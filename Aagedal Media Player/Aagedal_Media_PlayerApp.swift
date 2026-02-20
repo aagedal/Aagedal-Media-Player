@@ -12,6 +12,9 @@ struct Aagedal_Media_PlayerApp: App {
         WindowGroup {
             ContentView()
         }
+        .windowStyle(.automatic)
+        .windowToolbarStyle(.unified)
+        .windowResizability(.contentMinSize)
         .commands {
             CommandGroup(replacing: .newItem) {
                 Button("Open\u{2026}") {

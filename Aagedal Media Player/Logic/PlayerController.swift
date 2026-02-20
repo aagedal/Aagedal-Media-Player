@@ -61,7 +61,7 @@ final class PlayerController: ObservableObject {
 
     // MARK: - State
 
-    var mediaItem: MediaItem?
+    @Published var mediaItem: MediaItem?
     var loopObserver: Any?
     var playbackTimeObserver: Any?
     weak var playbackTimeObserverOwner: AVPlayer?
@@ -87,10 +87,11 @@ final class PlayerController: ObservableObject {
     // MARK: - Media Item Management
 
     func loadMedia(_ item: MediaItem) {
-        let previous = mediaItem
+        let previousURL = mediaItem?.url
         mediaItem = item
 
-        if previous?.id != item.id || previous?.url != item.url {
+        // Always prepare if it's a new file, or if it's the first load
+        if previousURL != item.url || !isReady {
             preparePlayback(startTime: 0)
         }
     }

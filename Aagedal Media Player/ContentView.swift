@@ -10,7 +10,6 @@ import OSLog
 
 struct ContentView: View {
     @StateObject private var controller = PlayerController()
-    @State private var mediaItem: MediaItem?
     @State private var timecodeMode: TimecodeDisplayMode = .preferred
     @State private var isDropTargeted = false
 
@@ -18,7 +17,7 @@ struct ContentView: View {
 
     var body: some View {
         Group {
-            if let item = mediaItem {
+            if let item = controller.mediaItem {
                 VStack(spacing: 0) {
                     PlayerView(controller: controller, item: item)
 
@@ -114,23 +113,19 @@ struct ContentView: View {
             size: fileSize
         )
 
-        // Load metadata asynchronously
+        // Load metadata asynchronously, then start playback
         Task {
             do {
                 let metadata = try await MetadataService.shared.metadata(for: url)
                 item.metadata = metadata
                 item.durationSeconds = metadata.duration ?? 0
                 item.hasVideoStream = !metadata.videoStreams.isEmpty
-                self.mediaItem = item
-
-                // Update window title
-                NSApp.keyWindow?.title = item.name
             } catch {
                 logger.warning("Failed to load metadata: \(error.localizedDescription)")
-                // Still open the file without metadata
-                self.mediaItem = item
-                NSApp.keyWindow?.title = item.name
             }
+
+            controller.loadMedia(item)
+            NSApp.keyWindow?.title = item.name
         }
 
         // Add to recent files
