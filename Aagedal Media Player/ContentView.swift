@@ -12,27 +12,40 @@ struct ContentView: View {
     @StateObject private var controller = PlayerController()
     @State private var timecodeMode: TimecodeDisplayMode = .preferred
     @State private var isDropTargeted = false
+    @State private var showInspector = false
 
     private let logger = Logger(subsystem: "com.aagedal.MediaPlayer", category: "ContentView")
 
     var body: some View {
-        Group {
+        VStack(spacing: 0) {
             if let item = controller.mediaItem {
-                VStack(spacing: 0) {
-                    PlayerView(controller: controller, item: item)
-
-                    ControlsView(
-                        controller: controller,
-                        item: item,
-                        timecodeMode: $timecodeMode
-                    )
-                }
+                PlayerView(controller: controller, item: item)
             } else {
                 dropZone
             }
+
+            ControlsView(
+                controller: controller,
+                item: controller.mediaItem,
+                timecodeMode: $timecodeMode
+            )
         }
         .frame(minWidth: 640, minHeight: 400)
         .background(Color.black)
+        .inspector(isPresented: $showInspector) {
+            if let item = controller.mediaItem {
+                MetadataInspectorView(item: item)
+            }
+        }
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button(action: { showInspector.toggle() }) {
+                    Image(systemName: "info.circle")
+                }
+                .help("Show metadata inspector")
+                .disabled(controller.mediaItem == nil)
+            }
+        }
         .onDrop(of: [.fileURL], isTargeted: $isDropTargeted) { providers in
             handleDrop(providers)
         }
@@ -46,6 +59,9 @@ struct ContentView: View {
             if let url = notification.object as? URL {
                 openFile(url: url)
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .toggleInspector)) { _ in
+            showInspector.toggle()
         }
     }
 

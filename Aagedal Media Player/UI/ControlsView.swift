@@ -9,11 +9,13 @@ import AVFoundation
 
 struct ControlsView: View {
     @ObservedObject var controller: PlayerController
-    let item: MediaItem
+    let item: MediaItem?
     @Binding var timecodeMode: TimecodeDisplayMode
 
     @State private var isDragging = false
     @State private var dragTime: Double = 0
+
+    private var isLoaded: Bool { item != nil }
 
     private var displayTime: Double {
         isDragging ? dragTime : controller.currentPlaybackTime
@@ -62,15 +64,17 @@ struct ControlsView: View {
 
                 // Loop toggle
                 Button(action: {
-                    controller.updateLoopPlayback(!(item.loopPlayback))
+                    if let item = item {
+                        controller.updateLoopPlayback(!item.loopPlayback)
+                    }
                 }) {
-                    Image(systemName: item.loopPlayback ? "repeat.1" : "repeat")
+                    Image(systemName: (item?.loopPlayback ?? false) ? "repeat.1" : "repeat")
                         .font(.system(size: 14))
-                        .foregroundColor(item.loopPlayback ? .accentColor : .secondary)
+                        .foregroundColor((item?.loopPlayback ?? false) ? .accentColor : .secondary)
                         .frame(width: 28, height: 28)
                 }
                 .buttonStyle(.plain)
-                .help(item.loopPlayback ? "Disable loop" : "Enable loop")
+                .help((item?.loopPlayback ?? false) ? "Disable loop" : "Enable loop")
 
                 // Fullscreen
                 Button(action: { controller.toggleFullscreen() }) {
@@ -82,6 +86,7 @@ struct ControlsView: View {
                 .help("Toggle fullscreen")
             }
         }
+        .disabled(!isLoaded)
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
         .background(.ultraThinMaterial)
@@ -96,7 +101,7 @@ struct ControlsView: View {
     private var timelineSlider: some View {
         GeometryReader { geometry in
             let width = geometry.size.width
-            let duration = item.durationSeconds
+            let duration = item?.durationSeconds ?? 0
             let progress = duration > 0 ? displayTime / duration : 0
 
             ZStack(alignment: .leading) {
@@ -141,32 +146,47 @@ struct ControlsView: View {
 
     private var timecodeDisplay: some View {
         HStack(spacing: 4) {
-            Text(timecodeMode.prefix)
-                .font(.system(size: 10, weight: .medium, design: .monospaced))
+            if let item = item {
+                Text(timecodeMode.prefix)
+                    .font(.system(size: 10, weight: .medium, design: .monospaced))
+                    .foregroundColor(.secondary)
+
+                Text(TimecodeFormatter.formatTimeForDisplayWithMode(
+                    seconds: displayTime,
+                    item: item,
+                    mode: timecodeMode
+                ))
+                .font(.system(size: 13, weight: .medium, design: .monospaced))
+                .foregroundColor(.primary)
+
+                Text("/")
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundColor(.secondary)
+
+                Text(TimecodeFormatter.formatTimeForDisplayWithMode(
+                    seconds: item.durationSeconds,
+                    item: item,
+                    mode: timecodeMode,
+                    isDuration: true
+                ))
+                .font(.system(size: 13, weight: .medium, design: .monospaced))
                 .foregroundColor(.secondary)
+            } else {
+                Text("00:00:00:00")
+                    .font(.system(size: 13, weight: .medium, design: .monospaced))
+                    .foregroundColor(.secondary)
 
-            Text(TimecodeFormatter.formatTimeForDisplayWithMode(
-                seconds: displayTime,
-                item: item,
-                mode: timecodeMode
-            ))
-            .font(.system(size: 13, weight: .medium, design: .monospaced))
-            .foregroundColor(.primary)
+                Text("/")
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundColor(.secondary)
 
-            Text("/")
-                .font(.system(size: 11, design: .monospaced))
-                .foregroundColor(.secondary)
-
-            Text(TimecodeFormatter.formatTimeForDisplayWithMode(
-                seconds: item.durationSeconds,
-                item: item,
-                mode: timecodeMode,
-                isDuration: true
-            ))
-            .font(.system(size: 13, weight: .medium, design: .monospaced))
-            .foregroundColor(.secondary)
+                Text("00:00:00:00")
+                    .font(.system(size: 13, weight: .medium, design: .monospaced))
+                    .foregroundColor(.secondary)
+            }
         }
         .onTapGesture {
+            guard isLoaded else { return }
             timecodeMode.toggle()
             UserDefaults.standard.set(timecodeMode.rawValue, forKey: "preferredTimecodeDisplayMode")
         }

@@ -22,6 +22,12 @@ struct Aagedal_Media_PlayerApp: App {
                 }
                 .keyboardShortcut("o")
             }
+            CommandGroup(after: .sidebar) {
+                Button("Toggle Inspector") {
+                    NotificationCenter.default.post(name: .toggleInspector, object: nil)
+                }
+                .keyboardShortcut("i")
+            }
         }
     }
 }
@@ -44,4 +50,5 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 extension Notification.Name {
     static let openFile = Notification.Name("openFile")
     static let openFileURL = Notification.Name("openFileURL")
+    static let toggleInspector = Notification.Name("toggleInspector")
 }
