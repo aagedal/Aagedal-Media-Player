@@ -40,6 +40,24 @@ struct ContentView: View {
     // MARK: - Body
 
     var body: some View {
+        contentLayers
+            .modifier(NotificationHandlers(
+                controller: controller,
+                nsWindow: nsWindow,
+                isEditingTimecode: $isEditingTimecode,
+                showInspector: $showInspector,
+                timecodeMode: $timecodeMode,
+                showOverlay: $showOverlay,
+                overlayHideTask: $overlayHideTask,
+                isMediaLoaded: isMediaLoaded,
+                openFilePanel: openFilePanel,
+                openFile: openFile
+            ))
+    }
+
+    // MARK: - Content Layers
+
+    private var contentLayers: some View {
         ZStack {
             // Layer 1: content (player or drop zone)
             if controller.mediaItem != nil {
@@ -126,81 +144,6 @@ struct ContentView: View {
             removeMouseMoveMonitor()
             removeAppActiveObserver()
             WindowManager.shared.unregister(id: windowID)
-        }
-        // File commands — key window only
-        .onReceive(NotificationCenter.default.publisher(for: .openFile)) { _ in
-            guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
-            openFilePanel()
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .openFileURL)) { notification in
-            guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
-            if let url = notification.object as? URL {
-                openFile(url: url)
-            }
-        }
-        // Window-specific commands — key window only
-        .onReceive(NotificationCenter.default.publisher(for: .toggleInspector)) { _ in
-            guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
-            showInspector.toggle()
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .captureScreenshot)) { _ in
-            guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
-            Task { await controller.captureScreenshot() }
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .exportTrim)) { _ in
-            guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
-            Task { await controller.exportTrim() }
-        }
-        // Syncable playback commands — all windows when sync is ON, key window otherwise
-        .onReceive(NotificationCenter.default.publisher(for: .togglePlayback)) { _ in
-            guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
-            controller.togglePlayback()
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .reverse)) { _ in
-            guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
-            controller.startReverseSimulation()
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .fastForward)) { _ in
-            guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
-            controller.fastForward()
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .seekByFrames)) { notification in
-            guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
-            if let count = (notification.object as? NSNumber)?.intValue {
-                controller.seekByFrames(count)
-            }
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .seekBySeconds)) { notification in
-            guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
-            if let seconds = (notification.object as? NSNumber)?.doubleValue {
-                controller.seek(by: seconds)
-            }
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .seekToEdge)) { notification in
-            guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
-            if let value = (notification.object as? NSNumber)?.doubleValue {
-                if value == 0 {
-                    controller.seekTo(0)
-                } else {
-                    let duration = controller.mediaItem?.durationSeconds ?? 0
-                    controller.seekTo(max(0, duration))
-                }
-            }
-        }
-        // Window-specific — key window only
-        .onReceive(NotificationCenter.default.publisher(for: .toggleFullscreen)) { _ in
-            guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
-            controller.toggleFullscreen()
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .cycleTimecodeMode)) { _ in
-            guard WindowManager.shared.isActiveWindow(nsWindow), !isEditingTimecode else { return }
-            let hasSourceTC = controller.mediaItem.flatMap { TimecodeFormatter.effectiveStartTimecode(for: $0) } != nil
-            timecodeMode.toggle(hasSourceTimecode: hasSourceTC)
-        }
-        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didResignActiveNotification)) { _ in
-            guard isMediaLoaded, !isEditingTimecode else { return }
-            overlayHideTask?.cancel()
-            showOverlay = false
         }
     }
 
@@ -455,5 +398,99 @@ struct ContentView: View {
             UTType("org.xiph.flac") ?? .audio,
             UTType("com.microsoft.waveform-audio") ?? .audio,
         ]
+    }
+}
+
+// MARK: - Notification Handlers (split out to help Swift type-checker)
+
+private struct NotificationHandlers: ViewModifier {
+    @ObservedObject var controller: PlayerController
+    let nsWindow: NSWindow?
+    @Binding var isEditingTimecode: Bool
+    @Binding var showInspector: Bool
+    @Binding var timecodeMode: TimecodeDisplayMode
+    @Binding var showOverlay: Bool
+    @Binding var overlayHideTask: Task<Void, Never>?
+    let isMediaLoaded: Bool
+    let openFilePanel: () -> Void
+    let openFile: (URL) -> Void
+
+    func body(content: Content) -> some View {
+        content
+            // File commands — key window only
+            .onReceive(NotificationCenter.default.publisher(for: .openFile)) { _ in
+                guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
+                openFilePanel()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .openFileURL)) { notification in
+                guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
+                if let url = notification.object as? URL {
+                    openFile(url)
+                }
+            }
+            // Window-specific commands — key window only
+            .onReceive(NotificationCenter.default.publisher(for: .toggleInspector)) { _ in
+                guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
+                showInspector.toggle()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .captureScreenshot)) { _ in
+                guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
+                Task { await controller.captureScreenshot() }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .exportTrim)) { _ in
+                guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
+                Task { await controller.exportTrim() }
+            }
+            // Syncable playback commands — all windows when sync is ON, key window otherwise
+            .onReceive(NotificationCenter.default.publisher(for: .togglePlayback)) { _ in
+                guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
+                controller.togglePlayback()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .reverse)) { _ in
+                guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
+                controller.startReverseSimulation()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .fastForward)) { _ in
+                guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
+                controller.fastForward()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .seekByFrames)) { notification in
+                guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
+                if let count = (notification.object as? NSNumber)?.intValue {
+                    controller.seekByFrames(count)
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .seekBySeconds)) { notification in
+                guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
+                if let seconds = (notification.object as? NSNumber)?.doubleValue {
+                    controller.seek(by: seconds)
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .seekToEdge)) { notification in
+                guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
+                if let value = (notification.object as? NSNumber)?.doubleValue {
+                    if value == 0 {
+                        controller.seekTo(0)
+                    } else {
+                        let duration = controller.mediaItem?.durationSeconds ?? 0
+                        controller.seekTo(max(0, duration))
+                    }
+                }
+            }
+            // Window-specific — key window only
+            .onReceive(NotificationCenter.default.publisher(for: .toggleFullscreen)) { _ in
+                guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
+                controller.toggleFullscreen()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .cycleTimecodeMode)) { _ in
+                guard WindowManager.shared.isActiveWindow(nsWindow), !isEditingTimecode else { return }
+                let hasSourceTC = controller.mediaItem.flatMap { TimecodeFormatter.effectiveStartTimecode(for: $0) } != nil
+                timecodeMode.toggle(hasSourceTimecode: hasSourceTC)
+            }
+            .onReceive(NotificationCenter.default.publisher(for: NSApplication.didResignActiveNotification)) { _ in
+                guard isMediaLoaded, !isEditingTimecode else { return }
+                overlayHideTask?.cancel()
+                showOverlay = false
+            }
     }
 }
