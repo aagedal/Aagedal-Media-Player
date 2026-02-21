@@ -104,6 +104,12 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: .toggleInspector)) { _ in
             showInspector.toggle()
         }
+        .onReceive(NotificationCenter.default.publisher(for: .captureScreenshot)) { _ in
+            Task { await controller.captureScreenshot() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .exportTrim)) { _ in
+            Task { await controller.exportTrim() }
+        }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didResignActiveNotification)) { _ in
             guard isMediaLoaded, !isEditingTimecode else { return }
             overlayHideTask?.cancel()
