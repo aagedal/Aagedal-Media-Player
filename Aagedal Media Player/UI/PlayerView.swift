@@ -38,6 +38,7 @@ struct PlayerView: View {
 
                     overlayIndicators
                 }
+                .ignoresSafeArea()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .onReceive(controller.playbackTimePublisher) { time in
                     // Time synced via publisher
@@ -52,6 +53,7 @@ struct PlayerView: View {
 
                     overlayIndicators
                 }
+                .ignoresSafeArea()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .onReceive(controller.playbackTimePublisher) { time in
                     // Time synced via publisher

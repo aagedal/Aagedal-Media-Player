@@ -9,8 +9,8 @@ import SwiftUI
 import AppKit
 
 struct WindowConfigurator: NSViewRepresentable {
-    static let baseMinWidth: CGFloat = 480
-    static let baseMinHeight: CGFloat = 345
+    static let baseMinWidth: CGFloat = 500
+    static let baseMinHeight: CGFloat = 350
 
     let aspectRatio: CGFloat?
     let showTrafficLights: Bool
@@ -57,6 +57,18 @@ struct WindowConfigurator: NSViewRepresentable {
                     }
                     break
                 }
+            }
+        }
+
+        /// Set contentMinSize based on the aspect ratio (or base values if nil).
+        func applyMinSize(_ window: NSWindow, ratio: CGFloat?) {
+            if let ratio, ratio > 0 {
+                let minW = max(WindowConfigurator.baseMinWidth, WindowConfigurator.baseMinHeight * ratio)
+                let minH = max(WindowConfigurator.baseMinHeight, WindowConfigurator.baseMinWidth / ratio)
+                window.contentMinSize = NSSize(width: minW, height: minH)
+            } else {
+                window.contentMinSize = NSSize(width: WindowConfigurator.baseMinWidth,
+                                               height: WindowConfigurator.baseMinHeight)
             }
         }
 
@@ -110,6 +122,8 @@ struct WindowConfigurator: NSViewRepresentable {
             coordinator.observeWindow(window)
             coordinator.applyWindowAppearance(window)
             coordinator.applyTrafficLightAlpha(window, animated: false)
+            // Set initial minimum size (base values; updated when video loads).
+            coordinator.applyMinSize(window, ratio: nil)
         }
     }
 
@@ -135,17 +149,14 @@ struct WindowConfigurator: NSViewRepresentable {
         DispatchQueue.main.async {
             coordinator.applyWindowAppearance(window)
 
-            // Aspect ratio — only apply when not in fullscreen
+            // Aspect ratio and min size — only apply when not in fullscreen,
+            // and only when the ratio actually changes.
             if !isFullScreen {
                 if let ratio, ratio > 0 {
-                    // Enforce minimum size that respects both base minimums and the aspect ratio.
-                    let minW = max(Self.baseMinWidth, Self.baseMinHeight * ratio)
-                    let minH = max(Self.baseMinHeight, Self.baseMinWidth / ratio)
-                    window.contentMinSize = NSSize(width: minW, height: minH)
-
                     if coordinator.lastAspectRatio != ratio {
                         coordinator.lastAspectRatio = ratio
                         coordinator.savedAspectRatio = ratio
+                        coordinator.applyMinSize(window, ratio: ratio)
                         window.contentAspectRatio = NSSize(width: ratio, height: 1)
 
                         if let contentView = window.contentView {
@@ -159,7 +170,7 @@ struct WindowConfigurator: NSViewRepresentable {
                                 width: frame.width,
                                 height: newHeight + titlebarHeight
                             )
-                            window.setFrame(contentRect, display: true, animate: true)
+                            window.setFrame(contentRect, display: true, animate: false)
                         }
                     }
                 } else {
@@ -167,8 +178,8 @@ struct WindowConfigurator: NSViewRepresentable {
                         coordinator.lastAspectRatio = nil
                         coordinator.savedAspectRatio = nil
                         window.contentResizeIncrements = NSSize(width: 1, height: 1)
+                        coordinator.applyMinSize(window, ratio: nil)
                     }
-                    window.contentMinSize = NSSize(width: Self.baseMinWidth, height: Self.baseMinHeight)
                 }
             }
 
