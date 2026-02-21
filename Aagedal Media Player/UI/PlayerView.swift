@@ -120,6 +120,8 @@ struct PlayerView: View {
         if lower == "i" {
             if modifiers.contains(.option) {
                 controller.clearTrimIn()
+            } else if modifiers.contains(.shift) {
+                if let inPoint = controller.trimIn { controller.seekTo(inPoint) }
             } else if !modifiers.contains(.command) && !modifiers.contains(.control) {
                 controller.setTrimIn()
             } else {
@@ -131,6 +133,8 @@ struct PlayerView: View {
         if lower == "o" {
             if modifiers.contains(.option) {
                 controller.clearTrimOut()
+            } else if modifiers.contains(.shift) {
+                if let outPoint = controller.trimOut { controller.seekTo(outPoint) }
             } else if !modifiers.contains(.command) && !modifiers.contains(.control) {
                 controller.setTrimOut()
             } else {
