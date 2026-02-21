@@ -64,7 +64,7 @@ struct ContentView: View {
             }
         }
         .ignoresSafeArea()
-        .frame(minWidth: 480, minHeight: 300)
+        .frame(minWidth: 500, minHeight: 250)
         .background(Color.black)
         .background(
             WindowConfigurator(
