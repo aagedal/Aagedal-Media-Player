@@ -110,6 +110,18 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: .exportTrim)) { _ in
             Task { await controller.exportTrim() }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .togglePlayback)) { _ in
+            controller.togglePlayback()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .reverse)) { _ in
+            controller.startReverseSimulation()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .fastForward)) { _ in
+            controller.fastForward()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .toggleFullscreen)) { _ in
+            controller.toggleFullscreen()
+        }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didResignActiveNotification)) { _ in
             guard isMediaLoaded, !isEditingTimecode else { return }
             overlayHideTask?.cancel()

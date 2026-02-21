@@ -44,6 +44,36 @@ struct Aagedal_Media_PlayerApp: App {
                     NotificationCenter.default.post(name: .toggleInspector, object: nil)
                 }
                 .keyboardShortcut("i")
+
+                Button("Cycle Timecode Display") {
+                    NotificationCenter.default.post(name: .cycleTimecodeMode, object: nil)
+                }
+                .keyboardShortcut("t", modifiers: [])
+            }
+            CommandMenu("Playback") {
+                Button("Play / Pause") {
+                    NotificationCenter.default.post(name: .togglePlayback, object: nil)
+                }
+                .keyboardShortcut(.space, modifiers: [])
+
+                Divider()
+
+                Button("Reverse") {
+                    NotificationCenter.default.post(name: .reverse, object: nil)
+                }
+                .keyboardShortcut("j", modifiers: [])
+
+                Button("Fast Forward") {
+                    NotificationCenter.default.post(name: .fastForward, object: nil)
+                }
+                .keyboardShortcut("l", modifiers: [])
+
+                Divider()
+
+                Button("Toggle Fullscreen") {
+                    NotificationCenter.default.post(name: .toggleFullscreen, object: nil)
+                }
+                .keyboardShortcut("f", modifiers: [])
             }
         }
 
@@ -113,4 +143,9 @@ extension Notification.Name {
     static let toggleInspector = Notification.Name("toggleInspector")
     static let captureScreenshot = Notification.Name("captureScreenshot")
     static let exportTrim = Notification.Name("exportTrim")
+    static let cycleTimecodeMode = Notification.Name("cycleTimecodeMode")
+    static let togglePlayback = Notification.Name("togglePlayback")
+    static let reverse = Notification.Name("reverse")
+    static let fastForward = Notification.Name("fastForward")
+    static let toggleFullscreen = Notification.Name("toggleFullscreen")
 }

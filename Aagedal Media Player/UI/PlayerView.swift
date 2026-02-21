@@ -145,28 +145,10 @@ struct PlayerView: View {
             return true
         }
 
-        // JKL playback controls
-        switch lower {
-        case "j":
-            controller.startReverseSimulation()
-            return true
-        case "k":
+        // K — secondary play/pause (Space is handled by Playback menu)
+        if lower == "k" {
             controller.togglePlayback()
             return true
-        case "l":
-            controller.fastForward()
-            return true
-        case " ":
-            controller.togglePlayback()
-            return true
-        case "t":
-            NotificationCenter.default.post(name: .cycleTimecodeMode, object: nil)
-            return true
-        case "f":
-            controller.toggleFullscreen()
-            return true
-        default:
-            break
         }
 
         // Arrow keys
@@ -301,8 +283,3 @@ private struct PlayerContainerView: NSViewRepresentable {
     }
 }
 
-// MARK: - Notification
-
-extension Notification.Name {
-    static let cycleTimecodeMode = Notification.Name("cycleTimecodeMode")
-}
