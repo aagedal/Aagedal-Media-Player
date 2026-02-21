@@ -15,10 +15,7 @@ struct PlayerView: View {
     @Binding var timecodeActivationTrigger: String?
 
     private var playerAspectRatio: CGFloat {
-        if let ratio = item.videoDisplayAspectRatio, ratio.isFinite, ratio > 0 {
-            return CGFloat(ratio)
-        }
-        return 16.0 / 9.0
+        controller.videoAspectRatio ?? 16.0 / 9.0
     }
 
     var body: some View {

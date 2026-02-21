@@ -31,12 +31,7 @@ struct ContentView: View {
     private var isMediaLoaded: Bool { controller.mediaItem != nil }
 
     private var videoAspectRatio: CGFloat? {
-        guard let item = controller.mediaItem,
-              let ratio = item.videoDisplayAspectRatio,
-              ratio.isFinite, ratio > 0 else {
-            return nil
-        }
-        return CGFloat(ratio)
+        controller.videoAspectRatio
     }
 
     // MARK: - Body
