@@ -9,7 +9,7 @@ import SwiftUI
 import AppKit
 
 struct WindowConfigurator: NSViewRepresentable {
-    static let baseMinWidth: CGFloat = 500
+    static let baseMinWidth: CGFloat = 480
     static let baseMinHeight: CGFloat = 360
 
     let aspectRatio: CGFloat?
