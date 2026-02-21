@@ -50,10 +50,15 @@ struct ContentView: View {
                 DropZoneView(isDropTargeted: isDropTargeted, onOpenFile: openFilePanel)
             }
 
-            // Layer 2: overlay controls
+            // Layer 2: trim export feedback
+            if controller.isExportingTrim || controller.trimExportDone {
+                trimExportOverlay
+            }
+
+            // Layer 3: overlay controls
             overlayControls
 
-            // Layer 3: right-edge cursor hide zone
+            // Layer 4: right-edge cursor hide zone
             if isMediaLoaded && !showInspector {
                 cursorHideZone
             }
@@ -158,6 +163,36 @@ struct ContentView: View {
         }
         .opacity(isMediaLoaded ? (showOverlay ? 1 : 0) : 1)
         .animation(.easeInOut(duration: 0.3), value: showOverlay)
+    }
+
+    // MARK: - Trim Export Overlay
+
+    private var trimExportOverlay: some View {
+        VStack {
+            Spacer()
+
+            HStack(spacing: 8) {
+                if controller.isExportingTrim {
+                    ProgressView()
+                        .controlSize(.small)
+                    Text("Exporting\u{2026}")
+                } else {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                    Text("Trimmed file saved.")
+                }
+            }
+            .font(.system(size: 13, weight: .medium))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .background(.black.opacity(0.7), in: .capsule)
+            .padding(.bottom, 80)
+        }
+        .transition(.opacity)
+        .animation(.easeInOut(duration: 0.25), value: controller.isExportingTrim)
+        .animation(.easeInOut(duration: 0.25), value: controller.trimExportDone)
+        .allowsHitTesting(false)
     }
 
     // MARK: - Top Toolbar
