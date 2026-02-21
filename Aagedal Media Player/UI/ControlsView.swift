@@ -133,6 +133,7 @@ struct ControlsView: View {
                         isDragging = true
                         let fraction = max(0, min(1, value.location.x / width))
                         dragTime = Double(fraction) * duration
+                        controller.seekTo(dragTime)
                     }
                     .onEnded { value in
                         let fraction = max(0, min(1, value.location.x / width))
