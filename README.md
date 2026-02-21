@@ -7,7 +7,7 @@ Based on the same fast engine as (Aagedal Media Converter)[https://github.com/aa
 
 ## Features
 
-#### File support
+### File support
 Playback (almost) every audio and video file in existence, through a combination of mpv and AVFoundation.
 As of 2026-02-21, it supports more codecs than IINA; ProRes RAW, Advanced Professional Video (APV), and VVC (H.266).
 
@@ -23,22 +23,22 @@ Some of the supported formats here:
 
 (Notable exceptions are other professional RAW video codecs.)
 
-#### Speed
+### Speed
 Launches faster than IINA and QuickTime. 1 seconds vs 2 seconds.
 Tested 2026-02-21 on an M1 Max Studio.
 
-#### Timecode display and input
+### Timecode display and input
 Display timecode, with quick switching between source timecode, relative timecode and a frame counter view.
 You can also input both absolute timecode, and use + and - before a number to jump relative to the current playhead position.
 
-#### Lossless Trim
+### Lossless Trim
 One of the most missed features from QuickTime is now available in an open source app. Quickly set an in and out point using I and O keys, then use Command + E to export.
 Select a default export location in the settings, or save next to the original, or always be asked where to save it.
 
-#### Professional Shortcuts
+### Professional Shortcuts
 Use proper JKL playback controls, like in all professional video editing software. Professionals can finally feel at home in a free and open source video player.
 
-#### Screenshots
+### Screenshots
 Take quick screenshots at source resolution in JPEG XL, JPEG or PNG. Command + S.
 Select a default export location in the settings, or save next to the original, or always be asked where to save it.
 
