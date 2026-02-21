@@ -64,6 +64,8 @@ final class PlayerController: ObservableObject {
 
     // Screenshot feedback
     @Published var lastScreenshotURL: URL?
+    @Published var isSavingScreenshot = false
+    @Published var screenshotDone = false
 
     // Trim export feedback
     @Published var isExportingTrim = false
@@ -859,15 +861,25 @@ final class PlayerController: ObservableObject {
 
         arguments += ["-y", outputURL.path]
 
+        isSavingScreenshot = true
+        screenshotDone = false
+
         do {
             try await FFmpegService.run(arguments: arguments)
+            isSavingScreenshot = false
             if FileManager.default.fileExists(atPath: outputURL.path) {
                 lastScreenshotURL = outputURL
                 logger.info("Screenshot saved: \(outputURL.lastPathComponent)")
+                screenshotDone = true
+                Task {
+                    try? await Task.sleep(for: .seconds(2))
+                    screenshotDone = false
+                }
             } else {
                 logger.error("Screenshot output file missing")
             }
         } catch {
+            isSavingScreenshot = false
             logger.error("Screenshot failed: \(error.localizedDescription)")
         }
     }

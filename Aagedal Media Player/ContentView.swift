@@ -50,9 +50,20 @@ struct ContentView: View {
                 DropZoneView(isDropTargeted: isDropTargeted, onOpenFile: openFilePanel)
             }
 
-            // Layer 2: trim export feedback
+            // Layer 2: export/screenshot feedback
+            if controller.isSavingScreenshot || controller.screenshotDone {
+                exportOverlay(
+                    isWorking: controller.isSavingScreenshot,
+                    workingText: "Saving\u{2026}",
+                    doneText: "Screenshot saved."
+                )
+            }
             if controller.isExportingTrim || controller.trimExportDone {
-                trimExportOverlay
+                exportOverlay(
+                    isWorking: controller.isExportingTrim,
+                    workingText: "Exporting\u{2026}",
+                    doneText: "Trimmed file saved."
+                )
             }
 
             // Layer 3: overlay controls
@@ -165,21 +176,21 @@ struct ContentView: View {
         .animation(.easeInOut(duration: 0.3), value: showOverlay)
     }
 
-    // MARK: - Trim Export Overlay
+    // MARK: - Export Overlay
 
-    private var trimExportOverlay: some View {
+    private func exportOverlay(isWorking: Bool, workingText: String, doneText: String) -> some View {
         VStack {
             Spacer()
 
             HStack(spacing: 8) {
-                if controller.isExportingTrim {
+                if isWorking {
                     ProgressView()
                         .controlSize(.small)
-                    Text("Exporting\u{2026}")
+                    Text(workingText)
                 } else {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(.green)
-                    Text("Trimmed file saved.")
+                    Text(doneText)
                 }
             }
             .font(.system(size: 13, weight: .medium))
@@ -190,8 +201,7 @@ struct ContentView: View {
             .padding(.bottom, 80)
         }
         .transition(.opacity)
-        .animation(.easeInOut(duration: 0.25), value: controller.isExportingTrim)
-        .animation(.easeInOut(duration: 0.25), value: controller.trimExportDone)
+        .animation(.easeInOut(duration: 0.25), value: isWorking)
         .allowsHitTesting(false)
     }
 
