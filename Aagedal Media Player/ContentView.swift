@@ -59,7 +59,7 @@ struct ContentView: View {
             }
         }
         .ignoresSafeArea()
-        .frame(minWidth: 500, minHeight: 250)
+        .frame(minWidth: 250, minHeight: 200)
         .background(Color.black)
         .background(
             WindowConfigurator(
@@ -103,6 +103,11 @@ struct ContentView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .toggleInspector)) { _ in
             showInspector.toggle()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didResignActiveNotification)) { _ in
+            guard isMediaLoaded, !isEditingTimecode else { return }
+            overlayHideTask?.cancel()
+            showOverlay = false
         }
     }
 
@@ -205,6 +210,7 @@ struct ContentView: View {
     private func installMouseMoveMonitor() {
         mouseMoveMonitor = NSEvent.addLocalMonitorForEvents(matching: .mouseMoved) { event in
             guard isMediaLoaded,
+                  isHoveringWindow,
                   !isHoveringRightEdge,
                   let window = NSApp.keyWindow,
                   window.isKeyWindow else {
@@ -237,6 +243,7 @@ struct ContentView: View {
             // Returning from another app — cursor must be visible.
             isHoveringRightEdge = false
             CursorHideNSView.ensureCursorVisible()
+            overlayHideTask?.cancel()
         }
     }
 

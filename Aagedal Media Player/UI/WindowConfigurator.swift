@@ -10,7 +10,7 @@ import AppKit
 
 struct WindowConfigurator: NSViewRepresentable {
     static let baseMinWidth: CGFloat = 500
-    static let baseMinHeight: CGFloat = 350
+    static let baseMinHeight: CGFloat = 360
 
     let aspectRatio: CGFloat?
     let showTrafficLights: Bool
@@ -22,12 +22,14 @@ struct WindowConfigurator: NSViewRepresentable {
         var willEnterFullScreen: NSObjectProtocol?
         var didExitFullScreen: NSObjectProtocol?
         var didBecomeKey: NSObjectProtocol?
+        var didResignKey: NSObjectProtocol?
         var lastTrafficLightAlpha: CGFloat = 0
 
         deinit {
             if let token = willEnterFullScreen { NotificationCenter.default.removeObserver(token) }
             if let token = didExitFullScreen { NotificationCenter.default.removeObserver(token) }
             if let token = didBecomeKey { NotificationCenter.default.removeObserver(token) }
+            if let token = didResignKey { NotificationCenter.default.removeObserver(token) }
         }
 
         /// Re-apply window chrome properties. Cheap to call repeatedly.
@@ -110,6 +112,18 @@ struct WindowConfigurator: NSViewRepresentable {
                     self.applyTrafficLightAlpha(window, animated: false)
                 }
             }
+
+            didResignKey = NotificationCenter.default.addObserver(
+                forName: NSWindow.didResignKeyNotification,
+                object: window, queue: .main
+            ) { [weak self] _ in
+                guard let self else { return }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+                    guard let self else { return }
+                    self.applyWindowAppearance(window)
+                    self.applyTrafficLightAlpha(window, animated: false)
+                }
+            }
         }
     }
 
@@ -160,15 +174,21 @@ struct WindowConfigurator: NSViewRepresentable {
                         window.contentAspectRatio = NSSize(width: ratio, height: 1)
 
                         if let contentView = window.contentView {
-                            let currentWidth = contentView.bounds.width
-                            let newHeight = currentWidth / ratio
                             let frame = window.frame
                             let titlebarHeight = frame.height - contentView.bounds.height
+                            var newWidth = contentView.bounds.width
+                            // For tall videos (taller than 3:4), cap width to avoid
+                            // an oversized window inherited from a previous wide video
+                            if ratio < 0.75 {
+                                newWidth = min(newWidth, 380)
+                            }
+                            let newHeight = newWidth / ratio
+                            let totalHeight = newHeight + titlebarHeight
                             let contentRect = NSRect(
                                 x: frame.origin.x,
-                                y: frame.origin.y + frame.height - newHeight - titlebarHeight,
-                                width: frame.width,
-                                height: newHeight + titlebarHeight
+                                y: frame.origin.y + frame.height - totalHeight,
+                                width: newWidth,
+                                height: totalHeight
                             )
                             window.setFrame(contentRect, display: true, animate: false)
                         }

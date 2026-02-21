@@ -155,6 +155,21 @@ struct PlayerView: View {
                     controller.seekByFrames(1)
                 }
                 return true
+            case .upArrow:
+                if modifiers.contains(.command) {
+                    controller.seekTo(0)
+                } else {
+                    controller.seekByFrames(-10)
+                }
+                return true
+            case .downArrow:
+                if modifiers.contains(.command) {
+                    let duration = controller.mediaItem?.durationSeconds ?? 0
+                    controller.seekTo(max(0, duration))
+                } else {
+                    controller.seekByFrames(10)
+                }
+                return true
             default:
                 break
             }
