@@ -84,6 +84,8 @@ struct ContentView: View {
             .animation(.easeInOut(duration: 0.3), value: showOverlay)
 
             // Right-edge cursor hide zone (only when media is loaded and inspector is closed)
+            // Bottom padding keeps it out of the controls area so the timeline
+            // end remains easy to click.
             if isMediaLoaded && !showInspector {
                 HStack {
                     Spacer()
@@ -99,6 +101,7 @@ struct ContentView: View {
                     }
                     .frame(width: rightEdgeWidth)
                 }
+                .padding(.bottom, 80)
             }
         }
         .ignoresSafeArea()
