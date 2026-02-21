@@ -39,10 +39,6 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
     @Published var videoAspectRatio: CGFloat?
     @Published var error: String?
 
-    private var videoWidth: Int = 0
-    private var videoHeight: Int = 0
-    private var videoDpar: Double = 1.0
-
     private var isInitialized = false
     private var startPaused = false
     private var wakeupContext: UnsafeMutableRawPointer?
@@ -147,9 +143,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         mpv_observe_property(mpv, 0, MPVProperty.seekable, MPV_FORMAT_FLAG)
         mpv_observe_property(mpv, 0, MPVProperty.eofReached, MPV_FORMAT_FLAG)
         mpv_observe_property(mpv, 0, MPVProperty.speed, MPV_FORMAT_DOUBLE)
-        mpv_observe_property(mpv, 0, MPVProperty.videoParamsW, MPV_FORMAT_INT64)
-        mpv_observe_property(mpv, 0, MPVProperty.videoParamsH, MPV_FORMAT_INT64)
-        mpv_observe_property(mpv, 0, MPVProperty.videoParamsDpar, MPV_FORMAT_DOUBLE)
+        mpv_observe_property(mpv, 0, MPVProperty.videoParamsAspect, MPV_FORMAT_DOUBLE)
 
         wakeupContext = Unmanaged.passRetained(self).toOpaque()
         mpv_set_wakeup_callback(mpv, { ctx in
@@ -211,15 +205,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         command("stop")
         isPlaying = false
         timePos = 0
-        videoWidth = 0
-        videoHeight = 0
-        videoDpar = 1.0
         videoAspectRatio = nil
-    }
-
-    private func updateVideoAspectRatio() {
-        guard videoWidth > 0, videoHeight > 0 else { return }
-        videoAspectRatio = (CGFloat(videoWidth) / CGFloat(videoHeight)) * CGFloat(videoDpar)
     }
 
     func seek(to time: TimeInterval) {
@@ -466,25 +452,10 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
                                     self.isPlaying = false
                                 }
                             }
-                        case MPVProperty.videoParamsW:
-                            if let value = UnsafePointer<Int64>(OpaquePointer(property.data))?.pointee {
+                        case MPVProperty.videoParamsAspect:
+                            if let value = UnsafePointer<Double>(OpaquePointer(property.data))?.pointee, value > 0 {
                                 DispatchQueue.main.async {
-                                    self.videoWidth = Int(value)
-                                    self.updateVideoAspectRatio()
-                                }
-                            }
-                        case MPVProperty.videoParamsH:
-                            if let value = UnsafePointer<Int64>(OpaquePointer(property.data))?.pointee {
-                                DispatchQueue.main.async {
-                                    self.videoHeight = Int(value)
-                                    self.updateVideoAspectRatio()
-                                }
-                            }
-                        case MPVProperty.videoParamsDpar:
-                            if let value = UnsafePointer<Double>(OpaquePointer(property.data))?.pointee {
-                                DispatchQueue.main.async {
-                                    self.videoDpar = value
-                                    self.updateVideoAspectRatio()
+                                    self.videoAspectRatio = CGFloat(value)
                                 }
                             }
                         default:
