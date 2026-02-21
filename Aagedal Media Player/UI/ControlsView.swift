@@ -16,9 +16,11 @@ struct ControlsView: View {
 
     @State private var isDragging = false
     @State private var dragTime: Double = 0
+    @State private var dragStartFraction: Double = 0
     @State private var timecodeInput = ""
     @State private var pendingCharacter: String?
     @State private var justActivated = false
+    @State private var isNarrow = false
     @FocusState private var isTimecodeFocused: Bool
 
     private var isLoaded: Bool { item != nil }
@@ -34,64 +36,34 @@ struct ControlsView: View {
             // Timeline scrubber
             timelineSlider
 
-            // Controls row
-            HStack(spacing: 12) {
-                // Play/Pause
-                Button(action: { controller.togglePlayback() }) {
-                    Image(systemName: isPlaying ? "pause.fill" : "play.fill")
-                        .font(.system(size: 16))
-                        .foregroundColor(Color(red: 1.0, green: 0.071, blue: 0.361))
-                        .frame(width: 28, height: 28)
-                }
-                .buttonStyle(.plain)
-                .keyboardShortcut(.space, modifiers: [])
-
-                Divider()
-                    .frame(height: 18)
-
-                // Audio track picker
-                if controller.audioTrackOptions.count > 1 {
-                    audioTrackPicker
-                }
-
-                // Subtitle track picker
-                if !controller.subtitleTrackOptions.isEmpty {
-                    subtitleTrackPicker
-                }
-
-                // Loop toggle
-                Button(action: {
-                    if let item = item {
-                        controller.updateLoopPlayback(!item.loopPlayback)
+            // Controls row — responsive layout
+            if isNarrow {
+                VStack(spacing: 6) {
+                    HStack(spacing: 8) {
+                        transportButtons
                     }
-                }) {
-                    Image(systemName: (item?.loopPlayback ?? false) ? "repeat.1" : "repeat")
-                        .font(.system(size: 14))
-                        .foregroundColor((item?.loopPlayback ?? false) ? .accentColor : .secondary)
-                        .frame(width: 28, height: 28)
+                    timecodeDisplay
                 }
-                .buttonStyle(.plain)
-                .help((item?.loopPlayback ?? false) ? "Disable loop" : "Enable loop")
-
-                // Fullscreen
-                Button(action: { controller.toggleFullscreen() }) {
-                    Image(systemName: "arrow.up.left.and.arrow.down.right")
-                        .font(.system(size: 14))
-                        .frame(width: 28, height: 28)
+            } else {
+                HStack(spacing: 12) {
+                    transportButtons
+                    Spacer()
+                    timecodeDisplay
                 }
-                .buttonStyle(.plain)
-                .help("Toggle fullscreen")
-
-                Spacer()
-
-                // Timecode display
-                timecodeDisplay
             }
         }
         .disabled(!isLoaded)
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
         .background(.ultraThinMaterial)
+        .overlay(
+            GeometryReader { geo in
+                Color.clear
+                    .onAppear { isNarrow = geo.size.width < 500 }
+                    .onChange(of: geo.size.width) { _, newWidth in isNarrow = newWidth < 500 }
+            }
+            .allowsHitTesting(false)
+        )
         .onReceive(NotificationCenter.default.publisher(for: .cycleTimecodeMode)) { _ in
             guard !isEditingTimecode else { return }
             timecodeMode.toggle()
@@ -103,6 +75,53 @@ struct ControlsView: View {
                 timecodeActivationTrigger = nil
             }
         }
+    }
+
+    // MARK: - Transport Buttons
+
+    @ViewBuilder
+    private var transportButtons: some View {
+        // Play/Pause
+        Button(action: { controller.togglePlayback() }) {
+            Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+                .font(.system(size: 16))
+                .foregroundColor(Color(red: 1.0, green: 0.071, blue: 0.361))
+                .frame(width: 28, height: 28)
+        }
+        .buttonStyle(.plain)
+        .keyboardShortcut(.space, modifiers: [])
+
+        Divider()
+            .frame(height: 18)
+
+        // Audio track picker
+        audioTrackPicker
+
+        // Subtitle track picker
+        subtitleTrackPicker
+
+        // Loop toggle
+        Button(action: {
+            if let item = item {
+                controller.updateLoopPlayback(!item.loopPlayback)
+            }
+        }) {
+            Image(systemName: (item?.loopPlayback ?? false) ? "repeat.1" : "repeat")
+                .font(.system(size: 14))
+                .foregroundColor((item?.loopPlayback ?? false) ? .accentColor : .secondary)
+                .frame(width: 28, height: 28)
+        }
+        .buttonStyle(.plain)
+        .help((item?.loopPlayback ?? false) ? "Disable loop" : "Enable loop")
+
+        // Fullscreen
+        Button(action: { controller.toggleFullscreen() }) {
+            Image(systemName: "arrow.up.left.and.arrow.down.right")
+                .font(.system(size: 14))
+                .frame(width: 28, height: 28)
+        }
+        .buttonStyle(.plain)
+        .help("Toggle fullscreen")
     }
 
     // MARK: - Timeline
@@ -130,15 +149,32 @@ struct ControlsView: View {
             .gesture(
                 DragGesture(minimumDistance: 0)
                     .onChanged { value in
-                        isDragging = true
-                        let fraction = max(0, min(1, value.location.x / width))
-                        dragTime = Double(fraction) * duration
+                        if !isDragging {
+                            isDragging = true
+                            dragStartFraction = duration > 0 ? controller.currentPlaybackTime / duration : 0
+                        }
+                        let isPrecision = NSEvent.modifierFlags.contains(.option)
+                        if isPrecision {
+                            let delta = (value.location.x - value.startLocation.x) / width
+                            let fraction = max(0, min(1, dragStartFraction + delta / 4.0))
+                            dragTime = Double(fraction) * duration
+                        } else {
+                            let fraction = max(0, min(1, value.location.x / width))
+                            dragTime = Double(fraction) * duration
+                        }
                         controller.seekTo(dragTime)
                     }
                     .onEnded { value in
-                        let fraction = max(0, min(1, value.location.x / width))
-                        let seekTime = Double(fraction) * duration
-                        controller.seekTo(seekTime)
+                        let isPrecision = NSEvent.modifierFlags.contains(.option)
+                        if isPrecision {
+                            let delta = (value.location.x - value.startLocation.x) / width
+                            let fraction = max(0, min(1, dragStartFraction + delta / 4.0))
+                            dragTime = Double(fraction) * duration
+                        } else {
+                            let fraction = max(0, min(1, value.location.x / width))
+                            dragTime = Double(fraction) * duration
+                        }
+                        controller.seekTo(dragTime)
                         isDragging = false
                     }
             )
@@ -162,7 +198,7 @@ struct ControlsView: View {
         HStack(spacing: 4) {
             if let item = item {
                 Text(timecodeMode.prefix)
-                    .font(.system(size: 10, weight: .medium, design: .monospaced))
+                    .font(.system(size: 12, weight: .medium, design: .monospaced))
                     .foregroundColor(.secondary)
 
                 Text(TimecodeFormatter.formatTimeForDisplayWithMode(
@@ -170,11 +206,11 @@ struct ControlsView: View {
                     item: item,
                     mode: timecodeMode
                 ))
-                .font(.system(size: 13, weight: .medium, design: .monospaced))
+                .font(.system(size: 12, weight: .medium, design: .monospaced))
                 .foregroundColor(.primary)
 
                 Text("/")
-                    .font(.system(size: 11, design: .monospaced))
+                    .font(.system(size: 12, design: .monospaced))
                     .foregroundColor(.secondary)
 
                 Text(TimecodeFormatter.formatTimeForDisplayWithMode(
@@ -183,19 +219,19 @@ struct ControlsView: View {
                     mode: timecodeMode,
                     isDuration: true
                 ))
-                .font(.system(size: 13, weight: .medium, design: .monospaced))
+                .font(.system(size: 12, weight: .medium, design: .monospaced))
                 .foregroundColor(.secondary)
             } else {
                 Text("00:00:00:00")
-                    .font(.system(size: 13, weight: .medium, design: .monospaced))
+                    .font(.system(size: 12, weight: .medium, design: .monospaced))
                     .foregroundColor(.secondary)
 
                 Text("/")
-                    .font(.system(size: 11, design: .monospaced))
+                    .font(.system(size: 12, design: .monospaced))
                     .foregroundColor(.secondary)
 
                 Text("00:00:00:00")
-                    .font(.system(size: 13, weight: .medium, design: .monospaced))
+                    .font(.system(size: 12, weight: .medium, design: .monospaced))
                     .foregroundColor(.secondary)
             }
         }
@@ -213,7 +249,7 @@ struct ControlsView: View {
 
     private var timecodeEditor: some View {
         TextField("0:00 or +10", text: $timecodeInput)
-            .font(.system(size: 13, weight: .medium, design: .monospaced))
+            .font(.system(size: 12, weight: .medium, design: .monospaced))
             .textFieldStyle(.plain)
             .frame(width: 140)
             .padding(.horizontal, 6)
