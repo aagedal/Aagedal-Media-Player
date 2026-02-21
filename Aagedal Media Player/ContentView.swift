@@ -343,6 +343,7 @@ struct ContentView: View {
             UTType("com.microsoft.windows-media-wmv") ?? .movie,
             UTType("org.matroska.mkv") ?? .movie,
             UTType("public.mxf") ?? .movie,
+            UTType("org.webmproject.webm") ?? .movie,
             UTType("com.apple.quicktime-movie") ?? .quickTimeMovie,
             UTType("public.mp3") ?? .audio,
             UTType("public.aiff-audio") ?? .audio,
