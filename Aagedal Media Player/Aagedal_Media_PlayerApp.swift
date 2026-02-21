@@ -28,6 +28,17 @@ struct Aagedal_Media_PlayerApp: App {
 
                 RecentDocumentsMenu()
             }
+            CommandGroup(replacing: .saveItem) {
+                Button("Save Screenshot") {
+                    NotificationCenter.default.post(name: .captureScreenshot, object: nil)
+                }
+                .keyboardShortcut("s")
+
+                Button("Export Trim\u{2026}") {
+                    NotificationCenter.default.post(name: .exportTrim, object: nil)
+                }
+                .keyboardShortcut("e")
+            }
             CommandGroup(after: .sidebar) {
                 Button("Toggle Inspector") {
                     NotificationCenter.default.post(name: .toggleInspector, object: nil)
@@ -100,4 +111,6 @@ extension Notification.Name {
     static let openFile = Notification.Name("openFile")
     static let openFileURL = Notification.Name("openFileURL")
     static let toggleInspector = Notification.Name("toggleInspector")
+    static let captureScreenshot = Notification.Name("captureScreenshot")
+    static let exportTrim = Notification.Name("exportTrim")
 }

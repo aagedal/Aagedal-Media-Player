@@ -116,18 +116,6 @@ struct PlayerView: View {
 
         let lower = characters.lowercased()
 
-        // Cmd+S — Screenshot
-        if lower == "s" && modifiers.contains(.command) {
-            Task { await controller.captureScreenshot() }
-            return true
-        }
-
-        // Cmd+E — Trim export
-        if lower == "e" && modifiers.contains(.command) {
-            Task { await controller.exportTrim() }
-            return true
-        }
-
         // I/O trim points (must be checked before timecode activation)
         if lower == "i" {
             if modifiers.contains(.option) {
