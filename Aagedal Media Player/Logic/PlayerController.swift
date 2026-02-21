@@ -10,6 +10,7 @@ import AppKit
 import AVKit
 import Combine
 import OSLog
+import UniformTypeIdentifiers
 
 @MainActor
 final class PlayerController: ObservableObject {
@@ -56,6 +57,13 @@ final class PlayerController: ObservableObject {
     @Published var audioTrackOptions: [AudioTrackOption] = []
     @Published var subtitleTrackOptions: [SubtitleTrackOption] = []
     @Published var videoAspectRatio: CGFloat?
+
+    // Trim points
+    @Published var trimIn: Double?
+    @Published var trimOut: Double?
+
+    // Screenshot feedback
+    @Published var lastScreenshotURL: URL?
 
     // Reverse simulation
     private var reverseSpeed: Int = 1
@@ -727,6 +735,147 @@ final class PlayerController: ObservableObject {
             let option = subtitleTrackOptions[position]
             mpv.currentSubtitleTrackIndex = option.trackId
             selectedSubtitleTrackOrderIndex = position
+        }
+    }
+
+    // MARK: - Trim Points
+
+    func setTrimIn() {
+        trimIn = currentPlaybackTime
+        // If trimOut exists and is before trimIn, clear it
+        if let out = trimOut, let inn = trimIn, out <= inn {
+            trimOut = nil
+        }
+    }
+
+    func setTrimOut() {
+        trimOut = currentPlaybackTime
+        // If trimIn exists and is after trimOut, clear it
+        if let inn = trimIn, let out = trimOut, inn >= out {
+            trimIn = nil
+        }
+    }
+
+    func clearTrimIn() {
+        trimIn = nil
+    }
+
+    func clearTrimOut() {
+        trimOut = nil
+    }
+
+    func clearTrimPoints() {
+        trimIn = nil
+        trimOut = nil
+    }
+
+    // MARK: - Screenshot
+
+    func captureScreenshot() async {
+        guard let item = mediaItem else { return }
+
+        let time = currentPlaybackTime
+        let stream = item.metadata?.primaryVideoStream
+        let bitDepth = stream?.bitDepth ?? 8
+        let hasAlpha = stream?.hasAlpha ?? false
+
+        let pixelFormat: String
+        if bitDepth > 8 {
+            pixelFormat = hasAlpha ? "rgba64le" : "rgb48le"
+        } else {
+            pixelFormat = hasAlpha ? "rgba" : "rgb24"
+        }
+
+        // Build output filename: {name}_{timestamp}_t{time}.jxl
+        let baseName = item.url.deletingPathExtension().lastPathComponent
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyyMMdd_HHmmss"
+        let timestamp = dateFormatter.string(from: Date())
+        let timeString = String(format: "%.3f", time)
+        let outputName = "\(baseName)_\(timestamp)_t\(timeString).jxl"
+        let outputURL = item.url.deletingLastPathComponent().appendingPathComponent(outputName)
+
+        var arguments = [
+            "-hide_banner", "-loglevel", "error",
+            "-ss", String(time),
+            "-i", item.url.path,
+            "-frames:v", "1",
+            "-vf", "scale=iw*sar:ih",
+            "-pix_fmt", pixelFormat,
+            "-c:v", "libjxl",
+            "-distance", "0.5",
+            "-effort", "7",
+        ]
+
+        FFmpegService.appendColorArguments(from: stream, to: &arguments)
+
+        arguments += ["-y", outputURL.path]
+
+        do {
+            try await FFmpegService.run(arguments: arguments)
+            if FileManager.default.fileExists(atPath: outputURL.path) {
+                lastScreenshotURL = outputURL
+                logger.info("Screenshot saved: \(outputURL.lastPathComponent)")
+            } else {
+                logger.error("Screenshot output file missing")
+            }
+        } catch {
+            logger.error("Screenshot failed: \(error.localizedDescription)")
+        }
+    }
+
+    // MARK: - Trim Export
+
+    func exportTrim() async {
+        guard let item = mediaItem else { return }
+        guard let inPoint = trimIn, let outPoint = trimOut, outPoint > inPoint else {
+            logger.warning("Export requires both trim in and out points")
+            return
+        }
+
+        let duration = outPoint - inPoint
+        let ext = item.url.pathExtension
+        let baseName = item.url.deletingPathExtension().lastPathComponent
+        let defaultName = "\(baseName)_trimmed.\(ext)"
+
+        // Show save panel on main thread
+        let saveURL: URL? = await withCheckedContinuation { continuation in
+            let panel = NSSavePanel()
+            panel.nameFieldStringValue = defaultName
+            panel.allowedContentTypes = [UTType(filenameExtension: ext) ?? .movie]
+            panel.canCreateDirectories = true
+            panel.directoryURL = item.url.deletingLastPathComponent()
+
+            panel.begin { response in
+                if response == .OK {
+                    continuation.resume(returning: panel.url)
+                } else {
+                    continuation.resume(returning: nil)
+                }
+            }
+        }
+
+        guard let outputURL = saveURL else { return }
+
+        let arguments = [
+            "-hide_banner", "-loglevel", "error",
+            "-ss", String(inPoint),
+            "-i", item.url.path,
+            "-t", String(duration),
+            "-c", "copy",
+            "-avoid_negative_ts", "make_zero",
+            "-y", outputURL.path,
+        ]
+
+        do {
+            try await FFmpegService.run(arguments: arguments)
+            if FileManager.default.fileExists(atPath: outputURL.path) {
+                logger.info("Trim export saved: \(outputURL.lastPathComponent)")
+            } else {
+                logger.error("Trim export output file missing")
+            }
+        } catch {
+            logger.error("Trim export failed: \(error.localizedDescription)")
         }
     }
 
