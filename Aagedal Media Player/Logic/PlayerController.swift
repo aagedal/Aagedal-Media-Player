@@ -65,6 +65,10 @@ final class PlayerController: ObservableObject {
     // Screenshot feedback
     @Published var lastScreenshotURL: URL?
 
+    // Trim export feedback
+    @Published var isExportingTrim = false
+    @Published var trimExportDone = false
+
     // Reverse simulation
     private var reverseSpeed: Int = 1
     private var reverseTimer: Timer?
@@ -922,14 +926,24 @@ final class PlayerController: ObservableObject {
             "-y", outputURL.path,
         ]
 
+        isExportingTrim = true
+        trimExportDone = false
+
         do {
             try await FFmpegService.run(arguments: arguments)
+            isExportingTrim = false
             if FileManager.default.fileExists(atPath: outputURL.path) {
                 logger.info("Trim export saved: \(outputURL.lastPathComponent)")
+                trimExportDone = true
+                Task {
+                    try? await Task.sleep(for: .seconds(2))
+                    trimExportDone = false
+                }
             } else {
                 logger.error("Trim export output file missing")
             }
         } catch {
+            isExportingTrim = false
             logger.error("Trim export failed: \(error.localizedDescription)")
         }
     }
