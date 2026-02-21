@@ -21,8 +21,9 @@ final class MPVViewController: NSViewController {
     }
 
     override func loadView() {
-        self.view = NSView(frame: .init(x: 0, y: 0, width: 640, height: 480))
-        self.view.wantsLayer = true
+        let view = NSView(frame: .init(x: 0, y: 0, width: 640, height: 480))
+        view.autoresizingMask = [.width, .height]
+        self.view = view
     }
 
     override func viewDidLoad() {
@@ -33,29 +34,32 @@ final class MPVViewController: NSViewController {
         metalLayer.contentsScale = NSScreen.main?.backingScaleFactor ?? 2.0
         metalLayer.framebufferOnly = true
         metalLayer.backgroundColor = NSColor.black.cgColor
+
+        // Layer-hosting: set layer before wantsLayer
         view.layer = metalLayer
+        view.wantsLayer = true
 
         player.attachDrawable(metalLayer)
     }
 
     override func viewDidLayout() {
         super.viewDidLayout()
-
         guard let window = view.window else { return }
 
         let scale = window.screen?.backingScaleFactor ?? 2.0
-        let layerSize = view.bounds.size
-        let newDrawableSize = CGSize(width: layerSize.width * scale, height: layerSize.height * scale)
+        metalLayer.frame = view.bounds
+        metalLayer.contentsScale = scale
 
-        metalLayer.frame = CGRect(x: 0, y: 0, width: layerSize.width, height: layerSize.height)
-
-        let currentSize = metalLayer.drawableSize
-        let sizeChanged = abs(currentSize.width - newDrawableSize.width) > 1 ||
-                         abs(currentSize.height - newDrawableSize.height) > 1
-
-        if sizeChanged && newDrawableSize.width > 1 && newDrawableSize.height > 1 {
+        // Update drawableSize so MoltenVK detects the surface change and
+        // recreates its Vulkan swapchain. Do NOT call setNeedsDisplay() —
+        // that triggers a Core Animation display cycle that races with
+        // MoltenVK's background rendering and causes Metal validation errors.
+        let newDrawableSize = CGSize(
+            width: view.bounds.width * scale,
+            height: view.bounds.height * scale
+        )
+        if newDrawableSize.width > 1 && newDrawableSize.height > 1 {
             metalLayer.drawableSize = newDrawableSize
-            metalLayer.setNeedsDisplay()
         }
     }
 }

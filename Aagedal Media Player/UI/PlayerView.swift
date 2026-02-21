@@ -11,6 +11,8 @@ import AVKit
 struct PlayerView: View {
     @ObservedObject var controller: PlayerController
     let item: MediaItem
+    @Binding var isEditingTimecode: Bool
+    @Binding var timecodeActivationTrigger: String?
 
     private var playerAspectRatio: CGFloat {
         if let ratio = item.videoDisplayAspectRatio, ratio.isFinite, ratio > 0 {
@@ -29,6 +31,7 @@ struct PlayerView: View {
                     PlayerContainerView(
                         player: player,
                         controller: controller,
+                        isEditingTimecode: $isEditingTimecode,
                         keyHandler: handleKeyEvent
                     )
                     .aspectRatio(playerAspectRatio, contentMode: .fit)
@@ -103,8 +106,15 @@ struct PlayerView: View {
         .padding(16)
     }
 
+    private static let timecodeCharacters = Set("0123456789+-.:;")
+
     @MainActor
     private func handleKeyEvent(_ characters: String, _ modifiers: NSEvent.ModifierFlags, _ specialKey: NSEvent.SpecialKey?) -> Bool {
+        // Don't intercept keys when editing timecode
+        if isEditingTimecode {
+            return false
+        }
+
         // JKL playback controls
         switch characters.lowercased() {
         case "j":
@@ -120,7 +130,6 @@ struct PlayerView: View {
             controller.togglePlayback()
             return true
         case "t":
-            // Cycle timecode display mode is handled by ControlsView
             NotificationCenter.default.post(name: .cycleTimecodeMode, object: nil)
             return true
         case "f":
@@ -152,6 +161,15 @@ struct PlayerView: View {
             }
         }
 
+        // Activate timecode input on numeric/timecode characters (no modifiers)
+        let significantModifiers: NSEvent.ModifierFlags = [.command, .control, .option]
+        if modifiers.intersection(significantModifiers).isEmpty,
+           let char = characters.first,
+           Self.timecodeCharacters.contains(char) {
+            timecodeActivationTrigger = String(char)
+            return true
+        }
+
         return false
     }
 }
@@ -163,6 +181,7 @@ private struct PlayerContainerView: NSViewRepresentable {
 
     let player: AVPlayer
     let controller: PlayerController
+    @Binding var isEditingTimecode: Bool
     let keyHandler: (String, NSEvent.ModifierFlags, NSEvent.SpecialKey?) -> Bool
 
     func makeNSView(context: Context) -> AVPlayerView {
@@ -174,10 +193,11 @@ private struct PlayerContainerView: NSViewRepresentable {
 
     func updateNSView(_ nsView: AVPlayerView, context: Context) {
         nsView.player = player
+        context.coordinator.isEditingTimecode = isEditingTimecode
     }
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(keyHandler: keyHandler)
+        Coordinator(keyHandler: keyHandler, isEditingTimecode: isEditingTimecode)
     }
 
     private func configure(_ playerView: AVPlayerView) {
@@ -195,9 +215,11 @@ private struct PlayerContainerView: NSViewRepresentable {
         private var monitor: Any?
         private weak var attachedView: AVPlayerView?
         private let keyHandler: (String, NSEvent.ModifierFlags, NSEvent.SpecialKey?) -> Bool
+        var isEditingTimecode: Bool
 
-        init(keyHandler: @escaping (String, NSEvent.ModifierFlags, NSEvent.SpecialKey?) -> Bool) {
+        init(keyHandler: @escaping (String, NSEvent.ModifierFlags, NSEvent.SpecialKey?) -> Bool, isEditingTimecode: Bool) {
             self.keyHandler = keyHandler
+            self.isEditingTimecode = isEditingTimecode
         }
 
         @MainActor
@@ -208,6 +230,11 @@ private struct PlayerContainerView: NSViewRepresentable {
 
             monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
                 guard let self = self else { return event }
+
+                // When editing timecode, let events pass through to the TextField
+                if self.isEditingTimecode {
+                    return event
+                }
 
                 guard let view = self.attachedView,
                       let window = view.window,
