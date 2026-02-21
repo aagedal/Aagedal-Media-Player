@@ -778,22 +778,47 @@ final class PlayerController: ObservableObject {
         let stream = item.metadata?.primaryVideoStream
         let bitDepth = stream?.bitDepth ?? 8
         let hasAlpha = stream?.hasAlpha ?? false
+        let format = SettingsView.selectedScreenshotFormat
 
-        let pixelFormat: String
-        if bitDepth > 8 {
-            pixelFormat = hasAlpha ? "rgba64le" : "rgb48le"
-        } else {
-            pixelFormat = hasAlpha ? "rgba" : "rgb24"
-        }
-
-        // Build output filename: {name}_{timestamp}_t{time}.jxl
+        // Build output filename
         let baseName = item.url.deletingPathExtension().lastPathComponent
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyyMMdd_HHmmss"
         let timestamp = dateFormatter.string(from: Date())
         let timeString = String(format: "%.3f", time)
-        let outputName = "\(baseName)_\(timestamp)_t\(timeString).jxl"
-        let outputURL = item.url.deletingLastPathComponent().appendingPathComponent(outputName)
+        let outputName = "\(baseName)_\(timestamp)_t\(timeString).\(format.fileExtension)"
+
+        // Resolve output URL based on screenshot location mode
+        let outputURL: URL
+        let resolvedDir = SettingsView.resolvedScreenshotDirectory(sourceURL: item.url)
+
+        if let dir = resolvedDir {
+            // original or custom mode
+            let needsSecurityScope = dir != item.url.deletingLastPathComponent()
+            if needsSecurityScope { _ = dir.startAccessingSecurityScopedResource() }
+            defer { if needsSecurityScope { dir.stopAccessingSecurityScopedResource() } }
+            outputURL = dir.appendingPathComponent(outputName)
+        } else {
+            // ask mode — show save panel
+            let chosenURL: URL? = await withCheckedContinuation { continuation in
+                let panel = NSSavePanel()
+                panel.nameFieldStringValue = outputName
+                panel.allowedContentTypes = [.init(filenameExtension: format.fileExtension) ?? .image]
+                panel.canCreateDirectories = true
+                panel.directoryURL = item.url.deletingLastPathComponent()
+
+                panel.begin { response in
+                    if response == .OK {
+                        continuation.resume(returning: panel.url)
+                    } else {
+                        continuation.resume(returning: nil)
+                    }
+                }
+            }
+
+            guard let chosen = chosenURL else { return }
+            outputURL = chosen
+        }
 
         var arguments = [
             "-hide_banner", "-loglevel", "error",
@@ -801,11 +826,30 @@ final class PlayerController: ObservableObject {
             "-i", item.url.path,
             "-frames:v", "1",
             "-vf", "scale=iw*sar:ih",
-            "-pix_fmt", pixelFormat,
-            "-c:v", "libjxl",
-            "-distance", "0.5",
-            "-effort", "7",
         ]
+
+        switch format {
+        case .jxl:
+            let pixelFormat: String
+            if bitDepth > 8 {
+                pixelFormat = hasAlpha ? "rgba64le" : "rgb48le"
+            } else {
+                pixelFormat = hasAlpha ? "rgba" : "rgb24"
+            }
+            arguments += ["-pix_fmt", pixelFormat, "-c:v", "libjxl", "-distance", "0.5", "-effort", "7"]
+
+        case .png:
+            let pixelFormat: String
+            if bitDepth > 8 {
+                pixelFormat = hasAlpha ? "rgba64be" : "rgb48be"
+            } else {
+                pixelFormat = hasAlpha ? "rgba" : "rgb24"
+            }
+            arguments += ["-pix_fmt", pixelFormat, "-c:v", "png"]
+
+        case .jpeg:
+            arguments += ["-pix_fmt", "yuvj444p", "-c:v", "mjpeg", "-q:v", "2"]
+        }
 
         FFmpegService.appendColorArguments(from: stream, to: &arguments)
 
