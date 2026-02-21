@@ -1,4 +1,4 @@
-<img width="1024" height="1024" alt="AagedalMediaPlayer" src="https://github.com/user-attachments/assets/e2234529-3fe6-458b-98ae-87761418c8d2" />
+<img width="256" height="256" alt="AagedalMediaPlayer" src="https://github.com/user-attachments/assets/e2234529-3fe6-458b-98ae-87761418c8d2" />
 
 ## Aagedal Media Player
 Based on the same fast engine as (Aagedal Media Converter)[https://github.com/aagedal/Aagedal-Media-Converter], but now for quickly just checking playback of files.
