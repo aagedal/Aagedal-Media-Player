@@ -8,6 +8,8 @@ import SwiftUI
 
 struct MetadataInspectorView: View {
     let item: MediaItem
+    let useMPV: Bool
+    @Binding var isPresented: Bool
 
     private var metadata: MediaMetadata? { item.metadata }
     private var video: MediaMetadata.VideoStream? { metadata?.videoStreams.first }
@@ -81,12 +83,35 @@ struct MetadataInspectorView: View {
                         }
                     }
                 }
+                // Playback
+                Section("Playback") {
+                    metadataRow("Engine", value: useMPV ? "mpv" : "Apple AVFoundation")
+                }
             } else {
                 ContentUnavailableView("No Metadata", systemImage: "doc.questionmark", description: Text("Metadata not available for this file."))
             }
         }
         .listStyle(.sidebar)
         .frame(minWidth: 240, idealWidth: 280)
+        .safeAreaInset(edge: .top) {
+            HStack {
+                Text("Metadata")
+                    .font(.headline)
+                Spacer()
+                Button(action: { isPresented = false }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 16))
+                        .foregroundColor(.secondary)
+                }
+                .buttonStyle(.plain)
+                .help("Close inspector")
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+        }
+        .onExitCommand {
+            isPresented = false
+        }
     }
 
     // MARK: - Row

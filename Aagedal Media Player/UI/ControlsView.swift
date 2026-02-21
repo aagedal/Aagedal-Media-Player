@@ -11,9 +11,15 @@ struct ControlsView: View {
     @ObservedObject var controller: PlayerController
     let item: MediaItem?
     @Binding var timecodeMode: TimecodeDisplayMode
+    @Binding var isEditingTimecode: Bool
+    @Binding var timecodeActivationTrigger: String?
 
     @State private var isDragging = false
     @State private var dragTime: Double = 0
+    @State private var timecodeInput = ""
+    @State private var pendingCharacter: String?
+    @State private var justActivated = false
+    @FocusState private var isTimecodeFocused: Bool
 
     private var isLoaded: Bool { item != nil }
 
@@ -21,12 +27,7 @@ struct ControlsView: View {
         isDragging ? dragTime : controller.currentPlaybackTime
     }
 
-    private var isPlaying: Bool {
-        if controller.useMPV {
-            return controller.mpvPlayer?.isPlaying ?? false
-        }
-        return (controller.player?.rate ?? 0) > 0
-    }
+    private var isPlaying: Bool { controller.isPlaying }
 
     var body: some View {
         VStack(spacing: 8) {
@@ -39,15 +40,14 @@ struct ControlsView: View {
                 Button(action: { controller.togglePlayback() }) {
                     Image(systemName: isPlaying ? "pause.fill" : "play.fill")
                         .font(.system(size: 16))
+                        .foregroundColor(Color(red: 1.0, green: 0.071, blue: 0.361))
                         .frame(width: 28, height: 28)
                 }
                 .buttonStyle(.plain)
                 .keyboardShortcut(.space, modifiers: [])
 
-                // Timecode display
-                timecodeDisplay
-
-                Spacer()
+                Divider()
+                    .frame(height: 18)
 
                 // Audio track picker
                 if controller.audioTrackOptions.count > 1 {
@@ -58,9 +58,6 @@ struct ControlsView: View {
                 if !controller.subtitleTrackOptions.isEmpty {
                     subtitleTrackPicker
                 }
-
-                // Volume control
-                volumeControl
 
                 // Loop toggle
                 Button(action: {
@@ -84,6 +81,11 @@ struct ControlsView: View {
                 }
                 .buttonStyle(.plain)
                 .help("Toggle fullscreen")
+
+                Spacer()
+
+                // Timecode display
+                timecodeDisplay
             }
         }
         .disabled(!isLoaded)
@@ -91,8 +93,15 @@ struct ControlsView: View {
         .padding(.vertical, 10)
         .background(.ultraThinMaterial)
         .onReceive(NotificationCenter.default.publisher(for: .cycleTimecodeMode)) { _ in
+            guard !isEditingTimecode else { return }
             timecodeMode.toggle()
             UserDefaults.standard.set(timecodeMode.rawValue, forKey: "preferredTimecodeDisplayMode")
+        }
+        .onChange(of: timecodeActivationTrigger) { _, newValue in
+            if let text = newValue {
+                startTimecodeEdit(withInitialText: text)
+                timecodeActivationTrigger = nil
+            }
         }
     }
 
@@ -107,20 +116,14 @@ struct ControlsView: View {
             ZStack(alignment: .leading) {
                 // Track background
                 RoundedRectangle(cornerRadius: 2)
-                    .fill(Color.white.opacity(0.2))
+                    .fill(Color.white.opacity(0.3))
                     .frame(height: 4)
 
-                // Progress fill
-                RoundedRectangle(cornerRadius: 2)
-                    .fill(Color.accentColor)
-                    .frame(width: max(0, width * CGFloat(progress)), height: 4)
-
-                // Playhead
-                Circle()
-                    .fill(Color.white)
-                    .frame(width: isDragging ? 14 : 10, height: isDragging ? 14 : 10)
-                    .shadow(radius: 2)
-                    .offset(x: max(0, width * CGFloat(progress) - (isDragging ? 7 : 5)))
+                // Playhead — thin vertical line
+                Rectangle()
+                    .fill(Color(red: 1.0, green: 0.071, blue: 0.361)) // #FF125C
+                    .frame(width: 2, height: 14)
+                    .offset(x: max(0, min(width - 2, width * CGFloat(progress) - 1)))
             }
             .frame(height: 20)
             .contentShape(Rectangle())
@@ -145,6 +148,16 @@ struct ControlsView: View {
     // MARK: - Timecode Display
 
     private var timecodeDisplay: some View {
+        Group {
+            if isEditingTimecode {
+                timecodeEditor
+            } else {
+                timecodeReadonly
+            }
+        }
+    }
+
+    private var timecodeReadonly: some View {
         HStack(spacing: 4) {
             if let item = item {
                 Text(timecodeMode.prefix)
@@ -190,7 +203,286 @@ struct ControlsView: View {
             timecodeMode.toggle()
             UserDefaults.standard.set(timecodeMode.rawValue, forKey: "preferredTimecodeDisplayMode")
         }
-        .help("Click or press T to cycle timecode mode")
+        .onTapGesture(count: 2) {
+            guard isLoaded else { return }
+            startTimecodeEdit()
+        }
+        .help("Click to cycle mode, double-click or type numbers to edit")
+    }
+
+    private var timecodeEditor: some View {
+        TextField("0:00 or +10", text: $timecodeInput)
+            .font(.system(size: 13, weight: .medium, design: .monospaced))
+            .textFieldStyle(.plain)
+            .frame(width: 140)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(Color.white.opacity(0.1))
+            .cornerRadius(4)
+            .focused($isTimecodeFocused)
+            .onSubmit {
+                seekToTimecode()
+            }
+            .onExitCommand {
+                cancelTimecodeEdit()
+            }
+    }
+
+    // MARK: - Timecode Edit Methods
+
+    private func startTimecodeEdit() {
+        guard let item = item else { return }
+        timecodeInput = TimecodeFormatter.formatTimeForDisplayWithMode(
+            seconds: controller.currentPlaybackTime,
+            item: item,
+            mode: timecodeMode
+        )
+        withAnimation(.easeInOut(duration: 0.15)) {
+            isEditingTimecode = true
+        }
+        isTimecodeFocused = true
+    }
+
+    private func startTimecodeEdit(withInitialText text: String) {
+        timecodeInput = ""
+        pendingCharacter = text
+        justActivated = true
+
+        withAnimation(.easeInOut(duration: 0.15)) {
+            isEditingTimecode = true
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            isTimecodeFocused = true
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                if let char = pendingCharacter {
+                    timecodeInput = char
+                    pendingCharacter = nil
+                    justActivated = false
+                }
+            }
+        }
+    }
+
+    private func cancelTimecodeEdit() {
+        withAnimation(.easeInOut(duration: 0.15)) {
+            isEditingTimecode = false
+        }
+        isTimecodeFocused = false
+        timecodeInput = ""
+        justActivated = false
+        pendingCharacter = nil
+    }
+
+    private func seekToTimecode() {
+        justActivated = false
+        pendingCharacter = nil
+
+        guard let seekTime = parseTimecodeToSeconds(timecodeInput) else {
+            cancelTimecodeEdit()
+            return
+        }
+
+        let duration = max(item?.durationSeconds ?? 0, 0)
+        let clampedTime = max(0, min(seekTime, duration))
+        controller.seekTo(clampedTime)
+        cancelTimecodeEdit()
+    }
+
+    // MARK: - Timecode Parsing
+
+    private func parseTimecodeToSeconds(_ timecode: String) -> Double? {
+        let trimmed = timecode.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return nil }
+
+        guard let item = item else { return nil }
+        let frameRate = TimecodeFormatter.effectiveFrameRate(for: item)
+        let fps = Int(frameRate.rounded())
+
+        // Frames mode
+        if timecodeMode == .frames {
+            if trimmed.hasPrefix("+") || trimmed.hasPrefix("-") {
+                let isPositive = trimmed.hasPrefix("+")
+                if let frameOffset = Int(String(trimmed.dropFirst())), frameOffset >= 0 {
+                    let offsetSeconds = Double(frameOffset) / frameRate
+                    return isPositive ? controller.currentPlaybackTime + offsetSeconds : controller.currentPlaybackTime - offsetSeconds
+                }
+            }
+
+            if let frameNumber = Int(trimmed), frameNumber >= 0 {
+                return Double(frameNumber) / frameRate
+            }
+        }
+
+        // Frame-only navigation (..<number>)
+        if trimmed.hasPrefix("..") {
+            let frameString = String(trimmed.dropFirst(2))
+            guard let frames = Int(frameString), frames >= 0, frames < fps else {
+                return nil
+            }
+            let currentSeconds = floor(controller.currentPlaybackTime)
+            let newTime = currentSeconds + (Double(frames) / frameRate)
+            let duration = max(item.durationSeconds, 0)
+            return max(0, min(newTime, duration))
+        }
+
+        // Relative frame seeking (+..<number> or -..<number>)
+        if trimmed.hasPrefix("+..") || trimmed.hasPrefix("-..") {
+            let isPositive = trimmed.hasPrefix("+")
+            let frameString = String(trimmed.dropFirst(3))
+            guard let frames = Int(frameString), frames >= 0 else {
+                return nil
+            }
+            let frameOffset = Double(frames) / frameRate
+            let newTime = isPositive ? controller.currentPlaybackTime + frameOffset : controller.currentPlaybackTime - frameOffset
+            let duration = max(item.durationSeconds, 0)
+            return max(0, min(newTime, duration))
+        }
+
+        // Relative seeking (+/-)
+        if trimmed.hasPrefix("+") || trimmed.hasPrefix("-") {
+            let isPositive = trimmed.hasPrefix("+")
+            let offsetString = String(trimmed.dropFirst())
+
+            guard let offsetSeconds = parseTimecodeOffset(offsetString, frameRate: frameRate, fps: fps) else {
+                return nil
+            }
+
+            let newTime = isPositive ? controller.currentPlaybackTime + offsetSeconds : controller.currentPlaybackTime - offsetSeconds
+            let duration = max(item.durationSeconds, 0)
+            return max(0, min(newTime, duration))
+        }
+
+        // Absolute timecode
+        return parseAbsoluteTimecode(trimmed, frameRate: frameRate, fps: fps)
+    }
+
+    private func parseTimecodeOffset(_ input: String, frameRate: Double, fps: Int) -> Double? {
+        let components = input.split(whereSeparator: { $0 == ":" || $0 == ";" || $0 == "." })
+
+        guard !components.isEmpty, components.count <= 4 else { return nil }
+
+        var hours = 0
+        var minutes = 0
+        var seconds = 0
+        var frames = 0
+
+        switch components.count {
+        case 1:
+            guard let value = Int(components[0]) else { return nil }
+            seconds = value
+        case 2:
+            guard let first = Int(components[0]),
+                  let second = Int(components[1]) else { return nil }
+            if first < 60 && second < 60 {
+                minutes = first
+                seconds = second
+            } else {
+                seconds = first
+                frames = second
+            }
+        case 3:
+            guard let h = Int(components[0]),
+                  let m = Int(components[1]),
+                  let s = Int(components[2]) else { return nil }
+            hours = h
+            minutes = m
+            seconds = s
+        case 4:
+            guard let h = Int(components[0]),
+                  let m = Int(components[1]),
+                  let s = Int(components[2]),
+                  let f = Int(components[3]) else { return nil }
+            hours = h
+            minutes = m
+            seconds = s
+            frames = f
+        default:
+            return nil
+        }
+
+        let totalSeconds = Double(hours * 3600 + minutes * 60 + seconds)
+        let frameSeconds = Double(frames) / frameRate
+        return totalSeconds + frameSeconds
+    }
+
+    private func parseAbsoluteTimecode(_ input: String, frameRate: Double, fps: Int) -> Double? {
+        let components = input.split(whereSeparator: { $0 == ":" || $0 == ";" || $0 == "." })
+
+        guard !components.isEmpty, components.count <= 4 else { return nil }
+
+        var hours = 0
+        var minutes = 0
+        var seconds = 0
+        var frames = 0
+
+        switch components.count {
+        case 1:
+            guard let s = Int(components[0]) else { return nil }
+            seconds = s
+        case 2:
+            guard let m = Int(components[0]),
+                  let s = Int(components[1]) else { return nil }
+            minutes = m
+            seconds = s
+        case 3:
+            guard let h = Int(components[0]),
+                  let m = Int(components[1]),
+                  let s = Int(components[2]) else { return nil }
+            hours = h
+            minutes = m
+            seconds = s
+        case 4:
+            guard let h = Int(components[0]),
+                  let m = Int(components[1]),
+                  let s = Int(components[2]),
+                  let f = Int(components[3]) else { return nil }
+            hours = h
+            minutes = m
+            seconds = s
+            frames = f
+        default:
+            return nil
+        }
+
+        guard hours >= 0, hours < 24,
+              minutes >= 0, minutes < 60,
+              seconds >= 0, seconds < 60,
+              frames >= 0, frames < fps else {
+            return nil
+        }
+
+        guard let item = item else { return nil }
+        let startTC: String? = (timecodeMode == .source) ? TimecodeFormatter.effectiveStartTimecode(for: item) : nil
+
+        if let startTC = startTC {
+            let startComponents = startTC.split(whereSeparator: { $0 == ":" || $0 == ";" })
+            guard startComponents.count == 4,
+                  let startHours = Int(startComponents[0]),
+                  let startMinutes = Int(startComponents[1]),
+                  let startSeconds = Int(startComponents[2]),
+                  let startFrames = Int(startComponents[3]) else {
+                return nil
+            }
+
+            var inputTotalFrames = hours * 3600 * fps
+            inputTotalFrames += minutes * 60 * fps
+            inputTotalFrames += seconds * fps
+            inputTotalFrames += frames
+
+            var startTotalFrames = startHours * 3600 * fps
+            startTotalFrames += startMinutes * 60 * fps
+            startTotalFrames += startSeconds * fps
+            startTotalFrames += startFrames
+
+            let frameOffset = inputTotalFrames - startTotalFrames
+            return Double(frameOffset) / frameRate
+        } else {
+            let totalSeconds = Double(hours * 3600 + minutes * 60 + seconds)
+            let frameSeconds = Double(frames) / frameRate
+            return totalSeconds + frameSeconds
+        }
     }
 
     // MARK: - Audio Track Picker
@@ -248,27 +540,5 @@ struct ControlsView: View {
         .menuStyle(.borderlessButton)
         .frame(width: 28)
         .help("Subtitles")
-    }
-
-    // MARK: - Volume Control
-
-    private var volumeControl: some View {
-        HStack(spacing: 4) {
-            Button(action: { controller.isMuted.toggle() }) {
-                Image(systemName: controller.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
-                    .font(.system(size: 14))
-                    .frame(width: 28, height: 28)
-            }
-            .buttonStyle(.plain)
-
-            Slider(value: Binding(
-                get: { controller.isMuted ? 0 : controller.volume },
-                set: { newValue in
-                    controller.volume = newValue
-                    if newValue > 0 { controller.isMuted = false }
-                }
-            ), in: 0...100)
-            .frame(width: 80)
-        }
     }
 }

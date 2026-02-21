@@ -50,6 +50,7 @@ final class PlayerController: ObservableObject {
     @Published var isReady = false
     @Published var errorMessage: String?
     @Published var currentPlaybackTime: Double = 0
+    @Published private(set) var isPlaying: Bool = false
     @Published private(set) var currentPlaybackSpeed: Float = 1.0
     @Published private(set) var isReverseSimulating: Bool = false
     @Published var audioTrackOptions: [AudioTrackOption] = []
@@ -93,6 +94,20 @@ final class PlayerController: ObservableObject {
         // Always prepare if it's a new file, or if it's the first load
         if previousURL != item.url || !isReady {
             preparePlayback(startTime: 0)
+        }
+    }
+
+    func updateMetadata(_ item: MediaItem) {
+        guard mediaItem?.url == item.url else { return }
+        let currentTime = currentPlaybackTime
+        mediaItem?.metadata = item.metadata
+        mediaItem?.durationSeconds = item.durationSeconds
+        mediaItem?.hasVideoStream = item.hasVideoStream
+
+        // If surround audio was detected and we're on AVPlayer, switch to MPV
+        if hasSurroundAudio && !hasProResVideoCodec && !useMPV {
+            logger.info("Surround audio detected after metadata load, switching to MPV for \(item.url.lastPathComponent)")
+            preparePlayback(startTime: currentTime, resetAudioSelection: true)
         }
     }
 
@@ -209,6 +224,14 @@ final class PlayerController: ObservableObject {
 
     // MARK: - Unified Playback Control
 
+    private func syncIsPlaying() {
+        if useMPV {
+            isPlaying = mpvPlayer?.isPlaying ?? false
+        } else {
+            isPlaying = (player?.rate ?? 0) > 0
+        }
+    }
+
     func togglePlayback() {
         guard isReady else { return }
 
@@ -236,6 +259,7 @@ final class PlayerController: ObservableObject {
                 player.play()
             }
         }
+        syncIsPlaying()
     }
 
     func pause() {
@@ -249,6 +273,7 @@ final class PlayerController: ObservableObject {
             currentPlaybackSpeed = 1.0
             player?.pause()
         }
+        syncIsPlaying()
     }
 
     func play() {
@@ -263,6 +288,7 @@ final class PlayerController: ObservableObject {
             currentPlaybackSpeed = 1.0
             player.play()
         }
+        syncIsPlaying()
     }
 
     func stepRate(forward: Bool) {
@@ -318,6 +344,7 @@ final class PlayerController: ObservableObject {
         if !isReverseSimulating {
             currentPlaybackSpeed = 1.0
         }
+        syncIsPlaying()
     }
 
     func rewind() {
@@ -350,6 +377,7 @@ final class PlayerController: ObservableObject {
         }
 
         stepRate(forward: true)
+        syncIsPlaying()
     }
 
     func seek(by seconds: Double) {

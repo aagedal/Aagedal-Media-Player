@@ -13,7 +13,6 @@ struct Aagedal_Media_PlayerApp: App {
             ContentView()
         }
         .windowStyle(.automatic)
-        .windowToolbarStyle(.unified)
         .windowResizability(.contentMinSize)
         .commands {
             CommandGroup(replacing: .newItem) {
@@ -21,12 +20,53 @@ struct Aagedal_Media_PlayerApp: App {
                     NotificationCenter.default.post(name: .openFile, object: nil)
                 }
                 .keyboardShortcut("o")
+
+                RecentDocumentsMenu()
             }
             CommandGroup(after: .sidebar) {
                 Button("Toggle Inspector") {
                     NotificationCenter.default.post(name: .toggleInspector, object: nil)
                 }
                 .keyboardShortcut("i")
+            }
+        }
+    }
+}
+
+// MARK: - Recent Documents Menu
+
+/// Provides an "Open Recent" submenu using NSDocumentController's recent document URLs.
+struct RecentDocumentsMenu: View {
+    @State private var recentURLs: [URL] = []
+
+    var body: some View {
+        Menu("Open Recent") {
+            ForEach(recentURLs, id: \.self) { url in
+                Button(url.lastPathComponent) {
+                    NotificationCenter.default.post(name: .openFileURL, object: url)
+                }
+            }
+
+            if !recentURLs.isEmpty {
+                Divider()
+            }
+
+            Button("Clear Menu") {
+                NSDocumentController.shared.clearRecentDocuments(nil)
+                recentURLs = []
+            }
+            .disabled(recentURLs.isEmpty)
+        }
+        .onAppear {
+            recentURLs = NSDocumentController.shared.recentDocumentURLs
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            recentURLs = NSDocumentController.shared.recentDocumentURLs
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .openFileURL)) { _ in
+            // Refresh after a file is opened
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                recentURLs = NSDocumentController.shared.recentDocumentURLs
             }
         }
     }
