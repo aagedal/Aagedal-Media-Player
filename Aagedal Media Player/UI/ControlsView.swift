@@ -138,6 +138,36 @@ struct ControlsView: View {
                     .fill(Color.white.opacity(0.3))
                     .frame(height: 4)
 
+                // Trim region overlay
+                if duration > 0 {
+                    let trimInFrac = controller.trimIn.map { CGFloat($0 / duration) } ?? 0
+                    let trimOutFrac = controller.trimOut.map { CGFloat($0 / duration) } ?? 1
+
+                    if controller.trimIn != nil || controller.trimOut != nil {
+                        // Shaded region between trim points
+                        Rectangle()
+                            .fill(Color.blue.opacity(0.25))
+                            .frame(width: max(0, (trimOutFrac - trimInFrac) * width), height: 6)
+                            .offset(x: trimInFrac * width)
+                    }
+
+                    // Trim-in marker
+                    if controller.trimIn != nil {
+                        Rectangle()
+                            .fill(Color.blue.opacity(0.8))
+                            .frame(width: 2, height: 14)
+                            .offset(x: max(0, min(width - 2, trimInFrac * width - 1)))
+                    }
+
+                    // Trim-out marker
+                    if controller.trimOut != nil {
+                        Rectangle()
+                            .fill(Color.blue.opacity(0.8))
+                            .frame(width: 2, height: 14)
+                            .offset(x: max(0, min(width - 2, trimOutFrac * width - 1)))
+                    }
+                }
+
                 // Playhead — thin vertical line
                 Rectangle()
                     .fill(Color(red: 1.0, green: 0.071, blue: 0.361)) // #FF125C

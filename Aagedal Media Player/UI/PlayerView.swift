@@ -114,8 +114,51 @@ struct PlayerView: View {
             return false
         }
 
+        let lower = characters.lowercased()
+
+        // Cmd+S — Screenshot
+        if lower == "s" && modifiers.contains(.command) {
+            Task { await controller.captureScreenshot() }
+            return true
+        }
+
+        // Cmd+E — Trim export
+        if lower == "e" && modifiers.contains(.command) {
+            Task { await controller.exportTrim() }
+            return true
+        }
+
+        // I/O trim points (must be checked before timecode activation)
+        if lower == "i" {
+            if modifiers.contains(.option) {
+                controller.clearTrimIn()
+            } else if !modifiers.contains(.command) && !modifiers.contains(.control) {
+                controller.setTrimIn()
+            } else {
+                return false
+            }
+            return true
+        }
+
+        if lower == "o" {
+            if modifiers.contains(.option) {
+                controller.clearTrimOut()
+            } else if !modifiers.contains(.command) && !modifiers.contains(.control) {
+                controller.setTrimOut()
+            } else {
+                return false
+            }
+            return true
+        }
+
+        // Option+X — Clear all trim points
+        if lower == "x" && modifiers.contains(.option) {
+            controller.clearTrimPoints()
+            return true
+        }
+
         // JKL playback controls
-        switch characters.lowercased() {
+        switch lower {
         case "j":
             controller.startReverseSimulation()
             return true
