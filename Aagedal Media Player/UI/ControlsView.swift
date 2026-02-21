@@ -59,8 +59,8 @@ struct ControlsView: View {
         .overlay(
             GeometryReader { geo in
                 Color.clear
-                    .onAppear { isNarrow = geo.size.width < 500 }
-                    .onChange(of: geo.size.width) { _, newWidth in isNarrow = newWidth < 500 }
+                    .onAppear { isNarrow = geo.size.width < 480 }
+                    .onChange(of: geo.size.width) { _, newWidth in isNarrow = newWidth < 480 }
             }
             .allowsHitTesting(false)
         )
