@@ -155,36 +155,35 @@ struct PlayerView: View {
             return true
         }
 
-        // Arrow keys
+        // Arrow keys — routed through notifications for multi-window sync
         if let specialKey {
             switch specialKey {
             case .leftArrow:
                 if modifiers.contains(.shift) {
-                    controller.seek(by: -10)
+                    NotificationCenter.default.post(name: .seekBySeconds, object: NSNumber(value: -10.0))
                 } else {
-                    controller.seekByFrames(-1)
+                    NotificationCenter.default.post(name: .seekByFrames, object: NSNumber(value: -1))
                 }
                 return true
             case .rightArrow:
                 if modifiers.contains(.shift) {
-                    controller.seek(by: 10)
+                    NotificationCenter.default.post(name: .seekBySeconds, object: NSNumber(value: 10.0))
                 } else {
-                    controller.seekByFrames(1)
+                    NotificationCenter.default.post(name: .seekByFrames, object: NSNumber(value: 1))
                 }
                 return true
             case .upArrow:
                 if modifiers.contains(.command) {
-                    controller.seekTo(0)
+                    NotificationCenter.default.post(name: .seekToEdge, object: NSNumber(value: 0.0))
                 } else {
-                    controller.seekByFrames(-10)
+                    NotificationCenter.default.post(name: .seekByFrames, object: NSNumber(value: -10))
                 }
                 return true
             case .downArrow:
                 if modifiers.contains(.command) {
-                    let duration = controller.mediaItem?.durationSeconds ?? 0
-                    controller.seekTo(max(0, duration))
+                    NotificationCenter.default.post(name: .seekToEdge, object: NSNumber(value: Double.infinity))
                 } else {
-                    controller.seekByFrames(10)
+                    NotificationCenter.default.post(name: .seekByFrames, object: NSNumber(value: 10))
                 }
                 return true
             default:

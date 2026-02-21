@@ -164,6 +164,29 @@ struct ContentView: View {
             guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
             controller.fastForward()
         }
+        .onReceive(NotificationCenter.default.publisher(for: .seekByFrames)) { notification in
+            guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
+            if let count = (notification.object as? NSNumber)?.intValue {
+                controller.seekByFrames(count)
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .seekBySeconds)) { notification in
+            guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
+            if let seconds = (notification.object as? NSNumber)?.doubleValue {
+                controller.seek(by: seconds)
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .seekToEdge)) { notification in
+            guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
+            if let value = (notification.object as? NSNumber)?.doubleValue {
+                if value == 0 {
+                    controller.seekTo(0)
+                } else {
+                    let duration = controller.mediaItem?.durationSeconds ?? 0
+                    controller.seekTo(max(0, duration))
+                }
+            }
+        }
         // Window-specific — key window only
         .onReceive(NotificationCenter.default.publisher(for: .toggleFullscreen)) { _ in
             guard WindowManager.shared.isActiveWindow(nsWindow) else { return }

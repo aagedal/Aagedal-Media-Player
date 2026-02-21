@@ -28,6 +28,7 @@ struct Aagedal_Media_PlayerApp: App {
             ContentView()
         }
         .windowStyle(.hiddenTitleBar)
+        .defaultSize(width: 640, height: 480)
         .commands {
             CommandGroup(replacing: .newItem) {
                 if allowMultipleWindows {
@@ -186,5 +187,8 @@ extension Notification.Name {
     static let togglePlayback = Notification.Name("togglePlayback")
     static let reverse = Notification.Name("reverse")
     static let fastForward = Notification.Name("fastForward")
+    static let seekByFrames = Notification.Name("seekByFrames")
+    static let seekBySeconds = Notification.Name("seekBySeconds")
+    static let seekToEdge = Notification.Name("seekToEdge")
     static let toggleFullscreen = Notification.Name("toggleFullscreen")
 }
