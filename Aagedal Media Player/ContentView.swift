@@ -20,6 +20,7 @@ struct ContentView: View {
     @State private var isHoveringRightEdge = false
     @State private var overlayHideTask: Task<Void, Never>?
     @State private var mouseMoveMonitor: Any?
+    @State private var appActiveObserver: NSObjectProtocol?
     @State private var isEditingTimecode = false
     @State private var timecodeActivationTrigger: String?
 
@@ -129,9 +130,11 @@ struct ContentView: View {
         }
         .onAppear {
             installMouseMoveMonitor()
+            installAppActiveObserver()
         }
         .onDisappear {
             removeMouseMoveMonitor()
+            removeAppActiveObserver()
         }
         .onReceive(NotificationCenter.default.publisher(for: .openFile)) { _ in
             openFilePanel()
@@ -184,6 +187,10 @@ struct ContentView: View {
                 return event
             }
 
+            // Safety net: if cursor was hidden by right-edge zone but mouse moved
+            // outside it, force-correct the state.
+            RightEdgeCursorHideNSView.ensureCursorVisible()
+
             showOverlay = true
             scheduleOverlayHide()
 
@@ -195,6 +202,24 @@ struct ContentView: View {
         if let monitor = mouseMoveMonitor {
             NSEvent.removeMonitor(monitor)
             mouseMoveMonitor = nil
+        }
+    }
+
+    private func installAppActiveObserver() {
+        appActiveObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.didBecomeActiveNotification,
+            object: nil, queue: .main
+        ) { _ in
+            // Returning from another app — cursor must be visible.
+            isHoveringRightEdge = false
+            RightEdgeCursorHideNSView.ensureCursorVisible()
+        }
+    }
+
+    private func removeAppActiveObserver() {
+        if let observer = appActiveObserver {
+            NotificationCenter.default.removeObserver(observer)
+            appActiveObserver = nil
         }
     }
 
@@ -421,15 +446,28 @@ private struct WindowConfigurator: NSViewRepresentable {
         }
     }
 
+    final class ConfiguratorNSView: NSView {
+        weak var coordinator: Coordinator?
+
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            guard let window, let coordinator else { return }
+            coordinator.observeWindow(window)
+            coordinator.applyWindowAppearance(window)
+            coordinator.applyTrafficLightAlpha(window, animated: false)
+        }
+    }
+
     func makeCoordinator() -> Coordinator { Coordinator() }
 
-    func makeNSView(context: Context) -> NSView {
-        let view = NSView()
+    func makeNSView(context: Context) -> ConfiguratorNSView {
+        let view = ConfiguratorNSView()
         view.setFrameSize(.zero)
+        view.coordinator = context.coordinator
         return view
     }
 
-    func updateNSView(_ nsView: NSView, context: Context) {
+    func updateNSView(_ nsView: ConfiguratorNSView, context: Context) {
         guard let window = nsView.window else { return }
         let coordinator = context.coordinator
 
@@ -500,6 +538,17 @@ private class RightEdgeCursorHideNSView: NSView {
     private var trackingArea: NSTrackingArea?
     private var isHovering = false
 
+    /// Centralized flag ensuring hide/unhide calls stay balanced (at most one outstanding hide).
+    private static var isCursorHiddenByUs = false
+
+    /// Force cursor visible if we hid it. Safe to call at any time.
+    static func ensureCursorVisible() {
+        if isCursorHiddenByUs {
+            NSCursor.unhide()
+            isCursorHiddenByUs = false
+        }
+    }
+
     override func hitTest(_ point: NSPoint) -> NSView? {
         return nil
     }
@@ -521,14 +570,17 @@ private class RightEdgeCursorHideNSView: NSView {
     override func mouseEntered(with event: NSEvent) {
         super.mouseEntered(with: event)
         isHovering = true
-        NSCursor.hide()
+        if !Self.isCursorHiddenByUs {
+            NSCursor.hide()
+            Self.isCursorHiddenByUs = true
+        }
         onHoverChanged?(true)
     }
 
     override func mouseExited(with event: NSEvent) {
         super.mouseExited(with: event)
         isHovering = false
-        NSCursor.unhide()
+        Self.ensureCursorVisible()
         onHoverChanged?(false)
     }
 
@@ -541,15 +593,15 @@ private class RightEdgeCursorHideNSView: NSView {
 
     override func removeFromSuperview() {
         if isHovering {
-            NSCursor.unhide()
             isHovering = false
+            Self.ensureCursorVisible()
         }
         super.removeFromSuperview()
     }
 
     deinit {
         if isHovering {
-            NSCursor.unhide()
+            Self.ensureCursorVisible()
         }
     }
 }
