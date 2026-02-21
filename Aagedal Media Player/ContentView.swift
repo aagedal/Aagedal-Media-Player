@@ -10,6 +10,7 @@ import UniformTypeIdentifiers
 import OSLog
 
 struct ContentView: View {
+    @Environment(\.openWindow) private var openWindow
     @StateObject private var controller = PlayerController()
     @State private var timecodeMode: TimecodeDisplayMode = .preferred
     @State private var isDropTargeted = false
@@ -23,7 +24,9 @@ struct ContentView: View {
     @State private var appActiveObserver: NSObjectProtocol?
     @State private var isEditingTimecode = false
     @State private var timecodeActivationTrigger: String?
+    @State private var nsWindow: NSWindow?
 
+    private let windowID = UUID()
     private let rightEdgeWidth: CGFloat = 60
     private let logger = Logger(subsystem: "com.aagedal.MediaPlayer", category: "ContentView")
 
@@ -81,7 +84,13 @@ struct ContentView: View {
         .background(
             WindowConfigurator(
                 aspectRatio: videoAspectRatio,
-                showTrafficLights: isHoveringWindow && !isHoveringRightEdge
+                showTrafficLights: isHoveringWindow && !isHoveringRightEdge,
+                onWindowAvailable: { window in
+                    if nsWindow !== window {
+                        nsWindow = window
+                        WindowManager.shared.register(id: windowID, window: window)
+                    }
+                }
             )
         )
         .onHover { hovering in
@@ -105,38 +114,59 @@ struct ContentView: View {
         .onAppear {
             installMouseMoveMonitor()
             installAppActiveObserver()
+            WindowManager.shared.openNewWindow = { [openWindow] in
+                openWindow(id: "player")
+            }
+            if let url = WindowManager.shared.pendingFileURL {
+                WindowManager.shared.pendingFileURL = nil
+                openFile(url: url)
+            }
         }
         .onDisappear {
             removeMouseMoveMonitor()
             removeAppActiveObserver()
+            WindowManager.shared.unregister(id: windowID)
         }
+        // File commands — key window only
         .onReceive(NotificationCenter.default.publisher(for: .openFile)) { _ in
+            guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
             openFilePanel()
         }
         .onReceive(NotificationCenter.default.publisher(for: .openFileURL)) { notification in
+            guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
             if let url = notification.object as? URL {
                 openFile(url: url)
             }
         }
+        // Window-specific commands — key window only
         .onReceive(NotificationCenter.default.publisher(for: .toggleInspector)) { _ in
+            guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
             showInspector.toggle()
         }
         .onReceive(NotificationCenter.default.publisher(for: .captureScreenshot)) { _ in
+            guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
             Task { await controller.captureScreenshot() }
         }
         .onReceive(NotificationCenter.default.publisher(for: .exportTrim)) { _ in
+            guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
             Task { await controller.exportTrim() }
         }
+        // Syncable playback commands — all windows when sync is ON, key window otherwise
         .onReceive(NotificationCenter.default.publisher(for: .togglePlayback)) { _ in
+            guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
             controller.togglePlayback()
         }
         .onReceive(NotificationCenter.default.publisher(for: .reverse)) { _ in
+            guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
             controller.startReverseSimulation()
         }
         .onReceive(NotificationCenter.default.publisher(for: .fastForward)) { _ in
+            guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
             controller.fastForward()
         }
+        // Window-specific — key window only
         .onReceive(NotificationCenter.default.publisher(for: .toggleFullscreen)) { _ in
+            guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
             controller.toggleFullscreen()
         }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didResignActiveNotification)) { _ in
@@ -351,7 +381,7 @@ struct ContentView: View {
 
         // Start playback immediately, load metadata in parallel
         controller.loadMedia(item)
-        NSApp.keyWindow?.title = item.name
+        (nsWindow ?? NSApp.keyWindow)?.title = item.name
 
         Task {
             do {

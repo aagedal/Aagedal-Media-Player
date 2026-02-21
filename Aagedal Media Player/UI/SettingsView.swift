@@ -55,7 +55,7 @@ struct SettingsView: View {
             KeyboardShortcutsView()
                 .tabItem { Label("Keyboard Shortcuts", systemImage: "keyboard") }
         }
-        .frame(width: 480, height: 360)
+        .frame(width: 480, height: 440)
     }
 
     // MARK: - Static Resolution
@@ -123,6 +123,9 @@ struct SettingsView: View {
 // MARK: - General Settings
 
 private struct GeneralSettingsView: View {
+    @AppStorage("allowMultipleWindows") private var allowMultipleWindows = false
+    @AppStorage("syncPlaybackControls") private var syncPlaybackControls = false
+
     @State private var screenshotMode: SaveLocationMode = .custom
     @State private var screenshotFormat: ScreenshotFormat = .jxl
     @State private var screenshotFolderName: String = "Desktop"
@@ -132,6 +135,13 @@ private struct GeneralSettingsView: View {
 
     var body: some View {
         Form {
+            Section("Windows") {
+                Toggle("Allow Multiple Windows", isOn: $allowMultipleWindows)
+                if allowMultipleWindows {
+                    Toggle("Sync Playback Controls", isOn: $syncPlaybackControls)
+                }
+            }
+
             Section("Screenshots") {
                 LabeledContent("Format") {
                     Picker("", selection: $screenshotFormat) {
@@ -318,6 +328,8 @@ private struct KeyboardShortcutsView: View {
                 ])
 
                 shortcutSection("General", shortcuts: [
+                    ("\u{2318}N", "New window (multi-window mode)"),
+                    ("\u{2318}W", "Close window"),
                     ("\u{2318}S", "Screenshot"),
                     ("\u{2318}F", "Toggle fullscreen"),
                     ("T", "Cycle timecode display"),
