@@ -4,9 +4,23 @@
 
 import SwiftUI
 
+struct IsMediaLoadedKey: FocusedValueKey {
+    typealias Value = Bool
+}
+
+extension FocusedValues {
+    var isMediaLoaded: Bool? {
+        get { self[IsMediaLoadedKey.self] }
+        set { self[IsMediaLoadedKey.self] = newValue }
+    }
+}
+
 @main
 struct Aagedal_Media_PlayerApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    @FocusedValue(\.isMediaLoaded) private var isMediaLoaded
+
+    private var mediaLoaded: Bool { isMediaLoaded ?? false }
 
     var body: some Scene {
         WindowGroup {
@@ -33,28 +47,33 @@ struct Aagedal_Media_PlayerApp: App {
                     NotificationCenter.default.post(name: .captureScreenshot, object: nil)
                 }
                 .keyboardShortcut("s")
+                .disabled(!mediaLoaded)
 
                 Button("Export Trim\u{2026}") {
                     NotificationCenter.default.post(name: .exportTrim, object: nil)
                 }
                 .keyboardShortcut("e")
+                .disabled(!mediaLoaded)
             }
             CommandGroup(after: .sidebar) {
                 Button("Toggle Inspector") {
                     NotificationCenter.default.post(name: .toggleInspector, object: nil)
                 }
                 .keyboardShortcut("i")
+                .disabled(!mediaLoaded)
 
                 Button("Cycle Timecode Display") {
                     NotificationCenter.default.post(name: .cycleTimecodeMode, object: nil)
                 }
                 .keyboardShortcut("t", modifiers: [])
+                .disabled(!mediaLoaded)
             }
             CommandMenu("Playback") {
                 Button("Play / Pause") {
                     NotificationCenter.default.post(name: .togglePlayback, object: nil)
                 }
                 .keyboardShortcut(.space, modifiers: [])
+                .disabled(!mediaLoaded)
 
                 Divider()
 
@@ -62,11 +81,13 @@ struct Aagedal_Media_PlayerApp: App {
                     NotificationCenter.default.post(name: .reverse, object: nil)
                 }
                 .keyboardShortcut("j", modifiers: [])
+                .disabled(!mediaLoaded)
 
                 Button("Fast Forward") {
                     NotificationCenter.default.post(name: .fastForward, object: nil)
                 }
                 .keyboardShortcut("l", modifiers: [])
+                .disabled(!mediaLoaded)
 
                 Divider()
 
@@ -74,6 +95,7 @@ struct Aagedal_Media_PlayerApp: App {
                     NotificationCenter.default.post(name: .toggleFullscreen, object: nil)
                 }
                 .keyboardShortcut("f")
+                .disabled(!mediaLoaded)
             }
         }
 
