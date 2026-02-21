@@ -4,7 +4,7 @@
 
 import SwiftUI
 
-enum ScreenshotLocationMode: String, CaseIterable {
+enum SaveLocationMode: String, CaseIterable {
     case original = "original"
     case custom = "custom"
     case ask = "ask"
@@ -44,6 +44,8 @@ struct SettingsView: View {
     static let modeKey = "screenshotLocationMode"
     static let formatKey = "screenshotFormat"
     static let bookmarkKey = "screenshotSaveDirectory"
+    static let trimModeKey = "trimLocationMode"
+    static let trimBookmarkKey = "trimSaveDirectory"
 
     var body: some View {
         TabView {
@@ -64,21 +66,29 @@ struct SettingsView: View {
     }
 
     static func resolvedScreenshotDirectory(sourceURL: URL) -> URL? {
-        let raw = UserDefaults.standard.string(forKey: modeKey) ?? "custom"
-        let mode = ScreenshotLocationMode(rawValue: raw) ?? .custom
+        resolvedDirectory(modeKey: modeKey, bookmarkKey: bookmarkKey, defaultMode: .custom, sourceURL: sourceURL)
+    }
+
+    static func resolvedTrimDirectory(sourceURL: URL) -> URL? {
+        resolvedDirectory(modeKey: trimModeKey, bookmarkKey: trimBookmarkKey, defaultMode: .ask, sourceURL: sourceURL)
+    }
+
+    private static func resolvedDirectory(modeKey: String, bookmarkKey: String, defaultMode: SaveLocationMode, sourceURL: URL) -> URL? {
+        let raw = UserDefaults.standard.string(forKey: modeKey) ?? defaultMode.rawValue
+        let mode = SaveLocationMode(rawValue: raw) ?? defaultMode
 
         switch mode {
         case .original:
             return sourceURL.deletingLastPathComponent()
         case .custom:
-            return resolveBookmark() ?? desktopURL()
+            return resolveBookmark(key: bookmarkKey) ?? desktopURL()
         case .ask:
             return nil
         }
     }
 
-    private static func resolveBookmark() -> URL? {
-        guard let data = UserDefaults.standard.data(forKey: bookmarkKey) else {
+    static func resolveBookmark(key: String) -> URL? {
+        guard let data = UserDefaults.standard.data(forKey: key) else {
             return nil
         }
 
@@ -98,7 +108,7 @@ struct SettingsView: View {
                 includingResourceValuesForKeys: nil,
                 relativeTo: nil
             ) {
-                UserDefaults.standard.set(fresh, forKey: bookmarkKey)
+                UserDefaults.standard.set(fresh, forKey: key)
             }
         }
 
@@ -113,53 +123,46 @@ struct SettingsView: View {
 // MARK: - General Settings
 
 private struct GeneralSettingsView: View {
-    @State private var mode: ScreenshotLocationMode = .custom
-    @State private var format: ScreenshotFormat = .jxl
-    @State private var customFolderName: String = "Desktop"
+    @State private var screenshotMode: SaveLocationMode = .custom
+    @State private var screenshotFormat: ScreenshotFormat = .jxl
+    @State private var screenshotFolderName: String = "Desktop"
+
+    @State private var trimMode: SaveLocationMode = .ask
+    @State private var trimFolderName: String = "Desktop"
 
     var body: some View {
         Form {
-            LabeledContent("Screenshot Format") {
-                Picker("", selection: $format) {
-                    ForEach(ScreenshotFormat.allCases, id: \.self) { f in
-                        Text(f.label).tag(f)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .onChange(of: format) { _, newValue in
-                    UserDefaults.standard.set(newValue.rawValue, forKey: SettingsView.formatKey)
-                }
-            }
-
-            LabeledContent("Screenshot Location") {
-                VStack(alignment: .trailing, spacing: 8) {
-                    Picker("", selection: $mode) {
-                        ForEach(ScreenshotLocationMode.allCases, id: \.self) { m in
-                            Text(m.label).tag(m)
+            Section("Screenshots") {
+                LabeledContent("Format") {
+                    Picker("", selection: $screenshotFormat) {
+                        ForEach(ScreenshotFormat.allCases, id: \.self) { f in
+                            Text(f.label).tag(f)
                         }
                     }
                     .pickerStyle(.segmented)
                     .labelsHidden()
-                    .onChange(of: mode) { _, newValue in
-                        UserDefaults.standard.set(newValue.rawValue, forKey: SettingsView.modeKey)
-                        if newValue == .custom {
-                            ensureCustomBookmark()
-                        }
-                    }
-
-                    if mode == .custom {
-                        HStack(spacing: 6) {
-                            Text(customFolderName)
-                                .foregroundStyle(.secondary)
-                                .lineLimit(1)
-
-                            Button("Choose\u{2026}") {
-                                chooseDirectory()
-                            }
-                        }
+                    .onChange(of: screenshotFormat) { _, newValue in
+                        UserDefaults.standard.set(newValue.rawValue, forKey: SettingsView.formatKey)
                     }
                 }
+
+                locationPicker(
+                    selection: $screenshotMode,
+                    folderName: screenshotFolderName,
+                    modeKey: SettingsView.modeKey,
+                    bookmarkKey: SettingsView.bookmarkKey,
+                    onChoose: { chooseDirectory(bookmarkKey: SettingsView.bookmarkKey) { screenshotFolderName = $0 } }
+                )
+            }
+
+            Section("Trim Export") {
+                locationPicker(
+                    selection: $trimMode,
+                    folderName: trimFolderName,
+                    modeKey: SettingsView.trimModeKey,
+                    bookmarkKey: SettingsView.trimBookmarkKey,
+                    onChoose: { chooseDirectory(bookmarkKey: SettingsView.trimBookmarkKey) { trimFolderName = $0 } }
+                )
             }
         }
         .formStyle(.grouped)
@@ -168,31 +171,79 @@ private struct GeneralSettingsView: View {
         }
     }
 
-    private func loadState() {
-        if let raw = UserDefaults.standard.string(forKey: SettingsView.modeKey),
-           let saved = ScreenshotLocationMode(rawValue: raw) {
-            mode = saved
-        } else {
-            mode = .custom
-            UserDefaults.standard.set(ScreenshotLocationMode.custom.rawValue, forKey: SettingsView.modeKey)
+    private func locationPicker(
+        selection: Binding<SaveLocationMode>,
+        folderName: String,
+        modeKey: String,
+        bookmarkKey: String,
+        onChoose: @escaping () -> Void
+    ) -> some View {
+        LabeledContent("Location") {
+            VStack(alignment: .trailing, spacing: 8) {
+                Picker("", selection: selection) {
+                    ForEach(SaveLocationMode.allCases, id: \.self) { m in
+                        Text(m.label).tag(m)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .onChange(of: selection.wrappedValue) { _, newValue in
+                    UserDefaults.standard.set(newValue.rawValue, forKey: modeKey)
+                    if newValue == .custom {
+                        ensureBookmark(key: bookmarkKey)
+                    }
+                }
+
+                if selection.wrappedValue == .custom {
+                    HStack(spacing: 6) {
+                        Text(folderName)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+
+                        Button("Choose\u{2026}") {
+                            onChoose()
+                        }
+                    }
+                }
+            }
         }
+    }
+
+    // MARK: - State Loading
+
+    private func loadState() {
+        screenshotMode = loadMode(key: SettingsView.modeKey, default: .custom)
+        trimMode = loadMode(key: SettingsView.trimModeKey, default: .ask)
 
         if let raw = UserDefaults.standard.string(forKey: SettingsView.formatKey),
            let saved = ScreenshotFormat(rawValue: raw) {
-            format = saved
-        } else {
-            format = .jxl
+            screenshotFormat = saved
         }
 
-        if mode == .custom {
-            ensureCustomBookmark()
+        if screenshotMode == .custom {
+            ensureBookmark(key: SettingsView.bookmarkKey)
+        }
+        if trimMode == .custom {
+            ensureBookmark(key: SettingsView.trimBookmarkKey)
         }
 
-        loadCustomFolderName()
+        screenshotFolderName = folderName(for: SettingsView.bookmarkKey)
+        trimFolderName = folderName(for: SettingsView.trimBookmarkKey)
     }
 
-    private func ensureCustomBookmark() {
-        if UserDefaults.standard.data(forKey: SettingsView.bookmarkKey) == nil {
+    private func loadMode(key: String, default defaultMode: SaveLocationMode) -> SaveLocationMode {
+        if let raw = UserDefaults.standard.string(forKey: key),
+           let saved = SaveLocationMode(rawValue: raw) {
+            return saved
+        }
+        UserDefaults.standard.set(defaultMode.rawValue, forKey: key)
+        return defaultMode
+    }
+
+    // MARK: - Bookmark Helpers
+
+    private func ensureBookmark(key: String) {
+        if UserDefaults.standard.data(forKey: key) == nil {
             let desktop = FileManager.default.homeDirectoryForCurrentUser
                 .appendingPathComponent("Desktop")
             if let data = try? desktop.bookmarkData(
@@ -200,61 +251,34 @@ private struct GeneralSettingsView: View {
                 includingResourceValuesForKeys: nil,
                 relativeTo: nil
             ) {
-                UserDefaults.standard.set(data, forKey: SettingsView.bookmarkKey)
+                UserDefaults.standard.set(data, forKey: key)
             }
         }
-        loadCustomFolderName()
     }
 
-    private func loadCustomFolderName() {
-        guard let data = UserDefaults.standard.data(forKey: SettingsView.bookmarkKey) else {
-            customFolderName = "Desktop"
-            return
+    private func folderName(for bookmarkKey: String) -> String {
+        guard let url = SettingsView.resolveBookmark(key: bookmarkKey) else {
+            return "Desktop"
         }
-
-        var isStale = false
-        guard let url = try? URL(
-            resolvingBookmarkData: data,
-            options: .withSecurityScope,
-            relativeTo: nil,
-            bookmarkDataIsStale: &isStale
-        ) else {
-            customFolderName = "Desktop"
-            return
-        }
-
-        if isStale {
-            if let fresh = try? url.bookmarkData(
-                options: .withSecurityScope,
-                includingResourceValuesForKeys: nil,
-                relativeTo: nil
-            ) {
-                UserDefaults.standard.set(fresh, forKey: SettingsView.bookmarkKey)
-            }
-        }
-
-        customFolderName = url.lastPathComponent
+        return url.lastPathComponent
     }
 
-    private func chooseDirectory() {
+    private func chooseDirectory(bookmarkKey: String, update: @escaping (String) -> Void) {
         let panel = NSOpenPanel()
         panel.canChooseFiles = false
         panel.canChooseDirectories = true
         panel.allowsMultipleSelection = false
-        panel.message = "Choose a default folder for screenshots"
+        panel.message = "Choose a default folder"
 
         guard panel.runModal() == .OK, let url = panel.url else { return }
 
-        do {
-            let bookmarkData = try url.bookmarkData(
-                options: .withSecurityScope,
-                includingResourceValuesForKeys: nil,
-                relativeTo: nil
-            )
-            UserDefaults.standard.set(bookmarkData, forKey: SettingsView.bookmarkKey)
-            customFolderName = url.lastPathComponent
-        } catch {
-            // Silently fail — user keeps previous setting
+        if let data = try? url.bookmarkData(
+            options: .withSecurityScope,
+            includingResourceValuesForKeys: nil,
+            relativeTo: nil
+        ) {
+            UserDefaults.standard.set(data, forKey: bookmarkKey)
+            update(url.lastPathComponent)
         }
     }
 }

@@ -882,24 +882,35 @@ final class PlayerController: ObservableObject {
         let baseName = item.url.deletingPathExtension().lastPathComponent
         let defaultName = "\(baseName)_trimmed.\(ext)"
 
-        // Show save panel on main thread
-        let saveURL: URL? = await withCheckedContinuation { continuation in
-            let panel = NSSavePanel()
-            panel.nameFieldStringValue = defaultName
-            panel.allowedContentTypes = [UTType(filenameExtension: ext) ?? .movie]
-            panel.canCreateDirectories = true
-            panel.directoryURL = item.url.deletingLastPathComponent()
+        // Resolve output URL based on trim location mode
+        let outputURL: URL
+        let resolvedDir = SettingsView.resolvedTrimDirectory(sourceURL: item.url)
 
-            panel.begin { response in
-                if response == .OK {
-                    continuation.resume(returning: panel.url)
-                } else {
-                    continuation.resume(returning: nil)
+        if let dir = resolvedDir {
+            let needsSecurityScope = dir != item.url.deletingLastPathComponent()
+            if needsSecurityScope { _ = dir.startAccessingSecurityScopedResource() }
+            defer { if needsSecurityScope { dir.stopAccessingSecurityScopedResource() } }
+            outputURL = dir.appendingPathComponent(defaultName)
+        } else {
+            let chosenURL: URL? = await withCheckedContinuation { continuation in
+                let panel = NSSavePanel()
+                panel.nameFieldStringValue = defaultName
+                panel.allowedContentTypes = [UTType(filenameExtension: ext) ?? .movie]
+                panel.canCreateDirectories = true
+                panel.directoryURL = item.url.deletingLastPathComponent()
+
+                panel.begin { response in
+                    if response == .OK {
+                        continuation.resume(returning: panel.url)
+                    } else {
+                        continuation.resume(returning: nil)
+                    }
                 }
             }
-        }
 
-        guard let outputURL = saveURL else { return }
+            guard let chosen = chosenURL else { return }
+            outputURL = chosen
+        }
 
         let arguments = [
             "-hide_banner", "-loglevel", "error",
