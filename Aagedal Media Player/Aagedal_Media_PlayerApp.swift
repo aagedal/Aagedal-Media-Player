@@ -14,6 +14,12 @@ struct Aagedal_Media_PlayerApp: App {
         }
         .windowStyle(.automatic)
         .commands {
+            CommandGroup(replacing: .appSettings) {
+                SettingsLink {
+                    Text("Settings\u{2026}")
+                }
+                .keyboardShortcut(",")
+            }
             CommandGroup(replacing: .newItem) {
                 Button("Open\u{2026}") {
                     NotificationCenter.default.post(name: .openFile, object: nil)
@@ -28,6 +34,10 @@ struct Aagedal_Media_PlayerApp: App {
                 }
                 .keyboardShortcut("i")
             }
+        }
+
+        Settings {
+            SettingsView()
         }
     }
 }
