@@ -14,6 +14,7 @@ struct ControlsView: View {
     @Binding var isEditingTimecode: Bool
     @Binding var timecodeActivationTrigger: String?
 
+    @AppStorage("precisionScrubFactor") private var precisionScrubFactor: Double = 10.0
     @State private var isDragging = false
     @State private var dragTime: Double = 0
     @State private var wasPrecision = false
@@ -191,7 +192,7 @@ struct ControlsView: View {
                                 wasPrecision = true
                             }
                             let delta = (value.location.x - precisionAnchorX) / width
-                            let fraction = max(0, min(1, precisionAnchorFraction + delta / 10.0))
+                            let fraction = max(0, min(1, precisionAnchorFraction + delta / precisionScrubFactor))
                             dragTime = Double(fraction) * duration
                         } else {
                             wasPrecision = false
@@ -204,7 +205,7 @@ struct ControlsView: View {
                         let isPrecision = NSEvent.modifierFlags.contains(.option)
                         if isPrecision && wasPrecision {
                             let delta = (value.location.x - precisionAnchorX) / width
-                            let fraction = max(0, min(1, precisionAnchorFraction + delta / 10.0))
+                            let fraction = max(0, min(1, precisionAnchorFraction + delta / precisionScrubFactor))
                             dragTime = Double(fraction) * duration
                         } else {
                             let fraction = max(0, min(1, value.location.x / width))
