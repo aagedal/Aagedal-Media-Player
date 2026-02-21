@@ -165,6 +165,14 @@ extension PlayerController {
                                 }
                             }
 
+                            // Extract early aspect ratio from naturalSize
+                            if let firstVideoTrack = videoTracks.first {
+                                let naturalSize = try await firstVideoTrack.load(.naturalSize)
+                                if naturalSize.width > 0, naturalSize.height > 0 {
+                                    self.videoAspectRatio = naturalSize.width / naturalSize.height
+                                }
+                            }
+
                             self.isReady = true
 
                             if let player = self.player {

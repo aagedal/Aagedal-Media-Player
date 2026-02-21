@@ -55,6 +55,7 @@ final class PlayerController: ObservableObject {
     @Published private(set) var isReverseSimulating: Bool = false
     @Published var audioTrackOptions: [AudioTrackOption] = []
     @Published var subtitleTrackOptions: [SubtitleTrackOption] = []
+    @Published var videoAspectRatio: CGFloat?
 
     // Reverse simulation
     private var reverseSpeed: Int = 1
@@ -76,6 +77,7 @@ final class PlayerController: ObservableObject {
     var useMPV = false
     // MPV loop observer
     var mpvLoopObserverTimer: Timer?
+    private var mpvAspectRatioCancellable: AnyCancellable?
 
     // MARK: - Initialization
 
@@ -93,6 +95,7 @@ final class PlayerController: ObservableObject {
 
         // Always prepare if it's a new file, or if it's the first load
         if previousURL != item.url || !isReady {
+            videoAspectRatio = nil
             preparePlayback(startTime: 0)
         }
     }
@@ -103,6 +106,11 @@ final class PlayerController: ObservableObject {
         mediaItem?.metadata = item.metadata
         mediaItem?.durationSeconds = item.durationSeconds
         mediaItem?.hasVideoStream = item.hasVideoStream
+
+        // Update aspect ratio from FFprobe (authoritative)
+        if let ratio = item.videoDisplayAspectRatio, ratio.isFinite, ratio > 0 {
+            videoAspectRatio = CGFloat(ratio)
+        }
 
         // If surround audio was detected and we're on AVPlayer, switch to MPV
         if hasSurroundAudio && !hasProResVideoCodec && !useMPV {
@@ -211,6 +219,14 @@ final class PlayerController: ObservableObject {
                 }
             }
         }
+
+        // Forward MPV aspect ratio
+        mpvAspectRatioCancellable = mpv.$videoAspectRatio
+            .compactMap { $0 }
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] ratio in
+                self?.videoAspectRatio = ratio
+            }
 
         // Refresh audio tracks after MPV parses the media
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
@@ -727,6 +743,8 @@ final class PlayerController: ObservableObject {
         useMPV = false
 
         isPreparing = false
+        videoAspectRatio = nil
+        mpvAspectRatioCancellable = nil
         removeLoopObserver()
         removePlaybackTimeObserver()
         removePlayerItemStatusObserver()
