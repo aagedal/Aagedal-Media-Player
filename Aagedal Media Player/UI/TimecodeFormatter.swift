@@ -28,17 +28,12 @@ enum TimecodeDisplayMode: String, CaseIterable {
         }
     }
 
-    mutating func toggle() {
+    mutating func toggle(hasSourceTimecode: Bool) {
         switch self {
-        case .relative: self = .source
+        case .relative: self = hasSourceTimecode ? .source : .frames
         case .source: self = .frames
         case .frames: self = .relative
         }
-    }
-
-    static var preferred: TimecodeDisplayMode {
-        let rawValue = UserDefaults.standard.string(forKey: "preferredTimecodeDisplayMode") ?? "relative"
-        return TimecodeDisplayMode(rawValue: rawValue) ?? .relative
     }
 }
 

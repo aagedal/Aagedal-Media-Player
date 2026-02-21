@@ -27,7 +27,7 @@ struct Aagedal_Media_PlayerApp: App {
         WindowGroup(id: "player") {
             ContentView()
         }
-        .windowStyle(.automatic)
+        .windowStyle(.hiddenTitleBar)
         .commands {
             CommandGroup(replacing: .newItem) {
                 if allowMultipleWindows {
