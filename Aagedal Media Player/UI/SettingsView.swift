@@ -125,6 +125,7 @@ struct SettingsView: View {
 private struct GeneralSettingsView: View {
     @AppStorage("allowMultipleWindows") private var allowMultipleWindows = false
     @AppStorage("syncPlaybackControls") private var syncPlaybackControls = false
+    @AppStorage("precisionScrubFactor") private var precisionScrubFactor: Double = 10.0
 
     @State private var screenshotMode: SaveLocationMode = .custom
     @State private var screenshotFormat: ScreenshotFormat = .jxl
@@ -139,6 +140,17 @@ private struct GeneralSettingsView: View {
                 Toggle("Allow Multiple Windows", isOn: $allowMultipleWindows)
                 if allowMultipleWindows {
                     Toggle("Sync Playback Controls", isOn: $syncPlaybackControls)
+                }
+            }
+
+            Section("Playback") {
+                LabeledContent("Precision Scrub") {
+                    HStack(spacing: 8) {
+                        Slider(value: $precisionScrubFactor, in: 2...20, step: 1)
+                        Text("\(Int(precisionScrubFactor))x slower")
+                            .monospacedDigit()
+                            .frame(width: 72, alignment: .trailing)
+                    }
                 }
             }
 
@@ -296,6 +308,8 @@ private struct GeneralSettingsView: View {
 // MARK: - Keyboard Shortcuts
 
 private struct KeyboardShortcutsView: View {
+    @AppStorage("precisionScrubFactor") private var precisionScrubFactor: Double = 10.0
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
@@ -315,7 +329,7 @@ private struct KeyboardShortcutsView: View {
                     ("\u{2318}\u{2191}", "Jump to start"),
                     ("\u{2318}\u{2193}", "Jump to end"),
                     ("\u{2325}\u{2190}\u{2192}\u{2191}\u{2193}", "Same as above, current window only"),
-                    ("\u{2325}Drag", "Precision scrub (10x slower)"),
+                    ("\u{2325}Drag", "Precision scrub (\(Int(precisionScrubFactor))x slower)"),
                 ])
 
                 shortcutSection("Trim", shortcuts: [
