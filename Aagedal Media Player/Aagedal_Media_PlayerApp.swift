@@ -73,7 +73,7 @@ struct Aagedal_Media_PlayerApp: App {
                 Button("Toggle Fullscreen") {
                     NotificationCenter.default.post(name: .toggleFullscreen, object: nil)
                 }
-                .keyboardShortcut("f", modifiers: [])
+                .keyboardShortcut("f")
             }
         }
 

@@ -309,6 +309,8 @@ private struct KeyboardShortcutsView: View {
                 shortcutSection("Trim", shortcuts: [
                     ("I", "Set trim in"),
                     ("O", "Set trim out"),
+                    ("\u{21E7}I", "Jump to trim in"),
+                    ("\u{21E7}O", "Jump to trim out"),
                     ("\u{2325}I", "Clear trim in"),
                     ("\u{2325}O", "Clear trim out"),
                     ("\u{2325}X", "Clear all trim points"),
@@ -317,7 +319,7 @@ private struct KeyboardShortcutsView: View {
 
                 shortcutSection("General", shortcuts: [
                     ("\u{2318}S", "Screenshot"),
-                    ("F", "Toggle fullscreen"),
+                    ("\u{2318}F", "Toggle fullscreen"),
                     ("T", "Cycle timecode display"),
                     ("\u{2318}I", "Toggle inspector"),
                     ("\u{2318}O", "Open file"),
