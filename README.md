@@ -37,6 +37,7 @@ Select a default export location in the settings, or save next to the original, 
 
 ### Professional Shortcuts
 Use proper JKL playback controls, like in all professional video editing software. Professionals can finally feel at home in a free and open source video player.
+You can also hold Option while dragging the playhead for 4x more presice dragging. Useful for finding an exact scene in longer videos
 
 ### Screenshots
 Take quick screenshots at source resolution in JPEG XL, JPEG or PNG. Command + S.
