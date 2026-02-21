@@ -12,7 +12,7 @@ import OSLog
 struct ContentView: View {
     @Environment(\.openWindow) private var openWindow
     @StateObject private var controller = PlayerController()
-    @State private var timecodeMode: TimecodeDisplayMode = .preferred
+    @State private var timecodeMode: TimecodeDisplayMode = .relative
     @State private var isDropTargeted = false
     @State private var showInspector = false
     @State private var showOverlay = true
@@ -168,6 +168,11 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: .toggleFullscreen)) { _ in
             guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
             controller.toggleFullscreen()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .cycleTimecodeMode)) { _ in
+            guard WindowManager.shared.isActiveWindow(nsWindow), !isEditingTimecode else { return }
+            let hasSourceTC = controller.mediaItem.flatMap { TimecodeFormatter.effectiveStartTimecode(for: $0) } != nil
+            timecodeMode.toggle(hasSourceTimecode: hasSourceTC)
         }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didResignActiveNotification)) { _ in
             guard isMediaLoaded, !isEditingTimecode else { return }
@@ -390,6 +395,7 @@ struct ContentView: View {
                 item.durationSeconds = metadata.duration ?? 0
                 item.hasVideoStream = !metadata.videoStreams.isEmpty
                 controller.updateMetadata(item)
+                timecodeMode = metadata.timecode != nil ? .source : .relative
             } catch {
                 logger.warning("Failed to load metadata: \(error.localizedDescription)")
             }

@@ -42,5 +42,7 @@
 			</array>
 		</dict>
 	</array>
+	<key>NSQuitAlwaysKeepsWindows</key>
+	<false/>
 </dict>
 </plist>

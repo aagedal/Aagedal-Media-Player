@@ -2,8 +2,8 @@
 // Copyright © 2026 Truls Aagedal
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// NSViewRepresentable that configures the NSWindow for borderless video playback:
-// transparent titlebar, full-size content, aspect ratio lock, traffic light visibility.
+// NSViewRepresentable that configures the NSWindow for video playback:
+// aspect ratio lock, traffic light visibility, background colour.
 
 import SwiftUI
 import AppKit
@@ -22,25 +22,11 @@ struct WindowConfigurator: NSViewRepresentable {
         weak var observedWindow: NSWindow?
         var willEnterFullScreen: NSObjectProtocol?
         var didExitFullScreen: NSObjectProtocol?
-        var didBecomeKey: NSObjectProtocol?
-        var didResignKey: NSObjectProtocol?
         var lastTrafficLightAlpha: CGFloat = 0
 
         deinit {
             if let token = willEnterFullScreen { NotificationCenter.default.removeObserver(token) }
             if let token = didExitFullScreen { NotificationCenter.default.removeObserver(token) }
-            if let token = didBecomeKey { NotificationCenter.default.removeObserver(token) }
-            if let token = didResignKey { NotificationCenter.default.removeObserver(token) }
-        }
-
-        /// Re-apply window chrome properties. Cheap to call repeatedly.
-        func applyWindowAppearance(_ window: NSWindow) {
-            window.titlebarAppearsTransparent = true
-            window.titleVisibility = .hidden
-            if !window.styleMask.contains(.fullSizeContentView) {
-                window.styleMask.insert(.fullSizeContentView)
-            }
-            window.backgroundColor = .black
         }
 
         func applyTrafficLightAlpha(_ window: NSWindow, animated: Bool = true) {
@@ -99,32 +85,6 @@ struct WindowConfigurator: NSViewRepresentable {
                     self.lastAspectRatio = ratio
                 }
             }
-
-            didBecomeKey = NotificationCenter.default.addObserver(
-                forName: NSWindow.didBecomeKeyNotification,
-                object: window, queue: .main
-            ) { [weak self] _ in
-                guard let self else { return }
-                // macOS resets titlebar and traffic lights on activation —
-                // re-apply after macOS finishes its updates
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
-                    guard let self else { return }
-                    self.applyWindowAppearance(window)
-                    self.applyTrafficLightAlpha(window, animated: false)
-                }
-            }
-
-            didResignKey = NotificationCenter.default.addObserver(
-                forName: NSWindow.didResignKeyNotification,
-                object: window, queue: .main
-            ) { [weak self] _ in
-                guard let self else { return }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
-                    guard let self else { return }
-                    self.applyWindowAppearance(window)
-                    self.applyTrafficLightAlpha(window, animated: false)
-                }
-            }
         }
     }
 
@@ -136,7 +96,7 @@ struct WindowConfigurator: NSViewRepresentable {
             super.viewDidMoveToWindow()
             guard let window, let coordinator else { return }
             coordinator.observeWindow(window)
-            coordinator.applyWindowAppearance(window)
+            window.backgroundColor = .black
             coordinator.applyTrafficLightAlpha(window, animated: false)
             // Set initial minimum size (base values; updated when video loads).
             coordinator.applyMinSize(window, ratio: nil)
@@ -167,8 +127,6 @@ struct WindowConfigurator: NSViewRepresentable {
         let isFullScreen = window.styleMask.contains(.fullScreen)
 
         DispatchQueue.main.async {
-            coordinator.applyWindowAppearance(window)
-
             // Aspect ratio and min size — only apply when not in fullscreen,
             // and only when the ratio actually changes.
             if !isFullScreen {

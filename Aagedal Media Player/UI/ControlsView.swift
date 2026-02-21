@@ -66,11 +66,6 @@ struct ControlsView: View {
             }
             .allowsHitTesting(false)
         )
-        .onReceive(NotificationCenter.default.publisher(for: .cycleTimecodeMode)) { _ in
-            guard !isEditingTimecode else { return }
-            timecodeMode.toggle()
-            UserDefaults.standard.set(timecodeMode.rawValue, forKey: "preferredTimecodeDisplayMode")
-        }
         .onChange(of: timecodeActivationTrigger) { _, newValue in
             if let text = newValue {
                 startTimecodeEdit(withInitialText: text)
@@ -279,8 +274,8 @@ struct ControlsView: View {
         }
         .onTapGesture {
             guard isLoaded else { return }
-            timecodeMode.toggle()
-            UserDefaults.standard.set(timecodeMode.rawValue, forKey: "preferredTimecodeDisplayMode")
+            let hasSourceTC = item.flatMap { TimecodeFormatter.effectiveStartTimecode(for: $0) } != nil
+            timecodeMode.toggle(hasSourceTimecode: hasSourceTC)
         }
         .onTapGesture(count: 2) {
             guard isLoaded else { return }
