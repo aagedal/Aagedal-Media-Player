@@ -314,6 +314,8 @@ private struct KeyboardShortcutsView: View {
                     ("\u{21E7}\u{2192}", "Forward 10 seconds"),
                     ("\u{2318}\u{2191}", "Jump to start"),
                     ("\u{2318}\u{2193}", "Jump to end"),
+                    ("\u{2325}\u{2190}\u{2192}\u{2191}\u{2193}", "Same as above, current window only"),
+                    ("\u{2325}Drag", "Precision scrub (10x slower)"),
                 ])
 
                 shortcutSection("Trim", shortcuts: [
