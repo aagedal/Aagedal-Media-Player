@@ -16,7 +16,9 @@ struct ControlsView: View {
 
     @State private var isDragging = false
     @State private var dragTime: Double = 0
-    @State private var dragStartFraction: Double = 0
+    @State private var wasPrecision = false
+    @State private var precisionAnchorFraction: Double = 0
+    @State private var precisionAnchorX: CGFloat = 0
     @State private var timecodeInput = ""
     @State private var pendingCharacter: String?
     @State private var justActivated = false
@@ -59,8 +61,8 @@ struct ControlsView: View {
         .overlay(
             GeometryReader { geo in
                 Color.clear
-                    .onAppear { isNarrow = geo.size.width < 480 }
-                    .onChange(of: geo.size.width) { _, newWidth in isNarrow = newWidth < 480 }
+                    .onAppear { isNarrow = geo.size.width < 490 }
+                    .onChange(of: geo.size.width) { _, newWidth in isNarrow = newWidth < 490 }
             }
             .allowsHitTesting(false)
         )
@@ -89,7 +91,6 @@ struct ControlsView: View {
                 .frame(width: 28, height: 28)
         }
         .buttonStyle(.plain)
-        .keyboardShortcut(.space, modifiers: [])
 
         Divider()
             .frame(height: 18)
@@ -181,14 +182,24 @@ struct ControlsView: View {
                     .onChanged { value in
                         if !isDragging {
                             isDragging = true
-                            dragStartFraction = duration > 0 ? controller.currentPlaybackTime / duration : 0
+                            wasPrecision = false
+                            // Jump to click position
+                            let clickFraction = max(0, min(1, value.location.x / width))
+                            dragTime = Double(clickFraction) * duration
                         }
                         let isPrecision = NSEvent.modifierFlags.contains(.option)
                         if isPrecision {
-                            let delta = (value.location.x - value.startLocation.x) / width
-                            let fraction = max(0, min(1, dragStartFraction + delta / 4.0))
+                            if !wasPrecision {
+                                // Entering precision: anchor at current playhead position
+                                precisionAnchorFraction = duration > 0 ? dragTime / duration : 0
+                                precisionAnchorX = value.location.x
+                                wasPrecision = true
+                            }
+                            let delta = (value.location.x - precisionAnchorX) / width
+                            let fraction = max(0, min(1, precisionAnchorFraction + delta / 4.0))
                             dragTime = Double(fraction) * duration
                         } else {
+                            wasPrecision = false
                             let fraction = max(0, min(1, value.location.x / width))
                             dragTime = Double(fraction) * duration
                         }
@@ -196,9 +207,9 @@ struct ControlsView: View {
                     }
                     .onEnded { value in
                         let isPrecision = NSEvent.modifierFlags.contains(.option)
-                        if isPrecision {
-                            let delta = (value.location.x - value.startLocation.x) / width
-                            let fraction = max(0, min(1, dragStartFraction + delta / 4.0))
+                        if isPrecision && wasPrecision {
+                            let delta = (value.location.x - precisionAnchorX) / width
+                            let fraction = max(0, min(1, precisionAnchorFraction + delta / 4.0))
                             dragTime = Double(fraction) * duration
                         } else {
                             let fraction = max(0, min(1, value.location.x / width))
@@ -206,6 +217,7 @@ struct ControlsView: View {
                         }
                         controller.seekTo(dragTime)
                         isDragging = false
+                        wasPrecision = false
                     }
             )
         }

@@ -149,9 +149,9 @@ struct PlayerView: View {
             return true
         }
 
-        // K — secondary play/pause (Space is handled by Playback menu)
+        // K — secondary play/pause (routes through notification for multi-window sync)
         if lower == "k" {
-            controller.togglePlayback()
+            NotificationCenter.default.post(name: .togglePlayback, object: nil)
             return true
         }
 

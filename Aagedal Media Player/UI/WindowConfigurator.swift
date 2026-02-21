@@ -9,11 +9,12 @@ import SwiftUI
 import AppKit
 
 struct WindowConfigurator: NSViewRepresentable {
-    static let baseMinWidth: CGFloat = 480
+    static let baseMinWidth: CGFloat = 460
     static let baseMinHeight: CGFloat = 360
 
     let aspectRatio: CGFloat?
     let showTrafficLights: Bool
+    var onWindowAvailable: ((NSWindow) -> Void)?
 
     final class Coordinator: NSObject {
         var lastAspectRatio: CGFloat?
@@ -129,6 +130,7 @@ struct WindowConfigurator: NSViewRepresentable {
 
     final class ConfiguratorNSView: NSView {
         weak var coordinator: Coordinator?
+        var onWindowAvailable: ((NSWindow) -> Void)?
 
         override func viewDidMoveToWindow() {
             super.viewDidMoveToWindow()
@@ -138,6 +140,7 @@ struct WindowConfigurator: NSViewRepresentable {
             coordinator.applyTrafficLightAlpha(window, animated: false)
             // Set initial minimum size (base values; updated when video loads).
             coordinator.applyMinSize(window, ratio: nil)
+            onWindowAvailable?(window)
         }
     }
 
@@ -147,11 +150,14 @@ struct WindowConfigurator: NSViewRepresentable {
         let view = ConfiguratorNSView()
         view.setFrameSize(.zero)
         view.coordinator = context.coordinator
+        view.onWindowAvailable = onWindowAvailable
         return view
     }
 
     func updateNSView(_ nsView: ConfiguratorNSView, context: Context) {
+        nsView.onWindowAvailable = onWindowAvailable
         guard let window = nsView.window else { return }
+        onWindowAvailable?(window)
         let coordinator = context.coordinator
 
         coordinator.observeWindow(window)

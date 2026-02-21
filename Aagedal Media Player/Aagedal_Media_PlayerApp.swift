@@ -19,26 +19,35 @@ extension FocusedValues {
 struct Aagedal_Media_PlayerApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @FocusedValue(\.isMediaLoaded) private var isMediaLoaded
+    @AppStorage("allowMultipleWindows") private var allowMultipleWindows = false
 
     private var mediaLoaded: Bool { isMediaLoaded ?? false }
 
     var body: some Scene {
-        WindowGroup {
+        WindowGroup(id: "player") {
             ContentView()
         }
         .windowStyle(.automatic)
         .commands {
-            CommandGroup(replacing: .appSettings) {
-                SettingsLink {
-                    Text("Settings\u{2026}")
-                }
-                .keyboardShortcut(",")
-            }
             CommandGroup(replacing: .newItem) {
+                if allowMultipleWindows {
+                    Button("New Window") {
+                        WindowManager.shared.openNewWindow?()
+                    }
+                    .keyboardShortcut("n")
+                }
+
                 Button("Open\u{2026}") {
                     NotificationCenter.default.post(name: .openFile, object: nil)
                 }
                 .keyboardShortcut("o")
+
+                Button("Close Window") {
+                    NSApp.keyWindow?.close()
+                }
+                .keyboardShortcut("w")
+
+                Divider()
 
                 RecentDocumentsMenu()
             }
@@ -149,7 +158,15 @@ struct RecentDocumentsMenu: View {
 class AppDelegate: NSObject, NSApplicationDelegate {
     func application(_ application: NSApplication, open urls: [URL]) {
         guard let url = urls.first else { return }
-        NotificationCenter.default.post(name: .openFileURL, object: url)
+
+        if WindowManager.shared.allowMultipleWindows {
+            // Multi-window: open file in a new window
+            WindowManager.shared.pendingFileURL = url
+            WindowManager.shared.openNewWindow?()
+        } else {
+            // Single-window: replace content in the key window
+            NotificationCenter.default.post(name: .openFileURL, object: url)
+        }
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
