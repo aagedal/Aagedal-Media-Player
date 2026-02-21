@@ -357,7 +357,6 @@ private struct WindowConfigurator: NSViewRepresentable {
             if !window.styleMask.contains(.fullSizeContentView) {
                 window.styleMask.insert(.fullSizeContentView)
             }
-            window.isMovableByWindowBackground = true
             window.backgroundColor = .black
         }
 
