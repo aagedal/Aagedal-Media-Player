@@ -191,7 +191,7 @@ struct ControlsView: View {
                                 wasPrecision = true
                             }
                             let delta = (value.location.x - precisionAnchorX) / width
-                            let fraction = max(0, min(1, precisionAnchorFraction + delta / 4.0))
+                            let fraction = max(0, min(1, precisionAnchorFraction + delta / 10.0))
                             dragTime = Double(fraction) * duration
                         } else {
                             wasPrecision = false
@@ -204,7 +204,7 @@ struct ControlsView: View {
                         let isPrecision = NSEvent.modifierFlags.contains(.option)
                         if isPrecision && wasPrecision {
                             let delta = (value.location.x - precisionAnchorX) / width
-                            let fraction = max(0, min(1, precisionAnchorFraction + delta / 4.0))
+                            let fraction = max(0, min(1, precisionAnchorFraction + delta / 10.0))
                             dragTime = Double(fraction) * duration
                         } else {
                             let fraction = max(0, min(1, value.location.x / width))

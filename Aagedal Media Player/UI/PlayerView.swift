@@ -155,35 +155,45 @@ struct PlayerView: View {
             return true
         }
 
-        // Arrow keys — routed through notifications for multi-window sync
+        // Arrow keys — routed through notifications for multi-window sync,
+        // Option+Arrow bypasses sync and only affects the current window.
         if let specialKey {
+            let optionHeld = modifiers.contains(.option)
             switch specialKey {
             case .leftArrow:
                 if modifiers.contains(.shift) {
-                    NotificationCenter.default.post(name: .seekBySeconds, object: NSNumber(value: -10.0))
+                    if optionHeld { controller.seek(by: -10) }
+                    else { NotificationCenter.default.post(name: .seekBySeconds, object: NSNumber(value: -10.0)) }
                 } else {
-                    NotificationCenter.default.post(name: .seekByFrames, object: NSNumber(value: -1))
+                    if optionHeld { controller.seekByFrames(-1) }
+                    else { NotificationCenter.default.post(name: .seekByFrames, object: NSNumber(value: -1)) }
                 }
                 return true
             case .rightArrow:
                 if modifiers.contains(.shift) {
-                    NotificationCenter.default.post(name: .seekBySeconds, object: NSNumber(value: 10.0))
+                    if optionHeld { controller.seek(by: 10) }
+                    else { NotificationCenter.default.post(name: .seekBySeconds, object: NSNumber(value: 10.0)) }
                 } else {
-                    NotificationCenter.default.post(name: .seekByFrames, object: NSNumber(value: 1))
+                    if optionHeld { controller.seekByFrames(1) }
+                    else { NotificationCenter.default.post(name: .seekByFrames, object: NSNumber(value: 1)) }
                 }
                 return true
             case .upArrow:
                 if modifiers.contains(.command) {
-                    NotificationCenter.default.post(name: .seekToEdge, object: NSNumber(value: 0.0))
+                    if optionHeld { controller.seekTo(0) }
+                    else { NotificationCenter.default.post(name: .seekToEdge, object: NSNumber(value: 0.0)) }
                 } else {
-                    NotificationCenter.default.post(name: .seekByFrames, object: NSNumber(value: -10))
+                    if optionHeld { controller.seekByFrames(-10) }
+                    else { NotificationCenter.default.post(name: .seekByFrames, object: NSNumber(value: -10)) }
                 }
                 return true
             case .downArrow:
                 if modifiers.contains(.command) {
-                    NotificationCenter.default.post(name: .seekToEdge, object: NSNumber(value: Double.infinity))
+                    if optionHeld { controller.seekTo(max(0, controller.mediaItem?.durationSeconds ?? 0)) }
+                    else { NotificationCenter.default.post(name: .seekToEdge, object: NSNumber(value: Double.infinity)) }
                 } else {
-                    NotificationCenter.default.post(name: .seekByFrames, object: NSNumber(value: 10))
+                    if optionHeld { controller.seekByFrames(10) }
+                    else { NotificationCenter.default.post(name: .seekByFrames, object: NSNumber(value: 10)) }
                 }
                 return true
             default:
