@@ -21,7 +21,9 @@ struct PlayerView: View {
     var body: some View {
         Group {
             if let player = controller.player {
-                // AVPlayer backend
+                // AVPlayer backend — .id() forces view recreation when the
+                // player changes, ensuring the old AVPlayerView is fully
+                // destroyed and cannot leak audio from a previous file.
                 ZStack {
                     Color.black
 
@@ -35,13 +37,14 @@ struct PlayerView: View {
 
                     overlayIndicators
                 }
+                .id(controller.preparationID)
                 .ignoresSafeArea()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .onReceive(controller.playbackTimePublisher) { time in
                     // Time synced via publisher
                 }
             } else if controller.useMPV, let mpvPlayer = controller.mpvPlayer {
-                // MPV backend
+                // MPV backend — .id() forces view recreation on each new load
                 ZStack {
                     Color.black
 
@@ -50,6 +53,7 @@ struct PlayerView: View {
 
                     overlayIndicators
                 }
+                .id(controller.preparationID)
                 .ignoresSafeArea()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .onReceive(controller.playbackTimePublisher) { time in

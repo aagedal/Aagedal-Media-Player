@@ -92,6 +92,12 @@ final class PlayerController: ObservableObject {
     // MPV loop observer
     var mpvLoopObserverTimer: Timer?
     private var mpvAspectRatioCancellable: AnyCancellable?
+    private var mpvTimePosTask: Task<Void, Never>?
+    private var mpvFileLoadedTask: Task<Void, Never>?
+
+    /// Monotonically increasing counter invalidating stale async work from
+    /// previous `preparePlayback` / `setupMPV` calls.
+    @Published private(set) var preparationID: Int = 0
 
     // MARK: - Initialization
 
@@ -163,6 +169,7 @@ final class PlayerController: ObservableObject {
 
     func preparePlayback(startTime: TimeInterval, resetAudioSelection: Bool = true) {
         teardown(resetAudioSelection: resetAudioSelection)
+        preparationID &+= 1
         isPreparing = true
         isReady = false
         errorMessage = nil
@@ -215,18 +222,22 @@ final class PlayerController: ObservableObject {
 
         mpv.load(url: url, startTime: startTime, autostart: false)
 
+        let myPrepID = preparationID
+
         // Sync time position
-        Task { @MainActor [weak self, weak mpv] in
+        mpvTimePosTask = Task { @MainActor [weak self, weak mpv] in
             guard let self, let mpv else { return }
             for await time in mpv.$timePos.values {
+                guard !Task.isCancelled, self.preparationID == myPrepID else { break }
                 self.currentPlaybackTime = time
             }
         }
 
         // Observe file loaded state for isReady
-        Task { @MainActor [weak self, weak mpv] in
+        mpvFileLoadedTask = Task { @MainActor [weak self, weak mpv] in
             guard let self, let mpv else { return }
             for await isLoaded in mpv.$isFileLoaded.values {
+                guard !Task.isCancelled, self.preparationID == myPrepID else { break }
                 if isLoaded {
                     self.isReady = true
                     break
@@ -969,14 +980,27 @@ final class PlayerController: ObservableObject {
         isReverseSimulating = false
         reverseSpeed = 1
 
-        // Fully detach old AVPlayer — replaceCurrentItem(with: nil) ensures
-        // no audio/video output even if the AVPlayer object lingers.
-        player?.pause()
-        player?.replaceCurrentItem(with: nil)
+        // Fully detach old AVPlayer — mute, stop, and replace item to ensure
+        // no audio/video output even if the object lingers from SwiftUI caching.
+        if let oldPlayer = player {
+            oldPlayer.isMuted = true
+            oldPlayer.rate = 0
+            oldPlayer.pause()
+            oldPlayer.replaceCurrentItem(with: nil)
+        }
+        // Also nil the AVPlayerView's player reference so the view layer
+        // cannot resurrect audio from the old player object.
+        playerView?.player = nil
         removePlaybackTimeObserver()
         removePlayerItemStatusObserver()
         removeLoopObserver()
         player = nil
+
+        // Cancel in-flight MPV observation Tasks before stopping
+        mpvTimePosTask?.cancel()
+        mpvTimePosTask = nil
+        mpvFileLoadedTask?.cancel()
+        mpvFileLoadedTask = nil
 
         if let mpv = mpvPlayer {
             mpv.stop()

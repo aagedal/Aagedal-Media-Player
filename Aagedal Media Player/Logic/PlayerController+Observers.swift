@@ -110,10 +110,14 @@ extension PlayerController {
         removePlayerItemStatusObserver()
 
         let logger = Logger(subsystem: "com.aagedal.MediaPlayer", category: "PlayerController")
+        let myPrepID = self.preparationID
 
         playerItemStatusObserver = playerItem.observe(\.status, options: [.new]) { [weak self] item, _ in
             Task { @MainActor [weak self] in
                 guard let self else { return }
+                // Bail out if a newer preparePlayback has started since this
+                // observer was installed — the player item is stale.
+                guard self.preparationID == myPrepID else { return }
 
                 switch item.status {
                 case .failed:
@@ -124,6 +128,7 @@ extension PlayerController {
                         logger.warning("AVPlayer error – domain: \(error.domain, privacy: .public), code: \(error.code, privacy: .public)")
                     }
 
+                    guard self.preparationID == myPrepID else { return }
                     guard let item = self.mediaItem else { return }
                     self.teardown(resetAudioSelection: false)
                     self.setupMPV(url: item.url, startTime: startTime)
@@ -134,6 +139,8 @@ extension PlayerController {
                     Task {
                         do {
                             let videoTracks = try await asset.loadTracks(withMediaType: .video)
+                            // Re-check after each await — a new file may have been loaded
+                            guard self.preparationID == myPrepID else { return }
 
                             if !videoTracks.isEmpty {
                                 var hasValidVideoFormat = false
@@ -144,6 +151,7 @@ extension PlayerController {
                                         break
                                     }
                                 }
+                                guard self.preparationID == myPrepID else { return }
 
                                 if !hasValidVideoFormat {
                                     logger.warning("AVPlayer ready but video format invalid. Attempting MPV playback.")
@@ -155,6 +163,7 @@ extension PlayerController {
 
                                 for track in videoTracks {
                                     let isDecodable = try await track.load(.isDecodable)
+                                    guard self.preparationID == myPrepID else { return }
                                     if !isDecodable {
                                         logger.warning("AVPlayer ready but video track not decodable. Attempting MPV playback.")
                                         guard let item = self.mediaItem else { return }
@@ -165,9 +174,12 @@ extension PlayerController {
                                 }
                             }
 
+                            guard self.preparationID == myPrepID else { return }
+
                             // Extract early aspect ratio from naturalSize
                             if let firstVideoTrack = videoTracks.first {
                                 let naturalSize = try await firstVideoTrack.load(.naturalSize)
+                                guard self.preparationID == myPrepID else { return }
                                 if naturalSize.width > 0, naturalSize.height > 0 {
                                     self.videoAspectRatio = naturalSize.width / naturalSize.height
                                 }
@@ -183,6 +195,7 @@ extension PlayerController {
                             self.applySelectedAudioTrack()
 
                         } catch {
+                            guard self.preparationID == myPrepID else { return }
                             logger.debug("Could not verify video tracks, proceeding with playback")
                             self.isReady = true
 
