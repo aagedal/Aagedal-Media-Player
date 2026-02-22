@@ -134,21 +134,25 @@ struct ContentView: View {
         .onDrop(of: [.fileURL], isTargeted: $isDropTargeted) { providers in
             handleDrop(providers)
         }
-        .onOpenURL { url in
-            openFile(url: url)
-        }
         .onAppear {
             installMouseMoveMonitor()
             installAppActiveObserver()
             WindowManager.shared.openNewWindow = { [openWindow] in
                 openWindow(id: "player")
             }
-            if let url = WindowManager.shared.pendingFileURL {
-                WindowManager.shared.pendingFileURL = nil
-                openFile(url: url)
-                // Ensure the window is visible when launched from Finder
-                (nsWindow ?? NSApp.windows.first)?.makeKeyAndOrderFront(nil)
-                NSApp.activate()
+        }
+        .task {
+            // Handle file passed via Finder: application(_:open:) may set
+            // pendingFileURL before or after this view appears during launch.
+            for _ in 0..<10 {
+                if let url = WindowManager.shared.pendingFileURL {
+                    WindowManager.shared.pendingFileURL = nil
+                    openFile(url: url)
+                    (nsWindow ?? NSApp.windows.first)?.makeKeyAndOrderFront(nil)
+                    NSApp.activate()
+                    return
+                }
+                try? await Task.sleep(for: .milliseconds(50))
             }
         }
         .onDisappear {
