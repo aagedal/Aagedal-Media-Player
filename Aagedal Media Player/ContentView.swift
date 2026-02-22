@@ -113,6 +113,15 @@ struct ContentView: View {
                 showTrafficLights: isHoveringWindow && !isHoveringRightEdge,
                 onWindowAvailable: { window in
                     if nsWindow !== window {
+                        // In single-window mode, close extra windows that SwiftUI
+                        // creates via URL routing when files are opened from Finder.
+                        if !WindowManager.shared.allowMultipleWindows && WindowManager.shared.hasWindows {
+                            window.orderOut(nil)
+                            DispatchQueue.main.async {
+                                window.close()
+                            }
+                            return
+                        }
                         nsWindow = window
                         WindowManager.shared.register(id: windowID, window: window)
                     }
@@ -158,6 +167,7 @@ struct ContentView: View {
         .onDisappear {
             removeMouseMoveMonitor()
             removeAppActiveObserver()
+            controller.teardown()
             WindowManager.shared.unregister(id: windowID)
         }
     }

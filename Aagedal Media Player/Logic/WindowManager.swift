@@ -22,8 +22,15 @@ final class WindowManager {
     /// non-View code (menus, AppDelegate) can open new WindowGroup windows.
     var openNewWindow: (() -> Void)?
 
-    @AppStorage("allowMultipleWindows") var allowMultipleWindows = false
-    @AppStorage("syncPlaybackControls") var syncPlaybackControls = false
+    /// Always read live from UserDefaults so the value is never stale
+    /// after the user toggles the setting (AppStorage on non-View classes
+    /// can cache the initial value).
+    var allowMultipleWindows: Bool {
+        UserDefaults.standard.bool(forKey: "allowMultipleWindows")
+    }
+    var syncPlaybackControls: Bool {
+        UserDefaults.standard.bool(forKey: "syncPlaybackControls")
+    }
 
     private init() {}
 

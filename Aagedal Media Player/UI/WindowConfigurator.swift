@@ -101,6 +101,17 @@ struct WindowConfigurator: NSViewRepresentable {
             coordinator.applyTrafficLightAlpha(window, animated: false)
             // Set initial minimum size (base values; updated when video loads).
             coordinator.applyMinSize(window, ratio: nil)
+
+            // Cascade new windows so they don't stack exactly on top of each other.
+            let existingCount = WindowManager.shared.windows.values.filter({ $0.window != nil }).count
+            if existingCount > 0 {
+                let offset = CGFloat(existingCount) * 22
+                var frame = window.frame
+                frame.origin.x += offset
+                frame.origin.y -= offset
+                window.setFrameOrigin(frame.origin)
+            }
+
             onWindowAvailable?(window)
         }
     }
