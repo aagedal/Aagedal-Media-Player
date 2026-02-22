@@ -256,9 +256,15 @@ struct ContentView: View {
                     .strokeBorder(style: StrokeStyle(lineWidth: 1, dash: [4, 4]))
                     .foregroundStyle(.white.opacity(0.25))
                     .overlay {
-                        Image(systemName: "cursorarrow")
-                            .font(.system(size: 14))
-                            .foregroundStyle(.white.opacity(0.3))
+                        ZStack {
+                            Image(systemName: "cursorarrow")
+                                .font(.system(size: 14))
+                            // Diagonal slash through the cursor
+                            Rectangle()
+                                .frame(width: 18, height: 1.5)
+                                .rotationEffect(.degrees(-45))
+                        }
+                        .foregroundStyle(.white.opacity(0.3))
                     }
                     .padding(6)
                     .opacity(showOverlay && !isHoveringRightEdge ? 1 : 0)
