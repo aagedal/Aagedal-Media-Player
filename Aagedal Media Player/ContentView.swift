@@ -113,9 +113,12 @@ struct ContentView: View {
                 showTrafficLights: isHoveringWindow && !isHoveringRightEdge,
                 onWindowAvailable: { window in
                     if nsWindow !== window {
-                        // In single-window mode, close extra windows that SwiftUI
-                        // creates via URL routing when files are opened from Finder.
-                        if !WindowManager.shared.allowMultipleWindows && WindowManager.shared.hasWindows {
+                        // Close extra windows that SwiftUI creates via URL routing:
+                        // in single-window mode, or when the file was routed to
+                        // an existing empty window in multi-window mode.
+                        if WindowManager.shared.fileRoutedToExistingWindow ||
+                            (!WindowManager.shared.allowMultipleWindows && WindowManager.shared.hasWindows) {
+                            WindowManager.shared.fileRoutedToExistingWindow = false
                             window.orderOut(nil)
                             DispatchQueue.main.async {
                                 window.close()
@@ -443,6 +446,7 @@ struct ContentView: View {
 
         // Start playback immediately, load metadata in parallel
         controller.loadMedia(item)
+        WindowManager.shared.markHasMedia(id: windowID)
         (nsWindow ?? NSApp.keyWindow)?.title = item.name
 
         Task {

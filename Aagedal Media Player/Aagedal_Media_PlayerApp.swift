@@ -165,9 +165,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         guard let url = urls.first else { return }
 
         if WindowManager.shared.allowMultipleWindows {
-            // Multi-window: store URL for the new window's .task to pick up.
-            // SwiftUI creates the window automatically via URL routing.
-            WindowManager.shared.pendingFileURL = url
+            if let emptyWindow = WindowManager.shared.firstEmptyWindow() {
+                // Reuse an existing empty window
+                emptyWindow.makeKeyAndOrderFront(nil)
+                WindowManager.shared.fileRoutedToExistingWindow = true
+                NotificationCenter.default.post(name: .openFileURL, object: url)
+            } else {
+                // No empty windows — let SwiftUI create a new one
+                WindowManager.shared.pendingFileURL = url
+            }
         } else if WindowManager.shared.hasWindows {
             // Single-window: replace content in the existing window
             NotificationCenter.default.post(name: .openFileURL, object: url)

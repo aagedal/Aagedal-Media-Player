@@ -16,7 +16,12 @@ final class WindowManager {
     }
 
     private(set) var windows: [UUID: WeakWindow] = [:]
+    private var windowsWithMedia: Set<UUID> = []
     var pendingFileURL: URL?
+
+    /// Set when a file-open event was routed to an existing empty window,
+    /// so the extra window SwiftUI creates via URL routing can be closed.
+    var fileRoutedToExistingWindow = false
 
     /// Stored by ContentView from its `@Environment(\.openWindow)` so that
     /// non-View code (menus, AppDelegate) can open new WindowGroup windows.
@@ -45,6 +50,21 @@ final class WindowManager {
 
     func unregister(id: UUID) {
         windows.removeValue(forKey: id)
+        windowsWithMedia.remove(id)
+    }
+
+    func markHasMedia(id: UUID) {
+        windowsWithMedia.insert(id)
+    }
+
+    /// Returns the NSWindow of the first registered window that has no media loaded.
+    func firstEmptyWindow() -> NSWindow? {
+        for (id, weakWindow) in windows {
+            if let window = weakWindow.window, !windowsWithMedia.contains(id) {
+                return window
+            }
+        }
+        return nil
     }
 
     /// Returns true if this window should respond to key-window-only commands
