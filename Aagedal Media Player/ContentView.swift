@@ -299,7 +299,7 @@ struct ContentView: View {
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(.white)
 
-                Link(destination: URL(string: "https://github.com/aagedal/homebrew-casks/releases")!) {
+                Link(destination: URL(string: "https://github.com/aagedal/Aagedal-Media-Player/releases")!) {
                     Text("Download")
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(.white)

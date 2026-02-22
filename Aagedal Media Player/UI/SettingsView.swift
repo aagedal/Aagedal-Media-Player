@@ -390,7 +390,7 @@ private struct UpdateSettingsView: View {
 
     @AppStorage("updateCheckInterval") private var checkInterval: Double = 7 * 24 * 3600
 
-    private static let releasesURL = URL(string: "https://github.com/aagedal/homebrew-casks/releases")!
+    private static let releasesURL = URL(string: "https://github.com/aagedal/Aagedal-Media-Player/releases")!
 
     private var intervalOptions: [(String, Double)] {
         [
