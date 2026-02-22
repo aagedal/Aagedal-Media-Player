@@ -53,7 +53,7 @@ struct SettingsView: View {
                 .tabItem { Label("General", systemImage: "gear") }
 
             KeyboardShortcutsView()
-                .tabItem { Label("Shortcuts", systemImage: "keyboard") }
+                .tabItem { Label("Shortcuts", systemImage: "command") }
 
             UpdateSettingsView()
                 .tabItem { Label("Updates", systemImage: "arrow.triangle.2.circlepath") }
@@ -434,7 +434,15 @@ private struct UpdateSettingsView: View {
                 }
 
                 HStack {
+                    if !checker.updateAvailable, checker.lastChecked != nil, !checker.isChecking {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundStyle(.green)
+                        Text("Up to date")
+                            .foregroundStyle(.secondary)
+                    }
+
                     Spacer()
+
                     Button("Check Now") {
                         Task { await checker.checkNow() }
                     }
