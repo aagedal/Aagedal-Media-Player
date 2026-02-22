@@ -169,9 +169,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             // Multi-window: open file in a new window
             WindowManager.shared.pendingFileURL = url
             WindowManager.shared.openNewWindow?()
-        } else {
-            // Single-window: replace content in the key window
+        } else if WindowManager.shared.hasWindows {
+            // Single-window: replace content in the existing window
             NotificationCenter.default.post(name: .openFileURL, object: url)
+        } else {
+            // App is still launching — store URL for ContentView.onAppear
+            WindowManager.shared.pendingFileURL = url
         }
     }
 

@@ -27,6 +27,11 @@ final class WindowManager {
 
     private init() {}
 
+    /// True once at least one window has been registered and is still alive.
+    var hasWindows: Bool {
+        windows.values.contains { $0.window != nil }
+    }
+
     func register(id: UUID, window: NSWindow) {
         windows[id] = WeakWindow(window: window)
     }
