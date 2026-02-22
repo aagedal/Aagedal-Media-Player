@@ -158,6 +158,10 @@ struct RecentDocumentsMenu: View {
 // MARK: - App Delegate
 
 class AppDelegate: NSObject, NSApplicationDelegate {
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        UpdateChecker.shared.checkIfNeeded()
+    }
+
     func application(_ application: NSApplication, open urls: [URL]) {
         guard let url = urls.first else { return }
 

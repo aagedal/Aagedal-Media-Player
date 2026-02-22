@@ -53,9 +53,12 @@ struct SettingsView: View {
                 .tabItem { Label("General", systemImage: "gear") }
 
             KeyboardShortcutsView()
-                .tabItem { Label("Keyboard Shortcuts", systemImage: "keyboard") }
+                .tabItem { Label("Shortcuts", systemImage: "keyboard") }
+
+            UpdateSettingsView()
+                .tabItem { Label("Updates", systemImage: "arrow.triangle.2.circlepath") }
         }
-        .frame(width: 480, height: 440)
+        .frame(width: 480, height: 460)
     }
 
     // MARK: - Static Resolution
@@ -377,5 +380,92 @@ private struct KeyboardShortcutsView: View {
                 }
             }
         }
+    }
+}
+
+// MARK: - Updates
+
+private struct UpdateSettingsView: View {
+    @StateObject private var checker = UpdateChecker.shared
+
+    @AppStorage("updateCheckInterval") private var checkInterval: Double = 7 * 24 * 3600
+
+    private static let releasesURL = URL(string: "https://github.com/aagedal/homebrew-casks/releases")!
+
+    private var intervalOptions: [(String, Double)] {
+        [
+            ("Daily", 24 * 3600),
+            ("Weekly", 7 * 24 * 3600),
+            ("Monthly", 30 * 24 * 3600),
+            ("Never", 0),
+        ]
+    }
+
+    var body: some View {
+        Form {
+            Section("Current Version") {
+                LabeledContent("Version") {
+                    Text(checker.currentVersion)
+                        .monospacedDigit()
+                }
+            }
+
+            Section("Update Check") {
+                LabeledContent("Check Frequency") {
+                    Picker("", selection: $checkInterval) {
+                        ForEach(intervalOptions, id: \.1) { option in
+                            Text(option.0).tag(option.1)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                }
+
+                LabeledContent("Last Checked") {
+                    if let date = checker.lastChecked {
+                        Text(date, style: .relative)
+                            .foregroundStyle(.secondary)
+                        + Text(" ago")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Text("Never")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                HStack {
+                    Spacer()
+                    Button("Check Now") {
+                        Task { await checker.checkNow() }
+                    }
+                    .disabled(checker.isChecking)
+                }
+            }
+
+            if checker.updateAvailable, let latest = checker.latestVersion {
+                Section {
+                    HStack(spacing: 12) {
+                        Image(systemName: "arrow.down.circle.fill")
+                            .font(.title2)
+                            .foregroundStyle(.blue)
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Version \(latest) Available")
+                                .fontWeight(.medium)
+                            Text("You are running \(checker.currentVersion)")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        Spacer()
+
+                        Link("Download", destination: Self.releasesURL)
+                            .buttonStyle(.borderedProminent)
+                    }
+                    .padding(.vertical, 4)
+                }
+            }
+        }
+        .formStyle(.grouped)
     }
 }
