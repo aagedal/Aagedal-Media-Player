@@ -96,6 +96,7 @@ struct WindowConfigurator: NSViewRepresentable {
             super.viewDidMoveToWindow()
             guard let window, let coordinator else { return }
             coordinator.observeWindow(window)
+            window.isRestorable = false
             window.backgroundColor = .black
             coordinator.applyTrafficLightAlpha(window, animated: false)
             // Set initial minimum size (base values; updated when video loads).
