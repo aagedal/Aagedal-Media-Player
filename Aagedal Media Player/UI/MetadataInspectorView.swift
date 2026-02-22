@@ -139,13 +139,20 @@ struct MetadataInspectorView: View {
             }
         }
         .listStyle(.sidebar)
-        .frame(minWidth: 240, idealWidth: 280)
+        .frame(minWidth: 280, idealWidth: 320)
         .safeAreaInset(edge: .top) {
             VStack(spacing: 8) {
                 HStack {
                     Text("Metadata")
                         .font(.headline)
                     Spacer()
+                    Button(action: { revealInFinder() }) {
+                        Image(systemName: "magnifyingglass")
+                            .font(.system(size: 14))
+                            .foregroundColor(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Reveal in Finder")
                     Button(action: { isPresented = false }) {
                         Image(systemName: "xmark.circle.fill")
                             .font(.system(size: 16))
@@ -178,6 +185,12 @@ struct MetadataInspectorView: View {
         .onExitCommand {
             isPresented = false
         }
+    }
+
+    // MARK: - Actions
+
+    private func revealInFinder() {
+        NSWorkspace.shared.activateFileViewerSelecting([item.url])
     }
 
     // MARK: - Badges
