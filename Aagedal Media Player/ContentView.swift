@@ -146,6 +146,9 @@ struct ContentView: View {
             if let url = WindowManager.shared.pendingFileURL {
                 WindowManager.shared.pendingFileURL = nil
                 openFile(url: url)
+                // Ensure the window is visible when launched from Finder
+                (nsWindow ?? NSApp.windows.first)?.makeKeyAndOrderFront(nil)
+                NSApp.activate()
             }
         }
         .onDisappear {

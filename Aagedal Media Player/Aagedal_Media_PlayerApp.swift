@@ -176,6 +176,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             // App is still launching — store URL for ContentView.onAppear
             WindowManager.shared.pendingFileURL = url
         }
+
+        // Bring the app to the foreground when opened via file association
+        NSApp.activate()
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
