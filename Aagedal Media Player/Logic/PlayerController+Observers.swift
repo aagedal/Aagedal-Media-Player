@@ -185,6 +185,14 @@ extension PlayerController {
                                 }
                             }
 
+                            // Populate duration from AVPlayer so the timeline is usable before FFprobe finishes
+                            let avDuration = try await asset.load(.duration)
+                            guard self.preparationID == myPrepID else { return }
+                            let seconds = CMTimeGetSeconds(avDuration)
+                            if seconds.isFinite, seconds > 0, (self.mediaItem?.durationSeconds ?? 0) == 0 {
+                                self.mediaItem?.durationSeconds = seconds
+                            }
+
                             self.isReady = true
 
                             if let player = self.player {
@@ -197,6 +205,15 @@ extension PlayerController {
                         } catch {
                             guard self.preparationID == myPrepID else { return }
                             logger.debug("Could not verify video tracks, proceeding with playback")
+
+                            // Try to get duration even if track verification failed
+                            if let dur = try? await asset.load(.duration) {
+                                let seconds = CMTimeGetSeconds(dur)
+                                if seconds.isFinite, seconds > 0, (self.mediaItem?.durationSeconds ?? 0) == 0 {
+                                    self.mediaItem?.durationSeconds = seconds
+                                }
+                            }
+
                             self.isReady = true
 
                             if let player = self.player {

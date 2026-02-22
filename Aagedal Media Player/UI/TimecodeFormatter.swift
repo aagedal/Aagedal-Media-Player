@@ -148,7 +148,7 @@ struct TimecodeFormatter {
                 useDropFrame: false
             )
         case .source:
-            let startTC = isDuration ? nil : effectiveStartTimecode(for: item)
+            let startTC = effectiveStartTimecode(for: item)
             let useDropFrame = startTC?.contains(";") ?? false
             displayString = timecode(
                 from: adjustedSeconds,

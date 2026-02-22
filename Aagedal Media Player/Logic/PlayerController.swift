@@ -94,6 +94,7 @@ final class PlayerController: ObservableObject {
     private var mpvAspectRatioCancellable: AnyCancellable?
     private var mpvTimePosTask: Task<Void, Never>?
     private var mpvFileLoadedTask: Task<Void, Never>?
+    private var mpvDurationTask: Task<Void, Never>?
 
     /// Monotonically increasing counter invalidating stale async work from
     /// previous `preparePlayback` / `setupMPV` calls.
@@ -240,6 +241,18 @@ final class PlayerController: ObservableObject {
                 guard !Task.isCancelled, self.preparationID == myPrepID else { break }
                 if isLoaded {
                     self.isReady = true
+                    break
+                }
+            }
+        }
+
+        // Populate duration from MPV so the timeline is usable before FFprobe finishes
+        mpvDurationTask = Task { @MainActor [weak self, weak mpv] in
+            guard let self, let mpv else { return }
+            for await dur in mpv.$duration.values {
+                guard !Task.isCancelled, self.preparationID == myPrepID else { break }
+                if dur > 0, (self.mediaItem?.durationSeconds ?? 0) == 0 {
+                    self.mediaItem?.durationSeconds = dur
                     break
                 }
             }
@@ -1001,6 +1014,8 @@ final class PlayerController: ObservableObject {
         mpvTimePosTask = nil
         mpvFileLoadedTask?.cancel()
         mpvFileLoadedTask = nil
+        mpvDurationTask?.cancel()
+        mpvDurationTask = nil
 
         if let mpv = mpvPlayer {
             mpv.stop()
