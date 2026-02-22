@@ -97,7 +97,7 @@ struct ContentView: View {
         }
         .ignoresSafeArea()
         .focusedSceneValue(\.isMediaLoaded, isMediaLoaded)
-        .frame(minWidth: 250, minHeight: 200)
+        .frame(minWidth: 270, minHeight: 200)
         .background(Color.black)
         .background(
             WindowConfigurator(

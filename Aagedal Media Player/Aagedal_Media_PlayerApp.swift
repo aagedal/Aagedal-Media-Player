@@ -27,6 +27,7 @@ struct Aagedal_Media_PlayerApp: App {
         WindowGroup(id: "player") {
             ContentView()
         }
+        .handlesExternalEvents(matching: [])
         .windowStyle(.hiddenTitleBar)
         .defaultSize(width: 600, height: 400)
         .commands {

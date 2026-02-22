@@ -18,6 +18,15 @@ struct MetadataInspectorView: View {
     var body: some View {
         List {
             if let metadata = metadata {
+                // File
+                Section("File") {
+                    metadataRow("Name", value: item.name)
+                    if let duration = metadata.duration, duration > 0 {
+                        metadataRow("Duration", value: formatDuration(duration))
+                    }
+                    metadataRow("Size", value: item.formattedSize)
+                }
+
                 // Container
                 Section("Container") {
                     metadataRow("Format", value: formatDisplayName(metadata))
@@ -33,25 +42,34 @@ struct MetadataInspectorView: View {
                             metadataRow("Codec", value: codecDisplayName(codec, profile: video.profile))
                         }
                         if let width = video.width, let height = video.height {
-                            metadataRow("Resolution", value: "\(width) \u{00D7} \(height)")
+                            metadataRow("Resolution", value: resolutionDisplay(width: width, height: height, dar: video.displayAspectRatio))
                         }
                         if let frameRate = video.frameRate {
                             metadataRow("Frame Rate", value: frameRateDisplay(frameRate))
                         }
+                        if let scanType = scanTypeDisplay(video) {
+                            metadataRow("Scan", value: scanType)
+                        }
                         if let chroma = video.chromaSubsampling {
                             let depth = video.bitDepth.map { "\(chroma) / \($0)-bit" } ?? chroma
-                            metadataRow("Chroma", value: depth)
+                            metadataRow("Chroma Subsampling", value: depth)
                         } else if let bitDepth = video.bitDepth {
                             metadataRow("Bit Depth", value: "\(bitDepth)-bit")
                         }
                         if let pixFmt = video.pixelFormat {
                             metadataRow("Pixel Format", value: pixFmt)
                         }
+                        if let colorPrimaries = video.colorPrimaries {
+                            metadataRow("Color Primaries", value: colorPrimaries)
+                        }
                         if let colorSpace = video.colorSpace {
                             metadataRow("Color Space", value: colorSpace)
                         }
                         if let colorTransfer = video.colorTransfer {
                             metadataRow("Transfer", value: colorTransfer)
+                        }
+                        if let colorRange = video.colorRange {
+                            metadataRow("Range", value: colorRange)
                         }
                     }
                 }
@@ -68,6 +86,9 @@ struct MetadataInspectorView: View {
                         if let sampleRate = audio.sampleRate {
                             metadataRow("Sample Rate", value: formatSampleRate(sampleRate))
                         }
+                        if let bitDepth = audio.bitDepth {
+                            metadataRow("Bit Depth", value: "\(bitDepth)-bit")
+                        }
                         if let bitRate = audio.bitRate, bitRate > 0 {
                             metadataRow("Bit Rate", value: formatBitRate(bitRate))
                         }
@@ -83,6 +104,32 @@ struct MetadataInspectorView: View {
                         }
                     }
                 }
+
+                // Subtitle streams
+                if !metadata.subtitleStreams.isEmpty {
+                    Section("Subtitles") {
+                        ForEach(Array(metadata.subtitleStreams.enumerated()), id: \.offset) { index, stream in
+                            let label = subtitleLabel(stream, index: index + 1)
+                            metadataRow(label, value: subtitleSummary(stream))
+                        }
+                    }
+                }
+
+                // Info (timecode, comment, encoder)
+                if metadata.timecode != nil || metadata.comment != nil || metadata.encoder != nil {
+                    Section("Info") {
+                        if let timecode = metadata.timecode {
+                            metadataRow("Timecode", value: timecode)
+                        }
+                        if let comment = metadata.comment {
+                            metadataRow("Comment", value: comment)
+                        }
+                        if let encoder = metadata.encoder {
+                            metadataRow("Encoder", value: encoder)
+                        }
+                    }
+                }
+
                 // Playback
                 Section("Playback") {
                     metadataRow("Engine", value: useMPV ? "mpv" : "Apple AVFoundation")
@@ -94,17 +141,35 @@ struct MetadataInspectorView: View {
         .listStyle(.sidebar)
         .frame(minWidth: 240, idealWidth: 280)
         .safeAreaInset(edge: .top) {
-            HStack {
-                Text("Metadata")
-                    .font(.headline)
-                Spacer()
-                Button(action: { isPresented = false }) {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 16))
-                        .foregroundColor(.secondary)
+            VStack(spacing: 8) {
+                HStack {
+                    Text("Metadata")
+                        .font(.headline)
+                    Spacer()
+                    Button(action: { isPresented = false }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 16))
+                            .foregroundColor(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Close inspector")
                 }
-                .buttonStyle(.plain)
-                .help("Close inspector")
+
+                if video != nil || audio != nil {
+                    HStack(spacing: 6) {
+                        if let video = video {
+                            if let badge = resolutionBadge(video) {
+                                mediaBadge(badge.label, color: badge.color)
+                            }
+                            mediaBadge(isHDR(video) ? "HDR" : "SDR",
+                                       color: isHDR(video) ? .orange : .gray)
+                        }
+                        if let metadata = metadata, let badge = audioBadge(metadata) {
+                            mediaBadge(badge.label, color: badge.color)
+                        }
+                        Spacer()
+                    }
+                }
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
@@ -112,6 +177,83 @@ struct MetadataInspectorView: View {
         .onExitCommand {
             isPresented = false
         }
+    }
+
+    // MARK: - Badges
+
+    private func mediaBadge(_ label: String, color: Color) -> some View {
+        Text(label)
+            .font(.caption2.weight(.bold))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
+            .background(color, in: .capsule)
+    }
+
+    private struct ResolutionBadge {
+        let label: String
+        let color: Color
+    }
+
+    private func resolutionBadge(_ video: MediaMetadata.VideoStream) -> ResolutionBadge? {
+        guard let width = video.width, let height = video.height else { return nil }
+        let shortEdge = min(width, height)
+        if shortEdge >= 4320 {
+            return ResolutionBadge(label: "8K", color: .yellow)
+        } else if shortEdge >= 2160 {
+            return ResolutionBadge(label: "4K", color: .purple)
+        } else if shortEdge >= 720 {
+            return ResolutionBadge(label: "HD", color: .blue)
+        } else {
+            return ResolutionBadge(label: "SD", color: .gray)
+        }
+    }
+
+    private struct AudioBadge {
+        let label: String
+        let color: Color
+    }
+
+    private func audioChannelLabel(_ channels: Int) -> String {
+        if channels >= 6 { return "Surround" }
+        if channels == 2 { return "Stereo" }
+        if channels == 1 { return "Mono" }
+        return "\(channels)ch"
+    }
+
+    private func audioBadge(_ metadata: MediaMetadata) -> AudioBadge? {
+        let streams = metadata.audioStreams
+        guard !streams.isEmpty else { return nil }
+
+        // Deduplicate by channel count, preserving stream order
+        var seen = Set<Int>()
+        var labels: [String] = []
+        for stream in streams {
+            guard let channels = stream.channels, seen.insert(channels).inserted else { continue }
+            labels.append(audioChannelLabel(channels))
+        }
+
+        guard !labels.isEmpty else { return nil }
+        let hasSurround = streams.contains { ($0.channels ?? 0) >= 6 }
+        return AudioBadge(
+            label: labels.joined(separator: " + "),
+            color: hasSurround ? .teal : .gray
+        )
+    }
+
+    private func isHDR(_ video: MediaMetadata.VideoStream) -> Bool {
+        if let transfer = video.colorTransfer?.lowercased() {
+            if transfer.contains("smpte2084") || transfer == "smpte st 2084"
+                || transfer.contains("arib-std-b67") || transfer == "hlg" {
+                return true
+            }
+        }
+        if let primaries = video.colorPrimaries?.lowercased() {
+            if primaries.contains("bt2020") {
+                return true
+            }
+        }
+        return false
     }
 
     // MARK: - Row
@@ -180,6 +322,36 @@ struct MetadataInspectorView: View {
         return String(format: "%.1f kHz", Double(rate) / 1000.0)
     }
 
+    private func formatDuration(_ seconds: Double) -> String {
+        let totalSeconds = Int(seconds.rounded())
+        let hours = totalSeconds / 3600
+        let minutes = (totalSeconds % 3600) / 60
+        let secs = totalSeconds % 60
+        if hours > 0 {
+            return String(format: "%d:%02d:%02d", hours, minutes, secs)
+        }
+        return String(format: "%02d:%02d", minutes, secs)
+    }
+
+    private func resolutionDisplay(width: Int, height: Int, dar: MediaMetadata.Ratio?) -> String {
+        var result = "\(width) \u{00D7} \(height)"
+        if let dar = dar {
+            result += " (\(dar.stringValue))"
+        }
+        return result
+    }
+
+    private func scanTypeDisplay(_ video: MediaMetadata.VideoStream) -> String? {
+        guard let fieldOrder = video.fieldOrder else { return nil }
+        let value = fieldOrder.lowercased()
+        if value == "progressive" { return "Progressive" }
+        if value == "unknown" { return nil }
+        // Interlaced — show field order
+        if value == "tt" || value == "tb" { return "Interlaced (TFF)" }
+        if value == "bb" || value == "bt" { return "Interlaced (BFF)" }
+        return "Interlaced"
+    }
+
     private func formatBitRate(_ bitRate: Int64) -> String {
         if bitRate >= 1_000_000 {
             return String(format: "%.1f Mbps", Double(bitRate) / 1_000_000.0)
@@ -203,5 +375,23 @@ struct MetadataInspectorView: View {
         if let ch = stream.channels { parts.append("\(ch)ch") }
         if let sr = stream.sampleRate { parts.append(formatSampleRate(sr)) }
         return parts.joined(separator: ", ")
+    }
+
+    private func subtitleLabel(_ stream: MediaMetadata.SubtitleStream, index: Int) -> String {
+        if let title = stream.title, !title.isEmpty {
+            return title
+        }
+        if let lang = stream.languageCode, !lang.isEmpty {
+            return "Track \(index) (\(lang))"
+        }
+        return "Track \(index)"
+    }
+
+    private func subtitleSummary(_ stream: MediaMetadata.SubtitleStream) -> String {
+        var parts: [String] = []
+        if let codec = stream.codec { parts.append(codec.uppercased()) }
+        if stream.isForced { parts.append("Forced") }
+        if stream.isDefault { parts.append("Default") }
+        return parts.isEmpty ? "Unknown" : parts.joined(separator: ", ")
     }
 }

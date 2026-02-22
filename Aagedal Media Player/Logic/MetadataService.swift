@@ -209,6 +209,8 @@ actor MetadataService {
         let filteredAudioStreams = audioStreams.filter { $0.codecType == "audio" }
 
         let timecode = format?.tags?.timecode ?? primaryVideoStream?.tags?.timecode
+        let comment = format?.tags?.comment
+        let encoder = format?.tags?.encoder
 
         let frameCount: Int? = {
             if let nbFrames = primaryVideoStream?.nbFrames, let count = Int(nbFrames) {
@@ -295,6 +297,8 @@ actor MetadataService {
             sizeBytes: format?.size.flatMap { Int64($0) },
             bitRate: format?.bitRate.flatMap { Int64($0) },
             timecode: timecode,
+            comment: comment,
+            encoder: encoder,
             frameCount: frameCount,
             videoStreams: video,
             audioStreams: audio,
@@ -426,5 +430,7 @@ private struct FFprobeResponse: Decodable {
         let language: String?
         let title: String?
         let timecode: String?
+        let comment: String?
+        let encoder: String?
     }
 }

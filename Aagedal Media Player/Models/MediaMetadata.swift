@@ -98,6 +98,8 @@ struct MediaMetadata: Equatable, Sendable {
     let sizeBytes: Int64?
     let bitRate: Int64?
     let timecode: String?
+    let comment: String?
+    let encoder: String?
     let frameCount: Int?
 
     struct VideoStream: Equatable, Sendable {
