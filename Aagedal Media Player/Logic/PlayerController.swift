@@ -963,7 +963,19 @@ final class PlayerController: ObservableObject {
     // MARK: - Teardown
 
     func teardown(resetAudioSelection: Bool = true) {
+        // Stop reverse simulation timer first
+        reverseTimer?.invalidate()
+        reverseTimer = nil
+        isReverseSimulating = false
+        reverseSpeed = 1
+
+        // Fully detach old AVPlayer — replaceCurrentItem(with: nil) ensures
+        // no audio/video output even if the AVPlayer object lingers.
         player?.pause()
+        player?.replaceCurrentItem(with: nil)
+        removePlaybackTimeObserver()
+        removePlayerItemStatusObserver()
+        removeLoopObserver()
         player = nil
 
         if let mpv = mpvPlayer {
@@ -973,11 +985,10 @@ final class PlayerController: ObservableObject {
         useMPV = false
 
         isPreparing = false
+        isPlaying = false
+        currentPlaybackSpeed = 1.0
         videoAspectRatio = nil
         mpvAspectRatioCancellable = nil
-        removeLoopObserver()
-        removePlaybackTimeObserver()
-        removePlayerItemStatusObserver()
         removeMPVLoopObserver()
         if resetAudioSelection {
             selectedAudioTrackOrderIndex = 0

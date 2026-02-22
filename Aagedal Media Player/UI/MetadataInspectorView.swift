@@ -173,6 +173,7 @@ struct MetadataInspectorView: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
+            .background(.bar, ignoresSafeAreaEdges: .top)
         }
         .onExitCommand {
             isPresented = false
