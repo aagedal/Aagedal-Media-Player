@@ -26,6 +26,8 @@ struct ContentView: View {
     @State private var timecodeActivationTrigger: String?
     @State private var nsWindow: NSWindow?
     @AppStorage("showCursorHideHint") private var showCursorHideHint = true
+    @ObservedObject private var updateChecker = UpdateChecker.shared
+    @State private var updateBannerDismissed = false
 
     private let windowID = UUID()
     private let rightEdgeWidth: CGFloat = 60
@@ -88,10 +90,15 @@ struct ContentView: View {
                 )
             }
 
-            // Layer 3: overlay controls
+            // Layer 3: update banner
+            if updateChecker.updateAvailable, !updateBannerDismissed {
+                updateBanner
+            }
+
+            // Layer 4: overlay controls
             overlayControls
 
-            // Layer 4: right-edge cursor hide zone
+            // Layer 5: right-edge cursor hide zone
             if isMediaLoaded && !showInspector {
                 cursorHideZone
             }
@@ -278,6 +285,47 @@ struct ContentView: View {
             .frame(width: rightEdgeWidth)
         }
         .padding(.bottom, 80)
+    }
+
+    // MARK: - Update Banner
+
+    private var updateBanner: some View {
+        VStack {
+            HStack(spacing: 8) {
+                Image(systemName: "arrow.down.circle.fill")
+                    .foregroundStyle(.white)
+
+                Text("Version \(updateChecker.latestVersion ?? "") available")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.white)
+
+                Link(destination: URL(string: "https://github.com/aagedal/homebrew-casks/releases")!) {
+                    Text("Download")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 3)
+                        .background(.white.opacity(0.2), in: .capsule)
+                }
+
+                Button {
+                    withAnimation { updateBannerDismissed = true }
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(.white.opacity(0.7))
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .background(.blue.opacity(0.85), in: .capsule)
+            .padding(.top, 36)
+
+            Spacer()
+        }
+        .transition(.move(edge: .top).combined(with: .opacity))
+        .allowsHitTesting(true)
     }
 
     // MARK: - Overlay Auto-Hide
