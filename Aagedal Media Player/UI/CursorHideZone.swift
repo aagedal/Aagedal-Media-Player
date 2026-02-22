@@ -75,8 +75,22 @@ final class CursorHideNSView: NSView {
 
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
-        if window != nil {
+        NotificationCenter.default.removeObserver(self, name: NSWindow.willEnterFullScreenNotification, object: nil)
+        NotificationCenter.default.removeObserver(self, name: NSWindow.willExitFullScreenNotification, object: nil)
+        if let window {
             updateTrackingAreas()
+            NotificationCenter.default.addObserver(self, selector: #selector(windowWillTransition),
+                                                   name: NSWindow.willEnterFullScreenNotification, object: window)
+            NotificationCenter.default.addObserver(self, selector: #selector(windowWillTransition),
+                                                   name: NSWindow.willExitFullScreenNotification, object: window)
+        }
+    }
+
+    @objc private func windowWillTransition(_ notification: Notification) {
+        if isHovering {
+            isHovering = false
+            Self.ensureCursorVisible()
+            onHoverChanged?(false)
         }
     }
 
@@ -85,6 +99,7 @@ final class CursorHideNSView: NSView {
             isHovering = false
             Self.ensureCursorVisible()
         }
+        NotificationCenter.default.removeObserver(self)
         super.removeFromSuperview()
     }
 
@@ -92,5 +107,6 @@ final class CursorHideNSView: NSView {
         if isHovering {
             Self.ensureCursorVisible()
         }
+        NotificationCenter.default.removeObserver(self)
     }
 }

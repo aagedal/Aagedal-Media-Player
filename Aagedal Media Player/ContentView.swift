@@ -239,15 +239,32 @@ struct ContentView: View {
     private var cursorHideZone: some View {
         HStack {
             Spacer()
-            CursorHideZone { hovering in
-                isHoveringRightEdge = hovering
-                if hovering {
-                    showOverlay = false
-                    overlayHideTask?.cancel()
-                } else {
-                    showOverlay = true
-                    scheduleOverlayHide()
+            ZStack {
+                CursorHideZone { hovering in
+                    isHoveringRightEdge = hovering
+                    if hovering {
+                        showOverlay = false
+                        overlayHideTask?.cancel()
+                    } else {
+                        showOverlay = true
+                        scheduleOverlayHide()
+                    }
                 }
+
+                // Discoverability hint — visible with overlay, hidden with it
+                RoundedRectangle(cornerRadius: 6)
+                    .strokeBorder(style: StrokeStyle(lineWidth: 1, dash: [4, 4]))
+                    .foregroundStyle(.white.opacity(0.25))
+                    .overlay {
+                        Image(systemName: "cursorarrow")
+                            .font(.system(size: 14))
+                            .foregroundStyle(.white.opacity(0.3))
+                    }
+                    .padding(6)
+                    .opacity(showOverlay && !isHoveringRightEdge ? 1 : 0)
+                    .animation(.easeInOut(duration: 0.3), value: showOverlay)
+                    .animation(.easeInOut(duration: 0.3), value: isHoveringRightEdge)
+                    .allowsHitTesting(false)
             }
             .frame(width: rightEdgeWidth)
         }
