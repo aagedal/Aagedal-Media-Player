@@ -6,8 +6,8 @@
 
 import Foundation
 
-struct MediaMetadata: Equatable, Sendable {
-    struct Ratio: Equatable, Sendable {
+struct MediaMetadata: Equatable, Sendable, Codable {
+    struct Ratio: Equatable, Sendable, Codable {
         let numerator: Int
         let denominator: Int
         let stringValue: String
@@ -56,7 +56,7 @@ struct MediaMetadata: Equatable, Sendable {
         }
     }
 
-    struct FrameRate: Equatable, Sendable {
+    struct FrameRate: Equatable, Sendable, Codable {
         let numerator: Int
         let denominator: Int
         let stringValue: String
@@ -102,7 +102,7 @@ struct MediaMetadata: Equatable, Sendable {
     let encoder: String?
     let frameCount: Int?
 
-    struct VideoStream: Equatable, Sendable {
+    struct VideoStream: Equatable, Sendable, Codable {
         let codec: String?
         let codecLongName: String?
         let profile: String?
@@ -124,7 +124,7 @@ struct MediaMetadata: Equatable, Sendable {
         let isInterlaced: Bool?
     }
 
-    struct AudioStream: Equatable, Sendable {
+    struct AudioStream: Equatable, Sendable, Codable {
         let index: Int?
         let languageCode: String?
         let title: String?
@@ -139,7 +139,7 @@ struct MediaMetadata: Equatable, Sendable {
         let isDefault: Bool
     }
 
-    struct SubtitleStream: Equatable, Sendable {
+    struct SubtitleStream: Equatable, Sendable, Codable {
         let index: Int?
         let languageCode: String?
         let title: String?

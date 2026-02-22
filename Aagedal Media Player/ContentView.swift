@@ -25,6 +25,7 @@ struct ContentView: View {
     @State private var isEditingTimecode = false
     @State private var timecodeActivationTrigger: String?
     @State private var nsWindow: NSWindow?
+    @AppStorage("showCursorHideHint") private var showCursorHideHint = true
 
     private let windowID = UUID()
     private let rightEdgeWidth: CGFloat = 60
@@ -252,25 +253,27 @@ struct ContentView: View {
                 }
 
                 // Discoverability hint — visible with overlay, hidden with it
-                RoundedRectangle(cornerRadius: 6)
-                    .strokeBorder(style: StrokeStyle(lineWidth: 1, dash: [4, 4]))
-                    .foregroundStyle(.white.opacity(0.25))
-                    .overlay {
-                        ZStack {
-                            Image(systemName: "cursorarrow")
-                                .font(.system(size: 14))
-                            // Diagonal slash through the cursor
-                            Rectangle()
-                                .frame(width: 18, height: 1.5)
-                                .rotationEffect(.degrees(-45))
+                if showCursorHideHint {
+                    RoundedRectangle(cornerRadius: 6)
+                        .strokeBorder(style: StrokeStyle(lineWidth: 1, dash: [4, 4]))
+                        .foregroundStyle(.white.opacity(0.25))
+                        .overlay {
+                            ZStack {
+                                Image(systemName: "cursorarrow")
+                                    .font(.system(size: 14))
+                                // Diagonal slash through the cursor
+                                Rectangle()
+                                    .frame(width: 18, height: 1.5)
+                                    .rotationEffect(.degrees(-45))
+                            }
+                            .foregroundStyle(.white.opacity(0.3))
                         }
-                        .foregroundStyle(.white.opacity(0.3))
-                    }
-                    .padding(6)
-                    .opacity(showOverlay && !isHoveringRightEdge ? 1 : 0)
-                    .animation(.easeInOut(duration: 0.3), value: showOverlay)
-                    .animation(.easeInOut(duration: 0.3), value: isHoveringRightEdge)
-                    .allowsHitTesting(false)
+                        .padding(6)
+                        .opacity(showOverlay && !isHoveringRightEdge ? 1 : 0)
+                        .animation(.easeInOut(duration: 0.3), value: showOverlay)
+                        .animation(.easeInOut(duration: 0.3), value: isHoveringRightEdge)
+                        .allowsHitTesting(false)
+                }
             }
             .frame(width: rightEdgeWidth)
         }

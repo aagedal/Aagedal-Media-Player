@@ -5,11 +5,13 @@
 // Inspector panel showing file metadata: container, codec, resolution, etc.
 
 import SwiftUI
+import AppKit
 
 struct MetadataInspectorView: View {
     let item: MediaItem
     let useMPV: Bool
     @Binding var isPresented: Bool
+    @State private var showCopiedConfirmation = false
 
     private var metadata: MediaMetadata? { item.metadata }
     private var video: MediaMetadata.VideoStream? { metadata?.videoStreams.first }
@@ -153,6 +155,14 @@ struct MetadataInspectorView: View {
                     }
                     .buttonStyle(.plain)
                     .help("Reveal in Finder")
+                    Button(action: { copyMetadataAsJSON() }) {
+                        Image(systemName: showCopiedConfirmation ? "checkmark" : "doc.on.doc")
+                            .font(.system(size: 14))
+                            .foregroundColor(showCopiedConfirmation ? .green : .secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Copy metadata as JSON")
+                    .disabled(metadata == nil)
                     Button(action: { isPresented = false }) {
                         Image(systemName: "xmark.circle.fill")
                             .font(.system(size: 16))
@@ -191,6 +201,22 @@ struct MetadataInspectorView: View {
 
     private func revealInFinder() {
         NSWorkspace.shared.activateFileViewerSelecting([item.url])
+    }
+
+    private func copyMetadataAsJSON() {
+        guard let metadata = metadata else { return }
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        guard let data = try? encoder.encode(metadata),
+              let json = String(data: data, encoding: .utf8) else { return }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(json, forType: .string)
+
+        withAnimation { showCopiedConfirmation = true }
+        Task {
+            try? await Task.sleep(for: .seconds(1.5))
+            withAnimation { showCopiedConfirmation = false }
+        }
     }
 
     // MARK: - Badges

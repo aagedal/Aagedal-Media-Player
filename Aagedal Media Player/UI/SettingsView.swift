@@ -125,6 +125,7 @@ struct SettingsView: View {
 private struct GeneralSettingsView: View {
     @AppStorage("allowMultipleWindows") private var allowMultipleWindows = false
     @AppStorage("syncPlaybackControls") private var syncPlaybackControls = false
+    @AppStorage("showCursorHideHint") private var showCursorHideHint = true
     @AppStorage("precisionScrubFactor") private var precisionScrubFactor: Double = 10.0
 
     @State private var screenshotMode: SaveLocationMode = .custom
@@ -141,6 +142,7 @@ private struct GeneralSettingsView: View {
                 if allowMultipleWindows {
                     Toggle("Sync Playback Controls", isOn: $syncPlaybackControls)
                 }
+                Toggle("Show Cursor Hide Zone Indicator", isOn: $showCursorHideHint)
             }
 
             Section("Playback") {
