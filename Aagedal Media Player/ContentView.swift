@@ -113,20 +113,21 @@ struct ContentView: View {
                 showTrafficLights: isHoveringWindow && !isHoveringRightEdge,
                 onWindowAvailable: { window in
                     if nsWindow !== window {
-                        // Close extra windows that SwiftUI creates via URL routing:
-                        // in single-window mode, or when the file was routed to
-                        // an existing empty window in multi-window mode.
-                        if WindowManager.shared.fileRoutedToExistingWindow ||
-                            (!WindowManager.shared.allowMultipleWindows && WindowManager.shared.hasWindows) {
-                            WindowManager.shared.fileRoutedToExistingWindow = false
+                        let wm = WindowManager.shared
+                        // Allow the very first window unconditionally.
+                        // For subsequent windows, only allow if explicitly requested
+                        // (windowCreationAllowed). This blocks unwanted windows
+                        // that SwiftUI creates via URL routing.
+                        if wm.hasWindows && !wm.windowCreationAllowed {
                             window.orderOut(nil)
                             DispatchQueue.main.async {
                                 window.close()
                             }
                             return
                         }
+                        wm.windowCreationAllowed = false
                         nsWindow = window
-                        WindowManager.shared.register(id: windowID, window: window)
+                        wm.register(id: windowID, window: window)
                     }
                 }
             )
@@ -154,13 +155,22 @@ struct ContentView: View {
             }
         }
         .task {
+            // Wait for this window to be accepted by onWindowAvailable.
+            // Rejected windows (closed by the guard) never get nsWindow set
+            // and must not consume pendingFileURL.
+            for _ in 0..<20 {
+                if nsWindow != nil { break }
+                try? await Task.sleep(for: .milliseconds(25))
+            }
+            guard nsWindow != nil else { return }
+
             // Handle file passed via Finder: application(_:open:) may set
             // pendingFileURL before or after this view appears during launch.
             for _ in 0..<10 {
                 if let url = WindowManager.shared.pendingFileURL {
                     WindowManager.shared.pendingFileURL = nil
                     openFile(url: url)
-                    (nsWindow ?? NSApp.windows.first)?.makeKeyAndOrderFront(nil)
+                    nsWindow?.makeKeyAndOrderFront(nil)
                     NSApp.activate()
                     return
                 }
@@ -518,7 +528,13 @@ private struct NotificationHandlers: ViewModifier {
                 openFilePanel()
             }
             .onReceive(NotificationCenter.default.publisher(for: .openFileURL)) { notification in
-                guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
+                // When a target window is specified, only that window handles the file.
+                // Otherwise fall back to key-window routing via isActiveWindow.
+                if let targetWindow = notification.userInfo?["targetWindow"] as? NSWindow {
+                    guard targetWindow === nsWindow else { return }
+                } else {
+                    guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
+                }
                 if let url = notification.object as? URL {
                     openFile(url)
                 }

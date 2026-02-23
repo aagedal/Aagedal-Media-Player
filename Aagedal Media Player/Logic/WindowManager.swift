@@ -19,9 +19,11 @@ final class WindowManager {
     private var windowsWithMedia: Set<UUID> = []
     var pendingFileURL: URL?
 
-    /// Set when a file-open event was routed to an existing empty window,
-    /// so the extra window SwiftUI creates via URL routing can be closed.
-    var fileRoutedToExistingWindow = false
+    /// When true, the next SwiftUI-created window is allowed to appear.
+    /// Defaults to false — only set to true before intentional window creation
+    /// (e.g. "New Window" menu, or Finder open with no empty windows).
+    /// This prevents SwiftUI's URL routing from spawning unwanted windows.
+    var windowCreationAllowed = false
 
     /// Stored by ContentView from its `@Environment(\.openWindow)` so that
     /// non-View code (menus, AppDelegate) can open new WindowGroup windows.

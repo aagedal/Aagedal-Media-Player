@@ -116,6 +116,9 @@ final class PlayerController: ObservableObject {
 
         // Always prepare if it's a new file, or if it's the first load
         if previousURL != item.url || !isReady {
+            currentPlaybackTime = 0
+            trimIn = nil
+            trimOut = nil
             videoAspectRatio = nil
             preparePlayback(startTime: 0)
         }

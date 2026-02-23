@@ -33,6 +33,7 @@ struct Aagedal_Media_PlayerApp: App {
             CommandGroup(replacing: .newItem) {
                 if allowMultipleWindows {
                     Button("New Window") {
+                        WindowManager.shared.windowCreationAllowed = true
                         WindowManager.shared.openNewWindow?()
                     }
                     .keyboardShortcut("n")
@@ -163,23 +164,33 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func application(_ application: NSApplication, open urls: [URL]) {
         guard let url = urls.first else { return }
+        let wm = WindowManager.shared
 
-        if WindowManager.shared.allowMultipleWindows {
-            if let emptyWindow = WindowManager.shared.firstEmptyWindow() {
+        if wm.allowMultipleWindows {
+            if let emptyWindow = wm.firstEmptyWindow() {
                 // Reuse an existing empty window
                 emptyWindow.makeKeyAndOrderFront(nil)
-                WindowManager.shared.fileRoutedToExistingWindow = true
-                NotificationCenter.default.post(name: .openFileURL, object: url)
+                NotificationCenter.default.post(
+                    name: .openFileURL, object: url,
+                    userInfo: ["targetWindow": emptyWindow])
+            } else if let openNew = wm.openNewWindow {
+                // All windows have media — explicitly create a new one
+                wm.windowCreationAllowed = true
+                wm.pendingFileURL = url
+                openNew()
             } else {
-                // No empty windows — let SwiftUI create a new one
-                WindowManager.shared.pendingFileURL = url
+                // App is still launching — store URL for initial window
+                wm.pendingFileURL = url
             }
-        } else if WindowManager.shared.hasWindows {
+        } else if let window = wm.windows.values.compactMap(\.window).first {
             // Single-window: replace content in the existing window
-            NotificationCenter.default.post(name: .openFileURL, object: url)
+            window.makeKeyAndOrderFront(nil)
+            NotificationCenter.default.post(
+                name: .openFileURL, object: url,
+                userInfo: ["targetWindow": window])
         } else {
             // App is still launching — store URL for ContentView.onAppear
-            WindowManager.shared.pendingFileURL = url
+            wm.pendingFileURL = url
         }
 
         // Bring the app to the foreground when opened via file association
