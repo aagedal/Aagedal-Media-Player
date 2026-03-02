@@ -377,9 +377,9 @@ final class PlayerController: ObservableObject {
             currentPlaybackSpeed = mpv.rate
         } else if let player = player {
             let current = player.rate
-            let step: Float = 1.0
+            let step: Float = 0.5
             let newRate = forward ? current + step : current - step
-            player.rate = newRate
+            player.rate = max(0.25, min(newRate, 8.0))
             currentPlaybackSpeed = player.rate
         }
     }
