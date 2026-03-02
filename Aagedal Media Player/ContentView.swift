@@ -640,6 +640,19 @@ private struct NotificationHandlers: ViewModifier {
                 let hasSourceTC = controller.mediaItem.flatMap { TimecodeFormatter.effectiveStartTimecode(for: $0) } != nil
                 timecodeMode.toggle(hasSourceTimecode: hasSourceTC)
             }
+            // Sync timecode — active window reads its time and broadcasts
+            .onReceive(NotificationCenter.default.publisher(for: .syncTimecode)) { _ in
+                guard WindowManager.shared.isActiveWindow(nsWindow), isMediaLoaded else { return }
+                let time = controller.currentPlaybackTime
+                NotificationCenter.default.post(name: .seekToSyncedTime, object: NSNumber(value: time))
+            }
+            // Sync timecode — non-active windows seek to the broadcast time
+            .onReceive(NotificationCenter.default.publisher(for: .seekToSyncedTime)) { notification in
+                guard !WindowManager.shared.isActiveWindow(nsWindow), isMediaLoaded else { return }
+                if let time = (notification.object as? NSNumber)?.doubleValue {
+                    controller.seekTo(time)
+                }
+            }
             .onReceive(NotificationCenter.default.publisher(for: NSApplication.didResignActiveNotification)) { _ in
                 guard isMediaLoaded, !isEditingTimecode else { return }
                 overlayHideTask?.cancel()

@@ -107,6 +107,14 @@ struct Aagedal_Media_PlayerApp: App {
                 }
                 .keyboardShortcut("f")
                 .disabled(!mediaLoaded)
+
+                Divider()
+
+                Button("Sync Timecode") {
+                    NotificationCenter.default.post(name: .syncTimecode, object: nil)
+                }
+                .keyboardShortcut("=", modifiers: [.command, .shift])
+                .disabled(!mediaLoaded)
             }
         }
 
@@ -228,4 +236,6 @@ extension Notification.Name {
     static let seekBySeconds = Notification.Name("seekBySeconds")
     static let seekToEdge = Notification.Name("seekToEdge")
     static let toggleFullscreen = Notification.Name("toggleFullscreen")
+    static let syncTimecode = Notification.Name("syncTimecode")
+    static let seekToSyncedTime = Notification.Name("seekToSyncedTime")
 }
