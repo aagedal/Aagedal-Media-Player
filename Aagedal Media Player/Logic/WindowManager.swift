@@ -31,6 +31,11 @@ final class WindowManager {
     /// Finder open on launch. Prevents duplicate spawning from later windows.
     var pendingWindowsSpawned = false
 
+    /// True while the app is processing a file-open event from Finder/dock.
+    /// Used by ContentView to auto-close windows that remain empty while
+    /// other windows successfully loaded media.
+    var fileOpenInProgress = false
+
     /// Stored by ContentView from its `@Environment(\.openWindow)` so that
     /// non-View code (menus, AppDelegate) can open new WindowGroup windows.
     var openNewWindow: (() -> Void)?
@@ -82,6 +87,11 @@ final class WindowManager {
         let liveWindows = windows.values.compactMap(\.window)
         if liveWindows.count <= 1 { return true }
         return window.isKeyWindow
+    }
+
+    /// Returns true if any window *other* than the given one has loaded media.
+    func otherWindowsHaveMedia(excluding id: UUID) -> Bool {
+        windowsWithMedia.contains { $0 != id }
     }
 
     /// Returns true if this window should handle syncable playback commands

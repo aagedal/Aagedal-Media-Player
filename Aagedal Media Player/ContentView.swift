@@ -195,6 +195,7 @@ struct ContentView: View {
             // Handle file(s) passed via Finder: application(_:open:) may
             // populate pendingFileURLs before or after this view appears.
             for _ in 0..<10 {
+                if controller.mediaItem != nil { return }
                 if !WindowManager.shared.pendingFileURLs.isEmpty {
                     let url = WindowManager.shared.pendingFileURLs.removeFirst()
                     openFile(url: url)
@@ -203,6 +204,19 @@ struct ContentView: View {
                     return
                 }
                 try? await Task.sleep(for: .milliseconds(50))
+            }
+
+            // Safety net: if the app was opened with files but this window
+            // didn't receive one (e.g. system-created extra window), close
+            // it once another window has successfully loaded media.
+            guard WindowManager.shared.fileOpenInProgress else { return }
+            for _ in 0..<20 {
+                try? await Task.sleep(for: .milliseconds(100))
+                if controller.mediaItem != nil { return }
+                if WindowManager.shared.otherWindowsHaveMedia(excluding: windowID) {
+                    nsWindow?.close()
+                    return
+                }
             }
         }
         .onDisappear {

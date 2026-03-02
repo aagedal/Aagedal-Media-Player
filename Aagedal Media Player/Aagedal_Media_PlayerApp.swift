@@ -165,6 +165,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func application(_ application: NSApplication, open urls: [URL]) {
         guard !urls.isEmpty else { return }
         let wm = WindowManager.shared
+        wm.fileOpenInProgress = true
 
         if wm.allowMultipleWindows {
             if let openNew = wm.openNewWindow {
