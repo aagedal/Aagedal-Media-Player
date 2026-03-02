@@ -183,8 +183,12 @@ struct MetadataInspectorView: View {
                             if let badge = resolutionBadge(video) {
                                 mediaBadge(badge.label, color: badge.color)
                             }
-                            mediaBadge(isHDR(video) ? "HDR" : "SDR",
-                                       color: isHDR(video) ? .orange : .gray)
+                            if isRAW(video) {
+                                mediaBadge("RAW", color: .purple)
+                            } else {
+                                mediaBadge(isHDR(video) ? "HDR" : "SDR",
+                                           color: isHDR(video) ? .orange : .gray)
+                            }
                         }
                         if let metadata = metadata, let badge = audioBadge(metadata) {
                             mediaBadge(badge.label, color: badge.color)
@@ -284,6 +288,11 @@ struct MetadataInspectorView: View {
             label: labels.joined(separator: " + "),
             color: hasSurround ? .teal : .gray
         )
+    }
+
+    private func isRAW(_ video: MediaMetadata.VideoStream) -> Bool {
+        guard let pixFmt = video.pixelFormat?.lowercased() else { return false }
+        return pixFmt.contains("bayer")
     }
 
     private func isHDR(_ video: MediaMetadata.VideoStream) -> Bool {

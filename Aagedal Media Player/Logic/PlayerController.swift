@@ -171,11 +171,17 @@ final class PlayerController: ObservableObject {
         return proresCodecs.contains { codec.contains($0) }
     }
 
-    /// Check if the video codec is ProRes RAW (which MPV cannot decode)
+    /// Check if the video codec is ProRes RAW (which MPV cannot decode).
+    /// Detects via bayer pixel format (most reliable) or codec FourCC tags.
     private var hasProResRAWVideoCodec: Bool {
-        guard let videoStream = mediaItem?.metadata?.primaryVideoStream,
-              let codec = videoStream.codec?.lowercased() else { return false }
-        return codec.contains("aprn") || codec.contains("aprh")
+        guard let videoStream = mediaItem?.metadata?.primaryVideoStream else { return false }
+        if let pixFmt = videoStream.pixelFormat?.lowercased(), pixFmt.contains("bayer") {
+            return true
+        }
+        if let codec = videoStream.codec?.lowercased() {
+            return codec.contains("aprn") || codec.contains("aprh")
+        }
+        return false
     }
 
     func preparePlayback(startTime: TimeInterval, resetAudioSelection: Bool = true) {
