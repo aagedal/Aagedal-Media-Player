@@ -653,6 +653,11 @@ private struct NotificationHandlers: ViewModifier {
                     controller.seekTo(time)
                 }
             }
+            .onReceive(NotificationCenter.default.publisher(for: .reloadPlayer)) { _ in
+                guard WindowManager.shared.isActiveWindow(nsWindow), isMediaLoaded else { return }
+                let time = controller.currentPlaybackTime
+                controller.preparePlayback(startTime: time, resetAudioSelection: false)
+            }
             .onReceive(NotificationCenter.default.publisher(for: NSApplication.didResignActiveNotification)) { _ in
                 guard isMediaLoaded, !isEditingTimecode else { return }
                 overlayHideTask?.cancel()

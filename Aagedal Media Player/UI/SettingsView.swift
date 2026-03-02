@@ -363,6 +363,7 @@ private struct KeyboardShortcutsView: View {
                     ("T", "Cycle timecode display"),
                     ("\u{2318}I", "Toggle inspector"),
                     ("\u{2318}O", "Open file"),
+                    ("\u{21E7}\u{2318}R", "Reload player"),
                     ("\u{2318},", "Settings"),
                 ])
             }

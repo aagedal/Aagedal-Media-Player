@@ -115,6 +115,14 @@ struct Aagedal_Media_PlayerApp: App {
                 }
                 .keyboardShortcut("s", modifiers: [.command, .shift])
                 .disabled(!mediaLoaded)
+
+                Divider()
+
+                Button("Reload Player") {
+                    NotificationCenter.default.post(name: .reloadPlayer, object: nil)
+                }
+                .keyboardShortcut("r", modifiers: [.command, .shift])
+                .disabled(!mediaLoaded)
             }
         }
 
@@ -238,4 +246,5 @@ extension Notification.Name {
     static let toggleFullscreen = Notification.Name("toggleFullscreen")
     static let syncTimecode = Notification.Name("syncTimecode")
     static let seekToSyncedTime = Notification.Name("seekToSyncedTime")
+    static let reloadPlayer = Notification.Name("reloadPlayer")
 }
