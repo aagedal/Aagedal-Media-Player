@@ -171,6 +171,13 @@ final class PlayerController: ObservableObject {
         return proresCodecs.contains { codec.contains($0) }
     }
 
+    /// Check if the video codec is ProRes RAW (which MPV cannot decode)
+    private var hasProResRAWVideoCodec: Bool {
+        guard let videoStream = mediaItem?.metadata?.primaryVideoStream,
+              let codec = videoStream.codec?.lowercased() else { return false }
+        return codec.contains("aprn") || codec.contains("aprh")
+    }
+
     func preparePlayback(startTime: TimeInterval, resetAudioSelection: Bool = true) {
         teardown(resetAudioSelection: resetAudioSelection)
         preparationID &+= 1
@@ -189,6 +196,13 @@ final class PlayerController: ObservableObject {
         // Force MPV for surround audio files (unless ProRes)
         if hasSurroundAudio && !hasProResVideoCodec {
             logger.info("Surround audio detected with non-ProRes codec, using MPV player for \(url.lastPathComponent)")
+            setupMPV(url: url, startTime: startTime)
+            return
+        }
+
+        // Honor "Always Use MPV" setting (except for ProRes RAW which MPV can't decode)
+        if UserDefaults.standard.bool(forKey: "alwaysUseMPV") && !hasProResRAWVideoCodec {
+            logger.info("Always Use MPV enabled, using MPV player for \(url.lastPathComponent)")
             setupMPV(url: url, startTime: startTime)
             return
         }

@@ -130,6 +130,7 @@ private struct GeneralSettingsView: View {
     @AppStorage("syncPlaybackControls") private var syncPlaybackControls = false
     @AppStorage("showCursorHideHint") private var showCursorHideHint = true
     @AppStorage("precisionScrubFactor") private var precisionScrubFactor: Double = 10.0
+    @AppStorage("alwaysUseMPV") private var alwaysUseMPV = false
 
     @State private var screenshotMode: SaveLocationMode = .custom
     @State private var screenshotFormat: ScreenshotFormat = .jxl
@@ -149,6 +150,12 @@ private struct GeneralSettingsView: View {
             }
 
             Section("Playback") {
+                Toggle("Always Use MPV Player", isOn: $alwaysUseMPV)
+                if alwaysUseMPV {
+                    Text("ProRes RAW always uses Apple AVFoundation.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
                 LabeledContent("Precision Scrub") {
                     HStack(spacing: 8) {
                         Slider(value: $precisionScrubFactor, in: 2...20, step: 1)
