@@ -113,7 +113,7 @@ struct Aagedal_Media_PlayerApp: App {
                 Button("Sync Timecode") {
                     NotificationCenter.default.post(name: .syncTimecode, object: nil)
                 }
-                .keyboardShortcut("=", modifiers: [.command, .shift])
+                .keyboardShortcut("s", modifiers: [.command, .shift])
                 .disabled(!mediaLoaded)
             }
         }
