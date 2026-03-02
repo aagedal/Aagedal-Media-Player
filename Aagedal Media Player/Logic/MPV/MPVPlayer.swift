@@ -120,6 +120,9 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         checkError(mpv_set_option_string(mpv, "gpu-context", "moltenvk"))
         checkError(mpv_set_option_string(mpv, "hwdec", "videotoolbox"))
 
+        checkError(mpv_set_option_string(mpv, "framedrop", "decoder+vo"))
+        checkError(mpv_set_option_string(mpv, "vd-lavc-framedrop", "nonref"))
+
         checkError(mpv_set_option_string(mpv, "target-colorspace-hint", "yes"))
         checkError(mpv_set_option_string(mpv, "keep-open", "yes"))
         checkError(mpv_set_option_string(mpv, "deinterlace", "auto"))
