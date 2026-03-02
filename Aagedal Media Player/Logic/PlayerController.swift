@@ -367,7 +367,7 @@ final class PlayerController: ObservableObject {
             let current = mpv.rate
             let step: Float = 0.5
             let newRate = forward ? current + step : current - step
-            mpv.rate = max(0.25, min(newRate, 4.0))
+            mpv.rate = max(0.25, min(newRate, 8.0))
             currentPlaybackSpeed = mpv.rate
         } else if let player = player {
             let current = player.rate
@@ -382,7 +382,7 @@ final class PlayerController: ObservableObject {
         guard isReady else { return }
 
         if isReverseSimulating {
-            reverseSpeed = min(reverseSpeed + 1, 4)
+            reverseSpeed = min(reverseSpeed + 1, 8)
             reverseTimer?.invalidate()
             let interval = (1.0/24.0) / Double(reverseSpeed)
             reverseTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
