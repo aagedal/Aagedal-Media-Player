@@ -77,12 +77,15 @@ final class CursorHideNSView: NSView {
         super.viewDidMoveToWindow()
         NotificationCenter.default.removeObserver(self, name: NSWindow.willEnterFullScreenNotification, object: nil)
         NotificationCenter.default.removeObserver(self, name: NSWindow.willExitFullScreenNotification, object: nil)
+        NotificationCenter.default.removeObserver(self, name: NSWindow.willCloseNotification, object: nil)
         if let window {
             updateTrackingAreas()
             NotificationCenter.default.addObserver(self, selector: #selector(windowWillTransition),
                                                    name: NSWindow.willEnterFullScreenNotification, object: window)
             NotificationCenter.default.addObserver(self, selector: #selector(windowWillTransition),
                                                    name: NSWindow.willExitFullScreenNotification, object: window)
+            NotificationCenter.default.addObserver(self, selector: #selector(windowWillTransition),
+                                                   name: NSWindow.willCloseNotification, object: window)
         }
     }
 
