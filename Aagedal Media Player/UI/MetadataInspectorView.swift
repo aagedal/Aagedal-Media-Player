@@ -82,32 +82,25 @@ struct MetadataInspectorView: View {
                 }
 
                 // Audio
-                if let audio = audio {
-                    Section("Audio") {
-                        if let codec = audio.codec {
-                            metadataRow("Codec", value: codecDisplayName(codec, profile: audio.profile))
+                ForEach(Array(metadata.audioStreams.enumerated()), id: \.offset) { index, stream in
+                    let title = metadata.audioStreams.count > 1
+                        ? "Audio \(streamLabel(stream, index: index + 1))"
+                        : "Audio"
+                    Section(title) {
+                        if let codec = stream.codec {
+                            metadataRow("Codec", value: codecDisplayName(codec, profile: stream.profile))
                         }
-                        if let channels = audio.channels {
-                            metadataRow("Channels", value: channelDescription(channels, layout: audio.channelLayout))
+                        if let channels = stream.channels {
+                            metadataRow("Channels", value: channelDescription(channels, layout: stream.channelLayout))
                         }
-                        if let sampleRate = audio.sampleRate {
+                        if let sampleRate = stream.sampleRate {
                             metadataRow("Sample Rate", value: formatSampleRate(sampleRate))
                         }
-                        if let bitDepth = audio.bitDepth {
+                        if let bitDepth = stream.bitDepth {
                             metadataRow("Bit Depth", value: "\(bitDepth)-bit")
                         }
-                        if let bitRate = audio.bitRate, bitRate > 0 {
+                        if let bitRate = stream.bitRate, bitRate > 0 {
                             metadataRow("Bit Rate", value: formatBitRate(bitRate))
-                        }
-                    }
-                }
-
-                // Additional audio streams
-                if metadata.audioStreams.count > 1 {
-                    Section("Additional Audio Tracks") {
-                        ForEach(Array(metadata.audioStreams.dropFirst().enumerated()), id: \.offset) { index, stream in
-                            let label = streamLabel(stream, index: index + 2)
-                            metadataRow(label, value: audioStreamSummary(stream))
                         }
                     }
                 }
