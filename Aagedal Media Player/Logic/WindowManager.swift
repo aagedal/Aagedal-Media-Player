@@ -17,13 +17,19 @@ final class WindowManager {
 
     private(set) var windows: [UUID: WeakWindow] = [:]
     private var windowsWithMedia: Set<UUID> = []
-    var pendingFileURL: URL?
 
-    /// When true, the next SwiftUI-created window is allowed to appear.
-    /// Defaults to false — only set to true before intentional window creation
-    /// (e.g. "New Window" menu, or Finder open with no empty windows).
-    /// This prevents SwiftUI's URL routing from spawning unwanted windows.
-    var windowCreationAllowed = false
+    /// URLs queued for new windows that haven't appeared yet.
+    /// Each new window's `.task` pops one URL from this array.
+    var pendingFileURLs: [URL] = []
+
+    /// Counter of explicitly requested windows that are allowed to appear.
+    /// Decremented as windows are accepted in onWindowAvailable.
+    /// Prevents SwiftUI's URL routing from spawning unwanted windows.
+    var windowsToAllow = 0
+
+    /// Set after the first window spawns additional windows for a multi-file
+    /// Finder open on launch. Prevents duplicate spawning from later windows.
+    var pendingWindowsSpawned = false
 
     /// Stored by ContentView from its `@Environment(\.openWindow)` so that
     /// non-View code (menus, AppDelegate) can open new WindowGroup windows.

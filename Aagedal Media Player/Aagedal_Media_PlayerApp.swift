@@ -33,7 +33,7 @@ struct Aagedal_Media_PlayerApp: App {
             CommandGroup(replacing: .newItem) {
                 if allowMultipleWindows {
                     Button("New Window") {
-                        WindowManager.shared.windowCreationAllowed = true
+                        WindowManager.shared.windowsToAllow += 1
                         WindowManager.shared.openNewWindow?()
                     }
                     .keyboardShortcut("n")
@@ -163,34 +163,43 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func application(_ application: NSApplication, open urls: [URL]) {
-        guard let url = urls.first else { return }
+        guard !urls.isEmpty else { return }
         let wm = WindowManager.shared
 
         if wm.allowMultipleWindows {
-            if let emptyWindow = wm.firstEmptyWindow() {
-                // Reuse an existing empty window
-                emptyWindow.makeKeyAndOrderFront(nil)
-                NotificationCenter.default.post(
-                    name: .openFileURL, object: url,
-                    userInfo: ["targetWindow": emptyWindow])
-            } else if let openNew = wm.openNewWindow {
-                // All windows have media — explicitly create a new one
-                wm.windowCreationAllowed = true
-                wm.pendingFileURL = url
-                openNew()
+            if let openNew = wm.openNewWindow {
+                // App is running — route each file individually.
+                // Mark spawned so .onAppear on new windows won't double-spawn.
+                wm.pendingWindowsSpawned = true
+                for url in urls {
+                    if let emptyWindow = wm.firstEmptyWindow() {
+                        emptyWindow.makeKeyAndOrderFront(nil)
+                        NotificationCenter.default.post(
+                            name: .openFileURL, object: url,
+                            userInfo: ["targetWindow": emptyWindow])
+                    } else {
+                        wm.windowsToAllow += 1
+                        wm.pendingFileURLs.append(url)
+                        openNew()
+                    }
+                }
             } else {
-                // App is still launching — store URL for initial window
-                wm.pendingFileURL = url
+                // App is still launching — store all URLs; the first window
+                // will load one and spawn windows for the rest.
+                wm.pendingFileURLs = urls
             }
         } else if let window = wm.windows.values.compactMap(\.window).first {
-            // Single-window: replace content in the existing window
+            // Single-window: replace content with the first file
+            guard let url = urls.first else { return }
             window.makeKeyAndOrderFront(nil)
             NotificationCenter.default.post(
                 name: .openFileURL, object: url,
                 userInfo: ["targetWindow": window])
         } else {
-            // App is still launching — store URL for ContentView.onAppear
-            wm.pendingFileURL = url
+            // App is still launching — store first URL for initial window
+            if let url = urls.first {
+                wm.pendingFileURLs = [url]
+            }
         }
 
         // Bring the app to the foreground when opened via file association

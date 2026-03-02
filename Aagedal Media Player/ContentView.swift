@@ -115,17 +115,33 @@ struct ContentView: View {
                     if nsWindow !== window {
                         let wm = WindowManager.shared
                         // Allow the very first window unconditionally.
-                        // For subsequent windows, only allow if explicitly requested
-                        // (windowCreationAllowed). This blocks unwanted windows
-                        // that SwiftUI creates via URL routing.
-                        if wm.hasWindows && !wm.windowCreationAllowed {
+                        // For subsequent windows, only allow if explicitly
+                        // requested (windowsToAllow > 0). This blocks unwanted
+                        // windows that SwiftUI creates via URL routing.
+                        if wm.hasWindows && wm.windowsToAllow <= 0 {
                             window.orderOut(nil)
                             DispatchQueue.main.async {
                                 window.close()
                             }
                             return
                         }
-                        wm.windowCreationAllowed = false
+                        if wm.windowsToAllow > 0 { wm.windowsToAllow -= 1 }
+
+                        // Cascade new windows so they don't stack on top of each other.
+                        // Count before registering so the current window isn't included.
+                        // Deferred so it runs after SwiftUI finishes positioning the window.
+                        let existingCount = wm.windows.values.filter({ $0.window != nil }).count
+                        if existingCount > 0 {
+                            DispatchQueue.main.async {
+                                guard window.isVisible else { return }
+                                let offset = CGFloat(existingCount) * 12
+                                var frame = window.frame
+                                frame.origin.x += offset
+                                frame.origin.y -= offset
+                                window.setFrameOrigin(frame.origin)
+                            }
+                        }
+
                         nsWindow = window
                         wm.register(id: windowID, window: window)
                     }
@@ -153,22 +169,34 @@ struct ContentView: View {
             WindowManager.shared.openNewWindow = { [openWindow] in
                 openWindow(id: "player")
             }
+
+            // On first launch with multiple files, the first window spawns
+            // additional windows for the remaining URLs.
+            let wm = WindowManager.shared
+            if !wm.pendingWindowsSpawned && wm.pendingFileURLs.count > 1 {
+                wm.pendingWindowsSpawned = true
+                let extra = wm.pendingFileURLs.count - 1
+                wm.windowsToAllow += extra
+                for _ in 0..<extra {
+                    openWindow(id: "player")
+                }
+            }
         }
         .task {
             // Wait for this window to be accepted by onWindowAvailable.
             // Rejected windows (closed by the guard) never get nsWindow set
-            // and must not consume pendingFileURL.
+            // and must not consume pending URLs.
             for _ in 0..<20 {
                 if nsWindow != nil { break }
                 try? await Task.sleep(for: .milliseconds(25))
             }
             guard nsWindow != nil else { return }
 
-            // Handle file passed via Finder: application(_:open:) may set
-            // pendingFileURL before or after this view appears during launch.
+            // Handle file(s) passed via Finder: application(_:open:) may
+            // populate pendingFileURLs before or after this view appears.
             for _ in 0..<10 {
-                if let url = WindowManager.shared.pendingFileURL {
-                    WindowManager.shared.pendingFileURL = nil
+                if !WindowManager.shared.pendingFileURLs.isEmpty {
+                    let url = WindowManager.shared.pendingFileURLs.removeFirst()
                     openFile(url: url)
                     nsWindow?.makeKeyAndOrderFront(nil)
                     NSApp.activate()
