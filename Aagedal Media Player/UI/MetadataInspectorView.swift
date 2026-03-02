@@ -53,9 +53,14 @@ struct MetadataInspectorView: View {
                             metadataRow("Scan", value: scanType)
                         }
                         if let chroma = video.chromaSubsampling {
-                            let depth = video.bitDepth.map { "\(chroma) / \($0)-bit" } ?? chroma
-                            metadataRow("Chroma Subsampling", value: depth)
-                        } else if let bitDepth = video.bitDepth {
+                            metadataRow("Chroma Subsampling", value: chroma)
+                        }
+                        if let chroma = video.chromaSubsampling,
+                           let w = video.width, let h = video.height,
+                           let chromaRes = chromaResolution(chroma: chroma, width: w, height: h) {
+                            metadataRow("Chroma Resolution", value: chromaRes)
+                        }
+                        if let bitDepth = video.bitDepth {
                             metadataRow("Bit Depth", value: "\(bitDepth)-bit")
                         }
                         if let pixFmt = video.pixelFormat {
@@ -379,6 +384,19 @@ struct MetadataInspectorView: View {
             result += " (\(dar.stringValue))"
         }
         return result
+    }
+
+    private func chromaResolution(chroma: String, width: Int, height: Int) -> String? {
+        let (cw, ch): (Int, Int)
+        switch chroma {
+        case "4:2:0": (cw, ch) = (width / 2, height / 2)
+        case "4:2:2": (cw, ch) = (width / 2, height)
+        case "4:1:1": (cw, ch) = (width / 4, height)
+        case "4:1:0": (cw, ch) = (width / 4, height / 2)
+        case "4:4:4": return nil // same as luma, not useful to show
+        default: return nil
+        }
+        return "\(cw) \u{00D7} \(ch)"
     }
 
     private func scanTypeDisplay(_ video: MediaMetadata.VideoStream) -> String? {
