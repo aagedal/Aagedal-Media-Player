@@ -8,6 +8,17 @@ import AppKit
 import Libmpv
 import OSLog
 
+/// Free function used as the mpv wakeup callback.  Defined at file scope
+/// so it is `nonisolated` and does NOT inherit `@MainActor` isolation from
+/// `MPVPlayer` (which is implicitly `@MainActor` under Swift 6's default
+/// actor isolation).  This prevents a runtime `dispatch_assert_queue` crash
+/// when mpv invokes the callback from its own background thread.
+private nonisolated func mpvWakeupCallback(_ ctx: UnsafeMutableRawPointer?) {
+    guard let ctx else { return }
+    let player = Unmanaged<MPVPlayer>.fromOpaque(ctx).takeUnretainedValue()
+    player.readEvents()
+}
+
 /// MPV Player - NOT an actor to allow background thread access for event handling
 /// All @Published property updates are dispatched to main thread
 /// Marked @unchecked Sendable because we handle thread safety manually with DispatchQueue
@@ -137,29 +148,28 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         #endif
 
         var wid = unsafeBitCast(metalLayer, to: Int64.self)
-        checkError(mpv_set_option(mpv, "wid", MPV_FORMAT_INT64, &wid))
-        checkError(mpv_set_option_string(mpv, "vo", "gpu-next"))
-        checkError(mpv_set_option_string(mpv, "gpu-api", "vulkan"))
-        checkError(mpv_set_option_string(mpv, "gpu-context", "moltenvk"))
-        checkError(mpv_set_option_string(mpv, "hwdec", "videotoolbox"))
+        checkError(mpv_set_option(mpv, "wid", MPV_FORMAT_INT64, &wid), context: "wid")
+        checkError(mpv_set_option_string(mpv, "vo", "gpu-next"), context: "vo")
+        checkError(mpv_set_option_string(mpv, "gpu-api", "vulkan"), context: "gpu-api")
+        checkError(mpv_set_option_string(mpv, "gpu-context", "moltenvk"), context: "gpu-context")
+        checkError(mpv_set_option_string(mpv, "hwdec", "videotoolbox"), context: "hwdec")
 
-        checkError(mpv_set_option_string(mpv, "framedrop", "decoder+vo"))
+        checkError(mpv_set_option_string(mpv, "framedrop", "decoder+vo"), context: "framedrop")
 
-        checkError(mpv_set_option_string(mpv, "target-colorspace-hint", "yes"))
-        checkError(mpv_set_option_string(mpv, "keep-open", "yes"))
-        checkError(mpv_set_option_string(mpv, "deinterlace", "auto"))
+        checkError(mpv_set_option_string(mpv, "target-colorspace-hint", "yes"), context: "target-colorspace-hint")
+        checkError(mpv_set_option_string(mpv, "keep-open", "yes"), context: "keep-open")
+        checkError(mpv_set_option_string(mpv, "deinterlace", "auto"), context: "deinterlace")
 
-        checkError(mpv_set_option_string(mpv, "ytdl", "no"))
-        checkError(mpv_set_option_string(mpv, "input-default-bindings", "no"))
-        checkError(mpv_set_option_string(mpv, "input-vo-keyboard", "no"))
-        checkError(mpv_set_option_string(mpv, "load-scripts", "no"))
-        checkError(mpv_set_option_string(mpv, "sid", "no"))
+        checkError(mpv_set_option_string(mpv, "input-default-bindings", "no"), context: "input-default-bindings")
+        checkError(mpv_set_option_string(mpv, "input-vo-keyboard", "no"), context: "input-vo-keyboard")
+        checkError(mpv_set_option_string(mpv, "load-scripts", "no"), context: "load-scripts")
+        checkError(mpv_set_option_string(mpv, "sid", "no"), context: "sid")
 
         #if os(macOS)
-        checkError(mpv_set_option_string(mpv, "input-media-keys", "no"))
+        checkError(mpv_set_option_string(mpv, "input-media-keys", "no"), context: "input-media-keys")
         #endif
 
-        checkError(mpv_initialize(mpv))
+        checkError(mpv_initialize(mpv), context: "mpv_initialize")
 
         mpv_observe_property(mpv, 0, MPVProperty.timePos, MPV_FORMAT_DOUBLE)
         mpv_observe_property(mpv, 0, MPVProperty.duration, MPV_FORMAT_DOUBLE)
@@ -171,11 +181,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         mpv_observe_property(mpv, 0, MPVProperty.videoParamsAspect, MPV_FORMAT_DOUBLE)
 
         wakeupContext = Unmanaged.passRetained(self).toOpaque()
-        mpv_set_wakeup_callback(mpv, { ctx in
-            guard let client = ctx else { return }
-            let player = Unmanaged<MPVPlayer>.fromOpaque(client).takeUnretainedValue()
-            player.readEvents()
-        }, wakeupContext)
+        mpv_set_wakeup_callback(mpv, mpvWakeupCallback, wakeupContext)
 
         isInitialized = true
         logger.info("MPV initialized successfully")
@@ -434,7 +440,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
 
     // MARK: - Event Handling
 
-    private func readEvents() {
+    fileprivate nonisolated func readEvents() {
         queue.async { [weak self] in
             guard let self, self.mpv != nil else { return }
 
@@ -618,10 +624,14 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         }
     }
 
-    private func checkError(_ status: CInt) {
+    private func checkError(_ status: CInt, context: String = "") {
         if status < 0 {
             let errorMsg = String(cString: mpv_error_string(status))
-            logger.error("MPV API error: \(errorMsg)")
+            if context.isEmpty {
+                logger.error("MPV API error: \(errorMsg)")
+            } else {
+                logger.error("MPV API error [\(context)]: \(errorMsg)")
+            }
         }
     }
 }
