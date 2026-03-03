@@ -57,6 +57,7 @@ final class PlayerController: ObservableObject {
     @Published var audioTrackOptions: [AudioTrackOption] = []
     @Published var subtitleTrackOptions: [SubtitleTrackOption] = []
     @Published var videoAspectRatio: CGFloat?
+    @Published var videoSourceSize: NSSize?
 
     // Trim points
     @Published var trimIn: Double?
@@ -92,6 +93,7 @@ final class PlayerController: ObservableObject {
     // MPV loop observer
     var mpvLoopObserverTimer: Timer?
     private var mpvAspectRatioCancellable: AnyCancellable?
+    private var mpvSourceSizeCancellable: AnyCancellable?
     private var mpvTimePosTask: Task<Void, Never>?
     private var mpvFileLoadedTask: Task<Void, Never>?
     private var mpvDurationTask: Task<Void, Never>?
@@ -120,6 +122,7 @@ final class PlayerController: ObservableObject {
             trimIn = nil
             trimOut = nil
             videoAspectRatio = nil
+            videoSourceSize = nil
             preparePlayback(startTime: 0)
         }
     }
@@ -134,6 +137,21 @@ final class PlayerController: ObservableObject {
         // Update aspect ratio from FFprobe (authoritative)
         if let ratio = item.videoDisplayAspectRatio, ratio.isFinite, ratio > 0 {
             videoAspectRatio = CGFloat(ratio)
+        }
+
+        // Compute display source size (accounts for non-square pixels / DAR)
+        if let stream = item.metadata?.primaryVideoStream,
+           let codedW = stream.width, let codedH = stream.height,
+           codedW > 0, codedH > 0 {
+            let displayWidth: Double
+            if let dar = stream.displayAspectRatio?.doubleValue, dar > 0 {
+                displayWidth = Double(codedH) * dar
+            } else if let par = stream.pixelAspectRatio?.doubleValue, par > 0 {
+                displayWidth = Double(codedW) * par
+            } else {
+                displayWidth = Double(codedW)
+            }
+            videoSourceSize = NSSize(width: displayWidth, height: Double(codedH))
         }
 
         // If surround audio was detected and we're on AVPlayer, switch to MPV
@@ -281,12 +299,19 @@ final class PlayerController: ObservableObject {
             }
         }
 
-        // Forward MPV aspect ratio
+        // Forward MPV aspect ratio and source size
         mpvAspectRatioCancellable = mpv.$videoAspectRatio
             .compactMap { $0 }
             .receive(on: DispatchQueue.main)
             .sink { [weak self] ratio in
                 self?.videoAspectRatio = ratio
+            }
+
+        mpvSourceSizeCancellable = mpv.$videoSourceSize
+            .compactMap { $0 }
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] size in
+                self?.videoSourceSize = size
             }
 
         // Refresh audio tracks after MPV parses the media
@@ -1050,7 +1075,9 @@ final class PlayerController: ObservableObject {
         isPlaying = false
         currentPlaybackSpeed = 1.0
         videoAspectRatio = nil
+        videoSourceSize = nil
         mpvAspectRatioCancellable = nil
+        mpvSourceSizeCancellable = nil
         removeMPVLoopObserver()
         if resetAudioSelection {
             selectedAudioTrackOrderIndex = 0

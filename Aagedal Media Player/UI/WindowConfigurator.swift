@@ -13,12 +13,14 @@ struct WindowConfigurator: NSViewRepresentable {
     static let baseMinHeight: CGFloat = 360
 
     let aspectRatio: CGFloat?
+    let videoSourceSize: NSSize?
     let showTrafficLights: Bool
     var onWindowAvailable: ((NSWindow) -> Void)?
 
     final class Coordinator: NSObject {
         var lastAspectRatio: CGFloat?
         var savedAspectRatio: CGFloat?
+        var lastSourceSize: NSSize?
         weak var observedWindow: NSWindow?
         var willEnterFullScreen: NSObjectProtocol?
         var didExitFullScreen: NSObjectProtocol?
@@ -125,6 +127,7 @@ struct WindowConfigurator: NSViewRepresentable {
         coordinator.observeWindow(window)
 
         let ratio = aspectRatio
+        let sourceSize = videoSourceSize
         let trafficLightAlpha: CGFloat = showTrafficLights ? 1 : 0
         let isFullScreen = window.styleMask.contains(.fullScreen)
 
@@ -133,22 +136,52 @@ struct WindowConfigurator: NSViewRepresentable {
             // and only when the ratio actually changes.
             if !isFullScreen {
                 if let ratio, ratio > 0 {
-                    if coordinator.lastAspectRatio != ratio {
+                    let ratioChanged = coordinator.lastAspectRatio != ratio
+                    let sourceSizeChanged = sourceSize != nil && sourceSize != coordinator.lastSourceSize
+
+                    if ratioChanged || sourceSizeChanged {
                         coordinator.lastAspectRatio = ratio
                         coordinator.savedAspectRatio = ratio
+                        coordinator.lastSourceSize = sourceSize
                         coordinator.applyMinSize(window, ratio: ratio)
                         window.contentAspectRatio = NSSize(width: ratio, height: 1)
 
                         if let contentView = window.contentView {
                             let frame = window.frame
                             let titlebarHeight = frame.height - contentView.bounds.height
-                            var newWidth = contentView.bounds.width
-                            // For tall videos (taller than 3:4), cap width to avoid
-                            // an oversized window inherited from a previous wide video
-                            if ratio < 0.75 {
-                                newWidth = min(newWidth, 380)
+
+                            let useSourceResolution = UserDefaults.standard.bool(forKey: "openAtSourceResolution")
+
+                            var newWidth: CGFloat
+                            var newHeight: CGFloat
+
+                            if useSourceResolution,
+                               let sourceSize,
+                               sourceSize.width > 0, sourceSize.height > 0 {
+                                // Size to source resolution at 1:1 pixels (divide by backing scale for Retina)
+                                let backingScale = window.backingScaleFactor
+                                newWidth = sourceSize.width / backingScale
+                                newHeight = sourceSize.height / backingScale
+                                if UserDefaults.standard.bool(forKey: "clampWindowToScreen"),
+                                   let screen = window.screen ?? NSScreen.main {
+                                    let maxFrame = screen.visibleFrame
+                                    let maxW = maxFrame.width * 0.9
+                                    let maxH = (maxFrame.height - titlebarHeight) * 0.9
+                                    if newWidth > maxW || newHeight > maxH {
+                                        let scale = min(maxW / newWidth, maxH / newHeight)
+                                        newWidth *= scale
+                                        newHeight *= scale
+                                    }
+                                }
+                            } else {
+                                // Default: adjust height from current width
+                                newWidth = contentView.bounds.width
+                                if ratio < 0.75 {
+                                    newWidth = min(newWidth, 380)
+                                }
+                                newHeight = newWidth / ratio
                             }
-                            let newHeight = newWidth / ratio
+
                             let totalHeight = newHeight + titlebarHeight
                             let contentRect = NSRect(
                                 x: frame.origin.x,
@@ -163,6 +196,7 @@ struct WindowConfigurator: NSViewRepresentable {
                     if coordinator.lastAspectRatio != nil {
                         coordinator.lastAspectRatio = nil
                         coordinator.savedAspectRatio = nil
+                        coordinator.lastSourceSize = nil
                         window.contentResizeIncrements = NSSize(width: 1, height: 1)
                         coordinator.applyMinSize(window, ratio: nil)
                     }

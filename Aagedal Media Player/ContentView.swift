@@ -40,6 +40,10 @@ struct ContentView: View {
         controller.videoAspectRatio
     }
 
+    private var videoSourceSize: NSSize? {
+        controller.videoSourceSize
+    }
+
     // MARK: - Body
 
     var body: some View {
@@ -110,6 +114,7 @@ struct ContentView: View {
         .background(
             WindowConfigurator(
                 aspectRatio: videoAspectRatio,
+                videoSourceSize: videoSourceSize,
                 showTrafficLights: isHoveringWindow && !isHoveringRightEdge,
                 onWindowAvailable: { window in
                     if nsWindow !== window {

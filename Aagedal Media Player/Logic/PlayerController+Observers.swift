@@ -182,6 +182,7 @@ extension PlayerController {
                                 guard self.preparationID == myPrepID else { return }
                                 if naturalSize.width > 0, naturalSize.height > 0 {
                                     self.videoAspectRatio = naturalSize.width / naturalSize.height
+                                    self.videoSourceSize = NSSize(width: naturalSize.width, height: naturalSize.height)
                                 }
                             }
 

@@ -175,6 +175,10 @@ struct RecentDocumentsMenu: View {
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
+        UserDefaults.standard.register(defaults: [
+            "openAtSourceResolution": true,
+            "clampWindowToScreen": true,
+        ])
         UpdateChecker.shared.checkIfNeeded()
     }
 

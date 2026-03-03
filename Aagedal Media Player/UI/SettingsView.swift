@@ -131,6 +131,8 @@ private struct GeneralSettingsView: View {
     @AppStorage("showCursorHideHint") private var showCursorHideHint = true
     @AppStorage("precisionScrubFactor") private var precisionScrubFactor: Double = 10.0
     @AppStorage("alwaysUseMPV") private var alwaysUseMPV = false
+    @AppStorage("openAtSourceResolution") private var openAtSourceResolution = true
+    @AppStorage("clampWindowToScreen") private var clampWindowToScreen = true
 
     @State private var screenshotMode: SaveLocationMode = .custom
     @State private var screenshotFormat: ScreenshotFormat = .jxl
@@ -147,6 +149,10 @@ private struct GeneralSettingsView: View {
                     Toggle("Sync Playback Controls", isOn: $syncPlaybackControls)
                 }
                 Toggle("Show Cursor Hide Zone Indicator", isOn: $showCursorHideHint)
+                Toggle("Open Windows at Source Resolution", isOn: $openAtSourceResolution)
+                if openAtSourceResolution {
+                    Toggle("Limit Window Size to Screen", isOn: $clampWindowToScreen)
+                }
             }
 
             Section("Playback") {

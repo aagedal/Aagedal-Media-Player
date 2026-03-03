@@ -22,8 +22,10 @@ struct MPVProperty {
     static let seekable = "seekable"
     static let speed = "speed"
 
-    // Video display aspect ratio (early sizing)
+    // Video display aspect ratio and dimensions (early sizing)
     static let videoParamsAspect = "video-params/aspect"
+    static let videoParamsDw = "video-params/dw"
+    static let videoParamsDh = "video-params/dh"
 
     // Audio
     static let volume = "volume"

@@ -37,6 +37,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
     @Published var isBusy = false
     @Published var isFileLoaded = false
     @Published var videoAspectRatio: CGFloat?
+    @Published var videoSourceSize: NSSize?
     @Published var error: String?
 
     private var isInitialized = false
@@ -209,6 +210,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         isPlaying = false
         timePos = 0
         videoAspectRatio = nil
+        videoSourceSize = nil
     }
 
     func seek(to time: TimeInterval) {
@@ -457,8 +459,13 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
                             }
                         case MPVProperty.videoParamsAspect:
                             if let value = UnsafePointer<Double>(OpaquePointer(property.data))?.pointee, value > 0 {
+                                let dw = self.getInt(MPVProperty.videoParamsDw)
+                                let dh = self.getInt(MPVProperty.videoParamsDh)
                                 DispatchQueue.main.async {
                                     self.videoAspectRatio = CGFloat(value)
+                                    if dw > 0, dh > 0 {
+                                        self.videoSourceSize = NSSize(width: dw, height: dh)
+                                    }
                                 }
                             }
                         default:
