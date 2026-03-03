@@ -57,17 +57,39 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
     }
 
     deinit {
+        // Safety net — destroy() should have been called already.
         if mpv != nil {
             mpv_set_wakeup_callback(mpv, nil, nil)
-
-            queue.sync {
-                if self.mpv != nil {
-                    mpv_terminate_destroy(self.mpv)
-                    self.mpv = nil
-                }
-            }
+            mpv_terminate_destroy(mpv)
+            mpv = nil
         }
 
+        if let ctx = wakeupContext {
+            Unmanaged<MPVPlayer>.fromOpaque(ctx).release()
+            wakeupContext = nil
+        }
+    }
+
+    /// Tear down the mpv context and break the Unmanaged retain cycle so
+    /// this object can be deallocated.  Must be called before dropping the
+    /// last external strong reference.
+    func destroy() {
+        guard mpv != nil else { return }
+
+        // Disable the wakeup callback first so no new readEvents() calls
+        // are dispatched while we tear down.
+        mpv_set_wakeup_callback(mpv, nil, nil)
+
+        queue.sync {
+            guard self.mpv != nil else { return }
+            mpv_terminate_destroy(self.mpv)
+            self.mpv = nil
+        }
+
+        isInitialized = false
+        metalLayer = nil
+
+        // Release the Unmanaged self-retain so deinit can run.
         if let ctx = wakeupContext {
             Unmanaged<MPVPlayer>.fromOpaque(ctx).release()
             wakeupContext = nil
@@ -122,7 +144,6 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         checkError(mpv_set_option_string(mpv, "hwdec", "videotoolbox"))
 
         checkError(mpv_set_option_string(mpv, "framedrop", "decoder+vo"))
-        checkError(mpv_set_option_string(mpv, "vd-lavc-framedrop", "nonref"))
 
         checkError(mpv_set_option_string(mpv, "target-colorspace-hint", "yes"))
         checkError(mpv_set_option_string(mpv, "keep-open", "yes"))
@@ -474,11 +495,10 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
                     }
 
                 case MPV_EVENT_SHUTDOWN:
-                    self.logger.info("MPV shutdown event")
-                    if self.mpv != nil {
-                        mpv_terminate_destroy(self.mpv)
-                        self.mpv = nil
-                    }
+                    self.logger.info("MPV shutdown event received")
+                    // Don't call mpv_terminate_destroy here — destroy()
+                    // handles full cleanup.  Just exit the event loop.
+                    return
 
                 case MPV_EVENT_LOG_MESSAGE:
                     if let msg = UnsafeMutablePointer<mpv_event_log_message>(OpaquePointer(pointee.data)) {

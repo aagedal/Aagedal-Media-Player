@@ -1066,7 +1066,7 @@ final class PlayerController: ObservableObject {
         mpvDurationTask = nil
 
         if let mpv = mpvPlayer {
-            mpv.stop()
+            mpv.destroy()
             mpvPlayer = nil
         }
         useMPV = false
