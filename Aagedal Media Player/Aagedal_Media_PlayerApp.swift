@@ -114,6 +114,19 @@ struct Aagedal_Media_PlayerApp: App {
                     NotificationCenter.default.post(name: .syncTimecode, object: nil)
                 }
                 .keyboardShortcut("s", modifiers: [.command, .shift])
+
+                Divider()
+
+                Button("Copy Timecode") {
+                    NotificationCenter.default.post(name: .copyTimecode, object: nil)
+                }
+                .keyboardShortcut("c", modifiers: [.command, .shift])
+                .disabled(!mediaLoaded)
+
+                Button("Paste Timecode") {
+                    NotificationCenter.default.post(name: .pasteTimecode, object: nil)
+                }
+                .keyboardShortcut("v", modifiers: [.command, .shift])
                 .disabled(!mediaLoaded)
 
                 Divider()
@@ -250,5 +263,7 @@ extension Notification.Name {
     static let toggleFullscreen = Notification.Name("toggleFullscreen")
     static let syncTimecode = Notification.Name("syncTimecode")
     static let seekToSyncedTime = Notification.Name("seekToSyncedTime")
+    static let copyTimecode = Notification.Name("copyTimecode")
+    static let pasteTimecode = Notification.Name("pasteTimecode")
     static let reloadPlayer = Notification.Name("reloadPlayer")
 }
