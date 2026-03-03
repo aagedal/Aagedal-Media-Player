@@ -6,34 +6,34 @@ import Foundation
 
 struct MPVProperty {
     // Video parameters
-    static let videoParamsColormatrix = "video-params/colormatrix"
-    static let videoParamsColorlevels = "video-params/colorlevels"
-    static let videoParamsPrimaries = "video-params/primaries"
-    static let videoParamsGamma = "video-params/gamma"
-    static let videoParamsSigPeak = "video-params/sig-peak"
+    nonisolated static let videoParamsColormatrix = "video-params/colormatrix"
+    nonisolated static let videoParamsColorlevels = "video-params/colorlevels"
+    nonisolated static let videoParamsPrimaries = "video-params/primaries"
+    nonisolated static let videoParamsGamma = "video-params/gamma"
+    nonisolated static let videoParamsSigPeak = "video-params/sig-peak"
 
     // Playback state
-    static let duration = "duration"
-    static let timePos = "time-pos"
-    static let path = "path"
-    static let pause = "pause"
-    static let pausedForCache = "paused-for-cache"
-    static let eofReached = "eof-reached"
-    static let seekable = "seekable"
-    static let speed = "speed"
+    nonisolated static let duration = "duration"
+    nonisolated static let timePos = "time-pos"
+    nonisolated static let path = "path"
+    nonisolated static let pause = "pause"
+    nonisolated static let pausedForCache = "paused-for-cache"
+    nonisolated static let eofReached = "eof-reached"
+    nonisolated static let seekable = "seekable"
+    nonisolated static let speed = "speed"
 
     // Video display aspect ratio and dimensions (early sizing)
-    static let videoParamsAspect = "video-params/aspect"
-    static let videoParamsDw = "video-params/dw"
-    static let videoParamsDh = "video-params/dh"
+    nonisolated static let videoParamsAspect = "video-params/aspect"
+    nonisolated static let videoParamsDw = "video-params/dw"
+    nonisolated static let videoParamsDh = "video-params/dh"
 
     // Audio
-    static let volume = "volume"
-    static let mute = "mute"
-    static let aid = "aid"
-    static let trackListCount = "track-list/count"
+    nonisolated static let volume = "volume"
+    nonisolated static let mute = "mute"
+    nonisolated static let aid = "aid"
+    nonisolated static let trackListCount = "track-list/count"
 
     // Subtitles
-    static let sid = "sid"
-    static let subVisibility = "sub-visibility"
+    nonisolated static let sid = "sid"
+    nonisolated static let subVisibility = "sub-visibility"
 }

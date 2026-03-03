@@ -256,7 +256,7 @@ private struct PlayerContainerView: NSViewRepresentable {
     }
 
     final class Coordinator: NSObject {
-        private var monitor: Any?
+        private nonisolated(unsafe) var monitor: Any?
         private weak var attachedView: AVPlayerView?
         private let keyHandler: (String, NSEvent.ModifierFlags, NSEvent.SpecialKey?) -> Bool
         var isEditingTimecode: Bool

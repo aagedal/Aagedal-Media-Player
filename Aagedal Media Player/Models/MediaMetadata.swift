@@ -12,19 +12,19 @@ struct MediaMetadata: Equatable, Sendable, Codable {
         let denominator: Int
         let stringValue: String
 
-        var doubleValue: Double? {
+        nonisolated var doubleValue: Double? {
             guard denominator != 0 else { return nil }
             return Double(numerator) / Double(denominator)
         }
 
-        init?(numerator: Int, denominator: Int) {
+        nonisolated init?(numerator: Int, denominator: Int) {
             guard denominator != 0 else { return nil }
             self.numerator = numerator
             self.denominator = denominator
             self.stringValue = "\(numerator):\(denominator)"
         }
 
-        init?(ratioString: String) {
+        nonisolated init?(ratioString: String) {
             let trimmed = ratioString.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !trimmed.isEmpty else { return nil }
 
@@ -44,7 +44,7 @@ struct MediaMetadata: Equatable, Sendable, Codable {
             return nil
         }
 
-        static func parse(_ string: String, separator: Character) -> Ratio? {
+        nonisolated static func parse(_ string: String, separator: Character) -> Ratio? {
             let parts = string.split(separator: separator)
             guard parts.count == 2,
                   let numerator = Int(parts[0]),
@@ -61,12 +61,12 @@ struct MediaMetadata: Equatable, Sendable, Codable {
         let denominator: Int
         let stringValue: String
 
-        var value: Double? {
+        nonisolated var value: Double? {
             guard denominator != 0 else { return nil }
             return Double(numerator) / Double(denominator)
         }
 
-        init?(frameRateString: String) {
+        nonisolated init?(frameRateString: String) {
             let trimmed = frameRateString.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !trimmed.isEmpty else { return nil }
 
@@ -157,7 +157,7 @@ struct MediaMetadata: Equatable, Sendable, Codable {
         videoStreams.first
     }
 
-    func isDefaultAudioStream(index: Int) -> Bool {
+    nonisolated func isDefaultAudioStream(index: Int) -> Bool {
         guard audioStreams.indices.contains(index) else { return false }
         return audioStreams[index].isDefault
     }

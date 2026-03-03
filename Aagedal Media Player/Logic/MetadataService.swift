@@ -309,7 +309,7 @@ actor MetadataService {
 
 // MARK: - Pixel Format Helpers
 
-private func bitDepthFromPixelFormat(_ pixelFormat: String) -> Int? {
+private nonisolated func bitDepthFromPixelFormat(_ pixelFormat: String) -> Int? {
     let format = pixelFormat.lowercased()
     let patterns = [
         #"(\d{1,2})(le|be)?$"#,
@@ -335,7 +335,7 @@ private func bitDepthFromPixelFormat(_ pixelFormat: String) -> Int? {
     return nil
 }
 
-private func chromaSubsamplingFromPixelFormat(_ pixelFormat: String) -> String? {
+private nonisolated func chromaSubsamplingFromPixelFormat(_ pixelFormat: String) -> String? {
     let format = pixelFormat.lowercased()
     if format.contains("420") || format.contains("nv12") || format.contains("nv21") { return "4:2:0" }
     if format.contains("422") || format.contains("yuyv") || format.contains("uyvy") { return "4:2:2" }
@@ -349,7 +349,7 @@ private func chromaSubsamplingFromPixelFormat(_ pixelFormat: String) -> String? 
     return nil
 }
 
-private func hasAlphaChannel(pixelFormat: String) -> Bool {
+private nonisolated func hasAlphaChannel(pixelFormat: String) -> Bool {
     let format = pixelFormat.lowercased()
     if format.contains("4444") { return true }
     if format.contains("rgba") || format.contains("bgra") ||
@@ -371,12 +371,12 @@ private struct FFprobeResponse: Decodable {
     let format: Format?
     let streams: [Stream]
 
-    init(format: Format?, streams: [Stream]) {
+    nonisolated init(format: Format?, streams: [Stream]) {
         self.format = format
         self.streams = streams
     }
 
-    init(from decoder: Decoder) throws {
+    nonisolated init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.format = try container.decodeIfPresent(Format.self, forKey: .format)
         self.streams = try container.decodeIfPresent([Stream].self, forKey: .streams) ?? []

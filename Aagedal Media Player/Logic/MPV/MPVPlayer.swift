@@ -15,7 +15,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
     private let logger = Logger(subsystem: "com.aagedal.MediaPlayer", category: "MPVPlayer")
 
     // MPV context
-    private var mpv: OpaquePointer?
+    private nonisolated(unsafe) var mpv: OpaquePointer?
     private var metalLayer: MPVMetalLayer?
     private let queue = DispatchQueue(label: "com.aagedal.mpv", qos: .userInitiated)
 
@@ -42,7 +42,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
 
     private var isInitialized = false
     private var startPaused = false
-    private var wakeupContext: UnsafeMutableRawPointer?
+    private nonisolated(unsafe) var wakeupContext: UnsafeMutableRawPointer?
 
     // Pending load - stored when load() is called before MPV is initialized
     private var pendingURL: URL?
@@ -569,7 +569,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         mpv_set_property(mpv, name, MPV_FORMAT_DOUBLE, &data)
     }
 
-    private func getInt(_ name: String) -> Int {
+    private nonisolated func getInt(_ name: String) -> Int {
         guard mpv != nil else { return 0 }
         var data = Int64()
         mpv_get_property(mpv, name, MPV_FORMAT_INT64, &data)

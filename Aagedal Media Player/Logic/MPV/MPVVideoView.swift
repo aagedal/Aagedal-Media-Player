@@ -85,7 +85,7 @@ struct MPVVideoView: NSViewControllerRepresentable {
     }
 
     final class Coordinator: NSObject, @unchecked Sendable {
-        private var monitor: Any?
+        private nonisolated(unsafe) var monitor: Any?
         private let keyHandler: (String, NSEvent.ModifierFlags, NSEvent.SpecialKey?) -> Bool
         weak var viewController: MPVViewController?
 

@@ -455,11 +455,13 @@ struct ContentView: View {
         appActiveObserver = NotificationCenter.default.addObserver(
             forName: NSApplication.didBecomeActiveNotification,
             object: nil, queue: .main
-        ) { _ in
-            // Returning from another app — cursor must be visible.
-            isHoveringRightEdge = false
-            CursorHideNSView.ensureCursorVisible()
-            overlayHideTask?.cancel()
+        ) { [self] _ in
+            MainActor.assumeIsolated {
+                // Returning from another app — cursor must be visible.
+                isHoveringRightEdge = false
+                CursorHideNSView.ensureCursorVisible()
+                overlayHideTask?.cancel()
+            }
         }
     }
 

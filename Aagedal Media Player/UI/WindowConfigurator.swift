@@ -22,8 +22,8 @@ struct WindowConfigurator: NSViewRepresentable {
         var savedAspectRatio: CGFloat?
         var lastSourceSize: NSSize?
         weak var observedWindow: NSWindow?
-        var willEnterFullScreen: NSObjectProtocol?
-        var didExitFullScreen: NSObjectProtocol?
+        nonisolated(unsafe) var willEnterFullScreen: NSObjectProtocol?
+        nonisolated(unsafe) var didExitFullScreen: NSObjectProtocol?
         var lastTrafficLightAlpha: CGFloat = 0
 
         deinit {
@@ -71,18 +71,20 @@ struct WindowConfigurator: NSViewRepresentable {
                 forName: NSWindow.willEnterFullScreenNotification,
                 object: window, queue: .main
             ) { [weak self] _ in
-                guard let self else { return }
-                self.savedAspectRatio = self.lastAspectRatio
-                self.lastAspectRatio = nil
-                window.contentResizeIncrements = NSSize(width: 1, height: 1)
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    self.savedAspectRatio = self.lastAspectRatio
+                    self.lastAspectRatio = nil
+                    window.contentResizeIncrements = NSSize(width: 1, height: 1)
+                }
             }
 
             didExitFullScreen = NotificationCenter.default.addObserver(
                 forName: NSWindow.didExitFullScreenNotification,
                 object: window, queue: .main
             ) { [weak self] _ in
-                guard let self, let ratio = self.savedAspectRatio, ratio > 0 else { return }
-                DispatchQueue.main.async {
+                MainActor.assumeIsolated {
+                    guard let self, let ratio = self.savedAspectRatio, ratio > 0 else { return }
                     window.contentAspectRatio = NSSize(width: ratio, height: 1)
                     self.lastAspectRatio = ratio
                 }

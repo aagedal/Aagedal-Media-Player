@@ -9,28 +9,28 @@ import AppKit
 // https://github.com/mpv-player/mpv/pull/13651
 class MPVMetalLayer: CAMetalLayer {
 
-    override init() {
+    nonisolated override init() {
         super.init()
         configureForHDR()
     }
 
-    override init(layer: Any) {
+    nonisolated override init(layer: Any) {
         super.init(layer: layer)
         configureForHDR()
     }
 
-    required init?(coder: NSCoder) {
+    nonisolated required init?(coder: NSCoder) {
         super.init(coder: coder)
         configureForHDR()
     }
 
-    private func configureForHDR() {
+    private nonisolated func configureForHDR() {
         wantsExtendedDynamicRangeContent = true
     }
 
     // Workaround for a MoltenVK that sets the drawableSize to 1x1 to forcefully complete
     // the presentation, this causes flicker and the drawableSize possibly staying at 1x1
-    override var drawableSize: CGSize {
+    nonisolated override var drawableSize: CGSize {
         get { return super.drawableSize }
         set {
             if Int(newValue.width) > 1 && Int(newValue.height) > 1 {

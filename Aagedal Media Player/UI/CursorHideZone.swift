@@ -107,8 +107,10 @@ final class CursorHideNSView: NSView {
     }
 
     deinit {
-        if isHovering {
-            Self.ensureCursorVisible()
+        MainActor.assumeIsolated {
+            if isHovering {
+                Self.ensureCursorVisible()
+            }
         }
         NotificationCenter.default.removeObserver(self)
     }
