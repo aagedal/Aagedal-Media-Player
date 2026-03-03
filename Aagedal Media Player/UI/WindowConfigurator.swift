@@ -99,10 +99,25 @@ struct WindowConfigurator: NSViewRepresentable {
             guard let window, let coordinator else { return }
             coordinator.observeWindow(window)
             window.isRestorable = false
+            window.setFrameAutosaveName("")
             window.backgroundColor = .black
             coordinator.applyTrafficLightAlpha(window, animated: false)
             // Set initial minimum size (base values; updated when video loads).
             coordinator.applyMinSize(window, ratio: nil)
+
+            // Force a consistent default size after SwiftUI finishes its layout pass.
+            DispatchQueue.main.async {
+                let defaultW: CGFloat = 711
+                let defaultH: CGFloat = 400
+                let titlebarHeight = window.frame.height - (window.contentView?.bounds.height ?? window.frame.height)
+                let totalHeight = defaultH + titlebarHeight
+                let origin = NSPoint(
+                    x: window.frame.origin.x,
+                    y: window.frame.origin.y + window.frame.height - totalHeight
+                )
+                window.setFrame(NSRect(x: origin.x, y: origin.y, width: defaultW, height: totalHeight),
+                                display: false)
+            }
 
             onWindowAvailable?(window)
         }
