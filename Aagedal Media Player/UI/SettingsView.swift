@@ -206,6 +206,7 @@ private struct GeneralSettingsView: View {
     @AppStorage("alwaysUseMPV") private var alwaysUseMPV = false
     @AppStorage("openAtSourceResolution") private var openAtSourceResolution = true
     @AppStorage("clampWindowToScreen") private var clampWindowToScreen = true
+    @AppStorage("centerWindowAfterResize") private var centerWindowAfterResize = true
 
     var body: some View {
         Form {
@@ -218,6 +219,7 @@ private struct GeneralSettingsView: View {
                 Toggle("Open Windows at Source Resolution", isOn: $openAtSourceResolution)
                 if openAtSourceResolution {
                     Toggle("Limit Window Size to Screen", isOn: $clampWindowToScreen)
+                    Toggle("Center Window on Screen", isOn: $centerWindowAfterResize)
                 }
             }
 

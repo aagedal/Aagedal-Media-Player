@@ -200,9 +200,24 @@ struct WindowConfigurator: NSViewRepresentable {
                             }
 
                             let totalHeight = newHeight + titlebarHeight
+                            let centerAfterResize = UserDefaults.standard.bool(forKey: "centerWindowAfterResize")
+                            let origin: NSPoint
+                            if centerAfterResize,
+                               let screen = window.screen ?? NSScreen.main {
+                                let visibleFrame = screen.visibleFrame
+                                origin = NSPoint(
+                                    x: visibleFrame.midX - newWidth / 2,
+                                    y: visibleFrame.midY - totalHeight / 2
+                                )
+                            } else {
+                                origin = NSPoint(
+                                    x: frame.origin.x,
+                                    y: frame.origin.y + frame.height - totalHeight
+                                )
+                            }
                             let contentRect = NSRect(
-                                x: frame.origin.x,
-                                y: frame.origin.y + frame.height - totalHeight,
+                                x: origin.x,
+                                y: origin.y,
                                 width: newWidth,
                                 height: totalHeight
                             )

@@ -191,6 +191,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         UserDefaults.standard.register(defaults: [
             "openAtSourceResolution": true,
             "clampWindowToScreen": true,
+            "centerWindowAfterResize": true,
             SettingsView.trimFormatKey: TrimExportFormat.copy.rawValue,
             SettingsView.screenshotJXLQualityKey: 90.0,
             SettingsView.screenshotJPEGQualityKey: 90.0,
