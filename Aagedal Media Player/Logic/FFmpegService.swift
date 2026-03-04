@@ -43,7 +43,7 @@ final class FFmpegHandle: Sendable {
         let p = _process
         lock.unlock()
         if let p, p.isRunning {
-            p.terminate()
+            kill(p.processIdentifier, SIGKILL)
         }
     }
 }

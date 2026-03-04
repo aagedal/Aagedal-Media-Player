@@ -78,20 +78,24 @@ struct ContentView: View {
                 DropZoneView(isDropTargeted: isDropTargeted, onOpenFile: openFilePanel)
             }
 
-            // Layer 2: export/screenshot feedback
-            if controller.isSavingScreenshot || controller.screenshotDone {
-                if controller.isSavingScreenshot {
-                    exportOverlay(statusText: "Saving\u{2026}", showSpinner: true)
-                } else {
-                    exportOverlay(statusIcon: "checkmark.circle.fill", iconColor: .green, statusText: "Screenshot saved.")
+            // Layer 2: export/screenshot feedback (fades with overlay controls)
+            Group {
+                if controller.isSavingScreenshot || controller.screenshotDone {
+                    if controller.isSavingScreenshot {
+                        exportOverlay(statusText: "Saving\u{2026}", showSpinner: true)
+                    } else {
+                        exportOverlay(statusIcon: "checkmark.circle.fill", iconColor: .green, statusText: "Screenshot saved.")
+                    }
+                }
+                if controller.isExportingTrim || controller.trimExportDone || controller.trimExportCancelling || controller.trimExportCancelled {
+                    trimExportOverlay
+                }
+                if let warning = controller.trimExportWarning {
+                    warningOverlay(warning)
                 }
             }
-            if controller.isExportingTrim || controller.trimExportDone || controller.trimExportCancelling || controller.trimExportCancelled {
-                trimExportOverlay
-            }
-            if let warning = controller.trimExportWarning {
-                warningOverlay(warning)
-            }
+            .opacity(isMediaLoaded ? (showOverlay ? 1 : 0) : 1)
+            .animation(.easeInOut(duration: 0.3), value: showOverlay)
 
             // Layer 3: update banner
             if updateChecker.updateAvailable, !updateBannerDismissed {
