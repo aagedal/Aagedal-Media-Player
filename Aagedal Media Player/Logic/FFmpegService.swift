@@ -6,10 +6,11 @@
 
 import Foundation
 
-enum FFmpegError: Error, LocalizedError {
+enum FFmpegError: Error, LocalizedError, Equatable {
     case ffmpegMissing
     case processFailed(String)
     case outputMissing
+    case cancelled
 
     var errorDescription: String? {
         switch self {
@@ -19,6 +20,30 @@ enum FFmpegError: Error, LocalizedError {
             return "ffmpeg failed: \(message)"
         case .outputMissing:
             return "ffmpeg produced no output file"
+        case .cancelled:
+            return "ffmpeg operation was cancelled"
+        }
+    }
+}
+
+/// Handle for cancelling a running ffmpeg process.
+/// Uses manual locking for thread safety — not bound to any actor.
+final class FFmpegHandle: Sendable {
+    private nonisolated(unsafe) var _process: Process?
+    private let lock = NSLock()
+
+    nonisolated func attach(_ process: Process) {
+        lock.lock()
+        _process = process
+        lock.unlock()
+    }
+
+    nonisolated func cancel() {
+        lock.lock()
+        let p = _process
+        lock.unlock()
+        if let p, p.isRunning {
+            p.terminate()
         }
     }
 }
@@ -29,30 +54,76 @@ enum FFmpegService {
     }
 
     static func run(arguments: [String]) async throws {
+        try await run(arguments: arguments, duration: nil, onProgress: nil)
+    }
+
+    /// Run ffmpeg with progress reporting and optional cancellation.
+    /// When `duration` is provided, `-progress pipe:1` is injected and `onProgress` is called
+    /// with a fraction 0...1 as ffmpeg writes progress updates to stdout.
+    /// Pass an `FFmpegHandle` to enable cancellation.
+    static func run(arguments: [String], duration: Double?, onProgress: (@Sendable (Double) -> Void)?, handle: FFmpegHandle? = nil) async throws {
         guard let path = ffmpegPath else {
             throw FFmpegError.ffmpegMissing
         }
+
+        let wantProgress = duration != nil && duration! > 0 && onProgress != nil
 
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             Task.detached(priority: .userInitiated) {
                 let process = Process()
                 process.executableURL = URL(fileURLWithPath: path)
-                process.arguments = arguments
-                process.standardOutput = Pipe()
+
+                var args = arguments
+                if wantProgress {
+                    // Insert -progress pipe:1 right after -hide_banner (or at the start)
+                    if let idx = args.firstIndex(of: "-hide_banner") {
+                        args.insert(contentsOf: ["-progress", "pipe:1"], at: idx + 1)
+                    } else {
+                        args.insert(contentsOf: ["-progress", "pipe:1"], at: 0)
+                    }
+                }
+                process.arguments = args
+
+                let stdoutPipe = Pipe()
                 let stderrPipe = Pipe()
+                process.standardOutput = stdoutPipe
                 process.standardError = stderrPipe
+
+                if wantProgress, let totalDuration = duration, let progressCallback = onProgress {
+                    stdoutPipe.fileHandleForReading.readabilityHandler = { handle in
+                        let data = handle.availableData
+                        guard !data.isEmpty, let text = String(data: data, encoding: .utf8) else { return }
+
+                        // Parse lines like "out_time_us=12345678"
+                        for line in text.components(separatedBy: .newlines) {
+                            if line.hasPrefix("out_time_us=") {
+                                let valueStr = line.dropFirst("out_time_us=".count)
+                                if let us = Double(valueStr), us > 0 {
+                                    let seconds = us / 1_000_000.0
+                                    let fraction = min(seconds / totalDuration, 1.0)
+                                    progressCallback(fraction)
+                                }
+                            }
+                        }
+                    }
+                }
 
                 do {
                     try process.run()
+                    handle?.attach(process)
                 } catch {
+                    stdoutPipe.fileHandleForReading.readabilityHandler = nil
                     continuation.resume(throwing: error)
                     return
                 }
 
                 process.waitUntilExit()
+                stdoutPipe.fileHandleForReading.readabilityHandler = nil
 
                 if process.terminationStatus == 0 {
                     continuation.resume(returning: ())
+                } else if process.terminationReason == .uncaughtSignal {
+                    continuation.resume(throwing: FFmpegError.cancelled)
                 } else {
                     let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
                     let message = String(data: stderrData, encoding: .utf8) ?? "Unknown ffmpeg error"

@@ -40,6 +40,50 @@ enum ScreenshotFormat: String, CaseIterable {
     }
 }
 
+enum TrimExportFormat: String, CaseIterable {
+    case copy = "copy"
+    case gif = "gif"
+    case animatedAVIF = "animatedAVIF"
+    case hardwareH264 = "hardwareH264"
+    case hardwareH265 = "hardwareH265"
+
+    var label: String {
+        switch self {
+        case .copy: "Lossless Copy"
+        case .gif: "GIF"
+        case .animatedAVIF: "Animated AVIF"
+        case .hardwareH264: "Hardware H.264"
+        case .hardwareH265: "Hardware H.265"
+        }
+    }
+
+    var fileExtension: String? {
+        switch self {
+        case .copy: nil
+        case .gif: "gif"
+        case .animatedAVIF: "avif"
+        case .hardwareH264: "mp4"
+        case .hardwareH265: "mp4"
+        }
+    }
+}
+
+enum GIFWidthPreset: Int, CaseIterable {
+    case original = 0
+    case w720 = 720
+    case w480 = 480
+    case w320 = 320
+
+    var label: String {
+        switch self {
+        case .original: "Original"
+        case .w720: "720px"
+        case .w480: "480px"
+        case .w320: "320px"
+        }
+    }
+}
+
 struct SettingsView: View {
     static let modeKey = "screenshotLocationMode"
     static let formatKey = "screenshotFormat"
@@ -47,10 +91,27 @@ struct SettingsView: View {
     static let trimModeKey = "trimLocationMode"
     static let trimBookmarkKey = "trimSaveDirectory"
 
+    // Export format keys
+    static let trimFormatKey = "trimExportFormat"
+    static let screenshotJXLQualityKey = "screenshotJXLQuality"
+    static let screenshotJPEGQualityKey = "screenshotJPEGQuality"
+    static let gifFrameRateKey = "gifFrameRate"
+    static let gifWidthKey = "gifWidth"
+    static let avifQualityKey = "avifQuality"
+    static let avifSpeedKey = "avifSpeed"
+    static let h264QualityKey = "h264Quality"
+    static let h265QualityKey = "h265Quality"
+
     var body: some View {
         TabView {
             GeneralSettingsView()
                 .tabItem { Label("General", systemImage: "gear") }
+
+            ScreenshotSettingsView()
+                .tabItem { Label("Screenshots", systemImage: "camera") }
+
+            ExportSettingsView()
+                .tabItem { Label("Export", systemImage: "square.and.arrow.up") }
 
             KeyboardShortcutsView()
                 .tabItem { Label("Shortcuts", systemImage: "command") }
@@ -58,7 +119,7 @@ struct SettingsView: View {
             UpdateSettingsView()
                 .tabItem { Label("Updates", systemImage: "arrow.triangle.2.circlepath") }
         }
-        .frame(width: 480, height: 460)
+        .frame(width: 480, height: 500)
     }
 
     // MARK: - Static Resolution
@@ -66,6 +127,11 @@ struct SettingsView: View {
     static var selectedScreenshotFormat: ScreenshotFormat {
         let raw = UserDefaults.standard.string(forKey: formatKey) ?? "jxl"
         return ScreenshotFormat(rawValue: raw) ?? .jxl
+    }
+
+    static var selectedTrimExportFormat: TrimExportFormat {
+        let raw = UserDefaults.standard.string(forKey: trimFormatKey) ?? "copy"
+        return TrimExportFormat(rawValue: raw) ?? .copy
     }
 
     static func resolvedScreenshotDirectory(sourceURL: URL) -> URL? {
@@ -134,13 +200,6 @@ private struct GeneralSettingsView: View {
     @AppStorage("openAtSourceResolution") private var openAtSourceResolution = true
     @AppStorage("clampWindowToScreen") private var clampWindowToScreen = true
 
-    @State private var screenshotMode: SaveLocationMode = .custom
-    @State private var screenshotFormat: ScreenshotFormat = .jxl
-    @State private var screenshotFolderName: String = "Desktop"
-
-    @State private var trimMode: SaveLocationMode = .ask
-    @State private var trimFolderName: String = "Desktop"
-
     var body: some View {
         Form {
             Section("Windows") {
@@ -171,116 +230,67 @@ private struct GeneralSettingsView: View {
                     }
                 }
             }
+        }
+        .formStyle(.grouped)
+    }
+}
 
-            Section("Screenshots") {
-                LabeledContent("Format") {
-                    Picker("", selection: $screenshotFormat) {
-                        ForEach(ScreenshotFormat.allCases, id: \.self) { f in
-                            Text(f.label).tag(f)
+// MARK: - Location Settings Section (Reusable)
+
+private struct LocationSettingsSection: View {
+    @Binding var mode: SaveLocationMode
+    @State private var folderName: String = "Desktop"
+
+    let modeKey: String
+    let bookmarkKey: String
+
+    var body: some View {
+        Section("Save Location") {
+            LabeledContent("Location") {
+                VStack(alignment: .trailing, spacing: 8) {
+                    Picker("", selection: $mode) {
+                        ForEach(SaveLocationMode.allCases, id: \.self) { m in
+                            Text(m.label).tag(m)
                         }
                     }
                     .pickerStyle(.segmented)
                     .labelsHidden()
-                    .onChange(of: screenshotFormat) { _, newValue in
-                        UserDefaults.standard.set(newValue.rawValue, forKey: SettingsView.formatKey)
+                    .onChange(of: mode) { _, newValue in
+                        UserDefaults.standard.set(newValue.rawValue, forKey: modeKey)
+                        if newValue == .custom {
+                            ensureBookmark(key: bookmarkKey)
+                        }
                     }
-                }
 
-                locationPicker(
-                    selection: $screenshotMode,
-                    folderName: screenshotFolderName,
-                    modeKey: SettingsView.modeKey,
-                    bookmarkKey: SettingsView.bookmarkKey,
-                    onChoose: { chooseDirectory(bookmarkKey: SettingsView.bookmarkKey) { screenshotFolderName = $0 } }
-                )
-            }
+                    if mode == .custom {
+                        HStack(spacing: 6) {
+                            Text(folderName)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
 
-            Section("Trim Export") {
-                locationPicker(
-                    selection: $trimMode,
-                    folderName: trimFolderName,
-                    modeKey: SettingsView.trimModeKey,
-                    bookmarkKey: SettingsView.trimBookmarkKey,
-                    onChoose: { chooseDirectory(bookmarkKey: SettingsView.trimBookmarkKey) { trimFolderName = $0 } }
-                )
-            }
-        }
-        .formStyle(.grouped)
-        .onAppear {
-            loadState()
-        }
-    }
-
-    private func locationPicker(
-        selection: Binding<SaveLocationMode>,
-        folderName: String,
-        modeKey: String,
-        bookmarkKey: String,
-        onChoose: @escaping () -> Void
-    ) -> some View {
-        LabeledContent("Location") {
-            VStack(alignment: .trailing, spacing: 8) {
-                Picker("", selection: selection) {
-                    ForEach(SaveLocationMode.allCases, id: \.self) { m in
-                        Text(m.label).tag(m)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .onChange(of: selection.wrappedValue) { _, newValue in
-                    UserDefaults.standard.set(newValue.rawValue, forKey: modeKey)
-                    if newValue == .custom {
-                        ensureBookmark(key: bookmarkKey)
-                    }
-                }
-
-                if selection.wrappedValue == .custom {
-                    HStack(spacing: 6) {
-                        Text(folderName)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-
-                        Button("Choose\u{2026}") {
-                            onChoose()
+                            Button("Choose\u{2026}") {
+                                chooseDirectory()
+                            }
                         }
                     }
                 }
             }
         }
+        .onAppear {
+            loadMode()
+            folderName = folderNameFromBookmark()
+        }
     }
 
-    // MARK: - State Loading
-
-    private func loadState() {
-        screenshotMode = loadMode(key: SettingsView.modeKey, default: .custom)
-        trimMode = loadMode(key: SettingsView.trimModeKey, default: .ask)
-
-        if let raw = UserDefaults.standard.string(forKey: SettingsView.formatKey),
-           let saved = ScreenshotFormat(rawValue: raw) {
-            screenshotFormat = saved
-        }
-
-        if screenshotMode == .custom {
-            ensureBookmark(key: SettingsView.bookmarkKey)
-        }
-        if trimMode == .custom {
-            ensureBookmark(key: SettingsView.trimBookmarkKey)
-        }
-
-        screenshotFolderName = folderName(for: SettingsView.bookmarkKey)
-        trimFolderName = folderName(for: SettingsView.trimBookmarkKey)
-    }
-
-    private func loadMode(key: String, default defaultMode: SaveLocationMode) -> SaveLocationMode {
-        if let raw = UserDefaults.standard.string(forKey: key),
+    private func loadMode() {
+        if let raw = UserDefaults.standard.string(forKey: modeKey),
            let saved = SaveLocationMode(rawValue: raw) {
-            return saved
+            mode = saved
         }
-        UserDefaults.standard.set(defaultMode.rawValue, forKey: key)
-        return defaultMode
+        if mode == .custom {
+            ensureBookmark(key: bookmarkKey)
+        }
     }
-
-    // MARK: - Bookmark Helpers
 
     private func ensureBookmark(key: String) {
         if UserDefaults.standard.data(forKey: key) == nil {
@@ -296,14 +306,14 @@ private struct GeneralSettingsView: View {
         }
     }
 
-    private func folderName(for bookmarkKey: String) -> String {
+    private func folderNameFromBookmark() -> String {
         guard let url = SettingsView.resolveBookmark(key: bookmarkKey) else {
             return "Desktop"
         }
         return url.lastPathComponent
     }
 
-    private func chooseDirectory(bookmarkKey: String, update: @escaping (String) -> Void) {
+    private func chooseDirectory() {
         let panel = NSOpenPanel()
         panel.canChooseFiles = false
         panel.canChooseDirectories = true
@@ -318,8 +328,184 @@ private struct GeneralSettingsView: View {
             relativeTo: nil
         ) {
             UserDefaults.standard.set(data, forKey: bookmarkKey)
-            update(url.lastPathComponent)
+            folderName = url.lastPathComponent
         }
+    }
+}
+
+// MARK: - Screenshot Settings
+
+private struct ScreenshotSettingsView: View {
+    @State private var screenshotFormat: ScreenshotFormat = .jxl
+    @AppStorage(SettingsView.screenshotJXLQualityKey) private var jxlQuality: Double = 90
+    @AppStorage(SettingsView.screenshotJPEGQualityKey) private var jpegQuality: Double = 90
+
+    @State private var screenshotMode: SaveLocationMode = .custom
+
+    var body: some View {
+        Form {
+            Section("Format") {
+                LabeledContent("Format") {
+                    Picker("", selection: $screenshotFormat) {
+                        ForEach(ScreenshotFormat.allCases, id: \.self) { f in
+                            Text(f.label).tag(f)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                    .onChange(of: screenshotFormat) { _, newValue in
+                        UserDefaults.standard.set(newValue.rawValue, forKey: SettingsView.formatKey)
+                    }
+                }
+
+                switch screenshotFormat {
+                case .jxl:
+                    LabeledContent("Quality") {
+                        HStack(spacing: 8) {
+                            Slider(value: $jxlQuality, in: 0...100, step: 1)
+                            Text("\(Int(jxlQuality))")
+                                .monospacedDigit()
+                                .frame(width: 32, alignment: .trailing)
+                        }
+                    }
+                case .jpeg:
+                    LabeledContent("Quality") {
+                        HStack(spacing: 8) {
+                            Slider(value: $jpegQuality, in: 0...100, step: 1)
+                            Text("\(Int(jpegQuality))")
+                                .monospacedDigit()
+                                .frame(width: 32, alignment: .trailing)
+                        }
+                    }
+                case .png:
+                    Text("PNG is always lossless.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            LocationSettingsSection(
+                mode: $screenshotMode,
+                modeKey: SettingsView.modeKey,
+                bookmarkKey: SettingsView.bookmarkKey
+            )
+        }
+        .formStyle(.grouped)
+        .onAppear {
+            if let raw = UserDefaults.standard.string(forKey: SettingsView.formatKey),
+               let saved = ScreenshotFormat(rawValue: raw) {
+                screenshotFormat = saved
+            }
+        }
+    }
+}
+
+// MARK: - Export Settings
+
+private struct ExportSettingsView: View {
+    @AppStorage(SettingsView.trimFormatKey) private var formatRaw: String = TrimExportFormat.copy.rawValue
+
+    @AppStorage(SettingsView.gifFrameRateKey) private var gifFrameRate: Double = 15
+    @AppStorage(SettingsView.gifWidthKey) private var gifWidthRaw: Int = GIFWidthPreset.w480.rawValue
+
+    @AppStorage(SettingsView.avifQualityKey) private var avifQuality: Double = 28
+    @AppStorage(SettingsView.avifSpeedKey) private var avifSpeed: Double = 4
+
+    @AppStorage(SettingsView.h264QualityKey) private var h264Quality: Double = 65
+    @AppStorage(SettingsView.h265QualityKey) private var h265Quality: Double = 65
+
+    @State private var trimMode: SaveLocationMode = .ask
+
+    private var format: TrimExportFormat {
+        get { TrimExportFormat(rawValue: formatRaw) ?? .copy }
+    }
+
+    var body: some View {
+        Form {
+            Section("Format") {
+                Picker("Format", selection: $formatRaw) {
+                    ForEach(TrimExportFormat.allCases, id: \.self) { f in
+                        Text(f.label).tag(f.rawValue)
+                    }
+                }
+
+                switch format {
+                case .copy:
+                    Text("Lossless stream copy. No re-encoding.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                case .gif:
+                    LabeledContent("Frame Rate") {
+                        HStack(spacing: 8) {
+                            Slider(value: $gifFrameRate, in: 5...30, step: 1)
+                            Text("\(Int(gifFrameRate)) fps")
+                                .monospacedDigit()
+                                .frame(width: 52, alignment: .trailing)
+                        }
+                    }
+
+                    LabeledContent("Width") {
+                        Picker("", selection: $gifWidthRaw) {
+                            ForEach(GIFWidthPreset.allCases, id: \.self) { p in
+                                Text(p.label).tag(p.rawValue)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                        .labelsHidden()
+                    }
+
+                case .animatedAVIF:
+                    LabeledContent("Quality (CRF)") {
+                        HStack(spacing: 8) {
+                            Slider(value: $avifQuality, in: 0...63, step: 1)
+                            Text("\(Int(avifQuality))")
+                                .monospacedDigit()
+                                .frame(width: 32, alignment: .trailing)
+                        }
+                    }
+                    Text("Lower values = higher quality.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    LabeledContent("Speed") {
+                        HStack(spacing: 8) {
+                            Slider(value: $avifSpeed, in: 0...8, step: 1)
+                            Text("\(Int(avifSpeed))")
+                                .monospacedDigit()
+                                .frame(width: 32, alignment: .trailing)
+                        }
+                    }
+
+                case .hardwareH264:
+                    LabeledContent("Quality") {
+                        HStack(spacing: 8) {
+                            Slider(value: $h264Quality, in: 1...100, step: 1)
+                            Text("\(Int(h264Quality))")
+                                .monospacedDigit()
+                                .frame(width: 32, alignment: .trailing)
+                        }
+                    }
+
+                case .hardwareH265:
+                    LabeledContent("Quality") {
+                        HStack(spacing: 8) {
+                            Slider(value: $h265Quality, in: 1...100, step: 1)
+                            Text("\(Int(h265Quality))")
+                                .monospacedDigit()
+                                .frame(width: 32, alignment: .trailing)
+                        }
+                    }
+                }
+            }
+
+            LocationSettingsSection(
+                mode: $trimMode,
+                modeKey: SettingsView.trimModeKey,
+                bookmarkKey: SettingsView.trimBookmarkKey
+            )
+        }
+        .formStyle(.grouped)
     }
 }
 

@@ -80,18 +80,14 @@ struct ContentView: View {
 
             // Layer 2: export/screenshot feedback
             if controller.isSavingScreenshot || controller.screenshotDone {
-                exportOverlay(
-                    isWorking: controller.isSavingScreenshot,
-                    workingText: "Saving\u{2026}",
-                    doneText: "Screenshot saved."
-                )
+                if controller.isSavingScreenshot {
+                    exportOverlay(statusText: "Saving\u{2026}", showSpinner: true)
+                } else {
+                    exportOverlay(statusIcon: "checkmark.circle.fill", iconColor: .green, statusText: "Screenshot saved.")
+                }
             }
-            if controller.isExportingTrim || controller.trimExportDone {
-                exportOverlay(
-                    isWorking: controller.isExportingTrim,
-                    workingText: "Exporting\u{2026}",
-                    doneText: "Trimmed file saved."
-                )
+            if controller.isExportingTrim || controller.trimExportDone || controller.trimExportCancelling || controller.trimExportCancelled {
+                trimExportOverlay
             }
             if let warning = controller.trimExportWarning {
                 warningOverlay(warning)
@@ -268,19 +264,63 @@ struct ContentView: View {
 
     // MARK: - Export Overlay
 
-    private func exportOverlay(isWorking: Bool, workingText: String, doneText: String) -> some View {
+    @ViewBuilder
+    private var trimExportOverlay: some View {
+        if controller.trimExportCancelling {
+            exportOverlay(statusIcon: nil, statusText: "Cancelling\u{2026}", showSpinner: true)
+        } else if controller.trimExportCancelled {
+            exportOverlay(statusIcon: "xmark.circle.fill", iconColor: .orange, statusText: "Export cancelled.")
+        } else if controller.isExportingTrim {
+            if let progress = controller.trimExportProgress {
+                exportOverlay(
+                    statusText: "Exporting \(Int(progress * 100))%",
+                    progress: progress,
+                    onCancel: { controller.cancelExport() }
+                )
+            } else {
+                exportOverlay(
+                    statusText: "Preparing export\u{2026}",
+                    showSpinner: true,
+                    onCancel: { controller.cancelExport() }
+                )
+            }
+        } else if controller.trimExportDone {
+            exportOverlay(statusIcon: "checkmark.circle.fill", iconColor: .green, statusText: "Trimmed file saved.")
+        }
+    }
+
+    private func exportOverlay(
+        statusIcon: String? = nil,
+        iconColor: Color = .green,
+        statusText: String,
+        showSpinner: Bool = false,
+        progress: Double? = nil,
+        onCancel: (() -> Void)? = nil
+    ) -> some View {
         VStack {
             Spacer()
 
             HStack(spacing: 8) {
-                if isWorking {
+                if showSpinner {
                     ProgressView()
                         .controlSize(.small)
-                    Text(workingText)
-                } else {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
-                    Text(doneText)
+                }
+                if let statusIcon {
+                    Image(systemName: statusIcon)
+                        .foregroundStyle(iconColor)
+                }
+                Text(statusText)
+                if let onCancel {
+                    Button {
+                        onCancel()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundStyle(.white.opacity(0.7))
+                            .frame(width: 18, height: 18)
+                            .background(.white.opacity(0.15), in: .circle)
+                    }
+                    .buttonStyle(.plain)
                 }
             }
             .font(.system(size: 13, weight: .medium))
@@ -288,11 +328,86 @@ struct ContentView: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
             .background(.black.opacity(0.7), in: .capsule)
+            .overlay {
+                if let progress {
+                    ProgressCapsuleBorder(progress: progress)
+                        .stroke(Color.accentColor, lineWidth: 2)
+                        .animation(.linear(duration: 0.2), value: progress)
+                }
+            }
             .padding(.bottom, 80)
         }
         .transition(.opacity)
-        .animation(.easeInOut(duration: 0.25), value: isWorking)
-        .allowsHitTesting(false)
+    }
+
+    // MARK: - Progress Capsule Border
+
+    /// A shape that traces a capsule's perimeter from top-center clockwise,
+    /// drawing only the fraction specified by `progress` (0...1).
+    private struct ProgressCapsuleBorder: Shape {
+        var progress: Double
+
+        var animatableData: Double {
+            get { progress }
+            set { progress = newValue }
+        }
+
+        func path(in rect: CGRect) -> Path {
+            let r = rect.height / 2
+            // Total perimeter: two semicircles + two straight edges
+            let straightLen = rect.width - 2 * r
+            let semicircleLen = .pi * r
+            let totalLen = 2 * semicircleLen + 2 * straightLen
+            let target = totalLen * min(max(progress, 0), 1)
+
+            var path = Path()
+            var drawn: CGFloat = 0
+
+            // Segment 1: top edge, from center-top rightward
+            let seg1 = straightLen / 2
+            if drawn >= target { return path }
+            let s1 = min(seg1, target - drawn)
+            path.move(to: CGPoint(x: rect.midX, y: rect.minY))
+            path.addLine(to: CGPoint(x: rect.midX + s1, y: rect.minY))
+            drawn += s1
+
+            // Segment 2: right semicircle (top to bottom, clockwise)
+            if drawn >= target { return path }
+            let s2 = min(semicircleLen, target - drawn)
+            let angle2 = s2 / r // radians to sweep
+            let center2 = CGPoint(x: rect.maxX - r, y: rect.midY)
+            path.addArc(center: center2, radius: r,
+                        startAngle: .radians(-.pi / 2),
+                        endAngle: .radians(-.pi / 2 + angle2),
+                        clockwise: false)
+            drawn += s2
+
+            // Segment 3: bottom edge, right to left
+            if drawn >= target { return path }
+            let s3 = min(straightLen, target - drawn)
+            let bottomRight = CGPoint(x: rect.maxX - r, y: rect.maxY)
+            path.addLine(to: CGPoint(x: bottomRight.x - s3, y: rect.maxY))
+            drawn += s3
+
+            // Segment 4: left semicircle (bottom to top, clockwise)
+            if drawn >= target { return path }
+            let s4 = min(semicircleLen, target - drawn)
+            let angle4 = s4 / r
+            let center4 = CGPoint(x: rect.minX + r, y: rect.midY)
+            path.addArc(center: center4, radius: r,
+                        startAngle: .radians(.pi / 2),
+                        endAngle: .radians(.pi / 2 + angle4),
+                        clockwise: false)
+            drawn += s4
+
+            // Segment 5: top edge, left to center
+            if drawn >= target { return path }
+            let s5 = min(straightLen / 2, target - drawn)
+            let topLeft = CGPoint(x: rect.minX + r, y: rect.minY)
+            path.addLine(to: CGPoint(x: topLeft.x + s5, y: rect.minY))
+
+            return path
+        }
     }
 
     private func warningOverlay(_ message: String) -> some View {

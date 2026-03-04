@@ -71,7 +71,12 @@ final class PlayerController: ObservableObject {
     // Trim export feedback
     @Published var isExportingTrim = false
     @Published var trimExportDone = false
+    @Published var trimExportCancelling = false
+    @Published var trimExportCancelled = false
     @Published var trimExportWarning: String?
+    /// Export progress fraction 0...1 for re-encoding formats, nil when preparing.
+    @Published var trimExportProgress: Double?
+    private var exportHandle: FFmpegHandle?
 
     // Reverse simulation
     private var reverseSpeed: Int = 1
@@ -915,7 +920,9 @@ final class PlayerController: ObservableObject {
             } else {
                 pixelFormat = hasAlpha ? "rgba" : "rgb24"
             }
-            arguments += ["-pix_fmt", pixelFormat, "-c:v", "libjxl", "-distance", "0.5", "-effort", "7"]
+            let jxlQuality = UserDefaults.standard.double(forKey: SettingsView.screenshotJXLQualityKey).clamped(to: 0...100, default: 90)
+            let distance = (100 - jxlQuality) / 100.0 * 15.0
+            arguments += ["-pix_fmt", pixelFormat, "-c:v", "libjxl", "-distance", String(format: "%.2f", distance), "-effort", "7"]
 
         case .png:
             let pixelFormat: String
@@ -927,7 +934,9 @@ final class PlayerController: ObservableObject {
             arguments += ["-pix_fmt", pixelFormat, "-c:v", "png"]
 
         case .jpeg:
-            arguments += ["-pix_fmt", "yuvj444p", "-c:v", "mjpeg", "-q:v", "2"]
+            let jpegQuality = UserDefaults.standard.double(forKey: SettingsView.screenshotJPEGQualityKey).clamped(to: 0...100, default: 90)
+            let qv = 1.0 + (100 - jpegQuality) / 100.0 * 30.0
+            arguments += ["-pix_fmt", "yuvj444p", "-c:v", "mjpeg", "-q:v", String(format: "%.1f", qv)]
         }
 
         FFmpegService.appendColorArguments(from: stream, to: &arguments)
@@ -975,8 +984,10 @@ final class PlayerController: ObservableObject {
             return
         }
 
+        let format = SettingsView.selectedTrimExportFormat
         let duration = outPoint - inPoint
-        let ext = item.url.pathExtension
+        let originalExt = item.url.pathExtension
+        let ext = format.fileExtension ?? originalExt
         let baseName = item.url.deletingPathExtension().lastPathComponent
         let defaultName = "\(baseName)_trimmed.\(ext)"
 
@@ -1010,22 +1021,59 @@ final class PlayerController: ObservableObject {
             outputURL = chosen
         }
 
-        let arguments = [
+        let formatArguments: [String]
+        switch format {
+        case .copy:
+            formatArguments = buildCopyArguments()
+        case .gif:
+            formatArguments = buildGIFArguments()
+        case .animatedAVIF:
+            formatArguments = buildAnimatedAVIFArguments()
+        case .hardwareH264:
+            formatArguments = buildH264Arguments()
+        case .hardwareH265:
+            formatArguments = buildH265Arguments()
+        }
+
+        var arguments = [
             "-hide_banner", "-loglevel", "error",
             "-ss", String(inPoint),
             "-i", item.url.path,
             "-t", String(duration),
-            "-c", "copy",
-            "-avoid_negative_ts", "make_zero",
-            "-y", outputURL.path,
         ]
+        arguments += formatArguments
+        arguments += ["-y", outputURL.path]
 
         isExportingTrim = true
         trimExportDone = false
+        trimExportCancelling = false
+        trimExportCancelled = false
+        trimExportProgress = nil
+
+        let handle = FFmpegHandle()
+        exportHandle = handle
+
+        let progressCallback: (@Sendable (Double) -> Void)?
+        if format != .copy {
+            progressCallback = { [weak self] fraction in
+                let _ = Task { @MainActor [weak self] in
+                    self?.trimExportProgress = fraction
+                }
+            }
+        } else {
+            progressCallback = nil
+        }
 
         do {
-            try await FFmpegService.run(arguments: arguments)
+            try await FFmpegService.run(
+                arguments: arguments,
+                duration: format != .copy ? duration : nil,
+                onProgress: progressCallback,
+                handle: handle
+            )
+            exportHandle = nil
             isExportingTrim = false
+            trimExportProgress = nil
             if FileManager.default.fileExists(atPath: outputURL.path) {
                 logger.info("Trim export saved: \(outputURL.lastPathComponent)")
                 trimExportDone = true
@@ -1036,10 +1084,70 @@ final class PlayerController: ObservableObject {
             } else {
                 logger.error("Trim export output file missing")
             }
-        } catch {
+        } catch let error as FFmpegError where error == .cancelled {
+            exportHandle = nil
             isExportingTrim = false
+            trimExportProgress = nil
+            trimExportCancelling = false
+            // Clean up partial output file
+            try? FileManager.default.removeItem(at: outputURL)
+            logger.info("Trim export cancelled")
+            trimExportCancelled = true
+            Task {
+                try? await Task.sleep(for: .seconds(1.5))
+                trimExportCancelled = false
+            }
+        } catch {
+            exportHandle = nil
+            isExportingTrim = false
+            trimExportCancelling = false
+            trimExportProgress = nil
             logger.error("Trim export failed: \(error.localizedDescription)")
         }
+    }
+
+    func cancelExport() {
+        trimExportCancelling = true
+        trimExportProgress = nil
+        exportHandle?.cancel()
+    }
+
+    // MARK: - Export Argument Builders
+
+    private func buildCopyArguments() -> [String] {
+        ["-c", "copy", "-avoid_negative_ts", "make_zero"]
+    }
+
+    private func buildGIFArguments() -> [String] {
+        let fps = Int(UserDefaults.standard.double(forKey: SettingsView.gifFrameRateKey).clamped(to: 5...30, default: 15))
+        let widthRaw = UserDefaults.standard.integer(forKey: SettingsView.gifWidthKey)
+        let width = GIFWidthPreset(rawValue: widthRaw) ?? .w480
+
+        let scaleFilter: String
+        if width == .original {
+            scaleFilter = "scale=iw:ih"
+        } else {
+            scaleFilter = "scale=\(width.rawValue):-1:flags=lanczos"
+        }
+
+        let filtergraph = "fps=\(fps),\(scaleFilter),split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse"
+        return ["-vf", filtergraph, "-an"]
+    }
+
+    private func buildAnimatedAVIFArguments() -> [String] {
+        let crf = Int(UserDefaults.standard.double(forKey: SettingsView.avifQualityKey).clamped(to: 0...63, default: 28))
+        let speed = Int(UserDefaults.standard.double(forKey: SettingsView.avifSpeedKey).clamped(to: 0...8, default: 4))
+        return ["-c:v", "libaom-av1", "-crf", String(crf), "-cpu-used", String(speed), "-b:v", "0", "-an"]
+    }
+
+    private func buildH264Arguments() -> [String] {
+        let quality = Int(UserDefaults.standard.double(forKey: SettingsView.h264QualityKey).clamped(to: 1...100, default: 65))
+        return ["-c:v", "h264_videotoolbox", "-q:v", String(quality), "-c:a", "aac"]
+    }
+
+    private func buildH265Arguments() -> [String] {
+        let quality = Int(UserDefaults.standard.double(forKey: SettingsView.h265QualityKey).clamped(to: 1...100, default: 65))
+        return ["-c:v", "hevc_videotoolbox", "-q:v", String(quality), "-c:a", "aac"]
     }
 
     // MARK: - Teardown
@@ -1095,5 +1203,14 @@ final class PlayerController: ObservableObject {
         }
         audioTrackOptions = []
         subtitleTrackOptions = []
+    }
+}
+
+// MARK: - Double Clamped Helper
+
+extension Double {
+    func clamped(to range: ClosedRange<Double>, default defaultValue: Double) -> Double {
+        let value = self == 0 ? defaultValue : self
+        return min(max(value, range.lowerBound), range.upperBound)
     }
 }
