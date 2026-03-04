@@ -93,6 +93,9 @@ struct ContentView: View {
                     doneText: "Trimmed file saved."
                 )
             }
+            if let warning = controller.trimExportWarning {
+                warningOverlay(warning)
+            }
 
             // Layer 3: update banner
             if updateChecker.updateAvailable, !updateBannerDismissed {
@@ -289,6 +292,26 @@ struct ContentView: View {
         }
         .transition(.opacity)
         .animation(.easeInOut(duration: 0.25), value: isWorking)
+        .allowsHitTesting(false)
+    }
+
+    private func warningOverlay(_ message: String) -> some View {
+        VStack {
+            Spacer()
+
+            HStack(spacing: 8) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.yellow)
+                Text(message)
+            }
+            .font(.system(size: 13, weight: .medium))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .background(.black.opacity(0.7), in: .capsule)
+            .padding(.bottom, 80)
+        }
+        .transition(.opacity)
         .allowsHitTesting(false)
     }
 

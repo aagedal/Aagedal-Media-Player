@@ -71,6 +71,7 @@ final class PlayerController: ObservableObject {
     // Trim export feedback
     @Published var isExportingTrim = false
     @Published var trimExportDone = false
+    @Published var trimExportWarning: String?
 
     // Reverse simulation
     private var reverseSpeed: Int = 1
@@ -961,7 +962,16 @@ final class PlayerController: ObservableObject {
     func exportTrim() async {
         guard let item = mediaItem else { return }
         guard let inPoint = trimIn, let outPoint = trimOut, outPoint > inPoint else {
+            let missing = trimIn == nil && trimOut == nil ? "Set trim in and out points first."
+                : trimIn == nil ? "Set a trim in point first."
+                : trimOut == nil ? "Set a trim out point first."
+                : "Trim out must be after trim in."
             logger.warning("Export requires both trim in and out points")
+            trimExportWarning = missing
+            Task {
+                try? await Task.sleep(for: .seconds(2))
+                trimExportWarning = nil
+            }
             return
         }
 
