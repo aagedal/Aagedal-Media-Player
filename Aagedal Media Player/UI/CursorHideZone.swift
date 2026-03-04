@@ -110,7 +110,9 @@ final class CursorHideNSView: NSView {
         let wasHovering = isHovering
         if wasHovering {
             if Thread.isMainThread {
-                Self.ensureCursorVisible()
+                MainActor.assumeIsolated {
+                    Self.ensureCursorVisible()
+                }
             } else {
                 DispatchQueue.main.async {
                     CursorHideNSView.ensureCursorVisible()

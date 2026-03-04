@@ -70,9 +70,7 @@ enum TrimExportFormat: String, CaseIterable {
 
 enum ExportWidthPreset: Int, CaseIterable {
     case original = 0
-    case w3840 = 3840
-    case w1920 = 1920
-    case w1280 = 1280
+    case w2160 = 2160
     case w1080 = 1080
     case w720 = 720
     case w480 = 480
@@ -81,9 +79,7 @@ enum ExportWidthPreset: Int, CaseIterable {
     var label: String {
         switch self {
         case .original: "Original"
-        case .w3840: "3840"
-        case .w1920: "1920"
-        case .w1280: "1280"
+        case .w2160: "2160"
         case .w1080: "1080"
         case .w720: "720"
         case .w480: "480"
