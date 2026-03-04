@@ -195,7 +195,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             SettingsView.screenshotJXLQualityKey: 90.0,
             SettingsView.screenshotJPEGQualityKey: 90.0,
             SettingsView.gifFrameRateKey: 15.0,
-            SettingsView.gifWidthKey: GIFWidthPreset.w480.rawValue,
+            SettingsView.exportWidthKey: ExportWidthPreset.original.rawValue,
             SettingsView.avifQualityKey: 28.0,
             SettingsView.avifSpeedKey: 4.0,
             SettingsView.h264QualityKey: 65.0,

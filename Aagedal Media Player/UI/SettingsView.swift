@@ -68,8 +68,10 @@ enum TrimExportFormat: String, CaseIterable {
     }
 }
 
-enum GIFWidthPreset: Int, CaseIterable {
+enum ExportWidthPreset: Int, CaseIterable {
     case original = 0
+    case w1920 = 1920
+    case w1280 = 1280
     case w720 = 720
     case w480 = 480
     case w320 = 320
@@ -77,6 +79,8 @@ enum GIFWidthPreset: Int, CaseIterable {
     var label: String {
         switch self {
         case .original: "Original"
+        case .w1920: "1920px"
+        case .w1280: "1280px"
         case .w720: "720px"
         case .w480: "480px"
         case .w320: "320px"
@@ -96,7 +100,7 @@ struct SettingsView: View {
     static let screenshotJXLQualityKey = "screenshotJXLQuality"
     static let screenshotJPEGQualityKey = "screenshotJPEGQuality"
     static let gifFrameRateKey = "gifFrameRate"
-    static let gifWidthKey = "gifWidth"
+    static let exportWidthKey = "exportWidth"
     static let avifQualityKey = "avifQuality"
     static let avifSpeedKey = "avifSpeed"
     static let h264QualityKey = "h264Quality"
@@ -406,7 +410,7 @@ private struct ExportSettingsView: View {
     @AppStorage(SettingsView.trimFormatKey) private var formatRaw: String = TrimExportFormat.copy.rawValue
 
     @AppStorage(SettingsView.gifFrameRateKey) private var gifFrameRate: Double = 15
-    @AppStorage(SettingsView.gifWidthKey) private var gifWidthRaw: Int = GIFWidthPreset.w480.rawValue
+    @AppStorage(SettingsView.exportWidthKey) private var exportWidthRaw: Int = ExportWidthPreset.original.rawValue
 
     @AppStorage(SettingsView.avifQualityKey) private var avifQuality: Double = 28
     @AppStorage(SettingsView.avifSpeedKey) private var avifSpeed: Double = 4
@@ -443,16 +447,6 @@ private struct ExportSettingsView: View {
                                 .monospacedDigit()
                                 .frame(width: 52, alignment: .trailing)
                         }
-                    }
-
-                    LabeledContent("Width") {
-                        Picker("", selection: $gifWidthRaw) {
-                            ForEach(GIFWidthPreset.allCases, id: \.self) { p in
-                                Text(p.label).tag(p.rawValue)
-                            }
-                        }
-                        .pickerStyle(.segmented)
-                        .labelsHidden()
                     }
 
                 case .animatedAVIF:
@@ -495,6 +489,17 @@ private struct ExportSettingsView: View {
                                 .monospacedDigit()
                                 .frame(width: 32, alignment: .trailing)
                         }
+                    }
+                }
+
+                if format != .copy {
+                    LabeledContent("Resolution") {
+                        Picker("", selection: $exportWidthRaw) {
+                            ForEach(ExportWidthPreset.allCases, id: \.self) { p in
+                                Text(p.label).tag(p.rawValue)
+                            }
+                        }
+                        .labelsHidden()
                     }
                 }
             }

@@ -1118,18 +1118,17 @@ final class PlayerController: ObservableObject {
         ["-c", "copy", "-avoid_negative_ts", "make_zero"]
     }
 
+    private var exportScaleFilter: String? {
+        let widthRaw = UserDefaults.standard.integer(forKey: SettingsView.exportWidthKey)
+        let width = ExportWidthPreset(rawValue: widthRaw) ?? .original
+        guard width != .original else { return nil }
+        return "scale=\(width.rawValue):-2:flags=lanczos"
+    }
+
     private func buildGIFArguments() -> [String] {
         let fps = Int(UserDefaults.standard.double(forKey: SettingsView.gifFrameRateKey).clamped(to: 5...30, default: 15))
-        let widthRaw = UserDefaults.standard.integer(forKey: SettingsView.gifWidthKey)
-        let width = GIFWidthPreset(rawValue: widthRaw) ?? .w480
 
-        let scaleFilter: String
-        if width == .original {
-            scaleFilter = "scale=iw:ih"
-        } else {
-            scaleFilter = "scale=\(width.rawValue):-1:flags=lanczos"
-        }
-
+        let scaleFilter = exportScaleFilter ?? "scale=iw:ih"
         let filtergraph = "fps=\(fps),\(scaleFilter),split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse"
         return ["-vf", filtergraph, "-an"]
     }
@@ -1137,17 +1136,23 @@ final class PlayerController: ObservableObject {
     private func buildAnimatedAVIFArguments() -> [String] {
         let crf = Int(UserDefaults.standard.double(forKey: SettingsView.avifQualityKey).clamped(to: 0...63, default: 28))
         let speed = Int(UserDefaults.standard.double(forKey: SettingsView.avifSpeedKey).clamped(to: 0...8, default: 4))
-        return ["-c:v", "libaom-av1", "-crf", String(crf), "-cpu-used", String(speed), "-b:v", "0", "-an"]
+        var args = ["-c:v", "libaom-av1", "-crf", String(crf), "-cpu-used", String(speed), "-b:v", "0", "-an"]
+        if let scale = exportScaleFilter { args += ["-vf", scale] }
+        return args
     }
 
     private func buildH264Arguments() -> [String] {
         let quality = Int(UserDefaults.standard.double(forKey: SettingsView.h264QualityKey).clamped(to: 1...100, default: 65))
-        return ["-c:v", "h264_videotoolbox", "-q:v", String(quality), "-c:a", "aac"]
+        var args = ["-c:v", "h264_videotoolbox", "-q:v", String(quality), "-c:a", "aac"]
+        if let scale = exportScaleFilter { args += ["-vf", scale] }
+        return args
     }
 
     private func buildH265Arguments() -> [String] {
         let quality = Int(UserDefaults.standard.double(forKey: SettingsView.h265QualityKey).clamped(to: 1...100, default: 65))
-        return ["-c:v", "hevc_videotoolbox", "-q:v", String(quality), "-c:a", "aac"]
+        var args = ["-c:v", "hevc_videotoolbox", "-q:v", String(quality), "-c:a", "aac"]
+        if let scale = exportScaleFilter { args += ["-vf", scale] }
+        return args
     }
 
     // MARK: - Teardown
