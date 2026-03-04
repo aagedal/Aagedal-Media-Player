@@ -70,8 +70,10 @@ enum TrimExportFormat: String, CaseIterable {
 
 enum ExportWidthPreset: Int, CaseIterable {
     case original = 0
+    case w3840 = 3840
     case w1920 = 1920
     case w1280 = 1280
+    case w1080 = 1080
     case w720 = 720
     case w480 = 480
     case w320 = 320
@@ -79,11 +81,13 @@ enum ExportWidthPreset: Int, CaseIterable {
     var label: String {
         switch self {
         case .original: "Original"
-        case .w1920: "1920px"
-        case .w1280: "1280px"
-        case .w720: "720px"
-        case .w480: "480px"
-        case .w320: "320px"
+        case .w3840: "3840"
+        case .w1920: "1920"
+        case .w1280: "1280"
+        case .w1080: "1080"
+        case .w720: "720"
+        case .w480: "480"
+        case .w320: "320"
         }
     }
 }
@@ -100,7 +104,10 @@ struct SettingsView: View {
     static let screenshotJXLQualityKey = "screenshotJXLQuality"
     static let screenshotJPEGQualityKey = "screenshotJPEGQuality"
     static let gifFrameRateKey = "gifFrameRate"
-    static let exportWidthKey = "exportWidth"
+    static let gifWidthKey = "gifWidth"
+    static let avifWidthKey = "avifWidth"
+    static let h264WidthKey = "h264Width"
+    static let h265WidthKey = "h265Width"
     static let avifQualityKey = "avifQuality"
     static let avifSpeedKey = "avifSpeed"
     static let h264QualityKey = "h264Quality"
@@ -410,7 +417,10 @@ private struct ExportSettingsView: View {
     @AppStorage(SettingsView.trimFormatKey) private var formatRaw: String = TrimExportFormat.copy.rawValue
 
     @AppStorage(SettingsView.gifFrameRateKey) private var gifFrameRate: Double = 15
-    @AppStorage(SettingsView.exportWidthKey) private var exportWidthRaw: Int = ExportWidthPreset.original.rawValue
+    @AppStorage(SettingsView.gifWidthKey) private var gifWidth: Int = ExportWidthPreset.w720.rawValue
+    @AppStorage(SettingsView.avifWidthKey) private var avifWidth: Int = ExportWidthPreset.w1080.rawValue
+    @AppStorage(SettingsView.h264WidthKey) private var h264Width: Int = ExportWidthPreset.original.rawValue
+    @AppStorage(SettingsView.h265WidthKey) private var h265Width: Int = ExportWidthPreset.original.rawValue
 
     @AppStorage(SettingsView.avifQualityKey) private var avifQuality: Double = 28
     @AppStorage(SettingsView.avifSpeedKey) private var avifSpeed: Double = 4
@@ -421,7 +431,17 @@ private struct ExportSettingsView: View {
     @State private var trimMode: SaveLocationMode = .ask
 
     private var format: TrimExportFormat {
-        get { TrimExportFormat(rawValue: formatRaw) ?? .copy }
+        TrimExportFormat(rawValue: formatRaw) ?? .copy
+    }
+
+    private var widthBinding: Binding<Int> {
+        switch format {
+        case .copy: .constant(0)
+        case .gif: $gifWidth
+        case .animatedAVIF: $avifWidth
+        case .hardwareH264: $h264Width
+        case .hardwareH265: $h265Width
+        }
     }
 
     var body: some View {
@@ -493,14 +513,17 @@ private struct ExportSettingsView: View {
                 }
 
                 if format != .copy {
-                    LabeledContent("Resolution") {
-                        Picker("", selection: $exportWidthRaw) {
+                    LabeledContent("Short Side") {
+                        Picker("", selection: widthBinding) {
                             ForEach(ExportWidthPreset.allCases, id: \.self) { p in
                                 Text(p.label).tag(p.rawValue)
                             }
                         }
                         .labelsHidden()
                     }
+                    Text("Limits the shortest side in pixels. The other side scales proportionally. Videos already within the limit are not upscaled.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
             }
 

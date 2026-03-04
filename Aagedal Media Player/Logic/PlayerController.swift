@@ -1118,18 +1118,26 @@ final class PlayerController: ObservableObject {
         ["-c", "copy", "-avoid_negative_ts", "make_zero"]
     }
 
-    private var exportScaleFilter: String? {
-        let widthRaw = UserDefaults.standard.integer(forKey: SettingsView.exportWidthKey)
-        let width = ExportWidthPreset(rawValue: widthRaw) ?? .original
-        guard width != .original else { return nil }
-        return "scale=\(width.rawValue):-2:flags=lanczos"
+    private func scaleFilter(forKey key: String, default defaultPreset: ExportWidthPreset) -> String? {
+        let widthRaw = UserDefaults.standard.integer(forKey: key)
+        let preset = ExportWidthPreset(rawValue: widthRaw) ?? defaultPreset
+        guard preset != .original else { return nil }
+        let s = preset.rawValue
+        // Limit the short side: if width <= height (portrait/square) scale width,
+        // otherwise scale height. min() prevents upscaling; -2 keeps the other dimension even.
+        return "scale='if(lte(iw,ih),min(\(s),iw),-2)':'if(lte(iw,ih),-2,min(\(s),ih))':flags=lanczos"
     }
 
     private func buildGIFArguments() -> [String] {
         let fps = Int(UserDefaults.standard.double(forKey: SettingsView.gifFrameRateKey).clamped(to: 5...30, default: 15))
 
-        let scaleFilter = exportScaleFilter ?? "scale=iw:ih"
-        let filtergraph = "fps=\(fps),\(scaleFilter),split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse"
+        let scaleComponent = scaleFilter(forKey: SettingsView.gifWidthKey, default: .w720)
+        let filtergraph: String
+        if let scaleComponent {
+            filtergraph = "fps=\(fps),\(scaleComponent),split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse"
+        } else {
+            filtergraph = "fps=\(fps),split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse"
+        }
         return ["-vf", filtergraph, "-an"]
     }
 
@@ -1137,21 +1145,21 @@ final class PlayerController: ObservableObject {
         let crf = Int(UserDefaults.standard.double(forKey: SettingsView.avifQualityKey).clamped(to: 0...63, default: 28))
         let speed = Int(UserDefaults.standard.double(forKey: SettingsView.avifSpeedKey).clamped(to: 0...8, default: 4))
         var args = ["-c:v", "libaom-av1", "-crf", String(crf), "-cpu-used", String(speed), "-b:v", "0", "-an"]
-        if let scale = exportScaleFilter { args += ["-vf", scale] }
+        if let scale = scaleFilter(forKey: SettingsView.avifWidthKey, default: .w1080) { args += ["-vf", scale] }
         return args
     }
 
     private func buildH264Arguments() -> [String] {
         let quality = Int(UserDefaults.standard.double(forKey: SettingsView.h264QualityKey).clamped(to: 1...100, default: 65))
         var args = ["-c:v", "h264_videotoolbox", "-q:v", String(quality), "-c:a", "aac"]
-        if let scale = exportScaleFilter { args += ["-vf", scale] }
+        if let scale = scaleFilter(forKey: SettingsView.h264WidthKey, default: .original) { args += ["-vf", scale] }
         return args
     }
 
     private func buildH265Arguments() -> [String] {
         let quality = Int(UserDefaults.standard.double(forKey: SettingsView.h265QualityKey).clamped(to: 1...100, default: 65))
         var args = ["-c:v", "hevc_videotoolbox", "-q:v", String(quality), "-c:a", "aac"]
-        if let scale = exportScaleFilter { args += ["-vf", scale] }
+        if let scale = scaleFilter(forKey: SettingsView.h265WidthKey, default: .original) { args += ["-vf", scale] }
         return args
     }
 
