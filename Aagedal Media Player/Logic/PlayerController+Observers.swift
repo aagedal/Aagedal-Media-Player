@@ -33,10 +33,16 @@ extension PlayerController {
     }
 
     func handlePlaybackEnded() {
-        guard let item = mediaItem, item.loopPlayback, let player else { return }
-        let target = CMTime(seconds: 0, preferredTimescale: 600)
-        player.seek(to: target, toleranceBefore: .zero, toleranceAfter: .zero) { _ in
-            player.play()
+        guard let item = mediaItem, let player else { return }
+
+        if item.loopPlayback {
+            let target = CMTime(seconds: 0, preferredTimescale: 600)
+            player.seek(to: target, toleranceBefore: .zero, toleranceAfter: .zero) { _ in
+                player.play()
+            }
+        } else if currentPlaybackSpeed != 1.0 {
+            // Reset speed when fast/slow playback reaches the end
+            resetPlaybackSpeed()
         }
     }
 
@@ -55,17 +61,23 @@ extension PlayerController {
         mpvLoopObserverTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
                 guard let self, let mpv = self.mpvPlayer else { return }
-                guard let item = self.mediaItem, item.loopPlayback else { return }
+                guard let item = self.mediaItem else { return }
 
                 let currentTime = mpv.timePos
                 let duration = item.durationSeconds
                 let tolerance = 0.05
 
                 if duration > 0, currentTime >= duration - tolerance {
-                    let wasPlaying = mpv.isPlaying
-                    mpv.seek(to: 0)
-                    if wasPlaying {
-                        mpv.play()
+                    if item.loopPlayback {
+                        let wasPlaying = mpv.isPlaying
+                        mpv.seek(to: 0)
+                        if wasPlaying {
+                            mpv.play()
+                        }
+                    } else if self.currentPlaybackSpeed != 1.0 {
+                        // Pause and reset speed at end of file
+                        mpv.pause()
+                        self.resetPlaybackSpeed()
                     }
                 }
             }

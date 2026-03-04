@@ -153,9 +153,27 @@ struct PlayerView: View {
             return true
         }
 
-        // K — secondary play/pause (routes through notification for multi-window sync)
+        // JKL playback controls — handled here (before performKeyEquivalent)
+        // so AVPlayerView's built-in JKL shuttle doesn't intercept them.
+        // Routed through notifications for multi-window sync.
+        if lower == "j" {
+            if modifiers.contains(.option) {
+                NotificationCenter.default.post(name: .slowReverse, object: nil)
+            } else {
+                NotificationCenter.default.post(name: .reverse, object: nil)
+            }
+            return true
+        }
         if lower == "k" {
             NotificationCenter.default.post(name: .togglePlayback, object: nil)
+            return true
+        }
+        if lower == "l" {
+            if modifiers.contains(.option) {
+                NotificationCenter.default.post(name: .slowForward, object: nil)
+            } else {
+                NotificationCenter.default.post(name: .fastForward, object: nil)
+            }
             return true
         }
 

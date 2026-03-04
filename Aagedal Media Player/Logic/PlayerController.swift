@@ -83,6 +83,13 @@ final class PlayerController: ObservableObject {
     private let slowSteps: [Float] = [0.75, 0.5, 0.25, 0.1]
     private var reverseTimer: Timer?
 
+    /// Effective video frame rate (falls back to 30 if metadata is unavailable).
+    private var effectiveFPS: Double {
+        if let fr = mediaItem?.metadata?.primaryVideoStream?.frameRate,
+           let v = fr.value, v > 0 { return v }
+        return 30.0
+    }
+
     // MARK: - State
 
     @Published var mediaItem: MediaItem?
@@ -333,6 +340,12 @@ final class PlayerController: ObservableObject {
 
     // MARK: - Unified Playback Control
 
+    /// Resets speed to 1x and syncs playback state. Callable from extensions.
+    func resetPlaybackSpeed() {
+        currentPlaybackSpeed = 1.0
+        syncIsPlaying()
+    }
+
     private func syncIsPlaying() {
         if useMPV {
             isPlaying = mpvPlayer?.isPlaying ?? false
@@ -421,28 +434,27 @@ final class PlayerController: ObservableObject {
 
         if isReverseSimulating {
             reverseSpeed = min(reverseSpeed + 1, 8)
-            reverseTimer?.invalidate()
-            let interval = (1.0/24.0) / Double(reverseSpeed)
-            reverseTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
-                Task { @MainActor in
-                    self?.seekByFrames(-1)
-                }
-            }
-            currentPlaybackSpeed = -Float(reverseSpeed)
-            return
+        } else {
+            pause()
+            reverseSpeed = 1
+            isReverseSimulating = true
         }
 
-        pause()
-        reverseSpeed = 1
-        isReverseSimulating = true
-        currentPlaybackSpeed = -1.0
-
-        let interval = 1.0/24.0
+        reverseTimer?.invalidate()
+        let fps = effectiveFPS
+        let skip = reverseSpeed
+        let interval = 1.0 / fps
         reverseTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             Task { @MainActor in
-                self?.seekByFrames(-1)
+                guard let self else { return }
+                if self.currentPlaybackTime <= 0 {
+                    self.stopReverseSimulation()
+                    return
+                }
+                self.seekByFrames(-skip)
             }
         }
+        currentPlaybackSpeed = -Float(reverseSpeed)
     }
 
     func stopReverseSimulation() {
@@ -542,10 +554,16 @@ final class PlayerController: ObservableObject {
         reverseSpeed = 1
         reverseTimer?.invalidate()
 
-        let interval = (1.0 / 24.0) / Double(target)
+        let fps = effectiveFPS
+        let interval = 1.0 / (fps * Double(target))
         reverseTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             Task { @MainActor in
-                self?.seekByFrames(-1)
+                guard let self else { return }
+                if self.currentPlaybackTime <= 0 {
+                    self.stopReverseSimulation()
+                    return
+                }
+                self.seekByFrames(-1)
             }
         }
         currentPlaybackSpeed = -target
