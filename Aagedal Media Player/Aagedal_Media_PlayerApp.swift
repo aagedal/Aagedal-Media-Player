@@ -102,6 +102,20 @@ struct Aagedal_Media_PlayerApp: App {
 
                 Divider()
 
+                Button("Slow Forward") {
+                    NotificationCenter.default.post(name: .slowForward, object: nil)
+                }
+                .keyboardShortcut("l", modifiers: [.option])
+                .disabled(!mediaLoaded)
+
+                Button("Slow Reverse") {
+                    NotificationCenter.default.post(name: .slowReverse, object: nil)
+                }
+                .keyboardShortcut("j", modifiers: [.option])
+                .disabled(!mediaLoaded)
+
+                Divider()
+
                 Button("Toggle Fullscreen") {
                     NotificationCenter.default.post(name: .toggleFullscreen, object: nil)
                 }
@@ -279,4 +293,6 @@ extension Notification.Name {
     static let copyTimecode = Notification.Name("copyTimecode")
     static let pasteTimecode = Notification.Name("pasteTimecode")
     static let reloadPlayer = Notification.Name("reloadPlayer")
+    static let slowForward = Notification.Name("slowForward")
+    static let slowReverse = Notification.Name("slowReverse")
 }

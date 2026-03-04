@@ -41,7 +41,7 @@ struct PlaybackSpeedIndicator: View {
         if absSpeed == floor(absSpeed) {
             return String(format: "%.0f", absSpeed)
         } else {
-            return String(format: "%.1f", absSpeed)
+            return String(format: "%g", (absSpeed * 100).rounded() / 100)
         }
     }
 }

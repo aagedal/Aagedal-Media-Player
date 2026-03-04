@@ -794,6 +794,14 @@ private struct PlaybackHandlers: ViewModifier {
                 guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
                 controller.fastForward()
             }
+            .onReceive(NotificationCenter.default.publisher(for: .slowForward)) { _ in
+                guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
+                controller.slowForward()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .slowReverse)) { _ in
+                guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
+                controller.slowReverse()
+            }
             .onReceive(NotificationCenter.default.publisher(for: .seekByFrames)) { notification in
                 guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
                 if let count = (notification.object as? NSNumber)?.intValue {
