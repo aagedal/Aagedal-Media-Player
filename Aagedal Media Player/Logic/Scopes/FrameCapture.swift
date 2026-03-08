@@ -31,7 +31,7 @@ final class FrameCapture: ObservableObject {
     private var isCapturing = false
 
     /// Target downscale width for scope analysis (full resolution not needed).
-    private let analysisWidth = 480
+    private let analysisWidth = 720
 
     // MARK: - AVPlayer Setup
 

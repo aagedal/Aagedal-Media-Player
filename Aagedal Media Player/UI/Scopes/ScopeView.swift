@@ -16,7 +16,6 @@ struct ScopeView: View {
     @State private var waveformMode: WaveformMode = .luma
     @State private var waveformImage: CGImage?
     @State private var vectorscopeImage: CGImage?
-    @State private var waveformGraticule: CGImage?
     @State private var vectorscopeGraticule: CGImage?
 
     var body: some View {
@@ -42,7 +41,7 @@ struct ScopeView: View {
 
             // Scopes
             HStack(spacing: 1) {
-                // Waveform
+                // Waveform — stretches to fill remaining width
                 ZStack {
                     Color.black
 
@@ -52,16 +51,12 @@ struct ScopeView: View {
                             .interpolation(.none)
                     }
 
-                    if let graticule = waveformGraticule {
-                        Image(decorative: graticule, scale: 2.0)
-                            .resizable()
-                            .interpolation(.high)
-                    }
+                    // Graticule drawn via Canvas so labels don't stretch
+                    WaveformGraticuleView()
                 }
-                .aspectRatio(16.0 / 9.0, contentMode: .fit)
                 .clipShape(Rectangle())
 
-                // Vectorscope
+                // Vectorscope — fixed 1:1 aspect ratio
                 ZStack {
                     Color.black
 
@@ -92,17 +87,14 @@ struct ScopeView: View {
             computeScopes(from: frame)
         }
         .onAppear {
-            // Generate graticules once at 2x for Retina sharpness
-            let wfSize = CGSize(width: 480, height: 270)
-            waveformGraticule = ScopeComputer.drawWaveformGraticule(size: wfSize)
-            let vsSize = CGSize(width: 270, height: 270)
+            let vsSize = CGSize(width: 405, height: 405)
             vectorscopeGraticule = ScopeComputer.drawVectorscopeGraticule(size: vsSize)
         }
     }
 
     private func computeScopes(from frame: CGImage) {
-        let wfSize = CGSize(width: 480, height: 270)
-        let vsSize = CGSize(width: 270, height: 270)
+        let wfSize = CGSize(width: 720, height: 405)
+        let vsSize = CGSize(width: 405, height: 405)
         let mode = waveformMode
 
         Task.detached(priority: .userInitiated) {
@@ -119,6 +111,36 @@ struct ScopeView: View {
             await MainActor.run {
                 waveformImage = wf
                 vectorscopeImage = vs
+            }
+        }
+    }
+}
+
+// MARK: - Waveform Graticule (Canvas-based, never stretches labels)
+
+private struct WaveformGraticuleView: View {
+    private let ireValues: [Int] = [0, 25, 50, 75, 100]
+    private let lineColor = Color(white: 0.25)
+    private let labelColor = Color(white: 0.4)
+
+    var body: some View {
+        Canvas { context, size in
+            let lineStyle = StrokeStyle(lineWidth: 0.5)
+
+            for ire in ireValues {
+                let y = size.height * (1.0 - CGFloat(ire) / 100.0)
+
+                // Horizontal line
+                var path = Path()
+                path.move(to: CGPoint(x: 0, y: y))
+                path.addLine(to: CGPoint(x: size.width, y: y))
+                context.stroke(path, with: .color(lineColor), style: lineStyle)
+
+                // Label
+                let text = Text("\(ire)")
+                    .font(.system(size: 9, weight: .regular, design: .monospaced))
+                    .foregroundColor(labelColor)
+                context.draw(text, at: CGPoint(x: 3, y: y + 8), anchor: .topLeading)
             }
         }
     }
