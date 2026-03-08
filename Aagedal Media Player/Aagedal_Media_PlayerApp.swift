@@ -226,6 +226,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             SettingsView.avifSpeedKey: 4.0,
             SettingsView.h264QualityKey: 65.0,
             SettingsView.h265QualityKey: 65.0,
+            SettingsView.scopeResolutionKey: ScopeResolution.standard.rawValue,
+            SettingsView.scopeFrameRateKey: 15.0,
         ])
         UpdateChecker.shared.checkIfNeeded()
     }

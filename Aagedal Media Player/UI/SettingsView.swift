@@ -68,6 +68,22 @@ enum TrimExportFormat: String, CaseIterable {
     }
 }
 
+enum ScopeResolution: Int, CaseIterable {
+    case low = 360
+    case standard = 720
+    case high = 1080
+    case ultra = 1440
+
+    var label: String {
+        switch self {
+        case .low: "Low (360)"
+        case .standard: "Standard (720)"
+        case .high: "High (1080)"
+        case .ultra: "Ultra (1440)"
+        }
+    }
+}
+
 enum ExportWidthPreset: Int, CaseIterable {
     case original = 0
     case w2160 = 2160
@@ -109,6 +125,10 @@ struct SettingsView: View {
     static let h264QualityKey = "h264Quality"
     static let h265QualityKey = "h265Quality"
 
+    // Scope keys
+    static let scopeResolutionKey = "scopeResolution"
+    static let scopeFrameRateKey = "scopeFrameRate"
+
     var body: some View {
         TabView {
             GeneralSettingsView()
@@ -119,6 +139,9 @@ struct SettingsView: View {
 
             ExportSettingsView()
                 .tabItem { Label("Export", systemImage: "square.and.arrow.up") }
+
+            ScopeSettingsView()
+                .tabItem { Label("Scopes", systemImage: "waveform") }
 
             KeyboardShortcutsView()
                 .tabItem { Label("Shortcuts", systemImage: "command") }
@@ -530,6 +553,46 @@ private struct ExportSettingsView: View {
                 modeKey: SettingsView.trimModeKey,
                 bookmarkKey: SettingsView.trimBookmarkKey
             )
+        }
+        .formStyle(.grouped)
+    }
+}
+
+// MARK: - Scope Settings
+
+private struct ScopeSettingsView: View {
+    @AppStorage(SettingsView.scopeResolutionKey) private var resolution: Int = ScopeResolution.standard.rawValue
+    @AppStorage(SettingsView.scopeFrameRateKey) private var frameRate: Double = 15
+
+    var body: some View {
+        Form {
+            Section("Rendering") {
+                LabeledContent("Resolution") {
+                    Picker("", selection: $resolution) {
+                        ForEach(ScopeResolution.allCases, id: \.self) { r in
+                            Text(r.label).tag(r.rawValue)
+                        }
+                    }
+                    .labelsHidden()
+                }
+                Text("Higher resolution shows more detail but uses more CPU.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section("Performance") {
+                LabeledContent("Update Rate") {
+                    HStack(spacing: 8) {
+                        Slider(value: $frameRate, in: 5...30, step: 1)
+                        Text("\(Int(frameRate)) fps")
+                            .monospacedDigit()
+                            .frame(width: 52, alignment: .trailing)
+                    }
+                }
+                Text("How often scopes refresh. Lower values reduce CPU usage. Changes apply when scopes are reopened.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
         .formStyle(.grouped)
     }

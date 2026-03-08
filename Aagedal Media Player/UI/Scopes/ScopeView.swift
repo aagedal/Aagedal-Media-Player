@@ -87,14 +87,19 @@ struct ScopeView: View {
             computeScopes(from: frame)
         }
         .onAppear {
-            let vsSize = CGSize(width: 405, height: 405)
-            vectorscopeGraticule = ScopeComputer.drawVectorscopeGraticule(size: vsSize)
+            let res = UserDefaults.standard.integer(forKey: "scopeResolution")
+            let w = CGFloat(res > 0 ? res : 720)
+            let h = round(w * 9.0 / 16.0)
+            vectorscopeGraticule = ScopeComputer.drawVectorscopeGraticule(size: CGSize(width: h, height: h))
         }
     }
 
     private func computeScopes(from frame: CGImage) {
-        let wfSize = CGSize(width: 720, height: 405)
-        let vsSize = CGSize(width: 405, height: 405)
+        let res = UserDefaults.standard.integer(forKey: "scopeResolution")
+        let w = CGFloat(res > 0 ? res : 720)
+        let h = round(w * 9.0 / 16.0)
+        let wfSize = CGSize(width: w, height: h)
+        let vsSize = CGSize(width: h, height: h)
         let mode = waveformMode
 
         Task.detached(priority: .userInitiated) {

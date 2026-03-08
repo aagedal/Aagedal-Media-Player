@@ -84,11 +84,17 @@ enum ScopeComputer: Sendable {
                 avgG = max(avgG * invMax, 0.08)
                 avgB = max(avgB * invMax, 0.08)
 
+                // White underlay so dark/desaturated scenes remain visible
+                let whiteMix: Float = 0.25
+                let finalR = intensity * (avgR * (1.0 - whiteMix) + whiteMix)
+                let finalG = intensity * (avgG * (1.0 - whiteMix) + whiteMix)
+                let finalB = intensity * (avgB * (1.0 - whiteMix) + whiteMix)
+
                 let row = outH - 1 - level
                 let px = (row * outW + col) * 4
-                outputPixels[px]     = UInt8(min(avgB * intensity * 255, 255))
-                outputPixels[px + 1] = UInt8(min(avgG * intensity * 255, 255))
-                outputPixels[px + 2] = UInt8(min(avgR * intensity * 255, 255))
+                outputPixels[px]     = UInt8(min(finalB * 255, 255))
+                outputPixels[px + 1] = UInt8(min(finalG * 255, 255))
+                outputPixels[px + 2] = UInt8(min(finalR * 255, 255))
                 outputPixels[px + 3] = 255
             }
         }
