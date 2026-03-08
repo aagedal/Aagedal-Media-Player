@@ -553,6 +553,83 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         }
     }
 
+    // MARK: - Screenshot
+
+    /// Raw pixel data returned by `screenshot-raw`.
+    struct RawScreenshot: Sendable {
+        let data: Data
+        let width: Int
+        let height: Int
+        let stride: Int
+    }
+
+    /// Capture the current decoded video frame as raw BGRA pixels.
+    /// Uses `screenshot-raw` via `mpv_command_node` — no libavcodec encoder needed.
+    /// Nonisolated because mpv's C API is thread-safe and this only touches
+    /// the `nonisolated(unsafe)` mpv pointer.
+    nonisolated func screenshotRaw() -> RawScreenshot? {
+        guard let mpvCtx = mpv else { return nil }
+
+        let cmdStr = strdup("screenshot-raw")
+        let flagStr = strdup("video")
+        defer { free(cmdStr); free(flagStr) }
+
+        var argNode0 = mpv_node()
+        argNode0.format = MPV_FORMAT_STRING
+        argNode0.u.string = cmdStr
+
+        var argNode1 = mpv_node()
+        argNode1.format = MPV_FORMAT_STRING
+        argNode1.u.string = flagStr
+
+        var argValues = [argNode0, argNode1]
+        var result = mpv_node()
+
+        let err = argValues.withUnsafeMutableBufferPointer { buf -> Int32 in
+            var list = mpv_node_list()
+            list.num = 2
+            list.values = buf.baseAddress
+            list.keys = nil
+
+            return withUnsafeMutablePointer(to: &list) { listPtr -> Int32 in
+                var args = mpv_node()
+                args.format = MPV_FORMAT_NODE_ARRAY
+                args.u.list = listPtr
+                return mpv_command_node(mpvCtx, &args, &result)
+            }
+        }
+
+        defer { mpv_free_node_contents(&result) }
+
+        guard err == 0,
+              result.format == MPV_FORMAT_NODE_MAP,
+              let resultList = result.u.list else { return nil }
+
+        let num = Int(resultList.pointee.num)
+        var width = 0, height = 0, stride = 0
+        var pixelData: Data?
+
+        for i in 0..<num {
+            guard let keyPtr = resultList.pointee.keys?[i] else { continue }
+            let key = String(cString: keyPtr)
+            let val = resultList.pointee.values[i]
+
+            switch key {
+            case "w": width = Int(val.u.int64)
+            case "h": height = Int(val.u.int64)
+            case "stride": stride = Int(val.u.int64)
+            case "data":
+                if let ba = val.u.ba {
+                    pixelData = Data(bytes: ba.pointee.data, count: ba.pointee.size)
+                }
+            default: break
+            }
+        }
+
+        guard let data = pixelData, width > 0, height > 0, stride > 0 else { return nil }
+        return RawScreenshot(data: data, width: width, height: height, stride: stride)
+    }
+
     // MARK: - MPV Commands & Properties
 
     private func commandString(_ cmd: String) {

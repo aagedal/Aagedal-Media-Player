@@ -28,6 +28,7 @@ struct ContentView: View {
     @AppStorage("showCursorHideHint") private var showCursorHideHint = true
     @ObservedObject private var updateChecker = UpdateChecker.shared
     @State private var updateBannerDismissed = false
+    @State private var scopeWindowController: ScopeWindowController?
 
     private let windowID = UUID()
     private let rightEdgeWidth: CGFloat = 60
@@ -53,6 +54,7 @@ struct ContentView: View {
                 nsWindow: nsWindow,
                 isEditingTimecode: $isEditingTimecode,
                 showInspector: $showInspector,
+                scopeWindowController: $scopeWindowController,
                 timecodeMode: $timecodeMode,
                 showOverlay: $showOverlay,
                 overlayHideTask: $overlayHideTask,
@@ -230,6 +232,8 @@ struct ContentView: View {
         .onDisappear {
             removeMouseMoveMonitor()
             removeAppActiveObserver()
+            scopeWindowController?.close()
+            scopeWindowController = nil
             controller.teardown()
             WindowManager.shared.unregister(id: windowID)
         }
@@ -704,6 +708,7 @@ private struct NotificationHandlers: ViewModifier {
     let nsWindow: NSWindow?
     @Binding var isEditingTimecode: Bool
     @Binding var showInspector: Bool
+    @Binding var scopeWindowController: ScopeWindowController?
     @Binding var timecodeMode: TimecodeDisplayMode
     @Binding var showOverlay: Bool
     @Binding var overlayHideTask: Task<Void, Never>?
@@ -716,6 +721,7 @@ private struct NotificationHandlers: ViewModifier {
             .modifier(FileAndWindowHandlers(
                 controller: controller, nsWindow: nsWindow,
                 showInspector: $showInspector,
+                scopeWindowController: $scopeWindowController,
                 openFilePanel: openFilePanel, openFile: openFile
             ))
             .modifier(PlaybackHandlers(controller: controller, nsWindow: nsWindow))
@@ -736,6 +742,7 @@ private struct FileAndWindowHandlers: ViewModifier {
     @ObservedObject var controller: PlayerController
     let nsWindow: NSWindow?
     @Binding var showInspector: Bool
+    @Binding var scopeWindowController: ScopeWindowController?
     let openFilePanel: () -> Void
     let openFile: (URL) -> Void
 
@@ -770,6 +777,24 @@ private struct FileAndWindowHandlers: ViewModifier {
             .onReceive(NotificationCenter.default.publisher(for: .toggleFullscreen)) { _ in
                 guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
                 controller.toggleFullscreen()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .toggleScopes)) { _ in
+                guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
+                if let existing = scopeWindowController {
+                    existing.toggle()
+                    if !existing.isVisible {
+                        scopeWindowController = nil
+                    }
+                } else {
+                    let filename = controller.mediaItem?.name ?? "Untitled"
+                    let sc = ScopeWindowController(
+                        frameCapture: controller.frameCapture,
+                        filename: filename,
+                        parentWindow: nsWindow
+                    )
+                    scopeWindowController = sc
+                    sc.show()
+                }
             }
     }
 }

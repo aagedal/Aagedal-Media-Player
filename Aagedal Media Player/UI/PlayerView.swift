@@ -49,7 +49,7 @@ struct PlayerView: View {
                     Color.black
 
                     MPVVideoView(player: mpvPlayer, keyHandler: handleKeyEvent)
-                        .aspectRatio(playerAspectRatio, contentMode: .fit)
+                    .aspectRatio(playerAspectRatio, contentMode: .fit)
 
                     overlayIndicators
                 }

@@ -116,6 +116,10 @@ final class PlayerController: ObservableObject {
     /// previous `preparePlayback` / `setupMPV` calls.
     @Published private(set) var preparationID: Int = 0
 
+    // MARK: - Scope Frame Capture
+
+    let frameCapture = FrameCapture()
+
     // MARK: - Initialization
 
     var playbackTimePublisher: Published<Double>.Publisher { $currentPlaybackTime }
@@ -252,6 +256,9 @@ final class PlayerController: ObservableObject {
 
         self.player = player
 
+        // Attach video output for scope frame capture
+        frameCapture.attachAVPlayer(player, playerItem: playerItem)
+
         installPlayerItemStatusObserver(for: playerItem, startTime: startTime)
 
         self.isPreparing = false
@@ -277,6 +284,9 @@ final class PlayerController: ObservableObject {
         mpv.isMuted = isMuted
 
         mpv.load(url: url, startTime: startTime, autostart: false)
+
+        // Attach MPV for scope frame capture (window set later by MPVVideoView)
+        frameCapture.attachMPV(mpv)
 
         let myPrepID = preparationID
 
@@ -1252,6 +1262,11 @@ final class PlayerController: ObservableObject {
         reverseTimer = nil
         isReverseSimulating = false
         reverseSpeed = 1
+
+        // Stop scope capture and detach backends
+        frameCapture.stopCapture()
+        frameCapture.detachAVPlayer()
+        frameCapture.detachMPV()
 
         // Fully detach old AVPlayer — mute, stop, and replace item to ensure
         // no audio/video output even if the object lingers from SwiftUI caching.

@@ -78,6 +78,14 @@ struct Aagedal_Media_PlayerApp: App {
                 }
                 .keyboardShortcut("t", modifiers: [])
                 .disabled(!mediaLoaded)
+
+                Divider()
+
+                Button("Video Scopes") {
+                    NotificationCenter.default.post(name: .toggleScopes, object: nil)
+                }
+                .keyboardShortcut("w", modifiers: [.command, .shift])
+                .disabled(!mediaLoaded)
             }
             CommandMenu("Playback") {
                 Button("Play / Pause") {
@@ -295,4 +303,5 @@ extension Notification.Name {
     static let reloadPlayer = Notification.Name("reloadPlayer")
     static let slowForward = Notification.Name("slowForward")
     static let slowReverse = Notification.Name("slowReverse")
+    static let toggleScopes = Notification.Name("toggleScopes")
 }
