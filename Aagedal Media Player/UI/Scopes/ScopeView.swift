@@ -8,7 +8,7 @@ import SwiftUI
 
 enum WaveformMode: String, CaseIterable {
     case luma = "Luma"
-    case rgbParade = "RGB Parade"
+    case parade = "Parade"
 }
 
 struct ScopeView: View {
@@ -19,18 +19,16 @@ struct ScopeView: View {
     @State private var waveformGraticule: CGImage?
     @State private var vectorscopeGraticule: CGImage?
 
-    private let scopeHeight: CGFloat = 256
-    private let vectorscopeSize: CGFloat = 256
-
     var body: some View {
         VStack(spacing: 0) {
             // Toolbar
             HStack {
-                Picker("Waveform", selection: $waveformMode) {
+                Picker("", selection: $waveformMode) {
                     ForEach(WaveformMode.allCases, id: \.self) { mode in
                         Text(mode.rawValue).tag(mode)
                     }
                 }
+                .labelsHidden()
                 .pickerStyle(.segmented)
                 .frame(width: 180)
 
@@ -48,16 +46,16 @@ struct ScopeView: View {
                 ZStack {
                     Color.black
 
-                    if let graticule = waveformGraticule {
-                        Image(decorative: graticule, scale: 1.0)
-                            .resizable()
-                            .interpolation(.none)
-                    }
-
                     if let waveform = waveformImage {
                         Image(decorative: waveform, scale: 1.0)
                             .resizable()
                             .interpolation(.none)
+                    }
+
+                    if let graticule = waveformGraticule {
+                        Image(decorative: graticule, scale: 2.0)
+                            .resizable()
+                            .interpolation(.high)
                     }
                 }
                 .aspectRatio(16.0 / 9.0, contentMode: .fit)
@@ -67,16 +65,16 @@ struct ScopeView: View {
                 ZStack {
                     Color.black
 
-                    if let graticule = vectorscopeGraticule {
-                        Image(decorative: graticule, scale: 1.0)
-                            .resizable()
-                            .interpolation(.none)
-                    }
-
                     if let vectorscope = vectorscopeImage {
                         Image(decorative: vectorscope, scale: 1.0)
                             .resizable()
                             .interpolation(.none)
+                    }
+
+                    if let graticule = vectorscopeGraticule {
+                        Image(decorative: graticule, scale: 2.0)
+                            .resizable()
+                            .interpolation(.high)
                     }
                 }
                 .aspectRatio(1.0, contentMode: .fit)
@@ -94,7 +92,7 @@ struct ScopeView: View {
             computeScopes(from: frame)
         }
         .onAppear {
-            // Generate graticules once
+            // Generate graticules once at 2x for Retina sharpness
             let wfSize = CGSize(width: 480, height: 270)
             waveformGraticule = ScopeComputer.drawWaveformGraticule(size: wfSize)
             let vsSize = CGSize(width: 270, height: 270)
@@ -112,8 +110,8 @@ struct ScopeView: View {
             switch mode {
             case .luma:
                 wf = ScopeComputer.computeWaveform(from: frame, outputSize: wfSize)
-            case .rgbParade:
-                wf = ScopeComputer.computeRGBParade(from: frame, outputSize: wfSize)
+            case .parade:
+                wf = ScopeComputer.computeParade(from: frame, outputSize: wfSize)
             }
 
             let vs = ScopeComputer.computeVectorscope(from: frame, outputSize: vsSize)

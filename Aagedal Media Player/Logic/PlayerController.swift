@@ -496,6 +496,7 @@ final class PlayerController: ObservableObject {
                 mpv.rate = 1.0
                 currentPlaybackSpeed = 1.0
                 mpv.play()
+                syncIsPlaying()
                 return
             }
         } else if let player = player {
@@ -503,6 +504,7 @@ final class PlayerController: ObservableObject {
                 player.rate = 1.0
                 currentPlaybackSpeed = 1.0
                 player.play()
+                syncIsPlaying()
                 return
             }
         }

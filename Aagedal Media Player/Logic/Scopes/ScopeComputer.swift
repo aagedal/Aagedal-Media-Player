@@ -2,161 +2,183 @@
 // Copyright © 2026 Truls Aagedal
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// CPU-based waveform and vectorscope computation from CGImage frames.
+// CPU-based waveform, parade, and vectorscope computation from CGImage frames.
 
 import CoreGraphics
 import AppKit
 
 enum ScopeComputer: Sendable {
 
-    // MARK: - Waveform (Luma)
+    // MARK: - Colorized Waveform (Luma)
 
-    /// Generates a waveform monitor image from a video frame.
-    /// Each column corresponds to a source pixel column; Y axis represents luma (0 at bottom, 1 at top).
-    /// Brightness is proportional to pixel density at each luma level.
+    /// Generates a colorized waveform monitor image.
+    /// Each column maps to source pixel columns; Y axis represents luma (0 bottom, 1 top).
+    /// Pixels are colored by their actual RGB values with saturation boost for visibility.
     nonisolated static func computeWaveform(from image: CGImage, outputSize: CGSize) -> CGImage? {
         let width = image.width
         let height = image.height
         guard width > 0, height > 0 else { return nil }
-
         guard let pixelData = extractPixelData(from: image) else { return nil }
 
         let outW = Int(outputSize.width)
         let outH = Int(outputSize.height)
         guard outW > 0, outH > 0 else { return nil }
 
-        // Accumulate luma histogram per output column
-        // histogram[col][lumaRow] = count of pixels mapping to that luma level
-        var histogram = [[UInt32]](repeating: [UInt32](repeating: 0, count: outH), count: outW)
+        // Flat bins indexed as [col * outH + level]
+        let binCount = outW * outH
+        var counts = [UInt32](repeating: 0, count: binCount)
+        var sumR = [Float](repeating: 0, count: binCount)
+        var sumG = [Float](repeating: 0, count: binCount)
+        var sumB = [Float](repeating: 0, count: binCount)
 
         for y in 0..<height {
             for x in 0..<width {
                 let offset = (y * width + x) * 4
-                let b = CGFloat(pixelData[offset]) / 255.0
-                let g = CGFloat(pixelData[offset + 1]) / 255.0
-                let r = CGFloat(pixelData[offset + 2]) / 255.0
+                let b = Float(pixelData[offset]) / 255.0
+                let g = Float(pixelData[offset + 1]) / 255.0
+                let r = Float(pixelData[offset + 2]) / 255.0
 
-                // BT.709 luma
                 let luma = 0.2126 * r + 0.7152 * g + 0.0722 * b
-                let col = x * outW / width
-                let row = outH - 1 - min(Int(luma * CGFloat(outH - 1)), outH - 1)
+                let col = min(x * outW / width, outW - 1)
+                let level = min(Int(luma * Float(outH - 1)), outH - 1)
 
-                histogram[min(col, outW - 1)][row] += 1
+                let idx = col * outH + level
+                counts[idx] &+= 1
+                sumR[idx] += r
+                sumG[idx] += g
+                sumB[idx] += b
             }
         }
 
-        // Find max density for normalization
-        var maxDensity: UInt32 = 1
-        for col in 0..<outW {
-            for row in 0..<outH {
-                maxDensity = max(maxDensity, histogram[col][row])
-            }
+        var maxCount: UInt32 = 1
+        for i in 0..<binCount {
+            if counts[i] > maxCount { maxCount = counts[i] }
         }
 
-        // Render into BGRA buffer
         var outputPixels = [UInt8](repeating: 0, count: outW * outH * 4)
+        let normFactor: Float = 1.0 / (Float(maxCount) * 0.25)
 
         for col in 0..<outW {
-            for row in 0..<outH {
-                let count = histogram[col][row]
+            for level in 0..<outH {
+                let idx = col * outH + level
+                let count = counts[idx]
                 guard count > 0 else { continue }
 
-                // Non-linear mapping for better visibility
-                let normalized = CGFloat(count) / CGFloat(maxDensity)
-                let brightness = UInt8(min(pow(normalized, 0.4) * 255, 255))
+                let intensity = min(Float(count) * normFactor, 1.0)
+                let invCount = 1.0 / Float(count)
+                var avgR = sumR[idx] * invCount
+                var avgG = sumG[idx] * invCount
+                var avgB = sumB[idx] * invCount
 
-                let offset = (row * outW + col) * 4
-                // Green-tinted waveform
-                outputPixels[offset] = 0                           // B
-                outputPixels[offset + 1] = brightness              // G
-                outputPixels[offset + 2] = brightness / 3          // R
-                outputPixels[offset + 3] = 255                     // A
+                // Saturation boost for visibility
+                let gray = (avgR + avgG + avgB) / 3.0
+                let satBoost: Float = 1.8
+                avgR = gray + (avgR - gray) * satBoost
+                avgG = gray + (avgG - gray) * satBoost
+                avgB = gray + (avgB - gray) * satBoost
+
+                // Normalize — ensure minimum brightness so sparse data is visible
+                let maxC = max(avgR, avgG, avgB, 0.3)
+                let invMax = 1.0 / maxC
+                avgR = max(avgR * invMax, 0.08)
+                avgG = max(avgG * invMax, 0.08)
+                avgB = max(avgB * invMax, 0.08)
+
+                let row = outH - 1 - level
+                let px = (row * outW + col) * 4
+                outputPixels[px]     = UInt8(min(avgB * intensity * 255, 255))
+                outputPixels[px + 1] = UInt8(min(avgG * intensity * 255, 255))
+                outputPixels[px + 2] = UInt8(min(avgR * intensity * 255, 255))
+                outputPixels[px + 3] = 255
             }
         }
 
         return createCGImage(from: &outputPixels, width: outW, height: outH)
     }
 
-    // MARK: - RGB Parade
+    // MARK: - RGBY Parade
 
-    /// Generates an RGB parade waveform — three side-by-side channel waveforms.
-    nonisolated static func computeRGBParade(from image: CGImage, outputSize: CGSize) -> CGImage? {
+    /// Generates an RGBY parade — four side-by-side channel waveforms (Red, Green, Blue, Luma).
+    nonisolated static func computeParade(from image: CGImage, outputSize: CGSize) -> CGImage? {
         let width = image.width
         let height = image.height
         guard width > 0, height > 0 else { return nil }
-
         guard let pixelData = extractPixelData(from: image) else { return nil }
 
         let outW = Int(outputSize.width)
         let outH = Int(outputSize.height)
         guard outW > 0, outH > 0 else { return nil }
 
-        let paradeW = outW / 3
+        let channelCount = 4
+        let gap = 2
+        let totalGaps = gap * (channelCount - 1)
+        let channelW = (outW - totalGaps) / channelCount
+        guard channelW > 1 else { return nil }
 
-        // Histograms for R, G, B channels
-        var histR = [[UInt32]](repeating: [UInt32](repeating: 0, count: outH), count: paradeW)
-        var histG = [[UInt32]](repeating: [UInt32](repeating: 0, count: outH), count: paradeW)
-        var histB = [[UInt32]](repeating: [UInt32](repeating: 0, count: outH), count: paradeW)
+        let binCount = channelW * outH
+        var rBins = [UInt32](repeating: 0, count: binCount)
+        var gBins = [UInt32](repeating: 0, count: binCount)
+        var bBins = [UInt32](repeating: 0, count: binCount)
+        var yBins = [UInt32](repeating: 0, count: binCount)
 
         for y in 0..<height {
             for x in 0..<width {
                 let offset = (y * width + x) * 4
-                let b = CGFloat(pixelData[offset]) / 255.0
-                let g = CGFloat(pixelData[offset + 1]) / 255.0
-                let r = CGFloat(pixelData[offset + 2]) / 255.0
+                let bVal = Float(pixelData[offset]) / 255.0
+                let gVal = Float(pixelData[offset + 1]) / 255.0
+                let rVal = Float(pixelData[offset + 2]) / 255.0
+                let luma = 0.2126 * rVal + 0.7152 * gVal + 0.0722 * bVal
 
-                let col = min(x * paradeW / width, paradeW - 1)
+                let col = min(x * channelW / width, channelW - 1)
 
-                let rowR = outH - 1 - min(Int(r * CGFloat(outH - 1)), outH - 1)
-                let rowG = outH - 1 - min(Int(g * CGFloat(outH - 1)), outH - 1)
-                let rowB = outH - 1 - min(Int(b * CGFloat(outH - 1)), outH - 1)
+                let rLevel = min(Int(rVal * Float(outH - 1)), outH - 1)
+                let gLevel = min(Int(gVal * Float(outH - 1)), outH - 1)
+                let bLevel = min(Int(bVal * Float(outH - 1)), outH - 1)
+                let yLevel = min(Int(luma * Float(outH - 1)), outH - 1)
 
-                histR[col][rowR] += 1
-                histG[col][rowG] += 1
-                histB[col][rowB] += 1
+                rBins[col * outH + rLevel] &+= 1
+                gBins[col * outH + gLevel] &+= 1
+                bBins[col * outH + bLevel] &+= 1
+                yBins[col * outH + yLevel] &+= 1
             }
         }
 
-        var maxDensity: UInt32 = 1
-        for col in 0..<paradeW {
-            for row in 0..<outH {
-                maxDensity = max(maxDensity, histR[col][row])
-                maxDensity = max(maxDensity, histG[col][row])
-                maxDensity = max(maxDensity, histB[col][row])
-            }
+        var maxCount: UInt32 = 1
+        for i in 0..<binCount {
+            maxCount = max(maxCount, rBins[i], gBins[i], bBins[i], yBins[i])
         }
 
         var outputPixels = [UInt8](repeating: 0, count: outW * outH * 4)
+        let normFactor: Float = 1.0 / (Float(maxCount) * 0.25)
 
-        for col in 0..<paradeW {
-            for row in 0..<outH {
-                // Red channel
-                if histR[col][row] > 0 {
-                    let brightness = UInt8(min(pow(CGFloat(histR[col][row]) / CGFloat(maxDensity), 0.4) * 255, 255))
-                    let px = (row * outW + col) * 4
-                    outputPixels[px] = 0
-                    outputPixels[px + 1] = brightness / 4
-                    outputPixels[px + 2] = brightness
-                    outputPixels[px + 3] = 255
-                }
+        // Channel tint colors
+        let channelColors: [(r: Float, g: Float, b: Float)] = [
+            (1.0, 0.2, 0.2),    // Red
+            (0.2, 1.0, 0.2),    // Green
+            (0.3, 0.4, 1.0),    // Blue
+            (0.85, 0.85, 0.85), // Luma (Y)
+        ]
+        let allBins = [rBins, gBins, bBins, yBins]
 
-                // Green channel
-                if histG[col][row] > 0 {
-                    let brightness = UInt8(min(pow(CGFloat(histG[col][row]) / CGFloat(maxDensity), 0.4) * 255, 255))
-                    let px = (row * outW + col + paradeW) * 4
-                    outputPixels[px] = 0
-                    outputPixels[px + 1] = brightness
-                    outputPixels[px + 2] = brightness / 4
-                    outputPixels[px + 3] = 255
-                }
+        for ch in 0..<channelCount {
+            let xOffset = ch * (channelW + gap)
+            let bins = allBins[ch]
+            let color = channelColors[ch]
 
-                // Blue channel
-                if histB[col][row] > 0 {
-                    let brightness = UInt8(min(pow(CGFloat(histB[col][row]) / CGFloat(maxDensity), 0.4) * 255, 255))
-                    let px = (row * outW + col + paradeW * 2) * 4
-                    outputPixels[px] = brightness
-                    outputPixels[px + 1] = brightness / 4
-                    outputPixels[px + 2] = 0
+            for col in 0..<channelW {
+                for level in 0..<outH {
+                    let count = bins[col * outH + level]
+                    guard count > 0 else { continue }
+
+                    let intensity = min(Float(count) * normFactor, 1.0)
+                    let row = outH - 1 - level
+                    let outX = xOffset + col
+                    guard outX < outW else { continue }
+
+                    let px = (row * outW + outX) * 4
+                    outputPixels[px]     = UInt8(min(color.b * intensity * 255, 255))
+                    outputPixels[px + 1] = UInt8(min(color.g * intensity * 255, 255))
+                    outputPixels[px + 2] = UInt8(min(color.r * intensity * 255, 255))
                     outputPixels[px + 3] = 255
                 }
             }
@@ -165,106 +187,126 @@ enum ScopeComputer: Sendable {
         return createCGImage(from: &outputPixels, width: outW, height: outH)
     }
 
-    // MARK: - Vectorscope
+    // MARK: - Colorized Vectorscope
 
-    /// Generates a vectorscope image from a video frame.
+    /// Generates a colorized vectorscope image.
     /// Plots Cb on X axis, Cr on Y axis (BT.709 matrix), centered.
+    /// Pixels are colored by their actual RGB values with logarithmic intensity mapping.
     nonisolated static func computeVectorscope(from image: CGImage, outputSize: CGSize) -> CGImage? {
         let width = image.width
         let height = image.height
         guard width > 0, height > 0 else { return nil }
-
         guard let pixelData = extractPixelData(from: image) else { return nil }
 
         let outW = Int(outputSize.width)
         let outH = Int(outputSize.height)
         guard outW > 0, outH > 0 else { return nil }
 
-        // 2D histogram for vectorscope
-        var histogram = [[UInt32]](repeating: [UInt32](repeating: 0, count: outW), count: outH)
-
-        let halfW = CGFloat(outW) / 2.0
-        let halfH = CGFloat(outH) / 2.0
-        // Scale so full chroma range fits within the circle
+        let halfW = Float(outW) / 2.0
+        let halfH = Float(outH) / 2.0
         let scale = min(halfW, halfH) * 0.9
+
+        let totalBins = outW * outH
+        var counts = [UInt32](repeating: 0, count: totalBins)
+        var sumR = [Float](repeating: 0, count: totalBins)
+        var sumG = [Float](repeating: 0, count: totalBins)
+        var sumB = [Float](repeating: 0, count: totalBins)
 
         for y in 0..<height {
             for x in 0..<width {
                 let offset = (y * width + x) * 4
-                let b = CGFloat(pixelData[offset]) / 255.0
-                let g = CGFloat(pixelData[offset + 1]) / 255.0
-                let r = CGFloat(pixelData[offset + 2]) / 255.0
+                let bVal = Float(pixelData[offset]) / 255.0
+                let gVal = Float(pixelData[offset + 1]) / 255.0
+                let rVal = Float(pixelData[offset + 2]) / 255.0
 
-                // BT.709 YCbCr conversion
-                let cb = -0.1146 * r - 0.3854 * g + 0.5 * b
-                let cr =  0.5 * r - 0.4542 * g - 0.0458 * b
+                let cb = -0.1146 * rVal - 0.3854 * gVal + 0.5 * bVal
+                let cr =  0.5 * rVal - 0.4542 * gVal - 0.0458 * bVal
 
-                // Map to output coordinates (Cb = X, Cr = Y inverted)
                 let px = Int(halfW + cb * scale * 2.0)
                 let py = Int(halfH - cr * scale * 2.0)
 
-                if px >= 0, px < outW, py >= 0, py < outH {
-                    histogram[py][px] += 1
-                }
+                guard px >= 0, px < outW, py >= 0, py < outH else { continue }
+                let idx = py * outW + px
+                counts[idx] &+= 1
+                sumR[idx] += rVal
+                sumG[idx] += gVal
+                sumB[idx] += bVal
             }
         }
 
-        // Find max density
-        var maxDensity: UInt32 = 1
-        for row in 0..<outH {
-            for col in 0..<outW {
-                maxDensity = max(maxDensity, histogram[row][col])
-            }
+        var maxCount: UInt32 = 1
+        for i in 0..<totalBins {
+            if counts[i] > maxCount { maxCount = counts[i] }
         }
 
         var outputPixels = [UInt8](repeating: 0, count: outW * outH * 4)
+        let logMax = log2f(1 + Float(maxCount))
+        let gain: Float = 3.0
 
-        for row in 0..<outH {
-            for col in 0..<outW {
-                let count = histogram[row][col]
-                guard count > 0 else { continue }
+        for i in 0..<totalBins {
+            let count = counts[i]
+            guard count > 0 else { continue }
 
-                let normalized = CGFloat(count) / CGFloat(maxDensity)
-                let brightness = UInt8(min(pow(normalized, 0.35) * 255, 255))
+            // Logarithmic intensity makes sparse bins visible
+            let intensity = min(log2f(1 + Float(count)) / logMax * gain, 1.0)
+            let invCount = 1.0 / Float(count)
+            var avgR = sumR[i] * invCount
+            var avgG = sumG[i] * invCount
+            var avgB = sumB[i] * invCount
 
-                let offset = (row * outW + col) * 4
-                // White/green tinted
-                outputPixels[offset] = brightness / 3       // B
-                outputPixels[offset + 1] = brightness        // G
-                outputPixels[offset + 2] = brightness / 2    // R
-                outputPixels[offset + 3] = 255               // A
-            }
+            // Saturation boost
+            let gray = (avgR + avgG + avgB) / 3.0
+            let satBoost: Float = 2.0
+            avgR = max(gray + (avgR - gray) * satBoost, 0.05)
+            avgG = max(gray + (avgG - gray) * satBoost, 0.05)
+            avgB = max(gray + (avgB - gray) * satBoost, 0.05)
+
+            // Normalize
+            let maxC = max(avgR, avgG, avgB, 0.01)
+            avgR /= maxC
+            avgG /= maxC
+            avgB /= maxC
+
+            let px = i * 4
+            outputPixels[px]     = UInt8(min(avgB * intensity * 255, 255))
+            outputPixels[px + 1] = UInt8(min(avgG * intensity * 255, 255))
+            outputPixels[px + 2] = UInt8(min(avgR * intensity * 255, 255))
+            outputPixels[px + 3] = 255
         }
 
         return createCGImage(from: &outputPixels, width: outW, height: outH)
     }
 
-    // MARK: - Graticule
+    // MARK: - Graticules (rendered at 2x for Retina sharpness)
 
-    /// Draws vectorscope graticule overlay: color targets and skin tone line.
+    /// Draws vectorscope graticule overlay: crosshairs, chroma circle, color targets, skin tone line.
+    /// Rendered at 2x pixel resolution; use with `Image(decorative:scale: 2.0)`.
     nonisolated static func drawVectorscopeGraticule(size: CGSize) -> CGImage? {
         let w = Int(size.width)
         let h = Int(size.height)
         guard w > 0, h > 0 else { return nil }
+
+        let pixelW = w * 2
+        let pixelH = h * 2
 
         let halfW = size.width / 2.0
         let halfH = size.height / 2.0
         let scale = min(halfW, halfH) * 0.9
 
         guard let context = CGContext(
-            data: nil, width: w, height: h,
-            bitsPerComponent: 8, bytesPerRow: w * 4,
+            data: nil, width: pixelW, height: pixelH,
+            bitsPerComponent: 8, bytesPerRow: pixelW * 4,
             space: CGColorSpaceCreateDeviceRGB(),
             bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
         ) else { return nil }
 
-        // Flip coordinates for standard drawing
-        context.translateBy(x: 0, y: size.height)
-        context.scaleBy(x: 1, y: -1)
+        // Flip Y and apply 2x scale so drawing uses logical coordinates
+        context.translateBy(x: 0, y: CGFloat(pixelH))
+        context.scaleBy(x: 2, y: -2)
 
         let center = CGPoint(x: halfW, y: halfH)
 
-        // Draw crosshairs
+        // Crosshairs
         context.setStrokeColor(CGColor(gray: 0.3, alpha: 1.0))
         context.setLineWidth(0.5)
         context.move(to: CGPoint(x: 0, y: halfH))
@@ -273,27 +315,28 @@ enum ScopeComputer: Sendable {
         context.addLine(to: CGPoint(x: halfW, y: size.height))
         context.strokePath()
 
-        // Draw circle at 75% chroma
+        // 75% chroma circle — max chroma maps to distance `scale` from center,
+        // so 75% is at radius `scale * 0.75`.
         context.setStrokeColor(CGColor(gray: 0.25, alpha: 1.0))
         context.setLineWidth(0.5)
-        context.addArc(center: center, radius: scale * 0.75 * 2.0, startAngle: 0, endAngle: .pi * 2, clockwise: false)
+        context.addArc(center: center, radius: scale * 0.75, startAngle: 0, endAngle: .pi * 2, clockwise: false)
         context.strokePath()
 
-        // Color target positions (BT.709 75% bars)
-        // Format: (Cb, Cr, color label)
-        let targets: [(cb: CGFloat, cr: CGFloat, r: CGFloat, g: CGFloat, b: CGFloat, label: String)] = [
-            ( 0.5,    -0.4542, 0.75, 0.0,  0.0,  "R"),   // Red
-            (-0.3854,  0.5,    0.0,  0.75, 0.0,  "G"),   // Green
-            ( 0.5,     0.0458, 0.0,  0.0,  0.75, "B"),   // Blue
-            (-0.5,     0.4542, 0.0,  0.75, 0.75, "Cy"),  // Cyan
-            ( 0.3854, -0.5,    0.75, 0.0,  0.75, "Mg"),  // Magenta
-            (-0.5,    -0.0458, 0.75, 0.75, 0.0,  "Yl"),  // Yellow
+        // BT.709 75% color bar targets (Cb, Cr computed from the same matrix as data)
+        let targets: [(cb: CGFloat, cr: CGFloat, r: CGFloat, g: CGFloat, b: CGFloat)] = [
+            (-0.0860,  0.3750, 0.75, 0.15, 0.15),  // Red
+            (-0.2891, -0.3407, 0.15, 0.75, 0.15),  // Green
+            ( 0.3750, -0.0344, 0.15, 0.15, 0.75),  // Blue
+            ( 0.0860, -0.3750, 0.15, 0.75, 0.75),  // Cyan
+            ( 0.2891,  0.3407, 0.75, 0.15, 0.75),  // Magenta
+            (-0.3750,  0.0344, 0.75, 0.75, 0.15),  // Yellow
         ]
 
         let targetSize: CGFloat = 8
         context.setLineWidth(1.0)
 
         for target in targets {
+            // Same mapping as vectorscope data: Cb → X, positive Cr → up
             let x = halfW + target.cb * scale * 2.0
             let y = halfH - target.cr * scale * 2.0
 
@@ -302,9 +345,9 @@ enum ScopeComputer: Sendable {
             context.strokePath()
         }
 
-        // Skin tone line (roughly 123 degrees from Cb axis, which is about I-axis)
+        // Skin tone line (~123 degrees from Cb axis toward red/yellow)
         let skinAngle: CGFloat = 123.0 * .pi / 180.0
-        let lineLen = scale * 2.0
+        let lineLen = scale
         context.setStrokeColor(CGColor(gray: 0.4, alpha: 0.8))
         context.setLineWidth(0.75)
         context.setLineDash(phase: 0, lengths: [4, 4])
@@ -319,25 +362,29 @@ enum ScopeComputer: Sendable {
     }
 
     /// Draws waveform graticule overlay with IRE markings.
+    /// Rendered at 2x pixel resolution; use with `Image(decorative:scale: 2.0)`.
     nonisolated static func drawWaveformGraticule(size: CGSize) -> CGImage? {
         let w = Int(size.width)
         let h = Int(size.height)
         guard w > 0, h > 0 else { return nil }
 
+        let pixelW = w * 2
+        let pixelH = h * 2
+
         guard let context = CGContext(
-            data: nil, width: w, height: h,
-            bitsPerComponent: 8, bytesPerRow: w * 4,
+            data: nil, width: pixelW, height: pixelH,
+            bitsPerComponent: 8, bytesPerRow: pixelW * 4,
             space: CGColorSpaceCreateDeviceRGB(),
             bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
         ) else { return nil }
 
-        context.translateBy(x: 0, y: size.height)
-        context.scaleBy(x: 1, y: -1)
+        // Flip Y and apply 2x scale so drawing uses logical coordinates
+        context.translateBy(x: 0, y: CGFloat(pixelH))
+        context.scaleBy(x: 2, y: -2)
 
         context.setStrokeColor(CGColor(gray: 0.25, alpha: 1.0))
         context.setLineWidth(0.5)
 
-        // IRE lines at 0, 25, 50, 75, 100
         let ireValues: [CGFloat] = [0, 25, 50, 75, 100]
         let font = CTFontCreateWithName("Menlo" as CFString, 9, nil)
 
@@ -347,7 +394,6 @@ enum ScopeComputer: Sendable {
             context.addLine(to: CGPoint(x: size.width, y: y))
             context.strokePath()
 
-            // Draw label
             let label = "\(Int(ire))" as CFString
             let attrs: [CFString: Any] = [
                 kCTFontAttributeName: font,
@@ -355,8 +401,13 @@ enum ScopeComputer: Sendable {
             ]
             let attrString = CFAttributedStringCreate(nil, label, attrs as CFDictionary)!
             let line = CTLineCreateWithAttributedString(attrString)
-            context.textPosition = CGPoint(x: 2, y: y + 2)
+            // Un-flip Y locally so text renders right-side up
+            context.saveGState()
+            context.translateBy(x: 2, y: y + 11)
+            context.scaleBy(x: 1, y: -1)
+            context.textPosition = .zero
             CTLineDraw(line, context)
+            context.restoreGState()
         }
 
         return context.makeImage()

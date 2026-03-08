@@ -32,7 +32,7 @@ final class ScopeWindowController {
 
     func show() {
         if let existing = panel {
-            existing.makeKeyAndOrderFront(nil)
+            existing.orderFront(nil)
             return
         }
 
@@ -65,7 +65,8 @@ final class ScopeWindowController {
             panel.center()
         }
 
-        panel.makeKeyAndOrderFront(nil)
+        panel.becomesKeyOnlyIfNeeded = true
+        panel.orderFront(nil)
         self.panel = panel
 
         // Start frame capture
