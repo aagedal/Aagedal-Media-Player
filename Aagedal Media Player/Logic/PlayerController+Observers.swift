@@ -103,6 +103,10 @@ extension PlayerController {
                 if currentTime.isFinite {
                     self.currentPlaybackTime = currentTime
                 }
+                // Detect native reverse reaching the beginning
+                if self.isNativeReverse && (self.player?.rate ?? 0) == 0 {
+                    self.stopReverse()
+                }
             }
         }
     }
@@ -213,6 +217,8 @@ extension PlayerController {
                             }
 
                             self.isReady = true
+                            self.canNativeReverse = item.canPlayReverse
+                            self.canNativeSlowReverse = item.canPlaySlowReverse
 
                             if let player = self.player {
                                 let seekTime = CMTime(seconds: startTime, preferredTimescale: 600)
@@ -234,6 +240,8 @@ extension PlayerController {
                             }
 
                             self.isReady = true
+                            self.canNativeReverse = item.canPlayReverse
+                            self.canNativeSlowReverse = item.canPlaySlowReverse
 
                             if let player = self.player {
                                 let seekTime = CMTime(seconds: startTime, preferredTimescale: 600)

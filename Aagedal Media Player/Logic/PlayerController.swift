@@ -53,7 +53,7 @@ final class PlayerController: ObservableObject {
     @Published var currentPlaybackTime: Double = 0
     @Published private(set) var isPlaying: Bool = false
     @Published private(set) var currentPlaybackSpeed: Float = 1.0
-    @Published private(set) var isReverseSimulating: Bool = false
+    @Published private(set) var isReversing: Bool = false
     @Published var audioTrackOptions: [AudioTrackOption] = []
     @Published var subtitleTrackOptions: [SubtitleTrackOption] = []
     @Published var videoAspectRatio: CGFloat?
@@ -78,10 +78,13 @@ final class PlayerController: ObservableObject {
     @Published var trimExportProgress: Double?
     private var exportHandle: FFmpegHandle?
 
-    // Reverse simulation
+    // Reverse playback
     private var reverseSpeed: Int = 1
     private let slowSteps: [Float] = [0.75, 0.5, 0.25, 0.1]
     private var reverseTimer: Timer?
+    var isNativeReverse: Bool = false
+    var canNativeReverse: Bool = false
+    var canNativeSlowReverse: Bool = false
 
     /// Effective video frame rate (falls back to 30 if metadata is unavailable).
     private var effectiveFPS: Double {
@@ -365,15 +368,15 @@ final class PlayerController: ObservableObject {
         if useMPV {
             isPlaying = mpvPlayer?.isPlaying ?? false
         } else {
-            isPlaying = (player?.rate ?? 0) > 0
+            isPlaying = (player?.rate ?? 0) != 0
         }
     }
 
     func togglePlayback() {
         guard isReady else { return }
 
-        if isReverseSimulating {
-            stopReverseSimulation()
+        if isReversing {
+            stopReverse()
             return
         }
 
@@ -400,7 +403,7 @@ final class PlayerController: ObservableObject {
     }
 
     func pause() {
-        stopReverseSimulation()
+        stopReverse()
 
         if useMPV, let mpv = mpvPlayer {
             mpv.rate = 1.0
@@ -444,55 +447,81 @@ final class PlayerController: ObservableObject {
         }
     }
 
-    func startReverseSimulation() {
+    func startReverse() {
         guard isReady else { return }
 
-        if isReverseSimulating {
-            reverseSpeed = min(reverseSpeed + 1, 8)
-        } else {
-            pause()
-            reverseSpeed = 1
-            isReverseSimulating = true
+        if isReversing {
+            // Already reversing — speed up
+            if isNativeReverse {
+                // Transition from native -1x to simulation at -2x
+                player?.rate = 0
+                isNativeReverse = false
+                reverseSpeed = 2
+            } else {
+                reverseSpeed = min(reverseSpeed + 1, 8)
+            }
+            startReverseTimer(skip: reverseSpeed)
+            currentPlaybackSpeed = -Float(reverseSpeed)
+            return
         }
 
+        // First J press — start reverse
+        pause()
+        reverseSpeed = 1
+        isReversing = true
+
+        if !useMPV, canNativeReverse, let player = player {
+            // Native AVPlayer reverse at -1x
+            isNativeReverse = true
+            player.rate = -1.0
+            currentPlaybackSpeed = -1.0
+            syncIsPlaying()
+        } else {
+            // Timer-based simulation (MPV or unsupported format)
+            startReverseTimer(skip: reverseSpeed)
+            currentPlaybackSpeed = -Float(reverseSpeed)
+        }
+    }
+
+    private func startReverseTimer(skip: Int) {
         reverseTimer?.invalidate()
         let fps = effectiveFPS
-        let skip = reverseSpeed
         let interval = 1.0 / fps
         reverseTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 guard let self else { return }
                 if self.currentPlaybackTime <= 0 {
-                    self.stopReverseSimulation()
+                    self.stopReverse()
                     return
                 }
                 self.seekByFrames(-skip)
             }
         }
-        currentPlaybackSpeed = -Float(reverseSpeed)
     }
 
-    func stopReverseSimulation() {
-        isReverseSimulating = false
-        reverseSpeed = 1
+    func stopReverse() {
+        if isNativeReverse {
+            player?.rate = 0
+            isNativeReverse = false
+        }
         reverseTimer?.invalidate()
         reverseTimer = nil
-        if !isReverseSimulating {
-            currentPlaybackSpeed = 1.0
-        }
+        isReversing = false
+        reverseSpeed = 1
+        currentPlaybackSpeed = 1.0
         syncIsPlaying()
     }
 
     func rewind() {
-        stopReverseSimulation()
+        stopReverse()
         stepRate(forward: false)
     }
 
     func fastForward() {
         guard isReady else { return }
 
-        if isReverseSimulating {
-            stopReverseSimulation()
+        if isReversing {
+            stopReverse()
             return
         }
 
@@ -521,8 +550,8 @@ final class PlayerController: ObservableObject {
     func slowForward() {
         guard isReady else { return }
 
-        if isReverseSimulating {
-            stopReverseSimulation()
+        if isReversing {
+            stopReverse()
         }
 
         let current = currentPlaybackSpeed
@@ -551,7 +580,7 @@ final class PlayerController: ObservableObject {
 
         let current = currentPlaybackSpeed
         let target: Float
-        if isReverseSimulating {
+        if isReversing {
             let absSpeed = abs(current)
             if let idx = slowSteps.firstIndex(where: { abs($0 - absSpeed) < 0.01 }) {
                 target = slowSteps[min(idx + 1, slowSteps.count - 1)]
@@ -562,28 +591,43 @@ final class PlayerController: ObservableObject {
             target = slowSteps[0]
         }
 
-        // Pause forward playback if needed
-        if !isReverseSimulating {
+        // Stop any current reverse mode (native or simulation)
+        if isReversing {
+            if isNativeReverse {
+                player?.rate = 0
+                isNativeReverse = false
+            }
+            reverseTimer?.invalidate()
+            reverseTimer = nil
+        } else {
             pause()
         }
 
-        isReverseSimulating = true
+        isReversing = true
         reverseSpeed = 1
-        reverseTimer?.invalidate()
 
-        let fps = effectiveFPS
-        let interval = 1.0 / (fps * Double(target))
-        reverseTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
-            Task { @MainActor in
-                guard let self else { return }
-                if self.currentPlaybackTime <= 0 {
-                    self.stopReverseSimulation()
-                    return
+        if !useMPV, canNativeSlowReverse, let player = player {
+            // Native AVPlayer slow reverse
+            isNativeReverse = true
+            player.rate = -target
+            currentPlaybackSpeed = -target
+            syncIsPlaying()
+        } else {
+            // Timer-based simulation
+            let fps = effectiveFPS
+            let interval = 1.0 / (fps * Double(target))
+            reverseTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+                Task { @MainActor in
+                    guard let self else { return }
+                    if self.currentPlaybackTime <= 0 {
+                        self.stopReverse()
+                        return
+                    }
+                    self.seekByFrames(-1)
                 }
-                self.seekByFrames(-1)
             }
+            currentPlaybackSpeed = -target
         }
-        currentPlaybackSpeed = -target
     }
 
     func seek(by seconds: Double) {
@@ -796,7 +840,7 @@ final class PlayerController: ObservableObject {
     func selectAudioTrack(at position: Int) {
         guard position != selectedAudioTrackOrderIndex else { return }
 
-        let wasPlaying = (player?.rate ?? 0) > 0 || (mpvPlayer?.isPlaying ?? false)
+        let wasPlaying = (player?.rate ?? 0) != 0 || (mpvPlayer?.isPlaying ?? false)
         if wasPlaying { pause() }
 
         selectedAudioTrackOrderIndex = position
@@ -1264,10 +1308,13 @@ final class PlayerController: ObservableObject {
     // MARK: - Teardown
 
     func teardown(resetAudioSelection: Bool = true) {
-        // Stop reverse simulation timer first
+        // Stop reverse playback first
         reverseTimer?.invalidate()
         reverseTimer = nil
-        isReverseSimulating = false
+        isReversing = false
+        isNativeReverse = false
+        canNativeReverse = false
+        canNativeSlowReverse = false
         reverseSpeed = 1
 
         // Stop scope capture and detach backends

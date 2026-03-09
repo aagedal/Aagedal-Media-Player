@@ -100,7 +100,7 @@ struct PlayerView: View {
             HStack {
                 PlaybackSpeedIndicator(
                     speed: controller.currentPlaybackSpeed,
-                    isReversing: controller.isReverseSimulating
+                    isReversing: controller.isReversing
                 )
                 Spacer()
             }

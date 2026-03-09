@@ -995,7 +995,7 @@ private struct PlaybackHandlers: ViewModifier {
             }
             .onReceive(NotificationCenter.default.publisher(for: .reverse)) { _ in
                 guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
-                controller.startReverseSimulation()
+                controller.startReverse()
             }
             .onReceive(NotificationCenter.default.publisher(for: .fastForward)) { _ in
                 guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
