@@ -51,27 +51,38 @@ struct AudioWaveformView: View {
             }
 
             // Waveform channels
-            if generator.channelImages.isEmpty && !generator.isGenerating {
-                if !isOverlay {
-                    if let error = generator.error {
-                        VStack(spacing: 8) {
-                            Image(systemName: "exclamationmark.triangle")
-                                .font(.title2)
-                                .foregroundColor(.secondary)
-                            Text(error)
-                                .font(.system(size: 11))
-                                .foregroundColor(.secondary)
-                                .multilineTextAlignment(.center)
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(Color.black)
-                    } else {
-                        Color.black
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            if !generator.channelImages.isEmpty {
+                waveformContent
+            } else if generator.isGenerating {
+                // Loading state
+                ZStack {
+                    backgroundColor
+                    HStack(spacing: 8) {
+                        ProgressView()
+                            .controlSize(.small)
+                        Text("Generating waveform\u{2026}")
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
                     }
                 }
-            } else {
-                waveformContent
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if !isOverlay {
+                if let error = generator.error {
+                    VStack(spacing: 8) {
+                        Image(systemName: "exclamationmark.triangle")
+                            .font(.title2)
+                            .foregroundColor(.secondary)
+                        Text(error)
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.black)
+                } else {
+                    Color.black
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
             }
         }
         .background(isOverlay ? Color.clear : Color.black)

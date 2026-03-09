@@ -153,23 +153,26 @@ final class AudioWaveformGenerator: ObservableObject {
             process.standardOutput = Pipe()
             process.standardError = stderrPipe
 
+            // Use terminationHandler instead of waitUntilExit() to avoid
+            // blocking the Swift cooperative thread pool, which can starve
+            // the main actor when generating many channels sequentially.
+            process.terminationHandler = { terminatedProcess in
+                if terminatedProcess.terminationStatus == 0 {
+                    continuation.resume(returning: ())
+                } else if terminatedProcess.terminationReason == .uncaughtSignal {
+                    continuation.resume(throwing: CancellationError())
+                } else {
+                    let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
+                    let message = String(data: stderrData, encoding: .utf8) ?? "Unknown ffmpeg error"
+                    continuation.resume(throwing: FFmpegError.processFailed(message.trimmingCharacters(in: .whitespacesAndNewlines)))
+                }
+            }
+
             do {
                 try process.run()
             } catch {
+                process.terminationHandler = nil
                 continuation.resume(throwing: error)
-                return
-            }
-
-            process.waitUntilExit()
-
-            if process.terminationStatus == 0 {
-                continuation.resume(returning: ())
-            } else if process.terminationReason == .uncaughtSignal {
-                continuation.resume(throwing: CancellationError())
-            } else {
-                let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
-                let message = String(data: stderrData, encoding: .utf8) ?? "Unknown ffmpeg error"
-                continuation.resume(throwing: FFmpegError.processFailed(message.trimmingCharacters(in: .whitespacesAndNewlines)))
             }
         }
     }

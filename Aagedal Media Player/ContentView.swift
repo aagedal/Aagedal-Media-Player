@@ -116,7 +116,7 @@ struct ContentView: View {
             overlayControls
 
             // Layer 5: audio waveform overlay (always visible when active, independent of controls)
-            if showAudioWaveformOverlay && isMediaLoaded && !audioWaveformGenerator.channelImages.isEmpty {
+            if showAudioWaveformOverlay && isMediaLoaded && (!audioWaveformGenerator.channelImages.isEmpty || audioWaveformGenerator.isGenerating) {
                 GeometryReader { geo in
                     VStack {
                         Spacer()
