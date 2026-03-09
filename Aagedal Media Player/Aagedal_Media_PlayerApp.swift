@@ -237,6 +237,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             SettingsView.audioWaveformDisplayModeKey: AudioWaveformDisplayMode.window.rawValue,
             SettingsView.audioWaveformBackgroundKey: AudioWaveformBackground.black.rawValue,
             SettingsView.audioWaveformResolutionKey: AudioWaveformResolution.standard.rawValue,
+            SettingsView.audioWaveformColorKey: AudioWaveformColor.pink.rawValue,
         ])
         UpdateChecker.shared.checkIfNeeded()
     }

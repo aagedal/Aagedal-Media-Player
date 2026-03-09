@@ -14,6 +14,7 @@ struct ControlsView: View {
     @Binding var isEditingTimecode: Bool
     @Binding var timecodeActivationTrigger: String?
 
+    @AppStorage(SettingsView.audioWaveformColorKey) private var waveformColorRaw: String = AudioWaveformColor.pink.rawValue
     @AppStorage("precisionScrubFactor") private var precisionScrubFactor: Double = 10.0
     @State private var isDragging = false
     @State private var dragTime: Double = 0
@@ -83,7 +84,7 @@ struct ControlsView: View {
         Button(action: { controller.togglePlayback() }) {
             Image(systemName: isPlaying ? "pause.fill" : "play.fill")
                 .font(.system(size: 16))
-                .foregroundColor(Color(red: 1.0, green: 0.071, blue: 0.361))
+                .foregroundColor((AudioWaveformColor(rawValue: waveformColorRaw) ?? .pink).swiftUIColor)
                 .frame(width: 28, height: 28)
         }
         .buttonStyle(.plain)

@@ -300,7 +300,7 @@ struct ContentView: View {
 
     private func audioWaveformOverlay(containerHeight: CGFloat) -> some View {
         // Target ~1/3 of the container; if window is too small, fill available space
-        let targetHeight = max(60, containerHeight / 3)
+        let targetHeight = max(60, containerHeight / 4)
         let isTransparent = audioWaveformBackground == AudioWaveformBackground.transparent.rawValue
 
         return AudioWaveformView(

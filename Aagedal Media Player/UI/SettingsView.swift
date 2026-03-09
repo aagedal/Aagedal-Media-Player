@@ -68,6 +68,36 @@ enum TrimExportFormat: String, CaseIterable {
     }
 }
 
+enum AudioWaveformColor: String, CaseIterable {
+    case pink = "FF2D78"
+    case blue = "4A9EE5"
+    case red = "E54A4A"
+    case green = "4AE57A"
+    case white = "FFFFFF"
+
+    var label: String {
+        switch self {
+        case .pink: "Pink"
+        case .blue: "Blue"
+        case .red: "Red"
+        case .green: "Green"
+        case .white: "White"
+        }
+    }
+
+    /// Hex color string for ffmpeg (without #).
+    var ffmpegHex: String { rawValue }
+
+    /// SwiftUI preview color.
+    var swiftUIColor: Color {
+        let hex = rawValue
+        let r = Double(Int(hex.prefix(2), radix: 16) ?? 0) / 255.0
+        let g = Double(Int(hex.dropFirst(2).prefix(2), radix: 16) ?? 0) / 255.0
+        let b = Double(Int(hex.dropFirst(4).prefix(2), radix: 16) ?? 0) / 255.0
+        return Color(red: r, green: g, blue: b)
+    }
+}
+
 enum AudioWaveformDisplayMode: String, CaseIterable {
     case window = "window"
     case overlay = "overlay"
@@ -193,6 +223,7 @@ struct SettingsView: View {
     static let audioWaveformDisplayModeKey = "audioWaveformDisplayMode"
     static let audioWaveformBackgroundKey = "audioWaveformBackground"
     static let audioWaveformResolutionKey = "audioWaveformResolution"
+    static let audioWaveformColorKey = "audioWaveformColor"
 
     var body: some View {
         TabView {
@@ -672,6 +703,7 @@ private struct AudioSettingsView: View {
     @AppStorage(SettingsView.audioWaveformDisplayModeKey) private var displayMode: String = AudioWaveformDisplayMode.window.rawValue
     @AppStorage(SettingsView.audioWaveformBackgroundKey) private var background: String = AudioWaveformBackground.black.rawValue
     @AppStorage(SettingsView.audioWaveformResolutionKey) private var resolution: String = AudioWaveformResolution.standard.rawValue
+    @AppStorage(SettingsView.audioWaveformColorKey) private var waveformColor: String = AudioWaveformColor.pink.rawValue
 
     var body: some View {
         Form {
@@ -718,6 +750,21 @@ private struct AudioSettingsView: View {
                     Text("A low-resolution preview is shown first, then replaced with the final waveform. Changes apply when the waveform is reopened.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                }
+
+                LabeledContent("Color") {
+                    Picker("", selection: $waveformColor) {
+                        ForEach(AudioWaveformColor.allCases, id: \.self) { c in
+                            HStack(spacing: 6) {
+                                Circle()
+                                    .fill(c.swiftUIColor)
+                                    .frame(width: 10, height: 10)
+                                Text(c.label)
+                            }
+                            .tag(c.rawValue)
+                        }
+                    }
+                    .labelsHidden()
                 }
             }
         }

@@ -25,6 +25,7 @@ final class AudioWaveformGenerator: ObservableObject {
     private var currentURL: URL?
     private var currentStreamIndex: Int?
     private var currentResolution: AudioWaveformResolution?
+    private var currentColor: AudioWaveformColor?
 
     // MARK: - Preview resolution (fast first pass)
 
@@ -37,10 +38,12 @@ final class AudioWaveformGenerator: ObservableObject {
     func generate(url: URL, streamIndex: Int, channels: Int, channelLayout: String?, duration: Double) {
         let rawResolution = UserDefaults.standard.string(forKey: SettingsView.audioWaveformResolutionKey) ?? AudioWaveformResolution.standard.rawValue
         let resolution = AudioWaveformResolution(rawValue: rawResolution) ?? .standard
+        let rawColor = UserDefaults.standard.string(forKey: SettingsView.audioWaveformColorKey) ?? AudioWaveformColor.pink.rawValue
+        let color = AudioWaveformColor(rawValue: rawColor) ?? .pink
 
-        // Skip if already generated for this exact stream at this resolution
+        // Skip if already generated for this exact stream at this resolution and color
         if url == currentURL, streamIndex == currentStreamIndex,
-           resolution == currentResolution, !channelImages.isEmpty {
+           resolution == currentResolution, color == currentColor, !channelImages.isEmpty {
             return
         }
 
@@ -48,6 +51,7 @@ final class AudioWaveformGenerator: ObservableObject {
         currentURL = url
         currentStreamIndex = streamIndex
         currentResolution = resolution
+        currentColor = color
         channelImages = []
         channelLabels = []
         error = nil
@@ -61,6 +65,8 @@ final class AudioWaveformGenerator: ObservableObject {
             return
         }
 
+        let colorHex = color.ffmpegHex
+
         currentTask = Task {
             do {
                 // Pass 1: fast low-res preview
@@ -70,6 +76,7 @@ final class AudioWaveformGenerator: ObservableObject {
                     streamIndex: streamIndex,
                     channelCount: channels,
                     duration: duration,
+                    colorHex: colorHex,
                     pixelsPerSecond: Self.previewPixelsPerSecond,
                     channelHeight: Self.previewChannelHeight,
                     maxWidth: Self.previewMaxWidth
@@ -85,6 +92,7 @@ final class AudioWaveformGenerator: ObservableObject {
                     streamIndex: streamIndex,
                     channelCount: channels,
                     duration: duration,
+                    colorHex: colorHex,
                     pixelsPerSecond: resolution.pixelsPerSecond,
                     channelHeight: resolution.channelHeight,
                     maxWidth: resolution.maxWidth
@@ -112,6 +120,7 @@ final class AudioWaveformGenerator: ObservableObject {
         currentURL = nil
         currentStreamIndex = nil
         currentResolution = nil
+        currentColor = nil
         channelImages = []
         channelLabels = []
         error = nil
@@ -127,6 +136,7 @@ final class AudioWaveformGenerator: ObservableObject {
         streamIndex: Int,
         channelCount: Int,
         duration: Double,
+        colorHex: String,
         pixelsPerSecond: Double,
         channelHeight: Int,
         maxWidth: Int
@@ -147,9 +157,9 @@ final class AudioWaveformGenerator: ObservableObject {
             let dest = tempDir.appendingPathComponent("ch\(ch).png")
             let filterChain: String
             if channelCount == 1 {
-                filterChain = "[0:a:\(streamIndex)]showwavespic=s=\(width)x\(channelHeight):colors=4A9EE5,format=rgba[out]"
+                filterChain = "[0:a:\(streamIndex)]showwavespic=s=\(width)x\(channelHeight):colors=\(colorHex),format=rgba[out]"
             } else {
-                filterChain = "[0:a:\(streamIndex)]pan=mono|c0=c\(ch),showwavespic=s=\(width)x\(channelHeight):colors=4A9EE5,format=rgba[out]"
+                filterChain = "[0:a:\(streamIndex)]pan=mono|c0=c\(ch),showwavespic=s=\(width)x\(channelHeight):colors=\(colorHex),format=rgba[out]"
             }
 
             let arguments: [String] = [
