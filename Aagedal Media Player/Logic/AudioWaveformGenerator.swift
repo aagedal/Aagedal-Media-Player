@@ -3,8 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // Generates per-channel audio waveform images using the bundled ffmpeg binary.
-// Uses a two-pass approach: a fast low-resolution preview is rendered first,
-// then replaced with the full resolution waveform.
+// Decodes audio once as raw PCM, then renders waveforms natively in Swift.
 
 import Foundation
 import AppKit
@@ -24,33 +23,28 @@ final class AudioWaveformGenerator: ObservableObject {
     private var currentTask: Task<Void, Never>?
     private var currentURL: URL?
     private var currentStreamIndex: Int?
-    private var currentResolution: AudioWaveformResolution?
     private var currentColor: AudioWaveformColor?
 
-    // MARK: - Preview resolution (fast first pass)
-
-    private static let previewPixelsPerSecond: Double = 1.5
-    private static let previewChannelHeight: Int = 40
-    private static let previewMaxWidth: Int = 2000
+    // Waveform rendering parameters
+    private static let pixelsPerSecond: Double = 12
+    private static let channelHeight: Int = 240
+    private static let maxWidth: Int = 24000
 
     /// Generate waveform images for every channel in the given audio stream.
-    /// Renders a fast low-res preview first, then replaces it with the final resolution.
+    /// Decodes audio once as raw PCM, then renders all channels natively.
     func generate(url: URL, streamIndex: Int, channels: Int, channelLayout: String?, duration: Double) {
-        let rawResolution = UserDefaults.standard.string(forKey: SettingsView.audioWaveformResolutionKey) ?? AudioWaveformResolution.standard.rawValue
-        let resolution = AudioWaveformResolution(rawValue: rawResolution) ?? .standard
         let rawColor = UserDefaults.standard.string(forKey: SettingsView.audioWaveformColorKey) ?? AudioWaveformColor.pink.rawValue
         let color = AudioWaveformColor(rawValue: rawColor) ?? .pink
 
-        // Skip if already generated for this exact stream at this resolution and color
+        // Skip if already generated for this exact stream and color
         if url == currentURL, streamIndex == currentStreamIndex,
-           resolution == currentResolution, color == currentColor, !channelImages.isEmpty {
+           color == currentColor, !channelImages.isEmpty {
             return
         }
 
         cancel()
         currentURL = url
         currentStreamIndex = streamIndex
-        currentResolution = resolution
         currentColor = color
         channelImages = []
         channelLabels = []
@@ -66,39 +60,27 @@ final class AudioWaveformGenerator: ObservableObject {
         }
 
         let colorHex = color.ffmpegHex
+        let logger = self.logger
 
         currentTask = Task {
             do {
-                // Pass 1: fast low-res preview
-                let previewImages = try await Self.generateChannelWaveforms(
+                let t0 = CFAbsoluteTimeGetCurrent()
+                let images = try await Self.generateNativeWaveforms(
                     url: url,
                     ffmpegPath: ffmpegPath,
                     streamIndex: streamIndex,
                     channelCount: channels,
                     duration: duration,
                     colorHex: colorHex,
-                    pixelsPerSecond: Self.previewPixelsPerSecond,
-                    channelHeight: Self.previewChannelHeight,
-                    maxWidth: Self.previewMaxWidth
+                    pixelsPerSecond: Self.pixelsPerSecond,
+                    channelHeight: Self.channelHeight,
+                    maxWidth: Self.maxWidth
                 )
+                let t1 = CFAbsoluteTimeGetCurrent()
+                logger.info("Waveform generation: \(String(format: "%.2f", t1 - t0))s (\(channels) channels)")
                 guard !Task.isCancelled else { return }
-                self.channelImages = previewImages
+                self.channelImages = images
                 self.channelLabels = labels
-
-                // Pass 2: full resolution
-                let fullImages = try await Self.generateChannelWaveforms(
-                    url: url,
-                    ffmpegPath: ffmpegPath,
-                    streamIndex: streamIndex,
-                    channelCount: channels,
-                    duration: duration,
-                    colorHex: colorHex,
-                    pixelsPerSecond: resolution.pixelsPerSecond,
-                    channelHeight: resolution.channelHeight,
-                    maxWidth: resolution.maxWidth
-                )
-                guard !Task.isCancelled else { return }
-                self.channelImages = fullImages
             } catch is CancellationError {
                 // Cancelled — no action needed
             } catch {
@@ -119,7 +101,6 @@ final class AudioWaveformGenerator: ObservableObject {
         cancel()
         currentURL = nil
         currentStreamIndex = nil
-        currentResolution = nil
         currentColor = nil
         channelImages = []
         channelLabels = []
@@ -127,10 +108,10 @@ final class AudioWaveformGenerator: ObservableObject {
         isGenerating = false
     }
 
-    // MARK: - FFmpeg Waveform Generation
+    // MARK: - Native Waveform Generation
 
-    /// Generates one waveform PNG per channel on a background thread.
-    private static nonisolated func generateChannelWaveforms(
+    /// Decodes audio once as raw PCM via ffmpeg, then renders all channel waveforms natively.
+    private static nonisolated func generateNativeWaveforms(
         url: URL,
         ffmpegPath: String,
         streamIndex: Int,
@@ -141,51 +122,153 @@ final class AudioWaveformGenerator: ObservableObject {
         channelHeight: Int,
         maxWidth: Int
     ) async throws -> [NSImage] {
+        let width = max(400, min(maxWidth, Int(duration * pixelsPerSecond)))
+
+        // Downsample to reduce data: aim for ~100 samples per output pixel column.
+        // This is plenty for visual waveform accuracy while keeping data manageable
+        // (e.g. a 1-hour 5.1 file at 1kHz ≈ 86 MB vs 4+ GB at full rate).
+        let idealRate = max(1000, min(48000, Int(ceil(Double(width) * 100.0 / max(duration, 0.1)))))
 
         let tempDir = FileManager.default.temporaryDirectory
             .appendingPathComponent("com.aagedal.MediaPlayer.waveforms.\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: tempDir) }
 
-        let width = max(400, min(maxWidth, Int(duration * pixelsPerSecond)))
+        let pcmFile = tempDir.appendingPathComponent("audio.raw")
+
+        let arguments: [String] = [
+            "-hide_banner", "-loglevel", "error",
+            "-i", url.path,
+            "-vn",
+            "-map", "0:a:\(streamIndex)",
+            "-ar", "\(idealRate)",
+            "-f", "f32le",
+            "-c:a", "pcm_f32le",
+            "-y", pcmFile.path
+        ]
+
+        try await runFFmpeg(path: ffmpegPath, arguments: arguments)
+        try Task.checkCancellation()
+
+        let pcmData = try Data(contentsOf: pcmFile)
+        let floatCount = pcmData.count / MemoryLayout<Float>.size
+        let totalFrames = floatCount / channelCount
+        guard totalFrames > 0 else { throw FFmpegError.outputMissing }
+
+        // Parse waveform color
+        let (cr, cg, cb) = parseHexColor(colorHex)
 
         var images: [NSImage] = []
 
         for ch in 0..<channelCount {
             try Task.checkCancellation()
 
-            let dest = tempDir.appendingPathComponent("ch\(ch).png")
-            let filterChain: String
-            if channelCount == 1 {
-                filterChain = "[0:a:\(streamIndex)]showwavespic=s=\(width)x\(channelHeight):colors=\(colorHex),format=rgba[out]"
-            } else {
-                filterChain = "[0:a:\(streamIndex)]pan=mono|c0=c\(ch),showwavespic=s=\(width)x\(channelHeight):colors=\(colorHex),format=rgba[out]"
+            // Compute average positive/negative amplitude per pixel column.
+            // This matches ffmpeg showwavespic's default "average" mode,
+            // which shows the mean envelope rather than absolute peaks.
+            var columnMins = [Float](repeating: 0, count: width)
+            var columnMaxs = [Float](repeating: 0, count: width)
+
+            pcmData.withUnsafeBytes { rawBuffer in
+                let floats = rawBuffer.bindMemory(to: Float.self)
+
+                for col in 0..<width {
+                    let startFrame = col * totalFrames / width
+                    let endFrame = min((col + 1) * totalFrames / width, totalFrames)
+                    guard startFrame < endFrame else { return }
+
+                    var posSum: Float = 0
+                    var posCount: Int = 0
+                    var negSum: Float = 0
+                    var negCount: Int = 0
+
+                    for frame in startFrame..<endFrame {
+                        let sample = floats[frame * channelCount + ch]
+                        if sample >= 0 {
+                            posSum += sample
+                            posCount += 1
+                        } else {
+                            negSum += sample
+                            negCount += 1
+                        }
+                    }
+
+                    columnMaxs[col] = min(posCount > 0 ? posSum / Float(posCount) : 0, 1.0)
+                    columnMins[col] = max(negCount > 0 ? negSum / Float(negCount) : 0, -1.0)
+                }
             }
 
-            let arguments: [String] = [
-                "-hide_banner",
-                "-loglevel", "error",
-                "-i", url.path,
-                "-filter_complex", filterChain,
-                "-map", "[out]",
-                "-an",
-                "-frames:v", "1",
-                "-f", "image2",
-                "-c:v", "png",
-                "-y",
-                dest.path
-            ]
-
-            try await runFFmpeg(path: ffmpegPath, arguments: arguments)
-
-            guard let image = NSImage(contentsOf: dest) else {
-                throw FFmpegError.outputMissing
+            if let image = renderWaveformImage(
+                mins: columnMins, maxs: columnMaxs,
+                width: width, height: channelHeight,
+                r: cr, g: cg, b: cb
+            ) {
+                images.append(image)
             }
-            images.append(image)
         }
 
         return images
     }
+
+    // MARK: - Image Rendering
+
+    /// Renders a single-channel waveform image from min/max amplitude data.
+    private static nonisolated func renderWaveformImage(
+        mins: [Float], maxs: [Float],
+        width: Int, height: Int,
+        r: UInt8, g: UInt8, b: UInt8
+    ) -> NSImage? {
+        let bytesPerRow = width * 4
+        var pixels = [UInt8](repeating: 0, count: bytesPerRow * height)
+        let centerY = Float(height) / 2.0
+
+        for col in 0..<width {
+            // Map amplitude [-1, 1] to pixel rows.
+            // Row 0 = top of image, row height-1 = bottom.
+            // amplitude 1.0 → row 0 (top), -1.0 → row height-1 (bottom)
+            let topRow = max(0, Int(centerY - maxs[col] * centerY))
+            let bottomRow = min(height - 1, Int(centerY - mins[col] * centerY))
+
+            for row in topRow...bottomRow {
+                let idx = (row * width + col) * 4
+                pixels[idx] = r
+                pixels[idx + 1] = g
+                pixels[idx + 2] = b
+                pixels[idx + 3] = 255
+            }
+        }
+
+        let data = Data(pixels)
+        guard let provider = CGDataProvider(data: data as CFData) else { return nil }
+
+        guard let cgImage = CGImage(
+            width: width, height: height,
+            bitsPerComponent: 8, bitsPerPixel: 32,
+            bytesPerRow: bytesPerRow,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue),
+            provider: provider,
+            decode: nil,
+            shouldInterpolate: false,
+            intent: .defaultIntent
+        ) else { return nil }
+
+        return NSImage(cgImage: cgImage, size: NSSize(width: width, height: height))
+    }
+
+    /// Parses a hex color string (RRGGBB) into RGB byte components.
+    private static nonisolated func parseHexColor(_ hex: String) -> (UInt8, UInt8, UInt8) {
+        guard hex.count == 6, let value = UInt32(hex, radix: 16) else {
+            return (255, 45, 120) // default pink
+        }
+        return (
+            UInt8((value >> 16) & 0xFF),
+            UInt8((value >> 8) & 0xFF),
+            UInt8(value & 0xFF)
+        )
+    }
+
+    // MARK: - FFmpeg Process
 
     private static nonisolated func runFFmpeg(path: String, arguments: [String]) async throws {
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in

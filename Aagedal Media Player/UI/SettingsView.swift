@@ -110,41 +110,6 @@ enum AudioWaveformDisplayMode: String, CaseIterable {
     }
 }
 
-enum AudioWaveformResolution: String, CaseIterable {
-    case standard = "standard"
-    case high = "high"
-
-    var label: String {
-        switch self {
-        case .standard: "Standard"
-        case .high: "High"
-        }
-    }
-
-    /// Pixels per second of audio duration.
-    var pixelsPerSecond: Double {
-        switch self {
-        case .standard: 4
-        case .high: 12
-        }
-    }
-
-    /// Channel height in pixels.
-    var channelHeight: Int {
-        switch self {
-        case .standard: 80
-        case .high: 240
-        }
-    }
-
-    /// Maximum waveform width in pixels.
-    var maxWidth: Int {
-        switch self {
-        case .standard: 8000
-        case .high: 24000
-        }
-    }
-}
 
 enum AudioWaveformBackground: String, CaseIterable {
     case black = "black"
@@ -248,8 +213,7 @@ struct SettingsView: View {
     // Audio waveform keys
     static let audioWaveformDisplayModeKey = "audioWaveformDisplayMode"
     static let audioWaveformBackgroundKey = "audioWaveformBackground"
-    static let audioWaveformResolutionKey = "audioWaveformResolution"
-    static let audioWaveformColorKey = "audioWaveformColor"
+static let audioWaveformColorKey = "audioWaveformColor"
 
     var body: some View {
         TabView {
@@ -758,7 +722,6 @@ private struct ScopeSettingsView: View {
 private struct AudioSettingsView: View {
     @AppStorage(SettingsView.audioWaveformDisplayModeKey) private var displayMode: String = AudioWaveformDisplayMode.overlay.rawValue
     @AppStorage(SettingsView.audioWaveformBackgroundKey) private var background: String = AudioWaveformBackground.transparent.rawValue
-    @AppStorage(SettingsView.audioWaveformResolutionKey) private var resolution: String = AudioWaveformResolution.standard.rawValue
     @AppStorage(SettingsView.audioWaveformColorKey) private var waveformColor: String = AudioWaveformColor.pink.rawValue
 
     var body: some View {
@@ -786,24 +749,6 @@ private struct AudioSettingsView: View {
                         .labelsHidden()
                     }
                     Text("Transparent lets the video show through the waveform.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
-                LabeledContent("Resolution") {
-                    Picker("", selection: $resolution) {
-                        ForEach(AudioWaveformResolution.allCases, id: \.self) { r in
-                            Text(r.label).tag(r.rawValue)
-                        }
-                    }
-                    .labelsHidden()
-                }
-                if resolution == AudioWaveformResolution.high.rawValue {
-                    Text("High resolution generates a more detailed waveform but takes significantly longer, especially for files with many audio channels. A low-resolution preview is shown while the full waveform renders.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                } else {
-                    Text("A low-resolution preview is shown first, then replaced with the final waveform. Changes apply when the waveform is reopened.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }

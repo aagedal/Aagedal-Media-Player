@@ -244,8 +244,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             SettingsView.scopeFrameRateKey: 15.0,
             SettingsView.audioWaveformDisplayModeKey: AudioWaveformDisplayMode.overlay.rawValue,
             SettingsView.audioWaveformBackgroundKey: AudioWaveformBackground.transparent.rawValue,
-            SettingsView.audioWaveformResolutionKey: AudioWaveformResolution.standard.rawValue,
-            SettingsView.audioWaveformColorKey: AudioWaveformColor.pink.rawValue,
+SettingsView.audioWaveformColorKey: AudioWaveformColor.pink.rawValue,
         ])
         UpdateChecker.shared.checkIfNeeded()
     }
