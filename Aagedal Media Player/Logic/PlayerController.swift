@@ -264,7 +264,11 @@ final class PlayerController: ObservableObject {
 
         // Attach video output for scope frame capture
         frameCapture.attachAVPlayer(player)
-        frameCapture.onAVOutputRemoved = { [weak self] in self?.rebuildCurrentPlayerItem() }
+        frameCapture.onAVOutputRemoved = { [weak self] in
+            guard let self else { return }
+            let time = self.currentPlaybackTime
+            self.preparePlayback(startTime: time, resetAudioSelection: false)
+        }
 
         installPlayerItemStatusObserver(for: playerItem, startTime: startTime)
 
@@ -279,44 +283,6 @@ final class PlayerController: ObservableObject {
         updatePlayerActionAtEnd()
 
         if wasCapturing { frameCapture.startCapture() }
-    }
-
-    /// Replace the current AVPlayerItem with a fresh one from the same asset.
-    /// This forces AVFoundation to rebuild its decode pipeline, which is needed
-    /// after removing an AVPlayerItemVideoOutput — otherwise ProRes RAW keeps
-    /// its tone-mapped (clipped) highlight rendering.
-    private func rebuildCurrentPlayerItem() {
-        guard let player, let oldItem = player.currentItem else { return }
-        guard let urlAsset = oldItem.asset as? AVURLAsset else { return }
-
-        // Create a completely fresh asset — AVFoundation caches the decode
-        // pipeline per asset instance, so reusing the old one keeps the
-        // tone-mapped path active.
-        let freshAsset = AVURLAsset(url: urlAsset.url, options: [
-            AVURLAssetPreferPreciseDurationAndTimingKey: true
-        ])
-        let currentTime = player.currentTime()
-        let wasPlaying = player.rate != 0
-
-        // Remove observers tied to the old item
-        removeLoopObserver()
-        removePlayerItemStatusObserver()
-
-        // Swap in a fresh item built from the new asset
-        let newItem = AVPlayerItem(asset: freshAsset)
-        player.replaceCurrentItem(with: newItem)
-
-        // Reinstall observers on the new item
-        installLoopObserver(for: newItem)
-        updatePlayerActionAtEnd()
-        refreshAudioTrackOptions(playerItem: newItem)
-        applySelectedAudioTrack()
-
-        // Restore playback position and state
-        player.seek(to: currentTime, toleranceBefore: .zero, toleranceAfter: .zero)
-        if wasPlaying { player.play() }
-
-        logger.info("Rebuilt AVPlayerItem to reset decode pipeline")
     }
 
     func setupMPV(url: URL, startTime: Double) {
