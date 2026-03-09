@@ -13,37 +13,45 @@ enum WaveformMode: String, CaseIterable {
 
 struct ScopeView: View {
     @ObservedObject var frameCapture: FrameCapture
+    var isOverlay = false
+    var transparentBackground = false
     @State private var waveformMode: WaveformMode = .luma
     @State private var waveformImage: CGImage?
     @State private var vectorscopeImage: CGImage?
     @State private var vectorscopeGraticule: CGImage?
 
+    private var backgroundColor: Color {
+        transparentBackground ? Color.black.opacity(0.5) : Color.black
+    }
+
     var body: some View {
         VStack(spacing: 0) {
-            // Toolbar
-            HStack {
-                Picker("", selection: $waveformMode) {
-                    ForEach(WaveformMode.allCases, id: \.self) { mode in
-                        Text(mode.rawValue).tag(mode)
+            // Toolbar (window mode only)
+            if !isOverlay {
+                HStack {
+                    Picker("", selection: $waveformMode) {
+                        ForEach(WaveformMode.allCases, id: \.self) { mode in
+                            Text(mode.rawValue).tag(mode)
+                        }
                     }
+                    .labelsHidden()
+                    .pickerStyle(.segmented)
+                    .frame(width: 180)
+
+                    Spacer()
                 }
-                .labelsHidden()
-                .pickerStyle(.segmented)
-                .frame(width: 180)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(Color(nsColor: .windowBackgroundColor))
 
-                Spacer()
+                Divider()
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(Color(nsColor: .windowBackgroundColor))
-
-            Divider()
 
             // Scopes
             HStack(spacing: 1) {
                 // Waveform — stretches to fill remaining width
                 ZStack {
-                    Color.black
+                    backgroundColor
 
                     if let waveform = waveformImage {
                         Image(decorative: waveform, scale: 1.0)
@@ -58,7 +66,7 @@ struct ScopeView: View {
 
                 // Vectorscope — fixed 1:1 aspect ratio
                 ZStack {
-                    Color.black
+                    backgroundColor
 
                     if let vectorscope = vectorscopeImage {
                         Image(decorative: vectorscope, scale: 1.0)
@@ -76,7 +84,7 @@ struct ScopeView: View {
                 .clipShape(Rectangle())
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color.black)
+            .background(isOverlay ? Color.clear : Color.black)
         }
         .onChange(of: frameCapture.currentFrame) { _, newFrame in
             guard let frame = newFrame else {
@@ -96,6 +104,9 @@ struct ScopeView: View {
             let w = CGFloat(res > 0 ? res : 720)
             let h = round(w * 9.0 / 16.0)
             vectorscopeGraticule = ScopeComputer.drawVectorscopeGraticule(size: CGSize(width: h, height: h))
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .toggleScopeParade)) { _ in
+            waveformMode = waveformMode == .luma ? .parade : .luma
         }
     }
 

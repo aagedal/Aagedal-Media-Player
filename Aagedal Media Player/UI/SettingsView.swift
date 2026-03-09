@@ -158,6 +158,30 @@ enum AudioWaveformBackground: String, CaseIterable {
     }
 }
 
+enum ScopeDisplayMode: String, CaseIterable {
+    case window = "window"
+    case overlay = "overlay"
+
+    var label: String {
+        switch self {
+        case .window: "Separate Window"
+        case .overlay: "Overlay"
+        }
+    }
+}
+
+enum ScopeBackground: String, CaseIterable {
+    case black = "black"
+    case transparent = "transparent"
+
+    var label: String {
+        switch self {
+        case .black: "Black"
+        case .transparent: "Transparent"
+        }
+    }
+}
+
 enum ScopeResolution: Int, CaseIterable {
     case low = 360
     case standard = 720
@@ -216,6 +240,8 @@ struct SettingsView: View {
     static let h265QualityKey = "h265Quality"
 
     // Scope keys
+    static let scopeDisplayModeKey = "scopeDisplayMode"
+    static let scopeBackgroundKey = "scopeBackground"
     static let scopeResolutionKey = "scopeResolution"
     static let scopeFrameRateKey = "scopeFrameRate"
 
@@ -660,11 +686,41 @@ private struct ExportSettingsView: View {
 // MARK: - Scope Settings
 
 private struct ScopeSettingsView: View {
+    @AppStorage(SettingsView.scopeDisplayModeKey) private var displayMode: String = ScopeDisplayMode.overlay.rawValue
+    @AppStorage(SettingsView.scopeBackgroundKey) private var background: String = ScopeBackground.transparent.rawValue
     @AppStorage(SettingsView.scopeResolutionKey) private var resolution: Int = ScopeResolution.standard.rawValue
     @AppStorage(SettingsView.scopeFrameRateKey) private var frameRate: Double = 15
 
     var body: some View {
         Form {
+            Section("Display") {
+                LabeledContent("Display Mode") {
+                    Picker("", selection: $displayMode) {
+                        ForEach(ScopeDisplayMode.allCases, id: \.self) { mode in
+                            Text(mode.label).tag(mode.rawValue)
+                        }
+                    }
+                    .labelsHidden()
+                }
+                Text("Overlay renders scopes over the video. Separate window opens a floating panel.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                if displayMode == ScopeDisplayMode.overlay.rawValue {
+                    LabeledContent("Background") {
+                        Picker("", selection: $background) {
+                            ForEach(ScopeBackground.allCases, id: \.self) { bg in
+                                Text(bg.label).tag(bg.rawValue)
+                            }
+                        }
+                        .labelsHidden()
+                    }
+                    Text("Transparent lets the video show through the scopes.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
             Section("Rendering") {
                 LabeledContent("Resolution") {
                     Picker("", selection: $resolution) {
@@ -700,8 +756,8 @@ private struct ScopeSettingsView: View {
 // MARK: - Audio Settings
 
 private struct AudioSettingsView: View {
-    @AppStorage(SettingsView.audioWaveformDisplayModeKey) private var displayMode: String = AudioWaveformDisplayMode.window.rawValue
-    @AppStorage(SettingsView.audioWaveformBackgroundKey) private var background: String = AudioWaveformBackground.black.rawValue
+    @AppStorage(SettingsView.audioWaveformDisplayModeKey) private var displayMode: String = AudioWaveformDisplayMode.overlay.rawValue
+    @AppStorage(SettingsView.audioWaveformBackgroundKey) private var background: String = AudioWaveformBackground.transparent.rawValue
     @AppStorage(SettingsView.audioWaveformResolutionKey) private var resolution: String = AudioWaveformResolution.standard.rawValue
     @AppStorage(SettingsView.audioWaveformColorKey) private var waveformColor: String = AudioWaveformColor.pink.rawValue
 

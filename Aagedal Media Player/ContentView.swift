@@ -29,11 +29,14 @@ struct ContentView: View {
     @ObservedObject private var updateChecker = UpdateChecker.shared
     @State private var updateBannerDismissed = false
     @State private var scopeWindowController: ScopeWindowController?
+    @State private var showScopeOverlay = false
+    @AppStorage(SettingsView.scopeDisplayModeKey) private var scopeDisplayMode: String = ScopeDisplayMode.overlay.rawValue
+    @AppStorage(SettingsView.scopeBackgroundKey) private var scopeBackground: String = ScopeBackground.transparent.rawValue
     @State private var audioWaveformWindowController: AudioWaveformWindowController?
     @State private var showAudioWaveformOverlay = false
     @StateObject private var audioWaveformGenerator = AudioWaveformGenerator()
-    @AppStorage(SettingsView.audioWaveformDisplayModeKey) private var audioWaveformDisplayMode: String = AudioWaveformDisplayMode.window.rawValue
-    @AppStorage(SettingsView.audioWaveformBackgroundKey) private var audioWaveformBackground: String = AudioWaveformBackground.black.rawValue
+    @AppStorage(SettingsView.audioWaveformDisplayModeKey) private var audioWaveformDisplayMode: String = AudioWaveformDisplayMode.overlay.rawValue
+    @AppStorage(SettingsView.audioWaveformBackgroundKey) private var audioWaveformBackground: String = AudioWaveformBackground.transparent.rawValue
 
     private let windowID = UUID()
     private let rightEdgeWidth: CGFloat = 60
@@ -60,6 +63,7 @@ struct ContentView: View {
                 isEditingTimecode: $isEditingTimecode,
                 showInspector: $showInspector,
                 scopeWindowController: $scopeWindowController,
+                showScopeOverlay: $showScopeOverlay,
                 audioWaveformWindowController: $audioWaveformWindowController,
                 showAudioWaveformOverlay: $showAudioWaveformOverlay,
                 audioWaveformGenerator: audioWaveformGenerator,
@@ -122,14 +126,27 @@ struct ContentView: View {
                         Spacer()
                         audioWaveformOverlay(containerHeight: geo.size.height)
                     }
-                    // Offset upward to sit above the controls area (~80pt)
                     .padding(.bottom, showOverlay ? 80 : 0)
                     .animation(.easeInOut(duration: 0.3), value: showOverlay)
                 }
                 .allowsHitTesting(true)
             }
 
-            // Layer 6: right-edge cursor hide zone
+            // Layer 6: scope overlay (sits above audio waveform when both active)
+            if showScopeOverlay && isMediaLoaded {
+                GeometryReader { geo in
+                    let audioWaveformHeight = showAudioWaveformOverlay ? max(60, geo.size.height / 4) : 0
+                    VStack {
+                        Spacer()
+                        scopeOverlay(containerHeight: geo.size.height)
+                    }
+                    .padding(.bottom, (showOverlay ? 80 : 0) + audioWaveformHeight)
+                    .animation(.easeInOut(duration: 0.3), value: showOverlay)
+                }
+                .allowsHitTesting(false)
+            }
+
+            // Layer 7: right-edge cursor hide zone
             if isMediaLoaded && !showInspector {
                 cursorHideZone
             }
@@ -256,6 +273,10 @@ struct ContentView: View {
             removeAppActiveObserver()
             scopeWindowController?.close()
             scopeWindowController = nil
+            if showScopeOverlay {
+                controller.frameCapture.stopCapture()
+                showScopeOverlay = false
+            }
             audioWaveformWindowController?.close()
             audioWaveformWindowController = nil
             showAudioWaveformOverlay = false
@@ -294,6 +315,21 @@ struct ContentView: View {
         }
         .opacity(isMediaLoaded ? (showOverlay ? 1 : 0) : 1)
         .animation(.easeInOut(duration: 0.3), value: showOverlay)
+    }
+
+    // MARK: - Scope Overlay
+
+    private func scopeOverlay(containerHeight: CGFloat) -> some View {
+        let targetHeight = max(80, containerHeight / 4)
+        let isTransparent = scopeBackground == ScopeBackground.transparent.rawValue
+
+        return ScopeView(
+            frameCapture: controller.frameCapture,
+            isOverlay: true,
+            transparentBackground: isTransparent
+        )
+        .frame(height: targetHeight)
+        .clipped()
     }
 
     // MARK: - Audio Waveform Overlay
@@ -752,6 +788,7 @@ private struct NotificationHandlers: ViewModifier {
     @Binding var isEditingTimecode: Bool
     @Binding var showInspector: Bool
     @Binding var scopeWindowController: ScopeWindowController?
+    @Binding var showScopeOverlay: Bool
     @Binding var audioWaveformWindowController: AudioWaveformWindowController?
     @Binding var showAudioWaveformOverlay: Bool
     @ObservedObject var audioWaveformGenerator: AudioWaveformGenerator
@@ -768,6 +805,7 @@ private struct NotificationHandlers: ViewModifier {
                 controller: controller, nsWindow: nsWindow,
                 showInspector: $showInspector,
                 scopeWindowController: $scopeWindowController,
+                showScopeOverlay: $showScopeOverlay,
                 audioWaveformWindowController: $audioWaveformWindowController,
                 showAudioWaveformOverlay: $showAudioWaveformOverlay,
                 audioWaveformGenerator: audioWaveformGenerator,
@@ -792,12 +830,14 @@ private struct FileAndWindowHandlers: ViewModifier {
     let nsWindow: NSWindow?
     @Binding var showInspector: Bool
     @Binding var scopeWindowController: ScopeWindowController?
+    @Binding var showScopeOverlay: Bool
     @Binding var audioWaveformWindowController: AudioWaveformWindowController?
     @Binding var showAudioWaveformOverlay: Bool
     @ObservedObject var audioWaveformGenerator: AudioWaveformGenerator
     let openFilePanel: () -> Void
     let openFile: (URL) -> Void
-    @AppStorage(SettingsView.audioWaveformDisplayModeKey) private var audioWaveformDisplayMode: String = AudioWaveformDisplayMode.window.rawValue
+    @AppStorage(SettingsView.scopeDisplayModeKey) private var scopeDisplayMode: String = ScopeDisplayMode.overlay.rawValue
+    @AppStorage(SettingsView.audioWaveformDisplayModeKey) private var audioWaveformDisplayMode: String = AudioWaveformDisplayMode.overlay.rawValue
 
     func body(content: Content) -> some View {
         content
@@ -833,20 +873,46 @@ private struct FileAndWindowHandlers: ViewModifier {
             }
             .onReceive(NotificationCenter.default.publisher(for: .toggleScopes)) { _ in
                 guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
-                if let existing = scopeWindowController {
-                    existing.toggle()
-                    if !existing.isVisible {
-                        scopeWindowController = nil
+                let isOverlayMode = scopeDisplayMode == ScopeDisplayMode.overlay.rawValue
+
+                if isOverlayMode {
+                    // Close any existing window
+                    scopeWindowController?.close()
+                    scopeWindowController = nil
+
+                    // Toggle overlay
+                    showScopeOverlay.toggle()
+                    if showScopeOverlay {
+                        controller.frameCapture.startCapture()
+                    } else {
+                        // Only stop capture if the scope window isn't also open
+                        if scopeWindowController == nil {
+                            controller.frameCapture.stopCapture()
+                        }
                     }
                 } else {
-                    let filename = controller.mediaItem?.name ?? "Untitled"
-                    let sc = ScopeWindowController(
-                        frameCapture: controller.frameCapture,
-                        filename: filename,
-                        parentWindow: nsWindow
-                    )
-                    scopeWindowController = sc
-                    sc.show()
+                    // Close overlay if open
+                    if showScopeOverlay {
+                        showScopeOverlay = false
+                        // Only stop capture if transitioning to window mode
+                    }
+
+                    // Toggle window
+                    if let existing = scopeWindowController {
+                        existing.toggle()
+                        if !existing.isVisible {
+                            scopeWindowController = nil
+                        }
+                    } else {
+                        let filename = controller.mediaItem?.name ?? "Untitled"
+                        let sc = ScopeWindowController(
+                            frameCapture: controller.frameCapture,
+                            filename: filename,
+                            parentWindow: nsWindow
+                        )
+                        scopeWindowController = sc
+                        sc.show()
+                    }
                 }
             }
             .onReceive(NotificationCenter.default.publisher(for: .toggleAudioWaveform)) { _ in

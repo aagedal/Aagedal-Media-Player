@@ -56,7 +56,9 @@ enum ScopeComputer: Sendable {
         }
 
         var outputPixels = [UInt8](repeating: 0, count: outW * outH * 4)
-        let normFactor: Float = 1.0 / (Float(maxCount) * 0.25)
+        // Logarithmic intensity so sparse bins are still visible
+        let logMax = log2f(1 + Float(maxCount))
+        let gain: Float = 2.5
 
         for col in 0..<outW {
             for level in 0..<outH {
@@ -64,38 +66,41 @@ enum ScopeComputer: Sendable {
                 let count = counts[idx]
                 guard count > 0 else { continue }
 
-                let intensity = min(Float(count) * normFactor, 1.0)
+                let intensity = min(log2f(1 + Float(count)) / logMax * gain, 1.0)
                 let invCount = 1.0 / Float(count)
-                var avgR = sumR[idx] * invCount
-                var avgG = sumG[idx] * invCount
-                var avgB = sumB[idx] * invCount
+                let avgR = sumR[idx] * invCount
+                let avgG = sumG[idx] * invCount
+                let avgB = sumB[idx] * invCount
 
-                // Saturation boost for visibility
+                // Measure how chromatic this bin is (0 = gray, 1 = saturated).
                 let gray = (avgR + avgG + avgB) / 3.0
-                let satBoost: Float = 1.8
-                avgR = gray + (avgR - gray) * satBoost
-                avgG = gray + (avgG - gray) * satBoost
-                avgB = gray + (avgB - gray) * satBoost
+                let maxDev = max(abs(avgR - gray), abs(avgG - gray), abs(avgB - gray))
+                let saturation = min(maxDev / max(gray, 0.01), 1.0)
 
-                // Normalize — ensure minimum brightness so sparse data is visible
-                let maxC = max(avgR, avgG, avgB, 0.3)
-                let invMax = 1.0 / maxC
-                avgR = max(avgR * invMax, 0.08)
-                avgG = max(avgG * invMax, 0.08)
-                avgB = max(avgB * invMax, 0.08)
+                // Boost saturation and normalize color to full brightness.
+                let satBoost: Float = 2.5
+                var cR = max(gray + (avgR - gray) * satBoost, 0)
+                var cG = max(gray + (avgG - gray) * satBoost, 0)
+                var cB = max(gray + (avgB - gray) * satBoost, 0)
+                let maxC = max(cR, cG, cB, 0.01)
+                cR /= maxC; cG /= maxC; cB /= maxC
 
-                // White underlay so dark/desaturated scenes remain visible
-                let whiteMix: Float = 0.25
-                let finalR = intensity * (avgR * (1.0 - whiteMix) + whiteMix)
-                let finalG = intensity * (avgG * (1.0 - whiteMix) + whiteMix)
-                let finalB = intensity * (avgB * (1.0 - whiteMix) + whiteMix)
+                // Blend between white and the boosted color based on saturation.
+                // Low saturation → white trace; high saturation → colored trace.
+                let colorMix = min(saturation * 3.0, 1.0)
+                let finalR = cR * colorMix + (1.0 - colorMix)
+                let finalG = cG * colorMix + (1.0 - colorMix)
+                let finalB = cB * colorMix + (1.0 - colorMix)
 
+                // Use premultiplied alpha: intensity drives opacity so sparse
+                // bins fade out instead of rendering as dark opaque pixels.
+                let alpha = intensity
                 let row = outH - 1 - level
                 let px = (row * outW + col) * 4
-                outputPixels[px]     = UInt8(min(finalB * 255, 255))
-                outputPixels[px + 1] = UInt8(min(finalG * 255, 255))
-                outputPixels[px + 2] = UInt8(min(finalR * 255, 255))
-                outputPixels[px + 3] = 255
+                outputPixels[px]     = UInt8(min(finalB * alpha * 255, 255))
+                outputPixels[px + 1] = UInt8(min(finalG * alpha * 255, 255))
+                outputPixels[px + 2] = UInt8(min(finalR * alpha * 255, 255))
+                outputPixels[px + 3] = UInt8(min(alpha * 255, 255))
             }
         }
 

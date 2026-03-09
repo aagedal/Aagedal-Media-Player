@@ -87,6 +87,12 @@ struct Aagedal_Media_PlayerApp: App {
                 .keyboardShortcut("w", modifiers: [.command, .shift])
                 .disabled(!mediaLoaded)
 
+                Button("Toggle Parade") {
+                    NotificationCenter.default.post(name: .toggleScopeParade, object: nil)
+                }
+                .keyboardShortcut("p", modifiers: [.command, .shift])
+                .disabled(!mediaLoaded)
+
                 Button("Audio Waveform") {
                     NotificationCenter.default.post(name: .toggleAudioWaveform, object: nil)
                 }
@@ -232,10 +238,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             SettingsView.avifSpeedKey: 4.0,
             SettingsView.h264QualityKey: 65.0,
             SettingsView.h265QualityKey: 65.0,
+            SettingsView.scopeDisplayModeKey: ScopeDisplayMode.overlay.rawValue,
+            SettingsView.scopeBackgroundKey: ScopeBackground.transparent.rawValue,
             SettingsView.scopeResolutionKey: ScopeResolution.standard.rawValue,
             SettingsView.scopeFrameRateKey: 15.0,
-            SettingsView.audioWaveformDisplayModeKey: AudioWaveformDisplayMode.window.rawValue,
-            SettingsView.audioWaveformBackgroundKey: AudioWaveformBackground.black.rawValue,
+            SettingsView.audioWaveformDisplayModeKey: AudioWaveformDisplayMode.overlay.rawValue,
+            SettingsView.audioWaveformBackgroundKey: AudioWaveformBackground.transparent.rawValue,
             SettingsView.audioWaveformResolutionKey: AudioWaveformResolution.standard.rawValue,
             SettingsView.audioWaveformColorKey: AudioWaveformColor.pink.rawValue,
         ])
@@ -316,5 +324,6 @@ extension Notification.Name {
     static let slowForward = Notification.Name("slowForward")
     static let slowReverse = Notification.Name("slowReverse")
     static let toggleScopes = Notification.Name("toggleScopes")
+    static let toggleScopeParade = Notification.Name("toggleScopeParade")
     static let toggleAudioWaveform = Notification.Name("toggleAudioWaveform")
 }
