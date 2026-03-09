@@ -29,6 +29,7 @@ struct ContentView: View {
     @ObservedObject private var updateChecker = UpdateChecker.shared
     @State private var updateBannerDismissed = false
     @State private var scopeWindowController: ScopeWindowController?
+    @State private var audioWaveformWindowController: AudioWaveformWindowController?
 
     private let windowID = UUID()
     private let rightEdgeWidth: CGFloat = 60
@@ -55,6 +56,7 @@ struct ContentView: View {
                 isEditingTimecode: $isEditingTimecode,
                 showInspector: $showInspector,
                 scopeWindowController: $scopeWindowController,
+                audioWaveformWindowController: $audioWaveformWindowController,
                 timecodeMode: $timecodeMode,
                 showOverlay: $showOverlay,
                 overlayHideTask: $overlayHideTask,
@@ -234,6 +236,8 @@ struct ContentView: View {
             removeAppActiveObserver()
             scopeWindowController?.close()
             scopeWindowController = nil
+            audioWaveformWindowController?.close()
+            audioWaveformWindowController = nil
             controller.teardown()
             WindowManager.shared.unregister(id: windowID)
         }
@@ -709,6 +713,7 @@ private struct NotificationHandlers: ViewModifier {
     @Binding var isEditingTimecode: Bool
     @Binding var showInspector: Bool
     @Binding var scopeWindowController: ScopeWindowController?
+    @Binding var audioWaveformWindowController: AudioWaveformWindowController?
     @Binding var timecodeMode: TimecodeDisplayMode
     @Binding var showOverlay: Bool
     @Binding var overlayHideTask: Task<Void, Never>?
@@ -722,6 +727,7 @@ private struct NotificationHandlers: ViewModifier {
                 controller: controller, nsWindow: nsWindow,
                 showInspector: $showInspector,
                 scopeWindowController: $scopeWindowController,
+                audioWaveformWindowController: $audioWaveformWindowController,
                 openFilePanel: openFilePanel, openFile: openFile
             ))
             .modifier(PlaybackHandlers(controller: controller, nsWindow: nsWindow))
@@ -743,6 +749,7 @@ private struct FileAndWindowHandlers: ViewModifier {
     let nsWindow: NSWindow?
     @Binding var showInspector: Bool
     @Binding var scopeWindowController: ScopeWindowController?
+    @Binding var audioWaveformWindowController: AudioWaveformWindowController?
     let openFilePanel: () -> Void
     let openFile: (URL) -> Void
 
@@ -794,6 +801,24 @@ private struct FileAndWindowHandlers: ViewModifier {
                     )
                     scopeWindowController = sc
                     sc.show()
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .toggleAudioWaveform)) { _ in
+                guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
+                if let existing = audioWaveformWindowController {
+                    existing.toggle()
+                    if !existing.isVisible {
+                        audioWaveformWindowController = nil
+                    }
+                } else {
+                    let filename = controller.mediaItem?.name ?? "Untitled"
+                    let wc = AudioWaveformWindowController(
+                        controller: controller,
+                        filename: filename,
+                        parentWindow: nsWindow
+                    )
+                    audioWaveformWindowController = wc
+                    wc.show()
                 }
             }
     }

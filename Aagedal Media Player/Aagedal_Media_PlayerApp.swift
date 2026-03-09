@@ -86,6 +86,12 @@ struct Aagedal_Media_PlayerApp: App {
                 }
                 .keyboardShortcut("w", modifiers: [.command, .shift])
                 .disabled(!mediaLoaded)
+
+                Button("Audio Waveform") {
+                    NotificationCenter.default.post(name: .toggleAudioWaveform, object: nil)
+                }
+                .keyboardShortcut("a", modifiers: [.command, .shift])
+                .disabled(!mediaLoaded)
             }
             CommandMenu("Playback") {
                 Button("Play / Pause") {
@@ -306,4 +312,5 @@ extension Notification.Name {
     static let slowForward = Notification.Name("slowForward")
     static let slowReverse = Notification.Name("slowReverse")
     static let toggleScopes = Notification.Name("toggleScopes")
+    static let toggleAudioWaveform = Notification.Name("toggleAudioWaveform")
 }

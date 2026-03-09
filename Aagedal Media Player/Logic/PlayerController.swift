@@ -98,7 +98,7 @@ final class PlayerController: ObservableObject {
     weak var playbackTimeObserverOwner: AVPlayer?
     var playerItemStatusObserver: Any?
     weak var playerView: AVPlayerView?
-    var selectedAudioTrackOrderIndex: Int = 0
+    @Published var selectedAudioTrackOrderIndex: Int = 0
     var selectedSubtitleTrackOrderIndex: Int = -1
 
     // MARK: - MPV State
