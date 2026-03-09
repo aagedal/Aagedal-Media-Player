@@ -28,7 +28,7 @@ final class FrameCapture: ObservableObject {
 
     // Shared timer
     private var captureTimer: Timer?
-    private var isCapturing = false
+    private(set) var isCapturing = false
 
     /// Target downscale width for scope analysis, read from settings.
     private var analysisWidth: Int {

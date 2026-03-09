@@ -221,6 +221,7 @@ final class PlayerController: ObservableObject {
     }
 
     func preparePlayback(startTime: TimeInterval, resetAudioSelection: Bool = true) {
+        let wasCapturing = frameCapture.isCapturing
         teardown(resetAudioSelection: resetAudioSelection)
         preparationID &+= 1
         isPreparing = true
@@ -239,6 +240,7 @@ final class PlayerController: ObservableObject {
         if hasSurroundAudio && !hasProResVideoCodec {
             logger.info("Surround audio detected with non-ProRes codec, using MPV player for \(url.lastPathComponent)")
             setupMPV(url: url, startTime: startTime)
+            if wasCapturing { frameCapture.startCapture() }
             return
         }
 
@@ -246,6 +248,7 @@ final class PlayerController: ObservableObject {
         if UserDefaults.standard.bool(forKey: "alwaysUseMPV") && !hasProResRAWVideoCodec {
             logger.info("Always Use MPV enabled, using MPV player for \(url.lastPathComponent)")
             setupMPV(url: url, startTime: startTime)
+            if wasCapturing { frameCapture.startCapture() }
             return
         }
 
@@ -270,6 +273,8 @@ final class PlayerController: ObservableObject {
         installLoopObserver(for: playerItem)
         installPlaybackTimeObserver(for: player)
         updatePlayerActionAtEnd()
+
+        if wasCapturing { frameCapture.startCapture() }
     }
 
     func setupMPV(url: URL, startTime: Double) {

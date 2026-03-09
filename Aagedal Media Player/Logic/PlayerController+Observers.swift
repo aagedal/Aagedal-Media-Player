@@ -142,8 +142,10 @@ extension PlayerController {
 
                     guard self.preparationID == myPrepID else { return }
                     guard let item = self.mediaItem else { return }
+                    let wasCapturing = self.frameCapture.isCapturing
                     self.teardown(resetAudioSelection: false)
                     self.setupMPV(url: item.url, startTime: startTime)
+                    if wasCapturing { self.frameCapture.startCapture() }
 
                 case .readyToPlay:
                     let asset = item.asset
@@ -168,8 +170,10 @@ extension PlayerController {
                                 if !hasValidVideoFormat {
                                     logger.warning("AVPlayer ready but video format invalid. Attempting MPV playback.")
                                     guard let item = self.mediaItem else { return }
+                                    let wasCapturing = self.frameCapture.isCapturing
                                     self.teardown(resetAudioSelection: false)
                                     self.setupMPV(url: item.url, startTime: startTime)
+                                    if wasCapturing { self.frameCapture.startCapture() }
                                     return
                                 }
 
@@ -179,8 +183,10 @@ extension PlayerController {
                                     if !isDecodable {
                                         logger.warning("AVPlayer ready but video track not decodable. Attempting MPV playback.")
                                         guard let item = self.mediaItem else { return }
+                                        let wasCapturing = self.frameCapture.isCapturing
                                         self.teardown(resetAudioSelection: false)
                                         self.setupMPV(url: item.url, startTime: startTime)
+                                        if wasCapturing { self.frameCapture.startCapture() }
                                         return
                                     }
                                 }
