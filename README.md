@@ -25,7 +25,7 @@ Some of the supported formats here:
 
 ### Speed
 Launches faster than IINA and QuickTime. 1 second vs 2 seconds.
-Tested 2026-02-21 on an M1 Max Studio.
+Tested 2026-02-21 on an M1 Max MacBook Pro.
 
 ### Timecode display and input
 Display timecode, with quick switching between source timecode, relative timecode and a frame counter view.
@@ -44,10 +44,13 @@ Take quick screenshots at source resolution in JPEG XL, JPEG or PNG. Command + S
 Select a default export location in the settings, or save next to the original, or always be asked where to save it.
 
 ### Video Scopes
-Real-time waveform and vectorscope overlays for monitoring exposure and color. Toggle with Command + Shift + W. Configurable resolution and frame rate in scope settings.
+Real-time waveform, waveform RGBY parade and vectorscope overlays for monitoring exposure and color. Toggle with Command + Shift + W. Configurable resolution and frame rate in scope settings. By default the waveform is overlayed over the video, but can also be opened in a separate window.
+
+### Audio waveform
+Preview multichannel audio tracks as waveforms, with one waveform per channel. Toggle with Command + Shift + A. Supports multi track files. Changing the audio output track will update the preview to the audio channels from the selected audio track. Navigate by clicking on a point in the audio waveform to jump to that location in the video. By default the audio waveform is overlayed over the video, but can also be opened in a separate window.
 
 ### Metadata
-Quickly check basic metadata like resolution, frame rate, codec, color space and chroma sub sampling information. Command + I.
+Quickly check basic metadata like resolution, frame rate, codec, color space and chroma sub sampling information. Command + I. Includes button to
 
 ## Keyboard Shortcuts
 
