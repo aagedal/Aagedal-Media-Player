@@ -287,8 +287,14 @@ final class PlayerController: ObservableObject {
     /// its tone-mapped (clipped) highlight rendering.
     private func rebuildCurrentPlayerItem() {
         guard let player, let oldItem = player.currentItem else { return }
+        guard let urlAsset = oldItem.asset as? AVURLAsset else { return }
 
-        let asset = oldItem.asset
+        // Create a completely fresh asset — AVFoundation caches the decode
+        // pipeline per asset instance, so reusing the old one keeps the
+        // tone-mapped path active.
+        let freshAsset = AVURLAsset(url: urlAsset.url, options: [
+            AVURLAssetPreferPreciseDurationAndTimingKey: true
+        ])
         let currentTime = player.currentTime()
         let wasPlaying = player.rate != 0
 
@@ -296,8 +302,8 @@ final class PlayerController: ObservableObject {
         removeLoopObserver()
         removePlayerItemStatusObserver()
 
-        // Swap in a fresh item
-        let newItem = AVPlayerItem(asset: asset)
+        // Swap in a fresh item built from the new asset
+        let newItem = AVPlayerItem(asset: freshAsset)
         player.replaceCurrentItem(with: newItem)
 
         // Reinstall observers on the new item
