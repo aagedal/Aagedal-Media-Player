@@ -741,6 +741,9 @@ struct ContentView: View {
                 item.hasVideoStream = !metadata.videoStreams.isEmpty
                 controller.updateMetadata(item)
                 timecodeMode = metadata.timecode != nil ? .source : .relative
+                if showAudioWaveformOverlay {
+                    generateAudioWaveform()
+                }
             } catch {
                 logger.warning("Failed to load metadata: \(error.localizedDescription)")
             }
@@ -761,6 +764,30 @@ struct ContentView: View {
         }
 
         return true
+    }
+
+    func generateAudioWaveform() {
+        guard let item = controller.mediaItem,
+              let metadata = item.metadata else { return }
+
+        let trackIdx = controller.selectedAudioTrackOrderIndex
+        guard trackIdx < controller.audioTrackOptions.count else { return }
+
+        let option = controller.audioTrackOptions[trackIdx]
+        let streamIndex = option.streamIndex
+        let audioStreams = metadata.audioStreams
+        guard streamIndex < audioStreams.count else { return }
+
+        let stream = audioStreams[streamIndex]
+        let channels = stream.channels ?? 2
+
+        audioWaveformGenerator.generate(
+            url: item.url,
+            streamIndex: streamIndex,
+            channels: channels,
+            channelLayout: stream.channelLayout,
+            duration: item.durationSeconds
+        )
     }
 
     private var supportedMediaTypes: [UTType] {
