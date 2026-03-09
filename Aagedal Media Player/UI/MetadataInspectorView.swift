@@ -12,6 +12,9 @@ struct MetadataInspectorView: View {
     let useMPV: Bool
     @Binding var isPresented: Bool
     @State private var showCopiedConfirmation = false
+    @State private var lufsResults: [Int: FFmpegService.LUFSResult] = [:]
+    @State private var lufsAnalyzing: Set<Int> = []
+    @State private var lufsErrors: [Int: String] = [:]
 
     private var metadata: MediaMetadata? { item.metadata }
     private var video: MediaMetadata.VideoStream? { metadata?.videoStreams.first }
@@ -102,6 +105,7 @@ struct MetadataInspectorView: View {
                         if let bitRate = stream.bitRate, bitRate > 0 {
                             metadataRow("Bit Rate", value: formatBitRate(bitRate))
                         }
+                        lufsSection(streamIndex: index)
                     }
                 }
 
@@ -197,6 +201,11 @@ struct MetadataInspectorView: View {
         .onExitCommand {
             isPresented = false
         }
+        .onChange(of: item) {
+            lufsResults.removeAll()
+            lufsAnalyzing.removeAll()
+            lufsErrors.removeAll()
+        }
     }
 
     // MARK: - Actions
@@ -218,6 +227,79 @@ struct MetadataInspectorView: View {
         Task {
             try? await Task.sleep(for: .seconds(1.5))
             withAnimation { showCopiedConfirmation = false }
+        }
+    }
+
+    // MARK: - LUFS Analysis
+
+    @ViewBuilder
+    private func lufsSection(streamIndex: Int) -> some View {
+        if let result = lufsResults[streamIndex] {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Integrated Loudness")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text(String(format: "%.1f LUFS", result.integratedLoudness))
+                    .font(.system(.body, design: .monospaced))
+                    .textSelection(.enabled)
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Loudness Range")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text(String(format: "%.1f LU", result.loudnessRange))
+                    .font(.system(.body, design: .monospaced))
+                    .textSelection(.enabled)
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text("True Peak")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text(String(format: "%.1f dBTP", result.truePeak))
+                    .font(.system(.body, design: .monospaced))
+                    .textSelection(.enabled)
+            }
+        } else if lufsAnalyzing.contains(streamIndex) {
+            HStack(spacing: 6) {
+                ProgressView()
+                    .controlSize(.small)
+                Text("Analyzing loudness…")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        } else {
+            if let error = lufsErrors[streamIndex] {
+                Text(error)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+            }
+            Button {
+                runLUFSAnalysis(streamIndex: streamIndex)
+            } label: {
+                Label("Measure LUFS", systemImage: "waveform.badge.magnifyingglass")
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+        }
+    }
+
+    private func runLUFSAnalysis(streamIndex: Int) {
+        lufsErrors.removeValue(forKey: streamIndex)
+        lufsAnalyzing.insert(streamIndex)
+        let url = item.url
+        Task.detached(priority: .userInitiated) {
+            do {
+                let result = try await FFmpegService.analyzeLUFS(url: url, audioStreamIndex: streamIndex)
+                await MainActor.run {
+                    lufsResults[streamIndex] = result
+                    lufsAnalyzing.remove(streamIndex)
+                }
+            } catch {
+                await MainActor.run {
+                    lufsErrors[streamIndex] = "LUFS analysis failed"
+                    lufsAnalyzing.remove(streamIndex)
+                }
+            }
         }
     }
 

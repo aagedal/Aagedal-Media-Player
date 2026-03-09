@@ -133,6 +133,139 @@ enum FFmpegService {
         }
     }
 
+    // MARK: - LUFS Analysis
+
+    struct LUFSResult: Sendable {
+        let integratedLoudness: Double
+        let loudnessRange: Double
+        let truePeak: Double
+    }
+
+    /// Run the EBU R128 loudness analysis on a specific audio stream.
+    /// `audioStreamIndex` is the zero-based index among audio streams (used with `-map 0:a:<index>`).
+    static func analyzeLUFS(url: URL, audioStreamIndex: Int) async throws -> LUFSResult {
+        guard let path = ffmpegPath else {
+            throw FFmpegError.ffmpegMissing
+        }
+
+        let arguments = [
+            "-hide_banner", "-nostats",
+            "-i", url.path,
+            "-map", "0:a:\(audioStreamIndex)",
+            "-af", "ebur128=peak=true",
+            "-f", "null", "-",
+        ]
+
+        return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<LUFSResult, Error>) in
+            Task.detached(priority: .userInitiated) {
+                let process = Process()
+                process.executableURL = URL(fileURLWithPath: path)
+                process.arguments = arguments
+
+                let stderrPipe = Pipe()
+                process.standardOutput = FileHandle.nullDevice
+                process.standardError = stderrPipe
+
+                // Collect stderr asynchronously to prevent pipe buffer deadlock.
+                // ebur128 outputs per-frame data that can fill the 64 KB buffer.
+                let collector = StderrCollector()
+                stderrPipe.fileHandleForReading.readabilityHandler = { handle in
+                    let data = handle.availableData
+                    guard !data.isEmpty else { return }
+                    collector.append(data)
+                }
+
+                do {
+                    try process.run()
+                } catch {
+                    stderrPipe.fileHandleForReading.readabilityHandler = nil
+                    continuation.resume(throwing: error)
+                    return
+                }
+
+                process.waitUntilExit()
+                stderrPipe.fileHandleForReading.readabilityHandler = nil
+
+                // Drain any remaining data
+                let remaining = stderrPipe.fileHandleForReading.readDataToEndOfFile()
+                if !remaining.isEmpty { collector.append(remaining) }
+                let output = String(data: collector.combined(), encoding: .utf8) ?? ""
+
+                guard process.terminationStatus == 0 else {
+                    continuation.resume(throwing: FFmpegError.processFailed(output.trimmingCharacters(in: .whitespacesAndNewlines)))
+                    return
+                }
+
+                guard let result = parseLUFSOutput(output) else {
+                    continuation.resume(throwing: FFmpegError.processFailed("Could not parse LUFS output"))
+                    return
+                }
+
+                continuation.resume(returning: result)
+            }
+        }
+    }
+
+    private final class StderrCollector: Sendable {
+        private let lock = NSLock()
+        private nonisolated(unsafe) var chunks: [Data] = []
+
+        nonisolated func append(_ data: Data) {
+            lock.lock()
+            chunks.append(data)
+            lock.unlock()
+        }
+
+        nonisolated func combined() -> Data {
+            lock.lock()
+            let result = chunks.reduce(Data(), +)
+            lock.unlock()
+            return result
+        }
+    }
+
+    nonisolated private static func parseLUFSOutput(_ output: String) -> LUFSResult? {
+        // Only parse lines after the "Summary:" marker to avoid matching per-frame data.
+        //   Integrated loudness:
+        //     I:         -14.0 LUFS
+        //   Loudness range:
+        //     LRA:        7.2 LU
+        //   True peak:
+        //     Peak:       -0.3 dBFS (or dBTP)
+        guard let summaryRange = output.range(of: "Summary:") else { return nil }
+        let summary = String(output[summaryRange.upperBound...])
+
+        var integrated: Double?
+        var lra: Double?
+        var peak: Double?
+
+        for line in summary.components(separatedBy: .newlines) {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            if trimmed.hasPrefix("I:") && trimmed.hasSuffix("LUFS") {
+                integrated = parseValue(trimmed, prefix: "I:", suffix: "LUFS")
+            } else if trimmed.hasPrefix("LRA:") && trimmed.hasSuffix("LU") {
+                lra = parseValue(trimmed, prefix: "LRA:", suffix: "LU")
+            } else if trimmed.hasPrefix("Peak:") {
+                // True peak may be reported as dBTP or dBFS depending on ffmpeg version
+                if trimmed.hasSuffix("dBTP") {
+                    peak = parseValue(trimmed, prefix: "Peak:", suffix: "dBTP")
+                } else if trimmed.hasSuffix("dBFS") {
+                    peak = parseValue(trimmed, prefix: "Peak:", suffix: "dBFS")
+                }
+            }
+        }
+
+        guard let i = integrated, let l = lra, let p = peak else { return nil }
+        return LUFSResult(integratedLoudness: i, loudnessRange: l, truePeak: p)
+    }
+
+    nonisolated private static func parseValue(_ line: String, prefix: String, suffix: String) -> Double? {
+        var s = line
+        s = String(s.dropFirst(prefix.count))
+        if s.hasSuffix(suffix) { s = String(s.dropLast(suffix.count)) }
+        return Double(s.trimmingCharacters(in: .whitespaces))
+    }
+
     // MARK: - Color Argument Helpers
 
     static func appendColorArguments(from stream: MediaMetadata.VideoStream?, to arguments: inout [String]) {
