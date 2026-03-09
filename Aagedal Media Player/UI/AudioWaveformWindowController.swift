@@ -15,7 +15,7 @@ final class AudioWaveformWindowController {
     private var panel: NSPanel?
     private let generator: AudioWaveformGenerator
     private let controller: PlayerController
-    private let filename: String
+    private var filename: String
     private weak var parentWindow: NSWindow?
 
     private var closeObserver: NSObjectProtocol?
@@ -25,6 +25,11 @@ final class AudioWaveformWindowController {
         self.generator = AudioWaveformGenerator()
         self.filename = filename
         self.parentWindow = parentWindow
+    }
+
+    private func updateTitle(_ name: String) {
+        filename = name
+        panel?.title = "Audio Waveform \u{2014} \(name)"
     }
 
     var isVisible: Bool {
@@ -37,11 +42,12 @@ final class AudioWaveformWindowController {
             return
         }
 
-        let duration = controller.mediaItem?.durationSeconds ?? 0
         let waveformView = AudioWaveformView(
             generator: generator,
             controller: controller,
-            duration: duration
+            onMediaChange: { [weak self] name in
+                self?.updateTitle(name)
+            }
         )
         let hostingView = NSHostingView(rootView: waveformView)
 

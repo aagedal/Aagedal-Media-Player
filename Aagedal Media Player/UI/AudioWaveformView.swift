@@ -9,9 +9,13 @@ import SwiftUI
 struct AudioWaveformView: View {
     @ObservedObject var generator: AudioWaveformGenerator
     @ObservedObject var controller: PlayerController
-    let duration: Double
+    var onMediaChange: ((String) -> Void)?
 
     @State private var isDragging = false
+
+    private var duration: Double {
+        controller.mediaItem?.durationSeconds ?? 0
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -119,6 +123,17 @@ struct AudioWaveformView: View {
         }
         .background(Color.black)
         .onChange(of: controller.selectedAudioTrackOrderIndex) {
+            triggerGeneration()
+        }
+        .onChange(of: controller.mediaItem) {
+            generator.reset()
+            if let name = controller.mediaItem?.name {
+                onMediaChange?(name)
+            }
+            // Waveform generation deferred to audioTrackOptions change,
+            // since metadata/tracks aren't available yet when mediaItem changes.
+        }
+        .onChange(of: controller.audioTrackOptions) {
             triggerGeneration()
         }
     }
