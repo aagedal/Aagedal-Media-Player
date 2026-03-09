@@ -216,9 +216,10 @@ struct MetadataInspectorView: View {
 
     private func copyMetadataAsJSON() {
         guard let metadata = metadata else { return }
+        let export = MetadataExport(metadata: metadata, lufsResults: lufsResults)
         let encoder = JSONEncoder()
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        guard let data = try? encoder.encode(metadata),
+        encoder.outputFormatting = [.prettyPrinted]
+        guard let data = try? encoder.encode(export),
               let json = String(data: data, encoding: .utf8) else { return }
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(json, forType: .string)
@@ -227,6 +228,81 @@ struct MetadataInspectorView: View {
         Task {
             try? await Task.sleep(for: .seconds(1.5))
             withAnimation { showCopiedConfirmation = false }
+        }
+    }
+
+    /// Encodable wrapper that outputs keys in metadata view order and includes LUFS results.
+    private struct MetadataExport: Encodable {
+        let metadata: MediaMetadata
+        let lufsResults: [Int: FFmpegService.LUFSResult]
+
+        private enum CodingKeys: String, CodingKey {
+            case duration, formatName, containerLongName, sizeBytes, bitRate
+            case videoStreams, audioStreams, subtitleStreams
+            case timecode, comment, encoder, frameCount
+        }
+
+        func encode(to encoder: Encoder) throws {
+            var c = encoder.container(keyedBy: CodingKeys.self)
+
+            // File & Container
+            try c.encodeIfPresent(metadata.duration, forKey: .duration)
+            try c.encodeIfPresent(metadata.formatName, forKey: .formatName)
+            try c.encodeIfPresent(metadata.containerLongName, forKey: .containerLongName)
+            try c.encodeIfPresent(metadata.sizeBytes, forKey: .sizeBytes)
+            try c.encodeIfPresent(metadata.bitRate, forKey: .bitRate)
+
+            // Video
+            if !metadata.videoStreams.isEmpty {
+                try c.encode(metadata.videoStreams, forKey: .videoStreams)
+            }
+
+            // Audio (with LUFS when measured)
+            if !metadata.audioStreams.isEmpty {
+                let streams = metadata.audioStreams.enumerated().map { index, stream in
+                    AudioStreamExport(stream: stream, lufs: lufsResults[index])
+                }
+                try c.encode(streams, forKey: .audioStreams)
+            }
+
+            // Subtitles
+            if !metadata.subtitleStreams.isEmpty {
+                try c.encode(metadata.subtitleStreams, forKey: .subtitleStreams)
+            }
+
+            // Info
+            try c.encodeIfPresent(metadata.timecode, forKey: .timecode)
+            try c.encodeIfPresent(metadata.comment, forKey: .comment)
+            try c.encodeIfPresent(metadata.encoder, forKey: .encoder)
+            try c.encodeIfPresent(metadata.frameCount, forKey: .frameCount)
+        }
+    }
+
+    private struct AudioStreamExport: Encodable {
+        let stream: MediaMetadata.AudioStream
+        let lufs: FFmpegService.LUFSResult?
+
+        private enum CodingKeys: String, CodingKey {
+            case index, languageCode, title, codec, codecLongName, profile
+            case sampleRate, channels, channelLayout, bitDepth, bitRate
+            case isDefault, lufs
+        }
+
+        func encode(to encoder: Encoder) throws {
+            var c = encoder.container(keyedBy: CodingKeys.self)
+            try c.encodeIfPresent(stream.index, forKey: .index)
+            try c.encodeIfPresent(stream.languageCode, forKey: .languageCode)
+            try c.encodeIfPresent(stream.title, forKey: .title)
+            try c.encodeIfPresent(stream.codec, forKey: .codec)
+            try c.encodeIfPresent(stream.codecLongName, forKey: .codecLongName)
+            try c.encodeIfPresent(stream.profile, forKey: .profile)
+            try c.encodeIfPresent(stream.sampleRate, forKey: .sampleRate)
+            try c.encodeIfPresent(stream.channels, forKey: .channels)
+            try c.encodeIfPresent(stream.channelLayout, forKey: .channelLayout)
+            try c.encodeIfPresent(stream.bitDepth, forKey: .bitDepth)
+            try c.encodeIfPresent(stream.bitRate, forKey: .bitRate)
+            try c.encode(stream.isDefault, forKey: .isDefault)
+            try c.encodeIfPresent(lufs, forKey: .lufs)
         }
     }
 

@@ -135,7 +135,7 @@ enum FFmpegService {
 
     // MARK: - LUFS Analysis
 
-    struct LUFSResult: Sendable {
+    struct LUFSResult: Sendable, Codable {
         let integratedLoudness: Double
         let loudnessRange: Double
         let truePeak: Double
