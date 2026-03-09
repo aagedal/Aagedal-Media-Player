@@ -213,7 +213,8 @@ struct SettingsView: View {
     // Audio waveform keys
     static let audioWaveformDisplayModeKey = "audioWaveformDisplayMode"
     static let audioWaveformBackgroundKey = "audioWaveformBackground"
-static let audioWaveformColorKey = "audioWaveformColor"
+    static let audioWaveformColorKey = "audioWaveformColor"
+    static let showAllMonoWaveformsKey = "showAllMonoWaveforms"
 
     var body: some View {
         TabView {
@@ -723,6 +724,7 @@ private struct AudioSettingsView: View {
     @AppStorage(SettingsView.audioWaveformDisplayModeKey) private var displayMode: String = AudioWaveformDisplayMode.overlay.rawValue
     @AppStorage(SettingsView.audioWaveformBackgroundKey) private var background: String = AudioWaveformBackground.transparent.rawValue
     @AppStorage(SettingsView.audioWaveformColorKey) private var waveformColor: String = AudioWaveformColor.pink.rawValue
+    @AppStorage(SettingsView.showAllMonoWaveformsKey) private var showAllMonoWaveforms: Bool = false
 
     var body: some View {
         Form {
@@ -767,6 +769,11 @@ private struct AudioSettingsView: View {
                     }
                     .labelsHidden()
                 }
+
+                Toggle("Show all waveforms for multi-mono files", isOn: $showAllMonoWaveforms)
+                Text("When enabled, files containing only mono tracks show all track waveforms at once instead of just the selected track.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)

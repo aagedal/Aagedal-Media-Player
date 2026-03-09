@@ -987,6 +987,23 @@ private struct FileAndWindowHandlers: ViewModifier {
         guard let item = controller.mediaItem,
               let metadata = item.metadata else { return }
 
+        if controller.showAllMonoWaveforms && controller.isMultiMonoFile {
+            let streams: [(index: Int, label: String)] = metadata.audioStreams.enumerated().map { offset, stream in
+                let label: String
+                if let title = stream.title, !title.isEmpty {
+                    label = title
+                } else if let option = controller.audioTrackOptions.first(where: { $0.streamIndex == offset }) {
+                    label = option.title
+                } else {
+                    label = "Track \(offset + 1)"
+                }
+                return (index: offset, label: label)
+            }
+            guard !streams.isEmpty else { return }
+            audioWaveformGenerator.generateAllMonoStreams(url: item.url, streams: streams, duration: item.durationSeconds)
+            return
+        }
+
         let trackIdx = controller.selectedAudioTrackOrderIndex
         guard trackIdx < controller.audioTrackOptions.count else { return }
 

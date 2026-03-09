@@ -575,6 +575,17 @@ struct ControlsView: View {
                     }
                 }
             }
+            if controller.isMultiMonoFile {
+                Divider()
+                Button(action: { controller.showAllMonoWaveforms.toggle() }) {
+                    HStack {
+                        Text("Show All Waveforms")
+                        if controller.showAllMonoWaveforms {
+                            Image(systemName: "checkmark")
+                        }
+                    }
+                }
+            }
         } label: {
             Image(systemName: "speaker.wave.2")
                 .font(.system(size: 14))

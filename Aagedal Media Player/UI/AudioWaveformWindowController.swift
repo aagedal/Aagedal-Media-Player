@@ -84,9 +84,26 @@ final class AudioWaveformWindowController {
         // Trigger waveform generation now that the view is open
         // Use a brief delay to allow SwiftUI to set up the view
         Task { @MainActor in
-            // Read AudioWaveformView's triggerGeneration through the generator
             guard let item = controller.mediaItem,
                   let metadata = item.metadata else { return }
+
+            if controller.showAllMonoWaveforms && controller.isMultiMonoFile {
+                let streams: [(index: Int, label: String)] = metadata.audioStreams.enumerated().map { offset, stream in
+                    let label: String
+                    if let title = stream.title, !title.isEmpty {
+                        label = title
+                    } else if let option = controller.audioTrackOptions.first(where: { $0.streamIndex == offset }) {
+                        label = option.title
+                    } else {
+                        label = "Track \(offset + 1)"
+                    }
+                    return (index: offset, label: label)
+                }
+                if !streams.isEmpty {
+                    generator.generateAllMonoStreams(url: item.url, streams: streams, duration: item.durationSeconds)
+                }
+                return
+            }
 
             let trackIdx = controller.selectedAudioTrackOrderIndex
             guard trackIdx < controller.audioTrackOptions.count else { return }

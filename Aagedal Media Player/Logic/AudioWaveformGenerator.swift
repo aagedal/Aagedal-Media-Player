@@ -23,6 +23,7 @@ final class AudioWaveformGenerator: ObservableObject {
     private var currentTask: Task<Void, Never>?
     private var currentURL: URL?
     private var currentStreamIndex: Int?
+    private var currentAllStreams: Bool = false
     private var currentColor: AudioWaveformColor?
 
     // Waveform rendering parameters
@@ -38,13 +39,14 @@ final class AudioWaveformGenerator: ObservableObject {
 
         // Skip if already generated for this exact stream and color
         if url == currentURL, streamIndex == currentStreamIndex,
-           color == currentColor, !channelImages.isEmpty {
+           !currentAllStreams, color == currentColor, !channelImages.isEmpty {
             return
         }
 
         cancel()
         currentURL = url
         currentStreamIndex = streamIndex
+        currentAllStreams = false
         currentColor = color
         channelImages = []
         channelLabels = []
@@ -92,6 +94,72 @@ final class AudioWaveformGenerator: ObservableObject {
         }
     }
 
+    /// Generate waveform images for all mono audio streams, one per stream.
+    func generateAllMonoStreams(url: URL, streams: [(index: Int, label: String)], duration: Double) {
+        let rawColor = UserDefaults.standard.string(forKey: SettingsView.audioWaveformColorKey) ?? AudioWaveformColor.pink.rawValue
+        let color = AudioWaveformColor(rawValue: rawColor) ?? .pink
+
+        if url == currentURL, currentAllStreams, color == currentColor, !channelImages.isEmpty {
+            return
+        }
+
+        cancel()
+        currentURL = url
+        currentStreamIndex = nil
+        currentAllStreams = true
+        currentColor = color
+        channelImages = []
+        channelLabels = []
+        error = nil
+        isGenerating = true
+
+        guard let ffmpegPath = FFmpegService.ffmpegPath else {
+            error = FFmpegError.ffmpegMissing.localizedDescription
+            isGenerating = false
+            return
+        }
+
+        let colorHex = color.ffmpegHex
+        let logger = self.logger
+        let labels = streams.map { $0.label }
+
+        currentTask = Task {
+            do {
+                let t0 = CFAbsoluteTimeGetCurrent()
+                var images: [NSImage] = []
+
+                for stream in streams {
+                    try Task.checkCancellation()
+                    let streamImages = try await Self.generateNativeWaveforms(
+                        url: url,
+                        ffmpegPath: ffmpegPath,
+                        streamIndex: stream.index,
+                        channelCount: 1,
+                        duration: duration,
+                        colorHex: colorHex,
+                        pixelsPerSecond: Self.pixelsPerSecond,
+                        channelHeight: Self.channelHeight,
+                        maxWidth: Self.maxWidth
+                    )
+                    images.append(contentsOf: streamImages)
+                }
+
+                let t1 = CFAbsoluteTimeGetCurrent()
+                logger.info("All-streams waveform generation: \(String(format: "%.2f", t1 - t0))s (\(streams.count) streams)")
+                guard !Task.isCancelled else { return }
+                self.channelImages = images
+                self.channelLabels = labels
+            } catch is CancellationError {
+                // Cancelled
+            } catch {
+                guard !Task.isCancelled else { return }
+                self.error = error.localizedDescription
+                self.logger.error("All-streams waveform generation failed: \(error.localizedDescription, privacy: .public)")
+            }
+            self.isGenerating = false
+        }
+    }
+
     func cancel() {
         currentTask?.cancel()
         currentTask = nil
@@ -101,6 +169,7 @@ final class AudioWaveformGenerator: ObservableObject {
         cancel()
         currentURL = nil
         currentStreamIndex = nil
+        currentAllStreams = false
         currentColor = nil
         channelImages = []
         channelLabels = []

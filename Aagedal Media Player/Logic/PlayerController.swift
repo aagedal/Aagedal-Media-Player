@@ -102,6 +102,7 @@ final class PlayerController: ObservableObject {
     var playerItemStatusObserver: Any?
     weak var playerView: AVPlayerView?
     @Published var selectedAudioTrackOrderIndex: Int = 0
+    @Published var showAllMonoWaveforms: Bool = UserDefaults.standard.bool(forKey: SettingsView.showAllMonoWaveformsKey)
     var selectedSubtitleTrackOrderIndex: Int = -1
 
     // MARK: - MPV State
@@ -188,6 +189,12 @@ final class PlayerController: ObservableObject {
     }
 
     // MARK: - Playback Preparation
+
+    /// Check if the file contains only mono audio tracks (2 or more, all single-channel).
+    var isMultiMonoFile: Bool {
+        guard let streams = mediaItem?.metadata?.audioStreams, streams.count >= 2 else { return false }
+        return streams.allSatisfy { ($0.channels ?? 0) == 1 }
+    }
 
     /// Check if the video has surround audio (any track with more than 2 channels)
     private var hasSurroundAudio: Bool {
@@ -1368,6 +1375,7 @@ final class PlayerController: ObservableObject {
         if resetAudioSelection {
             selectedAudioTrackOrderIndex = 0
             selectedSubtitleTrackOrderIndex = -1
+            showAllMonoWaveforms = UserDefaults.standard.bool(forKey: SettingsView.showAllMonoWaveformsKey)
         }
         audioTrackOptions = []
         subtitleTrackOptions = []
