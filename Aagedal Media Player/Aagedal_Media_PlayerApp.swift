@@ -236,6 +236,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             SettingsView.scopeFrameRateKey: 15.0,
             SettingsView.audioWaveformDisplayModeKey: AudioWaveformDisplayMode.window.rawValue,
             SettingsView.audioWaveformBackgroundKey: AudioWaveformBackground.black.rawValue,
+            SettingsView.audioWaveformResolutionKey: AudioWaveformResolution.standard.rawValue,
         ])
         UpdateChecker.shared.checkIfNeeded()
     }

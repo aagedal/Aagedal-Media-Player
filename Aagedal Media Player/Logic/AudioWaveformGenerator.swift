@@ -3,6 +3,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // Generates per-channel audio waveform images using the bundled ffmpeg binary.
+// Uses a two-pass approach: a fast low-resolution preview is rendered first,
+// then replaced with the full resolution waveform.
 
 import Foundation
 import AppKit
@@ -22,18 +24,30 @@ final class AudioWaveformGenerator: ObservableObject {
     private var currentTask: Task<Void, Never>?
     private var currentURL: URL?
     private var currentStreamIndex: Int?
+    private var currentResolution: AudioWaveformResolution?
+
+    // MARK: - Preview resolution (fast first pass)
+
+    private static let previewPixelsPerSecond: Double = 1.5
+    private static let previewChannelHeight: Int = 40
+    private static let previewMaxWidth: Int = 2000
 
     /// Generate waveform images for every channel in the given audio stream.
-    /// Each channel is rendered as a separate image via ffmpeg `showwavespic`.
+    /// Renders a fast low-res preview first, then replaces it with the final resolution.
     func generate(url: URL, streamIndex: Int, channels: Int, channelLayout: String?, duration: Double) {
-        // Skip if already generated for this exact stream
-        if url == currentURL, streamIndex == currentStreamIndex, !channelImages.isEmpty {
+        let rawResolution = UserDefaults.standard.string(forKey: SettingsView.audioWaveformResolutionKey) ?? AudioWaveformResolution.standard.rawValue
+        let resolution = AudioWaveformResolution(rawValue: rawResolution) ?? .standard
+
+        // Skip if already generated for this exact stream at this resolution
+        if url == currentURL, streamIndex == currentStreamIndex,
+           resolution == currentResolution, !channelImages.isEmpty {
             return
         }
 
         cancel()
         currentURL = url
         currentStreamIndex = streamIndex
+        currentResolution = resolution
         channelImages = []
         channelLabels = []
         error = nil
@@ -49,16 +63,34 @@ final class AudioWaveformGenerator: ObservableObject {
 
         currentTask = Task {
             do {
-                let images = try await Self.generateChannelWaveforms(
+                // Pass 1: fast low-res preview
+                let previewImages = try await Self.generateChannelWaveforms(
                     url: url,
                     ffmpegPath: ffmpegPath,
                     streamIndex: streamIndex,
                     channelCount: channels,
-                    duration: duration
+                    duration: duration,
+                    pixelsPerSecond: Self.previewPixelsPerSecond,
+                    channelHeight: Self.previewChannelHeight,
+                    maxWidth: Self.previewMaxWidth
                 )
                 guard !Task.isCancelled else { return }
-                self.channelImages = images
+                self.channelImages = previewImages
                 self.channelLabels = labels
+
+                // Pass 2: full resolution
+                let fullImages = try await Self.generateChannelWaveforms(
+                    url: url,
+                    ffmpegPath: ffmpegPath,
+                    streamIndex: streamIndex,
+                    channelCount: channels,
+                    duration: duration,
+                    pixelsPerSecond: resolution.pixelsPerSecond,
+                    channelHeight: resolution.channelHeight,
+                    maxWidth: resolution.maxWidth
+                )
+                guard !Task.isCancelled else { return }
+                self.channelImages = fullImages
             } catch is CancellationError {
                 // Cancelled — no action needed
             } catch {
@@ -79,6 +111,7 @@ final class AudioWaveformGenerator: ObservableObject {
         cancel()
         currentURL = nil
         currentStreamIndex = nil
+        currentResolution = nil
         channelImages = []
         channelLabels = []
         error = nil
@@ -93,7 +126,10 @@ final class AudioWaveformGenerator: ObservableObject {
         ffmpegPath: String,
         streamIndex: Int,
         channelCount: Int,
-        duration: Double
+        duration: Double,
+        pixelsPerSecond: Double,
+        channelHeight: Int,
+        maxWidth: Int
     ) async throws -> [NSImage] {
 
         let tempDir = FileManager.default.temporaryDirectory
@@ -101,9 +137,7 @@ final class AudioWaveformGenerator: ObservableObject {
         try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: tempDir) }
 
-        // Width scales with duration: ~4 pixels per second, clamped 800–8000
-        let width = max(800, min(8000, Int(duration * 4)))
-        let channelHeight = 80
+        let width = max(400, min(maxWidth, Int(duration * pixelsPerSecond)))
 
         var images: [NSImage] = []
 
@@ -111,7 +145,6 @@ final class AudioWaveformGenerator: ObservableObject {
             try Task.checkCancellation()
 
             let dest = tempDir.appendingPathComponent("ch\(ch).png")
-            // Extract single channel using pan filter, then render waveform
             let filterChain: String
             if channelCount == 1 {
                 filterChain = "[0:a:\(streamIndex)]showwavespic=s=\(width)x\(channelHeight):colors=4A9EE5,format=rgba[out]"
@@ -180,7 +213,6 @@ final class AudioWaveformGenerator: ObservableObject {
     // MARK: - Channel Labels
 
     private static func channelNames(count: Int, layout: String?) -> [String] {
-        // Try to parse from layout string (e.g. "5.1(side)" → FL, FR, FC, LFE, SL, SR)
         if let layout, !layout.isEmpty {
             let knownLayouts: [String: [String]] = [
                 "mono": ["Mono"],
@@ -206,7 +238,6 @@ final class AudioWaveformGenerator: ObservableObject {
             }
         }
 
-        // Fallback: generic numbering
         if count == 1 { return ["Mono"] }
         if count == 2 { return ["Left", "Right"] }
         return (0..<count).map { "Channel \($0 + 1)" }
