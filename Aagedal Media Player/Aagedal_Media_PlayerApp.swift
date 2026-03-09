@@ -234,6 +234,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             SettingsView.h265QualityKey: 65.0,
             SettingsView.scopeResolutionKey: ScopeResolution.standard.rawValue,
             SettingsView.scopeFrameRateKey: 15.0,
+            SettingsView.audioWaveformDisplayModeKey: AudioWaveformDisplayMode.window.rawValue,
+            SettingsView.audioWaveformBackgroundKey: AudioWaveformBackground.black.rawValue,
         ])
         UpdateChecker.shared.checkIfNeeded()
     }

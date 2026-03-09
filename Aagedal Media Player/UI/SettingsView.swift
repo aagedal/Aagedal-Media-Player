@@ -68,6 +68,30 @@ enum TrimExportFormat: String, CaseIterable {
     }
 }
 
+enum AudioWaveformDisplayMode: String, CaseIterable {
+    case window = "window"
+    case overlay = "overlay"
+
+    var label: String {
+        switch self {
+        case .window: "Separate Window"
+        case .overlay: "Overlay"
+        }
+    }
+}
+
+enum AudioWaveformBackground: String, CaseIterable {
+    case black = "black"
+    case transparent = "transparent"
+
+    var label: String {
+        switch self {
+        case .black: "Black"
+        case .transparent: "Transparent"
+        }
+    }
+}
+
 enum ScopeResolution: Int, CaseIterable {
     case low = 360
     case standard = 720
@@ -129,6 +153,10 @@ struct SettingsView: View {
     static let scopeResolutionKey = "scopeResolution"
     static let scopeFrameRateKey = "scopeFrameRate"
 
+    // Audio waveform keys
+    static let audioWaveformDisplayModeKey = "audioWaveformDisplayMode"
+    static let audioWaveformBackgroundKey = "audioWaveformBackground"
+
     var body: some View {
         TabView {
             GeneralSettingsView()
@@ -142,6 +170,9 @@ struct SettingsView: View {
 
             ScopeSettingsView()
                 .tabItem { Label("Scopes", systemImage: "waveform") }
+
+            AudioSettingsView()
+                .tabItem { Label("Audio", systemImage: "waveform.path") }
 
             KeyboardShortcutsView()
                 .tabItem { Label("Shortcuts", systemImage: "command") }
@@ -592,6 +623,46 @@ private struct ScopeSettingsView: View {
                 Text("How often scopes refresh. Lower values reduce CPU usage. Changes apply when scopes are reopened.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+            }
+        }
+        .formStyle(.grouped)
+    }
+}
+
+// MARK: - Audio Settings
+
+private struct AudioSettingsView: View {
+    @AppStorage(SettingsView.audioWaveformDisplayModeKey) private var displayMode: String = AudioWaveformDisplayMode.window.rawValue
+    @AppStorage(SettingsView.audioWaveformBackgroundKey) private var background: String = AudioWaveformBackground.black.rawValue
+
+    var body: some View {
+        Form {
+            Section("Audio Waveform") {
+                LabeledContent("Display Mode") {
+                    Picker("", selection: $displayMode) {
+                        ForEach(AudioWaveformDisplayMode.allCases, id: \.self) { mode in
+                            Text(mode.label).tag(mode.rawValue)
+                        }
+                    }
+                    .labelsHidden()
+                }
+                Text("Overlay renders the waveform over the video. Separate window opens a floating panel.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                if displayMode == AudioWaveformDisplayMode.overlay.rawValue {
+                    LabeledContent("Background") {
+                        Picker("", selection: $background) {
+                            ForEach(AudioWaveformBackground.allCases, id: \.self) { bg in
+                                Text(bg.label).tag(bg.rawValue)
+                            }
+                        }
+                        .labelsHidden()
+                    }
+                    Text("Transparent lets the video show through the waveform.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
         }
         .formStyle(.grouped)

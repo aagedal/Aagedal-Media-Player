@@ -9,6 +9,8 @@ import SwiftUI
 struct AudioWaveformView: View {
     @ObservedObject var generator: AudioWaveformGenerator
     @ObservedObject var controller: PlayerController
+    var isOverlay = false
+    var transparentBackground = false
     var onMediaChange: ((String) -> Void)?
 
     @State private var isDragging = false
@@ -17,111 +19,62 @@ struct AudioWaveformView: View {
         controller.mediaItem?.durationSeconds ?? 0
     }
 
+    private var backgroundColor: Color {
+        transparentBackground ? Color.black.opacity(0.5) : Color.black
+    }
+
     var body: some View {
         VStack(spacing: 0) {
-            // Track info toolbar
-            HStack {
-                if let trackTitle = currentTrackTitle {
-                    Text(trackTitle)
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(.secondary)
-                        .lineLimit(1)
+            // Track info toolbar (window mode only)
+            if !isOverlay {
+                HStack {
+                    if let trackTitle = currentTrackTitle {
+                        Text(trackTitle)
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(.secondary)
+                            .lineLimit(1)
+                    }
+                    Spacer()
+                    if generator.isGenerating {
+                        ProgressView()
+                            .controlSize(.small)
+                        Text("Generating\u{2026}")
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                    }
                 }
-                Spacer()
-                if generator.isGenerating {
-                    ProgressView()
-                        .controlSize(.small)
-                    Text("Generating\u{2026}")
-                        .font(.system(size: 11))
-                        .foregroundColor(.secondary)
-                }
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(Color(nsColor: .windowBackgroundColor))
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(Color(nsColor: .windowBackgroundColor))
 
-            Divider()
+                Divider()
+            }
 
             // Waveform channels
             if generator.channelImages.isEmpty && !generator.isGenerating {
-                if let error = generator.error {
-                    VStack(spacing: 8) {
-                        Image(systemName: "exclamationmark.triangle")
-                            .font(.title2)
-                            .foregroundColor(.secondary)
-                        Text(error)
-                            .font(.system(size: 11))
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color.black)
-                } else {
-                    Color.black
+                if !isOverlay {
+                    if let error = generator.error {
+                        VStack(spacing: 8) {
+                            Image(systemName: "exclamationmark.triangle")
+                                .font(.title2)
+                                .foregroundColor(.secondary)
+                            Text(error)
+                                .font(.system(size: 11))
+                                .foregroundColor(.secondary)
+                                .multilineTextAlignment(.center)
+                        }
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(Color.black)
+                    } else {
+                        Color.black
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
                 }
             } else {
-                GeometryReader { geo in
-                    ZStack {
-                        Color.black
-
-                        // Channel waveforms
-                        VStack(spacing: 0) {
-                            ForEach(Array(generator.channelImages.enumerated()), id: \.offset) { index, image in
-                                ZStack(alignment: .leading) {
-                                    Image(nsImage: image)
-                                        .resizable()
-                                        .interpolation(.medium)
-
-                                    // Channel label
-                                    if index < generator.channelLabels.count {
-                                        Text(generator.channelLabels[index])
-                                            .font(.system(size: 9, weight: .medium, design: .monospaced))
-                                            .foregroundColor(Color(white: 0.5))
-                                            .padding(.leading, 4)
-                                            .padding(.top, 2)
-                                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                                    }
-
-                                    // Subtle separator line at bottom
-                                    if index < generator.channelImages.count - 1 {
-                                        VStack {
-                                            Spacer()
-                                            Rectangle()
-                                                .fill(Color(white: 0.2))
-                                                .frame(height: 0.5)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        // Playhead
-                        let fraction = duration > 0 ? controller.currentPlaybackTime / duration : 0
-                        let xPos = geo.size.width * CGFloat(fraction)
-
-                        Path { path in
-                            path.move(to: CGPoint(x: xPos, y: 0))
-                            path.addLine(to: CGPoint(x: xPos, y: geo.size.height))
-                        }
-                        .stroke(Color.white, lineWidth: 1.5)
-                        .shadow(color: .black.opacity(0.6), radius: 1, x: 0, y: 0)
-                    }
-                    .contentShape(Rectangle())
-                    .gesture(
-                        DragGesture(minimumDistance: 0)
-                            .onChanged { value in
-                                isDragging = true
-                                seekToPosition(value.location.x, in: geo.size.width)
-                            }
-                            .onEnded { _ in
-                                isDragging = false
-                            }
-                    )
-                }
+                waveformContent
             }
         }
-        .background(Color.black)
+        .background(isOverlay ? Color.clear : Color.black)
         .onChange(of: controller.selectedAudioTrackOrderIndex) {
             triggerGeneration()
         }
@@ -135,6 +88,67 @@ struct AudioWaveformView: View {
         }
         .onChange(of: controller.audioTrackOptions) {
             triggerGeneration()
+        }
+    }
+
+    private var waveformContent: some View {
+        GeometryReader { geo in
+            ZStack {
+                backgroundColor
+
+                // Channel waveforms
+                VStack(spacing: 0) {
+                    ForEach(Array(generator.channelImages.enumerated()), id: \.offset) { index, image in
+                        ZStack(alignment: .leading) {
+                            Image(nsImage: image)
+                                .resizable()
+                                .interpolation(.medium)
+
+                            // Channel label
+                            if index < generator.channelLabels.count {
+                                Text(generator.channelLabels[index])
+                                    .font(.system(size: 9, weight: .medium, design: .monospaced))
+                                    .foregroundColor(Color(white: 0.5))
+                                    .padding(.leading, 4)
+                                    .padding(.top, 2)
+                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                            }
+
+                            // Subtle separator line at bottom
+                            if index < generator.channelImages.count - 1 {
+                                VStack {
+                                    Spacer()
+                                    Rectangle()
+                                        .fill(Color(white: 0.2))
+                                        .frame(height: 0.5)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Playhead
+                let fraction = duration > 0 ? controller.currentPlaybackTime / duration : 0
+                let xPos = geo.size.width * CGFloat(fraction)
+
+                Path { path in
+                    path.move(to: CGPoint(x: xPos, y: 0))
+                    path.addLine(to: CGPoint(x: xPos, y: geo.size.height))
+                }
+                .stroke(Color.white, lineWidth: 1.5)
+                .shadow(color: .black.opacity(0.6), radius: 1, x: 0, y: 0)
+            }
+            .contentShape(Rectangle())
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { value in
+                        isDragging = true
+                        seekToPosition(value.location.x, in: geo.size.width)
+                    }
+                    .onEnded { _ in
+                        isDragging = false
+                    }
+            )
         }
     }
 

@@ -30,6 +30,10 @@ struct ContentView: View {
     @State private var updateBannerDismissed = false
     @State private var scopeWindowController: ScopeWindowController?
     @State private var audioWaveformWindowController: AudioWaveformWindowController?
+    @State private var showAudioWaveformOverlay = false
+    @StateObject private var audioWaveformGenerator = AudioWaveformGenerator()
+    @AppStorage(SettingsView.audioWaveformDisplayModeKey) private var audioWaveformDisplayMode: String = AudioWaveformDisplayMode.window.rawValue
+    @AppStorage(SettingsView.audioWaveformBackgroundKey) private var audioWaveformBackground: String = AudioWaveformBackground.black.rawValue
 
     private let windowID = UUID()
     private let rightEdgeWidth: CGFloat = 60
@@ -57,6 +61,8 @@ struct ContentView: View {
                 showInspector: $showInspector,
                 scopeWindowController: $scopeWindowController,
                 audioWaveformWindowController: $audioWaveformWindowController,
+                showAudioWaveformOverlay: $showAudioWaveformOverlay,
+                audioWaveformGenerator: audioWaveformGenerator,
                 timecodeMode: $timecodeMode,
                 showOverlay: $showOverlay,
                 overlayHideTask: $overlayHideTask,
@@ -109,7 +115,21 @@ struct ContentView: View {
             // Layer 4: overlay controls
             overlayControls
 
-            // Layer 5: right-edge cursor hide zone
+            // Layer 5: audio waveform overlay (always visible when active, independent of controls)
+            if showAudioWaveformOverlay && isMediaLoaded && !audioWaveformGenerator.channelImages.isEmpty {
+                GeometryReader { geo in
+                    VStack {
+                        Spacer()
+                        audioWaveformOverlay(containerHeight: geo.size.height)
+                    }
+                    // Offset upward to sit above the controls area (~80pt)
+                    .padding(.bottom, showOverlay ? 80 : 0)
+                    .animation(.easeInOut(duration: 0.3), value: showOverlay)
+                }
+                .allowsHitTesting(true)
+            }
+
+            // Layer 6: right-edge cursor hide zone
             if isMediaLoaded && !showInspector {
                 cursorHideZone
             }
@@ -238,6 +258,8 @@ struct ContentView: View {
             scopeWindowController = nil
             audioWaveformWindowController?.close()
             audioWaveformWindowController = nil
+            showAudioWaveformOverlay = false
+            audioWaveformGenerator.cancel()
             controller.teardown()
             WindowManager.shared.unregister(id: windowID)
         }
@@ -272,6 +294,23 @@ struct ContentView: View {
         }
         .opacity(isMediaLoaded ? (showOverlay ? 1 : 0) : 1)
         .animation(.easeInOut(duration: 0.3), value: showOverlay)
+    }
+
+    // MARK: - Audio Waveform Overlay
+
+    private func audioWaveformOverlay(containerHeight: CGFloat) -> some View {
+        // Target ~1/3 of the container; if window is too small, fill available space
+        let targetHeight = max(60, containerHeight / 3)
+        let isTransparent = audioWaveformBackground == AudioWaveformBackground.transparent.rawValue
+
+        return AudioWaveformView(
+            generator: audioWaveformGenerator,
+            controller: controller,
+            isOverlay: true,
+            transparentBackground: isTransparent
+        )
+        .frame(height: targetHeight)
+        .clipped()
     }
 
     // MARK: - Export Overlay
@@ -714,6 +753,8 @@ private struct NotificationHandlers: ViewModifier {
     @Binding var showInspector: Bool
     @Binding var scopeWindowController: ScopeWindowController?
     @Binding var audioWaveformWindowController: AudioWaveformWindowController?
+    @Binding var showAudioWaveformOverlay: Bool
+    @ObservedObject var audioWaveformGenerator: AudioWaveformGenerator
     @Binding var timecodeMode: TimecodeDisplayMode
     @Binding var showOverlay: Bool
     @Binding var overlayHideTask: Task<Void, Never>?
@@ -728,6 +769,8 @@ private struct NotificationHandlers: ViewModifier {
                 showInspector: $showInspector,
                 scopeWindowController: $scopeWindowController,
                 audioWaveformWindowController: $audioWaveformWindowController,
+                showAudioWaveformOverlay: $showAudioWaveformOverlay,
+                audioWaveformGenerator: audioWaveformGenerator,
                 openFilePanel: openFilePanel, openFile: openFile
             ))
             .modifier(PlaybackHandlers(controller: controller, nsWindow: nsWindow))
@@ -750,8 +793,11 @@ private struct FileAndWindowHandlers: ViewModifier {
     @Binding var showInspector: Bool
     @Binding var scopeWindowController: ScopeWindowController?
     @Binding var audioWaveformWindowController: AudioWaveformWindowController?
+    @Binding var showAudioWaveformOverlay: Bool
+    @ObservedObject var audioWaveformGenerator: AudioWaveformGenerator
     let openFilePanel: () -> Void
     let openFile: (URL) -> Void
+    @AppStorage(SettingsView.audioWaveformDisplayModeKey) private var audioWaveformDisplayMode: String = AudioWaveformDisplayMode.window.rawValue
 
     func body(content: Content) -> some View {
         content
@@ -805,22 +851,67 @@ private struct FileAndWindowHandlers: ViewModifier {
             }
             .onReceive(NotificationCenter.default.publisher(for: .toggleAudioWaveform)) { _ in
                 guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
-                if let existing = audioWaveformWindowController {
-                    existing.toggle()
-                    if !existing.isVisible {
-                        audioWaveformWindowController = nil
+                let isOverlayMode = audioWaveformDisplayMode == AudioWaveformDisplayMode.overlay.rawValue
+
+                if isOverlayMode {
+                    // Close any existing window
+                    audioWaveformWindowController?.close()
+                    audioWaveformWindowController = nil
+
+                    // Toggle overlay
+                    showAudioWaveformOverlay.toggle()
+                    if showAudioWaveformOverlay {
+                        triggerOverlayWaveformGeneration()
+                    } else {
+                        audioWaveformGenerator.cancel()
                     }
                 } else {
-                    let filename = controller.mediaItem?.name ?? "Untitled"
-                    let wc = AudioWaveformWindowController(
-                        controller: controller,
-                        filename: filename,
-                        parentWindow: nsWindow
-                    )
-                    audioWaveformWindowController = wc
-                    wc.show()
+                    // Close overlay if open
+                    showAudioWaveformOverlay = false
+                    audioWaveformGenerator.cancel()
+
+                    // Toggle window
+                    if let existing = audioWaveformWindowController {
+                        existing.toggle()
+                        if !existing.isVisible {
+                            audioWaveformWindowController = nil
+                        }
+                    } else {
+                        let filename = controller.mediaItem?.name ?? "Untitled"
+                        let wc = AudioWaveformWindowController(
+                            controller: controller,
+                            filename: filename,
+                            parentWindow: nsWindow
+                        )
+                        audioWaveformWindowController = wc
+                        wc.show()
+                    }
                 }
             }
+    }
+
+    private func triggerOverlayWaveformGeneration() {
+        guard let item = controller.mediaItem,
+              let metadata = item.metadata else { return }
+
+        let trackIdx = controller.selectedAudioTrackOrderIndex
+        guard trackIdx < controller.audioTrackOptions.count else { return }
+
+        let option = controller.audioTrackOptions[trackIdx]
+        let streamIndex = option.streamIndex
+        let audioStreams = metadata.audioStreams
+        guard streamIndex < audioStreams.count else { return }
+
+        let stream = audioStreams[streamIndex]
+        let channels = stream.channels ?? 2
+
+        audioWaveformGenerator.generate(
+            url: item.url,
+            streamIndex: streamIndex,
+            channels: channels,
+            channelLayout: stream.channelLayout,
+            duration: item.durationSeconds
+        )
     }
 }
 
