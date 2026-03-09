@@ -86,6 +86,11 @@ struct ScopeView: View {
             }
             computeScopes(from: frame)
         }
+        .onChange(of: waveformMode) {
+            if let frame = frameCapture.currentFrame {
+                computeScopes(from: frame)
+            }
+        }
         .onAppear {
             let res = UserDefaults.standard.integer(forKey: "scopeResolution")
             let w = CGFloat(res > 0 ? res : 720)
