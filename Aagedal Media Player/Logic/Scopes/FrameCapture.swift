@@ -108,8 +108,13 @@ final class FrameCapture: ObservableObject {
         // Force AVFoundation to rebuild its decode pipeline (ProRes RAW
         // tone-maps highlights when an output is attached and the pipeline
         // doesn't revert on its own after removing the output).
+        // Deferred so the scope UI tears down fully before the item swap.
         if hadOutput {
-            onAVOutputRemoved?()
+            let callback = onAVOutputRemoved
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(100))
+                callback?()
+            }
         }
 
         logger.info("Scope frame capture stopped")
