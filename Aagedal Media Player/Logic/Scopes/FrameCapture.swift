@@ -22,6 +22,9 @@ final class FrameCapture: ObservableObject {
     private var videoOutput: AVPlayerItemVideoOutput?
     private weak var player: AVPlayer?
 
+    /// Called after the video output is removed so the host can rebuild the decode pipeline.
+    var onAVOutputRemoved: (() -> Void)?
+
     // MPV capture via screenshot-raw
     private weak var mpvPlayer: MPVPlayer?
     private var mpvCaptureInFlight = false
@@ -38,16 +41,8 @@ final class FrameCapture: ObservableObject {
 
     // MARK: - AVPlayer Setup
 
-    func attachAVPlayer(_ player: AVPlayer, playerItem: AVPlayerItem) {
+    func attachAVPlayer(_ player: AVPlayer) {
         self.player = player
-
-        let output = AVPlayerItemVideoOutput(pixelBufferAttributes: [
-            kCVPixelBufferPixelFormatTypeKey as String: Int(kCVPixelFormatType_32BGRA)
-        ])
-        playerItem.add(output)
-        videoOutput = output
-
-        logger.info("Attached AVPlayerItemVideoOutput for scope capture")
     }
 
     func detachAVPlayer() {
@@ -74,6 +69,16 @@ final class FrameCapture: ObservableObject {
         guard !isCapturing else { return }
         isCapturing = true
 
+        // Lazily attach AVPlayerItemVideoOutput only when capture is needed
+        if videoOutput == nil, let item = player?.currentItem {
+            let output = AVPlayerItemVideoOutput(pixelBufferAttributes: [
+                kCVPixelBufferPixelFormatTypeKey as String: Int(kCVPixelFormatType_32BGRA)
+            ])
+            item.add(output)
+            videoOutput = output
+            logger.info("Lazily attached AVPlayerItemVideoOutput for scope capture")
+        }
+
         let fps = UserDefaults.standard.double(forKey: "scopeFrameRate")
         let interval = 1.0 / (fps > 0 ? fps : 15.0)
         captureTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
@@ -92,6 +97,20 @@ final class FrameCapture: ObservableObject {
         captureTimer?.invalidate()
         captureTimer = nil
         currentFrame = nil
+
+        // Remove video output so it doesn't interfere with playback pipeline
+        let hadOutput = videoOutput != nil
+        if let output = videoOutput, let item = player?.currentItem {
+            item.remove(output)
+        }
+        videoOutput = nil
+
+        // Force AVFoundation to rebuild its decode pipeline (ProRes RAW
+        // tone-maps highlights when an output is attached and the pipeline
+        // doesn't revert on its own after removing the output).
+        if hadOutput {
+            onAVOutputRemoved?()
+        }
 
         logger.info("Scope frame capture stopped")
     }
