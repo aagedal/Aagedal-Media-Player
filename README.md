@@ -8,7 +8,7 @@ Based on the same fast engine as [Aagedal Media Converter](https://github.com/aa
 ## Features
 
 ### File support
-Playback (almost) every audio and video file in existence, through a combination of mpv and AVFoundation.
+Playback (almost) every audio and video file in existence, through a combination of the mpv and AVFoundation.
 As of 2026-02-21, it supports more codecs than IINA; ProRes RAW, Advanced Professional Video (APV), and VVC (H.266).
 
 Some of the supported formats here:
@@ -27,30 +27,43 @@ Some of the supported formats here:
 Launches faster than IINA and QuickTime. 1 second vs 2 seconds.
 Tested 2026-02-21 on an M1 Max MacBook Pro.
 
+
+### Professional Shortcuts
+Use proper JKL playback controls with up to 8x playback speed. Professionals can finally feel at home in a free and open source video player.
+You can also hold Option while dragging the playhead for 10x more precise dragging. Useful for finding an exact scene in longer videos.
+
+
 ### Timecode display and input
 Display timecode, with quick switching between source timecode, relative timecode and a frame counter view.
 You can also input both absolute timecode, and use + and - before a number to jump relative to the current playhead position.
 
+
 ### Lossless Trim
 One of the most missed features from QuickTime is now available in an open source app. Quickly set an in and out point using I and O keys, then use Command + E to export.
-Select a default export location in the settings, or save next to the original, or always be asked where to save it.
+Select a default export location in the settings, or save next to the original, or always be asked where to save it. Including a few settings for format. Default is lossless trim.
 
-### Professional Shortcuts
-Use proper JKL playback controls, like in all professional video editing software. Professionals can finally feel at home in a free and open source video player.
-You can also hold Option while dragging the playhead for 4x more precise dragging. Useful for finding an exact scene in longer videos.
 
 ### Screenshots
 Take quick screenshots at source resolution in JPEG XL, JPEG or PNG. Command + S.
 Select a default export location in the settings, or save next to the original, or always be asked where to save it.
 
+
 ### Video Scopes
 Real-time waveform, waveform RGBY parade and vectorscope overlays for monitoring exposure and color. Toggle with Command + Shift + W. Configurable resolution and frame rate in scope settings. By default the waveform is overlayed over the video, but can also be opened in a separate window.
+![SCR-20260309-ucop](https://github.com/user-attachments/assets/9fc2e4fb-8407-4b87-b71e-eb6d47ee383b)
+
 
 ### Audio waveform
 Preview multichannel audio tracks as waveforms, with one waveform per channel. Toggle with Command + Shift + A. Supports multi track files. Changing the audio output track will update the preview to the audio channels from the selected audio track. Navigate by clicking on a point in the audio waveform to jump to that location in the video. By default the audio waveform is overlayed over the video, but can also be opened in a separate window.
+![SCR-20260309-uczb](https://github.com/user-attachments/assets/55a05fce-6dd8-4fde-9c66-2b4ef312fd20)
+
 
 ### Metadata
-Quickly check basic metadata like resolution, frame rate, codec, color space and chroma sub sampling information. Command + I. Includes button to
+Quickly check basic metadata like resolution, frame rate, codec, color space and chroma sub sampling information. Command + I. Includes button to analyze LUFS levels (EBU 128).
+<img width="1227" height="691" alt="SCR-20260309-udpk" src="https://github.com/user-attachments/assets/52a86143-f944-4137-988a-e7a2c585bbaa" />
+
+
+
 
 ## Keyboard Shortcuts
 
