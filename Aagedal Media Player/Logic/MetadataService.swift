@@ -233,6 +233,27 @@ actor MetadataService {
             let bitDepth: Int? = stream.bitsPerRawSample.flatMap { Int($0) }
                 ?? stream.pixFmt.flatMap { bitDepthFromPixelFormat($0) }
             let chromaSubsampling = stream.pixFmt.flatMap { chromaSubsamplingFromPixelFormat($0) }
+
+            // Extract HDR luminance metadata from side_data_list
+            var maxCLL: Int?
+            var maxFALL: Int?
+            var masteringMaxLuminance: Double?
+            var masteringMinLuminance: Double?
+
+            if let sideDataList = stream.sideDataList {
+                for sideData in sideDataList {
+                    let type = sideData.sideDataType ?? ""
+                    if type.contains("Content light level") {
+                        maxCLL = sideData.maxContent
+                        maxFALL = sideData.maxAverage
+                    } else if type.contains("Mastering display") {
+                        // max_luminance is a ratio string like "10000000/10000" = 1000 nits
+                        masteringMaxLuminance = parseLuminanceRatio(sideData.maxLuminance)
+                        masteringMinLuminance = parseLuminanceRatio(sideData.minLuminance)
+                    }
+                }
+            }
+
             return MediaMetadata.VideoStream(
                 codec: stream.codecName,
                 codecLongName: stream.codecLongName,
@@ -255,7 +276,11 @@ actor MetadataService {
                 isInterlaced: stream.fieldOrder.map {
                     let value = $0.lowercased()
                     return value != "progressive" && value != "unknown"
-                }
+                },
+                maxCLL: maxCLL,
+                maxFALL: maxFALL,
+                masteringMaxLuminance: masteringMaxLuminance,
+                masteringMinLuminance: masteringMinLuminance
             )
         }
 
@@ -305,6 +330,18 @@ actor MetadataService {
             subtitleStreams: subtitles
         )
     }
+}
+
+// MARK: - Luminance Helpers
+
+/// Parse a luminance ratio string like "10000000/10000" → 1000.0 nits.
+private nonisolated func parseLuminanceRatio(_ ratioString: String?) -> Double? {
+    guard let str = ratioString else { return nil }
+    let parts = str.split(separator: "/")
+    if parts.count == 2, let num = Double(parts[0]), let den = Double(parts[1]), den > 0 {
+        return num / den
+    }
+    return Double(str)
 }
 
 // MARK: - Pixel Format Helpers
@@ -418,11 +455,22 @@ private struct FFprobeResponse: Decodable {
         let nbFrames: String?
         let disposition: Disposition?
         let tags: Tags?
+        let sideDataList: [SideData]?
 
         struct Disposition: Decodable {
             let defaultStream: Int?
             let attachedPic: Int?
             let forced: Int?
+        }
+
+        struct SideData: Decodable {
+            let sideDataType: String?
+            // Content light level metadata
+            let maxContent: Int?
+            let maxAverage: Int?
+            // Mastering display metadata
+            let maxLuminance: String?
+            let minLuminance: String?
         }
     }
 

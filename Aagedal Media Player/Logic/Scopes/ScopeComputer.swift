@@ -7,6 +7,26 @@
 import CoreGraphics
 import AppKit
 
+// MARK: - HDR Types
+
+enum TransferFunction: Sendable {
+    case sdr    // BT.1886/sRGB — show IRE
+    case pq     // SMPTE ST 2084 — absolute nits 0-10000
+    case hlg    // ARIB STD-B67 — scene-referred
+}
+
+struct HDRFrameData: Sendable, Equatable {
+    let pixels: [Float]             // RGB interleaved, encoded values [0,1]
+    let width: Int
+    let height: Int
+    let transferFunction: TransferFunction
+    let isLinearLight: Bool         // true for AVPlayer float16 path
+    let contentPeakNits: Float      // 10000 for PQ, 1000 for HLG, 100 for SDR
+
+    // Custom Equatable: use identity (never equal) to always trigger onChange
+    nonisolated static func == (lhs: HDRFrameData, rhs: HDRFrameData) -> Bool { false }
+}
+
 enum ScopeComputer: Sendable {
 
     // MARK: - Colorized Waveform (Luma)
@@ -283,6 +303,268 @@ enum ScopeComputer: Sendable {
             outputPixels[px + 1] = UInt8(min(avgG * intensity * 255, 255))
             outputPixels[px + 2] = UInt8(min(avgR * intensity * 255, 255))
             outputPixels[px + 3] = 255
+        }
+
+        return createCGImage(from: &outputPixels, width: outW, height: outH)
+    }
+
+    // MARK: - EOTF Conversion Functions
+
+    /// PQ (ST 2084) EOTF: encoded signal [0,1] → absolute luminance in nits [0, 10000]
+    nonisolated static func pqToNits(_ e: Float) -> Float {
+        guard e > 0 else { return 0 }
+        let m1: Float = 0.1593017578125
+        let m2: Float = 78.84375
+        let c1: Float = 0.8359375
+        let c2: Float = 18.8515625
+        let c3: Float = 18.6875
+
+        let eM2 = powf(e, 1.0 / m2)
+        let num = max(eM2 - c1, 0.0)
+        let den = c2 - c3 * eM2
+        guard den > 0 else { return 0 }
+        return 10000.0 * powf(num / den, 1.0 / m1)
+    }
+
+    /// HLG inverse OETF + OOTF: encoded [0,1] → nits
+    nonisolated static func hlgToNits(_ e: Float, peakNits: Float = 1000) -> Float {
+        guard e > 0 else { return 0 }
+        // Inverse OETF: encoded → scene linear
+        let a: Float = 0.17883277
+        let b: Float = 1.0 - 4.0 * a
+        let c: Float = 0.5 - a * logf(4.0 * a)
+        let scene: Float
+        if e <= 0.5 {
+            scene = (e * e) / 3.0
+        } else {
+            scene = (expf((e - c) / a) + b) / 12.0
+        }
+        // Simplified OOTF: scene linear → display nits
+        // System gamma ~1.2 for 1000-nit display
+        let gamma: Float = 1.2
+        return peakNits * powf(scene, gamma)
+    }
+
+    /// AVPlayer linear-light → nits (1.0 = SDR reference white = 203 nits per BT.2408)
+    nonisolated static func linearToNits(_ v: Float) -> Float {
+        max(0, v) * 203.0
+    }
+
+    /// Floor of the decade-based log scale in nits. Values below this are clamped.
+    /// Gives equal visual space per decade: 0.1–1, 1–10, 10–100, 100–1K, 1K–10K.
+    nonisolated static let hdrMinNits: Float = 0.1
+
+    /// Convert a nit value to a Y-axis bin using a decade-based log scale.
+    /// Each decade (10× range) occupies equal vertical space, matching DaVinci Resolve style.
+    nonisolated private static func nitsToLevel(_ nits: Float, outH: Int, peakNits: Float) -> Int {
+        let logMin = log10f(hdrMinNits)
+        let logMax = log10f(peakNits)
+        let logRange = logMax - logMin
+        guard logRange > 0 else { return 0 }
+        let clamped = min(max(nits, hdrMinNits), peakNits)
+        let normalized = (log10f(clamped) - logMin) / logRange  // 0…1
+        return min(Int(normalized * Float(outH - 1)), outH - 1)
+    }
+
+    /// Convert pixel values to nits based on transfer function and linear-light flag.
+    nonisolated private static func toNits(r: Float, g: Float, b: Float, tf: TransferFunction, isLinear: Bool, peakNits: Float) -> (rNits: Float, gNits: Float, bNits: Float) {
+        if isLinear {
+            return (linearToNits(r), linearToNits(g), linearToNits(b))
+        }
+        switch tf {
+        case .pq:
+            return (pqToNits(r), pqToNits(g), pqToNits(b))
+        case .hlg:
+            return (hlgToNits(r, peakNits: peakNits), hlgToNits(g, peakNits: peakNits), hlgToNits(b, peakNits: peakNits))
+        case .sdr:
+            return (r * 100.0, g * 100.0, b * 100.0)
+        }
+    }
+
+    // MARK: - HDR Colorized Waveform (Luma)
+
+    nonisolated static func computeHDRWaveform(from frame: HDRFrameData, outputSize: CGSize) -> CGImage? {
+        let width = frame.width
+        let height = frame.height
+        guard width > 0, height > 0 else { return nil }
+
+        let outW = Int(outputSize.width)
+        let outH = Int(outputSize.height)
+        guard outW > 0, outH > 0 else { return nil }
+
+        let binCount = outW * outH
+        var counts = [UInt32](repeating: 0, count: binCount)
+        var sumR = [Float](repeating: 0, count: binCount)
+        var sumG = [Float](repeating: 0, count: binCount)
+        var sumB = [Float](repeating: 0, count: binCount)
+
+        let tf = frame.transferFunction
+        let isLinear = frame.isLinearLight
+        let peakNits = frame.contentPeakNits
+
+        for y in 0..<height {
+            for x in 0..<width {
+                let offset = (y * width + x) * 3
+                let r = frame.pixels[offset]
+                let g = frame.pixels[offset + 1]
+                let b = frame.pixels[offset + 2]
+
+                let (rNits, gNits, bNits) = toNits(r: r, g: g, b: b, tf: tf, isLinear: isLinear, peakNits: peakNits)
+                // BT.2020 luma
+                let lumaNits = 0.2627 * rNits + 0.6780 * gNits + 0.0593 * bNits
+
+                let col = min(x * outW / width, outW - 1)
+                let level = nitsToLevel(lumaNits, outH: outH, peakNits: peakNits)
+
+                let idx = col * outH + level
+                counts[idx] &+= 1
+                // Store encoded RGB for colorization (normalized 0-1)
+                let maxVal = max(r, g, b, 0.001)
+                sumR[idx] += r / maxVal
+                sumG[idx] += g / maxVal
+                sumB[idx] += b / maxVal
+            }
+        }
+
+        var maxCount: UInt32 = 1
+        for i in 0..<binCount {
+            if counts[i] > maxCount { maxCount = counts[i] }
+        }
+
+        var outputPixels = [UInt8](repeating: 0, count: outW * outH * 4)
+        let logMax = log2f(1 + Float(maxCount))
+        let gain: Float = 2.5
+
+        for col in 0..<outW {
+            for level in 0..<outH {
+                let idx = col * outH + level
+                let count = counts[idx]
+                guard count > 0 else { continue }
+
+                let intensity = min(log2f(1 + Float(count)) / logMax * gain, 1.0)
+                let invCount = 1.0 / Float(count)
+                let avgR = sumR[idx] * invCount
+                let avgG = sumG[idx] * invCount
+                let avgB = sumB[idx] * invCount
+
+                let gray = (avgR + avgG + avgB) / 3.0
+                let maxDev = max(abs(avgR - gray), abs(avgG - gray), abs(avgB - gray))
+                let saturation = min(maxDev / max(gray, 0.01), 1.0)
+
+                let satBoost: Float = 2.5
+                var cR = max(gray + (avgR - gray) * satBoost, 0)
+                var cG = max(gray + (avgG - gray) * satBoost, 0)
+                var cB = max(gray + (avgB - gray) * satBoost, 0)
+                let maxC = max(cR, cG, cB, 0.01)
+                cR /= maxC; cG /= maxC; cB /= maxC
+
+                let colorMix = min(saturation * 3.0, 1.0)
+                let finalR = cR * colorMix + (1.0 - colorMix)
+                let finalG = cG * colorMix + (1.0 - colorMix)
+                let finalB = cB * colorMix + (1.0 - colorMix)
+
+                let alpha = intensity
+                let row = outH - 1 - level
+                let px = (row * outW + col) * 4
+                outputPixels[px]     = UInt8(min(finalB * alpha * 255, 255))
+                outputPixels[px + 1] = UInt8(min(finalG * alpha * 255, 255))
+                outputPixels[px + 2] = UInt8(min(finalR * alpha * 255, 255))
+                outputPixels[px + 3] = UInt8(min(alpha * 255, 255))
+            }
+        }
+
+        return createCGImage(from: &outputPixels, width: outW, height: outH)
+    }
+
+    // MARK: - HDR RGBY Parade
+
+    nonisolated static func computeHDRParade(from frame: HDRFrameData, outputSize: CGSize) -> CGImage? {
+        let width = frame.width
+        let height = frame.height
+        guard width > 0, height > 0 else { return nil }
+
+        let outW = Int(outputSize.width)
+        let outH = Int(outputSize.height)
+        guard outW > 0, outH > 0 else { return nil }
+
+        let channelCount = 4
+        let gap = 2
+        let totalGaps = gap * (channelCount - 1)
+        let channelW = (outW - totalGaps) / channelCount
+        guard channelW > 1 else { return nil }
+
+        let binCount = channelW * outH
+        var rBins = [UInt32](repeating: 0, count: binCount)
+        var gBins = [UInt32](repeating: 0, count: binCount)
+        var bBins = [UInt32](repeating: 0, count: binCount)
+        var yBins = [UInt32](repeating: 0, count: binCount)
+
+        let tf = frame.transferFunction
+        let isLinear = frame.isLinearLight
+        let peakNits = frame.contentPeakNits
+
+        for y in 0..<height {
+            for x in 0..<width {
+                let offset = (y * width + x) * 3
+                let r = frame.pixels[offset]
+                let g = frame.pixels[offset + 1]
+                let b = frame.pixels[offset + 2]
+
+                let (rNits, gNits, bNits) = toNits(r: r, g: g, b: b, tf: tf, isLinear: isLinear, peakNits: peakNits)
+                let lumaNits = 0.2627 * rNits + 0.6780 * gNits + 0.0593 * bNits
+
+                let col = min(x * channelW / width, channelW - 1)
+
+                let rLevel = nitsToLevel(rNits, outH: outH, peakNits: peakNits)
+                let gLevel = nitsToLevel(gNits, outH: outH, peakNits: peakNits)
+                let bLevel = nitsToLevel(bNits, outH: outH, peakNits: peakNits)
+                let yLevel = nitsToLevel(lumaNits, outH: outH, peakNits: peakNits)
+
+                rBins[col * outH + rLevel] &+= 1
+                gBins[col * outH + gLevel] &+= 1
+                bBins[col * outH + bLevel] &+= 1
+                yBins[col * outH + yLevel] &+= 1
+            }
+        }
+
+        var maxCount: UInt32 = 1
+        for i in 0..<binCount {
+            maxCount = max(maxCount, rBins[i], gBins[i], bBins[i], yBins[i])
+        }
+
+        var outputPixels = [UInt8](repeating: 0, count: outW * outH * 4)
+        let normFactor: Float = 1.0 / (Float(maxCount) * 0.25)
+
+        let channelColors: [(r: Float, g: Float, b: Float)] = [
+            (1.0, 0.2, 0.2),
+            (0.2, 1.0, 0.2),
+            (0.3, 0.4, 1.0),
+            (0.85, 0.85, 0.85),
+        ]
+        let allBins = [rBins, gBins, bBins, yBins]
+
+        for ch in 0..<channelCount {
+            let xOffset = ch * (channelW + gap)
+            let bins = allBins[ch]
+            let color = channelColors[ch]
+
+            for col in 0..<channelW {
+                for level in 0..<outH {
+                    let count = bins[col * outH + level]
+                    guard count > 0 else { continue }
+
+                    let intensity = min(Float(count) * normFactor, 1.0)
+                    let row = outH - 1 - level
+                    let outX = xOffset + col
+                    guard outX < outW else { continue }
+
+                    let px = (row * outW + outX) * 4
+                    outputPixels[px]     = UInt8(min(color.b * intensity * 255, 255))
+                    outputPixels[px + 1] = UInt8(min(color.g * intensity * 255, 255))
+                    outputPixels[px + 2] = UInt8(min(color.r * intensity * 255, 255))
+                    outputPixels[px + 3] = 255
+                }
+            }
         }
 
         return createCGImage(from: &outputPixels, width: outW, height: outH)

@@ -81,6 +81,19 @@ struct MetadataInspectorView: View {
                         if let colorRange = video.colorRange {
                             metadataRow("Range", value: colorRange)
                         }
+                        if let maxCLL = video.maxCLL {
+                            metadataRow("MaxCLL", value: "\(maxCLL) nits")
+                        }
+                        if let maxFALL = video.maxFALL {
+                            metadataRow("MaxFALL", value: "\(maxFALL) nits")
+                        }
+                        if let masteringMax = video.masteringMaxLuminance {
+                            let formatted = masteringMax == masteringMax.rounded() ? String(format: "%.0f", masteringMax) : String(format: "%.1f", masteringMax)
+                            metadataRow("Mastering Max Luminance", value: "\(formatted) nits")
+                        }
+                        if let masteringMin = video.masteringMinLuminance {
+                            metadataRow("Mastering Min Luminance", value: String(format: "%.4f nits", masteringMin))
+                        }
                     }
                 }
 

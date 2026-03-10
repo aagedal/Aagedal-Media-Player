@@ -50,6 +50,8 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
     @Published var videoAspectRatio: CGFloat?
     @Published var videoSourceSize: NSSize?
     @Published var error: String?
+    @Published var videoGamma: String?
+    @Published var videoSigPeak: Double = 1.0
 
     private var isInitialized = false
     private var startPaused = false
@@ -159,6 +161,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         checkError(mpv_set_option_string(mpv, "target-colorspace-hint", "yes"), context: "target-colorspace-hint")
         checkError(mpv_set_option_string(mpv, "keep-open", "yes"), context: "keep-open")
         checkError(mpv_set_option_string(mpv, "deinterlace", "auto"), context: "deinterlace")
+        checkError(mpv_set_option_string(mpv, "screenshot-high-bit-depth", "yes"), context: "screenshot-high-bit-depth")
 
         checkError(mpv_set_option_string(mpv, "input-default-bindings", "no"), context: "input-default-bindings")
         checkError(mpv_set_option_string(mpv, "input-vo-keyboard", "no"), context: "input-vo-keyboard")
@@ -179,6 +182,8 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         mpv_observe_property(mpv, 0, MPVProperty.eofReached, MPV_FORMAT_FLAG)
         mpv_observe_property(mpv, 0, MPVProperty.speed, MPV_FORMAT_DOUBLE)
         mpv_observe_property(mpv, 0, MPVProperty.videoParamsAspect, MPV_FORMAT_DOUBLE)
+        mpv_observe_property(mpv, 0, MPVProperty.videoParamsGamma, MPV_FORMAT_STRING)
+        mpv_observe_property(mpv, 0, MPVProperty.videoParamsSigPeak, MPV_FORMAT_DOUBLE)
 
         wakeupContext = Unmanaged.passRetained(self).toOpaque()
         mpv_set_wakeup_callback(mpv, mpvWakeupCallback, wakeupContext)
@@ -495,6 +500,16 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
                                     }
                                 }
                             }
+                        case MPVProperty.videoParamsGamma:
+                            if property.format == MPV_FORMAT_STRING,
+                               let strPtr = UnsafePointer<UnsafeMutablePointer<CChar>>(OpaquePointer(property.data))?.pointee {
+                                let gamma = String(cString: strPtr)
+                                DispatchQueue.main.async { self.videoGamma = gamma }
+                            }
+                        case MPVProperty.videoParamsSigPeak:
+                            if let value = UnsafePointer<Double>(OpaquePointer(property.data))?.pointee, value > 0 {
+                                DispatchQueue.main.async { self.videoSigPeak = value }
+                            }
                         default:
                             break
                         }
@@ -561,6 +576,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         let width: Int
         let height: Int
         let stride: Int
+        let format: String  // e.g. "bgr0", "rgba64"
     }
 
     /// Capture the current decoded video frame as raw BGRA pixels.
@@ -608,6 +624,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         let num = Int(resultList.pointee.num)
         var width = 0, height = 0, stride = 0
         var pixelData: Data?
+        var format = "bgr0"
 
         for i in 0..<num {
             guard let keyPtr = resultList.pointee.keys?[i] else { continue }
@@ -618,6 +635,10 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
             case "w": width = Int(val.u.int64)
             case "h": height = Int(val.u.int64)
             case "stride": stride = Int(val.u.int64)
+            case "format":
+                if val.format == MPV_FORMAT_STRING, let s = val.u.string {
+                    format = String(cString: s)
+                }
             case "data":
                 if let ba = val.u.ba {
                     pixelData = Data(bytes: ba.pointee.data, count: ba.pointee.size)
@@ -627,7 +648,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         }
 
         guard let data = pixelData, width > 0, height > 0, stride > 0 else { return nil }
-        return RawScreenshot(data: data, width: width, height: height, stride: stride)
+        return RawScreenshot(data: data, width: width, height: height, stride: stride, format: format)
     }
 
     // MARK: - MPV Commands & Properties

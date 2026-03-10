@@ -105,13 +105,19 @@ struct AudioWaveformView: View {
         .onChange(of: controller.selectedAudioTrackOrderIndex) {
             triggerGeneration()
         }
-        .onChange(of: controller.mediaItem) {
-            generator.reset()
-            if let name = controller.mediaItem?.name {
-                onMediaChange?(name)
+        .onChange(of: controller.mediaItem) { oldValue, newValue in
+            if oldValue?.url != newValue?.url {
+                generator.reset()
+                if let name = newValue?.name {
+                    onMediaChange?(name)
+                }
+                // Waveform generation deferred to audioTrackOptions change,
+                // since metadata/tracks aren't available yet when mediaItem changes.
+            } else if oldValue?.metadata == nil && newValue?.metadata != nil {
+                // Metadata just arrived for the same file — trigger generation
+                // in case audioTrackOptions already fired before metadata was available.
+                triggerGeneration()
             }
-            // Waveform generation deferred to audioTrackOptions change,
-            // since metadata/tracks aren't available yet when mediaItem changes.
         }
         .onChange(of: controller.audioTrackOptions) {
             triggerGeneration()
@@ -170,6 +176,8 @@ struct AudioWaveformView: View {
                                 }
                             }
                         }
+                        .opacity(activeStreamIndex.map { $0 == index ? 1.0 : 0.4 } ?? 1.0)
+                        .animation(.easeInOut(duration: 0.2), value: activeStreamIndex)
                     }
                 }
 
@@ -196,6 +204,13 @@ struct AudioWaveformView: View {
                     }
             )
         }
+    }
+
+    private var activeStreamIndex: Int? {
+        guard controller.showAllMonoWaveforms, controller.isMultiMonoFile else { return nil }
+        let idx = controller.selectedAudioTrackOrderIndex
+        guard idx < controller.audioTrackOptions.count else { return nil }
+        return controller.audioTrackOptions[idx].streamIndex
     }
 
     private var currentTrackTitle: String? {

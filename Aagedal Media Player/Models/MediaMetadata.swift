@@ -122,6 +122,11 @@ struct MediaMetadata: Equatable, Sendable, Codable {
         let chromaLocation: String?
         let fieldOrder: String?
         let isInterlaced: Bool?
+        // HDR luminance metadata
+        let maxCLL: Int?            // MaxCLL (Maximum Content Light Level) in nits
+        let maxFALL: Int?           // MaxFALL (Maximum Frame Average Light Level) in nits
+        let masteringMaxLuminance: Double?  // Mastering display max luminance in nits
+        let masteringMinLuminance: Double?  // Mastering display min luminance in nits
     }
 
     struct AudioStream: Equatable, Sendable, Codable {

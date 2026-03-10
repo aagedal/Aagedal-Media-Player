@@ -112,6 +112,8 @@ final class PlayerController: ObservableObject {
     var mpvLoopObserverTimer: Timer?
     private var mpvAspectRatioCancellable: AnyCancellable?
     private var mpvSourceSizeCancellable: AnyCancellable?
+    private var mpvGammaCancellable: AnyCancellable?
+    private var mpvSigPeakCancellable: AnyCancellable?
     private var mpvTimePosTask: Task<Void, Never>?
     private var mpvFileLoadedTask: Task<Void, Never>?
     private var mpvDurationTask: Task<Void, Never>?
@@ -176,11 +178,71 @@ final class PlayerController: ObservableObject {
             videoSourceSize = NSSize(width: displayWidth, height: Double(codedH))
         }
 
+        // Detect HDR transfer function from metadata
+        updateTransferFunction()
+
         // If surround audio was detected and we're on AVPlayer, switch to MPV
         if hasSurroundAudio && !hasProResVideoCodec && !useMPV {
             logger.info("Surround audio detected after metadata load, switching to MPV for \(item.url.lastPathComponent)")
             preparePlayback(startTime: currentTime, resetAudioSelection: true)
         }
+    }
+
+    /// Detect and set the HDR transfer function from video metadata.
+    private func updateTransferFunction() {
+        let videoStream = mediaItem?.metadata?.primaryVideoStream
+        guard let colorTransfer = videoStream?.colorTransfer?.lowercased() else {
+            frameCapture.transferFunction = .sdr
+            frameCapture.contentPeakNits = 100
+            return
+        }
+
+        if colorTransfer.contains("smpte2084") || colorTransfer == "pq" || colorTransfer.contains("st2084") {
+            frameCapture.transferFunction = .pq
+            // Use MaxCLL or mastering display max luminance for the peak, fall back to 1000
+            let peak = peakNitsFromMetadata(videoStream, fallback: 1000)
+            frameCapture.contentPeakNits = peak
+            logger.info("HDR detected: PQ transfer function, peak \(peak) nits")
+        } else if colorTransfer.contains("arib-std-b67") || colorTransfer == "hlg" {
+            frameCapture.transferFunction = .hlg
+            let peak = peakNitsFromMetadata(videoStream, fallback: 1000)
+            frameCapture.contentPeakNits = peak
+            logger.info("HDR detected: HLG transfer function, peak \(peak) nits")
+        } else {
+            frameCapture.transferFunction = .sdr
+            frameCapture.contentPeakNits = 100
+        }
+
+        // If scopes are active, restart capture with the right pixel format.
+        // Suppress pipeline rebuild to avoid a teardown cycle that resets transferFunction.
+        if frameCapture.isCapturing {
+            frameCapture.stopCapture(rebuildPipeline: false)
+            frameCapture.startCapture()
+        }
+    }
+
+    /// Derive peak nits from MaxCLL or mastering display max luminance metadata.
+    private func peakNitsFromMetadata(_ stream: MediaMetadata.VideoStream?, fallback: Float) -> Float {
+        // Prefer MaxCLL (content light level) — it's the actual content peak
+        if let maxCLL = stream?.maxCLL, maxCLL > 0 {
+            return snappedPeakNits(Float(maxCLL))
+        }
+        // Fall back to mastering display max luminance
+        if let masteringMax = stream?.masteringMaxLuminance, masteringMax > 0 {
+            return snappedPeakNits(Float(masteringMax))
+        }
+        return fallback
+    }
+
+    /// Snap a raw peak nits value up to the next standard graticule marker level.
+    /// Ensures the waveform data scale and graticule markers align to a clean boundary.
+    private static let graticuleMarkerNits: [Float] = [100, 203, 400, 600, 1000, 2000, 4000, 10000]
+
+    private func snappedPeakNits(_ raw: Float) -> Float {
+        for marker in Self.graticuleMarkerNits {
+            if marker >= raw { return marker }
+        }
+        return raw  // Above 10K: use raw value
     }
 
     func updateLoopPlayback(_ loop: Bool) {
@@ -356,6 +418,46 @@ final class PlayerController: ObservableObject {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] size in
                 self?.videoSourceSize = size
+            }
+
+        // Forward MPV gamma for HDR detection
+        mpvGammaCancellable = mpv.$videoGamma
+            .compactMap { $0 }
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] gamma in
+                guard let self else { return }
+                let wasCapturing = self.frameCapture.isCapturing
+                let videoStream = self.mediaItem?.metadata?.primaryVideoStream
+                switch gamma {
+                case "pq":
+                    self.frameCapture.transferFunction = .pq
+                    self.frameCapture.contentPeakNits = self.peakNitsFromMetadata(videoStream, fallback: 1000)
+                case "hlg":
+                    self.frameCapture.transferFunction = .hlg
+                    self.frameCapture.contentPeakNits = self.peakNitsFromMetadata(videoStream, fallback: 1000)
+                default:
+                    self.frameCapture.transferFunction = .sdr
+                    self.frameCapture.contentPeakNits = 100
+                }
+                if wasCapturing {
+                    self.frameCapture.stopCapture()
+                    self.frameCapture.startCapture()
+                }
+            }
+
+        // Refine peak nits from MPV signal peak (only if metadata didn't provide a value)
+        mpvSigPeakCancellable = mpv.$videoSigPeak
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] sigPeak in
+                guard let self, sigPeak > 0 else { return }
+                let videoStream = self.mediaItem?.metadata?.primaryVideoStream
+                // Only use sig-peak if we don't have MaxCLL or mastering luminance from metadata
+                guard videoStream?.maxCLL == nil, videoStream?.masteringMaxLuminance == nil else { return }
+                if self.frameCapture.transferFunction == .pq {
+                    self.frameCapture.contentPeakNits = self.snappedPeakNits(Float(sigPeak * 10000))
+                } else if self.frameCapture.transferFunction == .hlg {
+                    self.frameCapture.contentPeakNits = self.snappedPeakNits(Float(sigPeak * 1000))
+                }
             }
 
         // Refresh audio tracks after MPV parses the media
@@ -1333,6 +1435,8 @@ final class PlayerController: ObservableObject {
         frameCapture.stopCapture()
         frameCapture.detachAVPlayer()
         frameCapture.detachMPV()
+        frameCapture.transferFunction = .sdr
+        frameCapture.contentPeakNits = 100
 
         // Fully detach old AVPlayer — mute, stop, and replace item to ensure
         // no audio/video output even if the object lingers from SwiftUI caching.
@@ -1371,6 +1475,8 @@ final class PlayerController: ObservableObject {
         videoSourceSize = nil
         mpvAspectRatioCancellable = nil
         mpvSourceSizeCancellable = nil
+        mpvGammaCancellable = nil
+        mpvSigPeakCancellable = nil
         removeMPVLoopObserver()
         if resetAudioSelection {
             selectedAudioTrackOrderIndex = 0
