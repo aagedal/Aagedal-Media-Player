@@ -13,7 +13,11 @@ struct AudioWaveformView: View {
     var transparentBackground = false
     var onMediaChange: ((String) -> Void)?
 
+    @AppStorage(SettingsView.audioWaveformBoostKey) private var waveformBoost: Double = 0
+    @AppStorage(SettingsView.audioWaveformColorKey) private var waveformColor: String = AudioWaveformColor.pink.rawValue
+
     @State private var isDragging = false
+    @State private var rerenderTask: Task<Void, Never>?
 
     private var duration: Double {
         controller.mediaItem?.durationSeconds ?? 0
@@ -35,6 +39,18 @@ struct AudioWaveformView: View {
                             .lineLimit(1)
                     }
                     Spacer()
+                    HStack(spacing: 4) {
+                        Image(systemName: "waveform.badge.plus")
+                            .font(.system(size: 10))
+                            .foregroundColor(.secondary)
+                        Slider(value: $waveformBoost, in: 0...100)
+                            .frame(width: 80)
+                            .controlSize(.mini)
+                        Text("\(Int(waveformBoost))")
+                            .font(.system(size: 10, design: .monospaced))
+                            .foregroundColor(.secondary)
+                            .frame(width: 24, alignment: .trailing)
+                    }
                     if generator.isGenerating {
                         ProgressView()
                             .controlSize(.small)
@@ -103,6 +119,21 @@ struct AudioWaveformView: View {
         .onChange(of: controller.showAllMonoWaveforms) {
             generator.reset()
             triggerGeneration()
+        }
+        .onChange(of: waveformBoost) {
+            rerenderTask?.cancel()
+            rerenderTask = Task {
+                try? await Task.sleep(for: .milliseconds(30))
+                guard !Task.isCancelled else { return }
+                generator.rerender()
+            }
+        }
+        .onChange(of: waveformColor) {
+            if generator.hasCachedAmplitudes {
+                generator.rerender()
+            } else {
+                triggerGeneration()
+            }
         }
     }
 

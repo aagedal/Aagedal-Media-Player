@@ -25,6 +25,17 @@ final class AudioWaveformGenerator: ObservableObject {
     private var currentStreamIndex: Int?
     private var currentAllStreams: Bool = false
     private var currentColor: AudioWaveformColor?
+    private var currentBoost: Double = 0
+
+    /// Cached per-channel amplitude data from PCM decode, enabling fast re-renders.
+    private struct ChannelAmplitudeData {
+        let mins: [Float]
+        let maxs: [Float]
+    }
+    private var cachedAmplitudes: [ChannelAmplitudeData] = []
+    private var cachedWidth: Int = 0
+
+    var hasCachedAmplitudes: Bool { !cachedAmplitudes.isEmpty }
 
     // Waveform rendering parameters
     private static let pixelsPerSecond: Double = 12
@@ -36,11 +47,16 @@ final class AudioWaveformGenerator: ObservableObject {
     func generate(url: URL, streamIndex: Int, channels: Int, channelLayout: String?, duration: Double) {
         let rawColor = UserDefaults.standard.string(forKey: SettingsView.audioWaveformColorKey) ?? AudioWaveformColor.pink.rawValue
         let color = AudioWaveformColor(rawValue: rawColor) ?? .pink
+        let boost = UserDefaults.standard.double(forKey: SettingsView.audioWaveformBoostKey)
 
-        // Skip if already generated for this exact stream and color
+        // Same stream — if only color/boost changed, re-render from cache
         if url == currentURL, streamIndex == currentStreamIndex,
-           !currentAllStreams, color == currentColor, !channelImages.isEmpty {
-            return
+           !currentAllStreams, !channelImages.isEmpty {
+            if color == currentColor, boost == currentBoost { return }
+            if hasCachedAmplitudes {
+                rerender()
+                return
+            }
         }
 
         cancel()
@@ -48,8 +64,10 @@ final class AudioWaveformGenerator: ObservableObject {
         currentStreamIndex = streamIndex
         currentAllStreams = false
         currentColor = color
+        currentBoost = boost
         channelImages = []
         channelLabels = []
+        cachedAmplitudes = []
         error = nil
         isGenerating = true
 
@@ -62,18 +80,20 @@ final class AudioWaveformGenerator: ObservableObject {
         }
 
         let colorHex = color.ffmpegHex
+        let gamma = Self.boostToGamma(boost)
         let logger = self.logger
 
         currentTask = Task {
             do {
                 let t0 = CFAbsoluteTimeGetCurrent()
-                let images = try await Self.generateNativeWaveforms(
+                let (images, amplitudes, width) = try await Self.generateNativeWaveforms(
                     url: url,
                     ffmpegPath: ffmpegPath,
                     streamIndex: streamIndex,
                     channelCount: channels,
                     duration: duration,
                     colorHex: colorHex,
+                    gamma: gamma,
                     pixelsPerSecond: Self.pixelsPerSecond,
                     channelHeight: Self.channelHeight,
                     maxWidth: Self.maxWidth
@@ -81,6 +101,8 @@ final class AudioWaveformGenerator: ObservableObject {
                 let t1 = CFAbsoluteTimeGetCurrent()
                 logger.info("Waveform generation: \(String(format: "%.2f", t1 - t0))s (\(channels) channels)")
                 guard !Task.isCancelled else { return }
+                self.cachedAmplitudes = amplitudes
+                self.cachedWidth = width
                 self.channelImages = images
                 self.channelLabels = labels
             } catch is CancellationError {
@@ -98,9 +120,15 @@ final class AudioWaveformGenerator: ObservableObject {
     func generateAllMonoStreams(url: URL, streams: [(index: Int, label: String)], duration: Double) {
         let rawColor = UserDefaults.standard.string(forKey: SettingsView.audioWaveformColorKey) ?? AudioWaveformColor.pink.rawValue
         let color = AudioWaveformColor(rawValue: rawColor) ?? .pink
+        let boost = UserDefaults.standard.double(forKey: SettingsView.audioWaveformBoostKey)
 
-        if url == currentURL, currentAllStreams, color == currentColor, !channelImages.isEmpty {
-            return
+        // Same streams — if only color/boost changed, re-render from cache
+        if url == currentURL, currentAllStreams, !channelImages.isEmpty {
+            if color == currentColor, boost == currentBoost { return }
+            if hasCachedAmplitudes {
+                rerender()
+                return
+            }
         }
 
         cancel()
@@ -108,8 +136,10 @@ final class AudioWaveformGenerator: ObservableObject {
         currentStreamIndex = nil
         currentAllStreams = true
         currentColor = color
+        currentBoost = boost
         channelImages = []
         channelLabels = []
+        cachedAmplitudes = []
         error = nil
         isGenerating = true
 
@@ -120,6 +150,7 @@ final class AudioWaveformGenerator: ObservableObject {
         }
 
         let colorHex = color.ffmpegHex
+        let gamma = Self.boostToGamma(boost)
         let logger = self.logger
         let labels = streams.map { $0.label }
 
@@ -127,26 +158,33 @@ final class AudioWaveformGenerator: ObservableObject {
             do {
                 let t0 = CFAbsoluteTimeGetCurrent()
                 var images: [NSImage] = []
+                var allAmplitudes: [ChannelAmplitudeData] = []
+                var cachedW = 0
 
                 for stream in streams {
                     try Task.checkCancellation()
-                    let streamImages = try await Self.generateNativeWaveforms(
+                    let (streamImages, streamAmplitudes, width) = try await Self.generateNativeWaveforms(
                         url: url,
                         ffmpegPath: ffmpegPath,
                         streamIndex: stream.index,
                         channelCount: 1,
                         duration: duration,
                         colorHex: colorHex,
+                        gamma: gamma,
                         pixelsPerSecond: Self.pixelsPerSecond,
                         channelHeight: Self.channelHeight,
                         maxWidth: Self.maxWidth
                     )
                     images.append(contentsOf: streamImages)
+                    allAmplitudes.append(contentsOf: streamAmplitudes)
+                    cachedW = width
                 }
 
                 let t1 = CFAbsoluteTimeGetCurrent()
                 logger.info("All-streams waveform generation: \(String(format: "%.2f", t1 - t0))s (\(streams.count) streams)")
                 guard !Task.isCancelled else { return }
+                self.cachedAmplitudes = allAmplitudes
+                self.cachedWidth = cachedW
                 self.channelImages = images
                 self.channelLabels = labels
             } catch is CancellationError {
@@ -171,15 +209,65 @@ final class AudioWaveformGenerator: ObservableObject {
         currentStreamIndex = nil
         currentAllStreams = false
         currentColor = nil
+        currentBoost = 0
+        cachedAmplitudes = []
+        cachedWidth = 0
         channelImages = []
         channelLabels = []
         error = nil
         isGenerating = false
     }
 
+    /// Re-renders waveform images from cached amplitude data with current color and boost.
+    /// Skips FFmpeg decode entirely — only runs the fast pixel rendering.
+    func rerender() {
+        guard !cachedAmplitudes.isEmpty else { return }
+
+        let rawColor = UserDefaults.standard.string(forKey: SettingsView.audioWaveformColorKey) ?? AudioWaveformColor.pink.rawValue
+        let color = AudioWaveformColor(rawValue: rawColor) ?? .pink
+        let boost = UserDefaults.standard.double(forKey: SettingsView.audioWaveformBoostKey)
+
+        guard color != currentColor || boost != currentBoost else { return }
+
+        currentColor = color
+        currentBoost = boost
+
+        let amplitudes = cachedAmplitudes
+        let width = cachedWidth
+        let height = Self.channelHeight
+        let colorHex = color.ffmpegHex
+        let gamma = Self.boostToGamma(boost)
+        let (cr, cg, cb) = Self.parseHexColor(colorHex)
+
+        currentTask?.cancel()
+        currentTask = Task {
+            var images: [NSImage] = []
+            for data in amplitudes {
+                guard !Task.isCancelled else { return }
+                if let image = Self.renderWaveformImage(
+                    mins: data.mins, maxs: data.maxs,
+                    width: width, height: height,
+                    r: cr, g: cg, b: cb,
+                    gamma: gamma
+                ) {
+                    images.append(image)
+                }
+            }
+            guard !Task.isCancelled else { return }
+            self.channelImages = images
+        }
+    }
+
+    /// Converts a boost value (0–100) to a gamma exponent.
+    /// boost 0 → gamma 1.0 (linear), boost 100 → gamma 0.1 (max boost).
+    private static func boostToGamma(_ boost: Double) -> Float {
+        Float(pow(0.1, boost / 100.0))
+    }
+
     // MARK: - Native Waveform Generation
 
     /// Decodes audio once as raw PCM via ffmpeg, then renders all channel waveforms natively.
+    /// Returns images, cached amplitude data, and the computed width.
     private static nonisolated func generateNativeWaveforms(
         url: URL,
         ffmpegPath: String,
@@ -187,10 +275,11 @@ final class AudioWaveformGenerator: ObservableObject {
         channelCount: Int,
         duration: Double,
         colorHex: String,
+        gamma: Float,
         pixelsPerSecond: Double,
         channelHeight: Int,
         maxWidth: Int
-    ) async throws -> [NSImage] {
+    ) async throws -> ([NSImage], [ChannelAmplitudeData], Int) {
         let width = max(400, min(maxWidth, Int(duration * pixelsPerSecond)))
 
         // Downsample to reduce data: aim for ~100 samples per output pixel column.
@@ -228,6 +317,7 @@ final class AudioWaveformGenerator: ObservableObject {
         let (cr, cg, cb) = parseHexColor(colorHex)
 
         var images: [NSImage] = []
+        var amplitudes: [ChannelAmplitudeData] = []
 
         for ch in 0..<channelCount {
             try Task.checkCancellation()
@@ -267,36 +357,48 @@ final class AudioWaveformGenerator: ObservableObject {
                 }
             }
 
+            amplitudes.append(ChannelAmplitudeData(mins: columnMins, maxs: columnMaxs))
+
             if let image = renderWaveformImage(
                 mins: columnMins, maxs: columnMaxs,
                 width: width, height: channelHeight,
-                r: cr, g: cg, b: cb
+                r: cr, g: cg, b: cb,
+                gamma: gamma
             ) {
                 images.append(image)
             }
         }
 
-        return images
+        return (images, amplitudes, width)
     }
 
     // MARK: - Image Rendering
 
     /// Renders a single-channel waveform image from min/max amplitude data.
+    /// When gamma < 1, quiet values are boosted while peaks (1.0) stay fixed.
     private static nonisolated func renderWaveformImage(
         mins: [Float], maxs: [Float],
         width: Int, height: Int,
-        r: UInt8, g: UInt8, b: UInt8
+        r: UInt8, g: UInt8, b: UInt8,
+        gamma: Float = 1.0
     ) -> NSImage? {
         let bytesPerRow = width * 4
         var pixels = [UInt8](repeating: 0, count: bytesPerRow * height)
         let centerY = Float(height) / 2.0
+        let applyGamma = gamma != 1.0
 
         for col in 0..<width {
             // Map amplitude [-1, 1] to pixel rows.
             // Row 0 = top of image, row height-1 = bottom.
             // amplitude 1.0 → row 0 (top), -1.0 → row height-1 (bottom)
-            let topRow = max(0, Int(centerY - maxs[col] * centerY))
-            let bottomRow = min(height - 1, Int(centerY - mins[col] * centerY))
+            var maxVal = maxs[col]
+            var minVal = mins[col]
+            if applyGamma {
+                maxVal = powf(maxVal, gamma)         // maxs >= 0
+                minVal = -powf(-minVal, gamma)       // mins <= 0
+            }
+            let topRow = max(0, Int(centerY - maxVal * centerY))
+            let bottomRow = min(height - 1, Int(centerY - minVal * centerY))
 
             for row in topRow...bottomRow {
                 let idx = (row * width + col) * 4

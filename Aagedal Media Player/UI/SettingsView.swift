@@ -215,6 +215,7 @@ struct SettingsView: View {
     static let audioWaveformBackgroundKey = "audioWaveformBackground"
     static let audioWaveformColorKey = "audioWaveformColor"
     static let showAllMonoWaveformsKey = "showAllMonoWaveforms"
+    static let audioWaveformBoostKey = "audioWaveformBoost"
 
     var body: some View {
         TabView {
@@ -725,6 +726,7 @@ private struct AudioSettingsView: View {
     @AppStorage(SettingsView.audioWaveformBackgroundKey) private var background: String = AudioWaveformBackground.transparent.rawValue
     @AppStorage(SettingsView.audioWaveformColorKey) private var waveformColor: String = AudioWaveformColor.pink.rawValue
     @AppStorage(SettingsView.showAllMonoWaveformsKey) private var showAllMonoWaveforms: Bool = false
+    @AppStorage(SettingsView.audioWaveformBoostKey) private var waveformBoost: Double = 0
 
     var body: some View {
         Form {
@@ -769,6 +771,18 @@ private struct AudioSettingsView: View {
                     }
                     .labelsHidden()
                 }
+
+                LabeledContent("Boost") {
+                    HStack(spacing: 8) {
+                        Slider(value: $waveformBoost, in: 0...100, step: 1)
+                        Text("\(Int(waveformBoost))")
+                            .monospacedDigit()
+                            .frame(width: 32, alignment: .trailing)
+                    }
+                }
+                Text("Amplifies quiet parts of the waveform while keeping peaks unchanged.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
 
                 Toggle("Show all waveforms for multi-mono files", isOn: $showAllMonoWaveforms)
                 Text("When enabled, files containing only mono tracks show all track waveforms at once instead of just the selected track.")
