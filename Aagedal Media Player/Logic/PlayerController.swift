@@ -1160,12 +1160,17 @@ final class PlayerController: ObservableObject {
             outputURL = chosen
         }
 
+        let isInterlaced = stream?.isInterlaced ?? false
+        let videoFilter = isInterlaced
+            ? "bwdif=mode=0:parity=-1:deint=all,scale=iw*sar:ih"
+            : "scale=iw*sar:ih"
+
         var arguments = [
             "-hide_banner", "-loglevel", "error",
             "-ss", String(time),
             "-i", item.url.path,
             "-frames:v", "1",
-            "-vf", "scale=iw*sar:ih",
+            "-vf", videoFilter,
         ]
 
         switch format {
