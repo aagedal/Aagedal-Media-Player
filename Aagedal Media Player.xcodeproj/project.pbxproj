@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		8EA00001AAAA000000000001 /* MPVKit-GPL in Frameworks */ = {isa = PBXBuildFile; productRef = 8EA00002AAAA000000000001 /* MPVKit-GPL */; };
+		8EA00004AAAA000000000001 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 8EA00005AAAA000000000001 /* Sparkle */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -19,6 +20,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
+				Aagedal_Media_Player.entitlements,
 			);
 			target = 8EB2F2822F49166000B196AD /* Aagedal Media Player */;
 		};
@@ -41,6 +43,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				8EA00001AAAA000000000001 /* MPVKit-GPL in Frameworks */,
+				8EA00004AAAA000000000001 /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -84,6 +87,7 @@
 			name = "Aagedal Media Player";
 			packageProductDependencies = (
 				8EA00002AAAA000000000001 /* MPVKit-GPL */,
+				8EA00005AAAA000000000001 /* Sparkle */,
 			);
 			productName = "Aagedal Media Player";
 			productReference = 8EB2F2832F49166000B196AD /* Aagedal Media Player.app */;
@@ -114,7 +118,8 @@
 			mainGroup = 8EB2F27A2F49166000B196AD;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				8EA00003AAAA000000000001 /* XCLocalSwiftPackageReference "../../Aagedal-Media-Converter/MPVKit" */,
+				8EA00003AAAA000000000001 /* XCRemoteSwiftPackageReference "MPVKit" */,
+				8EA00006AAAA000000000001 /* XCRemoteSwiftPackageReference "Sparkle" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 8EB2F2842F49166000B196AD /* Products */;
@@ -281,7 +286,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = "";
+				CODE_SIGN_ENTITLEMENTS = "Aagedal Media Player/Aagedal_Media_Player.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 150;
@@ -315,7 +320,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = "";
+				CODE_SIGN_ENTITLEMENTS = "Aagedal Media Player/Aagedal_Media_Player.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 150;
@@ -367,17 +372,35 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCLocalSwiftPackageReference section */
-		8EA00003AAAA000000000001 /* XCLocalSwiftPackageReference "../../Aagedal-Media-Converter/MPVKit" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = "../../Aagedal-Media-Converter/MPVKit";
+/* Begin XCRemoteSwiftPackageReference section */
+		8EA00003AAAA000000000001 /* XCRemoteSwiftPackageReference "MPVKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://codeberg.org/taagedal/MPVKit";
+			requirement = {
+				branch = "aagedal/custom-builds";
+				kind = branch;
+			};
 		};
-/* End XCLocalSwiftPackageReference section */
+		8EA00006AAAA000000000001 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.9.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		8EA00002AAAA000000000001 /* MPVKit-GPL */ = {
 			isa = XCSwiftPackageProductDependency;
+			package = 8EA00003AAAA000000000001 /* XCRemoteSwiftPackageReference "MPVKit" */;
 			productName = "MPVKit-GPL";
+		};
+		8EA00005AAAA000000000001 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8EA00006AAAA000000000001 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

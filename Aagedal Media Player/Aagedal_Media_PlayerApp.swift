@@ -2,6 +2,7 @@
 // Copyright © 2026 Truls Aagedal
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+import Sparkle
 import SwiftUI
 
 struct IsMediaLoadedKey: FocusedValueKey {
@@ -21,6 +22,11 @@ struct Aagedal_Media_PlayerApp: App {
     @FocusedValue(\.isMediaLoaded) private var isMediaLoaded
     @AppStorage("allowMultipleWindows") private var allowMultipleWindows = false
 
+    /// Construct Sparkle eagerly so the updater attaches to the run loop
+    /// before the first window appears. Inert for Homebrew installs and when
+    /// SUFeedURL is unset — see `SparkleUpdater.isActive`.
+    private let sparkleUpdater = SparkleUpdater.shared
+
     private var mediaLoaded: Bool { isMediaLoaded ?? false }
 
     var body: some Scene {
@@ -30,6 +36,13 @@ struct Aagedal_Media_PlayerApp: App {
         .windowStyle(.hiddenTitleBar)
         .defaultSize(width: 711, height: 400)
         .commands {
+            if sparkleUpdater.isActive {
+                CommandGroup(after: .appInfo) {
+                    Button("Check for Updates\u{2026}") {
+                        sparkleUpdater.controller.checkForUpdates(nil)
+                    }
+                }
+            }
             CommandGroup(replacing: .newItem) {
                 if allowMultipleWindows {
                     Button("New Window") {

@@ -597,18 +597,27 @@ struct ContentView: View {
                 Image(systemName: "arrow.down.circle.fill")
                     .foregroundStyle(.white)
 
-                Text("Version \(updateChecker.latestVersion ?? "") available")
+                Text("Version \(updateChecker.latestVersion) available")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(.white)
 
-                Link(destination: URL(string: "https://github.com/aagedal/Aagedal-Media-Player/releases")!) {
-                    Text("Download")
+                Button {
+                    if updateChecker.isHomebrewInstall {
+                        let pasteboard = NSPasteboard.general
+                        pasteboard.clearContents()
+                        pasteboard.setString(UpdateChecker.homebrewUpgradeCommand, forType: .string)
+                    } else {
+                        updateChecker.openDownloadAsset()
+                    }
+                } label: {
+                    Text(updateChecker.isHomebrewInstall ? "Copy brew Command" : "Download")
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(.white)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 3)
                         .background(.white.opacity(0.2), in: .capsule)
                 }
+                .buttonStyle(.plain)
 
                 Button {
                     withAnimation { updateBannerDismissed = true }

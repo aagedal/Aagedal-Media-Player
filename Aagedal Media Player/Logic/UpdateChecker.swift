@@ -1,42 +1,66 @@
 // Aagedal Media Player
 // Copyright © 2026 Truls Aagedal
 // SPDX-License-Identifier: GPL-3.0-or-later
+//
+// Update checker for the two cases Sparkle deliberately does not handle:
+//   1. Homebrew-installed copies — Sparkle would replace the bundle that brew
+//      thinks it manages. This checker fetches the latest release info from
+//      Codeberg and the UI routes the user to `brew upgrade --cask …`.
+//   2. Bridge users coming from the pre-Sparkle releases — their old build
+//      still polls this checker (now pointed at Codeberg) and shows the
+//      in-app banner so they can manually install the first Sparkle-enabled
+//      release.
+//
+// Gated off whenever `SparkleUpdater.shared.isActive` is true, so direct-
+// download users on the Sparkle-enabled build get exactly one update path.
 
-import Foundation
 import Combine
-import os
+import Foundation
+import OSLog
+import SwiftUI
 
 @MainActor
 final class UpdateChecker: ObservableObject {
     static let shared = UpdateChecker()
+    private static let logger = Logger(subsystem: "com.aagedal.MediaPlayer", category: "UpdateChecker")
 
-    @Published var latestVersion: String?
-    @Published var isChecking = false
-    @Published var updateAvailable = false
+    @Published var latestVersion: String = ""
+    @Published var releaseNotesURL: URL? = nil
+    @Published var downloadAssetURL: URL? = nil
+    @Published var updateAvailable: Bool = false
+    @Published var isChecking: Bool = false
 
     var lastChecked: Date? {
         get { UserDefaults.standard.object(forKey: "updateLastChecked") as? Date }
         set { UserDefaults.standard.set(newValue, forKey: "updateLastChecked") }
     }
 
-    private let logger = Logger(subsystem: "com.aagedal.MediaPlayer", category: "UpdateChecker")
-    private let caskURL = URL(string: "https://raw.githubusercontent.com/aagedal/homebrew-casks/main/Casks/aagedal-media-player.rb")!
+    /// True when this app was installed via Homebrew. The checker still
+    /// fetches the release feed and reports `updateAvailable`, but the UI
+    /// branches: brew users get the `brew upgrade --cask …` command instead
+    /// of a Download button, so we don't replace a bundle brew thinks it
+    /// manages.
+    let isHomebrewInstall: Bool = (InstallSource.current == .homebrew)
+
+    /// The shell command shown to Homebrew-managed users when an update
+    /// exists. Single source of truth for the Settings hint and the banner.
+    static let homebrewUpgradeCommand = "brew upgrade --cask aagedal-media-player"
 
     var currentVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
     }
 
-    private init() {
-        // Restore cached latest version
-        if let cached = UserDefaults.standard.string(forKey: "updateLatestVersion") {
-            latestVersion = cached
-            updateAvailable = isNewer(cached, than: currentVersion)
-        }
-    }
+    // Codeberg runs Forgejo, whose API is Gitea-compatible: the JSON shape
+    // (tag_name, html_url, assets[].name, assets[].browser_download_url) matches
+    // GitHub's, so the parsing logic below works unchanged.
+    private let releasesAPIURL = URL(string: "https://codeberg.org/api/v1/repos/taagedal/Aagedal-Media-Player/releases/latest")!
+    private let fallbackReleasesPageURL = URL(string: "https://codeberg.org/taagedal/Aagedal-Media-Player/releases/latest")!
 
-    // MARK: - Public
+    private init() {}
 
     func checkIfNeeded() {
+        guard !SparkleUpdater.shared.isActive else { return }
+
         let interval = UserDefaults.standard.double(forKey: "updateCheckInterval")
         let checkInterval = interval > 0 ? interval : 7 * 24 * 3600 // Default: weekly
 
@@ -44,49 +68,125 @@ final class UpdateChecker: ObservableObject {
             return
         }
 
-        Task { await checkNow() }
+        Task { await checkNow(isUserInitiated: false) }
     }
 
-    func checkNow() async {
+    func checkNow(isUserInitiated: Bool = true) async {
         guard !isChecking else { return }
+        guard !SparkleUpdater.shared.isActive else { return }
         isChecking = true
         defer { isChecking = false }
 
+        var request = URLRequest(url: releasesAPIURL)
+        request.setValue(Self.userAgent, forHTTPHeaderField: "User-Agent")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.timeoutInterval = 30
+
+        let delegate = CodebergRedirectGuard()
+        let session = URLSession(configuration: .default, delegate: delegate, delegateQueue: nil)
+        defer { session.invalidateAndCancel() }
+
         do {
-            let (data, _) = try await URLSession.shared.data(from: caskURL)
-            guard let content = String(data: data, encoding: .utf8) else { return }
+            let (data, response) = try await session.data(for: request)
 
-            if let match = content.range(of: #"version\s+"([^"]+)""#, options: .regularExpression),
-               let capture = content[match].range(of: #""([^"]+)""#, options: .regularExpression) {
-                let raw = content[capture]
-                let version = String(raw.dropFirst().dropLast()) // Strip quotes
+            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                Self.logger.error("Update check returned non-200 status")
+                return
+            }
 
-                latestVersion = version
-                updateAvailable = isNewer(version, than: currentVersion)
-                lastChecked = Date()
+            guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let rawTag = json["tag_name"] as? String else {
+                Self.logger.error("Update check could not parse tag_name from release JSON")
+                return
+            }
 
-                UserDefaults.standard.set(version, forKey: "updateLatestVersion")
-                logger.info("Update check complete: latest=\(version, privacy: .public) current=\(self.currentVersion, privacy: .public)")
+            let remoteVersion = normalizeVersion(rawTag)
+            let notesURL = (json["html_url"] as? String).flatMap(URL.init(string:))
+            let assetURL = pickDownloadAsset(from: json["assets"] as? [[String: Any]] ?? [])
+
+            self.latestVersion = remoteVersion
+            self.releaseNotesURL = notesURL
+            self.downloadAssetURL = assetURL
+            self.updateAvailable = isVersion(remoteVersion, newerThan: currentVersion)
+
+            if !isUserInitiated {
+                self.lastChecked = Date()
             }
         } catch {
-            logger.error("Update check failed: \(error.localizedDescription, privacy: .public)")
+            Self.logger.error("Error checking for updates: \(error.localizedDescription, privacy: .public)")
         }
     }
 
-    // MARK: - Version Comparison
-
-    /// Returns true if `remote` is strictly newer than `local`.
-    private func isNewer(_ remote: String, than local: String) -> Bool {
-        let r = remote.split(separator: ".").compactMap { Int($0) }
-        let l = local.split(separator: ".").compactMap { Int($0) }
-        let count = max(r.count, l.count)
-
-        for i in 0..<count {
-            let rv = i < r.count ? r[i] : 0
-            let lv = i < l.count ? l[i] : 0
-            if rv > lv { return true }
-            if rv < lv { return false }
+    /// Release tags may be prefixed with `v` (e.g. "v1.5.0"). The numeric
+    /// comparator in `isVersion(_:newerThan:)` and `CFBundleShortVersionString`
+    /// are both bare numeric strings, so strip the prefix.
+    private func normalizeVersion(_ tag: String) -> String {
+        if tag.hasPrefix("v") || tag.hasPrefix("V") {
+            return String(tag.dropFirst())
         }
-        return false
+        return tag
+    }
+
+    private func pickDownloadAsset(from assets: [[String: Any]]) -> URL? {
+        let candidates: [(name: String, url: URL)] = assets.compactMap { asset in
+            guard let name = asset["name"] as? String,
+                  let urlString = asset["browser_download_url"] as? String,
+                  let url = URL(string: urlString) else {
+                return nil
+            }
+            return (name, url)
+        }
+
+        if let zip = candidates.first(where: { $0.name.lowercased().hasSuffix(".zip") }) {
+            return zip.url
+        }
+        if let dmg = candidates.first(where: { $0.name.lowercased().hasSuffix(".dmg") }) {
+            return dmg.url
+        }
+        return nil
+    }
+
+    private func isVersion(_ v1: String, newerThan v2: String) -> Bool {
+        return v1.compare(v2, options: .numeric) == .orderedDescending
+    }
+
+    func openDownloadAsset() {
+        NSWorkspace.shared.open(downloadAssetURL ?? fallbackReleasesPageURL)
+    }
+
+    func openReleaseNotes() {
+        NSWorkspace.shared.open(releaseNotesURL ?? fallbackReleasesPageURL)
+    }
+
+    private static let userAgent: String = {
+        let bundleID = Bundle.main.bundleIdentifier ?? "com.aagedal.MediaPlayer"
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.0"
+        return "\(bundleID)/\(version)"
+    }()
+}
+
+// MARK: - Codeberg redirect guard
+
+/// Refuses HTTP redirects away from Codeberg. The API call should stay on
+/// `codeberg.org`, and release-asset downloads use Codeberg's attachment
+/// subpaths (same origin), so a cross-host redirect indicates either a hijack
+/// or a misconfigured request and is rejected.
+private final class CodebergRedirectGuard: NSObject, URLSessionDataDelegate, @unchecked Sendable {
+    func urlSession(
+        _ session: URLSession,
+        task: URLSessionTask,
+        willPerformHTTPRedirection response: HTTPURLResponse,
+        newRequest request: URLRequest,
+        completionHandler: @escaping (URLRequest?) -> Void
+    ) {
+        guard let host = request.url?.host?.lowercased() else {
+            completionHandler(nil)
+            return
+        }
+        if host == "codeberg.org" || host.hasSuffix(".codeberg.org") {
+            completionHandler(request)
+        } else {
+            completionHandler(nil)
+        }
     }
 }

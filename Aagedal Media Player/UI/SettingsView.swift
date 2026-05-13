@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import SwiftUI
+import Sparkle
 
 enum SaveLocationMode: String, CaseIterable {
     case original = "original"
@@ -872,19 +873,7 @@ private struct KeyboardShortcutsView: View {
 
 private struct UpdateSettingsView: View {
     @StateObject private var checker = UpdateChecker.shared
-
-    @AppStorage("updateCheckInterval") private var checkInterval: Double = 7 * 24 * 3600
-
-    private static let releasesURL = URL(string: "https://github.com/aagedal/Aagedal-Media-Player/releases")!
-
-    private var intervalOptions: [(String, Double)] {
-        [
-            ("Daily", 24 * 3600),
-            ("Weekly", 7 * 24 * 3600),
-            ("Monthly", 30 * 24 * 3600),
-            ("Never", 0),
-        ]
-    }
+    @StateObject private var sparkleUpdater = SparkleUpdater.shared
 
     var body: some View {
         Form {
@@ -896,46 +885,19 @@ private struct UpdateSettingsView: View {
             }
 
             Section("Update Check") {
-                LabeledContent("Check Frequency") {
-                    Picker("", selection: $checkInterval) {
-                        ForEach(intervalOptions, id: \.1) { option in
-                            Text(option.0).tag(option.1)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .labelsHidden()
-                }
-
-                LabeledContent("Last Checked") {
-                    if let date = checker.lastChecked {
-                        Text(date, style: .relative)
-                            .foregroundStyle(.secondary)
-                        + Text(" ago")
-                            .foregroundStyle(.secondary)
-                    } else {
-                        Text("Never")
-                            .foregroundStyle(.secondary)
-                    }
-                }
-
-                HStack {
-                    if !checker.updateAvailable, checker.lastChecked != nil, !checker.isChecking {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundStyle(.green)
-                        Text("Up to date")
-                            .foregroundStyle(.secondary)
-                    }
-
-                    Spacer()
-
-                    Button("Check Now") {
-                        Task { await checker.checkNow() }
-                    }
-                    .disabled(checker.isChecking)
+                if sparkleUpdater.isActive {
+                    SparkleUpdateControls(updater: sparkleUpdater.updater,
+                                          checkNow: { sparkleUpdater.controller.checkForUpdates(nil) })
+                } else {
+                    HomebrewFallbackControls(checker: checker)
                 }
             }
 
-            if checker.updateAvailable, let latest = checker.latestVersion {
+            if checker.isHomebrewInstall {
+                Section {
+                    HomebrewUpdateHintView(highlight: checker.updateAvailable)
+                }
+            } else if !sparkleUpdater.isActive, checker.updateAvailable, !checker.latestVersion.isEmpty {
                 Section {
                     HStack(spacing: 12) {
                         Image(systemName: "arrow.down.circle.fill")
@@ -943,7 +905,7 @@ private struct UpdateSettingsView: View {
                             .foregroundStyle(.blue)
 
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("Version \(latest) Available")
+                            Text("Version \(checker.latestVersion) Available")
                                 .fontWeight(.medium)
                             Text("You are running \(checker.currentVersion)")
                                 .font(.caption)
@@ -952,13 +914,147 @@ private struct UpdateSettingsView: View {
 
                         Spacer()
 
-                        Link("Download", destination: Self.releasesURL)
-                            .buttonStyle(.borderedProminent)
+                        Button("Download") {
+                            checker.openDownloadAsset()
+                        }
+                        .buttonStyle(.borderedProminent)
                     }
                     .padding(.vertical, 4)
                 }
             }
         }
         .formStyle(.grouped)
+    }
+}
+
+/// Settings controls bound to Sparkle's `SPUUpdater`. `SPUUpdater` exposes its
+/// state via KVO rather than `@Published`, so the toggles use direct
+/// `Binding` closures — changes coming from Sparkle's own UI won't live-refresh
+/// this view, but user input in Settings persists immediately.
+private struct SparkleUpdateControls: View {
+    let updater: SPUUpdater
+    let checkNow: () -> Void
+
+    private static let intervalChoices: [(label: String, seconds: TimeInterval)] = [
+        ("Daily", 86_400),
+        ("Weekly", 604_800),
+        ("Monthly", 2_592_000)
+    ]
+
+    var body: some View {
+        Toggle("Automatically check for updates", isOn: Binding(
+            get: { updater.automaticallyChecksForUpdates },
+            set: { updater.automaticallyChecksForUpdates = $0 }
+        ))
+
+        if updater.automaticallyChecksForUpdates {
+            Picker("Check frequency", selection: Binding(
+                get: { closestInterval(to: updater.updateCheckInterval) },
+                set: { updater.updateCheckInterval = $0 }
+            )) {
+                ForEach(Self.intervalChoices, id: \.seconds) { choice in
+                    Text(choice.label).tag(choice.seconds)
+                }
+            }
+
+            Toggle("Install updates automatically", isOn: Binding(
+                get: { updater.automaticallyDownloadsUpdates },
+                set: { updater.automaticallyDownloadsUpdates = $0 }
+            ))
+            .help("Downloads new releases in the background and installs them on next launch.")
+        }
+
+        HStack {
+            Spacer()
+            Button("Check Now", action: checkNow)
+        }
+    }
+
+    private func closestInterval(to seconds: TimeInterval) -> TimeInterval {
+        Self.intervalChoices
+            .min(by: { abs($0.seconds - seconds) < abs($1.seconds - seconds) })?
+            .seconds ?? 604_800
+    }
+}
+
+private struct HomebrewFallbackControls: View {
+    @ObservedObject var checker: UpdateChecker
+
+    var body: some View {
+        LabeledContent("Last Checked") {
+            if let date = checker.lastChecked {
+                Text(date, style: .relative)
+                    .foregroundStyle(.secondary)
+                + Text(" ago")
+                    .foregroundStyle(.secondary)
+            } else {
+                Text("Never")
+                    .foregroundStyle(.secondary)
+            }
+        }
+
+        HStack {
+            if checker.isChecking {
+                ProgressView()
+                    .controlSize(.small)
+                Text("Checking\u{2026}")
+                    .foregroundStyle(.secondary)
+            } else if !checker.updateAvailable, checker.lastChecked != nil {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+                Text("Up to date")
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+
+            Button("Check Now") {
+                Task { await checker.checkNow() }
+            }
+            .disabled(checker.isChecking)
+        }
+    }
+}
+
+private struct HomebrewUpdateHintView: View {
+    let highlight: Bool
+    private var command: String { UpdateChecker.homebrewUpgradeCommand }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Label("Managed by Homebrew", systemImage: "shippingbox")
+                .font(.headline)
+
+            Text(highlight
+                 ? "An update is available. Install it through Homebrew to keep brew's records consistent:"
+                 : "This copy was installed via Homebrew. To update, run:")
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            HStack(spacing: 8) {
+                Text(command)
+                    .font(.system(.body, design: .monospaced))
+                    .textSelection(.enabled)
+                    .padding(.vertical, 6)
+                    .padding(.horizontal, 10)
+                    .background(Color(NSColor.textBackgroundColor))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6)
+                            .stroke(highlight ? Color.accentColor : Color.secondary.opacity(0.3), lineWidth: 1)
+                    )
+                    .cornerRadius(6)
+
+                Button {
+                    let pasteboard = NSPasteboard.general
+                    pasteboard.clearContents()
+                    pasteboard.setString(command, forType: .string)
+                } label: {
+                    Image(systemName: "doc.on.doc")
+                }
+                .buttonStyle(.borderless)
+                .help("Copy to clipboard")
+            }
+        }
+        .padding(.vertical, 4)
     }
 }

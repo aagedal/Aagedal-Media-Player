@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <channel>
+        <title>Aagedal Media Player</title>
+        <link>https://codeberg.org/taagedal/Aagedal-Media-Player/raw/branch/main/appcast.xml</link>
+        <description>Most recent changes for Aagedal Media Player.</description>
+        <language>en</language>
+
+        <!--
+            Each release adds an <item> below. scripts/release.sh appends one
+            automatically after notarizing and signing the .zip with Sparkle's
+            `sign_update` tool.
+
+            Required fields per item:
+              - <title>             — human-readable release name
+              - <pubDate>           — RFC 822 date (`date "+%a, %d %b %Y %H:%M:%S %z"`)
+              - <sparkle:version>             — CFBundleVersion (build number)
+              - <sparkle:shortVersionString>  — CFBundleShortVersionString
+              - <sparkle:minimumSystemVersion> — macOS minimum (15.0)
+              - <enclosure>:
+                  url           — Codeberg release-asset URL of the signed .zip
+                  length        — file size in bytes
+                  type          — application/octet-stream
+                  sparkle:edSignature — EdDSA signature from `sign_update`
+              - <description>       — release notes (CDATA-wrapped HTML)
+        -->
+
+    </channel>
+</rss>
