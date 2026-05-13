@@ -158,7 +158,7 @@ final class PlayerController: ObservableObject {
         mediaItem?.durationSeconds = item.durationSeconds
         mediaItem?.hasVideoStream = item.hasVideoStream
 
-        // Update aspect ratio from FFprobe (authoritative)
+        // Update aspect ratio from container metadata (authoritative)
         if let ratio = item.videoDisplayAspectRatio, ratio.isFinite, ratio > 0 {
             videoAspectRatio = CGFloat(ratio)
         }
@@ -393,7 +393,7 @@ final class PlayerController: ObservableObject {
             }
         }
 
-        // Populate duration from MPV so the timeline is usable before FFprobe finishes
+        // Populate duration from MPV so the timeline is usable before metadata finishes
         mpvDurationTask = Task { @MainActor [weak self, weak mpv] in
             guard let self, let mpv else { return }
             for await dur in mpv.$duration.values {

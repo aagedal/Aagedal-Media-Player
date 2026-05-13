@@ -2,17 +2,14 @@
 // Copyright © 2026 Truls Aagedal
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// Metadata extraction service using FFprobe.
-// Locates FFprobe from Aagedal Media Converter app bundle or system path.
+// Metadata extraction service using SwiftExif.
 
 import Foundation
 import OSLog
+import SwiftExif
 
 enum MetadataError: Error {
-    case ffprobeMissing
-    case processFailed(String)
-    case decodingFailed(String)
-    case timeout
+    case readFailed(String)
 }
 
 actor MetadataService {
@@ -28,457 +25,236 @@ actor MetadataService {
         }
     }
 
-    /// Locate FFprobe binary
-    private func findFFprobe() -> String? {
-        // 1. Check Aagedal Media Converter in ~/Applications
-        let homeApps = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent("Applications/Aagedal Media Converter.app/Contents/Resources/ffprobe")
-        if FileManager.default.isExecutableFile(atPath: homeApps.path) {
-            return homeApps.path
-        }
-
-        // 2. Check /Applications
-        let systemApps = "/Applications/Aagedal Media Converter.app/Contents/Resources/ffprobe"
-        if FileManager.default.isExecutableFile(atPath: systemApps) {
-            return systemApps
-        }
-
-        // 3. Check /usr/local/bin
-        let usrLocal = "/usr/local/bin/ffprobe"
-        if FileManager.default.isExecutableFile(atPath: usrLocal) {
-            return usrLocal
-        }
-
-        // 4. Check /opt/homebrew/bin
-        let homebrew = "/opt/homebrew/bin/ffprobe"
-        if FileManager.default.isExecutableFile(atPath: homebrew) {
-            return homebrew
-        }
-
-        // 5. Try `which ffprobe`
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/which")
-        process.arguments = ["ffprobe"]
-        let pipe = Pipe()
-        process.standardOutput = pipe
-        process.standardError = Pipe()
-        do {
-            try process.run()
-            process.waitUntilExit()
-            if process.terminationStatus == 0 {
-                let data = pipe.fileHandleForReading.readDataToEndOfFile()
-                if let path = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
-                   !path.isEmpty, FileManager.default.isExecutableFile(atPath: path) {
-                    return path
-                }
-            }
-        } catch {}
-
-        return nil
-    }
-
     func metadata(for url: URL) async throws -> MediaMetadata {
         if let cached = cache.object(forKey: url as NSURL) {
             return cached.metadata
         }
 
-        guard let ffprobePath = findFFprobe() else {
-            throw MetadataError.ffprobeMissing
+        let video: VideoMetadata
+        do {
+            video = try await readVideoMetadata(from: url)
+        } catch {
+            logger.error("SwiftExif read failed for \(url.path): \(error.localizedDescription)")
+            throw MetadataError.readFailed(error.localizedDescription)
         }
 
-        let formatResponse = try await fetchFFprobeResponse(
-            url: url,
-            ffprobePath: ffprobePath,
-            arguments: ["-v", "error", "-show_format", "-of", "json"]
-        )
-
-        let videoResponse = try await fetchFFprobeResponse(
-            url: url,
-            ffprobePath: ffprobePath,
-            arguments: ["-v", "error", "-select_streams", "v", "-show_streams", "-of", "json"],
-            allowNoStreams: true
-        )
-
-        let audioResponse = try await fetchFFprobeResponse(
-            url: url,
-            ffprobePath: ffprobePath,
-            arguments: ["-v", "error", "-select_streams", "a", "-show_streams", "-of", "json"],
-            allowNoStreams: true
-        )
-
-        let subtitleResponse = try await fetchFFprobeResponse(
-            url: url,
-            ffprobePath: ffprobePath,
-            arguments: ["-v", "error", "-select_streams", "s", "-show_streams", "-of", "json"],
-            allowNoStreams: true
-        )
-
-        let metadata = try buildMetadata(
-            format: formatResponse.format,
-            videoStreams: videoResponse.streams,
-            audioStreams: audioResponse.streams,
-            subtitleStreams: subtitleResponse.streams
-        )
+        let metadata = MetadataMapper.makeMediaMetadata(from: video)
         cache.setObject(CachedMetadata(metadata: metadata), forKey: url as NSURL)
         return metadata
     }
+}
 
-    private func runFFprobeJSON(url: URL, ffprobePath: String, arguments: [String]) async throws -> Data {
-        try await withCheckedThrowingContinuation { continuation in
-            Task.detached(priority: .userInitiated) {
-                let process = Process()
-                process.executableURL = URL(fileURLWithPath: ffprobePath)
-                var args = arguments
-                args.append(url.path)
-                process.arguments = args
+// MARK: - Mapper
 
-                let stdoutPipe = Pipe()
-                let stderrPipe = Pipe()
-                process.standardOutput = stdoutPipe
-                process.standardError = stderrPipe
+private enum MetadataMapper {
+    nonisolated static func makeMediaMetadata(from video: VideoMetadata) -> MediaMetadata {
+        let videoStreams = video.videoStreams
+            .filter { $0.isAttachedPic != true }
+            .map(makeVideoStream(from:))
 
-                do {
-                    try process.run()
-                } catch {
-                    continuation.resume(throwing: error)
-                    return
-                }
-
-                let timeoutSeconds: TimeInterval = 10
-                let checkInterval: TimeInterval = 0.5
-                var elapsed: TimeInterval = 0
-
-                while process.isRunning && elapsed < timeoutSeconds {
-                    try? await Task.sleep(for: .seconds(checkInterval))
-                    elapsed += checkInterval
-                }
-
-                if process.isRunning {
-                    process.terminate()
-                    try? await Task.sleep(for: .seconds(0.1))
-                    if process.isRunning {
-                        process.interrupt()
-                    }
-                    continuation.resume(throwing: MetadataError.timeout)
-                    return
-                }
-
-                let stdoutData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
-                let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
-
-                if process.terminationStatus == 0 {
-                    continuation.resume(returning: stdoutData)
-                } else {
-                    let message = String(data: stderrData, encoding: .utf8) ?? "Unknown ffprobe error"
-                    continuation.resume(throwing: MetadataError.processFailed(message))
-                }
-            }
-        }
-    }
-
-    private func fetchFFprobeResponse(url: URL, ffprobePath: String, arguments: [String], allowNoStreams: Bool = false) async throws -> FFprobeResponse {
-        do {
-            let data = try await runFFprobeJSON(url: url, ffprobePath: ffprobePath, arguments: arguments)
-            return try decodeFFprobeResponse(jsonData: data)
-        } catch MetadataError.processFailed(let message) {
-            if allowNoStreams, message.contains("Stream specifier") {
-                return FFprobeResponse(format: nil, streams: [])
-            }
-            throw MetadataError.processFailed(message)
-        }
-    }
-
-    private func decodeFFprobeResponse(jsonData: Data) throws -> FFprobeResponse {
-        do {
-            let decoder = JSONDecoder()
-            decoder.keyDecodingStrategy = .convertFromSnakeCase
-            return try decoder.decode(FFprobeResponse.self, from: jsonData)
-        } catch {
-            let message = String(data: jsonData, encoding: .utf8) ?? "<non-UTF8>"
-            logger.error("Failed to decode ffprobe JSON: \(message)")
-            throw MetadataError.decodingFailed(error.localizedDescription)
-        }
-    }
-
-    private func buildMetadata(format: FFprobeResponse.Format?, videoStreams: [FFprobeResponse.Stream], audioStreams: [FFprobeResponse.Stream], subtitleStreams: [FFprobeResponse.Stream]) throws -> MediaMetadata {
-        let filteredVideoStreams = videoStreams.filter { stream in
-            stream.codecType == "video" && stream.disposition?.attachedPic != 1
-        }
-        let primaryVideoStream = filteredVideoStreams.first
-
-        let filteredAudioStreams = audioStreams.filter { $0.codecType == "audio" }
-
-        let timecode = format?.tags?.timecode ?? primaryVideoStream?.tags?.timecode
-        let comment = format?.tags?.comment
-        let encoder = format?.tags?.encoder
+        let audioStreams = video.audioStreams.map(makeAudioStream(from:))
+        let subtitleStreams = video.subtitleStreams.map(makeSubtitleStream(from:))
 
         let frameCount: Int? = {
-            if let nbFrames = primaryVideoStream?.nbFrames, let count = Int(nbFrames) {
+            if let count = video.videoStreams.first?.frameCount, count > 0 {
                 return count
             }
-            if let durationStr = format?.duration,
-               let duration = Double(durationStr),
-               let frameRateStr = primaryVideoStream?.avgFrameRate ?? primaryVideoStream?.rFrameRate,
-               let frameRate = MediaMetadata.FrameRate(frameRateString: frameRateStr),
-               let fps = frameRate.value,
+            if let duration = video.duration,
+               let stream = video.videoStreams.first,
+               let fps = stream.avgFrameRate ?? stream.frameRate ?? stream.rFrameRate,
                fps > 0 {
-                return Int(round(duration * fps))
+                return Int((duration * fps).rounded())
             }
             return nil
         }()
 
-        let video = filteredVideoStreams.map { stream -> MediaMetadata.VideoStream in
-            let frameRateString = stream.avgFrameRate ?? stream.rFrameRate
-            let hasAlpha = stream.pixFmt.map { hasAlphaChannel(pixelFormat: $0) } ?? false
-            let bitDepth: Int? = stream.bitsPerRawSample.flatMap { Int($0) }
-                ?? stream.pixFmt.flatMap { bitDepthFromPixelFormat($0) }
-            let chromaSubsampling = stream.pixFmt.flatMap { chromaSubsamplingFromPixelFormat($0) }
-
-            // Extract HDR luminance metadata from side_data_list
-            var maxCLL: Int?
-            var maxFALL: Int?
-            var masteringMaxLuminance: Double?
-            var masteringMinLuminance: Double?
-
-            if let sideDataList = stream.sideDataList {
-                for sideData in sideDataList {
-                    let type = sideData.sideDataType ?? ""
-                    if type.contains("Content light level") {
-                        maxCLL = sideData.maxContent
-                        maxFALL = sideData.maxAverage
-                    } else if type.contains("Mastering display") {
-                        // max_luminance is a ratio string like "10000000/10000" = 1000 nits
-                        masteringMaxLuminance = parseLuminanceRatio(sideData.maxLuminance)
-                        masteringMinLuminance = parseLuminanceRatio(sideData.minLuminance)
-                    }
-                }
-            }
-
-            return MediaMetadata.VideoStream(
-                codec: stream.codecName,
-                codecLongName: stream.codecLongName,
-                profile: stream.profile,
-                width: stream.width,
-                height: stream.height,
-                pixelFormat: stream.pixFmt,
-                hasAlpha: hasAlpha,
-                pixelAspectRatio: stream.sampleAspectRatio.flatMap(MediaMetadata.Ratio.init(ratioString:)),
-                displayAspectRatio: stream.displayAspectRatio.flatMap(MediaMetadata.Ratio.init(ratioString:)),
-                frameRate: frameRateString.flatMap(MediaMetadata.FrameRate.init(frameRateString:)),
-                bitDepth: bitDepth,
-                chromaSubsampling: chromaSubsampling,
-                colorPrimaries: stream.colorPrimaries,
-                colorTransfer: stream.colorTransfer,
-                colorSpace: stream.colorSpace,
-                colorRange: stream.colorRange,
-                chromaLocation: stream.chromaLocation,
-                fieldOrder: stream.fieldOrder,
-                isInterlaced: stream.fieldOrder.map {
-                    let value = $0.lowercased()
-                    return value != "progressive" && value != "unknown"
-                },
-                maxCLL: maxCLL,
-                maxFALL: maxFALL,
-                masteringMaxLuminance: masteringMaxLuminance,
-                masteringMinLuminance: masteringMinLuminance
-            )
-        }
-
-        let audio = filteredAudioStreams.map { stream -> MediaMetadata.AudioStream in
-            MediaMetadata.AudioStream(
-                index: stream.index,
-                languageCode: stream.tags?.language?.lowercased(),
-                title: stream.tags?.title,
-                codec: stream.codecName,
-                codecLongName: stream.codecLongName,
-                profile: stream.profile,
-                sampleRate: stream.sampleRate.flatMap { Int($0) },
-                channels: stream.channels,
-                channelLayout: stream.channelLayout,
-                bitDepth: stream.bitsPerRawSample.flatMap { Int($0) },
-                bitRate: stream.bitRate.flatMap { Int64($0) },
-                isDefault: (stream.disposition?.defaultStream == 1)
-            )
-        }
-
-        let filteredSubtitleStreams = subtitleStreams.filter { $0.codecType == "subtitle" }
-
-        let subtitles = filteredSubtitleStreams.map { stream -> MediaMetadata.SubtitleStream in
-            MediaMetadata.SubtitleStream(
-                index: stream.index,
-                languageCode: stream.tags?.language?.lowercased(),
-                title: stream.tags?.title,
-                codec: stream.codecName,
-                codecLongName: stream.codecLongName,
-                isDefault: (stream.disposition?.defaultStream == 1),
-                isForced: (stream.disposition?.forced == 1)
-            )
-        }
+        let timecode = video.timecode ?? video.videoStreams.first?.timecode
 
         return MediaMetadata(
-            duration: format?.duration.flatMap { Double($0) },
-            formatName: format?.formatName,
-            containerLongName: format?.formatLongName,
-            sizeBytes: format?.size.flatMap { Int64($0) },
-            bitRate: format?.bitRate.flatMap { Int64($0) },
+            duration: video.duration,
+            formatName: video.format.rawValue,
+            containerLongName: video.formatLongName,
+            sizeBytes: video.fileSize,
+            bitRate: video.bitRate.map { Int64($0) },
             timecode: timecode,
-            comment: comment,
-            encoder: encoder,
+            comment: video.comment,
+            encoder: nil,
             frameCount: frameCount,
-            videoStreams: video,
-            audioStreams: audio,
-            subtitleStreams: subtitles
+            videoStreams: videoStreams,
+            audioStreams: audioStreams,
+            subtitleStreams: subtitleStreams
+        )
+    }
+
+    nonisolated private static func makeVideoStream(from stream: VideoStream) -> MediaMetadata.VideoStream {
+        let pixelAspectRatio: MediaMetadata.Ratio? = stream.pixelAspectRatio.flatMap { par in
+            MediaMetadata.Ratio(numerator: par.0, denominator: par.1)
+        }
+
+        let displayAspectRatio: MediaMetadata.Ratio? = {
+            if let w = stream.displayWidth, let h = stream.displayHeight, h > 0 {
+                return MediaMetadata.Ratio(numerator: w, denominator: h)
+            }
+            return nil
+        }()
+
+        let frameRate: MediaMetadata.FrameRate? = {
+            let fps = stream.avgFrameRate ?? stream.frameRate ?? stream.rFrameRate
+            guard let value = fps, value > 0 else { return nil }
+            return MediaMetadata.FrameRate(frameRateString: String(format: "%.6f", value))
+        }()
+
+        let colorPrimaries = stream.colorInfo?.primaries.flatMap(ColorMapping.primariesString(for:))
+        let colorTransfer = stream.colorInfo?.transfer.flatMap(ColorMapping.transferString(for:))
+        let colorSpace = stream.colorInfo?.matrix.flatMap(ColorMapping.matrixString(for:))
+        let colorRange = stream.colorInfo?.fullRange.map { $0 ? "pc" : "tv" }
+
+        let isInterlaced: Bool? = stream.fieldOrder.map { order in
+            switch order {
+            case .progressive, .unknown: return false
+            case .topFieldFirst, .bottomFieldFirst, .mixed: return true
+            }
+        }
+
+        let fieldOrderString: String? = stream.fieldOrder?.rawValue
+
+        let hasAlpha: Bool = {
+            if let flag = stream.hasAlphaChannel { return flag }
+            if let pixFmt = stream.pixelFormat { return hasAlphaChannel(pixelFormat: pixFmt) }
+            return false
+        }()
+
+        let contentLight = stream.hdr?.contentLightLevel
+        let mastering = stream.hdr?.masteringDisplay
+
+        return MediaMetadata.VideoStream(
+            codec: stream.codec,
+            codecLongName: stream.codecName,
+            profile: stream.profile,
+            width: stream.width,
+            height: stream.height,
+            pixelFormat: stream.pixelFormat,
+            hasAlpha: hasAlpha,
+            pixelAspectRatio: pixelAspectRatio,
+            displayAspectRatio: displayAspectRatio,
+            frameRate: frameRate,
+            bitDepth: stream.bitDepth,
+            chromaSubsampling: stream.chromaSubsampling,
+            colorPrimaries: colorPrimaries,
+            colorTransfer: colorTransfer,
+            colorSpace: colorSpace,
+            colorRange: colorRange,
+            chromaLocation: stream.chromaLocation,
+            fieldOrder: fieldOrderString,
+            isInterlaced: isInterlaced,
+            maxCLL: contentLight?.maxCLL,
+            maxFALL: contentLight?.maxFALL,
+            masteringMaxLuminance: mastering?.maxLuminance,
+            masteringMinLuminance: mastering?.minLuminance
+        )
+    }
+
+    nonisolated private static func makeAudioStream(from stream: AudioStream) -> MediaMetadata.AudioStream {
+        MediaMetadata.AudioStream(
+            index: stream.index,
+            languageCode: stream.language?.lowercased(),
+            title: stream.title,
+            codec: stream.codec,
+            codecLongName: stream.codecName,
+            profile: stream.profile,
+            sampleRate: stream.sampleRate,
+            channels: stream.channels,
+            channelLayout: stream.channelLayout,
+            bitDepth: stream.bitDepth,
+            bitRate: stream.bitRate.map { Int64($0) },
+            isDefault: stream.isDefault ?? false
+        )
+    }
+
+    nonisolated private static func makeSubtitleStream(from stream: SubtitleStream) -> MediaMetadata.SubtitleStream {
+        MediaMetadata.SubtitleStream(
+            index: stream.index,
+            languageCode: stream.language?.lowercased(),
+            title: stream.title,
+            codec: stream.codec,
+            codecLongName: stream.codecName,
+            isDefault: stream.isDefault ?? false,
+            isForced: stream.isForced ?? false
         )
     }
 }
 
-// MARK: - Luminance Helpers
+// MARK: - H.273 → ffmpeg-style color strings
 
-/// Parse a luminance ratio string like "10000000/10000" → 1000.0 nits.
-private nonisolated func parseLuminanceRatio(_ ratioString: String?) -> Double? {
-    guard let str = ratioString else { return nil }
-    let parts = str.split(separator: "/")
-    if parts.count == 2, let num = Double(parts[0]), let den = Double(parts[1]), den > 0 {
-        return num / den
-    }
-    return Double(str)
-}
-
-// MARK: - Pixel Format Helpers
-
-private nonisolated func bitDepthFromPixelFormat(_ pixelFormat: String) -> Int? {
-    let format = pixelFormat.lowercased()
-    let patterns = [
-        #"(\d{1,2})(le|be)?$"#,
-        #"p(\d{1,2})(le|be)?$"#,
-    ]
-    for pattern in patterns {
-        if let regex = try? NSRegularExpression(pattern: pattern, options: []),
-           let match = regex.firstMatch(in: format, options: [], range: NSRange(format.startIndex..., in: format)) {
-            let captureRange = match.numberOfRanges > 1 ? match.range(at: 1) : match.range(at: 0)
-            if let range = Range(captureRange, in: format),
-               let bitDepth = Int(format[range]),
-               bitDepth >= 8 && bitDepth <= 16 {
-                return bitDepth
-            }
+private enum ColorMapping {
+    nonisolated static func primariesString(for code: Int) -> String? {
+        switch code {
+        case 1: return "bt709"
+        case 4: return "bt470m"
+        case 5: return "bt470bg"
+        case 6: return "smpte170m"
+        case 7: return "smpte240m"
+        case 8: return "film"
+        case 9: return "bt2020"
+        case 10: return "smpte428"
+        case 11: return "smpte431"
+        case 12: return "smpte432"
+        case 22: return "jedec-p22"
+        default: return nil
         }
     }
-    if format.contains("24") || format.contains("32") { return 8 }
-    if format.contains("48") || format.contains("64") { return 16 }
-    let eightBitPatterns = ["yuv420p", "yuv422p", "yuv444p", "yuvj420p", "yuvj422p", "yuvj444p", "nv12", "nv21"]
-    for pattern in eightBitPatterns {
-        if format == pattern { return 8 }
+
+    nonisolated static func transferString(for code: Int) -> String? {
+        switch code {
+        case 1: return "bt709"
+        case 4: return "bt470m"
+        case 5: return "bt470bg"
+        case 6: return "smpte170m"
+        case 7: return "smpte240m"
+        case 8: return "linear"
+        case 9: return "log"
+        case 10: return "log-sqrt"
+        case 11: return "iec61966-2-4"
+        case 12: return "bt1361e"
+        case 13: return "iec61966-2-1"
+        case 14: return "bt2020-10"
+        case 15: return "bt2020-12"
+        case 16: return "smpte2084"
+        case 17: return "smpte428"
+        case 18: return "arib-std-b67"
+        default: return nil
+        }
     }
-    return nil
+
+    nonisolated static func matrixString(for code: Int) -> String? {
+        switch code {
+        case 0: return "gbr"
+        case 1: return "bt709"
+        case 4: return "fcc"
+        case 5: return "bt470bg"
+        case 6: return "smpte170m"
+        case 7: return "smpte240m"
+        case 8: return "ycgco"
+        case 9: return "bt2020nc"
+        case 10: return "bt2020c"
+        case 11: return "smpte2085"
+        case 12: return "chroma-derived-nc"
+        case 13: return "chroma-derived-c"
+        case 14: return "ictcp"
+        default: return nil
+        }
+    }
 }
 
-private nonisolated func chromaSubsamplingFromPixelFormat(_ pixelFormat: String) -> String? {
-    let format = pixelFormat.lowercased()
-    if format.contains("420") || format.contains("nv12") || format.contains("nv21") { return "4:2:0" }
-    if format.contains("422") || format.contains("yuyv") || format.contains("uyvy") { return "4:2:2" }
-    if format.contains("444") { return "4:4:4" }
-    if format.contains("411") { return "4:1:1" }
-    if format.contains("410") { return "4:1:0" }
-    if format.hasPrefix("rgb") || format.hasPrefix("bgr") || format.hasPrefix("argb") ||
-       format.hasPrefix("abgr") || format.hasPrefix("rgba") || format.hasPrefix("bgra") ||
-       format.hasPrefix("gbr") { return "4:4:4" }
-    if format.hasPrefix("gray") || format.hasPrefix("mono") || format == "y" { return nil }
-    return nil
-}
+// MARK: - Pixel-format alpha fallback
 
 private nonisolated func hasAlphaChannel(pixelFormat: String) -> Bool {
     let format = pixelFormat.lowercased()
     if format.contains("4444") { return true }
-    if format.contains("rgba") || format.contains("bgra") ||
-       format.contains("argb") || format.contains("abgr") { return true }
+    if format.contains("rgba") || format.contains("bgra")
+        || format.contains("argb") || format.contains("abgr") { return true }
     if format.hasPrefix("yuva") { return true }
     if format.hasPrefix("gbrap") { return true }
     if format.contains("alpha") { return true }
     return false
-}
-
-// MARK: - FFprobe Response Types
-
-private struct FFprobeResponse: Decodable {
-    enum CodingKeys: String, CodingKey {
-        case format
-        case streams
-    }
-
-    let format: Format?
-    let streams: [Stream]
-
-    nonisolated init(format: Format?, streams: [Stream]) {
-        self.format = format
-        self.streams = streams
-    }
-
-    nonisolated init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.format = try container.decodeIfPresent(Format.self, forKey: .format)
-        self.streams = try container.decodeIfPresent([Stream].self, forKey: .streams) ?? []
-    }
-
-    struct Format: Decodable {
-        let duration: String?
-        let formatName: String?
-        let formatLongName: String?
-        let size: String?
-        let bitRate: String?
-        let tags: Tags?
-    }
-
-    struct Stream: Decodable {
-        let index: Int?
-        let codecName: String?
-        let codecLongName: String?
-        let profile: String?
-        let codecType: String?
-        let width: Int?
-        let height: Int?
-        let pixFmt: String?
-        let sampleAspectRatio: String?
-        let displayAspectRatio: String?
-        let avgFrameRate: String?
-        let rFrameRate: String?
-        let bitRate: String?
-        let bitsPerRawSample: String?
-        let sampleRate: String?
-        let channels: Int?
-        let channelLayout: String?
-        let colorPrimaries: String?
-        let colorTransfer: String?
-        let colorSpace: String?
-        let colorRange: String?
-        let chromaLocation: String?
-        let fieldOrder: String?
-        let nbFrames: String?
-        let disposition: Disposition?
-        let tags: Tags?
-        let sideDataList: [SideData]?
-
-        struct Disposition: Decodable {
-            let defaultStream: Int?
-            let attachedPic: Int?
-            let forced: Int?
-        }
-
-        struct SideData: Decodable {
-            let sideDataType: String?
-            // Content light level metadata
-            let maxContent: Int?
-            let maxAverage: Int?
-            // Mastering display metadata
-            let maxLuminance: String?
-            let minLuminance: String?
-        }
-    }
-
-    struct Tags: Decodable {
-        let language: String?
-        let title: String?
-        let timecode: String?
-        let comment: String?
-        let encoder: String?
-    }
 }

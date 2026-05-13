@@ -208,7 +208,7 @@ extension PlayerController {
                                 }
                             }
 
-                            // Populate duration from AVPlayer so the timeline is usable before FFprobe finishes
+                            // Populate duration from AVPlayer so the timeline is usable before metadata finishes
                             let avDuration = try await asset.load(.duration)
                             guard self.preparationID == myPrepID else { return }
                             let seconds = CMTimeGetSeconds(avDuration)

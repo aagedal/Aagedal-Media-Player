@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		8EA00001AAAA000000000001 /* MPVKit-GPL in Frameworks */ = {isa = PBXBuildFile; productRef = 8EA00002AAAA000000000001 /* MPVKit-GPL */; };
 		8EA00004AAAA000000000001 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 8EA00005AAAA000000000001 /* Sparkle */; };
+		8EA00007AAAA000000000001 /* SwiftExif in Frameworks */ = {isa = PBXBuildFile; productRef = 8EA00008AAAA000000000001 /* SwiftExif */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -44,6 +45,7 @@
 			files = (
 				8EA00001AAAA000000000001 /* MPVKit-GPL in Frameworks */,
 				8EA00004AAAA000000000001 /* Sparkle in Frameworks */,
+				8EA00007AAAA000000000001 /* SwiftExif in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -88,6 +90,7 @@
 			packageProductDependencies = (
 				8EA00002AAAA000000000001 /* MPVKit-GPL */,
 				8EA00005AAAA000000000001 /* Sparkle */,
+				8EA00008AAAA000000000001 /* SwiftExif */,
 			);
 			productName = "Aagedal Media Player";
 			productReference = 8EB2F2832F49166000B196AD /* Aagedal Media Player.app */;
@@ -120,6 +123,7 @@
 			packageReferences = (
 				8EA00003AAAA000000000001 /* XCRemoteSwiftPackageReference "MPVKit" */,
 				8EA00006AAAA000000000001 /* XCRemoteSwiftPackageReference "Sparkle" */,
+				8EA00009AAAA000000000001 /* XCRemoteSwiftPackageReference "SwiftExif" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 8EB2F2842F49166000B196AD /* Products */;
@@ -389,6 +393,14 @@
 				minimumVersion = 2.9.1;
 			};
 		};
+		8EA00009AAAA000000000001 /* XCRemoteSwiftPackageReference "SwiftExif" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://codeberg.org/taagedal/SwiftExif";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.7.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -401,6 +413,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 8EA00006AAAA000000000001 /* XCRemoteSwiftPackageReference "Sparkle" */;
 			productName = Sparkle;
+		};
+		8EA00008AAAA000000000001 /* SwiftExif */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8EA00009AAAA000000000001 /* XCRemoteSwiftPackageReference "SwiftExif" */;
+			productName = SwiftExif;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
