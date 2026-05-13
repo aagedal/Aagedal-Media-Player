@@ -398,7 +398,7 @@
 			repositoryURL = "https://codeberg.org/taagedal/SwiftExif";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.7.0;
+				minimumVersion = 1.8.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
