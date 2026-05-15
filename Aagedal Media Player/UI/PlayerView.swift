@@ -153,6 +153,14 @@ struct PlayerView: View {
             return true
         }
 
+        // Space toggles play/pause. Handled here (before performKeyEquivalent)
+        // so the timeline slider, AVPlayerView, or any focused button can't
+        // swallow the key. Routed through notifications for multi-window sync.
+        if characters == " " {
+            NotificationCenter.default.post(name: .togglePlayback, object: nil)
+            return true
+        }
+
         // JKL playback controls — handled here (before performKeyEquivalent)
         // so AVPlayerView's built-in JKL shuttle doesn't intercept them.
         // Routed through notifications for multi-window sync.

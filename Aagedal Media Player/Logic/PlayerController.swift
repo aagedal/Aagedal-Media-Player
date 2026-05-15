@@ -100,6 +100,7 @@ final class PlayerController: ObservableObject {
     var playbackTimeObserver: Any?
     weak var playbackTimeObserverOwner: AVPlayer?
     var playerItemStatusObserver: Any?
+    var timeControlStatusObserver: NSKeyValueObservation?
     weak var playerView: AVPlayerView?
     @Published var selectedAudioTrackOrderIndex: Int = 0
     @Published var showAllMonoWaveforms: Bool = UserDefaults.standard.bool(forKey: SettingsView.showAllMonoWaveformsKey)
@@ -114,6 +115,7 @@ final class PlayerController: ObservableObject {
     private var mpvSourceSizeCancellable: AnyCancellable?
     private var mpvGammaCancellable: AnyCancellable?
     private var mpvSigPeakCancellable: AnyCancellable?
+    private var mpvIsPlayingCancellable: AnyCancellable?
     private var mpvTimePosTask: Task<Void, Never>?
     private var mpvFileLoadedTask: Task<Void, Never>?
     private var mpvDurationTask: Task<Void, Never>?
@@ -163,19 +165,16 @@ final class PlayerController: ObservableObject {
             videoAspectRatio = CGFloat(ratio)
         }
 
-        // Compute display source size (accounts for non-square pixels / DAR)
-        if let stream = item.metadata?.primaryVideoStream,
-           let codedW = stream.width, let codedH = stream.height,
-           codedW > 0, codedH > 0 {
-            let displayWidth: Double
-            if let dar = stream.displayAspectRatio?.doubleValue, dar > 0 {
-                displayWidth = Double(codedH) * dar
-            } else if let par = stream.pixelAspectRatio?.doubleValue, par > 0 {
-                displayWidth = Double(codedW) * par
-            } else {
-                displayWidth = Double(codedW)
+        // Use the metadata's resolved display dimensions directly. MetadataService
+        // already accounts for non-square pixels, container display dims, and
+        // rotation when populating these, so we don't need to re-derive them.
+        if let stream = item.metadata?.primaryVideoStream {
+            if let dw = stream.displayWidth, let dh = stream.displayHeight, dw > 0, dh > 0 {
+                videoSourceSize = NSSize(width: dw, height: dh)
+            } else if let codedW = stream.width, let codedH = stream.height,
+                      codedW > 0, codedH > 0 {
+                videoSourceSize = NSSize(width: codedW, height: codedH)
             }
-            videoSourceSize = NSSize(width: displayWidth, height: Double(codedH))
         }
 
         // Detect HDR transfer function from metadata
@@ -349,6 +348,7 @@ final class PlayerController: ObservableObject {
 
         installLoopObserver(for: playerItem)
         installPlaybackTimeObserver(for: player)
+        installTimeControlStatusObserver(for: player)
         updatePlayerActionAtEnd()
 
         if wasCapturing { frameCapture.startCapture() }
@@ -404,6 +404,15 @@ final class PlayerController: ObservableObject {
                 }
             }
         }
+
+        // Forward MPV play/pause state so the UI icon stays in sync with mpv's
+        // own pause property (EOF, internal pauses, errors).
+        mpvIsPlayingCancellable = mpv.$isPlaying
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] playing in
+                guard let self else { return }
+                self.isPlaying = playing || self.isReversing
+            }
 
         // Forward MPV aspect ratio and source size
         mpvAspectRatioCancellable = mpv.$videoAspectRatio
@@ -478,11 +487,11 @@ final class PlayerController: ObservableObject {
         syncIsPlaying()
     }
 
-    private func syncIsPlaying() {
+    func syncIsPlaying() {
         if useMPV {
-            isPlaying = mpvPlayer?.isPlaying ?? false
+            isPlaying = (mpvPlayer?.isPlaying ?? false) || isReversing
         } else {
-            isPlaying = (player?.rate ?? 0) != 0
+            isPlaying = (player?.timeControlStatus == .playing) || isReversing
         }
     }
 
@@ -1456,6 +1465,7 @@ final class PlayerController: ObservableObject {
         playerView?.player = nil
         removePlaybackTimeObserver()
         removePlayerItemStatusObserver()
+        removeTimeControlStatusObserver()
         removeLoopObserver()
         player = nil
 
@@ -1482,6 +1492,7 @@ final class PlayerController: ObservableObject {
         mpvSourceSizeCancellable = nil
         mpvGammaCancellable = nil
         mpvSigPeakCancellable = nil
+        mpvIsPlayingCancellable = nil
         removeMPVLoopObserver()
         if resetAudioSelection {
             selectedAudioTrackOrderIndex = 0

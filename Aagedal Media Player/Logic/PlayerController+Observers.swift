@@ -120,6 +120,23 @@ extension PlayerController {
         }
     }
 
+    // MARK: - Time Control Status Observer (live play/pause state)
+
+    func installTimeControlStatusObserver(for player: AVPlayer) {
+        removeTimeControlStatusObserver()
+
+        timeControlStatusObserver = player.observe(\.timeControlStatus, options: [.new, .initial]) { [weak self] _, _ in
+            Task { @MainActor [weak self] in
+                self?.syncIsPlaying()
+            }
+        }
+    }
+
+    func removeTimeControlStatusObserver() {
+        timeControlStatusObserver?.invalidate()
+        timeControlStatusObserver = nil
+    }
+
     // MARK: - Player Item Status Observer
 
     func installPlayerItemStatusObserver(for playerItem: AVPlayerItem, startTime: TimeInterval) {
@@ -198,13 +215,22 @@ extension PlayerController {
 
                             guard self.preparationID == myPrepID else { return }
 
-                            // Extract early aspect ratio from naturalSize
+                            // Extract early aspect ratio from naturalSize, applying the
+                            // track's preferredTransform so rotated tracks (portrait iPhone
+                            // clips, etc.) report post-rotation display dimensions and don't
+                            // overwrite the rotation-aware values produced by metadata.
                             if let firstVideoTrack = videoTracks.first {
                                 let naturalSize = try await firstVideoTrack.load(.naturalSize)
+                                let transform = try await firstVideoTrack.load(.preferredTransform)
                                 guard self.preparationID == myPrepID else { return }
-                                if naturalSize.width > 0, naturalSize.height > 0 {
-                                    self.videoAspectRatio = naturalSize.width / naturalSize.height
-                                    self.videoSourceSize = NSSize(width: naturalSize.width, height: naturalSize.height)
+                                let transformed = naturalSize.applying(transform)
+                                let displaySize = CGSize(
+                                    width: abs(transformed.width),
+                                    height: abs(transformed.height)
+                                )
+                                if displaySize.width > 0, displaySize.height > 0 {
+                                    self.videoAspectRatio = displaySize.width / displaySize.height
+                                    self.videoSourceSize = NSSize(width: displaySize.width, height: displaySize.height)
                                 }
                             }
 

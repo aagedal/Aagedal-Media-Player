@@ -46,12 +46,13 @@ struct MediaItem: Identifiable, Equatable, Sendable {
         if let ratioValue = metadata?.primaryVideoStream?.displayAspectRatio?.doubleValue {
             return ratioValue
         }
-        if
-            let width = metadata?.primaryVideoStream?.width,
-            let height = metadata?.primaryVideoStream?.height,
-            width > 0,
-            height > 0
-        {
+        if let stream = metadata?.primaryVideoStream,
+           let width = stream.width, let height = stream.height,
+           width > 0, height > 0 {
+            let normalizedRotation = ((stream.rotation ?? 0) % 360 + 360) % 360
+            if normalizedRotation == 90 || normalizedRotation == 270 {
+                return Double(height) / Double(width)
+            }
             return Double(width) / Double(height)
         }
         return nil

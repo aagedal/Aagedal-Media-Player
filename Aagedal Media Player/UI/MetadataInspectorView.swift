@@ -47,7 +47,19 @@ struct MetadataInspectorView: View {
                             metadataRow("Codec", value: codecDisplayName(codec, profile: video.profile))
                         }
                         if let width = video.width, let height = video.height {
-                            metadataRow("Resolution", value: resolutionDisplay(width: width, height: height, dar: video.displayAspectRatio))
+                            metadataRow("Resolution", value: resolutionDisplay(
+                                codedWidth: width,
+                                codedHeight: height,
+                                displayWidth: video.displayWidth,
+                                displayHeight: video.displayHeight
+                            ))
+                        }
+                        if let par = video.pixelAspectRatio,
+                           par.numerator != par.denominator {
+                            metadataRow("Pixel Aspect Ratio", value: par.reducedStringValue)
+                        }
+                        if let dar = video.displayAspectRatio {
+                            metadataRow("Display Aspect Ratio", value: dar.reducedStringValue)
                         }
                         if let frameRate = video.frameRate {
                             metadataRow("Frame Rate", value: frameRateDisplay(frameRate))
@@ -551,12 +563,19 @@ struct MetadataInspectorView: View {
         return String(format: "%02d:%02d", minutes, secs)
     }
 
-    private func resolutionDisplay(width: Int, height: Int, dar: MediaMetadata.Ratio?) -> String {
-        var result = "\(width) \u{00D7} \(height)"
-        if let dar = dar {
-            result += " (\(dar.stringValue))"
+    private func resolutionDisplay(codedWidth: Int, codedHeight: Int,
+                                   displayWidth: Int?, displayHeight: Int?) -> String {
+        // When the displayed orientation differs from the coded grid (rotated
+        // portrait clips, etc.), show the rotated display dims — those are
+        // what the viewer actually sees.
+        if let dw = displayWidth, let dh = displayHeight, dw > 0, dh > 0 {
+            let codedLandscape = codedWidth >= codedHeight
+            let displayLandscape = dw >= dh
+            if codedLandscape != displayLandscape {
+                return "\(dw) \u{00D7} \(dh)"
+            }
         }
-        return result
+        return "\(codedWidth) \u{00D7} \(codedHeight)"
     }
 
     private func chromaResolution(chroma: String, width: Int, height: Int) -> String? {

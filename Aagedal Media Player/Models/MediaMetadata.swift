@@ -17,6 +17,19 @@ struct MediaMetadata: Equatable, Sendable, Codable {
             return Double(numerator) / Double(denominator)
         }
 
+        /// `stringValue` reduced to lowest terms — e.g. `1920:1080` → `16:9`,
+        /// `5760:3240` → `16:9`. Useful for display where the colloquial ratio
+        /// is more readable than the raw pixel grid.
+        nonisolated var reducedStringValue: String {
+            let n = abs(numerator)
+            let d = abs(denominator)
+            guard n > 0, d > 0 else { return stringValue }
+            var a = n, b = d
+            while b != 0 { (a, b) = (b, a % b) }
+            let g = a
+            return "\(numerator / g):\(denominator / g)"
+        }
+
         nonisolated init?(numerator: Int, denominator: Int) {
             guard denominator != 0 else { return nil }
             self.numerator = numerator
@@ -108,6 +121,13 @@ struct MediaMetadata: Equatable, Sendable, Codable {
         let profile: String?
         let width: Int?
         let height: Int?
+        // Display dimensions: rotation-aware and PAR-corrected when known.
+        // Mirrors what ffprobe would report after applying side-data rotation
+        // and sample aspect ratio. Differs from `width`/`height` for anamorphic
+        // or rotated tracks (e.g. iPhone portrait HEVC: width 3840, height 2160,
+        // displayWidth 2160, displayHeight 3840).
+        let displayWidth: Int?
+        let displayHeight: Int?
         let pixelFormat: String?
         let hasAlpha: Bool
         let pixelAspectRatio: Ratio?
@@ -122,6 +142,7 @@ struct MediaMetadata: Equatable, Sendable, Codable {
         let chromaLocation: String?
         let fieldOrder: String?
         let isInterlaced: Bool?
+        let rotation: Int?           // Display rotation in degrees (90 / 180 / 270 / -90 etc.)
         // HDR luminance metadata
         let maxCLL: Int?            // MaxCLL (Maximum Content Light Level) in nits
         let maxFALL: Int?           // MaxFALL (Maximum Frame Average Light Level) in nits
