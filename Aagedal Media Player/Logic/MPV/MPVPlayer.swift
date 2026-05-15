@@ -181,7 +181,9 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         mpv_observe_property(mpv, 0, MPVProperty.seekable, MPV_FORMAT_FLAG)
         mpv_observe_property(mpv, 0, MPVProperty.eofReached, MPV_FORMAT_FLAG)
         mpv_observe_property(mpv, 0, MPVProperty.speed, MPV_FORMAT_DOUBLE)
-        mpv_observe_property(mpv, 0, MPVProperty.videoParamsAspect, MPV_FORMAT_DOUBLE)
+        mpv_observe_property(mpv, 0, MPVProperty.videoParamsDw, MPV_FORMAT_INT64)
+        mpv_observe_property(mpv, 0, MPVProperty.videoParamsDh, MPV_FORMAT_INT64)
+        mpv_observe_property(mpv, 0, MPVProperty.videoParamsRotate, MPV_FORMAT_INT64)
         mpv_observe_property(mpv, 0, MPVProperty.videoParamsGamma, MPV_FORMAT_STRING)
         mpv_observe_property(mpv, 0, MPVProperty.videoParamsSigPeak, MPV_FORMAT_DOUBLE)
 
@@ -504,15 +506,20 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
                                     self.isPlaying = false
                                 }
                             }
-                        case MPVProperty.videoParamsAspect:
-                            if let value = UnsafePointer<Double>(OpaquePointer(property.data))?.pointee, value > 0 {
-                                let dw = self.getInt(MPVProperty.videoParamsDw)
-                                let dh = self.getInt(MPVProperty.videoParamsDh)
+                        case MPVProperty.videoParamsDw, MPVProperty.videoParamsDh, MPVProperty.videoParamsRotate:
+                            // Read all three together — any of them changing means we
+                            // need to recompute display dims with rotation applied.
+                            let dw = self.getInt(MPVProperty.videoParamsDw)
+                            let dh = self.getInt(MPVProperty.videoParamsDh)
+                            let rotate = self.getInt(MPVProperty.videoParamsRotate)
+                            if dw > 0, dh > 0 {
+                                let normalized = ((rotate % 360) + 360) % 360
+                                let swap = (normalized == 90 || normalized == 270)
+                                let dispW = swap ? dh : dw
+                                let dispH = swap ? dw : dh
                                 DispatchQueue.main.async {
-                                    self.videoAspectRatio = CGFloat(value)
-                                    if dw > 0, dh > 0 {
-                                        self.videoSourceSize = NSSize(width: dw, height: dh)
-                                    }
+                                    self.videoSourceSize = NSSize(width: dispW, height: dispH)
+                                    self.videoAspectRatio = CGFloat(dispW) / CGFloat(dispH)
                                 }
                             }
                         case MPVProperty.videoParamsGamma:

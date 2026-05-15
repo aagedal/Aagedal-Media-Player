@@ -14,8 +14,32 @@ struct PlayerView: View {
     @Binding var isEditingTimecode: Bool
     @Binding var timecodeActivationTrigger: String?
 
+    /// Aspect ratio for the player view's `.aspectRatio(_:contentMode:)` modifier.
+    ///
+    /// Source priority:
+    /// 1. `controller.videoAspectRatio` — backend-reported (MPV's video-params
+    ///    or AVAsset preferredTransform), authoritative once playback starts.
+    /// 2. `item.videoDisplayAspectRatio` — metadata-derived, survives teardown.
+    /// 3. 16:9 default — only when nothing else is known (very first frame
+    ///    before metadata or backend reports anything).
+    ///
+    /// The metadata fallback matters during reload/swap: `teardown()` resets
+    /// `controller.videoAspectRatio` to nil and `.id(preparationID)` rebuilds
+    /// the MPVVideoView in that nil window, which would otherwise bake in the
+    /// 16/9 default. SwiftUI's AspectRatioLayout caches that decision against
+    /// the wrapped NSView, so the real value arriving on the next render
+    /// doesn't always reflow the Metal layer — leaving a 16:9 frame
+    /// pillarboxing a portrait video inside a portrait window.
     private var playerAspectRatio: CGFloat {
-        controller.videoAspectRatio ?? 16.0 / 9.0
+        if let backendRatio = controller.videoAspectRatio,
+           backendRatio.isFinite, backendRatio > 0 {
+            return backendRatio
+        }
+        if let metadataRatio = item.videoDisplayAspectRatio,
+           metadataRatio.isFinite, metadataRatio > 0 {
+            return CGFloat(metadataRatio)
+        }
+        return 16.0 / 9.0
     }
 
     var body: some View {

@@ -22,10 +22,18 @@ struct MPVProperty {
     nonisolated static let seekable = "seekable"
     nonisolated static let speed = "speed"
 
-    // Video display aspect ratio and dimensions (early sizing)
-    nonisolated static let videoParamsAspect = "video-params/aspect"
+    // Video display dimensions used for window sizing.
+    //
+    // `video-params/dw,dh` are the source display dims (coded × PAR) — they
+    // do *not* include container rotation. `video-params/rotate` carries the
+    // file's rotation in degrees. With hwdec=videotoolbox the filter chain
+    // doesn't reliably populate `video-out-params/*` or top-level
+    // `dwidth`/`dheight` with rotation-applied dims either, so the most
+    // reliable path is to read the source dims + rotate and apply the swap
+    // ourselves — mirroring what MetadataService does on the SwiftExif side.
     nonisolated static let videoParamsDw = "video-params/dw"
     nonisolated static let videoParamsDh = "video-params/dh"
+    nonisolated static let videoParamsRotate = "video-params/rotate"
 
     // Audio
     nonisolated static let volume = "volume"

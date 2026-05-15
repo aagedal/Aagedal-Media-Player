@@ -39,6 +39,14 @@ final class MPVViewController: NSViewController {
         view.layer = metalLayer
         view.wantsLayer = true
 
+        // Attach immediately. viewDidLayout is *not* a reliable trigger
+        // because SwiftUI's NSViewControllerRepresentable can recreate the
+        // view at bounds matching the previous instance (same-aspect swap,
+        // rapid Force Reloads), in which case viewDidLayout never fires
+        // and mpv's drawable would never get attached — leaving the pending
+        // loadfile stuck forever. Subsequent bounds changes from
+        // viewDidLayout update drawableSize, and MoltenVK recreates the
+        // swapchain to match.
         player.attachDrawable(metalLayer)
     }
 

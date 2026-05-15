@@ -737,29 +737,86 @@ struct ContentView: View {
             size: fileSize
         )
 
-        // Start playback immediately, load metadata in parallel
-        controller.loadMedia(item)
         WindowManager.shared.markHasMedia(id: windowID)
         (nsWindow ?? NSApp.keyWindow)?.title = item.name
 
+        // Await metadata before calling loadMedia so the player tree comes up
+        // at the correct aspect from the first render. SwiftExif is fast for
+        // local files (~50 ms typical), but we cap the wait at 500 ms so a
+        // pathological file can't stall playback — if the timeout fires we
+        // fall back to the old "load now, update later" path.
         Task {
-            do {
-                let metadata = try await MetadataService.shared.metadata(for: url)
+            let preloadedMetadata = await Self.loadMetadataWithTimeout(
+                url: url, timeoutMillis: 500
+            )
+
+            if let metadata = preloadedMetadata {
                 item.metadata = metadata
                 item.durationSeconds = metadata.duration ?? 0
                 item.hasVideoStream = !metadata.videoStreams.isEmpty
-                controller.updateMetadata(item)
                 timecodeMode = metadata.timecode != nil ? .source : .relative
+            }
+
+            controller.loadMedia(item)
+
+            if preloadedMetadata != nil {
+                // updateMetadata handles HDR transfer function detection and
+                // related post-metadata setup. videoAspectRatio / source size
+                // were already seeded by loadMedia from the same item, so this
+                // is essentially the HDR pass plus the AudioWaveform hook.
+                controller.updateMetadata(item)
                 if showAudioWaveformOverlay {
                     generateAudioWaveform()
                 }
-            } catch {
-                logger.warning("Failed to load metadata: \(error.localizedDescription)")
+            } else {
+                // Timeout path: keep fetching metadata in the background and
+                // run updateMetadata when it finally lands. Window/swapchain
+                // aspect will follow the metadata-driven update once it
+                // arrives (same behavior as before this change).
+                logger.info("Metadata fetch exceeded preload timeout for \(url.lastPathComponent), continuing without preload")
+                Task {
+                    do {
+                        let metadata = try await MetadataService.shared.metadata(for: url)
+                        item.metadata = metadata
+                        item.durationSeconds = metadata.duration ?? 0
+                        item.hasVideoStream = !metadata.videoStreams.isEmpty
+                        controller.updateMetadata(item)
+                        timecodeMode = metadata.timecode != nil ? .source : .relative
+                        if showAudioWaveformOverlay {
+                            generateAudioWaveform()
+                        }
+                    } catch {
+                        logger.warning("Failed to load metadata: \(error.localizedDescription)")
+                    }
+                }
             }
         }
 
         // Add to recent files
         NSDocumentController.shared.noteNewRecentDocumentURL(url)
+    }
+
+    /// Fetch metadata for `url` but return nil if the fetch doesn't complete
+    /// within `timeoutMillis`. The underlying SwiftExif read isn't cancelable
+    /// (it's actor-isolated file I/O), so on timeout we just stop waiting —
+    /// the work continues in the background and lands in MetadataService's
+    /// NSCache for the follow-up fetch in the timeout-path branch above.
+    private static func loadMetadataWithTimeout(
+        url: URL,
+        timeoutMillis: UInt64
+    ) async -> MediaMetadata? {
+        await withTaskGroup(of: MediaMetadata?.self) { group in
+            group.addTask {
+                try? await MetadataService.shared.metadata(for: url)
+            }
+            group.addTask {
+                try? await Task.sleep(nanoseconds: timeoutMillis * 1_000_000)
+                return nil
+            }
+            let first = await group.next() ?? nil
+            group.cancelAll()
+            return first
+        }
     }
 
     private func handleDrop(_ providers: [NSItemProvider]) -> Bool {

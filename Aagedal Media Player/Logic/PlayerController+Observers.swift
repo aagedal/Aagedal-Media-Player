@@ -215,24 +215,10 @@ extension PlayerController {
 
                             guard self.preparationID == myPrepID else { return }
 
-                            // Extract early aspect ratio from naturalSize, applying the
-                            // track's preferredTransform so rotated tracks (portrait iPhone
-                            // clips, etc.) report post-rotation display dimensions and don't
-                            // overwrite the rotation-aware values produced by metadata.
-                            if let firstVideoTrack = videoTracks.first {
-                                let naturalSize = try await firstVideoTrack.load(.naturalSize)
-                                let transform = try await firstVideoTrack.load(.preferredTransform)
-                                guard self.preparationID == myPrepID else { return }
-                                let transformed = naturalSize.applying(transform)
-                                let displaySize = CGSize(
-                                    width: abs(transformed.width),
-                                    height: abs(transformed.height)
-                                )
-                                if displaySize.width > 0, displaySize.height > 0 {
-                                    self.videoAspectRatio = displaySize.width / displaySize.height
-                                    self.videoSourceSize = NSSize(width: displaySize.width, height: displaySize.height)
-                                }
-                            }
+                            // Window aspect/source size come from MetadataService via
+                            // updateMetadata() now — no need to derive them from AVAsset
+                            // here. (This branch only runs for ProRes RAW since MPV is
+                            // the default backend for everything else.)
 
                             // Populate duration from AVPlayer so the timeline is usable before metadata finishes
                             let avDuration = try await asset.load(.duration)

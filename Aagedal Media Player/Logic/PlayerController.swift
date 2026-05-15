@@ -161,15 +161,41 @@ final class PlayerController: ObservableObject {
             currentPlaybackTime = 0
             trimIn = nil
             trimOut = nil
-            videoAspectRatio = nil
-            videoSourceSize = nil
+
+            // Seed videoAspectRatio / videoSourceSize from metadata when it's
+            // already on the item (openFile awaits SwiftExif before calling
+            // here). This ensures the SwiftUI tree around the new
+            // MPVViewController — WindowConfigurator, PlayerView aspect
+            // modifier — has the correct values *before* preparePlayback
+            // creates the player and view. mpv then configures its swapchain
+            // at the right size from frame 1, avoiding the
+            // "needs-Force-Reload-to-fix-scaling" bug that came from
+            // initializing at the 16:9 fallback and racing the
+            // metadata-driven resize.
+            if let ratio = item.videoDisplayAspectRatio, ratio.isFinite, ratio > 0 {
+                videoAspectRatio = CGFloat(ratio)
+            } else {
+                videoAspectRatio = nil
+            }
+            if let stream = item.metadata?.primaryVideoStream {
+                if let dw = stream.displayWidth, let dh = stream.displayHeight, dw > 0, dh > 0 {
+                    videoSourceSize = NSSize(width: dw, height: dh)
+                } else if let codedW = stream.width, let codedH = stream.height,
+                          codedW > 0, codedH > 0 {
+                    videoSourceSize = NSSize(width: codedW, height: codedH)
+                } else {
+                    videoSourceSize = nil
+                }
+            } else {
+                videoSourceSize = nil
+            }
+
             preparePlayback(startTime: 0)
         }
     }
 
     func updateMetadata(_ item: MediaItem) {
         guard mediaItem?.url == item.url else { return }
-        let currentTime = currentPlaybackTime
         mediaItem?.metadata = item.metadata
         mediaItem?.durationSeconds = item.durationSeconds
         mediaItem?.hasVideoStream = item.hasVideoStream
@@ -193,12 +219,6 @@ final class PlayerController: ObservableObject {
 
         // Detect HDR transfer function from metadata
         updateTransferFunction()
-
-        // If surround audio was detected and we're on AVPlayer, switch to MPV
-        if hasSurroundAudio && !hasProResVideoCodec && !useMPV {
-            logger.info("Surround audio detected after metadata load, switching to MPV for \(item.url.lastPathComponent)")
-            preparePlayback(startTime: currentTime, resetAudioSelection: true)
-        }
     }
 
     /// Detect and set the HDR transfer function from video metadata.
@@ -271,29 +291,10 @@ final class PlayerController: ObservableObject {
         return streams.allSatisfy { ($0.channels ?? 0) == 1 }
     }
 
-    /// Check if the video has surround audio (any track with more than 2 channels)
-    private var hasSurroundAudio: Bool {
-        guard let audioStreams = mediaItem?.metadata?.audioStreams else { return false }
-        return audioStreams.contains { ($0.channels ?? 0) > 2 }
-    }
-
-    /// Check if the video codec is ProRes
-    private var hasProResVideoCodec: Bool {
-        guard let videoStream = mediaItem?.metadata?.primaryVideoStream,
-              let codec = videoStream.codec?.lowercased() else { return false }
-
-        let proresCodecs = [
-            "prores", "prores_ks",
-            "ap4h", "ap4x",
-            "apcn", "apch", "apcs", "apco",
-            "aprn", "aprh",
-        ]
-
-        return proresCodecs.contains { codec.contains($0) }
-    }
-
-    /// Check if the video codec is ProRes RAW (which MPV cannot decode).
+    /// Check if the video codec is ProRes RAW based on already-loaded metadata.
     /// Detects via bayer pixel format (most reliable) or codec FourCC tags.
+    /// Returns false when metadata isn't loaded yet — `isProResRAWFile(url:)`
+    /// has the async fallback for that case.
     private var hasProResRAWVideoCodec: Bool {
         guard let videoStream = mediaItem?.metadata?.primaryVideoStream else { return false }
         if let pixFmt = videoStream.pixelFormat?.lowercased(), pixFmt.contains("bayer") {
@@ -305,10 +306,50 @@ final class PlayerController: ObservableObject {
         return false
     }
 
+    /// Determine whether `url` points to a ProRes RAW file. Backend selection
+    /// runs before SwiftExif metadata is available (loadMedia → preparePlayback
+    /// is synchronous, metadata fetch is on a separate Task), so when the
+    /// cached metadata check below misses we fall back to querying AVAsset's
+    /// CMFormatDescription directly — fast for local files and gives us the
+    /// codec FourCC without needing the full metadata pass.
+    ///
+    /// MPVKit-GPL can technically decode ProRes RAW, but the result has
+    /// incorrect colors and significantly worse playback performance than
+    /// VideoToolbox via AVPlayer, so we always route ProRes RAW to AVPlayer.
+    private static func isProResRAWFile(url: URL, metadata: MediaMetadata?) async -> Bool {
+        // Fast path: metadata is already loaded (Force Reload, re-drag of the
+        // same file, etc.).
+        if let stream = metadata?.primaryVideoStream {
+            if let pixFmt = stream.pixelFormat?.lowercased(), pixFmt.contains("bayer") {
+                return true
+            }
+            if let codec = stream.codec?.lowercased() {
+                return codec.contains("aprn") || codec.contains("aprh")
+            }
+        }
+
+        // Slow path: ask AVAsset for the video track's codec FourCC.
+        let asset = AVURLAsset(url: url)
+        do {
+            let tracks = try await asset.loadTracks(withMediaType: .video)
+            guard let track = tracks.first else { return false }
+            let formatDescs = try await track.load(.formatDescriptions)
+            guard let formatDesc = formatDescs.first else { return false }
+            let subtype = CMFormatDescriptionGetMediaSubType(formatDesc)
+            // FourCC: 'aprn' = ProRes RAW, 'aprh' = ProRes RAW HQ
+            let aprn: FourCharCode = 0x6170726E
+            let aprh: FourCharCode = 0x61707268
+            return subtype == aprn || subtype == aprh
+        } catch {
+            return false
+        }
+    }
+
     func preparePlayback(startTime: TimeInterval, resetAudioSelection: Bool = true) {
         let wasCapturing = frameCapture.isCapturing
         teardown(resetAudioSelection: resetAudioSelection)
         preparationID &+= 1
+        let myPrepID = preparationID
         isPreparing = true
         isReady = false
         errorMessage = nil
@@ -320,24 +361,35 @@ final class PlayerController: ObservableObject {
         }
 
         let url = item.url
+        let cachedMetadata = item.metadata
 
-        // Force MPV for surround audio files (unless ProRes)
-        if hasSurroundAudio && !hasProResVideoCodec {
-            logger.info("Surround audio detected with non-ProRes codec, using MPV player for \(url.lastPathComponent)")
-            setupMPV(url: url, startTime: startTime)
-            if wasCapturing { frameCapture.startCapture() }
-            return
+        // Backend selection has to happen *after* a codec check, because
+        // ProRes RAW must go to AVPlayer (VideoToolbox) while everything else
+        // goes to MPV. We can't read mediaItem.metadata synchronously here —
+        // openFile() spawns the SwiftExif metadata fetch in parallel with
+        // loadMedia(), so on first-open mediaItem.metadata is still nil. The
+        // async helper consults the cached metadata first and falls back to
+        // a fast AVAsset CMFormatDescription FourCC check.
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            let isProResRAW = await PlayerController.isProResRAWFile(url: url, metadata: cachedMetadata)
+            // A newer preparePlayback may have superseded this one.
+            guard self.preparationID == myPrepID else { return }
+
+            if isProResRAW {
+                self.logger.info("ProRes RAW detected, using AVPlayer for \(url.lastPathComponent)")
+                self.setupAVPlayer(url: url, startTime: startTime, wasCapturing: wasCapturing)
+            } else {
+                self.logger.info("Using MPV player for \(url.lastPathComponent)")
+                self.setupMPV(url: url, startTime: startTime)
+                if wasCapturing { self.frameCapture.startCapture() }
+            }
         }
+    }
 
-        // Honor "Always Use MPV" setting (except for ProRes RAW which MPV can't decode)
-        if UserDefaults.standard.bool(forKey: "alwaysUseMPV") && !hasProResRAWVideoCodec {
-            logger.info("Always Use MPV enabled, using MPV player for \(url.lastPathComponent)")
-            setupMPV(url: url, startTime: startTime)
-            if wasCapturing { frameCapture.startCapture() }
-            return
-        }
-
-        // Try AVPlayer first
+    /// AVPlayer-backed setup path. Used only for ProRes RAW (which mpv decodes
+    /// with wrong colors and worse performance than VideoToolbox).
+    private func setupAVPlayer(url: URL, startTime: TimeInterval, wasCapturing: Bool) {
         let asset = AVURLAsset(url: url, options: [AVURLAssetPreferPreciseDurationAndTimingKey: true])
         let playerItem = AVPlayerItem(asset: asset)
         let player = AVPlayer(playerItem: playerItem)
