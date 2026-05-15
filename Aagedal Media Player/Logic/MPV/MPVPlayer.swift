@@ -211,9 +211,10 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         pendingSeekAfterLoad = startTime
 
         let path = url.isFileURL ? url.path : url.absoluteString
-        let cmd = "loadfile \"\(path.replacingOccurrences(of: "\"", with: "\\\""))\" replace"
 
-        commandString(cmd)
+        // Use argv-form to avoid string-parsing pitfalls with paths that contain
+        // quotes, backslashes, or whitespace.
+        command("loadfile", args: [path, "replace"])
 
         if !autostart {
             setFlag(MPVProperty.pause, true)
@@ -523,9 +524,11 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
 
                 case MPV_EVENT_LOG_MESSAGE:
                     if let msg = UnsafeMutablePointer<mpv_event_log_message>(OpaquePointer(pointee.data)) {
-                        let prefix = String(cString: msg.pointee.prefix!)
-                        let level = String(cString: msg.pointee.level!)
-                        let text = String(cString: msg.pointee.text!)
+                        // mpv's log fields are documented as non-null, but defend
+                        // against malformed events rather than crashing the event loop.
+                        let prefix = msg.pointee.prefix.map { String(cString: $0) } ?? "mpv"
+                        let level = msg.pointee.level.map { String(cString: $0) } ?? "?"
+                        let text = msg.pointee.text.map { String(cString: $0) } ?? ""
                         print("[\(prefix)] \(level): \(text)", terminator: "")
                     }
 
