@@ -36,4 +36,8 @@ struct MPVProperty {
     // Subtitles
     nonisolated static let sid = "sid"
     nonisolated static let subVisibility = "sub-visibility"
+
+    // Chapters
+    nonisolated static let chapter = "chapter"
+    nonisolated static let chapterListCount = "chapter-list/count"
 }

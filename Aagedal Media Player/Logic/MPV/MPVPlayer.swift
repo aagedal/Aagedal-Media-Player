@@ -444,6 +444,20 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         setInt(MPVProperty.sid, 0)
     }
 
+    // MARK: - Chapters
+
+    var chapters: [(time: Double, title: String)] {
+        guard mpv != nil else { return [] }
+        var result: [(Double, String)] = []
+        let count = getInt(MPVProperty.chapterListCount)
+        for i in 0..<count {
+            let time = getDouble("chapter-list/\(i)/time")
+            let title = getString("chapter-list/\(i)/title") ?? "Chapter \(i + 1)"
+            result.append((time, title))
+        }
+        return result
+    }
+
     // MARK: - Event Handling
 
     fileprivate nonisolated func readEvents() {

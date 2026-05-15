@@ -30,6 +30,13 @@ final class PlayerController: ObservableObject {
         let title: String
     }
 
+    struct ChapterOption: Identifiable, Equatable {
+        let id: Int
+        let position: Int
+        let time: Double
+        let title: String
+    }
+
     // MARK: - Published State
 
     @Published var volume: Double = 100 {
@@ -56,6 +63,13 @@ final class PlayerController: ObservableObject {
     @Published private(set) var isReversing: Bool = false
     @Published var audioTrackOptions: [AudioTrackOption] = []
     @Published var subtitleTrackOptions: [SubtitleTrackOption] = []
+    @Published var chapterOptions: [ChapterOption] = []
+
+    var currentChapterPosition: Int? {
+        guard !chapterOptions.isEmpty else { return nil }
+        let t = currentPlaybackTime
+        return chapterOptions.last(where: { $0.time <= t + 0.001 })?.position
+    }
     @Published var videoAspectRatio: CGFloat?
     @Published var videoSourceSize: NSSize?
 
@@ -342,6 +356,7 @@ final class PlayerController: ObservableObject {
 
         self.isPreparing = false
         refreshAudioTrackOptions(playerItem: playerItem)
+        refreshChapterOptions(playerItem: playerItem)
 
         let seekTime = CMTime(seconds: startTime, preferredTimescale: 600)
         player.seek(to: seekTime, toleranceBefore: .zero, toleranceAfter: .zero)
@@ -473,6 +488,7 @@ final class PlayerController: ObservableObject {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             guard let self else { return }
             self.refreshAudioTrackOptions(playerItem: nil)
+            self.refreshChapterOptions(playerItem: nil)
         }
 
         // Install MPV loop observer
@@ -1087,6 +1103,49 @@ final class PlayerController: ObservableObject {
         }
     }
 
+    // MARK: - Chapter Selection
+
+    func refreshChapterOptions(playerItem: AVPlayerItem?) {
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            if useMPV, let mpv = mpvPlayer {
+                let raw = mpv.chapters
+                self.chapterOptions = raw.enumerated().map { idx, c in
+                    ChapterOption(
+                        id: idx,
+                        position: idx,
+                        time: c.time,
+                        title: c.title.isEmpty ? "Chapter \(idx + 1)" : c.title
+                    )
+                }
+            } else if let asset = playerItem?.asset {
+                let langs = Locale.preferredLanguages
+                let groups = (try? await asset.loadChapterMetadataGroups(
+                    bestMatchingPreferredLanguages: langs)) ?? []
+                var options: [ChapterOption] = []
+                for (idx, group) in groups.enumerated() {
+                    let start = group.timeRange.start.seconds
+                    guard start.isFinite else { continue }
+                    var title = "Chapter \(idx + 1)"
+                    if let titleItem = group.items.first(where: {
+                        $0.commonKey == .commonKeyTitle
+                    }), let s = try? await titleItem.load(.stringValue), !s.isEmpty {
+                        title = s
+                    }
+                    options.append(ChapterOption(id: idx, position: idx, time: start, title: title))
+                }
+                self.chapterOptions = options
+            } else {
+                self.chapterOptions = []
+            }
+        }
+    }
+
+    func jumpToChapter(at position: Int) {
+        guard chapterOptions.indices.contains(position) else { return }
+        seekTo(chapterOptions[position].time)
+    }
+
     // MARK: - Trim Points
 
     func setTrimIn() {
@@ -1501,6 +1560,7 @@ final class PlayerController: ObservableObject {
         }
         audioTrackOptions = []
         subtitleTrackOptions = []
+        chapterOptions = []
     }
 }
 

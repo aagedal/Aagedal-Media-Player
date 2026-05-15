@@ -98,6 +98,11 @@ struct ControlsView: View {
         // Subtitle track picker
         subtitleTrackPicker
 
+        // Chapter picker (only when chapters exist)
+        if !controller.chapterOptions.isEmpty {
+            chapterPicker
+        }
+
         // Loop toggle
         Button(action: {
             if let item = item {
@@ -627,5 +632,38 @@ struct ControlsView: View {
         .menuStyle(.borderlessButton)
         .frame(width: 28)
         .help("Subtitles")
+    }
+
+    // MARK: - Chapter Picker
+
+    private var chapterPicker: some View {
+        Menu {
+            ForEach(controller.chapterOptions) { option in
+                Button(action: { controller.jumpToChapter(at: option.position) }) {
+                    HStack {
+                        Text("\(formatChapterTime(option.time))  \(option.title)")
+                        if option.position == controller.currentChapterPosition {
+                            Image(systemName: "checkmark")
+                        }
+                    }
+                }
+            }
+        } label: {
+            Image(systemName: "list.bullet.rectangle")
+                .font(.system(size: 14))
+                .frame(width: 28, height: 28)
+        }
+        .menuStyle(.borderlessButton)
+        .frame(width: 28)
+        .help("Chapters")
+    }
+
+    private func formatChapterTime(_ t: Double) -> String {
+        let s = max(0, Int(t))
+        let h = s / 3600
+        let m = (s % 3600) / 60
+        let sec = s % 60
+        return h > 0 ? String(format: "%d:%02d:%02d", h, m, sec)
+                     : String(format: "%d:%02d", m, sec)
     }
 }
