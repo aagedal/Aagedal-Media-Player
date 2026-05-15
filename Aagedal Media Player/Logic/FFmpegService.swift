@@ -75,7 +75,6 @@ enum FFmpegService {
 
                 var args = arguments
                 if wantProgress {
-                    // Insert -progress pipe:1 right after -hide_banner (or at the start)
                     if let idx = args.firstIndex(of: "-hide_banner") {
                         args.insert(contentsOf: ["-progress", "pipe:1"], at: idx + 1)
                     } else {
@@ -84,17 +83,26 @@ enum FFmpegService {
                 }
                 process.arguments = args
 
-                let stdoutPipe = Pipe()
+                // stderr must drain continuously: once the kernel pipe buffer
+                // fills, ffmpeg blocks on write(2) and waitUntilExit() hangs.
                 let stderrPipe = Pipe()
-                process.standardOutput = stdoutPipe
+                let stderrCollector = StderrCollector()
                 process.standardError = stderrPipe
+                stderrPipe.fileHandleForReading.readabilityHandler = { fh in
+                    let data = fh.availableData
+                    guard !data.isEmpty else { return }
+                    stderrCollector.append(data)
+                }
 
+                let stdoutPipe: Pipe?
                 if wantProgress, let totalDuration = duration, let progressCallback = onProgress {
-                    stdoutPipe.fileHandleForReading.readabilityHandler = { handle in
-                        let data = handle.availableData
+                    let pipe = Pipe()
+                    stdoutPipe = pipe
+                    process.standardOutput = pipe
+                    pipe.fileHandleForReading.readabilityHandler = { fh in
+                        let data = fh.availableData
                         guard !data.isEmpty, let text = String(data: data, encoding: .utf8) else { return }
 
-                        // Parse lines like "out_time_us=12345678"
                         for line in text.components(separatedBy: .newlines) {
                             if line.hasPrefix("out_time_us=") {
                                 let valueStr = line.dropFirst("out_time_us=".count)
@@ -106,27 +114,35 @@ enum FFmpegService {
                             }
                         }
                     }
+                } else {
+                    stdoutPipe = nil
+                    process.standardOutput = FileHandle.nullDevice
                 }
 
                 do {
                     try process.run()
                     handle?.attach(process)
                 } catch {
-                    stdoutPipe.fileHandleForReading.readabilityHandler = nil
+                    stderrPipe.fileHandleForReading.readabilityHandler = nil
+                    stdoutPipe?.fileHandleForReading.readabilityHandler = nil
                     continuation.resume(throwing: error)
                     return
                 }
 
                 process.waitUntilExit()
-                stdoutPipe.fileHandleForReading.readabilityHandler = nil
+
+                stderrPipe.fileHandleForReading.readabilityHandler = nil
+                stdoutPipe?.fileHandleForReading.readabilityHandler = nil
+
+                let stderrTail = stderrPipe.fileHandleForReading.readDataToEndOfFile()
+                if !stderrTail.isEmpty { stderrCollector.append(stderrTail) }
 
                 if process.terminationStatus == 0 {
                     continuation.resume(returning: ())
                 } else if process.terminationReason == .uncaughtSignal {
                     continuation.resume(throwing: FFmpegError.cancelled)
                 } else {
-                    let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
-                    let message = String(data: stderrData, encoding: .utf8) ?? "Unknown ffmpeg error"
+                    let message = String(data: stderrCollector.combined(), encoding: .utf8) ?? "Unknown ffmpeg error"
                     continuation.resume(throwing: FFmpegError.processFailed(message.trimmingCharacters(in: .whitespacesAndNewlines)))
                 }
             }
