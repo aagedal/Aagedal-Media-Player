@@ -20,6 +20,9 @@ final class ScopeWindowController {
     /// Observation for parent window closing — auto-closes scope panel.
     private var closeObserver: NSObjectProtocol?
 
+    /// Observation for the scope panel's own willClose — runs cleanup() when the user dismisses it.
+    private var panelObserver: NSObjectProtocol?
+
     init(frameCapture: FrameCapture, filename: String, parentWindow: NSWindow?) {
         self.frameCapture = frameCapture
         self.filename = filename
@@ -86,7 +89,7 @@ final class ScopeWindowController {
         }
 
         // Handle scope panel close button
-        NotificationCenter.default.addObserver(
+        panelObserver = NotificationCenter.default.addObserver(
             forName: NSWindow.willCloseNotification,
             object: panel,
             queue: .main
@@ -122,6 +125,10 @@ final class ScopeWindowController {
         if let observer = closeObserver {
             NotificationCenter.default.removeObserver(observer)
             closeObserver = nil
+        }
+        if let observer = panelObserver {
+            NotificationCenter.default.removeObserver(observer)
+            panelObserver = nil
         }
 
         panel = nil

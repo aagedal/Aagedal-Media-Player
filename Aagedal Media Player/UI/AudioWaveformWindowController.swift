@@ -20,6 +20,9 @@ final class AudioWaveformWindowController {
 
     private var closeObserver: NSObjectProtocol?
 
+    /// Observation for the waveform panel's own willClose — runs cleanup() when the user dismisses it.
+    private var panelObserver: NSObjectProtocol?
+
     init(controller: PlayerController, filename: String, parentWindow: NSWindow?) {
         self.controller = controller
         self.generator = AudioWaveformGenerator()
@@ -139,7 +142,7 @@ final class AudioWaveformWindowController {
         }
 
         // Handle panel close button
-        NotificationCenter.default.addObserver(
+        panelObserver = NotificationCenter.default.addObserver(
             forName: NSWindow.willCloseNotification,
             object: panel,
             queue: .main
@@ -175,6 +178,10 @@ final class AudioWaveformWindowController {
         if let observer = closeObserver {
             NotificationCenter.default.removeObserver(observer)
             closeObserver = nil
+        }
+        if let observer = panelObserver {
+            NotificationCenter.default.removeObserver(observer)
+            panelObserver = nil
         }
 
         panel = nil
