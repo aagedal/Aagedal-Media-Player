@@ -6,6 +6,8 @@
 
 import SwiftUI
 import AppKit
+import AVFoundation
+import CoreMedia
 import UniformTypeIdentifiers
 import OSLog
 
@@ -740,55 +742,42 @@ struct ContentView: View {
         WindowManager.shared.markHasMedia(id: windowID)
         (nsWindow ?? NSApp.keyWindow)?.title = item.name
 
-        // Await metadata before calling loadMedia so the player tree comes up
-        // at the correct aspect from the first render. SwiftExif is fast for
-        // local files (~50 ms typical), but we cap the wait at 500 ms so a
-        // pathological file can't stall playback — if the timeout fires we
-        // fall back to the old "load now, update later" path.
+        // Two-tier metadata load:
+        //   1. Quick AVAsset descriptor (codec FourCC + presentation
+        //      dimensions). Reads only the moov atom, so it's fast even for
+        //      multi-GB files. Used to seed videoAspectRatio /
+        //      videoSourceSize on the controller before preparePlayback runs,
+        //      so the SwiftUI tree around the new MPVViewController has the
+        //      correct aspect on first render and mpv builds its Vulkan
+        //      swapchain at the right size from frame 1.
+        //   2. Full SwiftExif metadata in the background — for HDR transfer
+        //      function, timecode, channel layouts, etc. SwiftExif can be
+        //      slow on huge files (full-file hash), but its results aren't
+        //      needed on the playback critical path.
         Task {
-            let preloadedMetadata = await Self.loadMetadataWithTimeout(
-                url: url, timeoutMillis: 500
+            let descriptor = await Self.loadQuickDescriptor(url: url)
+            controller.loadMedia(
+                item,
+                initialAspectRatio: descriptor?.displayAspectRatio,
+                initialSourceSize: descriptor?.displaySize
             )
 
-            if let metadata = preloadedMetadata {
+            // Now load full SwiftExif metadata for the metadata panel and
+            // HDR detection. preparePlayback has already chosen a backend
+            // using the descriptor (or, falling back to AVAsset codec
+            // FourCC, the same path the descriptor used).
+            do {
+                let metadata = try await MetadataService.shared.metadata(for: url)
                 item.metadata = metadata
                 item.durationSeconds = metadata.duration ?? 0
                 item.hasVideoStream = !metadata.videoStreams.isEmpty
-                timecodeMode = metadata.timecode != nil ? .source : .relative
-            }
-
-            controller.loadMedia(item)
-
-            if preloadedMetadata != nil {
-                // updateMetadata handles HDR transfer function detection and
-                // related post-metadata setup. videoAspectRatio / source size
-                // were already seeded by loadMedia from the same item, so this
-                // is essentially the HDR pass plus the AudioWaveform hook.
                 controller.updateMetadata(item)
+                timecodeMode = metadata.timecode != nil ? .source : .relative
                 if showAudioWaveformOverlay {
                     generateAudioWaveform()
                 }
-            } else {
-                // Timeout path: keep fetching metadata in the background and
-                // run updateMetadata when it finally lands. Window/swapchain
-                // aspect will follow the metadata-driven update once it
-                // arrives (same behavior as before this change).
-                logger.info("Metadata fetch exceeded preload timeout for \(url.lastPathComponent), continuing without preload")
-                Task {
-                    do {
-                        let metadata = try await MetadataService.shared.metadata(for: url)
-                        item.metadata = metadata
-                        item.durationSeconds = metadata.duration ?? 0
-                        item.hasVideoStream = !metadata.videoStreams.isEmpty
-                        controller.updateMetadata(item)
-                        timecodeMode = metadata.timecode != nil ? .source : .relative
-                        if showAudioWaveformOverlay {
-                            generateAudioWaveform()
-                        }
-                    } catch {
-                        logger.warning("Failed to load metadata: \(error.localizedDescription)")
-                    }
-                }
+            } catch {
+                logger.warning("Failed to load metadata: \(error.localizedDescription)")
             }
         }
 
@@ -796,26 +785,43 @@ struct ContentView: View {
         NSDocumentController.shared.noteNewRecentDocumentURL(url)
     }
 
-    /// Fetch metadata for `url` but return nil if the fetch doesn't complete
-    /// within `timeoutMillis`. The underlying SwiftExif read isn't cancelable
-    /// (it's actor-isolated file I/O), so on timeout we just stop waiting —
-    /// the work continues in the background and lands in MetadataService's
-    /// NSCache for the follow-up fetch in the timeout-path branch above.
-    private static func loadMetadataWithTimeout(
-        url: URL,
-        timeoutMillis: UInt64
-    ) async -> MediaMetadata? {
-        await withTaskGroup(of: MediaMetadata?.self) { group in
-            group.addTask {
-                try? await MetadataService.shared.metadata(for: url)
-            }
-            group.addTask {
-                try? await Task.sleep(nanoseconds: timeoutMillis * 1_000_000)
-                return nil
-            }
-            let first = await group.next() ?? nil
-            group.cancelAll()
-            return first
+    /// Minimum playback-init info derived from AVAsset's
+    /// CMVideoFormatDescription: codec class and post-PAR/post-rotation
+    /// display dimensions. AVAsset only parses the moov atom for this, so
+    /// the call is fast even for very large files — unlike SwiftExif, which
+    /// reads the whole file for hashing and scales with file size.
+    private struct QuickDescriptor {
+        let displaySize: CGSize
+        let displayAspectRatio: Double
+    }
+
+    private static func loadQuickDescriptor(url: URL) async -> QuickDescriptor? {
+        let asset = AVURLAsset(url: url)
+        do {
+            let tracks = try await asset.loadTracks(withMediaType: .video)
+            guard let track = tracks.first else { return nil }
+            let formatDescs = try await track.load(.formatDescriptions)
+            guard let formatDesc = formatDescs.first else { return nil }
+
+            let presentationDims = CMVideoFormatDescriptionGetPresentationDimensions(
+                formatDesc,
+                usePixelAspectRatio: true,
+                useCleanAperture: true
+            )
+            let transform = try await track.load(.preferredTransform)
+            let transformed = presentationDims.applying(transform)
+            let displaySize = CGSize(
+                width: abs(transformed.width),
+                height: abs(transformed.height)
+            )
+            guard displaySize.width > 0, displaySize.height > 0 else { return nil }
+
+            return QuickDescriptor(
+                displaySize: displaySize,
+                displayAspectRatio: displaySize.width / displaySize.height
+            )
+        } catch {
+            return nil
         }
     }
 

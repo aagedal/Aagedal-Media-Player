@@ -152,7 +152,25 @@ final class PlayerController: ObservableObject {
 
     // MARK: - Media Item Management
 
-    func loadMedia(_ item: MediaItem) {
+    /// Load a new media item.
+    ///
+    /// `initialAspectRatio` / `initialSourceSize` are optional seed values
+    /// for `videoAspectRatio` / `videoSourceSize` so the SwiftUI tree around
+    /// the new MPVViewController (WindowConfigurator + PlayerView's aspect
+    /// modifier) has the correct values on the first render — mpv then
+    /// configures its Vulkan swapchain at the right size from frame 1,
+    /// instead of initializing at the 16:9 fallback and racing the
+    /// metadata-driven resize. openFile derives these from a fast AVAsset
+    /// CMVideoFormatDescription query.
+    ///
+    /// When full SwiftExif metadata is also on the item, it takes precedence
+    /// over the seed values. updateMetadata refines once full metadata
+    /// arrives later for backends that use it (HDR transfer function, etc.).
+    func loadMedia(
+        _ item: MediaItem,
+        initialAspectRatio: Double? = nil,
+        initialSourceSize: CGSize? = nil
+    ) {
         let previousURL = mediaItem?.url
         mediaItem = item
 
@@ -162,21 +180,16 @@ final class PlayerController: ObservableObject {
             trimIn = nil
             trimOut = nil
 
-            // Seed videoAspectRatio / videoSourceSize from metadata when it's
-            // already on the item (openFile awaits SwiftExif before calling
-            // here). This ensures the SwiftUI tree around the new
-            // MPVViewController — WindowConfigurator, PlayerView aspect
-            // modifier — has the correct values *before* preparePlayback
-            // creates the player and view. mpv then configures its swapchain
-            // at the right size from frame 1, avoiding the
-            // "needs-Force-Reload-to-fix-scaling" bug that came from
-            // initializing at the 16:9 fallback and racing the
-            // metadata-driven resize.
+            // Aspect ratio: metadata > AVAsset descriptor seed > nil
             if let ratio = item.videoDisplayAspectRatio, ratio.isFinite, ratio > 0 {
                 videoAspectRatio = CGFloat(ratio)
+            } else if let seed = initialAspectRatio, seed.isFinite, seed > 0 {
+                videoAspectRatio = CGFloat(seed)
             } else {
                 videoAspectRatio = nil
             }
+
+            // Source size: metadata > AVAsset descriptor seed > nil
             if let stream = item.metadata?.primaryVideoStream {
                 if let dw = stream.displayWidth, let dh = stream.displayHeight, dw > 0, dh > 0 {
                     videoSourceSize = NSSize(width: dw, height: dh)
@@ -186,6 +199,8 @@ final class PlayerController: ObservableObject {
                 } else {
                     videoSourceSize = nil
                 }
+            } else if let seed = initialSourceSize, seed.width > 0, seed.height > 0 {
+                videoSourceSize = NSSize(width: seed.width, height: seed.height)
             } else {
                 videoSourceSize = nil
             }
