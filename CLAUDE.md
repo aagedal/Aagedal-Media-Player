@@ -18,20 +18,26 @@ There are no test targets, no linting tools, and no CI/CD configured.
 
 **Important:** Metal API Validation must be OFF in the Xcode scheme's Run diagnostics. MoltenVK has a known race condition that causes crashes with validation enabled (KhronosGroup/MoltenVK#2226).
 
-## Dependency: MPVKit
+## Dependencies
 
-The sole external dependency is **MPVKit-GPL**, referenced as a local Swift package from `../../Aagedal-Media-Converter/MPVKit`. It bundles mpv 0.41.0, MoltenVK 1.4.0, and Libplacebo 7.351.0. The app also ships a bundled `ffmpeg` binary at `Aagedal Media Player/Aagedal Media Player/Binaries/ffmpeg` used for screenshot capture and trim export.
+Swift Package dependencies (all remote, resolved via SPM):
+
+- **MPVKit-GPL** — `https://codeberg.org/taagedal/MPVKit`, branch `aagedal/custom-builds`. Truls's fork of MPVKit. Bundles mpv 0.41.0, MoltenVK 1.4.0, Libplacebo 7.351.0.
+- **SwiftExif** — `https://codeberg.org/taagedal/SwiftExif`, semver `>= 1.8.0`. Pure-Swift metadata library (Truls's own), replaces the earlier ffprobe shell-out for stream metadata.
+- **Sparkle** — `https://github.com/sparkle-project/Sparkle`, semver `>= 2.9.1`. Auto-update infrastructure.
+
+The app also ships a bundled `ffmpeg` binary at `Aagedal Media Player/Binaries/ffmpeg`, used for screenshot capture and lossless trim export (not for metadata).
 
 ## Architecture
 
-### Dual Playback Backend
+### Playback Backend
 
-The core architectural decision is a **dual-backend player**: AVPlayer (primary) with MPV as fallback.
+**MPV is the default backend** for every codec the app supports. AVPlayer is reserved for ProRes RAW — MPVKit-GPL can technically decode it but the colors are wrong and performance is significantly worse than VideoToolbox.
 
 - `PlayerController` (`Logic/PlayerController.swift`) is the central `@MainActor ObservableObject` managing both backends. It exposes published state (volume, playback time, speed, trim points, etc.) consumed by all views.
-- **Backend selection** happens in `preparePlayback()`: AVPlayer is tried first. If AVPlayer fails (observed via `playerItem.status == .failed`), it falls back to MPV. Surround audio with non-ProRes video forces MPV immediately.
-- MPV handles formats AVPlayer can't: MKV containers, VVC (H.266), APV, ProRes RAW, and certain surround audio configurations.
+- **Backend selection** happens in `preparePlayback()`: an async `isProResRAWFile(url:metadata:)` check decides between `setupMPV` and `setupAVPlayer`. The check uses cached SwiftExif metadata as the fast path and falls back to AVAsset's `CMFormatDescription` codec FourCC (`aprn`, `aprh`) when metadata isn't loaded yet.
 - The `useMPV` boolean on `PlayerController` controls which rendering path `PlayerView` shows.
+- `ContentView.openFile` calls a fast AVAsset preload (`loadQuickDescriptor`) that reads only the moov atom for display dimensions, then seeds `videoAspectRatio` / `videoSourceSize` on the controller via `loadMedia(_:initialAspectRatio:initialSourceSize:)` before `preparePlayback` runs. This ensures the SwiftUI tree and mpv's Vulkan swapchain initialize at the correct size on frame 1.
 
 ### MPV Integration (`Logic/MPV/`)
 
@@ -46,14 +52,15 @@ MPV renders through Vulkan via MoltenVK onto a `CAMetalLayer`:
 
 ### View Layer
 
-- `ContentView` — Main window: shows `DropZoneView` when empty, `PlayerView` when a file is loaded. Manages overlay auto-hide, drag-drop, and window configuration.
-- `PlayerView` — Renders either AVPlayer or MPV backend based on `controller.useMPV`. Handles JKL keyboard controls.
+- `ContentView` — Main window: shows `DropZoneView` when empty, `PlayerView` when a file is loaded. Manages overlay auto-hide, drag-drop, and window configuration. `openFile` does the AVAsset descriptor preload before calling `controller.loadMedia`.
+- `PlayerView` — Renders either AVPlayer or MPV backend based on `controller.useMPV`. Handles JKL keyboard controls. `playerAspectRatio` falls back to `MediaItem.videoDisplayAspectRatio` before the 16:9 default so the view survives teardown without snapping to a stale aspect.
 - `ControlsView` — Playback controls bar with play/pause, seek slider, speed controls, timecode display, trim in/out buttons.
+- `WindowConfigurator` — `NSViewRepresentable` that drives `contentAspectRatio` and content size from `controller.videoAspectRatio` / `videoSourceSize`.
 
 ### Supporting Services
 
-- `MetadataService` — Async metadata extraction using FFmpeg, parses stream info (codecs, resolution, frame rates, color space).
-- `FFmpegService` — Wraps the bundled ffmpeg binary for screenshots and lossless trim exports.
+- `MetadataService` — Async metadata extraction using **SwiftExif** (no ffmpeg shell-out). Actor with NSCache keyed on URL. Applies `AVAsset.preferredTransform` as the authoritative rotation source for QuickTime/MP4-family containers, then walks `MetadataMapper` to produce a `MediaMetadata` with resolved display dimensions, DAR, PAR, HDR side-data, etc.
+- `FFmpegService` — Wraps the bundled ffmpeg binary for screenshots and lossless trim exports (not metadata).
 - `WindowManager` — Singleton managing multi-window state, coordinating synchronized playback across windows.
 
 ### Communication Pattern
