@@ -154,23 +154,14 @@ final class PlayerController: ObservableObject {
 
     /// Load a new media item.
     ///
-    /// `initialAspectRatio` / `initialSourceSize` are optional seed values
-    /// for `videoAspectRatio` / `videoSourceSize` so the SwiftUI tree around
-    /// the new MPVViewController (WindowConfigurator + PlayerView's aspect
-    /// modifier) has the correct values on the first render — mpv then
-    /// configures its Vulkan swapchain at the right size from frame 1,
-    /// instead of initializing at the 16:9 fallback and racing the
-    /// metadata-driven resize. openFile derives these from a fast AVAsset
-    /// CMVideoFormatDescription query.
-    ///
-    /// When full SwiftExif metadata is also on the item, it takes precedence
-    /// over the seed values. updateMetadata refines once full metadata
-    /// arrives later for backends that use it (HDR transfer function, etc.).
-    func loadMedia(
-        _ item: MediaItem,
-        initialAspectRatio: Double? = nil,
-        initialSourceSize: CGSize? = nil
-    ) {
+    /// Seeds `videoAspectRatio` / `videoSourceSize` from `item.metadata` so
+    /// the SwiftUI tree around the new MPVViewController (WindowConfigurator
+    /// + PlayerView's aspect modifier) has the correct values on the first
+    /// render and mpv builds its Vulkan swapchain at the right size from
+    /// frame 1. openFile awaits SwiftExif metadata before calling this so
+    /// the metadata path is the normal case; on the 500 ms timeout fallback
+    /// the values land later via updateMetadata.
+    func loadMedia(_ item: MediaItem) {
         let previousURL = mediaItem?.url
         mediaItem = item
 
@@ -180,16 +171,15 @@ final class PlayerController: ObservableObject {
             trimIn = nil
             trimOut = nil
 
-            // Aspect ratio: metadata > AVAsset descriptor seed > nil
+            // Aspect ratio from MetadataMapper's resolved DAR.
             if let ratio = item.videoDisplayAspectRatio, ratio.isFinite, ratio > 0 {
                 videoAspectRatio = CGFloat(ratio)
-            } else if let seed = initialAspectRatio, seed.isFinite, seed > 0 {
-                videoAspectRatio = CGFloat(seed)
             } else {
                 videoAspectRatio = nil
             }
 
-            // Source size: metadata > AVAsset descriptor seed > nil
+            // Source size: prefer MetadataMapper's display dims (post-PAR,
+            // post-rotation), fall back to coded dims.
             if let stream = item.metadata?.primaryVideoStream {
                 if let dw = stream.displayWidth, let dh = stream.displayHeight, dw > 0, dh > 0 {
                     videoSourceSize = NSSize(width: dw, height: dh)
@@ -199,8 +189,6 @@ final class PlayerController: ObservableObject {
                 } else {
                     videoSourceSize = nil
                 }
-            } else if let seed = initialSourceSize, seed.width > 0, seed.height > 0 {
-                videoSourceSize = NSSize(width: seed.width, height: seed.height)
             } else {
                 videoSourceSize = nil
             }
@@ -322,11 +310,10 @@ final class PlayerController: ObservableObject {
     }
 
     /// Determine whether `url` points to a ProRes RAW file. Backend selection
-    /// runs before SwiftExif metadata is available (loadMedia → preparePlayback
-    /// is synchronous, metadata fetch is on a separate Task), so when the
-    /// cached metadata check below misses we fall back to querying AVAsset's
-    /// CMFormatDescription directly — fast for local files and gives us the
-    /// codec FourCC without needing the full metadata pass.
+    /// normally has SwiftExif metadata available because openFile awaits it
+    /// before loadMedia, but the 500 ms timeout fallback path lets the file
+    /// open without metadata — for that case we fall back to querying
+    /// AVAsset's CMFormatDescription directly for the codec FourCC.
     ///
     /// MPVKit-GPL can technically decode ProRes RAW, but the result has
     /// incorrect colors and significantly worse playback performance than
@@ -380,11 +367,10 @@ final class PlayerController: ObservableObject {
 
         // Backend selection has to happen *after* a codec check, because
         // ProRes RAW must go to AVPlayer (VideoToolbox) while everything else
-        // goes to MPV. We can't read mediaItem.metadata synchronously here —
-        // openFile() spawns the SwiftExif metadata fetch in parallel with
-        // loadMedia(), so on first-open mediaItem.metadata is still nil. The
-        // async helper consults the cached metadata first and falls back to
-        // a fast AVAsset CMFormatDescription FourCC check.
+        // goes to MPV. openFile normally awaits SwiftExif metadata before
+        // calling loadMedia, so the cached metadata fast path covers the
+        // common case; the async helper falls back to a fast AVAsset
+        // CMFormatDescription FourCC check for the 500 ms-timeout path.
         Task { @MainActor [weak self] in
             guard let self else { return }
             let isProResRAW = await PlayerController.isProResRAWFile(url: url, metadata: cachedMetadata)
@@ -1612,8 +1598,11 @@ final class PlayerController: ObservableObject {
         isPreparing = false
         isPlaying = false
         currentPlaybackSpeed = 1.0
-        videoAspectRatio = nil
-        videoSourceSize = nil
+        // videoAspectRatio / videoSourceSize are intentionally NOT wiped here:
+        // the next loadMedia overwrites them with the new file's values, and
+        // keeping them set across the player gap avoids a nil-flash that would
+        // make PlayerView fall back to 16:9 and WindowConfigurator briefly
+        // collapse its aspect lock.
         mpvAspectRatioCancellable = nil
         mpvSourceSizeCancellable = nil
         mpvGammaCancellable = nil
