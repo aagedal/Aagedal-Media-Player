@@ -28,6 +28,12 @@ final class MPVViewController: NSViewController {
     nonisolated(unsafe) private var didExitFullScreenObserver: NSObjectProtocol?
     private weak var observedWindow: NSWindow?
 
+    /// Tracks the drawableSize we last sent a vo-reconfig nudge for, so
+    /// we only nudge on substantial jumps (fullscreen transitions, the
+    /// late layout-settle after metadata lands) — not on every pixel of
+    /// user-driven window drag, which would spam mpv.
+    private var lastNudgedDrawableSize: CGSize = .zero
+
     init(player: MPVPlayer) {
         self.player = player
         super.init(nibName: nil, bundle: nil)
@@ -114,6 +120,16 @@ final class MPVViewController: NSViewController {
         if newDrawableSize.width > 1 && newDrawableSize.height > 1 {
             metalLayer.drawableSize = newDrawableSize
             scalingLogger.info("viewDidLayout: bounds=\(String(describing: self.view.bounds)) scale=\(scale) oldDrawable=\(String(describing: oldDrawableSize)) newDrawable=\(String(describing: newDrawableSize)) fullscreen=\(isFullScreen)")
+
+            // Track size unconditionally for diagnostic correlation.
+            // We intentionally do NOT auto-reload from viewDidLayout —
+            // a reload mid-layout (e.g. during the .ts initial-settle
+            // case where the layer grows from 540×304 to 1920×1080)
+            // could compound with another layout pass and cause loops.
+            // Fullscreen transitions are the only place we auto-reload,
+            // because they're a discrete user action with a clear
+            // boundary (did{Enter,Exit}FullScreen).
+            lastNudgedDrawableSize = newDrawableSize
         } else {
             scalingLogger.debug("viewDidLayout: bounds=\(String(describing: self.view.bounds)) skipped (newDrawable=\(String(describing: newDrawableSize)) <=1)")
         }
@@ -156,6 +172,8 @@ final class MPVViewController: NSViewController {
             MainActor.assumeIsolated {
                 guard let self else { return }
                 scalingLogger.info("didEnterFullScreen: bounds=\(String(describing: self.view.bounds)) drawable=\(String(describing: self.metalLayer.drawableSize))")
+                self.lastNudgedDrawableSize = self.metalLayer.drawableSize
+                self.requestReloadForSurfaceChange(reason: "didEnterFullScreen")
             }
         }
         willExitFullScreenObserver = NotificationCenter.default.addObserver(
@@ -174,8 +192,31 @@ final class MPVViewController: NSViewController {
             MainActor.assumeIsolated {
                 guard let self else { return }
                 scalingLogger.info("didExitFullScreen: bounds=\(String(describing: self.view.bounds)) drawable=\(String(describing: self.metalLayer.drawableSize))")
+                self.lastNudgedDrawableSize = self.metalLayer.drawableSize
+                self.requestReloadForSurfaceChange(reason: "didExitFullScreen")
             }
         }
+    }
+
+    /// Trigger a Force Reload via the same `.reloadPlayer` notification
+    /// the menu uses. ContentView's handler calls
+    /// `PlayerController.preparePlayback(startTime:resetAudioSelection:)`,
+    /// which destroys+recreates the mpv context — the only thing we've
+    /// found that reliably re-inits mpv's vo at the *current* layer
+    /// surface size.
+    ///
+    /// Background on why lighter nudges don't work: with
+    /// `wid=metalLayer + gpu-next/vulkan/moltenvk`, mpv's `vo->dwidth`
+    /// /`dheight` are supposed to update inside `vk_acquire`, but in
+    /// practice, after the layer's drawableSize grows underneath a
+    /// paused stream (fullscreen entry), even a frame-forcing seek
+    /// renders into the old dst rect. Property nudges (video-zoom=0)
+    /// hit short-circuit checks. Only a full mpv-context recreate
+    /// observably clears the stale state. Heavier than ideal, but it
+    /// matches the user's known-working manual workaround.
+    private func requestReloadForSurfaceChange(reason: String) {
+        scalingLogger.info("requestReloadForSurfaceChange: \(reason) — posting .reloadPlayer to recreate mpv at current surface size")
+        NotificationCenter.default.post(name: .reloadPlayer, object: nil)
     }
 }
 
