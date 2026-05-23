@@ -566,6 +566,7 @@ final class PlayerController: ObservableObject {
 
     func togglePlayback() {
         guard isReady else { return }
+        logPlaybackTransition("togglePlayback")
 
         if isReversing {
             stopReverse()
@@ -595,6 +596,7 @@ final class PlayerController: ObservableObject {
     }
 
     func pause() {
+        logPlaybackTransition("pause")
         stopReverse()
 
         if useMPV, let mpv = mpvPlayer {
@@ -610,6 +612,7 @@ final class PlayerController: ObservableObject {
 
     func play() {
         guard isReady else { return }
+        logPlaybackTransition("play")
 
         if useMPV, let mpv = mpvPlayer {
             mpv.rate = 1.0
@@ -621,6 +624,16 @@ final class PlayerController: ObservableObject {
             player.play()
         }
         syncIsPlaying()
+    }
+
+    /// Diagnostic: emit a `scaling` event when a play/pause transition is
+    /// requested. Captures the current controller-tracked source size and
+    /// aspect ratio so we can correlate "fullscreen → play causes 1:1
+    /// collapse" with the state at the moment of play.
+    private func logPlaybackTransition(_ source: String) {
+        let size = videoSourceSize.map { "\(Int($0.width))x\(Int($0.height))" } ?? "nil"
+        let ratio = videoAspectRatio.map { String(format: "%.4f", Double($0)) } ?? "nil"
+        scalingLogger.info("\(source): backend=\(self.useMPV ? "mpv" : "av") wasPlaying=\(self.isPlaying) videoSourceSize=\(size) ratio=\(ratio)")
     }
 
     func stepRate(forward: Bool) {

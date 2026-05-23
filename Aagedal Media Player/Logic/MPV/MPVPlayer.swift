@@ -512,6 +512,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
                             let dw = self.getInt(MPVProperty.videoParamsDw)
                             let dh = self.getInt(MPVProperty.videoParamsDh)
                             let rotate = self.getInt(MPVProperty.videoParamsRotate)
+                            scalingLogger.info("mpv video-params: dw=\(dw) dh=\(dh) rotate=\(rotate)")
                             if dw > 0, dh > 0 {
                                 let normalized = ((rotate % 360) + 360) % 360
                                 let swap = (normalized == 90 || normalized == 270)
@@ -520,6 +521,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
                                 DispatchQueue.main.async {
                                     self.videoSourceSize = NSSize(width: dispW, height: dispH)
                                     self.videoAspectRatio = CGFloat(dispW) / CGFloat(dispH)
+                                    scalingLogger.info("mpv emitted videoSourceSize=\(dispW)x\(dispH) (ratio=\(Double(dispW) / Double(dispH)))")
                                 }
                             }
                         case MPVProperty.videoParamsGamma:
