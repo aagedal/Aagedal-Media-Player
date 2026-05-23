@@ -28,11 +28,23 @@ final class MPVViewController: NSViewController {
     nonisolated(unsafe) private var didExitFullScreenObserver: NSObjectProtocol?
     private weak var observedWindow: NSWindow?
 
-    /// Tracks the drawableSize we last sent a vo-reconfig nudge for, so
-    /// we only nudge on substantial jumps (fullscreen transitions, the
-    /// late layout-settle after metadata lands) — not on every pixel of
-    /// user-driven window drag, which would spam mpv.
+    /// Tracks the drawableSize we last observed in a viewDidLayout pass,
+    /// for diagnostic correlation in the `scaling` log.
     private var lastNudgedDrawableSize: CGSize = .zero
+
+    /// One-shot guard for the viewDidLayout-based auto Force Reload.
+    /// When mpv attaches to a layer whose drawableSize is small (e.g.
+    /// the layer hasn't been laid out into its final container yet —
+    /// the common case when a file drops into a small/empty window),
+    /// mpv's vo locks its dst rect to that small size. A subsequent
+    /// viewDidLayout that grows the surface to its real size leaves
+    /// mpv rendering 540×304-worth of pixels into a 1920×1080 swapchain
+    /// — video collapses to the top-left at the pixelated initial size.
+    /// We catch this by Force Reloading on the first ≥1.5× growth in
+    /// viewDidLayout, but only once per MPVViewController instance —
+    /// otherwise the reload itself (which recreates the view controller
+    /// via SwiftUI's preparationID-based .id()) could re-enter and loop.
+    private var hasAutoReloadedForLayoutJump = false
 
     init(player: MPVPlayer) {
         self.player = player
@@ -121,15 +133,25 @@ final class MPVViewController: NSViewController {
             metalLayer.drawableSize = newDrawableSize
             scalingLogger.info("viewDidLayout: bounds=\(String(describing: self.view.bounds)) scale=\(scale) oldDrawable=\(String(describing: oldDrawableSize)) newDrawable=\(String(describing: newDrawableSize)) fullscreen=\(isFullScreen)")
 
-            // Track size unconditionally for diagnostic correlation.
-            // We intentionally do NOT auto-reload from viewDidLayout —
-            // a reload mid-layout (e.g. during the .ts initial-settle
-            // case where the layer grows from 540×304 to 1920×1080)
-            // could compound with another layout pass and cause loops.
-            // Fullscreen transitions are the only place we auto-reload,
-            // because they're a discrete user action with a clear
-            // boundary (did{Enter,Exit}FullScreen).
             lastNudgedDrawableSize = newDrawableSize
+
+            // Auto Force Reload on initial layout-settle. Skip when
+            // already in fullscreen (didEnterFullScreen handles that
+            // path and we don't want both firing). One-shot per
+            // MPVViewController so the reload itself can't re-enter:
+            // after .reloadPlayer, the controller's preparationID
+            // changes, SwiftUI rebuilds the MPVVideoView, a fresh
+            // MPVViewController is created with hasAutoReloadedForLayoutJump=false,
+            // and the new instance's first viewDidLayout sees the
+            // already-settled window — no jump, no reload.
+            if !hasAutoReloadedForLayoutJump,
+               !isFullScreen,
+               shouldAutoReloadForLayoutJump(from: oldDrawableSize, to: newDrawableSize) {
+                hasAutoReloadedForLayoutJump = true
+                requestReloadForSurfaceChange(
+                    reason: "viewDidLayout drawableSize jumped \(Int(oldDrawableSize.width))x\(Int(oldDrawableSize.height)) → \(Int(newDrawableSize.width))x\(Int(newDrawableSize.height))"
+                )
+            }
         } else {
             scalingLogger.debug("viewDidLayout: bounds=\(String(describing: self.view.bounds)) skipped (newDrawable=\(String(describing: newDrawableSize)) <=1)")
         }
@@ -217,6 +239,20 @@ final class MPVViewController: NSViewController {
     private func requestReloadForSurfaceChange(reason: String) {
         scalingLogger.info("requestReloadForSurfaceChange: \(reason) — posting .reloadPlayer to recreate mpv at current surface size")
         NotificationCenter.default.post(name: .reloadPlayer, object: nil)
+    }
+
+    /// Returns true if the drawableSize grew ≥1.5× in either dimension,
+    /// indicating the layer was likely pre-layout when mpv attached and
+    /// has now settled to its real size. User-driven window-drag layout
+    /// passes are well under this threshold (~2-4% per tick), so this
+    /// is safe to act on without spamming reloads during resize.
+    /// Shrinkage isn't checked: shrinking the surface doesn't strand
+    /// mpv's dst rect — that's a growth-only bug.
+    private func shouldAutoReloadForLayoutJump(from old: CGSize, to new: CGSize) -> Bool {
+        guard old.width > 0, old.height > 0 else { return false }
+        let widthGrowth = new.width / old.width
+        let heightGrowth = new.height / old.height
+        return widthGrowth >= 1.5 || heightGrowth >= 1.5
     }
 }
 
