@@ -808,8 +808,15 @@ final class PlayerController: ObservableObject {
     func fastForward() {
         guard isReady else { return }
 
+        // L during reverse: instantly switch direction (Resolve/Premiere
+        // J↔L behavior). Call play() explicitly rather than falling through
+        // because mpv's @Published isPlaying is updated async by the event
+        // observer — checking it right after pause() reads the stale "true"
+        // and the fall-through would mistakenly take the "already playing,
+        // bump speed" branch (showing 1.5x while mpv is actually paused).
         if isReversing {
             stopReverse()
+            play()
             return
         }
 
@@ -838,6 +845,7 @@ final class PlayerController: ObservableObject {
     func slowForward() {
         guard isReady else { return }
 
+        let wasReversing = isReversing
         if isReversing {
             stopReverse()
         }
@@ -852,11 +860,14 @@ final class PlayerController: ObservableObject {
             target = slowSteps.first(where: { $0 < current }) ?? slowSteps.last!
         }
 
+        // Same stale-isPlaying race as fastForward: just exited reverse means
+        // mpv was actually playing (backward) and the pause hasn't propagated
+        // to @Published isPlaying yet, so we can't trust the conditional play.
         if useMPV, let mpv = mpvPlayer {
-            if !mpv.isPlaying { mpv.play() }
+            if wasReversing || !mpv.isPlaying { mpv.play() }
             mpv.rate = target
         } else if let player = player {
-            if player.rate == 0 { player.play() }
+            if wasReversing || player.rate == 0 { player.play() }
             player.rate = target
         }
         currentPlaybackSpeed = target
