@@ -26,6 +26,7 @@ final class MPVViewController: NSViewController {
     nonisolated(unsafe) private var didEnterFullScreenObserver: NSObjectProtocol?
     nonisolated(unsafe) private var willExitFullScreenObserver: NSObjectProtocol?
     nonisolated(unsafe) private var didExitFullScreenObserver: NSObjectProtocol?
+    nonisolated(unsafe) private var didEndLiveResizeObserver: NSObjectProtocol?
     private weak var observedWindow: NSWindow?
 
     /// Tracks the drawableSize we last observed in a viewDidLayout pass,
@@ -61,6 +62,7 @@ final class MPVViewController: NSViewController {
             didEnterFullScreenObserver,
             willExitFullScreenObserver,
             didExitFullScreenObserver,
+            didEndLiveResizeObserver,
         ].compactMap({ $0 }) {
             NotificationCenter.default.removeObserver(token)
         }
@@ -100,7 +102,7 @@ final class MPVViewController: NSViewController {
 
     override func viewWillAppear() {
         super.viewWillAppear()
-        installFullScreenObservers(on: view.window)
+        installWindowObservers(on: view.window)
     }
 
     override func viewDidLayout() {
@@ -109,10 +111,10 @@ final class MPVViewController: NSViewController {
             scalingLogger.debug("viewDidLayout: no window yet (bounds=\(String(describing: self.view.bounds)))")
             return
         }
-        // Install fullscreen observers lazily here too — viewDidLayout
+        // Install window observers lazily here too — viewDidLayout
         // is the earliest point we're guaranteed to have a window.
         if observedWindow !== window {
-            installFullScreenObservers(on: window)
+            installWindowObservers(on: window)
         }
 
         let scale = window.screen?.backingScaleFactor ?? 2.0
@@ -157,9 +159,9 @@ final class MPVViewController: NSViewController {
         }
     }
 
-    // MARK: - Fullscreen observers (diagnostic)
+    // MARK: - Window observers (fullscreen + live resize)
 
-    private func installFullScreenObservers(on window: NSWindow?) {
+    private func installWindowObservers(on window: NSWindow?) {
         // Tear down any previous observers if the window changed.
         if observedWindow !== window {
             for token in [
@@ -167,6 +169,7 @@ final class MPVViewController: NSViewController {
                 didEnterFullScreenObserver,
                 willExitFullScreenObserver,
                 didExitFullScreenObserver,
+                didEndLiveResizeObserver,
             ].compactMap({ $0 }) {
                 NotificationCenter.default.removeObserver(token)
             }
@@ -174,6 +177,7 @@ final class MPVViewController: NSViewController {
             didEnterFullScreenObserver = nil
             willExitFullScreenObserver = nil
             didExitFullScreenObserver = nil
+            didEndLiveResizeObserver = nil
             observedWindow = window
         }
         guard let window else { return }
@@ -216,6 +220,24 @@ final class MPVViewController: NSViewController {
                 scalingLogger.info("didExitFullScreen: bounds=\(String(describing: self.view.bounds)) drawable=\(String(describing: self.metalLayer.drawableSize))")
                 self.lastNudgedDrawableSize = self.metalLayer.drawableSize
                 self.requestReloadForSurfaceChange(reason: "didExitFullScreen")
+            }
+        }
+        // User-driven window resize: viewDidLayout updates drawableSize on
+        // every tick, but the per-tick growth is well under the 1.5×
+        // auto-reload threshold, so mpv's vo ends a drag with its dst rect
+        // stranded at the pre-drag size — small videos collapse to the
+        // top-left, large videos zoom into the upper-left quadrant. Fire
+        // a Force Reload once the live-resize session ends; this fires
+        // after the user releases the resize handle, not per drag tick.
+        didEndLiveResizeObserver = NotificationCenter.default.addObserver(
+            forName: NSWindow.didEndLiveResizeNotification,
+            object: window, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                scalingLogger.info("didEndLiveResize: bounds=\(String(describing: self.view.bounds)) drawable=\(String(describing: self.metalLayer.drawableSize))")
+                self.lastNudgedDrawableSize = self.metalLayer.drawableSize
+                self.requestReloadForSurfaceChange(reason: "didEndLiveResize")
             }
         }
     }
