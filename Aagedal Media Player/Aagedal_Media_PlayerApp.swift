@@ -261,6 +261,7 @@ SettingsView.audioWaveformColorKey: AudioWaveformColor.pink.rawValue,
             SettingsView.audioWaveformBoostKey: 0.0,
         ])
         UpdateChecker.shared.checkIfNeeded()
+        SparkleUpdater.shared.presentFirstLaunchNoticeIfNeeded()
     }
 
     func application(_ application: NSApplication, open urls: [URL]) {
