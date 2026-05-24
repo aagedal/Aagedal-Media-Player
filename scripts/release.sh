@@ -198,7 +198,52 @@ fi
 # Append appcast.xml entry
 # -----------------------------------------------------------------------------
 PUB_DATE=$(date "+%a, %d %b %Y %H:%M:%S %z")
-RELEASE_NOTES_HTML="                <p>See <a href=\"https://codeberg.org/$CODEBERG_OWNER/$CODEBERG_REPO/releases/tag/$MARKETING_VERSION\">release notes</a>.</p>"
+
+# Extract the [$MARKETING_VERSION] section of CHANGELOG.md and convert it to
+# HTML for the appcast <description>. Sparkle's "What's new" panel renders
+# this as HTML, so users see the real release notes in-app instead of a link.
+# Fails loudly if no matching section exists — better than shipping a release
+# with empty notes.
+RELEASE_NOTES_HTML=$(python3 - "CHANGELOG.md" "$MARKETING_VERSION" <<'PYEOF'
+import sys, pathlib, re, html
+
+path, version = sys.argv[1], sys.argv[2]
+text = pathlib.Path(path).read_text()
+
+pattern = rf'^## \[{re.escape(version)}\][^\n]*\n(.*?)(?=^## |\Z)'
+m = re.search(pattern, text, re.DOTALL | re.MULTILINE)
+if not m:
+    sys.stderr.write(f"ERROR: CHANGELOG.md has no section for [{version}]\n")
+    sys.exit(1)
+
+out, in_list = [], False
+for line in m.group(1).strip().split('\n'):
+    line = line.rstrip()
+    if not line:
+        if in_list:
+            out.append('</ul>'); in_list = False
+        continue
+    if line.startswith('### '):
+        if in_list:
+            out.append('</ul>'); in_list = False
+        out.append(f'<h3>{html.escape(line[4:], quote=False)}</h3>')
+    elif line.startswith('- '):
+        if not in_list:
+            out.append('<ul>'); in_list = True
+        content = html.escape(line[2:], quote=False)
+        content = re.sub(r'`([^`]+)`', r'<code>\1</code>', content)
+        out.append(f'<li>{content}</li>')
+    else:
+        if in_list:
+            out.append('</ul>'); in_list = False
+        out.append(f'<p>{html.escape(line, quote=False)}</p>')
+
+if in_list:
+    out.append('</ul>')
+
+print('\n'.join(out))
+PYEOF
+)
 
 NEW_ITEM=$(cat <<EOF
         <item>
