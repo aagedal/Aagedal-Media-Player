@@ -53,6 +53,13 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
     @Published var videoGamma: String?
     @Published var videoSigPeak: Double = 1.0
 
+    /// Fires when mpv itself gives up on backward playback (it emits
+    /// "Backward playback is likely stuck/broken now." when its experimental
+    /// algorithm can't keep up with the file — typically high-bitrate HEVC
+    /// content with mid-stream parameter-set changes). Subscribers should
+    /// fall back to a different reverse-playback strategy.
+    let backwardPlaybackFailed = PassthroughSubject<Void, Never>()
+
     private var isInitialized = false
     private var startPaused = false
     private nonisolated(unsafe) var wakeupContext: UnsafeMutableRawPointer?
@@ -158,6 +165,18 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
 
         checkError(mpv_set_option_string(mpv, "framedrop", "decoder+vo"), context: "framedrop")
 
+        // Buffers required for --play-direction=backward (used for reverse
+        // playback on the MPV backend). These are caps, not pre-allocations —
+        // mpv only uses what it needs to hold one GOP of decoded frames.
+        //
+        // Decoded-frame footprint: 1080p 10-bit ≈ 6 MB/frame, 4K 10-bit
+        // ≈ 25 MB/frame. A 2-second GOP at 24 fps of 4K HDR HEVC is ~1.2 GB
+        // of decoded frames, so anything under 2 GiB silently fails on
+        // Blu-ray-style content. 4 GiB gives headroom for long-GOP 4K HDR
+        // and 4K AV1 without affecting RAM use on simpler files.
+        checkError(mpv_set_option_string(mpv, "video-reversal-buffer", "4GiB"), context: "video-reversal-buffer")
+        checkError(mpv_set_option_string(mpv, "audio-reversal-buffer", "128MiB"), context: "audio-reversal-buffer")
+
         checkError(mpv_set_option_string(mpv, "target-colorspace-hint", "yes"), context: "target-colorspace-hint")
         checkError(mpv_set_option_string(mpv, "keep-open", "yes"), context: "keep-open")
         checkError(mpv_set_option_string(mpv, "deinterlace", "auto"), context: "deinterlace")
@@ -261,6 +280,23 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
 
     func seekRelative(_ time: TimeInterval) {
         command("seek", args: [String(time), "relative"])
+    }
+
+    /// Switch playback direction at runtime. Pass "forward" or "backward".
+    /// Backward playback decodes frames forward into the reversal buffer and
+    /// emits them in reverse, so the decoder never has to handle a backward
+    /// seek — fixes "Missing reference picture" failures on long-GOP files.
+    /// Requires `video-reversal-buffer` (and `audio-reversal-buffer`) to have
+    /// been set during initialization.
+    func setPlayDirection(_ direction: String) {
+        guard let mpvCtx = mpv else { return }
+        let result = direction.withCString { cstr -> Int32 in
+            var ptr: UnsafePointer<CChar>? = cstr
+            return mpv_set_property(mpvCtx, "play-direction", MPV_FORMAT_STRING, &ptr)
+        }
+        if result < 0 {
+            logger.warning("setPlayDirection(\(direction)) failed: \(String(cString: mpv_error_string(result)))")
+        }
     }
 
     var rate: Float {
@@ -553,6 +589,14 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
                         let level = msg.pointee.level.map { String(cString: $0) } ?? "?"
                         let text = msg.pointee.text.map { String(cString: $0) } ?? ""
                         print("[\(prefix)] \(level): \(text)", terminator: "")
+                        // mpv's backward-playback algorithm prints this exact
+                        // string when it gives up. Signal subscribers so they
+                        // can fall back to a different reverse strategy.
+                        if text.contains("Backward playback is likely stuck") {
+                            DispatchQueue.main.async { [weak self] in
+                                self?.backwardPlaybackFailed.send()
+                            }
+                        }
                     }
 
                 case MPV_EVENT_FILE_LOADED:

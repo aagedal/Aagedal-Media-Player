@@ -130,6 +130,15 @@ final class PlayerController: ObservableObject {
     private var mpvGammaCancellable: AnyCancellable?
     private var mpvSigPeakCancellable: AnyCancellable?
     private var mpvIsPlayingCancellable: AnyCancellable?
+    private var mpvBackwardFailureCancellable: AnyCancellable?
+
+    /// URLs where mpv's native `play-direction=backward` has previously
+    /// failed (it emits "Backward playback is likely stuck/broken now."
+    /// for files it can't handle — typically high-bitrate HEVC rips with
+    /// mid-stream PPS changes). On subsequent reverse attempts for these
+    /// files we skip native backward and go straight to the timer-based
+    /// seek simulation. Kept in-memory only; cleared on relaunch.
+    private var nativeReverseFailedURLs: Set<URL> = []
     private var mpvTimePosTask: Task<Void, Never>?
     private var mpvFileLoadedTask: Task<Void, Never>?
     private var mpvDurationTask: Task<Void, Never>?
@@ -497,6 +506,15 @@ final class PlayerController: ObservableObject {
                 self?.videoSourceSize = size
             }
 
+        // mpv tells us when its experimental backward-playback algorithm
+        // gives up; switch the current reverse session to timer simulation
+        // and remember this URL so subsequent reverses go straight there.
+        mpvBackwardFailureCancellable = mpv.backwardPlaybackFailed
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] in
+                self?.handleNativeBackwardFailure()
+            }
+
         // Forward MPV gamma for HDR detection
         mpvGammaCancellable = mpv.$videoGamma
             .compactMap { $0 }
@@ -657,15 +675,22 @@ final class PlayerController: ObservableObject {
 
         if isReversing {
             // Already reversing — speed up
+            let wasAVNative = isNativeReverse
             if isNativeReverse {
-                // Transition from native -1x to simulation at -2x
+                // Transition from native AVPlayer -1x to simulation at -2x
                 player?.rate = 0
                 isNativeReverse = false
                 reverseSpeed = 2
             } else {
                 reverseSpeed = min(reverseSpeed + 1, 8)
             }
-            startReverseTimer(skip: reverseSpeed)
+            // MPV native backward mode iff: MPV backend, no timer running,
+            // not coming from AVPlayer native. Everything else uses the timer.
+            if useMPV && reverseTimer == nil && !wasAVNative {
+                mpvPlayer?.rate = Float(reverseSpeed)
+            } else {
+                startReverseTimer(speed: Float(reverseSpeed))
+            }
             currentPlaybackSpeed = -Float(reverseSpeed)
             return
         }
@@ -675,23 +700,49 @@ final class PlayerController: ObservableObject {
         reverseSpeed = 1
         isReversing = true
 
-        if !useMPV, canNativeReverse, let player = player {
-            // Native AVPlayer reverse at -1x
+        let url = mediaItem?.url
+        let shouldUseNative = useMPV && !(url.map { nativeReverseFailedURLs.contains($0) } ?? false)
+
+        if shouldUseNative, let mpv = mpvPlayer {
+            // MPV native backward playback. Decoder runs forward into the
+            // reversal buffer (configured in setupMPV) and frames are emitted
+            // in reverse — no backward seeks, no decoder reference-picture
+            // failures on long-GOP files.
+            mpv.setPlayDirection("backward")
+            mpv.rate = Float(reverseSpeed)
+            mpv.play()
+            currentPlaybackSpeed = -Float(reverseSpeed)
+            syncIsPlaying()
+        } else if !useMPV, canNativeReverse, let player = player {
+            // Native AVPlayer reverse at -1x (ProRes RAW backend)
             isNativeReverse = true
             player.rate = -1.0
             currentPlaybackSpeed = -1.0
             syncIsPlaying()
         } else {
-            // Timer-based simulation (MPV or unsupported format)
-            startReverseTimer(skip: reverseSpeed)
+            // Timer-based seek simulation. Used for the AVPlayer-without-
+            // native-reverse edge case, and as the fallback for MPV files
+            // where mpv's experimental backward playback is known to fail.
+            startReverseTimer(speed: Float(reverseSpeed))
             currentPlaybackSpeed = -Float(reverseSpeed)
         }
     }
 
-    private func startReverseTimer(skip: Int) {
+    /// Drive reverse playback by ticking a timer at ~15 Hz minimum (capped at
+    /// the source fps) and seeking backward by `speed / H` seconds per tick.
+    /// Decouples UI refresh rate from playback speed so the timecode stays
+    /// responsive at slow speeds, while keeping seek frequency reasonable at
+    /// high speeds.
+    private func startReverseTimer(speed: Float) {
         reverseTimer?.invalidate()
         let fps = effectiveFPS
-        let interval = 1.0 / fps
+        let absSpeed = Double(abs(speed))
+        let minHz: Double = 15.0
+        let idealHz = absSpeed * fps
+        let H = max(minHz, min(fps, idealHz))
+        let interval = 1.0 / H
+        let secondsPerTick = absSpeed / H
+
         reverseTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 guard let self else { return }
@@ -699,7 +750,7 @@ final class PlayerController: ObservableObject {
                     self.stopReverse()
                     return
                 }
-                self.seekByFrames(-skip)
+                self.seek(by: -secondsPerTick)
             }
         }
     }
@@ -709,12 +760,44 @@ final class PlayerController: ObservableObject {
             player?.rate = 0
             isNativeReverse = false
         }
+        let wasReversing = isReversing
+        // If a timer is running we were in seek-simulation mode (MPV stayed
+        // forward+paused); only the MPV native path needs direction reset.
+        let wasNativeBackward = wasReversing && useMPV && reverseTimer == nil
         reverseTimer?.invalidate()
         reverseTimer = nil
         isReversing = false
         reverseSpeed = 1
         currentPlaybackSpeed = 1.0
+        if wasNativeBackward, let mpv = mpvPlayer {
+            // Return MPV to forward playback and pause on the current frame
+            // so the user lands cleanly rather than continuing backward.
+            mpv.pause()
+            mpv.setPlayDirection("forward")
+            mpv.rate = 1.0
+        }
         syncIsPlaying()
+    }
+
+    /// Invoked when mpv's backward-playback algorithm publishes a failure.
+    /// Tears down the native-backward state, blacklists the URL so future
+    /// reverse attempts skip native mode, and continues the current reverse
+    /// session via the timer-based seek simulation.
+    private func handleNativeBackwardFailure() {
+        // Only relevant if we're currently reverse-playing via native mode.
+        guard isReversing, useMPV, reverseTimer == nil, let mpv = mpvPlayer else { return }
+        if let url = mediaItem?.url {
+            nativeReverseFailedURLs.insert(url)
+            logger.warning("MPV backward playback failed on \(url.lastPathComponent); using timer-based reverse for this file.")
+        }
+        // Return MPV to forward + paused so seeks from the timer don't fight
+        // a half-stuck backward direction.
+        mpv.pause()
+        mpv.setPlayDirection("forward")
+        mpv.rate = 1.0
+        // Continue reversing at the current speed via the seek simulation.
+        let absSpeed = abs(currentPlaybackSpeed)
+        startReverseTimer(speed: absSpeed)
     }
 
     func rewind() {
@@ -783,6 +866,7 @@ final class PlayerController: ObservableObject {
     func slowReverse() {
         guard isReady else { return }
 
+        let wasReversing = isReversing
         let current = currentPlaybackSpeed
         let target: Float
         if isReversing {
@@ -811,26 +895,31 @@ final class PlayerController: ObservableObject {
         isReversing = true
         reverseSpeed = 1
 
-        if !useMPV, canNativeSlowReverse, let player = player {
+        let url = mediaItem?.url
+        let inFailedSet = url.map { nativeReverseFailedURLs.contains($0) } ?? false
+        // If we were already reversing via the timer (after a fallback), stay
+        // there. Otherwise, use MPV native if available and not blacklisted.
+        let useTimer = (reverseTimer != nil && wasReversing) || inFailedSet
+        let useNative = useMPV && !useTimer
+
+        if useNative, let mpv = mpvPlayer {
+            // MPV native backward playback at fractional speed.
+            if !wasReversing {
+                mpv.setPlayDirection("backward")
+            }
+            mpv.rate = target
+            mpv.play()
+            currentPlaybackSpeed = -target
+            syncIsPlaying()
+        } else if !useMPV, canNativeSlowReverse, let player = player {
             // Native AVPlayer slow reverse
             isNativeReverse = true
             player.rate = -target
             currentPlaybackSpeed = -target
             syncIsPlaying()
         } else {
-            // Timer-based simulation
-            let fps = effectiveFPS
-            let interval = 1.0 / (fps * Double(target))
-            reverseTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
-                Task { @MainActor in
-                    guard let self else { return }
-                    if self.currentPlaybackTime <= 0 {
-                        self.stopReverse()
-                        return
-                    }
-                    self.seekByFrames(-1)
-                }
-            }
+            // Timer simulation fallback
+            startReverseTimer(speed: target)
             currentPlaybackSpeed = -target
         }
     }
@@ -1621,6 +1710,7 @@ final class PlayerController: ObservableObject {
         mpvGammaCancellable = nil
         mpvSigPeakCancellable = nil
         mpvIsPlayingCancellable = nil
+        mpvBackwardFailureCancellable = nil
         removeMPVLoopObserver()
         if resetAudioSelection {
             selectedAudioTrackOrderIndex = 0
