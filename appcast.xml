@@ -25,5 +25,49 @@
               - <description>       — release notes (CDATA-wrapped HTML)
         -->
 
+        <item>
+            <title>Version 1.6.0</title>
+            <pubDate>Mon, 25 May 2026 11:44:09 +0200</pubDate>
+            <sparkle:version>161</sparkle:version>
+            <sparkle:shortVersionString>1.6.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <enclosure
+                url="https://codeberg.org/taagedal/Aagedal-Media-Player/releases/download/1.6.0/Aagedal_Media_Player_1-6-0.zip"
+                length="41727413"
+                type="application/octet-stream"
+                sparkle:edSignature="pofPFgmP/sJFObJFrqjLRKF+5klLXWiR2KTrmiZ+57NFqiBuh/+1s4dNmb6uWIMxSpRZ6q0M4WQRCVyvpGQCCw==" />
+            <description><![CDATA[
+<h3>Added</h3>
+<ul>
+<li>Sparkle in-app auto-updates.</li>
+<li>HDR support in the video scopes, plus active-track highlighting in the scope overlay.</li>
+<li>Boost slider in the audio waveform view for amplifying quiet audio.</li>
+<li>Show-all-waveforms option for multi-mono audio files.</li>
+<li>Chapter marker picker in the controls bar.</li>
+<li>Pixel Aspect Ratio and Display Aspect Ratio as separate rows in the metadata inspector.</li>
+<li>Space key as a play/pause shortcut.</li>
+</ul>
+<h3>Changed</h3>
+<ul>
+<li>MPV is now the default playback backend for every supported codec; AVPlayer is reserved for ProRes RAW, where VideoToolbox outperforms MPVKit.</li>
+<li>Reverse → forward (L / Shift+L) now switches direction instantly instead of decelerating through zero.</li>
+<li>Backward playback uses MPV's native reverse mode, with a timer-driven fallback for codecs that can't seek backward.</li>
+<li>Metadata extraction now uses SwiftExif (pure Swift) instead of bundling an <code>ffprobe</code> binary — smaller app, faster reads, no subprocess.</li>
+<li>Resolution row in the metadata inspector now reports the displayed dimensions for rotated videos (e.g. iPhone portrait HEVC reads <code>2160 × 3840</code> instead of <code>3840 × 2160</code>).</li>
+<li>Source repository and MPVKit dependency moved to Codeberg.</li>
+</ul>
+<h3>Fixed</h3>
+<ul>
+<li>Anamorphic AVC clips (1440×1080 with 4:3 PAR → 16:9 display) were rendering at 4:3 instead of 16:9.</li>
+<li>Rotated iPhone HEVC clips were rendering as small landscape strips inside portrait windows.</li>
+<li>Window and Vulkan swapchain sizes could drift out of sync — on first load, after a live-resize, on fullscreen enter/exit, and during the initial layout-settle. The player now auto-recovers in each case.</li>
+<li>Video was cropped when switching files in the same window.</li>
+<li>Hardened the MPV event loop and <code>loadfile</code> command against rare races on file switch.</li>
+<li>Memory leak from NotificationCenter observers in the scope and waveform panels.</li>
+<li>ffmpeg stderr pipe-buffer deadlock in long-running operations.</li>
+<li>Screenshots captured from interlaced sources are now deinterlaced before saving.</li>
+</ul>
+            ]]></description>
+        </item>
     </channel>
 </rss>
