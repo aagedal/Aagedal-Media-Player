@@ -651,9 +651,19 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
 
     /// Capture the current decoded video frame as raw BGRA pixels.
     /// Uses `screenshot-raw` via `mpv_command_node` — no libavcodec encoder needed.
-    /// Nonisolated because mpv's C API is thread-safe and this only touches
-    /// the `nonisolated(unsafe)` mpv pointer.
+    ///
+    /// Runs on `queue` so it is serialized against `destroy()`'s
+    /// `mpv_terminate_destroy`. Scope capture calls this from a background Task
+    /// that `stopCapture()` does not await, so without this serialization a
+    /// teardown could free the mpv context mid-command — a use-after-free.
+    /// Inside the queue the screenshot either completes before the context is
+    /// torn down or observes `mpv == nil` and bails.
     nonisolated func screenshotRaw() -> RawScreenshot? {
+        queue.sync { screenshotRawLocked() }
+    }
+
+    /// Must run on `queue`. Touches the mpv context directly.
+    private nonisolated func screenshotRawLocked() -> RawScreenshot? {
         guard let mpvCtx = mpv else { return nil }
 
         let cmdStr = strdup("screenshot-raw")
