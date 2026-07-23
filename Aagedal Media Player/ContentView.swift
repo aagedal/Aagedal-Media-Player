@@ -20,6 +20,7 @@ struct ContentView: View {
     @State private var isHoveringControls = false
     @State private var isHoveringRightEdge = false
     @State private var overlayHideTask: Task<Void, Never>?
+    @State private var fileOpenTask: Task<Void, Never>?
     @State private var mouseMoveMonitor: Any?
     @State private var appActiveObserver: NSObjectProtocol?
     @State private var isEditingTimecode = false
@@ -269,6 +270,8 @@ struct ContentView: View {
             }
         }
         .onDisappear {
+            fileOpenTask?.cancel()
+            fileOpenTask = nil
             removeMouseMoveMonitor()
             removeAppActiveObserver()
             scopeWindowController?.close()
@@ -722,6 +725,7 @@ struct ContentView: View {
 
     func openFile(url: URL) {
         logger.info("Opening file: \(url.lastPathComponent)")
+        fileOpenTask?.cancel()
 
         let fileSize: Int64
         if let attrs = try? FileManager.default.attributesOfItem(atPath: url.path),
@@ -750,10 +754,11 @@ struct ContentView: View {
         // full-file hash can't stall playback — on timeout the file loads
         // without preloaded metadata and the same fetch lands in the
         // background, triggering updateMetadata when it arrives.
-        Task {
+        fileOpenTask = Task { @MainActor in
             let preloadedMetadata = await Self.loadMetadataWithTimeout(
                 url: url, timeoutMillis: 500
             )
+            guard !Task.isCancelled else { return }
 
             if let metadata = preloadedMetadata {
                 item.metadata = metadata
@@ -778,20 +783,20 @@ struct ContentView: View {
                 // updateMetadata when it lands. Window/swapchain aspect will
                 // follow once the metadata-driven update fires.
                 logger.info("Metadata fetch exceeded preload timeout for \(url.lastPathComponent), continuing without preload")
-                Task {
-                    do {
-                        let metadata = try await MetadataService.shared.metadata(for: url)
-                        item.metadata = metadata
-                        item.durationSeconds = metadata.duration ?? 0
-                        item.hasVideoStream = !metadata.videoStreams.isEmpty
-                        controller.updateMetadata(item)
-                        timecodeMode = metadata.timecode != nil ? .source : .relative
-                        if showAudioWaveformOverlay {
-                            generateAudioWaveform()
-                        }
-                    } catch {
-                        logger.warning("Failed to load metadata: \(error.localizedDescription)")
+                do {
+                    let metadata = try await MetadataService.shared.metadata(for: url)
+                    guard !Task.isCancelled else { return }
+                    item.metadata = metadata
+                    item.durationSeconds = metadata.duration ?? 0
+                    item.hasVideoStream = !metadata.videoStreams.isEmpty
+                    controller.updateMetadata(item)
+                    timecodeMode = metadata.timecode != nil ? .source : .relative
+                    if showAudioWaveformOverlay {
+                        generateAudioWaveform()
                     }
+                } catch {
+                    guard !Task.isCancelled else { return }
+                    logger.warning("Failed to load metadata: \(error.localizedDescription)")
                 }
             }
         }
