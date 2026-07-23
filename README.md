@@ -3,7 +3,7 @@
 # Aagedal Media Player
 ![SCR-20260221-pzdf](https://github.com/user-attachments/assets/5c066416-8542-402f-83df-f49cc01a9bc4)
 
-Based on the same fast engine as [Aagedal Media Converter](https://codeberg.org/taagedal/Aagedal-Media-Converter), but now for quickly just checking playback of files.
+Based on the same fast engine as [Aagedal Media Converter](https://github.com/aagedal/Aagedal-Media-Converter), but now for quickly just checking playback of files.
 
 ## Features
 

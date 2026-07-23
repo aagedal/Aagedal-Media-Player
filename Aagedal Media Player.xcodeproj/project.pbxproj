@@ -394,7 +394,7 @@
 		};
 		8EA00009AAAA000000000001 /* XCRemoteSwiftPackageReference "SwiftExif" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://codeberg.org/taagedal/SwiftExif";
+			repositoryURL = "https://github.com/aagedal/SwiftExif";
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 1.8.0;

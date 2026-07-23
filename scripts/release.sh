@@ -15,8 +15,8 @@
 #      then run it once — it prints the public key (paste into Info.plist as
 #      SUPublicEDKey) and stores the private key in your login Keychain.
 #   3. notarytool credentials stored in Keychain as the profile name below.
-#   4. Codeberg API token in $CODEBERG_TOKEN (or the script will skip the
-#      upload step and just print the curl command for you to run manually).
+#   4. GitHub CLI (`gh`) installed and authenticated (or the script will skip
+#      the upload step and print manual release instructions).
 #
 # Usage:
 #   scripts/release.sh                 # uses MARKETING_VERSION from the project
@@ -48,8 +48,7 @@ fi
 # -----------------------------------------------------------------------------
 NOTARYTOOL_PROFILE="${NOTARYTOOL_PROFILE:-AagedalMediaPlayer}"
 SIGN_UPDATE_BIN="${SIGN_UPDATE_BIN:-./bin/sign_update}"   # Sparkle tool path
-CODEBERG_OWNER="taagedal"
-CODEBERG_REPO="Aagedal-Media-Player"
+GITHUB_REPOSITORY="aagedal/Aagedal-Media-Player"
 APPCAST="appcast.xml"
 
 # Homebrew tap automation. Set TAP_LOCAL_PATH to a local checkout of the
@@ -168,29 +167,27 @@ echo "==> Sparkle signature: $ED_SIGNATURE_LINE"
 ED_SIGNATURE=$(echo "$ED_SIGNATURE_LINE" | sed -n 's/.*sparkle:edSignature="\([^"]*\)".*/\1/p')
 
 # -----------------------------------------------------------------------------
-# Upload to Codeberg release
+# Upload to GitHub release
 # -----------------------------------------------------------------------------
-DOWNLOAD_URL="https://codeberg.org/$CODEBERG_OWNER/$CODEBERG_REPO/releases/download/$MARKETING_VERSION/$RELEASE_ZIP_NAME"
+DOWNLOAD_URL="https://github.com/$GITHUB_REPOSITORY/releases/download/$MARKETING_VERSION/$RELEASE_ZIP_NAME"
 
-if [[ -n "${CODEBERG_TOKEN:-}" ]]; then
-    echo "==> Creating Codeberg release $MARKETING_VERSION"
-    RELEASE_ID=$(curl -fsS -X POST \
-        -H "Authorization: token $CODEBERG_TOKEN" \
-        -H "Content-Type: application/json" \
-        "https://codeberg.org/api/v1/repos/$CODEBERG_OWNER/$CODEBERG_REPO/releases" \
-        -d "{\"tag_name\":\"$MARKETING_VERSION\",\"name\":\"$MARKETING_VERSION\",\"draft\":false,\"prerelease\":false}" \
-        | python3 -c 'import json,sys;print(json.load(sys.stdin)["id"])')
-
-    echo "==> Uploading $RELEASE_ZIP_NAME to release $RELEASE_ID"
-    curl -fsS -X POST \
-        -H "Authorization: token $CODEBERG_TOKEN" \
-        -H "Content-Type: multipart/form-data" \
-        -F "attachment=@$RELEASE_ZIP" \
-        "https://codeberg.org/api/v1/repos/$CODEBERG_OWNER/$CODEBERG_REPO/releases/$RELEASE_ID/assets?name=$RELEASE_ZIP_NAME"
-    echo
+if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
+    if gh release view "$MARKETING_VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+        echo "==> Uploading $RELEASE_ZIP_NAME to existing GitHub release $MARKETING_VERSION"
+        gh release upload "$MARKETING_VERSION" "$RELEASE_ZIP" \
+            --repo "$GITHUB_REPOSITORY" \
+            --clobber
+    else
+        echo "==> Creating GitHub release $MARKETING_VERSION"
+        gh release create "$MARKETING_VERSION" "$RELEASE_ZIP" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target main \
+            --title "$MARKETING_VERSION" \
+            --generate-notes
+    fi
 else
-    echo "==> CODEBERG_TOKEN not set — skipping upload. To upload manually:"
-    echo "    1. Create release $MARKETING_VERSION at https://codeberg.org/$CODEBERG_OWNER/$CODEBERG_REPO/releases/new"
+    echo "==> GitHub CLI is unavailable or unauthenticated — skipping upload."
+    echo "    1. Create release $MARKETING_VERSION at https://github.com/$GITHUB_REPOSITORY/releases/new"
     echo "    2. Attach $RELEASE_ZIP"
 fi
 

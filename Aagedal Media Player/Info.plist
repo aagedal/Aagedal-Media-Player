@@ -45,7 +45,7 @@
 	<key>NSQuitAlwaysKeepsWindows</key>
 	<false/>
 	<key>SUFeedURL</key>
-	<string>https://codeberg.org/taagedal/Aagedal-Media-Player/raw/branch/main/appcast.xml</string>
+	<string>https://raw.githubusercontent.com/aagedal/Aagedal-Media-Player/main/appcast.xml</string>
 	<key>SUPublicEDKey</key>
 	<string>i3xudeqe+09I7n+FVFHmPxBa8cEWc3/ljLk3Y9bTEkY=</string>
 	<key>SUAutomaticallyUpdate</key>

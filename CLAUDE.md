@@ -23,7 +23,7 @@ There are no test targets, no linting tools, and no CI/CD configured.
 Swift Package dependencies (all remote, resolved via SPM):
 
 - **MPVKit-GPL** — `https://codeberg.org/taagedal/MPVKit`, branch `aagedal/custom-builds`. Truls's fork of MPVKit. Bundles mpv 0.41.0, MoltenVK 1.4.0, Libplacebo 7.351.0.
-- **SwiftExif** — `https://codeberg.org/taagedal/SwiftExif`, semver `>= 1.8.0`. Pure-Swift metadata library (Truls's own), replaces the earlier ffprobe shell-out for stream metadata.
+- **SwiftExif** — `https://github.com/aagedal/SwiftExif`, semver `>= 1.8.0`. Pure-Swift metadata library (Truls's own), replaces the earlier ffprobe shell-out for stream metadata.
 - **Sparkle** — `https://github.com/sparkle-project/Sparkle`, semver `>= 2.9.1`. Auto-update infrastructure.
 
 The app also ships a bundled `ffmpeg` binary at `Aagedal Media Player/Binaries/ffmpeg`, used for screenshot capture and lossless trim export (not for metadata).

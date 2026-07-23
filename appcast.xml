@@ -2,7 +2,7 @@
 <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
     <channel>
         <title>Aagedal Media Player</title>
-        <link>https://codeberg.org/taagedal/Aagedal-Media-Player/raw/branch/main/appcast.xml</link>
+        <link>https://github.com/aagedal/Aagedal-Media-Player</link>
         <description>Most recent changes for Aagedal Media Player.</description>
         <language>en</language>
 
@@ -18,7 +18,7 @@
               - <sparkle:shortVersionString>  — CFBundleShortVersionString
               - <sparkle:minimumSystemVersion> — macOS minimum (15.0)
               - <enclosure>:
-                  url           — Codeberg release-asset URL of the signed .zip
+                  url           — download URL of the signed .zip
                   length        — file size in bytes
                   type          — application/octet-stream
                   sparkle:edSignature — EdDSA signature from `sign_update`
@@ -32,7 +32,7 @@
             <sparkle:shortVersionString>1.6.0</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
             <enclosure
-                url="https://codeberg.org/taagedal/Aagedal-Media-Player/releases/download/1.6.0/Aagedal_Media_Player_1-6-0.zip"
+                url="https://github.com/aagedal/Aagedal-Media-Player/releases/download/1.6.0/Aagedal_Media_Player_1-6-0.zip"
                 length="41727413"
                 type="application/octet-stream"
                 sparkle:edSignature="pofPFgmP/sJFObJFrqjLRKF+5klLXWiR2KTrmiZ+57NFqiBuh/+1s4dNmb6uWIMxSpRZ6q0M4WQRCVyvpGQCCw==" />
@@ -54,7 +54,7 @@
 <li>Backward playback uses MPV's native reverse mode, with a timer-driven fallback for codecs that can't seek backward.</li>
 <li>Metadata extraction now uses SwiftExif (pure Swift) instead of bundling an <code>ffprobe</code> binary — smaller app, faster reads, no subprocess.</li>
 <li>Resolution row in the metadata inspector now reports the displayed dimensions for rotated videos (e.g. iPhone portrait HEVC reads <code>2160 × 3840</code> instead of <code>3840 × 2160</code>).</li>
-<li>Source repository and MPVKit dependency moved to Codeberg.</li>
+<li>Source repository and package dependencies updated.</li>
 </ul>
 <h3>Fixed</h3>
 <ul>
