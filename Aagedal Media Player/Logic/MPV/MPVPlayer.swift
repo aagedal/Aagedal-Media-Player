@@ -278,6 +278,19 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         command("seek", args: [String(seekTime), "absolute"])
     }
 
+    /// Fast, keyframe-aligned seek for interactive timeline scrubbing.
+    /// A precise seek is issued when the gesture ends.
+    func seekForScrubbing(to time: TimeInterval) {
+        var seekTime = time
+        if duration > 0 {
+            let maxSeekTime = max(0, duration - 0.05)
+            seekTime = min(seekTime, maxSeekTime)
+        }
+        seekTime = max(0, seekTime)
+
+        command("seek", args: [String(seekTime), "absolute+keyframes"])
+    }
+
     func seekRelative(_ time: TimeInterval) {
         command("seek", args: [String(time), "relative"])
     }

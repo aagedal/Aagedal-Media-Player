@@ -17,6 +17,7 @@ struct AudioWaveformView: View {
     @AppStorage(SettingsView.audioWaveformColorKey) private var waveformColor: String = AudioWaveformColor.pink.rawValue
 
     @State private var isDragging = false
+    @State private var dragTime: Double = 0
     @State private var rerenderTask: Task<Void, Never>?
 
     private var duration: Double {
@@ -182,7 +183,8 @@ struct AudioWaveformView: View {
                 }
 
                 // Playhead
-                let fraction = duration > 0 ? controller.currentPlaybackTime / duration : 0
+                let displayedTime = isDragging ? dragTime : controller.currentPlaybackTime
+                let fraction = duration > 0 ? displayedTime / duration : 0
                 let xPos = geo.size.width * CGFloat(fraction)
 
                 Path { path in
@@ -197,9 +199,12 @@ struct AudioWaveformView: View {
                 DragGesture(minimumDistance: 0)
                     .onChanged { value in
                         isDragging = true
-                        seekToPosition(value.location.x, in: geo.size.width)
+                        dragTime = time(at: value.location.x, in: geo.size.width)
+                        controller.scrub(to: dragTime)
                     }
-                    .onEnded { _ in
+                    .onEnded { value in
+                        dragTime = time(at: value.location.x, in: geo.size.width)
+                        controller.endScrubbing(at: dragTime)
                         isDragging = false
                     }
             )
@@ -227,11 +232,10 @@ struct AudioWaveformView: View {
         return parts.joined(separator: " \u{2014} ")
     }
 
-    private func seekToPosition(_ x: CGFloat, in width: CGFloat) {
-        guard width > 0, duration > 0 else { return }
+    private func time(at x: CGFloat, in width: CGFloat) -> Double {
+        guard width > 0, duration > 0 else { return 0 }
         let fraction = max(0, min(1, x / width))
-        let time = fraction * duration
-        controller.seekTo(time)
+        return fraction * duration
     }
 
     func triggerGeneration() {

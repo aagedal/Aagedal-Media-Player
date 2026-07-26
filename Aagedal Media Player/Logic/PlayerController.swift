@@ -100,6 +100,14 @@ final class PlayerController: ObservableObject {
     var canNativeReverse: Bool = false
     var canNativeSlowReverse: Bool = false
 
+    // Interactive scrubbing. Pointer events can arrive much faster than a
+    // decoder can complete seeks, so keep only the newest requested position.
+    private var pendingScrubTime: TimeInterval?
+    private var mpvScrubThrottleTask: Task<Void, Never>?
+    private var avPlayerScrubSeekInProgress = false
+    private var scrubGeneration = 0
+    private static let mpvScrubIntervalNanoseconds: UInt64 = 33_333_333
+
     /// Effective video frame rate (falls back to 30 if metadata is unavailable).
     private var effectiveFPS: Double {
         if let fr = mediaItem?.metadata?.primaryVideoStream?.frameRate,
@@ -952,8 +960,29 @@ final class PlayerController: ObservableObject {
         }
     }
 
+    /// Preview a position during an interactive drag without flooding the
+    /// playback backend with more work than it can display.
+    func scrub(to time: Double) {
+        guard isReady, time.isFinite else { return }
+
+        currentPlaybackTime = time
+        pendingScrubTime = time
+
+        if useMPV {
+            issuePendingMPVScrubSeek()
+        } else {
+            issuePendingAVPlayerScrubSeek()
+        }
+    }
+
+    /// Finish an interactive drag with a frame-accurate seek.
+    func endScrubbing(at time: Double) {
+        seekTo(time)
+    }
+
     func seekTo(_ time: Double) {
-        guard isReady else { return }
+        cancelPendingScrubSeeks()
+        guard isReady, time.isFinite else { return }
 
         currentPlaybackTime = time
 
@@ -965,6 +994,69 @@ final class PlayerController: ObservableObject {
         guard let player else { return }
         let cmTime = CMTime(seconds: time, preferredTimescale: 600)
         player.seek(to: cmTime, toleranceBefore: .zero, toleranceAfter: .zero)
+    }
+
+    private func issuePendingMPVScrubSeek() {
+        guard mpvScrubThrottleTask == nil,
+              let time = pendingScrubTime,
+              let mpv = mpvPlayer else { return }
+
+        pendingScrubTime = nil
+        mpv.seekForScrubbing(to: time)
+
+        mpvScrubThrottleTask = Task { @MainActor [weak self] in
+            do {
+                try await Task.sleep(nanoseconds: Self.mpvScrubIntervalNanoseconds)
+            } catch {
+                return
+            }
+
+            guard let self, !Task.isCancelled else { return }
+            self.mpvScrubThrottleTask = nil
+            self.issuePendingMPVScrubSeek()
+        }
+    }
+
+    /// AVFoundation recommends serializing rapid seek requests and "chasing"
+    /// only the newest target once the in-flight seek completes.
+    private func issuePendingAVPlayerScrubSeek() {
+        guard !avPlayerScrubSeekInProgress,
+              let time = pendingScrubTime,
+              let player else { return }
+
+        pendingScrubTime = nil
+        avPlayerScrubSeekInProgress = true
+        let generation = scrubGeneration
+        let seekTime = CMTime(seconds: time, preferredTimescale: 600)
+        let tolerance = CMTime(seconds: 1.0 / effectiveFPS, preferredTimescale: 600)
+
+        player.seek(
+            to: seekTime,
+            toleranceBefore: tolerance,
+            toleranceAfter: tolerance
+        ) { [weak self, weak player] _ in
+            Task { @MainActor [weak self, weak player] in
+                guard let self,
+                      let player,
+                      self.player === player,
+                      self.scrubGeneration == generation else { return }
+
+                self.avPlayerScrubSeekInProgress = false
+                self.issuePendingAVPlayerScrubSeek()
+            }
+        }
+    }
+
+    private func cancelPendingScrubSeeks() {
+        scrubGeneration &+= 1
+        pendingScrubTime = nil
+        mpvScrubThrottleTask?.cancel()
+        mpvScrubThrottleTask = nil
+
+        if avPlayerScrubSeekInProgress {
+            player?.currentItem?.cancelPendingSeeks()
+            avPlayerScrubSeekInProgress = false
+        }
     }
 
     func getCurrentTime() -> TimeInterval? {
@@ -1661,6 +1753,8 @@ final class PlayerController: ObservableObject {
     // MARK: - Teardown
 
     func teardown(resetAudioSelection: Bool = true) {
+        cancelPendingScrubSeeks()
+
         // Stop reverse playback first
         reverseTimer?.invalidate()
         reverseTimer = nil

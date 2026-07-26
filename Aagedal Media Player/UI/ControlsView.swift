@@ -205,7 +205,7 @@ struct ControlsView: View {
                             let fraction = max(0, min(1, value.location.x / width))
                             dragTime = Double(fraction) * duration
                         }
-                        controller.seekTo(dragTime)
+                        controller.scrub(to: dragTime)
                     }
                     .onEnded { value in
                         let isPrecision = NSEvent.modifierFlags.contains(.option)
@@ -217,7 +217,7 @@ struct ControlsView: View {
                             let fraction = max(0, min(1, value.location.x / width))
                             dragTime = Double(fraction) * duration
                         }
-                        controller.seekTo(dragTime)
+                        controller.endScrubbing(at: dragTime)
                         isDragging = false
                         wasPrecision = false
                     }
