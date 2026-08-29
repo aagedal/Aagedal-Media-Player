@@ -492,9 +492,9 @@
 /* Begin XCRemoteSwiftPackageReference section */
 		8EA00003AAAA000000000001 /* XCRemoteSwiftPackageReference "MPVKit" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://codeberg.org/taagedal/MPVKit";
+			repositoryURL = "https://github.com/aagedal/MPVKit";
 			requirement = {
-				branch = "aagedal/custom-builds";
+				branch = main;
 				kind = branch;
 			};
 		};

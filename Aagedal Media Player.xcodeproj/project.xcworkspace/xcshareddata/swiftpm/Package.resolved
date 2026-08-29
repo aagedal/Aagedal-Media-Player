@@ -1,13 +1,13 @@
 {
-  "originHash" : "9daf02f4698636faebe0842fcd179b460d35451fa5d9b1bf7f457a7268cc1523",
+  "originHash" : "ed3845c9b32bce553e6f56520be5cebd3b73ff656988da9bc28519558f615f9d",
   "pins" : [
     {
       "identity" : "mpvkit",
       "kind" : "remoteSourceControl",
-      "location" : "https://codeberg.org/taagedal/MPVKit",
+      "location" : "https://github.com/aagedal/MPVKit",
       "state" : {
-        "branch" : "aagedal/custom-builds",
-        "revision" : "8762a49290cc590e79863644172b2625626e0760"
+        "branch" : "main",
+        "revision" : "230c3174f1515898f24599147ad61c2a277d0dc2"
       }
     },
     {
