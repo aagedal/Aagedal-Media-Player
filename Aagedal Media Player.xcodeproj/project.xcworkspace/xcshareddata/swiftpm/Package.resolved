@@ -1,0 +1,33 @@
+{
+  "originHash" : "9daf02f4698636faebe0842fcd179b460d35451fa5d9b1bf7f457a7268cc1523",
+  "pins" : [
+    {
+      "identity" : "mpvkit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://codeberg.org/taagedal/MPVKit",
+      "state" : {
+        "branch" : "aagedal/custom-builds",
+        "revision" : "8762a49290cc590e79863644172b2625626e0760"
+      }
+    },
+    {
+      "identity" : "sparkle",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/sparkle-project/Sparkle",
+      "state" : {
+        "revision" : "066e75a8b3e99962685d6a90cdd5293ebffd9261",
+        "version" : "2.9.1"
+      }
+    },
+    {
+      "identity" : "swiftexif",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/aagedal/SwiftExif",
+      "state" : {
+        "revision" : "47249c72b613ebab8e4514f4adf05bb8000a1908",
+        "version" : "1.9.10"
+      }
+    }
+  ],
+  "version" : 3
+}

@@ -21,6 +21,20 @@
                ReferencedContainer = "container:Aagedal Media Player.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+		 <BuildActionEntry
+			buildForTesting = "YES"
+			buildForRunning = "NO"
+			buildForProfiling = "NO"
+			buildForArchiving = "NO"
+			buildForAnalyzing = "NO">
+			<BuildableReference
+			   BuildableIdentifier = "primary"
+			   BlueprintIdentifier = "8EB2F4062F50000000B196AD"
+			   BuildableName = "Aagedal Media Player Tests.xctest"
+			   BlueprintName = "Aagedal Media Player Tests"
+			   ReferencedContainer = "container:Aagedal Media Player.xcodeproj">
+			</BuildableReference>
+		 </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
@@ -29,6 +43,19 @@
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES"
       shouldAutocreateTestPlan = "YES">
+	  <Testables>
+		 <TestableReference
+			skipped = "NO"
+			parallelizable = "YES">
+			<BuildableReference
+			   BuildableIdentifier = "primary"
+			   BlueprintIdentifier = "8EB2F4062F50000000B196AD"
+			   BuildableName = "Aagedal Media Player Tests.xctest"
+			   BlueprintName = "Aagedal Media Player Tests"
+			   ReferencedContainer = "container:Aagedal Media Player.xcodeproj">
+			</BuildableReference>
+		 </TestableReference>
+	  </Testables>
    </TestAction>
    <LaunchAction
       buildConfiguration = "Debug"

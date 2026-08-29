@@ -1,0 +1,54 @@
+name: Build, test, and analyze
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-test-analyze-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: macos-latest
+    timeout-minutes: 45
+    env:
+      DERIVED_DATA_PATH: ${{ runner.temp }}/AagedalMediaPlayerDerivedData
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Resolve pinned packages
+        run: >-
+          xcodebuild -resolvePackageDependencies
+          -project "Aagedal Media Player.xcodeproj"
+          -onlyUsePackageVersionsFromResolvedFile
+
+      - name: Build and test
+        run: >-
+          xcodebuild test
+          -project "Aagedal Media Player.xcodeproj"
+          -scheme "Aagedal Media Player"
+          -destination "platform=macOS"
+          -derivedDataPath "$DERIVED_DATA_PATH"
+          -disableAutomaticPackageResolution
+          CODE_SIGNING_ALLOWED=NO
+
+      - name: Analyze
+        run: >-
+          xcodebuild analyze
+          -project "Aagedal Media Player.xcodeproj"
+          -scheme "Aagedal Media Player"
+          -destination "platform=macOS"
+          -derivedDataPath "$DERIVED_DATA_PATH"
+          -disableAutomaticPackageResolution
+          CODE_SIGNING_ALLOWED=NO

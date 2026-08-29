@@ -97,14 +97,14 @@ final class UpdateChecker: ObservableObject {
                 return
             }
 
-            let remoteVersion = normalizeVersion(rawTag)
+            let remoteVersion = AppVersion.normalized(rawTag)
             let notesURL = (json["html_url"] as? String).flatMap(URL.init(string:))
             let assetURL = pickDownloadAsset(from: json["assets"] as? [[String: Any]] ?? [])
 
             self.latestVersion = remoteVersion
             self.releaseNotesURL = notesURL
             self.downloadAssetURL = assetURL
-            self.updateAvailable = isVersion(remoteVersion, newerThan: currentVersion)
+            self.updateAvailable = AppVersion.isNewer(remoteVersion, than: currentVersion)
 
             if !isUserInitiated {
                 self.lastChecked = Date()
@@ -112,16 +112,6 @@ final class UpdateChecker: ObservableObject {
         } catch {
             Self.logger.error("Error checking for updates: \(error.localizedDescription, privacy: .public)")
         }
-    }
-
-    /// Release tags may be prefixed with `v` (e.g. "v1.5.0"). The numeric
-    /// comparator in `isVersion(_:newerThan:)` and `CFBundleShortVersionString`
-    /// are both bare numeric strings, so strip the prefix.
-    private func normalizeVersion(_ tag: String) -> String {
-        if tag.hasPrefix("v") || tag.hasPrefix("V") {
-            return String(tag.dropFirst())
-        }
-        return tag
     }
 
     private func pickDownloadAsset(from assets: [[String: Any]]) -> URL? {
@@ -141,10 +131,6 @@ final class UpdateChecker: ObservableObject {
             return dmg.url
         }
         return nil
-    }
-
-    private func isVersion(_ v1: String, newerThan v2: String) -> Bool {
-        return v1.compare(v2, options: .numeric) == .orderedDescending
     }
 
     func openDownloadAsset() {
