@@ -50,11 +50,11 @@ enum TrimExportFormat: String, CaseIterable {
 
     var label: String {
         switch self {
-        case .copy: "Lossless Copy"
+        case .copy: "Lossless Copy (Keyframe-Aligned)"
         case .gif: "GIF"
         case .animatedAVIF: "Animated AVIF"
-        case .hardwareH264: "Hardware H.264"
-        case .hardwareH265: "Hardware H.265"
+        case .hardwareH264: "Exact H.264 (Hardware)"
+        case .hardwareH265: "Exact H.265 (Hardware)"
         }
     }
 
@@ -561,7 +561,7 @@ private struct ExportSettingsView: View {
 
                 switch format {
                 case .copy:
-                    Text("Lossless stream copy. No re-encoding.")
+                    Text("Fast and lossless, but the trim start may move to the preceding keyframe. The source container is preserved.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
 
@@ -606,6 +606,9 @@ private struct ExportSettingsView: View {
                                 .frame(width: 32, alignment: .trailing)
                         }
                     }
+                    Text("Frame-accurate trim. Re-encodes video as H.264 and audio as AAC.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
 
                 case .hardwareH265:
                     LabeledContent("Quality") {
@@ -616,6 +619,9 @@ private struct ExportSettingsView: View {
                                 .frame(width: 32, alignment: .trailing)
                         }
                     }
+                    Text("Frame-accurate trim. Re-encodes video as H.265 and audio as AAC.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
 
                 if format != .copy {

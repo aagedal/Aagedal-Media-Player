@@ -56,7 +56,7 @@ Acceptance: formatting and parsing round-trip exactly for every supported rate a
 
 ## Phase 3 — Screenshot and export data safety
 
-Status: In progress — collision-safe atomic output and visible result handling were implemented on 2026-08-31.
+Status: Completed on 2026-08-31.
 
 - [x] Create a reusable output coordinator that generates collision-free filenames.
 - [x] Write to a temporary sibling and atomically move the completed file into place.
@@ -64,8 +64,8 @@ Status: In progress — collision-safe atomic output and visible result handling
 - [x] Never overwrite automatically outside an explicit save-panel confirmation or preference.
 - [x] Show screenshot/export errors in the app instead of logging them only.
 - [x] Add completion actions such as Reveal in Finder, Open, and Copy Path.
-- [ ] Clarify that stream-copy trims may be keyframe-aligned; add an exact re-encode option.
-- [ ] Validate container/codec compatibility before starting stream copy.
+- [x] Clarify that stream-copy trims may be keyframe-aligned; identify H.264/H.265 re-encode modes as exact options.
+- [x] Validate container/codec compatibility before starting stream copy.
 
 Acceptance: automatic exports cannot silently replace existing user files, and failures leave no partial media behind.
 

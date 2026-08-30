@@ -1617,6 +1617,20 @@ final class PlayerController: ObservableObject {
 
         defer { output.discard() }
 
+        if format == .copy {
+            do {
+                try TrimExportValidator.validateStreamCopy(
+                    sourceURL: item.url,
+                    destinationURL: output.destinationURL,
+                    metadata: item.metadata
+                )
+            } catch {
+                trimExportError = "Export unavailable: \(error.localizedDescription)"
+                logger.error("Trim export preflight failed: \(error.localizedDescription)")
+                return
+            }
+        }
+
         let formatArguments: [String]
         switch format {
         case .copy:
