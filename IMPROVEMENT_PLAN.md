@@ -42,13 +42,15 @@ Status: In progress — the test/CI foundation was implemented on 2026-08-29; ge
 
 ## Phase 2 — SMPTE timecode correctness
 
-- Introduce a rational `TimecodeRate` model containing actual rate, nominal FPS, and drop-frame rules.
-- Implement correct 29.97 and 59.94 drop-frame frame-number conversion.
-- Replace repeated floating-point calculations with integer/rational frame arithmetic.
-- Consolidate absolute, relative, frame-only, source-offset, copy, and paste parsing in one engine.
-- Define and test trim-out inclusive/exclusive-frame semantics.
-- Reject invalid dropped labels at minute boundaries.
-- Add golden tests around minute, ten-minute, hour, and 24-hour wrap boundaries.
+Status: Completed on 2026-08-31.
+
+- [x] Introduce a rational `TimecodeRate` model containing actual rate, nominal FPS, and drop-frame rules.
+- [x] Implement correct 29.97 and 59.94 drop-frame frame-number conversion.
+- [x] Replace repeated floating-point calculations with integer/rational frame arithmetic.
+- [x] Consolidate absolute, relative, frame-only, source-offset, copy, and paste parsing in one engine.
+- [x] Define and test trim-out inclusive/exclusive-frame semantics.
+- [x] Reject invalid dropped labels at minute boundaries.
+- [x] Add golden tests around minute, ten-minute, hour, and 24-hour wrap boundaries.
 
 Acceptance: formatting and parsing round-trip exactly for every supported rate and source offset.
 
