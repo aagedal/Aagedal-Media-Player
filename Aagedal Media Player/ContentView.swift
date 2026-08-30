@@ -95,14 +95,21 @@ struct ContentView: View {
 
             // Layer 2: export/screenshot feedback (fades with overlay controls)
             Group {
-                if controller.isSavingScreenshot || controller.screenshotDone {
-                    if controller.isSavingScreenshot {
+                if controller.isSavingScreenshot || controller.screenshotDone || controller.screenshotError != nil {
+                    if let error = controller.screenshotError {
+                        errorOverlay(error) { controller.screenshotError = nil }
+                    } else if controller.isSavingScreenshot {
                         exportOverlay(statusText: "Saving\u{2026}", showSpinner: true)
                     } else {
-                        exportOverlay(statusIcon: "checkmark.circle.fill", iconColor: .green, statusText: "Screenshot saved.")
+                        exportOverlay(
+                            statusIcon: "checkmark.circle.fill",
+                            iconColor: .green,
+                            statusText: "Screenshot saved.",
+                            completedURL: controller.lastScreenshotURL
+                        )
                     }
                 }
-                if controller.isExportingTrim || controller.trimExportDone || controller.trimExportCancelling || controller.trimExportCancelled {
+                if controller.isExportingTrim || controller.trimExportDone || controller.trimExportCancelling || controller.trimExportCancelled || controller.trimExportError != nil {
                     trimExportOverlay
                 }
                 if let warning = controller.trimExportWarning {
@@ -356,7 +363,9 @@ struct ContentView: View {
 
     @ViewBuilder
     private var trimExportOverlay: some View {
-        if controller.trimExportCancelling {
+        if let error = controller.trimExportError {
+            errorOverlay(error) { controller.trimExportError = nil }
+        } else if controller.trimExportCancelling {
             exportOverlay(statusIcon: nil, statusText: "Cancelling\u{2026}", showSpinner: true)
         } else if controller.trimExportCancelled {
             exportOverlay(statusIcon: "xmark.circle.fill", iconColor: .orange, statusText: "Export cancelled.")
@@ -375,7 +384,12 @@ struct ContentView: View {
                 )
             }
         } else if controller.trimExportDone {
-            exportOverlay(statusIcon: "checkmark.circle.fill", iconColor: .green, statusText: "Trimmed file saved.")
+            exportOverlay(
+                statusIcon: "checkmark.circle.fill",
+                iconColor: .green,
+                statusText: "Trimmed file saved.",
+                completedURL: controller.lastTrimExportURL
+            )
         }
     }
 
@@ -385,7 +399,8 @@ struct ContentView: View {
         statusText: String,
         showSpinner: Bool = false,
         progress: Double? = nil,
-        onCancel: (() -> Void)? = nil
+        onCancel: (() -> Void)? = nil,
+        completedURL: URL? = nil
     ) -> some View {
         VStack {
             Spacer()
@@ -412,6 +427,9 @@ struct ContentView: View {
                     }
                     .buttonStyle(.plain)
                 }
+                if let completedURL {
+                    completionActions(for: completedURL)
+                }
             }
             .font(.system(size: 13, weight: .medium))
             .foregroundStyle(.white)
@@ -428,6 +446,28 @@ struct ContentView: View {
             .padding(.bottom, 80)
         }
         .transition(.opacity)
+    }
+
+    private func completionActions(for url: URL) -> some View {
+        Menu {
+            Button("Reveal in Finder") {
+                NSWorkspace.shared.activateFileViewerSelecting([url])
+            }
+            Button("Open") {
+                NSWorkspace.shared.open(url)
+            }
+            Button("Copy Path") {
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(url.path, forType: .string)
+            }
+        } label: {
+            Image(systemName: "ellipsis.circle")
+                .foregroundStyle(.white.opacity(0.8))
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .help("File actions")
     }
 
     // MARK: - Progress Capsule Border
@@ -518,6 +558,33 @@ struct ContentView: View {
         }
         .transition(.opacity)
         .allowsHitTesting(false)
+    }
+
+    private func errorOverlay(_ message: String, onDismiss: @escaping () -> Void) -> some View {
+        VStack {
+            Spacer()
+
+            HStack(spacing: 8) {
+                Image(systemName: "xmark.octagon.fill")
+                    .foregroundStyle(.red)
+                Text(message)
+                    .lineLimit(2)
+                Button(action: onDismiss) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(.white.opacity(0.7))
+                }
+                .buttonStyle(.plain)
+                .help("Dismiss")
+            }
+            .font(.system(size: 13, weight: .medium))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .background(.black.opacity(0.8), in: .capsule)
+            .padding(.bottom, 80)
+        }
+        .transition(.opacity)
     }
 
     // MARK: - Top Toolbar

@@ -81,13 +81,16 @@ final class PlayerController: ObservableObject {
     @Published var lastScreenshotURL: URL?
     @Published var isSavingScreenshot = false
     @Published var screenshotDone = false
+    @Published var screenshotError: String?
 
     // Trim export feedback
+    @Published var lastTrimExportURL: URL?
     @Published var isExportingTrim = false
     @Published var trimExportDone = false
     @Published var trimExportCancelling = false
     @Published var trimExportCancelled = false
     @Published var trimExportWarning: String?
+    @Published var trimExportError: String?
     /// Export progress fraction 0...1 for re-encoding formats, nil when preparing.
     @Published var trimExportProgress: Double?
     private var exportHandle: FFmpegHandle?
@@ -1440,6 +1443,8 @@ final class PlayerController: ObservableObject {
     func captureScreenshot() async {
         guard let item = mediaItem else { return }
 
+        screenshotError = nil
+
         let time = currentPlaybackTime
         let stream = item.metadata?.primaryVideoStream
         let bitDepth = stream?.bitDepth ?? 8
@@ -1455,7 +1460,7 @@ final class PlayerController: ObservableObject {
         let outputName = "\(baseName)_\(timestamp)_t\(timeString).\(format.fileExtension)"
 
         // Resolve output URL based on screenshot location mode
-        let outputURL: URL
+        let output: CoordinatedOutput
         let resolvedDir = SettingsView.resolvedScreenshotDirectory(sourceURL: item.url)
 
         if let dir = resolvedDir {
@@ -1463,7 +1468,7 @@ final class PlayerController: ObservableObject {
             let needsSecurityScope = dir != item.url.deletingLastPathComponent()
             if needsSecurityScope { _ = dir.startAccessingSecurityScopedResource() }
             defer { if needsSecurityScope { dir.stopAccessingSecurityScopedResource() } }
-            outputURL = dir.appendingPathComponent(outputName)
+            output = OutputCoordinator.automatic(directory: dir, preferredFilename: outputName)
         } else {
             // ask mode — show save panel
             let chosenURL: URL? = await withCheckedContinuation { continuation in
@@ -1483,8 +1488,10 @@ final class PlayerController: ObservableObject {
             }
 
             guard let chosen = chosenURL else { return }
-            outputURL = chosen
+            output = OutputCoordinator.userConfirmed(destinationURL: chosen)
         }
+
+        defer { output.discard() }
 
         let isInterlaced = stream?.isInterlaced ?? false
         let videoFilter = isInterlaced
@@ -1528,27 +1535,26 @@ final class PlayerController: ObservableObject {
 
         FFmpegService.appendColorArguments(from: stream, to: &arguments)
 
-        arguments += ["-y", outputURL.path]
+        arguments += ["-n", output.temporaryURL.path]
 
         isSavingScreenshot = true
         screenshotDone = false
 
         do {
             try await FFmpegService.run(arguments: arguments)
+            let outputURL = try output.commit()
             isSavingScreenshot = false
-            if FileManager.default.fileExists(atPath: outputURL.path) {
-                lastScreenshotURL = outputURL
-                logger.info("Screenshot saved: \(outputURL.lastPathComponent)")
-                screenshotDone = true
-                Task {
-                    try? await Task.sleep(for: .seconds(2))
-                    screenshotDone = false
-                }
-            } else {
-                logger.error("Screenshot output file missing")
+            lastScreenshotURL = outputURL
+            logger.info("Screenshot saved: \(outputURL.lastPathComponent)")
+            screenshotDone = true
+            Task {
+                try? await Task.sleep(for: .seconds(5))
+                screenshotDone = false
             }
         } catch {
             isSavingScreenshot = false
+            screenshotDone = false
+            screenshotError = "Screenshot failed: \(error.localizedDescription)"
             logger.error("Screenshot failed: \(error.localizedDescription)")
         }
     }
@@ -1557,6 +1563,7 @@ final class PlayerController: ObservableObject {
 
     func exportTrim() async {
         guard let item = mediaItem else { return }
+        trimExportError = nil
         guard let inPoint = trimIn, let outPoint = trimOut, outPoint > inPoint else {
             let missing = trimIn == nil && trimOut == nil ? "Set trim in and out points first."
                 : trimIn == nil ? "Set a trim in point first."
@@ -1579,14 +1586,14 @@ final class PlayerController: ObservableObject {
         let defaultName = "\(baseName)_trimmed.\(ext)"
 
         // Resolve output URL based on trim location mode
-        let outputURL: URL
+        let output: CoordinatedOutput
         let resolvedDir = SettingsView.resolvedTrimDirectory(sourceURL: item.url)
 
         if let dir = resolvedDir {
             let needsSecurityScope = dir != item.url.deletingLastPathComponent()
             if needsSecurityScope { _ = dir.startAccessingSecurityScopedResource() }
             defer { if needsSecurityScope { dir.stopAccessingSecurityScopedResource() } }
-            outputURL = dir.appendingPathComponent(defaultName)
+            output = OutputCoordinator.automatic(directory: dir, preferredFilename: defaultName)
         } else {
             let chosenURL: URL? = await withCheckedContinuation { continuation in
                 let panel = NSSavePanel()
@@ -1605,8 +1612,10 @@ final class PlayerController: ObservableObject {
             }
 
             guard let chosen = chosenURL else { return }
-            outputURL = chosen
+            output = OutputCoordinator.userConfirmed(destinationURL: chosen)
         }
+
+        defer { output.discard() }
 
         let formatArguments: [String]
         switch format {
@@ -1629,7 +1638,7 @@ final class PlayerController: ObservableObject {
             "-t", String(duration),
         ]
         arguments += formatArguments
-        arguments += ["-y", outputURL.path]
+        arguments += ["-n", output.temporaryURL.path]
 
         isExportingTrim = true
         trimExportDone = false
@@ -1658,26 +1667,22 @@ final class PlayerController: ObservableObject {
                 onProgress: progressCallback,
                 handle: handle
             )
+            let outputURL = try output.commit()
             exportHandle = nil
             isExportingTrim = false
             trimExportProgress = nil
-            if FileManager.default.fileExists(atPath: outputURL.path) {
-                logger.info("Trim export saved: \(outputURL.lastPathComponent)")
-                trimExportDone = true
-                Task {
-                    try? await Task.sleep(for: .seconds(2))
-                    trimExportDone = false
-                }
-            } else {
-                logger.error("Trim export output file missing")
+            lastTrimExportURL = outputURL
+            logger.info("Trim export saved: \(outputURL.lastPathComponent)")
+            trimExportDone = true
+            Task {
+                try? await Task.sleep(for: .seconds(5))
+                trimExportDone = false
             }
         } catch let error as FFmpegError where error == .cancelled {
             exportHandle = nil
             isExportingTrim = false
             trimExportProgress = nil
             trimExportCancelling = false
-            // Clean up partial output file
-            try? FileManager.default.removeItem(at: outputURL)
             logger.info("Trim export cancelled")
             trimExportCancelled = true
             Task {
@@ -1689,6 +1694,8 @@ final class PlayerController: ObservableObject {
             isExportingTrim = false
             trimExportCancelling = false
             trimExportProgress = nil
+            trimExportDone = false
+            trimExportError = "Export failed: \(error.localizedDescription)"
             logger.error("Trim export failed: \(error.localizedDescription)")
         }
     }

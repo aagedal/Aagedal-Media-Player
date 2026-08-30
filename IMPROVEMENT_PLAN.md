@@ -56,14 +56,16 @@ Acceptance: formatting and parsing round-trip exactly for every supported rate a
 
 ## Phase 3 — Screenshot and export data safety
 
-- Create a reusable output coordinator that generates collision-free filenames.
-- Write to a temporary sibling and atomically move the completed file into place.
-- Remove partial output after failure and cancellation.
-- Never overwrite automatically outside an explicit save-panel confirmation or preference.
-- Show screenshot/export errors in the app instead of logging them only.
-- Add completion actions such as Reveal in Finder, Open, and Copy Path.
-- Clarify that stream-copy trims may be keyframe-aligned; add an exact re-encode option.
-- Validate container/codec compatibility before starting stream copy.
+Status: In progress — collision-safe atomic output and visible result handling were implemented on 2026-08-31.
+
+- [x] Create a reusable output coordinator that generates collision-free filenames.
+- [x] Write to a temporary sibling and atomically move the completed file into place.
+- [x] Remove partial output after failure and cancellation.
+- [x] Never overwrite automatically outside an explicit save-panel confirmation or preference.
+- [x] Show screenshot/export errors in the app instead of logging them only.
+- [x] Add completion actions such as Reveal in Finder, Open, and Copy Path.
+- [ ] Clarify that stream-copy trims may be keyframe-aligned; add an exact re-encode option.
+- [ ] Validate container/codec compatibility before starting stream copy.
 
 Acceptance: automatic exports cannot silently replace existing user files, and failures leave no partial media behind.
 
