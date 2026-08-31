@@ -26,28 +26,6 @@ enum FFmpegError: Error, LocalizedError, Equatable {
     }
 }
 
-/// Handle for cancelling a running ffmpeg process.
-/// Uses manual locking for thread safety — not bound to any actor.
-final class FFmpegHandle: Sendable {
-    private nonisolated(unsafe) var _process: Process?
-    private let lock = NSLock()
-
-    nonisolated func attach(_ process: Process) {
-        lock.lock()
-        _process = process
-        lock.unlock()
-    }
-
-    nonisolated func cancel() {
-        lock.lock()
-        let p = _process
-        lock.unlock()
-        if let p, p.isRunning {
-            kill(p.processIdentifier, SIGKILL)
-        }
-    }
-}
-
 enum FFmpegService {
     static var ffmpegPath: String? {
         Bundle.main.path(forResource: "ffmpeg", ofType: nil)
@@ -60,92 +38,51 @@ enum FFmpegService {
     /// Run ffmpeg with progress reporting and optional cancellation.
     /// When `duration` is provided, `-progress pipe:1` is injected and `onProgress` is called
     /// with a fraction 0...1 as ffmpeg writes progress updates to stdout.
-    /// Pass an `FFmpegHandle` to enable cancellation.
-    static func run(arguments: [String], duration: Double?, onProgress: (@Sendable (Double) -> Void)?, handle: FFmpegHandle? = nil) async throws {
+    /// Pass a `SubprocessHandle` to allow explicit cancellation from UI actions.
+    /// Cancelling the calling Swift task always cancels the child process as well.
+    static func run(arguments: [String], duration: Double?, onProgress: (@Sendable (Double) -> Void)?, handle: SubprocessHandle? = nil) async throws {
         guard let path = ffmpegPath else {
             throw FFmpegError.ffmpegMissing
         }
 
         let wantProgress = duration != nil && duration! > 0 && onProgress != nil
 
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-            Task.detached(priority: .userInitiated) {
-                let process = Process()
-                process.executableURL = URL(fileURLWithPath: path)
-
-                var args = arguments
-                if wantProgress {
-                    if let idx = args.firstIndex(of: "-hide_banner") {
-                        args.insert(contentsOf: ["-progress", "pipe:1"], at: idx + 1)
-                    } else {
-                        args.insert(contentsOf: ["-progress", "pipe:1"], at: 0)
-                    }
-                }
-                process.arguments = args
-
-                // stderr must drain continuously: once the kernel pipe buffer
-                // fills, ffmpeg blocks on write(2) and waitUntilExit() hangs.
-                let stderrPipe = Pipe()
-                let stderrCollector = StderrCollector()
-                process.standardError = stderrPipe
-                stderrPipe.fileHandleForReading.readabilityHandler = { fh in
-                    let data = fh.availableData
-                    guard !data.isEmpty else { return }
-                    stderrCollector.append(data)
-                }
-
-                let stdoutPipe: Pipe?
-                if wantProgress, let totalDuration = duration, let progressCallback = onProgress {
-                    let pipe = Pipe()
-                    stdoutPipe = pipe
-                    process.standardOutput = pipe
-                    pipe.fileHandleForReading.readabilityHandler = { fh in
-                        let data = fh.availableData
-                        guard !data.isEmpty, let text = String(data: data, encoding: .utf8) else { return }
-
-                        for line in text.components(separatedBy: .newlines) {
-                            if line.hasPrefix("out_time_us=") {
-                                let valueStr = line.dropFirst("out_time_us=".count)
-                                if let us = Double(valueStr), us > 0 {
-                                    let seconds = us / 1_000_000.0
-                                    let fraction = min(seconds / totalDuration, 1.0)
-                                    progressCallback(fraction)
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    stdoutPipe = nil
-                    process.standardOutput = FileHandle.nullDevice
-                }
-
-                do {
-                    try process.run()
-                    handle?.attach(process)
-                } catch {
-                    stderrPipe.fileHandleForReading.readabilityHandler = nil
-                    stdoutPipe?.fileHandleForReading.readabilityHandler = nil
-                    continuation.resume(throwing: error)
-                    return
-                }
-
-                process.waitUntilExit()
-
-                stderrPipe.fileHandleForReading.readabilityHandler = nil
-                stdoutPipe?.fileHandleForReading.readabilityHandler = nil
-
-                let stderrTail = stderrPipe.fileHandleForReading.readDataToEndOfFile()
-                if !stderrTail.isEmpty { stderrCollector.append(stderrTail) }
-
-                if process.terminationStatus == 0 {
-                    continuation.resume(returning: ())
-                } else if process.terminationReason == .uncaughtSignal {
-                    continuation.resume(throwing: FFmpegError.cancelled)
-                } else {
-                    let message = String(data: stderrCollector.combined(), encoding: .utf8) ?? "Unknown ffmpeg error"
-                    continuation.resume(throwing: FFmpegError.processFailed(message.trimmingCharacters(in: .whitespacesAndNewlines)))
-                }
+        var args = arguments
+        if wantProgress {
+            if let idx = args.firstIndex(of: "-hide_banner") {
+                args.insert(contentsOf: ["-progress", "pipe:1"], at: idx + 1)
+            } else {
+                args.insert(contentsOf: ["-progress", "pipe:1"], at: 0)
             }
+        }
+
+        let progressLineHandler: (@Sendable (String) -> Void)?
+        if wantProgress, let totalDuration = duration, let progressCallback = onProgress {
+            progressLineHandler = { line in
+                guard line.hasPrefix("out_time_us="),
+                      let microseconds = Double(line.dropFirst("out_time_us=".count)),
+                      microseconds >= 0 else { return }
+                progressCallback(min(microseconds / 1_000_000.0 / totalDuration, 1.0))
+            }
+        } else {
+            progressLineHandler = nil
+        }
+
+        let result: SubprocessResult
+        do {
+            result = try await SubprocessService.run(
+                executableURL: URL(fileURLWithPath: path),
+                arguments: args,
+                handle: handle,
+                onStandardOutputLine: progressLineHandler
+            )
+        } catch is CancellationError {
+            throw FFmpegError.cancelled
+        }
+
+        guard result.terminationStatus == 0 else {
+            let message = String(data: result.standardError, encoding: .utf8) ?? "Unknown ffmpeg error"
+            throw FFmpegError.processFailed(message.trimmingCharacters(in: .whitespacesAndNewlines))
         }
     }
 
@@ -172,72 +109,24 @@ enum FFmpegService {
             "-f", "null", "-",
         ]
 
-        return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<LUFSResult, Error>) in
-            Task.detached(priority: .userInitiated) {
-                let process = Process()
-                process.executableURL = URL(fileURLWithPath: path)
-                process.arguments = arguments
-
-                let stderrPipe = Pipe()
-                process.standardOutput = FileHandle.nullDevice
-                process.standardError = stderrPipe
-
-                // Collect stderr asynchronously to prevent pipe buffer deadlock.
-                // ebur128 outputs per-frame data that can fill the 64 KB buffer.
-                let collector = StderrCollector()
-                stderrPipe.fileHandleForReading.readabilityHandler = { handle in
-                    let data = handle.availableData
-                    guard !data.isEmpty else { return }
-                    collector.append(data)
-                }
-
-                do {
-                    try process.run()
-                } catch {
-                    stderrPipe.fileHandleForReading.readabilityHandler = nil
-                    continuation.resume(throwing: error)
-                    return
-                }
-
-                process.waitUntilExit()
-                stderrPipe.fileHandleForReading.readabilityHandler = nil
-
-                // Drain any remaining data
-                let remaining = stderrPipe.fileHandleForReading.readDataToEndOfFile()
-                if !remaining.isEmpty { collector.append(remaining) }
-                let output = String(data: collector.combined(), encoding: .utf8) ?? ""
-
-                guard process.terminationStatus == 0 else {
-                    continuation.resume(throwing: FFmpegError.processFailed(output.trimmingCharacters(in: .whitespacesAndNewlines)))
-                    return
-                }
-
-                guard let result = parseLUFSOutput(output) else {
-                    continuation.resume(throwing: FFmpegError.processFailed("Could not parse LUFS output"))
-                    return
-                }
-
-                continuation.resume(returning: result)
-            }
-        }
-    }
-
-    private final class StderrCollector: Sendable {
-        private let lock = NSLock()
-        private nonisolated(unsafe) var chunks: [Data] = []
-
-        nonisolated func append(_ data: Data) {
-            lock.lock()
-            chunks.append(data)
-            lock.unlock()
+        let result: SubprocessResult
+        do {
+            result = try await SubprocessService.run(
+                executableURL: URL(fileURLWithPath: path),
+                arguments: arguments
+            )
+        } catch is CancellationError {
+            throw FFmpegError.cancelled
         }
 
-        nonisolated func combined() -> Data {
-            lock.lock()
-            let result = chunks.reduce(Data(), +)
-            lock.unlock()
-            return result
+        let output = String(data: result.standardError, encoding: .utf8) ?? ""
+        guard result.terminationStatus == 0 else {
+            throw FFmpegError.processFailed(output.trimmingCharacters(in: .whitespacesAndNewlines))
         }
+        guard let parsed = parseLUFSOutput(output) else {
+            throw FFmpegError.processFailed("Could not parse LUFS output")
+        }
+        return parsed
     }
 
     nonisolated private static func parseLUFSOutput(_ output: String) -> LUFSResult? {

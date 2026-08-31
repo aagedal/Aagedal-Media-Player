@@ -93,7 +93,7 @@ final class PlayerController: ObservableObject {
     @Published var trimExportError: String?
     /// Export progress fraction 0...1 for re-encoding formats, nil when preparing.
     @Published var trimExportProgress: Double?
-    private var exportHandle: FFmpegHandle?
+    private var exportHandle: SubprocessHandle?
 
     // Reverse playback
     private var reverseSpeed: Int = 1
@@ -1660,7 +1660,7 @@ final class PlayerController: ObservableObject {
         trimExportCancelled = false
         trimExportProgress = nil
 
-        let handle = FFmpegHandle()
+        let handle = SubprocessHandle()
         exportHandle = handle
 
         let progressCallback: (@Sendable (Double) -> Void)?

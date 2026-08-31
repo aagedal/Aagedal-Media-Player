@@ -71,13 +71,15 @@ Acceptance: automatic exports cannot silently replace existing user files, and f
 
 ## Phase 4 — Unified subprocess execution
 
-- Replace the separate ffmpeg runners with one cancellation-aware process service.
-- Continuously drain stdout and stderr with bounded diagnostic retention.
-- Terminate child processes from Swift task cancellation handlers.
-- Fix cancellation-before-process-attachment races.
-- Parse progress through a persistent line buffer.
-- Add cancellation support to LUFS and waveform generation.
-- Consider streaming PCM aggregation instead of loading the full temporary raw file.
+Status: Completed on 2026-08-31.
+
+- [x] Replace the separate ffmpeg runners with one cancellation-aware process service.
+- [x] Continuously drain stdout and stderr with bounded diagnostic retention.
+- [x] Terminate child processes from Swift task cancellation handlers.
+- [x] Fix cancellation-before-process-attachment races.
+- [x] Parse progress through a persistent line buffer.
+- [x] Add cancellation support to LUFS and waveform generation.
+- [x] Evaluate streaming PCM aggregation. Retain the downsampled temporary PCM design for now: it bounds long-file decode size while keeping native multi-channel rendering simple; revisit streaming if Phase 5 profiling identifies memory pressure.
 
 Acceptance: closing or cancelling a feature promptly ends its child process with no hangs or orphans.
 

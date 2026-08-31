@@ -73,12 +73,6 @@ final class AudioWaveformGenerator: ObservableObject {
 
         let labels = Self.channelNames(count: channels, layout: channelLayout)
 
-        guard let ffmpegPath = FFmpegService.ffmpegPath else {
-            error = FFmpegError.ffmpegMissing.localizedDescription
-            isGenerating = false
-            return
-        }
-
         let colorHex = color.ffmpegHex
         let gamma = Self.boostToGamma(boost)
         let logger = self.logger
@@ -88,7 +82,6 @@ final class AudioWaveformGenerator: ObservableObject {
                 let t0 = CFAbsoluteTimeGetCurrent()
                 let (images, amplitudes, width) = try await Self.generateNativeWaveforms(
                     url: url,
-                    ffmpegPath: ffmpegPath,
                     streamIndex: streamIndex,
                     channelCount: channels,
                     duration: duration,
@@ -143,12 +136,6 @@ final class AudioWaveformGenerator: ObservableObject {
         error = nil
         isGenerating = true
 
-        guard let ffmpegPath = FFmpegService.ffmpegPath else {
-            error = FFmpegError.ffmpegMissing.localizedDescription
-            isGenerating = false
-            return
-        }
-
         let colorHex = color.ffmpegHex
         let gamma = Self.boostToGamma(boost)
         let logger = self.logger
@@ -165,7 +152,6 @@ final class AudioWaveformGenerator: ObservableObject {
                     try Task.checkCancellation()
                     let (streamImages, streamAmplitudes, width) = try await Self.generateNativeWaveforms(
                         url: url,
-                        ffmpegPath: ffmpegPath,
                         streamIndex: stream.index,
                         channelCount: 1,
                         duration: duration,
@@ -270,7 +256,6 @@ final class AudioWaveformGenerator: ObservableObject {
     /// Returns images, cached amplitude data, and the computed width.
     private static nonisolated func generateNativeWaveforms(
         url: URL,
-        ffmpegPath: String,
         streamIndex: Int,
         channelCount: Int,
         duration: Double,
@@ -305,7 +290,7 @@ final class AudioWaveformGenerator: ObservableObject {
             "-y", pcmFile.path
         ]
 
-        try await runFFmpeg(path: ffmpegPath, arguments: arguments)
+        try await FFmpegService.run(arguments: arguments)
         try Task.checkCancellation()
 
         let pcmData = try Data(contentsOf: pcmFile)
@@ -437,41 +422,6 @@ final class AudioWaveformGenerator: ObservableObject {
             UInt8((value >> 8) & 0xFF),
             UInt8(value & 0xFF)
         )
-    }
-
-    // MARK: - FFmpeg Process
-
-    private static nonisolated func runFFmpeg(path: String, arguments: [String]) async throws {
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: path)
-            process.arguments = arguments
-            let stderrPipe = Pipe()
-            process.standardOutput = Pipe()
-            process.standardError = stderrPipe
-
-            // Use terminationHandler instead of waitUntilExit() to avoid
-            // blocking the Swift cooperative thread pool, which can starve
-            // the main actor when generating many channels sequentially.
-            process.terminationHandler = { terminatedProcess in
-                if terminatedProcess.terminationStatus == 0 {
-                    continuation.resume(returning: ())
-                } else if terminatedProcess.terminationReason == .uncaughtSignal {
-                    continuation.resume(throwing: CancellationError())
-                } else {
-                    let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
-                    let message = String(data: stderrData, encoding: .utf8) ?? "Unknown ffmpeg error"
-                    continuation.resume(throwing: FFmpegError.processFailed(message.trimmingCharacters(in: .whitespacesAndNewlines)))
-                }
-            }
-
-            do {
-                try process.run()
-            } catch {
-                process.terminationHandler = nil
-                continuation.resume(throwing: error)
-            }
-        }
     }
 
     // MARK: - Channel Labels
