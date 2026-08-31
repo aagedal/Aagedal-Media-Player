@@ -85,12 +85,14 @@ Acceptance: closing or cancelling a feature promptly ends its child process with
 
 ## Phase 5 — Scope and waveform performance
 
-- Add a latest-frame-wins scope worker with one computation in flight.
-- Drop superseded frames and prevent stale results from replacing newer output.
-- Cancel workers when scopes close, media changes, or playback tears down.
-- Add signposts for capture, compute, dropped frames, and memory pressure.
-- Profile all supported resolution/frame-rate combinations.
-- Replace forced metadata casts in HDR frame capture with safe type handling.
+Status: In progress — bounded scope scheduling, cancellation, instrumentation, and safe HDR attachment handling were implemented on 2026-08-31; resolution/frame-rate profiling remains.
+
+- [x] Add a latest-frame-wins scope worker with one computation in flight.
+- [x] Drop superseded frames and prevent stale results from replacing newer output.
+- [x] Cancel workers when scopes close, media changes, or playback tears down.
+- [x] Add signposts for capture, compute, dropped frames, and memory pressure.
+- [ ] Profile all supported resolution/frame-rate combinations.
+- [x] Replace forced metadata casts in HDR frame capture with safe type handling.
 
 Acceptance: long scope sessions maintain bounded CPU, memory, and task counts.
 

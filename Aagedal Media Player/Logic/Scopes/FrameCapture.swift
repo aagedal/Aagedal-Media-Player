@@ -14,7 +14,11 @@ import VideoToolbox
 @MainActor
 final class FrameCapture: ObservableObject {
     private let logger = Logger(subsystem: "com.aagedal.MediaPlayer", category: "FrameCapture")
-    private nonisolated(unsafe) static let staticLogger = Logger(subsystem: "com.aagedal.MediaPlayer", category: "FrameCapture")
+    private nonisolated static let staticLogger = Logger(subsystem: "com.aagedal.MediaPlayer", category: "FrameCapture")
+    private nonisolated static let performanceSignposter = OSSignposter(
+        subsystem: "com.aagedal.MediaPlayer",
+        category: "ScopePerformance"
+    )
 
     /// The latest captured frame, downscaled for scope computation (SDR path).
     @Published var currentFrame: CGImage?
@@ -181,6 +185,9 @@ final class FrameCapture: ObservableObject {
     }
 
     private func captureAVPlayerFrame(output: AVPlayerItemVideoOutput, player: AVPlayer) {
+        let interval = Self.performanceSignposter.beginInterval("Scope capture")
+        defer { Self.performanceSignposter.endInterval("Scope capture", interval) }
+
         let time = player.currentTime()
         guard output.hasNewPixelBuffer(forItemTime: time) else { return }
         guard let pixelBuffer = output.copyPixelBuffer(forItemTime: time, itemTimeForDisplay: nil) else { return }
@@ -191,6 +198,9 @@ final class FrameCapture: ObservableObject {
     // MARK: - AVPlayer HDR Frame Capture
 
     private func captureAVPlayerHDRFrame(output: AVPlayerItemVideoOutput, player: AVPlayer) {
+        let interval = Self.performanceSignposter.beginInterval("Scope capture")
+        defer { Self.performanceSignposter.endInterval("Scope capture", interval) }
+
         let time = player.currentTime()
         guard output.hasNewPixelBuffer(forItemTime: time) else { return }
         guard let pixelBuffer = output.copyPixelBuffer(forItemTime: time, itemTimeForDisplay: nil) else { return }
@@ -225,8 +235,7 @@ final class FrameCapture: ObservableObject {
         // rather than linearized, depending on OS version and pipeline configuration.
         var isLinear = false
         if let tfAttachment = CVBufferCopyAttachment(pixelBuffer, kCVImageBufferTransferFunctionKey, nil) {
-            let tfString = tfAttachment as! CFString as String
-            isLinear = (tfString == (kCVImageBufferTransferFunction_Linear as String))
+            isLinear = CFEqual(tfAttachment, kCVImageBufferTransferFunction_Linear)
         }
 
         let bytesPerRow = CVPixelBufferGetBytesPerRow(pixelBuffer)
@@ -332,6 +341,9 @@ final class FrameCapture: ObservableObject {
     nonisolated private static func screenshotAndDownsample(
         mpv: MPVPlayer, targetWidth: Int
     ) async -> CGImage? {
+        let interval = performanceSignposter.beginInterval("Scope capture")
+        defer { performanceSignposter.endInterval("Scope capture", interval) }
+
         guard let raw = mpv.screenshotRaw() else { return nil }
 
         // screenshot-raw returns bgr0 format: B,G,R,X in memory
@@ -366,6 +378,9 @@ final class FrameCapture: ObservableObject {
         mpv: MPVPlayer, targetWidth: Int,
         transferFunction: TransferFunction, peakNits: Float
     ) async -> MPVHDRResult? {
+        let interval = performanceSignposter.beginInterval("Scope capture")
+        defer { performanceSignposter.endInterval("Scope capture", interval) }
+
         guard let raw = mpv.screenshotRaw() else { return nil }
 
         let srcW = raw.width

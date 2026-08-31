@@ -52,6 +52,7 @@ enum ScopeComputer: Sendable {
         var sumB = [Float](repeating: 0, count: binCount)
 
         for y in 0..<height {
+            guard !Task.isCancelled else { return nil }
             for x in 0..<width {
                 let offset = (y * width + x) * 4
                 let b = Float(pixelData[offset]) / 255.0
@@ -81,6 +82,7 @@ enum ScopeComputer: Sendable {
         let gain: Float = 2.5
 
         for col in 0..<outW {
+            guard !Task.isCancelled else { return nil }
             for level in 0..<outH {
                 let idx = col * outH + level
                 let count = counts[idx]
@@ -153,6 +155,7 @@ enum ScopeComputer: Sendable {
         var yBins = [UInt32](repeating: 0, count: binCount)
 
         for y in 0..<height {
+            guard !Task.isCancelled else { return nil }
             for x in 0..<width {
                 let offset = (y * width + x) * 4
                 let bVal = Float(pixelData[offset]) / 255.0
@@ -192,6 +195,7 @@ enum ScopeComputer: Sendable {
         let allBins = [rBins, gBins, bBins, yBins]
 
         for ch in 0..<channelCount {
+            guard !Task.isCancelled else { return nil }
             let xOffset = ch * (channelW + gap)
             let bins = allBins[ch]
             let color = channelColors[ch]
@@ -244,6 +248,7 @@ enum ScopeComputer: Sendable {
         var sumB = [Float](repeating: 0, count: totalBins)
 
         for y in 0..<height {
+            guard !Task.isCancelled else { return nil }
             for x in 0..<width {
                 let offset = (y * width + x) * 4
                 let bVal = Float(pixelData[offset]) / 255.0
@@ -275,6 +280,7 @@ enum ScopeComputer: Sendable {
         let gain: Float = 3.0
 
         for i in 0..<totalBins {
+            if i.isMultiple(of: 16_384), Task.isCancelled { return nil }
             let count = counts[i]
             guard count > 0 else { continue }
 
@@ -403,6 +409,7 @@ enum ScopeComputer: Sendable {
         let peakNits = frame.contentPeakNits
 
         for y in 0..<height {
+            guard !Task.isCancelled else { return nil }
             for x in 0..<width {
                 let offset = (y * width + x) * 3
                 let r = frame.pixels[offset]
@@ -436,6 +443,7 @@ enum ScopeComputer: Sendable {
         let gain: Float = 2.5
 
         for col in 0..<outW {
+            guard !Task.isCancelled else { return nil }
             for level in 0..<outH {
                 let idx = col * outH + level
                 let count = counts[idx]
@@ -504,6 +512,7 @@ enum ScopeComputer: Sendable {
         let peakNits = frame.contentPeakNits
 
         for y in 0..<height {
+            guard !Task.isCancelled else { return nil }
             for x in 0..<width {
                 let offset = (y * width + x) * 3
                 let r = frame.pixels[offset]
@@ -544,6 +553,7 @@ enum ScopeComputer: Sendable {
         let allBins = [rBins, gBins, bBins, yBins]
 
         for ch in 0..<channelCount {
+            guard !Task.isCancelled else { return nil }
             let xOffset = ch * (channelW + gap)
             let bins = allBins[ch]
             let color = channelColors[ch]

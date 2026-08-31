@@ -6,7 +6,7 @@
 
 import SwiftUI
 
-enum WaveformMode: String, CaseIterable {
+enum WaveformMode: String, CaseIterable, Sendable {
     case luma = "Luma"
     case parade = "Parade"
 }
@@ -15,11 +15,9 @@ struct ScopeView: View {
     @ObservedObject var frameCapture: FrameCapture
     var isOverlay = false
     var transparentBackground = false
+    @StateObject private var renderWorker = ScopeRenderWorker()
     @State private var waveformMode: WaveformMode = .luma
-    @State private var waveformImage: CGImage?
-    @State private var vectorscopeImage: CGImage?
     @State private var vectorscopeGraticule: CGImage?
-    @State private var hdrPeakNits: Float = 10000
 
     private var isHDR: Bool {
         frameCapture.transferFunction != .sdr
@@ -78,14 +76,14 @@ struct ScopeView: View {
                 ZStack {
                     backgroundColor
 
-                    if let waveform = waveformImage {
+                    if let waveform = renderWorker.waveformImage {
                         Image(decorative: waveform, scale: 1.0)
                             .resizable()
                             .interpolation(.none)
                     }
 
                     // Graticule drawn via Canvas so labels don't stretch
-                    WaveformGraticuleView(isHDR: isHDR, peakNits: hdrPeakNits)
+                    WaveformGraticuleView(isHDR: isHDR, peakNits: renderWorker.hdrPeakNits)
                 }
                 .clipShape(Rectangle())
 
@@ -93,7 +91,7 @@ struct ScopeView: View {
                 ZStack {
                     backgroundColor
 
-                    if let vectorscope = vectorscopeImage {
+                    if let vectorscope = renderWorker.vectorscopeImage {
                         Image(decorative: vectorscope, scale: 1.0)
                             .resizable()
                             .interpolation(.none)
@@ -112,110 +110,42 @@ struct ScopeView: View {
             .background(isOverlay ? Color.clear : Color.black)
         }
         .onChange(of: frameCapture.currentFrame) { _, newFrame in
-            guard let frame = newFrame else {
-                if !isHDR {
-                    waveformImage = nil
-                    vectorscopeImage = nil
-                }
-                return
-            }
-            if isHDR {
-                // Only update vectorscope from SDR frame in HDR mode
-                computeVectorscopeOnly(from: frame)
-            } else {
-                computeScopes(from: frame)
-            }
+            submitScopeFrame(sdrFrame: newFrame, hdrFrame: frameCapture.currentHDRFrame)
         }
         .onChange(of: frameCapture.currentHDRFrame) { _, newFrame in
-            guard let frame = newFrame else {
-                if isHDR {
-                    waveformImage = nil
-                }
-                return
-            }
-            hdrPeakNits = frame.contentPeakNits
-            computeHDRScopes(from: frame)
+            submitScopeFrame(sdrFrame: frameCapture.currentFrame, hdrFrame: newFrame)
         }
         .onChange(of: waveformMode) {
-            if isHDR {
-                if let frame = frameCapture.currentHDRFrame {
-                    computeHDRScopes(from: frame)
-                }
-            } else if let frame = frameCapture.currentFrame {
-                computeScopes(from: frame)
-            }
+            submitScopeFrame(
+                sdrFrame: frameCapture.currentFrame,
+                hdrFrame: frameCapture.currentHDRFrame
+            )
         }
         .onAppear {
             let res = UserDefaults.standard.integer(forKey: "scopeResolution")
             let w = CGFloat(res > 0 ? res : 720)
             let h = round(w * 9.0 / 16.0)
             vectorscopeGraticule = ScopeComputer.drawVectorscopeGraticule(size: CGSize(width: h, height: h))
+            submitScopeFrame(
+                sdrFrame: frameCapture.currentFrame,
+                hdrFrame: frameCapture.currentHDRFrame
+            )
         }
+        .onDisappear { renderWorker.cancel(clearImages: true) }
         .onReceive(NotificationCenter.default.publisher(for: .toggleScopeParade)) { _ in
             waveformMode = waveformMode == .luma ? .parade : .luma
         }
     }
 
-    private func computeScopes(from frame: CGImage) {
+    private func submitScopeFrame(sdrFrame: CGImage?, hdrFrame: HDRFrameData?) {
         let res = UserDefaults.standard.integer(forKey: "scopeResolution")
-        let w = CGFloat(res > 0 ? res : 720)
-        let h = round(w * 9.0 / 16.0)
-        let wfSize = CGSize(width: w, height: h)
-        let vsSize = CGSize(width: h, height: h)
-        let mode = waveformMode
-
-        Task.detached(priority: .userInitiated) {
-            let wf: CGImage?
-            switch mode {
-            case .luma:
-                wf = ScopeComputer.computeWaveform(from: frame, outputSize: wfSize)
-            case .parade:
-                wf = ScopeComputer.computeParade(from: frame, outputSize: wfSize)
-            }
-
-            let vs = ScopeComputer.computeVectorscope(from: frame, outputSize: vsSize)
-
-            await MainActor.run {
-                waveformImage = wf
-                vectorscopeImage = vs
-            }
-        }
-    }
-
-    private func computeHDRScopes(from frame: HDRFrameData) {
-        let res = UserDefaults.standard.integer(forKey: "scopeResolution")
-        let w = CGFloat(res > 0 ? res : 720)
-        let h = round(w * 9.0 / 16.0)
-        let wfSize = CGSize(width: w, height: h)
-        let mode = waveformMode
-
-        Task.detached(priority: .userInitiated) {
-            let wf: CGImage?
-            switch mode {
-            case .luma:
-                wf = ScopeComputer.computeHDRWaveform(from: frame, outputSize: wfSize)
-            case .parade:
-                wf = ScopeComputer.computeHDRParade(from: frame, outputSize: wfSize)
-            }
-
-            await MainActor.run {
-                waveformImage = wf
-            }
-        }
-    }
-
-    private func computeVectorscopeOnly(from frame: CGImage) {
-        let res = UserDefaults.standard.integer(forKey: "scopeResolution")
-        let w = CGFloat(res > 0 ? res : 720)
-        let h = round(w * 9.0 / 16.0)
-        let vsSize = CGSize(width: h, height: h)
-
-        Task.detached(priority: .userInitiated) {
-            let vs = ScopeComputer.computeVectorscope(from: frame, outputSize: vsSize)
-            await MainActor.run {
-                vectorscopeImage = vs
-            }
-        }
+        renderWorker.submit(
+            sdrFrame: sdrFrame,
+            hdrFrame: hdrFrame,
+            transferFunction: frameCapture.transferFunction,
+            mode: waveformMode,
+            resolution: res
+        )
     }
 }
 
