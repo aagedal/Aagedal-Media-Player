@@ -125,14 +125,14 @@ Acceptance: primary playback, seeking, track selection, and export workflows wor
 
 ## Phase 8 — Architecture cleanup
 
-Status: In progress — settings keys and canonical defaults were centralized in a typed store on 2026-08-31.
+Status: In progress — settings keys and canonical defaults were centralized in a typed store, and screenshot/trim ffmpeg command construction was moved into pure tested builders on 2026-08-31.
 
 - [ ] Split `PlayerController` into playback coordination, backend adapters, track selection, trim/export, and screenshot components.
 - [ ] Split window/file-open coordination and overlays out of `ContentView`.
 - [ ] Replace stringly typed NotificationCenter command payloads with typed commands or focused scene actions.
 - [x] Centralize settings keys and defaults in a typed settings store.
 - [ ] Replace clusters of status booleans with enums.
-- [ ] Move export command construction into pure, tested builders.
+- [x] Move export command construction into pure, tested builders.
 
 Acceptance: state transitions have a single owner and pure behavior can be tested without constructing views or decoders.
 

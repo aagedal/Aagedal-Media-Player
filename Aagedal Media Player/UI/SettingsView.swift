@@ -19,56 +19,6 @@ enum SaveLocationMode: String, CaseIterable {
     }
 }
 
-enum ScreenshotFormat: String, CaseIterable {
-    case jxl = "jxl"
-    case png = "png"
-    case jpeg = "jpeg"
-
-    var label: String {
-        switch self {
-        case .jxl: "JPEG XL"
-        case .png: "PNG"
-        case .jpeg: "JPEG"
-        }
-    }
-
-    var fileExtension: String {
-        switch self {
-        case .jxl: "jxl"
-        case .png: "png"
-        case .jpeg: "jpg"
-        }
-    }
-}
-
-enum TrimExportFormat: String, CaseIterable {
-    case copy = "copy"
-    case gif = "gif"
-    case animatedAVIF = "animatedAVIF"
-    case hardwareH264 = "hardwareH264"
-    case hardwareH265 = "hardwareH265"
-
-    var label: String {
-        switch self {
-        case .copy: "Lossless Copy (Keyframe-Aligned)"
-        case .gif: "GIF"
-        case .animatedAVIF: "Animated AVIF"
-        case .hardwareH264: "Exact H.264 (Hardware)"
-        case .hardwareH265: "Exact H.265 (Hardware)"
-        }
-    }
-
-    var fileExtension: String? {
-        switch self {
-        case .copy: nil
-        case .gif: "gif"
-        case .animatedAVIF: "avif"
-        case .hardwareH264: "mp4"
-        case .hardwareH265: "mp4"
-        }
-    }
-}
-
 enum AudioWaveformColor: String, CaseIterable {
     case pink = "FF2D78"
     case blue = "4A9EE5"
@@ -160,26 +110,6 @@ enum ScopeResolution: Int, CaseIterable {
         case .standard: "Standard (720)"
         case .high: "High (1080)"
         case .ultra: "Ultra (1440)"
-        }
-    }
-}
-
-enum ExportWidthPreset: Int, CaseIterable {
-    case original = 0
-    case w2160 = 2160
-    case w1080 = 1080
-    case w720 = 720
-    case w480 = 480
-    case w320 = 320
-
-    var label: String {
-        switch self {
-        case .original: "Original"
-        case .w2160: "2160"
-        case .w1080: "1080"
-        case .w720: "720"
-        case .w480: "480"
-        case .w320: "320"
         }
     }
 }

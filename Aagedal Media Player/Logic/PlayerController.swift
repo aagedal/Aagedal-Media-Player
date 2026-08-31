@@ -1584,51 +1584,18 @@ final class PlayerController: ObservableObject {
 
         defer { output.discard() }
 
-        let isInterlaced = stream?.isInterlaced ?? false
-        let videoFilter = isInterlaced
-            ? "bwdif=mode=0:parity=-1:deint=all,scale=iw*sar:ih"
-            : "scale=iw*sar:ih"
-
-        var arguments = [
-            "-hide_banner", "-loglevel", "error",
-            "-ss", String(time),
-            "-i", item.url.path,
-            "-frames:v", "1",
-            "-vf", videoFilter,
-        ]
-
-        switch format {
-        case .jxl:
-            let pixelFormat: String
-            if bitDepth > 8 {
-                pixelFormat = hasAlpha ? "rgba64le" : "rgb48le"
-            } else {
-                pixelFormat = hasAlpha ? "rgba" : "rgb24"
-            }
-            let jxlQuality = UserDefaults.standard.value(for: AppSettings.screenshotJXLQuality)
-                .clamped(to: 0...100, default: AppSettings.screenshotJXLQuality.defaultValue)
-            let distance = (100 - jxlQuality) / 100.0 * 15.0
-            arguments += ["-pix_fmt", pixelFormat, "-c:v", "libjxl", "-distance", String(format: "%.2f", distance), "-effort", "7"]
-
-        case .png:
-            let pixelFormat: String
-            if bitDepth > 8 {
-                pixelFormat = hasAlpha ? "rgba64be" : "rgb48be"
-            } else {
-                pixelFormat = hasAlpha ? "rgba" : "rgb24"
-            }
-            arguments += ["-pix_fmt", pixelFormat, "-c:v", "png"]
-
-        case .jpeg:
-            let jpegQuality = UserDefaults.standard.value(for: AppSettings.screenshotJPEGQuality)
-                .clamped(to: 0...100, default: AppSettings.screenshotJPEGQuality.defaultValue)
-            let qv = 1.0 + (100 - jpegQuality) / 100.0 * 30.0
-            arguments += ["-pix_fmt", "yuvj444p", "-c:v", "mjpeg", "-q:v", String(format: "%.1f", qv)]
-        }
-
-        FFmpegService.appendColorArguments(from: stream, to: &arguments)
-
-        arguments += ["-n", output.temporaryURL.path]
+        let arguments = ScreenshotCommandBuilder.arguments(for: ScreenshotCommandRequest(
+            sourceURL: item.url,
+            destinationURL: output.temporaryURL,
+            time: time,
+            format: format,
+            bitDepth: bitDepth,
+            hasAlpha: hasAlpha,
+            isInterlaced: stream?.isInterlaced ?? false,
+            jxlQuality: UserDefaults.standard.value(for: AppSettings.screenshotJXLQuality),
+            jpegQuality: UserDefaults.standard.value(for: AppSettings.screenshotJPEGQuality),
+            colorMetadata: stream
+        ))
 
         isSavingScreenshot = true
         screenshotDone = false
@@ -1724,28 +1691,33 @@ final class PlayerController: ObservableObject {
             }
         }
 
-        let formatArguments: [String]
+        let width: Int
         switch format {
         case .copy:
-            formatArguments = buildCopyArguments()
+            width = ExportWidthPreset.original.rawValue
         case .gif:
-            formatArguments = buildGIFArguments()
+            width = UserDefaults.standard.value(for: AppSettings.gifWidth)
         case .animatedAVIF:
-            formatArguments = buildAnimatedAVIFArguments()
+            width = UserDefaults.standard.value(for: AppSettings.avifWidth)
         case .hardwareH264:
-            formatArguments = buildH264Arguments()
+            width = UserDefaults.standard.value(for: AppSettings.h264Width)
         case .hardwareH265:
-            formatArguments = buildH265Arguments()
+            width = UserDefaults.standard.value(for: AppSettings.h265Width)
         }
 
-        var arguments = [
-            "-hide_banner", "-loglevel", "error",
-            "-ss", String(inPoint),
-            "-i", item.url.path,
-            "-t", String(duration),
-        ]
-        arguments += formatArguments
-        arguments += ["-n", output.temporaryURL.path]
+        let arguments = TrimExportCommandBuilder.arguments(for: TrimExportCommandRequest(
+            sourceURL: item.url,
+            destinationURL: output.temporaryURL,
+            inPoint: inPoint,
+            outPoint: outPoint,
+            format: format,
+            width: width,
+            gifFrameRate: UserDefaults.standard.value(for: AppSettings.gifFrameRate),
+            avifQuality: UserDefaults.standard.value(for: AppSettings.avifQuality),
+            avifSpeed: UserDefaults.standard.value(for: AppSettings.avifSpeed),
+            h264Quality: UserDefaults.standard.value(for: AppSettings.h264Quality),
+            h265Quality: UserDefaults.standard.value(for: AppSettings.h265Quality)
+        ))
 
         isExportingTrim = true
         trimExportDone = false
@@ -1811,64 +1783,6 @@ final class PlayerController: ObservableObject {
         trimExportCancelling = true
         trimExportProgress = nil
         exportHandle?.cancel()
-    }
-
-    // MARK: - Export Argument Builders
-
-    private func buildCopyArguments() -> [String] {
-        ["-c", "copy", "-avoid_negative_ts", "make_zero"]
-    }
-
-    private func scaleFilter(for setting: AppSetting<Int>) -> String? {
-        let widthRaw = UserDefaults.standard.value(for: setting)
-        let preset = ExportWidthPreset(rawValue: widthRaw)
-            ?? ExportWidthPreset(rawValue: setting.defaultValue)
-            ?? .original
-        guard preset != .original else { return nil }
-        let s = preset.rawValue
-        // Limit the short side: if width <= height (portrait/square) scale width,
-        // otherwise scale height. min() prevents upscaling; -2 keeps the other dimension even.
-        return "scale='if(lte(iw,ih),min(\(s),iw),-2)':'if(lte(iw,ih),-2,min(\(s),ih))':flags=lanczos"
-    }
-
-    private func buildGIFArguments() -> [String] {
-        let fps = Int(UserDefaults.standard.value(for: AppSettings.gifFrameRate)
-            .clamped(to: 5...30, default: AppSettings.gifFrameRate.defaultValue))
-
-        let scaleComponent = scaleFilter(for: AppSettings.gifWidth)
-        let filtergraph: String
-        if let scaleComponent {
-            filtergraph = "fps=\(fps),\(scaleComponent),split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse"
-        } else {
-            filtergraph = "fps=\(fps),split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse"
-        }
-        return ["-vf", filtergraph, "-an"]
-    }
-
-    private func buildAnimatedAVIFArguments() -> [String] {
-        let crf = Int(UserDefaults.standard.value(for: AppSettings.avifQuality)
-            .clamped(to: 0...63, default: AppSettings.avifQuality.defaultValue))
-        let speed = Int(UserDefaults.standard.value(for: AppSettings.avifSpeed)
-            .clamped(to: 0...8, default: AppSettings.avifSpeed.defaultValue))
-        var args = ["-c:v", "libaom-av1", "-crf", String(crf), "-cpu-used", String(speed), "-b:v", "0", "-an"]
-        if let scale = scaleFilter(for: AppSettings.avifWidth) { args += ["-vf", scale] }
-        return args
-    }
-
-    private func buildH264Arguments() -> [String] {
-        let quality = Int(UserDefaults.standard.value(for: AppSettings.h264Quality)
-            .clamped(to: 1...100, default: AppSettings.h264Quality.defaultValue))
-        var args = ["-c:v", "h264_videotoolbox", "-q:v", String(quality), "-c:a", "aac"]
-        if let scale = scaleFilter(for: AppSettings.h264Width) { args += ["-vf", scale] }
-        return args
-    }
-
-    private func buildH265Arguments() -> [String] {
-        let quality = Int(UserDefaults.standard.value(for: AppSettings.h265Quality)
-            .clamped(to: 1...100, default: AppSettings.h265Quality.defaultValue))
-        var args = ["-c:v", "hevc_videotoolbox", "-q:v", String(quality), "-c:a", "aac"]
-        if let scale = scaleFilter(for: AppSettings.h265Width) { args += ["-vf", scale] }
-        return args
     }
 
     // MARK: - Teardown
