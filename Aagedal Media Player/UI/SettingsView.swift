@@ -1054,6 +1054,7 @@ private struct HomebrewUpdateHintView: View {
                 }
                 .buttonStyle(.borderless)
                 .help("Copy to clipboard")
+                .accessibilityLabel("Copy command to clipboard")
             }
         }
         .padding(.vertical, 4)

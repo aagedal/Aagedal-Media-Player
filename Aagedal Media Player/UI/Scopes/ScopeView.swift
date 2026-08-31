@@ -48,6 +48,7 @@ struct ScopeView: View {
                     .labelsHidden()
                     .pickerStyle(.segmented)
                     .frame(width: 180)
+                    .accessibilityLabel("Waveform display")
 
                     if let label = transferLabel {
                         Text(label)

@@ -24,6 +24,7 @@ struct ContentView: View {
     @State private var mouseMoveMonitor: Any?
     @State private var appActiveObserver: NSObjectProtocol?
     @State private var isEditingTimecode = false
+    @State private var isTimelineFocused = false
     @State private var timecodeActivationTrigger: String?
     @State private var nsWindow: NSWindow?
     @AppStorage("showCursorHideHint") private var showCursorHideHint = true
@@ -87,6 +88,7 @@ struct ContentView: View {
                     controller: controller,
                     item: controller.mediaItem!,
                     isEditingTimecode: $isEditingTimecode,
+                    isTimelineFocused: $isTimelineFocused,
                     timecodeActivationTrigger: $timecodeActivationTrigger
                 )
             } else {
@@ -220,6 +222,21 @@ struct ContentView: View {
         .onDrop(of: [.fileURL], isTargeted: $isDropTargeted) { providers in
             handleDrop(providers)
         }
+        .onChange(of: controller.screenshotDone) { _, done in
+            if done { announce("Screenshot saved.") }
+        }
+        .onChange(of: controller.screenshotError) { _, error in
+            if let error { announce(error) }
+        }
+        .onChange(of: controller.trimExportDone) { _, done in
+            if done { announce("Trimmed file saved.") }
+        }
+        .onChange(of: controller.trimExportCancelled) { _, cancelled in
+            if cancelled { announce("Export cancelled.") }
+        }
+        .onChange(of: controller.trimExportError) { _, error in
+            if let error { announce(error) }
+        }
         .onAppear {
             installMouseMoveMonitor()
             installAppActiveObserver()
@@ -312,6 +329,7 @@ struct ContentView: View {
                 item: controller.mediaItem,
                 timecodeMode: $timecodeMode,
                 isEditingTimecode: $isEditingTimecode,
+                isTimelineFocused: $isTimelineFocused,
                 timecodeActivationTrigger: $timecodeActivationTrigger
             )
             .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -426,6 +444,8 @@ struct ContentView: View {
                             .background(.white.opacity(0.15), in: .circle)
                     }
                     .buttonStyle(.plain)
+                    .help("Cancel export")
+                    .accessibilityLabel("Cancel export")
                 }
                 if let completedURL {
                     completionActions(for: completedURL)
@@ -468,6 +488,8 @@ struct ContentView: View {
         .menuIndicator(.hidden)
         .fixedSize()
         .help("File actions")
+        .accessibilityLabel("File actions")
+        .accessibilityHint("Reveal, open, or copy the saved file path.")
     }
 
     // MARK: - Progress Capsule Border
@@ -576,6 +598,7 @@ struct ContentView: View {
                 }
                 .buttonStyle(.plain)
                 .help("Dismiss")
+                .accessibilityLabel("Dismiss error")
             }
             .font(.system(size: 13, weight: .medium))
             .foregroundStyle(.white)
@@ -599,6 +622,9 @@ struct ContentView: View {
             }
             .buttonStyle(.plain)
             .help("Show metadata inspector")
+            .accessibilityLabel(showInspector ? "Hide metadata inspector" : "Show metadata inspector")
+            .accessibilityValue(showInspector ? "Shown" : "Hidden")
+            .accessibilityAddTraits(showInspector ? .isSelected : [])
             .disabled(controller.mediaItem == nil)
         }
         .padding(.leading, 16)
@@ -612,6 +638,10 @@ struct ContentView: View {
                 endPoint: .bottom
             )
         )
+    }
+
+    private func announce(_ message: String) {
+        AccessibilityNotification.Announcement(message).post()
     }
 
     // MARK: - Cursor Hide Zone
@@ -697,6 +727,8 @@ struct ContentView: View {
                         .foregroundStyle(.white.opacity(0.7))
                 }
                 .buttonStyle(.plain)
+                .help("Dismiss update")
+                .accessibilityLabel("Dismiss update")
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 8)
@@ -896,12 +928,15 @@ struct ContentView: View {
     }
 
     private func handleDrop(_ providers: [NSItemProvider]) -> Bool {
-        guard let provider = providers.first else { return false }
+        guard !providers.isEmpty else { return false }
+        let results = DroppedURLResults(count: providers.count)
 
-        _ = provider.loadObject(ofClass: URL.self) { url, error in
-            guard let url = url else { return }
-            Task { @MainActor in
-                self.openFile(url: url)
+        for (index, provider) in providers.enumerated() {
+            _ = provider.loadObject(ofClass: URL.self) { url, _ in
+                guard let completedURLs = results.record(url, at: index) else { return }
+                Task { @MainActor in
+                    WindowManager.shared.open(completedURLs)
+                }
             }
         }
 
@@ -946,6 +981,28 @@ struct ContentView: View {
             UTType("org.xiph.flac") ?? .audio,
             UTType("com.microsoft.waveform-audio") ?? .audio,
         ]
+    }
+}
+
+/// Collects NSItemProvider callbacks without depending on their completion
+/// order. Provider callbacks may arrive concurrently and off the main actor.
+private final class DroppedURLResults: @unchecked Sendable {
+    private let lock = NSLock()
+    nonisolated(unsafe) private var urls: [URL?]
+    nonisolated(unsafe) private var remaining: Int
+
+    nonisolated init(count: Int) {
+        urls = Array(repeating: nil, count: count)
+        remaining = count
+    }
+
+    nonisolated func record(_ url: URL?, at index: Int) -> [URL]? {
+        lock.withLock {
+            urls[index] = url
+            remaining -= 1
+            guard remaining == 0 else { return nil }
+            return urls.compactMap { $0 }
+        }
     }
 }
 

@@ -142,7 +142,7 @@ final class PlayerController: ObservableObject {
     weak var playerView: AVPlayerView?
     @Published var selectedAudioTrackOrderIndex: Int = 0
     @Published var showAllMonoWaveforms: Bool = UserDefaults.standard.bool(forKey: SettingsView.showAllMonoWaveformsKey)
-    var selectedSubtitleTrackOrderIndex: Int = -1
+    @Published var selectedSubtitleTrackOrderIndex: Int = -1
 
     // MARK: - MPV State
     var mpvPlayer: MPVPlayer?

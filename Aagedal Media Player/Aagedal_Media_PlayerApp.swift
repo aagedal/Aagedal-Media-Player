@@ -285,48 +285,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func application(_ application: NSApplication, open urls: [URL]) {
-        guard !urls.isEmpty else { return }
-        let wm = WindowManager.shared
-        wm.fileOpenInProgress = true
-
-        if wm.allowMultipleWindows {
-            if let openNew = wm.openNewWindow {
-                // App is running — route each file individually.
-                // Mark spawned so .onAppear on new windows won't double-spawn.
-                wm.pendingWindowsSpawned = true
-                for url in urls {
-                    if let emptyWindow = wm.firstEmptyWindow() {
-                        emptyWindow.makeKeyAndOrderFront(nil)
-                        NotificationCenter.default.post(
-                            name: .openFileURL, object: url,
-                            userInfo: ["targetWindow": emptyWindow])
-                    } else {
-                        wm.windowsToAllow += 1
-                        wm.pendingFileURLs.append(url)
-                        openNew()
-                    }
-                }
-            } else {
-                // App is still launching — store all URLs; the first window
-                // will load one and spawn windows for the rest.
-                wm.pendingFileURLs = urls
-            }
-        } else if let window = wm.windows.values.compactMap(\.window).first {
-            // Single-window: replace content with the first file
-            guard let url = urls.first else { return }
-            window.makeKeyAndOrderFront(nil)
-            NotificationCenter.default.post(
-                name: .openFileURL, object: url,
-                userInfo: ["targetWindow": window])
-        } else {
-            // App is still launching — store first URL for initial window
-            if let url = urls.first {
-                wm.pendingFileURLs = [url]
-            }
-        }
-
-        // Bring the app to the foreground when opened via file association
-        NSApp.activate()
+        WindowManager.shared.open(urls)
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {

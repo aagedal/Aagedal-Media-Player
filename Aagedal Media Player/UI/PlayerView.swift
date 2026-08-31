@@ -12,6 +12,7 @@ struct PlayerView: View {
     @ObservedObject var controller: PlayerController
     let item: MediaItem
     @Binding var isEditingTimecode: Bool
+    @Binding var isTimelineFocused: Bool
     @Binding var timecodeActivationTrigger: String?
 
     /// Aspect ratio for the player view's `.aspectRatio(_:contentMode:)` modifier.
@@ -177,6 +178,14 @@ struct PlayerView: View {
     private func handleKeyEvent(_ characters: String, _ modifiers: NSEvent.ModifierFlags, _ specialKey: NSEvent.SpecialKey?) -> Bool {
         // Don't intercept keys when editing timecode
         if isEditingTimecode {
+            return false
+        }
+
+        // A local AppKit monitor sees key events before SwiftUI does. Let
+        // arrow keys continue to the focused timeline so its keyboard and
+        // Full Keyboard Access behavior is not shadowed by player shortcuts.
+        if isTimelineFocused,
+           specialKey == .leftArrow || specialKey == .rightArrow {
             return false
         }
 

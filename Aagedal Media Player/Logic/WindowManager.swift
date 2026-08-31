@@ -70,10 +70,58 @@ final class WindowManager {
         windowsWithMedia.insert(id)
     }
 
-    /// Returns the NSWindow of the first registered window that has no media loaded.
-    func firstEmptyWindow() -> NSWindow? {
+    /// Route a batch of files using the same policy for Finder open events
+    /// and in-app drag and drop.
+    func open(_ urls: [URL]) {
+        guard !urls.isEmpty else { return }
+        fileOpenInProgress = true
+
+        if allowMultipleWindows {
+            if let openNewWindow {
+                // The app is running: fill existing empty windows first,
+                // then create one window for each remaining file.
+                pendingWindowsSpawned = true
+                for url in urls {
+                    if let emptyWindow = takeFirstEmptyWindow() {
+                        emptyWindow.makeKeyAndOrderFront(nil)
+                        NotificationCenter.default.post(
+                            name: .openFileURL,
+                            object: url,
+                            userInfo: ["targetWindow": emptyWindow]
+                        )
+                    } else {
+                        windowsToAllow += 1
+                        pendingFileURLs.append(url)
+                        openNewWindow()
+                    }
+                }
+            } else {
+                // The app is still launching. ContentView consumes this
+                // queue and creates the additional windows on appearance.
+                pendingFileURLs = urls
+            }
+        } else if let window = windows.values.compactMap(\.window).first {
+            // Single-window mode replaces the current item with the first
+            // file, matching the established Finder-open behavior.
+            window.makeKeyAndOrderFront(nil)
+            NotificationCenter.default.post(
+                name: .openFileURL,
+                object: urls[0],
+                userInfo: ["targetWindow": window]
+            )
+        } else {
+            pendingFileURLs = [urls[0]]
+        }
+
+        NSApp.activate()
+    }
+
+    /// Returns and reserves an empty window so a batch cannot route several
+    /// files into the same window before its asynchronous open begins.
+    private func takeFirstEmptyWindow() -> NSWindow? {
         for (id, weakWindow) in windows {
             if let window = weakWindow.window, !windowsWithMedia.contains(id) {
+                windowsWithMedia.insert(id)
                 return window
             }
         }

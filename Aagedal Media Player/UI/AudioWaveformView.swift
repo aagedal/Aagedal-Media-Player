@@ -47,6 +47,8 @@ struct AudioWaveformView: View {
                         Slider(value: $waveformBoost, in: 0...100)
                             .frame(width: 80)
                             .controlSize(.mini)
+                            .accessibilityLabel("Waveform gain")
+                            .accessibilityValue("\(Int(waveformBoost)) percent")
                         Text("\(Int(waveformBoost))")
                             .font(.system(size: 10, design: .monospaced))
                             .foregroundColor(.secondary)

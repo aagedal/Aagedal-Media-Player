@@ -12,6 +12,7 @@ struct ControlsView: View {
     let item: MediaItem?
     @Binding var timecodeMode: TimecodeDisplayMode
     @Binding var isEditingTimecode: Bool
+    @Binding var isTimelineFocused: Bool
     @Binding var timecodeActivationTrigger: String?
 
     @AppStorage(SettingsView.audioWaveformColorKey) private var waveformColorRaw: String = AudioWaveformColor.pink.rawValue
@@ -26,6 +27,7 @@ struct ControlsView: View {
     @State private var justActivated = false
     @State private var isNarrow = false
     @FocusState private var isTimecodeFocused: Bool
+    @FocusState private var timelineFocus: Bool
 
     private var isLoaded: Bool { item != nil }
 
@@ -74,6 +76,12 @@ struct ControlsView: View {
                 timecodeActivationTrigger = nil
             }
         }
+        .onChange(of: timelineFocus) { _, focused in
+            isTimelineFocused = focused
+        }
+        .onDisappear {
+            isTimelineFocused = false
+        }
     }
 
     // MARK: - Transport Buttons
@@ -88,6 +96,9 @@ struct ControlsView: View {
                 .frame(width: 28, height: 28)
         }
         .buttonStyle(.plain)
+        .help(isPlaying ? "Pause" : "Play")
+        .accessibilityLabel(isPlaying ? "Pause" : "Play")
+        .accessibilityValue(isPlaying ? "Playing" : "Paused")
 
         Divider()
             .frame(height: 18)
@@ -121,6 +132,9 @@ struct ControlsView: View {
         }
         .buttonStyle(.plain)
         .help((item?.loopPlayback ?? false) ? "Disable loop" : "Enable loop")
+        .accessibilityLabel("Loop playback")
+        .accessibilityValue((item?.loopPlayback ?? false) ? "On" : "Off")
+        .accessibilityAddTraits((item?.loopPlayback ?? false) ? .isSelected : [])
 
         // Fullscreen
         Button(action: { controller.toggleFullscreen() }) {
@@ -130,6 +144,7 @@ struct ControlsView: View {
         }
         .buttonStyle(.plain)
         .help("Toggle fullscreen")
+        .accessibilityLabel("Toggle fullscreen")
     }
 
     private var volumeControl: some View {
@@ -221,6 +236,7 @@ struct ControlsView: View {
                 DragGesture(minimumDistance: 0)
                     .onChanged { value in
                         if !isDragging {
+                            timelineFocus = true
                             isDragging = true
                             wasPrecision = false
                             // Jump to click position
@@ -260,8 +276,59 @@ struct ControlsView: View {
                         wasPrecision = false
                     }
             )
+            .focusable()
+            .focused($timelineFocus)
+            .onKeyPress(.leftArrow) {
+                adjustTimeline(byFrames: -1)
+                return .handled
+            }
+            .onKeyPress(.rightArrow) {
+                adjustTimeline(byFrames: 1)
+                return .handled
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Playback position")
+            .accessibilityValue(timelineAccessibilityValue)
+            .accessibilityHint("Use Left and Right Arrow to seek one frame.")
+            .accessibilityAdjustableAction { direction in
+                switch direction {
+                case .increment:
+                    adjustTimeline(byFrames: 1)
+                case .decrement:
+                    adjustTimeline(byFrames: -1)
+                @unknown default:
+                    break
+                }
+            }
+            .overlay {
+                if timelineFocus {
+                    RoundedRectangle(cornerRadius: 4)
+                        .stroke(Color.accentColor, lineWidth: 2)
+                }
+            }
         }
         .frame(height: 20)
+    }
+
+    private var timelineAccessibilityValue: String {
+        guard let item else { return "No media loaded" }
+        let current = TimecodeFormatter.formatTimeForDisplayWithMode(
+            seconds: displayTime,
+            item: item,
+            mode: timecodeMode
+        )
+        let duration = TimecodeFormatter.formatTimeForDisplayWithMode(
+            seconds: item.durationSeconds,
+            item: item,
+            mode: timecodeMode,
+            isDuration: true
+        )
+        return "\(current) of \(duration)"
+    }
+
+    private func adjustTimeline(byFrames frameCount: Int) {
+        guard isLoaded else { return }
+        controller.seekByFrames(frameCount)
     }
 
     // MARK: - Timecode Display
@@ -327,6 +394,10 @@ struct ControlsView: View {
             startTimecodeEdit()
         }
         .help("Click to cycle mode, double-click or type numbers to edit")
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Timecode")
+        .accessibilityValue(timelineAccessibilityValue)
+        .accessibilityHint("Activate to cycle display mode. Enter a timecode by typing numbers.")
     }
 
     private var timecodeEditor: some View {
@@ -455,6 +526,8 @@ struct ControlsView: View {
         .menuStyle(.borderlessButton)
         .frame(width: 28)
         .help("Audio track")
+        .accessibilityLabel("Audio track")
+        .accessibilityValue(selectedAudioTrackTitle)
     }
 
     // MARK: - Subtitle Track Picker
@@ -488,6 +561,8 @@ struct ControlsView: View {
         .menuStyle(.borderlessButton)
         .frame(width: 28)
         .help("Subtitles")
+        .accessibilityLabel("Subtitles")
+        .accessibilityValue(selectedSubtitleTrackTitle)
     }
 
     // MARK: - Chapter Picker
@@ -512,6 +587,8 @@ struct ControlsView: View {
         .menuStyle(.borderlessButton)
         .frame(width: 28)
         .help("Chapters")
+        .accessibilityLabel("Chapters")
+        .accessibilityValue(selectedChapterTitle)
     }
 
     private func formatChapterTime(_ t: Double) -> String {
@@ -521,5 +598,23 @@ struct ControlsView: View {
         let sec = s % 60
         return h > 0 ? String(format: "%d:%02d:%02d", h, m, sec)
                      : String(format: "%d:%02d", m, sec)
+    }
+
+    private var selectedAudioTrackTitle: String {
+        controller.audioTrackOptions.first {
+            $0.position == controller.selectedAudioTrackOrderIndex
+        }?.title ?? "Default"
+    }
+
+    private var selectedSubtitleTrackTitle: String {
+        guard controller.selectedSubtitleTrackOrderIndex >= 0 else { return "Off" }
+        return controller.subtitleTrackOptions.first {
+            $0.position == controller.selectedSubtitleTrackOrderIndex
+        }?.title ?? "Off"
+    }
+
+    private var selectedChapterTitle: String {
+        guard let position = controller.currentChapterPosition else { return "No chapter selected" }
+        return controller.chapterOptions.first { $0.position == position }?.title ?? "No chapter selected"
     }
 }

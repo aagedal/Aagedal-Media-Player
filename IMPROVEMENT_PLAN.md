@@ -111,13 +111,15 @@ Acceptance: every backend failure reaches an actionable UI state, and audio cont
 
 ## Phase 7 — Accessibility and playback usability
 
-- Make the custom timeline keyboard- and VoiceOver-adjustable.
-- Add labels, values, hints, and selected states to icon-only controls.
-- Preserve visible focus rings and test Full Keyboard Access.
-- Announce export completion, cancellation, and failure.
-- Improve audio-only presentation, preferably with an automatic waveform option.
-- Handle multi-file drops consistently with Finder open events.
-- Evaluate folder navigation or a lightweight queue after the core work is stable.
+Status: In progress — timeline accessibility, control semantics, status announcements, and unified multi-file opening were implemented on 2026-08-31; manual Full Keyboard Access validation and audio-only presentation remain.
+
+- [x] Make the custom timeline keyboard- and VoiceOver-adjustable.
+- [x] Add labels, values, hints, and selected states to icon-only controls.
+- [ ] Preserve visible focus rings and test Full Keyboard Access. The timeline now draws an explicit focus ring; end-to-end manual validation remains.
+- [x] Announce export completion, cancellation, and failure.
+- [ ] Improve audio-only presentation, preferably with an automatic waveform option.
+- [x] Handle multi-file drops consistently with Finder open events.
+- [ ] Evaluate folder navigation or a lightweight queue after the core work is stable.
 
 Acceptance: primary playback, seeking, track selection, and export workflows work without a pointing device.
 

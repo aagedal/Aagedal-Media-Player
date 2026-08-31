@@ -188,6 +188,7 @@ struct MetadataInspectorView: View {
                     }
                     .buttonStyle(.plain)
                     .help("Reveal in Finder")
+                    .accessibilityLabel("Reveal in Finder")
                     Button(action: { copyMetadataAsJSON() }) {
                         Image(systemName: showCopiedConfirmation ? "checkmark" : "doc.on.doc")
                             .font(.system(size: 14))
@@ -195,6 +196,7 @@ struct MetadataInspectorView: View {
                     }
                     .buttonStyle(.plain)
                     .help("Copy metadata as JSON")
+                    .accessibilityLabel(showCopiedConfirmation ? "Metadata copied" : "Copy metadata as JSON")
                     .disabled(metadata == nil)
                     Button(action: { isPresented = false }) {
                         Image(systemName: "xmark.circle.fill")
@@ -203,6 +205,7 @@ struct MetadataInspectorView: View {
                     }
                     .buttonStyle(.plain)
                     .help("Close inspector")
+                    .accessibilityLabel("Close inspector")
                 }
 
                 if video != nil || audio != nil {
