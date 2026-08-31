@@ -272,7 +272,7 @@ struct MetadataInspectorView: View {
 
         private enum CodingKeys: String, CodingKey {
             case duration, formatName, containerLongName, sizeBytes, bitRate
-            case videoStreams, audioStreams, subtitleStreams
+            case videoStreams, audioStreams, subtitleStreams, chapters
             case timecode, comment, encoder, frameCount
         }
 
@@ -302,6 +302,10 @@ struct MetadataInspectorView: View {
             // Subtitles
             if !metadata.subtitleStreams.isEmpty {
                 try c.encode(metadata.subtitleStreams, forKey: .subtitleStreams)
+            }
+
+            if !metadata.chapters.isEmpty {
+                try c.encode(metadata.chapters, forKey: .chapters)
             }
 
             // Info

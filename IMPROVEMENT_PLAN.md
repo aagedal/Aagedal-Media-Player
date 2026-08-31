@@ -16,21 +16,21 @@ This plan is based on a read-only source, build, and static-analysis audit perfo
 
 ## Phase 1 — Regression safety net
 
-Status: In progress — the test/CI foundation was implemented on 2026-08-29; generated media fixtures remain.
+Status: Completed on 2026-08-31.
 
 ### Test infrastructure
 
 - [x] Add an `Aagedal Media Player Tests` unit-test target.
 - [x] Add focused tests for timecode formatting/parsing, metadata ratios, version comparison, and numeric defaults.
 - [x] Extract pure logic from UI/service types where needed for direct testing.
-- [ ] Add media-fixture support for generated test clips without committing large binaries.
-- [ ] Add fixtures for common rates, drop-frame boundaries, rotation/PAR, HDR, multichannel audio, subtitles, chapters, and long-GOP trimming.
+- [x] Add media-fixture support for generated test clips without committing large binaries.
+- [x] Add fixtures for common rates, drop-frame boundaries, rotation/PAR, HDR, multichannel audio, subtitles, chapters, and long-GOP trimming.
 
 ### Deterministic builds and verification
 
 - [x] Track `Package.resolved`, or pin every package to an exact revision.
 - [x] Add a macOS CI workflow that builds, tests, and analyzes the app. Removed by project decision on 2026-08-31.
-- [ ] Verify build, tests, and analysis from a clean package cache.
+- [x] Verify build, tests, and analysis from a clean package cache.
 - [x] Document the local build/test commands in `README.md` or contributor guidance.
 
 ### Acceptance criteria

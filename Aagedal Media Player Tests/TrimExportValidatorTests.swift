@@ -62,7 +62,8 @@ final class TrimExportValidatorTests: XCTestCase {
             frameCount: nil,
             videoStreams: [],
             audioStreams: [],
-            subtitleStreams: []
+            subtitleStreams: [],
+            chapters: []
         )
 
         XCTAssertThrowsError(

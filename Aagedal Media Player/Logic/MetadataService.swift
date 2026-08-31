@@ -90,6 +90,16 @@ private enum MetadataMapper {
 
         let audioStreams = video.audioStreams.map(makeAudioStream(from:))
         let subtitleStreams = video.subtitleStreams.map(makeSubtitleStream(from:))
+        let chapters = video.chapters.map {
+            MediaMetadata.Chapter(
+                id: $0.id,
+                index: $0.index,
+                startTime: $0.startTime,
+                endTime: $0.endTime,
+                title: $0.title,
+                languageCode: $0.language?.lowercased()
+            )
+        }
 
         let frameCount: Int? = {
             if let count = video.videoStreams.first?.frameCount, count > 0 {
@@ -118,7 +128,8 @@ private enum MetadataMapper {
             frameCount: frameCount,
             videoStreams: videoStreams,
             audioStreams: audioStreams,
-            subtitleStreams: subtitleStreams
+            subtitleStreams: subtitleStreams,
+            chapters: chapters
         )
     }
 

@@ -32,3 +32,6 @@ Carthage/Build/
 # Playgrounds
 timeline.xctimeline
 playground.xcworkspace
+
+# Generated media regression fixtures (recreate with the script in scripts/)
+Test Fixtures/Generated/

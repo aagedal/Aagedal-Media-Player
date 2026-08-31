@@ -1,0 +1,126 @@
+// Aagedal Media Player
+// Copyright © 2026 Truls Aagedal
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+import Foundation
+import XCTest
+@testable import Aagedal_Media_Player
+
+final class GeneratedMediaFixtureTests: XCTestCase {
+    @MainActor
+    func testCommonFrameRates() async throws {
+        let directory = try fixtureDirectory()
+        let expectedRates: [(String, Double)] = [
+            ("23.976", 24_000.0 / 1_001.0),
+            ("24", 24),
+            ("25", 25),
+            ("29.97", 30_000.0 / 1_001.0),
+            ("30", 30),
+            ("50", 50),
+            ("59.94", 60_000.0 / 1_001.0),
+            ("60", 60)
+        ]
+
+        for (name, expectedRate) in expectedRates {
+            let url = directory.appending(path: "rates/\(name).mp4")
+            let metadata = try await MetadataService.shared.metadata(for: url)
+            let actualRate = try XCTUnwrap(metadata.primaryVideoStream?.frameRate?.value, name)
+            XCTAssertEqual(actualRate, expectedRate, accuracy: 0.001, name)
+        }
+    }
+
+    @MainActor
+    func testEmbeddedDropFrameBoundaryTimecodes() async throws {
+        let directory = try fixtureDirectory()
+        let expectedLabels: [(String, String)] = [
+            ("29.97-minute", "00:00:59;28"),
+            ("29.97-ten-minute", "00:09:59;28"),
+            ("29.97-hour", "00:59:59;28"),
+            ("29.97-day-wrap", "23:59:59;28"),
+            ("59.94-minute", "00:00:59;56")
+        ]
+
+        for (name, expectedLabel) in expectedLabels {
+            let url = directory.appending(path: "drop-frame-boundaries/\(name).mov")
+            let metadata = try await MetadataService.shared.metadata(for: url)
+            XCTAssertEqual(metadata.timecode, expectedLabel, name)
+        }
+    }
+
+    @MainActor
+    func testRotationAndPixelAspectRatio() async throws {
+        let url = try fixtureDirectory().appending(path: "rotation-par.mp4")
+        let metadata = try await MetadataService.shared.metadata(for: url)
+        let stream = try XCTUnwrap(metadata.primaryVideoStream)
+
+        XCTAssertEqual(stream.width, 720)
+        XCTAssertEqual(stream.height, 576)
+        XCTAssertEqual(stream.pixelAspectRatio?.reducedStringValue, "64:45")
+        XCTAssertEqual(abs(stream.rotation ?? 0), 90)
+        XCTAssertEqual(stream.displayAspectRatio?.reducedStringValue, "9:16")
+    }
+
+    @MainActor
+    func testHDR10Metadata() async throws {
+        let url = try fixtureDirectory().appending(path: "hdr10.mp4")
+        let metadata = try await MetadataService.shared.metadata(for: url)
+        let stream = try XCTUnwrap(metadata.primaryVideoStream)
+
+        XCTAssertEqual(stream.bitDepth, 10)
+        XCTAssertEqual(stream.colorPrimaries, "bt2020")
+        XCTAssertEqual(stream.colorTransfer, "smpte2084")
+        XCTAssertEqual(stream.colorSpace, "bt2020nc")
+        XCTAssertEqual(stream.maxCLL, 1_000)
+        XCTAssertEqual(stream.maxFALL, 400)
+    }
+
+    @MainActor
+    func testMultichannelAudio() async throws {
+        let url = try fixtureDirectory().appending(path: "multichannel-5.1.m4a")
+        let metadata = try await MetadataService.shared.metadata(for: url)
+        let stream = try XCTUnwrap(metadata.audioStreams.first)
+
+        XCTAssertEqual(stream.sampleRate, 48_000)
+        XCTAssertEqual(stream.channels, 6)
+        XCTAssertEqual(stream.bitDepth, 24)
+    }
+
+    @MainActor
+    func testSubtitlesChaptersAndLongGOPFixture() async throws {
+        let url = try fixtureDirectory().appending(path: "chapters-subtitles-long-gop.mkv")
+        let metadata = try await MetadataService.shared.metadata(for: url)
+
+        XCTAssertEqual(metadata.frameCount, 125)
+        XCTAssertEqual(metadata.subtitleStreams.count, 1)
+        XCTAssertEqual(metadata.subtitleStreams.first?.languageCode, "eng")
+        XCTAssertEqual(metadata.subtitleStreams.first?.isDefault, true)
+        XCTAssertEqual(metadata.chapters.map(\.title), ["Opening", "Closing"])
+        XCTAssertEqual(metadata.chapters.map(\.startTime), [0, 2.5])
+    }
+
+    @MainActor
+    private func fixtureDirectory() throws -> URL {
+        if let override = ProcessInfo.processInfo.environment["MEDIA_FIXTURE_DIR"],
+           !override.isEmpty {
+            return try validateFixtureDirectory(URL(fileURLWithPath: override, isDirectory: true))
+        }
+
+        let sourceFile = URL(fileURLWithPath: #filePath)
+        let repository = sourceFile.deletingLastPathComponent().deletingLastPathComponent()
+        return try validateFixtureDirectory(
+            repository.appending(path: "Test Fixtures/Generated", directoryHint: .isDirectory)
+        )
+    }
+
+    @MainActor
+    private func validateFixtureDirectory(_ url: URL) throws -> URL {
+        let manifest = url.appending(path: "MANIFEST.txt")
+        guard FileManager.default.fileExists(atPath: manifest.path) else {
+            throw XCTSkip(
+                "Generated media fixtures are unavailable. Run scripts/generate-test-fixtures.sh " +
+                "or set MEDIA_FIXTURE_DIR."
+            )
+        }
+        return url
+    }
+}

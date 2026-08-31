@@ -175,9 +175,19 @@ struct MediaMetadata: Equatable, Sendable, Codable {
         let isForced: Bool
     }
 
+    struct Chapter: Equatable, Sendable, Codable {
+        let id: UInt64?
+        let index: Int
+        let startTime: TimeInterval
+        let endTime: TimeInterval?
+        let title: String?
+        let languageCode: String?
+    }
+
     let videoStreams: [VideoStream]
     let audioStreams: [AudioStream]
     let subtitleStreams: [SubtitleStream]
+    let chapters: [Chapter]
 
     var primaryVideoStream: VideoStream? {
         videoStreams.first

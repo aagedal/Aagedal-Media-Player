@@ -5,6 +5,20 @@
 
 Based on the same fast engine as [Aagedal Media Converter](https://github.com/aagedal/Aagedal-Media-Converter), but now for quickly just checking playback of files.
 
+## Local verification
+
+Media integration tests use tiny, locally generated clips so large binary
+fixtures are never committed:
+
+```bash
+scripts/generate-test-fixtures.sh
+xcodebuild test -project "Aagedal Media Player.xcodeproj" -scheme "Aagedal Media Player" -destination "platform=macOS"
+```
+
+The generator requires a full ffmpeg installation with libx264/libx265. Set
+`FFMPEG=/path/to/ffmpeg` to select one explicitly. If fixtures are absent, only
+the generated-media tests are skipped; all pure unit tests continue to run.
+
 ## Features
 
 ### File support
