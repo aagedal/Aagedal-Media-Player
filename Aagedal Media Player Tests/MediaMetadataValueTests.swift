@@ -39,4 +39,32 @@ final class MediaMetadataValueTests: XCTestCase {
         XCTAssertEqual(try XCTUnwrap(rate.value), 29.970_029_97, accuracy: 0.000_000_01)
         XCTAssertEqual(rate.stringValue, "29.970")
     }
+
+    @MainActor
+    func testMediaPresentationKindRequiresResolvedStreamCounts() {
+        XCTAssertEqual(
+            MediaPresentationKind(videoStreamCount: nil, audioStreamCount: nil),
+            .unresolved
+        )
+    }
+
+    @MainActor
+    func testMediaPresentationKindPrefersVideoWhenBothKindsExist() {
+        XCTAssertEqual(
+            MediaPresentationKind(videoStreamCount: 1, audioStreamCount: 2),
+            .video
+        )
+    }
+
+    @MainActor
+    func testMediaPresentationKindRecognizesAudioOnlyMedia() {
+        XCTAssertEqual(
+            MediaPresentationKind(videoStreamCount: 0, audioStreamCount: 1),
+            .audioOnly
+        )
+        XCTAssertEqual(
+            MediaPresentationKind(videoStreamCount: 0, audioStreamCount: 0),
+            .noPlayableStreams
+        )
+    }
 }

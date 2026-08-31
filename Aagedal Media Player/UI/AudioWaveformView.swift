@@ -85,23 +85,30 @@ struct AudioWaveformView: View {
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if !isOverlay {
-                if let error = generator.error {
-                    VStack(spacing: 8) {
-                        Image(systemName: "exclamationmark.triangle")
-                            .font(.title2)
-                            .foregroundColor(.secondary)
-                        Text(error)
-                            .font(.system(size: 11))
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
+            } else if let error = generator.error {
+                VStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.title2)
+                        .foregroundColor(.secondary)
+                    Text("Couldn’t generate the waveform")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(.secondary)
+                    Text(error)
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(2)
+                    Button("Retry") {
+                        triggerGeneration()
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color.black)
-                } else {
-                    Color.black
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .controlSize(.small)
                 }
+                .padding(12)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(backgroundColor)
+            } else if !isOverlay {
+                Color.black
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .background(isOverlay ? Color.clear : Color.black)
@@ -143,6 +150,9 @@ struct AudioWaveformView: View {
             } else {
                 triggerGeneration()
             }
+        }
+        .onAppear {
+            triggerGeneration()
         }
     }
 

@@ -10,10 +10,13 @@ import AVKit
 
 struct PlayerView: View {
     @ObservedObject var controller: PlayerController
+    @ObservedObject var audioWaveformGenerator: AudioWaveformGenerator
     let item: MediaItem
+    let showsAudioWaveform: Bool
     @Binding var isEditingTimecode: Bool
     @Binding var isTimelineFocused: Bool
     @Binding var timecodeActivationTrigger: String?
+    @AppStorage(SettingsView.automaticAudioOnlyWaveformKey) private var automaticAudioOnlyWaveform = true
 
     /// Aspect ratio for the player view's `.aspectRatio(_:contentMode:)` modifier.
     ///
@@ -74,6 +77,15 @@ struct PlayerView: View {
                     .onReceive(controller.playbackTimePublisher) { time in
                         // Time synced via publisher
                     }
+            }
+
+            if item.presentationKind == .audioOnly {
+                AudioOnlyPresentationView(
+                    generator: audioWaveformGenerator,
+                    controller: controller,
+                    item: item,
+                    showsWaveform: automaticAudioOnlyWaveform || showsAudioWaveform
+                )
             }
 
             if controller.player != nil || controller.mpvPlayer != nil {

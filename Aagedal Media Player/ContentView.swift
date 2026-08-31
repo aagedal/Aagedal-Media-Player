@@ -86,7 +86,9 @@ struct ContentView: View {
             if controller.mediaItem != nil {
                 PlayerView(
                     controller: controller,
+                    audioWaveformGenerator: audioWaveformGenerator,
                     item: controller.mediaItem!,
+                    showsAudioWaveform: showAudioWaveformOverlay,
                     isEditingTimecode: $isEditingTimecode,
                     isTimelineFocused: $isTimelineFocused,
                     timecodeActivationTrigger: $timecodeActivationTrigger
@@ -130,7 +132,10 @@ struct ContentView: View {
             overlayControls
 
             // Layer 5: audio waveform overlay (always visible when active, independent of controls)
-            if showAudioWaveformOverlay && isMediaLoaded && (!audioWaveformGenerator.channelImages.isEmpty || audioWaveformGenerator.isGenerating) {
+            if showAudioWaveformOverlay,
+               isMediaLoaded,
+               controller.mediaItem?.presentationKind != .audioOnly,
+               !audioWaveformGenerator.channelImages.isEmpty || audioWaveformGenerator.isGenerating || audioWaveformGenerator.error != nil {
                 GeometryReader { geo in
                     VStack {
                         Spacer()
@@ -1154,13 +1159,15 @@ private struct FileAndWindowHandlers: ViewModifier {
                     showAudioWaveformOverlay.toggle()
                     if showAudioWaveformOverlay {
                         triggerOverlayWaveformGeneration()
-                    } else {
+                    } else if !keepsAutomaticAudioOnlyWaveform {
                         audioWaveformGenerator.cancel()
                     }
                 } else {
                     // Close overlay if open
                     showAudioWaveformOverlay = false
-                    audioWaveformGenerator.cancel()
+                    if !keepsAutomaticAudioOnlyWaveform {
+                        audioWaveformGenerator.cancel()
+                    }
 
                     // Toggle window
                     if let existing = audioWaveformWindowController {
@@ -1180,6 +1187,11 @@ private struct FileAndWindowHandlers: ViewModifier {
                     }
                 }
             }
+    }
+
+    private var keepsAutomaticAudioOnlyWaveform: Bool {
+        controller.mediaItem?.presentationKind == .audioOnly
+            && UserDefaults.standard.bool(forKey: SettingsView.automaticAudioOnlyWaveformKey)
     }
 
     private func triggerOverlayWaveformGeneration() {

@@ -49,10 +49,13 @@ final class AudioWaveformGenerator: ObservableObject {
         let color = AudioWaveformColor(rawValue: rawColor) ?? .pink
         let boost = UserDefaults.standard.double(forKey: SettingsView.audioWaveformBoostKey)
 
-        // Same stream — if only color/boost changed, re-render from cache
-        if url == currentURL, streamIndex == currentStreamIndex,
-           !currentAllStreams, !channelImages.isEmpty {
-            if color == currentColor, boost == currentBoost { return }
+        // Same stream — keep an in-flight decode, or re-render completed
+        // amplitude data when only the appearance changed.
+        if url == currentURL, streamIndex == currentStreamIndex, !currentAllStreams {
+            if color == currentColor, boost == currentBoost,
+               isGenerating || !channelImages.isEmpty {
+                return
+            }
             if hasCachedAmplitudes {
                 rerender()
                 return
@@ -115,9 +118,13 @@ final class AudioWaveformGenerator: ObservableObject {
         let color = AudioWaveformColor(rawValue: rawColor) ?? .pink
         let boost = UserDefaults.standard.double(forKey: SettingsView.audioWaveformBoostKey)
 
-        // Same streams — if only color/boost changed, re-render from cache
-        if url == currentURL, currentAllStreams, !channelImages.isEmpty {
-            if color == currentColor, boost == currentBoost { return }
+        // Same streams — keep an in-flight decode, or re-render completed
+        // amplitude data when only the appearance changed.
+        if url == currentURL, currentAllStreams {
+            if color == currentColor, boost == currentBoost,
+               isGenerating || !channelImages.isEmpty {
+                return
+            }
             if hasCachedAmplitudes {
                 rerender()
                 return

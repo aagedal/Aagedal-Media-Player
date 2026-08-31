@@ -217,6 +217,7 @@ struct SettingsView: View {
     static let audioWaveformColorKey = "audioWaveformColor"
     static let showAllMonoWaveformsKey = "showAllMonoWaveforms"
     static let audioWaveformBoostKey = "audioWaveformBoost"
+    static let automaticAudioOnlyWaveformKey = "automaticAudioOnlyWaveform"
     static let playbackVolumeKey = "playbackVolume"
     static let playbackMutedKey = "playbackMuted"
 
@@ -729,10 +730,16 @@ private struct AudioSettingsView: View {
     @AppStorage(SettingsView.audioWaveformColorKey) private var waveformColor: String = AudioWaveformColor.pink.rawValue
     @AppStorage(SettingsView.showAllMonoWaveformsKey) private var showAllMonoWaveforms: Bool = false
     @AppStorage(SettingsView.audioWaveformBoostKey) private var waveformBoost: Double = 0
+    @AppStorage(SettingsView.automaticAudioOnlyWaveformKey) private var automaticAudioOnlyWaveform = true
 
     var body: some View {
         Form {
             Section("Audio Waveform") {
+                Toggle("Show automatically for audio-only files", isOn: $automaticAudioOnlyWaveform)
+                Text("Audio-only files use the waveform as their main playback surface. Turn this off for a simpler title-only presentation.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
                 LabeledContent("Display Mode") {
                     Picker("", selection: $displayMode) {
                         ForEach(AudioWaveformDisplayMode.allCases, id: \.self) { mode in

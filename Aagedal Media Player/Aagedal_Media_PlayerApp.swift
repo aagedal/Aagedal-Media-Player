@@ -277,6 +277,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             SettingsView.audioWaveformBackgroundKey: AudioWaveformBackground.transparent.rawValue,
             SettingsView.audioWaveformColorKey: AudioWaveformColor.pink.rawValue,
             SettingsView.audioWaveformBoostKey: 0.0,
+            SettingsView.automaticAudioOnlyWaveformKey: true,
             SettingsView.playbackVolumeKey: 100.0,
             SettingsView.playbackMutedKey: false,
         ])

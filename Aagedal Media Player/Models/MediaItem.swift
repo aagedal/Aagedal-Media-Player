@@ -4,6 +4,28 @@
 
 import Foundation
 
+enum MediaPresentationKind: Equatable, Sendable {
+    case unresolved
+    case video
+    case audioOnly
+    case noPlayableStreams
+
+    nonisolated init(videoStreamCount: Int?, audioStreamCount: Int?) {
+        guard let videoStreamCount, let audioStreamCount else {
+            self = .unresolved
+            return
+        }
+
+        if videoStreamCount > 0 {
+            self = .video
+        } else if audioStreamCount > 0 {
+            self = .audioOnly
+        } else {
+            self = .noPlayableStreams
+        }
+    }
+}
+
 struct MediaItem: Identifiable, Equatable, Sendable {
     let id: UUID = UUID()
     var url: URL
@@ -13,6 +35,13 @@ struct MediaItem: Identifiable, Equatable, Sendable {
     var hasVideoStream: Bool = true
     var metadata: MediaMetadata?
     var loopPlayback: Bool = false
+
+    var presentationKind: MediaPresentationKind {
+        MediaPresentationKind(
+            videoStreamCount: metadata?.videoStreams.count,
+            audioStreamCount: metadata?.audioStreams.count
+        )
+    }
 
     var duration: String {
         guard durationSeconds > 0 else { return "--:--" }
