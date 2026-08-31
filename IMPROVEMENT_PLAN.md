@@ -26,11 +26,11 @@ Status: In progress — the test/CI foundation was implemented on 2026-08-29; ge
 - [ ] Add media-fixture support for generated test clips without committing large binaries.
 - [ ] Add fixtures for common rates, drop-frame boundaries, rotation/PAR, HDR, multichannel audio, subtitles, chapters, and long-GOP trimming.
 
-### Deterministic builds and CI
+### Deterministic builds and verification
 
 - [x] Track `Package.resolved`, or pin every package to an exact revision.
-- [x] Add a macOS CI workflow that builds, tests, and analyzes the app.
-- [ ] Verify the workflow from a clean package cache.
+- [x] Add a macOS CI workflow that builds, tests, and analyzes the app. Removed by project decision on 2026-08-31.
+- [ ] Verify build, tests, and analysis from a clean package cache.
 - [x] Document the local build/test commands in `README.md` or contributor guidance.
 
 ### Acceptance criteria
@@ -38,7 +38,7 @@ Status: In progress — the test/CI foundation was implemented on 2026-08-29; ge
 - A fresh checkout resolves the same package revisions as a release build.
 - `xcodebuild test` runs at least one real unit-test bundle.
 - Core pure-logic tests run without requiring media playback or network access.
-- CI blocks changes that fail build, tests, or static analysis.
+- Local release verification blocks changes that fail build, tests, or static analysis.
 
 ## Phase 2 — SMPTE timecode correctness
 

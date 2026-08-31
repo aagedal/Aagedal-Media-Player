@@ -23,7 +23,7 @@ xcodebuild test -project "Aagedal Media Player.xcodeproj" -scheme "Aagedal Media
 xcodebuild analyze -project "Aagedal Media Player.xcodeproj" -scheme "Aagedal Media Player" -destination "platform=macOS"
 ```
 
-The shared scheme includes the `Aagedal Media Player Tests` XCTest target. GitHub Actions builds, tests, and analyzes pushes to `main` and pull requests. There is no separate linting tool configured.
+The shared scheme includes the `Aagedal Media Player Tests` XCTest target. No GitHub Actions workflows or separate linting tool are configured; build, test, and analysis verification is run locally.
 
 **Important:** Metal API Validation must be OFF in the Xcode scheme's Run diagnostics. MoltenVK has a known race condition that causes crashes with validation enabled (KhronosGroup/MoltenVK#2226).
 
