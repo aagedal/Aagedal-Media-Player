@@ -98,12 +98,14 @@ Acceptance: long scope sessions maintain bounded CPU, memory, and task counts.
 
 ## Phase 6 — Playback state, errors, and volume
 
-- Replace overlapping preparation/readiness/error booleans with a typed playback phase.
-- Forward MPV initialization, load, and end-file errors into the controller/UI.
-- Add Retry, Reveal File, and diagnostic actions to playback failures.
-- Add mute and volume controls plus keyboard shortcuts and persistence.
-- Apply volume/mute consistently to MPV and AVPlayer.
-- Surface buffering/busy state.
+Status: Completed on 2026-08-31.
+
+- [x] Replace overlapping preparation/readiness/error booleans with a typed playback phase.
+- [x] Forward MPV initialization, load, and end-file errors into the controller/UI.
+- [x] Add Retry, Reveal File, and diagnostic actions to playback failures.
+- [x] Add mute and volume controls plus keyboard shortcuts and persistence.
+- [x] Apply volume/mute consistently to MPV and AVPlayer.
+- [x] Surface buffering/busy state.
 
 Acceptance: every backend failure reaches an actionable UI state, and audio controls behave identically across backends.
 

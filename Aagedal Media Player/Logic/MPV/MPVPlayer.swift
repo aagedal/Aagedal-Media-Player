@@ -50,6 +50,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
     @Published var videoAspectRatio: CGFloat?
     @Published var videoSourceSize: NSSize?
     @Published var error: String?
+    @Published private(set) var errorStage: PlaybackFailureStage = .loading
     @Published var videoGamma: String?
     @Published var videoSigPeak: Double = 1.0
 
@@ -146,6 +147,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         mpv = mpv_create()
         guard mpv != nil else {
             logger.error("Failed to create MPV context")
+            errorStage = .initialization
             error = "Failed to create MPV context"
             return
         }
@@ -191,7 +193,21 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         checkError(mpv_set_option_string(mpv, "input-media-keys", "no"), context: "input-media-keys")
         #endif
 
-        checkError(mpv_initialize(mpv), context: "mpv_initialize")
+        let initializationStatus = mpv_initialize(mpv)
+        guard initializationStatus >= 0 else {
+            let message = String(cString: mpv_error_string(initializationStatus))
+            logger.error("MPV initialization failed: \(message)")
+            mpv_terminate_destroy(mpv)
+            mpv = nil
+            errorStage = .initialization
+            error = "MPV initialization failed: \(message)"
+            return
+        }
+
+        // These values may have been assigned while load() was still pending,
+        // before the drawable existed and mpv had an initialized context.
+        setDouble(MPVProperty.volume, volume)
+        setFlag(MPVProperty.mute, isMuted)
 
         mpv_observe_property(mpv, 0, MPVProperty.timePos, MPV_FORMAT_DOUBLE)
         mpv_observe_property(mpv, 0, MPVProperty.duration, MPV_FORMAT_DOUBLE)
@@ -225,6 +241,8 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         }
 
         isFileLoaded = false
+        error = nil
+        errorStage = .loading
 
         logger.info("Loading file: \(url.lastPathComponent), startTime: \(startTime), autostart: \(autostart)")
 
@@ -235,7 +253,11 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
 
         // Use argv-form to avoid string-parsing pitfalls with paths that contain
         // quotes, backslashes, or whitespace.
-        command("loadfile", args: [path, "replace"])
+        if !command("loadfile", args: [path, "replace"]) {
+            errorStage = .loading
+            error = "mpv rejected the request to load this file."
+            return
+        }
 
         if !autostart {
             setFlag(MPVProperty.pause, true)
@@ -633,6 +655,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
                             let errorMsg = String(cString: mpv_error_string(endFile.error))
                             self.logger.error("MPV end file error: \(errorMsg)")
                             DispatchQueue.main.async {
+                                self.errorStage = self.isFileLoaded ? .playback : .loading
                                 self.error = errorMsg
                             }
                         }
@@ -754,8 +777,9 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         }
     }
 
-    private func command(_ name: String, args: [String] = []) {
-        guard let mpvCtx = mpv else { return }
+    @discardableResult
+    private func command(_ name: String, args: [String] = []) -> Bool {
+        guard let mpvCtx = mpv else { return false }
 
         var strArgs: [String?] = [name] + args
         strArgs.append(nil)
@@ -770,7 +794,9 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         let result = mpv_command(mpvCtx, &cargs)
         if result < 0 {
             logger.warning("MPV command '\(name)' failed: \(String(cString: mpv_error_string(result)))")
+            return false
         }
+        return true
     }
 
     private func getDouble(_ name: String) -> Double {

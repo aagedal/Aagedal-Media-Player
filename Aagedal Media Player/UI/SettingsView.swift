@@ -217,6 +217,8 @@ struct SettingsView: View {
     static let audioWaveformColorKey = "audioWaveformColor"
     static let showAllMonoWaveformsKey = "showAllMonoWaveforms"
     static let audioWaveformBoostKey = "audioWaveformBoost"
+    static let playbackVolumeKey = "playbackVolume"
+    static let playbackMutedKey = "playbackMuted"
 
     var body: some View {
         TabView {

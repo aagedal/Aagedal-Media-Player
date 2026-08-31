@@ -78,6 +78,9 @@ Quickly check basic metadata like resolution, frame rate, codec, color space and
 | Option + J | Slow reverse |
 | Option + L | Slow forward |
 | F | Toggle fullscreen |
+| M | Mute / unmute |
+| Control + Up Arrow | Increase volume |
+| Control + Down Arrow | Decrease volume |
 
 ### Navigation
 

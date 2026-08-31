@@ -43,24 +43,20 @@ struct PlayerView: View {
     }
 
     var body: some View {
-        Group {
+        ZStack {
+            Color.black
+
             if let player = controller.player {
                 // AVPlayer backend — .id() forces view recreation when the
                 // player changes, ensuring the old AVPlayerView is fully
                 // destroyed and cannot leak audio from a previous file.
-                ZStack {
-                    Color.black
-
-                    PlayerContainerView(
-                        player: player,
-                        controller: controller,
-                        isEditingTimecode: $isEditingTimecode,
-                        keyHandler: handleKeyEvent
-                    )
-                    .aspectRatio(playerAspectRatio, contentMode: .fit)
-
-                    overlayIndicators
-                }
+                PlayerContainerView(
+                    player: player,
+                    controller: controller,
+                    isEditingTimecode: $isEditingTimecode,
+                    keyHandler: handleKeyEvent
+                )
+                .aspectRatio(playerAspectRatio, contentMode: .fit)
                 .id(controller.preparationID)
                 .ignoresSafeArea()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -69,53 +65,95 @@ struct PlayerView: View {
                 }
             } else if controller.useMPV, let mpvPlayer = controller.mpvPlayer {
                 // MPV backend — .id() forces view recreation on each new load
-                ZStack {
-                    Color.black
-
-                    MPVVideoView(player: mpvPlayer, keyHandler: handleKeyEvent)
+                MPVVideoView(player: mpvPlayer, keyHandler: handleKeyEvent)
                     .aspectRatio(playerAspectRatio, contentMode: .fit)
+                    .id(controller.preparationID)
+                    .ignoresSafeArea()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .onReceive(controller.playbackTimePublisher) { time in
+                        // Time synced via publisher
+                    }
+            }
 
-                    overlayIndicators
-                }
-                .id(controller.preparationID)
-                .ignoresSafeArea()
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .onReceive(controller.playbackTimePublisher) { time in
-                    // Time synced via publisher
-                }
-            } else if controller.isPreparing {
-                VStack(spacing: 12) {
-                    ProgressView().progressViewStyle(.circular)
-                    Text("Preparing playback\u{2026}")
-                        .foregroundColor(.white.opacity(0.8))
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color.black)
-            } else if let message = controller.errorMessage {
-                VStack(spacing: 12) {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundColor(.yellow)
-                        .font(.system(size: 40))
-                    Text("Playback unavailable")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                    Text(message)
-                        .font(.footnote)
-                        .foregroundColor(.white.opacity(0.8))
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
+            if controller.player != nil || controller.mpvPlayer != nil {
+                overlayIndicators
+            }
+
+            playbackStateOverlay
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.black)
+    }
+
+    @ViewBuilder
+    private var playbackStateOverlay: some View {
+        switch controller.playbackPhase {
+        case .idle, .ready:
+            EmptyView()
+
+        case .preparing:
+            stateProgressOverlay(label: "Preparing playback…")
+
+        case .buffering:
+            stateProgressOverlay(label: "Buffering…")
+
+        case .failed(let failure):
+            VStack(spacing: 12) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundColor(.yellow)
+                    .font(.system(size: 40))
+                Text("Playback unavailable")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                Text(failure.message)
+                    .font(.footnote)
+                    .foregroundColor(.white.opacity(0.8))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+
+                HStack {
                     Button("Retry") {
-                        controller.preparePlayback(startTime: 0)
+                        controller.preparePlayback(startTime: controller.currentPlaybackTime)
                     }
                     .buttonStyle(.borderedProminent)
+
+                    if failure.mediaURL?.isFileURL == true {
+                        Button("Reveal File") {
+                            revealFailedFile(failure)
+                        }
+                        .buttonStyle(.bordered)
+                    }
+
+                    Button("Copy Diagnostics") {
+                        copyDiagnostics(failure)
+                    }
+                    .buttonStyle(.bordered)
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color.black)
-            } else {
-                Color.black
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
+            .padding(24)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.black.opacity(0.92))
         }
+    }
+
+    private func stateProgressOverlay(label: String) -> some View {
+        VStack(spacing: 12) {
+            ProgressView().progressViewStyle(.circular)
+            Text(label)
+                .foregroundColor(.white.opacity(0.8))
+        }
+        .padding(18)
+        .background(.black.opacity(0.68), in: RoundedRectangle(cornerRadius: 12))
+    }
+
+    private func revealFailedFile(_ failure: PlaybackFailure) {
+        guard let url = failure.mediaURL else { return }
+        NSWorkspace.shared.activateFileViewerSelecting([url])
+    }
+
+    private func copyDiagnostics(_ failure: PlaybackFailure) {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(failure.diagnosticText, forType: .string)
     }
 
     @ViewBuilder
@@ -213,6 +251,18 @@ struct PlayerView: View {
         // Option+Arrow bypasses sync and only affects the current window.
         if let specialKey {
             let optionHeld = modifiers.contains(.option)
+            if modifiers.contains(.control) {
+                switch specialKey {
+                case .upArrow:
+                    controller.adjustVolume(by: 5)
+                    return true
+                case .downArrow:
+                    controller.adjustVolume(by: -5)
+                    return true
+                default:
+                    break
+                }
+            }
             switch specialKey {
             case .leftArrow:
                 if modifiers.contains(.shift) {
@@ -349,4 +399,3 @@ private struct PlayerContainerView: NSViewRepresentable {
         }
     }
 }
-

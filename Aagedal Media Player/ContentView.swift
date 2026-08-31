@@ -1179,6 +1179,15 @@ private struct PlaybackHandlers: ViewModifier {
                 guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
                 controller.togglePlayback()
             }
+            .onReceive(NotificationCenter.default.publisher(for: .toggleMute)) { _ in
+                guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
+                controller.toggleMute()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .adjustVolume)) { notification in
+                guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow),
+                      let delta = (notification.object as? NSNumber)?.doubleValue else { return }
+                controller.adjustVolume(by: delta)
+            }
             .onReceive(NotificationCenter.default.publisher(for: .reverse)) { _ in
                 guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
                 controller.startReverse()

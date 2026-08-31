@@ -14,6 +14,7 @@ extension PlayerController {
 
     func installLoopObserver(for item: AVPlayerItem) {
         removeLoopObserver()
+        let myPrepID = preparationID
         loopObserver = NotificationCenter.default.addObserver(
             forName: .AVPlayerItemDidPlayToEndTime,
             object: item,
@@ -23,12 +24,35 @@ extension PlayerController {
                 self?.handlePlaybackEnded()
             }
         }
+
+        playbackFailureObserver = NotificationCenter.default.addObserver(
+            forName: .AVPlayerItemFailedToPlayToEndTime,
+            object: item,
+            queue: .main
+        ) { [weak self] notification in
+            let message = (notification.userInfo?[AVPlayerItemFailedToPlayToEndTimeErrorKey] as? NSError)?
+                .localizedDescription
+                ?? "AVFoundation could not finish playing this file."
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                guard self.preparationID == myPrepID else { return }
+                self.reportPlaybackFailure(
+                    backend: .avFoundation,
+                    stage: .playback,
+                    message: message
+                )
+            }
+        }
     }
 
     func removeLoopObserver() {
         if let loopObserver {
             NotificationCenter.default.removeObserver(loopObserver)
             self.loopObserver = nil
+        }
+        if let playbackFailureObserver {
+            NotificationCenter.default.removeObserver(playbackFailureObserver)
+            self.playbackFailureObserver = nil
         }
     }
 
@@ -127,7 +151,11 @@ extension PlayerController {
 
         timeControlStatusObserver = player.observe(\.timeControlStatus, options: [.new, .initial]) { [weak self] _, _ in
             Task { @MainActor [weak self] in
-                self?.syncIsPlaying()
+                guard let self else { return }
+                self.syncIsPlaying()
+                self.updateBufferingState(
+                    player.timeControlStatus == .waitingToPlayAtSpecifiedRate
+                )
             }
         }
     }
@@ -155,18 +183,17 @@ extension PlayerController {
                 switch item.status {
                 case .failed:
                     let failureDescription = item.error?.localizedDescription ?? "unknown error"
-                    logger.warning("AVPlayer playback failed: \(failureDescription, privacy: .public). Attempting MPV fallback.")
+                    logger.warning("AVPlayer playback failed: \(failureDescription, privacy: .public)")
 
                     if let error = item.error as NSError? {
                         logger.warning("AVPlayer error – domain: \(error.domain, privacy: .public), code: \(error.code, privacy: .public)")
                     }
 
-                    guard self.preparationID == myPrepID else { return }
-                    guard let item = self.mediaItem else { return }
-                    let wasCapturing = self.frameCapture.isCapturing
-                    self.teardown(resetAudioSelection: false)
-                    self.setupMPV(url: item.url, startTime: startTime)
-                    if wasCapturing { self.frameCapture.startCapture() }
+                    self.reportPlaybackFailure(
+                        backend: .avFoundation,
+                        stage: .loading,
+                        message: failureDescription
+                    )
 
                 case .readyToPlay:
                     let asset = item.asset
@@ -176,6 +203,7 @@ extension PlayerController {
                             let videoTracks = try await asset.loadTracks(withMediaType: .video)
                             // Re-check after each await — a new file may have been loaded
                             guard self.preparationID == myPrepID else { return }
+                            guard self.playbackFailure == nil else { return }
 
                             if !videoTracks.isEmpty {
                                 var hasValidVideoFormat = false
@@ -189,12 +217,11 @@ extension PlayerController {
                                 guard self.preparationID == myPrepID else { return }
 
                                 if !hasValidVideoFormat {
-                                    logger.warning("AVPlayer ready but video format invalid. Attempting MPV playback.")
-                                    guard let item = self.mediaItem else { return }
-                                    let wasCapturing = self.frameCapture.isCapturing
-                                    self.teardown(resetAudioSelection: false)
-                                    self.setupMPV(url: item.url, startTime: startTime)
-                                    if wasCapturing { self.frameCapture.startCapture() }
+                                    self.reportPlaybackFailure(
+                                        backend: .avFoundation,
+                                        stage: .loading,
+                                        message: "The file's video format could not be read by AVFoundation."
+                                    )
                                     return
                                 }
 
@@ -202,18 +229,18 @@ extension PlayerController {
                                     let isDecodable = try await track.load(.isDecodable)
                                     guard self.preparationID == myPrepID else { return }
                                     if !isDecodable {
-                                        logger.warning("AVPlayer ready but video track not decodable. Attempting MPV playback.")
-                                        guard let item = self.mediaItem else { return }
-                                        let wasCapturing = self.frameCapture.isCapturing
-                                        self.teardown(resetAudioSelection: false)
-                                        self.setupMPV(url: item.url, startTime: startTime)
-                                        if wasCapturing { self.frameCapture.startCapture() }
+                                        self.reportPlaybackFailure(
+                                            backend: .avFoundation,
+                                            stage: .loading,
+                                            message: "AVFoundation cannot decode this file's video track."
+                                        )
                                         return
                                     }
                                 }
                             }
 
                             guard self.preparationID == myPrepID else { return }
+                            guard self.playbackFailure == nil else { return }
 
                             // Window aspect/source size come from MetadataService via
                             // updateMetadata() now — no need to derive them from AVAsset
@@ -223,12 +250,15 @@ extension PlayerController {
                             // Populate duration from AVPlayer so the timeline is usable before metadata finishes
                             let avDuration = try await asset.load(.duration)
                             guard self.preparationID == myPrepID else { return }
+                            guard self.playbackFailure == nil else { return }
                             let seconds = CMTimeGetSeconds(avDuration)
                             if seconds.isFinite, seconds > 0, (self.mediaItem?.durationSeconds ?? 0) == 0 {
                                 self.mediaItem?.durationSeconds = seconds
                             }
 
-                            self.isReady = true
+                            self.markPlaybackReady(
+                                isBuffering: self.player?.timeControlStatus == .waitingToPlayAtSpecifiedRate
+                            )
                             self.canNativeReverse = item.canPlayReverse
                             self.canNativeSlowReverse = item.canPlaySlowReverse
 
@@ -241,6 +271,7 @@ extension PlayerController {
 
                         } catch {
                             guard self.preparationID == myPrepID else { return }
+                            guard self.playbackFailure == nil else { return }
                             logger.debug("Could not verify video tracks, proceeding with playback")
 
                             // Try to get duration even if track verification failed
@@ -251,7 +282,9 @@ extension PlayerController {
                                 }
                             }
 
-                            self.isReady = true
+                            self.markPlaybackReady(
+                                isBuffering: self.player?.timeControlStatus == .waitingToPlayAtSpecifiedRate
+                            )
                             self.canNativeReverse = item.canPlayReverse
                             self.canNativeSlowReverse = item.canPlaySlowReverse
 

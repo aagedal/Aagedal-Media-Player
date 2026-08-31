@@ -41,22 +41,34 @@ final class PlayerController: ObservableObject {
 
     @Published var volume: Double = 100 {
         didSet {
+            let clampedVolume = volume.clamped(to: 0...100, default: 100)
+            if volume != clampedVolume {
+                volume = clampedVolume
+                return
+            }
+            UserDefaults.standard.set(volume, forKey: SettingsView.playbackVolumeKey)
             if useMPV, let mpvPlayer {
                 mpvPlayer.volume = volume
+            } else {
+                player?.volume = Float(volume / 100)
             }
         }
     }
     @Published var isMuted: Bool = false {
         didSet {
+            UserDefaults.standard.set(isMuted, forKey: SettingsView.playbackMutedKey)
             if useMPV, let mpvPlayer {
                 mpvPlayer.isMuted = isMuted
+            } else {
+                player?.isMuted = isMuted
             }
         }
     }
     @Published var player: AVPlayer?
-    @Published var isPreparing = false
-    @Published var isReady = false
-    @Published var errorMessage: String?
+    @Published private(set) var playbackPhase: PlaybackPhase = .idle
+    var isPreparing: Bool { playbackPhase == .preparing }
+    var isReady: Bool { playbackPhase.permitsPlaybackControls }
+    var playbackFailure: PlaybackFailure? { playbackPhase.failure }
     @Published var currentPlaybackTime: Double = 0
     @Published private(set) var isPlaying: Bool = false
     @Published private(set) var currentPlaybackSpeed: Float = 1.0
@@ -125,6 +137,7 @@ final class PlayerController: ObservableObject {
     var playbackTimeObserver: Any?
     weak var playbackTimeObserverOwner: AVPlayer?
     var playerItemStatusObserver: Any?
+    var playbackFailureObserver: Any?
     var timeControlStatusObserver: NSKeyValueObservation?
     weak var playerView: AVPlayerView?
     @Published var selectedAudioTrackOrderIndex: Int = 0
@@ -142,6 +155,8 @@ final class PlayerController: ObservableObject {
     private var mpvSigPeakCancellable: AnyCancellable?
     private var mpvIsPlayingCancellable: AnyCancellable?
     private var mpvBackwardFailureCancellable: AnyCancellable?
+    private var mpvErrorCancellable: AnyCancellable?
+    private var mpvBusyCancellable: AnyCancellable?
 
     /// URLs where mpv's native `play-direction=backward` has previously
     /// failed (it emits "Backward playback is likely stuck/broken now."
@@ -168,7 +183,14 @@ final class PlayerController: ObservableObject {
 
     private let logger = Logger(subsystem: "com.aagedal.MediaPlayer", category: "PlayerController")
 
-    init() {}
+    init() {
+        let defaults = UserDefaults.standard
+        if defaults.object(forKey: SettingsView.playbackVolumeKey) != nil {
+            volume = defaults.double(forKey: SettingsView.playbackVolumeKey)
+                .clamped(to: 0...100, default: 100)
+        }
+        isMuted = defaults.bool(forKey: SettingsView.playbackMutedKey)
+    }
 
     // MARK: - Media Item Management
 
@@ -372,13 +394,11 @@ final class PlayerController: ObservableObject {
         teardown(resetAudioSelection: resetAudioSelection)
         preparationID &+= 1
         let myPrepID = preparationID
-        isPreparing = true
-        isReady = false
-        errorMessage = nil
+        playbackPhase = .preparing
         useMPV = false
 
         guard let item = mediaItem else {
-            isPreparing = false
+            playbackPhase = .idle
             return
         }
 
@@ -411,9 +431,12 @@ final class PlayerController: ObservableObject {
     /// AVPlayer-backed setup path. Used only for ProRes RAW (which mpv decodes
     /// with wrong colors and worse performance than VideoToolbox).
     private func setupAVPlayer(url: URL, startTime: TimeInterval, wasCapturing: Bool) {
+        playbackPhase = .preparing
         let asset = AVURLAsset(url: url, options: [AVURLAssetPreferPreciseDurationAndTimingKey: true])
         let playerItem = AVPlayerItem(asset: asset)
         let player = AVPlayer(playerItem: playerItem)
+        player.volume = Float(volume / 100)
+        player.isMuted = isMuted
 
         self.player = player
 
@@ -427,7 +450,6 @@ final class PlayerController: ObservableObject {
 
         installPlayerItemStatusObserver(for: playerItem, startTime: startTime)
 
-        self.isPreparing = false
         refreshAudioTrackOptions(playerItem: playerItem)
         refreshChapterOptions(playerItem: playerItem)
 
@@ -443,12 +465,12 @@ final class PlayerController: ObservableObject {
     }
 
     func setupMPV(url: URL, startTime: Double) {
+        playbackPhase = .preparing
         player = nil
 
         let mpv = MPVPlayer()
         self.mpvPlayer = mpv
         self.useMPV = true
-        self.isPreparing = false
 
         mpv.volume = volume
         mpv.isMuted = isMuted
@@ -469,17 +491,40 @@ final class PlayerController: ObservableObject {
             }
         }
 
-        // Observe file loaded state for isReady
+        // Observe file loaded state for the controller's typed playback phase.
         mpvFileLoadedTask = Task { @MainActor [weak self, weak mpv] in
             guard let self, let mpv else { return }
             for await isLoaded in mpv.$isFileLoaded.values {
                 guard !Task.isCancelled, self.preparationID == myPrepID else { break }
                 if isLoaded {
-                    self.isReady = true
+                    guard self.playbackFailure == nil else { break }
+                    self.markPlaybackReady(isBuffering: mpv.isBusy)
                     break
                 }
             }
         }
+
+        mpvErrorCancellable = mpv.$error
+            .compactMap { $0 }
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self, weak mpv] message in
+                guard let self, let mpv, self.mpvPlayer === mpv,
+                      self.preparationID == myPrepID else { return }
+                self.reportPlaybackFailure(
+                    backend: .mpv,
+                    stage: mpv.errorStage,
+                    message: message
+                )
+            }
+
+        mpvBusyCancellable = mpv.$isBusy
+            .removeDuplicates()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self, weak mpv] busy in
+                guard let self, let mpv, self.mpvPlayer === mpv,
+                      self.preparationID == myPrepID, mpv.isFileLoaded else { return }
+                self.updateBufferingState(busy)
+            }
 
         // Populate duration from MPV so the timeline is usable before metadata finishes
         mpvDurationTask = Task { @MainActor [weak self, weak mpv] in
@@ -577,6 +622,43 @@ final class PlayerController: ObservableObject {
         installMPVLoopObserver()
     }
 
+    func markPlaybackReady(isBuffering: Bool) {
+        guard playbackFailure == nil else { return }
+        playbackPhase = isBuffering ? .buffering : .ready
+    }
+
+    func updateBufferingState(_ isBuffering: Bool) {
+        switch playbackPhase {
+        case .ready, .buffering:
+            playbackPhase = isBuffering ? .buffering : .ready
+        case .idle, .preparing, .failed:
+            break
+        }
+    }
+
+    func reportPlaybackFailure(
+        backend: PlaybackBackend,
+        stage: PlaybackFailureStage,
+        message: String
+    ) {
+        let normalizedMessage = message.trimmingCharacters(in: .whitespacesAndNewlines)
+        let failure = PlaybackFailure(
+            backend: backend,
+            stage: stage,
+            message: normalizedMessage.isEmpty ? "An unknown playback error occurred." : normalizedMessage,
+            mediaURL: mediaItem?.url
+        )
+        logger.error("\(failure.diagnosticText, privacy: .public)")
+        reverseTimer?.invalidate()
+        reverseTimer = nil
+        isReversing = false
+        isNativeReverse = false
+        player?.pause()
+        mpvPlayer?.pause()
+        playbackPhase = .failed(failure)
+        isPlaying = false
+    }
+
     // MARK: - Unified Playback Control
 
     /// Resets speed to 1x and syncs playback state. Callable from extensions.
@@ -590,6 +672,17 @@ final class PlayerController: ObservableObject {
             isPlaying = (mpvPlayer?.isPlaying ?? false) || isReversing
         } else {
             isPlaying = (player?.timeControlStatus == .playing) || isReversing
+        }
+    }
+
+    func toggleMute() {
+        isMuted.toggle()
+    }
+
+    func adjustVolume(by delta: Double) {
+        volume = (volume + delta).clamped(to: 0...100, default: 100)
+        if volume > 0 {
+            isMuted = false
         }
     }
 
@@ -1823,7 +1916,7 @@ final class PlayerController: ObservableObject {
         }
         useMPV = false
 
-        isPreparing = false
+        playbackPhase = .idle
         isPlaying = false
         currentPlaybackSpeed = 1.0
         // videoAspectRatio / videoSourceSize are intentionally NOT wiped here:
@@ -1837,6 +1930,8 @@ final class PlayerController: ObservableObject {
         mpvSigPeakCancellable = nil
         mpvIsPlayingCancellable = nil
         mpvBackwardFailureCancellable = nil
+        mpvErrorCancellable = nil
+        mpvBusyCancellable = nil
         removeMPVLoopObserver()
         if resetAudioSelection {
             selectedAudioTrackOrderIndex = 0

@@ -119,6 +119,24 @@ struct Aagedal_Media_PlayerApp: App {
                 .keyboardShortcut(.space, modifiers: [])
                 .disabled(!mediaLoaded)
 
+                Button("Mute / Unmute") {
+                    NotificationCenter.default.post(name: .toggleMute, object: nil)
+                }
+                .keyboardShortcut("m", modifiers: [])
+                .disabled(!mediaLoaded)
+
+                Button("Increase Volume") {
+                    NotificationCenter.default.post(name: .adjustVolume, object: NSNumber(value: 5.0))
+                }
+                .keyboardShortcut(.upArrow, modifiers: [.control])
+                .disabled(!mediaLoaded)
+
+                Button("Decrease Volume") {
+                    NotificationCenter.default.post(name: .adjustVolume, object: NSNumber(value: -5.0))
+                }
+                .keyboardShortcut(.downArrow, modifiers: [.control])
+                .disabled(!mediaLoaded)
+
                 Divider()
 
                 Button("Reverse") {
@@ -257,8 +275,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             SettingsView.scopeFrameRateKey: 15.0,
             SettingsView.audioWaveformDisplayModeKey: AudioWaveformDisplayMode.overlay.rawValue,
             SettingsView.audioWaveformBackgroundKey: AudioWaveformBackground.transparent.rawValue,
-SettingsView.audioWaveformColorKey: AudioWaveformColor.pink.rawValue,
+            SettingsView.audioWaveformColorKey: AudioWaveformColor.pink.rawValue,
             SettingsView.audioWaveformBoostKey: 0.0,
+            SettingsView.playbackVolumeKey: 100.0,
+            SettingsView.playbackMutedKey: false,
         ])
         UpdateChecker.shared.checkIfNeeded()
         SparkleUpdater.shared.presentFirstLaunchNoticeIfNeeded()
@@ -324,6 +344,8 @@ extension Notification.Name {
     static let exportTrim = Notification.Name("exportTrim")
     static let cycleTimecodeMode = Notification.Name("cycleTimecodeMode")
     static let togglePlayback = Notification.Name("togglePlayback")
+    static let toggleMute = Notification.Name("toggleMute")
+    static let adjustVolume = Notification.Name("adjustVolume")
     static let reverse = Notification.Name("reverse")
     static let fastForward = Notification.Name("fastForward")
     static let seekByFrames = Notification.Name("seekByFrames")

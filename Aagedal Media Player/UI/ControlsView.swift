@@ -92,6 +92,11 @@ struct ControlsView: View {
         Divider()
             .frame(height: 18)
 
+        volumeControl
+
+        Divider()
+            .frame(height: 18)
+
         // Audio track picker
         audioTrackPicker
 
@@ -125,6 +130,39 @@ struct ControlsView: View {
         }
         .buttonStyle(.plain)
         .help("Toggle fullscreen")
+    }
+
+    private var volumeControl: some View {
+        HStack(spacing: 5) {
+            Button(action: { controller.toggleMute() }) {
+                Image(systemName: volumeSymbolName)
+                    .font(.system(size: 14))
+                    .frame(width: 24, height: 28)
+            }
+            .buttonStyle(.plain)
+            .help(controller.isMuted ? "Unmute" : "Mute")
+            .accessibilityLabel(controller.isMuted ? "Unmute" : "Mute")
+
+            Slider(
+                value: Binding(
+                    get: { controller.volume },
+                    set: { controller.volume = $0 }
+                ),
+                in: 0...100,
+                step: 1
+            )
+            .frame(width: isNarrow ? 54 : 72)
+            .help("Volume: \(Int(controller.volume)) percent")
+            .accessibilityLabel("Volume")
+            .accessibilityValue("\(Int(controller.volume)) percent")
+        }
+    }
+
+    private var volumeSymbolName: String {
+        if controller.isMuted || controller.volume == 0 { return "speaker.slash.fill" }
+        if controller.volume < 34 { return "speaker.wave.1.fill" }
+        if controller.volume < 67 { return "speaker.wave.2.fill" }
+        return "speaker.wave.3.fill"
     }
 
     // MARK: - Timeline
