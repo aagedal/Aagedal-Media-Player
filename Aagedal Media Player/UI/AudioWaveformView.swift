@@ -13,8 +13,10 @@ struct AudioWaveformView: View {
     var transparentBackground = false
     var onMediaChange: ((String) -> Void)?
 
-    @AppStorage(SettingsView.audioWaveformBoostKey) private var waveformBoost: Double = 0
-    @AppStorage(SettingsView.audioWaveformColorKey) private var waveformColor: String = AudioWaveformColor.pink.rawValue
+    @AppStorage(AppSettings.audioWaveformBoost.key)
+    private var waveformBoost = AppSettings.audioWaveformBoost.defaultValue
+    @AppStorage(AppSettings.audioWaveformColor.key)
+    private var waveformColor = AppSettings.audioWaveformColor.defaultValue
 
     @State private var isDragging = false
     @State private var dragTime: Double = 0

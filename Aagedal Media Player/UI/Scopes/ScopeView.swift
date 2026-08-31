@@ -123,8 +123,8 @@ struct ScopeView: View {
             )
         }
         .onAppear {
-            let res = UserDefaults.standard.integer(forKey: "scopeResolution")
-            let w = CGFloat(res > 0 ? res : 720)
+            let res = UserDefaults.standard.value(for: AppSettings.scopeResolution)
+            let w = CGFloat(res)
             let h = round(w * 9.0 / 16.0)
             vectorscopeGraticule = ScopeComputer.drawVectorscopeGraticule(size: CGSize(width: h, height: h))
             submitScopeFrame(
@@ -139,7 +139,7 @@ struct ScopeView: View {
     }
 
     private func submitScopeFrame(sdrFrame: CGImage?, hdrFrame: HDRFrameData?) {
-        let res = UserDefaults.standard.integer(forKey: "scopeResolution")
+        let res = UserDefaults.standard.value(for: AppSettings.scopeResolution)
         renderWorker.submit(
             sdrFrame: sdrFrame,
             hdrFrame: hdrFrame,

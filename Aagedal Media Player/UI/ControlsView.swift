@@ -15,8 +15,10 @@ struct ControlsView: View {
     @Binding var isTimelineFocused: Bool
     @Binding var timecodeActivationTrigger: String?
 
-    @AppStorage(SettingsView.audioWaveformColorKey) private var waveformColorRaw: String = AudioWaveformColor.pink.rawValue
-    @AppStorage("precisionScrubFactor") private var precisionScrubFactor: Double = 10.0
+    @AppStorage(AppSettings.audioWaveformColor.key)
+    private var waveformColorRaw = AppSettings.audioWaveformColor.defaultValue
+    @AppStorage(AppSettings.precisionScrubFactor.key)
+    private var precisionScrubFactor = AppSettings.precisionScrubFactor.defaultValue
     @State private var isDragging = false
     @State private var dragTime: Double = 0
     @State private var wasPrecision = false

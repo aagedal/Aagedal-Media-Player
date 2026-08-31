@@ -46,7 +46,7 @@ final class PlayerController: ObservableObject {
                 volume = clampedVolume
                 return
             }
-            UserDefaults.standard.set(volume, forKey: SettingsView.playbackVolumeKey)
+            UserDefaults.standard.set(volume, for: AppSettings.playbackVolume)
             if useMPV, let mpvPlayer {
                 mpvPlayer.volume = volume
             } else {
@@ -56,7 +56,7 @@ final class PlayerController: ObservableObject {
     }
     @Published var isMuted: Bool = false {
         didSet {
-            UserDefaults.standard.set(isMuted, forKey: SettingsView.playbackMutedKey)
+            UserDefaults.standard.set(isMuted, for: AppSettings.playbackMuted)
             if useMPV, let mpvPlayer {
                 mpvPlayer.isMuted = isMuted
             } else {
@@ -141,7 +141,7 @@ final class PlayerController: ObservableObject {
     var timeControlStatusObserver: NSKeyValueObservation?
     weak var playerView: AVPlayerView?
     @Published var selectedAudioTrackOrderIndex: Int = 0
-    @Published var showAllMonoWaveforms: Bool = UserDefaults.standard.bool(forKey: SettingsView.showAllMonoWaveformsKey)
+    @Published var showAllMonoWaveforms = UserDefaults.standard.value(for: AppSettings.showAllMonoWaveforms)
     @Published var selectedSubtitleTrackOrderIndex: Int = -1
 
     // MARK: - MPV State
@@ -185,11 +185,9 @@ final class PlayerController: ObservableObject {
 
     init() {
         let defaults = UserDefaults.standard
-        if defaults.object(forKey: SettingsView.playbackVolumeKey) != nil {
-            volume = defaults.double(forKey: SettingsView.playbackVolumeKey)
-                .clamped(to: 0...100, default: 100)
-        }
-        isMuted = defaults.bool(forKey: SettingsView.playbackMutedKey)
+        volume = defaults.value(for: AppSettings.playbackVolume)
+            .clamped(to: 0...100, default: AppSettings.playbackVolume.defaultValue)
+        isMuted = defaults.value(for: AppSettings.playbackMuted)
     }
 
     // MARK: - Media Item Management
@@ -1607,7 +1605,8 @@ final class PlayerController: ObservableObject {
             } else {
                 pixelFormat = hasAlpha ? "rgba" : "rgb24"
             }
-            let jxlQuality = UserDefaults.standard.double(forKey: SettingsView.screenshotJXLQualityKey).clamped(to: 0...100, default: 90)
+            let jxlQuality = UserDefaults.standard.value(for: AppSettings.screenshotJXLQuality)
+                .clamped(to: 0...100, default: AppSettings.screenshotJXLQuality.defaultValue)
             let distance = (100 - jxlQuality) / 100.0 * 15.0
             arguments += ["-pix_fmt", pixelFormat, "-c:v", "libjxl", "-distance", String(format: "%.2f", distance), "-effort", "7"]
 
@@ -1621,7 +1620,8 @@ final class PlayerController: ObservableObject {
             arguments += ["-pix_fmt", pixelFormat, "-c:v", "png"]
 
         case .jpeg:
-            let jpegQuality = UserDefaults.standard.double(forKey: SettingsView.screenshotJPEGQualityKey).clamped(to: 0...100, default: 90)
+            let jpegQuality = UserDefaults.standard.value(for: AppSettings.screenshotJPEGQuality)
+                .clamped(to: 0...100, default: AppSettings.screenshotJPEGQuality.defaultValue)
             let qv = 1.0 + (100 - jpegQuality) / 100.0 * 30.0
             arguments += ["-pix_fmt", "yuvj444p", "-c:v", "mjpeg", "-q:v", String(format: "%.1f", qv)]
         }
@@ -1819,9 +1819,11 @@ final class PlayerController: ObservableObject {
         ["-c", "copy", "-avoid_negative_ts", "make_zero"]
     }
 
-    private func scaleFilter(forKey key: String, default defaultPreset: ExportWidthPreset) -> String? {
-        let widthRaw = UserDefaults.standard.integer(forKey: key)
-        let preset = ExportWidthPreset(rawValue: widthRaw) ?? defaultPreset
+    private func scaleFilter(for setting: AppSetting<Int>) -> String? {
+        let widthRaw = UserDefaults.standard.value(for: setting)
+        let preset = ExportWidthPreset(rawValue: widthRaw)
+            ?? ExportWidthPreset(rawValue: setting.defaultValue)
+            ?? .original
         guard preset != .original else { return nil }
         let s = preset.rawValue
         // Limit the short side: if width <= height (portrait/square) scale width,
@@ -1830,9 +1832,10 @@ final class PlayerController: ObservableObject {
     }
 
     private func buildGIFArguments() -> [String] {
-        let fps = Int(UserDefaults.standard.double(forKey: SettingsView.gifFrameRateKey).clamped(to: 5...30, default: 15))
+        let fps = Int(UserDefaults.standard.value(for: AppSettings.gifFrameRate)
+            .clamped(to: 5...30, default: AppSettings.gifFrameRate.defaultValue))
 
-        let scaleComponent = scaleFilter(forKey: SettingsView.gifWidthKey, default: .w720)
+        let scaleComponent = scaleFilter(for: AppSettings.gifWidth)
         let filtergraph: String
         if let scaleComponent {
             filtergraph = "fps=\(fps),\(scaleComponent),split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse"
@@ -1843,24 +1846,28 @@ final class PlayerController: ObservableObject {
     }
 
     private func buildAnimatedAVIFArguments() -> [String] {
-        let crf = Int(UserDefaults.standard.double(forKey: SettingsView.avifQualityKey).clamped(to: 0...63, default: 28))
-        let speed = Int(UserDefaults.standard.double(forKey: SettingsView.avifSpeedKey).clamped(to: 0...8, default: 4))
+        let crf = Int(UserDefaults.standard.value(for: AppSettings.avifQuality)
+            .clamped(to: 0...63, default: AppSettings.avifQuality.defaultValue))
+        let speed = Int(UserDefaults.standard.value(for: AppSettings.avifSpeed)
+            .clamped(to: 0...8, default: AppSettings.avifSpeed.defaultValue))
         var args = ["-c:v", "libaom-av1", "-crf", String(crf), "-cpu-used", String(speed), "-b:v", "0", "-an"]
-        if let scale = scaleFilter(forKey: SettingsView.avifWidthKey, default: .w1080) { args += ["-vf", scale] }
+        if let scale = scaleFilter(for: AppSettings.avifWidth) { args += ["-vf", scale] }
         return args
     }
 
     private func buildH264Arguments() -> [String] {
-        let quality = Int(UserDefaults.standard.double(forKey: SettingsView.h264QualityKey).clamped(to: 1...100, default: 65))
+        let quality = Int(UserDefaults.standard.value(for: AppSettings.h264Quality)
+            .clamped(to: 1...100, default: AppSettings.h264Quality.defaultValue))
         var args = ["-c:v", "h264_videotoolbox", "-q:v", String(quality), "-c:a", "aac"]
-        if let scale = scaleFilter(forKey: SettingsView.h264WidthKey, default: .original) { args += ["-vf", scale] }
+        if let scale = scaleFilter(for: AppSettings.h264Width) { args += ["-vf", scale] }
         return args
     }
 
     private func buildH265Arguments() -> [String] {
-        let quality = Int(UserDefaults.standard.double(forKey: SettingsView.h265QualityKey).clamped(to: 1...100, default: 65))
+        let quality = Int(UserDefaults.standard.value(for: AppSettings.h265Quality)
+            .clamped(to: 1...100, default: AppSettings.h265Quality.defaultValue))
         var args = ["-c:v", "hevc_videotoolbox", "-q:v", String(quality), "-c:a", "aac"]
-        if let scale = scaleFilter(forKey: SettingsView.h265WidthKey, default: .original) { args += ["-vf", scale] }
+        if let scale = scaleFilter(for: AppSettings.h265Width) { args += ["-vf", scale] }
         return args
     }
 
@@ -1936,7 +1943,7 @@ final class PlayerController: ObservableObject {
         if resetAudioSelection {
             selectedAudioTrackOrderIndex = 0
             selectedSubtitleTrackOrderIndex = -1
-            showAllMonoWaveforms = UserDefaults.standard.bool(forKey: SettingsView.showAllMonoWaveformsKey)
+            showAllMonoWaveforms = UserDefaults.standard.value(for: AppSettings.showAllMonoWaveforms)
         }
         audioTrackOptions = []
         subtitleTrackOptions = []

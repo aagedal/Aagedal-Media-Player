@@ -44,10 +44,10 @@ final class WindowManager {
     /// after the user toggles the setting (AppStorage on non-View classes
     /// can cache the initial value).
     var allowMultipleWindows: Bool {
-        UserDefaults.standard.bool(forKey: "allowMultipleWindows")
+        UserDefaults.standard.value(for: AppSettings.allowMultipleWindows)
     }
     var syncPlaybackControls: Bool {
-        UserDefaults.standard.bool(forKey: "syncPlaybackControls")
+        UserDefaults.standard.value(for: AppSettings.syncPlaybackControls)
     }
 
     private init() {}

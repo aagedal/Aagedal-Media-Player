@@ -31,8 +31,8 @@ final class UpdateChecker: ObservableObject {
     @Published var isChecking: Bool = false
 
     var lastChecked: Date? {
-        get { UserDefaults.standard.object(forKey: "updateLastChecked") as? Date }
-        set { UserDefaults.standard.set(newValue, forKey: "updateLastChecked") }
+        get { UserDefaults.standard.object(forKey: AppSettings.updateLastChecked.key) as? Date }
+        set { UserDefaults.standard.set(newValue, forKey: AppSettings.updateLastChecked.key) }
     }
 
     /// True when this app was installed via Homebrew. The checker still
@@ -58,8 +58,7 @@ final class UpdateChecker: ObservableObject {
     func checkIfNeeded() {
         guard !SparkleUpdater.shared.isActive else { return }
 
-        let interval = UserDefaults.standard.double(forKey: "updateCheckInterval")
-        let checkInterval = interval > 0 ? interval : 7 * 24 * 3600 // Default: weekly
+        let checkInterval = UserDefaults.standard.value(for: AppSettings.updateCheckInterval)
 
         if let last = lastChecked, Date().timeIntervalSince(last) < checkInterval {
             return

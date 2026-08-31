@@ -185,42 +185,6 @@ enum ExportWidthPreset: Int, CaseIterable {
 }
 
 struct SettingsView: View {
-    static let modeKey = "screenshotLocationMode"
-    static let formatKey = "screenshotFormat"
-    static let bookmarkKey = "screenshotSaveDirectory"
-    static let trimModeKey = "trimLocationMode"
-    static let trimBookmarkKey = "trimSaveDirectory"
-
-    // Export format keys
-    static let trimFormatKey = "trimExportFormat"
-    static let screenshotJXLQualityKey = "screenshotJXLQuality"
-    static let screenshotJPEGQualityKey = "screenshotJPEGQuality"
-    static let gifFrameRateKey = "gifFrameRate"
-    static let gifWidthKey = "gifWidth"
-    static let avifWidthKey = "avifWidth"
-    static let h264WidthKey = "h264Width"
-    static let h265WidthKey = "h265Width"
-    static let avifQualityKey = "avifQuality"
-    static let avifSpeedKey = "avifSpeed"
-    static let h264QualityKey = "h264Quality"
-    static let h265QualityKey = "h265Quality"
-
-    // Scope keys
-    static let scopeDisplayModeKey = "scopeDisplayMode"
-    static let scopeBackgroundKey = "scopeBackground"
-    static let scopeResolutionKey = "scopeResolution"
-    static let scopeFrameRateKey = "scopeFrameRate"
-
-    // Audio waveform keys
-    static let audioWaveformDisplayModeKey = "audioWaveformDisplayMode"
-    static let audioWaveformBackgroundKey = "audioWaveformBackground"
-    static let audioWaveformColorKey = "audioWaveformColor"
-    static let showAllMonoWaveformsKey = "showAllMonoWaveforms"
-    static let audioWaveformBoostKey = "audioWaveformBoost"
-    static let automaticAudioOnlyWaveformKey = "automaticAudioOnlyWaveform"
-    static let playbackVolumeKey = "playbackVolume"
-    static let playbackMutedKey = "playbackMuted"
-
     var body: some View {
         TabView {
             GeneralSettingsView()
@@ -250,39 +214,54 @@ struct SettingsView: View {
     // MARK: - Static Resolution
 
     static var selectedScreenshotFormat: ScreenshotFormat {
-        let raw = UserDefaults.standard.string(forKey: formatKey) ?? "jxl"
+        let raw = UserDefaults.standard.value(for: AppSettings.screenshotFormat)
         return ScreenshotFormat(rawValue: raw) ?? .jxl
     }
 
     static var selectedTrimExportFormat: TrimExportFormat {
-        let raw = UserDefaults.standard.string(forKey: trimFormatKey) ?? "copy"
+        let raw = UserDefaults.standard.value(for: AppSettings.trimExportFormat)
         return TrimExportFormat(rawValue: raw) ?? .copy
     }
 
     static func resolvedScreenshotDirectory(sourceURL: URL) -> URL? {
-        resolvedDirectory(modeKey: modeKey, bookmarkKey: bookmarkKey, defaultMode: .custom, sourceURL: sourceURL)
+        resolvedDirectory(
+            modeSetting: AppSettings.screenshotLocationMode,
+            bookmarkSetting: AppSettings.screenshotSaveDirectory,
+            defaultMode: .custom,
+            sourceURL: sourceURL
+        )
     }
 
     static func resolvedTrimDirectory(sourceURL: URL) -> URL? {
-        resolvedDirectory(modeKey: trimModeKey, bookmarkKey: trimBookmarkKey, defaultMode: .ask, sourceURL: sourceURL)
+        resolvedDirectory(
+            modeSetting: AppSettings.trimLocationMode,
+            bookmarkSetting: AppSettings.trimSaveDirectory,
+            defaultMode: .ask,
+            sourceURL: sourceURL
+        )
     }
 
-    private static func resolvedDirectory(modeKey: String, bookmarkKey: String, defaultMode: SaveLocationMode, sourceURL: URL) -> URL? {
-        let raw = UserDefaults.standard.string(forKey: modeKey) ?? defaultMode.rawValue
+    private static func resolvedDirectory(
+        modeSetting: AppSetting<String>,
+        bookmarkSetting: AppSetting<Data?>,
+        defaultMode: SaveLocationMode,
+        sourceURL: URL
+    ) -> URL? {
+        let raw = UserDefaults.standard.value(for: modeSetting)
         let mode = SaveLocationMode(rawValue: raw) ?? defaultMode
 
         switch mode {
         case .original:
             return sourceURL.deletingLastPathComponent()
         case .custom:
-            return resolveBookmark(key: bookmarkKey) ?? desktopURL()
+            return resolveBookmark(setting: bookmarkSetting) ?? desktopURL()
         case .ask:
             return nil
         }
     }
 
-    static func resolveBookmark(key: String) -> URL? {
-        guard let data = UserDefaults.standard.data(forKey: key) else {
+    static func resolveBookmark(setting: AppSetting<Data?>) -> URL? {
+        guard let data = UserDefaults.standard.data(forKey: setting.key) else {
             return nil
         }
 
@@ -302,7 +281,7 @@ struct SettingsView: View {
                 includingResourceValuesForKeys: nil,
                 relativeTo: nil
             ) {
-                UserDefaults.standard.set(fresh, forKey: key)
+                UserDefaults.standard.set(fresh, forKey: setting.key)
             }
         }
 
@@ -317,13 +296,20 @@ struct SettingsView: View {
 // MARK: - General Settings
 
 private struct GeneralSettingsView: View {
-    @AppStorage("allowMultipleWindows") private var allowMultipleWindows = false
-    @AppStorage("syncPlaybackControls") private var syncPlaybackControls = false
-    @AppStorage("showCursorHideHint") private var showCursorHideHint = true
-    @AppStorage("precisionScrubFactor") private var precisionScrubFactor: Double = 10.0
-    @AppStorage("openAtSourceResolution") private var openAtSourceResolution = true
-    @AppStorage("clampWindowToScreen") private var clampWindowToScreen = true
-    @AppStorage("centerWindowAfterResize") private var centerWindowAfterResize = true
+    @AppStorage(AppSettings.allowMultipleWindows.key)
+    private var allowMultipleWindows = AppSettings.allowMultipleWindows.defaultValue
+    @AppStorage(AppSettings.syncPlaybackControls.key)
+    private var syncPlaybackControls = AppSettings.syncPlaybackControls.defaultValue
+    @AppStorage(AppSettings.showCursorHideHint.key)
+    private var showCursorHideHint = AppSettings.showCursorHideHint.defaultValue
+    @AppStorage(AppSettings.precisionScrubFactor.key)
+    private var precisionScrubFactor = AppSettings.precisionScrubFactor.defaultValue
+    @AppStorage(AppSettings.openAtSourceResolution.key)
+    private var openAtSourceResolution = AppSettings.openAtSourceResolution.defaultValue
+    @AppStorage(AppSettings.clampWindowToScreen.key)
+    private var clampWindowToScreen = AppSettings.clampWindowToScreen.defaultValue
+    @AppStorage(AppSettings.centerWindowAfterResize.key)
+    private var centerWindowAfterResize = AppSettings.centerWindowAfterResize.defaultValue
 
     var body: some View {
         Form {
@@ -361,8 +347,8 @@ private struct LocationSettingsSection: View {
     @Binding var mode: SaveLocationMode
     @State private var folderName: String = "Desktop"
 
-    let modeKey: String
-    let bookmarkKey: String
+    let modeSetting: AppSetting<String>
+    let bookmarkSetting: AppSetting<Data?>
 
     var body: some View {
         Section("Save Location") {
@@ -376,9 +362,9 @@ private struct LocationSettingsSection: View {
                     .pickerStyle(.segmented)
                     .labelsHidden()
                     .onChange(of: mode) { _, newValue in
-                        UserDefaults.standard.set(newValue.rawValue, forKey: modeKey)
+                        UserDefaults.standard.set(newValue.rawValue, for: modeSetting)
                         if newValue == .custom {
-                            ensureBookmark(key: bookmarkKey)
+                            ensureBookmark(setting: bookmarkSetting)
                         }
                     }
 
@@ -403,17 +389,17 @@ private struct LocationSettingsSection: View {
     }
 
     private func loadMode() {
-        if let raw = UserDefaults.standard.string(forKey: modeKey),
+        if let raw = UserDefaults.standard.string(forKey: modeSetting.key),
            let saved = SaveLocationMode(rawValue: raw) {
             mode = saved
         }
         if mode == .custom {
-            ensureBookmark(key: bookmarkKey)
+            ensureBookmark(setting: bookmarkSetting)
         }
     }
 
-    private func ensureBookmark(key: String) {
-        if UserDefaults.standard.data(forKey: key) == nil {
+    private func ensureBookmark(setting: AppSetting<Data?>) {
+        if UserDefaults.standard.data(forKey: setting.key) == nil {
             let desktop = FileManager.default.homeDirectoryForCurrentUser
                 .appendingPathComponent("Desktop")
             if let data = try? desktop.bookmarkData(
@@ -421,13 +407,13 @@ private struct LocationSettingsSection: View {
                 includingResourceValuesForKeys: nil,
                 relativeTo: nil
             ) {
-                UserDefaults.standard.set(data, forKey: key)
+                UserDefaults.standard.set(data, forKey: setting.key)
             }
         }
     }
 
     private func folderNameFromBookmark() -> String {
-        guard let url = SettingsView.resolveBookmark(key: bookmarkKey) else {
+        guard let url = SettingsView.resolveBookmark(setting: bookmarkSetting) else {
             return "Desktop"
         }
         return url.lastPathComponent
@@ -447,7 +433,7 @@ private struct LocationSettingsSection: View {
             includingResourceValuesForKeys: nil,
             relativeTo: nil
         ) {
-            UserDefaults.standard.set(data, forKey: bookmarkKey)
+            UserDefaults.standard.set(data, forKey: bookmarkSetting.key)
             folderName = url.lastPathComponent
         }
     }
@@ -457,8 +443,10 @@ private struct LocationSettingsSection: View {
 
 private struct ScreenshotSettingsView: View {
     @State private var screenshotFormat: ScreenshotFormat = .jxl
-    @AppStorage(SettingsView.screenshotJXLQualityKey) private var jxlQuality: Double = 90
-    @AppStorage(SettingsView.screenshotJPEGQualityKey) private var jpegQuality: Double = 90
+    @AppStorage(AppSettings.screenshotJXLQuality.key)
+    private var jxlQuality = AppSettings.screenshotJXLQuality.defaultValue
+    @AppStorage(AppSettings.screenshotJPEGQuality.key)
+    private var jpegQuality = AppSettings.screenshotJPEGQuality.defaultValue
 
     @State private var screenshotMode: SaveLocationMode = .custom
 
@@ -474,7 +462,7 @@ private struct ScreenshotSettingsView: View {
                     .pickerStyle(.segmented)
                     .labelsHidden()
                     .onChange(of: screenshotFormat) { _, newValue in
-                        UserDefaults.standard.set(newValue.rawValue, forKey: SettingsView.formatKey)
+                        UserDefaults.standard.set(newValue.rawValue, for: AppSettings.screenshotFormat)
                     }
                 }
 
@@ -506,16 +494,13 @@ private struct ScreenshotSettingsView: View {
 
             LocationSettingsSection(
                 mode: $screenshotMode,
-                modeKey: SettingsView.modeKey,
-                bookmarkKey: SettingsView.bookmarkKey
+                modeSetting: AppSettings.screenshotLocationMode,
+                bookmarkSetting: AppSettings.screenshotSaveDirectory
             )
         }
         .formStyle(.grouped)
         .onAppear {
-            if let raw = UserDefaults.standard.string(forKey: SettingsView.formatKey),
-               let saved = ScreenshotFormat(rawValue: raw) {
-                screenshotFormat = saved
-            }
+            screenshotFormat = SettingsView.selectedScreenshotFormat
         }
     }
 }
@@ -523,19 +508,29 @@ private struct ScreenshotSettingsView: View {
 // MARK: - Export Settings
 
 private struct ExportSettingsView: View {
-    @AppStorage(SettingsView.trimFormatKey) private var formatRaw: String = TrimExportFormat.copy.rawValue
+    @AppStorage(AppSettings.trimExportFormat.key)
+    private var formatRaw = AppSettings.trimExportFormat.defaultValue
 
-    @AppStorage(SettingsView.gifFrameRateKey) private var gifFrameRate: Double = 15
-    @AppStorage(SettingsView.gifWidthKey) private var gifWidth: Int = ExportWidthPreset.w720.rawValue
-    @AppStorage(SettingsView.avifWidthKey) private var avifWidth: Int = ExportWidthPreset.w1080.rawValue
-    @AppStorage(SettingsView.h264WidthKey) private var h264Width: Int = ExportWidthPreset.original.rawValue
-    @AppStorage(SettingsView.h265WidthKey) private var h265Width: Int = ExportWidthPreset.original.rawValue
+    @AppStorage(AppSettings.gifFrameRate.key)
+    private var gifFrameRate = AppSettings.gifFrameRate.defaultValue
+    @AppStorage(AppSettings.gifWidth.key)
+    private var gifWidth = AppSettings.gifWidth.defaultValue
+    @AppStorage(AppSettings.avifWidth.key)
+    private var avifWidth = AppSettings.avifWidth.defaultValue
+    @AppStorage(AppSettings.h264Width.key)
+    private var h264Width = AppSettings.h264Width.defaultValue
+    @AppStorage(AppSettings.h265Width.key)
+    private var h265Width = AppSettings.h265Width.defaultValue
 
-    @AppStorage(SettingsView.avifQualityKey) private var avifQuality: Double = 28
-    @AppStorage(SettingsView.avifSpeedKey) private var avifSpeed: Double = 4
+    @AppStorage(AppSettings.avifQuality.key)
+    private var avifQuality = AppSettings.avifQuality.defaultValue
+    @AppStorage(AppSettings.avifSpeed.key)
+    private var avifSpeed = AppSettings.avifSpeed.defaultValue
 
-    @AppStorage(SettingsView.h264QualityKey) private var h264Quality: Double = 65
-    @AppStorage(SettingsView.h265QualityKey) private var h265Quality: Double = 65
+    @AppStorage(AppSettings.h264Quality.key)
+    private var h264Quality = AppSettings.h264Quality.defaultValue
+    @AppStorage(AppSettings.h265Quality.key)
+    private var h265Quality = AppSettings.h265Quality.defaultValue
 
     @State private var trimMode: SaveLocationMode = .ask
 
@@ -644,8 +639,8 @@ private struct ExportSettingsView: View {
 
             LocationSettingsSection(
                 mode: $trimMode,
-                modeKey: SettingsView.trimModeKey,
-                bookmarkKey: SettingsView.trimBookmarkKey
+                modeSetting: AppSettings.trimLocationMode,
+                bookmarkSetting: AppSettings.trimSaveDirectory
             )
         }
         .formStyle(.grouped)
@@ -655,10 +650,14 @@ private struct ExportSettingsView: View {
 // MARK: - Scope Settings
 
 private struct ScopeSettingsView: View {
-    @AppStorage(SettingsView.scopeDisplayModeKey) private var displayMode: String = ScopeDisplayMode.overlay.rawValue
-    @AppStorage(SettingsView.scopeBackgroundKey) private var background: String = ScopeBackground.transparent.rawValue
-    @AppStorage(SettingsView.scopeResolutionKey) private var resolution: Int = ScopeResolution.standard.rawValue
-    @AppStorage(SettingsView.scopeFrameRateKey) private var frameRate: Double = 15
+    @AppStorage(AppSettings.scopeDisplayMode.key)
+    private var displayMode = AppSettings.scopeDisplayMode.defaultValue
+    @AppStorage(AppSettings.scopeBackground.key)
+    private var background = AppSettings.scopeBackground.defaultValue
+    @AppStorage(AppSettings.scopeResolution.key)
+    private var resolution = AppSettings.scopeResolution.defaultValue
+    @AppStorage(AppSettings.scopeFrameRate.key)
+    private var frameRate = AppSettings.scopeFrameRate.defaultValue
 
     var body: some View {
         Form {
@@ -725,12 +724,18 @@ private struct ScopeSettingsView: View {
 // MARK: - Audio Settings
 
 private struct AudioSettingsView: View {
-    @AppStorage(SettingsView.audioWaveformDisplayModeKey) private var displayMode: String = AudioWaveformDisplayMode.overlay.rawValue
-    @AppStorage(SettingsView.audioWaveformBackgroundKey) private var background: String = AudioWaveformBackground.transparent.rawValue
-    @AppStorage(SettingsView.audioWaveformColorKey) private var waveformColor: String = AudioWaveformColor.pink.rawValue
-    @AppStorage(SettingsView.showAllMonoWaveformsKey) private var showAllMonoWaveforms: Bool = false
-    @AppStorage(SettingsView.audioWaveformBoostKey) private var waveformBoost: Double = 0
-    @AppStorage(SettingsView.automaticAudioOnlyWaveformKey) private var automaticAudioOnlyWaveform = true
+    @AppStorage(AppSettings.audioWaveformDisplayMode.key)
+    private var displayMode = AppSettings.audioWaveformDisplayMode.defaultValue
+    @AppStorage(AppSettings.audioWaveformBackground.key)
+    private var background = AppSettings.audioWaveformBackground.defaultValue
+    @AppStorage(AppSettings.audioWaveformColor.key)
+    private var waveformColor = AppSettings.audioWaveformColor.defaultValue
+    @AppStorage(AppSettings.showAllMonoWaveforms.key)
+    private var showAllMonoWaveforms = AppSettings.showAllMonoWaveforms.defaultValue
+    @AppStorage(AppSettings.audioWaveformBoost.key)
+    private var waveformBoost = AppSettings.audioWaveformBoost.defaultValue
+    @AppStorage(AppSettings.automaticAudioOnlyWaveform.key)
+    private var automaticAudioOnlyWaveform = AppSettings.automaticAudioOnlyWaveform.defaultValue
 
     var body: some View {
         Form {
@@ -806,7 +811,8 @@ private struct AudioSettingsView: View {
 // MARK: - Keyboard Shortcuts
 
 private struct KeyboardShortcutsView: View {
-    @AppStorage("precisionScrubFactor") private var precisionScrubFactor: Double = 10.0
+    @AppStorage(AppSettings.precisionScrubFactor.key)
+    private var precisionScrubFactor = AppSettings.precisionScrubFactor.defaultValue
 
     var body: some View {
         ScrollView {

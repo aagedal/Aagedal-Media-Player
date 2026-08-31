@@ -20,7 +20,8 @@ extension FocusedValues {
 struct Aagedal_Media_PlayerApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @FocusedValue(\.isMediaLoaded) private var isMediaLoaded
-    @AppStorage("allowMultipleWindows") private var allowMultipleWindows = false
+    @AppStorage(AppSettings.allowMultipleWindows.key)
+    private var allowMultipleWindows = AppSettings.allowMultipleWindows.defaultValue
 
     /// Construct Sparkle eagerly so the updater attaches to the run loop
     /// before the first window appears. Inert for Homebrew installs and when
@@ -253,34 +254,7 @@ struct RecentDocumentsMenu: View {
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
-        UserDefaults.standard.register(defaults: [
-            "openAtSourceResolution": true,
-            "clampWindowToScreen": true,
-            "centerWindowAfterResize": true,
-            SettingsView.trimFormatKey: TrimExportFormat.copy.rawValue,
-            SettingsView.screenshotJXLQualityKey: 90.0,
-            SettingsView.screenshotJPEGQualityKey: 90.0,
-            SettingsView.gifFrameRateKey: 15.0,
-            SettingsView.gifWidthKey: ExportWidthPreset.w720.rawValue,
-            SettingsView.avifWidthKey: ExportWidthPreset.w1080.rawValue,
-            SettingsView.h264WidthKey: ExportWidthPreset.original.rawValue,
-            SettingsView.h265WidthKey: ExportWidthPreset.original.rawValue,
-            SettingsView.avifQualityKey: 28.0,
-            SettingsView.avifSpeedKey: 4.0,
-            SettingsView.h264QualityKey: 65.0,
-            SettingsView.h265QualityKey: 65.0,
-            SettingsView.scopeDisplayModeKey: ScopeDisplayMode.overlay.rawValue,
-            SettingsView.scopeBackgroundKey: ScopeBackground.transparent.rawValue,
-            SettingsView.scopeResolutionKey: ScopeResolution.standard.rawValue,
-            SettingsView.scopeFrameRateKey: 15.0,
-            SettingsView.audioWaveformDisplayModeKey: AudioWaveformDisplayMode.overlay.rawValue,
-            SettingsView.audioWaveformBackgroundKey: AudioWaveformBackground.transparent.rawValue,
-            SettingsView.audioWaveformColorKey: AudioWaveformColor.pink.rawValue,
-            SettingsView.audioWaveformBoostKey: 0.0,
-            SettingsView.automaticAudioOnlyWaveformKey: true,
-            SettingsView.playbackVolumeKey: 100.0,
-            SettingsView.playbackMutedKey: false,
-        ])
+        AppSettings.registerDefaults()
         UpdateChecker.shared.checkIfNeeded()
         SparkleUpdater.shared.presentFirstLaunchNoticeIfNeeded()
     }

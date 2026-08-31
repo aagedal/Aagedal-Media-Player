@@ -94,11 +94,6 @@ final class SparkleUpdater: ObservableObject {
     /// False for Homebrew installs or when SUFeedURL is unset.
     let isActive: Bool
 
-    /// `UserDefaults` flag tracking whether the one-time "automatic updates
-    /// are on" notice has been shown. Stored in `UserDefaults.standard` so it
-    /// survives every app/Sparkle bundle swap.
-    private static let didShowAutoUpdateNoticeKey = "didShowAutoUpdateNotice"
-
     private init() {
         let hasFeedURL = (Bundle.main.object(forInfoDictionaryKey: "SUFeedURL") as? String)?
             .isEmpty == false
@@ -125,8 +120,8 @@ final class SparkleUpdater: ObservableObject {
         guard isActive else { return }
         guard updater.automaticallyDownloadsUpdates else { return }
         let defaults = UserDefaults.standard
-        guard !defaults.bool(forKey: Self.didShowAutoUpdateNoticeKey) else { return }
-        defaults.set(true, forKey: Self.didShowAutoUpdateNoticeKey)
+        guard !defaults.value(for: AppSettings.didShowAutoUpdateNotice) else { return }
+        defaults.set(true, for: AppSettings.didShowAutoUpdateNotice)
 
         let alert = NSAlert()
         alert.messageText = "Automatic updates are on"

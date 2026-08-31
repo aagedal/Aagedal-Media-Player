@@ -167,7 +167,7 @@ struct WindowConfigurator: NSViewRepresentable {
                             let frame = window.frame
                             let titlebarHeight = frame.height - contentView.bounds.height
 
-                            let useSourceResolution = UserDefaults.standard.bool(forKey: "openAtSourceResolution")
+                            let useSourceResolution = UserDefaults.standard.value(for: AppSettings.openAtSourceResolution)
 
                             var newWidth: CGFloat
                             var newHeight: CGFloat
@@ -179,7 +179,7 @@ struct WindowConfigurator: NSViewRepresentable {
                                 let backingScale = window.backingScaleFactor
                                 newWidth = sourceSize.width / backingScale
                                 newHeight = sourceSize.height / backingScale
-                                if UserDefaults.standard.bool(forKey: "clampWindowToScreen"),
+                                if UserDefaults.standard.value(for: AppSettings.clampWindowToScreen),
                                    let screen = window.screen ?? NSScreen.main {
                                     let maxFrame = screen.visibleFrame
                                     let maxW = maxFrame.width * 0.9
@@ -200,7 +200,7 @@ struct WindowConfigurator: NSViewRepresentable {
                             }
 
                             let totalHeight = newHeight + titlebarHeight
-                            let centerAfterResize = UserDefaults.standard.bool(forKey: "centerWindowAfterResize")
+                            let centerAfterResize = UserDefaults.standard.value(for: AppSettings.centerWindowAfterResize)
                             let origin: NSPoint
                             if centerAfterResize,
                                let screen = window.screen ?? NSScreen.main {

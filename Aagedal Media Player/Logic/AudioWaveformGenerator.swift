@@ -45,9 +45,9 @@ final class AudioWaveformGenerator: ObservableObject {
     /// Generate waveform images for every channel in the given audio stream.
     /// Decodes audio once as raw PCM, then renders all channels natively.
     func generate(url: URL, streamIndex: Int, channels: Int, channelLayout: String?, duration: Double) {
-        let rawColor = UserDefaults.standard.string(forKey: SettingsView.audioWaveformColorKey) ?? AudioWaveformColor.pink.rawValue
+        let rawColor = UserDefaults.standard.value(for: AppSettings.audioWaveformColor)
         let color = AudioWaveformColor(rawValue: rawColor) ?? .pink
-        let boost = UserDefaults.standard.double(forKey: SettingsView.audioWaveformBoostKey)
+        let boost = UserDefaults.standard.value(for: AppSettings.audioWaveformBoost)
 
         // Same stream — keep an in-flight decode, or re-render completed
         // amplitude data when only the appearance changed.
@@ -114,9 +114,9 @@ final class AudioWaveformGenerator: ObservableObject {
 
     /// Generate waveform images for all mono audio streams, one per stream.
     func generateAllMonoStreams(url: URL, streams: [(index: Int, label: String)], duration: Double) {
-        let rawColor = UserDefaults.standard.string(forKey: SettingsView.audioWaveformColorKey) ?? AudioWaveformColor.pink.rawValue
+        let rawColor = UserDefaults.standard.value(for: AppSettings.audioWaveformColor)
         let color = AudioWaveformColor(rawValue: rawColor) ?? .pink
-        let boost = UserDefaults.standard.double(forKey: SettingsView.audioWaveformBoostKey)
+        let boost = UserDefaults.standard.value(for: AppSettings.audioWaveformBoost)
 
         // Same streams — keep an in-flight decode, or re-render completed
         // amplitude data when only the appearance changed.
@@ -216,9 +216,9 @@ final class AudioWaveformGenerator: ObservableObject {
     func rerender() {
         guard !cachedAmplitudes.isEmpty else { return }
 
-        let rawColor = UserDefaults.standard.string(forKey: SettingsView.audioWaveformColorKey) ?? AudioWaveformColor.pink.rawValue
+        let rawColor = UserDefaults.standard.value(for: AppSettings.audioWaveformColor)
         let color = AudioWaveformColor(rawValue: rawColor) ?? .pink
-        let boost = UserDefaults.standard.double(forKey: SettingsView.audioWaveformBoostKey)
+        let boost = UserDefaults.standard.value(for: AppSettings.audioWaveformBoost)
 
         guard color != currentColor || boost != currentBoost else { return }
 

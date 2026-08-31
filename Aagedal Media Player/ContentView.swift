@@ -27,18 +27,23 @@ struct ContentView: View {
     @State private var isTimelineFocused = false
     @State private var timecodeActivationTrigger: String?
     @State private var nsWindow: NSWindow?
-    @AppStorage("showCursorHideHint") private var showCursorHideHint = true
+    @AppStorage(AppSettings.showCursorHideHint.key)
+    private var showCursorHideHint = AppSettings.showCursorHideHint.defaultValue
     @ObservedObject private var updateChecker = UpdateChecker.shared
     @State private var updateBannerDismissed = false
     @State private var scopeWindowController: ScopeWindowController?
     @State private var showScopeOverlay = false
-    @AppStorage(SettingsView.scopeDisplayModeKey) private var scopeDisplayMode: String = ScopeDisplayMode.overlay.rawValue
-    @AppStorage(SettingsView.scopeBackgroundKey) private var scopeBackground: String = ScopeBackground.transparent.rawValue
+    @AppStorage(AppSettings.scopeDisplayMode.key)
+    private var scopeDisplayMode = AppSettings.scopeDisplayMode.defaultValue
+    @AppStorage(AppSettings.scopeBackground.key)
+    private var scopeBackground = AppSettings.scopeBackground.defaultValue
     @State private var audioWaveformWindowController: AudioWaveformWindowController?
     @State private var showAudioWaveformOverlay = false
     @StateObject private var audioWaveformGenerator = AudioWaveformGenerator()
-    @AppStorage(SettingsView.audioWaveformDisplayModeKey) private var audioWaveformDisplayMode: String = AudioWaveformDisplayMode.overlay.rawValue
-    @AppStorage(SettingsView.audioWaveformBackgroundKey) private var audioWaveformBackground: String = AudioWaveformBackground.transparent.rawValue
+    @AppStorage(AppSettings.audioWaveformDisplayMode.key)
+    private var audioWaveformDisplayMode = AppSettings.audioWaveformDisplayMode.defaultValue
+    @AppStorage(AppSettings.audioWaveformBackground.key)
+    private var audioWaveformBackground = AppSettings.audioWaveformBackground.defaultValue
 
     private let windowID = UUID()
     private let rightEdgeWidth: CGFloat = 60
@@ -1067,8 +1072,10 @@ private struct FileAndWindowHandlers: ViewModifier {
     @ObservedObject var audioWaveformGenerator: AudioWaveformGenerator
     let openFilePanel: () -> Void
     let openFile: (URL) -> Void
-    @AppStorage(SettingsView.scopeDisplayModeKey) private var scopeDisplayMode: String = ScopeDisplayMode.overlay.rawValue
-    @AppStorage(SettingsView.audioWaveformDisplayModeKey) private var audioWaveformDisplayMode: String = AudioWaveformDisplayMode.overlay.rawValue
+    @AppStorage(AppSettings.scopeDisplayMode.key)
+    private var scopeDisplayMode = AppSettings.scopeDisplayMode.defaultValue
+    @AppStorage(AppSettings.audioWaveformDisplayMode.key)
+    private var audioWaveformDisplayMode = AppSettings.audioWaveformDisplayMode.defaultValue
 
     func body(content: Content) -> some View {
         content
@@ -1191,7 +1198,7 @@ private struct FileAndWindowHandlers: ViewModifier {
 
     private var keepsAutomaticAudioOnlyWaveform: Bool {
         controller.mediaItem?.presentationKind == .audioOnly
-            && UserDefaults.standard.bool(forKey: SettingsView.automaticAudioOnlyWaveformKey)
+            && UserDefaults.standard.value(for: AppSettings.automaticAudioOnlyWaveform)
     }
 
     private func triggerOverlayWaveformGeneration() {

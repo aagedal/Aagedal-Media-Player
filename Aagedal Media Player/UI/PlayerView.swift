@@ -16,7 +16,8 @@ struct PlayerView: View {
     @Binding var isEditingTimecode: Bool
     @Binding var isTimelineFocused: Bool
     @Binding var timecodeActivationTrigger: String?
-    @AppStorage(SettingsView.automaticAudioOnlyWaveformKey) private var automaticAudioOnlyWaveform = true
+    @AppStorage(AppSettings.automaticAudioOnlyWaveform.key)
+    private var automaticAudioOnlyWaveform = AppSettings.automaticAudioOnlyWaveform.defaultValue
 
     /// Aspect ratio for the player view's `.aspectRatio(_:contentMode:)` modifier.
     ///

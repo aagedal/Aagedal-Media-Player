@@ -51,8 +51,7 @@ final class FrameCapture: ObservableObject {
 
     /// Target downscale width for scope analysis, read from settings.
     private var analysisWidth: Int {
-        let raw = UserDefaults.standard.integer(forKey: "scopeResolution")
-        return raw > 0 ? raw : 720
+        UserDefaults.standard.value(for: AppSettings.scopeResolution)
     }
 
     // MARK: - AVPlayer Setup
@@ -114,8 +113,8 @@ final class FrameCapture: ObservableObject {
             }
         }
 
-        let fps = UserDefaults.standard.double(forKey: "scopeFrameRate")
-        let interval = 1.0 / (fps > 0 ? fps : 15.0)
+        let fps = UserDefaults.standard.value(for: AppSettings.scopeFrameRate)
+        let interval = 1.0 / max(fps, 1)
         captureTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 self?.captureFrame()
