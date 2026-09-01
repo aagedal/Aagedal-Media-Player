@@ -1176,9 +1176,9 @@ final class PlayerController: ObservableObject {
 
     // MARK: - Screenshot
 
-    func captureScreenshot() async {
+    func captureScreenshot() {
         guard let item = mediaItem else { return }
-        await mediaOperations.captureScreenshot(for: item, at: currentPlaybackTime)
+        mediaOperations.captureScreenshot(for: item, at: currentPlaybackTime)
     }
 
     func dismissScreenshotFeedback() {
@@ -1187,9 +1187,9 @@ final class PlayerController: ObservableObject {
 
     // MARK: - Trim Export
 
-    func exportTrim() async {
+    func exportTrim() {
         guard let item = mediaItem else { return }
-        await mediaOperations.exportTrim(for: item)
+        mediaOperations.exportTrim(for: item)
     }
 
     func cancelExport() {
@@ -1198,6 +1198,10 @@ final class PlayerController: ObservableObject {
 
     func dismissTrimExportFeedback() {
         mediaOperations.dismissTrimExportFeedback()
+    }
+
+    func cancelMediaOperationsForWindowClose() {
+        mediaOperations.cancelOperationsForWindowClose()
     }
 
     // MARK: - Teardown

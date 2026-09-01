@@ -16,16 +16,19 @@ All notable changes to Aagedal Media Player.
 
 ### Changed
 - Split playback backends, track selection, media operations, window opening, overlays, settings, and command routing into focused components.
+- Extract the update settings pane and publish typed update-check outcomes with retry guidance.
+- Update the bundled ffmpeg executable to 9.0.1 with Developer ID signing, Hardened Runtime, and secure-timestamp preflight validation.
 - Update SwiftMediaMetadata to 2.0.0 and adopt its renamed package product and importable module.
 - Keep Main Thread Checker and Thread Performance Checker enabled while retaining the required MoltenVK Metal API Validation exception.
 - Document and validate the intentional Apple-Silicon-only release architecture and security entitlements.
 
 ### Fixed
-- Prevented superseded scope frames and media-operation tasks from publishing stale results or surviving teardown.
+- Prevented superseded scope frames and media-operation tasks from publishing stale results, and stopped screenshots or exports from surviving their owning player window.
 - Forwarded backend preparation, load, and end-file errors into actionable UI states.
 - Kept playback controls and their keyboard focus rings visible in narrow player windows.
 - Bounded long-recording waveform memory by streaming PCM directly into fixed-size accumulators.
 - Restored bundled audio-decoder and EBU R128 capabilities required by waveform and LUFS analysis.
+- Kept update status truthful after failures and recorded every successful manual or automatic fallback check.
 
 ## [1.6.0] — 2026-05-24
 

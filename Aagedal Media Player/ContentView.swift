@@ -229,6 +229,7 @@ struct ContentView: View {
             audioWaveformWindowController = nil
             showAudioWaveformOverlay = false
             audioWaveformGenerator.cancel()
+            controller.cancelMediaOperationsForWindowClose()
             controller.teardown()
             windowCoordinator.tearDown()
         }

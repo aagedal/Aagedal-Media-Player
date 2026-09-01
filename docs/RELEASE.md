@@ -62,12 +62,17 @@ spctl --assess --type execute --verbose=2 "build/export/Aagedal Media Player.app
 
 Treat `checksums/ffmpeg.sha256` as a reviewed provenance record. When
 intentionally replacing ffmpeg, confirm that it is a thin arm64 Mach-O
-executable, review its origin and capabilities, then update the checksum. The
-preflight also requires the audio decoders, Float32 PCM output, and EBU R128
-filter used by waveform and LUFS analysis; do not substitute an image-only
+executable, review its origin and capabilities, then sign the repository copy
+with the release Developer ID Application identity, Hardened Runtime, and a
+secure timestamp before updating the checksum. The preflight verifies that
+signature and also requires the audio decoders, Float32 PCM output, and EBU
+R128 filter used by waveform and LUFS analysis; do not substitute an image-only
 build even if screenshot/export smoke tests pass.
 
 ```bash
+codesign --force --sign "Developer ID Application: …" --identifier no.aagedal.full.ffmpeg \
+  --options runtime --timestamp "Aagedal Media Player/Binaries/ffmpeg"
+codesign --verify --strict --verbose=2 "Aagedal Media Player/Binaries/ffmpeg"
 file "Aagedal Media Player/Binaries/ffmpeg"
 lipo -archs "Aagedal Media Player/Binaries/ffmpeg"
 shasum -a 256 "Aagedal Media Player/Binaries/ffmpeg"

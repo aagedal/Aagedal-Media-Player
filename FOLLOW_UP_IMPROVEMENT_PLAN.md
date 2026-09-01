@@ -14,6 +14,10 @@ original nine phases are complete.
 - [x] Phase 11 completion passes the expanded 106-test suite, real bundled
   ffmpeg multichannel decoding, release preflight, and static analysis on
   2026-09-01.
+- [x] Phase 12 completion passes the expanded 109-test suite and static analysis
+  on 2026-09-01.
+- [x] Phase 13 completion passes the expanded 115-test suite, 61-check release
+  preflight, and static analysis on 2026-09-01.
 
 ## Phase 10 — Playback and preload correctness
 
@@ -56,26 +60,34 @@ resolution rather than media duration.
 
 ## Phase 12 — Media operation ownership
 
-Status: Pending.
+Status: Completed on 2026-09-01. Screenshots and trim exports are owned by the
+player window that initiated them. Closing that window cancels preparation and
+encoding, dismisses save panels, terminates ffmpeg across the process-attachment
+race, removes temporary output, and invalidates late operation feedback.
 
-- [ ] Define whether screenshots and exports cancel or continue when their
+- [x] Define whether screenshots and exports cancel or continue when their
   player window closes.
-- [ ] Store operation tasks explicitly and apply the selected close policy.
-- [ ] Keep completion and failure feedback reachable if operations continue.
-- [ ] Add lifecycle tests for closing a window during preparation and encoding.
+- [x] Store operation tasks explicitly and apply the selected close policy.
+- [x] Keep completion and failure feedback reachable if operations continue.
+  The selected policy cancels window-owned work, so no post-close result needs
+  to be delivered outside its initiating window.
+- [x] Add lifecycle tests for closing a window during preparation and encoding.
 
 Acceptance: no ffmpeg process continues invisibly, and closing a window has a
 clear, tested outcome for every active media operation.
 
 ## Phase 13 — Update status and maintainability
 
-Status: Pending.
+Status: Completed on 2026-09-01. The fallback checker now publishes one typed
+attempt result, records every successful check, exposes retryability, and uses
+injected networking, time, version, and defaults dependencies. Update settings
+were also extracted from the remaining large settings file.
 
-- [ ] Publish a typed update-check result, including retryable failures.
-- [ ] Record `lastChecked` after every successful automatic or manual check.
-- [ ] Prevent stale state from presenting a failed check as "Up to date."
-- [ ] Inject networking and time dependencies for deterministic tests.
-- [ ] Continue splitting the remaining large settings and playback components
+- [x] Publish a typed update-check result, including retryable failures.
+- [x] Record `lastChecked` after every successful automatic or manual check.
+- [x] Prevent stale state from presenting a failed check as "Up to date."
+- [x] Inject networking and time dependencies for deterministic tests.
+- [x] Continue splitting the remaining large settings and playback components
   when a change requires touching them.
 
 Acceptance: update UI always reflects the latest attempt truthfully and the

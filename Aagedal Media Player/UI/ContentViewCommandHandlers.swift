@@ -111,13 +111,13 @@ private struct FileAndWindowHandlers: ViewModifier {
                 guard let command = notification.appCommand,
                       case .captureScreenshot = command else { return }
                 guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
-                Task { await controller.captureScreenshot() }
+                controller.captureScreenshot()
             }
             .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
                 guard let command = notification.appCommand,
                       case .exportTrim = command else { return }
                 guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
-                Task { await controller.exportTrim() }
+                controller.exportTrim()
             }
             .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
                 guard let command = notification.appCommand,

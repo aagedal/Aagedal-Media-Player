@@ -210,6 +210,29 @@ def validate_ffmpeg(validation: Validation) -> None:
     if result.returncode == 0:
         validation.equal(result.stdout.strip(), "arm64", "bundled ffmpeg architecture")
 
+    result = command("/usr/bin/codesign", "--verify", "--strict", "--verbose=2", str(FFMPEG))
+    signature_error = (result.stderr or result.stdout).strip()
+    validation.require(
+        result.returncode == 0,
+        "bundled ffmpeg strict code-signature verification failed"
+        + (f": {signature_error}" if signature_error else ""),
+    )
+    details = command("/usr/bin/codesign", "-dvvv", str(FFMPEG))
+    signature_details = details.stderr + details.stdout
+    validation.require(
+        f"TeamIdentifier={EXPECTED_TEAM_ID}" in signature_details,
+        f"bundled ffmpeg is not signed by team {EXPECTED_TEAM_ID}",
+    )
+    validation.require(
+        "Authority=Developer ID Application:" in signature_details,
+        "bundled ffmpeg does not have a Developer ID Application signature",
+    )
+    validation.require(
+        "flags=0x10000(runtime)" in signature_details,
+        "bundled ffmpeg lacks hardened runtime",
+    )
+    validation.require("Timestamp=" in signature_details, "bundled ffmpeg lacks a secure timestamp")
+
     capability_commands = {
         "decoder": ("-decoders", ("aac", "flac", "pcm_f32le")),
         "encoder": ("-encoders", ("pcm_f32le",)),

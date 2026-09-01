@@ -20,7 +20,9 @@ final class MediaOperationsController: ObservableObject {
     @Published private(set) var screenshotState: ScreenshotOperationState = .idle
     @Published private(set) var trimExportState: TrimExportOperationState = .idle
 
-    private var exportHandle: SubprocessHandle?
+    private let taskOwner = MediaOperationTaskOwner()
+    private var screenshotSavePanel: NSSavePanel?
+    private var trimExportSavePanel: NSSavePanel?
     private let logger = Logger(subsystem: "com.aagedal.MediaPlayer", category: "MediaOperationsController")
 
     // MARK: - Trim Points
@@ -54,8 +56,26 @@ final class MediaOperationsController: ObservableObject {
 
     // MARK: - Screenshot
 
-    func captureScreenshot(for item: MediaItem, at time: Double) async {
+    func captureScreenshot(for item: MediaItem, at time: Double) {
         guard !screenshotState.isInFlight else { return }
+
+        taskOwner.start(.screenshot) { [weak self] token, subprocessHandle in
+            await self?.performScreenshot(
+                for: item,
+                at: time,
+                token: token,
+                subprocessHandle: subprocessHandle
+            )
+        }
+    }
+
+    private func performScreenshot(
+        for item: MediaItem,
+        at time: Double,
+        token: MediaOperationTaskOwner.Token,
+        subprocessHandle: SubprocessHandle
+    ) async {
+        guard taskOwner.isCurrent(.screenshot, token: token) else { return }
 
         screenshotState = .idle
 
@@ -82,6 +102,7 @@ final class MediaOperationsController: ObservableObject {
         } else {
             let chosenURL: URL? = await withCheckedContinuation { continuation in
                 let panel = NSSavePanel()
+                screenshotSavePanel = panel
                 panel.nameFieldStringValue = outputName
                 panel.allowedContentTypes = [.init(filenameExtension: format.fileExtension) ?? .image]
                 panel.canCreateDirectories = true
@@ -91,8 +112,11 @@ final class MediaOperationsController: ObservableObject {
                     continuation.resume(returning: response == .OK ? panel.url : nil)
                 }
             }
+            screenshotSavePanel = nil
 
-            guard let chosenURL else { return }
+            guard taskOwner.isCurrent(.screenshot, token: token),
+                  !Task.isCancelled,
+                  let chosenURL else { return }
             output = OutputCoordinator.userConfirmed(destinationURL: chosenURL)
         }
 
@@ -114,12 +138,23 @@ final class MediaOperationsController: ObservableObject {
         screenshotState = .saving
 
         do {
-            try await FFmpegService.run(arguments: arguments)
+            try await FFmpegService.run(
+                arguments: arguments,
+                duration: nil,
+                onProgress: nil,
+                handle: subprocessHandle
+            )
+            guard taskOwner.isCurrent(.screenshot, token: token), !Task.isCancelled else { return }
             let outputURL = try output.commit()
             logger.info("Screenshot saved: \(outputURL.lastPathComponent)")
             screenshotState = .succeeded(outputURL)
             clearScreenshotSuccess(after: .seconds(5), outputURL: outputURL)
+        } catch let error as FFmpegError where error == .cancelled {
+            guard taskOwner.isCurrent(.screenshot, token: token) else { return }
+            screenshotState = .idle
+            logger.info("Screenshot cancelled")
         } catch {
+            guard taskOwner.isCurrent(.screenshot, token: token) else { return }
             screenshotState = .failed("Screenshot failed: \(error.localizedDescription)")
             logger.error("Screenshot failed: \(error.localizedDescription)")
         }
@@ -131,7 +166,7 @@ final class MediaOperationsController: ObservableObject {
 
     // MARK: - Trim Export
 
-    func exportTrim(for item: MediaItem) async {
+    func exportTrim(for item: MediaItem) {
         guard !trimExportState.isInFlight else { return }
 
         trimExportState = .idle
@@ -145,6 +180,26 @@ final class MediaOperationsController: ObservableObject {
             clearTrimWarning(after: .seconds(2), message: missing)
             return
         }
+
+        taskOwner.start(.trimExport) { [weak self] token, subprocessHandle in
+            await self?.performTrimExport(
+                for: item,
+                inPoint: inPoint,
+                outPoint: outPoint,
+                token: token,
+                subprocessHandle: subprocessHandle
+            )
+        }
+    }
+
+    private func performTrimExport(
+        for item: MediaItem,
+        inPoint: Double,
+        outPoint: Double,
+        token: MediaOperationTaskOwner.Token,
+        subprocessHandle: SubprocessHandle
+    ) async {
+        guard taskOwner.isCurrent(.trimExport, token: token) else { return }
 
         let format = SettingsView.selectedTrimExportFormat
         let duration = outPoint - inPoint
@@ -164,6 +219,7 @@ final class MediaOperationsController: ObservableObject {
         } else {
             let chosenURL: URL? = await withCheckedContinuation { continuation in
                 let panel = NSSavePanel()
+                trimExportSavePanel = panel
                 panel.nameFieldStringValue = defaultName
                 panel.allowedContentTypes = [UTType(filenameExtension: outputExtension) ?? .movie]
                 panel.canCreateDirectories = true
@@ -173,8 +229,11 @@ final class MediaOperationsController: ObservableObject {
                     continuation.resume(returning: response == .OK ? panel.url : nil)
                 }
             }
+            trimExportSavePanel = nil
 
-            guard let chosenURL else { return }
+            guard taskOwner.isCurrent(.trimExport, token: token),
+                  !Task.isCancelled,
+                  let chosenURL else { return }
             output = OutputCoordinator.userConfirmed(destinationURL: chosenURL)
         }
 
@@ -224,14 +283,13 @@ final class MediaOperationsController: ObservableObject {
 
         trimExportState = .preparing
 
-        let handle = SubprocessHandle()
-        exportHandle = handle
-
         let progressCallback: (@Sendable (Double) -> Void)?
         if format != .copy {
             progressCallback = { [weak self] fraction in
                 Task { @MainActor [weak self] in
-                    guard let self, self.trimExportState.acceptsProgress else { return }
+                    guard let self,
+                          self.taskOwner.isCurrent(.trimExport, token: token),
+                          self.trimExportState.acceptsProgress else { return }
                     self.trimExportState = .exporting(progress: fraction)
                 }
             }
@@ -244,32 +302,43 @@ final class MediaOperationsController: ObservableObject {
                 arguments: arguments,
                 duration: format != .copy ? duration : nil,
                 onProgress: progressCallback,
-                handle: handle
+                handle: subprocessHandle
             )
+            guard taskOwner.isCurrent(.trimExport, token: token), !Task.isCancelled else { return }
             let outputURL = try output.commit()
-            exportHandle = nil
             logger.info("Trim export saved: \(outputURL.lastPathComponent)")
             trimExportState = .succeeded(outputURL)
             clearTrimSuccess(after: .seconds(5), outputURL: outputURL)
         } catch let error as FFmpegError where error == .cancelled {
-            exportHandle = nil
+            guard taskOwner.isCurrent(.trimExport, token: token) else { return }
             logger.info("Trim export cancelled")
             trimExportState = .cancelled
             clearTrimCancellation(after: .milliseconds(1_500))
         } catch {
-            exportHandle = nil
+            guard taskOwner.isCurrent(.trimExport, token: token) else { return }
             trimExportState = .failed("Export failed: \(error.localizedDescription)")
             logger.error("Trim export failed: \(error.localizedDescription)")
         }
     }
 
     func cancelExport() {
-        guard exportHandle != nil else { return }
+        guard taskOwner.isActive(.trimExport) else { return }
         trimExportState = .cancelling
-        exportHandle?.cancel()
+        taskOwner.requestCancellation(.trimExport)
     }
 
     func dismissTrimExportFeedback() {
+        trimExportState = .idle
+    }
+
+    /// Cancels every operation owned by the closing player window.
+    func cancelOperationsForWindowClose() {
+        taskOwner.cancelAll()
+        screenshotSavePanel?.cancel(nil)
+        trimExportSavePanel?.cancel(nil)
+        screenshotSavePanel = nil
+        trimExportSavePanel = nil
+        screenshotState = .idle
         trimExportState = .idle
     }
 

@@ -40,13 +40,13 @@ nonisolated enum AsyncDeadline {
 /// Lock-protected, exactly-once continuation storage. Cancellation can arrive
 /// before the continuation is installed, so a completed result is retained and
 /// delivered as soon as installation occurs.
-private final class DeadlineCompletion<Value: Sendable>: Sendable {
+nonisolated private final class DeadlineCompletion<Value: Sendable>: @unchecked Sendable {
     private let lock = NSLock()
-    private nonisolated(unsafe) var continuation: CheckedContinuation<Value?, Never>?
-    private nonisolated(unsafe) var result: Value?
-    private nonisolated(unsafe) var isResolved = false
+    private var continuation: CheckedContinuation<Value?, Never>?
+    private var result: Value?
+    private var isResolved = false
 
-    nonisolated func install(_ continuation: CheckedContinuation<Value?, Never>) {
+    func install(_ continuation: CheckedContinuation<Value?, Never>) {
         let resolvedResult: (Bool, Value?) = lock.withLock {
             if isResolved {
                 return (true, result)
@@ -60,7 +60,7 @@ private final class DeadlineCompletion<Value: Sendable>: Sendable {
         }
     }
 
-    nonisolated func resolve(_ result: Value?) {
+    func resolve(_ result: Value?) {
         let continuationToResume: CheckedContinuation<Value?, Never>? = lock.withLock {
             guard !isResolved else { return nil }
             isResolved = true
