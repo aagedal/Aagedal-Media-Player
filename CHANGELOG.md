@@ -8,6 +8,7 @@ All notable changes to Aagedal Media Player.
 - Drop-frame-correct SMPTE timecode handling and regression coverage for supported frame rates.
 - Collision-safe, atomic screenshot and trim output with visible completion and failure actions.
 - Cancellation-aware ffmpeg execution, bounded scope scheduling, and generated media fixtures.
+- A reproducible optimized scope-performance matrix covering all resolution and update-rate settings.
 - Consistent volume, mute, buffering, playback-error, keyboard, and accessibility behavior across playback backends.
 - Release preflight validation for version/build ordering, changelog and appcast metadata, Sparkle signatures and URLs, exported app signing, and bundled ffmpeg provenance.
 

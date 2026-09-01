@@ -85,13 +85,13 @@ Acceptance: closing or cancelling a feature promptly ends its child process with
 
 ## Phase 5 — Scope and waveform performance
 
-Status: In progress — bounded scope scheduling, cancellation, instrumentation, and safe HDR attachment handling were implemented on 2026-08-31; resolution/frame-rate profiling remains.
+Status: Completed on 2026-09-01. Scope work is bounded and cancellation-aware, and an optimized reproducible profiling matrix now covers every supported resolution and 5–30 fps update-rate combination.
 
 - [x] Add a latest-frame-wins scope worker with one computation in flight.
 - [x] Drop superseded frames and prevent stale results from replacing newer output.
 - [x] Cancel workers when scopes close, media changes, or playback tears down.
 - [x] Add signposts for capture, compute, dropped frames, and memory pressure.
-- [ ] Profile all supported resolution/frame-rate combinations.
+- [x] Profile all supported resolution/frame-rate combinations. The reproducible matrix and initial hardware baseline are documented in `docs/SCOPE_PERFORMANCE.md`.
 - [x] Replace forced metadata casts in HDR frame capture with safe type handling.
 
 Acceptance: long scope sessions maintain bounded CPU, memory, and task counts.

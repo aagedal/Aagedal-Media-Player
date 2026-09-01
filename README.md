@@ -19,6 +19,18 @@ The generator requires a full ffmpeg installation with libx264/libx265. Set
 `FFMPEG=/path/to/ffmpeg` to select one explicitly. If fixtures are absent, only
 the generated-media tests are skipped; all pure unit tests continue to run.
 
+Scope rendering has an optimized profiling matrix covering every available
+scope resolution and the full 5–30 fps update-rate range:
+
+```bash
+scripts/profile-scopes.sh
+```
+
+The report includes luma and RGBY parade render time, sustainable update rate,
+and estimated renderer load for every supported update-rate setting. Timings
+are machine-dependent, so compare changes on the same hardware and profile on
+the oldest Mac supported for release when changing scope capture or rendering.
+
 Release builds support Apple Silicon (`arm64`) on macOS 15 or later. Maintainer
 preflight, signing, architecture, entitlement, and ffmpeg provenance guidance is
 in [docs/RELEASE.md](docs/RELEASE.md).
