@@ -16,8 +16,12 @@ final class PlayerOverlayController: ObservableObject {
 
     private var hideTask: Task<Void, Never>?
     private var mouseMoveMonitor: Any?
+    private var keyDownMonitor: Any?
     private var appActiveObserver: NSObjectProtocol?
     private let hideDelay: Duration
+
+    /// Hardware key code used by AppKit for Tab, including Shift-Tab.
+    private static let tabKeyCode: UInt16 = 48
 
     init(hideDelay: Duration = .seconds(3)) {
         self.hideDelay = hideDelay
@@ -46,6 +50,19 @@ final class PlayerOverlayController: ObservableObject {
                 isPlaying: isPlaying,
                 isEditingTimecode: isEditingTimecode
             )
+            return event
+        }
+
+        keyDownMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            guard let self,
+                  isMediaLoaded(),
+                  event.keyCode == Self.tabKeyCode,
+                  let window = NSApp.keyWindow,
+                  window.isKeyWindow else {
+                return event
+            }
+
+            self.revealForKeyboardNavigation()
             return event
         }
 
@@ -98,6 +115,14 @@ final class PlayerOverlayController: ObservableObject {
         isVisible = true
     }
 
+    /// Keeps auto-hidden controls visible while Full Keyboard Access moves
+    /// focus through them. The key event itself is returned to AppKit so normal
+    /// Tab and Shift-Tab traversal still occurs.
+    func revealForKeyboardNavigation() {
+        reveal()
+        cancelScheduledHide()
+    }
+
     func hide() {
         isVisible = false
         cancelScheduledHide()
@@ -139,6 +164,10 @@ final class PlayerOverlayController: ObservableObject {
         if let mouseMoveMonitor {
             NSEvent.removeMonitor(mouseMoveMonitor)
             self.mouseMoveMonitor = nil
+        }
+        if let keyDownMonitor {
+            NSEvent.removeMonitor(keyDownMonitor)
+            self.keyDownMonitor = nil
         }
         if let appActiveObserver {
             NotificationCenter.default.removeObserver(appActiveObserver)

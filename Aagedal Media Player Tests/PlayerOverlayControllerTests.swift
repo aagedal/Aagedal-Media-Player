@@ -65,4 +65,19 @@ final class PlayerOverlayControllerTests: XCTestCase {
 
         XCTAssertFalse(controller.isVisible)
     }
+
+    func testKeyboardNavigationRevealsOverlayAndCancelsPendingHide() async {
+        let controller = PlayerOverlayController(hideDelay: .milliseconds(10))
+        controller.hide()
+        controller.scheduleHide(
+            isPlaying: { true },
+            isEditingTimecode: { false }
+        )
+
+        controller.revealForKeyboardNavigation()
+
+        try? await Task.sleep(for: .milliseconds(30))
+
+        XCTAssertTrue(controller.isVisible)
+    }
 }
