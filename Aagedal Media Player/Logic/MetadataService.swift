@@ -18,6 +18,7 @@ actor MetadataService {
 
     private let logger = Logger(subsystem: "com.aagedal.MediaPlayer", category: "MetadataService")
     private let cache = NSCache<NSURL, CachedMetadata>()
+    private var inFlightRequests: [URL: Task<MediaMetadata, Error>] = [:]
 
     private final class CachedMetadata: NSObject {
         let metadata: MediaMetadata
@@ -31,6 +32,30 @@ actor MetadataService {
             return cached.metadata
         }
 
+        if let inFlight = inFlightRequests[url] {
+            return try await inFlight.value
+        }
+
+        let request = Task {
+            try await loadMetadata(for: url)
+        }
+        inFlightRequests[url] = request
+
+        do {
+            let metadata = try await request.value
+            inFlightRequests[url] = nil
+            cache.setObject(CachedMetadata(metadata: metadata), forKey: url as NSURL)
+            return metadata
+        } catch {
+            inFlightRequests[url] = nil
+            throw error
+        }
+    }
+
+    /// Performs one uncached metadata read. `metadata(for:)` retains the Task
+    /// so callers arriving after the preload deadline join this same work
+    /// instead of launching a duplicate parser and AVAsset pass.
+    private func loadMetadata(for url: URL) async throws -> MediaMetadata {
         var video: VideoMetadata
         do {
             video = try await readVideoMetadata(from: url)
@@ -54,7 +79,6 @@ actor MetadataService {
         }
 
         let metadata = MetadataMapper.makeMediaMetadata(from: video)
-        cache.setObject(CachedMetadata(metadata: metadata), forKey: url as NSURL)
         return metadata
     }
 

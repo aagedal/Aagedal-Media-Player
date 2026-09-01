@@ -6,8 +6,13 @@
 import XCTest
 
 final class NumericDefaultsTests: XCTestCase {
-    func testClampedUsesDefaultForUnsetZero() {
-        XCTAssertEqual(0.0.clamped(to: 1...100, default: 65), 65)
+    func testClampedPreservesValidZero() {
+        XCTAssertEqual(0.0.clamped(to: 0...100, default: 65), 0)
+    }
+
+    func testClampedUsesDefaultForNonFiniteValues() {
+        XCTAssertEqual(Double.nan.clamped(to: 0...100, default: 65), 65)
+        XCTAssertEqual(Double.infinity.clamped(to: 0...100, default: 65), 65)
     }
 
     func testClampedBoundsStoredValues() {

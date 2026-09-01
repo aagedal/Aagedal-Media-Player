@@ -21,6 +21,7 @@ final class AudioWaveformGenerator: ObservableObject {
     @Published var error: String?
 
     private var currentTask: Task<Void, Never>?
+    private var taskGeneration = OperationGeneration()
     private var currentURL: URL?
     private var currentStreamIndex: Int?
     private var currentAllStreams: Bool = false
@@ -28,7 +29,7 @@ final class AudioWaveformGenerator: ObservableObject {
     private var currentBoost: Double = 0
 
     /// Cached per-channel amplitude data from PCM decode, enabling fast re-renders.
-    private struct ChannelAmplitudeData {
+    private struct ChannelAmplitudeData: Sendable {
         let mins: [Float]
         let maxs: [Float]
     }
@@ -79,8 +80,16 @@ final class AudioWaveformGenerator: ObservableObject {
         let colorHex = color.ffmpegHex
         let gamma = Self.boostToGamma(boost)
         let logger = self.logger
+        let generation = taskGeneration.current
 
-        currentTask = Task {
+        currentTask = Task { [weak self] in
+            defer {
+                if let self, self.taskGeneration.isCurrent(generation) {
+                    self.isGenerating = false
+                    self.currentTask = nil
+                }
+            }
+
             do {
                 let t0 = CFAbsoluteTimeGetCurrent()
                 let (images, amplitudes, width) = try await Self.generateNativeWaveforms(
@@ -96,7 +105,9 @@ final class AudioWaveformGenerator: ObservableObject {
                 )
                 let t1 = CFAbsoluteTimeGetCurrent()
                 logger.info("Waveform generation: \(String(format: "%.2f", t1 - t0))s (\(channels) channels)")
-                guard !Task.isCancelled else { return }
+                guard let self,
+                      !Task.isCancelled,
+                      self.taskGeneration.isCurrent(generation) else { return }
                 self.cachedAmplitudes = amplitudes
                 self.cachedWidth = width
                 self.channelImages = images
@@ -104,11 +115,12 @@ final class AudioWaveformGenerator: ObservableObject {
             } catch is CancellationError {
                 // Cancelled — no action needed
             } catch {
-                guard !Task.isCancelled else { return }
+                guard let self,
+                      !Task.isCancelled,
+                      self.taskGeneration.isCurrent(generation) else { return }
                 self.error = error.localizedDescription
                 self.logger.error("Waveform generation failed: \(error.localizedDescription, privacy: .public)")
             }
-            self.isGenerating = false
         }
     }
 
@@ -147,8 +159,16 @@ final class AudioWaveformGenerator: ObservableObject {
         let gamma = Self.boostToGamma(boost)
         let logger = self.logger
         let labels = streams.map { $0.label }
+        let generation = taskGeneration.current
 
-        currentTask = Task {
+        currentTask = Task { [weak self] in
+            defer {
+                if let self, self.taskGeneration.isCurrent(generation) {
+                    self.isGenerating = false
+                    self.currentTask = nil
+                }
+            }
+
             do {
                 let t0 = CFAbsoluteTimeGetCurrent()
                 var images: [NSImage] = []
@@ -175,7 +195,9 @@ final class AudioWaveformGenerator: ObservableObject {
 
                 let t1 = CFAbsoluteTimeGetCurrent()
                 logger.info("All-streams waveform generation: \(String(format: "%.2f", t1 - t0))s (\(streams.count) streams)")
-                guard !Task.isCancelled else { return }
+                guard let self,
+                      !Task.isCancelled,
+                      self.taskGeneration.isCurrent(generation) else { return }
                 self.cachedAmplitudes = allAmplitudes
                 self.cachedWidth = cachedW
                 self.channelImages = images
@@ -183,17 +205,20 @@ final class AudioWaveformGenerator: ObservableObject {
             } catch is CancellationError {
                 // Cancelled
             } catch {
-                guard !Task.isCancelled else { return }
+                guard let self,
+                      !Task.isCancelled,
+                      self.taskGeneration.isCurrent(generation) else { return }
                 self.error = error.localizedDescription
                 self.logger.error("All-streams waveform generation failed: \(error.localizedDescription, privacy: .public)")
             }
-            self.isGenerating = false
         }
     }
 
     func cancel() {
+        taskGeneration.advance()
         currentTask?.cancel()
         currentTask = nil
+        isGenerating = false
     }
 
     func reset() {
@@ -232,11 +257,12 @@ final class AudioWaveformGenerator: ObservableObject {
         let gamma = Self.boostToGamma(boost)
         let (cr, cg, cb) = Self.parseHexColor(colorHex)
 
-        currentTask?.cancel()
-        currentTask = Task {
+        cancel()
+        let generation = taskGeneration.current
+        let renderTask = Task.detached(priority: .userInitiated) {
             var images: [NSImage] = []
             for data in amplitudes {
-                guard !Task.isCancelled else { return }
+                guard !Task.isCancelled else { return Optional<[NSImage]>.none }
                 if let image = Self.renderWaveformImage(
                     mins: data.mins, maxs: data.maxs,
                     width: width, height: height,
@@ -246,8 +272,24 @@ final class AudioWaveformGenerator: ObservableObject {
                     images.append(image)
                 }
             }
-            guard !Task.isCancelled else { return }
-            self.channelImages = images
+            guard !Task.isCancelled else { return Optional<[NSImage]>.none }
+            return images
+        }
+
+        currentTask = Task { [weak self] in
+            let images = await withTaskCancellationHandler {
+                await renderTask.value
+            } onCancel: {
+                renderTask.cancel()
+            }
+
+            guard let self,
+                  !Task.isCancelled,
+                  self.taskGeneration.isCurrent(generation) else { return }
+            self.currentTask = nil
+            if let images {
+                self.channelImages = images
+            }
         }
     }
 

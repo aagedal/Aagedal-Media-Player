@@ -150,7 +150,7 @@ final class PlayerWindowCoordinator: ObservableObject {
         fileOpenTask = Task { @MainActor in
             let preloadedMetadata = await Self.loadMetadataWithTimeout(
                 url: url,
-                timeoutMillis: 500
+                timeout: .milliseconds(500)
             )
             guard !Task.isCancelled else { return }
 
@@ -330,24 +330,15 @@ final class PlayerWindowCoordinator: ObservableObject {
         item.hasVideoStream = !metadata.videoStreams.isEmpty
     }
 
-    /// The underlying SwiftMediaMetadata read is not cancellable, so timing out merely
-    /// stops this caller waiting. The actor finishes and caches the result for
-    /// the follow-up request in openFile.
+    /// The underlying SwiftMediaMetadata read is not cancellable. AsyncDeadline
+    /// stops this caller waiting while allowing the operation to finish and
+    /// populate MetadataService's cache for the follow-up request in openFile.
     private static func loadMetadataWithTimeout(
         url: URL,
-        timeoutMillis: UInt64
+        timeout: Duration
     ) async -> MediaMetadata? {
-        await withTaskGroup(of: MediaMetadata?.self) { group in
-            group.addTask {
-                try? await MetadataService.shared.metadata(for: url)
-            }
-            group.addTask {
-                try? await Task.sleep(nanoseconds: timeoutMillis * 1_000_000)
-                return nil
-            }
-            let first = await group.next() ?? nil
-            group.cancelAll()
-            return first
+        await AsyncDeadline.value(within: timeout) {
+            try? await MetadataService.shared.metadata(for: url)
         }
     }
 
