@@ -125,11 +125,12 @@ Acceptance: primary playback, seeking, track selection, and export workflows wor
 
 ## Phase 8 — Architecture cleanup
 
-Status: In progress — settings keys and canonical defaults were centralized in a typed store, screenshot/trim ffmpeg command construction was moved into pure tested builders, app-wide commands were converted to typed payloads, screenshot/export feedback booleans were replaced with typed operation states, and media-output coordination was extracted from `PlayerController` by 2026-09-01.
+Status: In progress — settings keys and canonical defaults were centralized in a typed store, screenshot/trim ffmpeg command construction was moved into pure tested builders, app-wide commands were converted to typed payloads, screenshot/export feedback booleans were replaced with typed operation states, and media-output and track-selection ownership were extracted from `PlayerController` by 2026-09-01.
 
 - [ ] Split `PlayerController` into playback coordination, backend adapters, track selection, trim/export, and screenshot components.
   - [x] Extract trim points, screenshot capture, and trim-export lifecycle into a focused media-operations coordinator.
-  - [ ] Extract backend adapters and track-selection ownership.
+  - [x] Extract audio, subtitle, and chapter discovery, selection, and backend application into a focused track-selection controller.
+  - [ ] Extract backend adapters.
 - [ ] Split window/file-open coordination and overlays out of `ContentView`.
 - [x] Replace stringly typed NotificationCenter command payloads with typed commands or focused scene actions.
 - [x] Centralize settings keys and defaults in a typed settings store.

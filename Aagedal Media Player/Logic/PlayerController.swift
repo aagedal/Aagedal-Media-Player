@@ -13,28 +13,9 @@ import OSLog
 
 @MainActor
 final class PlayerController: ObservableObject {
-    struct AudioTrackOption: Identifiable, Equatable {
-        let id: Int
-        let position: Int
-        let streamIndex: Int
-        let mediaOptionIndex: Int?
-        let title: String
-        let subtitle: String?
-    }
-
-    struct SubtitleTrackOption: Identifiable, Equatable {
-        let id: Int
-        let position: Int
-        let trackId: Int32
-        let title: String
-    }
-
-    struct ChapterOption: Identifiable, Equatable {
-        let id: Int
-        let position: Int
-        let time: Double
-        let title: String
-    }
+    typealias AudioTrackOption = TrackSelectionController.AudioTrackOption
+    typealias SubtitleTrackOption = TrackSelectionController.SubtitleTrackOption
+    typealias ChapterOption = TrackSelectionController.ChapterOption
 
     // MARK: - Published State
 
@@ -72,9 +53,13 @@ final class PlayerController: ObservableObject {
     @Published private(set) var isPlaying: Bool = false
     @Published private(set) var currentPlaybackSpeed: Float = 1.0
     @Published private(set) var isReversing: Bool = false
-    @Published var audioTrackOptions: [AudioTrackOption] = []
-    @Published var subtitleTrackOptions: [SubtitleTrackOption] = []
-    @Published var chapterOptions: [ChapterOption] = []
+    private let trackSelection = TrackSelectionController()
+    private var trackSelectionCancellable: AnyCancellable?
+    var audioTrackOptions: [AudioTrackOption] { trackSelection.audioTrackOptions }
+    var subtitleTrackOptions: [SubtitleTrackOption] { trackSelection.subtitleTrackOptions }
+    var chapterOptions: [ChapterOption] { trackSelection.chapterOptions }
+    var selectedAudioTrackOrderIndex: Int { trackSelection.selectedAudioTrackOrderIndex }
+    var selectedSubtitleTrackOrderIndex: Int { trackSelection.selectedSubtitleTrackOrderIndex }
 
     var currentChapterPosition: Int? {
         guard !chapterOptions.isEmpty else { return nil }
@@ -126,9 +111,7 @@ final class PlayerController: ObservableObject {
     var playbackFailureObserver: Any?
     var timeControlStatusObserver: NSKeyValueObservation?
     weak var playerView: AVPlayerView?
-    @Published var selectedAudioTrackOrderIndex: Int = 0
     @Published var showAllMonoWaveforms = UserDefaults.standard.value(for: AppSettings.showAllMonoWaveforms)
-    @Published var selectedSubtitleTrackOrderIndex: Int = -1
 
     // MARK: - MPV State
     var mpvPlayer: MPVPlayer?
@@ -175,6 +158,9 @@ final class PlayerController: ObservableObject {
             .clamped(to: 0...100, default: AppSettings.playbackVolume.defaultValue)
         isMuted = defaults.value(for: AppSettings.playbackMuted)
         mediaOperationsCancellable = mediaOperations.objectWillChange.sink { [weak self] in
+            self?.objectWillChange.send()
+        }
+        trackSelectionCancellable = trackSelection.objectWillChange.sink { [weak self] in
             self?.objectWillChange.send()
         }
     }
@@ -1153,167 +1139,15 @@ final class PlayerController: ObservableObject {
     // MARK: - Audio Track Selection
 
     func refreshAudioTrackOptions(playerItem: AVPlayerItem?) {
-        let existingSelection = selectedAudioTrackOrderIndex
         Task { @MainActor [weak self] in
             guard let self, let item = self.mediaItem else { return }
-
-            if useMPV {
-                guard let mpv = mpvPlayer else { return }
-                let names = mpv.audioTrackNames
-                let indexes = mpv.audioTrackIndexes
-                buildMPVAudioTrackOptions(names: names, indexes: indexes)
-                buildMPVSubtitleTrackOptions()
-            } else {
-                let metadata = item.metadata
-
-                let orderedIndices = metadata.map { self.orderAudioStreams(from: $0) } ?? []
-                let mediaGroup: AVMediaSelectionGroup?
-                if let playerItem {
-                    mediaGroup = try? await playerItem.asset.loadMediaSelectionGroup(for: .audible)
-                } else {
-                    mediaGroup = nil
-                }
-
-                self.buildAudioTrackOptions(metadata: metadata, orderedIndices: orderedIndices, mediaGroup: mediaGroup)
-            }
-
-            if self.audioTrackOptions.isEmpty {
-                self.selectedAudioTrackOrderIndex = 0
-            } else {
-                let clamped = min(max(existingSelection, 0), self.audioTrackOptions.count - 1)
-                self.selectedAudioTrackOrderIndex = clamped
-            }
-
-            self.applySelectedAudioTrack()
-        }
-    }
-
-    nonisolated private func orderAudioStreams(from metadata: MediaMetadata) -> [Int] {
-        guard !metadata.audioStreams.isEmpty else { return [] }
-        let sorted = metadata.audioStreams.enumerated().sorted { lhs, rhs in
-            let lhsDefault = metadata.isDefaultAudioStream(index: lhs.offset)
-            let rhsDefault = metadata.isDefaultAudioStream(index: rhs.offset)
-            if lhsDefault != rhsDefault { return lhsDefault }
-            let lhsChannels = lhs.element.channels ?? 0
-            let rhsChannels = rhs.element.channels ?? 0
-            if lhsChannels != rhsChannels { return lhsChannels > rhsChannels }
-            return lhs.offset < rhs.offset
-        }
-        return sorted.map { $0.offset }
-    }
-
-    private func buildAudioTrackOptions(metadata: MediaMetadata?, orderedIndices: [Int], mediaGroup: AVMediaSelectionGroup?) {
-        let metadataStreams = metadata?.audioStreams ?? []
-        let effectiveOrder = orderedIndices.isEmpty ? Array(metadataStreams.indices) : orderedIndices
-        let mediaOptions = mediaGroup?.options ?? []
-
-        if metadataStreams.isEmpty && mediaOptions.isEmpty {
-            audioTrackOptions = []
-            return
-        }
-
-        var options: [AudioTrackOption] = []
-        let count = max(effectiveOrder.count, mediaOptions.count)
-        for position in 0..<count {
-            let streamIndex = effectiveOrder.indices.contains(position) ? effectiveOrder[position] : position
-            let stream = metadataStreams.indices.contains(streamIndex) ? metadataStreams[streamIndex] : nil
-            let mediaOption = mediaOptions.indices.contains(position) ? mediaOptions[position] : nil
-            let mediaOptionIndex = mediaOptions.indices.contains(position) ? position : nil
-
-            let title: String
-            if let stream {
-                title = self.formattedAudioTrackTitle(for: stream, position: position)
-            } else if let mediaOption {
-                title = mediaOption.displayName
-            } else {
-                title = "Audio Track \(position + 1)"
-            }
-
-            var details: [String] = []
-            if let stream {
-                if stream.isDefault { details.append("Default") }
-                if let channels = stream.channels { details.append("\(channels) ch") }
-                if let sampleRate = stream.sampleRate { details.append("\(sampleRate) Hz") }
-                if let codec = stream.codecLongName ?? stream.codec { details.append(codec) }
-            }
-
-            if let mediaOption, details.isEmpty {
-                if let locale = mediaOption.locale {
-                    details.append(locale.localizedString(forLanguageCode: locale.language.languageCode?.identifier ?? "") ?? locale.identifier)
-                }
-            }
-
-            options.append(
-                AudioTrackOption(
-                    id: streamIndex,
-                    position: position,
-                    streamIndex: streamIndex,
-                    mediaOptionIndex: mediaOptionIndex,
-                    title: title,
-                    subtitle: details.isEmpty ? nil : details.joined(separator: " \u{2022} ")
-                )
+            await self.trackSelection.refreshAudioTrackOptions(
+                mediaItem: item,
+                playerItem: playerItem,
+                mpvPlayer: self.mpvPlayer,
+                useMPV: self.useMPV
             )
         }
-
-        audioTrackOptions = options
-    }
-
-    private func buildMPVAudioTrackOptions(names: [String], indexes: [Int32]) {
-        var options: [AudioTrackOption] = []
-
-        for (index, trackID) in indexes.enumerated() {
-            if trackID <= 0 { continue }
-
-            let name = index < names.count ? names[index] : "Track \(trackID)"
-            let position = options.count
-
-            options.append(
-                AudioTrackOption(
-                    id: Int(trackID),
-                    position: position,
-                    streamIndex: Int(trackID) - 1,
-                    mediaOptionIndex: nil,
-                    title: name,
-                    subtitle: nil
-                )
-            )
-        }
-
-        audioTrackOptions = options
-
-        if !audioTrackOptions.isEmpty {
-            if selectedAudioTrackOrderIndex >= audioTrackOptions.count {
-                selectedAudioTrackOrderIndex = 0
-            }
-        }
-    }
-
-    private func formattedAudioTrackTitle(for stream: MediaMetadata.AudioStream, position: Int) -> String {
-        var components: [String] = []
-
-        if let index = stream.index {
-            components.append("#\(index)")
-        } else {
-            components.append("#\(position)")
-        }
-
-        if let language = stream.languageCode, !language.isEmpty {
-            components.append(language)
-        }
-
-        if let codecName = stream.codecLongName ?? stream.codec, !codecName.isEmpty {
-            components.append(codecName)
-        }
-
-        if let layout = stream.channelLayout, !layout.isEmpty {
-            components.append(layout)
-        }
-
-        if components.isEmpty {
-            return "Audio Track \(position + 1)"
-        }
-
-        return components.joined(separator: " \u{2013} ")
     }
 
     func selectAudioTrack(at position: Int) {
@@ -1322,125 +1156,52 @@ final class PlayerController: ObservableObject {
         let wasPlaying = (player?.rate ?? 0) != 0 || (mpvPlayer?.isPlaying ?? false)
         if wasPlaying { pause() }
 
-        selectedAudioTrackOrderIndex = position
-        applySelectedAudioTrack()
-
-        if wasPlaying {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-                self?.togglePlayback()
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            let changed = await self.trackSelection.selectAudioTrack(
+                at: position,
+                playerItem: self.player?.currentItem,
+                mpvPlayer: self.mpvPlayer,
+                useMPV: self.useMPV
+            )
+            if changed, wasPlaying {
+                try? await Task.sleep(for: .milliseconds(100))
+                guard !Task.isCancelled else { return }
+                self.togglePlayback()
             }
         }
     }
 
     func applySelectedAudioTrack() {
-        if useMPV {
-            applySelectedAudioTrackToMPV()
-        } else {
-            applySelectedAudioTrackToCurrentPlayerItem()
-        }
-    }
-
-    private func applySelectedAudioTrackToMPV() {
-        guard let mpv = mpvPlayer else { return }
-
-        let indexes = mpv.audioTrackIndexes
-
-        if self.selectedAudioTrackOrderIndex < indexes.count {
-            let trackID = indexes[self.selectedAudioTrackOrderIndex]
-            mpv.currentAudioTrackIndex = trackID
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            await self.trackSelection.applySelectedAudioTrack(
+                playerItem: self.player?.currentItem,
+                mpvPlayer: self.mpvPlayer,
+                useMPV: self.useMPV
+            )
         }
     }
 
     func applySelectedAudioTrackToCurrentPlayerItem() {
-        guard let playerItem = player?.currentItem else { return }
-
-        Task { @MainActor [weak self, weak playerItem] in
-            guard let self, let playerItem else { return }
-
-            var mediaGroup: AVMediaSelectionGroup?
-            do {
-                mediaGroup = try await playerItem.asset.loadMediaSelectionGroup(for: .audible)
-            } catch {
-                logger.error("Failed to load audible group: \(error)")
-            }
-
-            self.buildAudioTrackOptions(metadata: self.mediaItem?.metadata, orderedIndices: [], mediaGroup: mediaGroup)
-
-            guard !self.audioTrackOptions.isEmpty else { return }
-
-            let desiredPosition = min(max(self.selectedAudioTrackOrderIndex, 0), self.audioTrackOptions.count - 1)
-            let selectedOption = self.audioTrackOptions[desiredPosition]
-
-            if let mediaGroup, let mappedIndex = selectedOption.mediaOptionIndex, mediaGroup.options.indices.contains(mappedIndex) {
-                let avOption = mediaGroup.options[mappedIndex]
-                if playerItem.currentMediaSelection.selectedMediaOption(in: mediaGroup) != avOption {
-                    playerItem.select(avOption, in: mediaGroup)
-                    return
-                }
-            }
-
-            let tracks = playerItem.tracks
-            var audioTracks: [AVPlayerItemTrack] = []
-            for track in tracks {
-                if track.assetTrack?.mediaType == .audio {
-                    audioTracks.append(track)
-                }
-            }
-
-            if !audioTracks.isEmpty {
-                for (index, track) in audioTracks.enumerated() {
-                    let shouldEnable = (index == desiredPosition)
-                    if track.isEnabled != shouldEnable {
-                        track.isEnabled = shouldEnable
-                    }
-                }
-            }
-        }
+        applySelectedAudioTrack()
     }
 
     // MARK: - Subtitle Track Selection
 
     func buildMPVSubtitleTrackOptions() {
-        guard let mpv = mpvPlayer else {
-            subtitleTrackOptions = []
-            return
-        }
-
-        let names = mpv.subtitleTrackNames
-        let indexes = mpv.subtitleTrackIndexes
-
-        var options: [SubtitleTrackOption] = []
-
-        for (index, trackID) in indexes.enumerated() {
-            if trackID <= 0 { continue }
-
-            let name = index < names.count ? names[index] : "Subtitle \(trackID)"
-            let position = options.count
-
-            options.append(
-                SubtitleTrackOption(
-                    id: Int(trackID),
-                    position: position,
-                    trackId: trackID,
-                    title: name
-                )
-            )
-        }
-
-        subtitleTrackOptions = options
+        guard let mpvPlayer else { return }
+        trackSelection.rebuildMPVTrackOptions(
+            audioNames: mpvPlayer.audioTrackNames,
+            audioIndexes: mpvPlayer.audioTrackIndexes,
+            subtitleNames: mpvPlayer.subtitleTrackNames,
+            subtitleIndexes: mpvPlayer.subtitleTrackIndexes
+        )
     }
 
     func selectSubtitleTrack(at position: Int) {
-        guard useMPV, let mpv = mpvPlayer else { return }
-
-        if position < 0 {
-            mpv.disableSubtitles()
-            selectedSubtitleTrackOrderIndex = -1
-        } else if position < subtitleTrackOptions.count {
-            let option = subtitleTrackOptions[position]
-            mpv.currentSubtitleTrackIndex = option.trackId
-            selectedSubtitleTrackOrderIndex = position
-        }
+        guard useMPV else { return }
+        _ = trackSelection.selectSubtitleTrack(at: position, mpvPlayer: mpvPlayer)
     }
 
     // MARK: - Chapter Selection
@@ -1448,36 +1209,11 @@ final class PlayerController: ObservableObject {
     func refreshChapterOptions(playerItem: AVPlayerItem?) {
         Task { @MainActor [weak self] in
             guard let self else { return }
-            if useMPV, let mpv = mpvPlayer {
-                let raw = mpv.chapters
-                self.chapterOptions = raw.enumerated().map { idx, c in
-                    ChapterOption(
-                        id: idx,
-                        position: idx,
-                        time: c.time,
-                        title: c.title.isEmpty ? "Chapter \(idx + 1)" : c.title
-                    )
-                }
-            } else if let asset = playerItem?.asset {
-                let langs = Locale.preferredLanguages
-                let groups = (try? await asset.loadChapterMetadataGroups(
-                    bestMatchingPreferredLanguages: langs)) ?? []
-                var options: [ChapterOption] = []
-                for (idx, group) in groups.enumerated() {
-                    let start = group.timeRange.start.seconds
-                    guard start.isFinite else { continue }
-                    var title = "Chapter \(idx + 1)"
-                    if let titleItem = group.items.first(where: {
-                        $0.commonKey == .commonKeyTitle
-                    }), let s = try? await titleItem.load(.stringValue), !s.isEmpty {
-                        title = s
-                    }
-                    options.append(ChapterOption(id: idx, position: idx, time: start, title: title))
-                }
-                self.chapterOptions = options
-            } else {
-                self.chapterOptions = []
-            }
+            await self.trackSelection.refreshChapterOptions(
+                playerItem: playerItem,
+                mpvPlayer: self.mpvPlayer,
+                useMPV: self.useMPV
+            )
         }
     }
 
@@ -1604,13 +1340,9 @@ final class PlayerController: ObservableObject {
         mpvBusyCancellable = nil
         removeMPVLoopObserver()
         if resetAudioSelection {
-            selectedAudioTrackOrderIndex = 0
-            selectedSubtitleTrackOrderIndex = -1
             showAllMonoWaveforms = UserDefaults.standard.value(for: AppSettings.showAllMonoWaveforms)
         }
-        audioTrackOptions = []
-        subtitleTrackOptions = []
-        chapterOptions = []
+        trackSelection.reset(preservingSelections: !resetAudioSelection)
     }
 }
 
