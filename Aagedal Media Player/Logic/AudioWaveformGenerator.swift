@@ -10,6 +10,28 @@ import AppKit
 import Combine
 import OSLog
 
+nonisolated struct AudioWaveformGenerationRequest: Sendable {
+    let url: URL
+    let streamIndex: Int
+    let channelCount: Int
+    let duration: Double
+    let colorHex: String
+    let gamma: Float
+    let pixelsPerSecond: Double
+    let channelHeight: Int
+    let maxWidth: Int
+}
+
+nonisolated struct AudioWaveformGenerationOutput: @unchecked Sendable {
+    let images: [NSImage]
+    let amplitudes: [WaveformAmplitudeData]
+    let width: Int
+}
+
+typealias AudioWaveformGenerationOperation = @Sendable (
+    AudioWaveformGenerationRequest
+) async throws -> AudioWaveformGenerationOutput
+
 @MainActor
 final class AudioWaveformGenerator: ObservableObject {
     private let logger = Logger(subsystem: "com.aagedal.MediaPlayer", category: "AudioWaveform")
@@ -27,13 +49,10 @@ final class AudioWaveformGenerator: ObservableObject {
     private var currentAllStreams: Bool = false
     private var currentColor: AudioWaveformColor?
     private var currentBoost: Double = 0
+    private let generationOperation: AudioWaveformGenerationOperation
 
     /// Cached per-channel amplitude data from PCM decode, enabling fast re-renders.
-    private struct ChannelAmplitudeData: Sendable {
-        let mins: [Float]
-        let maxs: [Float]
-    }
-    private var cachedAmplitudes: [ChannelAmplitudeData] = []
+    private var cachedAmplitudes: [WaveformAmplitudeData] = []
     private var cachedWidth: Int = 0
 
     var hasCachedAmplitudes: Bool { !cachedAmplitudes.isEmpty }
@@ -42,6 +61,12 @@ final class AudioWaveformGenerator: ObservableObject {
     private static let pixelsPerSecond: Double = 12
     private static let channelHeight: Int = 240
     private static let maxWidth: Int = 24000
+
+    init(generationOperation: AudioWaveformGenerationOperation? = nil) {
+        self.generationOperation = generationOperation ?? { request in
+            try await AudioWaveformGenerator.generateNativeWaveforms(request: request)
+        }
+    }
 
     /// Generate waveform images for every channel in the given audio stream.
     /// Decodes audio once as raw PCM, then renders all channels natively.
@@ -81,6 +106,7 @@ final class AudioWaveformGenerator: ObservableObject {
         let gamma = Self.boostToGamma(boost)
         let logger = self.logger
         let generation = taskGeneration.current
+        let generationOperation = self.generationOperation
 
         currentTask = Task { [weak self] in
             defer {
@@ -92,7 +118,7 @@ final class AudioWaveformGenerator: ObservableObject {
 
             do {
                 let t0 = CFAbsoluteTimeGetCurrent()
-                let (images, amplitudes, width) = try await Self.generateNativeWaveforms(
+                let output = try await generationOperation(AudioWaveformGenerationRequest(
                     url: url,
                     streamIndex: streamIndex,
                     channelCount: channels,
@@ -102,15 +128,15 @@ final class AudioWaveformGenerator: ObservableObject {
                     pixelsPerSecond: Self.pixelsPerSecond,
                     channelHeight: Self.channelHeight,
                     maxWidth: Self.maxWidth
-                )
+                ))
                 let t1 = CFAbsoluteTimeGetCurrent()
                 logger.info("Waveform generation: \(String(format: "%.2f", t1 - t0))s (\(channels) channels)")
                 guard let self,
                       !Task.isCancelled,
                       self.taskGeneration.isCurrent(generation) else { return }
-                self.cachedAmplitudes = amplitudes
-                self.cachedWidth = width
-                self.channelImages = images
+                self.cachedAmplitudes = output.amplitudes
+                self.cachedWidth = output.width
+                self.channelImages = output.images
                 self.channelLabels = labels
             } catch is CancellationError {
                 // Cancelled — no action needed
@@ -160,6 +186,7 @@ final class AudioWaveformGenerator: ObservableObject {
         let logger = self.logger
         let labels = streams.map { $0.label }
         let generation = taskGeneration.current
+        let generationOperation = self.generationOperation
 
         currentTask = Task { [weak self] in
             defer {
@@ -172,12 +199,12 @@ final class AudioWaveformGenerator: ObservableObject {
             do {
                 let t0 = CFAbsoluteTimeGetCurrent()
                 var images: [NSImage] = []
-                var allAmplitudes: [ChannelAmplitudeData] = []
+                var allAmplitudes: [WaveformAmplitudeData] = []
                 var cachedW = 0
 
                 for stream in streams {
                     try Task.checkCancellation()
-                    let (streamImages, streamAmplitudes, width) = try await Self.generateNativeWaveforms(
+                    let output = try await generationOperation(AudioWaveformGenerationRequest(
                         url: url,
                         streamIndex: stream.index,
                         channelCount: 1,
@@ -187,10 +214,10 @@ final class AudioWaveformGenerator: ObservableObject {
                         pixelsPerSecond: Self.pixelsPerSecond,
                         channelHeight: Self.channelHeight,
                         maxWidth: Self.maxWidth
-                    )
-                    images.append(contentsOf: streamImages)
-                    allAmplitudes.append(contentsOf: streamAmplitudes)
-                    cachedW = width
+                    ))
+                    images.append(contentsOf: output.images)
+                    allAmplitudes.append(contentsOf: output.amplitudes)
+                    cachedW = output.width
                 }
 
                 let t1 = CFAbsoluteTimeGetCurrent()
@@ -304,106 +331,56 @@ final class AudioWaveformGenerator: ObservableObject {
     /// Decodes audio once as raw PCM via ffmpeg, then renders all channel waveforms natively.
     /// Returns images, cached amplitude data, and the computed width.
     private static nonisolated func generateNativeWaveforms(
-        url: URL,
-        streamIndex: Int,
-        channelCount: Int,
-        duration: Double,
-        colorHex: String,
-        gamma: Float,
-        pixelsPerSecond: Double,
-        channelHeight: Int,
-        maxWidth: Int
-    ) async throws -> ([NSImage], [ChannelAmplitudeData], Int) {
-        let width = max(400, min(maxWidth, Int(duration * pixelsPerSecond)))
+        request: AudioWaveformGenerationRequest
+    ) async throws -> AudioWaveformGenerationOutput {
+        let width = max(400, min(request.maxWidth, Int(request.duration * request.pixelsPerSecond)))
 
         // Downsample to reduce data: aim for ~100 samples per output pixel column.
-        // This is plenty for visual waveform accuracy while keeping data manageable
-        // (e.g. a 1-hour 5.1 file at 1kHz ≈ 86 MB vs 4+ GB at full rate).
-        let idealRate = max(1000, min(48000, Int(ceil(Double(width) * 100.0 / max(duration, 0.1)))))
-
-        let tempDir = FileManager.default.temporaryDirectory
-            .appendingPathComponent("com.aagedal.MediaPlayer.waveforms.\(UUID().uuidString)")
-        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
-        defer { try? FileManager.default.removeItem(at: tempDir) }
-
-        let pcmFile = tempDir.appendingPathComponent("audio.raw")
+        // Streaming means even very long recordings retain only the fixed-size
+        // column accumulators. A 100 Hz floor preserves short transients without
+        // producing multi-gigabyte intermediate streams for day-long media.
+        let idealRate = max(100, min(48000, Int(ceil(Double(width) * 100.0 / max(request.duration, 0.1)))))
+        let accumulator = StreamingWaveformAccumulator(
+            width: width,
+            channelCount: request.channelCount,
+            expectedFrameCount: max(1, Int(ceil(request.duration * Double(idealRate))))
+        )
 
         let arguments: [String] = [
             "-hide_banner", "-loglevel", "error",
-            "-i", url.path,
+            "-i", request.url.path,
             "-vn",
-            "-map", "0:a:\(streamIndex)",
+            "-map", "0:a:\(request.streamIndex)",
             "-ar", "\(idealRate)",
             "-f", "f32le",
             "-c:a", "pcm_f32le",
-            "-y", pcmFile.path
+            "pipe:1"
         ]
 
-        try await FFmpegService.run(arguments: arguments)
+        try await FFmpegService.runStreamingOutput(arguments: arguments) { data in
+            accumulator.consume(data)
+        }
         try Task.checkCancellation()
 
-        let pcmData = try Data(contentsOf: pcmFile)
-        let floatCount = pcmData.count / MemoryLayout<Float>.size
-        let totalFrames = floatCount / channelCount
-        guard totalFrames > 0 else { throw FFmpegError.outputMissing }
+        let amplitudes = try accumulator.finish()
 
         // Parse waveform color
-        let (cr, cg, cb) = parseHexColor(colorHex)
+        let (cr, cg, cb) = parseHexColor(request.colorHex)
 
         var images: [NSImage] = []
-        var amplitudes: [ChannelAmplitudeData] = []
-
-        for ch in 0..<channelCount {
+        for amplitude in amplitudes {
             try Task.checkCancellation()
-
-            // Compute average positive/negative amplitude per pixel column.
-            // This matches ffmpeg showwavespic's default "average" mode,
-            // which shows the mean envelope rather than absolute peaks.
-            var columnMins = [Float](repeating: 0, count: width)
-            var columnMaxs = [Float](repeating: 0, count: width)
-
-            pcmData.withUnsafeBytes { rawBuffer in
-                let floats = rawBuffer.bindMemory(to: Float.self)
-
-                for col in 0..<width {
-                    let startFrame = col * totalFrames / width
-                    let endFrame = min((col + 1) * totalFrames / width, totalFrames)
-                    guard startFrame < endFrame else { return }
-
-                    var posSum: Float = 0
-                    var posCount: Int = 0
-                    var negSum: Float = 0
-                    var negCount: Int = 0
-
-                    for frame in startFrame..<endFrame {
-                        let sample = floats[frame * channelCount + ch]
-                        if sample >= 0 {
-                            posSum += sample
-                            posCount += 1
-                        } else {
-                            negSum += sample
-                            negCount += 1
-                        }
-                    }
-
-                    columnMaxs[col] = min(posCount > 0 ? posSum / Float(posCount) : 0, 1.0)
-                    columnMins[col] = max(negCount > 0 ? negSum / Float(negCount) : 0, -1.0)
-                }
-            }
-
-            amplitudes.append(ChannelAmplitudeData(mins: columnMins, maxs: columnMaxs))
-
             if let image = renderWaveformImage(
-                mins: columnMins, maxs: columnMaxs,
-                width: width, height: channelHeight,
+                mins: amplitude.mins, maxs: amplitude.maxs,
+                width: width, height: request.channelHeight,
                 r: cr, g: cg, b: cb,
-                gamma: gamma
+                gamma: request.gamma
             ) {
                 images.append(image)
             }
         }
 
-        return (images, amplitudes, width)
+        return AudioWaveformGenerationOutput(images: images, amplitudes: amplitudes, width: width)
     }
 
     // MARK: - Image Rendering

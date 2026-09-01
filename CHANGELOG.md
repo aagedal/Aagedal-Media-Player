@@ -12,10 +12,11 @@ All notable changes to Aagedal Media Player.
 - Consistent volume, mute, buffering, playback-error, keyboard, and accessibility behavior across playback backends.
 - Previous/next keyboard navigation across supported media files in the current folder.
 - Release preflight validation for version/build ordering, changelog and appcast metadata, Sparkle signatures and URLs, exported app signing, and bundled ffmpeg provenance.
+- Reproducible 1, 8, and 24-hour multichannel audio-waveform performance profiling.
 
 ### Changed
 - Split playback backends, track selection, media operations, window opening, overlays, settings, and command routing into focused components.
-- Follow the SwiftExif repository rename to SwiftMediaMetadata while retaining its compatible `SwiftExif` module.
+- Update SwiftMediaMetadata to 2.0.0 and adopt its renamed package product and importable module.
 - Keep Main Thread Checker and Thread Performance Checker enabled while retaining the required MoltenVK Metal API Validation exception.
 - Document and validate the intentional Apple-Silicon-only release architecture and security entitlements.
 
@@ -23,6 +24,8 @@ All notable changes to Aagedal Media Player.
 - Prevented superseded scope frames and media-operation tasks from publishing stale results or surviving teardown.
 - Forwarded backend preparation, load, and end-file errors into actionable UI states.
 - Kept playback controls and their keyboard focus rings visible in narrow player windows.
+- Bounded long-recording waveform memory by streaming PCM directly into fixed-size accumulators.
+- Restored bundled audio-decoder and EBU R128 capabilities required by waveform and LUFS analysis.
 
 ## [1.6.0] — 2026-05-24
 

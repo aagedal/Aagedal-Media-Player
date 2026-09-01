@@ -30,6 +30,21 @@ final class SubprocessServiceTests: XCTestCase {
         XCTAssertEqual(received.lines, ["out_time_us=500000", "progress=end"])
     }
 
+    func testStreamsStandardOutputWithoutRetainingIt() async throws {
+        let received = DataRecorder()
+        let result = try await SubprocessService.run(
+            executableURL: URL(fileURLWithPath: "/bin/sh"),
+            arguments: ["-c", "printf 'streamed-pcm'; printf 'diagnostic' >&2"],
+            standardOutputLimit: 0,
+            onStandardOutputData: { received.append($0) }
+        )
+
+        XCTAssertEqual(result.terminationStatus, 0)
+        XCTAssertTrue(result.standardOutput.isEmpty)
+        XCTAssertEqual(String(decoding: result.standardError, as: UTF8.self), "diagnostic")
+        XCTAssertEqual(String(decoding: received.data, as: UTF8.self), "streamed-pcm")
+    }
+
     func testTaskCancellationTerminatesChildProcess() async throws {
         let task = Task {
             try await SubprocessService.run(
@@ -77,6 +92,19 @@ private final class LineRecorder: Sendable {
     }
 
     nonisolated var lines: [String] {
+        lock.withLock { storage }
+    }
+}
+
+private final class DataRecorder: Sendable {
+    private let lock = NSLock()
+    private nonisolated(unsafe) var storage = Data()
+
+    nonisolated func append(_ data: Data) {
+        lock.withLock { storage.append(data) }
+    }
+
+    nonisolated var data: Data {
         lock.withLock { storage }
     }
 }

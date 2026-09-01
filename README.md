@@ -31,6 +31,17 @@ and estimated renderer load for every supported update-rate setting. Timings
 are machine-dependent, so compare changes on the same hardware and profile on
 the oldest Mac supported for release when changing scope capture or rendering.
 
+Long-recording audio waveform aggregation has a separate 1, 8, and 24-hour
+multichannel profile:
+
+```bash
+scripts/profile-audio-waveforms.sh
+```
+
+Its report includes decode time, fixed accumulator size, and resident-memory
+growth. See [docs/AUDIO_WAVEFORM_PERFORMANCE.md](docs/AUDIO_WAVEFORM_PERFORMANCE.md)
+for the current baseline and methodology.
+
 Release builds support Apple Silicon (`arm64`) on macOS 15 or later. Maintainer
 preflight, signing, architecture, entitlement, and ffmpeg provenance guidance is
 in [docs/RELEASE.md](docs/RELEASE.md).

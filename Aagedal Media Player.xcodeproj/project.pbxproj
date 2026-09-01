@@ -9,7 +9,7 @@
 /* Begin PBXBuildFile section */
 		8EA00001AAAA000000000001 /* MPVKit-GPL in Frameworks */ = {isa = PBXBuildFile; productRef = 8EA00002AAAA000000000001 /* MPVKit-GPL */; };
 		8EA00004AAAA000000000001 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 8EA00005AAAA000000000001 /* Sparkle */; };
-		8EA00007AAAA000000000001 /* SwiftExif in Frameworks */ = {isa = PBXBuildFile; productRef = 8EA00008AAAA000000000001 /* SwiftExif */; };
+		8EA00007AAAA000000000001 /* SwiftMediaMetadata in Frameworks */ = {isa = PBXBuildFile; productRef = 8EA00008AAAA000000000001 /* SwiftMediaMetadata */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -67,7 +67,7 @@
 			files = (
 				8EA00001AAAA000000000001 /* MPVKit-GPL in Frameworks */,
 				8EA00004AAAA000000000001 /* Sparkle in Frameworks */,
-				8EA00007AAAA000000000001 /* SwiftExif in Frameworks */,
+				8EA00007AAAA000000000001 /* SwiftMediaMetadata in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -137,7 +137,7 @@
 			packageProductDependencies = (
 				8EA00002AAAA000000000001 /* MPVKit-GPL */,
 				8EA00005AAAA000000000001 /* Sparkle */,
-				8EA00008AAAA000000000001 /* SwiftExif */,
+				8EA00008AAAA000000000001 /* SwiftMediaMetadata */,
 			);
 			productName = "Aagedal Media Player";
 			productReference = 8EB2F2832F49166000B196AD /* Aagedal Media Player.app */;
@@ -511,7 +511,7 @@
 			repositoryURL = "https://github.com/aagedal/SwiftMediaMetadata";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.8.0;
+				minimumVersion = 2.0.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
@@ -527,10 +527,10 @@
 			package = 8EA00006AAAA000000000001 /* XCRemoteSwiftPackageReference "Sparkle" */;
 			productName = Sparkle;
 		};
-		8EA00008AAAA000000000001 /* SwiftExif */ = {
+		8EA00008AAAA000000000001 /* SwiftMediaMetadata */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 8EA00009AAAA000000000001 /* XCRemoteSwiftPackageReference "SwiftMediaMetadata" */;
-			productName = SwiftExif;
+			productName = SwiftMediaMetadata;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

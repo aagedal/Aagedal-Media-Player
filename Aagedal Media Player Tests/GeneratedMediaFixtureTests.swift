@@ -86,6 +86,34 @@ final class GeneratedMediaFixtureTests: XCTestCase {
     }
 
     @MainActor
+    func testBundledFFmpegStreamsMultichannelPCM() async throws {
+        let url = try fixtureDirectory().appending(path: "multichannel-5.1.m4a")
+        let accumulator = StreamingWaveformAccumulator(
+            width: 100,
+            channelCount: 6,
+            expectedFrameCount: 1_000
+        )
+
+        try await FFmpegService.runStreamingOutput(arguments: [
+            "-hide_banner", "-loglevel", "error",
+            "-i", url.path,
+            "-vn", "-map", "0:a:0",
+            "-ar", "1000",
+            "-f", "f32le", "-c:a", "pcm_f32le",
+            "pipe:1",
+        ]) { data in
+            accumulator.consume(data)
+        }
+
+        let channels = try accumulator.finish()
+        XCTAssertEqual(channels.count, 6)
+        for channel in channels {
+            XCTAssertTrue(channel.maxs.contains { $0 > 0 })
+            XCTAssertTrue(channel.mins.contains { $0 < 0 })
+        }
+    }
+
+    @MainActor
     func testSubtitlesChaptersAndLongGOPFixture() async throws {
         let url = try fixtureDirectory().appending(path: "chapters-subtitles-long-gop.mkv")
         let metadata = try await MetadataService.shared.metadata(for: url)

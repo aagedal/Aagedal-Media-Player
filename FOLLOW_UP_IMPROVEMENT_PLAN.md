@@ -11,6 +11,9 @@ original nine phases are complete.
 - [x] Review completed without modifying existing app behavior.
 - [x] First implementation batch passes the expanded 99-test suite and static
   analysis on 2026-09-01.
+- [x] Phase 11 completion passes the expanded 106-test suite, real bundled
+  ffmpeg multichannel decoding, release preflight, and static analysis on
+  2026-09-01.
 
 ## Phase 10 — Playback and preload correctness
 
@@ -32,17 +35,20 @@ initial media load beyond the preload deadline.
 
 ## Phase 11 — Audio waveform lifecycle and performance
 
-Status: In progress.
+Status: Completed on 2026-09-01. Replacement and cancellation behavior is
+covered end to end, PCM reduction is duration-bounded, and the reproducible
+8-channel 1/8/24-hour baseline is documented in
+`docs/AUDIO_WAVEFORM_PERFORMANCE.md`.
 
 - [x] Add generation identities so cancelled waveform tasks cannot publish
   stale images, errors, or loading state.
 - [x] Move cached waveform image rerendering off the main actor.
 - [x] Add unit coverage for generation invalidation and synchronous cancellation
   state cleanup.
-- [ ] Add end-to-end tests for replacement and stale image completion behavior.
-- [ ] Replace whole-file PCM loading with bounded streaming aggregation for
+- [x] Add end-to-end tests for replacement and stale image completion behavior.
+- [x] Replace whole-file PCM loading with bounded streaming aggregation for
   long recordings.
-- [ ] Profile multichannel files at 1, 8, and 24 hours.
+- [x] Profile multichannel files at 1, 8, and 24 hours.
 
 Acceptance: replacing or closing a waveform never corrupts current UI state,
 appearance adjustments remain responsive, and memory use is bounded by output

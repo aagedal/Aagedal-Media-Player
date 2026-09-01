@@ -210,6 +210,22 @@ def validate_ffmpeg(validation: Validation) -> None:
     if result.returncode == 0:
         validation.equal(result.stdout.strip(), "arm64", "bundled ffmpeg architecture")
 
+    capability_commands = {
+        "decoder": ("-decoders", ("aac", "flac", "pcm_f32le")),
+        "encoder": ("-encoders", ("pcm_f32le",)),
+        "muxer": ("-muxers", ("f32le", "null")),
+        "filter": ("-filters", ("ebur128",)),
+    }
+    for capability, (option, required_names) in capability_commands.items():
+        result = command(str(FFMPEG), "-hide_banner", option)
+        validation.equal(result.returncode, 0, f"ffmpeg {capability} listing exit status")
+        for name in required_names:
+            validation.require(
+                re.search(rf"(?m)^\s*[A-Z.]+\s+{re.escape(name)}(?:\s|$)", result.stdout)
+                is not None,
+                f"bundled ffmpeg lacks required {capability} {name}",
+            )
+
 
 def validate_scheme(validation: Validation) -> None:
     try:

@@ -35,6 +35,35 @@ enum FFmpegService {
         try await run(arguments: arguments, duration: nil, onProgress: nil)
     }
 
+    /// Run ffmpeg while consuming its standard output incrementally. The output
+    /// is not retained by the subprocess service, keeping memory bounded for
+    /// binary streams such as decoded PCM.
+    static func runStreamingOutput(
+        arguments: [String],
+        onStandardOutputData: @escaping @Sendable (Data) -> Void
+    ) async throws {
+        guard let path = ffmpegPath else {
+            throw FFmpegError.ffmpegMissing
+        }
+
+        let result: SubprocessResult
+        do {
+            result = try await SubprocessService.run(
+                executableURL: URL(fileURLWithPath: path),
+                arguments: arguments,
+                standardOutputLimit: 0,
+                onStandardOutputData: onStandardOutputData
+            )
+        } catch is CancellationError {
+            throw FFmpegError.cancelled
+        }
+
+        guard result.terminationStatus == 0 else {
+            let message = String(data: result.standardError, encoding: .utf8) ?? "Unknown ffmpeg error"
+            throw FFmpegError.processFailed(message.trimmingCharacters(in: .whitespacesAndNewlines))
+        }
+    }
+
     /// Run ffmpeg with progress reporting and optional cancellation.
     /// When `duration` is provided, `-progress pipe:1` is injected and `onProgress` is called
     /// with a fraction 0...1 as ffmpeg writes progress updates to stdout.

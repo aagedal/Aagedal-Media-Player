@@ -74,7 +74,9 @@ enum SubprocessService {
         executableURL: URL,
         arguments: [String],
         outputLimit: Int = 128 * 1024,
+        standardOutputLimit: Int? = nil,
         handle suppliedHandle: SubprocessHandle? = nil,
+        onStandardOutputData: (@Sendable (Data) -> Void)? = nil,
         onStandardOutputLine: (@Sendable (String) -> Void)? = nil
     ) async throws -> SubprocessResult {
         let handle = suppliedHandle ?? SubprocessHandle()
@@ -88,7 +90,7 @@ enum SubprocessService {
 
                 let stdoutPipe = Pipe()
                 let stderrPipe = Pipe()
-                let stdoutCollector = BoundedDataCollector(limit: outputLimit)
+                let stdoutCollector = BoundedDataCollector(limit: standardOutputLimit ?? outputLimit)
                 let stderrCollector = BoundedDataCollector(limit: outputLimit)
                 let stdoutLines = LineBuffer(
                     onLine: onStandardOutputLine,
@@ -99,15 +101,20 @@ enum SubprocessService {
                 process.standardError = stderrPipe
 
                 stdoutPipe.fileHandleForReading.readabilityHandler = { fileHandle in
-                    let data = fileHandle.availableData
-                    guard !data.isEmpty else { return }
-                    stdoutCollector.append(data)
-                    stdoutLines.append(data)
+                    autoreleasepool {
+                        let data = fileHandle.availableData
+                        guard !data.isEmpty else { return }
+                        onStandardOutputData?(data)
+                        stdoutCollector.append(data)
+                        stdoutLines.append(data)
+                    }
                 }
                 stderrPipe.fileHandleForReading.readabilityHandler = { fileHandle in
-                    let data = fileHandle.availableData
-                    guard !data.isEmpty else { return }
-                    stderrCollector.append(data)
+                    autoreleasepool {
+                        let data = fileHandle.availableData
+                        guard !data.isEmpty else { return }
+                        stderrCollector.append(data)
+                    }
                 }
 
                 process.terminationHandler = { terminatedProcess in
@@ -118,6 +125,7 @@ enum SubprocessService {
 
                     let stdoutTail = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
                     if !stdoutTail.isEmpty {
+                        onStandardOutputData?(stdoutTail)
                         stdoutCollector.append(stdoutTail)
                         stdoutLines.append(stdoutTail)
                     }

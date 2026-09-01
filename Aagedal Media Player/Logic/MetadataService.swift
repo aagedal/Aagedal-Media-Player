@@ -2,12 +2,12 @@
 // Copyright © 2026 Truls Aagedal
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// Metadata extraction service using SwiftMediaMetadata's SwiftExif module.
+// Metadata extraction service using SwiftMediaMetadata.
 
 import AVFoundation
 import Foundation
 import OSLog
-import SwiftExif
+import SwiftMediaMetadata
 
 enum MetadataError: Error {
     case readFailed(String)
