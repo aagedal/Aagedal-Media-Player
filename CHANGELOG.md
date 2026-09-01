@@ -24,6 +24,7 @@ All notable changes to Aagedal Media Player.
 
 ### Fixed
 - Prevented superseded scope frames and media-operation tasks from publishing stale results, and stopped screenshots or exports from surviving their owning player window.
+- Kept sorted AVFoundation audio-track labels and backend selections aligned when display order differs from source stream order.
 - Forwarded backend preparation, load, and end-file errors into actionable UI states.
 - Kept playback controls and their keyboard focus rings visible in narrow player windows.
 - Bounded long-recording waveform memory by streaming PCM directly into fixed-size accumulators.

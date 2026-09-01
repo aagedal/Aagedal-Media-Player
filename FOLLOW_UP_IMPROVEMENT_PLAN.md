@@ -18,6 +18,8 @@ original nine phases are complete.
   on 2026-09-01.
 - [x] Phase 13 completion passes the expanded 115-test suite, 61-check release
   preflight, and static analysis on 2026-09-01.
+- [x] Phase 14 audio-routing completion passes the expanded 118-test suite and
+  static analysis on 2026-09-01.
 
 ## Phase 10 — Playback and preload correctness
 
@@ -93,6 +95,22 @@ were also extracted from the remaining large settings file.
 Acceptance: update UI always reflects the latest attempt truthfully and the
 checker can be fully tested without network access.
 
+## Phase 14 — AVFoundation audio-track routing
+
+Status: Completed on 2026-09-01. AVFoundation audio options now retain their
+preferred display order while carrying the original source index through both
+media-selection and lower-level player-item routing paths.
+
+- [x] Separate audio-track display positions from AVFoundation source indices.
+- [x] Route sorted rows to their matching media-selection options.
+- [x] Use the source index for the lower-level `AVPlayerItemTrack` fallback.
+- [x] Cover reordered, incomplete, and metadata-free routing with pure tests.
+- [x] Pass the full test suite and static analysis.
+
+Acceptance: selecting an AVFoundation audio row activates the track described
+by that row even when the preferred display order differs from file stream
+order.
+
 ## Delivery order
 
 1. Phase 10 correctness fixes and regression tests.
@@ -100,3 +118,4 @@ checker can be fully tested without network access.
 3. Phase 11 bounded PCM aggregation and profiling.
 4. Phase 12 operation ownership.
 5. Phase 13 update-state improvements and incremental cleanup.
+6. Phase 14 AVFoundation audio-track routing correctness.

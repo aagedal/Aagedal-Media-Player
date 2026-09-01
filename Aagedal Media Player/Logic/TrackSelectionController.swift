@@ -37,6 +37,16 @@ final class TrackSelectionController: ObservableObject {
         let title: String
     }
 
+    /// Connects a display-order row to the corresponding AVFoundation source
+    /// track and media-selection option. Audio rows may be sorted independently
+    /// of the file's stream order, so the display position is not itself a
+    /// safe backend index.
+    nonisolated struct AVAudioTrackRoute: Equatable {
+        let position: Int
+        let streamIndex: Int
+        let mediaOptionIndex: Int?
+    }
+
     @Published private(set) var audioTrackOptions: [AudioTrackOption] = []
     @Published private(set) var subtitleTrackOptions: [SubtitleTrackOption] = []
     @Published private(set) var chapterOptions: [ChapterOption] = []
@@ -212,13 +222,44 @@ final class TrackSelectionController: ObservableObject {
         }.map(\.offset)
     }
 
+    /// Builds stable AVFoundation routes while retaining the preferred display
+    /// order. Media-selection options and `AVPlayerItemTrack` audio tracks use
+    /// source order, not the reordered row position shown in the UI.
+    nonisolated static func avAudioTrackRoutes(
+        metadataStreamCount: Int,
+        orderedStreamIndices: [Int],
+        mediaOptionCount: Int
+    ) -> [AVAudioTrackRoute] {
+        let safeMetadataCount = max(metadataStreamCount, 0)
+        let safeMediaOptionCount = max(mediaOptionCount, 0)
+        let metadataIndices = Array(0..<safeMetadataCount)
+
+        var seen = Set<Int>()
+        let validOrder = orderedStreamIndices.filter { index in
+            metadataIndices.contains(index) && seen.insert(index).inserted
+        }
+        let effectiveOrder = validOrder + metadataIndices.filter { !seen.contains($0) }
+        let routeCount = max(effectiveOrder.count, safeMediaOptionCount)
+
+        return (0..<routeCount).map { position in
+            let streamIndex = effectiveOrder.indices.contains(position)
+                ? effectiveOrder[position]
+                : position
+            let mediaOptionIndex = streamIndex < safeMediaOptionCount ? streamIndex : nil
+            return AVAudioTrackRoute(
+                position: position,
+                streamIndex: streamIndex,
+                mediaOptionIndex: mediaOptionIndex
+            )
+        }
+    }
+
     private func buildAVAudioTrackOptions(
         metadata: MediaMetadata?,
         orderedIndices: [Int],
         mediaGroup: AVMediaSelectionGroup?
     ) {
         let metadataStreams = metadata?.audioStreams ?? []
-        let effectiveOrder = orderedIndices.isEmpty ? Array(metadataStreams.indices) : orderedIndices
         let mediaOptions = mediaGroup?.options ?? []
 
         guard !metadataStreams.isEmpty || !mediaOptions.isEmpty else {
@@ -226,10 +267,19 @@ final class TrackSelectionController: ObservableObject {
             return
         }
 
-        audioTrackOptions = (0..<max(effectiveOrder.count, mediaOptions.count)).map { position in
-            let streamIndex = effectiveOrder.indices.contains(position) ? effectiveOrder[position] : position
+        let routes = Self.avAudioTrackRoutes(
+            metadataStreamCount: metadataStreams.count,
+            orderedStreamIndices: orderedIndices,
+            mediaOptionCount: mediaOptions.count
+        )
+
+        audioTrackOptions = routes.map { route in
+            let position = route.position
+            let streamIndex = route.streamIndex
             let stream = metadataStreams.indices.contains(streamIndex) ? metadataStreams[streamIndex] : nil
-            let mediaOption = mediaOptions.indices.contains(position) ? mediaOptions[position] : nil
+            let mediaOption = route.mediaOptionIndex.flatMap { optionIndex in
+                mediaOptions.indices.contains(optionIndex) ? mediaOptions[optionIndex] : nil
+            }
             let title = stream.map { formattedAudioTrackTitle(for: $0, position: position) }
                 ?? mediaOption?.displayName
                 ?? "Audio Track \(position + 1)"
@@ -249,7 +299,7 @@ final class TrackSelectionController: ObservableObject {
                 id: streamIndex,
                 position: position,
                 streamIndex: streamIndex,
-                mediaOptionIndex: mediaOptions.indices.contains(position) ? position : nil,
+                mediaOptionIndex: route.mediaOptionIndex,
                 title: title,
                 subtitle: details.isEmpty ? nil : details.joined(separator: " \u{2022} ")
             )
@@ -298,7 +348,7 @@ final class TrackSelectionController: ObservableObject {
 
         let audioTracks = playerItem.tracks.filter { $0.assetTrack?.mediaType == .audio }
         for (index, track) in audioTracks.enumerated() {
-            let shouldEnable = index == selectedAudioTrackOrderIndex
+            let shouldEnable = index == selectedOption.streamIndex
             if track.isEnabled != shouldEnable { track.isEnabled = shouldEnable }
         }
     }

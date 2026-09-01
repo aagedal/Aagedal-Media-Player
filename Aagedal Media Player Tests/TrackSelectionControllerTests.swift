@@ -111,6 +111,40 @@ final class TrackSelectionControllerTests: XCTestCase {
         XCTAssertEqual(TrackSelectionController.orderAudioStreams(from: metadata), [1, 2, 0, 3])
     }
 
+    func testAVAudioRoutesKeepDisplayOrderSeparateFromSourceOrder() {
+        let routes = TrackSelectionController.avAudioTrackRoutes(
+            metadataStreamCount: 4,
+            orderedStreamIndices: [1, 2, 0, 3],
+            mediaOptionCount: 4
+        )
+
+        XCTAssertEqual(routes.map(\.position), [0, 1, 2, 3])
+        XCTAssertEqual(routes.map(\.streamIndex), [1, 2, 0, 3])
+        XCTAssertEqual(routes.map(\.mediaOptionIndex), [1, 2, 0, 3])
+    }
+
+    func testAVAudioRoutesFillIncompleteOrderAndHandleMissingMediaOptions() {
+        let routes = TrackSelectionController.avAudioTrackRoutes(
+            metadataStreamCount: 4,
+            orderedStreamIndices: [2, 2, -1, 8],
+            mediaOptionCount: 2
+        )
+
+        XCTAssertEqual(routes.map(\.streamIndex), [2, 0, 1, 3])
+        XCTAssertEqual(routes.map(\.mediaOptionIndex), [nil, 0, 1, nil])
+    }
+
+    func testAVAudioRoutesSupportMediaOptionsWithoutMetadata() {
+        let routes = TrackSelectionController.avAudioTrackRoutes(
+            metadataStreamCount: 0,
+            orderedStreamIndices: [],
+            mediaOptionCount: 2
+        )
+
+        XCTAssertEqual(routes.map(\.streamIndex), [0, 1])
+        XCTAssertEqual(routes.map(\.mediaOptionIndex), [0, 1])
+    }
+
     private func audioStream(index: Int, channels: Int, isDefault: Bool) -> MediaMetadata.AudioStream {
         MediaMetadata.AudioStream(
             index: index,
