@@ -1079,37 +1079,49 @@ private struct FileAndWindowHandlers: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .onReceive(NotificationCenter.default.publisher(for: .openFile)) { _ in
+            .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
+                guard let command = notification.appCommand,
+                      case .openFilePicker = command else { return }
                 guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
                 openFilePanel()
             }
-            .onReceive(NotificationCenter.default.publisher(for: .openFileURL)) { notification in
-                if let targetWindow = notification.userInfo?["targetWindow"] as? NSWindow {
+            .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
+                guard let command = notification.appCommand,
+                      case let .openFile(url, targetWindow) = command else { return }
+                if let targetWindow {
                     guard targetWindow === nsWindow else { return }
                 } else {
                     guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
                 }
-                if let url = notification.object as? URL {
-                    openFile(url)
-                }
+                openFile(url)
             }
-            .onReceive(NotificationCenter.default.publisher(for: .toggleInspector)) { _ in
+            .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
+                guard let command = notification.appCommand,
+                      case .toggleInspector = command else { return }
                 guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
                 showInspector.toggle()
             }
-            .onReceive(NotificationCenter.default.publisher(for: .captureScreenshot)) { _ in
+            .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
+                guard let command = notification.appCommand,
+                      case .captureScreenshot = command else { return }
                 guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
                 Task { await controller.captureScreenshot() }
             }
-            .onReceive(NotificationCenter.default.publisher(for: .exportTrim)) { _ in
+            .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
+                guard let command = notification.appCommand,
+                      case .exportTrim = command else { return }
                 guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
                 Task { await controller.exportTrim() }
             }
-            .onReceive(NotificationCenter.default.publisher(for: .toggleFullscreen)) { _ in
+            .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
+                guard let command = notification.appCommand,
+                      case .toggleFullscreen = command else { return }
                 guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
                 controller.toggleFullscreen()
             }
-            .onReceive(NotificationCenter.default.publisher(for: .toggleScopes)) { _ in
+            .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
+                guard let command = notification.appCommand,
+                      case .toggleScopes = command else { return }
                 guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
                 let isOverlayMode = scopeDisplayMode == ScopeDisplayMode.overlay.rawValue
 
@@ -1153,7 +1165,9 @@ private struct FileAndWindowHandlers: ViewModifier {
                     }
                 }
             }
-            .onReceive(NotificationCenter.default.publisher(for: .toggleAudioWaveform)) { _ in
+            .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
+                guard let command = notification.appCommand,
+                      case .toggleAudioWaveform = command else { return }
                 guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
                 let isOverlayMode = audioWaveformDisplayMode == AudioWaveformDisplayMode.overlay.rawValue
 
@@ -1251,56 +1265,70 @@ private struct PlaybackHandlers: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .onReceive(NotificationCenter.default.publisher(for: .togglePlayback)) { _ in
+            .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
+                guard let command = notification.appCommand,
+                      case .togglePlayback = command else { return }
                 guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
                 controller.togglePlayback()
             }
-            .onReceive(NotificationCenter.default.publisher(for: .toggleMute)) { _ in
+            .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
+                guard let command = notification.appCommand,
+                      case .toggleMute = command else { return }
                 guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
                 controller.toggleMute()
             }
-            .onReceive(NotificationCenter.default.publisher(for: .adjustVolume)) { notification in
-                guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow),
-                      let delta = (notification.object as? NSNumber)?.doubleValue else { return }
+            .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
+                guard let command = notification.appCommand,
+                      case let .adjustVolume(delta) = command,
+                      WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
                 controller.adjustVolume(by: delta)
             }
-            .onReceive(NotificationCenter.default.publisher(for: .reverse)) { _ in
+            .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
+                guard let command = notification.appCommand,
+                      case .reverse = command else { return }
                 guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
                 controller.startReverse()
             }
-            .onReceive(NotificationCenter.default.publisher(for: .fastForward)) { _ in
+            .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
+                guard let command = notification.appCommand,
+                      case .fastForward = command else { return }
                 guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
                 controller.fastForward()
             }
-            .onReceive(NotificationCenter.default.publisher(for: .slowForward)) { _ in
+            .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
+                guard let command = notification.appCommand,
+                      case .slowForward = command else { return }
                 guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
                 controller.slowForward()
             }
-            .onReceive(NotificationCenter.default.publisher(for: .slowReverse)) { _ in
+            .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
+                guard let command = notification.appCommand,
+                      case .slowReverse = command else { return }
                 guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
                 controller.slowReverse()
             }
-            .onReceive(NotificationCenter.default.publisher(for: .seekByFrames)) { notification in
-                guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
-                if let count = (notification.object as? NSNumber)?.intValue {
-                    controller.seekByFrames(count)
-                }
+            .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
+                guard let command = notification.appCommand,
+                      case let .seekByFrames(count) = command,
+                      WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
+                controller.seekByFrames(count)
             }
-            .onReceive(NotificationCenter.default.publisher(for: .seekBySeconds)) { notification in
-                guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
-                if let seconds = (notification.object as? NSNumber)?.doubleValue {
-                    controller.seek(by: seconds)
-                }
+            .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
+                guard let command = notification.appCommand,
+                      case let .seekBySeconds(seconds) = command,
+                      WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
+                controller.seek(by: seconds)
             }
-            .onReceive(NotificationCenter.default.publisher(for: .seekToEdge)) { notification in
-                guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
-                if let value = (notification.object as? NSNumber)?.doubleValue {
-                    if value == 0 {
-                        controller.seekTo(0)
-                    } else {
-                        let duration = controller.mediaItem?.durationSeconds ?? 0
-                        controller.seekTo(max(0, duration))
-                    }
+            .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
+                guard let command = notification.appCommand,
+                      case let .seekToEdge(edge) = command,
+                      WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
+                switch edge {
+                case .start:
+                    controller.seekTo(0)
+                case .end:
+                    let duration = controller.mediaItem?.durationSeconds ?? 0
+                    controller.seekTo(max(0, duration))
                 }
             }
     }
@@ -1319,37 +1347,45 @@ private struct TimecodeAndSyncHandlers: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .onReceive(NotificationCenter.default.publisher(for: .cycleTimecodeMode)) { _ in
+            .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
+                guard let command = notification.appCommand,
+                      case .cycleTimecodeMode = command else { return }
                 guard WindowManager.shared.isActiveWindow(nsWindow), !isEditingTimecode else { return }
                 let hasSourceTC = controller.mediaItem.flatMap { TimecodeFormatter.effectiveStartTimecode(for: $0) } != nil
                 timecodeMode.toggle(hasSourceTimecode: hasSourceTC)
             }
             // Sync timecode — active window reads its time and broadcasts
-            .onReceive(NotificationCenter.default.publisher(for: .syncTimecode)) { _ in
+            .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
+                guard let command = notification.appCommand,
+                      case .syncTimecode = command else { return }
                 guard WindowManager.shared.isActiveWindow(nsWindow), isMediaLoaded else { return }
                 let relTime = controller.currentPlaybackTime
-                var userInfo: [String: Double] = ["relTime": relTime]
-                if let item = controller.mediaItem,
-                   let startSeconds = TimecodeFormatter.startTimecodeInSeconds(for: item) {
-                    userInfo["srcTime"] = relTime + startSeconds
+                let startSeconds = controller.mediaItem.flatMap {
+                    TimecodeFormatter.startTimecodeInSeconds(for: $0)
                 }
-                NotificationCenter.default.post(name: .seekToSyncedTime, object: nil, userInfo: userInfo)
+                NotificationCenter.default.post(.seekToSyncedTime(.init(
+                    relativeSeconds: relTime,
+                    sourceSeconds: startSeconds.map { relTime + $0 }
+                )))
             }
             // Sync timecode — non-active windows seek to the broadcast time
-            .onReceive(NotificationCenter.default.publisher(for: .seekToSyncedTime)) { notification in
+            .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
+                guard let command = notification.appCommand,
+                      case let .seekToSyncedTime(time) = command else { return }
                 guard !WindowManager.shared.isActiveWindow(nsWindow), isMediaLoaded else { return }
-                guard let info = notification.userInfo as? [String: Double] else { return }
-                if let srcTime = info["srcTime"],
+                if let srcTime = time.sourceSeconds,
                    let item = controller.mediaItem,
                    let receiverStartSeconds = TimecodeFormatter.startTimecodeInSeconds(for: item) {
                     let seekPosition = srcTime - receiverStartSeconds
                     controller.seekTo(max(0, seekPosition))
-                } else if let relTime = info["relTime"] {
-                    controller.seekTo(relTime)
+                } else {
+                    controller.seekTo(time.relativeSeconds)
                 }
             }
             // Copy timecode — copies the current timecode display to the clipboard
-            .onReceive(NotificationCenter.default.publisher(for: .copyTimecode)) { _ in
+            .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
+                guard let command = notification.appCommand,
+                      case .copyTimecode = command else { return }
                 guard WindowManager.shared.isActiveWindow(nsWindow), isMediaLoaded else { return }
                 guard let item = controller.mediaItem else { return }
                 let tc = TimecodeFormatter.formatTimeForDisplayWithMode(
@@ -1362,7 +1398,9 @@ private struct TimecodeAndSyncHandlers: ViewModifier {
                 NSPasteboard.general.setString(tc, forType: .string)
             }
             // Paste timecode — reads a timecode from clipboard and seeks to it
-            .onReceive(NotificationCenter.default.publisher(for: .pasteTimecode)) { _ in
+            .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
+                guard let command = notification.appCommand,
+                      case .pasteTimecode = command else { return }
                 guard WindowManager.shared.isActiveWindow(nsWindow), isMediaLoaded else { return }
                 guard let item = controller.mediaItem,
                       let clipboardString = NSPasteboard.general.string(forType: .string),
@@ -1372,7 +1410,9 @@ private struct TimecodeAndSyncHandlers: ViewModifier {
                 let duration = max(item.durationSeconds, 0)
                 controller.seekTo(max(0, min(seekTime, duration)))
             }
-            .onReceive(NotificationCenter.default.publisher(for: .reloadPlayer)) { _ in
+            .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
+                guard let command = notification.appCommand,
+                      case .reloadPlayer = command else { return }
                 guard WindowManager.shared.isActiveWindow(nsWindow), isMediaLoaded else { return }
                 let time = controller.currentPlaybackTime
                 controller.preparePlayback(startTime: time, resetAudioSelection: false)

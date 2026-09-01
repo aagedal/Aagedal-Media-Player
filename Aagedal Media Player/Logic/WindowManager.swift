@@ -84,11 +84,7 @@ final class WindowManager {
                 for url in urls {
                     if let emptyWindow = takeFirstEmptyWindow() {
                         emptyWindow.makeKeyAndOrderFront(nil)
-                        NotificationCenter.default.post(
-                            name: .openFileURL,
-                            object: url,
-                            userInfo: ["targetWindow": emptyWindow]
-                        )
+                        NotificationCenter.default.post(.openFile(url, targetWindow: emptyWindow))
                     } else {
                         windowsToAllow += 1
                         pendingFileURLs.append(url)
@@ -104,11 +100,7 @@ final class WindowManager {
             // Single-window mode replaces the current item with the first
             // file, matching the established Finder-open behavior.
             window.makeKeyAndOrderFront(nil)
-            NotificationCenter.default.post(
-                name: .openFileURL,
-                object: urls[0],
-                userInfo: ["targetWindow": window]
-            )
+            NotificationCenter.default.post(.openFile(urls[0], targetWindow: window))
         } else {
             pendingFileURLs = [urls[0]]
         }

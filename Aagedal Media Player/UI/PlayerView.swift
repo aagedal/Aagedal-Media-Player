@@ -241,7 +241,7 @@ struct PlayerView: View {
         // so the timeline slider, AVPlayerView, or any focused button can't
         // swallow the key. Routed through notifications for multi-window sync.
         if characters == " " {
-            NotificationCenter.default.post(name: .togglePlayback, object: nil)
+            NotificationCenter.default.post(.togglePlayback)
             return true
         }
 
@@ -250,21 +250,21 @@ struct PlayerView: View {
         // Routed through notifications for multi-window sync.
         if lower == "j" {
             if modifiers.contains(.option) {
-                NotificationCenter.default.post(name: .slowReverse, object: nil)
+                NotificationCenter.default.post(.slowReverse)
             } else {
-                NotificationCenter.default.post(name: .reverse, object: nil)
+                NotificationCenter.default.post(.reverse)
             }
             return true
         }
         if lower == "k" {
-            NotificationCenter.default.post(name: .togglePlayback, object: nil)
+            NotificationCenter.default.post(.togglePlayback)
             return true
         }
         if lower == "l" {
             if modifiers.contains(.option) {
-                NotificationCenter.default.post(name: .slowForward, object: nil)
+                NotificationCenter.default.post(.slowForward)
             } else {
-                NotificationCenter.default.post(name: .fastForward, object: nil)
+                NotificationCenter.default.post(.fastForward)
             }
             return true
         }
@@ -289,37 +289,37 @@ struct PlayerView: View {
             case .leftArrow:
                 if modifiers.contains(.shift) {
                     if optionHeld { controller.seek(by: -10) }
-                    else { NotificationCenter.default.post(name: .seekBySeconds, object: NSNumber(value: -10.0)) }
+                    else { NotificationCenter.default.post(.seekBySeconds(-10)) }
                 } else {
                     if optionHeld { controller.seekByFrames(-1) }
-                    else { NotificationCenter.default.post(name: .seekByFrames, object: NSNumber(value: -1)) }
+                    else { NotificationCenter.default.post(.seekByFrames(-1)) }
                 }
                 return true
             case .rightArrow:
                 if modifiers.contains(.shift) {
                     if optionHeld { controller.seek(by: 10) }
-                    else { NotificationCenter.default.post(name: .seekBySeconds, object: NSNumber(value: 10.0)) }
+                    else { NotificationCenter.default.post(.seekBySeconds(10)) }
                 } else {
                     if optionHeld { controller.seekByFrames(1) }
-                    else { NotificationCenter.default.post(name: .seekByFrames, object: NSNumber(value: 1)) }
+                    else { NotificationCenter.default.post(.seekByFrames(1)) }
                 }
                 return true
             case .upArrow:
                 if modifiers.contains(.command) {
                     if optionHeld { controller.seekTo(0) }
-                    else { NotificationCenter.default.post(name: .seekToEdge, object: NSNumber(value: 0.0)) }
+                    else { NotificationCenter.default.post(.seekToEdge(.start)) }
                 } else {
                     if optionHeld { controller.seekByFrames(-10) }
-                    else { NotificationCenter.default.post(name: .seekByFrames, object: NSNumber(value: -10)) }
+                    else { NotificationCenter.default.post(.seekByFrames(-10)) }
                 }
                 return true
             case .downArrow:
                 if modifiers.contains(.command) {
                     if optionHeld { controller.seekTo(max(0, controller.mediaItem?.durationSeconds ?? 0)) }
-                    else { NotificationCenter.default.post(name: .seekToEdge, object: NSNumber(value: Double.infinity)) }
+                    else { NotificationCenter.default.post(.seekToEdge(.end)) }
                 } else {
                     if optionHeld { controller.seekByFrames(10) }
-                    else { NotificationCenter.default.post(name: .seekByFrames, object: NSNumber(value: 10)) }
+                    else { NotificationCenter.default.post(.seekByFrames(10)) }
                 }
                 return true
             default:

@@ -54,7 +54,7 @@ struct Aagedal_Media_PlayerApp: App {
                 }
 
                 Button("Open\u{2026}") {
-                    NotificationCenter.default.post(name: .openFile, object: nil)
+                    NotificationCenter.default.post(.openFilePicker)
                 }
                 .keyboardShortcut("o")
 
@@ -69,26 +69,26 @@ struct Aagedal_Media_PlayerApp: App {
             }
             CommandGroup(replacing: .saveItem) {
                 Button("Save Screenshot") {
-                    NotificationCenter.default.post(name: .captureScreenshot, object: nil)
+                    NotificationCenter.default.post(.captureScreenshot)
                 }
                 .keyboardShortcut("s")
                 .disabled(!mediaLoaded)
 
                 Button("Export Trim\u{2026}") {
-                    NotificationCenter.default.post(name: .exportTrim, object: nil)
+                    NotificationCenter.default.post(.exportTrim)
                 }
                 .keyboardShortcut("e")
                 .disabled(!mediaLoaded)
             }
             CommandGroup(after: .sidebar) {
                 Button("Toggle Inspector") {
-                    NotificationCenter.default.post(name: .toggleInspector, object: nil)
+                    NotificationCenter.default.post(.toggleInspector)
                 }
                 .keyboardShortcut("i")
                 .disabled(!mediaLoaded)
 
                 Button("Cycle Timecode Display") {
-                    NotificationCenter.default.post(name: .cycleTimecodeMode, object: nil)
+                    NotificationCenter.default.post(.cycleTimecodeMode)
                 }
                 .keyboardShortcut("t", modifiers: [])
                 .disabled(!mediaLoaded)
@@ -96,44 +96,44 @@ struct Aagedal_Media_PlayerApp: App {
                 Divider()
 
                 Button("Video Scopes") {
-                    NotificationCenter.default.post(name: .toggleScopes, object: nil)
+                    NotificationCenter.default.post(.toggleScopes)
                 }
                 .keyboardShortcut("w", modifiers: [.command, .shift])
                 .disabled(!mediaLoaded)
 
                 Button("Toggle Parade") {
-                    NotificationCenter.default.post(name: .toggleScopeParade, object: nil)
+                    NotificationCenter.default.post(.toggleScopeParade)
                 }
                 .keyboardShortcut("p", modifiers: [.command, .shift])
                 .disabled(!mediaLoaded)
 
                 Button("Audio Waveform") {
-                    NotificationCenter.default.post(name: .toggleAudioWaveform, object: nil)
+                    NotificationCenter.default.post(.toggleAudioWaveform)
                 }
                 .keyboardShortcut("a", modifiers: [.command, .shift])
                 .disabled(!mediaLoaded)
             }
             CommandMenu("Playback") {
                 Button("Play / Pause") {
-                    NotificationCenter.default.post(name: .togglePlayback, object: nil)
+                    NotificationCenter.default.post(.togglePlayback)
                 }
                 .keyboardShortcut(.space, modifiers: [])
                 .disabled(!mediaLoaded)
 
                 Button("Mute / Unmute") {
-                    NotificationCenter.default.post(name: .toggleMute, object: nil)
+                    NotificationCenter.default.post(.toggleMute)
                 }
                 .keyboardShortcut("m", modifiers: [])
                 .disabled(!mediaLoaded)
 
                 Button("Increase Volume") {
-                    NotificationCenter.default.post(name: .adjustVolume, object: NSNumber(value: 5.0))
+                    NotificationCenter.default.post(.adjustVolume(by: 5))
                 }
                 .keyboardShortcut(.upArrow, modifiers: [.control])
                 .disabled(!mediaLoaded)
 
                 Button("Decrease Volume") {
-                    NotificationCenter.default.post(name: .adjustVolume, object: NSNumber(value: -5.0))
+                    NotificationCenter.default.post(.adjustVolume(by: -5))
                 }
                 .keyboardShortcut(.downArrow, modifiers: [.control])
                 .disabled(!mediaLoaded)
@@ -141,13 +141,13 @@ struct Aagedal_Media_PlayerApp: App {
                 Divider()
 
                 Button("Reverse") {
-                    NotificationCenter.default.post(name: .reverse, object: nil)
+                    NotificationCenter.default.post(.reverse)
                 }
                 .keyboardShortcut("j", modifiers: [])
                 .disabled(!mediaLoaded)
 
                 Button("Fast Forward") {
-                    NotificationCenter.default.post(name: .fastForward, object: nil)
+                    NotificationCenter.default.post(.fastForward)
                 }
                 .keyboardShortcut("l", modifiers: [])
                 .disabled(!mediaLoaded)
@@ -155,13 +155,13 @@ struct Aagedal_Media_PlayerApp: App {
                 Divider()
 
                 Button("Slow Forward") {
-                    NotificationCenter.default.post(name: .slowForward, object: nil)
+                    NotificationCenter.default.post(.slowForward)
                 }
                 .keyboardShortcut("l", modifiers: [.option])
                 .disabled(!mediaLoaded)
 
                 Button("Slow Reverse") {
-                    NotificationCenter.default.post(name: .slowReverse, object: nil)
+                    NotificationCenter.default.post(.slowReverse)
                 }
                 .keyboardShortcut("j", modifiers: [.option])
                 .disabled(!mediaLoaded)
@@ -169,7 +169,7 @@ struct Aagedal_Media_PlayerApp: App {
                 Divider()
 
                 Button("Toggle Fullscreen") {
-                    NotificationCenter.default.post(name: .toggleFullscreen, object: nil)
+                    NotificationCenter.default.post(.toggleFullscreen)
                 }
                 .keyboardShortcut("f")
                 .disabled(!mediaLoaded)
@@ -177,20 +177,20 @@ struct Aagedal_Media_PlayerApp: App {
                 Divider()
 
                 Button("Sync Timecode") {
-                    NotificationCenter.default.post(name: .syncTimecode, object: nil)
+                    NotificationCenter.default.post(.syncTimecode)
                 }
                 .keyboardShortcut("s", modifiers: [.command, .shift])
 
                 Divider()
 
                 Button("Copy Timecode") {
-                    NotificationCenter.default.post(name: .copyTimecode, object: nil)
+                    NotificationCenter.default.post(.copyTimecode)
                 }
                 .keyboardShortcut("c", modifiers: [.command, .shift])
                 .disabled(!mediaLoaded)
 
                 Button("Paste Timecode") {
-                    NotificationCenter.default.post(name: .pasteTimecode, object: nil)
+                    NotificationCenter.default.post(.pasteTimecode)
                 }
                 .keyboardShortcut("v", modifiers: [.command, .shift])
                 .disabled(!mediaLoaded)
@@ -198,7 +198,7 @@ struct Aagedal_Media_PlayerApp: App {
                 Divider()
 
                 Button("Reload Player") {
-                    NotificationCenter.default.post(name: .reloadPlayer, object: nil)
+                    NotificationCenter.default.post(.reloadPlayer)
                 }
                 .keyboardShortcut("r", modifiers: [.command, .shift])
                 .disabled(!mediaLoaded)
@@ -221,7 +221,7 @@ struct RecentDocumentsMenu: View {
         Menu("Open Recent") {
             ForEach(recentURLs, id: \.self) { url in
                 Button(url.lastPathComponent) {
-                    NotificationCenter.default.post(name: .openFileURL, object: url)
+                    NotificationCenter.default.post(.openFile(url))
                 }
             }
 
@@ -241,7 +241,8 @@ struct RecentDocumentsMenu: View {
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             recentURLs = NSDocumentController.shared.recentDocumentURLs
         }
-        .onReceive(NotificationCenter.default.publisher(for: .openFileURL)) { _ in
+        .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
+            guard case .openFile = notification.appCommand else { return }
             // Refresh after a file is opened
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 recentURLs = NSDocumentController.shared.recentDocumentURLs
@@ -266,34 +267,4 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         true
     }
-}
-
-// MARK: - Notifications
-
-extension Notification.Name {
-    static let openFile = Notification.Name("openFile")
-    static let openFileURL = Notification.Name("openFileURL")
-    static let toggleInspector = Notification.Name("toggleInspector")
-    static let captureScreenshot = Notification.Name("captureScreenshot")
-    static let exportTrim = Notification.Name("exportTrim")
-    static let cycleTimecodeMode = Notification.Name("cycleTimecodeMode")
-    static let togglePlayback = Notification.Name("togglePlayback")
-    static let toggleMute = Notification.Name("toggleMute")
-    static let adjustVolume = Notification.Name("adjustVolume")
-    static let reverse = Notification.Name("reverse")
-    static let fastForward = Notification.Name("fastForward")
-    static let seekByFrames = Notification.Name("seekByFrames")
-    static let seekBySeconds = Notification.Name("seekBySeconds")
-    static let seekToEdge = Notification.Name("seekToEdge")
-    static let toggleFullscreen = Notification.Name("toggleFullscreen")
-    static let syncTimecode = Notification.Name("syncTimecode")
-    static let seekToSyncedTime = Notification.Name("seekToSyncedTime")
-    static let copyTimecode = Notification.Name("copyTimecode")
-    static let pasteTimecode = Notification.Name("pasteTimecode")
-    static let reloadPlayer = Notification.Name("reloadPlayer")
-    static let slowForward = Notification.Name("slowForward")
-    static let slowReverse = Notification.Name("slowReverse")
-    static let toggleScopes = Notification.Name("toggleScopes")
-    static let toggleScopeParade = Notification.Name("toggleScopeParade")
-    static let toggleAudioWaveform = Notification.Name("toggleAudioWaveform")
 }

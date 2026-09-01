@@ -133,7 +133,9 @@ struct ScopeView: View {
             )
         }
         .onDisappear { renderWorker.cancel(clearImages: true) }
-        .onReceive(NotificationCenter.default.publisher(for: .toggleScopeParade)) { _ in
+        .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
+            guard let command = notification.appCommand,
+                  case .toggleScopeParade = command else { return }
             waveformMode = waveformMode == .luma ? .parade : .luma
         }
     }

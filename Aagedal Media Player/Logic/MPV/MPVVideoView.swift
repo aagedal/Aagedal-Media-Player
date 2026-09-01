@@ -242,7 +242,7 @@ final class MPVViewController: NSViewController {
         }
     }
 
-    /// Trigger a Force Reload via the same `.reloadPlayer` notification
+    /// Trigger a Force Reload via the same `.reloadPlayer` command
     /// the menu uses. ContentView's handler calls
     /// `PlayerController.preparePlayback(startTime:resetAudioSelection:)`,
     /// which destroys+recreates the mpv context — the only thing we've
@@ -260,7 +260,7 @@ final class MPVViewController: NSViewController {
     /// matches the user's known-working manual workaround.
     private func requestReloadForSurfaceChange(reason: String) {
         scalingLogger.info("requestReloadForSurfaceChange: \(reason) — posting .reloadPlayer to recreate mpv at current surface size")
-        NotificationCenter.default.post(name: .reloadPlayer, object: nil)
+        NotificationCenter.default.post(.reloadPlayer)
     }
 
     /// Returns true if the drawableSize grew ≥1.5× in either dimension,

@@ -74,7 +74,7 @@ MPV renders through Vulkan via MoltenVK onto a `CAMetalLayer`:
 
 ### Communication Pattern
 
-Menu commands and global shortcuts route through `NotificationCenter` notifications (e.g., `.openFile`, `.togglePlayback`, `.captureScreenshot`), dispatched from `Aagedal_Media_PlayerApp.swift` Commands and handled in `ContentView`.
+Menu commands and global shortcuts route through the typed `AppCommand` enum over one private `NotificationCenter` channel. Commands are dispatched from `Aagedal_Media_PlayerApp.swift` and `PlayerView`, then handled in `ContentView`; this retains synchronous multi-window broadcasts without untyped objects or `userInfo` dictionaries.
 
 ## Code Conventions
 
