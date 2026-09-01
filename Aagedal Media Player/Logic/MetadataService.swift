@@ -2,7 +2,7 @@
 // Copyright © 2026 Truls Aagedal
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// Metadata extraction service using SwiftExif.
+// Metadata extraction service using SwiftMediaMetadata's SwiftExif module.
 
 import AVFoundation
 import Foundation
@@ -35,13 +35,13 @@ actor MetadataService {
         do {
             video = try await readVideoMetadata(from: url)
         } catch {
-            logger.error("SwiftExif read failed for \(url.path): \(error.localizedDescription)")
+            logger.error("SwiftMediaMetadata read failed for \(url.path): \(error.localizedDescription)")
             throw MetadataError.readFailed(error.localizedDescription)
         }
 
         // For QuickTime/MP4-family containers, AVAsset's preferredTransform
         // is the authoritative rotation source — it's what the OS applies
-        // during AVPlayer playback, and SwiftExif's tkhd parsing can disagree
+        // during AVPlayer playback, and SwiftMediaMetadata's tkhd parsing can disagree
         // depending on which atoms a file carries (the `pasp` path writes
         // displayWidth/displayHeight in coded orientation, the tkhd fallback
         // writes them post-rotation). Overriding stream.rotation here lets
@@ -59,7 +59,7 @@ actor MetadataService {
     }
 
     /// Reads the first video track's `preferredTransform` and returns the
-    /// implied rotation in degrees (matching SwiftExif/ffprobe convention:
+    /// implied rotation in degrees (matching SwiftMediaMetadata/ffprobe convention:
     /// `θ = -atan2(b, a)`). Returns nil for non-QuickTime containers,
     /// unreadable assets, or an identity transform.
     private func avAssetRotation(for url: URL) async -> Int? {
@@ -143,7 +143,7 @@ private enum MetadataMapper {
         //   2. PAR-corrected coded dimensions (anamorphic content),
         //   3. coded dimensions as a square-pixel fallback.
         //
-        // SwiftExif populates `displayWidth`/`displayHeight` inconsistently
+        // SwiftMediaMetadata populates `displayWidth`/`displayHeight` inconsistently
         // depending on which atoms a file carries:
         //   - MP4/MOV with `pasp` (most iPhone HEVC clips) populates them from
         //     coded × PAR, in the coded *orientation* — for square-pixel

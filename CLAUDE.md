@@ -32,7 +32,7 @@ The shared scheme includes the `Aagedal Media Player Tests` XCTest target. No Gi
 Swift Package dependencies (all remote, resolved via SPM):
 
 - **MPVKit-GPL** — `https://github.com/aagedal/MPVKit`, branch `main`. Truls's fork of MPVKit. Bundles mpv 0.41.0, FFmpeg n8.1.2, MoltenVK 1.4.2, Libplacebo 7.360.1.
-- **SwiftExif** — `https://github.com/aagedal/SwiftExif`, semver `>= 1.8.0`. Pure-Swift metadata library (Truls's own), replaces the earlier ffprobe shell-out for stream metadata.
+- **SwiftMediaMetadata** — `https://github.com/aagedal/SwiftMediaMetadata`, semver `>= 1.8.0`. Pure-Swift metadata library (currently exposing the `SwiftExif` product/module), replaces the earlier ffprobe shell-out for stream metadata.
 - **Sparkle** — `https://github.com/sparkle-project/Sparkle`, semver `>= 2.9.1`. Auto-update infrastructure.
 
 The app also ships a bundled `ffmpeg` binary at `Aagedal Media Player/Binaries/ffmpeg`, used for screenshot capture and lossless trim export (not for metadata).
@@ -44,7 +44,7 @@ The app also ships a bundled `ffmpeg` binary at `Aagedal Media Player/Binaries/f
 **MPV is the default backend** for every codec the app supports. AVPlayer is reserved for ProRes RAW — MPVKit-GPL can technically decode it but the colors are wrong and performance is significantly worse than VideoToolbox.
 
 - `PlayerController` (`Logic/PlayerController.swift`) is the central `@MainActor ObservableObject` managing both backends. It exposes published state (volume, playback time, speed, trim points, etc.) consumed by all views.
-- **Backend selection** happens in `preparePlayback()`: an async `isProResRAWFile(url:metadata:)` check decides between `setupMPV` and `setupAVPlayer`. The check uses cached SwiftExif metadata as the fast path and falls back to AVAsset's `CMFormatDescription` codec FourCC (`aprn`, `aprh`) when metadata isn't loaded yet.
+- **Backend selection** happens in `preparePlayback()`: an async `isProResRAWFile(url:metadata:)` check decides between `setupMPV` and `setupAVPlayer`. The check uses cached SwiftMediaMetadata results as the fast path and falls back to AVAsset's `CMFormatDescription` codec FourCC (`aprn`, `aprh`) when metadata isn't loaded yet.
 - The `useMPV` boolean on `PlayerController` controls which rendering path `PlayerView` shows.
 - `ContentView.openFile` calls a fast AVAsset preload (`loadQuickDescriptor`) that reads only the moov atom for display dimensions, then seeds `videoAspectRatio` / `videoSourceSize` on the controller via `loadMedia(_:initialAspectRatio:initialSourceSize:)` before `preparePlayback` runs. This ensures the SwiftUI tree and mpv's Vulkan swapchain initialize at the correct size on frame 1.
 
@@ -69,7 +69,7 @@ MPV renders through Vulkan via MoltenVK onto a `CAMetalLayer`:
 
 ### Supporting Services
 
-- `MetadataService` — Async metadata extraction using **SwiftExif** (no ffmpeg shell-out). Actor with NSCache keyed on URL. Applies `AVAsset.preferredTransform` as the authoritative rotation source for QuickTime/MP4-family containers, then walks `MetadataMapper` to produce a `MediaMetadata` with resolved display dimensions, DAR, PAR, HDR side-data, etc.
+- `MetadataService` — Async metadata extraction using **SwiftMediaMetadata** (imported through its current `SwiftExif` module; no ffmpeg shell-out). Actor with NSCache keyed on URL. Applies `AVAsset.preferredTransform` as the authoritative rotation source for QuickTime/MP4-family containers, then walks `MetadataMapper` to produce a `MediaMetadata` with resolved display dimensions, DAR, PAR, HDR side-data, etc.
 - `FFmpegService` — Wraps the bundled ffmpeg binary for screenshots and lossless trim exports (not metadata).
 - `WindowManager` — Singleton managing multi-window state, coordinating synchronized playback across windows.
 

@@ -166,7 +166,7 @@ final class PlayerController: ObservableObject {
     /// the SwiftUI tree around the new MPVViewController (WindowConfigurator
     /// + PlayerView's aspect modifier) has the correct values on the first
     /// render and mpv builds its Vulkan swapchain at the right size from
-    /// frame 1. openFile awaits SwiftExif metadata before calling this so
+    /// frame 1. openFile awaits SwiftMediaMetadata results before calling this so
     /// the metadata path is the normal case; on the 500 ms timeout fallback
     /// the values land later via updateMetadata.
     func loadMedia(_ item: MediaItem) {
@@ -302,7 +302,7 @@ final class PlayerController: ObservableObject {
     }
 
     /// Determine whether `url` points to a ProRes RAW file. Backend selection
-    /// normally has SwiftExif metadata available because openFile awaits it
+    /// normally has SwiftMediaMetadata results available because openFile awaits them
     /// before loadMedia, but the 500 ms timeout fallback path lets the file
     /// open without metadata — for that case we fall back to querying
     /// AVAsset's CMFormatDescription directly for the codec FourCC.
@@ -351,7 +351,7 @@ final class PlayerController: ObservableObject {
 
         // Backend selection has to happen *after* a codec check, because
         // ProRes RAW must go to AVPlayer (VideoToolbox) while everything else
-        // goes to MPV. openFile normally awaits SwiftExif metadata before
+        // goes to MPV. openFile normally awaits SwiftMediaMetadata results before
         // calling loadMedia, so the cached metadata fast path covers the
         // common case; the async helper falls back to a fast AVAsset
         // CMFormatDescription FourCC check for the 500 ms-timeout path.

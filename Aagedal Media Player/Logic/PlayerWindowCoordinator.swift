@@ -330,7 +330,7 @@ final class PlayerWindowCoordinator: ObservableObject {
         item.hasVideoStream = !metadata.videoStreams.isEmpty
     }
 
-    /// The underlying SwiftExif read is not cancellable, so timing out merely
+    /// The underlying SwiftMediaMetadata read is not cancellable, so timing out merely
     /// stops this caller waiting. The actor finishes and caches the result for
     /// the follow-up request in openFile.
     private static func loadMetadataWithTimeout(

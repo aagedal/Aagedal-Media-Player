@@ -30,7 +30,7 @@ struct MPVProperty {
     // doesn't reliably populate `video-out-params/*` or top-level
     // `dwidth`/`dheight` with rotation-applied dims either, so the most
     // reliable path is to read the source dims + rotate and apply the swap
-    // ourselves — mirroring what MetadataService does on the SwiftExif side.
+    // ourselves — mirroring what MetadataService does on the SwiftMediaMetadata side.
     nonisolated static let videoParamsDw = "video-params/dw"
     nonisolated static let videoParamsDh = "video-params/dh"
     nonisolated static let videoParamsRotate = "video-params/rotate"

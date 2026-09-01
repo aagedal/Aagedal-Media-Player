@@ -1,5 +1,5 @@
 {
-  "originHash" : "ed3845c9b32bce553e6f56520be5cebd3b73ff656988da9bc28519558f615f9d",
+  "originHash" : "f9467a207f6ac1cf34f10977803b889804e97467907bf95a9ed2296f5e448082",
   "pins" : [
     {
       "identity" : "mpvkit",
@@ -20,9 +20,9 @@
       }
     },
     {
-      "identity" : "swiftexif",
+      "identity" : "swiftmediametadata",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/aagedal/SwiftExif",
+      "location" : "https://github.com/aagedal/SwiftMediaMetadata",
       "state" : {
         "revision" : "47249c72b613ebab8e4514f4adf05bb8000a1908",
         "version" : "1.9.10"

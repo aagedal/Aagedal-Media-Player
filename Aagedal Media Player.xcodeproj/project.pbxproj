@@ -174,7 +174,7 @@
 			packageReferences = (
 				8EA00003AAAA000000000001 /* XCRemoteSwiftPackageReference "MPVKit" */,
 				8EA00006AAAA000000000001 /* XCRemoteSwiftPackageReference "Sparkle" */,
-				8EA00009AAAA000000000001 /* XCRemoteSwiftPackageReference "SwiftExif" */,
+				8EA00009AAAA000000000001 /* XCRemoteSwiftPackageReference "SwiftMediaMetadata" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 8EB2F2842F49166000B196AD /* Products */;
@@ -506,9 +506,9 @@
 				minimumVersion = 2.9.1;
 			};
 		};
-		8EA00009AAAA000000000001 /* XCRemoteSwiftPackageReference "SwiftExif" */ = {
+		8EA00009AAAA000000000001 /* XCRemoteSwiftPackageReference "SwiftMediaMetadata" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/aagedal/SwiftExif";
+			repositoryURL = "https://github.com/aagedal/SwiftMediaMetadata";
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 1.8.0;
@@ -529,7 +529,7 @@
 		};
 		8EA00008AAAA000000000001 /* SwiftExif */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 8EA00009AAAA000000000001 /* XCRemoteSwiftPackageReference "SwiftExif" */;
+			package = 8EA00009AAAA000000000001 /* XCRemoteSwiftPackageReference "SwiftMediaMetadata" */;
 			productName = SwiftExif;
 		};
 /* End XCSwiftPackageProductDependency section */

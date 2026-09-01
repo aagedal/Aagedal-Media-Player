@@ -15,6 +15,7 @@ All notable changes to Aagedal Media Player.
 
 ### Changed
 - Split playback backends, track selection, media operations, window opening, overlays, settings, and command routing into focused components.
+- Follow the SwiftExif repository rename to SwiftMediaMetadata while retaining its compatible `SwiftExif` module.
 - Keep Main Thread Checker and Thread Performance Checker enabled while retaining the required MoltenVK Metal API Validation exception.
 - Document and validate the intentional Apple-Silicon-only release architecture and security entitlements.
 
