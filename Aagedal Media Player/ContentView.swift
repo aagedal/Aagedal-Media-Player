@@ -104,25 +104,11 @@ struct ContentView: View {
 
             // Layer 2: export/screenshot feedback (fades with overlay controls)
             Group {
-                if controller.isSavingScreenshot || controller.screenshotDone || controller.screenshotError != nil {
-                    if let error = controller.screenshotError {
-                        errorOverlay(error) { controller.screenshotError = nil }
-                    } else if controller.isSavingScreenshot {
-                        exportOverlay(statusText: "Saving\u{2026}", showSpinner: true)
-                    } else {
-                        exportOverlay(
-                            statusIcon: "checkmark.circle.fill",
-                            iconColor: .green,
-                            statusText: "Screenshot saved.",
-                            completedURL: controller.lastScreenshotURL
-                        )
-                    }
+                if controller.screenshotState.isVisible {
+                    screenshotOverlay
                 }
-                if controller.isExportingTrim || controller.trimExportDone || controller.trimExportCancelling || controller.trimExportCancelled || controller.trimExportError != nil {
+                if controller.trimExportState.isVisible {
                     trimExportOverlay
-                }
-                if let warning = controller.trimExportWarning {
-                    warningOverlay(warning)
                 }
             }
             .opacity(isMediaLoaded ? (showOverlay ? 1 : 0) : 1)
@@ -232,20 +218,27 @@ struct ContentView: View {
         .onDrop(of: [.fileURL], isTargeted: $isDropTargeted) { providers in
             handleDrop(providers)
         }
-        .onChange(of: controller.screenshotDone) { _, done in
-            if done { announce("Screenshot saved.") }
+        .onChange(of: controller.screenshotState) { _, state in
+            switch state {
+            case .succeeded:
+                announce("Screenshot saved.")
+            case .failed(let message):
+                announce(message)
+            case .idle, .saving:
+                break
+            }
         }
-        .onChange(of: controller.screenshotError) { _, error in
-            if let error { announce(error) }
-        }
-        .onChange(of: controller.trimExportDone) { _, done in
-            if done { announce("Trimmed file saved.") }
-        }
-        .onChange(of: controller.trimExportCancelled) { _, cancelled in
-            if cancelled { announce("Export cancelled.") }
-        }
-        .onChange(of: controller.trimExportError) { _, error in
-            if let error { announce(error) }
+        .onChange(of: controller.trimExportState) { _, state in
+            switch state {
+            case .succeeded:
+                announce("Trimmed file saved.")
+            case .cancelled:
+                announce("Export cancelled.")
+            case .failed(let message):
+                announce(message)
+            case .idle, .warning, .preparing, .exporting, .cancelling:
+                break
+            }
         }
         .onAppear {
             installMouseMoveMonitor()
@@ -390,34 +383,56 @@ struct ContentView: View {
     // MARK: - Export Overlay
 
     @ViewBuilder
+    private var screenshotOverlay: some View {
+        switch controller.screenshotState {
+        case .idle:
+            EmptyView()
+        case .saving:
+            exportOverlay(statusText: "Saving\u{2026}", showSpinner: true)
+        case .succeeded(let url):
+            exportOverlay(
+                statusIcon: "checkmark.circle.fill",
+                iconColor: .green,
+                statusText: "Screenshot saved.",
+                completedURL: url
+            )
+        case .failed(let message):
+            errorOverlay(message) { controller.dismissScreenshotFeedback() }
+        }
+    }
+
+    @ViewBuilder
     private var trimExportOverlay: some View {
-        if let error = controller.trimExportError {
-            errorOverlay(error) { controller.trimExportError = nil }
-        } else if controller.trimExportCancelling {
+        switch controller.trimExportState {
+        case .idle:
+            EmptyView()
+        case .warning(let message):
+            warningOverlay(message)
+        case .preparing:
+            exportOverlay(
+                statusText: "Preparing export\u{2026}",
+                showSpinner: true,
+                onCancel: { controller.cancelExport() }
+            )
+        case .exporting(let progress):
+            exportOverlay(
+                statusText: "Exporting \(Int(progress * 100))%",
+                progress: progress,
+                onCancel: { controller.cancelExport() }
+            )
+        case .cancelling:
             exportOverlay(statusIcon: nil, statusText: "Cancelling\u{2026}", showSpinner: true)
-        } else if controller.trimExportCancelled {
+        case .cancelled:
             exportOverlay(statusIcon: "xmark.circle.fill", iconColor: .orange, statusText: "Export cancelled.")
-        } else if controller.isExportingTrim {
-            if let progress = controller.trimExportProgress {
-                exportOverlay(
-                    statusText: "Exporting \(Int(progress * 100))%",
-                    progress: progress,
-                    onCancel: { controller.cancelExport() }
-                )
-            } else {
-                exportOverlay(
-                    statusText: "Preparing export\u{2026}",
-                    showSpinner: true,
-                    onCancel: { controller.cancelExport() }
-                )
-            }
-        } else if controller.trimExportDone {
+        case .succeeded(let url):
             exportOverlay(
                 statusIcon: "checkmark.circle.fill",
                 iconColor: .green,
                 statusText: "Trimmed file saved.",
-                completedURL: controller.lastTrimExportURL
+                completedURL: url
             )
+        case .failed(let message):
+            errorOverlay(message) { controller.dismissTrimExportFeedback() }
         }
     }
 

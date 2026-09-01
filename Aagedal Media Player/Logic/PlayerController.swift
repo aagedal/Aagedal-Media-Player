@@ -89,22 +89,9 @@ final class PlayerController: ObservableObject {
     @Published var trimIn: Double?
     @Published var trimOut: Double?
 
-    // Screenshot feedback
-    @Published var lastScreenshotURL: URL?
-    @Published var isSavingScreenshot = false
-    @Published var screenshotDone = false
-    @Published var screenshotError: String?
-
-    // Trim export feedback
-    @Published var lastTrimExportURL: URL?
-    @Published var isExportingTrim = false
-    @Published var trimExportDone = false
-    @Published var trimExportCancelling = false
-    @Published var trimExportCancelled = false
-    @Published var trimExportWarning: String?
-    @Published var trimExportError: String?
-    /// Export progress fraction 0...1 for re-encoding formats, nil when preparing.
-    @Published var trimExportProgress: Double?
+    // Media operation feedback
+    @Published private(set) var screenshotState: ScreenshotOperationState = .idle
+    @Published private(set) var trimExportState: TrimExportOperationState = .idle
     private var exportHandle: SubprocessHandle?
 
     // Reverse playback
@@ -1532,9 +1519,10 @@ final class PlayerController: ObservableObject {
     // MARK: - Screenshot
 
     func captureScreenshot() async {
+        guard !screenshotState.isInFlight else { return }
         guard let item = mediaItem else { return }
 
-        screenshotError = nil
+        screenshotState = .idle
 
         let time = currentPlaybackTime
         let stream = item.metadata?.primaryVideoStream
@@ -1597,43 +1585,47 @@ final class PlayerController: ObservableObject {
             colorMetadata: stream
         ))
 
-        isSavingScreenshot = true
-        screenshotDone = false
+        screenshotState = .saving
 
         do {
             try await FFmpegService.run(arguments: arguments)
             let outputURL = try output.commit()
-            isSavingScreenshot = false
-            lastScreenshotURL = outputURL
             logger.info("Screenshot saved: \(outputURL.lastPathComponent)")
-            screenshotDone = true
+            screenshotState = .succeeded(outputURL)
             Task {
                 try? await Task.sleep(for: .seconds(5))
-                screenshotDone = false
+                if screenshotState == .succeeded(outputURL) {
+                    screenshotState = .idle
+                }
             }
         } catch {
-            isSavingScreenshot = false
-            screenshotDone = false
-            screenshotError = "Screenshot failed: \(error.localizedDescription)"
+            screenshotState = .failed("Screenshot failed: \(error.localizedDescription)")
             logger.error("Screenshot failed: \(error.localizedDescription)")
         }
+    }
+
+    func dismissScreenshotFeedback() {
+        screenshotState = .idle
     }
 
     // MARK: - Trim Export
 
     func exportTrim() async {
+        guard !trimExportState.isInFlight else { return }
         guard let item = mediaItem else { return }
-        trimExportError = nil
+        trimExportState = .idle
         guard let inPoint = trimIn, let outPoint = trimOut, outPoint > inPoint else {
             let missing = trimIn == nil && trimOut == nil ? "Set trim in and out points first."
                 : trimIn == nil ? "Set a trim in point first."
                 : trimOut == nil ? "Set a trim out point first."
                 : "Trim out must be after trim in."
             logger.warning("Export requires both trim in and out points")
-            trimExportWarning = missing
+            trimExportState = .warning(missing)
             Task {
                 try? await Task.sleep(for: .seconds(2))
-                trimExportWarning = nil
+                if trimExportState == .warning(missing) {
+                    trimExportState = .idle
+                }
             }
             return
         }
@@ -1685,7 +1677,7 @@ final class PlayerController: ObservableObject {
                     metadata: item.metadata
                 )
             } catch {
-                trimExportError = "Export unavailable: \(error.localizedDescription)"
+                trimExportState = .failed("Export unavailable: \(error.localizedDescription)")
                 logger.error("Trim export preflight failed: \(error.localizedDescription)")
                 return
             }
@@ -1719,11 +1711,7 @@ final class PlayerController: ObservableObject {
             h265Quality: UserDefaults.standard.value(for: AppSettings.h265Quality)
         ))
 
-        isExportingTrim = true
-        trimExportDone = false
-        trimExportCancelling = false
-        trimExportCancelled = false
-        trimExportProgress = nil
+        trimExportState = .preparing
 
         let handle = SubprocessHandle()
         exportHandle = handle
@@ -1732,7 +1720,9 @@ final class PlayerController: ObservableObject {
         if format != .copy {
             progressCallback = { [weak self] fraction in
                 let _ = Task { @MainActor [weak self] in
-                    self?.trimExportProgress = fraction
+                    guard let self else { return }
+                    guard self.trimExportState.acceptsProgress else { return }
+                    self.trimExportState = .exporting(progress: fraction)
                 }
             }
         } else {
@@ -1748,41 +1738,39 @@ final class PlayerController: ObservableObject {
             )
             let outputURL = try output.commit()
             exportHandle = nil
-            isExportingTrim = false
-            trimExportProgress = nil
-            lastTrimExportURL = outputURL
             logger.info("Trim export saved: \(outputURL.lastPathComponent)")
-            trimExportDone = true
+            trimExportState = .succeeded(outputURL)
             Task {
                 try? await Task.sleep(for: .seconds(5))
-                trimExportDone = false
+                if trimExportState == .succeeded(outputURL) {
+                    trimExportState = .idle
+                }
             }
         } catch let error as FFmpegError where error == .cancelled {
             exportHandle = nil
-            isExportingTrim = false
-            trimExportProgress = nil
-            trimExportCancelling = false
             logger.info("Trim export cancelled")
-            trimExportCancelled = true
+            trimExportState = .cancelled
             Task {
                 try? await Task.sleep(for: .seconds(1.5))
-                trimExportCancelled = false
+                if trimExportState == .cancelled {
+                    trimExportState = .idle
+                }
             }
         } catch {
             exportHandle = nil
-            isExportingTrim = false
-            trimExportCancelling = false
-            trimExportProgress = nil
-            trimExportDone = false
-            trimExportError = "Export failed: \(error.localizedDescription)"
+            trimExportState = .failed("Export failed: \(error.localizedDescription)")
             logger.error("Trim export failed: \(error.localizedDescription)")
         }
     }
 
     func cancelExport() {
-        trimExportCancelling = true
-        trimExportProgress = nil
+        guard exportHandle != nil else { return }
+        trimExportState = .cancelling
         exportHandle?.cancel()
+    }
+
+    func dismissTrimExportFeedback() {
+        trimExportState = .idle
     }
 
     // MARK: - Teardown
