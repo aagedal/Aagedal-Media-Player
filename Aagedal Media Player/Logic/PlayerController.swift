@@ -27,24 +27,16 @@ final class PlayerController: ObservableObject {
                 return
             }
             UserDefaults.standard.set(volume, for: AppSettings.playbackVolume)
-            if useMPV, let mpvPlayer {
-                mpvPlayer.volume = volume
-            } else {
-                player?.volume = Float(volume / 100)
-            }
+            backendAdapter?.volume = volume
         }
     }
     @Published var isMuted: Bool = false {
         didSet {
             UserDefaults.standard.set(isMuted, for: AppSettings.playbackMuted)
-            if useMPV, let mpvPlayer {
-                mpvPlayer.isMuted = isMuted
-            } else {
-                player?.isMuted = isMuted
-            }
+            backendAdapter?.isMuted = isMuted
         }
     }
-    @Published var player: AVPlayer?
+    var player: AVPlayer? { backendAdapter?.avPlayer }
     @Published private(set) var playbackPhase: PlaybackPhase = .idle
     var isPreparing: Bool { playbackPhase == .preparing }
     var isReady: Bool { playbackPhase.permitsPlaybackControls }
@@ -113,9 +105,10 @@ final class PlayerController: ObservableObject {
     weak var playerView: AVPlayerView?
     @Published var showAllMonoWaveforms = UserDefaults.standard.value(for: AppSettings.showAllMonoWaveforms)
 
-    // MARK: - MPV State
-    var mpvPlayer: MPVPlayer?
-    var useMPV = false
+    // MARK: - Playback Backend State
+    @Published private var backendAdapter: (any PlayerBackendAdapter)?
+    var mpvPlayer: MPVPlayer? { backendAdapter?.mpvPlayer }
+    var useMPV: Bool { backendAdapter?.backend == .mpv }
     // MPV loop observer
     var mpvLoopObserverTimer: Timer?
     private var mpvAspectRatioCancellable: AnyCancellable?
@@ -308,21 +301,6 @@ final class PlayerController: ObservableObject {
         return streams.allSatisfy { ($0.channels ?? 0) == 1 }
     }
 
-    /// Check if the video codec is ProRes RAW based on already-loaded metadata.
-    /// Detects via bayer pixel format (most reliable) or codec FourCC tags.
-    /// Returns false when metadata isn't loaded yet — `isProResRAWFile(url:)`
-    /// has the async fallback for that case.
-    private var hasProResRAWVideoCodec: Bool {
-        guard let videoStream = mediaItem?.metadata?.primaryVideoStream else { return false }
-        if let pixFmt = videoStream.pixelFormat?.lowercased(), pixFmt.contains("bayer") {
-            return true
-        }
-        if let codec = videoStream.codec?.lowercased() {
-            return codec.contains("aprn") || codec.contains("aprh")
-        }
-        return false
-    }
-
     /// Determine whether `url` points to a ProRes RAW file. Backend selection
     /// normally has SwiftExif metadata available because openFile awaits it
     /// before loadMedia, but the 500 ms timeout fallback path lets the file
@@ -335,13 +313,8 @@ final class PlayerController: ObservableObject {
     private static func isProResRAWFile(url: URL, metadata: MediaMetadata?) async -> Bool {
         // Fast path: metadata is already loaded (Force Reload, re-drag of the
         // same file, etc.).
-        if let stream = metadata?.primaryVideoStream {
-            if let pixFmt = stream.pixelFormat?.lowercased(), pixFmt.contains("bayer") {
-                return true
-            }
-            if let codec = stream.codec?.lowercased() {
-                return codec.contains("aprn") || codec.contains("aprh")
-            }
+        if let backend = PlaybackBackendSelector.backend(metadata: metadata) {
+            return backend == .avFoundation
         }
 
         // Slow path: ask AVAsset for the video track's codec FourCC.
@@ -367,7 +340,6 @@ final class PlayerController: ObservableObject {
         preparationID &+= 1
         let myPrepID = preparationID
         playbackPhase = .preparing
-        useMPV = false
 
         guard let item = mediaItem else {
             playbackPhase = .idle
@@ -404,13 +376,17 @@ final class PlayerController: ObservableObject {
     /// with wrong colors and worse performance than VideoToolbox).
     private func setupAVPlayer(url: URL, startTime: TimeInterval, wasCapturing: Bool) {
         playbackPhase = .preparing
-        let asset = AVURLAsset(url: url, options: [AVURLAssetPreferPreciseDurationAndTimingKey: true])
-        let playerItem = AVPlayerItem(asset: asset)
-        let player = AVPlayer(playerItem: playerItem)
-        player.volume = Float(volume / 100)
-        player.isMuted = isMuted
-
-        self.player = player
+        let backend = AVFoundationPlayerBackend(url: url, volume: volume, isMuted: isMuted)
+        backendAdapter = backend
+        let player = backend.player
+        guard let playerItem = player.currentItem else {
+            reportPlaybackFailure(
+                backend: .avFoundation,
+                stage: .initialization,
+                message: "AVFoundation could not create a player item."
+            )
+            return
+        }
 
         // Attach video output for scope frame capture
         frameCapture.attachAVPlayer(player)
@@ -438,16 +414,14 @@ final class PlayerController: ObservableObject {
 
     func setupMPV(url: URL, startTime: Double) {
         playbackPhase = .preparing
-        player = nil
-
-        let mpv = MPVPlayer()
-        self.mpvPlayer = mpv
-        self.useMPV = true
-
-        mpv.volume = volume
-        mpv.isMuted = isMuted
-
-        mpv.load(url: url, startTime: startTime, autostart: false)
+        let backend = MPVPlayerBackend(
+            url: url,
+            startTime: startTime,
+            volume: volume,
+            isMuted: isMuted
+        )
+        backendAdapter = backend
+        let mpv = backend.player
 
         // Attach MPV for scope frame capture (window set later by MPVVideoView)
         frameCapture.attachMPV(mpv)
@@ -625,8 +599,7 @@ final class PlayerController: ObservableObject {
         reverseTimer = nil
         isReversing = false
         isNativeReverse = false
-        player?.pause()
-        mpvPlayer?.pause()
+        backendAdapter?.pause()
         playbackPhase = .failed(failure)
         isPlaying = false
     }
@@ -640,11 +613,7 @@ final class PlayerController: ObservableObject {
     }
 
     func syncIsPlaying() {
-        if useMPV {
-            isPlaying = (mpvPlayer?.isPlaying ?? false) || isReversing
-        } else {
-            isPlaying = (player?.timeControlStatus == .playing) || isReversing
-        }
+        isPlaying = (backendAdapter?.isPlaying ?? false) || isReversing
     }
 
     func toggleMute() {
@@ -667,23 +636,15 @@ final class PlayerController: ObservableObject {
             return
         }
 
-        if useMPV, let mpv = mpvPlayer {
-            let wasPlaying = mpv.isPlaying
-            mpv.rate = 1.0
+        if let backendAdapter {
+            let wasPaused = backendAdapter.isPaused
+            backendAdapter.rate = 1.0
             currentPlaybackSpeed = 1.0
 
-            if wasPlaying {
-                mpv.pause()
+            if wasPaused {
+                backendAdapter.play()
             } else {
-                mpv.play()
-            }
-        } else if let player = player {
-            currentPlaybackSpeed = 1.0
-            if player.rate != 0 {
-                player.pause()
-            } else {
-                player.rate = 1.0
-                player.play()
+                backendAdapter.pause()
             }
         }
         syncIsPlaying()
@@ -693,13 +654,10 @@ final class PlayerController: ObservableObject {
         logPlaybackTransition("pause")
         stopReverse()
 
-        if useMPV, let mpv = mpvPlayer {
-            mpv.rate = 1.0
+        if let backendAdapter {
+            backendAdapter.rate = 1.0
             currentPlaybackSpeed = 1.0
-            mpv.pause()
-        } else {
-            currentPlaybackSpeed = 1.0
-            player?.pause()
+            backendAdapter.pause()
         }
         syncIsPlaying()
     }
@@ -708,14 +666,10 @@ final class PlayerController: ObservableObject {
         guard isReady else { return }
         logPlaybackTransition("play")
 
-        if useMPV, let mpv = mpvPlayer {
-            mpv.rate = 1.0
+        if let backendAdapter {
+            backendAdapter.rate = 1.0
             currentPlaybackSpeed = 1.0
-            mpv.play()
-        } else if let player = player {
-            player.rate = 1.0
-            currentPlaybackSpeed = 1.0
-            player.play()
+            backendAdapter.play()
         }
         syncIsPlaying()
     }
@@ -731,18 +685,12 @@ final class PlayerController: ObservableObject {
     }
 
     func stepRate(forward: Bool) {
-        if useMPV, let mpv = mpvPlayer {
-            let current = mpv.rate
+        if let backendAdapter {
+            let current = backendAdapter.rate
             let step: Float = 0.5
             let newRate = forward ? current + step : current - step
-            mpv.rate = max(0.25, min(newRate, 8.0))
-            currentPlaybackSpeed = mpv.rate
-        } else if let player = player {
-            let current = player.rate
-            let step: Float = 0.5
-            let newRate = forward ? current + step : current - step
-            player.rate = max(0.25, min(newRate, 8.0))
-            currentPlaybackSpeed = player.rate
+            backendAdapter.rate = max(0.25, min(newRate, 8.0))
+            currentPlaybackSpeed = backendAdapter.rate
         }
     }
 
@@ -896,19 +844,11 @@ final class PlayerController: ObservableObject {
             return
         }
 
-        if useMPV, let mpv = mpvPlayer {
-            if !mpv.isPlaying {
-                mpv.rate = 1.0
+        if let backendAdapter {
+            if backendAdapter.isPaused {
+                backendAdapter.rate = 1.0
                 currentPlaybackSpeed = 1.0
-                mpv.play()
-                syncIsPlaying()
-                return
-            }
-        } else if let player = player {
-            if player.rate == 0 {
-                player.rate = 1.0
-                currentPlaybackSpeed = 1.0
-                player.play()
+                backendAdapter.play()
                 syncIsPlaying()
                 return
             }
@@ -939,12 +879,9 @@ final class PlayerController: ObservableObject {
         // Same stale-isPlaying race as fastForward: just exited reverse means
         // mpv was actually playing (backward) and the pause hasn't propagated
         // to @Published isPlaying yet, so we can't trust the conditional play.
-        if useMPV, let mpv = mpvPlayer {
-            if wasReversing || !mpv.isPlaying { mpv.play() }
-            mpv.rate = target
-        } else if let player = player {
-            if wasReversing || player.rate == 0 { player.play() }
-            player.rate = target
+        if let backendAdapter {
+            if wasReversing || backendAdapter.isPaused { backendAdapter.play() }
+            backendAdapter.rate = target
         }
         currentPlaybackSpeed = target
         syncIsPlaying()
@@ -1054,14 +991,7 @@ final class PlayerController: ObservableObject {
 
         currentPlaybackTime = time
 
-        if useMPV, let mpv = mpvPlayer {
-            mpv.seek(to: time)
-            return
-        }
-
-        guard let player else { return }
-        let cmTime = CMTime(seconds: time, preferredTimescale: 600)
-        player.seek(to: cmTime, toleranceBefore: .zero, toleranceAfter: .zero)
+        backendAdapter?.seek(to: time)
     }
 
     private func issuePendingMPVScrubSeek() {
@@ -1291,14 +1221,6 @@ final class PlayerController: ObservableObject {
         frameCapture.transferFunction = .sdr
         frameCapture.contentPeakNits = 100
 
-        // Fully detach old AVPlayer — mute, stop, and replace item to ensure
-        // no audio/video output even if the object lingers from SwiftUI caching.
-        if let oldPlayer = player {
-            oldPlayer.isMuted = true
-            oldPlayer.rate = 0
-            oldPlayer.pause()
-            oldPlayer.replaceCurrentItem(with: nil)
-        }
         // Also nil the AVPlayerView's player reference so the view layer
         // cannot resurrect audio from the old player object.
         playerView?.player = nil
@@ -1306,7 +1228,6 @@ final class PlayerController: ObservableObject {
         removePlayerItemStatusObserver()
         removeTimeControlStatusObserver()
         removeLoopObserver()
-        player = nil
 
         // Cancel in-flight MPV observation Tasks before stopping
         mpvTimePosTask?.cancel()
@@ -1316,11 +1237,8 @@ final class PlayerController: ObservableObject {
         mpvDurationTask?.cancel()
         mpvDurationTask = nil
 
-        if let mpv = mpvPlayer {
-            mpv.destroy()
-            mpvPlayer = nil
-        }
-        useMPV = false
+        backendAdapter?.teardown()
+        backendAdapter = nil
 
         playbackPhase = .idle
         isPlaying = false
