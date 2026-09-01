@@ -111,7 +111,7 @@ Acceptance: every backend failure reaches an actionable UI state, and audio cont
 
 ## Phase 7 — Accessibility and playback usability
 
-Status: In progress — timeline accessibility, control semantics, status announcements, unified multi-file opening, and automatic audio-only waveform presentation were implemented on 2026-08-31; manual Full Keyboard Access validation remains.
+Status: In progress — timeline accessibility, control semantics, status announcements, unified multi-file opening, automatic audio-only waveform presentation, and folder navigation are implemented; manual Full Keyboard Access validation remains.
 
 - [x] Make the custom timeline keyboard- and VoiceOver-adjustable.
 - [x] Add labels, values, hints, and selected states to icon-only controls.
@@ -119,7 +119,7 @@ Status: In progress — timeline accessibility, control semantics, status announ
 - [x] Announce export completion, cancellation, and failure.
 - [x] Improve audio-only presentation with an automatic waveform option and retryable failure state.
 - [x] Handle multi-file drops consistently with Finder open events.
-- [ ] Evaluate folder navigation or a lightweight queue after the core work is stable.
+- [x] Add lightweight previous/next navigation across supported media files in the current folder, with per-window menu commands and keyboard shortcuts.
 
 Acceptance: primary playback, seeking, track selection, and export workflows work without a pointing device.
 

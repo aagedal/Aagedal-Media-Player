@@ -14,8 +14,13 @@ final class PlayerWindowCoordinator: ObservableObject {
     let id: UUID
 
     @Published private(set) var window: NSWindow?
+    @Published private(set) var canOpenPreviousFile = false
+    @Published private(set) var canOpenNextFile = false
 
     private var fileOpenTask: Task<Void, Never>?
+    private var folderNavigationTask: Task<Void, Never>?
+    private var siblingMediaURLs: [URL] = []
+    private var siblingMediaIndex: Int?
     private let logger = Logger(
         subsystem: "com.aagedal.MediaPlayer",
         category: "PlayerWindowCoordinator"
@@ -136,6 +141,7 @@ final class PlayerWindowCoordinator: ObservableObject {
     ) {
         logger.info("Opening file: \(url.lastPathComponent)")
         fileOpenTask?.cancel()
+        refreshFolderNavigation(for: url)
 
         var item = Self.makeMediaItem(for: url)
         WindowManager.shared.markHasMedia(id: id)
@@ -180,6 +186,14 @@ final class PlayerWindowCoordinator: ObservableObject {
         NSDocumentController.shared.noteNewRecentDocumentURL(url)
     }
 
+    func previousMediaURL() -> URL? {
+        adjacentMediaURL(offset: -1)
+    }
+
+    func nextMediaURL() -> URL? {
+        adjacentMediaURL(offset: 1)
+    }
+
     func handleDrop(_ providers: [NSItemProvider]) -> Bool {
         guard !providers.isEmpty else { return false }
         let results = DroppedURLResults(count: providers.count)
@@ -199,8 +213,41 @@ final class PlayerWindowCoordinator: ObservableObject {
     func tearDown() {
         fileOpenTask?.cancel()
         fileOpenTask = nil
+        folderNavigationTask?.cancel()
+        folderNavigationTask = nil
+        siblingMediaURLs = []
+        siblingMediaIndex = nil
+        canOpenPreviousFile = false
+        canOpenNextFile = false
         WindowManager.shared.unregister(id: id)
         window = nil
+    }
+
+    /// Returns supported media files beside the current item in stable Finder-like
+    /// filename order. Folder navigation is intentionally local to each player
+    /// window rather than a global playlist.
+    nonisolated static func siblingMediaFiles(
+        containing currentURL: URL,
+        fileManager: FileManager = .default
+    ) -> [URL] {
+        let directory = currentURL.deletingLastPathComponent()
+        let resourceKeys: [URLResourceKey] = [.contentTypeKey, .isRegularFileKey]
+        let resourceKeySet = Set(resourceKeys)
+        let candidates = (try? fileManager.contentsOfDirectory(
+            at: directory,
+            includingPropertiesForKeys: resourceKeys,
+            options: [.skipsHiddenFiles]
+        )) ?? []
+
+        return candidates
+            .filter { url in
+                let values = try? url.resourceValues(forKeys: resourceKeySet)
+                guard values?.isRegularFile != false else { return false }
+                guard let type = values?.contentType
+                    ?? UTType(filenameExtension: url.pathExtension) else { return false }
+                return supportedMediaTypes.contains { type.conforms(to: $0) }
+            }
+            .sorted(by: compareMediaFilenames)
     }
 
     nonisolated static func makeMediaItem(
@@ -226,6 +273,55 @@ final class PlayerWindowCoordinator: ObservableObject {
             frame.origin.y -= offset
             candidate.setFrameOrigin(frame.origin)
         }
+    }
+
+    private func refreshFolderNavigation(for currentURL: URL) {
+        folderNavigationTask?.cancel()
+        applyFolderNavigation(currentURL: currentURL, siblingURLs: [])
+        folderNavigationTask = Task { [weak self] in
+            let siblingURLs = await Task.detached(priority: .userInitiated) {
+                Self.siblingMediaFiles(containing: currentURL)
+            }.value
+            guard !Task.isCancelled else { return }
+            self?.applyFolderNavigation(
+                currentURL: currentURL,
+                siblingURLs: siblingURLs
+            )
+        }
+    }
+
+    func applyFolderNavigation(currentURL: URL, siblingURLs: [URL]) {
+        siblingMediaURLs = siblingURLs
+        let standardizedCurrentURL = currentURL.standardizedFileURL
+        siblingMediaIndex = siblingMediaURLs.firstIndex {
+            $0.standardizedFileURL == standardizedCurrentURL
+        }
+        updateFolderNavigationAvailability()
+    }
+
+    private func adjacentMediaURL(offset: Int) -> URL? {
+        guard let siblingMediaIndex else { return nil }
+        let destinationIndex = siblingMediaIndex + offset
+        guard siblingMediaURLs.indices.contains(destinationIndex) else { return nil }
+        return siblingMediaURLs[destinationIndex]
+    }
+
+    private func updateFolderNavigationAvailability() {
+        guard let siblingMediaIndex else {
+            canOpenPreviousFile = false
+            canOpenNextFile = false
+            return
+        }
+        canOpenPreviousFile = siblingMediaURLs.indices.contains(siblingMediaIndex - 1)
+        canOpenNextFile = siblingMediaURLs.indices.contains(siblingMediaIndex + 1)
+    }
+
+    nonisolated private static func compareMediaFilenames(_ lhs: URL, _ rhs: URL) -> Bool {
+        let result = lhs.lastPathComponent.localizedStandardCompare(rhs.lastPathComponent)
+        if result == .orderedSame {
+            return lhs.path < rhs.path
+        }
+        return result == .orderedAscending
     }
 
     private static func apply(_ metadata: MediaMetadata, to item: inout MediaItem) {
@@ -255,7 +351,7 @@ final class PlayerWindowCoordinator: ObservableObject {
         }
     }
 
-    static let supportedMediaTypes: [UTType] = [
+    nonisolated static let supportedMediaTypes: [UTType] = [
         .movie, .video, .audio, .mpeg4Movie, .quickTimeMovie, .avi, .mpeg2Video,
         UTType("public.mpeg-4") ?? .movie,
         UTType("com.microsoft.windows-media-wmv") ?? .movie,

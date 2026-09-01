@@ -10,6 +10,7 @@ All notable changes to Aagedal Media Player.
 - Cancellation-aware ffmpeg execution, bounded scope scheduling, and generated media fixtures.
 - A reproducible optimized scope-performance matrix covering all resolution and update-rate settings.
 - Consistent volume, mute, buffering, playback-error, keyboard, and accessibility behavior across playback backends.
+- Previous/next keyboard navigation across supported media files in the current folder.
 - Release preflight validation for version/build ordering, changelog and appcast metadata, Sparkle signatures and URLs, exported app signing, and bundled ffmpeg provenance.
 
 ### Changed

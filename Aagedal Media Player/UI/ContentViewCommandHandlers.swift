@@ -24,6 +24,8 @@ struct NotificationHandlers: ViewModifier {
     let isMediaLoaded: Bool
     let openFilePanel: () -> Void
     let openFile: (URL) -> Void
+    let openPreviousFile: () -> Void
+    let openNextFile: () -> Void
 
     func body(content: Content) -> some View {
         content
@@ -35,7 +37,8 @@ struct NotificationHandlers: ViewModifier {
                 audioWaveformWindowController: $audioWaveformWindowController,
                 showAudioWaveformOverlay: $showAudioWaveformOverlay,
                 audioWaveformGenerator: audioWaveformGenerator,
-                openFilePanel: openFilePanel, openFile: openFile
+                openFilePanel: openFilePanel, openFile: openFile,
+                openPreviousFile: openPreviousFile, openNextFile: openNextFile
             ))
             .modifier(PlaybackHandlers(controller: controller, nsWindow: nsWindow))
             .modifier(TimecodeAndSyncHandlers(
@@ -61,6 +64,8 @@ private struct FileAndWindowHandlers: ViewModifier {
     @ObservedObject var audioWaveformGenerator: AudioWaveformGenerator
     let openFilePanel: () -> Void
     let openFile: (URL) -> Void
+    let openPreviousFile: () -> Void
+    let openNextFile: () -> Void
     @AppStorage(AppSettings.scopeDisplayMode.key)
     private var scopeDisplayMode = AppSettings.scopeDisplayMode.defaultValue
     @AppStorage(AppSettings.audioWaveformDisplayMode.key)
@@ -83,6 +88,18 @@ private struct FileAndWindowHandlers: ViewModifier {
                     guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
                 }
                 openFile(url)
+            }
+            .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
+                guard let command = notification.appCommand,
+                      case .openPreviousFile = command else { return }
+                guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
+                openPreviousFile()
+            }
+            .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
+                guard let command = notification.appCommand,
+                      case .openNextFile = command else { return }
+                guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
+                openNextFile()
             }
             .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
                 guard let command = notification.appCommand,

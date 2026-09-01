@@ -46,4 +46,63 @@ final class PlayerWindowCoordinatorTests: XCTestCase {
         XCTAssertNil(results.record(nil, at: 0))
         XCTAssertEqual(results.record(url, at: 1), [url])
     }
+
+    func testSiblingMediaFilesFiltersHiddenDirectoriesAndUnsupportedFiles() throws {
+        let directory = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let expected = ["Clip 2.mov", "Clip 10.MP4", "Soundtrack.flac"]
+        for name in expected + ["notes.txt", ".hidden.mp3"] {
+            XCTAssertTrue(FileManager.default.createFile(
+                atPath: directory.appendingPathComponent(name).path,
+                contents: Data()
+            ))
+        }
+        try FileManager.default.createDirectory(
+            at: directory.appendingPathComponent("Nested.mov"),
+            withIntermediateDirectories: false
+        )
+
+        let files = PlayerWindowCoordinator.siblingMediaFiles(
+            containing: directory.appendingPathComponent("Clip 2.mov")
+        )
+
+        XCTAssertEqual(files.map(\.lastPathComponent), expected)
+    }
+
+    func testFolderNavigationReportsBoundariesAndAdjacentURLs() throws {
+        let directory = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let urls = ["01.mov", "02.mov", "03.mov"].map {
+            directory.appendingPathComponent($0)
+        }
+        for url in urls {
+            XCTAssertTrue(FileManager.default.createFile(atPath: url.path, contents: Data()))
+        }
+
+        let coordinator = PlayerWindowCoordinator()
+        coordinator.applyFolderNavigation(currentURL: urls[1], siblingURLs: urls)
+
+        XCTAssertTrue(coordinator.canOpenPreviousFile)
+        XCTAssertTrue(coordinator.canOpenNextFile)
+        XCTAssertEqual(
+            coordinator.previousMediaURL()?.resolvingSymlinksInPath(),
+            urls[0].resolvingSymlinksInPath()
+        )
+        XCTAssertEqual(
+            coordinator.nextMediaURL()?.resolvingSymlinksInPath(),
+            urls[2].resolvingSymlinksInPath()
+        )
+        coordinator.tearDown()
+    }
+
+    private func makeTemporaryDirectory() throws -> URL {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(
+            at: directory,
+            withIntermediateDirectories: true
+        )
+        return directory
+    }
 }

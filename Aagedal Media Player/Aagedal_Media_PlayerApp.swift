@@ -9,10 +9,28 @@ struct IsMediaLoadedKey: FocusedValueKey {
     typealias Value = Bool
 }
 
+struct CanOpenPreviousFileKey: FocusedValueKey {
+    typealias Value = Bool
+}
+
+struct CanOpenNextFileKey: FocusedValueKey {
+    typealias Value = Bool
+}
+
 extension FocusedValues {
     var isMediaLoaded: Bool? {
         get { self[IsMediaLoadedKey.self] }
         set { self[IsMediaLoadedKey.self] = newValue }
+    }
+
+    var canOpenPreviousFile: Bool? {
+        get { self[CanOpenPreviousFileKey.self] }
+        set { self[CanOpenPreviousFileKey.self] = newValue }
+    }
+
+    var canOpenNextFile: Bool? {
+        get { self[CanOpenNextFileKey.self] }
+        set { self[CanOpenNextFileKey.self] = newValue }
     }
 }
 
@@ -20,6 +38,8 @@ extension FocusedValues {
 struct Aagedal_Media_PlayerApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @FocusedValue(\.isMediaLoaded) private var isMediaLoaded
+    @FocusedValue(\.canOpenPreviousFile) private var canOpenPreviousFile
+    @FocusedValue(\.canOpenNextFile) private var canOpenNextFile
     @AppStorage(AppSettings.allowMultipleWindows.key)
     private var allowMultipleWindows = AppSettings.allowMultipleWindows.defaultValue
 
@@ -66,6 +86,20 @@ struct Aagedal_Media_PlayerApp: App {
                 Divider()
 
                 RecentDocumentsMenu()
+
+                Divider()
+
+                Button("Previous File in Folder") {
+                    NotificationCenter.default.post(.openPreviousFile)
+                }
+                .keyboardShortcut("[", modifiers: .command)
+                .disabled(!(canOpenPreviousFile ?? false))
+
+                Button("Next File in Folder") {
+                    NotificationCenter.default.post(.openNextFile)
+                }
+                .keyboardShortcut("]", modifiers: .command)
+                .disabled(!(canOpenNextFile ?? false))
             }
             CommandGroup(replacing: .saveItem) {
                 Button("Save Screenshot") {

@@ -13,6 +13,8 @@ import Foundation
 enum AppCommand {
     case openFilePicker
     case openFile(URL, targetWindow: NSWindow? = nil)
+    case openPreviousFile
+    case openNextFile
     case toggleInspector
     case captureScreenshot
     case exportTrim

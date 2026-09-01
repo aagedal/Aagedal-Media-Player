@@ -124,6 +124,8 @@ Quickly check basic metadata like resolution, frame rate, codec, color space and
 | Shift + Right Arrow | Seek forward 10 seconds |
 | Cmd + Up Arrow | Seek to start |
 | Cmd + Down Arrow | Seek to end |
+| Cmd + [ | Open previous media file in folder |
+| Cmd + ] | Open next media file in folder |
 
 ### Trim
 

@@ -65,7 +65,9 @@ struct ContentView: View {
                 overlayController: overlayController,
                 isMediaLoaded: isMediaLoaded,
                 openFilePanel: openFilePanel,
-                openFile: openFile
+                openFile: openFile,
+                openPreviousFile: openPreviousFile,
+                openNextFile: openNextFile
             ))
     }
 
@@ -141,6 +143,8 @@ struct ContentView: View {
         }
         .ignoresSafeArea()
         .focusedSceneValue(\.isMediaLoaded, isMediaLoaded)
+        .focusedSceneValue(\.canOpenPreviousFile, windowCoordinator.canOpenPreviousFile)
+        .focusedSceneValue(\.canOpenNextFile, windowCoordinator.canOpenNextFile)
         .frame(minWidth: 270, minHeight: 200)
         .background(Color.black)
         .background(
@@ -377,6 +381,16 @@ struct ContentView: View {
             onTimecodeModeChange: { timecodeMode = $0 },
             onMetadataLoaded: metadataDidLoad
         )
+    }
+
+    func openPreviousFile() {
+        guard let url = windowCoordinator.previousMediaURL() else { return }
+        openFile(url: url)
+    }
+
+    func openNextFile() {
+        guard let url = windowCoordinator.nextMediaURL() else { return }
+        openFile(url: url)
     }
 
     private func metadataDidLoad() {
