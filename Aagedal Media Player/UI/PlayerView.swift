@@ -15,6 +15,7 @@ struct PlayerView: View {
     let showsAudioWaveform: Bool
     @Binding var isEditingTimecode: Bool
     @Binding var isTimelineFocused: Bool
+    let isOverlayControlFocused: Bool
     @Binding var timecodeActivationTrigger: String?
     @AppStorage(AppSettings.automaticAudioOnlyWaveform.key)
     private var automaticAudioOnlyWaveform = AppSettings.automaticAudioOnlyWaveform.defaultValue
@@ -237,10 +238,12 @@ struct PlayerView: View {
             return true
         }
 
-        // Space toggles play/pause. Handled here (before performKeyEquivalent)
-        // so the timeline slider, AVPlayerView, or any focused button can't
-        // swallow the key. Routed through notifications for multi-window sync.
+        // Let Full Keyboard Access deliver Space to a focused overlay control.
+        // Otherwise Space remains the global play/pause shortcut.
         if characters == " " {
+            if isOverlayControlFocused {
+                return false
+            }
             NotificationCenter.default.post(.togglePlayback)
             return true
         }
@@ -359,6 +362,7 @@ private struct PlayerContainerView: NSViewRepresentable {
 
     func updateNSView(_ nsView: AVPlayerView, context: Context) {
         nsView.player = player
+        context.coordinator.keyHandler = keyHandler
         context.coordinator.isEditingTimecode = isEditingTimecode
     }
 
@@ -380,7 +384,7 @@ private struct PlayerContainerView: NSViewRepresentable {
     final class Coordinator: NSObject {
         private nonisolated(unsafe) var monitor: Any?
         private weak var attachedView: AVPlayerView?
-        private let keyHandler: (String, NSEvent.ModifierFlags, NSEvent.SpecialKey?) -> Bool
+        var keyHandler: (String, NSEvent.ModifierFlags, NSEvent.SpecialKey?) -> Bool
         var isEditingTimecode: Bool
 
         init(keyHandler: @escaping (String, NSEvent.ModifierFlags, NSEvent.SpecialKey?) -> Bool, isEditingTimecode: Bool) {

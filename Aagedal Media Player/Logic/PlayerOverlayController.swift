@@ -29,8 +29,9 @@ final class PlayerOverlayController: ObservableObject {
 
     func install(
         isMediaLoaded: @escaping @MainActor () -> Bool,
+        isKeyWindow: @escaping @MainActor () -> Bool,
         isPlaying: @escaping @MainActor () -> Bool,
-        isEditingTimecode: @escaping @MainActor () -> Bool
+        isControlInteractionActive: @escaping @MainActor () -> Bool
     ) {
         removeObservers()
 
@@ -39,8 +40,7 @@ final class PlayerOverlayController: ObservableObject {
                   isMediaLoaded(),
                   self.isWindowHovered,
                   !self.isRightEdgeHovered,
-                  let window = NSApp.keyWindow,
-                  window.isKeyWindow else {
+                  isKeyWindow() else {
                 return event
             }
 
@@ -48,7 +48,7 @@ final class PlayerOverlayController: ObservableObject {
             self.reveal()
             self.scheduleHide(
                 isPlaying: isPlaying,
-                isEditingTimecode: isEditingTimecode
+                isControlInteractionActive: isControlInteractionActive
             )
             return event
         }
@@ -57,8 +57,7 @@ final class PlayerOverlayController: ObservableObject {
             guard let self,
                   isMediaLoaded(),
                   event.keyCode == Self.tabKeyCode,
-                  let window = NSApp.keyWindow,
-                  window.isKeyWindow else {
+                  isKeyWindow() else {
                 return event
             }
 
@@ -76,13 +75,16 @@ final class PlayerOverlayController: ObservableObject {
                 self.isRightEdgeHovered = false
                 CursorHideNSView.ensureCursorVisible()
                 self.cancelScheduledHide()
+                if isControlInteractionActive() {
+                    self.reveal()
+                }
             }
         }
     }
 
-    func setWindowHovered(_ hovered: Bool, isEditingTimecode: Bool) {
+    func setWindowHovered(_ hovered: Bool, isControlInteractionActive: Bool) {
         isWindowHovered = hovered
-        if !hovered && !isEditingTimecode {
+        if !hovered && !isControlInteractionActive {
             hide()
         }
     }
@@ -97,16 +99,19 @@ final class PlayerOverlayController: ObservableObject {
     func setRightEdgeHovered(
         _ hovered: Bool,
         isPlaying: @escaping @MainActor () -> Bool,
-        isEditingTimecode: @escaping @MainActor () -> Bool
+        isControlInteractionActive: @escaping @MainActor () -> Bool
     ) {
         isRightEdgeHovered = hovered
         if hovered {
-            hide()
+            cancelScheduledHide()
+            if !isControlInteractionActive() {
+                hide()
+            }
         } else {
             reveal()
             scheduleHide(
                 isPlaying: isPlaying,
-                isEditingTimecode: isEditingTimecode
+                isControlInteractionActive: isControlInteractionActive
             )
         }
     }
@@ -130,23 +135,23 @@ final class PlayerOverlayController: ObservableObject {
 
     func scheduleHide(
         isPlaying: @escaping @MainActor () -> Bool,
-        isEditingTimecode: @escaping @MainActor () -> Bool
+        isControlInteractionActive: @escaping @MainActor () -> Bool
     ) {
         cancelScheduledHide()
-        guard !isControlsHovered, !isEditingTimecode(), isPlaying() else { return }
+        guard !isControlsHovered, !isControlInteractionActive(), isPlaying() else { return }
 
         let hideDelay = hideDelay
         hideTask = Task { @MainActor [weak self] in
             try? await Task.sleep(for: hideDelay)
             guard !Task.isCancelled, let self else { return }
-            if !self.isControlsHovered, !isEditingTimecode(), isPlaying() {
+            if !self.isControlsHovered, !isControlInteractionActive(), isPlaying() {
                 self.isVisible = false
             }
         }
     }
 
-    func appDidResign(isMediaLoaded: Bool, isEditingTimecode: Bool) {
-        guard isMediaLoaded, !isEditingTimecode else { return }
+    func appDidResign(isMediaLoaded: Bool, isControlInteractionActive: Bool) {
+        guard isMediaLoaded, !isControlInteractionActive else { return }
         hide()
     }
 

@@ -13,7 +13,7 @@ final class PlayerOverlayControllerTests: XCTestCase {
         controller.setRightEdgeHovered(
             true,
             isPlaying: { false },
-            isEditingTimecode: { false }
+            isControlInteractionActive: { false }
         )
         XCTAssertFalse(controller.isVisible)
         XCTAssertTrue(controller.isRightEdgeHovered)
@@ -21,7 +21,7 @@ final class PlayerOverlayControllerTests: XCTestCase {
         controller.setRightEdgeHovered(
             false,
             isPlaying: { false },
-            isEditingTimecode: { false }
+            isControlInteractionActive: { false }
         )
         XCTAssertTrue(controller.isVisible)
         XCTAssertFalse(controller.isRightEdgeHovered)
@@ -32,7 +32,7 @@ final class PlayerOverlayControllerTests: XCTestCase {
         controller.setControlsHovered(true)
         controller.scheduleHide(
             isPlaying: { true },
-            isEditingTimecode: { false }
+            isControlInteractionActive: { false }
         )
 
         try? await Task.sleep(for: .milliseconds(30))
@@ -45,7 +45,7 @@ final class PlayerOverlayControllerTests: XCTestCase {
         var isPlaying = true
         controller.scheduleHide(
             isPlaying: { isPlaying },
-            isEditingTimecode: { false }
+            isControlInteractionActive: { false }
         )
         isPlaying = false
 
@@ -58,7 +58,7 @@ final class PlayerOverlayControllerTests: XCTestCase {
         let controller = PlayerOverlayController(hideDelay: .milliseconds(10))
         controller.scheduleHide(
             isPlaying: { true },
-            isEditingTimecode: { false }
+            isControlInteractionActive: { false }
         )
 
         try? await Task.sleep(for: .milliseconds(30))
@@ -71,12 +71,36 @@ final class PlayerOverlayControllerTests: XCTestCase {
         controller.hide()
         controller.scheduleHide(
             isPlaying: { true },
-            isEditingTimecode: { false }
+            isControlInteractionActive: { false }
         )
 
         controller.revealForKeyboardNavigation()
 
         try? await Task.sleep(for: .milliseconds(30))
+
+        XCTAssertTrue(controller.isVisible)
+    }
+
+    func testFocusedControlPreventsScheduledHide() async {
+        let controller = PlayerOverlayController(hideDelay: .milliseconds(10))
+        controller.scheduleHide(
+            isPlaying: { true },
+            isControlInteractionActive: { true }
+        )
+
+        try? await Task.sleep(for: .milliseconds(30))
+
+        XCTAssertTrue(controller.isVisible)
+    }
+
+    func testRightEdgeDoesNotHideFocusedControl() {
+        let controller = PlayerOverlayController()
+
+        controller.setRightEdgeHovered(
+            true,
+            isPlaying: { true },
+            isControlInteractionActive: { true }
+        )
 
         XCTAssertTrue(controller.isVisible)
     }

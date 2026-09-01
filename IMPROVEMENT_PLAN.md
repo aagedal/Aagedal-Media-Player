@@ -111,11 +111,11 @@ Acceptance: every backend failure reaches an actionable UI state, and audio cont
 
 ## Phase 7 — Accessibility and playback usability
 
-Status: In progress — timeline accessibility, control semantics, status announcements, unified multi-file opening, automatic audio-only waveform presentation, folder navigation, and keyboard-triggered control-overlay visibility are implemented; manual Full Keyboard Access validation remains.
+Status: In progress — timeline accessibility, control semantics, status announcements, unified multi-file opening, automatic audio-only waveform presentation, folder navigation, and focus-aware keyboard control navigation are implemented; manual Full Keyboard Access validation remains.
 
 - [x] Make the custom timeline keyboard- and VoiceOver-adjustable.
 - [x] Add labels, values, hints, and selected states to icon-only controls.
-- [ ] Preserve visible focus rings and test Full Keyboard Access. The timeline draws an explicit focus ring, and Tab/Shift-Tab reveals auto-hidden playback controls without intercepting focus traversal; end-to-end manual validation remains.
+- [ ] Preserve visible focus rings and test Full Keyboard Access. Every playback control now reports focus, plain-style controls draw explicit focus rings, focused controls suppress auto-hide, and the current key handler is propagated through both playback backends so Space reaches the focused control instead of toggling playback. A live MPV check confirmed timeline/timecode traversal, the visible timecode focus ring, and focused Space activation; Tab/Shift-Tab reveals only the active window's overlay without intercepting traversal. End-to-end validation with macOS Keyboard Navigation enabled for all controls remains.
 - [x] Announce export completion, cancellation, and failure.
 - [x] Improve audio-only presentation with an automatic waveform option and retryable failure state.
 - [x] Handle multi-file drops consistently with Finder open events.

@@ -18,6 +18,8 @@ struct ContentView: View {
     @State private var showInspector = false
     @State private var isEditingTimecode = false
     @State private var isTimelineFocused = false
+    @State private var isPlaybackControlsFocused = false
+    @FocusState private var isInspectorButtonFocused: Bool
     @State private var timecodeActivationTrigger: String?
     @AppStorage(AppSettings.showCursorHideHint.key)
     private var showCursorHideHint = AppSettings.showCursorHideHint.defaultValue
@@ -38,6 +40,9 @@ struct ContentView: View {
     private var isMediaLoaded: Bool { controller.mediaItem != nil }
     private var nsWindow: NSWindow? { windowCoordinator.window }
     private var showOverlay: Bool { overlayController.isVisible }
+    private var isControlInteractionActive: Bool {
+        isEditingTimecode || isPlaybackControlsFocused || isInspectorButtonFocused
+    }
 
     private var videoAspectRatio: CGFloat? {
         controller.videoAspectRatio
@@ -84,6 +89,7 @@ struct ContentView: View {
                     showsAudioWaveform: showAudioWaveformOverlay,
                     isEditingTimecode: $isEditingTimecode,
                     isTimelineFocused: $isTimelineFocused,
+                    isOverlayControlFocused: isControlInteractionActive,
                     timecodeActivationTrigger: $timecodeActivationTrigger
                 )
             } else {
@@ -160,7 +166,7 @@ struct ContentView: View {
         .onHover { hovering in
             overlayController.setWindowHovered(
                 hovering,
-                isEditingTimecode: isEditingTimecode
+                isControlInteractionActive: isControlInteractionActive
             )
         }
         .inspector(isPresented: $showInspector) {
@@ -196,8 +202,9 @@ struct ContentView: View {
         .onAppear {
             overlayController.install(
                 isMediaLoaded: { controller.mediaItem != nil },
+                isKeyWindow: { nsWindow?.isKeyWindow == true },
                 isPlaying: { controller.isPlaying },
-                isEditingTimecode: { isEditingTimecode }
+                isControlInteractionActive: { isControlInteractionActive }
             )
             windowCoordinator.configureWindowOpening { [openWindow] in
                 openWindow(id: "player")
@@ -244,6 +251,7 @@ struct ContentView: View {
                 timecodeMode: $timecodeMode,
                 isEditingTimecode: $isEditingTimecode,
                 isTimelineFocused: $isTimelineFocused,
+                isControlsFocused: $isPlaybackControlsFocused,
                 timecodeActivationTrigger: $timecodeActivationTrigger
             )
             .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -299,6 +307,15 @@ struct ContentView: View {
                     .foregroundColor(.white.opacity(0.9))
             }
             .buttonStyle(.plain)
+            .focused($isInspectorButtonFocused)
+            .overlay {
+                if isInspectorButtonFocused {
+                    Circle()
+                        .stroke(Color.accentColor, lineWidth: 2)
+                        .padding(1)
+                        .allowsHitTesting(false)
+                }
+            }
             .help("Show metadata inspector")
             .accessibilityLabel(showInspector ? "Hide metadata inspector" : "Show metadata inspector")
             .accessibilityValue(showInspector ? "Shown" : "Hidden")
@@ -332,7 +349,7 @@ struct ContentView: View {
                     overlayController.setRightEdgeHovered(
                         hovering,
                         isPlaying: { controller.isPlaying },
-                        isEditingTimecode: { isEditingTimecode }
+                        isControlInteractionActive: { isControlInteractionActive }
                     )
                 }
 

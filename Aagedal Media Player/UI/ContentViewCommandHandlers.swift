@@ -425,7 +425,7 @@ private struct TimecodeAndSyncHandlers: ViewModifier {
             .onReceive(NotificationCenter.default.publisher(for: NSApplication.didResignActiveNotification)) { _ in
                 overlayController.appDidResign(
                     isMediaLoaded: isMediaLoaded,
-                    isEditingTimecode: isEditingTimecode
+                    isControlInteractionActive: isEditingTimecode
                 )
             }
     }

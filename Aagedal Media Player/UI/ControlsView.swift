@@ -7,12 +7,42 @@
 import SwiftUI
 import AVFoundation
 
+private enum PlaybackControlFocus: Hashable {
+    case timeline
+    case playPause
+    case mute
+    case volume
+    case audioTrack
+    case subtitles
+    case chapters
+    case loop
+    case fullscreen
+    case timecode
+    case timecodeEditor
+}
+
+private struct PlaybackControlFocusRing: ViewModifier {
+    let isFocused: Bool
+
+    func body(content: Content) -> some View {
+        content.overlay {
+            if isFocused {
+                RoundedRectangle(cornerRadius: 5)
+                    .stroke(Color.accentColor, lineWidth: 2)
+                    .padding(1)
+                    .allowsHitTesting(false)
+            }
+        }
+    }
+}
+
 struct ControlsView: View {
     @ObservedObject var controller: PlayerController
     let item: MediaItem?
     @Binding var timecodeMode: TimecodeDisplayMode
     @Binding var isEditingTimecode: Bool
     @Binding var isTimelineFocused: Bool
+    @Binding var isControlsFocused: Bool
     @Binding var timecodeActivationTrigger: String?
 
     @AppStorage(AppSettings.audioWaveformColor.key)
@@ -28,8 +58,7 @@ struct ControlsView: View {
     @State private var pendingCharacter: String?
     @State private var justActivated = false
     @State private var isNarrow = false
-    @FocusState private var isTimecodeFocused: Bool
-    @FocusState private var timelineFocus: Bool
+    @FocusState private var focusedControl: PlaybackControlFocus?
 
     private var isLoaded: Bool { item != nil }
 
@@ -78,11 +107,13 @@ struct ControlsView: View {
                 timecodeActivationTrigger = nil
             }
         }
-        .onChange(of: timelineFocus) { _, focused in
-            isTimelineFocused = focused
+        .onChange(of: focusedControl) { _, focus in
+            isTimelineFocused = focus == .timeline
+            isControlsFocused = focus != nil
         }
         .onDisappear {
             isTimelineFocused = false
+            isControlsFocused = false
         }
     }
 
@@ -98,6 +129,8 @@ struct ControlsView: View {
                 .frame(width: 28, height: 28)
         }
         .buttonStyle(.plain)
+        .focused($focusedControl, equals: .playPause)
+        .modifier(PlaybackControlFocusRing(isFocused: focusedControl == .playPause))
         .help(isPlaying ? "Pause" : "Play")
         .accessibilityLabel(isPlaying ? "Pause" : "Play")
         .accessibilityValue(isPlaying ? "Playing" : "Paused")
@@ -133,6 +166,8 @@ struct ControlsView: View {
                 .frame(width: 28, height: 28)
         }
         .buttonStyle(.plain)
+        .focused($focusedControl, equals: .loop)
+        .modifier(PlaybackControlFocusRing(isFocused: focusedControl == .loop))
         .help((item?.loopPlayback ?? false) ? "Disable loop" : "Enable loop")
         .accessibilityLabel("Loop playback")
         .accessibilityValue((item?.loopPlayback ?? false) ? "On" : "Off")
@@ -145,6 +180,8 @@ struct ControlsView: View {
                 .frame(width: 28, height: 28)
         }
         .buttonStyle(.plain)
+        .focused($focusedControl, equals: .fullscreen)
+        .modifier(PlaybackControlFocusRing(isFocused: focusedControl == .fullscreen))
         .help("Toggle fullscreen")
         .accessibilityLabel("Toggle fullscreen")
     }
@@ -157,6 +194,8 @@ struct ControlsView: View {
                     .frame(width: 24, height: 28)
             }
             .buttonStyle(.plain)
+            .focused($focusedControl, equals: .mute)
+            .modifier(PlaybackControlFocusRing(isFocused: focusedControl == .mute))
             .help(controller.isMuted ? "Unmute" : "Mute")
             .accessibilityLabel(controller.isMuted ? "Unmute" : "Mute")
 
@@ -169,6 +208,7 @@ struct ControlsView: View {
                 step: 1
             )
             .frame(width: isNarrow ? 54 : 72)
+            .focused($focusedControl, equals: .volume)
             .help("Volume: \(Int(controller.volume)) percent")
             .accessibilityLabel("Volume")
             .accessibilityValue("\(Int(controller.volume)) percent")
@@ -238,7 +278,7 @@ struct ControlsView: View {
                 DragGesture(minimumDistance: 0)
                     .onChanged { value in
                         if !isDragging {
-                            timelineFocus = true
+                            focusedControl = .timeline
                             isDragging = true
                             wasPrecision = false
                             // Jump to click position
@@ -279,7 +319,7 @@ struct ControlsView: View {
                     }
             )
             .focusable()
-            .focused($timelineFocus)
+            .focused($focusedControl, equals: .timeline)
             .onKeyPress(.leftArrow) {
                 adjustTimeline(byFrames: -1)
                 return .handled
@@ -303,7 +343,7 @@ struct ControlsView: View {
                 }
             }
             .overlay {
-                if timelineFocus {
+                if focusedControl == .timeline {
                     RoundedRectangle(cornerRadius: 4)
                         .stroke(Color.accentColor, lineWidth: 2)
                 }
@@ -387,19 +427,31 @@ struct ControlsView: View {
             }
         }
         .onTapGesture {
-            guard isLoaded else { return }
-            let hasSourceTC = item.flatMap { TimecodeFormatter.effectiveStartTimecode(for: $0) } != nil
-            timecodeMode.toggle(hasSourceTimecode: hasSourceTC)
+            cycleTimecodeMode()
         }
         .onTapGesture(count: 2) {
             guard isLoaded else { return }
             startTimecodeEdit()
         }
         .help("Click to cycle mode, double-click or type numbers to edit")
+        .focusable()
+        .focused($focusedControl, equals: .timecode)
+        .onKeyPress(.space) {
+            cycleTimecodeMode()
+            return .handled
+        }
+        .onKeyPress(.return) {
+            cycleTimecodeMode()
+            return .handled
+        }
+        .modifier(PlaybackControlFocusRing(isFocused: focusedControl == .timecode))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Timecode")
         .accessibilityValue(timelineAccessibilityValue)
         .accessibilityHint("Activate to cycle display mode. Enter a timecode by typing numbers.")
+        .accessibilityAction {
+            cycleTimecodeMode()
+        }
     }
 
     private var timecodeEditor: some View {
@@ -411,7 +463,8 @@ struct ControlsView: View {
             .padding(.vertical, 2)
             .background(Color.white.opacity(0.1))
             .cornerRadius(4)
-            .focused($isTimecodeFocused)
+            .focused($focusedControl, equals: .timecodeEditor)
+            .modifier(PlaybackControlFocusRing(isFocused: focusedControl == .timecodeEditor))
             .onSubmit {
                 seekToTimecode()
             }
@@ -421,6 +474,12 @@ struct ControlsView: View {
     }
 
     // MARK: - Timecode Edit Methods
+
+    private func cycleTimecodeMode() {
+        guard isLoaded else { return }
+        let hasSourceTC = item.flatMap { TimecodeFormatter.effectiveStartTimecode(for: $0) } != nil
+        timecodeMode.toggle(hasSourceTimecode: hasSourceTC)
+    }
 
     private func startTimecodeEdit() {
         guard let item = item else { return }
@@ -432,7 +491,7 @@ struct ControlsView: View {
         withAnimation(.easeInOut(duration: 0.15)) {
             isEditingTimecode = true
         }
-        isTimecodeFocused = true
+        focusedControl = .timecodeEditor
     }
 
     private func startTimecodeEdit(withInitialText text: String) {
@@ -445,7 +504,7 @@ struct ControlsView: View {
         }
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-            isTimecodeFocused = true
+            focusedControl = .timecodeEditor
 
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
                 if let char = pendingCharacter {
@@ -461,7 +520,7 @@ struct ControlsView: View {
         withAnimation(.easeInOut(duration: 0.15)) {
             isEditingTimecode = false
         }
-        isTimecodeFocused = false
+        focusedControl = nil
         timecodeInput = ""
         justActivated = false
         pendingCharacter = nil
@@ -527,6 +586,8 @@ struct ControlsView: View {
         }
         .menuStyle(.borderlessButton)
         .frame(width: 28)
+        .focused($focusedControl, equals: .audioTrack)
+        .modifier(PlaybackControlFocusRing(isFocused: focusedControl == .audioTrack))
         .help("Audio track")
         .accessibilityLabel("Audio track")
         .accessibilityValue(selectedAudioTrackTitle)
@@ -562,6 +623,8 @@ struct ControlsView: View {
         }
         .menuStyle(.borderlessButton)
         .frame(width: 28)
+        .focused($focusedControl, equals: .subtitles)
+        .modifier(PlaybackControlFocusRing(isFocused: focusedControl == .subtitles))
         .help("Subtitles")
         .accessibilityLabel("Subtitles")
         .accessibilityValue(selectedSubtitleTrackTitle)
@@ -588,6 +651,8 @@ struct ControlsView: View {
         }
         .menuStyle(.borderlessButton)
         .frame(width: 28)
+        .focused($focusedControl, equals: .chapters)
+        .modifier(PlaybackControlFocusRing(isFocused: focusedControl == .chapters))
         .help("Chapters")
         .accessibilityLabel("Chapters")
         .accessibilityValue(selectedChapterTitle)
