@@ -61,7 +61,8 @@ MPV renders through Vulkan via MoltenVK onto a `CAMetalLayer`:
 
 ### View Layer
 
-- `ContentView` — Main window: shows `DropZoneView` when empty, `PlayerView` when a file is loaded. Manages overlay auto-hide, drag-drop, and window configuration. `openFile` does the AVAsset descriptor preload before calling `controller.loadMedia`.
+- `ContentView` — Main window composition: shows `DropZoneView` when empty and `PlayerView` when a file is loaded. It delegates per-window registration and metadata-aware opening to `PlayerWindowCoordinator`, overlay visibility and AppKit event observers to `PlayerOverlayController`, and typed menu/shortcut routing to focused command-handler modifiers.
+- `PlayerOverlayViews` — Reusable screenshot/export feedback and update-availability overlays kept separate from the main player composition.
 - `PlayerView` — Renders either AVPlayer or MPV backend based on `controller.useMPV`. Handles JKL keyboard controls. `playerAspectRatio` falls back to `MediaItem.videoDisplayAspectRatio` before the 16:9 default so the view survives teardown without snapping to a stale aspect.
 - `ControlsView` — Playback controls bar with play/pause, seek slider, speed controls, timecode display, trim in/out buttons.
 - `WindowConfigurator` — `NSViewRepresentable` that drives `contentAspectRatio` and content size from `controller.videoAspectRatio` / `videoSourceSize`.
