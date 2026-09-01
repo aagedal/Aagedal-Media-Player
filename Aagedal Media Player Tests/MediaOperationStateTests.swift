@@ -3,10 +3,56 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import XCTest
+import Combine
 @testable import Aagedal_Media_Player
 
 @MainActor
 final class MediaOperationStateTests: XCTestCase {
+    func testPlayerControllerForwardsMediaOperationChanges() {
+        let controller = PlayerController()
+        var changeCount = 0
+        let cancellable = controller.objectWillChange.sink {
+            changeCount += 1
+        }
+
+        controller.setTrimIn()
+
+        XCTAssertEqual(controller.trimIn, 0)
+        XCTAssertGreaterThan(changeCount, 0)
+        withExtendedLifetime(cancellable) {}
+    }
+
+    func testSettingTrimInClearsAnOverlappingOutPoint() {
+        let operations = MediaOperationsController()
+        operations.setTrimOut(at: 10)
+
+        operations.setTrimIn(at: 10)
+
+        XCTAssertEqual(operations.trimIn, 10)
+        XCTAssertNil(operations.trimOut)
+    }
+
+    func testSettingTrimOutClearsAnOverlappingInPoint() {
+        let operations = MediaOperationsController()
+        operations.setTrimIn(at: 10)
+
+        operations.setTrimOut(at: 10)
+
+        XCTAssertNil(operations.trimIn)
+        XCTAssertEqual(operations.trimOut, 10)
+    }
+
+    func testClearTrimPointsResetsBothPoints() {
+        let operations = MediaOperationsController()
+        operations.setTrimIn(at: 5)
+        operations.setTrimOut(at: 10)
+
+        operations.clearTrimPoints()
+
+        XCTAssertNil(operations.trimIn)
+        XCTAssertNil(operations.trimOut)
+    }
+
     func testScreenshotVisibilityTracksIdleState() {
         let visibility = [
             ScreenshotOperationState.idle.isVisible,

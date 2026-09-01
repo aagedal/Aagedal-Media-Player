@@ -10,7 +10,6 @@ import AppKit
 import AVKit
 import Combine
 import OSLog
-import UniformTypeIdentifiers
 
 @MainActor
 final class PlayerController: ObservableObject {
@@ -85,14 +84,14 @@ final class PlayerController: ObservableObject {
     @Published var videoAspectRatio: CGFloat?
     @Published var videoSourceSize: NSSize?
 
-    // Trim points
-    @Published var trimIn: Double?
-    @Published var trimOut: Double?
-
-    // Media operation feedback
-    @Published private(set) var screenshotState: ScreenshotOperationState = .idle
-    @Published private(set) var trimExportState: TrimExportOperationState = .idle
-    private var exportHandle: SubprocessHandle?
+    // Media operation state is owned by a focused coordinator. These computed
+    // properties preserve the existing view-facing PlayerController API.
+    private let mediaOperations = MediaOperationsController()
+    private var mediaOperationsCancellable: AnyCancellable?
+    var trimIn: Double? { mediaOperations.trimIn }
+    var trimOut: Double? { mediaOperations.trimOut }
+    var screenshotState: ScreenshotOperationState { mediaOperations.screenshotState }
+    var trimExportState: TrimExportOperationState { mediaOperations.trimExportState }
 
     // Reverse playback
     private var reverseSpeed: Int = 1
@@ -175,6 +174,9 @@ final class PlayerController: ObservableObject {
         volume = defaults.value(for: AppSettings.playbackVolume)
             .clamped(to: 0...100, default: AppSettings.playbackVolume.defaultValue)
         isMuted = defaults.value(for: AppSettings.playbackMuted)
+        mediaOperationsCancellable = mediaOperations.objectWillChange.sink { [weak self] in
+            self?.objectWillChange.send()
+        }
     }
 
     // MARK: - Media Item Management
@@ -195,8 +197,7 @@ final class PlayerController: ObservableObject {
         // Always prepare if it's a new file, or if it's the first load
         if previousURL != item.url || !isReady {
             currentPlaybackTime = 0
-            trimIn = nil
-            trimOut = nil
+            mediaOperations.clearTrimPoints()
 
             // Aspect ratio from MetadataMapper's resolved DAR.
             if let ratio = item.videoDisplayAspectRatio, ratio.isFinite, ratio > 0 {
@@ -1488,289 +1489,49 @@ final class PlayerController: ObservableObject {
     // MARK: - Trim Points
 
     func setTrimIn() {
-        trimIn = currentPlaybackTime
-        // If trimOut exists and is before trimIn, clear it
-        if let out = trimOut, let inn = trimIn, out <= inn {
-            trimOut = nil
-        }
+        mediaOperations.setTrimIn(at: currentPlaybackTime)
     }
 
     func setTrimOut() {
-        trimOut = currentPlaybackTime
-        // If trimIn exists and is after trimOut, clear it
-        if let inn = trimIn, let out = trimOut, inn >= out {
-            trimIn = nil
-        }
+        mediaOperations.setTrimOut(at: currentPlaybackTime)
     }
 
     func clearTrimIn() {
-        trimIn = nil
+        mediaOperations.clearTrimIn()
     }
 
     func clearTrimOut() {
-        trimOut = nil
+        mediaOperations.clearTrimOut()
     }
 
     func clearTrimPoints() {
-        trimIn = nil
-        trimOut = nil
+        mediaOperations.clearTrimPoints()
     }
 
     // MARK: - Screenshot
 
     func captureScreenshot() async {
-        guard !screenshotState.isInFlight else { return }
         guard let item = mediaItem else { return }
-
-        screenshotState = .idle
-
-        let time = currentPlaybackTime
-        let stream = item.metadata?.primaryVideoStream
-        let bitDepth = stream?.bitDepth ?? 8
-        let hasAlpha = stream?.hasAlpha ?? false
-        let format = SettingsView.selectedScreenshotFormat
-
-        // Build output filename
-        let baseName = item.url.deletingPathExtension().lastPathComponent
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyyMMdd_HHmmss"
-        let timestamp = dateFormatter.string(from: Date())
-        let timeString = String(format: "%.3f", time)
-        let outputName = "\(baseName)_\(timestamp)_t\(timeString).\(format.fileExtension)"
-
-        // Resolve output URL based on screenshot location mode
-        let output: CoordinatedOutput
-        let resolvedDir = SettingsView.resolvedScreenshotDirectory(sourceURL: item.url)
-
-        if let dir = resolvedDir {
-            // original or custom mode
-            let needsSecurityScope = dir != item.url.deletingLastPathComponent()
-            if needsSecurityScope { _ = dir.startAccessingSecurityScopedResource() }
-            defer { if needsSecurityScope { dir.stopAccessingSecurityScopedResource() } }
-            output = OutputCoordinator.automatic(directory: dir, preferredFilename: outputName)
-        } else {
-            // ask mode — show save panel
-            let chosenURL: URL? = await withCheckedContinuation { continuation in
-                let panel = NSSavePanel()
-                panel.nameFieldStringValue = outputName
-                panel.allowedContentTypes = [.init(filenameExtension: format.fileExtension) ?? .image]
-                panel.canCreateDirectories = true
-                panel.directoryURL = item.url.deletingLastPathComponent()
-
-                panel.begin { response in
-                    if response == .OK {
-                        continuation.resume(returning: panel.url)
-                    } else {
-                        continuation.resume(returning: nil)
-                    }
-                }
-            }
-
-            guard let chosen = chosenURL else { return }
-            output = OutputCoordinator.userConfirmed(destinationURL: chosen)
-        }
-
-        defer { output.discard() }
-
-        let arguments = ScreenshotCommandBuilder.arguments(for: ScreenshotCommandRequest(
-            sourceURL: item.url,
-            destinationURL: output.temporaryURL,
-            time: time,
-            format: format,
-            bitDepth: bitDepth,
-            hasAlpha: hasAlpha,
-            isInterlaced: stream?.isInterlaced ?? false,
-            jxlQuality: UserDefaults.standard.value(for: AppSettings.screenshotJXLQuality),
-            jpegQuality: UserDefaults.standard.value(for: AppSettings.screenshotJPEGQuality),
-            colorMetadata: stream
-        ))
-
-        screenshotState = .saving
-
-        do {
-            try await FFmpegService.run(arguments: arguments)
-            let outputURL = try output.commit()
-            logger.info("Screenshot saved: \(outputURL.lastPathComponent)")
-            screenshotState = .succeeded(outputURL)
-            Task {
-                try? await Task.sleep(for: .seconds(5))
-                if screenshotState == .succeeded(outputURL) {
-                    screenshotState = .idle
-                }
-            }
-        } catch {
-            screenshotState = .failed("Screenshot failed: \(error.localizedDescription)")
-            logger.error("Screenshot failed: \(error.localizedDescription)")
-        }
+        await mediaOperations.captureScreenshot(for: item, at: currentPlaybackTime)
     }
 
     func dismissScreenshotFeedback() {
-        screenshotState = .idle
+        mediaOperations.dismissScreenshotFeedback()
     }
 
     // MARK: - Trim Export
 
     func exportTrim() async {
-        guard !trimExportState.isInFlight else { return }
         guard let item = mediaItem else { return }
-        trimExportState = .idle
-        guard let inPoint = trimIn, let outPoint = trimOut, outPoint > inPoint else {
-            let missing = trimIn == nil && trimOut == nil ? "Set trim in and out points first."
-                : trimIn == nil ? "Set a trim in point first."
-                : trimOut == nil ? "Set a trim out point first."
-                : "Trim out must be after trim in."
-            logger.warning("Export requires both trim in and out points")
-            trimExportState = .warning(missing)
-            Task {
-                try? await Task.sleep(for: .seconds(2))
-                if trimExportState == .warning(missing) {
-                    trimExportState = .idle
-                }
-            }
-            return
-        }
-
-        let format = SettingsView.selectedTrimExportFormat
-        let duration = outPoint - inPoint
-        let originalExt = item.url.pathExtension
-        let ext = format.fileExtension ?? originalExt
-        let baseName = item.url.deletingPathExtension().lastPathComponent
-        let defaultName = "\(baseName)_trimmed.\(ext)"
-
-        // Resolve output URL based on trim location mode
-        let output: CoordinatedOutput
-        let resolvedDir = SettingsView.resolvedTrimDirectory(sourceURL: item.url)
-
-        if let dir = resolvedDir {
-            let needsSecurityScope = dir != item.url.deletingLastPathComponent()
-            if needsSecurityScope { _ = dir.startAccessingSecurityScopedResource() }
-            defer { if needsSecurityScope { dir.stopAccessingSecurityScopedResource() } }
-            output = OutputCoordinator.automatic(directory: dir, preferredFilename: defaultName)
-        } else {
-            let chosenURL: URL? = await withCheckedContinuation { continuation in
-                let panel = NSSavePanel()
-                panel.nameFieldStringValue = defaultName
-                panel.allowedContentTypes = [UTType(filenameExtension: ext) ?? .movie]
-                panel.canCreateDirectories = true
-                panel.directoryURL = item.url.deletingLastPathComponent()
-
-                panel.begin { response in
-                    if response == .OK {
-                        continuation.resume(returning: panel.url)
-                    } else {
-                        continuation.resume(returning: nil)
-                    }
-                }
-            }
-
-            guard let chosen = chosenURL else { return }
-            output = OutputCoordinator.userConfirmed(destinationURL: chosen)
-        }
-
-        defer { output.discard() }
-
-        if format == .copy {
-            do {
-                try TrimExportValidator.validateStreamCopy(
-                    sourceURL: item.url,
-                    destinationURL: output.destinationURL,
-                    metadata: item.metadata
-                )
-            } catch {
-                trimExportState = .failed("Export unavailable: \(error.localizedDescription)")
-                logger.error("Trim export preflight failed: \(error.localizedDescription)")
-                return
-            }
-        }
-
-        let width: Int
-        switch format {
-        case .copy:
-            width = ExportWidthPreset.original.rawValue
-        case .gif:
-            width = UserDefaults.standard.value(for: AppSettings.gifWidth)
-        case .animatedAVIF:
-            width = UserDefaults.standard.value(for: AppSettings.avifWidth)
-        case .hardwareH264:
-            width = UserDefaults.standard.value(for: AppSettings.h264Width)
-        case .hardwareH265:
-            width = UserDefaults.standard.value(for: AppSettings.h265Width)
-        }
-
-        let arguments = TrimExportCommandBuilder.arguments(for: TrimExportCommandRequest(
-            sourceURL: item.url,
-            destinationURL: output.temporaryURL,
-            inPoint: inPoint,
-            outPoint: outPoint,
-            format: format,
-            width: width,
-            gifFrameRate: UserDefaults.standard.value(for: AppSettings.gifFrameRate),
-            avifQuality: UserDefaults.standard.value(for: AppSettings.avifQuality),
-            avifSpeed: UserDefaults.standard.value(for: AppSettings.avifSpeed),
-            h264Quality: UserDefaults.standard.value(for: AppSettings.h264Quality),
-            h265Quality: UserDefaults.standard.value(for: AppSettings.h265Quality)
-        ))
-
-        trimExportState = .preparing
-
-        let handle = SubprocessHandle()
-        exportHandle = handle
-
-        let progressCallback: (@Sendable (Double) -> Void)?
-        if format != .copy {
-            progressCallback = { [weak self] fraction in
-                let _ = Task { @MainActor [weak self] in
-                    guard let self else { return }
-                    guard self.trimExportState.acceptsProgress else { return }
-                    self.trimExportState = .exporting(progress: fraction)
-                }
-            }
-        } else {
-            progressCallback = nil
-        }
-
-        do {
-            try await FFmpegService.run(
-                arguments: arguments,
-                duration: format != .copy ? duration : nil,
-                onProgress: progressCallback,
-                handle: handle
-            )
-            let outputURL = try output.commit()
-            exportHandle = nil
-            logger.info("Trim export saved: \(outputURL.lastPathComponent)")
-            trimExportState = .succeeded(outputURL)
-            Task {
-                try? await Task.sleep(for: .seconds(5))
-                if trimExportState == .succeeded(outputURL) {
-                    trimExportState = .idle
-                }
-            }
-        } catch let error as FFmpegError where error == .cancelled {
-            exportHandle = nil
-            logger.info("Trim export cancelled")
-            trimExportState = .cancelled
-            Task {
-                try? await Task.sleep(for: .seconds(1.5))
-                if trimExportState == .cancelled {
-                    trimExportState = .idle
-                }
-            }
-        } catch {
-            exportHandle = nil
-            trimExportState = .failed("Export failed: \(error.localizedDescription)")
-            logger.error("Trim export failed: \(error.localizedDescription)")
-        }
+        await mediaOperations.exportTrim(for: item)
     }
 
     func cancelExport() {
-        guard exportHandle != nil else { return }
-        trimExportState = .cancelling
-        exportHandle?.cancel()
+        mediaOperations.cancelExport()
     }
 
     func dismissTrimExportFeedback() {
-        trimExportState = .idle
+        mediaOperations.dismissTrimExportFeedback()
     }
 
     // MARK: - Teardown
