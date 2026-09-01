@@ -19,6 +19,10 @@ The generator requires a full ffmpeg installation with libx264/libx265. Set
 `FFMPEG=/path/to/ffmpeg` to select one explicitly. If fixtures are absent, only
 the generated-media tests are skipped; all pure unit tests continue to run.
 
+Release builds support Apple Silicon (`arm64`) on macOS 15 or later. Maintainer
+preflight, signing, architecture, entitlement, and ffmpeg provenance guidance is
+in [docs/RELEASE.md](docs/RELEASE.md).
+
 ## Features
 
 ### File support

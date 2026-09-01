@@ -16,6 +16,10 @@ xcuserdata/
 .build/
 Packages/
 
+# Python helper caches
+__pycache__/
+*.py[cod]
+
 # CocoaPods / Carthage
 Pods/
 Carthage/Build/

@@ -141,11 +141,13 @@ Acceptance: state transitions have a single owner and pure behavior can be teste
 
 ## Phase 9 — Release engineering
 
-- Reconcile the shared scheme with the documented requirement to disable Metal API Validation for MoltenVK.
-- Review disabled Main Thread Checker and performance diagnostics settings.
-- Add release preflight checks for version/build monotonicity, changelog/appcast consistency, signatures, URLs, and the bundled ffmpeg hash/architecture.
-- Decide whether the app is intentionally Apple-Silicon-only and either document that prominently or evaluate universal artifacts.
-- Document why App Sandbox and library validation exceptions are required, and periodically reassess their scope.
+Status: Completed on 2026-09-01. The release pipeline now fails before publishing inconsistent metadata or artifacts and records the architecture and security decisions that must be revisited when dependencies or file access change.
+
+- [x] Reconcile the shared scheme with the documented requirement to disable Metal API Validation for MoltenVK.
+- [x] Review disabled Main Thread Checker and performance diagnostics settings. Both checkers are enabled; only the MoltenVK-specific Metal validation exception remains.
+- [x] Add release preflight checks for version/build monotonicity, changelog/appcast consistency, signatures, URLs, and the bundled ffmpeg hash/architecture.
+- [x] Decide whether the app is intentionally Apple-Silicon-only and either document that prominently or evaluate universal artifacts. Releases are intentionally arm64-only until all native dependencies and playback paths can be validated as universal builds.
+- [x] Document why App Sandbox and library validation exceptions are required, and periodically reassess their scope.
 
 Acceptance: releases fail early on inconsistent metadata or artifacts and have an auditable, reproducible dependency set.
 

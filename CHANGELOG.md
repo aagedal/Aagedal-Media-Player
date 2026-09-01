@@ -2,6 +2,24 @@
 
 All notable changes to Aagedal Media Player.
 
+## [1.6.1] — Unreleased
+
+### Added
+- Drop-frame-correct SMPTE timecode handling and regression coverage for supported frame rates.
+- Collision-safe, atomic screenshot and trim output with visible completion and failure actions.
+- Cancellation-aware ffmpeg execution, bounded scope scheduling, and generated media fixtures.
+- Consistent volume, mute, buffering, playback-error, keyboard, and accessibility behavior across playback backends.
+- Release preflight validation for version/build ordering, changelog and appcast metadata, Sparkle signatures and URLs, exported app signing, and bundled ffmpeg provenance.
+
+### Changed
+- Split playback backends, track selection, media operations, window opening, overlays, settings, and command routing into focused components.
+- Keep Main Thread Checker and Thread Performance Checker enabled while retaining the required MoltenVK Metal API Validation exception.
+- Document and validate the intentional Apple-Silicon-only release architecture and security entitlements.
+
+### Fixed
+- Prevented superseded scope frames and media-operation tasks from publishing stale results or surviving teardown.
+- Forwarded backend preparation, load, and end-file errors into actionable UI states.
+
 ## [1.6.0] — 2026-05-24
 
 ### Added

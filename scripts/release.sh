@@ -5,7 +5,7 @@
 #
 # Build, sign, notarize, and publish a new release. After completing the build
 # pipeline this script signs the resulting .zip with Sparkle's EdDSA key and
-# appends a new <item> to appcast.xml so existing installs auto-update.
+# prepends a new <item> to appcast.xml so existing installs auto-update.
 #
 # Prerequisites (one-time setup):
 #   1. Sparkle SDK installed via SPM (it is, as of the Sparkle integration).
@@ -81,6 +81,13 @@ fi
 
 echo "==> Building $MARKETING_VERSION ($CURRENT_PROJECT_VERSION)"
 
+# Fail before deleting an old build or spending time archiving if source
+# metadata, appcast ordering/signatures, scheme diagnostics, or the reviewed
+# ffmpeg artifact are inconsistent.
+python3 scripts/release-preflight.py \
+    --version "$MARKETING_VERSION" \
+    --build "$CURRENT_PROJECT_VERSION"
+
 # -----------------------------------------------------------------------------
 # Build & export
 # -----------------------------------------------------------------------------
@@ -112,6 +119,8 @@ xcodebuild archive \
     -scheme "$SCHEME" \
     -configuration Release \
     -archivePath "$ARCHIVE_PATH" \
+    MARKETING_VERSION="$MARKETING_VERSION" \
+    CURRENT_PROJECT_VERSION="$CURRENT_PROJECT_VERSION" \
     ARCHS=arm64 \
     ONLY_ACTIVE_ARCH=NO
 
@@ -122,6 +131,14 @@ xcodebuild -exportArchive \
 
 APP_PATH="$EXPORT_DIR/$SCHEME.app"
 [[ -d "$APP_PATH" ]] || { echo "Build produced no .app at $APP_PATH" >&2; exit 1; }
+
+# Confirm the exported bundle contains the requested metadata, is arm64-only,
+# carries hardened-runtime Developer ID signatures, and passes strict nested
+# signature verification before notarization or upload.
+python3 scripts/release-preflight.py \
+    --version "$MARKETING_VERSION" \
+    --build "$CURRENT_PROJECT_VERSION" \
+    --app "$APP_PATH"
 
 # -----------------------------------------------------------------------------
 # Notarize & staple
@@ -165,34 +182,12 @@ echo "==> Sparkle signature: $ED_SIGNATURE_LINE"
 # `sign_update` prints something like:
 #   sparkle:edSignature="abc..." length="12345"
 ED_SIGNATURE=$(echo "$ED_SIGNATURE_LINE" | sed -n 's/.*sparkle:edSignature="\([^"]*\)".*/\1/p')
+[[ -n "$ED_SIGNATURE" ]] || { echo "ERROR: sign_update returned no EdDSA signature." >&2; exit 1; }
 
-# -----------------------------------------------------------------------------
-# Upload to GitHub release
-# -----------------------------------------------------------------------------
 DOWNLOAD_URL="https://github.com/$GITHUB_REPOSITORY/releases/download/$MARKETING_VERSION/$RELEASE_ZIP_NAME"
 
-if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
-    if gh release view "$MARKETING_VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-        echo "==> Uploading $RELEASE_ZIP_NAME to existing GitHub release $MARKETING_VERSION"
-        gh release upload "$MARKETING_VERSION" "$RELEASE_ZIP" \
-            --repo "$GITHUB_REPOSITORY" \
-            --clobber
-    else
-        echo "==> Creating GitHub release $MARKETING_VERSION"
-        gh release create "$MARKETING_VERSION" "$RELEASE_ZIP" \
-            --repo "$GITHUB_REPOSITORY" \
-            --target main \
-            --title "$MARKETING_VERSION" \
-            --generate-notes
-    fi
-else
-    echo "==> GitHub CLI is unavailable or unauthenticated — skipping upload."
-    echo "    1. Create release $MARKETING_VERSION at https://github.com/$GITHUB_REPOSITORY/releases/new"
-    echo "    2. Attach $RELEASE_ZIP"
-fi
-
 # -----------------------------------------------------------------------------
-# Append appcast.xml entry
+# Build and validate the pending appcast entry before publishing
 # -----------------------------------------------------------------------------
 PUB_DATE=$(date "+%a, %d %b %Y %H:%M:%S %z")
 
@@ -261,19 +256,54 @@ $RELEASE_NOTES_HTML
 EOF
 )
 
-python3 - "$APPCAST" "$NEW_ITEM" <<'PYEOF'
+PENDING_APPCAST="$BUILD_DIR/appcast.xml"
+python3 - "$APPCAST" "$PENDING_APPCAST" "$NEW_ITEM" <<'PYEOF'
 import sys, pathlib
-path = pathlib.Path(sys.argv[1])
-new_item = sys.argv[2]
-text = path.read_text()
-needle = "    </channel>"
+source = pathlib.Path(sys.argv[1])
+destination = pathlib.Path(sys.argv[2])
+new_item = sys.argv[3]
+text = source.read_text()
+needle = "        <item>"
 if needle not in text:
-    raise SystemExit(f"Could not find '{needle.strip()}' in {path}")
-text = text.replace(needle, new_item + "\n" + needle, 1)
-path.write_text(text)
+    raise SystemExit(f"Could not find an existing <item> in {source}")
+text = text.replace(needle, new_item + "\n\n" + needle, 1)
+destination.write_text(text)
 PYEOF
 
-echo "==> Appended appcast entry. Review and commit:"
+python3 scripts/release-preflight.py \
+    --version "$MARKETING_VERSION" \
+    --build "$CURRENT_PROJECT_VERSION" \
+    --state published \
+    --appcast "$PENDING_APPCAST"
+
+# -----------------------------------------------------------------------------
+# Upload only after the pending feed has passed every deterministic check
+# -----------------------------------------------------------------------------
+if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
+    if gh release view "$MARKETING_VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+        echo "==> Uploading $RELEASE_ZIP_NAME to existing GitHub release $MARKETING_VERSION"
+        gh release upload "$MARKETING_VERSION" "$RELEASE_ZIP" \
+            --repo "$GITHUB_REPOSITORY" \
+            --clobber
+    else
+        echo "==> Creating GitHub release $MARKETING_VERSION"
+        gh release create "$MARKETING_VERSION" "$RELEASE_ZIP" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target main \
+            --title "$MARKETING_VERSION" \
+            --generate-notes
+    fi
+else
+    echo "==> GitHub CLI is unavailable or unauthenticated — skipping upload."
+    echo "    1. Create release $MARKETING_VERSION at https://github.com/$GITHUB_REPOSITORY/releases/new"
+    echo "    2. Attach $RELEASE_ZIP"
+fi
+
+# Publish the already-validated feed locally only after the upload succeeds (or
+# after selecting the explicit manual-upload path above).
+mv "$PENDING_APPCAST" "$APPCAST"
+
+echo "==> Prepended and validated appcast entry. Review and commit:"
 echo "    git diff $APPCAST"
 echo "    git add $APPCAST && git commit -m \"Release $MARKETING_VERSION\" && git push"
 
