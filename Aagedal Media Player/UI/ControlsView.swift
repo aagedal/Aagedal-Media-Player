@@ -77,13 +77,17 @@ struct ControlsView: View {
             if isNarrow {
                 VStack(spacing: 6) {
                     HStack(spacing: 8) {
-                        transportButtons
+                        primaryTransportControls
+                    }
+                    HStack(spacing: 8) {
+                        secondaryTransportControls
                     }
                     timecodeDisplay
                 }
             } else {
                 HStack(spacing: 12) {
-                    transportButtons
+                    primaryTransportControls
+                    secondaryTransportControls
                     Spacer()
                     timecodeDisplay
                 }
@@ -120,7 +124,7 @@ struct ControlsView: View {
     // MARK: - Transport Buttons
 
     @ViewBuilder
-    private var transportButtons: some View {
+    private var primaryTransportControls: some View {
         // Play/Pause
         Button(action: { controller.togglePlayback() }) {
             Image(systemName: isPlaying ? "pause.fill" : "play.fill")
@@ -140,9 +144,14 @@ struct ControlsView: View {
 
         volumeControl
 
-        Divider()
-            .frame(height: 18)
+        if !isNarrow {
+            Divider()
+                .frame(height: 18)
+        }
+    }
 
+    @ViewBuilder
+    private var secondaryTransportControls: some View {
         // Audio track picker
         audioTrackPicker
 

@@ -22,6 +22,7 @@ All notable changes to Aagedal Media Player.
 ### Fixed
 - Prevented superseded scope frames and media-operation tasks from publishing stale results or surviving teardown.
 - Forwarded backend preparation, load, and end-file errors into actionable UI states.
+- Kept playback controls and their keyboard focus rings visible in narrow player windows.
 
 ## [1.6.0] — 2026-05-24
 

@@ -111,11 +111,11 @@ Acceptance: every backend failure reaches an actionable UI state, and audio cont
 
 ## Phase 7 — Accessibility and playback usability
 
-Status: In progress — timeline accessibility, control semantics, status announcements, unified multi-file opening, automatic audio-only waveform presentation, folder navigation, and focus-aware keyboard control navigation are implemented; manual Full Keyboard Access validation remains.
+Status: Completed on 2026-09-01. Full Keyboard Access now traverses every playback control in both directions, preserves visible focus rings and overlay visibility, and activates the focused control without triggering global playback shortcuts.
 
 - [x] Make the custom timeline keyboard- and VoiceOver-adjustable.
 - [x] Add labels, values, hints, and selected states to icon-only controls.
-- [ ] Preserve visible focus rings and test Full Keyboard Access. Every playback control now reports focus, plain-style controls draw explicit focus rings, focused controls suppress auto-hide, and the current key handler is propagated through both playback backends so Space reaches the focused control instead of toggling playback. A live MPV check confirmed timeline/timecode traversal, the visible timecode focus ring, and focused Space activation; Tab/Shift-Tab reveals only the active window's overlay without intercepting traversal. End-to-end validation with macOS Keyboard Navigation enabled for all controls remains.
+- [x] Preserve visible focus rings and test Full Keyboard Access. End-to-end MPV validation with macOS Keyboard Navigation enabled confirmed forward and reverse traversal across the inspector, timeline, transport, volume, track menus, loop, fullscreen, and timecode controls; frame seeking, focused Space activation, and focus-held overlay visibility also passed. Narrow layouts split controls across two rows so no focused control or ring is clipped.
 - [x] Announce export completion, cancellation, and failure.
 - [x] Improve audio-only presentation with an automatic waveform option and retryable failure state.
 - [x] Handle multi-file drops consistently with Finder open events.
