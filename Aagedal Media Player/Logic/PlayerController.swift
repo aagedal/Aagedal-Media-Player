@@ -34,6 +34,7 @@ final class PlayerController: ObservableObject {
     typealias AudioTrackOption = TrackSelectionController.AudioTrackOption
     typealias SubtitleTrackOption = TrackSelectionController.SubtitleTrackOption
     typealias ChapterOption = TrackSelectionController.ChapterOption
+    typealias ProResRAWDetector = @MainActor @Sendable (URL, MediaMetadata?) async -> Bool
 
     // MARK: - Published State
 
@@ -149,6 +150,8 @@ final class PlayerController: ObservableObject {
     private var mpvTimePosTask: Task<Void, Never>?
     private var mpvFileLoadedTask: Task<Void, Never>?
     private var mpvDurationTask: Task<Void, Never>?
+    private var playbackPreparationTask: Task<Void, Never>?
+    private let proResRAWDetector: ProResRAWDetector
 
     /// Monotonically increasing counter invalidating stale async work from
     /// previous `preparePlayback` / `setupMPV` calls.
@@ -164,7 +167,10 @@ final class PlayerController: ObservableObject {
 
     private let logger = Logger(subsystem: "com.aagedal.MediaPlayer", category: "PlayerController")
 
-    init() {
+    init(proResRAWDetector: ProResRAWDetector? = nil) {
+        self.proResRAWDetector = proResRAWDetector ?? { url, metadata in
+            await PlayerController.isProResRAWFile(url: url, metadata: metadata)
+        }
         let defaults = UserDefaults.standard
         volume = defaults.value(for: AppSettings.playbackVolume)
             .clamped(to: 0...100, default: AppSettings.playbackVolume.defaultValue)
@@ -356,7 +362,6 @@ final class PlayerController: ObservableObject {
     func preparePlayback(startTime: TimeInterval, resetAudioSelection: Bool = true) {
         let wasCapturing = frameCapture.isCapturing
         teardown(resetAudioSelection: resetAudioSelection)
-        preparationID &+= 1
         let myPrepID = preparationID
         playbackPhase = .preparing
 
@@ -374,11 +379,14 @@ final class PlayerController: ObservableObject {
         // calling loadMedia, so the cached metadata fast path covers the
         // common case; the async helper falls back to a fast AVAsset
         // CMFormatDescription FourCC check for the 500 ms-timeout path.
-        Task { @MainActor [weak self] in
-            guard let self else { return }
-            let isProResRAW = await PlayerController.isProResRAWFile(url: url, metadata: cachedMetadata)
-            // A newer preparePlayback may have superseded this one.
-            guard self.preparationID == myPrepID else { return }
+        let detector = proResRAWDetector
+        playbackPreparationTask = Task { @MainActor [weak self] in
+            let isProResRAW = await detector(url, cachedMetadata)
+            // A newer preparePlayback or teardown may have superseded this
+            // work even when the underlying AVAsset load ignored cancellation.
+            guard let self,
+                  !Task.isCancelled,
+                  self.preparationID == myPrepID else { return }
 
             if isProResRAW {
                 self.logger.info("ProRes RAW detected, using AVPlayer for \(url.lastPathComponent)")
@@ -388,6 +396,7 @@ final class PlayerController: ObservableObject {
                 self.setupMPV(url: url, startTime: startTime)
                 if wasCapturing { self.frameCapture.startCapture() }
             }
+            self.playbackPreparationTask = nil
         }
     }
 
@@ -1294,6 +1303,14 @@ final class PlayerController: ObservableObject {
     // MARK: - Teardown
 
     func teardown(resetAudioSelection: Bool = true) {
+        // Invalidate backend selection before tearing down the active backend.
+        // AVAsset property loading is not guaranteed to stop immediately when
+        // its Swift task is cancelled, so the preparation ID is the final
+        // stale-completion barrier.
+        preparationID &+= 1
+        playbackPreparationTask?.cancel()
+        playbackPreparationTask = nil
+
         cancelPendingScrubSeeks()
 
         // Stop reverse playback first

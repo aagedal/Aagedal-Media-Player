@@ -47,6 +47,8 @@ original nine phases are complete.
 - [x] Release preflight passes all 61 checks after installing the verified
   Developer ID-signed ffmpeg 9.0.1 artifact and updating its provenance
   checksum on 2026-09-02.
+- [x] Phase 27 playback-preparation ownership passes the expanded 136-test
+  suite and static analysis on 2026-09-02.
 
 ## Phase 10 — Playback and preload correctness
 
@@ -367,6 +369,25 @@ Acceptance: a fresh package resolution selects SwiftMediaMetadata 3.0.0, the
 app builds against its renamed module without compatibility shims, and current
 documentation no longer describes the old SwiftExif package identity.
 
+## Phase 27 — Playback-preparation ownership
+
+Status: Completed on 2026-09-02. Asynchronous backend selection is now owned by
+the player controller, cancelled during teardown, and guarded by a preparation
+generation that teardown invalidates even if AVAsset property loading ignores
+task cancellation.
+
+- [x] Retain the asynchronous ProRes RAW backend-selection task.
+- [x] Cancel backend selection whenever playback is torn down or replaced.
+- [x] Advance the preparation identity during teardown so a late completion
+  cannot construct a new backend after its player window closes.
+- [x] Inject the codec probe and cover a suspended completion after teardown
+  with a deterministic regression test.
+- [x] Pass the full test suite and static analysis.
+
+Acceptance: closing a player window or replacing its media while backend
+selection is suspended cannot create an AVFoundation or MPV backend after
+teardown.
+
 ## Delivery order
 
 1. Phase 10 correctness fixes and regression tests.
@@ -387,3 +408,4 @@ documentation no longer describes the old SwiftExif package identity.
 16. Phase 24 deferred UI-work ownership.
 17. Phase 25 media-operation feedback ownership.
 18. Phase 26 SwiftMediaMetadata 3.0.0 migration.
+19. Phase 27 playback-preparation ownership.

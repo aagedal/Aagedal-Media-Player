@@ -121,4 +121,57 @@ final class PlayerBackendAdapterTests: XCTestCase {
             player: nil
         ))
     }
+
+    func testTeardownRejectsSuspendedBackendSelectionCompletion() async {
+        let detector = SuspendedProResRAWDetector()
+        let controller = PlayerController { _, _ in
+            await detector.result()
+        }
+        let item = MediaItem(
+            url: URL(fileURLWithPath: "/tmp/pending.mov"),
+            name: "pending",
+            size: 0
+        )
+
+        controller.loadMedia(item)
+        await detector.waitUntilStarted()
+        let activePreparationID = controller.preparationID
+        XCTAssertEqual(controller.playbackPhase, .preparing)
+
+        controller.teardown()
+        XCTAssertGreaterThan(controller.preparationID, activePreparationID)
+        XCTAssertEqual(controller.playbackPhase, .idle)
+
+        detector.resume(returning: false)
+        for _ in 0..<10 {
+            await Task.yield()
+        }
+
+        XCTAssertEqual(controller.playbackPhase, .idle)
+        XCTAssertFalse(controller.isReady)
+    }
+}
+
+@MainActor
+private final class SuspendedProResRAWDetector {
+    private var continuation: CheckedContinuation<Bool, Never>?
+    private var didStart = false
+
+    func result() async -> Bool {
+        didStart = true
+        return await withCheckedContinuation { continuation in
+            self.continuation = continuation
+        }
+    }
+
+    func waitUntilStarted() async {
+        while !didStart {
+            await Task.yield()
+        }
+    }
+
+    func resume(returning value: Bool) {
+        continuation?.resume(returning: value)
+        continuation = nil
+    }
 }
