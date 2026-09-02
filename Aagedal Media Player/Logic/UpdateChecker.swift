@@ -116,6 +116,7 @@ final class UpdateChecker: ObservableObject {
     private let now: @Sendable () -> Date
     private let fetch: Fetch
     private let sparkleIsActive: Bool
+    private var inFlightCheck: Task<UpdateCheckResult, Never>?
 
     init(
         defaults: UserDefaults = .standard,
@@ -148,8 +149,23 @@ final class UpdateChecker: ObservableObject {
 
     @discardableResult
     func checkNow(isUserInitiated _: Bool = true) async -> UpdateCheckResult {
-        guard !isChecking, !sparkleIsActive else { return result }
+        guard !sparkleIsActive else { return result }
+        if let inFlightCheck {
+            return await inFlightCheck.value
+        }
+
         result = .checking
+        let check = Task { @MainActor [weak self] in
+            guard let self else { return UpdateCheckResult.notChecked }
+            return await self.performCheck()
+        }
+        inFlightCheck = check
+        let completedResult = await check.value
+        inFlightCheck = nil
+        return completedResult
+    }
+
+    private func performCheck() async -> UpdateCheckResult {
 
         var request = URLRequest(url: releasesAPIURL)
         request.setValue(Self.userAgent, forHTTPHeaderField: "User-Agent")

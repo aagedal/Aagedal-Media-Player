@@ -30,6 +30,8 @@ original nine phases are complete.
   static analysis on 2026-09-02.
 - [x] Phase 19 LUFS-analysis isolation passes the expanded 127-test suite and
   static analysis on 2026-09-02.
+- [x] Phase 20 update-request coalescing passes the expanded 128-test suite and
+  static analysis on 2026-09-02.
 
 ## Phase 10 — Playback and preload correctness
 
@@ -229,6 +231,22 @@ Acceptance: replacing media, retrying a stream, or closing the inspector cannot
 leave invisible LUFS work running or allow an obsolete result to affect the
 current inspector state.
 
+## Phase 20 — Update-request coalescing
+
+Status: Completed on 2026-09-02. Overlapping automatic and manual fallback
+checks now join one in-flight request and return its completed typed result.
+
+- [x] Coalesce overlapping automatic and manual fallback update checks onto one
+  in-flight request.
+- [x] Make every overlapping caller await and receive the completed typed result
+  instead of the transient `checking` state.
+- [x] Cover request count, automatic/manual overlap, and shared final results
+  with a deterministic suspended-network test.
+- [x] Pass the full test suite and static analysis.
+
+Acceptance: overlapping fallback update checks perform one network request and
+every caller receives the same completed attempt result.
+
 ## Delivery order
 
 1. Phase 10 correctness fixes and regression tests.
@@ -242,3 +260,4 @@ current inspector state.
 9. Phase 17 MPV-publisher lifecycle isolation.
 10. Phase 18 scope-capture lifecycle isolation.
 11. Phase 19 metadata-inspector analysis isolation.
+12. Phase 20 update-request coalescing.

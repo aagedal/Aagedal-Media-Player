@@ -117,6 +117,33 @@ final class UpdateCheckerTests: XCTestCase {
         XCTAssertEqual(checker.lastChecked, clock.date)
     }
 
+    func testOverlappingChecksAwaitTheSameCompletedAttempt() async throws {
+        let defaults = try makeDefaults()
+        let source = SuspendedUpdateSource()
+        let checker = makeChecker(defaults: defaults) { request in
+            await source.fetch(request)
+        }
+
+        let automaticCheck = try XCTUnwrap(checker.checkIfNeeded())
+        await source.waitUntilRequested()
+        let manualCheck = Task { await checker.checkNow() }
+        await Task.yield()
+
+        await source.complete(with: UpdateHTTPResponse(
+            data: Self.releaseJSON(tag: "v2.0.0"),
+            statusCode: 200
+        ))
+
+        let expected = UpdateCheckResult.updateAvailable(Self.release(version: "2.0.0"))
+        let automaticResult = await automaticCheck.value
+        let manualResult = await manualCheck.value
+        XCTAssertEqual(automaticResult, expected)
+        XCTAssertEqual(manualResult, expected)
+        XCTAssertEqual(checker.result, expected)
+        let requestCount = await source.requestCount
+        XCTAssertEqual(requestCount, 1)
+    }
+
     private func makeChecker(
         defaults: UserDefaults,
         clock: TestClock = TestClock(Date(timeIntervalSince1970: 1_000)),
@@ -189,6 +216,29 @@ private actor SequencedUpdateSource {
             )
         }
         throw URLError(.notConnectedToInternet)
+    }
+}
+
+private actor SuspendedUpdateSource {
+    private(set) var requestCount = 0
+    private var continuation: CheckedContinuation<UpdateHTTPResponse, Never>?
+
+    func fetch(_: URLRequest) async -> UpdateHTTPResponse {
+        requestCount += 1
+        return await withCheckedContinuation { continuation in
+            self.continuation = continuation
+        }
+    }
+
+    func waitUntilRequested() async {
+        while requestCount == 0 {
+            await Task.yield()
+        }
+    }
+
+    func complete(with response: UpdateHTTPResponse) {
+        continuation?.resume(returning: response)
+        continuation = nil
     }
 }
 
