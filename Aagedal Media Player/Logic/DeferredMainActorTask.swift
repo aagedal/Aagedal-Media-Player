@@ -16,16 +16,53 @@ final class DeferredMainActorTask {
     func schedule(
         _ operation: @escaping @MainActor @Sendable () -> Void
     ) -> Task<Void, Never> {
+        schedule(waitUntilReady: {
+            await Task.yield()
+        }) {
+            operation()
+        }
+    }
+
+    @discardableResult
+    func schedule(
+        after delay: Duration,
+        _ operation: @escaping @MainActor @Sendable () -> Void
+    ) -> Task<Void, Never> {
+        schedule(waitUntilReady: {
+            try await Task.sleep(for: delay)
+        }) {
+            operation()
+        }
+    }
+
+    @discardableResult
+    func scheduleAsync(
+        after delay: Duration,
+        _ operation: @escaping @MainActor @Sendable () async -> Void
+    ) -> Task<Void, Never> {
+        schedule(waitUntilReady: {
+            try await Task.sleep(for: delay)
+        }, operation: operation)
+    }
+
+    private func schedule(
+        waitUntilReady: @escaping @Sendable () async throws -> Void,
+        operation: @escaping @MainActor @Sendable () async -> Void
+    ) -> Task<Void, Never> {
         cancel()
         let generation = generations.advance()
 
         let scheduledTask = Task { @MainActor [weak self] in
-            await Task.yield()
+            do {
+                try await waitUntilReady()
+            } catch {
+                return
+            }
             guard let self,
                   !Task.isCancelled,
                   generations.isCurrent(generation) else { return }
 
-            operation()
+            await operation()
 
             if generations.isCurrent(generation) {
                 task = nil

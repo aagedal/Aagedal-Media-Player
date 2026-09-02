@@ -38,6 +38,8 @@ original nine phases are complete.
   suite and static analysis on 2026-09-02.
 - [x] Phase 23 dropped-file load ownership passes the expanded 133-test suite
   and static analysis on 2026-09-02.
+- [x] Phase 24 deferred UI-work ownership passes the expanded 134-test suite
+  and static analysis on 2026-09-02.
 
 ## Phase 10 — Playback and preload correctness
 
@@ -303,6 +305,22 @@ by the player window and cancelled when superseded or when that window closes.
 Acceptance: closing a player window or beginning a replacement drop cannot let
 an earlier asynchronous provider completion open files or spawn new windows.
 
+## Phase 24 — Deferred UI-work ownership
+
+Status: Completed on 2026-09-02. Delayed waveform rerenders and timecode-entry
+focus handoffs are now explicitly cancellable and owned by their SwiftUI views.
+
+- [x] Extend the deferred main-actor task owner with cancellable delayed work.
+- [x] Cancel a pending waveform gain rerender when its view disappears.
+- [x] Cancel pending timecode focus and character insertion when editing ends
+  or the controls disappear.
+- [x] Cover delayed cancellation with a focused regression test.
+- [x] Pass the full test suite and static analysis.
+
+Acceptance: closing a waveform view cannot restart rendering after cleanup,
+and cancelling timecode entry cannot restore focus or text from an obsolete
+activation.
+
 ## Delivery order
 
 1. Phase 10 correctness fixes and regression tests.
@@ -320,3 +338,4 @@ an earlier asynchronous provider completion open files or spawn new windows.
 13. Phase 21 auxiliary-waveform startup ownership.
 14. Phase 22 queued playback-timer isolation.
 15. Phase 23 dropped-file load ownership.
+16. Phase 24 deferred UI-work ownership.

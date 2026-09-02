@@ -58,6 +58,7 @@ struct ControlsView: View {
     @State private var pendingCharacter: String?
     @State private var justActivated = false
     @State private var isNarrow = false
+    @State private var deferredTimecodeActivation = DeferredMainActorTask()
     @FocusState private var focusedControl: PlaybackControlFocus?
 
     private var isLoaded: Bool { item != nil }
@@ -116,6 +117,7 @@ struct ControlsView: View {
             isControlsFocused = focus != nil
         }
         .onDisappear {
+            deferredTimecodeActivation.cancel()
             isTimelineFocused = false
             isControlsFocused = false
         }
@@ -492,6 +494,7 @@ struct ControlsView: View {
 
     private func startTimecodeEdit() {
         guard let item = item else { return }
+        deferredTimecodeActivation.cancel()
         timecodeInput = TimecodeFormatter.formatTimeForDisplayWithMode(
             seconds: controller.currentPlaybackTime,
             item: item,
@@ -512,20 +515,27 @@ struct ControlsView: View {
             isEditingTimecode = true
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+        deferredTimecodeActivation.scheduleAsync(after: .milliseconds(50)) {
+            guard isEditingTimecode, justActivated else { return }
             focusedControl = .timecodeEditor
 
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                if let char = pendingCharacter {
-                    timecodeInput = char
-                    pendingCharacter = nil
-                    justActivated = false
-                }
+            do {
+                try await Task.sleep(for: .milliseconds(50))
+            } catch {
+                return
             }
+            guard !Task.isCancelled,
+                  isEditingTimecode,
+                  justActivated,
+                  let char = pendingCharacter else { return }
+            timecodeInput = char
+            pendingCharacter = nil
+            justActivated = false
         }
     }
 
     private func cancelTimecodeEdit() {
+        deferredTimecodeActivation.cancel()
         withAnimation(.easeInOut(duration: 0.15)) {
             isEditingTimecode = false
         }

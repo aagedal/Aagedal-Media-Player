@@ -35,6 +35,19 @@ final class DeferredMainActorTaskTests: XCTestCase {
         await currentTask.value
         XCTAssertEqual(probe.events, ["current"])
     }
+
+    func testCancellationPreventsDelayedOperationFromStarting() async {
+        let owner = DeferredMainActorTask()
+        let probe = DeferredTaskProbe()
+
+        let task = owner.schedule(after: .milliseconds(50)) {
+            probe.events.append("cancelled")
+        }
+        owner.cancel()
+
+        await task.value
+        XCTAssertTrue(probe.events.isEmpty)
+    }
 }
 
 @MainActor

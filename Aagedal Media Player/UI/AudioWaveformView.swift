@@ -20,7 +20,7 @@ struct AudioWaveformView: View {
 
     @State private var isDragging = false
     @State private var dragTime: Double = 0
-    @State private var rerenderTask: Task<Void, Never>?
+    @State private var deferredRerender = DeferredMainActorTask()
 
     private var duration: Double {
         controller.mediaItem?.durationSeconds ?? 0
@@ -139,14 +139,12 @@ struct AudioWaveformView: View {
             triggerGeneration()
         }
         .onChange(of: waveformBoost) {
-            rerenderTask?.cancel()
-            rerenderTask = Task {
-                try? await Task.sleep(for: .milliseconds(30))
-                guard !Task.isCancelled else { return }
+            deferredRerender.schedule(after: .milliseconds(30)) {
                 generator.rerender()
             }
         }
         .onChange(of: waveformColor) {
+            deferredRerender.cancel()
             if generator.hasCachedAmplitudes {
                 generator.rerender()
             } else {
@@ -155,6 +153,9 @@ struct AudioWaveformView: View {
         }
         .onAppear {
             triggerGeneration()
+        }
+        .onDisappear {
+            deferredRerender.cancel()
         }
     }
 
