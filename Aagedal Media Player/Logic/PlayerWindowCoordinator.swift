@@ -19,6 +19,8 @@ final class PlayerWindowCoordinator: ObservableObject {
 
     private var fileOpenTask: Task<Void, Never>?
     private var folderNavigationTask: Task<Void, Never>?
+    private var droppedURLResults: DroppedURLResults?
+    private var droppedURLLoadProgresses: [Progress] = []
     private var siblingMediaURLs: [URL] = []
     private var siblingMediaIndex: Int?
     private let logger = Logger(
@@ -196,15 +198,22 @@ final class PlayerWindowCoordinator: ObservableObject {
 
     func handleDrop(_ providers: [NSItemProvider]) -> Bool {
         guard !providers.isEmpty else { return false }
+        cancelDroppedURLLoads()
+
         let results = DroppedURLResults(count: providers.count)
+        droppedURLResults = results
 
         for (index, provider) in providers.enumerated() {
-            _ = provider.loadObject(ofClass: URL.self) { url, _ in
+            let progress = provider.loadObject(ofClass: URL.self) { [weak self] url, _ in
                 guard let completedURLs = results.record(url, at: index) else { return }
-                Task { @MainActor in
+                Task { @MainActor [weak self] in
+                    guard let self, self.droppedURLResults === results else { return }
+                    self.droppedURLResults = nil
+                    self.droppedURLLoadProgresses = []
                     WindowManager.shared.open(completedURLs)
                 }
             }
+            droppedURLLoadProgresses.append(progress)
         }
 
         return true
@@ -215,12 +224,22 @@ final class PlayerWindowCoordinator: ObservableObject {
         fileOpenTask = nil
         folderNavigationTask?.cancel()
         folderNavigationTask = nil
+        cancelDroppedURLLoads()
         siblingMediaURLs = []
         siblingMediaIndex = nil
         canOpenPreviousFile = false
         canOpenNextFile = false
         WindowManager.shared.unregister(id: id)
         window = nil
+    }
+
+    private func cancelDroppedURLLoads() {
+        droppedURLResults?.cancel()
+        droppedURLResults = nil
+        for progress in droppedURLLoadProgresses {
+            progress.cancel()
+        }
+        droppedURLLoadProgresses = []
     }
 
     /// Returns supported media files beside the current item in stable Finder-like
@@ -363,6 +382,7 @@ final class DroppedURLResults: @unchecked Sendable {
     private let lock = NSLock()
     nonisolated(unsafe) private var urls: [URL?]
     nonisolated(unsafe) private var remaining: Int
+    nonisolated(unsafe) private var isActive = true
 
     nonisolated init(count: Int) {
         urls = Array(repeating: nil, count: count)
@@ -371,10 +391,18 @@ final class DroppedURLResults: @unchecked Sendable {
 
     nonisolated func record(_ url: URL?, at index: Int) -> [URL]? {
         lock.withLock {
+            guard isActive, urls.indices.contains(index) else { return nil }
             urls[index] = url
             remaining -= 1
             guard remaining == 0 else { return nil }
+            isActive = false
             return urls.compactMap { $0 }
+        }
+    }
+
+    nonisolated func cancel() {
+        lock.withLock {
+            isActive = false
         }
     }
 }

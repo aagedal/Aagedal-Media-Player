@@ -47,6 +47,17 @@ final class PlayerWindowCoordinatorTests: XCTestCase {
         XCTAssertEqual(results.record(url, at: 1), [url])
     }
 
+    func testDroppedURLResultsCancellationRejectsPendingCompletion() {
+        let first = URL(fileURLWithPath: "/tmp/first.mov")
+        let second = URL(fileURLWithPath: "/tmp/second.mov")
+        let results = DroppedURLResults(count: 2)
+
+        XCTAssertNil(results.record(first, at: 0))
+        results.cancel()
+
+        XCTAssertNil(results.record(second, at: 1))
+    }
+
     func testSiblingMediaFilesFiltersHiddenDirectoriesAndUnsupportedFiles() throws {
         let directory = try makeTemporaryDirectory()
         defer { try? FileManager.default.removeItem(at: directory) }

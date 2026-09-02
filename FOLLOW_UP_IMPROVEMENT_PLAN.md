@@ -36,6 +36,8 @@ original nine phases are complete.
   130-test suite and static analysis on 2026-09-02.
 - [x] Phase 22 queued playback-timer isolation passes the expanded 132-test
   suite and static analysis on 2026-09-02.
+- [x] Phase 23 dropped-file load ownership passes the expanded 133-test suite
+  and static analysis on 2026-09-02.
 
 ## Phase 10 — Playback and preload correctness
 
@@ -286,6 +288,21 @@ Acceptance: a timer callback queued before scope capture or simulated reverse
 playback stops cannot start work or seek after that session is stopped,
 restarted, or replaced by newer media.
 
+## Phase 23 — Dropped-file load ownership
+
+Status: Completed on 2026-09-02. Asynchronous item-provider loads are now owned
+by the player window and cancelled when superseded or when that window closes.
+
+- [x] Retain and cancel the progress objects returned by dropped-file loads.
+- [x] Invalidate the pending result collector when a newer drop replaces it.
+- [x] Prevent a completion already queued on the main actor from opening files
+  after its window closes or a newer drop starts.
+- [x] Cover collector cancellation with a focused regression test.
+- [x] Pass the full test suite and static analysis.
+
+Acceptance: closing a player window or beginning a replacement drop cannot let
+an earlier asynchronous provider completion open files or spawn new windows.
+
 ## Delivery order
 
 1. Phase 10 correctness fixes and regression tests.
@@ -302,3 +319,4 @@ restarted, or replaced by newer media.
 12. Phase 20 update-request coalescing.
 13. Phase 21 auxiliary-waveform startup ownership.
 14. Phase 22 queued playback-timer isolation.
+15. Phase 23 dropped-file load ownership.
