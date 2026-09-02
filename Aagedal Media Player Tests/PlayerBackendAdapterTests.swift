@@ -69,4 +69,30 @@ final class PlayerBackendAdapterTests: XCTestCase {
             playerItem: replacementItem
         ))
     }
+
+    func testMPVPlaybackObservationIdentityRequiresSamePreparationAndPlayer() {
+        let firstPlayer = MPVPlayer()
+        let replacementPlayer = MPVPlayer()
+        let identity = MPVPlaybackObservationIdentity(
+            preparationID: 11,
+            player: firstPlayer
+        )
+
+        XCTAssertTrue(identity.matches(
+            preparationID: 11,
+            player: firstPlayer
+        ))
+        XCTAssertFalse(identity.matches(
+            preparationID: 12,
+            player: firstPlayer
+        ))
+        XCTAssertFalse(identity.matches(
+            preparationID: 11,
+            player: replacementPlayer
+        ))
+        XCTAssertFalse(identity.matches(
+            preparationID: 11,
+            player: nil
+        ))
+    }
 }

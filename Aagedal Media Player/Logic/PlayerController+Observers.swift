@@ -37,6 +37,25 @@ struct AVPlaybackObservationIdentity: Equatable, Sendable {
     }
 }
 
+/// Identifies the exact MPV preparation that installed a publisher bridge.
+/// MPV property changes are dispatched to the main queue, so cancelling a
+/// subscription during teardown is not sufficient proof that an already
+/// queued value belongs to the replacement backend.
+struct MPVPlaybackObservationIdentity: Equatable, Sendable {
+    let preparationID: Int
+    let playerID: ObjectIdentifier?
+
+    init(preparationID: Int, player: MPVPlayer?) {
+        self.preparationID = preparationID
+        playerID = player.map(ObjectIdentifier.init)
+    }
+
+    func matches(preparationID: Int, player: MPVPlayer?) -> Bool {
+        self.preparationID == preparationID
+            && playerID == player.map(ObjectIdentifier.init)
+    }
+}
+
 extension PlayerController {
 
     private func isCurrent(_ identity: AVPlaybackObservationIdentity) -> Bool {

@@ -427,12 +427,20 @@ final class PlayerController: ObservableObject {
         frameCapture.attachMPV(mpv)
 
         let myPrepID = preparationID
+        let observationIdentity = MPVPlaybackObservationIdentity(
+            preparationID: myPrepID,
+            player: mpv
+        )
 
         // Sync time position
         mpvTimePosTask = Task { @MainActor [weak self, weak mpv] in
             guard let self, let mpv else { return }
             for await time in mpv.$timePos.values {
-                guard !Task.isCancelled, self.preparationID == myPrepID else { break }
+                guard !Task.isCancelled,
+                      observationIdentity.matches(
+                          preparationID: self.preparationID,
+                          player: self.mpvPlayer
+                      ) else { break }
                 self.currentPlaybackTime = time
             }
         }
@@ -441,7 +449,11 @@ final class PlayerController: ObservableObject {
         mpvFileLoadedTask = Task { @MainActor [weak self, weak mpv] in
             guard let self, let mpv else { return }
             for await isLoaded in mpv.$isFileLoaded.values {
-                guard !Task.isCancelled, self.preparationID == myPrepID else { break }
+                guard !Task.isCancelled,
+                      observationIdentity.matches(
+                          preparationID: self.preparationID,
+                          player: self.mpvPlayer
+                      ) else { break }
                 if isLoaded {
                     guard self.playbackFailure == nil else { break }
                     self.markPlaybackReady(isBuffering: mpv.isBusy)
@@ -454,8 +466,11 @@ final class PlayerController: ObservableObject {
             .compactMap { $0 }
             .receive(on: DispatchQueue.main)
             .sink { [weak self, weak mpv] message in
-                guard let self, let mpv, self.mpvPlayer === mpv,
-                      self.preparationID == myPrepID else { return }
+                guard let self, let mpv,
+                      observationIdentity.matches(
+                          preparationID: self.preparationID,
+                          player: self.mpvPlayer
+                      ) else { return }
                 self.reportPlaybackFailure(
                     backend: .mpv,
                     stage: mpv.errorStage,
@@ -467,8 +482,11 @@ final class PlayerController: ObservableObject {
             .removeDuplicates()
             .receive(on: DispatchQueue.main)
             .sink { [weak self, weak mpv] busy in
-                guard let self, let mpv, self.mpvPlayer === mpv,
-                      self.preparationID == myPrepID, mpv.isFileLoaded else { return }
+                guard let self, let mpv,
+                      observationIdentity.matches(
+                          preparationID: self.preparationID,
+                          player: self.mpvPlayer
+                      ), mpv.isFileLoaded else { return }
                 self.updateBufferingState(busy)
             }
 
@@ -476,7 +494,11 @@ final class PlayerController: ObservableObject {
         mpvDurationTask = Task { @MainActor [weak self, weak mpv] in
             guard let self, let mpv else { return }
             for await dur in mpv.$duration.values {
-                guard !Task.isCancelled, self.preparationID == myPrepID else { break }
+                guard !Task.isCancelled,
+                      observationIdentity.matches(
+                          preparationID: self.preparationID,
+                          player: self.mpvPlayer
+                      ) else { break }
                 if dur > 0, (self.mediaItem?.durationSeconds ?? 0) == 0 {
                     self.mediaItem?.durationSeconds = dur
                     break
@@ -488,8 +510,12 @@ final class PlayerController: ObservableObject {
         // own pause property (EOF, internal pauses, errors).
         mpvIsPlayingCancellable = mpv.$isPlaying
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] playing in
-                guard let self else { return }
+            .sink { [weak self, weak mpv] playing in
+                guard let self, mpv != nil,
+                      observationIdentity.matches(
+                          preparationID: self.preparationID,
+                          player: self.mpvPlayer
+                      ) else { return }
                 self.isPlaying = playing || self.isReversing
             }
 
@@ -497,15 +523,25 @@ final class PlayerController: ObservableObject {
         mpvAspectRatioCancellable = mpv.$videoAspectRatio
             .compactMap { $0 }
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] ratio in
-                self?.videoAspectRatio = ratio
+            .sink { [weak self, weak mpv] ratio in
+                guard let self, mpv != nil,
+                      observationIdentity.matches(
+                          preparationID: self.preparationID,
+                          player: self.mpvPlayer
+                      ) else { return }
+                self.videoAspectRatio = ratio
             }
 
         mpvSourceSizeCancellable = mpv.$videoSourceSize
             .compactMap { $0 }
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] size in
-                self?.videoSourceSize = size
+            .sink { [weak self, weak mpv] size in
+                guard let self, mpv != nil,
+                      observationIdentity.matches(
+                          preparationID: self.preparationID,
+                          player: self.mpvPlayer
+                      ) else { return }
+                self.videoSourceSize = size
             }
 
         // mpv tells us when its experimental backward-playback algorithm
@@ -513,16 +549,25 @@ final class PlayerController: ObservableObject {
         // and remember this URL so subsequent reverses go straight there.
         mpvBackwardFailureCancellable = mpv.backwardPlaybackFailed
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] in
-                self?.handleNativeBackwardFailure()
+            .sink { [weak self, weak mpv] in
+                guard let self, mpv != nil,
+                      observationIdentity.matches(
+                          preparationID: self.preparationID,
+                          player: self.mpvPlayer
+                      ) else { return }
+                self.handleNativeBackwardFailure()
             }
 
         // Forward MPV gamma for HDR detection
         mpvGammaCancellable = mpv.$videoGamma
             .compactMap { $0 }
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] gamma in
-                guard let self else { return }
+            .sink { [weak self, weak mpv] gamma in
+                guard let self, mpv != nil,
+                      observationIdentity.matches(
+                          preparationID: self.preparationID,
+                          player: self.mpvPlayer
+                      ) else { return }
                 let wasCapturing = self.frameCapture.isCapturing
                 let videoStream = self.mediaItem?.metadata?.primaryVideoStream
                 switch gamma {
@@ -545,8 +590,12 @@ final class PlayerController: ObservableObject {
         // Refine peak nits from MPV signal peak (only if metadata didn't provide a value)
         mpvSigPeakCancellable = mpv.$videoSigPeak
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] sigPeak in
-                guard let self, sigPeak > 0 else { return }
+            .sink { [weak self, weak mpv] sigPeak in
+                guard let self, mpv != nil, sigPeak > 0,
+                      observationIdentity.matches(
+                          preparationID: self.preparationID,
+                          player: self.mpvPlayer
+                      ) else { return }
                 let videoStream = self.mediaItem?.metadata?.primaryVideoStream
                 // Only use sig-peak if we don't have MaxCLL or mastering luminance from metadata
                 guard videoStream?.maxCLL == nil, videoStream?.masteringMaxLuminance == nil else { return }
@@ -560,8 +609,10 @@ final class PlayerController: ObservableObject {
         // Refresh audio tracks after MPV parses the media
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self, weak mpv] in
             guard let self, let mpv,
-                  self.preparationID == myPrepID,
-                  self.mpvPlayer === mpv else { return }
+                  observationIdentity.matches(
+                      preparationID: self.preparationID,
+                      player: self.mpvPlayer
+                  ) else { return }
             self.refreshAudioTrackOptions(playerItem: nil)
             self.refreshChapterOptions(playerItem: nil)
         }

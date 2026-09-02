@@ -27,6 +27,7 @@ All notable changes to Aagedal Media Player.
 - Kept sorted AVFoundation audio-track labels and backend selections aligned when display order differs from source stream order.
 - Prevented superseded audio/chapter discovery and track-selection work from affecting a replacement file.
 - Prevented queued playback observers and asynchronous AVFoundation readiness work from affecting a replacement file.
+- Prevented queued MPV publisher updates from changing playback, geometry, HDR, or reverse state after the backend is replaced.
 - Forwarded backend preparation, load, and end-file errors into actionable UI states.
 - Kept playback controls and their keyboard focus rings visible in narrow player windows.
 - Bounded long-recording waveform memory by streaming PCM directly into fixed-size accumulators.

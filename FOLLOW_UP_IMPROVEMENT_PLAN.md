@@ -24,6 +24,8 @@ original nine phases are complete.
   and static analysis on 2026-09-01.
 - [x] Phase 16 playback-observer isolation passes the expanded 122-test suite
   and static analysis on 2026-09-02.
+- [x] Phase 17 MPV-publisher isolation passes the expanded 123-test suite and
+  static analysis on 2026-09-02.
 
 ## Phase 10 — Playback and preload correctness
 
@@ -162,6 +164,26 @@ Acceptance: callbacks and continuations originating from a superseded playback
 backend cannot change the replacement file's time, readiness, buffering,
 failure, reverse, or play/pause state.
 
+## Phase 17 — MPV publisher lifecycle isolation
+
+Status: Completed on 2026-09-02. Every MPV publisher and delayed callback now
+revalidates both its preparation and originating player before changing shared
+controller or scope state.
+
+- [x] Bind every MPV publisher bridge to its originating preparation and
+  player instance.
+- [x] Prevent queued stale values from changing play state, video geometry,
+  HDR scope configuration, or reverse-playback mode.
+- [x] Apply the same identity check to MPV time, duration, readiness, errors,
+  buffering, and delayed track discovery.
+- [x] Cover preparation and player identity matching with a focused regression
+  test.
+- [x] Pass the full test suite and static analysis.
+
+Acceptance: no publisher value or delayed callback originating from a
+superseded MPV backend can mutate the replacement file's controller or scope
+state.
+
 ## Delivery order
 
 1. Phase 10 correctness fixes and regression tests.
@@ -172,3 +194,4 @@ failure, reverse, or play/pause state.
 6. Phase 14 AVFoundation audio-track routing correctness.
 7. Phase 15 track-discovery and selection lifecycle isolation.
 8. Phase 16 playback-observer lifecycle isolation.
+9. Phase 17 MPV-publisher lifecycle isolation.
