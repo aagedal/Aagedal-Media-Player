@@ -40,6 +40,13 @@ original nine phases are complete.
   and static analysis on 2026-09-02.
 - [x] Phase 24 deferred UI-work ownership passes the expanded 134-test suite
   and static analysis on 2026-09-02.
+- [x] Phase 25 media-operation feedback ownership passes the expanded 135-test
+  suite and static analysis on 2026-09-02.
+- [ ] Release preflight is blocked by the tracked bundled ffmpeg's invalid
+  signature, missing Developer ID Application authority, and missing secure
+  timestamp. The current machine has no valid code-signing identities, so the
+  artifact must be re-signed in the release environment before this gate can
+  pass.
 
 ## Phase 10 — Playback and preload correctness
 
@@ -321,6 +328,28 @@ Acceptance: closing a waveform view cannot restart rendering after cleanup,
 and cancelling timecode entry cannot restore focus or text from an obsolete
 activation.
 
+## Phase 25 — Media-operation feedback ownership
+
+Status: Implementation completed on 2026-09-02. Delayed screenshot and
+trim-export feedback cleanup is now explicitly owned per operation. The
+expanded 135-test suite and static analysis pass; release preflight remains
+blocked by the pre-existing bundled ffmpeg signing issue recorded above.
+
+- [x] Replace fire-and-forget screenshot and trim-export feedback timers with
+  cancellable deferred-task owners.
+- [x] Give screenshot and trim-export feedback independent ownership so one
+  operation cannot cancel the other's cleanup.
+- [x] Cancel pending cleanup when feedback is replaced, dismissed, or its
+  player window closes.
+- [x] Cover repeated equal-valued feedback with a focused regression test.
+- [x] Pass the full test suite and static analysis.
+- [ ] Pass release preflight after the bundled ffmpeg is re-signed with a
+  Developer ID Application identity, Hardened Runtime, and a secure timestamp.
+
+Acceptance: replacing, dismissing, or tearing down media-operation feedback
+cannot let an obsolete delayed task clear a newer message, and no feedback
+timer remains owned by a closed player window.
+
 ## Delivery order
 
 1. Phase 10 correctness fixes and regression tests.
@@ -339,3 +368,4 @@ activation.
 14. Phase 22 queued playback-timer isolation.
 15. Phase 23 dropped-file load ownership.
 16. Phase 24 deferred UI-work ownership.
+17. Phase 25 media-operation feedback ownership.

@@ -101,4 +101,31 @@ final class MediaOperationStateTests: XCTestCase {
         XCTAssertEqual(exportStates.map(\.isInFlight), [false, false, true, true, true, false, false, false])
         XCTAssertEqual(exportStates.map(\.acceptsProgress), [false, false, true, true, false, false, false, false])
     }
+
+    func testRepeatedTrimWarningGetsItsOwnFullDismissalDelay() async throws {
+        let operations = MediaOperationsController(feedbackDelays: .init(
+            screenshotSuccess: .seconds(5),
+            trimWarning: .milliseconds(300),
+            trimSuccess: .seconds(5),
+            trimCancellation: .milliseconds(1_500)
+        ))
+        let item = MediaItem(
+            url: URL(fileURLWithPath: "/tmp/input.mov"),
+            name: "input",
+            size: 0
+        )
+
+        operations.exportTrim(for: item)
+        try await Task.sleep(for: .milliseconds(100))
+        operations.exportTrim(for: item)
+
+        try await Task.sleep(for: .milliseconds(225))
+        XCTAssertEqual(
+            operations.trimExportState,
+            .warning("Set trim in and out points first.")
+        )
+
+        try await Task.sleep(for: .milliseconds(125))
+        XCTAssertEqual(operations.trimExportState, .idle)
+    }
 }

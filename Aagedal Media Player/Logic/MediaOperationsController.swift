@@ -21,9 +21,16 @@ final class MediaOperationsController: ObservableObject {
     @Published private(set) var trimExportState: TrimExportOperationState = .idle
 
     private let taskOwner = MediaOperationTaskOwner()
+    private let screenshotFeedbackDismissal = DeferredMainActorTask()
+    private let trimExportFeedbackDismissal = DeferredMainActorTask()
+    private let feedbackDelays: MediaOperationFeedbackDelays
     private var screenshotSavePanel: NSSavePanel?
     private var trimExportSavePanel: NSSavePanel?
     private let logger = Logger(subsystem: "com.aagedal.MediaPlayer", category: "MediaOperationsController")
+
+    init(feedbackDelays: MediaOperationFeedbackDelays = .standard) {
+        self.feedbackDelays = feedbackDelays
+    }
 
     // MARK: - Trim Points
 
@@ -58,6 +65,7 @@ final class MediaOperationsController: ObservableObject {
 
     func captureScreenshot(for item: MediaItem, at time: Double) {
         guard !screenshotState.isInFlight else { return }
+        screenshotFeedbackDismissal.cancel()
 
         taskOwner.start(.screenshot) { [weak self] token, subprocessHandle in
             await self?.performScreenshot(
@@ -148,7 +156,7 @@ final class MediaOperationsController: ObservableObject {
             let outputURL = try output.commit()
             logger.info("Screenshot saved: \(outputURL.lastPathComponent)")
             screenshotState = .succeeded(outputURL)
-            clearScreenshotSuccess(after: .seconds(5), outputURL: outputURL)
+            clearScreenshotSuccess(outputURL: outputURL)
         } catch let error as FFmpegError where error == .cancelled {
             guard taskOwner.isCurrent(.screenshot, token: token) else { return }
             screenshotState = .idle
@@ -161,6 +169,7 @@ final class MediaOperationsController: ObservableObject {
     }
 
     func dismissScreenshotFeedback() {
+        screenshotFeedbackDismissal.cancel()
         screenshotState = .idle
     }
 
@@ -169,6 +178,7 @@ final class MediaOperationsController: ObservableObject {
     func exportTrim(for item: MediaItem) {
         guard !trimExportState.isInFlight else { return }
 
+        trimExportFeedbackDismissal.cancel()
         trimExportState = .idle
         guard let inPoint = trimIn, let outPoint = trimOut, outPoint > inPoint else {
             let missing = trimIn == nil && trimOut == nil ? "Set trim in and out points first."
@@ -177,7 +187,7 @@ final class MediaOperationsController: ObservableObject {
                 : "Trim out must be after trim in."
             logger.warning("Export requires both trim in and out points")
             trimExportState = .warning(missing)
-            clearTrimWarning(after: .seconds(2), message: missing)
+            clearTrimWarning(message: missing)
             return
         }
 
@@ -308,12 +318,12 @@ final class MediaOperationsController: ObservableObject {
             let outputURL = try output.commit()
             logger.info("Trim export saved: \(outputURL.lastPathComponent)")
             trimExportState = .succeeded(outputURL)
-            clearTrimSuccess(after: .seconds(5), outputURL: outputURL)
+            clearTrimSuccess(outputURL: outputURL)
         } catch let error as FFmpegError where error == .cancelled {
             guard taskOwner.isCurrent(.trimExport, token: token) else { return }
             logger.info("Trim export cancelled")
             trimExportState = .cancelled
-            clearTrimCancellation(after: .milliseconds(1_500))
+            clearTrimCancellation()
         } catch {
             guard taskOwner.isCurrent(.trimExport, token: token) else { return }
             trimExportState = .failed("Export failed: \(error.localizedDescription)")
@@ -328,6 +338,7 @@ final class MediaOperationsController: ObservableObject {
     }
 
     func dismissTrimExportFeedback() {
+        trimExportFeedbackDismissal.cancel()
         trimExportState = .idle
     }
 
@@ -338,41 +349,53 @@ final class MediaOperationsController: ObservableObject {
         trimExportSavePanel?.cancel(nil)
         screenshotSavePanel = nil
         trimExportSavePanel = nil
+        screenshotFeedbackDismissal.cancel()
+        trimExportFeedbackDismissal.cancel()
         screenshotState = .idle
         trimExportState = .idle
     }
 
     // MARK: - Delayed Feedback Cleanup
 
-    private func clearScreenshotSuccess(after delay: Duration, outputURL: URL) {
-        Task { @MainActor [weak self] in
-            try? await Task.sleep(for: delay)
+    private func clearScreenshotSuccess(outputURL: URL) {
+        screenshotFeedbackDismissal.schedule(after: feedbackDelays.screenshotSuccess) { [weak self] in
             guard self?.screenshotState == .succeeded(outputURL) else { return }
             self?.screenshotState = .idle
         }
     }
 
-    private func clearTrimWarning(after delay: Duration, message: String) {
-        Task { @MainActor [weak self] in
-            try? await Task.sleep(for: delay)
+    private func clearTrimWarning(message: String) {
+        trimExportFeedbackDismissal.schedule(after: feedbackDelays.trimWarning) { [weak self] in
             guard self?.trimExportState == .warning(message) else { return }
             self?.trimExportState = .idle
         }
     }
 
-    private func clearTrimSuccess(after delay: Duration, outputURL: URL) {
-        Task { @MainActor [weak self] in
-            try? await Task.sleep(for: delay)
+    private func clearTrimSuccess(outputURL: URL) {
+        trimExportFeedbackDismissal.schedule(after: feedbackDelays.trimSuccess) { [weak self] in
             guard self?.trimExportState == .succeeded(outputURL) else { return }
             self?.trimExportState = .idle
         }
     }
 
-    private func clearTrimCancellation(after delay: Duration) {
-        Task { @MainActor [weak self] in
-            try? await Task.sleep(for: delay)
+    private func clearTrimCancellation() {
+        trimExportFeedbackDismissal.schedule(after: feedbackDelays.trimCancellation) { [weak self] in
             guard self?.trimExportState == .cancelled else { return }
             self?.trimExportState = .idle
         }
     }
+}
+
+nonisolated struct MediaOperationFeedbackDelays: Sendable {
+    let screenshotSuccess: Duration
+    let trimWarning: Duration
+    let trimSuccess: Duration
+    let trimCancellation: Duration
+
+    static let standard = MediaOperationFeedbackDelays(
+        screenshotSuccess: .seconds(5),
+        trimWarning: .seconds(2),
+        trimSuccess: .seconds(5),
+        trimCancellation: .milliseconds(1_500)
+    )
 }
