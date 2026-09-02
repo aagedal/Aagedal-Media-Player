@@ -17,6 +17,7 @@ final class AudioWaveformWindowController {
     private let controller: PlayerController
     private var filename: String
     private weak var parentWindow: NSWindow?
+    private let deferredGenerationTask = DeferredMainActorTask()
 
     private var closeObserver: NSObjectProtocol?
 
@@ -84,48 +85,11 @@ final class AudioWaveformWindowController {
         panel.orderFront(nil)
         self.panel = panel
 
-        // Trigger waveform generation now that the view is open
-        // Use a brief delay to allow SwiftUI to set up the view
-        Task { @MainActor in
-            guard let item = controller.mediaItem,
-                  let metadata = item.metadata else { return }
-
-            if controller.showAllMonoWaveforms && controller.isMultiMonoFile {
-                let streams: [(index: Int, label: String)] = metadata.audioStreams.enumerated().map { offset, stream in
-                    let label: String
-                    if let title = stream.title, !title.isEmpty {
-                        label = title
-                    } else if let option = controller.audioTrackOptions.first(where: { $0.streamIndex == offset }) {
-                        label = option.title
-                    } else {
-                        label = "Track \(offset + 1)"
-                    }
-                    return (index: offset, label: label)
-                }
-                if !streams.isEmpty {
-                    generator.generateAllMonoStreams(url: item.url, streams: streams, duration: item.durationSeconds)
-                }
-                return
-            }
-
-            let trackIdx = controller.selectedAudioTrackOrderIndex
-            guard trackIdx < controller.audioTrackOptions.count else { return }
-
-            let option = controller.audioTrackOptions[trackIdx]
-            let streamIndex = option.streamIndex
-            let audioStreams = metadata.audioStreams
-            guard streamIndex < audioStreams.count else { return }
-
-            let stream = audioStreams[streamIndex]
-            let channels = stream.channels ?? 2
-
-            generator.generate(
-                url: item.url,
-                streamIndex: streamIndex,
-                channels: channels,
-                channelLayout: stream.channelLayout,
-                duration: item.durationSeconds
-            )
+        // Defer generation until SwiftUI has installed the hosted view. The
+        // task is panel-owned so an immediate close cannot start new ffmpeg
+        // work after cleanup has already run.
+        deferredGenerationTask.schedule { [weak self] in
+            self?.generateInitialWaveform()
         }
 
         // Auto-close when parent window closes
@@ -173,6 +137,7 @@ final class AudioWaveformWindowController {
     }
 
     private func cleanup() {
+        deferredGenerationTask.cancel()
         generator.cancel()
 
         if let observer = closeObserver {
@@ -186,6 +151,51 @@ final class AudioWaveformWindowController {
 
         panel = nil
         logger.info("Audio waveform window closed for \(self.filename)")
+    }
+
+    private func generateInitialWaveform() {
+        guard panel != nil,
+              let item = controller.mediaItem,
+              let metadata = item.metadata else { return }
+
+        if controller.showAllMonoWaveforms && controller.isMultiMonoFile {
+            let streams: [(index: Int, label: String)] = metadata.audioStreams.enumerated().map { offset, stream in
+                let label: String
+                if let title = stream.title, !title.isEmpty {
+                    label = title
+                } else if let option = controller.audioTrackOptions.first(where: { $0.streamIndex == offset }) {
+                    label = option.title
+                } else {
+                    label = "Track \(offset + 1)"
+                }
+                return (index: offset, label: label)
+            }
+            if !streams.isEmpty {
+                generator.generateAllMonoStreams(
+                    url: item.url,
+                    streams: streams,
+                    duration: item.durationSeconds
+                )
+            }
+            return
+        }
+
+        let trackIdx = controller.selectedAudioTrackOrderIndex
+        guard trackIdx < controller.audioTrackOptions.count else { return }
+
+        let option = controller.audioTrackOptions[trackIdx]
+        let streamIndex = option.streamIndex
+        let audioStreams = metadata.audioStreams
+        guard streamIndex < audioStreams.count else { return }
+
+        let stream = audioStreams[streamIndex]
+        generator.generate(
+            url: item.url,
+            streamIndex: streamIndex,
+            channels: stream.channels ?? 2,
+            channelLayout: stream.channelLayout,
+            duration: item.durationSeconds
+        )
     }
 
     nonisolated deinit {

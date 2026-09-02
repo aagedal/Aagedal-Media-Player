@@ -32,6 +32,8 @@ original nine phases are complete.
   static analysis on 2026-09-02.
 - [x] Phase 20 update-request coalescing passes the expanded 128-test suite and
   static analysis on 2026-09-02.
+- [x] Phase 21 auxiliary-waveform startup ownership passes the expanded
+  130-test suite and static analysis on 2026-09-02.
 
 ## Phase 10 — Playback and preload correctness
 
@@ -247,6 +249,20 @@ checks now join one in-flight request and return its completed typed result.
 Acceptance: overlapping fallback update checks perform one network request and
 every caller receives the same completed attempt result.
 
+## Phase 21 — Auxiliary-waveform startup ownership
+
+Status: Completed on 2026-09-02. The deferred waveform startup is owned by its
+panel, so closing or replacing that panel invalidates queued generation before
+it can start ffmpeg work.
+
+- [x] Track and invalidate deferred waveform generation when the panel closes.
+- [x] Prevent replaced deferred startup work from running.
+- [x] Cover cancellation and replacement with focused regression tests.
+- [x] Pass the full test suite and static analysis.
+
+Acceptance: closing or replacing an auxiliary waveform panel before its hosted
+view is ready cannot start invisible ffmpeg work after cleanup.
+
 ## Delivery order
 
 1. Phase 10 correctness fixes and regression tests.
@@ -261,3 +277,4 @@ every caller receives the same completed attempt result.
 10. Phase 18 scope-capture lifecycle isolation.
 11. Phase 19 metadata-inspector analysis isolation.
 12. Phase 20 update-request coalescing.
+13. Phase 21 auxiliary-waveform startup ownership.
