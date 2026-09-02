@@ -42,6 +42,8 @@ original nine phases are complete.
   and static analysis on 2026-09-02.
 - [x] Phase 25 media-operation feedback ownership passes the expanded 135-test
   suite and static analysis on 2026-09-02.
+- [x] Phase 26 SwiftMediaMetadata 3.0.0 migration passes the 135-test suite and
+  static analysis on 2026-09-02.
 - [ ] Release preflight is blocked by the tracked bundled ffmpeg's invalid
   signature, missing Developer ID Application authority, and missing secure
   timestamp. The current machine has no valid code-signing identities, so the
@@ -350,6 +352,24 @@ Acceptance: replacing, dismissing, or tearing down media-operation feedback
 cannot let an obsolete delayed task clear a newer message, and no feedback
 timer remains owned by a closed player window.
 
+## Phase 26 — SwiftMediaMetadata 3.0.0 migration
+
+Status: Completed on 2026-09-02. The renamed SwiftMediaMetadata package,
+product, and module now use the latest 3.0.0 release and its exact resolved
+revision.
+
+- [x] Review the 3.0.0 changelog for source-breaking enum additions.
+- [x] Confirm the app does not exhaustively switch over the affected XMP and
+  photo-metadata value enums.
+- [x] Raise the package requirement to 3.0.0 and refresh `Package.resolved`.
+- [x] Remove stale current documentation that still describes the product and
+  module as SwiftExif while preserving historical release notes.
+- [x] Pass the full test suite and static analysis against 3.0.0.
+
+Acceptance: a fresh package resolution selects SwiftMediaMetadata 3.0.0, the
+app builds against its renamed module without compatibility shims, and current
+documentation no longer describes the old SwiftExif package identity.
+
 ## Delivery order
 
 1. Phase 10 correctness fixes and regression tests.
@@ -369,3 +389,4 @@ timer remains owned by a closed player window.
 15. Phase 23 dropped-file load ownership.
 16. Phase 24 deferred UI-work ownership.
 17. Phase 25 media-operation feedback ownership.
+18. Phase 26 SwiftMediaMetadata 3.0.0 migration.

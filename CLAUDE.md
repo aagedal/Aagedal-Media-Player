@@ -32,7 +32,7 @@ The shared scheme includes the `Aagedal Media Player Tests` XCTest target. No Gi
 Swift Package dependencies (all remote, resolved via SPM):
 
 - **MPVKit-GPL** — `https://github.com/aagedal/MPVKit`, branch `main`. Truls's fork of MPVKit. Bundles mpv 0.41.0, FFmpeg n8.1.2, MoltenVK 1.4.2, Libplacebo 7.360.1.
-- **SwiftMediaMetadata** — `https://github.com/aagedal/SwiftMediaMetadata`, semver `>= 1.8.0`. Pure-Swift metadata library (currently exposing the `SwiftExif` product/module), replaces the earlier ffprobe shell-out for stream metadata.
+- **SwiftMediaMetadata** — `https://github.com/aagedal/SwiftMediaMetadata`, semver `>= 3.0.0`. Pure-Swift metadata library, replaces the earlier ffprobe shell-out for stream metadata.
 - **Sparkle** — `https://github.com/sparkle-project/Sparkle`, semver `>= 2.9.1`. Auto-update infrastructure.
 
 The app also ships a bundled `ffmpeg` binary at `Aagedal Media Player/Binaries/ffmpeg`, used for screenshot capture and lossless trim export (not for metadata).
@@ -69,7 +69,7 @@ MPV renders through Vulkan via MoltenVK onto a `CAMetalLayer`:
 
 ### Supporting Services
 
-- `MetadataService` — Async metadata extraction using **SwiftMediaMetadata** (imported through its current `SwiftExif` module; no ffmpeg shell-out). Actor with NSCache keyed on URL. Applies `AVAsset.preferredTransform` as the authoritative rotation source for QuickTime/MP4-family containers, then walks `MetadataMapper` to produce a `MediaMetadata` with resolved display dimensions, DAR, PAR, HDR side-data, etc.
+- `MetadataService` — Async metadata extraction using the **SwiftMediaMetadata** module (no ffmpeg shell-out). Actor with NSCache keyed on URL. Applies `AVAsset.preferredTransform` as the authoritative rotation source for QuickTime/MP4-family containers, then walks `MetadataMapper` to produce a `MediaMetadata` with resolved display dimensions, DAR, PAR, HDR side-data, etc.
 - `FFmpegService` — Wraps the bundled ffmpeg binary for screenshots and lossless trim exports (not metadata).
 - `WindowManager` — Singleton managing multi-window state, coordinating synchronized playback across windows.
 

@@ -18,7 +18,7 @@ All notable changes to Aagedal Media Player.
 - Split playback backends, track selection, media operations, window opening, overlays, settings, and command routing into focused components.
 - Extract the update settings pane and publish typed update-check outcomes with retry guidance.
 - Update the bundled ffmpeg executable to 9.0.1 with Developer ID signing, Hardened Runtime, and secure-timestamp preflight validation.
-- Update SwiftMediaMetadata to 2.0.0 and adopt its renamed package product and importable module.
+- Update SwiftMediaMetadata to 3.0.0 and use its renamed package product and importable module.
 - Keep Main Thread Checker and Thread Performance Checker enabled while retaining the required MoltenVK Metal API Validation exception.
 - Document and validate the intentional Apple-Silicon-only release architecture and security entitlements.
 
