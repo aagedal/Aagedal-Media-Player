@@ -2,6 +2,7 @@
 // Copyright © 2026 Truls Aagedal
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+import AVFoundation
 import XCTest
 @testable import Aagedal_Media_Player
 
@@ -145,6 +146,119 @@ final class TrackSelectionControllerTests: XCTestCase {
         XCTAssertEqual(routes.map(\.mediaOptionIndex), [0, 1])
     }
 
+    func testSupersededAVAudioRefreshCannotPublishStaleOptions() async {
+        let loader = SuspendedAudioMediaGroupLoader()
+        let controller = TrackSelectionController(audioMediaGroupLoader: loader.load)
+        let playerItem = AVPlayerItem(url: URL(fileURLWithPath: "/tmp/old.mov"))
+        let oldItem = mediaItem(audioStreams: [
+            audioStream(index: 10, channels: 2, isDefault: false),
+            audioStream(index: 11, channels: 1, isDefault: false)
+        ])
+        let newItem = mediaItem(audioStreams: [
+            audioStream(index: 99, channels: 6, isDefault: true)
+        ])
+
+        let oldRefresh = Task {
+            await controller.refreshAudioTrackOptions(
+                mediaItem: oldItem,
+                playerItem: playerItem,
+                mpvPlayer: nil,
+                useMPV: false
+            )
+        }
+        await loader.waitUntilStarted()
+
+        await controller.refreshAudioTrackOptions(
+            mediaItem: newItem,
+            playerItem: nil,
+            mpvPlayer: nil,
+            useMPV: false
+        )
+        loader.resumeFirstLoad()
+        await oldRefresh.value
+
+        XCTAssertEqual(controller.audioTrackOptions.map(\.title), ["#99"])
+    }
+
+    func testResetInvalidatesPendingAVAudioSelection() async {
+        let loader = SuspendedAudioMediaGroupLoader()
+        let controller = TrackSelectionController(audioMediaGroupLoader: loader.load)
+        controller.rebuildMPVTrackOptions(
+            audioNames: ["One", "Two"],
+            audioIndexes: [1, 2],
+            subtitleNames: [],
+            subtitleIndexes: []
+        )
+        let playerItem = AVPlayerItem(url: URL(fileURLWithPath: "/tmp/old.mov"))
+
+        let selection = Task {
+            await controller.selectAudioTrack(
+                at: 1,
+                playerItem: playerItem,
+                mpvPlayer: nil,
+                useMPV: false
+            )
+        }
+        await loader.waitUntilStarted()
+
+        controller.reset(preservingSelections: false)
+        loader.resumeFirstLoad()
+
+        let didSelect = await selection.value
+        XCTAssertFalse(didSelect)
+        XCTAssertTrue(controller.audioTrackOptions.isEmpty)
+        XCTAssertEqual(controller.selectedAudioTrackOrderIndex, 0)
+    }
+
+    func testSupersededAVChapterRefreshCannotPublishStaleOptions() async {
+        let loader = SuspendedChapterMetadataGroupLoader()
+        let controller = TrackSelectionController(chapterMetadataGroupLoader: loader.load)
+        let playerItem = AVPlayerItem(url: URL(fileURLWithPath: "/tmp/old.mov"))
+
+        let oldRefresh = Task {
+            await controller.refreshChapterOptions(
+                playerItem: playerItem,
+                mpvPlayer: nil,
+                useMPV: false
+            )
+        }
+        await loader.waitUntilStarted()
+
+        await controller.refreshChapterOptions(
+            playerItem: nil,
+            mpvPlayer: nil,
+            useMPV: false
+        )
+        loader.resumeFirstLoad()
+        await oldRefresh.value
+
+        XCTAssertTrue(controller.chapterOptions.isEmpty)
+    }
+
+    private func mediaItem(audioStreams: [MediaMetadata.AudioStream]) -> MediaItem {
+        let metadata = MediaMetadata(
+            duration: nil,
+            formatName: nil,
+            containerLongName: nil,
+            sizeBytes: nil,
+            bitRate: nil,
+            timecode: nil,
+            comment: nil,
+            encoder: nil,
+            frameCount: nil,
+            videoStreams: [],
+            audioStreams: audioStreams,
+            subtitleStreams: [],
+            chapters: []
+        )
+        return MediaItem(
+            url: URL(fileURLWithPath: "/tmp/test.mov"),
+            name: "test",
+            size: 0,
+            metadata: metadata
+        )
+    }
+
     private func audioStream(index: Int, channels: Int, isDefault: Bool) -> MediaMetadata.AudioStream {
         MediaMetadata.AudioStream(
             index: index,
@@ -160,5 +274,72 @@ final class TrackSelectionControllerTests: XCTestCase {
             bitRate: nil,
             isDefault: isDefault
         )
+    }
+}
+
+@MainActor
+private final class SuspendedAudioMediaGroupLoader {
+    private var firstLoadContinuation: CheckedContinuation<AVMediaSelectionGroup?, Never>?
+    private var startWaiters: [CheckedContinuation<Void, Never>] = []
+    private var loadCount = 0
+
+    func load(_ playerItem: AVPlayerItem) async -> AVMediaSelectionGroup? {
+        _ = playerItem
+        loadCount += 1
+        guard loadCount == 1 else { return nil }
+
+        let waiters = startWaiters
+        startWaiters = []
+        waiters.forEach { $0.resume() }
+        return await withCheckedContinuation { continuation in
+            firstLoadContinuation = continuation
+        }
+    }
+
+    func waitUntilStarted() async {
+        guard loadCount == 0 else { return }
+        await withCheckedContinuation { continuation in
+            startWaiters.append(continuation)
+        }
+    }
+
+    func resumeFirstLoad() {
+        firstLoadContinuation?.resume(returning: nil)
+        firstLoadContinuation = nil
+    }
+}
+
+@MainActor
+private final class SuspendedChapterMetadataGroupLoader {
+    private var firstLoadContinuation: CheckedContinuation<[AVTimedMetadataGroup], Never>?
+    private var startWaiters: [CheckedContinuation<Void, Never>] = []
+    private var didStart = false
+
+    func load(_ asset: AVAsset) async -> [AVTimedMetadataGroup] {
+        _ = asset
+        didStart = true
+        let waiters = startWaiters
+        startWaiters = []
+        waiters.forEach { $0.resume() }
+
+        return await withCheckedContinuation { continuation in
+            firstLoadContinuation = continuation
+        }
+    }
+
+    func waitUntilStarted() async {
+        guard !didStart else { return }
+        await withCheckedContinuation { continuation in
+            startWaiters.append(continuation)
+        }
+    }
+
+    func resumeFirstLoad() {
+        let group = AVTimedMetadataGroup(
+            items: [],
+            timeRange: CMTimeRange(start: .zero, duration: CMTime(seconds: 1, preferredTimescale: 600))
+        )
+        firstLoadContinuation?.resume(returning: [group])
+        firstLoadContinuation = nil
     }
 }

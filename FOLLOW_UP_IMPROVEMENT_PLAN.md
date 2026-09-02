@@ -20,6 +20,8 @@ original nine phases are complete.
   preflight, and static analysis on 2026-09-01.
 - [x] Phase 14 audio-routing completion passes the expanded 118-test suite and
   static analysis on 2026-09-01.
+- [x] Phase 15 track-lifecycle completion passes the expanded 121-test suite
+  and static analysis on 2026-09-01.
 
 ## Phase 10 — Playback and preload correctness
 
@@ -111,6 +113,28 @@ Acceptance: selecting an AVFoundation audio row activates the track described
 by that row even when the preferred display order differs from file stream
 order.
 
+## Phase 15 — Track-discovery lifecycle isolation
+
+Status: Completed on 2026-09-01. Audio selection, audio discovery, and chapter
+discovery now use independent generations so superseded AVFoundation work
+cannot publish into a replacement file. Delayed MPV discovery and post-switch
+playback resumption are also bound to the preparation that created them.
+
+- [x] Invalidate pending audio and chapter discovery whenever a newer request
+  starts or track state resets.
+- [x] Prevent superseded AVFoundation loads from publishing stale audio or
+  chapter options.
+- [x] Prevent a superseded audio selection from reporting success and resuming
+  playback after the active media changes.
+- [x] Bind delayed MPV track discovery to its originating preparation and
+  backend instance.
+- [x] Inject AVFoundation discovery dependencies and cover replacement and
+  reset races with deterministic suspended-operation tests.
+
+Acceptance: rapidly replacing media cannot show the previous file's tracks or
+chapters, apply a previous selection, or start playback in the replacement
+file.
+
 ## Delivery order
 
 1. Phase 10 correctness fixes and regression tests.
@@ -119,3 +143,4 @@ order.
 4. Phase 12 operation ownership.
 5. Phase 13 update-state improvements and incremental cleanup.
 6. Phase 14 AVFoundation audio-track routing correctness.
+7. Phase 15 track-discovery and selection lifecycle isolation.

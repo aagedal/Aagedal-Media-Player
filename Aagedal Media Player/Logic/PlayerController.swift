@@ -558,8 +558,10 @@ final class PlayerController: ObservableObject {
             }
 
         // Refresh audio tracks after MPV parses the media
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-            guard let self else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self, weak mpv] in
+            guard let self, let mpv,
+                  self.preparationID == myPrepID,
+                  self.mpvPlayer === mpv else { return }
             self.refreshAudioTrackOptions(playerItem: nil)
             self.refreshChapterOptions(playerItem: nil)
         }
@@ -1083,11 +1085,13 @@ final class PlayerController: ObservableObject {
     func selectAudioTrack(at position: Int) {
         guard position != selectedAudioTrackOrderIndex else { return }
 
+        let myPrepID = preparationID
         let wasPlaying = (player?.rate ?? 0) != 0 || (mpvPlayer?.isPlaying ?? false)
         if wasPlaying { pause() }
 
         Task { @MainActor [weak self] in
-            guard let self else { return }
+            guard let self,
+                  self.preparationID == myPrepID else { return }
             let changed = await self.trackSelection.selectAudioTrack(
                 at: position,
                 playerItem: self.player?.currentItem,
@@ -1096,7 +1100,8 @@ final class PlayerController: ObservableObject {
             )
             if changed, wasPlaying {
                 try? await Task.sleep(for: .milliseconds(100))
-                guard !Task.isCancelled else { return }
+                guard !Task.isCancelled,
+                      self.preparationID == myPrepID else { return }
                 self.togglePlayback()
             }
         }

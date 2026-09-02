@@ -14,6 +14,9 @@ import OSLog
 /// discovery, selection validation, and backend-specific track application.
 @MainActor
 final class TrackSelectionController: ObservableObject {
+    typealias AudioMediaGroupLoader = @MainActor (AVPlayerItem) async throws -> AVMediaSelectionGroup?
+    typealias ChapterMetadataGroupLoader = @MainActor (AVAsset) async throws -> [AVTimedMetadataGroup]
+
     struct AudioTrackOption: Identifiable, Equatable {
         let id: Int
         let position: Int
@@ -54,6 +57,24 @@ final class TrackSelectionController: ObservableObject {
     @Published private(set) var selectedSubtitleTrackOrderIndex = -1
 
     private let logger = Logger(subsystem: "com.aagedal.MediaPlayer", category: "TrackSelectionController")
+    private let audioMediaGroupLoader: AudioMediaGroupLoader
+    private let chapterMetadataGroupLoader: ChapterMetadataGroupLoader
+    private var audioOperationGeneration = OperationGeneration()
+    private var chapterOperationGeneration = OperationGeneration()
+
+    init(
+        audioMediaGroupLoader: @escaping AudioMediaGroupLoader = { playerItem in
+            try await playerItem.asset.loadMediaSelectionGroup(for: .audible)
+        },
+        chapterMetadataGroupLoader: @escaping ChapterMetadataGroupLoader = { asset in
+            try await asset.loadChapterMetadataGroups(
+                bestMatchingPreferredLanguages: Locale.preferredLanguages
+            )
+        }
+    ) {
+        self.audioMediaGroupLoader = audioMediaGroupLoader
+        self.chapterMetadataGroupLoader = chapterMetadataGroupLoader
+    }
 
     func refreshAudioTrackOptions(
         mediaItem: MediaItem,
@@ -61,11 +82,12 @@ final class TrackSelectionController: ObservableObject {
         mpvPlayer: MPVPlayer?,
         useMPV: Bool
     ) async {
+        let generation = audioOperationGeneration.advance()
         let existingSelection = selectedAudioTrackOrderIndex
 
         if useMPV {
             guard let mpvPlayer else { return }
-            rebuildMPVTrackOptions(
+            publishMPVTrackOptions(
                 audioNames: mpvPlayer.audioTrackNames,
                 audioIndexes: mpvPlayer.audioTrackIndexes,
                 subtitleNames: mpvPlayer.subtitleTrackNames,
@@ -76,10 +98,16 @@ final class TrackSelectionController: ObservableObject {
             let orderedIndices = metadata.map(Self.orderAudioStreams(from:)) ?? []
             let mediaGroup: AVMediaSelectionGroup?
             if let playerItem {
-                mediaGroup = try? await playerItem.asset.loadMediaSelectionGroup(for: .audible)
+                do {
+                    mediaGroup = try await audioMediaGroupLoader(playerItem)
+                } catch {
+                    logger.error("Failed to load audible group: \(error)")
+                    mediaGroup = nil
+                }
             } else {
                 mediaGroup = nil
             }
+            guard audioOperationGeneration.isCurrent(generation) else { return }
             buildAVAudioTrackOptions(
                 metadata: metadata,
                 orderedIndices: orderedIndices,
@@ -87,8 +115,14 @@ final class TrackSelectionController: ObservableObject {
             )
         }
 
+        guard audioOperationGeneration.isCurrent(generation) else { return }
         selectedAudioTrackOrderIndex = clampedAudioSelection(existingSelection)
-        await applySelectedAudioTrack(playerItem: playerItem, mpvPlayer: mpvPlayer, useMPV: useMPV)
+        await applySelectedAudioTrack(
+            playerItem: playerItem,
+            mpvPlayer: mpvPlayer,
+            useMPV: useMPV,
+            generation: generation
+        )
     }
 
     func selectAudioTrack(
@@ -100,9 +134,15 @@ final class TrackSelectionController: ObservableObject {
         guard audioTrackOptions.indices.contains(position),
               position != selectedAudioTrackOrderIndex else { return false }
 
+        let generation = audioOperationGeneration.advance()
         selectedAudioTrackOrderIndex = position
-        await applySelectedAudioTrack(playerItem: playerItem, mpvPlayer: mpvPlayer, useMPV: useMPV)
-        return true
+        await applySelectedAudioTrack(
+            playerItem: playerItem,
+            mpvPlayer: mpvPlayer,
+            useMPV: useMPV,
+            generation: generation
+        )
+        return audioOperationGeneration.isCurrent(generation)
     }
 
     func applySelectedAudioTrack(
@@ -110,10 +150,26 @@ final class TrackSelectionController: ObservableObject {
         mpvPlayer: MPVPlayer?,
         useMPV: Bool
     ) async {
+        let generation = audioOperationGeneration.advance()
+        await applySelectedAudioTrack(
+            playerItem: playerItem,
+            mpvPlayer: mpvPlayer,
+            useMPV: useMPV,
+            generation: generation
+        )
+    }
+
+    private func applySelectedAudioTrack(
+        playerItem: AVPlayerItem?,
+        mpvPlayer: MPVPlayer?,
+        useMPV: Bool,
+        generation: UInt64
+    ) async {
+        guard audioOperationGeneration.isCurrent(generation) else { return }
         if useMPV {
             applySelectedAudioTrackToMPV(mpvPlayer)
         } else if let playerItem {
-            await applySelectedAudioTrackToAVPlayer(playerItem)
+            await applySelectedAudioTrackToAVPlayer(playerItem, generation: generation)
         }
     }
 
@@ -134,7 +190,9 @@ final class TrackSelectionController: ObservableObject {
     }
 
     func refreshChapterOptions(playerItem: AVPlayerItem?, mpvPlayer: MPVPlayer?, useMPV: Bool) async {
+        let generation = chapterOperationGeneration.advance()
         if useMPV, let mpvPlayer {
+            guard chapterOperationGeneration.isCurrent(generation) else { return }
             chapterOptions = mpvPlayer.chapters.enumerated().map { index, chapter in
                 ChapterOption(
                     id: index,
@@ -144,9 +202,14 @@ final class TrackSelectionController: ObservableObject {
                 )
             }
         } else if let asset = playerItem?.asset {
-            let groups = (try? await asset.loadChapterMetadataGroups(
-                bestMatchingPreferredLanguages: Locale.preferredLanguages
-            )) ?? []
+            let groups: [AVTimedMetadataGroup]
+            do {
+                groups = try await chapterMetadataGroupLoader(asset)
+            } catch {
+                logger.error("Failed to load chapter metadata groups: \(error)")
+                groups = []
+            }
+            guard chapterOperationGeneration.isCurrent(generation) else { return }
             var options: [ChapterOption] = []
             for (index, group) in groups.enumerated() {
                 let start = group.timeRange.start.seconds
@@ -156,15 +219,20 @@ final class TrackSelectionController: ObservableObject {
                    let value = try? await titleItem.load(.stringValue), !value.isEmpty {
                     title = value
                 }
+                guard chapterOperationGeneration.isCurrent(generation) else { return }
                 options.append(ChapterOption(id: index, position: index, time: start, title: title))
             }
+            guard chapterOperationGeneration.isCurrent(generation) else { return }
             chapterOptions = options
         } else {
+            guard chapterOperationGeneration.isCurrent(generation) else { return }
             chapterOptions = []
         }
     }
 
     func reset(preservingSelections: Bool) {
+        audioOperationGeneration.advance()
+        chapterOperationGeneration.advance()
         if !preservingSelections {
             selectedAudioTrackOrderIndex = 0
             selectedSubtitleTrackOrderIndex = -1
@@ -177,6 +245,21 @@ final class TrackSelectionController: ObservableObject {
     /// Pure MPV option mapping kept internal so it can be regression tested
     /// without constructing an MPV playback backend.
     func rebuildMPVTrackOptions(
+        audioNames: [String],
+        audioIndexes: [Int32],
+        subtitleNames: [String],
+        subtitleIndexes: [Int32]
+    ) {
+        audioOperationGeneration.advance()
+        publishMPVTrackOptions(
+            audioNames: audioNames,
+            audioIndexes: audioIndexes,
+            subtitleNames: subtitleNames,
+            subtitleIndexes: subtitleIndexes
+        )
+    }
+
+    private func publishMPVTrackOptions(
         audioNames: [String],
         audioIndexes: [Int32],
         subtitleNames: [String],
@@ -324,16 +407,20 @@ final class TrackSelectionController: ObservableObject {
         mpvPlayer.currentAudioTrackIndex = Int32(audioTrackOptions[selectedAudioTrackOrderIndex].id)
     }
 
-    private func applySelectedAudioTrackToAVPlayer(_ playerItem: AVPlayerItem) async {
+    private func applySelectedAudioTrackToAVPlayer(
+        _ playerItem: AVPlayerItem,
+        generation: UInt64
+    ) async {
         let mediaGroup: AVMediaSelectionGroup?
         do {
-            mediaGroup = try await playerItem.asset.loadMediaSelectionGroup(for: .audible)
+            mediaGroup = try await audioMediaGroupLoader(playerItem)
         } catch {
             logger.error("Failed to load audible group: \(error)")
             mediaGroup = nil
         }
 
-        guard audioTrackOptions.indices.contains(selectedAudioTrackOrderIndex) else { return }
+        guard audioOperationGeneration.isCurrent(generation),
+              audioTrackOptions.indices.contains(selectedAudioTrackOrderIndex) else { return }
         let selectedOption = audioTrackOptions[selectedAudioTrackOrderIndex]
 
         if let mediaGroup,
