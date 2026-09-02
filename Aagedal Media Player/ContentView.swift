@@ -11,6 +11,7 @@ import UniformTypeIdentifiers
 struct ContentView: View {
     @Environment(\.openWindow) private var openWindow
     @StateObject private var controller = PlayerController()
+    @StateObject private var compareSession = CompareSessionController()
     @StateObject private var windowCoordinator = PlayerWindowCoordinator()
     @StateObject private var overlayController = PlayerOverlayController()
     @State private var timecodeMode: TimecodeDisplayMode = .relative
@@ -45,7 +46,19 @@ struct ContentView: View {
     }
 
     private var videoAspectRatio: CGFloat? {
-        controller.videoAspectRatio
+        guard compareSession.isActive else { return controller.videoAspectRatio }
+        switch compareSession.viewMode {
+        case .primary:
+            return controller.videoAspectRatio
+        case .secondary:
+            return compareSession.secondaryController.videoAspectRatio
+        case .sideBySide:
+            guard let primary = controller.videoAspectRatio,
+                  let secondary = compareSession.secondaryController.videoAspectRatio else {
+                return controller.videoAspectRatio.map { $0 * 2 }
+            }
+            return primary + secondary
+        }
     }
 
     private var videoSourceSize: NSSize? {
@@ -58,6 +71,7 @@ struct ContentView: View {
         contentLayers
             .modifier(NotificationHandlers(
                 controller: controller,
+                compareSession: compareSession,
                 nsWindow: nsWindow,
                 isEditingTimecode: $isEditingTimecode,
                 showInspector: $showInspector,
@@ -81,17 +95,32 @@ struct ContentView: View {
     private var contentLayers: some View {
         ZStack {
             // Layer 1: content (player or drop zone)
-            if controller.mediaItem != nil {
-                PlayerView(
-                    controller: controller,
-                    audioWaveformGenerator: audioWaveformGenerator,
-                    item: controller.mediaItem!,
-                    showsAudioWaveform: showAudioWaveformOverlay,
-                    isEditingTimecode: $isEditingTimecode,
-                    isTimelineFocused: $isTimelineFocused,
-                    isOverlayControlFocused: isControlInteractionActive,
-                    timecodeActivationTrigger: $timecodeActivationTrigger
-                )
+            if let item = controller.mediaItem {
+                if compareSession.isActive {
+                    ComparePlayerView(
+                        primaryController: controller,
+                        compareSession: compareSession,
+                        primaryWaveformGenerator: audioWaveformGenerator,
+                        primaryItem: item,
+                        showsAudioWaveform: showAudioWaveformOverlay,
+                        isEditingTimecode: $isEditingTimecode,
+                        isTimelineFocused: $isTimelineFocused,
+                        isOverlayControlFocused: isControlInteractionActive,
+                        timecodeActivationTrigger: $timecodeActivationTrigger
+                    )
+                } else {
+                    PlayerView(
+                        controller: controller,
+                        audioWaveformGenerator: audioWaveformGenerator,
+                        item: item,
+                        showsAudioWaveform: showAudioWaveformOverlay,
+                        isEditingTimecode: $isEditingTimecode,
+                        isTimelineFocused: $isTimelineFocused,
+                        isOverlayControlFocused: isControlInteractionActive,
+                        timecodeActivationTrigger: $timecodeActivationTrigger,
+                        compareSession: compareSession
+                    )
+                }
             } else {
                 DropZoneView(isDropTargeted: isDropTargeted, onOpenFile: openFilePanel)
             }
@@ -177,6 +206,17 @@ struct ContentView: View {
         .onDrop(of: [.fileURL], isTargeted: $isDropTargeted) { providers in
             windowCoordinator.handleDrop(providers)
         }
+        .alert(
+            "Compare Mode",
+            isPresented: Binding(
+                get: { compareSession.loadError != nil },
+                set: { if !$0 { compareSession.dismissLoadError() } }
+            )
+        ) {
+            Button("OK") { compareSession.dismissLoadError() }
+        } message: {
+            Text(compareSession.loadError ?? "The comparison file could not be loaded.")
+        }
         .onChange(of: controller.screenshotState) { _, state in
             switch state {
             case .succeeded:
@@ -229,6 +269,7 @@ struct ContentView: View {
             audioWaveformWindowController = nil
             showAudioWaveformOverlay = false
             audioWaveformGenerator.cancel()
+            compareSession.stop()
             controller.cancelMediaOperationsForWindowClose()
             controller.teardown()
             windowCoordinator.tearDown()
@@ -248,6 +289,7 @@ struct ContentView: View {
 
             ControlsView(
                 controller: controller,
+                compareSession: compareSession,
                 item: controller.mediaItem,
                 timecodeMode: $timecodeMode,
                 isEditingTimecode: $isEditingTimecode,
@@ -300,8 +342,60 @@ struct ContentView: View {
     // MARK: - Top Toolbar
 
     private var topToolbar: some View {
-        HStack {
+        HStack(spacing: 10) {
             Spacer()
+
+            if compareSession.isLoading {
+                ProgressView()
+                    .controlSize(.small)
+                    .help("Loading comparison file")
+            }
+
+            if compareSession.isActive {
+                Picker("Compare view", selection: $compareSession.viewMode) {
+                    ForEach(CompareViewMode.allCases, id: \.self) { mode in
+                        Text(mode.label).tag(mode)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 132)
+                .help("Choose comparison view")
+
+                if let alignment = compareSession.mapping?.mode.label {
+                    Text(alignment)
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.72))
+                }
+
+                Button(action: openCompareFilePanel) {
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                        .font(.system(size: 15))
+                        .foregroundColor(.white.opacity(0.9))
+                }
+                .buttonStyle(.plain)
+                .help("Replace comparison file")
+                .accessibilityLabel("Replace comparison file")
+
+                Button(action: { compareSession.stop() }) {
+                    Image(systemName: "xmark.circle")
+                        .font(.system(size: 16))
+                        .foregroundColor(.white.opacity(0.9))
+                }
+                .buttonStyle(.plain)
+                .help("Exit Compare Mode")
+                .accessibilityLabel("Exit Compare Mode")
+            } else {
+                Button(action: openCompareFilePanel) {
+                    Image(systemName: "rectangle.split.2x1")
+                        .font(.system(size: 16))
+                        .foregroundColor(.white.opacity(0.9))
+                }
+                .buttonStyle(.plain)
+                .help("Add comparison file")
+                .accessibilityLabel("Add comparison file")
+                .disabled(controller.mediaItem == nil || compareSession.isLoading)
+            }
+
             Button(action: { showInspector.toggle() }) {
                 Image(systemName: "info.circle")
                     .font(.system(size: 16))
@@ -393,6 +487,7 @@ struct ContentView: View {
     }
 
     func openFile(url: URL) {
+        compareSession.stop()
         windowCoordinator.openFile(
             url,
             controller: controller,
@@ -415,6 +510,19 @@ struct ContentView: View {
         if showAudioWaveformOverlay {
             generateAudioWaveform()
         }
+    }
+
+    private func openCompareFilePanel() {
+        guard controller.mediaItem != nil else { return }
+        let panel = NSOpenPanel()
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+        panel.canChooseFiles = true
+        panel.allowedContentTypes = PlayerWindowCoordinator.supportedMediaTypes
+        panel.message = "Choose a file to compare with source A"
+
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        compareSession.loadSecondary(url, alignedWith: controller)
     }
 
     func generateAudioWaveform() {

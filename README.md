@@ -5,6 +5,12 @@
 
 Based on the same fast engine as [Aagedal Media Converter](https://github.com/aagedal/Aagedal-Media-Converter), but now for quickly just checking playback of files.
 
+## Roadmap
+
+See [PRODUCT_ROADMAP.md](PRODUCT_ROADMAP.md) for the release sequence from the
+1.6.1 reliability foundation through Compare Mode, Audio QC, and review/report
+workflows.
+
 ## Local verification
 
 Media integration tests use tiny, locally generated clips so large binary

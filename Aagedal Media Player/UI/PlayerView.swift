@@ -17,6 +17,8 @@ struct PlayerView: View {
     @Binding var isTimelineFocused: Bool
     let isOverlayControlFocused: Bool
     @Binding var timecodeActivationTrigger: String?
+    var acceptsKeyboardInput = true
+    var compareSession: CompareSessionController? = nil
     @AppStorage(AppSettings.automaticAudioOnlyWaveform.key)
     private var automaticAudioOnlyWaveform = AppSettings.automaticAudioOnlyWaveform.defaultValue
 
@@ -190,6 +192,8 @@ struct PlayerView: View {
 
     @MainActor
     private func handleKeyEvent(_ characters: String, _ modifiers: NSEvent.ModifierFlags, _ specialKey: NSEvent.SpecialKey?) -> Bool {
+        guard acceptsKeyboardInput else { return false }
+
         // Don't intercept keys when editing timecode
         if isEditingTimecode {
             return false
@@ -210,7 +214,7 @@ struct PlayerView: View {
             if modifiers.contains(.option) {
                 controller.clearTrimIn()
             } else if modifiers.contains(.shift) {
-                if let inPoint = controller.trimIn { controller.seekTo(inPoint) }
+                if let inPoint = controller.trimIn { seek(to: inPoint) }
             } else if !modifiers.contains(.command) && !modifiers.contains(.control) {
                 controller.setTrimIn()
             } else {
@@ -223,7 +227,7 @@ struct PlayerView: View {
             if modifiers.contains(.option) {
                 controller.clearTrimOut()
             } else if modifiers.contains(.shift) {
-                if let outPoint = controller.trimOut { controller.seekTo(outPoint) }
+                if let outPoint = controller.trimOut { seek(to: outPoint) }
             } else if !modifiers.contains(.command) && !modifiers.contains(.control) {
                 controller.setTrimOut()
             } else {
@@ -291,37 +295,37 @@ struct PlayerView: View {
             switch specialKey {
             case .leftArrow:
                 if modifiers.contains(.shift) {
-                    if optionHeld { controller.seek(by: -10) }
+                    if optionHeld { seek(by: -10) }
                     else { NotificationCenter.default.post(.seekBySeconds(-10)) }
                 } else {
-                    if optionHeld { controller.seekByFrames(-1) }
+                    if optionHeld { seekByFrames(-1) }
                     else { NotificationCenter.default.post(.seekByFrames(-1)) }
                 }
                 return true
             case .rightArrow:
                 if modifiers.contains(.shift) {
-                    if optionHeld { controller.seek(by: 10) }
+                    if optionHeld { seek(by: 10) }
                     else { NotificationCenter.default.post(.seekBySeconds(10)) }
                 } else {
-                    if optionHeld { controller.seekByFrames(1) }
+                    if optionHeld { seekByFrames(1) }
                     else { NotificationCenter.default.post(.seekByFrames(1)) }
                 }
                 return true
             case .upArrow:
                 if modifiers.contains(.command) {
-                    if optionHeld { controller.seekTo(0) }
+                    if optionHeld { seek(to: 0) }
                     else { NotificationCenter.default.post(.seekToEdge(.start)) }
                 } else {
-                    if optionHeld { controller.seekByFrames(-10) }
+                    if optionHeld { seekByFrames(-10) }
                     else { NotificationCenter.default.post(.seekByFrames(-10)) }
                 }
                 return true
             case .downArrow:
                 if modifiers.contains(.command) {
-                    if optionHeld { controller.seekTo(max(0, controller.mediaItem?.durationSeconds ?? 0)) }
+                    if optionHeld { seek(to: max(0, controller.mediaItem?.durationSeconds ?? 0)) }
                     else { NotificationCenter.default.post(.seekToEdge(.end)) }
                 } else {
-                    if optionHeld { controller.seekByFrames(10) }
+                    if optionHeld { seekByFrames(10) }
                     else { NotificationCenter.default.post(.seekByFrames(10)) }
                 }
                 return true
@@ -340,6 +344,30 @@ struct PlayerView: View {
         }
 
         return false
+    }
+
+    private func seek(to time: TimeInterval) {
+        if let compareSession, compareSession.isActive {
+            compareSession.seek(primary: controller, to: time)
+        } else {
+            controller.seekTo(time)
+        }
+    }
+
+    private func seek(by seconds: TimeInterval) {
+        if let compareSession, compareSession.isActive {
+            compareSession.seek(primary: controller, by: seconds)
+        } else {
+            controller.seek(by: seconds)
+        }
+    }
+
+    private func seekByFrames(_ frameCount: Int) {
+        if let compareSession, compareSession.isActive {
+            compareSession.seekByFrames(primary: controller, frameCount: frameCount)
+        } else {
+            controller.seekByFrames(frameCount)
+        }
     }
 }
 

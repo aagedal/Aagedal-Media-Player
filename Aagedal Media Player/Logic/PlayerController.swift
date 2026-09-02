@@ -52,9 +52,14 @@ final class PlayerController: ObservableObject {
     @Published var isMuted: Bool = false {
         didSet {
             UserDefaults.standard.set(isMuted, for: AppSettings.playbackMuted)
-            backendAdapter?.isMuted = isMuted
+            backendAdapter?.isMuted = effectiveIsMuted
         }
     }
+    /// Session-level suppression is used by Compare Mode so source B never
+    /// produces duplicate audio. Unlike `isMuted`, it is intentionally not
+    /// persisted as a user preference.
+    private var isAudioSuppressed = false
+    private var effectiveIsMuted: Bool { isMuted || isAudioSuppressed }
     var player: AVPlayer? { backendAdapter?.avPlayer }
     @Published private(set) var playbackPhase: PlaybackPhase = .idle
     var isPreparing: Bool { playbackPhase == .preparing }
@@ -194,13 +199,13 @@ final class PlayerController: ObservableObject {
     /// frame 1. openFile awaits SwiftMediaMetadata results before calling this so
     /// the metadata path is the normal case; on the 500 ms timeout fallback
     /// the values land later via updateMetadata.
-    func loadMedia(_ item: MediaItem) {
+    func loadMedia(_ item: MediaItem, startTime: TimeInterval = 0) {
         let previousURL = mediaItem?.url
         mediaItem = item
 
         // Always prepare if it's a new file, or if it's the first load
         if previousURL != item.url || !isReady {
-            currentPlaybackTime = 0
+            currentPlaybackTime = max(0, startTime)
             mediaOperations.clearTrimPoints()
 
             // Aspect ratio from MetadataMapper's resolved DAR.
@@ -225,7 +230,7 @@ final class PlayerController: ObservableObject {
                 videoSourceSize = nil
             }
 
-            preparePlayback(startTime: 0)
+            preparePlayback(startTime: max(0, startTime))
         }
     }
 
@@ -404,7 +409,7 @@ final class PlayerController: ObservableObject {
     /// with wrong colors and worse performance than VideoToolbox).
     private func setupAVPlayer(url: URL, startTime: TimeInterval, wasCapturing: Bool) {
         playbackPhase = .preparing
-        let backend = AVFoundationPlayerBackend(url: url, volume: volume, isMuted: isMuted)
+        let backend = AVFoundationPlayerBackend(url: url, volume: volume, isMuted: effectiveIsMuted)
         backendAdapter = backend
         let player = backend.player
         guard let playerItem = player.currentItem else {
@@ -446,7 +451,7 @@ final class PlayerController: ObservableObject {
             url: url,
             startTime: startTime,
             volume: volume,
-            isMuted: isMuted
+            isMuted: effectiveIsMuted
         )
         backendAdapter = backend
         let mpv = backend.player
@@ -698,6 +703,12 @@ final class PlayerController: ObservableObject {
 
     func toggleMute() {
         isMuted.toggle()
+    }
+
+    func setAudioSuppressed(_ suppressed: Bool) {
+        guard isAudioSuppressed != suppressed else { return }
+        isAudioSuppressed = suppressed
+        backendAdapter?.isMuted = effectiveIsMuted
     }
 
     func adjustVolume(by delta: Double) {

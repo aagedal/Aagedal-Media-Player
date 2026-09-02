@@ -11,6 +11,7 @@ import SwiftUI
 
 struct NotificationHandlers: ViewModifier {
     @ObservedObject var controller: PlayerController
+    @ObservedObject var compareSession: CompareSessionController
     let nsWindow: NSWindow?
     @Binding var isEditingTimecode: Bool
     @Binding var showInspector: Bool
@@ -40,9 +41,14 @@ struct NotificationHandlers: ViewModifier {
                 openFilePanel: openFilePanel, openFile: openFile,
                 openPreviousFile: openPreviousFile, openNextFile: openNextFile
             ))
-            .modifier(PlaybackHandlers(controller: controller, nsWindow: nsWindow))
+            .modifier(PlaybackHandlers(
+                controller: controller,
+                compareSession: compareSession,
+                nsWindow: nsWindow
+            ))
             .modifier(TimecodeAndSyncHandlers(
                 controller: controller, nsWindow: nsWindow,
+                compareSession: compareSession,
                 isEditingTimecode: $isEditingTimecode,
                 timecodeMode: $timecodeMode,
                 overlayController: overlayController,
@@ -267,6 +273,7 @@ private struct FileAndWindowHandlers: ViewModifier {
 
 private struct PlaybackHandlers: ViewModifier {
     @ObservedObject var controller: PlayerController
+    @ObservedObject var compareSession: CompareSessionController
     let nsWindow: NSWindow?
 
     func body(content: Content) -> some View {
@@ -275,7 +282,11 @@ private struct PlaybackHandlers: ViewModifier {
                 guard let command = notification.appCommand,
                       case .togglePlayback = command else { return }
                 guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
-                controller.togglePlayback()
+                if compareSession.isActive {
+                    compareSession.togglePlayback(primary: controller)
+                } else {
+                    controller.togglePlayback()
+                }
             }
             .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
                 guard let command = notification.appCommand,
@@ -293,37 +304,61 @@ private struct PlaybackHandlers: ViewModifier {
                 guard let command = notification.appCommand,
                       case .reverse = command else { return }
                 guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
-                controller.startReverse()
+                if compareSession.isActive {
+                    compareSession.reverse(primary: controller)
+                } else {
+                    controller.startReverse()
+                }
             }
             .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
                 guard let command = notification.appCommand,
                       case .fastForward = command else { return }
                 guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
-                controller.fastForward()
+                if compareSession.isActive {
+                    compareSession.fastForward(primary: controller)
+                } else {
+                    controller.fastForward()
+                }
             }
             .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
                 guard let command = notification.appCommand,
                       case .slowForward = command else { return }
                 guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
-                controller.slowForward()
+                if compareSession.isActive {
+                    compareSession.slowForward(primary: controller)
+                } else {
+                    controller.slowForward()
+                }
             }
             .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
                 guard let command = notification.appCommand,
                       case .slowReverse = command else { return }
                 guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
-                controller.slowReverse()
+                if compareSession.isActive {
+                    compareSession.slowReverse(primary: controller)
+                } else {
+                    controller.slowReverse()
+                }
             }
             .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
                 guard let command = notification.appCommand,
                       case let .seekByFrames(count) = command,
                       WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
-                controller.seekByFrames(count)
+                if compareSession.isActive {
+                    compareSession.seekByFrames(primary: controller, frameCount: count)
+                } else {
+                    controller.seekByFrames(count)
+                }
             }
             .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
                 guard let command = notification.appCommand,
                       case let .seekBySeconds(seconds) = command,
                       WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
-                controller.seek(by: seconds)
+                if compareSession.isActive {
+                    compareSession.seek(primary: controller, by: seconds)
+                } else {
+                    controller.seek(by: seconds)
+                }
             }
             .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
                 guard let command = notification.appCommand,
@@ -331,10 +366,18 @@ private struct PlaybackHandlers: ViewModifier {
                       WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
                 switch edge {
                 case .start:
-                    controller.seekTo(0)
+                    if compareSession.isActive {
+                        compareSession.seek(primary: controller, to: 0)
+                    } else {
+                        controller.seekTo(0)
+                    }
                 case .end:
                     let duration = controller.mediaItem?.durationSeconds ?? 0
-                    controller.seekTo(max(0, duration))
+                    if compareSession.isActive {
+                        compareSession.seek(primary: controller, to: max(0, duration))
+                    } else {
+                        controller.seekTo(max(0, duration))
+                    }
                 }
             }
     }
@@ -345,6 +388,7 @@ private struct PlaybackHandlers: ViewModifier {
 private struct TimecodeAndSyncHandlers: ViewModifier {
     @ObservedObject var controller: PlayerController
     let nsWindow: NSWindow?
+    @ObservedObject var compareSession: CompareSessionController
     @Binding var isEditingTimecode: Bool
     @Binding var timecodeMode: TimecodeDisplayMode
     @ObservedObject var overlayController: PlayerOverlayController
@@ -378,13 +422,18 @@ private struct TimecodeAndSyncHandlers: ViewModifier {
                 guard let command = notification.appCommand,
                       case let .seekToSyncedTime(time) = command else { return }
                 guard !WindowManager.shared.isActiveWindow(nsWindow), isMediaLoaded else { return }
+                let seekPosition: TimeInterval
                 if let srcTime = time.sourceSeconds,
                    let item = controller.mediaItem,
                    let receiverStartSeconds = TimecodeFormatter.startTimecodeInSeconds(for: item) {
-                    let seekPosition = srcTime - receiverStartSeconds
-                    controller.seekTo(max(0, seekPosition))
+                    seekPosition = max(0, srcTime - receiverStartSeconds)
                 } else {
-                    controller.seekTo(time.relativeSeconds)
+                    seekPosition = time.relativeSeconds
+                }
+                if compareSession.isActive {
+                    compareSession.seek(primary: controller, to: seekPosition)
+                } else {
+                    controller.seekTo(seekPosition)
                 }
             }
             // Copy timecode — copies the current timecode display to the clipboard
@@ -413,14 +462,18 @@ private struct TimecodeAndSyncHandlers: ViewModifier {
                           clipboardString, item: item, mode: timecodeMode
                       ) else { return }
                 let duration = max(item.durationSeconds, 0)
-                controller.seekTo(max(0, min(seekTime, duration)))
+                let target = max(0, min(seekTime, duration))
+                if compareSession.isActive {
+                    compareSession.seek(primary: controller, to: target)
+                } else {
+                    controller.seekTo(target)
+                }
             }
             .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
                 guard let command = notification.appCommand,
                       case .reloadPlayer = command else { return }
                 guard WindowManager.shared.isActiveWindow(nsWindow), isMediaLoaded else { return }
-                let time = controller.currentPlaybackTime
-                controller.preparePlayback(startTime: time, resetAudioSelection: false)
+                compareSession.reload(primary: controller)
             }
             .onReceive(NotificationCenter.default.publisher(for: NSApplication.didResignActiveNotification)) { _ in
                 overlayController.appDidResign(

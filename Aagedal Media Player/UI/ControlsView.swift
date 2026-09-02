@@ -38,6 +38,7 @@ private struct PlaybackControlFocusRing: ViewModifier {
 
 struct ControlsView: View {
     @ObservedObject var controller: PlayerController
+    @ObservedObject var compareSession: CompareSessionController
     let item: MediaItem?
     @Binding var timecodeMode: TimecodeDisplayMode
     @Binding var isEditingTimecode: Bool
@@ -128,7 +129,7 @@ struct ControlsView: View {
     @ViewBuilder
     private var primaryTransportControls: some View {
         // Play/Pause
-        Button(action: { controller.togglePlayback() }) {
+        Button(action: togglePlayback) {
             Image(systemName: isPlaying ? "pause.fill" : "play.fill")
                 .font(.system(size: 16))
                 .foregroundColor((AudioWaveformColor(rawValue: waveformColorRaw) ?? .pink).swiftUIColor)
@@ -312,7 +313,7 @@ struct ControlsView: View {
                             let fraction = max(0, min(1, value.location.x / width))
                             dragTime = Double(fraction) * duration
                         }
-                        controller.scrub(to: dragTime)
+                        scrub(to: dragTime)
                     }
                     .onEnded { value in
                         let isPrecision = NSEvent.modifierFlags.contains(.option)
@@ -324,7 +325,7 @@ struct ControlsView: View {
                             let fraction = max(0, min(1, value.location.x / width))
                             dragTime = Double(fraction) * duration
                         }
-                        controller.endScrubbing(at: dragTime)
+                        endScrubbing(at: dragTime)
                         isDragging = false
                         wasPrecision = false
                     }
@@ -381,7 +382,11 @@ struct ControlsView: View {
 
     private func adjustTimeline(byFrames frameCount: Int) {
         guard isLoaded else { return }
-        controller.seekByFrames(frameCount)
+        if compareSession.isActive {
+            compareSession.seekByFrames(primary: controller, frameCount: frameCount)
+        } else {
+            controller.seekByFrames(frameCount)
+        }
     }
 
     // MARK: - Timecode Display
@@ -556,7 +561,7 @@ struct ControlsView: View {
 
         let duration = max(item?.durationSeconds ?? 0, 0)
         let clampedTime = max(0, min(seekTime, duration))
-        controller.seekTo(clampedTime)
+        seek(to: clampedTime)
         cancelTimecodeEdit()
     }
 
@@ -654,7 +659,7 @@ struct ControlsView: View {
     private var chapterPicker: some View {
         Menu {
             ForEach(controller.chapterOptions) { option in
-                Button(action: { controller.jumpToChapter(at: option.position) }) {
+                Button(action: { seek(to: option.time) }) {
                     HStack {
                         Text("\(formatChapterTime(option.time))  \(option.title)")
                         if option.position == controller.currentChapterPosition {
@@ -702,5 +707,39 @@ struct ControlsView: View {
     private var selectedChapterTitle: String {
         guard let position = controller.currentChapterPosition else { return "No chapter selected" }
         return controller.chapterOptions.first { $0.position == position }?.title ?? "No chapter selected"
+    }
+
+    // MARK: - Compare-aware transport
+
+    private func togglePlayback() {
+        if compareSession.isActive {
+            compareSession.togglePlayback(primary: controller)
+        } else {
+            controller.togglePlayback()
+        }
+    }
+
+    private func seek(to time: TimeInterval) {
+        if compareSession.isActive {
+            compareSession.seek(primary: controller, to: time)
+        } else {
+            controller.seekTo(time)
+        }
+    }
+
+    private func scrub(to time: TimeInterval) {
+        if compareSession.isActive {
+            compareSession.scrub(primary: controller, to: time)
+        } else {
+            controller.scrub(to: time)
+        }
+    }
+
+    private func endScrubbing(at time: TimeInterval) {
+        if compareSession.isActive {
+            compareSession.endScrubbing(primary: controller, at: time)
+        } else {
+            controller.endScrubbing(at: time)
+        }
     }
 }
