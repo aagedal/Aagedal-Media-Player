@@ -24,4 +24,37 @@ final class OperationGenerationTests: XCTestCase {
         XCTAssertFalse(generations.isCurrent(first))
         XCTAssertTrue(generations.isCurrent(second))
     }
+
+    func testKeyedReplacementDoesNotInvalidateConcurrentOperation() {
+        var generations = KeyedOperationGeneration<Int>()
+        let firstStream = generations.begin(for: 0)
+        let secondStream = generations.begin(for: 1)
+        let firstStreamReplacement = generations.begin(for: 0)
+
+        XCTAssertFalse(generations.isCurrent(firstStream, for: 0))
+        XCTAssertTrue(generations.isCurrent(firstStreamReplacement, for: 0))
+        XCTAssertTrue(generations.isCurrent(secondStream, for: 1))
+    }
+
+    func testStaleFinishCannotClearReplacement() {
+        var generations = KeyedOperationGeneration<Int>()
+        let stale = generations.begin(for: 0)
+        let replacement = generations.begin(for: 0)
+
+        XCTAssertFalse(generations.finish(stale, for: 0))
+        XCTAssertTrue(generations.isCurrent(replacement, for: 0))
+        XCTAssertTrue(generations.finish(replacement, for: 0))
+        XCTAssertFalse(generations.isCurrent(replacement, for: 0))
+    }
+
+    func testInvalidateAllRejectsEveryPendingCompletion() {
+        var generations = KeyedOperationGeneration<Int>()
+        let firstStream = generations.begin(for: 0)
+        let secondStream = generations.begin(for: 1)
+
+        generations.invalidateAll()
+
+        XCTAssertFalse(generations.finish(firstStream, for: 0))
+        XCTAssertFalse(generations.finish(secondStream, for: 1))
+    }
 }

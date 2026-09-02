@@ -16,6 +16,7 @@ struct MetadataInspectorView: View {
     @State private var lufsAnalyzing: Set<Int> = []
     @State private var lufsErrors: [Int: String] = [:]
     @State private var lufsTasks: [Int: Task<Void, Never>] = [:]
+    @State private var lufsGenerations = KeyedOperationGeneration<Int>()
 
     private var metadata: MediaMetadata? { item.metadata }
     private var video: MediaMetadata.VideoStream? { metadata?.videoStreams.first }
@@ -171,9 +172,7 @@ struct MetadataInspectorView: View {
         .listStyle(.sidebar)
         .frame(minWidth: 280, idealWidth: 320)
         .onDisappear {
-            lufsTasks.values.forEach { $0.cancel() }
-            lufsTasks.removeAll()
-            lufsAnalyzing.removeAll()
+            cancelLUFSAnalyses(resetResults: false)
         }
         .safeAreaInset(edge: .top) {
             VStack(spacing: 8) {
@@ -235,10 +234,8 @@ struct MetadataInspectorView: View {
         .onExitCommand {
             isPresented = false
         }
-        .onChange(of: item) {
-            lufsResults.removeAll()
-            lufsAnalyzing.removeAll()
-            lufsErrors.removeAll()
+        .onChange(of: item.url) {
+            cancelLUFSAnalyses(resetResults: true)
         }
     }
 
@@ -402,20 +399,34 @@ struct MetadataInspectorView: View {
         lufsAnalyzing.insert(streamIndex)
         let url = item.url
         lufsTasks[streamIndex]?.cancel()
+        let generation = lufsGenerations.begin(for: streamIndex)
         lufsTasks[streamIndex] = Task(priority: .userInitiated) {
-            defer {
-                lufsAnalyzing.remove(streamIndex)
-                lufsTasks.removeValue(forKey: streamIndex)
-            }
             do {
                 let result = try await FFmpegService.analyzeLUFS(url: url, audioStreamIndex: streamIndex)
-                guard !Task.isCancelled else { return }
+                guard !Task.isCancelled,
+                      lufsGenerations.finish(generation, for: streamIndex) else { return }
+                lufsAnalyzing.remove(streamIndex)
+                lufsTasks.removeValue(forKey: streamIndex)
                 lufsResults[streamIndex] = result
             } catch {
+                guard lufsGenerations.finish(generation, for: streamIndex) else { return }
+                lufsAnalyzing.remove(streamIndex)
+                lufsTasks.removeValue(forKey: streamIndex)
                 if !Task.isCancelled, error as? FFmpegError != .cancelled {
                     lufsErrors[streamIndex] = "LUFS analysis failed"
                 }
             }
+        }
+    }
+
+    private func cancelLUFSAnalyses(resetResults: Bool) {
+        lufsGenerations.invalidateAll()
+        lufsTasks.values.forEach { $0.cancel() }
+        lufsTasks.removeAll()
+        lufsAnalyzing.removeAll()
+        lufsErrors.removeAll()
+        if resetResults {
+            lufsResults.removeAll()
         }
     }
 

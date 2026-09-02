@@ -28,6 +28,8 @@ original nine phases are complete.
   static analysis on 2026-09-02.
 - [x] Phase 18 scope-capture isolation passes the expanded 124-test suite and
   static analysis on 2026-09-02.
+- [x] Phase 19 LUFS-analysis isolation passes the expanded 127-test suite and
+  static analysis on 2026-09-02.
 
 ## Phase 10 — Playback and preload correctness
 
@@ -208,6 +210,25 @@ Acceptance: a scope screenshot or delayed AVFoundation rebuild originating
 from superseded media cannot publish into, stall, or restart the replacement
 file.
 
+## Phase 19 — Metadata-inspector analysis isolation
+
+Status: Completed on 2026-09-02. Per-stream LUFS analyses now carry independent
+operation generations, cancel when their media is replaced or the inspector
+closes, and cannot publish or clear state belonging to replacement work.
+
+- [x] Cancel every in-flight LUFS subprocess when the inspected media changes.
+- [x] Cancel LUFS work when the metadata inspector closes.
+- [x] Keep concurrent analyses for different audio streams independent.
+- [x] Prevent a superseded completion from publishing into replacement media
+  or clearing a newer retry's loading state.
+- [x] Cover keyed replacement, concurrent work, stale completion, and bulk
+  invalidation with focused regression tests.
+- [x] Pass the full test suite and static analysis.
+
+Acceptance: replacing media, retrying a stream, or closing the inspector cannot
+leave invisible LUFS work running or allow an obsolete result to affect the
+current inspector state.
+
 ## Delivery order
 
 1. Phase 10 correctness fixes and regression tests.
@@ -220,3 +241,4 @@ file.
 8. Phase 16 playback-observer lifecycle isolation.
 9. Phase 17 MPV-publisher lifecycle isolation.
 10. Phase 18 scope-capture lifecycle isolation.
+11. Phase 19 metadata-inspector analysis isolation.

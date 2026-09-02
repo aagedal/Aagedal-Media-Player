@@ -19,3 +19,37 @@ nonisolated struct OperationGeneration: Sendable {
         generation == current
     }
 }
+
+/// Tracks independently replaceable asynchronous operations by key. This is
+/// useful when several operations may run concurrently, while a replacement
+/// for one key must not let the superseded completion publish or clear the
+/// newer operation's state.
+nonisolated struct KeyedOperationGeneration<Key: Hashable & Sendable>: Sendable {
+    private var nextGeneration: UInt64 = 0
+    private var currentGenerations: [Key: UInt64] = [:]
+
+    mutating func begin(for key: Key) -> UInt64 {
+        nextGeneration &+= 1
+        currentGenerations[key] = nextGeneration
+        return nextGeneration
+    }
+
+    func isCurrent(_ generation: UInt64, for key: Key) -> Bool {
+        currentGenerations[key] == generation
+    }
+
+    @discardableResult
+    mutating func finish(_ generation: UInt64, for key: Key) -> Bool {
+        guard isCurrent(generation, for: key) else { return false }
+        currentGenerations.removeValue(forKey: key)
+        return true
+    }
+
+    mutating func invalidate(for key: Key) {
+        currentGenerations.removeValue(forKey: key)
+    }
+
+    mutating func invalidateAll() {
+        currentGenerations.removeAll()
+    }
+}
