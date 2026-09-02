@@ -11,6 +11,24 @@ import AVKit
 import Combine
 import OSLog
 
+/// Identifies one timer-driven reverse-playback session. Invalidating the
+/// NSTimer cannot retract an already queued main-actor task, so each tick also
+/// validates the timer generation and playback preparation before seeking.
+nonisolated struct ReversePlaybackTickIdentity: Equatable, Sendable {
+    let generation: UInt64
+    let preparationID: Int
+
+    func matches(
+        generation: UInt64,
+        preparationID: Int,
+        isReversing: Bool
+    ) -> Bool {
+        isReversing
+            && self.generation == generation
+            && self.preparationID == preparationID
+    }
+}
+
 @MainActor
 final class PlayerController: ObservableObject {
     typealias AudioTrackOption = TrackSelectionController.AudioTrackOption
@@ -74,6 +92,7 @@ final class PlayerController: ObservableObject {
     private var reverseSpeed: Int = 1
     private let slowSteps: [Float] = [0.75, 0.5, 0.25, 0.1]
     private var reverseTimer: Timer?
+    private var reverseTimerGeneration = OperationGeneration()
     var isNativeReverse: Bool = false
     var canNativeReverse: Bool = false
     var canNativeSlowReverse: Bool = false
@@ -648,8 +667,7 @@ final class PlayerController: ObservableObject {
             mediaURL: mediaItem?.url
         )
         logger.error("\(failure.diagnosticText, privacy: .public)")
-        reverseTimer?.invalidate()
-        reverseTimer = nil
+        invalidateReverseTimer()
         isReversing = false
         isNativeReverse = false
         backendAdapter?.pause()
@@ -812,6 +830,10 @@ final class PlayerController: ObservableObject {
     /// high speeds.
     private func startReverseTimer(speed: Float) {
         reverseTimer?.invalidate()
+        let tickIdentity = ReversePlaybackTickIdentity(
+            generation: reverseTimerGeneration.advance(),
+            preparationID: preparationID
+        )
         let fps = effectiveFPS
         let absSpeed = Double(abs(speed))
         let minHz: Double = 15.0
@@ -821,8 +843,13 @@ final class PlayerController: ObservableObject {
         let secondsPerTick = absSpeed / H
 
         reverseTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
-            Task { @MainActor in
-                guard let self else { return }
+            Task { @MainActor [weak self] in
+                guard let self,
+                      tickIdentity.matches(
+                          generation: self.reverseTimerGeneration.current,
+                          preparationID: self.preparationID,
+                          isReversing: self.isReversing
+                      ) else { return }
                 if self.currentPlaybackTime <= 0 {
                     self.stopReverse()
                     return
@@ -841,8 +868,7 @@ final class PlayerController: ObservableObject {
         // If a timer is running we were in seek-simulation mode (MPV stayed
         // forward+paused); only the MPV native path needs direction reset.
         let wasNativeBackward = wasReversing && useMPV && reverseTimer == nil
-        reverseTimer?.invalidate()
-        reverseTimer = nil
+        invalidateReverseTimer()
         isReversing = false
         reverseSpeed = 1
         currentPlaybackSpeed = 1.0
@@ -854,6 +880,12 @@ final class PlayerController: ObservableObject {
             mpv.rate = 1.0
         }
         syncIsPlaying()
+    }
+
+    private func invalidateReverseTimer() {
+        reverseTimerGeneration.advance()
+        reverseTimer?.invalidate()
+        reverseTimer = nil
     }
 
     /// Invoked when mpv's backward-playback algorithm publishes a failure.
@@ -963,8 +995,7 @@ final class PlayerController: ObservableObject {
                 player?.rate = 0
                 isNativeReverse = false
             }
-            reverseTimer?.invalidate()
-            reverseTimer = nil
+            invalidateReverseTimer()
         } else {
             pause()
         }
@@ -1266,8 +1297,7 @@ final class PlayerController: ObservableObject {
         cancelPendingScrubSeeks()
 
         // Stop reverse playback first
-        reverseTimer?.invalidate()
-        reverseTimer = nil
+        invalidateReverseTimer()
         isReversing = false
         isNativeReverse = false
         canNativeReverse = false

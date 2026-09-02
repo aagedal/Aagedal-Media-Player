@@ -34,6 +34,8 @@ original nine phases are complete.
   static analysis on 2026-09-02.
 - [x] Phase 21 auxiliary-waveform startup ownership passes the expanded
   130-test suite and static analysis on 2026-09-02.
+- [x] Phase 22 queued playback-timer isolation passes the expanded 132-test
+  suite and static analysis on 2026-09-02.
 
 ## Phase 10 — Playback and preload correctness
 
@@ -263,6 +265,27 @@ it can start ffmpeg work.
 Acceptance: closing or replacing an auxiliary waveform panel before its hosted
 view is ready cannot start invisible ffmpeg work after cleanup.
 
+## Phase 22 — Queued playback-timer isolation
+
+Status: Completed on 2026-09-02. Timer ticks now carry the identity of the
+scope-capture or reverse-playback session that scheduled them, so invalidating
+an NSTimer is backed by explicit stale-callback rejection.
+
+- [x] Bind scope-capture timer ticks to the capture session that scheduled them.
+- [x] Prevent stopped or replaced scope sessions from starting queued frame
+  capture work.
+- [x] Bind timer-driven reverse-playback seeks to their timer generation and
+  playback preparation.
+- [x] Prevent stopped, restarted, or superseded reverse sessions from seeking
+  active media through a queued stale tick.
+- [x] Cover current, stopped, regenerated, and replacement identities with
+  focused regression tests.
+- [x] Pass the full test suite and static analysis.
+
+Acceptance: a timer callback queued before scope capture or simulated reverse
+playback stops cannot start work or seek after that session is stopped,
+restarted, or replaced by newer media.
+
 ## Delivery order
 
 1. Phase 10 correctness fixes and regression tests.
@@ -278,3 +301,4 @@ view is ready cannot start invisible ffmpeg work after cleanup.
 11. Phase 19 metadata-inspector analysis isolation.
 12. Phase 20 update-request coalescing.
 13. Phase 21 auxiliary-waveform startup ownership.
+14. Phase 22 queued playback-timer isolation.

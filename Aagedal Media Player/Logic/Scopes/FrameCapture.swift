@@ -30,6 +30,18 @@ struct ScopeCaptureIdentity: Equatable, Sendable {
     }
 }
 
+/// Identifies the capture session that scheduled a timer tick. Invalidating an
+/// NSTimer cannot retract a callback that has already queued onto the main
+/// actor, so the queued tick must prove that capture is still running in the
+/// same session before it starts any AVFoundation or MPV work.
+nonisolated struct ScopeCaptureTickIdentity: Equatable, Sendable {
+    let generation: UInt64
+
+    func matches(generation: UInt64, isCapturing: Bool) -> Bool {
+        isCapturing && self.generation == generation
+    }
+}
+
 @MainActor
 final class FrameCapture: ObservableObject {
     private let logger = Logger(subsystem: "com.aagedal.MediaPlayer", category: "FrameCapture")
@@ -110,7 +122,9 @@ final class FrameCapture: ObservableObject {
 
     func startCapture() {
         guard !isCapturing else { return }
-        captureGeneration.advance()
+        let tickIdentity = ScopeCaptureTickIdentity(
+            generation: captureGeneration.advance()
+        )
         isCapturing = true
 
         // Lazily attach AVPlayerItemVideoOutput only when capture is needed
@@ -141,8 +155,8 @@ final class FrameCapture: ObservableObject {
         let fps = UserDefaults.standard.value(for: AppSettings.scopeFrameRate)
         let interval = 1.0 / max(fps, 1)
         captureTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
-            Task { @MainActor in
-                self?.captureFrame()
+            Task { @MainActor [weak self] in
+                self?.captureFrame(identity: tickIdentity)
             }
         }
 
@@ -194,7 +208,12 @@ final class FrameCapture: ObservableObject {
 
     // MARK: - Frame Capture
 
-    private func captureFrame() {
+    private func captureFrame(identity: ScopeCaptureTickIdentity) {
+        guard identity.matches(
+            generation: captureGeneration.current,
+            isCapturing: isCapturing
+        ) else { return }
+
         if transferFunction != .sdr {
             captureHDRFrame()
         } else if let output = videoOutput, let player {

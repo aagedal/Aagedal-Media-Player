@@ -57,4 +57,40 @@ final class OperationGenerationTests: XCTestCase {
         XCTAssertFalse(generations.finish(firstStream, for: 0))
         XCTAssertFalse(generations.finish(secondStream, for: 1))
     }
+
+    func testScopeCaptureTickRequiresCurrentRunningSession() {
+        let identity = ScopeCaptureTickIdentity(generation: 7)
+
+        XCTAssertTrue(identity.matches(generation: 7, isCapturing: true))
+        XCTAssertFalse(identity.matches(generation: 8, isCapturing: true))
+        XCTAssertFalse(identity.matches(generation: 7, isCapturing: false))
+    }
+
+    func testReversePlaybackTickRequiresCurrentActivePreparation() {
+        let identity = ReversePlaybackTickIdentity(
+            generation: 11,
+            preparationID: 3
+        )
+
+        XCTAssertTrue(identity.matches(
+            generation: 11,
+            preparationID: 3,
+            isReversing: true
+        ))
+        XCTAssertFalse(identity.matches(
+            generation: 12,
+            preparationID: 3,
+            isReversing: true
+        ))
+        XCTAssertFalse(identity.matches(
+            generation: 11,
+            preparationID: 4,
+            isReversing: true
+        ))
+        XCTAssertFalse(identity.matches(
+            generation: 11,
+            preparationID: 3,
+            isReversing: false
+        ))
+    }
 }
