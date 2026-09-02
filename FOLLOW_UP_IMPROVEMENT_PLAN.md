@@ -44,11 +44,9 @@ original nine phases are complete.
   suite and static analysis on 2026-09-02.
 - [x] Phase 26 SwiftMediaMetadata 3.0.0 migration passes the 135-test suite and
   static analysis on 2026-09-02.
-- [ ] Release preflight is blocked by the tracked bundled ffmpeg's invalid
-  signature, missing Developer ID Application authority, and missing secure
-  timestamp. The current machine has no valid code-signing identities, so the
-  artifact must be re-signed in the release environment before this gate can
-  pass.
+- [x] Release preflight passes all 61 checks after installing the verified
+  Developer ID-signed ffmpeg 9.0.1 artifact and updating its provenance
+  checksum on 2026-09-02.
 
 ## Phase 10 — Playback and preload correctness
 
@@ -332,10 +330,9 @@ activation.
 
 ## Phase 25 — Media-operation feedback ownership
 
-Status: Implementation completed on 2026-09-02. Delayed screenshot and
-trim-export feedback cleanup is now explicitly owned per operation. The
-expanded 135-test suite and static analysis pass; release preflight remains
-blocked by the pre-existing bundled ffmpeg signing issue recorded above.
+Status: Completed on 2026-09-02. Delayed screenshot and trim-export feedback
+cleanup is now explicitly owned per operation. The expanded 135-test suite,
+61-check release preflight, and static analysis pass.
 
 - [x] Replace fire-and-forget screenshot and trim-export feedback timers with
   cancellable deferred-task owners.
@@ -345,8 +342,8 @@ blocked by the pre-existing bundled ffmpeg signing issue recorded above.
   player window closes.
 - [x] Cover repeated equal-valued feedback with a focused regression test.
 - [x] Pass the full test suite and static analysis.
-- [ ] Pass release preflight after the bundled ffmpeg is re-signed with a
-  Developer ID Application identity, Hardened Runtime, and a secure timestamp.
+- [x] Pass release preflight with the bundled ffmpeg signed using a Developer
+  ID Application identity, Hardened Runtime, and a secure timestamp.
 
 Acceptance: replacing, dismissing, or tearing down media-operation feedback
 cannot let an obsolete delayed task clear a newer message, and no feedback
