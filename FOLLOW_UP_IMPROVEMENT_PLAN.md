@@ -22,6 +22,8 @@ original nine phases are complete.
   static analysis on 2026-09-01.
 - [x] Phase 15 track-lifecycle completion passes the expanded 121-test suite
   and static analysis on 2026-09-01.
+- [x] Phase 16 playback-observer isolation passes the expanded 122-test suite
+  and static analysis on 2026-09-02.
 
 ## Phase 10 — Playback and preload correctness
 
@@ -135,6 +137,31 @@ Acceptance: rapidly replacing media cannot show the previous file's tracks or
 chapters, apply a previous selection, or start playback in the replacement
 file.
 
+## Phase 16 — Playback-observer lifecycle isolation
+
+Status: Completed on 2026-09-02. AVFoundation observer callbacks now carry the
+preparation, player, and player-item identity that installed them, and all
+asynchronous readiness paths revalidate that identity after suspension. The
+MPV end-of-file timer is likewise bound to its originating preparation and
+backend instance.
+
+- [x] Prevent queued AVFoundation playback-end and failure notifications from
+  acting on a replacement player item.
+- [x] Prevent stale periodic-time and time-control callbacks from publishing
+  playback time, reverse, playing, or buffering state.
+- [x] Revalidate AVFoundation readiness work after every asynchronous asset
+  load and seek, including the fallback error path.
+- [x] Prevent a completed loop seek from restarting playback after the active
+  media changes.
+- [x] Bind delayed MPV end-of-file polling work to its originating preparation
+  and player instance.
+- [x] Cover preparation, player, and player-item identity matching with a
+  focused regression test.
+
+Acceptance: callbacks and continuations originating from a superseded playback
+backend cannot change the replacement file's time, readiness, buffering,
+failure, reverse, or play/pause state.
+
 ## Delivery order
 
 1. Phase 10 correctness fixes and regression tests.
@@ -144,3 +171,4 @@ file.
 5. Phase 13 update-state improvements and incremental cleanup.
 6. Phase 14 AVFoundation audio-track routing correctness.
 7. Phase 15 track-discovery and selection lifecycle isolation.
+8. Phase 16 playback-observer lifecycle isolation.

@@ -8,20 +8,62 @@ import Foundation
 import AVKit
 import OSLog
 
+/// Identifies the exact AVFoundation playback preparation that installed an
+/// observer. Removing a KVO or NotificationCenter observer does not retract
+/// callbacks already queued onto the main actor, so every queued callback must
+/// also prove that its source player and item still belong to the active
+/// preparation before publishing state.
+struct AVPlaybackObservationIdentity: Equatable, Sendable {
+    let preparationID: Int
+    let playerID: ObjectIdentifier?
+    let playerItemID: ObjectIdentifier?
+
+    @MainActor
+    init(preparationID: Int, player: AVPlayer?, playerItem: AVPlayerItem?) {
+        self.preparationID = preparationID
+        playerID = player.map(ObjectIdentifier.init)
+        playerItemID = playerItem.map(ObjectIdentifier.init)
+    }
+
+    @MainActor
+    func matches(
+        preparationID: Int,
+        player: AVPlayer?,
+        playerItem: AVPlayerItem?
+    ) -> Bool {
+        self.preparationID == preparationID
+            && playerID == player.map(ObjectIdentifier.init)
+            && playerItemID == playerItem.map(ObjectIdentifier.init)
+    }
+}
+
 extension PlayerController {
+
+    private func isCurrent(_ identity: AVPlaybackObservationIdentity) -> Bool {
+        identity.matches(
+            preparationID: preparationID,
+            player: player,
+            playerItem: player?.currentItem
+        )
+    }
 
     // MARK: - Loop Observer
 
     func installLoopObserver(for item: AVPlayerItem) {
         removeLoopObserver()
-        let myPrepID = preparationID
+        let identity = AVPlaybackObservationIdentity(
+            preparationID: preparationID,
+            player: player,
+            playerItem: item
+        )
         loopObserver = NotificationCenter.default.addObserver(
             forName: .AVPlayerItemDidPlayToEndTime,
             object: item,
             queue: .main
         ) { [weak self] _ in
             Task { @MainActor [weak self] in
-                self?.handlePlaybackEnded()
+                guard let self, self.isCurrent(identity) else { return }
+                self.handlePlaybackEnded(identity: identity)
             }
         }
 
@@ -34,8 +76,7 @@ extension PlayerController {
                 .localizedDescription
                 ?? "AVFoundation could not finish playing this file."
             Task { @MainActor [weak self] in
-                guard let self else { return }
-                guard self.preparationID == myPrepID else { return }
+                guard let self, self.isCurrent(identity) else { return }
                 self.reportPlaybackFailure(
                     backend: .avFoundation,
                     stage: .playback,
@@ -56,13 +97,18 @@ extension PlayerController {
         }
     }
 
-    func handlePlaybackEnded() {
-        guard let item = mediaItem, let player else { return }
+    private func handlePlaybackEnded(identity: AVPlaybackObservationIdentity) {
+        guard let item = mediaItem, let observedPlayer = player else { return }
 
         if item.loopPlayback {
             let target = CMTime(seconds: 0, preferredTimescale: 600)
-            player.seek(to: target, toleranceBefore: .zero, toleranceAfter: .zero) { _ in
-                player.play()
+            observedPlayer.seek(to: target, toleranceBefore: .zero, toleranceAfter: .zero) { [weak self, weak observedPlayer] _ in
+                Task { @MainActor [weak self, weak observedPlayer] in
+                    guard let self,
+                          let observedPlayer,
+                          self.isCurrent(identity) else { return }
+                    observedPlayer.play()
+                }
             }
         } else if currentPlaybackSpeed != 1.0 {
             // Reset speed when fast/slow playback reaches the end
@@ -80,11 +126,16 @@ extension PlayerController {
     func installMPVLoopObserver() {
         removeMPVLoopObserver()
 
-        guard useMPV, mpvPlayer != nil else { return }
+        guard useMPV, let observedMPV = mpvPlayer else { return }
+        let observedPreparationID = preparationID
 
         mpvLoopObserverTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
-            Task { @MainActor [weak self] in
-                guard let self, let mpv = self.mpvPlayer else { return }
+            Task { @MainActor [weak self, weak observedMPV] in
+                guard let self,
+                      let observedMPV,
+                      self.preparationID == observedPreparationID,
+                      self.mpvPlayer === observedMPV else { return }
+                let mpv = observedMPV
                 guard let item = self.mediaItem else { return }
 
                 let currentTime = mpv.timePos
@@ -118,11 +169,16 @@ extension PlayerController {
     func installPlaybackTimeObserver(for player: AVPlayer) {
         removePlaybackTimeObserver()
 
+        let identity = AVPlaybackObservationIdentity(
+            preparationID: preparationID,
+            player: player,
+            playerItem: player.currentItem
+        )
         let interval = CMTime(seconds: 0.05, preferredTimescale: 600)
         playbackTimeObserverOwner = player
         playbackTimeObserver = player.addPeriodicTimeObserver(forInterval: interval, queue: .main) { [weak self] time in
             Task { @MainActor [weak self] in
-                guard let self = self else { return }
+                guard let self, self.isCurrent(identity) else { return }
                 let currentTime = time.seconds
                 if currentTime.isFinite {
                     self.currentPlaybackTime = currentTime
@@ -149,9 +205,14 @@ extension PlayerController {
     func installTimeControlStatusObserver(for player: AVPlayer) {
         removeTimeControlStatusObserver()
 
+        let identity = AVPlaybackObservationIdentity(
+            preparationID: preparationID,
+            player: player,
+            playerItem: player.currentItem
+        )
         timeControlStatusObserver = player.observe(\.timeControlStatus, options: [.new, .initial]) { [weak self] _, _ in
             Task { @MainActor [weak self] in
-                guard let self else { return }
+                guard let self, self.isCurrent(identity) else { return }
                 self.syncIsPlaying()
                 self.updateBufferingState(
                     player.timeControlStatus == .waitingToPlayAtSpecifiedRate
@@ -171,14 +232,19 @@ extension PlayerController {
         removePlayerItemStatusObserver()
 
         let logger = Logger(subsystem: "com.aagedal.MediaPlayer", category: "PlayerController")
-        let myPrepID = self.preparationID
+        let observedPlayer = player
+        let identity = AVPlaybackObservationIdentity(
+            preparationID: preparationID,
+            player: observedPlayer,
+            playerItem: playerItem
+        )
 
         playerItemStatusObserver = playerItem.observe(\.status, options: [.new]) { [weak self] item, _ in
             Task { @MainActor [weak self] in
                 guard let self else { return }
                 // Bail out if a newer preparePlayback has started since this
                 // observer was installed — the player item is stale.
-                guard self.preparationID == myPrepID else { return }
+                guard self.isCurrent(identity) else { return }
 
                 switch item.status {
                 case .failed:
@@ -202,19 +268,20 @@ extension PlayerController {
                         do {
                             let videoTracks = try await asset.loadTracks(withMediaType: .video)
                             // Re-check after each await — a new file may have been loaded
-                            guard self.preparationID == myPrepID else { return }
+                            guard self.isCurrent(identity) else { return }
                             guard self.playbackFailure == nil else { return }
 
                             if !videoTracks.isEmpty {
                                 var hasValidVideoFormat = false
                                 for track in videoTracks {
                                     let formatDescriptions = try await track.load(.formatDescriptions) as [CMFormatDescription]
+                                    guard self.isCurrent(identity) else { return }
                                     if !formatDescriptions.isEmpty {
                                         hasValidVideoFormat = true
                                         break
                                     }
                                 }
-                                guard self.preparationID == myPrepID else { return }
+                                guard self.isCurrent(identity) else { return }
 
                                 if !hasValidVideoFormat {
                                     self.reportPlaybackFailure(
@@ -227,7 +294,7 @@ extension PlayerController {
 
                                 for track in videoTracks {
                                     let isDecodable = try await track.load(.isDecodable)
-                                    guard self.preparationID == myPrepID else { return }
+                                    guard self.isCurrent(identity) else { return }
                                     if !isDecodable {
                                         self.reportPlaybackFailure(
                                             backend: .avFoundation,
@@ -239,7 +306,7 @@ extension PlayerController {
                                 }
                             }
 
-                            guard self.preparationID == myPrepID else { return }
+                            guard self.isCurrent(identity) else { return }
                             guard self.playbackFailure == nil else { return }
 
                             // Window aspect/source size come from MetadataService via
@@ -249,7 +316,7 @@ extension PlayerController {
 
                             // Populate duration from AVPlayer so the timeline is usable before metadata finishes
                             let avDuration = try await asset.load(.duration)
-                            guard self.preparationID == myPrepID else { return }
+                            guard self.isCurrent(identity) else { return }
                             guard self.playbackFailure == nil else { return }
                             let seconds = CMTimeGetSeconds(avDuration)
                             if seconds.isFinite, seconds > 0, (self.mediaItem?.durationSeconds ?? 0) == 0 {
@@ -257,40 +324,44 @@ extension PlayerController {
                             }
 
                             self.markPlaybackReady(
-                                isBuffering: self.player?.timeControlStatus == .waitingToPlayAtSpecifiedRate
+                                isBuffering: observedPlayer?.timeControlStatus == .waitingToPlayAtSpecifiedRate
                             )
                             self.canNativeReverse = item.canPlayReverse
                             self.canNativeSlowReverse = item.canPlaySlowReverse
 
-                            if let player = self.player {
+                            if let observedPlayer {
                                 let seekTime = CMTime(seconds: startTime, preferredTimescale: 600)
-                                await player.seek(to: seekTime, toleranceBefore: .zero, toleranceAfter: .zero)
+                                await observedPlayer.seek(to: seekTime, toleranceBefore: .zero, toleranceAfter: .zero)
+                                guard self.isCurrent(identity) else { return }
                             }
 
                             self.applySelectedAudioTrack()
 
                         } catch {
-                            guard self.preparationID == myPrepID else { return }
+                            guard self.isCurrent(identity) else { return }
                             guard self.playbackFailure == nil else { return }
                             logger.debug("Could not verify video tracks, proceeding with playback")
 
                             // Try to get duration even if track verification failed
                             if let dur = try? await asset.load(.duration) {
+                                guard self.isCurrent(identity) else { return }
                                 let seconds = CMTimeGetSeconds(dur)
                                 if seconds.isFinite, seconds > 0, (self.mediaItem?.durationSeconds ?? 0) == 0 {
                                     self.mediaItem?.durationSeconds = seconds
                                 }
                             }
+                            guard self.isCurrent(identity) else { return }
 
                             self.markPlaybackReady(
-                                isBuffering: self.player?.timeControlStatus == .waitingToPlayAtSpecifiedRate
+                                isBuffering: observedPlayer?.timeControlStatus == .waitingToPlayAtSpecifiedRate
                             )
                             self.canNativeReverse = item.canPlayReverse
                             self.canNativeSlowReverse = item.canPlaySlowReverse
 
-                            if let player = self.player {
+                            if let observedPlayer {
                                 let seekTime = CMTime(seconds: startTime, preferredTimescale: 600)
-                                await player.seek(to: seekTime, toleranceBefore: .zero, toleranceAfter: .zero)
+                                await observedPlayer.seek(to: seekTime, toleranceBefore: .zero, toleranceAfter: .zero)
+                                guard self.isCurrent(identity) else { return }
                             }
 
                             self.applySelectedAudioTrack()
