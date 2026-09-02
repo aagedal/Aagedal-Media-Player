@@ -26,6 +26,8 @@ original nine phases are complete.
   and static analysis on 2026-09-02.
 - [x] Phase 17 MPV-publisher isolation passes the expanded 123-test suite and
   static analysis on 2026-09-02.
+- [x] Phase 18 scope-capture isolation passes the expanded 124-test suite and
+  static analysis on 2026-09-02.
 
 ## Phase 10 — Playback and preload correctness
 
@@ -184,6 +186,28 @@ Acceptance: no publisher value or delayed callback originating from a
 superseded MPV backend can mutate the replacement file's controller or scope
 state.
 
+## Phase 18 — Scope-capture lifecycle isolation
+
+Status: Completed on 2026-09-02. Asynchronous MPV screenshots now publish only
+into the capture session and backend that requested them, and playback teardown
+cannot schedule an AVFoundation pipeline rebuild against replacement media.
+
+- [x] Bind asynchronous MPV screenshot results to their originating capture
+  session and player instance.
+- [x] Prevent a stale completion from clearing a replacement capture that is
+  already in flight.
+- [x] Invalidate pending capture work when capture stops or either playback
+  backend is replaced.
+- [x] Suppress AVFoundation's delayed same-item pipeline rebuild when the
+  entire playback backend is being torn down.
+- [x] Cover capture-session and MPV-player identity matching with a focused
+  regression test.
+- [x] Pass the full test suite and static analysis.
+
+Acceptance: a scope screenshot or delayed AVFoundation rebuild originating
+from superseded media cannot publish into, stall, or restart the replacement
+file.
+
 ## Delivery order
 
 1. Phase 10 correctness fixes and regression tests.
@@ -195,3 +219,4 @@ state.
 7. Phase 15 track-discovery and selection lifecycle isolation.
 8. Phase 16 playback-observer lifecycle isolation.
 9. Phase 17 MPV-publisher lifecycle isolation.
+10. Phase 18 scope-capture lifecycle isolation.

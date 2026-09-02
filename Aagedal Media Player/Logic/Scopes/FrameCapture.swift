@@ -11,6 +11,25 @@ import Combine
 import OSLog
 import VideoToolbox
 
+/// Identifies one scope-capture session and the MPV backend that supplied a
+/// frame. A screenshot request cannot be cancelled once it has entered mpv's
+/// serial queue, so its result must prove that both the session and player are
+/// still current before it is published.
+struct ScopeCaptureIdentity: Equatable, Sendable {
+    let generation: UInt64
+    let playerID: ObjectIdentifier?
+
+    init(generation: UInt64, player: MPVPlayer?) {
+        self.generation = generation
+        playerID = player.map(ObjectIdentifier.init)
+    }
+
+    func matches(generation: UInt64, player: MPVPlayer?) -> Bool {
+        self.generation == generation
+            && playerID == player.map(ObjectIdentifier.init)
+    }
+}
+
 @MainActor
 final class FrameCapture: ObservableObject {
     private let logger = Logger(subsystem: "com.aagedal.MediaPlayer", category: "FrameCapture")
@@ -42,7 +61,8 @@ final class FrameCapture: ObservableObject {
 
     // MPV capture via screenshot-raw
     private weak var mpvPlayer: MPVPlayer?
-    private var mpvCaptureInFlight = false
+    private var captureGeneration = OperationGeneration()
+    private var mpvCaptureInFlight: ScopeCaptureIdentity?
     private nonisolated(unsafe) static var hdrFormatLogged = false
 
     // Shared timer
@@ -57,10 +77,12 @@ final class FrameCapture: ObservableObject {
     // MARK: - AVPlayer Setup
 
     func attachAVPlayer(_ player: AVPlayer) {
+        invalidatePendingCapture()
         self.player = player
     }
 
     func detachAVPlayer() {
+        invalidatePendingCapture()
         if let output = videoOutput, let item = player?.currentItem {
             item.remove(output)
         }
@@ -75,10 +97,12 @@ final class FrameCapture: ObservableObject {
     // MARK: - MPV Setup
 
     func attachMPV(_ mpv: MPVPlayer) {
+        invalidatePendingCapture()
         self.mpvPlayer = mpv
     }
 
     func detachMPV() {
+        invalidatePendingCapture()
         mpvPlayer = nil
     }
 
@@ -86,6 +110,7 @@ final class FrameCapture: ObservableObject {
 
     func startCapture() {
         guard !isCapturing else { return }
+        captureGeneration.advance()
         isCapturing = true
 
         // Lazily attach AVPlayerItemVideoOutput only when capture is needed
@@ -129,7 +154,9 @@ final class FrameCapture: ObservableObject {
     /// a teardown/rebuild cycle that resets the transfer function.
     func stopCapture(rebuildPipeline: Bool = true) {
         guard isCapturing else { return }
+        let stoppedGeneration = captureGeneration.advance()
         isCapturing = false
+        mpvCaptureInFlight = nil
 
         captureTimer?.invalidate()
         captureTimer = nil
@@ -156,6 +183,8 @@ final class FrameCapture: ObservableObject {
             let callback = onAVOutputRemoved
             Task { @MainActor in
                 try? await Task.sleep(for: .milliseconds(100))
+                guard !self.isCapturing,
+                      self.captureGeneration.isCurrent(stoppedGeneration) else { return }
                 callback?()
             }
         }
@@ -300,40 +329,66 @@ final class FrameCapture: ObservableObject {
     // MARK: - MPV Frame Capture via screenshot-raw
 
     private func captureMPVFrame() {
-        guard !mpvCaptureInFlight, let mpv = mpvPlayer else { return }
+        guard mpvCaptureInFlight == nil, let mpv = mpvPlayer else { return }
 
-        mpvCaptureInFlight = true
+        let identity = ScopeCaptureIdentity(
+            generation: captureGeneration.current,
+            player: mpv
+        )
+        mpvCaptureInFlight = identity
         let width = analysisWidth
 
-        Task {
+        Task { [weak self] in
             let image = await Self.screenshotAndDownsample(mpv: mpv, targetWidth: width)
-            guard isCapturing else {
-                mpvCaptureInFlight = false
-                return
-            }
-            currentFrame = image
-            mpvCaptureInFlight = false
+            self?.finishMPVCapture(identity: identity, sdrImage: image, hdrFrame: nil)
         }
     }
 
     private func captureMPVHDRFrame() {
-        guard !mpvCaptureInFlight, let mpv = mpvPlayer else { return }
+        guard mpvCaptureInFlight == nil, let mpv = mpvPlayer else { return }
 
-        mpvCaptureInFlight = true
+        let identity = ScopeCaptureIdentity(
+            generation: captureGeneration.current,
+            player: mpv
+        )
+        mpvCaptureInFlight = identity
         let width = analysisWidth
         let tf = transferFunction
         let peak = contentPeakNits
 
-        Task {
+        Task { [weak self] in
             let result = await Self.screenshotAndDownsampleHDR(mpv: mpv, targetWidth: width, transferFunction: tf, peakNits: peak)
-            guard isCapturing else {
-                mpvCaptureInFlight = false
-                return
-            }
-            currentHDRFrame = result?.hdrFrame
-            currentFrame = result?.sdrImage
-            mpvCaptureInFlight = false
+            self?.finishMPVCapture(
+                identity: identity,
+                sdrImage: result?.sdrImage,
+                hdrFrame: result?.hdrFrame
+            )
         }
+    }
+
+    private func invalidatePendingCapture() {
+        captureGeneration.advance()
+        mpvCaptureInFlight = nil
+    }
+
+    private func finishMPVCapture(
+        identity: ScopeCaptureIdentity,
+        sdrImage: CGImage?,
+        hdrFrame: HDRFrameData?
+    ) {
+        // A replacement capture may already be in flight. An older completion
+        // must neither clear that request nor publish its frame.
+        guard mpvCaptureInFlight == identity else { return }
+        mpvCaptureInFlight = nil
+
+        guard isCapturing,
+              identity.matches(
+                  generation: captureGeneration.current,
+                  player: mpvPlayer
+              ) else { return }
+
+        currentHDRFrame = hdrFrame
+        currentFrame = sdrImage
     }
 
     /// Runs off the main actor: captures raw pixels via mpv and downscales.

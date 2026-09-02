@@ -608,7 +608,7 @@ final class PlayerController: ObservableObject {
 
         // Refresh audio tracks after MPV parses the media
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self, weak mpv] in
-            guard let self, let mpv,
+            guard let self, mpv != nil,
                   observationIdentity.matches(
                       preparationID: self.preparationID,
                       player: self.mpvPlayer
@@ -1275,7 +1275,11 @@ final class PlayerController: ObservableObject {
         reverseSpeed = 1
 
         // Stop scope capture and detach backends
-        frameCapture.stopCapture()
+        // The playback backend is about to be discarded, so AVFoundation does
+        // not need the delayed same-item pipeline rebuild used when a user
+        // merely closes the scopes. Scheduling it here could instead restart
+        // playback after a replacement file has already begun preparing.
+        frameCapture.stopCapture(rebuildPipeline: false)
         frameCapture.detachAVPlayer()
         frameCapture.detachMPV()
         frameCapture.transferFunction = .sdr

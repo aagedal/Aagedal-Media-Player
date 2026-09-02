@@ -95,4 +95,30 @@ final class PlayerBackendAdapterTests: XCTestCase {
             player: nil
         ))
     }
+
+    func testScopeCaptureIdentityRequiresSameGenerationAndPlayer() {
+        let firstPlayer = MPVPlayer()
+        let replacementPlayer = MPVPlayer()
+        let identity = ScopeCaptureIdentity(
+            generation: 13,
+            player: firstPlayer
+        )
+
+        XCTAssertTrue(identity.matches(
+            generation: 13,
+            player: firstPlayer
+        ))
+        XCTAssertFalse(identity.matches(
+            generation: 14,
+            player: firstPlayer
+        ))
+        XCTAssertFalse(identity.matches(
+            generation: 13,
+            player: replacementPlayer
+        ))
+        XCTAssertFalse(identity.matches(
+            generation: 13,
+            player: nil
+        ))
+    }
 }
