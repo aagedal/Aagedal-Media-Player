@@ -48,6 +48,24 @@ final class DeferredMainActorTaskTests: XCTestCase {
         await task.value
         XCTAssertTrue(probe.events.isEmpty)
     }
+
+    func testReplacementRestartsDelayedOperationOwnership() async {
+        let owner = DeferredMainActorTask()
+        let probe = DeferredTaskProbe()
+
+        let staleTask = owner.schedule(after: .milliseconds(50)) {
+            probe.events.append("stale")
+        }
+        let currentTask = owner.schedule(after: .milliseconds(50)) {
+            probe.events.append("current")
+        }
+
+        await staleTask.value
+        XCTAssertTrue(probe.events.isEmpty)
+
+        await currentTask.value
+        XCTAssertEqual(probe.events, ["current"])
+    }
 }
 
 @MainActor

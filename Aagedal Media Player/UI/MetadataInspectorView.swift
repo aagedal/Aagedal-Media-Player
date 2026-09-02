@@ -12,6 +12,7 @@ struct MetadataInspectorView: View {
     let useMPV: Bool
     @Binding var isPresented: Bool
     @State private var showCopiedConfirmation = false
+    @State private var copiedConfirmationTask = DeferredMainActorTask()
     @State private var lufsResults: [Int: FFmpegService.LUFSResult] = [:]
     @State private var lufsAnalyzing: Set<Int> = []
     @State private var lufsErrors: [Int: String] = [:]
@@ -172,6 +173,8 @@ struct MetadataInspectorView: View {
         .listStyle(.sidebar)
         .frame(minWidth: 280, idealWidth: 320)
         .onDisappear {
+            copiedConfirmationTask.cancel()
+            showCopiedConfirmation = false
             cancelLUFSAnalyses(resetResults: false)
         }
         .safeAreaInset(edge: .top) {
@@ -235,6 +238,8 @@ struct MetadataInspectorView: View {
             isPresented = false
         }
         .onChange(of: item.url) {
+            copiedConfirmationTask.cancel()
+            showCopiedConfirmation = false
             cancelLUFSAnalyses(resetResults: true)
         }
     }
@@ -256,8 +261,7 @@ struct MetadataInspectorView: View {
         NSPasteboard.general.setString(json, forType: .string)
 
         withAnimation { showCopiedConfirmation = true }
-        Task {
-            try? await Task.sleep(for: .seconds(1.5))
+        copiedConfirmationTask.schedule(after: .seconds(1.5)) {
             withAnimation { showCopiedConfirmation = false }
         }
     }

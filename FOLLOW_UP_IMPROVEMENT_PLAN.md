@@ -49,6 +49,8 @@ original nine phases are complete.
   checksum on 2026-09-02.
 - [x] Phase 27 playback-preparation ownership passes the expanded 136-test
   suite and static analysis on 2026-09-02.
+- [x] Phase 28 metadata-copy feedback ownership passes the expanded 137-test
+  suite and static analysis on 2026-09-02.
 
 ## Phase 10 — Playback and preload correctness
 
@@ -388,6 +390,25 @@ Acceptance: closing a player window or replacing its media while backend
 selection is suspended cannot create an AVFoundation or MPV backend after
 teardown.
 
+## Phase 28 — Metadata-copy feedback ownership
+
+Status: Completed on 2026-09-02. The metadata inspector's copied-confirmation
+delay is now explicitly owned by the view, replaced on every copy, and
+cancelled when the inspected media changes or the inspector disappears.
+
+- [x] Replace the fire-and-forget copied-confirmation delay with a cancellable
+  deferred-task owner.
+- [x] Restart the full confirmation interval after every copy so an older
+  delayed completion cannot hide newer feedback.
+- [x] Cancel and clear pending copy feedback when the media changes or the
+  inspector closes.
+- [x] Cover delayed task replacement with a focused regression test.
+- [x] Pass the full test suite and static analysis.
+
+Acceptance: repeated metadata copies each receive their full confirmation
+interval, and no copy-feedback task remains owned by a closed or repurposed
+metadata inspector.
+
 ## Delivery order
 
 1. Phase 10 correctness fixes and regression tests.
@@ -409,3 +430,4 @@ teardown.
 17. Phase 25 media-operation feedback ownership.
 18. Phase 26 SwiftMediaMetadata 3.0.0 migration.
 19. Phase 27 playback-preparation ownership.
+20. Phase 28 metadata-copy feedback ownership.
