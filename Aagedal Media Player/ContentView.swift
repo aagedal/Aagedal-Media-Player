@@ -377,6 +377,26 @@ struct ContentView: View {
                         .help("Overlay blend: A at the left, B at the right")
                         .accessibilityLabel("Overlay blend")
                         .accessibilityValue("\(Int(compareSession.overlayBlend * 100)) percent source B")
+                } else if compareSession.viewMode == .difference {
+                    Slider(
+                        value: Binding(
+                            get: { compareSession.differenceGain },
+                            set: { compareSession.setDifferenceGain($0) }
+                        ),
+                        in: CompareSessionController.minimumDifferenceGain...CompareSessionController.maximumDifferenceGain,
+                        step: 0.5
+                    )
+                        .controlSize(.small)
+                        .frame(width: 110)
+                        .help("Amplify the post-display RGB difference. This is not an objective image-quality metric.")
+                        .accessibilityLabel("Difference gain")
+                        .accessibilityValue("\(compareSession.differenceGain.formatted()) times")
+
+                    Text("\(compareSession.differenceGain.formatted())× display-space")
+                        .font(.caption)
+                        .monospacedDigit()
+                        .foregroundStyle(.white.opacity(0.72))
+                        .help("Difference is computed from post-display RGB, not normalized source pixels")
                 }
 
                 if let alignment = compareSession.mapping?.mode.label {

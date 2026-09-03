@@ -13,6 +13,7 @@ nonisolated enum CompareViewMode: String, CaseIterable, Sendable {
     case verticalWipe
     case horizontalWipe
     case overlay
+    case difference
 
     var label: String {
         switch self {
@@ -22,6 +23,7 @@ nonisolated enum CompareViewMode: String, CaseIterable, Sendable {
         case .verticalWipe: "Vertical Wipe"
         case .horizontalWipe: "Horizontal Wipe"
         case .overlay: "Overlay"
+        case .difference: "Display Difference"
         }
     }
 
@@ -92,12 +94,16 @@ nonisolated struct CompareTimelineMapping: Equatable, Sendable {
 
 @MainActor
 final class CompareSessionController: ObservableObject {
+    nonisolated static let minimumDifferenceGain = 1.0
+    nonisolated static let maximumDifferenceGain = 16.0
+
     let secondaryController: PlayerController
     let secondaryWaveformGenerator = AudioWaveformGenerator()
 
     @Published var viewMode: CompareViewMode = .sideBySide
     @Published private(set) var wipePosition = 0.5
     @Published private(set) var overlayBlend = 0.5
+    @Published private(set) var differenceGain = 1.0
     @Published private(set) var secondaryURL: URL?
     @Published private(set) var mapping: CompareTimelineMapping?
     @Published private(set) var isLoading = false
@@ -190,6 +196,7 @@ final class CompareSessionController: ObservableObject {
         viewMode = .sideBySide
         wipePosition = 0.5
         overlayBlend = 0.5
+        differenceGain = 1
     }
 
     func togglePrimarySecondary() {
@@ -208,9 +215,23 @@ final class CompareSessionController: ObservableObject {
         overlayBlend = Self.clampedUnitValue(blend)
     }
 
+    func setDifferenceGain(_ gain: Double) {
+        differenceGain = Self.clampedDifferenceGain(gain)
+    }
+
     nonisolated static func clampedUnitValue(_ value: Double) -> Double {
         guard value.isFinite else { return 0.5 }
         return min(max(value, 0), 1)
+    }
+
+    nonisolated static func clampedDifferenceGain(_ value: Double) -> Double {
+        guard value.isFinite else { return 1 }
+        return min(max(value, minimumDifferenceGain), maximumDifferenceGain)
+    }
+
+    nonisolated static func differenceBrightness(forGain gain: Double) -> Double {
+        let gain = clampedDifferenceGain(gain)
+        return (gain - 1) / (2 * gain)
     }
 
     func dismissLoadError() {
@@ -334,7 +355,11 @@ final class CompareSessionController: ObservableObject {
         primary.preparePlayback(startTime: primaryTime, resetAudioSelection: false)
         secondaryController.preparePlayback(startTime: secondaryTime, resetAudioSelection: false)
         if wasPlaying {
-            startSecondaryWhenReady(primary: primary, generation: loadGeneration.current)
+            startSecondaryWhenReady(
+                primary: primary,
+                generation: loadGeneration.current,
+                resumePlayback: true
+            )
         }
     }
 
@@ -351,7 +376,11 @@ final class CompareSessionController: ObservableObject {
         ) ?? primaryTime
     }
 
-    private func startSecondaryWhenReady(primary: PlayerController, generation: UInt64) {
+    private func startSecondaryWhenReady(
+        primary: PlayerController,
+        generation: UInt64,
+        resumePlayback: Bool = false
+    ) {
         readinessTask?.cancel()
         readinessTask = Task { @MainActor [weak self, weak primary] in
             guard let self, let primary else { return }
@@ -359,8 +388,12 @@ final class CompareSessionController: ObservableObject {
                 guard !Task.isCancelled,
                       self.loadGeneration.isCurrent(generation),
                       self.isActive else { return }
-                if self.secondaryController.isReady {
+                let primaryIsReady = primary.isReady
+                if self.secondaryController.isReady && (!resumePlayback || primaryIsReady) {
                     self.synchronize(primary: primary)
+                    if resumePlayback {
+                        primary.play()
+                    }
                     if primary.isPlaying {
                         self.secondaryController.play()
                         self.startDriftCorrection(primary: primary)

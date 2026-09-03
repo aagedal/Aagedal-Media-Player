@@ -18,6 +18,7 @@ nonisolated let scalingLogger = Logger(subsystem: "com.aagedal.MediaPlayer", cat
 
 final class MPVViewController: NSViewController {
     let player: MPVPlayer
+    private var managesSurfaceReloads: Bool
     private var metalLayer: MPVMetalLayer!
 
     // nonisolated(unsafe) because we tear these down from `deinit` which runs
@@ -47,13 +48,18 @@ final class MPVViewController: NSViewController {
     /// via SwiftUI's preparationID-based .id()) could re-enter and loop.
     private var hasAutoReloadedForLayoutJump = false
 
-    init(player: MPVPlayer) {
+    init(player: MPVPlayer, managesSurfaceReloads: Bool) {
         self.player = player
+        self.managesSurfaceReloads = managesSurfaceReloads
         super.init(nibName: nil, bundle: nil)
     }
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    func setManagesSurfaceReloads(_ managesSurfaceReloads: Bool) {
+        self.managesSurfaceReloads = managesSurfaceReloads
     }
 
     deinit {
@@ -259,6 +265,10 @@ final class MPVViewController: NSViewController {
     /// observably clears the stale state. Heavier than ideal, but it
     /// matches the user's known-working manual workaround.
     private func requestReloadForSurfaceChange(reason: String) {
+        guard managesSurfaceReloads else {
+            scalingLogger.info("requestReloadForSurfaceChange: \(reason) — paired surface owns reload")
+            return
+        }
         scalingLogger.info("requestReloadForSurfaceChange: \(reason) — posting .reloadPlayer to recreate mpv at current surface size")
         NotificationCenter.default.post(.reloadPlayer)
     }
@@ -283,14 +293,19 @@ final class MPVViewController: NSViewController {
 struct MPVVideoView: NSViewControllerRepresentable {
     let player: MPVPlayer
     let keyHandler: (String, NSEvent.ModifierFlags, NSEvent.SpecialKey?) -> Bool
+    let managesSurfaceReloads: Bool
 
     func makeNSViewController(context: Context) -> MPVViewController {
-        let viewController = MPVViewController(player: player)
+        let viewController = MPVViewController(
+            player: player,
+            managesSurfaceReloads: managesSurfaceReloads
+        )
         context.coordinator.viewController = viewController
         return viewController
     }
 
     func updateNSViewController(_ nsViewController: MPVViewController, context: Context) {
+        nsViewController.setManagesSurfaceReloads(managesSurfaceReloads)
         context.coordinator.viewController = nsViewController
         context.coordinator.keyHandler = keyHandler
     }

@@ -40,6 +40,40 @@ final class ComparePresentationTests: XCTestCase {
         XCTAssertEqual(session.overlayBlend, 1)
     }
 
+    func testDifferenceGainClampsToSupportedRange() {
+        let session = CompareSessionController()
+
+        session.setDifferenceGain(0)
+        XCTAssertEqual(session.differenceGain, 1)
+
+        session.setDifferenceGain(8.5)
+        XCTAssertEqual(session.differenceGain, 8.5)
+
+        session.setDifferenceGain(20)
+        XCTAssertEqual(session.differenceGain, 16)
+
+        session.setDifferenceGain(.nan)
+        XCTAssertEqual(session.differenceGain, 1)
+    }
+
+    func testDifferenceBrightnessCompensatesForContrastLift() {
+        XCTAssertEqual(
+            CompareSessionController.differenceBrightness(forGain: 1),
+            0,
+            accuracy: 0.000_001
+        )
+        XCTAssertEqual(
+            CompareSessionController.differenceBrightness(forGain: 2),
+            0.25,
+            accuracy: 0.000_001
+        )
+        XCTAssertEqual(
+            CompareSessionController.differenceBrightness(forGain: 4),
+            0.375,
+            accuracy: 0.000_001
+        )
+    }
+
     func testABToggleEntersPrimaryAndAlternatesSources() {
         let session = CompareSessionController()
 
@@ -55,6 +89,7 @@ final class ComparePresentationTests: XCTestCase {
         XCTAssertTrue(CompareViewMode.verticalWipe.isWipe)
         XCTAssertTrue(CompareViewMode.horizontalWipe.isWipe)
         XCTAssertFalse(CompareViewMode.overlay.isWipe)
+        XCTAssertFalse(CompareViewMode.difference.isWipe)
         XCTAssertFalse(CompareViewMode.sideBySide.isWipe)
     }
 }

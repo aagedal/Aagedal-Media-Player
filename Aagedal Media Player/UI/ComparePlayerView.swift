@@ -29,26 +29,7 @@ struct ComparePlayerView: View {
             // conditionally rebuilding either PlayerView can strand playback
             // on an obsolete Metal layer.
             ZStack(alignment: .topLeading) {
-                primaryPlayer
-                    .frame(width: size.width, height: size.height)
-                    .scaleEffect(presentation.sourceScale, anchor: .topLeading)
-                    .offset(y: presentation.sourceOffsetY)
-                    .opacity(presentation.primaryOpacity)
-
-                secondaryPlayer
-                    .frame(width: size.width, height: size.height)
-                    .frame(
-                        width: presentation.secondaryClipWidth,
-                        height: presentation.secondaryClipHeight,
-                        alignment: .topLeading
-                    )
-                    .clipped()
-                    .scaleEffect(presentation.sourceScale, anchor: .topLeading)
-                    .offset(
-                        x: presentation.secondaryOffsetX,
-                        y: presentation.sourceOffsetY
-                    )
-                    .opacity(presentation.secondaryOpacity)
+                comparisonSurfaces(size: size, presentation: presentation)
 
                 if compareSession.viewMode == .sideBySide {
                     Rectangle()
@@ -69,6 +50,46 @@ struct ComparePlayerView: View {
             .coordinateSpace(name: "compareCanvas")
         }
         .background(Color.black)
+    }
+
+    private func comparisonSurfaces(
+        size: CGSize,
+        presentation: PresentationGeometry
+    ) -> some View {
+        ZStack(alignment: .topLeading) {
+            Color.black
+
+            primaryPlayer
+                .frame(width: size.width, height: size.height)
+                .scaleEffect(presentation.sourceScale, anchor: .topLeading)
+                .offset(y: presentation.sourceOffsetY)
+                .opacity(presentation.primaryOpacity)
+
+            secondaryPlayer
+                .frame(width: size.width, height: size.height)
+                .frame(
+                    width: presentation.secondaryClipWidth,
+                    height: presentation.secondaryClipHeight,
+                    alignment: .topLeading
+                )
+                .clipped()
+                .scaleEffect(presentation.sourceScale, anchor: .topLeading)
+                .offset(
+                    x: presentation.secondaryOffsetX,
+                    y: presentation.sourceOffsetY
+                )
+                .opacity(presentation.secondaryOpacity)
+                .blendMode(compareSession.viewMode == .difference ? .difference : .normal)
+        }
+        .frame(width: size.width, height: size.height)
+        .compositingGroup()
+        // SwiftUI's Difference blend produces abs(A - B). Applying brightness
+        // before contrast with this offset makes the contrast transform
+        // simplify to abs(A - B) * gain, clamped by the compositor. Standard
+        // layer effects also keep AppKit-backed MPV and AVPlayer surfaces in
+        // the render tree, unlike stitchable color shaders.
+        .brightness(differenceBrightness)
+        .contrast(differenceContrast)
     }
 
     private var primaryPlayer: some View {
@@ -97,7 +118,11 @@ struct ComparePlayerView: View {
                 isTimelineFocused: $isTimelineFocused,
                 isOverlayControlFocused: isOverlayControlFocused,
                 timecodeActivationTrigger: $timecodeActivationTrigger,
-                acceptsKeyboardInput: false
+                acceptsKeyboardInput: false,
+                // A paired reload rebuilds both controllers. When A is also
+                // MPV-backed, let its surface own the window-level request so
+                // one fullscreen/resize event cannot rebuild the pair twice.
+                managesMPVSurfaceReloads: !primaryController.useMPV
             )
         } else {
             Color.black
@@ -222,9 +247,20 @@ struct ComparePlayerView: View {
             0
         case .overlay:
             CompareSessionController.clampedUnitValue(compareSession.overlayBlend)
-        case .sideBySide, .secondary, .verticalWipe, .horizontalWipe:
+        case .sideBySide, .secondary, .verticalWipe, .horizontalWipe, .difference:
             1
         }
+    }
+
+    private var differenceContrast: Double {
+        compareSession.viewMode == .difference ? compareSession.differenceGain : 1
+    }
+
+    private var differenceBrightness: Double {
+        guard compareSession.viewMode == .difference else { return 0 }
+        return CompareSessionController.differenceBrightness(
+            forGain: compareSession.differenceGain
+        )
     }
 
     private struct PresentationGeometry {

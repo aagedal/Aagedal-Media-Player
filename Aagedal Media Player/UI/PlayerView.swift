@@ -19,6 +19,7 @@ struct PlayerView: View {
     @Binding var timecodeActivationTrigger: String?
     var acceptsKeyboardInput = true
     var compareSession: CompareSessionController? = nil
+    var managesMPVSurfaceReloads = true
     @AppStorage(AppSettings.automaticAudioOnlyWaveform.key)
     private var automaticAudioOnlyWaveform = AppSettings.automaticAudioOnlyWaveform.defaultValue
 
@@ -73,7 +74,11 @@ struct PlayerView: View {
                 }
             } else if controller.useMPV, let mpvPlayer = controller.mpvPlayer {
                 // MPV backend — .id() forces view recreation on each new load
-                MPVVideoView(player: mpvPlayer, keyHandler: handleKeyEvent)
+                MPVVideoView(
+                    player: mpvPlayer,
+                    keyHandler: handleKeyEvent,
+                    managesSurfaceReloads: managesMPVSurfaceReloads
+                )
                     .aspectRatio(playerAspectRatio, contentMode: .fit)
                     .id(controller.preparationID)
                     .ignoresSafeArea()
