@@ -778,6 +778,12 @@ private struct KeyboardShortcutsView: View {
                     ("\u{2318}E", "Export trim"),
                 ])
 
+                shortcutSection("Compare Mode", shortcuts: [
+                    ("B", "Toggle source A / B"),
+                    ("[ / ]", "Move wipe 2%"),
+                    ("\u{21E7}[ / ]", "Move wipe 10%"),
+                ])
+
                 shortcutSection("General", shortcuts: [
                     ("\u{2318}N", "New window (multi-window mode)"),
                     ("\u{2318}W", "Close window"),

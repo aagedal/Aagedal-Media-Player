@@ -10,13 +10,23 @@ nonisolated enum CompareViewMode: String, CaseIterable, Sendable {
     case sideBySide
     case primary
     case secondary
+    case verticalWipe
+    case horizontalWipe
+    case overlay
 
     var label: String {
         switch self {
         case .sideBySide: "A | B"
         case .primary: "A"
         case .secondary: "B"
+        case .verticalWipe: "Vertical Wipe"
+        case .horizontalWipe: "Horizontal Wipe"
+        case .overlay: "Overlay"
         }
+    }
+
+    var isWipe: Bool {
+        self == .verticalWipe || self == .horizontalWipe
     }
 }
 
@@ -86,6 +96,8 @@ final class CompareSessionController: ObservableObject {
     let secondaryWaveformGenerator = AudioWaveformGenerator()
 
     @Published var viewMode: CompareViewMode = .sideBySide
+    @Published private(set) var wipePosition = 0.5
+    @Published private(set) var overlayBlend = 0.5
     @Published private(set) var secondaryURL: URL?
     @Published private(set) var mapping: CompareTimelineMapping?
     @Published private(set) var isLoading = false
@@ -176,6 +188,29 @@ final class CompareSessionController: ObservableObject {
         isLoading = false
         loadError = nil
         viewMode = .sideBySide
+        wipePosition = 0.5
+        overlayBlend = 0.5
+    }
+
+    func togglePrimarySecondary() {
+        viewMode = viewMode == .primary ? .secondary : .primary
+    }
+
+    func setWipePosition(_ position: Double) {
+        wipePosition = Self.clampedUnitValue(position)
+    }
+
+    func moveWipe(by delta: Double) {
+        setWipePosition(wipePosition + delta)
+    }
+
+    func setOverlayBlend(_ blend: Double) {
+        overlayBlend = Self.clampedUnitValue(blend)
+    }
+
+    nonisolated static func clampedUnitValue(_ value: Double) -> Double {
+        guard value.isFinite else { return 0.5 }
+        return min(max(value, 0), 1)
     }
 
     func dismissLoadError() {

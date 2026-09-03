@@ -46,19 +46,9 @@ struct ContentView: View {
     }
 
     private var videoAspectRatio: CGFloat? {
-        guard compareSession.isActive else { return controller.videoAspectRatio }
-        switch compareSession.viewMode {
-        case .primary:
-            return controller.videoAspectRatio
-        case .secondary:
-            return compareSession.secondaryController.videoAspectRatio
-        case .sideBySide:
-            guard let primary = controller.videoAspectRatio,
-                  let secondary = compareSession.secondaryController.videoAspectRatio else {
-                return controller.videoAspectRatio.map { $0 * 2 }
-            }
-            return primary + secondary
-        }
+        // Keep one stable comparison canvas. Resizing the window as the view
+        // mode changes can make MPV recreate its drawable and reload playback.
+        controller.videoAspectRatio
     }
 
     private var videoSourceSize: NSSize? {
@@ -357,9 +347,37 @@ struct ContentView: View {
                         Text(mode.label).tag(mode)
                     }
                 }
-                .pickerStyle(.segmented)
-                .frame(width: 132)
-                .help("Choose comparison view")
+                .pickerStyle(.menu)
+                .frame(width: 150)
+                .help("Choose comparison view. Press B to toggle A/B.")
+
+                if compareSession.viewMode.isWipe {
+                    Slider(
+                        value: Binding(
+                            get: { compareSession.wipePosition },
+                            set: { compareSession.setWipePosition($0) }
+                        ),
+                        in: 0...1
+                    )
+                    .controlSize(.small)
+                    .frame(width: 110)
+                    .help("Wipe position. Drag the divider or press [ and ].")
+                    .accessibilityLabel("Wipe position")
+                    .accessibilityValue("\(Int(compareSession.wipePosition * 100)) percent")
+                } else if compareSession.viewMode == .overlay {
+                    Slider(
+                        value: Binding(
+                            get: { compareSession.overlayBlend },
+                            set: { compareSession.setOverlayBlend($0) }
+                        ),
+                        in: 0...1
+                    )
+                        .controlSize(.small)
+                        .frame(width: 110)
+                        .help("Overlay blend: A at the left, B at the right")
+                        .accessibilityLabel("Overlay blend")
+                        .accessibilityValue("\(Int(compareSession.overlayBlend * 100)) percent source B")
+                }
 
                 if let alignment = compareSession.mapping?.mode.label {
                     Text(alignment)

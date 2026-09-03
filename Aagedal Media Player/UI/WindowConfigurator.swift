@@ -9,8 +9,8 @@ import SwiftUI
 import AppKit
 
 struct WindowConfigurator: NSViewRepresentable {
-    static let baseMinWidth: CGFloat = 460
-    static let baseMinHeight: CGFloat = 360
+    static let baseMinWidth: CGFloat = 690
+    static let baseMinHeight: CGFloat = 540
 
     let aspectRatio: CGFloat?
     let videoSourceSize: NSSize?

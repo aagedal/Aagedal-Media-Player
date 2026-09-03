@@ -209,6 +209,27 @@ struct PlayerView: View {
 
         let lower = characters.lowercased()
 
+        if let compareSession, compareSession.isActive {
+            let commandModifiers: NSEvent.ModifierFlags = [.command, .control, .option]
+            if lower == "b", modifiers.intersection(commandModifiers).isEmpty {
+                compareSession.togglePrimarySecondary()
+                return true
+            }
+
+            if compareSession.viewMode.isWipe,
+               modifiers.intersection(commandModifiers).isEmpty {
+                let increment = modifiers.contains(.shift) ? 0.1 : 0.02
+                if lower == "[" {
+                    compareSession.moveWipe(by: -increment)
+                    return true
+                }
+                if lower == "]" {
+                    compareSession.moveWipe(by: increment)
+                    return true
+                }
+            }
+        }
+
         // I/O trim points (must be checked before timecode activation)
         if lower == "i" {
             if modifiers.contains(.option) {

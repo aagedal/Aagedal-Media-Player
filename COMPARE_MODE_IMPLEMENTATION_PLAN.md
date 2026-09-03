@@ -73,14 +73,17 @@ Acceptance:
 
 ## Phase 2 — Visual comparison tools
 
-- [ ] Add a draggable vertical/horizontal wipe.
-- [ ] Add opacity overlay with an adjustable blend amount.
+Status: Wipe, overlay, stable renderer composition, and keyboard controls
+implemented on 2026-09-02. Live mixed-backend visual validation remains.
+
+- [x] Add a draggable vertical/horizontal wipe.
+- [x] Add opacity overlay with an adjustable blend amount.
 - [ ] Add a display-space difference view with gain control.
 - [ ] Normalize geometry for differing resolutions, pixel aspect ratios, and
   rotations.
 - [ ] Warn when frame rates, duration, transfer function, color primaries, or
   range differ.
-- [ ] Add keyboard shortcuts for A/B toggle and moving the wipe.
+- [x] Add keyboard shortcuts for A/B toggle and moving the wipe.
 
 Acceptance:
 
