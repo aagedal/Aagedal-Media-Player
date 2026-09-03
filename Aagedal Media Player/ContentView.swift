@@ -253,6 +253,7 @@ struct ContentView: View {
             scopeWindowController = nil
             if showScopeOverlay {
                 controller.frameCapture.stopCapture()
+                compareSession.secondaryController.frameCapture.stopCapture()
                 showScopeOverlay = false
             }
             audioWaveformWindowController?.close()
@@ -304,7 +305,11 @@ struct ContentView: View {
         let isTransparent = scopeBackground == ScopeBackground.transparent.rawValue
 
         return ScopeView(
-            frameCapture: controller.frameCapture,
+            primaryController: controller,
+            secondaryController: compareSession.secondaryController,
+            primaryFrameCapture: controller.frameCapture,
+            secondaryFrameCapture: compareSession.secondaryController.frameCapture,
+            compareSession: compareSession,
             isOverlay: true,
             transparentBackground: isTransparent
         )
@@ -397,6 +402,38 @@ struct ContentView: View {
                         .monospacedDigit()
                         .foregroundStyle(.white.opacity(0.72))
                         .help("Difference is computed from post-display RGB, not normalized source pixels")
+                }
+
+                if showScopeOverlay {
+                    Picker("Scope source", selection: $compareSession.scopeSource) {
+                        ForEach(CompareScopeSource.allCases, id: \.self) { source in
+                            Text(source.label).tag(source)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .frame(width: 130)
+                    .help("Choose whether scopes inspect source A, source B, or their display-space difference")
+
+                    if compareSession.scopeSource == .difference,
+                       compareSession.viewMode != .difference {
+                        Slider(
+                            value: Binding(
+                                get: { compareSession.differenceGain },
+                                set: { compareSession.setDifferenceGain($0) }
+                            ),
+                            in: CompareSessionController.minimumDifferenceGain...CompareSessionController.maximumDifferenceGain,
+                            step: 0.5
+                        )
+                        .controlSize(.small)
+                        .frame(width: 65)
+                        .help("Amplify the display-space scope difference. This is not an objective image-quality metric.")
+                        .accessibilityLabel("Scope difference gain")
+                        .accessibilityValue("\(compareSession.differenceGain.formatted()) times")
+
+                        Text("\(compareSession.differenceGain.formatted())× Δ")
+                            .font(.caption.monospacedDigit())
+                            .foregroundStyle(.white.opacity(0.72))
+                    }
                 }
 
                 if let alignment = compareSession.mapping?.mode.label {

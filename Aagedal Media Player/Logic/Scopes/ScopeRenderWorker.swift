@@ -5,7 +5,135 @@
 import CoreGraphics
 import Combine
 import Dispatch
+import Foundation
 import OSLog
+
+nonisolated struct ScopeFrameInput: Sendable {
+    let sdrFrame: CGImage?
+    let hdrFrame: HDRFrameData?
+    let transferFunction: TransferFunction
+    let displayAspectRatio: CGFloat?
+}
+
+/// Produces the same kind of display-referred absolute RGB difference shown by
+/// Compare Mode. B is aspect-fitted into A's frame so differing rasters do not
+/// get stretched merely to make their pixel grids match.
+nonisolated enum ScopeFrameDifference {
+    static func makeDisplaySpaceDifference(
+        primary: CGImage,
+        primaryDisplayAspectRatio: CGFloat?,
+        secondary: CGImage,
+        secondaryDisplayAspectRatio: CGFloat?,
+        gain: Double
+    ) -> CGImage? {
+        let width = primary.width
+        let primaryAspect = sanitizedAspectRatio(
+            primaryDisplayAspectRatio,
+            fallback: CGFloat(primary.width) / CGFloat(primary.height)
+        )
+        let secondaryAspect = sanitizedAspectRatio(
+            secondaryDisplayAspectRatio,
+            fallback: CGFloat(secondary.width) / CGFloat(secondary.height)
+        )
+        let height = min(4_096, max(1, Int((CGFloat(width) / primaryAspect).rounded())))
+        guard width > 0, height > 0 else { return nil }
+
+        let (pixelCount, pixelOverflow) = width.multipliedReportingOverflow(by: height)
+        let (byteCount, byteOverflow) = pixelCount.multipliedReportingOverflow(by: 4)
+        guard !pixelOverflow, !byteOverflow else { return nil }
+
+        guard let primaryPixels = renderedPixels(
+            image: primary,
+            canvasWidth: width,
+            canvasHeight: height,
+            displayAspectRatio: primaryAspect,
+            byteCount: byteCount
+        ), let secondaryPixels = renderedPixels(
+            image: secondary,
+            canvasWidth: width,
+            canvasHeight: height,
+            displayAspectRatio: secondaryAspect,
+            byteCount: byteCount
+        ) else { return nil }
+
+        let gain = CompareSessionController.clampedDifferenceGain(gain)
+        var difference = [UInt8](repeating: 0, count: byteCount)
+        for offset in stride(from: 0, to: byteCount, by: 4) {
+            difference[offset] = amplifiedDifference(primaryPixels[offset], secondaryPixels[offset], gain: gain)
+            difference[offset + 1] = amplifiedDifference(primaryPixels[offset + 1], secondaryPixels[offset + 1], gain: gain)
+            difference[offset + 2] = amplifiedDifference(primaryPixels[offset + 2], secondaryPixels[offset + 2], gain: gain)
+            difference[offset + 3] = 255
+        }
+
+        guard let provider = CGDataProvider(data: Data(difference) as CFData) else { return nil }
+        return CGImage(
+            width: width,
+            height: height,
+            bitsPerComponent: 8,
+            bitsPerPixel: 32,
+            bytesPerRow: width * 4,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGBitmapInfo(
+                rawValue: CGImageAlphaInfo.premultipliedFirst.rawValue
+                    | CGBitmapInfo.byteOrder32Little.rawValue
+            ),
+            provider: provider,
+            decode: nil,
+            shouldInterpolate: false,
+            intent: .defaultIntent
+        )
+    }
+
+    private static func renderedPixels(
+        image: CGImage,
+        canvasWidth: Int,
+        canvasHeight: Int,
+        displayAspectRatio: CGFloat,
+        byteCount: Int
+    ) -> [UInt8]? {
+        var pixels = [UInt8](repeating: 0, count: byteCount)
+        guard let context = CGContext(
+            data: &pixels,
+            width: canvasWidth,
+            height: canvasHeight,
+            bitsPerComponent: 8,
+            bytesPerRow: canvasWidth * 4,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue
+                | CGBitmapInfo.byteOrder32Little.rawValue
+        ) else { return nil }
+
+        context.setFillColor(CGColor(gray: 0, alpha: 1))
+        context.fill(CGRect(x: 0, y: 0, width: canvasWidth, height: canvasHeight))
+        context.interpolationQuality = .low
+
+        let canvas = CGSize(width: canvasWidth, height: canvasHeight)
+        let canvasAspect = canvas.width / canvas.height
+        let size: CGSize
+        if displayAspectRatio >= canvasAspect {
+            size = CGSize(width: canvas.width, height: canvas.width / displayAspectRatio)
+        } else {
+            size = CGSize(width: canvas.height * displayAspectRatio, height: canvas.height)
+        }
+        let drawRect = CGRect(
+            x: (canvas.width - size.width) / 2,
+            y: (canvas.height - size.height) / 2,
+            width: size.width,
+            height: size.height
+        )
+        context.draw(image, in: drawRect)
+        return pixels
+    }
+
+    private static func sanitizedAspectRatio(_ value: CGFloat?, fallback: CGFloat) -> CGFloat {
+        guard let value, value.isFinite, value >= 0.1, value <= 10 else { return fallback }
+        return value
+    }
+
+    private static func amplifiedDifference(_ lhs: UInt8, _ rhs: UInt8, gain: Double) -> UInt8 {
+        UInt8(min(Double(abs(Int(lhs) - Int(rhs))) * gain, 255))
+    }
+}
 
 @MainActor
 final class ScopeRenderWorker: ObservableObject {
@@ -20,8 +148,10 @@ final class ScopeRenderWorker: ObservableObject {
 
     private struct Request: Sendable {
         let generation: UInt64
-        let sdrFrame: CGImage?
-        let hdrFrame: HDRFrameData?
+        let primary: ScopeFrameInput
+        let secondary: ScopeFrameInput?
+        let source: CompareScopeSource
+        let differenceGain: Double
         let isHDR: Bool
         let mode: WaveformMode
         let waveformSize: CGSize
@@ -54,14 +184,23 @@ final class ScopeRenderWorker: ObservableObject {
     }
 
     func submit(
-        sdrFrame: CGImage?,
-        hdrFrame: HDRFrameData?,
-        transferFunction: TransferFunction,
+        primary: ScopeFrameInput,
+        secondary: ScopeFrameInput?,
+        source: CompareScopeSource,
+        differenceGain: Double,
         mode: WaveformMode,
         resolution: Int
     ) {
-        let isHDR = transferFunction != .sdr
-        let hasRequiredFrame = isHDR ? (sdrFrame != nil || hdrFrame != nil) : sdrFrame != nil
+        let selected = source == .secondary ? secondary : primary
+        let isHDR = source != .difference && selected?.transferFunction != .sdr
+        let hasRequiredFrame: Bool
+        if source == .difference {
+            hasRequiredFrame = primary.sdrFrame != nil && secondary?.sdrFrame != nil
+        } else if isHDR {
+            hasRequiredFrame = selected?.sdrFrame != nil || selected?.hdrFrame != nil
+        } else {
+            hasRequiredFrame = selected?.sdrFrame != nil
+        }
         guard hasRequiredFrame else {
             cancel(clearImages: true)
             return
@@ -72,8 +211,10 @@ final class ScopeRenderWorker: ObservableObject {
         let submission = gate.submit()
         let request = Request(
             generation: submission.generation,
-            sdrFrame: sdrFrame,
-            hdrFrame: hdrFrame,
+            primary: primary,
+            secondary: secondary,
+            source: source,
+            differenceGain: differenceGain,
             isHDR: isHDR,
             mode: mode,
             waveformSize: CGSize(width: width, height: height),
@@ -154,8 +295,24 @@ final class ScopeRenderWorker: ObservableObject {
             return Result(waveformImage: nil, vectorscopeImage: nil, hdrPeakNits: nil)
         }
 
+        let selected = request.source == .secondary ? request.secondary : request.primary
+        let sdrFrame: CGImage?
+        if request.source == .difference,
+           let primary = request.primary.sdrFrame,
+           let secondary = request.secondary?.sdrFrame {
+            sdrFrame = ScopeFrameDifference.makeDisplaySpaceDifference(
+                primary: primary,
+                primaryDisplayAspectRatio: request.primary.displayAspectRatio,
+                secondary: secondary,
+                secondaryDisplayAspectRatio: request.secondary?.displayAspectRatio,
+                gain: request.differenceGain
+            )
+        } else {
+            sdrFrame = selected?.sdrFrame
+        }
+
         if !request.isHDR {
-            guard let frame = request.sdrFrame else {
+            guard let frame = sdrFrame else {
                 return Result(waveformImage: nil, vectorscopeImage: nil, hdrPeakNits: nil)
             }
 
@@ -176,7 +333,7 @@ final class ScopeRenderWorker: ObservableObject {
 
         var waveform: CGImage?
         var peakNits: Float?
-        if let frame = request.hdrFrame {
+        if let frame = selected?.hdrFrame {
             peakNits = frame.contentPeakNits
             switch request.mode {
             case .luma:
@@ -189,7 +346,7 @@ final class ScopeRenderWorker: ObservableObject {
         guard !Task.isCancelled else {
             return Result(waveformImage: nil, vectorscopeImage: nil, hdrPeakNits: nil)
         }
-        let vectorscope = request.sdrFrame.flatMap {
+        let vectorscope = sdrFrame.flatMap {
             ScopeComputer.computeVectorscope(from: $0, outputSize: request.vectorscopeSize)
         }
         return Result(waveformImage: waveform, vectorscopeImage: vectorscope, hdrPeakNits: peakNits)

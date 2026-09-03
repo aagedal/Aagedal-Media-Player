@@ -31,7 +31,9 @@ struct NotificationHandlers: ViewModifier {
     func body(content: Content) -> some View {
         content
             .modifier(FileAndWindowHandlers(
-                controller: controller, nsWindow: nsWindow,
+                controller: controller,
+                compareSession: compareSession,
+                nsWindow: nsWindow,
                 showInspector: $showInspector,
                 scopeWindowController: $scopeWindowController,
                 showScopeOverlay: $showScopeOverlay,
@@ -61,6 +63,7 @@ struct NotificationHandlers: ViewModifier {
 
 private struct FileAndWindowHandlers: ViewModifier {
     @ObservedObject var controller: PlayerController
+    @ObservedObject var compareSession: CompareSessionController
     let nsWindow: NSWindow?
     @Binding var showInspector: Bool
     @Binding var scopeWindowController: ScopeWindowController?
@@ -145,11 +148,11 @@ private struct FileAndWindowHandlers: ViewModifier {
                     // Toggle overlay
                     showScopeOverlay.toggle()
                     if showScopeOverlay {
-                        controller.frameCapture.startCapture()
+                        startScopeCaptures()
                     } else {
                         // Only stop capture if the scope window isn't also open
                         if scopeWindowController == nil {
-                            controller.frameCapture.stopCapture()
+                            stopScopeCaptures()
                         }
                     }
                 } else {
@@ -168,7 +171,8 @@ private struct FileAndWindowHandlers: ViewModifier {
                     } else {
                         let filename = controller.mediaItem?.name ?? "Untitled"
                         let sc = ScopeWindowController(
-                            frameCapture: controller.frameCapture,
+                            primaryController: controller,
+                            compareSession: compareSession,
                             filename: filename,
                             parentWindow: nsWindow
                         )
@@ -225,6 +229,18 @@ private struct FileAndWindowHandlers: ViewModifier {
     private var keepsAutomaticAudioOnlyWaveform: Bool {
         controller.mediaItem?.presentationKind == .audioOnly
             && UserDefaults.standard.value(for: AppSettings.automaticAudioOnlyWaveform)
+    }
+
+    private func startScopeCaptures() {
+        controller.frameCapture.startCapture()
+        if compareSession.isActive {
+            compareSession.secondaryController.frameCapture.startCapture()
+        }
+    }
+
+    private func stopScopeCaptures() {
+        controller.frameCapture.stopCapture()
+        compareSession.secondaryController.frameCapture.stopCapture()
     }
 
     private func triggerOverlayWaveformGeneration() {

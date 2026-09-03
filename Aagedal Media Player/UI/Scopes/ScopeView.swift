@@ -12,19 +12,32 @@ enum WaveformMode: String, CaseIterable, Sendable {
 }
 
 struct ScopeView: View {
-    @ObservedObject var frameCapture: FrameCapture
+    @ObservedObject var primaryController: PlayerController
+    @ObservedObject var secondaryController: PlayerController
+    @ObservedObject var primaryFrameCapture: FrameCapture
+    @ObservedObject var secondaryFrameCapture: FrameCapture
+    @ObservedObject var compareSession: CompareSessionController
     var isOverlay = false
     var transparentBackground = false
     @StateObject private var renderWorker = ScopeRenderWorker()
     @State private var waveformMode: WaveformMode = .luma
     @State private var vectorscopeGraticule: CGImage?
 
+    private var selectedSource: CompareScopeSource {
+        compareSession.isActive ? compareSession.scopeSource : .primary
+    }
+
+    private var selectedFrameCapture: FrameCapture {
+        selectedSource == .secondary ? secondaryFrameCapture : primaryFrameCapture
+    }
+
     private var isHDR: Bool {
-        frameCapture.transferFunction != .sdr
+        selectedSource != .difference && selectedFrameCapture.transferFunction != .sdr
     }
 
     private var transferLabel: String? {
-        switch frameCapture.transferFunction {
+        if selectedSource == .difference { return "DISPLAY RGB" }
+        switch selectedFrameCapture.transferFunction {
         case .pq: return "PQ"
         case .hlg: return "HLG"
         case .sdr: return nil
@@ -47,8 +60,16 @@ struct ScopeView: View {
                     }
                     .labelsHidden()
                     .pickerStyle(.segmented)
-                    .frame(width: 180)
+                    .frame(width: 145)
                     .accessibilityLabel("Waveform display")
+
+                    if compareSession.isActive {
+                        scopeSourcePicker
+
+                        if selectedSource == .difference {
+                            differenceGainControl
+                        }
+                    }
 
                     if let label = transferLabel {
                         Text(label)
@@ -110,27 +131,49 @@ struct ScopeView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(isOverlay ? Color.clear : Color.black)
         }
-        .onChange(of: frameCapture.currentFrame) { _, newFrame in
-            submitScopeFrame(sdrFrame: newFrame, hdrFrame: frameCapture.currentHDRFrame)
+        .onChange(of: primaryFrameCapture.currentFrame) {
+            guard selectedSource != .secondary else { return }
+            submitScopeFrame()
         }
-        .onChange(of: frameCapture.currentHDRFrame) { _, newFrame in
-            submitScopeFrame(sdrFrame: frameCapture.currentFrame, hdrFrame: newFrame)
+        .onChange(of: primaryFrameCapture.currentHDRFrame) {
+            guard selectedSource == .primary else { return }
+            submitScopeFrame()
+        }
+        .onChange(of: secondaryFrameCapture.currentFrame) {
+            guard selectedSource != .primary else { return }
+            submitScopeFrame()
+        }
+        .onChange(of: secondaryFrameCapture.currentHDRFrame) {
+            guard selectedSource == .secondary else { return }
+            submitScopeFrame()
+        }
+        .onChange(of: compareSession.scopeSource) {
+            submitScopeFrame()
+        }
+        .onChange(of: compareSession.differenceGain) {
+            guard selectedSource == .difference else { return }
+            submitScopeFrame()
+        }
+        .onChange(of: compareSession.isActive) {
+            submitScopeFrame()
+        }
+        .onChange(of: primaryController.videoAspectRatio) {
+            guard selectedSource != .secondary else { return }
+            submitScopeFrame()
+        }
+        .onChange(of: secondaryController.videoAspectRatio) {
+            guard selectedSource != .primary else { return }
+            submitScopeFrame()
         }
         .onChange(of: waveformMode) {
-            submitScopeFrame(
-                sdrFrame: frameCapture.currentFrame,
-                hdrFrame: frameCapture.currentHDRFrame
-            )
+            submitScopeFrame()
         }
         .onAppear {
             let res = UserDefaults.standard.value(for: AppSettings.scopeResolution)
             let w = CGFloat(res)
             let h = round(w * 9.0 / 16.0)
             vectorscopeGraticule = ScopeComputer.drawVectorscopeGraticule(size: CGSize(width: h, height: h))
-            submitScopeFrame(
-                sdrFrame: frameCapture.currentFrame,
-                hdrFrame: frameCapture.currentHDRFrame
-            )
+            submitScopeFrame()
         }
         .onDisappear { renderWorker.cancel(clearImages: true) }
         .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
@@ -140,12 +183,72 @@ struct ScopeView: View {
         }
     }
 
-    private func submitScopeFrame(sdrFrame: CGImage?, hdrFrame: HDRFrameData?) {
+    private var scopeSourcePicker: some View {
+        Picker("Scope source", selection: $compareSession.scopeSource) {
+            ForEach(CompareScopeSource.allCases, id: \.self) { source in
+                Text(source.label).tag(source)
+            }
+        }
+        .labelsHidden()
+        .pickerStyle(.menu)
+        .frame(width: 130)
+        .help("\(selectedSourceLabel). Choose whether scopes inspect source A, source B, or their display-space difference.")
+        .accessibilityLabel("Scope source")
+    }
+
+    private var selectedSourceLabel: String {
+        switch selectedSource {
+        case .primary:
+            return "A: \(primaryController.mediaItem?.name ?? "Unavailable")"
+        case .secondary:
+            return "B: \(secondaryController.mediaItem?.name ?? "Unavailable")"
+        case .difference:
+            let primary = primaryController.mediaItem?.name ?? "Unavailable"
+            let secondary = secondaryController.mediaItem?.name ?? "Unavailable"
+            return "Δ: \(primary) / \(secondary)"
+        }
+    }
+
+    private var differenceGainControl: some View {
+        HStack(spacing: 6) {
+            Slider(
+                value: Binding(
+                    get: { compareSession.differenceGain },
+                    set: { compareSession.setDifferenceGain($0) }
+                ),
+                in: CompareSessionController.minimumDifferenceGain...CompareSessionController.maximumDifferenceGain,
+                step: 0.5
+            )
+            .controlSize(.small)
+            .frame(width: 65)
+
+            Text("\(compareSession.differenceGain.formatted())×")
+                .font(.caption.monospacedDigit())
+                .foregroundStyle(.secondary)
+        }
+        .help("Amplify the display-space RGB difference. This is not an objective image-quality metric.")
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Scope difference gain")
+        .accessibilityValue("\(compareSession.differenceGain.formatted()) times")
+    }
+
+    private func submitScopeFrame() {
         let res = UserDefaults.standard.value(for: AppSettings.scopeResolution)
         renderWorker.submit(
-            sdrFrame: sdrFrame,
-            hdrFrame: hdrFrame,
-            transferFunction: frameCapture.transferFunction,
+            primary: ScopeFrameInput(
+                sdrFrame: primaryFrameCapture.currentFrame,
+                hdrFrame: primaryFrameCapture.currentHDRFrame,
+                transferFunction: primaryFrameCapture.transferFunction,
+                displayAspectRatio: primaryController.videoAspectRatio
+            ),
+            secondary: compareSession.isActive ? ScopeFrameInput(
+                sdrFrame: secondaryFrameCapture.currentFrame,
+                hdrFrame: secondaryFrameCapture.currentHDRFrame,
+                transferFunction: secondaryFrameCapture.transferFunction,
+                displayAspectRatio: secondaryController.videoAspectRatio
+            ) : nil,
+            source: selectedSource,
+            differenceGain: compareSession.differenceGain,
             mode: waveformMode,
             resolution: res
         )

@@ -44,6 +44,20 @@ nonisolated enum CompareAlignmentMode: Equatable, Sendable {
     }
 }
 
+nonisolated enum CompareScopeSource: String, CaseIterable, Sendable {
+    case primary
+    case secondary
+    case difference
+
+    var label: String {
+        switch self {
+        case .primary: "Scopes: A"
+        case .secondary: "Scopes: B"
+        case .difference: "Scopes: Display Difference"
+        }
+    }
+}
+
 /// Maps the primary player's relative timeline onto the comparison player's
 /// relative timeline. Keeping this pure makes drop-frame parsing a concern of
 /// TimecodeFormatter while synchronization and overlap math remain testable.
@@ -104,6 +118,7 @@ final class CompareSessionController: ObservableObject {
     @Published private(set) var wipePosition = 0.5
     @Published private(set) var overlayBlend = 0.5
     @Published private(set) var differenceGain = 1.0
+    @Published var scopeSource: CompareScopeSource = .primary
     @Published private(set) var secondaryURL: URL?
     @Published private(set) var mapping: CompareTimelineMapping?
     @Published private(set) var isLoading = false
@@ -197,6 +212,7 @@ final class CompareSessionController: ObservableObject {
         wipePosition = 0.5
         overlayBlend = 0.5
         differenceGain = 1
+        scopeSource = .primary
     }
 
     func togglePrimarySecondary() {
@@ -391,6 +407,13 @@ final class CompareSessionController: ObservableObject {
                 let primaryIsReady = primary.isReady
                 if self.secondaryController.isReady && (!resumePlayback || primaryIsReady) {
                     self.synchronize(primary: primary)
+                    if primary.frameCapture.isCapturing {
+                        // Loading/replacing B tears down its backend and capture
+                        // attachment. Restart only after the replacement backend
+                        // is ready so AVFoundation can attach its video output.
+                        self.secondaryController.frameCapture.stopCapture(rebuildPipeline: false)
+                        self.secondaryController.frameCapture.startCapture()
+                    }
                     if resumePlayback {
                         primary.play()
                     }

@@ -13,7 +13,8 @@ final class ScopeWindowController {
     private let logger = Logger(subsystem: "com.aagedal.MediaPlayer", category: "ScopeWindow")
 
     private var panel: NSPanel?
-    private let frameCapture: FrameCapture
+    private let primaryController: PlayerController
+    private let compareSession: CompareSessionController
     private let filename: String
     private weak var parentWindow: NSWindow?
 
@@ -23,8 +24,14 @@ final class ScopeWindowController {
     /// Observation for the scope panel's own willClose — runs cleanup() when the user dismisses it.
     private var panelObserver: NSObjectProtocol?
 
-    init(frameCapture: FrameCapture, filename: String, parentWindow: NSWindow?) {
-        self.frameCapture = frameCapture
+    init(
+        primaryController: PlayerController,
+        compareSession: CompareSessionController,
+        filename: String,
+        parentWindow: NSWindow?
+    ) {
+        self.primaryController = primaryController
+        self.compareSession = compareSession
         self.filename = filename
         self.parentWindow = parentWindow
     }
@@ -39,7 +46,13 @@ final class ScopeWindowController {
             return
         }
 
-        let scopeView = ScopeView(frameCapture: frameCapture)
+        let scopeView = ScopeView(
+            primaryController: primaryController,
+            secondaryController: compareSession.secondaryController,
+            primaryFrameCapture: primaryController.frameCapture,
+            secondaryFrameCapture: compareSession.secondaryController.frameCapture,
+            compareSession: compareSession
+        )
         let hostingView = NSHostingView(rootView: scopeView)
 
         let panel = NSPanel(
@@ -73,7 +86,10 @@ final class ScopeWindowController {
         self.panel = panel
 
         // Start frame capture
-        frameCapture.startCapture()
+        primaryController.frameCapture.startCapture()
+        if compareSession.isActive {
+            compareSession.secondaryController.frameCapture.startCapture()
+        }
 
         // Auto-close when parent window closes
         if let parent = parentWindow {
@@ -120,7 +136,8 @@ final class ScopeWindowController {
     }
 
     private func cleanup() {
-        frameCapture.stopCapture()
+        primaryController.frameCapture.stopCapture()
+        compareSession.secondaryController.frameCapture.stopCapture()
 
         if let observer = closeObserver {
             NotificationCenter.default.removeObserver(observer)

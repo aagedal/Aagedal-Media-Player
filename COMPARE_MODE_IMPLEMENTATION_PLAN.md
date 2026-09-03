@@ -93,7 +93,11 @@ Acceptance:
 
 ## Phase 3 — Professional QC integration
 
-- [ ] Let scopes inspect A, B, or their difference.
+Status: Scope routing and the compact mismatch summary are implemented through
+2026-09-03. Live mixed-backend validation and timestamp-aware motion-frame
+pairing remain.
+
+- [x] Let scopes inspect A, B, or their display-space difference.
 - [ ] Add explicit A/B audio switching and optional channel comparison.
 - [ ] Export a comparison still containing both filenames, timecode, alignment,
   and selected technical metadata.

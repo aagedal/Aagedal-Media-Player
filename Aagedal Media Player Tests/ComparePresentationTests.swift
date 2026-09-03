@@ -85,6 +85,19 @@ final class ComparePresentationTests: XCTestCase {
         XCTAssertEqual(session.viewMode, .secondary)
     }
 
+    func testScopeSourceIsIndependentAndResetsWithSession() {
+        let session = CompareSessionController()
+
+        XCTAssertEqual(session.scopeSource, .primary)
+        session.viewMode = .overlay
+        session.scopeSource = .difference
+        XCTAssertEqual(session.viewMode, .overlay)
+        XCTAssertEqual(session.scopeSource, .difference)
+
+        session.stop()
+        XCTAssertEqual(session.scopeSource, .primary)
+    }
+
     func testOnlyWipeModesReportWipeControls() {
         XCTAssertTrue(CompareViewMode.verticalWipe.isWipe)
         XCTAssertTrue(CompareViewMode.horizontalWipe.isWipe)

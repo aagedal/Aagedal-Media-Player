@@ -156,6 +156,7 @@ final class PlayerController: ObservableObject {
     private var mpvFileLoadedTask: Task<Void, Never>?
     private var mpvDurationTask: Task<Void, Never>?
     private var playbackPreparationTask: Task<Void, Never>?
+    private var scopePlaybackResumeTask: Task<Void, Never>?
     private let proResRAWDetector: ProResRAWDetector
 
     /// Monotonically increasing counter invalidating stale async work from
@@ -425,8 +426,25 @@ final class PlayerController: ObservableObject {
         frameCapture.attachAVPlayer(player)
         frameCapture.onAVOutputRemoved = { [weak self] in
             guard let self else { return }
+            let shouldResume = self.isPlaying
             let time = self.currentPlaybackTime
             self.preparePlayback(startTime: time, resetAudioSelection: false)
+            guard shouldResume else { return }
+            let preparationID = self.preparationID
+            self.scopePlaybackResumeTask = Task { @MainActor [weak self] in
+                guard let self else { return }
+                for _ in 0..<200 {
+                    guard !Task.isCancelled,
+                          self.preparationID == preparationID else { return }
+                    if self.isReady {
+                        self.play()
+                        self.scopePlaybackResumeTask = nil
+                        return
+                    }
+                    try? await Task.sleep(for: .milliseconds(25))
+                }
+                self.scopePlaybackResumeTask = nil
+            }
         }
 
         installPlayerItemStatusObserver(for: playerItem, startTime: startTime)
@@ -1321,6 +1339,8 @@ final class PlayerController: ObservableObject {
         preparationID &+= 1
         playbackPreparationTask?.cancel()
         playbackPreparationTask = nil
+        scopePlaybackResumeTask?.cancel()
+        scopePlaybackResumeTask = nil
 
         cancelPendingScrubSeeks()
 
