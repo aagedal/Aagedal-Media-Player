@@ -98,6 +98,62 @@ final class ComparePresentationTests: XCTestCase {
         XCTAssertEqual(session.scopeSource, .primary)
     }
 
+    func testAudioSourceRoutesExactlyOneControllerAndStopRestoresSafety() {
+        let primary = PlayerController()
+        let secondary = PlayerController()
+        let session = CompareSessionController(secondaryController: secondary)
+
+        XCTAssertEqual(session.audioSource, .primary)
+        XCTAssertFalse(primary.isAudioSuppressed)
+        XCTAssertTrue(secondary.isAudioSuppressed)
+
+        session.selectAudioSource(.secondary, primary: primary)
+        XCTAssertEqual(session.audioSource, .secondary)
+        XCTAssertTrue(primary.isAudioSuppressed)
+        XCTAssertFalse(secondary.isAudioSuppressed)
+
+        session.selectAudioSource(.primary, primary: primary)
+        XCTAssertFalse(primary.isAudioSuppressed)
+        XCTAssertTrue(secondary.isAudioSuppressed)
+
+        session.selectAudioSource(.secondary, primary: primary)
+        session.stop()
+        XCTAssertEqual(session.audioSource, .primary)
+        XCTAssertFalse(primary.isAudioSuppressed)
+        XCTAssertTrue(secondary.isAudioSuppressed)
+    }
+
+    func testAudioSourceSelectionDoesNotChangeUserMutePreference() {
+        let primary = PlayerController()
+        let secondary = PlayerController()
+        let session = CompareSessionController(secondaryController: secondary)
+        let primaryMutePreference = primary.isMuted
+        let secondaryMutePreference = secondary.isMuted
+
+        session.selectAudioSource(.secondary, primary: primary)
+        session.selectAudioSource(.primary, primary: primary)
+
+        XCTAssertEqual(primary.isMuted, primaryMutePreference)
+        XCTAssertEqual(secondary.isMuted, secondaryMutePreference)
+    }
+
+    func testReplacingSecondaryReturnsAudioMonitoringToPrimary() {
+        let primary = PlayerController()
+        let secondary = PlayerController()
+        let session = CompareSessionController(secondaryController: secondary)
+
+        session.selectAudioSource(.secondary, primary: primary)
+        session.loadSecondary(
+            URL(fileURLWithPath: "/tmp/replacement-compare-source.mov"),
+            alignedWith: primary
+        )
+
+        XCTAssertEqual(session.audioSource, .primary)
+        XCTAssertFalse(primary.isAudioSuppressed)
+        XCTAssertTrue(secondary.isAudioSuppressed)
+        session.stop()
+    }
+
     func testOnlyWipeModesReportWipeControls() {
         XCTAssertTrue(CompareViewMode.verticalWipe.isWipe)
         XCTAssertTrue(CompareViewMode.horizontalWipe.isWipe)

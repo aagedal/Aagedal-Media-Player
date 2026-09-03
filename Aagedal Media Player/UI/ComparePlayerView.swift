@@ -163,12 +163,12 @@ struct ComparePlayerView: View {
     private var sourceBadges: some View {
         HStack(alignment: .top, spacing: 8) {
             if compareSession.viewMode != .secondary {
-                sourceBadge("A", name: primaryItem.name)
+                sourceBadge("A", name: primaryItem.name, audioSource: .primary)
             }
             Spacer(minLength: 8)
             if compareSession.viewMode != .primary,
                let secondaryItem = secondaryController.mediaItem {
-                sourceBadge("B", name: secondaryItem.name)
+                sourceBadge("B", name: secondaryItem.name, audioSource: .secondary)
             }
         }
         .padding(.top, 44)
@@ -176,7 +176,11 @@ struct ComparePlayerView: View {
         .allowsHitTesting(false)
     }
 
-    private func sourceBadge(_ source: String, name: String) -> some View {
+    private func sourceBadge(
+        _ source: String,
+        name: String,
+        audioSource: CompareAudioSource
+    ) -> some View {
         HStack(spacing: 6) {
             Text(source)
                 .fontWeight(.bold)
@@ -186,6 +190,10 @@ struct ComparePlayerView: View {
                 .background(Color.white, in: RoundedRectangle(cornerRadius: 4))
             Text(name)
                 .lineLimit(1)
+            if compareSession.audioSource == audioSource {
+                Image(systemName: "speaker.wave.2.fill")
+                    .accessibilityHidden(true)
+            }
         }
         .font(.caption)
         .foregroundStyle(.white)

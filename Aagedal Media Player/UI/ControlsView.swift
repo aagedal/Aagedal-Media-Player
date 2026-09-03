@@ -70,6 +70,13 @@ struct ControlsView: View {
 
     private var isPlaying: Bool { controller.isPlaying }
 
+    private var audioController: PlayerController {
+        if compareSession.isActive, compareSession.audioSource == .secondary {
+            return compareSession.secondaryController
+        }
+        return controller
+    }
+
     var body: some View {
         VStack(spacing: 8) {
             // Timeline scrubber
@@ -200,7 +207,7 @@ struct ControlsView: View {
 
     private var volumeControl: some View {
         HStack(spacing: 5) {
-            Button(action: { controller.toggleMute() }) {
+            Button(action: toggleMute) {
                 Image(systemName: volumeSymbolName)
                     .font(.system(size: 14))
                     .frame(width: 24, height: 28)
@@ -214,7 +221,13 @@ struct ControlsView: View {
             Slider(
                 value: Binding(
                     get: { controller.volume },
-                    set: { controller.volume = $0 }
+                    set: { volume in
+                        if compareSession.isActive {
+                            compareSession.setMonitoringVolume(volume, primary: controller)
+                        } else {
+                            controller.volume = volume
+                        }
+                    }
                 ),
                 in: 0...100,
                 step: 1
@@ -581,40 +594,27 @@ struct ControlsView: View {
     // MARK: - Audio Track Picker
 
     private var audioTrackPicker: some View {
-        Menu {
-            ForEach(controller.audioTrackOptions) { option in
-                Button(action: { controller.selectAudioTrack(at: option.position) }) {
-                    HStack {
-                        Text(option.title)
-                        if option.position == controller.selectedAudioTrackOrderIndex {
-                            Image(systemName: "checkmark")
-                        }
-                    }
+        AudioTrackPicker(
+            controller: audioController,
+            sourceName: compareSession.isActive
+                ? (compareSession.audioSource == .primary ? "source A" : "source B")
+                : nil,
+            showsWaveformOption: !compareSession.isActive || compareSession.audioSource == .primary,
+            onSelect: { position in
+                if compareSession.isActive {
+                    compareSession.selectAudioTrack(
+                        at: position,
+                        for: compareSession.audioSource,
+                        primary: controller
+                    )
+                } else {
+                    controller.selectAudioTrack(at: position)
                 }
             }
-            if controller.isMultiMonoFile {
-                Divider()
-                Button(action: { controller.showAllMonoWaveforms.toggle() }) {
-                    HStack {
-                        Text("Show All Waveforms")
-                        if controller.showAllMonoWaveforms {
-                            Image(systemName: "checkmark")
-                        }
-                    }
-                }
-            }
-        } label: {
-            Image(systemName: "speaker.wave.2")
-                .font(.system(size: 14))
-                .frame(width: 28, height: 28)
-        }
-        .menuStyle(.borderlessButton)
+        )
         .frame(width: 28)
         .focused($focusedControl, equals: .audioTrack)
         .modifier(PlaybackControlFocusRing(isFocused: focusedControl == .audioTrack))
-        .help("Audio track")
-        .accessibilityLabel("Audio track")
-        .accessibilityValue(selectedAudioTrackTitle)
     }
 
     // MARK: - Subtitle Track Picker
@@ -691,10 +691,12 @@ struct ControlsView: View {
                      : String(format: "%d:%02d", m, sec)
     }
 
-    private var selectedAudioTrackTitle: String {
-        controller.audioTrackOptions.first {
-            $0.position == controller.selectedAudioTrackOrderIndex
-        }?.title ?? "Default"
+    private func toggleMute() {
+        if compareSession.isActive {
+            compareSession.toggleMonitoringMute(primary: controller)
+        } else {
+            controller.toggleMute()
+        }
     }
 
     private var selectedSubtitleTrackTitle: String {
@@ -741,5 +743,56 @@ struct ControlsView: View {
         } else {
             controller.endScrubbing(at: time)
         }
+    }
+}
+
+private struct AudioTrackPicker: View {
+    @ObservedObject var controller: PlayerController
+    let sourceName: String?
+    let showsWaveformOption: Bool
+    let onSelect: (Int) -> Void
+
+    private var label: String {
+        sourceName.map { "Audio track for \($0)" } ?? "Audio track"
+    }
+
+    private var selectedTitle: String {
+        controller.audioTrackOptions.first {
+            $0.position == controller.selectedAudioTrackOrderIndex
+        }?.title ?? "Default"
+    }
+
+    var body: some View {
+        Menu {
+            ForEach(controller.audioTrackOptions) { option in
+                Button(action: { onSelect(option.position) }) {
+                    HStack {
+                        Text(option.title)
+                        if option.position == controller.selectedAudioTrackOrderIndex {
+                            Image(systemName: "checkmark")
+                        }
+                    }
+                }
+            }
+            if showsWaveformOption, controller.isMultiMonoFile {
+                Divider()
+                Button(action: { controller.showAllMonoWaveforms.toggle() }) {
+                    HStack {
+                        Text("Show All Waveforms")
+                        if controller.showAllMonoWaveforms {
+                            Image(systemName: "checkmark")
+                        }
+                    }
+                }
+            }
+        } label: {
+            Image(systemName: "speaker.wave.2")
+                .font(.system(size: 14))
+                .frame(width: 28, height: 28)
+        }
+        .menuStyle(.borderlessButton)
+        .help(label)
+        .accessibilityLabel(label)
+        .accessibilityValue(selectedTitle)
     }
 }

@@ -260,6 +260,9 @@ struct ContentView: View {
             audioWaveformWindowController = nil
             showAudioWaveformOverlay = false
             audioWaveformGenerator.cancel()
+            if compareSession.isActive {
+                compareSession.pause(primary: controller)
+            }
             compareSession.stop()
             controller.cancelMediaOperationsForWindowClose()
             controller.teardown()
@@ -355,6 +358,28 @@ struct ContentView: View {
                 .pickerStyle(.menu)
                 .frame(width: 150)
                 .help("Choose comparison view. Press B to toggle A/B.")
+
+                Picker(
+                    "Audio source",
+                    selection: Binding(
+                        get: { compareSession.audioSource },
+                        set: { compareSession.selectAudioSource($0, primary: controller) }
+                    )
+                ) {
+                    ForEach(CompareAudioSource.allCases, id: \.self) { source in
+                        Text(source.label)
+                            .tag(source)
+                            .disabled(
+                                source == .secondary
+                                    && !compareSession.isSecondaryReady
+                            )
+                    }
+                }
+                .pickerStyle(.menu)
+                .frame(width: 100)
+                .help("Choose the only comparison source that is audible")
+                .accessibilityLabel("Comparison audio source")
+                .accessibilityValue(compareSession.audioSource.label)
 
                 if compareSession.viewMode.isWipe {
                     Slider(
@@ -560,14 +585,13 @@ struct ContentView: View {
     // MARK: - File Opening
 
     func openFilePanel() {
-        windowCoordinator.openFilePanel(
-            controller: controller,
-            onTimecodeModeChange: { timecodeMode = $0 },
-            onMetadataLoaded: metadataDidLoad
-        )
+        windowCoordinator.openFilePanel(onSelection: openFile(url:))
     }
 
     func openFile(url: URL) {
+        if compareSession.isActive {
+            compareSession.pause(primary: controller)
+        }
         compareSession.stop()
         windowCoordinator.openFile(
             url,

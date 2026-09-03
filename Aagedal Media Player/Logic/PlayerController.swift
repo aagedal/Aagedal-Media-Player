@@ -58,7 +58,7 @@ final class PlayerController: ObservableObject {
     /// Session-level suppression is used by Compare Mode so source B never
     /// produces duplicate audio. Unlike `isMuted`, it is intentionally not
     /// persisted as a user preference.
-    private var isAudioSuppressed = false
+    private(set) var isAudioSuppressed = false
     private var effectiveIsMuted: Bool { isMuted || isAudioSuppressed }
     var player: AVPlayer? { backendAdapter?.avPlayer }
     @Published private(set) var playbackPhase: PlaybackPhase = .idle
@@ -1212,12 +1212,7 @@ final class PlayerController: ObservableObject {
         Task { @MainActor [weak self] in
             guard let self,
                   self.preparationID == myPrepID else { return }
-            let changed = await self.trackSelection.selectAudioTrack(
-                at: position,
-                playerItem: self.player?.currentItem,
-                mpvPlayer: self.mpvPlayer,
-                useMPV: self.useMPV
-            )
+            let changed = await self.selectAudioTrackAndWait(at: position)
             if changed, wasPlaying {
                 try? await Task.sleep(for: .milliseconds(100))
                 guard !Task.isCancelled,
@@ -1225,6 +1220,18 @@ final class PlayerController: ObservableObject {
                 self.togglePlayback()
             }
         }
+    }
+
+    func selectAudioTrackAndWait(at position: Int) async -> Bool {
+        guard position != selectedAudioTrackOrderIndex else { return false }
+        let myPrepID = preparationID
+        let changed = await trackSelection.selectAudioTrack(
+            at: position,
+            playerItem: player?.currentItem,
+            mpvPlayer: mpvPlayer,
+            useMPV: useMPV
+        )
+        return changed && preparationID == myPrepID
     }
 
     func applySelectedAudioTrack() {

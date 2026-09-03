@@ -308,13 +308,21 @@ private struct PlaybackHandlers: ViewModifier {
                 guard let command = notification.appCommand,
                       case .toggleMute = command else { return }
                 guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
-                controller.toggleMute()
+                if compareSession.isActive {
+                    compareSession.toggleMonitoringMute(primary: controller)
+                } else {
+                    controller.toggleMute()
+                }
             }
             .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
                 guard let command = notification.appCommand,
                       case let .adjustVolume(delta) = command,
                       WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
-                controller.adjustVolume(by: delta)
+                if compareSession.isActive {
+                    compareSession.adjustMonitoringVolume(by: delta, primary: controller)
+                } else {
+                    controller.adjustVolume(by: delta)
+                }
             }
             .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
                 guard let command = notification.appCommand,

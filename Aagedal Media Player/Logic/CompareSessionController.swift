@@ -58,6 +58,18 @@ nonisolated enum CompareScopeSource: String, CaseIterable, Sendable {
     }
 }
 
+nonisolated enum CompareAudioSource: String, CaseIterable, Sendable {
+    case primary
+    case secondary
+
+    var label: String {
+        switch self {
+        case .primary: "Audio: A"
+        case .secondary: "Audio: B"
+        }
+    }
+}
+
 /// Maps the primary player's relative timeline onto the comparison player's
 /// relative timeline. Keeping this pure makes drop-frame parsing a concern of
 /// TimecodeFormatter while synchronization and overlap math remain testable.
@@ -119,31 +131,60 @@ final class CompareSessionController: ObservableObject {
     @Published private(set) var overlayBlend = 0.5
     @Published private(set) var differenceGain = 1.0
     @Published var scopeSource: CompareScopeSource = .primary
+    @Published private(set) var audioSource: CompareAudioSource = .primary
     @Published private(set) var secondaryURL: URL?
     @Published private(set) var mapping: CompareTimelineMapping?
     @Published private(set) var isLoading = false
+    @Published private(set) var isSecondaryReady = false
     @Published private(set) var loadError: String?
 
     private var loadTask: Task<Void, Never>?
     private var readinessTask: Task<Void, Never>?
     private var driftCorrectionTask: Task<Void, Never>?
+    private var audioTrackSelectionTask: Task<Void, Never>?
+    private var shouldResumeAfterAudioTrackSelection = false
+    private var secondaryPlaybackPhaseCancellable: AnyCancellable?
     private var loadGeneration = OperationGeneration()
+    private weak var primaryAudioController: PlayerController?
 
     var isActive: Bool { secondaryURL != nil }
 
     init(secondaryController: PlayerController? = nil) {
         self.secondaryController = secondaryController ?? PlayerController()
         self.secondaryController.setAudioSuppressed(true)
+        secondaryPlaybackPhaseCancellable = self.secondaryController.$playbackPhase
+            .sink { [weak self] phase in
+                guard let self else { return }
+                self.isSecondaryReady = phase.permitsPlaybackControls
+                guard case .failed(let failure) = phase,
+                      self.isActive,
+                      let primary = self.primaryAudioController else { return }
+                self.selectAudioSource(.primary, primary: primary)
+                self.loadError = "The comparison file could not be played: \(failure.message)"
+            }
     }
 
     func loadSecondary(_ url: URL, alignedWith primary: PlayerController) {
+        if primaryAudioController !== primary {
+            secondaryController.setAudioSuppressed(true)
+            primaryAudioController?.setAudioSuppressed(false)
+        }
+        primaryAudioController = primary
+
         let generation = loadGeneration.advance()
         loadTask?.cancel()
         readinessTask?.cancel()
+        audioTrackSelectionTask?.cancel()
+        audioTrackSelectionTask = nil
+        shouldResumeAfterAudioTrackSelection = false
         stopDriftCorrection()
         secondaryWaveformGenerator.cancel()
         secondaryController.teardown()
-        secondaryController.setAudioSuppressed(true)
+        // Replacing B is an explicit source change. Return monitoring to A so
+        // the replacement cannot become audible merely because the old B was.
+        audioSource = .primary
+        synchronizeAudioPreferences(primary: primary)
+        applyAudioRouting(primary: primary)
 
         isLoading = true
         loadError = nil
@@ -200,19 +241,115 @@ final class CompareSessionController: ObservableObject {
         loadTask = nil
         readinessTask?.cancel()
         readinessTask = nil
+        audioTrackSelectionTask?.cancel()
+        audioTrackSelectionTask = nil
+        shouldResumeAfterAudioTrackSelection = false
         stopDriftCorrection()
         secondaryWaveformGenerator.cancel()
         secondaryController.teardown()
         secondaryController.setAudioSuppressed(true)
+        primaryAudioController?.setAudioSuppressed(false)
+        primaryAudioController = nil
         secondaryURL = nil
         mapping = nil
         isLoading = false
+        isSecondaryReady = false
         loadError = nil
         viewMode = .sideBySide
         wipePosition = 0.5
         overlayBlend = 0.5
         differenceGain = 1
         scopeSource = .primary
+        audioSource = .primary
+    }
+
+    func selectAudioSource(_ source: CompareAudioSource, primary: PlayerController) {
+        // Enforce silence before synchronizing preferences: a stale B mute
+        // preference must not make B audible during the routing transition.
+        primaryAudioController?.setAudioSuppressed(true)
+        primary.setAudioSuppressed(true)
+        secondaryController.setAudioSuppressed(true)
+        if primaryAudioController !== primary {
+            primaryAudioController?.setAudioSuppressed(false)
+            primaryAudioController = primary
+        }
+        synchronizeAudioPreferences(primary: primary)
+        audioSource = source
+        unsuppressSelectedAudioSource(primary: primary)
+    }
+
+    func toggleMonitoringMute(primary: PlayerController) {
+        let muted = !primary.isMuted
+        primary.isMuted = muted
+        secondaryController.isMuted = muted
+    }
+
+    func setMonitoringVolume(_ volume: Double, primary: PlayerController) {
+        primary.volume = volume
+        secondaryController.volume = primary.volume
+    }
+
+    func adjustMonitoringVolume(by delta: Double, primary: PlayerController) {
+        primary.adjustVolume(by: delta)
+        secondaryController.volume = primary.volume
+        secondaryController.isMuted = primary.isMuted
+    }
+
+    func selectAudioTrack(
+        at position: Int,
+        for source: CompareAudioSource,
+        primary: PlayerController
+    ) {
+        let target = source == .primary ? primary : secondaryController
+        guard target.audioTrackOptions.indices.contains(position),
+              position != target.selectedAudioTrackOrderIndex else { return }
+
+        let wasPlaying = primary.isPlaying
+            || secondaryController.isPlaying
+            || shouldResumeAfterAudioTrackSelection
+        shouldResumeAfterAudioTrackSelection = wasPlaying
+        primary.pause()
+        secondaryController.pause()
+        stopDriftCorrection()
+
+        audioTrackSelectionTask?.cancel()
+        let generation = loadGeneration.current
+        audioTrackSelectionTask = Task { @MainActor [weak self, weak primary] in
+            guard let self, let primary else { return }
+            _ = await target.selectAudioTrackAndWait(at: position)
+            guard !Task.isCancelled,
+                  self.loadGeneration.isCurrent(generation),
+                  self.isActive else { return }
+            self.synchronize(primary: primary)
+            let shouldResume = self.shouldResumeAfterAudioTrackSelection
+            self.shouldResumeAfterAudioTrackSelection = false
+            if shouldResume {
+                self.play(primary: primary)
+            }
+            self.audioTrackSelectionTask = nil
+        }
+    }
+
+    private func synchronizeAudioPreferences(primary: PlayerController) {
+        secondaryController.volume = primary.volume
+        secondaryController.isMuted = primary.isMuted
+    }
+
+    private func applyAudioRouting(primary: PlayerController) {
+        // Break before make: suppress both outputs first so switching can
+        // never produce a short burst of doubled audio.
+        primary.setAudioSuppressed(true)
+        secondaryController.setAudioSuppressed(true)
+        unsuppressSelectedAudioSource(primary: primary)
+    }
+
+    private func unsuppressSelectedAudioSource(primary: PlayerController) {
+        switch audioSource {
+        case .primary:
+            primary.setAudioSuppressed(false)
+        case .secondary:
+            secondaryController.setAudioSuppressed(false)
+        }
     }
 
     func togglePrimarySecondary() {
@@ -427,6 +564,7 @@ final class CompareSessionController: ObservableObject {
                 try? await Task.sleep(for: .milliseconds(25))
             }
             guard !Task.isCancelled, self.loadGeneration.isCurrent(generation) else { return }
+            self.selectAudioSource(.primary, primary: primary)
             self.loadError = "The comparison file did not become ready for playback."
             self.readinessTask = nil
         }

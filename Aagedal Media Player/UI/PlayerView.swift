@@ -309,10 +309,10 @@ struct PlayerView: View {
             if modifiers.contains(.control) {
                 switch specialKey {
                 case .upArrow:
-                    controller.adjustVolume(by: 5)
+                    adjustVolume(by: 5)
                     return true
                 case .downArrow:
-                    controller.adjustVolume(by: -5)
+                    adjustVolume(by: -5)
                     return true
                 default:
                     break
@@ -393,6 +393,14 @@ struct PlayerView: View {
             compareSession.seekByFrames(primary: controller, frameCount: frameCount)
         } else {
             controller.seekByFrames(frameCount)
+        }
+    }
+
+    private func adjustVolume(by delta: Double) {
+        if let compareSession, compareSession.isActive {
+            compareSession.adjustMonitoringVolume(by: delta, primary: controller)
+        } else {
+            controller.adjustVolume(by: delta)
         }
     }
 }

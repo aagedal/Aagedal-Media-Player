@@ -115,11 +115,7 @@ final class PlayerWindowCoordinator: ObservableObject {
         }
     }
 
-    func openFilePanel(
-        controller: PlayerController,
-        onTimecodeModeChange: @escaping (TimecodeDisplayMode) -> Void,
-        onMetadataLoaded: @escaping () -> Void
-    ) {
+    func openFilePanel(onSelection: (URL) -> Void) {
         let panel = NSOpenPanel()
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
@@ -127,12 +123,7 @@ final class PlayerWindowCoordinator: ObservableObject {
         panel.allowedContentTypes = Self.supportedMediaTypes
 
         guard panel.runModal() == .OK, let url = panel.url else { return }
-        openFile(
-            url,
-            controller: controller,
-            onTimecodeModeChange: onTimecodeModeChange,
-            onMetadataLoaded: onMetadataLoaded
-        )
+        onSelection(url)
     }
 
     func openFile(
