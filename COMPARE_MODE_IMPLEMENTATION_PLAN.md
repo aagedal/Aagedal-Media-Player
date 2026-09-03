@@ -97,7 +97,7 @@ Acceptance:
 - [ ] Add explicit A/B audio switching and optional channel comparison.
 - [ ] Export a comparison still containing both filenames, timecode, alignment,
   and selected technical metadata.
-- [ ] Add a compact mismatch summary for codec, raster, frame rate, color,
+- [x] Add a compact mismatch summary for codec, raster, frame rate, color,
   audio layout, and duration.
 - [ ] Add safe-area and aspect-ratio overlays shared across both sources.
 

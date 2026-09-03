@@ -29,8 +29,8 @@ struct CompareMismatchIndicator: View {
                 .foregroundStyle(.yellow)
             }
             .buttonStyle(.plain)
-            .help("Show source mismatches")
-            .accessibilityLabel("Source mismatches")
+            .help("Show technical mismatch summary")
+            .accessibilityLabel("Technical mismatch summary")
             .accessibilityValue("\(mismatches.count) mismatches")
             .popover(isPresented: $isPresented, arrowEdge: .top) {
                 CompareMismatchView(mismatches: mismatches)
@@ -44,7 +44,7 @@ struct CompareMismatchView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label("Source mismatch", systemImage: "exclamationmark.triangle.fill")
+            Label("Technical mismatch summary", systemImage: "exclamationmark.triangle.fill")
                 .font(.headline)
                 .foregroundStyle(.primary)
 
@@ -78,6 +78,7 @@ struct CompareMismatchView: View {
                 .fontWeight(.bold)
             Text(value)
                 .lineLimit(1)
+                .help(value)
         }
         .font(.callout.monospacedDigit())
     }
