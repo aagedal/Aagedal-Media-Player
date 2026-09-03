@@ -73,16 +73,15 @@ Acceptance:
 
 ## Phase 2 — Visual comparison tools
 
-Status: Wipe, overlay, display-space difference, stable renderer composition,
-and keyboard controls implemented through 2026-09-03. Live mixed-backend visual
-validation remains.
+Status: Planned Phase 2 implementation completed through 2026-09-03. Live
+mixed-backend visual validation remains.
 
 - [x] Add a draggable vertical/horizontal wipe.
 - [x] Add opacity overlay with an adjustable blend amount.
 - [x] Add a display-space difference view with gain control.
-- [ ] Normalize geometry for differing resolutions, pixel aspect ratios, and
+- [x] Normalize geometry for differing resolutions, pixel aspect ratios, and
   rotations.
-- [ ] Warn when frame rates, duration, transfer function, color primaries, or
+- [x] Warn when frame rates, duration, transfer function, color primaries, or
   range differ.
 - [x] Add keyboard shortcuts for A/B toggle and moving the wipe.
 

@@ -92,4 +92,117 @@ final class ComparePresentationTests: XCTestCase {
         XCTAssertFalse(CompareViewMode.difference.isWipe)
         XCTAssertFalse(CompareViewMode.sideBySide.isWipe)
     }
+
+    func testEquivalentDisplayAspectsShareTheSameComparisonRect() {
+        let geometry = CompareDisplayGeometry(
+            canvasSize: CGSize(width: 1_920, height: 1_200),
+            primaryAspectRatio: 1_920.0 / 1_080.0,
+            // For example, 1440x1080 coded pixels after a 4:3 PAR is applied.
+            secondaryAspectRatio: 1_920.0 / 1_080.0
+        )
+
+        XCTAssertEqual(geometry.primaryReferenceRect.minY, 60, accuracy: 0.000_001)
+        XCTAssertEqual(geometry.primaryReferenceRect.width, 1_920, accuracy: 0.000_001)
+        XCTAssertEqual(geometry.primaryReferenceRect.height, 1_080, accuracy: 0.000_001)
+        XCTAssertEqual(
+            CompareDisplayGeometry.aspectFitRect(
+                aspectRatio: geometry.secondaryAspectRatio,
+                in: geometry.canvasRect
+            ),
+            geometry.primaryReferenceRect
+        )
+    }
+
+    func testRotatedAndPhysicallyPortraitSourcesShareDisplayGeometry() {
+        let geometry = CompareDisplayGeometry(
+            canvasSize: CGSize(width: 1_600, height: 900),
+            // Both inputs are post-display ratios: one can originate from a
+            // rotated 1920x1080 stream and the other from a 1080x1920 raster.
+            primaryAspectRatio: 9.0 / 16.0,
+            secondaryAspectRatio: 1_080.0 / 1_920.0
+        )
+
+        let secondaryRect = CompareDisplayGeometry.aspectFitRect(
+            aspectRatio: geometry.secondaryAspectRatio,
+            in: geometry.canvasRect
+        )
+        XCTAssertEqual(secondaryRect, geometry.primaryReferenceRect)
+        XCTAssertEqual(geometry.primaryReferenceRect.width, 506.25, accuracy: 0.000_001)
+        XCTAssertEqual(geometry.primaryReferenceRect.height, 900, accuracy: 0.000_001)
+    }
+
+    func testSideBySideFitsPortraitSourcesToFullPaneHeight() {
+        let geometry = CompareDisplayGeometry(
+            canvasSize: CGSize(width: 1_600, height: 900),
+            primaryAspectRatio: 9.0 / 16.0,
+            secondaryAspectRatio: 9.0 / 16.0
+        )
+
+        let primary = geometry.sideBySideTransform(for: .primary)
+        let secondary = geometry.sideBySideTransform(for: .secondary)
+
+        XCTAssertEqual(primary.scale, 1, accuracy: 0.000_001)
+        XCTAssertEqual(primary.offset.x, -400, accuracy: 0.000_001)
+        XCTAssertEqual(primary.offset.y, 0, accuracy: 0.000_001)
+        XCTAssertEqual(secondary.scale, 1, accuracy: 0.000_001)
+        XCTAssertEqual(secondary.offset.x, 400, accuracy: 0.000_001)
+        XCTAssertEqual(secondary.offset.y, 0, accuracy: 0.000_001)
+        XCTAssertEqual(
+            geometry.presentationClipRect(for: .primary, mode: .sideBySide),
+            CGRect(x: 0, y: 0, width: 800, height: 900)
+        )
+        XCTAssertEqual(
+            geometry.presentationClipRect(for: .secondary, mode: .sideBySide),
+            CGRect(x: 800, y: 0, width: 800, height: 900)
+        )
+    }
+
+    func testWipeClipUsesPrimaryVisiblePictureBounds() {
+        let geometry = CompareDisplayGeometry(
+            canvasSize: CGSize(width: 1_920, height: 1_200),
+            primaryAspectRatio: 16.0 / 9.0,
+            secondaryAspectRatio: 16.0 / 9.0
+        )
+
+        XCTAssertEqual(
+            geometry.secondaryClipRect(for: .verticalWipe, wipePosition: 0.5),
+            CGRect(x: 0, y: 60, width: 960, height: 1_080)
+        )
+        XCTAssertEqual(
+            geometry.secondaryClipRect(for: .horizontalWipe, wipePosition: 0.5),
+            CGRect(x: 0, y: 60, width: 1_920, height: 540)
+        )
+    }
+
+    func testDifferingDisplayAspectsRetainIndependentFullFrameFits() {
+        let geometry = CompareDisplayGeometry(
+            canvasSize: CGSize(width: 1_920, height: 1_200),
+            primaryAspectRatio: 16.0 / 9.0,
+            secondaryAspectRatio: 4.0 / 3.0
+        )
+
+        XCTAssertFalse(geometry.displayAspectsMatch)
+        XCTAssertEqual(geometry.comparisonReferenceRect, geometry.canvasRect)
+        XCTAssertEqual(
+            geometry.secondaryClipRect(for: .verticalWipe, wipePosition: 1),
+            geometry.canvasRect
+        )
+        XCTAssertEqual(
+            geometry.secondaryClipRect(for: .difference, wipePosition: 0.5),
+            geometry.canvasRect
+        )
+    }
+
+    func testInvalidGeometryFallsBackWithoutProducingNonFiniteValues() {
+        let geometry = CompareDisplayGeometry(
+            canvasSize: CGSize(width: CGFloat.infinity, height: CGFloat.nan),
+            primaryAspectRatio: CGFloat.nan,
+            secondaryAspectRatio: -CGFloat.infinity
+        )
+
+        XCTAssertEqual(geometry.canvasSize, CGSize.zero)
+        XCTAssertEqual(geometry.primaryAspectRatio, 16.0 / 9.0)
+        XCTAssertEqual(geometry.secondaryAspectRatio, 16.0 / 9.0)
+        XCTAssertEqual(geometry.primaryReferenceRect, CGRect.zero)
+    }
 }

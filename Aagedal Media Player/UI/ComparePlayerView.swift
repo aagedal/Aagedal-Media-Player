@@ -22,7 +22,8 @@ struct ComparePlayerView: View {
     var body: some View {
         GeometryReader { geometry in
             let size = geometry.size
-            let presentation = presentationGeometry(for: size)
+            let displayGeometry = displayGeometry(for: size)
+            let presentation = presentationGeometry(using: displayGeometry)
 
             // Keep exactly one native surface for each controller across every
             // presentation mode. MPV binds its drawable during setup, so
@@ -42,7 +43,7 @@ struct ComparePlayerView: View {
                 sourceBadges
 
                 if compareSession.viewMode.isWipe {
-                    wipeInteractionOverlay(size: size)
+                    wipeInteractionOverlay(referenceRect: displayGeometry.comparisonReferenceRect)
                 }
             }
             .frame(width: size.width, height: size.height)
@@ -61,25 +62,55 @@ struct ComparePlayerView: View {
 
             primaryPlayer
                 .frame(width: size.width, height: size.height)
-                .scaleEffect(presentation.sourceScale, anchor: .topLeading)
-                .offset(y: presentation.sourceOffsetY)
+                .scaleEffect(presentation.primaryTransform.scale, anchor: .topLeading)
+                .offset(
+                    x: presentation.primaryTransform.offset.x,
+                    y: presentation.primaryTransform.offset.y
+                )
                 .opacity(presentation.primaryOpacity)
+                .mask(alignment: .topLeading) {
+                    Rectangle()
+                        .frame(
+                            width: presentation.primaryPresentationClipRect.width,
+                            height: presentation.primaryPresentationClipRect.height
+                        )
+                        .offset(
+                            x: presentation.primaryPresentationClipRect.minX,
+                            y: presentation.primaryPresentationClipRect.minY
+                        )
+                }
 
             secondaryPlayer
                 .frame(width: size.width, height: size.height)
-                .frame(
-                    width: presentation.secondaryClipWidth,
-                    height: presentation.secondaryClipHeight,
-                    alignment: .topLeading
-                )
-                .clipped()
-                .scaleEffect(presentation.sourceScale, anchor: .topLeading)
+                .mask(alignment: .topLeading) {
+                    Rectangle()
+                        .frame(
+                            width: presentation.secondaryClipRect.width,
+                            height: presentation.secondaryClipRect.height
+                        )
+                        .offset(
+                            x: presentation.secondaryClipRect.minX,
+                            y: presentation.secondaryClipRect.minY
+                        )
+                }
+                .scaleEffect(presentation.secondaryTransform.scale, anchor: .topLeading)
                 .offset(
-                    x: presentation.secondaryOffsetX,
-                    y: presentation.sourceOffsetY
+                    x: presentation.secondaryTransform.offset.x,
+                    y: presentation.secondaryTransform.offset.y
                 )
                 .opacity(presentation.secondaryOpacity)
                 .blendMode(compareSession.viewMode == .difference ? .difference : .normal)
+                .mask(alignment: .topLeading) {
+                    Rectangle()
+                        .frame(
+                            width: presentation.secondaryPresentationClipRect.width,
+                            height: presentation.secondaryPresentationClipRect.height
+                        )
+                        .offset(
+                            x: presentation.secondaryPresentationClipRect.minX,
+                            y: presentation.secondaryPresentationClipRect.minY
+                        )
+                }
         }
         .frame(width: size.width, height: size.height)
         .compositingGroup()
@@ -162,81 +193,139 @@ struct ComparePlayerView: View {
         .background(.black.opacity(0.62), in: RoundedRectangle(cornerRadius: 6))
     }
 
-    private func wipeInteractionOverlay(size: CGSize) -> some View {
+    private func wipeInteractionOverlay(referenceRect: CGRect) -> some View {
         ZStack(alignment: .topLeading) {
             if compareSession.viewMode == .verticalWipe {
                 Color.clear
                     .contentShape(Rectangle())
-                    .frame(width: 24, height: size.height)
-                    .offset(x: handleOffset(total: size.width))
-                    .gesture(wipeDragGesture(size: size))
+                    .frame(width: 24, height: referenceRect.height)
+                    .offset(
+                        x: handleOffset(
+                            origin: referenceRect.minX,
+                            total: referenceRect.width
+                        ),
+                        y: referenceRect.minY
+                    )
+                    .gesture(wipeDragGesture(referenceRect: referenceRect))
 
                 Rectangle()
                     .fill(.white.opacity(0.9))
-                    .frame(width: 2, height: size.height)
-                    .offset(x: dividerOffset(total: size.width))
+                    .frame(width: 2, height: referenceRect.height)
+                    .offset(
+                        x: dividerOffset(
+                            origin: referenceRect.minX,
+                            total: referenceRect.width
+                        ),
+                        y: referenceRect.minY
+                    )
                     .shadow(color: .black.opacity(0.8), radius: 2)
                     .allowsHitTesting(false)
             } else {
                 Color.clear
                     .contentShape(Rectangle())
-                    .frame(width: size.width, height: 24)
-                    .offset(y: handleOffset(total: size.height))
-                    .gesture(wipeDragGesture(size: size))
+                    .frame(width: referenceRect.width, height: 24)
+                    .offset(
+                        x: referenceRect.minX,
+                        y: handleOffset(
+                            origin: referenceRect.minY,
+                            total: referenceRect.height
+                        )
+                    )
+                    .gesture(wipeDragGesture(referenceRect: referenceRect))
 
                 Rectangle()
                     .fill(.white.opacity(0.9))
-                    .frame(width: size.width, height: 2)
-                    .offset(y: dividerOffset(total: size.height))
+                    .frame(width: referenceRect.width, height: 2)
+                    .offset(
+                        x: referenceRect.minX,
+                        y: dividerOffset(
+                            origin: referenceRect.minY,
+                            total: referenceRect.height
+                        )
+                    )
                     .shadow(color: .black.opacity(0.8), radius: 2)
                     .allowsHitTesting(false)
             }
         }
     }
 
-    private func wipeDragGesture(size: CGSize) -> some Gesture {
+    private func wipeDragGesture(referenceRect: CGRect) -> some Gesture {
         DragGesture(minimumDistance: 0, coordinateSpace: .named("compareCanvas"))
             .onChanged { value in
                 let position: Double
                 if compareSession.viewMode == .verticalWipe {
-                    position = size.width > 0 ? Double(value.location.x / size.width) : 0.5
+                    position = referenceRect.width > 0
+                        ? Double((value.location.x - referenceRect.minX) / referenceRect.width)
+                        : 0.5
                 } else {
-                    position = size.height > 0 ? Double(value.location.y / size.height) : 0.5
+                    position = referenceRect.height > 0
+                        ? Double((value.location.y - referenceRect.minY) / referenceRect.height)
+                        : 0.5
                 }
                 compareSession.setWipePosition(position)
             }
     }
 
-    private func dividerOffset(total: CGFloat) -> CGFloat {
+    private func dividerOffset(origin: CGFloat, total: CGFloat) -> CGFloat {
         let position = CGFloat(compareSession.wipePosition)
-        return max(0, min(total - 2, total * position - 1))
+        return origin + max(0, min(total - 2, total * position - 1))
     }
 
-    private func handleOffset(total: CGFloat) -> CGFloat {
+    private func handleOffset(origin: CGFloat, total: CGFloat) -> CGFloat {
         let position = CGFloat(compareSession.wipePosition)
-        return max(0, min(total - 24, total * position - 12))
+        return origin + max(0, min(total - 24, total * position - 12))
     }
 
-    private func presentationGeometry(for size: CGSize) -> PresentationGeometry {
+    private func displayGeometry(for size: CGSize) -> CompareDisplayGeometry {
+        CompareDisplayGeometry(
+            canvasSize: size,
+            primaryAspectRatio: resolvedAspectRatio(
+                controller: primaryController,
+                item: primaryItem
+            ),
+            secondaryAspectRatio: secondaryController.mediaItem.flatMap {
+                resolvedAspectRatio(controller: secondaryController, item: $0)
+            }
+        )
+    }
+
+    private func resolvedAspectRatio(controller: PlayerController, item: MediaItem) -> CGFloat? {
+        if let ratio = controller.videoAspectRatio, ratio.isFinite, ratio > 0 {
+            return ratio
+        }
+        if let ratio = item.videoDisplayAspectRatio, ratio.isFinite, ratio > 0 {
+            return CGFloat(ratio)
+        }
+        return nil
+    }
+
+    private func presentationGeometry(using displayGeometry: CompareDisplayGeometry) -> PresentationGeometry {
         let mode = compareSession.viewMode
         let sideBySide = mode == .sideBySide
-        let secondaryClipWidth = mode == .verticalWipe
-            ? size.width * CGFloat(compareSession.wipePosition)
-            : size.width
-        let secondaryClipHeight = mode == .horizontalWipe
-            ? size.height * CGFloat(compareSession.wipePosition)
-            : size.height
 
         // Side-by-side is a visual transform over two full-size render
         // surfaces. Keeping their layout size stable avoids MPV's large-
         // surface-change reload path when the user switches modes.
         return PresentationGeometry(
-            sourceScale: sideBySide ? 0.5 : 1,
-            sourceOffsetY: sideBySide ? size.height / 4 : 0,
+            primaryTransform: sideBySide
+                ? displayGeometry.sideBySideTransform(for: .primary)
+                : .identity,
+            secondaryTransform: sideBySide
+                ? displayGeometry.sideBySideTransform(for: .secondary)
+                : .identity,
             primaryOpacity: mode == .secondary ? 0 : 1,
-            secondaryClipWidth: secondaryClipWidth,
-            secondaryClipHeight: secondaryClipHeight,
-            secondaryOffsetX: sideBySide ? size.width / 2 : 0,
+            secondaryClipRect: displayGeometry.secondaryClipRect(
+                for: mode,
+                wipePosition: compareSession.wipePosition
+            ),
+            primaryPresentationClipRect: displayGeometry.presentationClipRect(
+                for: .primary,
+                mode: mode
+            ),
+            secondaryPresentationClipRect: displayGeometry.presentationClipRect(
+                for: .secondary,
+                mode: mode
+            ),
             secondaryOpacity: secondaryOpacity(for: mode)
         )
     }
@@ -264,12 +353,12 @@ struct ComparePlayerView: View {
     }
 
     private struct PresentationGeometry {
-        let sourceScale: CGFloat
-        let sourceOffsetY: CGFloat
+        let primaryTransform: CompareSurfaceTransform
+        let secondaryTransform: CompareSurfaceTransform
         let primaryOpacity: Double
-        let secondaryClipWidth: CGFloat
-        let secondaryClipHeight: CGFloat
-        let secondaryOffsetX: CGFloat
+        let secondaryClipRect: CGRect
+        let primaryPresentationClipRect: CGRect
+        let secondaryPresentationClipRect: CGRect
         let secondaryOpacity: Double
     }
 }

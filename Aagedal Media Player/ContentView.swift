@@ -405,6 +405,12 @@ struct ContentView: View {
                         .foregroundStyle(.white.opacity(0.72))
                 }
 
+                CompareMismatchIndicator(
+                    primaryController: controller,
+                    secondaryController: compareSession.secondaryController,
+                    isActive: compareSession.isActive
+                )
+
                 Button(action: openCompareFilePanel) {
                     Image(systemName: "arrow.triangle.2.circlepath")
                         .font(.system(size: 15))
