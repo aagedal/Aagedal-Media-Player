@@ -107,6 +107,25 @@ struct CompareReviewView: View {
                     Button("PDF Report…") {
                         compareSession.exportReviewReport(.pdf, primary: primaryController)
                     }
+                    Divider()
+                    Button("DaVinci Resolve Markers (.edl)…") {
+                        compareSession.exportReviewReport(
+                            .resolveMarkersEDL,
+                            primary: primaryController
+                        )
+                    }
+                    Button("Final Cut Pro Markers (.fcpxml)…") {
+                        compareSession.exportReviewReport(
+                            .finalCutProXML,
+                            primary: primaryController
+                        )
+                    }
+                    Button("Avid Media Composer Markers (.txt)…") {
+                        compareSession.exportReviewReport(
+                            .avidMarkersText,
+                            primary: primaryController
+                        )
+                    }
                 } label: {
                     Label("Export", systemImage: "square.and.arrow.up")
                 }

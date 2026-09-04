@@ -131,11 +131,181 @@ final class CompareReviewReportExporterTests: XCTestCase {
         XCTAssertGreaterThan(document.numberOfPages, 1)
     }
 
+    func testResolveMarkerEDLPreservesDropFrameBoundaryAndSanitizesNote() throws {
+        let primary = makeItem(
+            path: "/tmp/Master.mov",
+            duration: 120,
+            startTimecode: "01:00:00;00",
+            frameRate: "30000/1001"
+        )
+        let rate = TimecodeRate(numerator: 30_000, denominator: 1_001, dropFrame: true)
+        let start = try XCTUnwrap(rate.frameCount(forTimecode: "01:00:00;00"))
+        let marker = try XCTUnwrap(rate.frameCount(forTimecode: "01:00:59;29"))
+        let note = CompareReviewNote(
+            primaryFrame: marker - start,
+            primaryTime: 59.96,
+            secondaryFrame: 1_797,
+            secondaryTime: 59.96,
+            primaryRateNumerator: 30_000,
+            primaryRateDenominator: 1_001,
+            secondaryRateNumerator: 30_000,
+            secondaryRateDenominator: 1_001,
+            text: "Check|edge\nnext line"
+        )
+        let snapshot = CompareReviewReportSnapshot(
+            primaryItem: primary,
+            secondaryItem: makeItem(path: "/tmp/Encode.mp4", duration: 120),
+            alignmentMode: .sourceTimecode,
+            notes: [note]
+        )
+
+        let edl = try CompareReviewReportExporter.resolveMarkersEDL(snapshot: snapshot)
+
+        XCTAssertTrue(edl.contains("FCM: DROP FRAME"))
+        XCTAssertTrue(edl.contains(
+            "01:00:59;29 01:01:00;02 01:00:59;29 01:01:00;02"
+        ))
+        XCTAssertTrue(edl.contains("|M:Check/edge next line"))
+        XCTAssertEqual(
+            CompareReviewReportExporter.preferredFilename(
+                for: .resolveMarkersEDL,
+                snapshot: snapshot
+            ),
+            "Master_vs_Encode_review.edl"
+        )
+    }
+
+    func testFinalCutProXMLUsesExactRateAndEscapesComparisonContext() throws {
+        let snapshot = CompareReviewReportSnapshot(
+            primaryItem: makeItem(
+                path: "/tmp/Master & \"approved\".mov",
+                duration: 10,
+                startTimecode: "01:00:00:00",
+                frameRate: "24000/1001"
+            ),
+            secondaryItem: makeItem(path: "/tmp/Encode & web.mp4", duration: 10),
+            alignmentMode: .sourceTimecode,
+            notes: [CompareReviewNote(
+                primaryFrame: 48,
+                primaryTime: 2.002,
+                secondaryFrame: 60,
+                secondaryTime: 2,
+                primaryRateNumerator: 24_000,
+                primaryRateDenominator: 1_001,
+                text: "Blacks <lifted> & noisy\nCheck again"
+            )]
+        )
+
+        let xml = CompareReviewReportExporter.finalCutProXML(snapshot: snapshot)
+        let document = try XMLDocument(xmlString: xml)
+
+        XCTAssertEqual(document.rootElement()?.name, "fcpxml")
+        XCTAssertTrue(xml.contains("frameDuration=\"1001/24000s\""))
+        XCTAssertTrue(xml.contains("start=\"18018/5s\""))
+        XCTAssertTrue(xml.contains("Master%20&amp;%20%22approved%22.mov"))
+        XCTAssertTrue(xml.contains("Blacks &lt;lifted&gt; &amp; noisy&#10;Check again"))
+        XCTAssertEqual(
+            try document.nodes(forXPath: "//marker").count,
+            1
+        )
+        XCTAssertEqual(
+            CompareReviewReportExporter.preferredFilename(
+                for: .finalCutProXML,
+                snapshot: snapshot
+            ),
+            "Master & \"approved\"_vs_Encode & web_review.fcpxml"
+        )
+    }
+
+    func testAvidMarkersAreTabDelimitedAndUsePrimaryFrameCoordinates() {
+        let snapshot = CompareReviewReportSnapshot(
+            primaryItem: makeItem(path: "/tmp/Master.mov", duration: 5),
+            secondaryItem: makeItem(path: "/tmp/Encode.mp4", duration: 5),
+            alignmentMode: .relative,
+            notes: [CompareReviewNote(
+                primaryFrame: 42,
+                primaryTime: 1.4,
+                secondaryFrame: 45,
+                secondaryTime: 1.5,
+                text: "One\ttwo\nthree"
+            )]
+        )
+
+        let text = CompareReviewReportExporter.avidMarkersText(snapshot: snapshot)
+        let fields = text.dropLast(2).split(separator: "\t", omittingEmptySubsequences: false)
+
+        XCTAssertEqual(fields.count, 5)
+        XCTAssertEqual(fields[0], "Aagedal")
+        XCTAssertEqual(fields[1], "42")
+        XCTAssertEqual(fields[2], "V1")
+        XCTAssertEqual(fields[3], "blue")
+        XCTAssertTrue(fields[4].contains("One two three"))
+        XCTAssertTrue(fields[4].contains("Source B: Encode.mp4"))
+    }
+
+    func testResolveMarkerEDLRejectsMoreThan999Markers() {
+        let notes = (0..<1_000).map { frame in
+            CompareReviewNote(
+                primaryFrame: Int64(frame),
+                primaryTime: Double(frame) / 30,
+                secondaryFrame: Int64(frame),
+                secondaryTime: Double(frame) / 30,
+                text: "Marker \(frame)"
+            )
+        }
+        let snapshot = CompareReviewReportSnapshot(
+            primaryItem: makeItem(path: "/tmp/Master.mov", duration: 40),
+            secondaryItem: makeItem(path: "/tmp/Encode.mp4", duration: 40),
+            alignmentMode: .relative,
+            notes: notes
+        )
+
+        XCTAssertThrowsError(
+            try CompareReviewReportExporter.resolveMarkersEDL(snapshot: snapshot)
+        ) { error in
+            XCTAssertEqual(
+                error.localizedDescription,
+                "DaVinci Resolve marker EDL supports at most 999 markers; this review has 1000."
+            )
+        }
+    }
+
     private func makeItem(
         path: String,
         duration: TimeInterval,
-        startTimecode: String? = nil
+        startTimecode: String? = nil,
+        frameRate: String? = nil
     ) -> MediaItem {
+        let videoStreams = frameRate.map { value in
+            [MediaMetadata.VideoStream(
+                codec: nil,
+                codecLongName: nil,
+                profile: nil,
+                width: 1_920,
+                height: 1_080,
+                displayWidth: 1_920,
+                displayHeight: 1_080,
+                pixelFormat: nil,
+                hasAlpha: false,
+                pixelAspectRatio: nil,
+                displayAspectRatio: nil,
+                frameRate: MediaMetadata.FrameRate(frameRateString: value),
+                bitDepth: nil,
+                chromaSubsampling: nil,
+                colorPrimaries: nil,
+                colorTransfer: nil,
+                colorSpace: nil,
+                colorRange: nil,
+                chromaLocation: nil,
+                fieldOrder: nil,
+                isInterlaced: nil,
+                rotation: nil,
+                maxCLL: nil,
+                maxFALL: nil,
+                masteringMaxLuminance: nil,
+                masteringMinLuminance: nil
+            )]
+        } ?? []
         let metadata = MediaMetadata(
             duration: duration,
             formatName: nil,
@@ -146,7 +316,7 @@ final class CompareReviewReportExporterTests: XCTestCase {
             comment: nil,
             encoder: nil,
             frameCount: nil,
-            videoStreams: [],
+            videoStreams: videoStreams,
             audioStreams: [],
             subtitleStreams: [],
             chapters: []

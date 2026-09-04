@@ -529,6 +529,12 @@ final class CompareSessionController: ObservableObject {
         panel.allowedContentTypes = switch format {
         case .csv: [.commaSeparatedText]
         case .pdf: [.pdf]
+        case .resolveMarkersEDL:
+            [UTType(filenameExtension: "edl") ?? .plainText]
+        case .finalCutProXML:
+            [UTType(filenameExtension: "fcpxml") ?? .xml]
+        case .avidMarkersText:
+            [.plainText]
         }
         panel.canCreateDirectories = true
         panel.directoryURL = primaryItem.url.deletingLastPathComponent()

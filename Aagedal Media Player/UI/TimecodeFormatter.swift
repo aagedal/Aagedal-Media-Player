@@ -38,7 +38,7 @@ enum TimecodeDisplayMode: String, CaseIterable {
 
 /// A media rate and its SMPTE label rules. Counts are real frames; the nominal
 /// rate is used only for the HH:MM:SS:FF label fields.
-struct TimecodeRate: Equatable, Sendable {
+nonisolated struct TimecodeRate: Equatable, Sendable {
     let numerator: Int64
     let denominator: Int64
     let nominalFPS: Int64

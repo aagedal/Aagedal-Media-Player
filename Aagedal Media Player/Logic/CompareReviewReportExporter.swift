@@ -7,11 +7,17 @@ import Foundation
 nonisolated enum CompareReviewReportFormat: String, CaseIterable, Sendable {
     case csv
     case pdf
+    case resolveMarkersEDL
+    case finalCutProXML
+    case avidMarkersText
 
     var label: String {
         switch self {
         case .csv: "CSV Report"
         case .pdf: "PDF Report"
+        case .resolveMarkersEDL: "DaVinci Resolve Markers"
+        case .finalCutProXML: "Final Cut Pro Markers"
+        case .avidMarkersText: "Avid Media Composer Markers"
         }
     }
 
@@ -19,6 +25,9 @@ nonisolated enum CompareReviewReportFormat: String, CaseIterable, Sendable {
         switch self {
         case .csv: "csv"
         case .pdf: "pdf"
+        case .resolveMarkersEDL: "edl"
+        case .finalCutProXML: "fcpxml"
+        case .avidMarkersText: "txt"
         }
     }
 }
@@ -30,6 +39,20 @@ nonisolated enum CompareReviewExportState: Equatable, Sendable {
     case failed(String)
 
     var isInFlight: Bool { self == .exporting }
+}
+
+nonisolated enum CompareReviewReportExportError: Error, LocalizedError {
+    case tooManyResolveMarkers(Int)
+    case unsupportedResolveFrameRate(Int64)
+
+    var errorDescription: String? {
+        switch self {
+        case .tooManyResolveMarkers(let count):
+            "DaVinci Resolve marker EDL supports at most 999 markers; this review has \(count)."
+        case .unsupportedResolveFrameRate(let nominalFPS):
+            "DaVinci Resolve marker EDL export does not support \(nominalFPS) fps media."
+        }
+    }
 }
 
 nonisolated struct CompareReviewReportRow: Equatable, Sendable {
@@ -48,9 +71,15 @@ nonisolated struct CompareReviewReportRow: Equatable, Sendable {
 /// An immutable snapshot keeps a report internally consistent even if the
 /// user edits notes or replaces source B while the save panel is open.
 nonisolated struct CompareReviewReportSnapshot: Equatable, Sendable {
+    let primaryURL: URL
     let primaryFilename: String
     let secondaryFilename: String
     let alignmentLabel: String
+    let primaryRateNumerator: Int64
+    let primaryRateDenominator: Int64
+    let primaryStartFrame: Int64
+    let primaryDurationFrames: Int64
+    let primaryUsesDropFrame: Bool
     let rows: [CompareReviewReportRow]
 
     @MainActor
@@ -60,9 +89,20 @@ nonisolated struct CompareReviewReportSnapshot: Equatable, Sendable {
         alignmentMode: CompareAlignmentMode,
         notes: [CompareReviewNote]
     ) {
+        primaryURL = primaryItem.url
         primaryFilename = primaryItem.url.lastPathComponent
         secondaryFilename = secondaryItem.url.lastPathComponent
         alignmentLabel = alignmentMode.label
+
+        let startTimecode = TimecodeFormatter.effectiveStartTimecode(for: primaryItem)
+        primaryUsesDropFrame = startTimecode?.contains(";") ?? false
+        let rate = TimecodeFormatter.effectiveTimecodeRate(
+            for: primaryItem,
+            dropFrame: primaryUsesDropFrame
+        )
+        primaryRateNumerator = rate.numerator
+        primaryRateDenominator = rate.denominator
+        primaryStartFrame = startTimecode.flatMap(rate.frameCount(forTimecode:)) ?? 0
 
         let sortedNotes = notes.sorted {
             if $0.primaryFrame != $1.primaryFrame {
@@ -117,6 +157,12 @@ nonisolated struct CompareReviewReportSnapshot: Equatable, Sendable {
                 updatedAt: note.updatedAt
             )
         }
+
+        let durationFrames = Int64(
+            (max(0, primaryItem.durationSeconds) * rate.value).rounded(.up)
+        )
+        let finalMarkerFrame = rows.map(\.primaryFrame).max().map { $0 + 1 } ?? 0
+        primaryDurationFrames = max(1, durationFrames, finalMarkerFrame)
     }
 
     @MainActor
@@ -156,6 +202,12 @@ nonisolated enum CompareReviewReportExporter {
             Data(csv(snapshot: snapshot).utf8)
         case .pdf:
             try CompareReviewPDFRenderer.render(snapshot: snapshot)
+        case .resolveMarkersEDL:
+            Data(try resolveMarkersEDL(snapshot: snapshot).utf8)
+        case .finalCutProXML:
+            Data(finalCutProXML(snapshot: snapshot).utf8)
+        case .avidMarkersText:
+            Data(avidMarkersText(snapshot: snapshot).utf8)
         }
     }
 
@@ -199,6 +251,113 @@ nonisolated enum CompareReviewReportExporter {
             .joined(separator: "\r\n") + "\r\n"
     }
 
+    /// Resolve's marker-EDL extension uses one-frame CMX events with marker
+    /// metadata in comments. The target timeline must use source A's rate.
+    static func resolveMarkersEDL(snapshot: CompareReviewReportSnapshot) throws -> String {
+        let rate = TimecodeRate(
+            numerator: Int(snapshot.primaryRateNumerator),
+            denominator: Int(snapshot.primaryRateDenominator),
+            dropFrame: snapshot.primaryUsesDropFrame
+        )
+        guard snapshot.rows.count <= 999 else {
+            throw CompareReviewReportExportError.tooManyResolveMarkers(snapshot.rows.count)
+        }
+        guard rate.nominalFPS <= 60 else {
+            throw CompareReviewReportExportError.unsupportedResolveFrameRate(rate.nominalFPS)
+        }
+        var lines = [
+            "TITLE: \(edlText("\(snapshot.primaryFilename) vs \(snapshot.secondaryFilename) Review"))",
+            "FCM: \(snapshot.primaryUsesDropFrame ? "DROP FRAME" : "NON-DROP FRAME")",
+            "",
+        ]
+
+        for row in snapshot.rows {
+            let markerFrame = snapshot.primaryStartFrame + row.primaryFrame
+            let input = rate.timecode(forFrameCount: markerFrame)
+            let output = rate.timecode(forFrameCount: markerFrame + 1)
+            lines.append(String(
+                format: "%03d  001      V     C        %@ %@ %@ %@",
+                row.markerNumber,
+                input,
+                output,
+                input,
+                output
+            ))
+            lines.append(
+                " |C:ResolveColorBlue |M:\(edlText(markerNote(row: row, snapshot: snapshot))) |D:1"
+            )
+            lines.append("")
+        }
+        return lines.joined(separator: "\r\n")
+    }
+
+    /// Avid's marker interchange is a tab-delimited, frame-addressed format.
+    static func avidMarkersText(snapshot: CompareReviewReportSnapshot) -> String {
+        snapshot.rows.map { row in
+            [
+                "Aagedal",
+                String(row.primaryFrame),
+                "V1",
+                "blue",
+                avidText(markerNote(row: row, snapshot: snapshot)),
+            ].joined(separator: "\t")
+        }.joined(separator: "\r\n") + "\r\n"
+    }
+
+    /// FCPXML browser-clip markers stay attached to source A and use rational
+    /// time values so fractional rates never pass through floating point.
+    static func finalCutProXML(snapshot: CompareReviewReportSnapshot) -> String {
+        let frameDuration = rationalTime(
+            frames: 1,
+            rateNumerator: snapshot.primaryRateNumerator,
+            rateDenominator: snapshot.primaryRateDenominator
+        )
+        let sourceStart = rationalTime(
+            frames: snapshot.primaryStartFrame,
+            rateNumerator: snapshot.primaryRateNumerator,
+            rateDenominator: snapshot.primaryRateDenominator
+        )
+        let duration = rationalTime(
+            frames: snapshot.primaryDurationFrames,
+            rateNumerator: snapshot.primaryRateNumerator,
+            rateDenominator: snapshot.primaryRateDenominator
+        )
+        let reviewName = "\(snapshot.primaryFilename) vs \(snapshot.secondaryFilename) Review"
+
+        var lines = [
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
+            "<!DOCTYPE fcpxml>",
+            "<fcpxml version=\"1.9\">",
+            "  <resources>",
+            "    <format id=\"r1\" frameDuration=\"\(frameDuration)\"/>",
+            "    <asset id=\"r2\" name=\"\(xmlAttribute(snapshot.primaryFilename))\" start=\"\(sourceStart)\" duration=\"\(duration)\" hasVideo=\"1\" format=\"r1\">",
+            "      <media-rep kind=\"original-media\" src=\"\(xmlAttribute(snapshot.primaryURL.absoluteString))\"/>",
+            "    </asset>",
+            "  </resources>",
+            "  <event name=\"Aagedal Compare Review\">",
+            "    <asset-clip name=\"\(xmlAttribute(reviewName))\" ref=\"r2\" format=\"r1\" start=\"\(sourceStart)\" duration=\"\(duration)\">",
+        ]
+
+        for row in snapshot.rows {
+            let markerStart = rationalTime(
+                frames: snapshot.primaryStartFrame + row.primaryFrame,
+                rateNumerator: snapshot.primaryRateNumerator,
+                rateDenominator: snapshot.primaryRateDenominator
+            )
+            lines.append(
+                "      <marker start=\"\(markerStart)\" duration=\"\(frameDuration)\" value=\"QC \(String(format: "%03d", row.markerNumber))\" note=\"\(xmlAttribute(markerNote(row: row, snapshot: snapshot)))\"/>"
+            )
+        }
+
+        lines.append(contentsOf: [
+            "    </asset-clip>",
+            "  </event>",
+            "</fcpxml>",
+            "",
+        ])
+        return lines.joined(separator: "\n")
+    }
+
     private static func escapedCSVField(_ value: String) -> String {
         guard value.contains(",")
                 || value.contains("\"")
@@ -207,6 +366,60 @@ nonisolated enum CompareReviewReportExporter {
             return value
         }
         return "\"\(value.replacingOccurrences(of: "\"", with: "\"\""))\""
+    }
+
+    private static func markerNote(
+        row: CompareReviewReportRow,
+        snapshot: CompareReviewReportSnapshot
+    ) -> String {
+        let secondaryTimecode = row.secondarySourceTimecode ?? row.secondaryRelativeTimecode
+        return "\(row.note) | Source B: \(snapshot.secondaryFilename), \(secondaryTimecode), frame \(row.secondaryFrame) | Alignment: \(snapshot.alignmentLabel)"
+    }
+
+    private static func edlText(_ value: String) -> String {
+        value
+            .replacingOccurrences(of: "\r\n", with: " ")
+            .replacingOccurrences(of: "\r", with: " ")
+            .replacingOccurrences(of: "\n", with: " ")
+            .replacingOccurrences(of: "|", with: "/")
+    }
+
+    private static func avidText(_ value: String) -> String {
+        String(value
+            .replacingOccurrences(of: "\t", with: " ")
+            .replacingOccurrences(of: "\r\n", with: " ")
+            .replacingOccurrences(of: "\r", with: " ")
+            .replacingOccurrences(of: "\n", with: " ")
+            .prefix(32_000))
+    }
+
+    private static func xmlAttribute(_ value: String) -> String {
+        value
+            .replacingOccurrences(of: "&", with: "&amp;")
+            .replacingOccurrences(of: "\"", with: "&quot;")
+            .replacingOccurrences(of: "<", with: "&lt;")
+            .replacingOccurrences(of: ">", with: "&gt;")
+            .replacingOccurrences(of: "\r\n", with: "&#10;")
+            .replacingOccurrences(of: "\r", with: "&#10;")
+            .replacingOccurrences(of: "\n", with: "&#10;")
+    }
+
+    private static func rationalTime(
+        frames: Int64,
+        rateNumerator: Int64,
+        rateDenominator: Int64
+    ) -> String {
+        let numerator = max(0, frames) * max(1, rateDenominator)
+        let denominator = max(1, rateNumerator)
+        let divisor = greatestCommonDivisor(numerator, denominator)
+        return "\(numerator / divisor)/\(denominator / divisor)s"
+    }
+
+    private static func greatestCommonDivisor(_ lhs: Int64, _ rhs: Int64) -> Int64 {
+        var a = abs(lhs)
+        var b = abs(rhs)
+        while b != 0 { (a, b) = (b, a % b) }
+        return max(a, 1)
     }
 
     private static func sanitizedFilenameStem(_ filename: String) -> String {
