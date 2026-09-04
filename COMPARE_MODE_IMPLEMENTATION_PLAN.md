@@ -49,8 +49,12 @@ Status: Foundation implemented on 2026-09-02. Backend-clock drift sampling, a
 one-primary-frame correction policy, correction cooldown, and Instruments
 signposts for secondary load/drift profiling were added on 2026-09-04.
 Deterministic coverage now verifies rapid B replacement, stopping during
-metadata loading, and preservation of specific decoder failures. Live
-backend/drift validation remains before Phase 1 acceptance is complete.
+metadata loading, and preservation of specific decoder failures. Real-decoder
+integration coverage now verifies source-timecode alignment, paired
+seek/play/pause, one-frame drift convergence, and audio suppression for
+MPV/MPV, AVFoundation/AVFoundation, and both mixed-backend directions using
+generated fixtures. Sustained playback and production-resolution validation
+remain before Phase 1 acceptance is complete.
 
 - [x] Define the implementation plan and release boundaries.
 - [x] Add a window-owned compare session with cancellation-safe secondary-file
@@ -165,13 +169,16 @@ is not possible.
 - Different durations and no-overlap source-timecode ranges.
 - Rotated and anamorphic media.
 - SDR/HDR and mixed-transfer-function pairs.
-- MPV/MPV and mixed MPV/AVFoundation playback.
+- MPV/MPV, AVFoundation/AVFoundation, and mixed MPV/AVFoundation playback.
 - Rapidly replace B, remove B during preparation, and close the window while B
   is loading.
 
 The metadata-loading portion of rapid replacement and removal is covered by
 automated lifecycle tests. Decoder teardown during backend preparation and
-window close remains part of live mixed-backend validation.
+window close remains part of live mixed-backend validation. Small real-decoder
+fixtures now cover MPV/MPV, AVFoundation/AVFoundation, and both mixed-backend
+directions for timecode alignment and shared transport; the full raster/color
+matrix still requires hands-on validation.
 
 ## Release and marketing work
 
