@@ -1183,6 +1183,19 @@ final class PlayerController: ObservableObject {
         return currentPlaybackTime
     }
 
+    /// Reads the backend clock directly for frame-sensitive review actions.
+    /// Published playback time is optimized for UI observation and can trail
+    /// a playing AVPlayer by more than one high-frame-rate video frame.
+    func playbackTimeSnapshot() -> TimeInterval {
+        if useMPV, let time = mpvPlayer?.timePos, time.isFinite {
+            return max(0, time)
+        }
+        if let time = player?.currentTime().seconds, time.isFinite {
+            return max(0, time)
+        }
+        return max(0, currentPlaybackTime.isFinite ? currentPlaybackTime : 0)
+    }
+
     func toggleFullscreen() {
         let window = playerView?.window ?? NSApp.keyWindow
         window?.toggleFullScreen(nil)

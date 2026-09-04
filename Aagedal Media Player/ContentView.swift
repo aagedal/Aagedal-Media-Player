@@ -20,6 +20,7 @@ struct ContentView: View {
     @State private var isEditingTimecode = false
     @State private var isTimelineFocused = false
     @State private var isPlaybackControlsFocused = false
+    @State private var showReviewNotes = false
     @FocusState private var isInspectorButtonFocused: Bool
     @State private var timecodeActivationTrigger: String?
     @AppStorage(AppSettings.showCursorHideHint.key)
@@ -42,7 +43,7 @@ struct ContentView: View {
     private var nsWindow: NSWindow? { windowCoordinator.window }
     private var showOverlay: Bool { overlayController.isVisible }
     private var isControlInteractionActive: Bool {
-        isEditingTimecode || isPlaybackControlsFocused || isInspectorButtonFocused
+        isEditingTimecode || isPlaybackControlsFocused || isInspectorButtonFocused || showReviewNotes
     }
 
     private var videoAspectRatio: CGFloat? {
@@ -96,6 +97,7 @@ struct ContentView: View {
                         isEditingTimecode: $isEditingTimecode,
                         isTimelineFocused: $isTimelineFocused,
                         isOverlayControlFocused: isControlInteractionActive,
+                        isTextInputActive: showReviewNotes,
                         timecodeActivationTrigger: $timecodeActivationTrigger
                     )
                 } else {
@@ -107,6 +109,7 @@ struct ContentView: View {
                         isEditingTimecode: $isEditingTimecode,
                         isTimelineFocused: $isTimelineFocused,
                         isOverlayControlFocused: isControlInteractionActive,
+                        isTextInputActive: showReviewNotes,
                         timecodeActivationTrigger: $timecodeActivationTrigger,
                         compareSession: compareSession
                     )
@@ -216,6 +219,11 @@ struct ContentView: View {
                 announce(message)
             case .idle, .saving:
                 break
+            }
+        }
+        .onChange(of: compareSession.isActive) { _, isActive in
+            if !isActive {
+                showReviewNotes = false
             }
         }
         .onChange(of: controller.trimExportState) { _, state in
@@ -501,6 +509,33 @@ struct ContentView: View {
                     isActive: compareSession.isActive
                 )
 
+                Button(action: { showReviewNotes.toggle() }) {
+                    ZStack(alignment: .topTrailing) {
+                        Image(systemName: "text.bubble")
+                            .font(.system(size: 15))
+                        if !compareSession.reviewNotes.isEmpty {
+                            Text("\(compareSession.reviewNotes.count)")
+                                .font(.system(size: 8, weight: .bold, design: .rounded))
+                                .foregroundStyle(.black)
+                                .padding(2)
+                                .background(.orange, in: Circle())
+                                .offset(x: 7, y: -7)
+                        }
+                    }
+                    .foregroundColor(.white.opacity(0.9))
+                }
+                .buttonStyle(.plain)
+                .help("Add or edit frame-accurate comparison notes")
+                .accessibilityLabel("Comparison review notes")
+                .accessibilityValue("\(compareSession.reviewNotes.count) notes")
+                .popover(isPresented: $showReviewNotes, arrowEdge: .bottom) {
+                    CompareReviewView(
+                        primaryController: controller,
+                        compareSession: compareSession,
+                        timecodeMode: timecodeMode
+                    )
+                }
+
                 Button(action: { compareSession.captureComparisonStill(primary: controller) }) {
                     Image(systemName: "square.and.arrow.down")
                         .font(.system(size: 15))
@@ -520,7 +555,10 @@ struct ContentView: View {
                 .help("Replace comparison file")
                 .accessibilityLabel("Replace comparison file")
 
-                Button(action: { compareSession.stop() }) {
+                Button(action: {
+                    showReviewNotes = false
+                    compareSession.stop()
+                }) {
                     Image(systemName: "xmark.circle")
                         .font(.system(size: 16))
                         .foregroundColor(.white.opacity(0.9))
@@ -638,6 +676,7 @@ struct ContentView: View {
     }
 
     func openFile(url: URL) {
+        showReviewNotes = false
         if compareSession.isActive {
             compareSession.pause(primary: controller)
         }

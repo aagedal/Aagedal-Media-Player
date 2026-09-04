@@ -5,6 +5,7 @@
 import AppKit
 import Combine
 import Foundation
+import UniformTypeIdentifiers
 
 nonisolated enum CompareViewMode: String, CaseIterable, Sendable {
     case sideBySide
@@ -191,17 +192,32 @@ final class CompareSessionController: ObservableObject {
     @Published private(set) var isLoading = false
     @Published private(set) var isSecondaryReady = false
     @Published private(set) var loadError: String?
+    @Published private(set) var reviewNotes: [CompareReviewNote] = []
+    @Published private(set) var reviewSidecarURL: URL?
+    @Published private(set) var reviewError: String?
+    @Published private(set) var isReviewLoading = false
+    @Published private(set) var reviewExportState: CompareReviewExportState = .idle
 
     private var loadTask: Task<Void, Never>?
     private var readinessTask: Task<Void, Never>?
     private var driftCorrectionTask: Task<Void, Never>?
     private var audioTrackSelectionTask: Task<Void, Never>?
+    private var reviewLoadTask: Task<Void, Never>?
+    private var reviewSaveTask: Task<Void, Never>?
+    private var reviewExportTask: Task<Void, Never>?
+    private var reviewExportSavePanel: NSSavePanel?
     private var shouldResumeAfterAudioTrackSelection = false
     private var secondaryPlaybackPhaseCancellable: AnyCancellable?
     private var loadGeneration = OperationGeneration()
+    private var reviewRevision: UInt64 = 0
+    private var isReviewSidecarWritable = false
+    private let reviewStore = CompareReviewSidecarStore.shared
     private weak var primaryAudioController: PlayerController?
 
     var isActive: Bool { secondaryURL != nil }
+    var canEditReviewNotes: Bool {
+        isActive && !isReviewLoading && isReviewSidecarWritable
+    }
 
     init(secondaryController: PlayerController? = nil) {
         self.secondaryController = secondaryController ?? PlayerController()
@@ -228,6 +244,10 @@ final class CompareSessionController: ObservableObject {
         let generation = loadGeneration.advance()
         loadTask?.cancel()
         readinessTask?.cancel()
+        reviewLoadTask?.cancel()
+        reviewExportTask?.cancel()
+        reviewExportSavePanel?.cancel(nil)
+        reviewExportSavePanel = nil
         audioTrackSelectionTask?.cancel()
         audioTrackSelectionTask = nil
         shouldResumeAfterAudioTrackSelection = false
@@ -244,6 +264,12 @@ final class CompareSessionController: ObservableObject {
         loadError = nil
         secondaryURL = nil
         mapping = nil
+        reviewNotes = []
+        reviewSidecarURL = nil
+        reviewError = nil
+        isReviewLoading = false
+        isReviewSidecarWritable = false
+        reviewExportState = .idle
 
         loadTask = Task { @MainActor [weak self, weak primary] in
             guard let self, let primary else { return }
@@ -277,6 +303,13 @@ final class CompareSessionController: ObservableObject {
             self.mapping = newMapping
             self.secondaryURL = url
             self.isLoading = false
+            if let primaryURL = primary.mediaItem?.url {
+                self.loadReviewNotes(
+                    primaryURL: primaryURL,
+                    secondaryURL: url,
+                    generation: generation
+                )
+            }
             let secondaryTime = newMapping.secondaryTime(
                 forPrimaryTime: primary.currentPlaybackTime
             )
@@ -295,6 +328,12 @@ final class CompareSessionController: ObservableObject {
         loadTask = nil
         readinessTask?.cancel()
         readinessTask = nil
+        reviewLoadTask?.cancel()
+        reviewLoadTask = nil
+        reviewExportTask?.cancel()
+        reviewExportTask = nil
+        reviewExportSavePanel?.cancel(nil)
+        reviewExportSavePanel = nil
         audioTrackSelectionTask?.cancel()
         audioTrackSelectionTask = nil
         shouldResumeAfterAudioTrackSelection = false
@@ -309,6 +348,12 @@ final class CompareSessionController: ObservableObject {
         isLoading = false
         isSecondaryReady = false
         loadError = nil
+        reviewNotes = []
+        reviewSidecarURL = nil
+        reviewError = nil
+        isReviewLoading = false
+        isReviewSidecarWritable = false
+        reviewExportState = .idle
         viewMode = .sideBySide
         wipePosition = 0.5
         overlayBlend = 0.5
@@ -445,6 +490,285 @@ final class CompareSessionController: ObservableObject {
 
     func dismissLoadError() {
         loadError = nil
+    }
+
+    func dismissReviewError() {
+        reviewError = nil
+    }
+
+    func dismissReviewExportFeedback() {
+        guard !reviewExportState.isInFlight else { return }
+        reviewExportState = .idle
+    }
+
+    func exportReviewReport(
+        _ format: CompareReviewReportFormat,
+        primary: PlayerController
+    ) {
+        guard !reviewExportState.isInFlight,
+              !isReviewLoading,
+              let primaryItem = primary.mediaItem,
+              let secondaryItem = secondaryController.mediaItem,
+              let alignmentMode = mapping?.mode,
+              !reviewNotes.isEmpty else { return }
+
+        let snapshot = CompareReviewReportSnapshot(
+            primaryItem: primaryItem,
+            secondaryItem: secondaryItem,
+            alignmentMode: alignmentMode,
+            notes: reviewNotes
+        )
+        let generation = loadGeneration.current
+        let panel = NSSavePanel()
+        reviewExportSavePanel = panel
+        reviewExportState = .exporting
+        panel.nameFieldStringValue = CompareReviewReportExporter.preferredFilename(
+            for: format,
+            snapshot: snapshot
+        )
+        panel.allowedContentTypes = [.commaSeparatedText]
+        panel.canCreateDirectories = true
+        panel.directoryURL = primaryItem.url.deletingLastPathComponent()
+
+        panel.begin { [weak self] response in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.reviewExportSavePanel = nil
+                guard self.loadGeneration.isCurrent(generation) else { return }
+                guard response == .OK, let destinationURL = panel.url else {
+                    self.reviewExportState = .idle
+                    return
+                }
+
+                let output = OutputCoordinator.userConfirmed(destinationURL: destinationURL)
+                self.reviewExportTask = Task { @MainActor [weak self] in
+                    defer { output.discard() }
+                    do {
+                        let data = CompareReviewReportExporter.data(
+                            for: format,
+                            snapshot: snapshot
+                        )
+                        try data.write(to: output.temporaryURL, options: .atomic)
+                        try Task.checkCancellation()
+                        guard let self,
+                              self.loadGeneration.isCurrent(generation) else { return }
+                        let outputURL = try output.commit()
+                        self.reviewExportState = .succeeded(outputURL)
+                        self.reviewExportTask = nil
+                    } catch is CancellationError {
+                        guard let self,
+                              self.loadGeneration.isCurrent(generation) else { return }
+                        self.reviewExportState = .idle
+                        self.reviewExportTask = nil
+                    } catch {
+                        guard let self,
+                              self.loadGeneration.isCurrent(generation) else { return }
+                        self.reviewExportState = .failed(
+                            "Could not export comparison review: \(error.localizedDescription)"
+                        )
+                        self.reviewExportTask = nil
+                    }
+                }
+            }
+        }
+    }
+
+    func retryReviewLoad(primary: PlayerController) {
+        guard let primaryURL = primary.mediaItem?.url,
+              let secondaryURL else { return }
+        loadReviewNotes(
+            primaryURL: primaryURL,
+            secondaryURL: secondaryURL,
+            generation: loadGeneration.current
+        )
+    }
+
+    @discardableResult
+    func addReviewNote(_ text: String, primary: PlayerController) -> Bool {
+        let text = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty,
+              canEditReviewNotes,
+              let primaryItem = primary.mediaItem,
+              let secondaryItem = secondaryController.mediaItem else { return false }
+
+        // Freeze both clocks before taking the backend snapshot so the marker
+        // identifies the frame the user is reviewing, not a stale UI tick.
+        pause(primary: primary)
+        let primaryTimecodeRate = TimecodeFormatter.effectiveTimecodeRate(for: primaryItem)
+        let primaryRate = primaryTimecodeRate.value
+        let primaryDuration = max(0, primaryItem.durationSeconds)
+        let rawPrimaryTime = max(0, min(primary.playbackTimeSnapshot(), primaryDuration))
+        let primaryFrame = CompareReviewTimeline.frameIndex(
+            for: rawPrimaryTime,
+            duration: primaryDuration,
+            frameRate: primaryRate
+        )
+        let primaryTime = CompareReviewTimeline.time(
+            forFrame: primaryFrame,
+            duration: primaryDuration,
+            frameRate: primaryRate
+        )
+
+        let secondaryTimecodeRate = TimecodeFormatter.effectiveTimecodeRate(for: secondaryItem)
+        let secondaryRate = secondaryTimecodeRate.value
+        let secondaryDuration = max(0, secondaryItem.durationSeconds)
+        let rawSecondaryTime = max(
+            0,
+            min(mappedSecondaryTime(for: primaryTime), secondaryDuration)
+        )
+        let secondaryFrame = CompareReviewTimeline.frameIndex(
+            for: rawSecondaryTime,
+            duration: secondaryDuration,
+            frameRate: secondaryRate
+        )
+        let secondaryTime = CompareReviewTimeline.time(
+            forFrame: secondaryFrame,
+            duration: secondaryDuration,
+            frameRate: secondaryRate
+        )
+
+        let note = CompareReviewNote(
+            primaryFrame: primaryFrame,
+            primaryTime: primaryTime,
+            secondaryFrame: secondaryFrame,
+            secondaryTime: secondaryTime,
+            primaryRateNumerator: primaryTimecodeRate.numerator,
+            primaryRateDenominator: primaryTimecodeRate.denominator,
+            secondaryRateNumerator: secondaryTimecodeRate.numerator,
+            secondaryRateDenominator: secondaryTimecodeRate.denominator,
+            text: text
+        )
+        reviewNotes.append(note)
+        reviewNotes.sort {
+            ($0.primaryFrame, $0.createdAt) < ($1.primaryFrame, $1.createdAt)
+        }
+        persistReviewMutation(
+            .upsert(note),
+            primaryURL: primaryItem.url,
+            secondaryURL: secondaryItem.url
+        )
+        return true
+    }
+
+    func updateReviewNote(id: UUID, text: String) {
+        guard let index = reviewNotes.firstIndex(where: { $0.id == id }),
+              canEditReviewNotes,
+              let primaryURL = primaryAudioController?.mediaItem?.url,
+              let secondaryURL else { return }
+        reviewNotes[index].text = text
+        reviewNotes[index].updatedAt = Date()
+        persistReviewMutation(
+            .upsert(reviewNotes[index]),
+            primaryURL: primaryURL,
+            secondaryURL: secondaryURL
+        )
+    }
+
+    func deleteReviewNote(id: UUID) {
+        guard canEditReviewNotes,
+              let primaryURL = primaryAudioController?.mediaItem?.url,
+              let secondaryURL else { return }
+        reviewNotes.removeAll { $0.id == id }
+        persistReviewMutation(
+            .delete(id),
+            primaryURL: primaryURL,
+            secondaryURL: secondaryURL
+        )
+    }
+
+    func seekToReviewNote(_ note: CompareReviewNote, primary: PlayerController) {
+        let time = primary.mediaItem.map { reviewNotePrimaryTime(note, primaryItem: $0) }
+            ?? note.primaryTime
+        seek(primary: primary, to: time)
+    }
+
+    func reviewNotePrimaryTime(_ note: CompareReviewNote, primaryItem: MediaItem) -> TimeInterval {
+        let rate = Double(note.primaryRateNumerator) / Double(note.primaryRateDenominator)
+        return CompareReviewTimeline.time(
+            forFrame: note.primaryFrame,
+            duration: primaryItem.durationSeconds,
+            frameRate: rate,
+            fallback: note.primaryTime
+        )
+    }
+
+    private func loadReviewNotes(
+        primaryURL: URL,
+        secondaryURL: URL,
+        generation: UInt64
+    ) {
+        reviewLoadTask?.cancel()
+        let sidecarURL = CompareReviewSidecarStore.sidecarURL(
+            primaryURL: primaryURL,
+            secondaryURL: secondaryURL
+        )
+        reviewSidecarURL = sidecarURL
+        isReviewLoading = true
+        isReviewSidecarWritable = false
+        reviewRevision &+= 1
+        let loadRevision = reviewRevision
+        reviewLoadTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            do {
+                let document = try await self.reviewStore.load(
+                    from: sidecarURL,
+                    primaryURL: primaryURL,
+                    secondaryURL: secondaryURL
+                )
+                guard !Task.isCancelled,
+                      self.loadGeneration.isCurrent(generation),
+                      self.reviewRevision == loadRevision,
+                      self.secondaryURL == secondaryURL else { return }
+                self.reviewNotes = (document?.notes ?? []).sorted {
+                    ($0.primaryFrame, $0.createdAt) < ($1.primaryFrame, $1.createdAt)
+                }
+                self.reviewError = nil
+                self.isReviewSidecarWritable = true
+            } catch {
+                guard !Task.isCancelled,
+                      self.loadGeneration.isCurrent(generation),
+                      self.reviewRevision == loadRevision else { return }
+                self.reviewNotes = []
+                self.reviewError = "Could not load comparison notes: \(error.localizedDescription)"
+                self.isReviewSidecarWritable = false
+            }
+            self.isReviewLoading = false
+            self.reviewLoadTask = nil
+        }
+    }
+
+    private func persistReviewMutation(
+        _ mutation: CompareReviewMutation,
+        primaryURL: URL,
+        secondaryURL: URL
+    ) {
+        guard let reviewSidecarURL else { return }
+        reviewRevision &+= 1
+        let revision = reviewRevision
+        let previousSave = reviewSaveTask
+        let reviewStore = reviewStore
+        reviewSaveTask = Task { @MainActor [weak self] in
+            await previousSave?.value
+            guard !Task.isCancelled else { return }
+            do {
+                let document = try await reviewStore.apply(
+                    mutation,
+                    to: reviewSidecarURL,
+                    primaryURL: primaryURL,
+                    secondaryURL: secondaryURL
+                )
+                guard let self else { return }
+                guard !Task.isCancelled, revision == self.reviewRevision else { return }
+                self.reviewNotes = document.notes
+                self.reviewError = nil
+                self.reviewSaveTask = nil
+            } catch {
+                guard let self else { return }
+                guard !Task.isCancelled, revision == self.reviewRevision else { return }
+                self.reviewError = "Could not save comparison notes: \(error.localizedDescription)"
+                self.reviewSaveTask = nil
+            }
+        }
     }
 
     func togglePlayback(primary: PlayerController) {

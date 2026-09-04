@@ -289,6 +289,21 @@ struct ControlsView: View {
                             .frame(width: 2, height: 14)
                             .offset(x: max(0, min(width - 2, trimOutFrac * width - 1)))
                     }
+
+                    // Review markers are display-only here so the timeline's
+                    // zero-distance scrub gesture remains unambiguous. The
+                    // Review popover provides selection, editing, and delete.
+                    ForEach(compareSession.reviewNotes) { note in
+                        let noteTime = item.map {
+                            compareSession.reviewNotePrimaryTime(note, primaryItem: $0)
+                        } ?? note.primaryTime
+                        let markerFraction = CGFloat(noteTime / duration)
+                        Capsule()
+                            .fill(Color.orange)
+                            .frame(width: 3, height: 14)
+                            .offset(x: max(0, min(width - 3, markerFraction * width - 1.5)))
+                            .allowsHitTesting(false)
+                    }
                 }
 
                 // Playhead — thin vertical line

@@ -13,6 +13,7 @@ struct ComparePlayerView: View {
     @Binding var isEditingTimecode: Bool
     @Binding var isTimelineFocused: Bool
     let isOverlayControlFocused: Bool
+    let isTextInputActive: Bool
     @Binding var timecodeActivationTrigger: String?
 
     private var secondaryController: PlayerController {
@@ -221,6 +222,7 @@ struct ComparePlayerView: View {
             isEditingTimecode: $isEditingTimecode,
             isTimelineFocused: $isTimelineFocused,
             isOverlayControlFocused: isOverlayControlFocused,
+            isTextInputActive: isTextInputActive,
             timecodeActivationTrigger: $timecodeActivationTrigger,
             compareSession: compareSession
         )
@@ -237,6 +239,7 @@ struct ComparePlayerView: View {
                 isEditingTimecode: $isEditingTimecode,
                 isTimelineFocused: $isTimelineFocused,
                 isOverlayControlFocused: isOverlayControlFocused,
+                isTextInputActive: isTextInputActive,
                 timecodeActivationTrigger: $timecodeActivationTrigger,
                 acceptsKeyboardInput: false,
                 // A paired reload rebuilds both controllers. When A is also

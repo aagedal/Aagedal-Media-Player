@@ -16,6 +16,7 @@ struct PlayerView: View {
     @Binding var isEditingTimecode: Bool
     @Binding var isTimelineFocused: Bool
     let isOverlayControlFocused: Bool
+    var isTextInputActive = false
     @Binding var timecodeActivationTrigger: String?
     var acceptsKeyboardInput = true
     var compareSession: CompareSessionController? = nil
@@ -62,7 +63,7 @@ struct PlayerView: View {
                 PlayerContainerView(
                     player: player,
                     controller: controller,
-                    isEditingTimecode: $isEditingTimecode,
+                    isTextInputActive: isEditingTimecode || isTextInputActive,
                     keyHandler: handleKeyEvent
                 )
                 .aspectRatio(playerAspectRatio, contentMode: .fit)
@@ -200,7 +201,7 @@ struct PlayerView: View {
         guard acceptsKeyboardInput else { return false }
 
         // Don't intercept keys when editing timecode
-        if isEditingTimecode {
+        if isEditingTimecode || isTextInputActive {
             return false
         }
 
@@ -412,7 +413,7 @@ private struct PlayerContainerView: NSViewRepresentable {
 
     let player: AVPlayer
     let controller: PlayerController
-    @Binding var isEditingTimecode: Bool
+    let isTextInputActive: Bool
     let keyHandler: (String, NSEvent.ModifierFlags, NSEvent.SpecialKey?) -> Bool
 
     func makeNSView(context: Context) -> AVPlayerView {
@@ -425,11 +426,11 @@ private struct PlayerContainerView: NSViewRepresentable {
     func updateNSView(_ nsView: AVPlayerView, context: Context) {
         nsView.player = player
         context.coordinator.keyHandler = keyHandler
-        context.coordinator.isEditingTimecode = isEditingTimecode
+        context.coordinator.isTextInputActive = isTextInputActive
     }
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(keyHandler: keyHandler, isEditingTimecode: isEditingTimecode)
+        Coordinator(keyHandler: keyHandler, isTextInputActive: isTextInputActive)
     }
 
     private func configure(_ playerView: AVPlayerView) {
@@ -447,11 +448,11 @@ private struct PlayerContainerView: NSViewRepresentable {
         private nonisolated(unsafe) var monitor: Any?
         private weak var attachedView: AVPlayerView?
         var keyHandler: (String, NSEvent.ModifierFlags, NSEvent.SpecialKey?) -> Bool
-        var isEditingTimecode: Bool
+        var isTextInputActive: Bool
 
-        init(keyHandler: @escaping (String, NSEvent.ModifierFlags, NSEvent.SpecialKey?) -> Bool, isEditingTimecode: Bool) {
+        init(keyHandler: @escaping (String, NSEvent.ModifierFlags, NSEvent.SpecialKey?) -> Bool, isTextInputActive: Bool) {
             self.keyHandler = keyHandler
-            self.isEditingTimecode = isEditingTimecode
+            self.isTextInputActive = isTextInputActive
         }
 
         @MainActor
@@ -463,8 +464,8 @@ private struct PlayerContainerView: NSViewRepresentable {
             monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
                 guard let self = self else { return event }
 
-                // When editing timecode, let events pass through to the TextField
-                if self.isEditingTimecode {
+                // Let active timecode and review-note fields receive raw keys.
+                if self.isTextInputActive {
                     return event
                 }
 
