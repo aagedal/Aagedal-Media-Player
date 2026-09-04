@@ -6,16 +6,19 @@ import Foundation
 
 nonisolated enum CompareReviewReportFormat: String, CaseIterable, Sendable {
     case csv
+    case pdf
 
     var label: String {
         switch self {
         case .csv: "CSV Report"
+        case .pdf: "PDF Report"
         }
     }
 
     var fileExtension: String {
         switch self {
         case .csv: "csv"
+        case .pdf: "pdf"
         }
     }
 }
@@ -147,10 +150,12 @@ nonisolated enum CompareReviewReportExporter {
     static func data(
         for format: CompareReviewReportFormat,
         snapshot: CompareReviewReportSnapshot
-    ) -> Data {
+    ) throws -> Data {
         switch format {
         case .csv:
             Data(csv(snapshot: snapshot).utf8)
+        case .pdf:
+            try CompareReviewPDFRenderer.render(snapshot: snapshot)
         }
     }
 

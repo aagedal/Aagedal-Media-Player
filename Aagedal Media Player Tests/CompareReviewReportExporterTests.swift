@@ -2,6 +2,7 @@
 // Copyright © 2026 Truls Aagedal
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+import CoreGraphics
 import XCTest
 @testable import Aagedal_Media_Player
 
@@ -52,7 +53,7 @@ final class CompareReviewReportExporterTests: XCTestCase {
         XCTAssertTrue(csv.hasSuffix("\r\n"))
     }
 
-    func testCSVDataAndPreferredFilenameAreDeterministic() {
+    func testCSVDataAndPreferredFilenameAreDeterministic() throws {
         let snapshot = CompareReviewReportSnapshot(
             primaryItem: makeItem(path: "/tmp/Master: V2.mov", duration: 5),
             secondaryItem: makeItem(path: "/tmp/Encode.mp4", duration: 5),
@@ -67,13 +68,67 @@ final class CompareReviewReportExporterTests: XCTestCase {
         )
 
         XCTAssertEqual(
-            String(decoding: CompareReviewReportExporter.data(for: .csv, snapshot: snapshot), as: UTF8.self),
+            String(
+                decoding: try CompareReviewReportExporter.data(for: .csv, snapshot: snapshot),
+                as: UTF8.self
+            ),
             CompareReviewReportExporter.csv(snapshot: snapshot)
         )
         XCTAssertEqual(
             CompareReviewReportExporter.preferredFilename(for: .csv, snapshot: snapshot),
             "Master- V2_vs_Encode_review.csv"
         )
+    }
+
+    func testPDFDataIsReadableAndUsesPreferredFilename() throws {
+        let snapshot = CompareReviewReportSnapshot(
+            primaryItem: makeItem(path: "/tmp/Master.mov", duration: 5),
+            secondaryItem: makeItem(path: "/tmp/Encode.mp4", duration: 5),
+            alignmentMode: .relative,
+            notes: [CompareReviewNote(
+                primaryFrame: 0,
+                primaryTime: 0,
+                secondaryFrame: 0,
+                secondaryTime: 0,
+                text: "Check the opening frame — blå"
+            )]
+        )
+
+        let data = try CompareReviewReportExporter.data(for: .pdf, snapshot: snapshot)
+        let provider = try XCTUnwrap(CGDataProvider(data: data as CFData))
+        let document = try XCTUnwrap(CGPDFDocument(provider))
+
+        XCTAssertTrue(data.starts(with: Data("%PDF".utf8)))
+        XCTAssertEqual(document.numberOfPages, 1)
+        XCTAssertGreaterThan(data.count, 1_000)
+        XCTAssertEqual(
+            CompareReviewReportExporter.preferredFilename(for: .pdf, snapshot: snapshot),
+            "Master_vs_Encode_review.pdf"
+        )
+    }
+
+    func testPDFPaginatesLargeReports() throws {
+        let notes = (0..<80).map { index in
+            CompareReviewNote(
+                primaryFrame: Int64(index),
+                primaryTime: Double(index) / 30,
+                secondaryFrame: Int64(index),
+                secondaryTime: Double(index) / 30,
+                text: "Marker \(index): inspect compression detail and color continuity."
+            )
+        }
+        let snapshot = CompareReviewReportSnapshot(
+            primaryItem: makeItem(path: "/tmp/Master.mov", duration: 5),
+            secondaryItem: makeItem(path: "/tmp/Encode.mp4", duration: 5),
+            alignmentMode: .sourceTimecode,
+            notes: notes
+        )
+
+        let data = try CompareReviewReportExporter.data(for: .pdf, snapshot: snapshot)
+        let provider = try XCTUnwrap(CGDataProvider(data: data as CFData))
+        let document = try XCTUnwrap(CGPDFDocument(provider))
+
+        XCTAssertGreaterThan(document.numberOfPages, 1)
     }
 
     private func makeItem(

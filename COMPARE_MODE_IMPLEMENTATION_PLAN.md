@@ -111,13 +111,13 @@ timestamp-aware motion-frame pairing remain.
 ## Phase 4 — Review workflow
 
 Status: Frame-accurate comparison notes, pair-specific non-destructive JSON
-sidecars, and CSV review reports are implemented through 2026-09-04. PDF and
-NLE interchange remain.
+sidecars, and CSV/PDF review reports are implemented through 2026-09-04. NLE
+interchange and annotated report stills remain.
 
 - [x] Add frame-accurate markers and notes on the comparison timeline.
 - [x] Store notes in a non-destructive sidecar file.
 - [x] Export CSV reports.
-- [ ] Export PDF reports.
+- [x] Export PDF reports.
 - [ ] Export common NLE marker formats.
 - [ ] Include annotated comparison stills in reports.
 

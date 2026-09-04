@@ -104,6 +104,9 @@ struct CompareReviewView: View {
                     Button("CSV Report…") {
                         compareSession.exportReviewReport(.csv, primary: primaryController)
                     }
+                    Button("PDF Report…") {
+                        compareSession.exportReviewReport(.pdf, primary: primaryController)
+                    }
                 } label: {
                     Label("Export", systemImage: "square.and.arrow.up")
                 }

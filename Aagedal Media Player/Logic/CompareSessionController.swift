@@ -526,7 +526,10 @@ final class CompareSessionController: ObservableObject {
             for: format,
             snapshot: snapshot
         )
-        panel.allowedContentTypes = [.commaSeparatedText]
+        panel.allowedContentTypes = switch format {
+        case .csv: [.commaSeparatedText]
+        case .pdf: [.pdf]
+        }
         panel.canCreateDirectories = true
         panel.directoryURL = primaryItem.url.deletingLastPathComponent()
 
@@ -544,7 +547,7 @@ final class CompareSessionController: ObservableObject {
                 self.reviewExportTask = Task { @MainActor [weak self] in
                     defer { output.discard() }
                     do {
-                        let data = CompareReviewReportExporter.data(
+                        let data = try CompareReviewReportExporter.data(
                             for: format,
                             snapshot: snapshot
                         )
