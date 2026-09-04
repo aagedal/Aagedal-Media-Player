@@ -22,6 +22,8 @@ struct ScopeView: View {
     @StateObject private var renderWorker = ScopeRenderWorker()
     @State private var waveformMode: WaveformMode = .luma
     @State private var vectorscopeGraticule: CGImage?
+    @State private var pairedPrimarySample: ScopeFrameSample?
+    @State private var pairedSecondarySample: ScopeFrameSample?
 
     private var selectedSource: CompareScopeSource {
         compareSession.isActive ? compareSession.scopeSource : .primary
@@ -131,23 +133,17 @@ struct ScopeView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(isOverlay ? Color.clear : Color.black)
         }
-        .onChange(of: primaryFrameCapture.currentFrame) {
-            guard selectedSource != .secondary else { return }
-            submitScopeFrame()
+        .onChange(of: primaryFrameCapture.currentSample) {
+            handlePrimaryCapturedSample()
         }
-        .onChange(of: primaryFrameCapture.currentHDRFrame) {
-            guard selectedSource == .primary else { return }
-            submitScopeFrame()
-        }
-        .onChange(of: secondaryFrameCapture.currentFrame) {
-            guard selectedSource != .primary else { return }
-            submitScopeFrame()
-        }
-        .onChange(of: secondaryFrameCapture.currentHDRFrame) {
-            guard selectedSource == .secondary else { return }
-            submitScopeFrame()
+        .onChange(of: secondaryFrameCapture.currentSample) {
+            handleSecondaryCapturedSample()
         }
         .onChange(of: compareSession.scopeSource) {
+            resetDifferencePair()
+            if selectedSource == .difference {
+                refreshDifferencePair()
+            }
             submitScopeFrame()
         }
         .onChange(of: compareSession.differenceGain) {
@@ -155,6 +151,17 @@ struct ScopeView: View {
             submitScopeFrame()
         }
         .onChange(of: compareSession.isActive) {
+            resetDifferencePair()
+            if compareSession.isActive, selectedSource == .difference {
+                refreshDifferencePair()
+            }
+            submitScopeFrame()
+        }
+        .onChange(of: compareSession.mapping) {
+            resetDifferencePair()
+            if selectedSource == .difference {
+                refreshDifferencePair()
+            }
             submitScopeFrame()
         }
         .onChange(of: primaryController.videoAspectRatio) {
@@ -173,6 +180,9 @@ struct ScopeView: View {
             let w = CGFloat(res)
             let h = round(w * 9.0 / 16.0)
             vectorscopeGraticule = ScopeComputer.drawVectorscopeGraticule(size: CGSize(width: h, height: h))
+            if selectedSource == .difference {
+                refreshDifferencePair()
+            }
             submitScopeFrame()
         }
         .onDisappear { renderWorker.cancel(clearImages: true) }
@@ -234,24 +244,105 @@ struct ScopeView: View {
 
     private func submitScopeFrame() {
         let res = UserDefaults.standard.value(for: AppSettings.scopeResolution)
+        let primarySample = selectedSource == .difference
+            ? pairedPrimarySample
+            : primaryFrameCapture.currentSample
+        let secondarySample = selectedSource == .difference
+            ? pairedSecondarySample
+            : secondaryFrameCapture.currentSample
         renderWorker.submit(
-            primary: ScopeFrameInput(
-                sdrFrame: primaryFrameCapture.currentFrame,
-                hdrFrame: primaryFrameCapture.currentHDRFrame,
-                transferFunction: primaryFrameCapture.transferFunction,
-                displayAspectRatio: primaryController.videoAspectRatio
+            primary: scopeInput(
+                sample: primarySample,
+                frameCapture: primaryFrameCapture,
+                controller: primaryController
             ),
-            secondary: compareSession.isActive ? ScopeFrameInput(
-                sdrFrame: secondaryFrameCapture.currentFrame,
-                hdrFrame: secondaryFrameCapture.currentHDRFrame,
-                transferFunction: secondaryFrameCapture.transferFunction,
-                displayAspectRatio: secondaryController.videoAspectRatio
+            secondary: compareSession.isActive ? scopeInput(
+                sample: secondarySample,
+                frameCapture: secondaryFrameCapture,
+                controller: secondaryController
             ) : nil,
             source: selectedSource,
             differenceGain: compareSession.differenceGain,
             mode: waveformMode,
             resolution: res
         )
+    }
+
+    private func scopeInput(
+        sample: ScopeFrameSample?,
+        frameCapture: FrameCapture,
+        controller: PlayerController
+    ) -> ScopeFrameInput {
+        ScopeFrameInput(
+            sdrFrame: sample?.sdrFrame,
+            hdrFrame: sample?.hdrFrame,
+            transferFunction: frameCapture.transferFunction,
+            displayAspectRatio: controller.videoAspectRatio
+        )
+    }
+
+    private func handlePrimaryCapturedSample() {
+        switch selectedSource {
+        case .primary:
+            submitScopeFrame()
+        case .secondary:
+            return
+        case .difference:
+            guard refreshDifferencePair() else { return }
+            submitScopeFrame()
+        }
+    }
+
+    private func handleSecondaryCapturedSample() {
+        switch selectedSource {
+        case .primary:
+            return
+        case .secondary:
+            submitScopeFrame()
+        case .difference:
+            // A owns the comparison timeline. A new B capture is matched to
+            // the current A frame instead of attempting to invert a clamped
+            // A→B mapping at an overlap boundary.
+            guard refreshDifferencePair() else { return }
+            submitScopeFrame()
+        }
+    }
+
+    @discardableResult
+    private func refreshDifferencePair() -> Bool {
+        guard compareSession.isActive else { return false }
+        let tolerance = ScopeFramePairer.tolerance(
+            primaryFrameRate: primaryController.mediaItem?
+                .metadata?.primaryVideoStream?.frameRate?.value,
+            secondaryFrameRate: secondaryController.mediaItem?
+                .metadata?.primaryVideoStream?.frameRate?.value
+        )
+
+        guard let primary = primaryFrameCapture.currentSample,
+              let secondary = ScopeFramePairer.closestSecondary(
+                to: primary,
+                mapping: compareSession.mapping,
+                secondaryDuration: secondaryController.mediaItem?.durationSeconds ?? 0,
+                candidates: secondaryFrameCapture.recentSamplesSnapshot(),
+                tolerance: tolerance
+              ) else { return false }
+        // Pairing state needs display-space SDR pixels only. Avoid extending
+        // the lifetime of an expensive Float HDR payload via SwiftUI state.
+        pairedPrimarySample = ScopeFrameSample(
+            sequence: primary.sequence,
+            playbackTime: primary.playbackTime,
+            timestampUncertainty: primary.timestampUncertainty,
+            timestampQuality: primary.timestampQuality,
+            sdrFrame: primary.sdrFrame,
+            hdrFrame: nil
+        )
+        pairedSecondarySample = secondary
+        return true
+    }
+
+    private func resetDifferencePair() {
+        pairedPrimarySample = nil
+        pairedSecondarySample = nil
     }
 }
 

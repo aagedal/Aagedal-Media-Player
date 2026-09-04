@@ -15,6 +15,91 @@ nonisolated struct ScopeFrameInput: Sendable {
     let displayAspectRatio: CGFloat?
 }
 
+/// Matches independently captured A/B scope frames in their aligned media
+/// timelines. The larger frame duration permits valid mixed-rate pairs (for
+/// example 59.94 against 23.976) without accepting an arbitrarily stale frame.
+nonisolated enum ScopeFramePairer {
+    static func tolerance(
+        primaryFrameRate: Double?,
+        secondaryFrameRate: Double?
+    ) -> TimeInterval {
+        max(
+            frameDuration(for: primaryFrameRate),
+            frameDuration(for: secondaryFrameRate)
+        )
+    }
+
+    static func closestSecondary(
+        to primary: ScopeFrameSample,
+        mapping: CompareTimelineMapping?,
+        secondaryDuration: TimeInterval,
+        candidates: [ScopeFrameSample],
+        tolerance: TimeInterval
+    ) -> ScopeFrameSample? {
+        guard let primaryTime = primary.playbackTime else { return nil }
+        let target = mapping?.secondaryTime(
+            forPrimaryTime: primaryTime,
+            secondaryDuration: secondaryDuration
+        ) ?? primaryTime
+        return closest(
+            to: target,
+            targetUncertainty: primary.timestampUncertainty,
+            candidates: candidates,
+            tolerance: tolerance
+        )
+    }
+
+    static func closest(
+        to target: TimeInterval,
+        targetUncertainty: TimeInterval = 0,
+        candidates: [ScopeFrameSample],
+        tolerance: TimeInterval
+    ) -> ScopeFrameSample? {
+        guard target.isFinite,
+              targetUncertainty.isFinite,
+              targetUncertainty >= 0,
+              tolerance.isFinite,
+              tolerance >= 0 else { return nil }
+        return candidates
+            .compactMap { sample -> (sample: ScopeFrameSample, delta: TimeInterval)? in
+                guard sample.timestampQuality != .unavailable,
+                      sample.timestampUncertainty.isFinite,
+                      let time = sample.playbackTime,
+                      time.isFinite else { return nil }
+                let delta = abs(time - target)
+                guard delta + targetUncertainty + sample.timestampUncertainty
+                        <= tolerance else { return nil }
+                return (sample, delta)
+            }
+            .min { lhs, rhs in
+                if lhs.delta == rhs.delta {
+                    if lhs.sample.timestampQuality == rhs.sample.timestampQuality {
+                        return lhs.sample.sequence > rhs.sample.sequence
+                    }
+                    return timestampRank(lhs.sample.timestampQuality)
+                        < timestampRank(rhs.sample.timestampQuality)
+                }
+                return lhs.delta < rhs.delta
+            }?
+            .sample
+    }
+
+    private static func frameDuration(for rate: Double?) -> TimeInterval {
+        guard let rate, rate.isFinite, rate >= 1, rate <= 240 else {
+            return 1.0 / 30.0
+        }
+        return 1.0 / rate
+    }
+
+    private static func timestampRank(_ quality: ScopeFrameTimestampQuality) -> Int {
+        switch quality {
+        case .exact: 0
+        case .estimated: 1
+        case .unavailable: 2
+        }
+    }
+}
+
 /// Produces the same kind of display-referred absolute RGB difference shown by
 /// Compare Mode. B is aspect-fitted into A's frame so differing rasters do not
 /// get stretched merely to make their pixel grids match.

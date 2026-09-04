@@ -42,6 +42,72 @@ nonisolated struct ScopeCaptureTickIdentity: Equatable, Sendable {
     }
 }
 
+nonisolated enum ScopeFrameTimestampQuality: Equatable, Sendable {
+    /// Timestamp identifies the decoded/displayed video frame itself.
+    case exact
+    /// Timestamp is the backend playback clock sampled beside capture.
+    case estimated
+    /// Pixels are usable for a single-source scope but cannot be paired.
+    case unavailable
+}
+
+/// One atomically published scope capture. Publishing SDR/HDR payloads and
+/// their item-relative media time together prevents a difference request from
+/// combining a new image with the preceding image's timestamp.
+nonisolated struct ScopeFrameSample: Equatable, Sendable {
+    let sequence: UInt64
+    let playbackTime: TimeInterval?
+    let timestampUncertainty: TimeInterval
+    let timestampQuality: ScopeFrameTimestampQuality
+    let sdrFrame: CGImage?
+    let hdrFrame: HDRFrameData?
+
+    static func == (lhs: ScopeFrameSample, rhs: ScopeFrameSample) -> Bool {
+        lhs.sequence == rhs.sequence
+    }
+}
+
+/// Bounded sample storage shared by both capture backends. A large seek clears
+/// old samples so a newly captured frame cannot pair with an earlier visit to
+/// the same timeline region.
+nonisolated struct ScopeFrameHistory: Sendable {
+    static let defaultCapacity = 4
+    static let discontinuityThreshold: TimeInterval = 1
+
+    let capacity: Int
+    private(set) var samples: [ScopeFrameSample] = []
+
+    init(capacity: Int = defaultCapacity) {
+        self.capacity = max(1, capacity)
+    }
+
+    mutating func append(_ sample: ScopeFrameSample) {
+        if let previousTime = samples.last?.playbackTime,
+           let currentTime = sample.playbackTime,
+           abs(currentTime - previousTime) > Self.discontinuityThreshold {
+            samples.removeAll(keepingCapacity: true)
+        }
+        if samples.last?.sequence == sample.sequence { return }
+        // Display-space difference uses SDR pixels only. Do not multiply the
+        // much larger Float HDR payload by the history capacity.
+        samples.append(ScopeFrameSample(
+            sequence: sample.sequence,
+            playbackTime: sample.playbackTime,
+            timestampUncertainty: sample.timestampUncertainty,
+            timestampQuality: sample.timestampQuality,
+            sdrFrame: sample.sdrFrame,
+            hdrFrame: nil
+        ))
+        if samples.count > capacity {
+            samples.removeFirst(samples.count - capacity)
+        }
+    }
+
+    mutating func removeAll() {
+        samples.removeAll(keepingCapacity: true)
+    }
+}
+
 @MainActor
 final class FrameCapture: ObservableObject {
     private let logger = Logger(subsystem: "com.aagedal.MediaPlayer", category: "FrameCapture")
@@ -51,11 +117,12 @@ final class FrameCapture: ObservableObject {
         category: "ScopePerformance"
     )
 
-    /// The latest captured frame, downscaled for scope computation (SDR path).
-    @Published var currentFrame: CGImage?
+    /// Latest pixels and their media timestamp, published as one value.
+    @Published private(set) var currentSample: ScopeFrameSample?
 
-    /// The latest captured HDR frame data (HDR path).
-    @Published var currentHDRFrame: HDRFrameData?
+    /// Compatibility accessors used by single-source scope rendering.
+    var currentFrame: CGImage? { currentSample?.sdrFrame }
+    var currentHDRFrame: HDRFrameData? { currentSample?.hdrFrame }
 
     /// Transfer function of the current content.
     var transferFunction: TransferFunction = .sdr
@@ -75,6 +142,8 @@ final class FrameCapture: ObservableObject {
     private weak var mpvPlayer: MPVPlayer?
     private var captureGeneration = OperationGeneration()
     private var mpvCaptureInFlight: ScopeCaptureIdentity?
+    private var sampleSequence: UInt64 = 0
+    private var sampleHistory = ScopeFrameHistory()
     private nonisolated(unsafe) static var hdrFormatLogged = false
 
     // Shared timer
@@ -174,8 +243,7 @@ final class FrameCapture: ObservableObject {
 
         captureTimer?.invalidate()
         captureTimer = nil
-        currentFrame = nil
-        currentHDRFrame = nil
+        clearCapturedSamples()
         Self.hdrFormatLogged = false
 
         // Remove video output so it doesn't interfere with playback pipeline
@@ -235,11 +303,22 @@ final class FrameCapture: ObservableObject {
         let interval = Self.performanceSignposter.beginInterval("Scope capture")
         defer { Self.performanceSignposter.endInterval("Scope capture", interval) }
 
-        let time = player.currentTime()
-        guard output.hasNewPixelBuffer(forItemTime: time) else { return }
-        guard let pixelBuffer = output.copyPixelBuffer(forItemTime: time, itemTimeForDisplay: nil) else { return }
+        let requestedTime = player.currentTime()
+        guard output.hasNewPixelBuffer(forItemTime: requestedTime) else { return }
+        var displayTime = CMTime.invalid
+        guard let pixelBuffer = output.copyPixelBuffer(
+            forItemTime: requestedTime,
+            itemTimeForDisplay: &displayTime
+        ) else { return }
 
-        currentFrame = downsamplePixelBuffer(pixelBuffer)
+        let timestamp = validSeconds(displayTime) ?? validSeconds(requestedTime)
+        publishSample(
+            sdrFrame: downsamplePixelBuffer(pixelBuffer),
+            hdrFrame: nil,
+            playbackTime: timestamp,
+            timestampUncertainty: 0,
+            timestampQuality: validSeconds(displayTime) == nil ? .estimated : .exact
+        )
     }
 
     // MARK: - AVPlayer HDR Frame Capture
@@ -248,9 +327,13 @@ final class FrameCapture: ObservableObject {
         let interval = Self.performanceSignposter.beginInterval("Scope capture")
         defer { Self.performanceSignposter.endInterval("Scope capture", interval) }
 
-        let time = player.currentTime()
-        guard output.hasNewPixelBuffer(forItemTime: time) else { return }
-        guard let pixelBuffer = output.copyPixelBuffer(forItemTime: time, itemTimeForDisplay: nil) else { return }
+        let requestedTime = player.currentTime()
+        guard output.hasNewPixelBuffer(forItemTime: requestedTime) else { return }
+        var displayTime = CMTime.invalid
+        guard let pixelBuffer = output.copyPixelBuffer(
+            forItemTime: requestedTime,
+            itemTimeForDisplay: &displayTime
+        ) else { return }
 
         let targetW = analysisWidth
         let tf = transferFunction
@@ -260,8 +343,14 @@ final class FrameCapture: ObservableObject {
         let hdrFrame = Self.convertFloat16PixelBuffer(pixelBuffer, targetWidth: targetW, transferFunction: tf, peakNits: peak)
         let sdrFrame = downsamplePixelBuffer(pixelBuffer)
 
-        currentHDRFrame = hdrFrame
-        currentFrame = sdrFrame
+        let timestamp = validSeconds(displayTime) ?? validSeconds(requestedTime)
+        publishSample(
+            sdrFrame: sdrFrame,
+            hdrFrame: hdrFrame,
+            playbackTime: timestamp,
+            timestampUncertainty: 0,
+            timestampQuality: validSeconds(displayTime) == nil ? .estimated : .exact
+        )
     }
 
     /// Convert Float16 RGBA pixel buffer to HDRFrameData with RGB Float32 array.
@@ -358,8 +447,15 @@ final class FrameCapture: ObservableObject {
         let width = analysisWidth
 
         Task { [weak self] in
-            let image = await Self.screenshotAndDownsample(mpv: mpv, targetWidth: width)
-            self?.finishMPVCapture(identity: identity, sdrImage: image, hdrFrame: nil)
+            let result = await Self.screenshotAndDownsample(mpv: mpv, targetWidth: width)
+            self?.finishMPVCapture(
+                identity: identity,
+                sdrImage: result?.image,
+                hdrFrame: nil,
+                playbackTime: result?.playbackTime,
+                timestampUncertainty: result?.timestampUncertainty ?? .infinity,
+                timestampQuality: result?.timestampQuality ?? .unavailable
+            )
         }
     }
 
@@ -380,7 +476,10 @@ final class FrameCapture: ObservableObject {
             self?.finishMPVCapture(
                 identity: identity,
                 sdrImage: result?.sdrImage,
-                hdrFrame: result?.hdrFrame
+                hdrFrame: result?.hdrFrame,
+                playbackTime: result?.playbackTime,
+                timestampUncertainty: result?.timestampUncertainty ?? .infinity,
+                timestampQuality: result?.timestampQuality ?? .unavailable
             )
         }
     }
@@ -388,12 +487,16 @@ final class FrameCapture: ObservableObject {
     private func invalidatePendingCapture() {
         captureGeneration.advance()
         mpvCaptureInFlight = nil
+        clearCapturedSamples()
     }
 
     private func finishMPVCapture(
         identity: ScopeCaptureIdentity,
         sdrImage: CGImage?,
-        hdrFrame: HDRFrameData?
+        hdrFrame: HDRFrameData?,
+        playbackTime: TimeInterval?,
+        timestampUncertainty: TimeInterval,
+        timestampQuality: ScopeFrameTimestampQuality
     ) {
         // A replacement capture may already be in flight. An older completion
         // must neither clear that request nor publish its frame.
@@ -406,14 +509,66 @@ final class FrameCapture: ObservableObject {
                   player: mpvPlayer
               ) else { return }
 
-        currentHDRFrame = hdrFrame
-        currentFrame = sdrImage
+        publishSample(
+            sdrFrame: sdrImage,
+            hdrFrame: hdrFrame,
+            playbackTime: playbackTime,
+            timestampUncertainty: timestampUncertainty,
+            timestampQuality: timestampQuality
+        )
+    }
+
+    func recentSamplesSnapshot() -> [ScopeFrameSample] {
+        sampleHistory.samples
+    }
+
+    private func publishSample(
+        sdrFrame: CGImage?,
+        hdrFrame: HDRFrameData?,
+        playbackTime: TimeInterval?,
+        timestampUncertainty: TimeInterval,
+        timestampQuality: ScopeFrameTimestampQuality
+    ) {
+        sampleSequence &+= 1
+        let sanitizedTime = playbackTime.flatMap {
+            $0.isFinite ? max(0, $0) : nil
+        }
+        let sample = ScopeFrameSample(
+            sequence: sampleSequence,
+            playbackTime: sanitizedTime,
+            timestampUncertainty: timestampUncertainty.isFinite
+                ? max(0, timestampUncertainty)
+                : .infinity,
+            timestampQuality: sanitizedTime == nil ? .unavailable : timestampQuality,
+            sdrFrame: sdrFrame,
+            hdrFrame: hdrFrame
+        )
+        sampleHistory.append(sample)
+        currentSample = sample
+    }
+
+    private func clearCapturedSamples() {
+        sampleHistory.removeAll()
+        currentSample = nil
+    }
+
+    private func validSeconds(_ time: CMTime) -> TimeInterval? {
+        let seconds = time.seconds
+        guard time.isValid, seconds.isFinite else { return nil }
+        return max(0, seconds)
     }
 
     /// Runs off the main actor: captures raw pixels via mpv and downscales.
+    private struct MPVSDRResult: Sendable {
+        let image: CGImage
+        let playbackTime: TimeInterval?
+        let timestampUncertainty: TimeInterval
+        let timestampQuality: ScopeFrameTimestampQuality
+    }
+
     nonisolated private static func screenshotAndDownsample(
         mpv: MPVPlayer, targetWidth: Int
-    ) async -> CGImage? {
+    ) async -> MPVSDRResult? {
         let interval = performanceSignposter.beginInterval("Scope capture")
         defer { performanceSignposter.endInterval("Scope capture", interval) }
 
@@ -438,12 +593,23 @@ final class FrameCapture: ObservableObject {
             intent: .defaultIntent
         ) else { return nil }
 
-        return downsampleCGImage(image, targetWidth: targetWidth)
+        guard let downsampled = downsampleCGImage(image, targetWidth: targetWidth) else {
+            return nil
+        }
+        return MPVSDRResult(
+            image: downsampled,
+            playbackTime: raw.playbackTime,
+            timestampUncertainty: raw.playbackTimeUncertainty ?? .infinity,
+            timestampQuality: raw.playbackTime == nil ? .unavailable : .estimated
+        )
     }
 
     private struct MPVHDRResult {
         let hdrFrame: HDRFrameData
         let sdrImage: CGImage?  // For vectorscope
+        let playbackTime: TimeInterval?
+        let timestampUncertainty: TimeInterval
+        let timestampQuality: ScopeFrameTimestampQuality
     }
 
     /// Captures HDR frame data from MPV screenshot-raw, handling both 8-bit and 16-bit formats.
@@ -548,7 +714,13 @@ final class FrameCapture: ObservableObject {
         // Also produce SDR CGImage for vectorscope
         let sdrImage = screenshotToSDRImage(raw: raw, targetWidth: targetWidth)
 
-        return MPVHDRResult(hdrFrame: hdrFrame, sdrImage: sdrImage)
+        return MPVHDRResult(
+            hdrFrame: hdrFrame,
+            sdrImage: sdrImage,
+            playbackTime: raw.playbackTime,
+            timestampUncertainty: raw.playbackTimeUncertainty ?? .infinity,
+            timestampQuality: raw.playbackTime == nil ? .unavailable : .estimated
+        )
     }
 
     /// Creates an 8-bit CGImage from a raw screenshot for the vectorscope.

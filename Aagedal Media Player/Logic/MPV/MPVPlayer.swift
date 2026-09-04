@@ -683,6 +683,10 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         let height: Int
         let stride: Int
         let format: String  // e.g. "bgr0", "rgba64"
+        /// Item-relative playback-clock estimate bracketed immediately around
+        /// `screenshot-raw`. The uncertainty is half of that clock interval.
+        let playbackTime: TimeInterval?
+        let playbackTimeUncertainty: TimeInterval?
     }
 
     /// Capture the current decoded video frame as raw BGRA pixels.
@@ -701,6 +705,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
     /// Must run on `queue`. Touches the mpv context directly.
     private nonisolated func screenshotRawLocked() -> RawScreenshot? {
         guard let mpvCtx = mpv else { return nil }
+        let timeBeforeCapture = doublePropertyLocked(MPVProperty.timePos, context: mpvCtx)
 
         let cmdStr = strdup("screenshot-raw")
         let flagStr = strdup("video")
@@ -730,6 +735,11 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
                 return mpv_command_node(mpvCtx, &args, &result)
             }
         }
+        let timeAfterCapture = doublePropertyLocked(MPVProperty.timePos, context: mpvCtx)
+        let bracketedTime = bracketedPlaybackTime(
+            before: timeBeforeCapture,
+            after: timeAfterCapture
+        )
 
         defer { mpv_free_node_contents(&result) }
 
@@ -764,7 +774,39 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         }
 
         guard let data = pixelData, width > 0, height > 0, stride > 0 else { return nil }
-        return RawScreenshot(data: data, width: width, height: height, stride: stride, format: format)
+        return RawScreenshot(
+            data: data,
+            width: width,
+            height: height,
+            stride: stride,
+            format: format,
+            playbackTime: bracketedTime?.time,
+            playbackTimeUncertainty: bracketedTime?.uncertainty
+        )
+    }
+
+    private nonisolated func bracketedPlaybackTime(
+        before: TimeInterval?,
+        after: TimeInterval?
+    ) -> (time: TimeInterval, uncertainty: TimeInterval)? {
+        guard let before, let after else { return nil }
+        return (
+            time: max(0, (before + after) / 2),
+            uncertainty: abs(after - before) / 2
+        )
+    }
+
+    /// Reads a property while already serialized on mpv's queue. Keeping the
+    /// timestamp read beside `screenshot-raw` avoids using the slower
+    /// main-actor-published clock after pixel extraction has completed.
+    private nonisolated func doublePropertyLocked(
+        _ name: String,
+        context: OpaquePointer
+    ) -> Double? {
+        var value = Double.zero
+        let result = mpv_get_property(context, name, MPV_FORMAT_DOUBLE, &value)
+        guard result >= 0, value.isFinite else { return nil }
+        return max(0, value)
     }
 
     // MARK: - MPV Commands & Properties

@@ -95,8 +95,9 @@ Acceptance:
 
 Status: Scope routing, the compact mismatch summary, explicit A/B audio
 monitoring, annotated comparison-still export, and shared safe-area/aspect-ratio
-guides are implemented through 2026-09-04. Live mixed-backend validation and
-timestamp-aware motion-frame pairing remain.
+guides are implemented through 2026-09-04. Timestamp-aware scope-difference
+frame pairing is also implemented with bounded A/B capture histories. Live
+mixed-backend validation remains.
 
 - [x] Let scopes inspect A, B, or their display-space difference.
 - [x] Add explicit A/B audio switching.

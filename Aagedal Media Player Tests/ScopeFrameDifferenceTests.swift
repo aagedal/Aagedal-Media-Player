@@ -8,6 +8,122 @@ import XCTest
 @testable import Aagedal_Media_Player
 
 final class ScopeFrameDifferenceTests: XCTestCase {
+    func testRelativeTimelinePairingChoosesNearestSecondaryTimestamp() throws {
+        let primary = sample(sequence: 1, time: 2)
+        let mapping = CompareTimelineMapping(
+            primaryStartSeconds: nil,
+            secondaryStartSeconds: nil,
+            secondaryDuration: 20
+        )
+        let secondary = [
+            sample(sequence: 1, time: 1.9),
+            sample(sequence: 2, time: 2.01),
+            sample(sequence: 3, time: 2.03),
+        ]
+
+        let match = try XCTUnwrap(ScopeFramePairer.closestSecondary(
+            to: primary,
+            mapping: mapping,
+            secondaryDuration: 20,
+            candidates: secondary,
+            tolerance: 1.0 / 24.0
+        ))
+
+        XCTAssertEqual(match.sequence, 2)
+    }
+
+    func testSourceTimecodeOffsetIsAppliedBeforePairing() throws {
+        let primary = sample(sequence: 1, time: 2)
+        let mapping = CompareTimelineMapping(
+            primaryStartSeconds: 100,
+            secondaryStartSeconds: 90,
+            secondaryDuration: 20
+        )
+        let secondary = [
+            sample(sequence: 1, time: 2),
+            sample(sequence: 2, time: 11.99),
+        ]
+
+        let match = try XCTUnwrap(ScopeFramePairer.closestSecondary(
+            to: primary,
+            mapping: mapping,
+            secondaryDuration: 20,
+            candidates: secondary,
+            tolerance: 1.0 / 24.0
+        ))
+
+        XCTAssertEqual(match.sequence, 2)
+    }
+
+    func testPairingRejectsFramesOutsideToleranceAndUnavailableTimestamps() {
+        let candidates = [
+            sample(sequence: 1, time: 1.9),
+            sample(sequence: 2, time: 2, quality: .unavailable),
+        ]
+
+        XCTAssertNil(ScopeFramePairer.closest(
+            to: 2,
+            candidates: candidates,
+            tolerance: 1.0 / 60.0
+        ))
+    }
+
+    func testPairingRejectsEstimatedCaptureWhoseClockBracketExceedsTolerance() {
+        let candidates = [
+            sample(
+                sequence: 1,
+                time: 2,
+                uncertainty: 0.02,
+                quality: .estimated
+            ),
+        ]
+
+        XCTAssertNil(ScopeFramePairer.closest(
+            to: 2,
+            targetUncertainty: 0,
+            candidates: candidates,
+            tolerance: 1.0 / 60.0
+        ))
+    }
+
+    func testMixedRateToleranceUsesLargerFrameDuration() {
+        XCTAssertEqual(
+            ScopeFramePairer.tolerance(
+                primaryFrameRate: 59.94,
+                secondaryFrameRate: 23.976
+            ),
+            1.0 / 23.976,
+            accuracy: 0.000_001
+        )
+    }
+
+    func testPairingPrefersExactTimestampWhenDeltaTies() throws {
+        let candidates = [
+            sample(sequence: 2, time: 2.5, quality: .estimated),
+            sample(sequence: 1, time: 1.5, quality: .exact),
+        ]
+
+        let match = try XCTUnwrap(ScopeFramePairer.closest(
+            to: 2,
+            candidates: candidates,
+            tolerance: 0.5
+        ))
+
+        XCTAssertEqual(match.sequence, 1)
+    }
+
+    func testFrameHistoryIsBoundedAndClearsAcrossSeekDiscontinuity() {
+        var history = ScopeFrameHistory(capacity: 3)
+        history.append(sample(sequence: 1, time: 0))
+        history.append(sample(sequence: 2, time: 0.1))
+        history.append(sample(sequence: 3, time: 0.2))
+        history.append(sample(sequence: 4, time: 0.3))
+        XCTAssertEqual(history.samples.map(\.sequence), [2, 3, 4])
+
+        history.append(sample(sequence: 5, time: 8))
+        XCTAssertEqual(history.samples.map(\.sequence), [5])
+    }
+
     func testIdenticalFramesProduceBlack() throws {
         let frame = try makeImage(width: 4, height: 2, red: 60, green: 120, blue: 180)
 
@@ -98,6 +214,22 @@ final class ScopeFrameDifferenceTests: XCTestCase {
         let red: UInt8
         let green: UInt8
         let blue: UInt8
+    }
+
+    private func sample(
+        sequence: UInt64,
+        time: TimeInterval?,
+        uncertainty: TimeInterval = 0,
+        quality: ScopeFrameTimestampQuality = .exact
+    ) -> ScopeFrameSample {
+        ScopeFrameSample(
+            sequence: sequence,
+            playbackTime: time,
+            timestampUncertainty: uncertainty,
+            timestampQuality: quality,
+            sdrFrame: nil,
+            hdrFrame: nil
+        )
     }
 
     private func makeImage(
