@@ -6,6 +6,7 @@ set -euo pipefail
 repository_dir="${0:A:h:h}"
 ffmpeg_binary="${FFMPEG:-$(command -v ffmpeg || true)}"
 frame_size="${COMPARE_PROFILE_SIZE:-3840x2160}"
+render_size="${COMPARE_PROFILE_RENDER_SIZE:-$frame_size}"
 frame_rate="${COMPARE_PROFILE_FRAME_RATE:-24}"
 observation_seconds="${COMPARE_PROFILE_SECONDS:-30}"
 temporary_dir="$(mktemp -d "${TMPDIR:-/tmp/}aagedal-compare-profile.XXXXXX")"
@@ -105,6 +106,8 @@ plutil -insert "$test_environment_path.COMPARE_SUSTAINED_PLAYBACK_SECONDS" \
   -string "$observation_seconds" "$xctestrun_file"
 plutil -insert "$test_environment_path.COMPARE_PROFILE_REPORT" \
   -string "1" "$xctestrun_file"
+plutil -insert "$test_environment_path.COMPARE_PROFILE_RENDER_SIZE" \
+  -string "$render_size" "$xctestrun_file"
 
 print -u2 "Profiling all four backend pairings for $observation_seconds seconds each…"
 set +e
@@ -142,6 +145,7 @@ print
 print -r -- "- Hardware: ${hardware_model:-Unknown} / ${chip:-Unknown} / ${memory:-Unknown}"
 print -r -- "- macOS: $(sw_vers -productVersion)"
 print -r -- "- Fixture: $frame_size at $frame_rate fps, HEVC Main 10, BT.2020/PQ"
+print -r -- "- Render surface: $render_size per decoder"
 print -r -- "- Sustained observation: $observation_seconds seconds per backend pairing"
 print
 print '```text'

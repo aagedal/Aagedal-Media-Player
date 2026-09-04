@@ -51,7 +51,8 @@ with a hard-seek fallback, full MPV audio-track suppression for inactive B
 audio, and Instruments signposts for secondary load/drift profiling were added
 through 2026-09-04.
 Deterministic coverage now verifies rapid B replacement, stopping during
-metadata loading, and preservation of specific decoder failures. Real-decoder
+metadata loading or suspended backend preparation, and preservation of
+specific decoder failures. Real-decoder
 integration coverage now verifies source-timecode alignment, paired
 seek/play/pause, frame stepping, scrubbing, forward shuttle acceleration,
 one-frame drift convergence, and audio suppression for
@@ -73,10 +74,12 @@ CPU time, and peak resident memory. The profiler now runs only those four
 pairings, serially and with Release optimization, injects configuration into a
 disposable test run, derives tolerances from the fixture frame rate, and lets
 an excursion already active at the cutoff use only its remaining one-second
-recovery window. An eight-second UHD HDR smoke run passed on an M5 Pro with a
-0.647-second worst recovery and about 840 MiB peak resident memory. It still
-needs to be run for the full duration on the oldest supported Apple Silicon Mac
-with a complementary Instruments GPU/thermal pass.
+recovery window. Both backends now retain render outputs at the configured
+profile resolution, while ordinary integration tests keep 320×180 outputs.
+An eight-second UHD HDR smoke run with production-sized render outputs passed
+on an M5 Pro with a 0.860-second worst recovery and about 846 MiB peak resident
+memory. It still needs to be run for the full duration on the oldest supported
+Apple Silicon Mac with a complementary Instruments GPU/thermal pass.
 
 - [x] Define the implementation plan and release boundaries.
 - [x] Add a window-owned compare session with cancellation-safe secondary-file
@@ -197,8 +200,10 @@ is not possible.
   is loading.
 
 The metadata-loading portion of rapid replacement and removal is covered by
-automated lifecycle tests. Decoder teardown during backend preparation and
-window close remains part of live mixed-backend validation. Small real-decoder
+automated lifecycle tests. A suspended backend-selection test also verifies
+that stopping the compare session tears down B and rejects the decoder's late
+completion. Full window-close integration remains part of live mixed-backend
+validation. Small real-decoder
 fixtures now cover MPV/MPV, AVFoundation/AVFoundation, and both mixed-backend
 directions for timecode alignment, shared transport, and eight seconds of
 sustained playback without a decoder stall or an out-of-frame excursion that

@@ -59,6 +59,56 @@ final class CompareSessionLifecycleTests: XCTestCase {
         XCTAssertTrue(secondary.isAudioSuppressed)
     }
 
+    func testStopDuringBackendPreparationRejectsLateDecoderCompletion() async {
+        let loader = ControlledCompareMetadataLoader()
+        let detector = ControlledCompareProResRAWDetector()
+        let primary = PlayerController()
+        let secondary = PlayerController { _, _ in
+            await detector.result()
+        }
+        let session = makeSession(loader: loader, secondary: secondary)
+        let url = URL(fileURLWithPath: "/tmp/compare-preparing.mov")
+
+        session.loadSecondary(url, alignedWith: primary)
+        let requested = await waitUntil { loader.hasRequest(for: url) }
+        guard requested else {
+            XCTFail("Comparison metadata loading did not start.")
+            session.stop()
+            return
+        }
+
+        loader.succeed(url, metadata: metadata(duration: 10))
+        await detector.waitUntilStarted()
+        let activePreparationID = secondary.preparationID
+        XCTAssertEqual(session.secondaryURL, url)
+        XCTAssertEqual(secondary.playbackPhase, .preparing)
+
+        // ContentView uses the same stop path when its window disappears.
+        session.stop()
+        XCTAssertGreaterThan(secondary.preparationID, activePreparationID)
+        XCTAssertNil(session.secondaryURL)
+        XCTAssertNil(session.mapping)
+        XCTAssertFalse(session.isActive)
+        XCTAssertFalse(session.isLoading)
+        XCTAssertFalse(session.isSecondaryReady)
+        XCTAssertEqual(secondary.playbackPhase, .idle)
+        XCTAssertNil(secondary.player)
+        XCTAssertNil(secondary.mpvPlayer)
+        XCTAssertFalse(primary.isAudioSuppressed)
+        XCTAssertTrue(secondary.isAudioSuppressed)
+
+        detector.resume(returning: false)
+        await settleMainActorTasks()
+
+        XCTAssertFalse(session.isActive)
+        XCTAssertNil(session.loadError)
+        XCTAssertEqual(secondary.playbackPhase, .idle)
+        XCTAssertNil(secondary.player)
+        XCTAssertNil(secondary.mpvPlayer)
+        XCTAssertFalse(primary.isAudioSuppressed)
+        XCTAssertTrue(secondary.isAudioSuppressed)
+    }
+
     func testDecoderFailureRemainsMoreSpecificThanReadinessTimeout() async {
         let loader = ControlledCompareMetadataLoader()
         let primary = PlayerController()
@@ -159,5 +209,29 @@ private final class ControlledCompareMetadataLoader {
 
     func succeed(_ url: URL, metadata: MediaMetadata) {
         continuations.removeValue(forKey: url)?.resume(returning: metadata)
+    }
+}
+
+@MainActor
+private final class ControlledCompareProResRAWDetector {
+    private var continuation: CheckedContinuation<Bool, Never>?
+    private var didStart = false
+
+    func result() async -> Bool {
+        didStart = true
+        return await withCheckedContinuation { continuation in
+            self.continuation = continuation
+        }
+    }
+
+    func waitUntilStarted() async {
+        while !didStart {
+            await Task.yield()
+        }
+    }
+
+    func resume(returning value: Bool) {
+        continuation?.resume(returning: value)
+        continuation = nil
     }
 }

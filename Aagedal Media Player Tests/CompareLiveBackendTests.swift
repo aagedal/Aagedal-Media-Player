@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import AppKit
+import AVFoundation
 import Foundation
 import XCTest
 @testable import Aagedal_Media_Player
@@ -20,6 +21,41 @@ import XCTest
 ///   -only-testing:"Aagedal Media Player Tests/CompareLiveBackendTests"
 @MainActor
 final class CompareLiveBackendTests: XCTestCase {
+    private final class AVFoundationRenderSurface {
+        let hostView: NSView
+        let playerLayer: AVPlayerLayer
+
+        init(player: AVPlayer, size: CGSize) {
+            let frame = CGRect(origin: .zero, size: size)
+            let hostView = NSView(frame: frame)
+            hostView.wantsLayer = true
+            hostView.layer = CALayer()
+
+            let playerLayer = AVPlayerLayer(player: player)
+            playerLayer.frame = frame
+            playerLayer.videoGravity = .resizeAspect
+            hostView.layer?.addSublayer(playerLayer)
+
+            self.hostView = hostView
+            self.playerLayer = playerLayer
+        }
+    }
+
+    private enum RetainedPlaybackSurface {
+        case mpv(MPVMetalLayer)
+        case avFoundation(AVFoundationRenderSurface)
+    }
+
+    private var retainedPlaybackSurfaces: [RetainedPlaybackSurface] = []
+
+    override func tearDown() {
+        for case .avFoundation(let surface) in retainedPlaybackSurfaces {
+            surface.playerLayer.player = nil
+        }
+        retainedPlaybackSurfaces.removeAll()
+        super.tearDown()
+    }
+
     private struct DriftObservation {
         let sampleCount: Int
         let inToleranceCount: Int
@@ -245,7 +281,7 @@ final class CompareLiveBackendTests: XCTestCase {
             XCTFail("Disjoint comparison metadata did not finish loading.")
             return
         }
-        try await attachMPVSurfaceIfNeeded(to: secondary)
+        try await attachRenderSurface(to: secondary)
         let secondaryBecameReady = await waitUntil { session.isSecondaryReady }
         guard secondaryBecameReady else {
             XCTFail("Secondary MPV decoder did not become ready.")
@@ -297,7 +333,7 @@ final class CompareLiveBackendTests: XCTestCase {
         }
 
         try await loadPrimary(primary, url: url)
-        try await attachMPVSurfaceIfNeeded(to: primary)
+        try await attachRenderSurface(to: primary)
         let primaryReady = await waitUntil {
             primary.isReady && primary.selectedAudioChannelCount == 6
         }
@@ -356,7 +392,7 @@ final class CompareLiveBackendTests: XCTestCase {
         }
 
         try await loadPrimary(primary, url: primaryURL)
-        try await attachMPVSurfaceIfNeeded(to: primary)
+        try await attachRenderSurface(to: primary)
         let primaryBecameReady = await waitUntil { primary.isReady }
         XCTAssertTrue(
             primaryBecameReady,
@@ -369,7 +405,7 @@ final class CompareLiveBackendTests: XCTestCase {
             metadataFinishedLoading,
             "Comparison metadata did not finish loading."
         )
-        try await attachMPVSurfaceIfNeeded(to: secondary)
+        try await attachRenderSurface(to: secondary)
         let secondaryBecameReady = await waitUntil { session.isSecondaryReady }
         XCTAssertTrue(
             secondaryBecameReady,
@@ -558,7 +594,7 @@ final class CompareLiveBackendTests: XCTestCase {
         }
 
         try await loadPrimary(primary, url: primaryURL)
-        try await attachMPVSurfaceIfNeeded(to: primary)
+        try await attachRenderSurface(to: primary)
         let primaryBecameReady = await waitUntil { primary.isReady }
         guard primaryBecameReady else {
             XCTFail("Primary \(primaryBackend.rawValue) decoder did not become ready.")
@@ -573,7 +609,7 @@ final class CompareLiveBackendTests: XCTestCase {
             XCTFail("Relative-alignment comparison metadata did not finish loading.")
             return
         }
-        try await attachMPVSurfaceIfNeeded(to: secondary)
+        try await attachRenderSurface(to: secondary)
         let secondaryBecameReady = await waitUntil { session.isSecondaryReady }
         guard secondaryBecameReady else {
             XCTFail("Secondary \(secondaryBackend.rawValue) decoder did not become ready.")
@@ -640,7 +676,7 @@ final class CompareLiveBackendTests: XCTestCase {
         }
 
         try await loadPrimary(primary, url: primaryURL)
-        try await attachMPVSurfaceIfNeeded(to: primary)
+        try await attachRenderSurface(to: primary)
         guard await waitUntil({ primary.isReady }) else {
             XCTFail("Primary decoder did not become ready for \(description).")
             return
@@ -651,7 +687,7 @@ final class CompareLiveBackendTests: XCTestCase {
             XCTFail("Comparison metadata did not load for \(description).")
             return
         }
-        try await attachMPVSurfaceIfNeeded(to: secondary)
+        try await attachRenderSurface(to: secondary)
         guard await waitUntil({ session.isSecondaryReady }) else {
             XCTFail(
                 "Secondary decoder did not become ready for \(description): " +
@@ -692,17 +728,51 @@ final class CompareLiveBackendTests: XCTestCase {
         controller.updateMetadata(item)
     }
 
-    private func attachMPVSurfaceIfNeeded(to controller: PlayerController) async throws {
+    private func attachRenderSurface(to controller: PlayerController) async throws {
         guard await waitUntil({ controller.useMPV || controller.player != nil }) else {
             XCTFail("The forced playback backend was not constructed.")
             return
         }
-        guard controller.useMPV else { return }
-        let mpv = try XCTUnwrap(controller.mpvPlayer)
-        let layer = MPVMetalLayer()
-        layer.frame = CGRect(x: 0, y: 0, width: 320, height: 180)
-        layer.drawableSize = CGSize(width: 320, height: 180)
-        mpv.attachDrawable(layer)
+        let size = renderSurfaceSize
+        let frame = CGRect(origin: .zero, size: size)
+
+        if controller.useMPV {
+            let mpv = try XCTUnwrap(controller.mpvPlayer)
+            let layer = MPVMetalLayer()
+            layer.frame = frame
+            layer.drawableSize = size
+            mpv.attachDrawable(layer)
+
+            XCTAssertEqual(layer.frame.size, size)
+            XCTAssertEqual(layer.drawableSize, size)
+            retainedPlaybackSurfaces.append(.mpv(layer))
+        } else {
+            let player = try XCTUnwrap(controller.player)
+            let surface = AVFoundationRenderSurface(player: player, size: size)
+
+            XCTAssertTrue(surface.playerLayer.player === player)
+            XCTAssertTrue(surface.playerLayer.superlayer === surface.hostView.layer)
+            XCTAssertEqual(surface.playerLayer.frame.size, size)
+            retainedPlaybackSurfaces.append(.avFoundation(surface))
+        }
+    }
+
+    private var renderSurfaceSize: CGSize {
+        let fallback = CGSize(width: 320, height: 180)
+        guard let rawValue = ProcessInfo.processInfo.environment[
+            "COMPARE_PROFILE_RENDER_SIZE"
+        ], !rawValue.isEmpty else { return fallback }
+
+        let dimensions = rawValue.lowercased().split(separator: "x")
+        guard dimensions.count == 2,
+              let width = Int(dimensions[0]),
+              let height = Int(dimensions[1]),
+              width > 0,
+              height > 0 else {
+            XCTFail("COMPARE_PROFILE_RENDER_SIZE must use WIDTHxHEIGHT with positive integers.")
+            return fallback
+        }
+        return CGSize(width: CGFloat(width), height: CGFloat(height))
     }
 
     private func waitUntil(
