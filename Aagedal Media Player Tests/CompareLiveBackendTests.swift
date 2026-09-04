@@ -23,6 +23,9 @@ import XCTest
 ///   -only-testing:"Aagedal Media Player Tests/CompareLiveBackendTests"
 @MainActor
 final class CompareLiveBackendTests: XCTestCase {
+    private static let driftSamplingInterval: Duration = .milliseconds(25)
+    private static let driftRecoveryMeasurementTolerance: TimeInterval = 0.025
+
     private final class AVFoundationRenderSurface {
         let hostView: NSView
         let playerLayer: AVPlayerLayer
@@ -76,6 +79,13 @@ final class CompareLiveBackendTests: XCTestCase {
             guard sampleCount > 0 else { return 0 }
             return Double(inToleranceCount) / Double(sampleCount)
         }
+    }
+
+    private struct VisualModeObservation {
+        let updateCount: Int
+        let coveredModeCount: Int
+        let maximumSchedulingDelay: TimeInterval
+        let canvasPixelSize: CGSize
     }
 
     func testMPVPairAlignsBySourceTimecodeAndSharesTransport() async throws {
@@ -507,13 +517,15 @@ final class CompareLiveBackendTests: XCTestCase {
         )
         XCTAssertLessThanOrEqual(
             observation.longestExcursion,
-            1,
-            "Drift correction did not recover within one second. \(observationDescription)"
+            1 + Self.driftRecoveryMeasurementTolerance,
+            "Drift correction did not recover within one second plus one sampling interval. " +
+                observationDescription
         )
         XCTAssertLessThanOrEqual(
             observation.lastInToleranceAge,
-            1,
-            "Drift did not reconverge during the final second. \(observationDescription)"
+            1 + Self.driftRecoveryMeasurementTolerance,
+            "Drift did not reconverge during the final second plus one sampling interval. " +
+                observationDescription
         )
         XCTAssertLessThanOrEqual(
             observation.finalEffectiveDrift,
@@ -727,7 +739,7 @@ final class CompareLiveBackendTests: XCTestCase {
             )
         )
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 960, height: 540),
+            contentRect: NSRect(origin: .zero, size: visualCanvasSize),
             styleMask: [.borderless],
             backing: .buffered,
             defer: false
@@ -771,37 +783,146 @@ final class CompareLiveBackendTests: XCTestCase {
         let primaryStart = primary.playbackTimeSnapshot()
         let secondaryStart = secondary.playbackTimeSnapshot()
 
-        for mode in CompareViewMode.allCases {
-            session.viewMode = mode
-            if mode.isWipe {
-                session.moveWipe(by: 0.1)
+        if isCompareProfile {
+            try await Task.sleep(for: .milliseconds(750))
+            let frameRate = primary.mediaItem?.metadata?.primaryVideoStream?.frameRate?.value
+            let driftPolicy = CompareDriftPolicy(primaryFrameRate: frameRate)
+            let visualTask = Task { @MainActor in
+                await self.observeSustainedVisualModes(
+                    session: session,
+                    hostingView: hostingView,
+                    window: window,
+                    duration: self.sustainedPlaybackDuration
+                )
             }
-            hostingView.layoutSubtreeIfNeeded()
-            try await Task.sleep(for: .milliseconds(120))
+            let driftObservation = await observeSustainedDrift(
+                primary: primary,
+                secondary: secondary,
+                session: session,
+                driftTolerance: driftPolicy.correctionThreshold,
+                duration: sustainedPlaybackDuration
+            )
+            let visualObservation = await visualTask.value
+            let pairDescription = "\(primaryBackend.rawValue)/\(secondaryBackend.rawValue)"
+            let driftDescription = driftObservationDescription(
+                driftObservation,
+                backendPair: pairDescription
+            )
+            let visualDescription = visualModeObservationDescription(
+                visualObservation,
+                backendPair: pairDescription
+            )
+            print("COMPARE_PROFILE_VISUAL \(visualDescription), \(driftDescription)")
+            let attachment = XCTAttachment(
+                string: "COMPARE_PROFILE_VISUAL \(visualDescription), \(driftDescription)"
+            )
+            attachment.name = "Compare Mode visual profile"
+            attachment.lifetime = .keepAlways
+            add(attachment)
 
-            XCTAssertEqual(session.viewMode, mode, mode.label)
-            XCTAssertEqual(primary.preparationID, primaryPreparationID, mode.label)
-            XCTAssertEqual(secondary.preparationID, secondaryPreparationID, mode.label)
-            XCTAssertTrue(primary.mpvPlayer === primaryMPV, mode.label)
-            XCTAssertTrue(primary.player === primaryAVPlayer, mode.label)
-            XCTAssertTrue(secondary.mpvPlayer === secondaryMPV, mode.label)
-            XCTAssertTrue(secondary.player === secondaryAVPlayer, mode.label)
             XCTAssertEqual(
-                metalLayers(in: hostingView).first.map(ObjectIdentifier.init),
-                Optional(metalLayerIdentity),
-                mode.label
+                visualObservation.coveredModeCount,
+                CompareViewMode.allCases.count,
+                visualDescription
             )
-            XCTAssertEqual(
-                avPlayerViews(in: hostingView).first.map(ObjectIdentifier.init),
-                Optional(avPlayerViewIdentity),
-                mode.label
+            XCTAssertGreaterThanOrEqual(
+                visualObservation.updateCount,
+                Int(sustainedPlaybackDuration * 4),
+                "Visual controls did not remain interactive. \(visualDescription)"
             )
-            XCTAssertTrue(primary.isPlaying && secondary.isPlaying, mode.label)
+            XCTAssertLessThanOrEqual(
+                visualObservation.maximumSchedulingDelay,
+                0.25,
+                "Visual updates stalled the main actor. \(visualDescription)"
+            )
+            XCTAssertTrue(
+                primary.isPlaying && secondary.isPlaying,
+                "A decoder stopped during sustained visual playback. \(driftDescription)"
+            )
+            assertSustainedPlayback(
+                driftObservation,
+                duration: sustainedPlaybackDuration,
+                driftTolerance: driftPolicy.correctionThreshold,
+                description: driftDescription
+            )
+        } else {
+            for mode in CompareViewMode.allCases {
+                session.viewMode = mode
+                if mode.isWipe {
+                    session.moveWipe(by: 0.1)
+                }
+                hostingView.layoutSubtreeIfNeeded()
+                try await Task.sleep(for: .milliseconds(120))
+
+                XCTAssertEqual(session.viewMode, mode, mode.label)
+                assertStableVisualSurfaces(
+                    primary: primary,
+                    secondary: secondary,
+                    hostingView: hostingView,
+                    primaryPreparationID: primaryPreparationID,
+                    secondaryPreparationID: secondaryPreparationID,
+                    primaryMPV: primaryMPV,
+                    primaryAVPlayer: primaryAVPlayer,
+                    secondaryMPV: secondaryMPV,
+                    secondaryAVPlayer: secondaryAVPlayer,
+                    metalLayerIdentity: metalLayerIdentity,
+                    avPlayerViewIdentity: avPlayerViewIdentity,
+                    description: mode.label
+                )
+                XCTAssertTrue(primary.isPlaying && secondary.isPlaying, mode.label)
+            }
+
+            XCTAssertEqual(session.wipePosition, 0.7, accuracy: 0.000_001)
         }
 
+        assertStableVisualSurfaces(
+            primary: primary,
+            secondary: secondary,
+            hostingView: hostingView,
+            primaryPreparationID: primaryPreparationID,
+            secondaryPreparationID: secondaryPreparationID,
+            primaryMPV: primaryMPV,
+            primaryAVPlayer: primaryAVPlayer,
+            secondaryMPV: secondaryMPV,
+            secondaryAVPlayer: secondaryAVPlayer,
+            metalLayerIdentity: metalLayerIdentity,
+            avPlayerViewIdentity: avPlayerViewIdentity,
+            description: "final visual state"
+        )
         XCTAssertGreaterThan(primary.playbackTimeSnapshot() - primaryStart, 0.5)
         XCTAssertGreaterThan(secondary.playbackTimeSnapshot() - secondaryStart, 0.5)
-        XCTAssertEqual(session.wipePosition, 0.7, accuracy: 0.000_001)
+    }
+
+    private func assertStableVisualSurfaces(
+        primary: PlayerController,
+        secondary: PlayerController,
+        hostingView: NSView,
+        primaryPreparationID: Int,
+        secondaryPreparationID: Int,
+        primaryMPV: MPVPlayer?,
+        primaryAVPlayer: AVPlayer?,
+        secondaryMPV: MPVPlayer?,
+        secondaryAVPlayer: AVPlayer?,
+        metalLayerIdentity: ObjectIdentifier,
+        avPlayerViewIdentity: ObjectIdentifier,
+        description: String
+    ) {
+        XCTAssertEqual(primary.preparationID, primaryPreparationID, description)
+        XCTAssertEqual(secondary.preparationID, secondaryPreparationID, description)
+        XCTAssertTrue(primary.mpvPlayer === primaryMPV, description)
+        XCTAssertTrue(primary.player === primaryAVPlayer, description)
+        XCTAssertTrue(secondary.mpvPlayer === secondaryMPV, description)
+        XCTAssertTrue(secondary.player === secondaryAVPlayer, description)
+        XCTAssertEqual(
+            metalLayers(in: hostingView).first.map(ObjectIdentifier.init),
+            Optional(metalLayerIdentity),
+            description
+        )
+        XCTAssertEqual(
+            avPlayerViews(in: hostingView).first.map(ObjectIdentifier.init),
+            Optional(avPlayerViewIdentity),
+            description
+        )
     }
 
     private func exercisePreparedPair(
@@ -939,6 +1060,82 @@ final class CompareLiveBackendTests: XCTestCase {
         return CGSize(width: CGFloat(width), height: CGFloat(height))
     }
 
+    private var visualCanvasSize: CGSize {
+        guard isCompareProfile else { return CGSize(width: 960, height: 540) }
+        let backingScale = max(1, NSScreen.main?.backingScaleFactor ?? 1)
+        return CGSize(
+            width: renderSurfaceSize.width / backingScale,
+            height: renderSurfaceSize.height / backingScale
+        )
+    }
+
+    private var isCompareProfile: Bool {
+        ProcessInfo.processInfo.environment["COMPARE_PROFILE_REPORT"] == "1"
+    }
+
+    private func observeSustainedVisualModes(
+        session: CompareSessionController,
+        hostingView: NSView,
+        window: NSWindow,
+        duration: TimeInterval
+    ) async -> VisualModeObservation {
+        let clock = ContinuousClock()
+        let cadence: Duration = .milliseconds(100)
+        let cadenceSeconds = 0.1
+        let start = clock.now
+        let deadline = start.advanced(by: .seconds(duration))
+        var expectedUpdate = start
+        var updateCount = 0
+        var coveredModes = Set<CompareViewMode>()
+        var maximumSchedulingDelay: TimeInterval = 0
+
+        while clock.now < deadline {
+            let now = clock.now
+            maximumSchedulingDelay = max(
+                maximumSchedulingDelay,
+                max(0, durationSeconds(from: expectedUpdate, to: now))
+            )
+
+            let mode = CompareViewMode.allCases[updateCount % CompareViewMode.allCases.count]
+            coveredModes.insert(mode)
+            session.viewMode = mode
+            switch mode {
+            case .verticalWipe, .horizontalWipe:
+                session.setWipePosition(Double(updateCount % 11) / 10)
+            case .overlay:
+                session.setOverlayBlend(Double(updateCount % 11) / 10)
+            case .difference:
+                let gainRange = CompareSessionController.maximumDifferenceGain -
+                    CompareSessionController.minimumDifferenceGain
+                session.setDifferenceGain(
+                    CompareSessionController.minimumDifferenceGain +
+                        gainRange * Double(updateCount % 11) / 10
+                )
+            case .sideBySide, .primary, .secondary:
+                break
+            }
+            hostingView.layoutSubtreeIfNeeded()
+            window.displayIfNeeded()
+            updateCount += 1
+
+            expectedUpdate = expectedUpdate.advanced(by: cadence)
+            let remaining = clock.now.duration(to: expectedUpdate)
+            if remaining > .zero {
+                try? await Task.sleep(for: remaining)
+            } else if durationSeconds(from: expectedUpdate, to: clock.now) > cadenceSeconds {
+                expectedUpdate = clock.now
+            }
+        }
+
+        let canvasPixelSize = hostingView.convertToBacking(hostingView.bounds).size
+        return VisualModeObservation(
+            updateCount: updateCount,
+            coveredModeCount: coveredModes.count,
+            maximumSchedulingDelay: maximumSchedulingDelay,
+            canvasPixelSize: canvasPixelSize
+        )
+    }
+
     private func waitUntil(
         _ condition: @escaping @MainActor () -> Bool,
         timeout: Duration = .seconds(8)
@@ -1035,7 +1232,7 @@ final class CompareLiveBackendTests: XCTestCase {
                 excursionStart = sampleTime
             }
 
-            try? await Task.sleep(for: .milliseconds(25))
+            try? await Task.sleep(for: Self.driftSamplingInterval)
         }
 
         let end = clock.now
@@ -1088,6 +1285,54 @@ final class CompareLiveBackendTests: XCTestCase {
             "\(String(format: "%.2f", observation.maximumSecondaryRate)), " +
             "primaryAdvance=\(String(format: "%.3f", observation.primaryAdvance))s, " +
             "secondaryAdvance=\(String(format: "%.3f", observation.secondaryAdvance))s"
+    }
+
+    private func visualModeObservationDescription(
+        _ observation: VisualModeObservation,
+        backendPair: String
+    ) -> String {
+        "pair=\(backendPair), " +
+            "canvas=\(Int(observation.canvasPixelSize.width))x" +
+            "\(Int(observation.canvasPixelSize.height)), " +
+            "visualUpdates=\(observation.updateCount), " +
+            "coveredModes=\(observation.coveredModeCount)/\(CompareViewMode.allCases.count), " +
+            "maxMainActorDelay=" +
+            "\(String(format: "%.3f", observation.maximumSchedulingDelay))s"
+    }
+
+    private func assertSustainedPlayback(
+        _ observation: DriftObservation,
+        duration: TimeInterval,
+        driftTolerance: TimeInterval,
+        description: String
+    ) {
+        XCTAssertGreaterThanOrEqual(
+            observation.primaryAdvance,
+            duration - 1,
+            "The primary clock stalled or reached EOF. \(description)"
+        )
+        XCTAssertGreaterThanOrEqual(
+            observation.secondaryAdvance,
+            duration - 1,
+            "The secondary clock stalled or reached EOF. \(description)"
+        )
+        XCTAssertLessThanOrEqual(
+            observation.longestExcursion,
+            1 + Self.driftRecoveryMeasurementTolerance,
+            "Drift correction did not recover within one second plus one sampling interval. " +
+                description
+        )
+        XCTAssertLessThanOrEqual(
+            observation.lastInToleranceAge,
+            1 + Self.driftRecoveryMeasurementTolerance,
+            "Drift did not reconverge during the final second plus one sampling interval. " +
+                description
+        )
+        XCTAssertLessThanOrEqual(
+            observation.finalEffectiveDrift,
+            driftTolerance,
+            "Drift finished outside one-frame tolerance. \(description)"
+        )
     }
 
     /// The regular suite intentionally keeps this short. The Compare Mode

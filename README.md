@@ -45,8 +45,9 @@ Compare Mode has a separate opt-in production-resolution profile:
 scripts/profile-compare-mode.sh | tee compare-mode-profile.txt
 ```
 
-It generates disposable UHD 10-bit HDR sources and exercises all four MPV and
-AVFoundation backend pairings with extended drift assertions. See
+It generates disposable UHD 10-bit HDR sources, exercises all four MPV and
+AVFoundation backend pairings with extended drift assertions, and drives the
+real mixed-backend comparison canvas through every visual mode. See
 [the Compare Mode performance methodology](docs/COMPARE_MODE_PERFORMANCE.md)
 for configuration, pass criteria, and the complementary Instruments run.
 

@@ -73,16 +73,24 @@ Longer production-resolution validation
 remains before Phase 1 acceptance is complete. A repeatable opt-in profiler now
 generates UHD 10-bit HDR pairs and runs the same drift assertions for an
 extended duration across all four backend pairings, while reporting wall time,
-CPU time, and peak resident memory. The profiler now runs only those four
-pairings, serially and with Release optimization, injects configuration into a
-disposable test run, derives tolerances from the fixture frame rate, and lets
-an excursion already active at the cutoff use only its remaining one-second
-recovery window. Both backends now retain render outputs at the configured
-profile resolution, while ordinary integration tests keep 320×180 outputs.
-An eight-second UHD HDR smoke run with production-sized render outputs passed
-on an M5 Pro with a 0.860-second worst recovery and about 846 MiB peak resident
-memory. It still needs to be run for the full duration on the oldest supported
-Apple Silicon Mac with a complementary Instruments GPU/thermal pass.
+CPU time, and peak resident memory. It also mounts the real comparison canvas
+in both mixed-backend directions, repeatedly drives all seven visual modes and
+their controls, measures main-actor responsiveness, and verifies decoder and
+native-surface identity. The profiler runs serially with Release optimization,
+injects configuration into a disposable test run, derives tolerances from the
+fixture frame rate, and lets an excursion already active at the cutoff use only
+its remaining one-second recovery window. The drift-duration assertion allows
+one 25 ms sampling interval of measurement tolerance while the final one-frame
+drift assertion remains strict. Both backends retain render outputs at the
+configured profile resolution, while ordinary integration tests keep 320×180
+outputs and a 960×540 hosted comparison canvas. A 30-second UHD HDR
+decoder-only baseline passed on an M5 Pro with a 0.851-second worst recovery
+and about 847 MiB peak resident memory. The extended eight-second visual smoke
+run also passed there: both 3840×2160 canvases delivered 80 updates, covered all
+seven modes, stayed under 51 ms worst main-actor delay, reconverged within
+0.599 seconds, and used about 848 MiB peak resident memory. The profiler still
+needs to be run for the full duration on the oldest supported Apple Silicon Mac
+with a complementary Instruments GPU/thermal and live-scope pass.
 
 - [x] Define the implementation plan and release boundaries.
 - [x] Add a window-owned compare session with cancellation-safe secondary-file
@@ -110,10 +118,13 @@ Acceptance:
 ## Phase 2 — Visual comparison tools
 
 Status: Planned Phase 2 implementation completed through 2026-09-03. Hosted
-real-decoder coverage now mounts the actual comparison canvas and cycles every
+real-decoder coverage mounts the actual comparison canvas and cycles every
 visual mode during playback in both mixed-backend directions, verifying that
-the MPV and AVFoundation surfaces and decoder instances remain stable. Hands-on
-pixel, interaction, and GPU validation at production resolution remains.
+the MPV and AVFoundation surfaces and decoder instances remain stable. The
+opt-in production profiler now sustains that workload at the configured render
+size, sweeps wipe, overlay, and difference controls, checks paired drift, and
+measures main-actor scheduling delay. Hands-on pixel and Instruments GPU
+validation at production resolution remains.
 
 - [x] Add a draggable vertical/horizontal wipe.
 - [x] Add opacity overlay with an adjustable blend amount.
@@ -222,7 +233,11 @@ rate variants, rotated/anamorphic pairing, and SDR/HDR pairing. The full
 raster/color matrix and longer production-resolution runs still require
 hands-on validation. Hosted mixed-backend checks mount `ComparePlayerView`,
 cycle all seven presentation modes during playback, move both wipe variants,
-and verify that neither native surface nor decoder is rebuilt.
+and verify that neither native surface nor decoder is rebuilt. In profiling
+mode those checks use the configured production render size, repeatedly sweep
+the visual controls for the full observation, measure main-actor response, and
+apply the same decoder-advance and drift-recovery assertions. Live scopes,
+pixel correctness, GPU utilization, and thermal behavior remain manual gates.
 
 ## Release and marketing work
 

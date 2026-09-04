@@ -16,12 +16,17 @@ The profiler generates disposable 3840×2160, 24 fps, 10-bit HEVC fixtures with
 BT.2020/PQ signaling. It then runs the same source-timecode alignment,
 transport, decoder-advance, audio-suppression, and one-frame drift assertions
 used by `CompareLiveBackendTests` for 30 seconds across MPV/MPV,
-AVFoundation/AVFoundation, and both mixed-backend directions. Its report also
-captures wall time, CPU time, and peak resident memory for the optimized,
-serial test run. The profiler injects its configuration into a disposable
-`.xctestrun` file, so concurrent ordinary tests in the checkout are unaffected.
-Each backend is attached to a retained render output matching the fixture size;
-ordinary integration-test runs continue to use small 320×180 outputs.
+AVFoundation/AVFoundation, and both mixed-backend directions. Two additional
+mixed-backend passes mount the real comparison canvas at the configured render
+size, repeatedly exercise all seven presentation modes and their adjustable
+controls, and measure the worst main-actor scheduling delay while continuing
+to verify drift and decoder/surface identity. Its report also captures wall
+time, CPU time, and peak resident memory for the optimized, serial test run.
+The profiler injects its configuration into a disposable `.xctestrun` file, so
+concurrent ordinary tests in the checkout are unaffected. Each transport-only
+backend is attached to a retained render output matching the fixture size;
+ordinary integration-test runs continue to use small 320×180 outputs and a
+960×540 hosted comparison canvas.
 If the requested observation ends during an out-of-frame excursion, that
 pairing continues only until it reconverges or its one-second recovery deadline
 expires. This prevents the result from depending on which part of a correction
@@ -47,19 +52,23 @@ or Instruments runs; otherwise the profiler removes its temporary fixtures.
 ## Pass criteria
 
 - All four decoder pairings keep both clocks advancing for the requested run.
-- Any excursion beyond one primary frame reconverges within one second.
+- Any excursion beyond one primary frame reconverges within one second, with
+  one 25 ms sampling interval of measurement tolerance.
 - An excursion active at the cutoff reconverges within its one-second deadline,
   and the final sample is within the one-frame correction threshold.
 - MPV-backed source B keeps its audio track disabled while A is monitored.
+- Both mixed-backend comparison canvases cover every visual mode repeatedly,
+  keep their original decoder and native-surface identities, and deliver at
+  least four control updates per second without a main-actor delay over 250 ms.
 - The machine remains responsive and the comparison view remains interactive.
 
-The automated report does not measure GPU utilization or prove that wipe,
-overlay, difference rendering, and scopes remain interactive under the same
-load. For release validation, retain the fixtures and perform a second run in
-the app while recording the existing `CompareMode` signposts in Instruments.
-Also record the `ScopePerformance` category when exercising scope sources.
-Exercise the visual modes and scope sources, record CPU/GPU utilization and
-thermal behavior, and attach those observations to the saved profile report.
+The automated report exercises wipe, overlay, and difference rendering, but it
+does not measure GPU utilization or mount live scopes. For release validation,
+retain the fixtures and perform a second run in the app while recording the
+existing `CompareMode` signposts in Instruments. Also record the
+`ScopePerformance` category when exercising scope sources. Exercise the visual
+modes and scope sources, record CPU/GPU utilization and thermal behavior, and
+attach those observations to the saved profile report.
 
 The script prints its drift and resource report even when an assertion fails,
 then returns the failing `xcodebuild` status so it can be used as a release or

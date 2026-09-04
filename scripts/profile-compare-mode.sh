@@ -20,7 +20,7 @@ attachments_exported=false
 derived_data="$temporary_dir/DerivedData"
 
 cleanup() {
-  rm -R "$temporary_dir"
+  rm -Rf -- "$temporary_dir"
 }
 trap cleanup EXIT
 
@@ -109,7 +109,7 @@ plutil -insert "$test_environment_path.COMPARE_PROFILE_REPORT" \
 plutil -insert "$test_environment_path.COMPARE_PROFILE_RENDER_SIZE" \
   -string "$render_size" "$xctestrun_file"
 
-print -u2 "Profiling all four backend pairings for $observation_seconds seconds each…"
+print -u2 "Profiling all four backend pairings and both mixed-backend visual canvases for $observation_seconds seconds each…"
 set +e
 /usr/bin/time -lp \
   xcodebuild test-without-building \
@@ -121,6 +121,8 @@ set +e
     -only-testing:"Aagedal Media Player Tests/CompareLiveBackendTests/testMPVPrimaryAndAVFoundationSecondaryShareTransport" \
     -only-testing:"Aagedal Media Player Tests/CompareLiveBackendTests/testAVFoundationPairAlignsBySourceTimecodeAndSharesTransport" \
     -only-testing:"Aagedal Media Player Tests/CompareLiveBackendTests/testAVFoundationPrimaryAndMPVSecondaryShareTransport" \
+    -only-testing:"Aagedal Media Player Tests/CompareLiveBackendTests/testMPVPrimaryAndAVFoundationSecondaryKeepSurfacesAcrossVisualModes" \
+    -only-testing:"Aagedal Media Player Tests/CompareLiveBackendTests/testAVFoundationPrimaryAndMPVSecondaryKeepSurfacesAcrossVisualModes" \
     > "$profile_log" 2>&1
 profile_status=$?
 set -e

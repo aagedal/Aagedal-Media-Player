@@ -15,6 +15,8 @@ All notable changes to Aagedal Media Player.
 - Reproducible 1, 8, and 24-hour multichannel audio-waveform performance profiling.
 - Real-decoder Compare Mode fixtures for mixed-codec relative alignment and disjoint source-timecode ranges.
 - Mixed-backend Compare Mode validation for paired stepping, scrubbing, forward shuttle, supported frame rates, rotated anamorphic geometry, and SDR/HDR metadata.
+- Production-resolution Compare Mode profiling for the real hosted compositor,
+  including sustained visual-control cadence and main-actor delay measurements.
 
 ### Changed
 - Split playback backends, track selection, media operations, window opening, overlays, settings, and command routing into focused components.
@@ -25,6 +27,8 @@ All notable changes to Aagedal Media Player.
 - Document and validate the intentional Apple-Silicon-only release architecture and security entitlements.
 - Make Compare Mode performance profiling serial, optimized, frame-rate-aware,
   production-render-sized, and isolated from ordinary test runs.
+- Make Compare Mode profiler cleanup non-interactive for read-only package
+  checkout files.
 
 ### Fixed
 - Prevented superseded scope frames and media-operation tasks from publishing stale results, and stopped screenshots or exports from surviving their owning player window.
