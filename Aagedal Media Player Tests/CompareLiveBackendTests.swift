@@ -56,8 +56,93 @@ final class CompareLiveBackendTests: XCTestCase {
         try await exercisePair(primaryBackend: .avFoundation, secondaryBackend: .mpv)
     }
 
+    func testMPVPrimaryAndAVFoundationSecondaryUseRelativeAlignmentForMismatchedMasters() async throws {
+        try await exerciseRelativeAlignment(
+            primaryBackend: .mpv,
+            secondaryBackend: .avFoundation
+        )
+    }
+
+    func testAVFoundationPrimaryAndMPVSecondaryUseRelativeAlignmentForMismatchedMasters() async throws {
+        try await exerciseRelativeAlignment(
+            primaryBackend: .avFoundation,
+            secondaryBackend: .mpv
+        )
+    }
+
+    func testDisjointSourceTimecodesClampToFirstSecondaryFrame() async throws {
+        let fixtures = try fixtureDirectory(requiredFiles: [
+            "compare/source-a.mov",
+            "compare/disjoint-b.mov",
+        ])
+        let primaryURL = fixtures.appending(path: "compare/source-a.mov")
+        let secondaryURL = fixtures.appending(path: "compare/disjoint-b.mov")
+        let primary = makeController(forcedBackend: .avFoundation)
+        let secondary = makeController(forcedBackend: .mpv)
+        let session = CompareSessionController(secondaryController: secondary)
+
+        defer {
+            session.stop()
+            primary.teardown()
+        }
+
+        try await loadPrimary(primary, url: primaryURL)
+        let primaryBecameReady = await waitUntil { primary.isReady }
+        guard primaryBecameReady else {
+            XCTFail("Primary AVFoundation decoder did not become ready.")
+            return
+        }
+
+        session.loadSecondary(secondaryURL, alignedWith: primary)
+        let metadataFinishedLoading = await waitUntil {
+            session.secondaryURL == secondaryURL
+        }
+        guard metadataFinishedLoading else {
+            XCTFail("Disjoint comparison metadata did not finish loading.")
+            return
+        }
+        try await attachMPVSurfaceIfNeeded(to: secondary)
+        let secondaryBecameReady = await waitUntil { session.isSecondaryReady }
+        guard secondaryBecameReady else {
+            XCTFail("Secondary MPV decoder did not become ready.")
+            return
+        }
+
+        let mapping = try XCTUnwrap(session.mapping)
+        XCTAssertEqual(mapping.mode, .sourceTimecode)
+        XCTAssertEqual(mapping.offset, -3_600, accuracy: 1.0 / 24.0)
+        XCTAssertNil(
+            mapping.primaryOverlapRange(
+                primaryDuration: primary.mediaItem?.durationSeconds ?? 0
+            )
+        )
+
+        // Move B away from the expected clamp point first so this assertion
+        // cannot pass before the paired seek reaches the secondary backend.
+        secondary.seekTo(2)
+        let secondaryReachedSetupPosition = await waitUntil(tolerance: 1.0 / 24.0) {
+            secondary.playbackTimeSnapshot() - 2
+        }
+        guard secondaryReachedSetupPosition else {
+            XCTFail("Secondary setup seek did not complete.")
+            return
+        }
+
+        session.seek(primary: primary, to: 2)
+        let primaryReachedTarget = await waitUntil(tolerance: 1.0 / 24.0) {
+            primary.playbackTimeSnapshot() - 2
+        }
+        XCTAssertTrue(primaryReachedTarget)
+        let secondaryReturnedToFirstFrame = await waitUntil(tolerance: 1.0 / 24.0) {
+            secondary.playbackTimeSnapshot()
+        }
+        XCTAssertTrue(secondaryReturnedToFirstFrame)
+    }
+
     func testMixedBackendsIsolateMatchingMultichannelAudioAndRestoreOnStop() async throws {
-        let url = try fixtureDirectory().appending(path: "multichannel-5.1.m4a")
+        let url = try fixtureDirectory(requiredFiles: [
+            "multichannel-5.1.m4a",
+        ]).appending(path: "multichannel-5.1.m4a")
         let primary = makeController(forcedBackend: .mpv)
         let secondary = makeController(forcedBackend: .avFoundation)
         let session = CompareSessionController(secondaryController: secondary)
@@ -260,6 +345,84 @@ final class CompareLiveBackendTests: XCTestCase {
         XCTAssertTrue(secondary.isAudioSuppressed)
     }
 
+    private func exerciseRelativeAlignment(
+        primaryBackend: PlaybackBackend,
+        secondaryBackend: PlaybackBackend
+    ) async throws {
+        let fixtures = try fixtureDirectory(requiredFiles: [
+            "compare/relative-a.mov",
+            "compare/relative-b.mov",
+        ])
+        let primaryURL = fixtures.appending(path: "compare/relative-a.mov")
+        let secondaryURL = fixtures.appending(path: "compare/relative-b.mov")
+        let primary = makeController(forcedBackend: primaryBackend)
+        let secondary = makeController(forcedBackend: secondaryBackend)
+        let session = CompareSessionController(secondaryController: secondary)
+
+        defer {
+            session.stop()
+            primary.teardown()
+        }
+
+        try await loadPrimary(primary, url: primaryURL)
+        try await attachMPVSurfaceIfNeeded(to: primary)
+        let primaryBecameReady = await waitUntil { primary.isReady }
+        guard primaryBecameReady else {
+            XCTFail("Primary \(primaryBackend.rawValue) decoder did not become ready.")
+            return
+        }
+
+        session.loadSecondary(secondaryURL, alignedWith: primary)
+        let metadataFinishedLoading = await waitUntil {
+            session.secondaryURL == secondaryURL
+        }
+        guard metadataFinishedLoading else {
+            XCTFail("Relative-alignment comparison metadata did not finish loading.")
+            return
+        }
+        try await attachMPVSurfaceIfNeeded(to: secondary)
+        let secondaryBecameReady = await waitUntil { session.isSecondaryReady }
+        guard secondaryBecameReady else {
+            XCTFail("Secondary \(secondaryBackend.rawValue) decoder did not become ready.")
+            return
+        }
+
+        let mapping = try XCTUnwrap(session.mapping)
+        XCTAssertEqual(mapping.mode, .relative)
+        XCTAssertEqual(mapping.offset, 0)
+        let primaryItem = try XCTUnwrap(primary.mediaItem)
+        let secondaryItem = try XCTUnwrap(secondary.mediaItem)
+        let primaryMetadata = try XCTUnwrap(primaryItem.metadata)
+        let secondaryMetadata = try XCTUnwrap(secondaryItem.metadata)
+        XCTAssertNil(primaryMetadata.timecode)
+        XCTAssertNil(secondaryMetadata.timecode)
+        let primaryVideo = try XCTUnwrap(primaryMetadata.primaryVideoStream)
+        let secondaryVideo = try XCTUnwrap(secondaryMetadata.primaryVideoStream)
+        XCTAssertEqual(primaryVideo.codec, "avc1")
+        XCTAssertEqual(secondaryVideo.codec, "hvc1")
+        XCTAssertEqual(primaryVideo.frameRate?.value, 24)
+        XCTAssertEqual(secondaryVideo.frameRate?.value, 25)
+        XCTAssertEqual(primaryVideo.width, 320)
+        XCTAssertEqual(secondaryVideo.width, 240)
+        XCTAssertEqual(primaryItem.durationSeconds, 5, accuracy: 0.05)
+        XCTAssertEqual(secondaryItem.durationSeconds, 6, accuracy: 0.05)
+        XCTAssertEqual(primaryMetadata.audioStreams.first?.codec, "mp4a")
+        XCTAssertEqual(secondaryMetadata.audioStreams.first?.codec, "alac")
+
+        session.seek(primary: primary, to: 1.25)
+        let tolerance = 1.0 / 24.0
+        let primaryReachedTarget = await waitUntil(tolerance: tolerance) {
+            primary.playbackTimeSnapshot() - 1.25
+        }
+        XCTAssertTrue(primaryReachedTarget)
+        let secondaryReachedTarget = await waitUntil(tolerance: tolerance) {
+            secondary.playbackTimeSnapshot() - 1.25
+        }
+        XCTAssertTrue(secondaryReachedTarget)
+        XCTAssertFalse(primary.isAudioSuppressed)
+        XCTAssertTrue(secondary.isAudioSuppressed)
+    }
+
     private func makeController(forcedBackend backend: PlaybackBackend) -> PlayerController {
         PlayerController(proResRAWDetector: { _, _ in
             backend == .avFoundation
@@ -452,37 +615,43 @@ final class CompareLiveBackendTests: XCTestCase {
         return min(max(requested, 2), 3_600)
     }
 
-    private func fixtureDirectory() throws -> URL {
+    private func fixtureDirectory(
+        requiredFiles: [String] = [
+            "compare/source-a.mov",
+            "compare/source-b.mov",
+        ]
+    ) throws -> URL {
         if let override = ProcessInfo.processInfo.environment["MEDIA_FIXTURE_DIR"],
            !override.isEmpty {
             return try validateFixtureDirectory(
-                URL(fileURLWithPath: override, isDirectory: true)
+                URL(fileURLWithPath: override, isDirectory: true),
+                requiredFiles: requiredFiles
             )
         }
 
         let sourceFile = URL(fileURLWithPath: #filePath)
         let repository = sourceFile.deletingLastPathComponent().deletingLastPathComponent()
         return try validateFixtureDirectory(
-            repository.appending(path: "Test Fixtures/Generated", directoryHint: .isDirectory)
+            repository.appending(path: "Test Fixtures/Generated", directoryHint: .isDirectory),
+            requiredFiles: requiredFiles
         )
     }
 
-    private func validateFixtureDirectory(_ url: URL) throws -> URL {
-        let requiredFiles = [
-            "MANIFEST.txt",
-            "compare/source-a.mov",
-            "compare/source-b.mov",
-        ]
+    private func validateFixtureDirectory(
+        _ url: URL,
+        requiredFiles: [String]
+    ) throws -> URL {
+        let requiredFiles = ["MANIFEST.txt"] + requiredFiles
         let manifestURL = url.appending(path: "MANIFEST.txt")
         let manifest = try? String(contentsOf: manifestURL, encoding: .utf8)
-        guard manifest?.split(whereSeparator: \.isNewline).contains("schema=3") == true,
+        guard manifest?.split(whereSeparator: \.isNewline).contains("schema=4") == true,
               requiredFiles.allSatisfy({
             FileManager.default.fileExists(atPath: url.appending(path: $0).path)
         }) else {
             throw XCTSkip(
-                "Compare fixtures are unavailable or stale. Run " +
+                "Compare fixtures are unavailable or stale (schema 4). Run " +
                     "scripts/generate-test-fixtures.sh or set MEDIA_FIXTURE_DIR " +
-                    "to a schema=3 fixture tree."
+                    "to a schema=4 fixture tree."
             )
         }
         return url

@@ -70,7 +70,7 @@ generate_fixture "$fixture_dir/compare/source-b.mov" "$((fixture_seconds + 1))" 
 
 {
   print "Aagedal Media Player Compare Mode profiling fixtures"
-  print "schema=3"
+  print "schema=4"
   print "size=$frame_size"
   print "frame_rate=$frame_rate"
   print "duration=$fixture_seconds"

@@ -92,6 +92,33 @@ ffmpeg \
     -pix_fmt yuv420p -c:a aac -timecode "00:59:59:00" \
     -movflags +faststart "$output_dir/compare/source-b.mov"
 
+# A pair without embedded timecode verifies the relative-timeline fallback.
+# It deliberately differs in codec, coded raster, frame rate, duration, and
+# audio codec so the live Compare Mode tests exercise an ordinary source/master
+# mismatch instead of another identical pair.
+ffmpeg \
+    -f lavfi -i "testsrc2=size=320x180:rate=24:duration=5" \
+    -f lavfi -i "sine=frequency=550:sample_rate=48000:duration=5" \
+    -map 0:v:0 -map 1:a:0 -c:v libx264 -preset ultrafast -crf 28 \
+    -pix_fmt yuv420p -c:a aac -movflags +faststart \
+    "$output_dir/compare/relative-a.mov"
+
+ffmpeg \
+    -f lavfi -i "testsrc2=size=240x180:rate=25:duration=6" \
+    -f lavfi -i "sine=frequency=770:sample_rate=48000:duration=6" \
+    -map 0:v:0 -map 1:a:0 -c:v libx265 -preset ultrafast -crf 30 \
+    -pix_fmt yuv420p -tag:v hvc1 -c:a alac -movflags +faststart \
+    "$output_dir/compare/relative-b.mov"
+
+# This clip starts an hour after source-a.mov ends. Compare Mode should retain
+# its source-timecode mapping, report no shared interval, and clamp B to its
+# first frame when A is at the beginning of its own timeline.
+ffmpeg \
+    -f lavfi -i "testsrc2=size=320x180:rate=24:duration=4" \
+    -an -c:v libx264 -preset ultrafast -crf 28 -pix_fmt yuv420p \
+    -timecode "02:00:00:00" -movflags +faststart \
+    "$output_dir/compare/disjoint-b.mov"
+
 # Coded 720x576 with 64:45 PAR gives a 16:9 display grid. The display matrix
 # then rotates the presentation by 90 degrees without physically rotating the
 # encoded frames.
@@ -151,7 +178,7 @@ ffmpeg \
 
 printf '%s\n' \
     'Aagedal Media Player generated media fixtures' \
-    'schema=3' \
+    'schema=4' \
     "ffmpeg=$($ffmpeg_binary -hide_banner -version 2>&1 | head -n 1)" \
     > "$output_dir/MANIFEST.txt"
 
