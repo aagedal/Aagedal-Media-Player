@@ -7,9 +7,10 @@ import Foundation
 import XCTest
 @testable import Aagedal_Media_Player
 
-/// Real-decoder Compare Mode checks. The fixtures are deliberately small so
-/// these can exercise Metal-backed MPV contexts and AVPlayer instances in the
-/// normal macOS test run without turning the suite into a performance test.
+/// Real-decoder Compare Mode checks. The fixtures are deliberately low
+/// resolution so these can exercise Metal-backed MPV contexts and AVPlayer
+/// instances in the normal macOS test run without turning the suite into a
+/// hardware performance test.
 ///
 /// Run with:
 /// xcodebuild test \
@@ -19,6 +20,25 @@ import XCTest
 ///   -only-testing:"Aagedal Media Player Tests/CompareLiveBackendTests"
 @MainActor
 final class CompareLiveBackendTests: XCTestCase {
+    private struct DriftObservation {
+        let sampleCount: Int
+        let inToleranceCount: Int
+        let worstDrift: TimeInterval
+        let longestExcursion: TimeInterval
+        let lastInToleranceAge: TimeInterval
+        let primaryAdvance: TimeInterval
+        let secondaryAdvance: TimeInterval
+        let firstSignedDrift: TimeInterval
+        let lastSignedDrift: TimeInterval
+        let minimumSecondaryRate: Float
+        let maximumSecondaryRate: Float
+
+        var inToleranceFraction: Double {
+            guard sampleCount > 0 else { return 0 }
+            return Double(inToleranceCount) / Double(sampleCount)
+        }
+    }
+
     func testMPVPairAlignsBySourceTimecodeAndSharesTransport() async throws {
         try await exercisePair(primaryBackend: .mpv, secondaryBackend: .mpv)
     }
@@ -103,20 +123,51 @@ final class CompareLiveBackendTests: XCTestCase {
         let bothStartedPlaying = await waitUntil { primary.isPlaying && secondary.isPlaying }
         XCTAssertTrue(bothStartedPlaying)
         try await Task.sleep(for: .milliseconds(750))
-        let driftConverged = await waitUntil(tolerance: 1.0 / 24.0) {
-            let expectedSecondaryTime = session.secondaryTime(
-                forPrimaryTime: primary.playbackTimeSnapshot()
+        if secondaryBackend == .mpv {
+            XCTAssertEqual(
+                secondary.mpvPlayer?.isAudioTrackSelectionDisabled,
+                true,
+                "Suppressed MPV source B unexpectedly re-enabled an audio track."
             )
-            return secondary.playbackTimeSnapshot() - expectedSecondaryTime
         }
-        let finalExpectedSecondaryTime = session.secondaryTime(
-            forPrimaryTime: primary.playbackTimeSnapshot()
+        let frameRate = primary.mediaItem?.metadata?.primaryVideoStream?.frameRate?.value
+        let driftTolerance = CompareDriftPolicy(
+            primaryFrameRate: frameRate
+        ).correctionThreshold
+        let observation = await observeSustainedDrift(
+            primary: primary,
+            secondary: secondary,
+            session: session,
+            driftTolerance: driftTolerance
         )
-        let finalPlayingDrift = secondary.playbackTimeSnapshot() - finalExpectedSecondaryTime
+        let pairDescription = "\(primaryBackend.rawValue)/\(secondaryBackend.rawValue)"
+        let observationDescription = driftObservationDescription(
+            observation,
+            backendPair: pairDescription
+        )
         XCTAssertTrue(
-            driftConverged,
-            "1x playback drift did not converge within one primary frame; " +
-                "final drift was \(finalPlayingDrift) seconds."
+            primary.isPlaying && secondary.isPlaying,
+            "A decoder stopped during sustained playback. \(observationDescription)"
+        )
+        XCTAssertGreaterThanOrEqual(
+            observation.primaryAdvance,
+            7,
+            "The primary clock stalled or reached EOF. \(observationDescription)"
+        )
+        XCTAssertGreaterThanOrEqual(
+            observation.secondaryAdvance,
+            7,
+            "The secondary clock stalled or reached EOF. \(observationDescription)"
+        )
+        XCTAssertLessThanOrEqual(
+            observation.longestExcursion,
+            1,
+            "Drift correction did not recover within one second. \(observationDescription)"
+        )
+        XCTAssertLessThanOrEqual(
+            observation.lastInToleranceAge,
+            1,
+            "Drift did not reconverge during the final second. \(observationDescription)"
         )
 
         session.pause(primary: primary)
@@ -189,6 +240,116 @@ final class CompareLiveBackendTests: XCTestCase {
         await waitUntil({ abs(difference()) <= tolerance }, timeout: timeout)
     }
 
+    private func observeSustainedDrift(
+        primary: PlayerController,
+        secondary: PlayerController,
+        session: CompareSessionController,
+        driftTolerance: TimeInterval
+    ) async -> DriftObservation {
+        let clock = ContinuousClock()
+        let start = clock.now
+        let deadline = start.advanced(by: .seconds(8))
+        let primaryStart = primary.playbackTimeSnapshot()
+        let secondaryStart = secondary.playbackTimeSnapshot()
+        var sampleCount = 0
+        var inToleranceCount = 0
+        var worstDrift: TimeInterval = 0
+        var excursionStart: ContinuousClock.Instant?
+        var longestExcursion: TimeInterval = 0
+        var lastInTolerance = start
+        var firstSignedDrift: TimeInterval?
+        var lastSignedDrift: TimeInterval = 0
+        var minimumSecondaryRate = Float.greatestFiniteMagnitude
+        var maximumSecondaryRate: Float = 0
+
+        while clock.now < deadline, primary.isPlaying, secondary.isPlaying {
+            // Bracket the secondary clock read with primary reads so main-actor
+            // scheduling time is removed from the effective drift measurement.
+            let primaryBefore = primary.playbackTimeSnapshot()
+            let secondaryTime = secondary.playbackTimeSnapshot()
+            let primaryAfter = primary.playbackTimeSnapshot()
+            let primaryTime = (primaryBefore + primaryAfter) / 2
+            let expectedSecondaryTime = session.secondaryTime(forPrimaryTime: primaryTime)
+            let signedDrift = secondaryTime - expectedSecondaryTime
+            let readUncertainty = abs(primaryAfter - primaryBefore) / 2
+            let effectiveDrift = max(
+                0,
+                abs(signedDrift) - readUncertainty
+            )
+            let sampleTime = clock.now
+            let secondaryRate = secondary.mpvPlayer?.rate ?? secondary.player?.rate ?? 0
+
+            sampleCount += 1
+            firstSignedDrift = firstSignedDrift ?? signedDrift
+            lastSignedDrift = signedDrift
+            minimumSecondaryRate = min(minimumSecondaryRate, secondaryRate)
+            maximumSecondaryRate = max(maximumSecondaryRate, secondaryRate)
+            worstDrift = max(worstDrift, effectiveDrift)
+            if effectiveDrift <= driftTolerance {
+                inToleranceCount += 1
+                lastInTolerance = sampleTime
+                if let currentExcursionStart = excursionStart {
+                    longestExcursion = max(
+                        longestExcursion,
+                        durationSeconds(from: currentExcursionStart, to: sampleTime)
+                    )
+                    excursionStart = nil
+                }
+            } else if excursionStart == nil {
+                excursionStart = sampleTime
+            }
+
+            try? await Task.sleep(for: .milliseconds(25))
+        }
+
+        let end = clock.now
+        if let excursionStart {
+            longestExcursion = max(
+                longestExcursion,
+                durationSeconds(from: excursionStart, to: end)
+            )
+        }
+        return DriftObservation(
+            sampleCount: sampleCount,
+            inToleranceCount: inToleranceCount,
+            worstDrift: worstDrift,
+            longestExcursion: longestExcursion,
+            lastInToleranceAge: durationSeconds(from: lastInTolerance, to: end),
+            primaryAdvance: primary.playbackTimeSnapshot() - primaryStart,
+            secondaryAdvance: secondary.playbackTimeSnapshot() - secondaryStart,
+            firstSignedDrift: firstSignedDrift ?? 0,
+            lastSignedDrift: lastSignedDrift,
+            minimumSecondaryRate: minimumSecondaryRate.isFinite ? minimumSecondaryRate : 0,
+            maximumSecondaryRate: maximumSecondaryRate
+        )
+    }
+
+    private func durationSeconds(
+        from start: ContinuousClock.Instant,
+        to end: ContinuousClock.Instant
+    ) -> TimeInterval {
+        let duration = start.duration(to: end)
+        return Double(duration.components.seconds) +
+            Double(duration.components.attoseconds) / 1_000_000_000_000_000_000
+    }
+
+    private func driftObservationDescription(
+        _ observation: DriftObservation,
+        backendPair: String
+    ) -> String {
+        let percent = observation.inToleranceFraction * 100
+        return "pair=\(backendPair), samples=\(observation.sampleCount), " +
+            "withinFrame=\(String(format: "%.1f", percent))%, " +
+            "worstDrift=\(String(format: "%.3f", observation.worstDrift))s, " +
+            "longestExcursion=\(String(format: "%.3f", observation.longestExcursion))s, " +
+            "signedDrift=\(String(format: "%.3f", observation.firstSignedDrift))s→" +
+            "\(String(format: "%.3f", observation.lastSignedDrift))s, " +
+            "secondaryRate=\(String(format: "%.2f", observation.minimumSecondaryRate))–" +
+            "\(String(format: "%.2f", observation.maximumSecondaryRate)), " +
+            "primaryAdvance=\(String(format: "%.3f", observation.primaryAdvance))s, " +
+            "secondaryAdvance=\(String(format: "%.3f", observation.secondaryAdvance))s"
+    }
+
     private func fixtureDirectory() throws -> URL {
         if let override = ProcessInfo.processInfo.environment["MEDIA_FIXTURE_DIR"],
            !override.isEmpty {
@@ -210,12 +371,16 @@ final class CompareLiveBackendTests: XCTestCase {
             "compare/source-a.mov",
             "compare/source-b.mov",
         ]
-        guard requiredFiles.allSatisfy({
+        let manifestURL = url.appending(path: "MANIFEST.txt")
+        let manifest = try? String(contentsOf: manifestURL, encoding: .utf8)
+        guard manifest?.split(whereSeparator: \.isNewline).contains("schema=3") == true,
+              requiredFiles.allSatisfy({
             FileManager.default.fileExists(atPath: url.appending(path: $0).path)
         }) else {
             throw XCTSkip(
-                "Compare fixtures are unavailable. Run scripts/generate-test-fixtures.sh " +
-                    "or set MEDIA_FIXTURE_DIR."
+                "Compare fixtures are unavailable or stale. Run " +
+                    "scripts/generate-test-fixtures.sh or set MEDIA_FIXTURE_DIR " +
+                    "to a schema=3 fixture tree."
             )
         }
         return url

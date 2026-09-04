@@ -69,6 +69,8 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
     private var pendingURL: URL?
     private var pendingStartTime: Double = 0
     private var pendingAutostart: Bool = false
+    private var isAudioTrackDisabled = false
+    var isAudioTrackSelectionDisabled: Bool { isAudioTrackDisabled }
 
     // Start time to seek to after file loads
     private var pendingSeekAfterLoad: Double = 0
@@ -188,6 +190,9 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         checkError(mpv_set_option_string(mpv, "input-vo-keyboard", "no"), context: "input-vo-keyboard")
         checkError(mpv_set_option_string(mpv, "load-scripts", "no"), context: "load-scripts")
         checkError(mpv_set_option_string(mpv, "sid", "no"), context: "sid")
+        if isAudioTrackDisabled {
+            checkError(mpv_set_option_string(mpv, "aid", "no"), context: "aid")
+        }
 
         #if os(macOS)
         checkError(mpv_set_option_string(mpv, "input-media-keys", "no"), context: "input-media-keys")
@@ -317,6 +322,16 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         command("seek", args: [String(time), "relative"])
     }
 
+    /// Reads mpv's playback clock directly, serialized with event handling and
+    /// teardown. The published `timePos` value is intentionally optimized for
+    /// UI observation and can be several update intervals behind the decoder.
+    nonisolated func playbackTimeSnapshot() -> TimeInterval? {
+        queue.sync {
+            guard let mpv else { return nil }
+            return doublePropertyLocked(MPVProperty.timePos, context: mpv)
+        }
+    }
+
     /// Switch playback direction at runtime. Pass "forward" or "backward".
     /// Backward playback decodes frames forward into the reversal buffer and
     /// emits them in reverse, so the decoder never has to handle a backward
@@ -431,8 +446,20 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
             Int32(getInt(MPVProperty.aid))
         }
         set {
+            guard !isAudioTrackDisabled || newValue == -2 else { return }
             setInt(MPVProperty.aid, Int(newValue))
         }
+    }
+
+    func disableAudioTrack() {
+        // mpv represents the disabled audio selection as track id -2.
+        isAudioTrackDisabled = true
+        guard mpv != nil else { return }
+        currentAudioTrackIndex = -2
+    }
+
+    func enableAudioTrackSelection() {
+        isAudioTrackDisabled = false
     }
 
     // MARK: - Subtitle Tracks

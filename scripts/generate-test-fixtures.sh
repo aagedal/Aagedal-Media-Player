@@ -70,22 +70,24 @@ generate_drop_frame_fixture "29.97-hour" "30000/1001" "00:59:59;28"
 generate_drop_frame_fixture "29.97-day-wrap" "30000/1001" "23:59:59;28"
 generate_drop_frame_fixture "59.94-minute" "60000/1001" "00:00:59;56"
 
-# Five-second comparison masters with a one-second source-timecode offset.
+# Comparison masters with a one-second source-timecode offset. Twelve seconds
+# of overlap leaves enough headroom for the real-decoder tests to observe
+# sustained playback without reaching EOF.
 # Source A starts at 01:00:00:00 while B starts at 00:59:59:00, so A time
 # 00:00:00:00 maps to B time 00:00:01:00. Both files are intentionally
 # AVFoundation-compatible even though normal playback selects MPV; the live
 # Compare Mode integration tests force each backend to exercise MPV/MPV,
 # AVFoundation/AVFoundation, and both mixed directions with the same pair.
 ffmpeg \
-    -f lavfi -i "testsrc2=size=320x180:rate=24:duration=5" \
-    -f lavfi -i "sine=frequency=440:sample_rate=48000:duration=5" \
+    -f lavfi -i "testsrc2=size=320x180:rate=24:duration=12" \
+    -f lavfi -i "sine=frequency=440:sample_rate=48000:duration=12" \
     -map 0:v:0 -map 1:a:0 -c:v libx264 -preset ultrafast -crf 28 \
     -pix_fmt yuv420p -c:a aac -timecode "01:00:00:00" \
     -movflags +faststart "$output_dir/compare/source-a.mov"
 
 ffmpeg \
-    -f lavfi -i "testsrc2=size=320x180:rate=24:duration=6" \
-    -f lavfi -i "sine=frequency=660:sample_rate=48000:duration=6" \
+    -f lavfi -i "testsrc2=size=320x180:rate=24:duration=13" \
+    -f lavfi -i "sine=frequency=660:sample_rate=48000:duration=13" \
     -map 0:v:0 -map 1:a:0 -c:v libx264 -preset ultrafast -crf 28 \
     -pix_fmt yuv420p -c:a aac -timecode "00:59:59:00" \
     -movflags +faststart "$output_dir/compare/source-b.mov"
@@ -149,7 +151,7 @@ ffmpeg \
 
 printf '%s\n' \
     'Aagedal Media Player generated media fixtures' \
-    'schema=2' \
+    'schema=3' \
     "ffmpeg=$($ffmpeg_binary -hide_banner -version 2>&1 | head -n 1)" \
     > "$output_dir/MANIFEST.txt"
 

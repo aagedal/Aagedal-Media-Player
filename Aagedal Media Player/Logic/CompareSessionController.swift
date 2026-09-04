@@ -173,12 +173,19 @@ nonisolated struct CompareTimelineMapping: Equatable, Sendable {
 }
 
 /// Decides when the secondary decoder must be re-synchronized with the
-/// primary backend clock. The tolerance is exactly one primary frame; a short
-/// cooldown prevents a decoder with an outstanding seek from being flooded
-/// with duplicate corrections.
+/// primary backend clock. The tolerance is one primary frame plus a small
+/// clock-comparison margin; a short cooldown prevents a decoder with an
+/// outstanding seek from being flooded with duplicate corrections.
 nonisolated struct CompareDriftPolicy: Equatable, Sendable {
     static let fallbackFrameRate = 30.0
     static let correctionCooldown: TimeInterval = 0.25
+    static let correctionSettlementTimeout: TimeInterval = 1
+    static let clockComparisonTolerance: TimeInterval = 0.001
+    static let avFoundationRateNudgeFraction = 0.1
+    static let maximumRateCorrectionFraction = 0.5
+    static let rateCorrectionGain = 2.0
+    static let hardSeekThreshold: TimeInterval = 1
+    static let monitoringWarmup: TimeInterval = 0.75
 
     let frameRate: Double
 
@@ -193,6 +200,9 @@ nonisolated struct CompareDriftPolicy: Equatable, Sendable {
     }
 
     var frameDuration: TimeInterval { 1 / frameRate }
+    var correctionThreshold: TimeInterval {
+        frameDuration + Self.clockComparisonTolerance
+    }
 
     func signedDrift(
         actualSecondaryTime: TimeInterval,
@@ -212,7 +222,7 @@ nonisolated struct CompareDriftPolicy: Equatable, Sendable {
                 actualSecondaryTime: actualSecondaryTime,
                 expectedSecondaryTime: expectedSecondaryTime
               ),
-              abs(drift) > frameDuration else { return nil }
+              abs(drift) > correctionThreshold else { return nil }
         return expectedSecondaryTime
     }
 }
@@ -876,7 +886,6 @@ final class CompareSessionController: ObservableObject {
             primary.play()
             return
         }
-        synchronize(primary: primary)
         primary.play()
         if secondaryController.isReady {
             secondaryController.play()
@@ -1087,6 +1096,10 @@ final class CompareSessionController: ObservableObject {
         driftCorrectionTask = Task { @MainActor [weak self, weak primary] in
             guard let self, let primary else { return }
             var lastCorrectionTime = -TimeInterval.infinity
+            var outOfToleranceSince: TimeInterval?
+            var isWaitingForCorrectionToSettle = false
+            var isRateNudged = false
+            let monitoringStartTime = ProcessInfo.processInfo.systemUptime
             while !Task.isCancelled,
                   self.loadGeneration.isCurrent(generation),
                   self.isActive {
@@ -1095,22 +1108,103 @@ final class CompareSessionController: ObservableObject {
                       primary.isPlaying,
                       self.secondaryController.isPlaying else { continue }
 
-                let expected = self.mappedSecondaryTime(
-                    for: primary.playbackTimeSnapshot()
-                )
+                let primaryBefore = primary.playbackTimeSnapshot()
                 let actual = self.secondaryController.playbackTimeSnapshot()
+                let primaryAfter = primary.playbackTimeSnapshot()
+                let primaryTime = (primaryBefore + primaryAfter) / 2
+                let expected = self.mappedSecondaryTime(for: primaryTime)
+                let readUncertainty = abs(primaryAfter - primaryBefore) / 2
                 let sampleTime = ProcessInfo.processInfo.systemUptime
-                guard let target = policy.correctionTarget(
-                    actualSecondaryTime: actual,
-                    expectedSecondaryTime: expected,
-                    timeSinceLastCorrection: sampleTime - lastCorrectionTime
-                ) else { continue }
-
-                lastCorrectionTime = sampleTime
-                let signedDrift = policy.signedDrift(
+                guard sampleTime - monitoringStartTime >=
+                        CompareDriftPolicy.monitoringWarmup else { continue }
+                guard let signedDrift = policy.signedDrift(
                     actualSecondaryTime: actual,
                     expectedSecondaryTime: expected
-                ) ?? 0
+                ) else { continue }
+
+                let absoluteDrift = max(0, abs(signedDrift) - readUncertainty)
+                let baseRate = max(0.1, abs(primary.currentPlaybackSpeed))
+                if absoluteDrift <= policy.frameDuration / 2 {
+                    if isRateNudged {
+                        self.secondaryController.restoreSynchronizationPlaybackRate()
+                        isRateNudged = false
+                    }
+                    outOfToleranceSince = nil
+                    isWaitingForCorrectionToSettle = false
+                    continue
+                }
+
+                // Let a hard seek settle before considering a rate nudge. An
+                // intermediate decoder clock can otherwise turn one recovery
+                // operation into two competing corrections.
+                if isWaitingForCorrectionToSettle {
+                    guard sampleTime - lastCorrectionTime >=
+                            CompareDriftPolicy.correctionSettlementTimeout else { continue }
+                    isWaitingForCorrectionToSettle = false
+                    outOfToleranceSince = sampleTime
+                    continue
+                }
+
+                if absoluteDrift > policy.correctionThreshold,
+                   !primary.isReversing,
+                   !self.secondaryController.isReversing,
+                   absoluteDrift < CompareDriftPolicy.hardSeekThreshold {
+                    let multiplier: Double
+                    if self.secondaryController.useMPV {
+                        let maximumCorrection =
+                            CompareDriftPolicy.maximumRateCorrectionFraction
+                        let unboundedCorrection =
+                            -signedDrift * CompareDriftPolicy.rateCorrectionGain
+                        let rateCorrection = min(
+                            maximumCorrection,
+                            max(-maximumCorrection, unboundedCorrection)
+                        )
+                        multiplier = 1 + rateCorrection
+                    } else {
+                        // Reassigning AVPlayer.rate on every clock sample can
+                        // repeatedly restart its timebase. Hold one modest
+                        // nudge until the clocks enter the convergence band.
+                        guard !isRateNudged else { continue }
+                        multiplier = signedDrift > 0
+                            ? 1 - CompareDriftPolicy.avFoundationRateNudgeFraction
+                            : 1 + CompareDriftPolicy.avFoundationRateNudgeFraction
+                    }
+                    self.secondaryController.setSynchronizationPlaybackRate(
+                        baseRate * Float(multiplier)
+                    )
+                    isRateNudged = true
+                    Self.signposter.emitEvent(
+                        "Drift correction rate",
+                        "drift_ms=\(signedDrift * 1_000) multiplier=\(multiplier)"
+                    )
+                    outOfToleranceSince = nil
+                    isWaitingForCorrectionToSettle = false
+                    continue
+                }
+
+                if isRateNudged {
+                    self.secondaryController.restoreSynchronizationPlaybackRate()
+                    isRateNudged = false
+                }
+
+                guard absoluteDrift > policy.correctionThreshold,
+                      sampleTime - lastCorrectionTime >=
+                        CompareDriftPolicy.correctionCooldown else { continue }
+
+                guard let excursionStart = outOfToleranceSince else {
+                    outOfToleranceSince = sampleTime
+                    continue
+                }
+                guard sampleTime - excursionStart >= CompareDriftPolicy.correctionCooldown,
+                      let target = policy.correctionTarget(
+                        actualSecondaryTime: actual,
+                        expectedSecondaryTime: expected,
+                        timeSinceLastCorrection: sampleTime - lastCorrectionTime
+                      ) else { continue }
+
+                lastCorrectionTime = sampleTime
+                outOfToleranceSince = nil
+                isWaitingForCorrectionToSettle = true
                 Self.signposter.emitEvent(
                     "Drift correction seek",
                     "drift_ms=\(signedDrift * 1_000)"
@@ -1123,6 +1217,7 @@ final class CompareSessionController: ObservableObject {
     private func stopDriftCorrection() {
         driftCorrectionTask?.cancel()
         driftCorrectionTask = nil
+        secondaryController.restoreSynchronizationPlaybackRate()
         if let state = driftMonitoringSignpostState {
             Self.signposter.endInterval("Drift monitoring", state)
             driftMonitoringSignpostState = nil

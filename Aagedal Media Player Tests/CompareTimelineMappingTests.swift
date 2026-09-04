@@ -6,7 +6,7 @@ import XCTest
 @testable import Aagedal_Media_Player
 
 final class CompareTimelineMappingTests: XCTestCase {
-    func testDriftPolicyUsesOnePrimaryFrameAcrossVerificationRates() {
+    func testDriftPolicyUsesOnePrimaryFramePlusClockMarginAcrossVerificationRates() {
         let rates = [
             24_000.0 / 1_001.0,
             24,
@@ -19,14 +19,12 @@ final class CompareTimelineMappingTests: XCTestCase {
 
         for rate in rates {
             let policy = CompareDriftPolicy(primaryFrameRate: rate)
-            // Stay clear of binary floating-point noise at the exact frame
-            // boundary while still exercising both sides of the policy.
-            let withinOneFrame = 10 + (0.999 * policy.frameDuration)
-            let beyondOneFrame = 10 + (1.001 * policy.frameDuration)
+            let withinThreshold = 10 + policy.frameDuration
+            let beyondThreshold = 10 + policy.correctionThreshold + 0.001
 
             XCTAssertNil(
                 policy.correctionTarget(
-                    actualSecondaryTime: withinOneFrame,
+                    actualSecondaryTime: withinThreshold,
                     expectedSecondaryTime: 10,
                     timeSinceLastCorrection: .infinity
                 ),
@@ -34,7 +32,7 @@ final class CompareTimelineMappingTests: XCTestCase {
             )
             XCTAssertEqual(
                 policy.correctionTarget(
-                    actualSecondaryTime: beyondOneFrame,
+                    actualSecondaryTime: beyondThreshold,
                     expectedSecondaryTime: 10,
                     timeSinceLastCorrection: .infinity
                 ),

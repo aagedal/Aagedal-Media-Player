@@ -473,6 +473,9 @@ final class PlayerController: ObservableObject {
         )
         backendAdapter = backend
         let mpv = backend.player
+        if isAudioSuppressed {
+            mpv.disableAudioTrack()
+        }
 
         // Attach MPV for scope frame capture (window set later by MPVVideoView)
         frameCapture.attachMPV(mpv)
@@ -727,6 +730,13 @@ final class PlayerController: ObservableObject {
         guard isAudioSuppressed != suppressed else { return }
         isAudioSuppressed = suppressed
         backendAdapter?.isMuted = effectiveIsMuted
+        guard useMPV else { return }
+        if suppressed {
+            mpvPlayer?.disableAudioTrack()
+        } else {
+            mpvPlayer?.enableAudioTrackSelection()
+            applySelectedAudioTrack()
+        }
     }
 
     func adjustVolume(by delta: Double) {
@@ -781,6 +791,20 @@ final class PlayerController: ObservableObject {
             backendAdapter.play()
         }
         syncIsPlaying()
+    }
+
+    /// Applies a temporary backend rate without changing the transport speed
+    /// shown to the user. Compare Mode uses this for small clock corrections.
+    func setSynchronizationPlaybackRate(_ rate: Float) {
+        guard rate.isFinite, rate > 0 else { return }
+        backendAdapter?.rate = rate
+    }
+
+    func restoreSynchronizationPlaybackRate() {
+        guard !isReversing,
+              currentPlaybackSpeed > 0,
+              backendAdapter?.isPlaying == true else { return }
+        backendAdapter?.rate = currentPlaybackSpeed
     }
 
     /// Diagnostic: emit a `scaling` event when a play/pause transition is
@@ -1187,7 +1211,9 @@ final class PlayerController: ObservableObject {
     /// Published playback time is optimized for UI observation and can trail
     /// a playing AVPlayer by more than one high-frame-rate video frame.
     func playbackTimeSnapshot() -> TimeInterval {
-        if useMPV, let time = mpvPlayer?.timePos, time.isFinite {
+        if useMPV,
+           let time = mpvPlayer?.playbackTimeSnapshot(),
+           time.isFinite {
             return max(0, time)
         }
         if let time = player?.currentTime().seconds, time.isFinite {
@@ -1212,6 +1238,9 @@ final class PlayerController: ObservableObject {
                 mpvPlayer: self.mpvPlayer,
                 useMPV: self.useMPV
             )
+            if self.useMPV, self.isAudioSuppressed {
+                self.mpvPlayer?.disableAudioTrack()
+            }
         }
     }
 
@@ -1244,17 +1273,26 @@ final class PlayerController: ObservableObject {
             mpvPlayer: mpvPlayer,
             useMPV: useMPV
         )
+        if useMPV, isAudioSuppressed {
+            mpvPlayer?.disableAudioTrack()
+        }
         return changed && preparationID == myPrepID
     }
 
     func applySelectedAudioTrack() {
         Task { @MainActor [weak self] in
             guard let self else { return }
+            if self.useMPV, !self.isAudioSuppressed {
+                self.mpvPlayer?.enableAudioTrackSelection()
+            }
             await self.trackSelection.applySelectedAudioTrack(
                 playerItem: self.player?.currentItem,
                 mpvPlayer: self.mpvPlayer,
                 useMPV: self.useMPV
             )
+            if self.useMPV, self.isAudioSuppressed {
+                self.mpvPlayer?.disableAudioTrack()
+            }
         }
     }
 
