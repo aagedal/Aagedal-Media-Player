@@ -47,7 +47,9 @@ clear place to add source selection for those tools.
 
 Status: Foundation implemented on 2026-09-02. Backend-clock drift sampling, a
 one-primary-frame correction policy, correction cooldown, and Instruments
-signposts for secondary load/drift profiling were added on 2026-09-04. Live
+signposts for secondary load/drift profiling were added on 2026-09-04.
+Deterministic coverage now verifies rapid B replacement, stopping during
+metadata loading, and preservation of specific decoder failures. Live
 backend/drift validation remains before Phase 1 acceptance is complete.
 
 - [x] Define the implementation plan and release boundaries.
@@ -166,6 +168,10 @@ is not possible.
 - MPV/MPV and mixed MPV/AVFoundation playback.
 - Rapidly replace B, remove B during preparation, and close the window while B
   is loading.
+
+The metadata-loading portion of rapid replacement and removal is covered by
+automated lifecycle tests. Decoder teardown during backend preparation and
+window close remains part of live mixed-backend validation.
 
 ## Release and marketing work
 

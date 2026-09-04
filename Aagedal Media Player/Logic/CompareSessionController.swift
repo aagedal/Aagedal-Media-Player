@@ -219,6 +219,8 @@ nonisolated struct CompareDriftPolicy: Equatable, Sendable {
 
 @MainActor
 final class CompareSessionController: ObservableObject {
+    typealias MetadataLoader = @MainActor @Sendable (URL) async throws -> MediaMetadata
+
     nonisolated static let minimumDifferenceGain = 1.0
     nonisolated static let maximumDifferenceGain = 16.0
     private nonisolated static let signposter = OSSignposter(
@@ -264,6 +266,7 @@ final class CompareSessionController: ObservableObject {
     private var reviewRevision: UInt64 = 0
     private var isReviewSidecarWritable = false
     private let reviewStore = CompareReviewSidecarStore.shared
+    private let metadataLoader: MetadataLoader
     private weak var primaryAudioController: PlayerController?
 
     var isActive: Bool { secondaryURL != nil }
@@ -271,21 +274,36 @@ final class CompareSessionController: ObservableObject {
         isActive && !isReviewLoading && isReviewSidecarWritable
     }
 
-    init(secondaryController: PlayerController? = nil) {
+    init(
+        secondaryController: PlayerController? = nil,
+        metadataLoader: @escaping MetadataLoader = { url in
+            try await MetadataService.shared.metadata(for: url)
+        }
+    ) {
         self.secondaryController = secondaryController ?? PlayerController()
+        self.metadataLoader = metadataLoader
         self.secondaryController.setAudioSuppressed(true)
         secondaryPlaybackPhaseCancellable = self.secondaryController.$playbackPhase
             .sink { [weak self] phase in
                 guard let self else { return }
-                self.isSecondaryReady = phase.permitsPlaybackControls
-                guard case .failed(let failure) = phase,
-                      self.isActive,
-                      let primary = self.primaryAudioController else { return }
-                self.endSecondaryLoadSignpost()
-                Self.signposter.emitEvent("Secondary decoder failed")
-                self.selectAudioSource(.primary, primary: primary)
-                self.loadError = "The comparison file could not be played: \(failure.message)"
+                self.handleSecondaryPlaybackPhase(phase)
             }
+    }
+
+    func handleSecondaryPlaybackPhase(_ phase: PlaybackPhase) {
+        isSecondaryReady = phase.permitsPlaybackControls
+        guard case .failed(let failure) = phase,
+              isActive,
+              let primary = primaryAudioController else { return }
+        // A decoder failure is terminal for this readiness attempt. Without
+        // cancelling the poller, its later timeout can replace the specific
+        // backend diagnostic with a generic message.
+        readinessTask?.cancel()
+        readinessTask = nil
+        endSecondaryLoadSignpost()
+        Self.signposter.emitEvent("Secondary decoder failed")
+        selectAudioSource(.primary, primary: primary)
+        loadError = "The comparison file could not be played: \(failure.message)"
     }
 
     func loadSecondary(_ url: URL, alignedWith primary: PlayerController) {
@@ -331,7 +349,7 @@ final class CompareSessionController: ObservableObject {
             var item = PlayerWindowCoordinator.makeMediaItem(for: url)
 
             do {
-                let metadata = try await MetadataService.shared.metadata(for: url)
+                let metadata = try await self.metadataLoader(url)
                 guard !Task.isCancelled, self.loadGeneration.isCurrent(generation) else { return }
                 item.metadata = metadata
                 item.durationSeconds = metadata.duration ?? 0
@@ -1042,12 +1060,20 @@ final class CompareSessionController: ObservableObject {
                 try? await Task.sleep(for: .milliseconds(25))
             }
             guard !Task.isCancelled, self.loadGeneration.isCurrent(generation) else { return }
-            self.endSecondaryLoadSignpost()
-            Self.signposter.emitEvent("Secondary decoder readiness timeout")
-            self.selectAudioSource(.primary, primary: primary)
-            self.loadError = "The comparison file did not become ready for playback."
-            self.readinessTask = nil
+            self.handleSecondaryReadinessTimeout(primary: primary)
         }
+    }
+
+    func handleSecondaryReadinessTimeout(primary: PlayerController) {
+        guard loadError == nil else {
+            readinessTask = nil
+            return
+        }
+        endSecondaryLoadSignpost()
+        Self.signposter.emitEvent("Secondary decoder readiness timeout")
+        selectAudioSource(.primary, primary: primary)
+        loadError = "The comparison file did not become ready for playback."
+        readinessTask = nil
     }
 
     private func startDriftCorrection(primary: PlayerController) {

@@ -33,6 +33,7 @@ All notable changes to Aagedal Media Player.
 - Bounded long-recording waveform memory by streaming PCM directly into fixed-size accumulators.
 - Restored bundled audio-decoder and EBU R128 capabilities required by waveform and LUFS analysis.
 - Kept update status truthful after failures and recorded every successful manual or automatic fallback check.
+- Prevented a Compare Mode readiness timeout from replacing a specific source-B decoder failure, and covered stale secondary metadata completions during rapid replacement and teardown.
 
 ## [1.6.0] — 2026-05-24
 
