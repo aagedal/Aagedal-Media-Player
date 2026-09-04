@@ -382,6 +382,33 @@ struct ContentView: View {
                 .accessibilityLabel("Comparison audio source")
                 .accessibilityValue(compareSession.audioSource.label)
 
+                Menu {
+                    Picker("Safe Area", selection: $compareSession.safeAreaGuide) {
+                        ForEach(CompareSafeAreaGuide.allCases, id: \.self) { guide in
+                            Text(guide.label).tag(guide)
+                        }
+                    }
+
+                    Picker("Aspect Ratio", selection: $compareSession.aspectRatioGuide) {
+                        ForEach(CompareAspectRatioGuide.allCases, id: \.self) { guide in
+                            Text(guide.label).tag(guide)
+                        }
+                    }
+                } label: {
+                    Image(
+                        systemName: compareSession.safeAreaGuide != .none
+                            || compareSession.aspectRatioGuide != .none
+                            ? "viewfinder.circle.fill"
+                            : "viewfinder.circle"
+                    )
+                    .foregroundColor(.white.opacity(0.9))
+                }
+                .menuStyle(.borderlessButton)
+                .fixedSize()
+                .help("Configure safe-area and aspect-ratio guides shared by both sources")
+                .accessibilityLabel("Comparison guides")
+                .accessibilityValue(comparisonGuideAccessibilityValue)
+
                 if compareSession.viewMode.isWipe {
                     Slider(
                         value: Binding(
@@ -545,6 +572,17 @@ struct ContentView: View {
                 endPoint: .bottom
             )
         )
+    }
+
+    private var comparisonGuideAccessibilityValue: String {
+        let safeArea = compareSession.safeAreaGuide == .none
+            ? nil
+            : compareSession.safeAreaGuide.label
+        let aspectRatio = compareSession.aspectRatioGuide == .none
+            ? nil
+            : compareSession.aspectRatioGuide.label
+        let labels = [safeArea, aspectRatio].compactMap { $0 }
+        return labels.isEmpty ? "Off" : labels.joined(separator: ", ")
     }
 
     private func announce(_ message: String) {

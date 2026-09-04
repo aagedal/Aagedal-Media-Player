@@ -32,6 +32,8 @@ struct ComparePlayerView: View {
             ZStack(alignment: .topLeading) {
                 comparisonSurfaces(size: size, presentation: presentation)
 
+                comparisonGuides(displayGeometry: displayGeometry)
+
                 if compareSession.viewMode == .sideBySide {
                     Rectangle()
                         .fill(.white.opacity(0.25))
@@ -51,6 +53,93 @@ struct ComparePlayerView: View {
             .coordinateSpace(name: "compareCanvas")
         }
         .background(Color.black)
+    }
+
+    @ViewBuilder
+    private func comparisonGuides(displayGeometry: CompareDisplayGeometry) -> some View {
+        if compareSession.safeAreaGuide != .none
+            || compareSession.aspectRatioGuide != .none {
+            ZStack(alignment: .topLeading) {
+                ForEach(
+                    Array(
+                        displayGeometry.guideReferenceRects(for: compareSession.viewMode)
+                            .enumerated()
+                    ),
+                    id: \.offset
+                ) { entry in
+                    comparisonGuideSet(in: entry.element)
+                }
+            }
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+        }
+    }
+
+    private func comparisonGuideSet(in referenceRect: CGRect) -> some View {
+        let guideRect = CompareDisplayGeometry.aspectGuideRect(
+            aspectRatio: compareSession.aspectRatioGuide.aspectRatio,
+            in: referenceRect
+        )
+        let actionSafeRect = CompareDisplayGeometry.safeAreaRect(
+            fraction: 0.9,
+            in: guideRect
+        )
+        let titleSafeRect = CompareDisplayGeometry.safeAreaRect(
+            fraction: 0.8,
+            in: guideRect
+        )
+
+        return ZStack(alignment: .topLeading) {
+            if compareSession.aspectRatioGuide != .none {
+                CompareGuideMatteShape(outerRect: referenceRect, innerRect: guideRect)
+                    .fill(.black.opacity(0.42), style: FillStyle(eoFill: true))
+
+                guideRectangle(guideRect, color: .yellow.opacity(0.92))
+
+                guideLabel(compareSession.aspectRatioGuide.label, in: guideRect)
+            }
+
+            if compareSession.safeAreaGuide.showsActionSafe {
+                guideRectangle(
+                    actionSafeRect,
+                    color: .white.opacity(0.9),
+                    dash: [8, 5]
+                )
+            }
+
+            if compareSession.safeAreaGuide.showsTitleSafe {
+                guideRectangle(
+                    titleSafeRect,
+                    color: .white.opacity(0.78),
+                    dash: [2, 4]
+                )
+            }
+        }
+    }
+
+    private func guideRectangle(
+        _ rect: CGRect,
+        color: Color,
+        dash: [CGFloat] = []
+    ) -> some View {
+        Rectangle()
+            .stroke(
+                color,
+                style: StrokeStyle(lineWidth: 1, dash: dash)
+            )
+            .frame(width: rect.width, height: rect.height)
+            .position(x: rect.midX, y: rect.midY)
+            .shadow(color: .black.opacity(0.8), radius: 1)
+    }
+
+    private func guideLabel(_ label: String, in rect: CGRect) -> some View {
+        Text(label)
+            .font(.caption2.monospacedDigit())
+            .foregroundStyle(.yellow)
+            .padding(.horizontal, 4)
+            .padding(.vertical, 2)
+            .background(.black.opacity(0.72), in: RoundedRectangle(cornerRadius: 3))
+            .offset(x: rect.minX + 4, y: rect.minY + 4)
     }
 
     private func comparisonSurfaces(
@@ -368,5 +457,17 @@ struct ComparePlayerView: View {
         let primaryPresentationClipRect: CGRect
         let secondaryPresentationClipRect: CGRect
         let secondaryOpacity: Double
+    }
+}
+
+private struct CompareGuideMatteShape: Shape {
+    let outerRect: CGRect
+    let innerRect: CGRect
+
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.addRect(outerRect)
+        path.addRect(innerRect)
+        return path
     }
 }

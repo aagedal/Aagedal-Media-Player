@@ -43,6 +43,10 @@ nonisolated struct CompareDisplayGeometry: Equatable, Sendable {
         Self.aspectFitRect(aspectRatio: primaryAspectRatio, in: canvasRect)
     }
 
+    var secondaryReferenceRect: CGRect {
+        Self.aspectFitRect(aspectRatio: secondaryAspectRatio, in: canvasRect)
+    }
+
     /// Sources with matching post-display aspect ratios share A's visible
     /// picture bounds. If the display aspects genuinely differ, retain each
     /// source's independent fit instead of silently cropping or stretching B.
@@ -52,6 +56,49 @@ nonisolated struct CompareDisplayGeometry: Equatable, Sendable {
 
     var displayAspectsMatch: Bool {
         abs(primaryAspectRatio - secondaryAspectRatio) <= 0.001
+    }
+
+    /// Returns the visible comparison frames that receive the same guide
+    /// configuration. Side-by-side repeats the guides inside both panes;
+    /// composited modes use one shared frame so their lines cannot diverge.
+    func guideReferenceRects(for mode: CompareViewMode) -> [CGRect] {
+        switch mode {
+        case .sideBySide:
+            let primaryPane = presentationClipRect(for: .primary, mode: mode)
+            let secondaryPane = presentationClipRect(for: .secondary, mode: mode)
+            return [
+                Self.aspectFitRect(aspectRatio: primaryAspectRatio, in: primaryPane),
+                Self.aspectFitRect(aspectRatio: secondaryAspectRatio, in: secondaryPane)
+            ]
+        case .primary:
+            return [primaryReferenceRect]
+        case .secondary:
+            return [secondaryReferenceRect]
+        case .verticalWipe, .horizontalWipe, .overlay, .difference:
+            return [comparisonReferenceRect]
+        }
+    }
+
+    static func aspectGuideRect(aspectRatio: CGFloat?, in referenceRect: CGRect) -> CGRect {
+        guard let aspectRatio else { return referenceRect }
+        return aspectFitRect(aspectRatio: aspectRatio, in: referenceRect)
+    }
+
+    static func safeAreaRect(fraction: CGFloat, in referenceRect: CGRect) -> CGRect {
+        guard fraction.isFinite, fraction > 0,
+              referenceRect.width.isFinite, referenceRect.height.isFinite,
+              referenceRect.width > 0, referenceRect.height > 0 else { return .zero }
+        let clampedFraction = min(fraction, 1)
+        let size = CGSize(
+            width: referenceRect.width * clampedFraction,
+            height: referenceRect.height * clampedFraction
+        )
+        return CGRect(
+            x: referenceRect.midX - size.width / 2,
+            y: referenceRect.midY - size.height / 2,
+            width: size.width,
+            height: size.height
+        )
     }
 
     func presentationClipRect(for source: CompareSource, mode: CompareViewMode) -> CGRect {

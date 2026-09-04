@@ -98,6 +98,58 @@ final class ComparePresentationTests: XCTestCase {
         XCTAssertEqual(session.scopeSource, .primary)
     }
 
+    func testComparisonGuidesResetWithSession() {
+        let session = CompareSessionController()
+
+        session.safeAreaGuide = .actionAndTitle
+        session.aspectRatioGuide = .twoThirtyNine
+
+        session.stop()
+
+        XCTAssertEqual(session.safeAreaGuide, .none)
+        XCTAssertEqual(session.aspectRatioGuide, .none)
+    }
+
+    func testSafeAreaGuidePresetsExposeExpectedFrames() {
+        XCTAssertFalse(CompareSafeAreaGuide.none.showsActionSafe)
+        XCTAssertFalse(CompareSafeAreaGuide.none.showsTitleSafe)
+        XCTAssertTrue(CompareSafeAreaGuide.action.showsActionSafe)
+        XCTAssertFalse(CompareSafeAreaGuide.action.showsTitleSafe)
+        XCTAssertFalse(CompareSafeAreaGuide.title.showsActionSafe)
+        XCTAssertTrue(CompareSafeAreaGuide.title.showsTitleSafe)
+        XCTAssertTrue(CompareSafeAreaGuide.actionAndTitle.showsActionSafe)
+        XCTAssertTrue(CompareSafeAreaGuide.actionAndTitle.showsTitleSafe)
+    }
+
+    func testSafeAreaRectsUseNinetyAndEightyPercentOfGuideFrame() {
+        let reference = CGRect(x: 0, y: 0, width: 1_920, height: 1_080)
+
+        XCTAssertEqual(
+            CompareDisplayGeometry.safeAreaRect(fraction: 0.9, in: reference),
+            CGRect(x: 96, y: 54, width: 1_728, height: 972)
+        )
+        XCTAssertEqual(
+            CompareDisplayGeometry.safeAreaRect(fraction: 0.8, in: reference),
+            CGRect(x: 192, y: 108, width: 1_536, height: 864)
+        )
+    }
+
+    func testAspectGuideIsInscribedWithinVisiblePicture() {
+        let reference = CGRect(x: 0, y: 0, width: 1_920, height: 1_080)
+
+        XCTAssertEqual(
+            CompareDisplayGeometry.aspectGuideRect(
+                aspectRatio: CompareAspectRatioGuide.fourByThree.aspectRatio,
+                in: reference
+            ),
+            CGRect(x: 240, y: 0, width: 1_440, height: 1_080)
+        )
+        XCTAssertEqual(
+            CompareDisplayGeometry.aspectGuideRect(aspectRatio: nil, in: reference),
+            reference
+        )
+    }
+
     func testAudioSourceRoutesExactlyOneControllerAndStopRestoresSafety() {
         let primary = PlayerController()
         let secondary = PlayerController()
@@ -226,6 +278,43 @@ final class ComparePresentationTests: XCTestCase {
         )
     }
 
+    func testSideBySideGuidesRepeatInsideEachSourcePane() {
+        let geometry = CompareDisplayGeometry(
+            canvasSize: CGSize(width: 1_920, height: 1_200),
+            primaryAspectRatio: 16.0 / 9.0,
+            secondaryAspectRatio: 4.0 / 3.0
+        )
+
+        XCTAssertEqual(
+            geometry.guideReferenceRects(for: .sideBySide),
+            [
+                CGRect(x: 0, y: 330, width: 960, height: 540),
+                CGRect(x: 960, y: 240, width: 960, height: 720)
+            ]
+        )
+    }
+
+    func testCompositedGuidesUseOneSharedComparisonFrame() {
+        let geometry = CompareDisplayGeometry(
+            canvasSize: CGSize(width: 1_920, height: 1_200),
+            primaryAspectRatio: 16.0 / 9.0,
+            secondaryAspectRatio: 4.0 / 3.0
+        )
+
+        XCTAssertEqual(geometry.guideReferenceRects(for: .overlay), [geometry.canvasRect])
+        XCTAssertEqual(geometry.guideReferenceRects(for: .difference), [geometry.canvasRect])
+        XCTAssertEqual(geometry.guideReferenceRects(for: .verticalWipe), [geometry.canvasRect])
+        XCTAssertEqual(geometry.guideReferenceRects(for: .horizontalWipe), [geometry.canvasRect])
+        XCTAssertEqual(
+            geometry.guideReferenceRects(for: .primary),
+            [geometry.primaryReferenceRect]
+        )
+        XCTAssertEqual(
+            geometry.guideReferenceRects(for: .secondary),
+            [geometry.secondaryReferenceRect]
+        )
+    }
+
     func testWipeClipUsesPrimaryVisiblePictureBounds() {
         let geometry = CompareDisplayGeometry(
             canvasSize: CGSize(width: 1_920, height: 1_200),
@@ -273,5 +362,12 @@ final class ComparePresentationTests: XCTestCase {
         XCTAssertEqual(geometry.primaryAspectRatio, 16.0 / 9.0)
         XCTAssertEqual(geometry.secondaryAspectRatio, 16.0 / 9.0)
         XCTAssertEqual(geometry.primaryReferenceRect, CGRect.zero)
+        XCTAssertEqual(
+            CompareDisplayGeometry.safeAreaRect(
+                fraction: .nan,
+                in: CGRect(x: 0, y: 0, width: 100, height: 100)
+            ),
+            .zero
+        )
     }
 }

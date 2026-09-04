@@ -94,9 +94,9 @@ Acceptance:
 ## Phase 3 — Professional QC integration
 
 Status: Scope routing, the compact mismatch summary, explicit A/B audio
-monitoring, and annotated comparison-still export are implemented through
-2026-09-03. Live mixed-backend validation and timestamp-aware motion-frame
-pairing remain.
+monitoring, annotated comparison-still export, and shared safe-area/aspect-ratio
+guides are implemented through 2026-09-04. Live mixed-backend validation and
+timestamp-aware motion-frame pairing remain.
 
 - [x] Let scopes inspect A, B, or their display-space difference.
 - [x] Add explicit A/B audio switching.
@@ -106,7 +106,7 @@ pairing remain.
   and selected technical metadata.
 - [x] Add a compact mismatch summary for codec, raster, frame rate, color,
   audio layout, and duration.
-- [ ] Add safe-area and aspect-ratio overlays shared across both sources.
+- [x] Add safe-area and aspect-ratio overlays shared across both sources.
 
 ## Phase 4 — Review workflow
 

@@ -70,6 +70,58 @@ nonisolated enum CompareAudioSource: String, CaseIterable, Sendable {
     }
 }
 
+nonisolated enum CompareSafeAreaGuide: String, CaseIterable, Sendable {
+    case none
+    case action
+    case title
+    case actionAndTitle
+
+    var label: String {
+        switch self {
+        case .none: "Off"
+        case .action: "Action Safe (90%)"
+        case .title: "Title Safe (80%)"
+        case .actionAndTitle: "Action + Title Safe"
+        }
+    }
+
+    var showsActionSafe: Bool {
+        self == .action || self == .actionAndTitle
+    }
+
+    var showsTitleSafe: Bool {
+        self == .title || self == .actionAndTitle
+    }
+}
+
+nonisolated enum CompareAspectRatioGuide: String, CaseIterable, Sendable {
+    case none
+    case fourByThree
+    case sixteenByNine
+    case oneEightyFive
+    case twoThirtyNine
+
+    var label: String {
+        switch self {
+        case .none: "Off"
+        case .fourByThree: "4:3"
+        case .sixteenByNine: "16:9"
+        case .oneEightyFive: "1.85:1"
+        case .twoThirtyNine: "2.39:1"
+        }
+    }
+
+    var aspectRatio: CGFloat? {
+        switch self {
+        case .none: nil
+        case .fourByThree: 4.0 / 3.0
+        case .sixteenByNine: 16.0 / 9.0
+        case .oneEightyFive: 1.85
+        case .twoThirtyNine: 2.39
+        }
+    }
+}
+
 /// Maps the primary player's relative timeline onto the comparison player's
 /// relative timeline. Keeping this pure makes drop-frame parsing a concern of
 /// TimecodeFormatter while synchronization and overlap math remain testable.
@@ -131,6 +183,8 @@ final class CompareSessionController: ObservableObject {
     @Published private(set) var overlayBlend = 0.5
     @Published private(set) var differenceGain = 1.0
     @Published var scopeSource: CompareScopeSource = .primary
+    @Published var safeAreaGuide: CompareSafeAreaGuide = .none
+    @Published var aspectRatioGuide: CompareAspectRatioGuide = .none
     @Published private(set) var audioSource: CompareAudioSource = .primary
     @Published private(set) var secondaryURL: URL?
     @Published private(set) var mapping: CompareTimelineMapping?
@@ -260,6 +314,8 @@ final class CompareSessionController: ObservableObject {
         overlayBlend = 0.5
         differenceGain = 1
         scopeSource = .primary
+        safeAreaGuide = .none
+        aspectRatioGuide = .none
         audioSource = .primary
     }
 
