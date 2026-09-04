@@ -120,7 +120,11 @@ private struct FileAndWindowHandlers: ViewModifier {
                 guard let command = notification.appCommand,
                       case .captureScreenshot = command else { return }
                 guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
-                controller.captureScreenshot()
+                if compareSession.isActive {
+                    compareSession.captureComparisonStill(primary: controller)
+                } else {
+                    controller.captureScreenshot()
+                }
             }
             .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
                 guard let command = notification.appCommand,

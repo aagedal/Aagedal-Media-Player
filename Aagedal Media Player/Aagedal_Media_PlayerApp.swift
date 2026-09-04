@@ -17,6 +17,10 @@ struct CanOpenNextFileKey: FocusedValueKey {
     typealias Value = Bool
 }
 
+struct IsCompareModeActiveKey: FocusedValueKey {
+    typealias Value = Bool
+}
+
 extension FocusedValues {
     var isMediaLoaded: Bool? {
         get { self[IsMediaLoadedKey.self] }
@@ -32,6 +36,11 @@ extension FocusedValues {
         get { self[CanOpenNextFileKey.self] }
         set { self[CanOpenNextFileKey.self] = newValue }
     }
+
+    var isCompareModeActive: Bool? {
+        get { self[IsCompareModeActiveKey.self] }
+        set { self[IsCompareModeActiveKey.self] = newValue }
+    }
 }
 
 @main
@@ -40,6 +49,7 @@ struct Aagedal_Media_PlayerApp: App {
     @FocusedValue(\.isMediaLoaded) private var isMediaLoaded
     @FocusedValue(\.canOpenPreviousFile) private var canOpenPreviousFile
     @FocusedValue(\.canOpenNextFile) private var canOpenNextFile
+    @FocusedValue(\.isCompareModeActive) private var isCompareModeActive
     @AppStorage(AppSettings.allowMultipleWindows.key)
     private var allowMultipleWindows = AppSettings.allowMultipleWindows.defaultValue
 
@@ -102,7 +112,7 @@ struct Aagedal_Media_PlayerApp: App {
                 .disabled(!(canOpenNextFile ?? false))
             }
             CommandGroup(replacing: .saveItem) {
-                Button("Save Screenshot") {
+                Button(isCompareModeActive == true ? "Export Comparison Still" : "Save Screenshot") {
                     NotificationCenter.default.post(.captureScreenshot)
                 }
                 .keyboardShortcut("s")

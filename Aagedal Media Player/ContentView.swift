@@ -168,6 +168,7 @@ struct ContentView: View {
         }
         .ignoresSafeArea()
         .focusedSceneValue(\.isMediaLoaded, isMediaLoaded)
+        .focusedSceneValue(\.isCompareModeActive, compareSession.isActive)
         .focusedSceneValue(\.canOpenPreviousFile, windowCoordinator.canOpenPreviousFile)
         .focusedSceneValue(\.canOpenNextFile, windowCoordinator.canOpenNextFile)
         .frame(minWidth: 270, minHeight: 200)
@@ -472,6 +473,16 @@ struct ContentView: View {
                     secondaryController: compareSession.secondaryController,
                     isActive: compareSession.isActive
                 )
+
+                Button(action: { compareSession.captureComparisonStill(primary: controller) }) {
+                    Image(systemName: "square.and.arrow.down")
+                        .font(.system(size: 15))
+                        .foregroundColor(.white.opacity(0.9))
+                }
+                .buttonStyle(.plain)
+                .help("Export an annotated comparison still (Command-S)")
+                .accessibilityLabel("Export comparison still")
+                .disabled(!compareSession.isSecondaryReady)
 
                 Button(action: openCompareFilePanel) {
                     Image(systemName: "arrow.triangle.2.circlepath")

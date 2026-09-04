@@ -522,6 +522,23 @@ final class CompareSessionController: ObservableObject {
         secondaryController.seekTo(expected)
     }
 
+    func secondaryTime(forPrimaryTime primaryTime: TimeInterval) -> TimeInterval {
+        mappedSecondaryTime(for: primaryTime)
+    }
+
+    func captureComparisonStill(primary: PlayerController) {
+        guard isActive,
+              isSecondaryReady,
+              let secondaryItem = secondaryController.mediaItem,
+              let mapping else { return }
+        let primaryTime = primary.currentPlaybackTime
+        primary.captureComparisonStill(
+            secondaryItem: secondaryItem,
+            secondaryTime: secondaryTime(forPrimaryTime: primaryTime),
+            alignmentMode: mapping.mode
+        )
+    }
+
     private func mappedSecondaryTime(for primaryTime: TimeInterval) -> TimeInterval {
         mapping?.secondaryTime(
             forPrimaryTime: primaryTime,

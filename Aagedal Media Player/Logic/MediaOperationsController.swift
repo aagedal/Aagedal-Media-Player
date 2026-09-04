@@ -77,6 +77,133 @@ final class MediaOperationsController: ObservableObject {
         }
     }
 
+    func captureComparisonStill(
+        primaryItem: MediaItem,
+        secondaryItem: MediaItem,
+        primaryTime: TimeInterval,
+        secondaryTime: TimeInterval,
+        alignmentMode: CompareAlignmentMode
+    ) {
+        guard !screenshotState.isInFlight else { return }
+        screenshotFeedbackDismissal.cancel()
+
+        let clampedPrimaryTime = ComparisonStillFrameExtractor.clampedTime(
+            primaryTime,
+            for: primaryItem
+        )
+        let clampedSecondaryTime = ComparisonStillFrameExtractor.clampedTime(
+            secondaryTime,
+            for: secondaryItem
+        )
+
+        // Freeze all user-visible values before asynchronous frame extraction
+        // begins. Playback may continue while the still is being prepared.
+        let details = ComparisonStillDetails(
+            primary: ComparisonStillSourceDetails(item: primaryItem, time: clampedPrimaryTime),
+            secondary: ComparisonStillSourceDetails(item: secondaryItem, time: clampedSecondaryTime),
+            alignmentLabel: alignmentMode.label
+        )
+
+        taskOwner.start(.screenshot) { [weak self] token, _ in
+            await self?.performComparisonStill(
+                primaryItem: primaryItem,
+                secondaryItem: secondaryItem,
+                primaryTime: clampedPrimaryTime,
+                secondaryTime: clampedSecondaryTime,
+                details: details,
+                token: token
+            )
+        }
+    }
+
+    private func performComparisonStill(
+        primaryItem: MediaItem,
+        secondaryItem: MediaItem,
+        primaryTime: TimeInterval,
+        secondaryTime: TimeInterval,
+        details: ComparisonStillDetails,
+        token: MediaOperationTaskOwner.Token
+    ) async {
+        guard taskOwner.isCurrent(.screenshot, token: token) else { return }
+
+        screenshotState = .idle
+        let primaryBaseName = primaryItem.url.deletingPathExtension().lastPathComponent
+        let secondaryBaseName = secondaryItem.url.deletingPathExtension().lastPathComponent
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyyMMdd_HHmmss"
+        let timestamp = dateFormatter.string(from: Date())
+        let outputName = "\(primaryBaseName)_vs_\(secondaryBaseName)_\(timestamp).png"
+
+        let output: CoordinatedOutput
+        let resolvedDir = SettingsView.resolvedScreenshotDirectory(sourceURL: primaryItem.url)
+
+        if let dir = resolvedDir {
+            let needsSecurityScope = dir != primaryItem.url.deletingLastPathComponent()
+            if needsSecurityScope { _ = dir.startAccessingSecurityScopedResource() }
+            defer { if needsSecurityScope { dir.stopAccessingSecurityScopedResource() } }
+            output = OutputCoordinator.automatic(directory: dir, preferredFilename: outputName)
+        } else {
+            let chosenURL: URL? = await withCheckedContinuation { continuation in
+                let panel = NSSavePanel()
+                screenshotSavePanel = panel
+                panel.nameFieldStringValue = outputName
+                panel.allowedContentTypes = [.png]
+                panel.canCreateDirectories = true
+                panel.directoryURL = primaryItem.url.deletingLastPathComponent()
+
+                panel.begin { response in
+                    continuation.resume(returning: response == .OK ? panel.url : nil)
+                }
+            }
+            screenshotSavePanel = nil
+
+            guard taskOwner.isCurrent(.screenshot, token: token),
+                  !Task.isCancelled,
+                  let chosenURL else { return }
+            output = OutputCoordinator.userConfirmed(destinationURL: chosenURL)
+        }
+
+        defer { output.discard() }
+        screenshotState = .saving
+
+        do {
+            let primaryImage = try await ComparisonStillFrameExtractor.image(
+                from: primaryItem.url,
+                at: primaryTime
+            )
+            try Task.checkCancellation()
+            guard taskOwner.isCurrent(.screenshot, token: token) else { return }
+
+            let secondaryImage = try await ComparisonStillFrameExtractor.image(
+                from: secondaryItem.url,
+                at: secondaryTime
+            )
+            try Task.checkCancellation()
+            guard taskOwner.isCurrent(.screenshot, token: token) else { return }
+
+            let rendered = try ComparisonStillRenderer.render(
+                primaryImage: primaryImage,
+                secondaryImage: secondaryImage,
+                details: details
+            )
+            try ComparisonStillRenderer.writePNG(rendered, to: output.temporaryURL)
+            guard taskOwner.isCurrent(.screenshot, token: token), !Task.isCancelled else { return }
+
+            let outputURL = try output.commit()
+            logger.info("Comparison still saved: \(outputURL.lastPathComponent)")
+            screenshotState = .succeeded(outputURL)
+            clearScreenshotSuccess(outputURL: outputURL)
+        } catch is CancellationError {
+            guard taskOwner.isCurrent(.screenshot, token: token) else { return }
+            screenshotState = .idle
+            logger.info("Comparison still cancelled")
+        } catch {
+            guard taskOwner.isCurrent(.screenshot, token: token) else { return }
+            screenshotState = .failed("Comparison still failed: \(error.localizedDescription)")
+            logger.error("Comparison still failed: \(error.localizedDescription)")
+        }
+    }
+
     private func performScreenshot(
         for item: MediaItem,
         at time: Double,

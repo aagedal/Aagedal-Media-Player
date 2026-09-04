@@ -32,7 +32,10 @@ struct MediaOperationFeedbackOverlay: View {
             operationOverlay(
                 statusIcon: "checkmark.circle.fill",
                 iconColor: .green,
-                statusText: "Screenshot saved.",
+                statusText: url.pathExtension.lowercased() == "png"
+                    && url.lastPathComponent.contains("_vs_")
+                    ? "Comparison still saved."
+                    : "Screenshot saved.",
                 completedURL: url
             )
         case .failed(let message):

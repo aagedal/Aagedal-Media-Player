@@ -1313,6 +1313,21 @@ final class PlayerController: ObservableObject {
         mediaOperations.captureScreenshot(for: item, at: currentPlaybackTime)
     }
 
+    func captureComparisonStill(
+        secondaryItem: MediaItem,
+        secondaryTime: TimeInterval,
+        alignmentMode: CompareAlignmentMode
+    ) {
+        guard let primaryItem = mediaItem else { return }
+        mediaOperations.captureComparisonStill(
+            primaryItem: primaryItem,
+            secondaryItem: secondaryItem,
+            primaryTime: currentPlaybackTime,
+            secondaryTime: secondaryTime,
+            alignmentMode: alignmentMode
+        )
+    }
+
     func dismissScreenshotFeedback() {
         mediaOperations.dismissScreenshotFeedback()
     }

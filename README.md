@@ -173,7 +173,7 @@ Quickly check basic metadata like resolution, frame rate, codec, color space and
 | Cmd + O | Open file |
 | Cmd + N | New window |
 | Cmd + W | Close window |
-| Cmd + S | Save screenshot |
+| Cmd + S | Save screenshot, or export an annotated still in Compare Mode |
 | Cmd + I | Toggle inspector |
 | Cmd + Shift + W | Toggle video scopes |
 | Cmd + Shift + S | Sync timecode across windows |
