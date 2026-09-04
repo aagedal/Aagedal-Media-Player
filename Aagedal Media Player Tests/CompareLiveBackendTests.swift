@@ -70,6 +70,150 @@ final class CompareLiveBackendTests: XCTestCase {
         )
     }
 
+    func testSupportedFrameRatesUseRelativeAlignmentAndPairedSeek() async throws {
+        let fixtures = try fixtureDirectory(requiredFiles: [
+            "rates/23.976.mp4",
+            "rates/24.mp4",
+            "rates/25.mp4",
+            "rates/29.97.mp4",
+            "rates/30.mp4",
+            "rates/50.mp4",
+            "rates/59.94.mp4",
+            "rates/60.mp4",
+        ])
+        let rates: [(name: String, value: Double)] = [
+            ("23.976", 24_000.0 / 1_001.0),
+            ("24", 24),
+            ("25", 25),
+            ("29.97", 30_000.0 / 1_001.0),
+            ("30", 30),
+            ("50", 50),
+            ("59.94", 60_000.0 / 1_001.0),
+            ("60", 60),
+        ]
+
+        for rate in rates {
+            let url = fixtures.appending(path: "rates/\(rate.name).mp4")
+            try await exercisePreparedPair(
+                primaryURL: url,
+                secondaryURL: url,
+                primaryBackend: .mpv,
+                secondaryBackend: .avFoundation,
+                seekTarget: 0.2,
+                tolerance: 1 / rate.value,
+                description: "\(rate.name) fps"
+            ) { primary, secondary, session in
+                XCTAssertEqual(session.mapping?.mode, .relative, rate.name)
+                let primaryRate = try XCTUnwrap(
+                    primary.mediaItem?.metadata?.primaryVideoStream?.frameRate?.value,
+                    rate.name
+                )
+                let secondaryRate = try XCTUnwrap(
+                    secondary.mediaItem?.metadata?.primaryVideoStream?.frameRate?.value,
+                    rate.name
+                )
+                XCTAssertEqual(
+                    primaryRate,
+                    rate.value,
+                    accuracy: 0.001,
+                    rate.name
+                )
+                XCTAssertEqual(
+                    secondaryRate,
+                    rate.value,
+                    accuracy: 0.001,
+                    rate.name
+                )
+                XCTAssertEqual(
+                    CompareDriftPolicy(primaryFrameRate: rate.value).frameDuration,
+                    1 / rate.value,
+                    accuracy: 0.000_001,
+                    rate.name
+                )
+            }
+        }
+    }
+
+    func testRotatedAnamorphicAndPortraitPairShareDisplayGeometry() async throws {
+        let fixtures = try fixtureDirectory(requiredFiles: [
+            "rotation-par.mp4",
+            "portrait.mp4",
+        ])
+
+        try await exercisePreparedPair(
+            primaryURL: fixtures.appending(path: "rotation-par.mp4"),
+            secondaryURL: fixtures.appending(path: "portrait.mp4"),
+            primaryBackend: .mpv,
+            secondaryBackend: .avFoundation,
+            seekTarget: 0.75,
+            tolerance: 1.0 / 25.0,
+            description: "rotated/anamorphic and portrait"
+        ) { primary, secondary, session in
+            let primaryItem = try XCTUnwrap(primary.mediaItem)
+            let secondaryItem = try XCTUnwrap(secondary.mediaItem)
+            let primaryAspect = try XCTUnwrap(primaryItem.videoDisplayAspectRatio)
+            let secondaryAspect = try XCTUnwrap(secondaryItem.videoDisplayAspectRatio)
+            XCTAssertEqual(session.mapping?.mode, .relative)
+            XCTAssertEqual(primaryAspect, 9.0 / 16.0, accuracy: 0.001)
+            XCTAssertEqual(secondaryAspect, 9.0 / 16.0, accuracy: 0.001)
+
+            let geometry = CompareDisplayGeometry(
+                canvasSize: CGSize(width: 1_600, height: 900),
+                primaryAspectRatio: primary.videoAspectRatio,
+                secondaryAspectRatio: secondary.videoAspectRatio
+            )
+            XCTAssertTrue(geometry.displayAspectsMatch)
+            XCTAssertEqual(
+                geometry.primaryReferenceRect,
+                CGRect(x: 546.875, y: 0, width: 506.25, height: 900)
+            )
+            XCTAssertTrue(
+                CompareMediaComparison.mismatches(
+                    primary: primaryItem,
+                    secondary: secondaryItem
+                ).contains { $0.kind == .raster }
+            )
+        }
+    }
+
+    func testSDRAndHDRPairExposeColorMismatchAndScopeTransferFunctions() async throws {
+        let fixtures = try fixtureDirectory(requiredFiles: [
+            "sdr-bt709.mp4",
+            "hdr10.mp4",
+        ])
+
+        try await exercisePreparedPair(
+            primaryURL: fixtures.appending(path: "sdr-bt709.mp4"),
+            secondaryURL: fixtures.appending(path: "hdr10.mp4"),
+            primaryBackend: .mpv,
+            secondaryBackend: .avFoundation,
+            seekTarget: 0.75,
+            tolerance: 1.0 / 24.0,
+            description: "SDR/HDR"
+        ) { primary, secondary, session in
+            let primaryItem = try XCTUnwrap(primary.mediaItem)
+            let secondaryItem = try XCTUnwrap(secondary.mediaItem)
+            XCTAssertEqual(session.mapping?.mode, .relative)
+
+            let mismatchKinds = CompareMediaComparison.mismatches(
+                primary: primaryItem,
+                secondary: secondaryItem
+            ).map(\.kind)
+            XCTAssertTrue(mismatchKinds.contains(.transferFunction))
+            XCTAssertTrue(mismatchKinds.contains(.colorPrimaries))
+
+            guard case .sdr = primary.frameCapture.transferFunction else {
+                XCTFail("The BT.709 primary did not configure SDR scope capture.")
+                return
+            }
+            guard case .pq = secondary.frameCapture.transferFunction else {
+                XCTFail("The HDR10 secondary did not configure PQ scope capture.")
+                return
+            }
+            XCTAssertEqual(secondary.frameCapture.contentPeakNits, 1_000)
+        }
+    }
+
     func testDisjointSourceTimecodesClampToFirstSecondaryFrame() async throws {
         let fixtures = try fixtureDirectory(requiredFiles: [
             "compare/source-a.mov",
@@ -341,6 +485,55 @@ final class CompareLiveBackendTests: XCTestCase {
             secondaryReachedPauseTarget,
             "Paused synchronization did not complete within one-frame tolerance."
         )
+
+        session.seek(primary: primary, to: 1)
+        let primaryReachedStepStart = await waitUntil(tolerance: frameDuration) {
+            primary.playbackTimeSnapshot() - 1
+        }
+        XCTAssertTrue(primaryReachedStepStart, "Primary frame-step setup seek failed.")
+        let secondaryReachedStepStart = await waitUntil(tolerance: frameDuration) {
+            secondary.playbackTimeSnapshot() - 2
+        }
+        XCTAssertTrue(secondaryReachedStepStart, "Secondary frame-step setup seek failed.")
+
+        session.seekByFrames(primary: primary, frameCount: 1)
+        let steppedPrimaryTime = 1 + frameDuration
+        let steppedSecondaryTime = 2 + frameDuration
+        let primarySteppedOneFrame = await waitUntil(tolerance: frameDuration) {
+            primary.playbackTimeSnapshot() - steppedPrimaryTime
+        }
+        XCTAssertTrue(primarySteppedOneFrame, "Primary frame step did not complete.")
+        let secondarySteppedOneFrame = await waitUntil(tolerance: frameDuration) {
+            secondary.playbackTimeSnapshot() - steppedSecondaryTime
+        }
+        XCTAssertTrue(secondarySteppedOneFrame, "Secondary frame step did not complete.")
+
+        session.scrub(primary: primary, to: 1.5)
+        session.endScrubbing(primary: primary, at: 1.5)
+        let primaryCompletedScrub = await waitUntil(tolerance: frameDuration) {
+            primary.playbackTimeSnapshot() - 1.5
+        }
+        XCTAssertTrue(primaryCompletedScrub, "Primary scrub did not complete.")
+        let secondaryCompletedScrub = await waitUntil(tolerance: frameDuration) {
+            secondary.playbackTimeSnapshot() - 2.5
+        }
+        XCTAssertTrue(secondaryCompletedScrub, "Secondary scrub did not complete.")
+
+        session.fastForward(primary: primary)
+        let shuttleStarted = await waitUntil {
+            primary.isPlaying && secondary.isPlaying
+        }
+        XCTAssertTrue(shuttleStarted, "Paired forward shuttle did not start.")
+        session.fastForward(primary: primary)
+        let shuttleAccelerated = await waitUntil {
+            primary.currentPlaybackSpeed > 1 && secondary.currentPlaybackSpeed > 1
+        }
+        XCTAssertTrue(shuttleAccelerated, "Paired forward shuttle did not accelerate.")
+        session.pause(primary: primary)
+        let shuttlePaused = await waitUntil {
+            !primary.isPlaying && !secondary.isPlaying
+        }
+        XCTAssertTrue(shuttlePaused, "Paired forward shuttle did not pause.")
         XCTAssertFalse(primary.isAudioSuppressed)
         XCTAssertTrue(secondary.isAudioSuppressed)
     }
@@ -419,6 +612,66 @@ final class CompareLiveBackendTests: XCTestCase {
             secondary.playbackTimeSnapshot() - 1.25
         }
         XCTAssertTrue(secondaryReachedTarget)
+        XCTAssertFalse(primary.isAudioSuppressed)
+        XCTAssertTrue(secondary.isAudioSuppressed)
+    }
+
+    private func exercisePreparedPair(
+        primaryURL: URL,
+        secondaryURL: URL,
+        primaryBackend: PlaybackBackend,
+        secondaryBackend: PlaybackBackend,
+        seekTarget: TimeInterval,
+        tolerance: TimeInterval,
+        description: String,
+        assertions: (
+            _ primary: PlayerController,
+            _ secondary: PlayerController,
+            _ session: CompareSessionController
+        ) throws -> Void
+    ) async throws {
+        let primary = makeController(forcedBackend: primaryBackend)
+        let secondary = makeController(forcedBackend: secondaryBackend)
+        let session = CompareSessionController(secondaryController: secondary)
+
+        defer {
+            session.stop()
+            primary.teardown()
+        }
+
+        try await loadPrimary(primary, url: primaryURL)
+        try await attachMPVSurfaceIfNeeded(to: primary)
+        guard await waitUntil({ primary.isReady }) else {
+            XCTFail("Primary decoder did not become ready for \(description).")
+            return
+        }
+
+        session.loadSecondary(secondaryURL, alignedWith: primary)
+        guard await waitUntil({ session.secondaryURL == secondaryURL }) else {
+            XCTFail("Comparison metadata did not load for \(description).")
+            return
+        }
+        try await attachMPVSurfaceIfNeeded(to: secondary)
+        guard await waitUntil({ session.isSecondaryReady }) else {
+            XCTFail(
+                "Secondary decoder did not become ready for \(description): " +
+                    (session.loadError ?? "no backend diagnostic")
+            )
+            return
+        }
+
+        try assertions(primary, secondary, session)
+
+        session.seek(primary: primary, to: seekTarget)
+        let primaryReachedTarget = await waitUntil(tolerance: tolerance) {
+            primary.playbackTimeSnapshot() - seekTarget
+        }
+        XCTAssertTrue(primaryReachedTarget, "Primary seek failed for \(description).")
+        let expectedSecondaryTime = session.secondaryTime(forPrimaryTime: seekTarget)
+        let secondaryReachedTarget = await waitUntil(tolerance: tolerance) {
+            secondary.playbackTimeSnapshot() - expectedSecondaryTime
+        }
+        XCTAssertTrue(secondaryReachedTarget, "Secondary seek failed for \(description).")
         XCTAssertFalse(primary.isAudioSuppressed)
         XCTAssertTrue(secondary.isAudioSuppressed)
     }
@@ -644,14 +897,14 @@ final class CompareLiveBackendTests: XCTestCase {
         let requiredFiles = ["MANIFEST.txt"] + requiredFiles
         let manifestURL = url.appending(path: "MANIFEST.txt")
         let manifest = try? String(contentsOf: manifestURL, encoding: .utf8)
-        guard manifest?.split(whereSeparator: \.isNewline).contains("schema=4") == true,
+        guard manifest?.split(whereSeparator: \.isNewline).contains("schema=5") == true,
               requiredFiles.allSatisfy({
             FileManager.default.fileExists(atPath: url.appending(path: $0).path)
         }) else {
             throw XCTSkip(
-                "Compare fixtures are unavailable or stale (schema 4). Run " +
+                "Compare fixtures are unavailable or stale (schema 5). Run " +
                     "scripts/generate-test-fixtures.sh or set MEDIA_FIXTURE_DIR " +
-                    "to a schema=4 fixture tree."
+                    "to a schema=5 fixture tree."
             )
         }
         return url

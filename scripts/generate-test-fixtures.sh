@@ -124,18 +124,34 @@ ffmpeg \
 # encoded frames.
 ffmpeg \
     -noautorotate -display_rotation:v 90 \
-    -f lavfi -i "testsrc2=size=720x576:rate=25:duration=0.5" \
+    -f lavfi -i "testsrc2=size=720x576:rate=25:duration=2" \
     -vf "setsar=64/45" -an -c:v libx264 -preset ultrafast -crf 28 \
     -pix_fmt yuv420p -movflags +faststart "$output_dir/rotation-par.mp4"
+
+# A physically portrait square-pixel source with the same 9:16 display aspect
+# as rotation-par.mp4. Comparing the pair verifies that display geometry is
+# normalized from metadata rather than from either coded raster.
+ffmpeg \
+    -f lavfi -i "testsrc2=size=324x576:rate=25:duration=2" \
+    -an -c:v libx264 -preset ultrafast -crf 28 -pix_fmt yuv420p \
+    -movflags +faststart "$output_dir/portrait.mp4"
 
 # A small HDR10 clip carrying BT.2020/PQ, mastering-display, and MaxCLL/MaxFALL
 # metadata. repeat-headers keeps the metadata available to prefix-only readers.
 ffmpeg \
-    -f lavfi -i "testsrc2=size=160x90:rate=24:duration=0.5" \
+    -f lavfi -i "testsrc2=size=160x90:rate=24:duration=2" \
     -an -c:v libx265 -preset ultrafast -crf 28 -pix_fmt yuv420p10le \
     -color_primaries bt2020 -color_trc smpte2084 -colorspace bt2020nc \
     -x265-params "log-level=error:hdr10=1:repeat-headers=1:colorprim=bt2020:transfer=smpte2084:colormatrix=bt2020nc:master-display=G(13250,34500)B(7500,3000)R(34000,16000)WP(15635,16450)L(10000000,50):max-cll=1000,400" \
     -tag:v hvc1 -movflags +faststart "$output_dir/hdr10.mp4"
+
+# An explicitly tagged SDR partner for hdr10.mp4. Keeping both clips at the
+# same rate and duration isolates the color-system mismatch in Compare Mode.
+ffmpeg \
+    -f lavfi -i "testsrc2=size=160x90:rate=24:duration=2" \
+    -an -c:v libx264 -preset ultrafast -crf 28 -pix_fmt yuv420p \
+    -color_primaries bt709 -color_trc bt709 -colorspace bt709 -color_range tv \
+    -movflags +faststart "$output_dir/sdr-bt709.mp4"
 
 # Six independently identifiable channels in standard 5.1 order.
 ffmpeg \
@@ -178,7 +194,7 @@ ffmpeg \
 
 printf '%s\n' \
     'Aagedal Media Player generated media fixtures' \
-    'schema=4' \
+    'schema=5' \
     "ffmpeg=$($ffmpeg_binary -hide_banner -version 2>&1 | head -n 1)" \
     > "$output_dir/MANIFEST.txt"
 

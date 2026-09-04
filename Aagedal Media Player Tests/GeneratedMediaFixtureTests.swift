@@ -146,7 +146,7 @@ final class GeneratedMediaFixtureTests: XCTestCase {
 
         try await loadMultichannelFixture(into: controller)
         let channelsLoaded = await waitUntil {
-            controller.player != nil && controller.selectedAudioChannelCount == 6
+            controller.isReady && controller.selectedAudioChannelCount == 6
         }
         XCTAssertTrue(channelsLoaded)
 

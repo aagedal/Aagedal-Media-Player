@@ -14,6 +14,7 @@ All notable changes to Aagedal Media Player.
 - Release preflight validation for version/build ordering, changelog and appcast metadata, Sparkle signatures and URLs, exported app signing, and bundled ffmpeg provenance.
 - Reproducible 1, 8, and 24-hour multichannel audio-waveform performance profiling.
 - Real-decoder Compare Mode fixtures for mixed-codec relative alignment and disjoint source-timecode ranges.
+- Mixed-backend Compare Mode validation for paired stepping, scrubbing, forward shuttle, supported frame rates, rotated anamorphic geometry, and SDR/HDR metadata.
 
 ### Changed
 - Split playback backends, track selection, media operations, window opening, overlays, settings, and command routing into focused components.

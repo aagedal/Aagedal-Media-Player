@@ -53,7 +53,8 @@ through 2026-09-04.
 Deterministic coverage now verifies rapid B replacement, stopping during
 metadata loading, and preservation of specific decoder failures. Real-decoder
 integration coverage now verifies source-timecode alignment, paired
-seek/play/pause, one-frame drift convergence, and audio suppression for
+seek/play/pause, frame stepping, scrubbing, forward shuttle acceleration,
+one-frame drift convergence, and audio suppression for
 MPV/MPV, AVFoundation/AVFoundation, and both mixed-backend directions using
 generated fixtures. Additional mixed-backend fixtures now verify relative
 alignment when neither file has source timecode while codec, raster, frame
@@ -61,7 +62,10 @@ rate, audio codec, and duration differ. A disjoint source-timecode pair also
 verifies no-overlap detection and clamping B to its first frame. Eight-second
 sustained playback coverage now verifies that all four backend pairings keep
 advancing and reconverge within one second of a transient out-of-frame
-excursion. Longer production-resolution validation
+excursion. Additional mixed-backend checks exercise every supported frame-rate
+variant, normalize a rotated anamorphic source against a square-pixel portrait
+source, and retain explicit SDR/HDR metadata and scope-transfer distinctions.
+Longer production-resolution validation
 remains before Phase 1 acceptance is complete. A repeatable opt-in profiler now
 generates UHD 10-bit HDR pairs and runs the same drift assertions for an
 extended duration across all four backend pairings, while reporting wall time,
@@ -200,9 +204,10 @@ directions for timecode alignment, shared transport, and eight seconds of
 sustained playback without a decoder stall or an out-of-frame excursion that
 persists longer than one second. Mixed-backend fixtures also cover relative
 alignment with simultaneous codec/raster/rate/duration differences, plus a
-disjoint source-timecode range. Isolated rate variants, rotated/anamorphic
-pairing, SDR/HDR pairing, the full raster/color matrix, and longer
-production-resolution runs still require hands-on validation.
+disjoint source-timecode range. Generated integration checks now cover isolated
+rate variants, rotated/anamorphic pairing, and SDR/HDR pairing. The full
+raster/color matrix and longer production-resolution runs still require
+hands-on validation.
 
 ## Release and marketing work
 
