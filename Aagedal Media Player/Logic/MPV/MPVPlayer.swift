@@ -70,6 +70,8 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
     private var pendingStartTime: Double = 0
     private var pendingAutostart: Bool = false
     private var isAudioTrackDisabled = false
+    private var audioChannelRouting = AudioChannelRouting()
+    private(set) var isAudioChannelFilterActive = false
     var isAudioTrackSelectionDisabled: Bool { isAudioTrackDisabled }
 
     // Start time to seek to after file loads
@@ -213,6 +215,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         // before the drawable existed and mpv had an initialized context.
         setDouble(MPVProperty.volume, volume)
         setFlag(MPVProperty.mute, isMuted)
+        applyAudioChannelRouting()
 
         mpv_observe_property(mpv, 0, MPVProperty.timePos, MPV_FORMAT_DOUBLE)
         mpv_observe_property(mpv, 0, MPVProperty.duration, MPV_FORMAT_DOUBLE)
@@ -460,6 +463,22 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
 
     func enableAudioTrackSelection() {
         isAudioTrackDisabled = false
+    }
+
+    func setAudioChannelRouting(_ routing: AudioChannelRouting) {
+        audioChannelRouting = routing
+        applyAudioChannelRouting()
+    }
+
+    private func applyAudioChannelRouting() {
+        if let filter = audioChannelRouting.mpvAudioFilter {
+            if command("af", args: ["add", "@amp-channel-route:\(filter)"]) {
+                isAudioChannelFilterActive = true
+            }
+        } else if isAudioChannelFilterActive,
+                  command("af", args: ["remove", "@amp-channel-route"]) {
+            isAudioChannelFilterActive = false
+        }
     }
 
     // MARK: - Subtitle Tracks

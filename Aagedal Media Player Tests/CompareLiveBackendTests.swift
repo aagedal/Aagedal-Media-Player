@@ -61,6 +61,60 @@ final class CompareLiveBackendTests: XCTestCase {
         try await exercisePair(primaryBackend: .avFoundation, secondaryBackend: .mpv)
     }
 
+    func testMixedBackendsIsolateMatchingMultichannelAudioAndRestoreOnStop() async throws {
+        let url = try fixtureDirectory().appending(path: "multichannel-5.1.m4a")
+        let primary = makeController(forcedBackend: .mpv)
+        let secondary = makeController(forcedBackend: .avFoundation)
+        let session = CompareSessionController(secondaryController: secondary)
+
+        defer {
+            session.stop()
+            primary.teardown()
+        }
+
+        try await loadPrimary(primary, url: url)
+        try await attachMPVSurfaceIfNeeded(to: primary)
+        let primaryReady = await waitUntil {
+            primary.isReady && primary.selectedAudioChannelCount == 6
+        }
+        XCTAssertTrue(primaryReady)
+        primary.toggleAudioChannelMute(5)
+        XCTAssertEqual(primary.audioChannelRouting.mutedChannels, [5])
+
+        session.loadSecondary(url, alignedWith: primary)
+        let metadataLoaded = await waitUntil { session.secondaryURL == url }
+        XCTAssertTrue(metadataLoaded)
+        let secondaryReady = await waitUntil {
+            session.isSecondaryReady && secondary.selectedAudioChannelCount == 6
+        }
+        XCTAssertTrue(secondaryReady)
+
+        let center = try XCTUnwrap(
+            session.availableComparedAudioChannels(primary: primary).first {
+                $0.label == "Center"
+            }
+        )
+        session.selectComparedAudioChannel(center, primary: primary)
+
+        XCTAssertEqual(session.comparedAudioChannel?.label, "Center")
+        XCTAssertEqual(primary.audioChannelRouting.soloedChannels, [2])
+        XCTAssertEqual(secondary.audioChannelRouting.soloedChannels, [2])
+        XCTAssertEqual(primary.mpvPlayer?.isAudioChannelFilterActive, true)
+        XCTAssertNotNil(secondary.player?.currentItem?.audioMix)
+        XCTAssertFalse(primary.isAudioSuppressed)
+        XCTAssertTrue(secondary.isAudioSuppressed)
+
+        session.selectAudioSource(.secondary, primary: primary)
+        XCTAssertTrue(primary.isAudioSuppressed)
+        XCTAssertFalse(secondary.isAudioSuppressed)
+
+        session.stop()
+        XCTAssertNil(session.comparedAudioChannel)
+        XCTAssertEqual(primary.audioChannelRouting.mutedChannels, [5])
+        XCTAssertEqual(primary.audioChannelRouting.soloedChannels, [])
+        XCTAssertFalse(primary.isAudioSuppressed)
+    }
+
     private func exercisePair(
         primaryBackend: PlaybackBackend,
         secondaryBackend: PlaybackBackend

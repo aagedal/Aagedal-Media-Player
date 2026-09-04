@@ -365,7 +365,9 @@ struct ContentView: View {
     // MARK: - Top Toolbar
 
     private var topToolbar: some View {
-        HStack(spacing: 10) {
+        let comparedChannels = compareSession.availableComparedAudioChannels(primary: controller)
+
+        return HStack(spacing: 10) {
             Spacer()
 
             if compareSession.isLoading {
@@ -405,6 +407,49 @@ struct ContentView: View {
                 .help("Choose the only comparison source that is audible")
                 .accessibilityLabel("Comparison audio source")
                 .accessibilityValue(compareSession.audioSource.label)
+
+                Menu {
+                    Button {
+                        compareSession.selectComparedAudioChannel(nil, primary: controller)
+                    } label: {
+                        HStack {
+                            Text("All Channels")
+                            if compareSession.comparedAudioChannel == nil {
+                                Image(systemName: "checkmark")
+                            }
+                        }
+                    }
+
+                    Divider()
+
+                    ForEach(comparedChannels) { channel in
+                        Button {
+                            compareSession.selectComparedAudioChannel(channel, primary: controller)
+                        } label: {
+                            HStack {
+                                Text(channel.label)
+                                if compareSession.comparedAudioChannel?.id == channel.id {
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                        }
+                    }
+                } label: {
+                    Label(
+                        compareSession.comparedAudioChannel?.label ?? "All Channels",
+                        systemImage: "speaker.wave.2"
+                    )
+                }
+                .menuStyle(.borderlessButton)
+                .fixedSize()
+                .disabled(comparedChannels.isEmpty)
+                .help(
+                    comparedChannels.isEmpty
+                        ? "Matching channel monitoring is unavailable for these audio layouts"
+                        : "Monitor all channels or isolate the matching channel in A and B"
+                )
+                .accessibilityLabel("Compared audio channel")
+                .accessibilityValue(compareSession.comparedAudioChannel?.label ?? "All channels")
 
                 Menu {
                     Picker("Safe Area", selection: $compareSession.safeAreaGuide) {

@@ -181,7 +181,7 @@ nonisolated struct CompareDriftPolicy: Equatable, Sendable {
     static let correctionCooldown: TimeInterval = 0.25
     static let correctionSettlementTimeout: TimeInterval = 1
     static let clockComparisonTolerance: TimeInterval = 0.001
-    static let avFoundationRateNudgeFraction = 0.1
+    static let avFoundationRateNudgeFraction = 0.15
     static let maximumRateCorrectionFraction = 0.5
     static let rateCorrectionGain = 2.0
     static let hardSeekThreshold: TimeInterval = 1
@@ -249,6 +249,7 @@ final class CompareSessionController: ObservableObject {
     @Published var safeAreaGuide: CompareSafeAreaGuide = .none
     @Published var aspectRatioGuide: CompareAspectRatioGuide = .none
     @Published private(set) var audioSource: CompareAudioSource = .primary
+    @Published private(set) var comparedAudioChannel: CompareAudioChannelOption?
     @Published private(set) var secondaryURL: URL?
     @Published private(set) var mapping: CompareTimelineMapping?
     @Published private(set) var isLoading = false
@@ -312,6 +313,7 @@ final class CompareSessionController: ObservableObject {
         readinessTask = nil
         endSecondaryLoadSignpost()
         Self.signposter.emitEvent("Secondary decoder failed")
+        selectComparedAudioChannel(nil, primary: primary)
         selectAudioSource(.primary, primary: primary)
         loadError = "The comparison file could not be played: \(failure.message)"
     }
@@ -336,6 +338,9 @@ final class CompareSessionController: ObservableObject {
         shouldResumeAfterAudioTrackSelection = false
         stopDriftCorrection()
         secondaryWaveformGenerator.cancel()
+        primary.setSessionAudioChannelRouting(nil)
+        secondaryController.setSessionAudioChannelRouting(nil)
+        comparedAudioChannel = nil
         secondaryController.teardown()
         // Replacing B is an explicit source change. Return monitoring to A so
         // the replacement cannot become audible merely because the old B was.
@@ -423,6 +428,9 @@ final class CompareSessionController: ObservableObject {
         stopDriftCorrection()
         endSecondaryLoadSignpost()
         secondaryWaveformGenerator.cancel()
+        primaryAudioController?.setSessionAudioChannelRouting(nil)
+        secondaryController.setSessionAudioChannelRouting(nil)
+        comparedAudioChannel = nil
         secondaryController.teardown()
         secondaryController.setAudioSuppressed(true)
         primaryAudioController?.setAudioSuppressed(false)
@@ -446,6 +454,46 @@ final class CompareSessionController: ObservableObject {
         safeAreaGuide = .none
         aspectRatioGuide = .none
         audioSource = .primary
+    }
+
+    func availableComparedAudioChannels(primary: PlayerController) -> [CompareAudioChannelOption] {
+        CompareAudioChannelMatcher.options(
+            primaryCount: primary.selectedAudioChannelCount,
+            primaryLayout: primary.selectedAudioStream?.channelLayout,
+            secondaryCount: secondaryController.selectedAudioChannelCount,
+            secondaryLayout: secondaryController.selectedAudioStream?.channelLayout
+        )
+    }
+
+    func selectComparedAudioChannel(
+        _ option: CompareAudioChannelOption?,
+        primary: PlayerController
+    ) {
+        guard let option else {
+            comparedAudioChannel = nil
+            primary.setSessionAudioChannelRouting(nil)
+            secondaryController.setSessionAudioChannelRouting(nil)
+            return
+        }
+
+        let available = availableComparedAudioChannels(primary: primary)
+        guard let current = available.first(where: { $0.id == option.id }) else {
+            selectComparedAudioChannel(nil, primary: primary)
+            return
+        }
+        comparedAudioChannel = current
+        primary.setSessionAudioChannelRouting(
+            AudioChannelRouting(
+                channelCount: primary.selectedAudioChannelCount,
+                soloedChannels: [current.primaryIndex]
+            )
+        )
+        secondaryController.setSessionAudioChannelRouting(
+            AudioChannelRouting(
+                channelCount: secondaryController.selectedAudioChannelCount,
+                soloedChannels: [current.secondaryIndex]
+            )
+        )
     }
 
     func selectAudioSource(_ source: CompareAudioSource, primary: PlayerController) {
@@ -505,6 +553,14 @@ final class CompareSessionController: ObservableObject {
             guard !Task.isCancelled,
                   self.loadGeneration.isCurrent(generation),
                   self.isActive else { return }
+            if let comparedAudioChannel = self.comparedAudioChannel,
+               let updatedChannel = self.availableComparedAudioChannels(primary: primary).first(where: {
+                   $0.id == comparedAudioChannel.id
+               }) {
+                self.selectComparedAudioChannel(updatedChannel, primary: primary)
+            } else {
+                self.selectComparedAudioChannel(nil, primary: primary)
+            }
             self.synchronize(primary: primary)
             let shouldResume = self.shouldResumeAfterAudioTrackSelection
             self.shouldResumeAfterAudioTrackSelection = false

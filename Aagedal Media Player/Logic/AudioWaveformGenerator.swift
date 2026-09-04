@@ -100,7 +100,7 @@ final class AudioWaveformGenerator: ObservableObject {
         error = nil
         isGenerating = true
 
-        let labels = Self.channelNames(count: channels, layout: channelLayout)
+        let labels = AudioChannelLabels.names(count: channels, layout: channelLayout)
 
         let colorHex = color.ffmpegHex
         let gamma = Self.boostToGamma(boost)
@@ -450,36 +450,4 @@ final class AudioWaveformGenerator: ObservableObject {
         )
     }
 
-    // MARK: - Channel Labels
-
-    private static func channelNames(count: Int, layout: String?) -> [String] {
-        if let layout, !layout.isEmpty {
-            let knownLayouts: [String: [String]] = [
-                "mono": ["Mono"],
-                "stereo": ["Left", "Right"],
-                "2.1": ["Left", "Right", "LFE"],
-                "3.0": ["Left", "Right", "Center"],
-                "3.0(back)": ["Left", "Right", "Back Center"],
-                "3.1": ["Left", "Right", "Center", "LFE"],
-                "4.0": ["Left", "Right", "Center", "Back Center"],
-                "quad": ["Left", "Right", "Back Left", "Back Right"],
-                "quad(side)": ["Left", "Right", "Side Left", "Side Right"],
-                "5.0": ["Left", "Right", "Center", "Back Left", "Back Right"],
-                "5.0(side)": ["Left", "Right", "Center", "Side Left", "Side Right"],
-                "5.1": ["Left", "Right", "Center", "LFE", "Back Left", "Back Right"],
-                "5.1(side)": ["Left", "Right", "Center", "LFE", "Side Left", "Side Right"],
-                "6.1": ["Left", "Right", "Center", "LFE", "Back Center", "Side Left", "Side Right"],
-                "7.1": ["Left", "Right", "Center", "LFE", "Back Left", "Back Right", "Side Left", "Side Right"],
-                "7.1(wide)": ["Left", "Right", "Center", "LFE", "Back Left", "Back Right", "Front Left of Center", "Front Right of Center"],
-            ]
-            let normalized = layout.lowercased()
-            if let names = knownLayouts[normalized], names.count == count {
-                return names
-            }
-        }
-
-        if count == 1 { return ["Mono"] }
-        if count == 2 { return ["Left", "Right"] }
-        return (0..<count).map { "Channel \($0 + 1)" }
-    }
 }

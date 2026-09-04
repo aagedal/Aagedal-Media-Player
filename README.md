@@ -72,8 +72,9 @@ Load a second master in the same window and inspect both with shared, frame-accu
 transport. Compare Mode aligns sources by embedded timecode when possible and offers
 side-by-side, instant A/B, draggable wipe, opacity overlay, and display-space
 difference views. Source B stays silent unless you explicitly switch monitoring,
-and annotated stills and review reports keep filenames, timecode, alignment, and
-technical context attached.
+with optional matching-channel isolation for multichannel A/B checks. Annotated
+stills and review reports keep filenames, timecode, alignment, and technical
+context attached.
 
 ### File support
 Playback (almost) every audio and video file in existence, through a combination of the mpv and AVFoundation.

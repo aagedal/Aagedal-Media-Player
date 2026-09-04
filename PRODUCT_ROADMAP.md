@@ -197,12 +197,12 @@ confidence as the picture.
 
 ### Audio QC
 
-- [ ] Add per-channel mute and solo without changing the encoded file.
+- [x] Add per-channel mute and solo without changing the encoded file.
 - [ ] Add peak and true-peak meters with clear dBFS/dBTP units.
 - [ ] Add live momentary and short-term loudness, plus integrated loudness over
   a selected range or full file.
 - [ ] Show channel labels and layout mismatches clearly in Compare Mode.
-- [ ] Support A/B audio switching and optional channel-by-channel comparison.
+- [x] Support A/B audio switching and optional channel-by-channel comparison.
 - [ ] Define calibration, ballistics, hold behavior, and EBU/ATSC presets before
   presenting measurements as compliance information.
 - [ ] Test and profile multichannel, multi-track, very long, and malformed

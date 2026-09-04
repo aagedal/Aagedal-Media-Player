@@ -22,6 +22,8 @@ protocol PlayerBackendAdapter: AnyObject {
     var volume: Double { get set }
     var isMuted: Bool { get set }
 
+    func setAudioChannelRouting(_ routing: AudioChannelRouting)
+
     func play()
     func pause()
     func seek(to time: TimeInterval)
@@ -31,6 +33,7 @@ protocol PlayerBackendAdapter: AnyObject {
 @MainActor
 final class AVFoundationPlayerBackend: PlayerBackendAdapter {
     let player: AVPlayer
+    private var hasAudioChannelRouting = false
 
     let backend: PlaybackBackend = .avFoundation
     var avPlayer: AVPlayer? { player }
@@ -71,6 +74,12 @@ final class AVFoundationPlayerBackend: PlayerBackendAdapter {
     func seek(to time: TimeInterval) {
         let target = CMTime(seconds: time, preferredTimescale: 600)
         player.seek(to: target, toleranceBefore: .zero, toleranceAfter: .zero)
+    }
+
+    func setAudioChannelRouting(_ routing: AudioChannelRouting) {
+        guard !routing.isBypassed || hasAudioChannelRouting else { return }
+        AVAudioChannelRouter.apply(routing, to: player.currentItem)
+        hasAudioChannelRouting = !routing.isBypassed
     }
 
     func teardown() {
@@ -120,6 +129,10 @@ final class MPVPlayerBackend: PlayerBackendAdapter {
 
     func seek(to time: TimeInterval) {
         player.seek(to: time)
+    }
+
+    func setAudioChannelRouting(_ routing: AudioChannelRouting) {
+        player.setAudioChannelRouting(routing)
     }
 
     func teardown() {

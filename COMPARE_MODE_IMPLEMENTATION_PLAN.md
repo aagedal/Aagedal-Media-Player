@@ -109,15 +109,15 @@ Acceptance:
 
 ## Phase 3 — Professional QC integration
 
-Status: Scope routing, the compact mismatch summary, explicit A/B audio
-monitoring, annotated comparison-still export, and shared safe-area/aspect-ratio
-guides are implemented through 2026-09-04. Timestamp-aware scope-difference
-frame pairing is also implemented with bounded A/B capture histories. Live
-mixed-backend validation remains.
+Status: Scope routing, the compact mismatch summary, explicit A/B and matching
+channel audio monitoring, annotated comparison-still export, and shared
+safe-area/aspect-ratio guides are implemented through 2026-09-04.
+Timestamp-aware scope-difference frame pairing is also implemented with bounded
+A/B capture histories. Live mixed-backend visual validation remains.
 
 - [x] Let scopes inspect A, B, or their display-space difference.
 - [x] Add explicit A/B audio switching.
-- [ ] Add optional channel-by-channel audio comparison after the cross-backend
+- [x] Add optional channel-by-channel audio comparison after the cross-backend
   per-channel mute/solo architecture planned for Audio QC.
 - [x] Export a comparison still containing both filenames, timecode, alignment,
   and selected technical metadata.

@@ -615,6 +615,7 @@ struct ControlsView: View {
                 ? (compareSession.audioSource == .primary ? "source A" : "source B")
                 : nil,
             showsWaveformOption: !compareSession.isActive || compareSession.audioSource == .primary,
+            showsChannelControls: !compareSession.isActive,
             onSelect: { position in
                 if compareSession.isActive {
                     compareSession.selectAudioTrack(
@@ -765,6 +766,7 @@ private struct AudioTrackPicker: View {
     @ObservedObject var controller: PlayerController
     let sourceName: String?
     let showsWaveformOption: Bool
+    let showsChannelControls: Bool
     let onSelect: (Int) -> Void
 
     private var label: String {
@@ -796,6 +798,51 @@ private struct AudioTrackPicker: View {
                         Text("Show All Waveforms")
                         if controller.showAllMonoWaveforms {
                             Image(systemName: "checkmark")
+                        }
+                    }
+                }
+            }
+            if showsChannelControls, controller.selectedAudioChannelLabels.count > 1 {
+                Divider()
+                Menu("Channel Monitoring") {
+                    Button {
+                        controller.clearAudioChannelRouting()
+                    } label: {
+                        HStack {
+                            Text("All Channels")
+                            if controller.audioChannelRouting.isBypassed {
+                                Image(systemName: "checkmark")
+                            }
+                        }
+                    }
+
+                    Menu("Solo") {
+                        ForEach(Array(controller.selectedAudioChannelLabels.enumerated()), id: \.offset) { channel, name in
+                            Button {
+                                controller.toggleAudioChannelSolo(channel)
+                            } label: {
+                                HStack {
+                                    Text(name)
+                                    if controller.audioChannelRouting.soloedChannels == [channel] {
+                                        Image(systemName: "checkmark")
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Menu("Mute") {
+                        ForEach(Array(controller.selectedAudioChannelLabels.enumerated()), id: \.offset) { channel, name in
+                            Button {
+                                controller.toggleAudioChannelMute(channel)
+                            } label: {
+                                HStack {
+                                    Text(name)
+                                    if controller.audioChannelRouting.mutedChannels.contains(channel) {
+                                        Image(systemName: "checkmark")
+                                    }
+                                }
+                            }
                         }
                     }
                 }

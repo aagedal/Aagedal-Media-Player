@@ -2,6 +2,7 @@
 // Copyright © 2026 Truls Aagedal
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+import AppKit
 import Foundation
 import XCTest
 @testable import Aagedal_Media_Player
@@ -114,6 +115,51 @@ final class GeneratedMediaFixtureTests: XCTestCase {
     }
 
     @MainActor
+    func testMPVAppliesAndClearsMultichannelMonitoringRoute() async throws {
+        let controller = PlayerController(proResRAWDetector: { _, _ in false })
+        defer { controller.teardown() }
+
+        try await loadMultichannelFixture(into: controller)
+        let backendConstructed = await waitUntil { controller.useMPV }
+        XCTAssertTrue(backendConstructed)
+        let mpv = try XCTUnwrap(controller.mpvPlayer)
+        let layer = MPVMetalLayer()
+        layer.frame = CGRect(x: 0, y: 0, width: 320, height: 180)
+        layer.drawableSize = layer.frame.size
+        mpv.attachDrawable(layer)
+
+        let channelsLoaded = await waitUntil { controller.selectedAudioChannelCount == 6 }
+        XCTAssertTrue(channelsLoaded)
+        controller.setSessionAudioChannelRouting(
+            AudioChannelRouting(channelCount: 6, soloedChannels: [2])
+        )
+        XCTAssertTrue(mpv.isAudioChannelFilterActive)
+
+        controller.setSessionAudioChannelRouting(nil)
+        XCTAssertFalse(mpv.isAudioChannelFilterActive)
+    }
+
+    @MainActor
+    func testAVFoundationAppliesAndClearsMultichannelMonitoringRoute() async throws {
+        let controller = PlayerController(proResRAWDetector: { _, _ in true })
+        defer { controller.teardown() }
+
+        try await loadMultichannelFixture(into: controller)
+        let channelsLoaded = await waitUntil {
+            controller.player != nil && controller.selectedAudioChannelCount == 6
+        }
+        XCTAssertTrue(channelsLoaded)
+
+        controller.setSessionAudioChannelRouting(
+            AudioChannelRouting(channelCount: 6, soloedChannels: [2])
+        )
+        XCTAssertNotNil(controller.player?.currentItem?.audioMix)
+
+        controller.setSessionAudioChannelRouting(nil)
+        XCTAssertNil(controller.player?.currentItem?.audioMix)
+    }
+
+    @MainActor
     func testSubtitlesChaptersAndLongGOPFixture() async throws {
         let url = try fixtureDirectory().appending(path: "chapters-subtitles-long-gop.mkv")
         let metadata = try await MetadataService.shared.metadata(for: url)
@@ -150,5 +196,31 @@ final class GeneratedMediaFixtureTests: XCTestCase {
             )
         }
         return url
+    }
+
+    @MainActor
+    private func loadMultichannelFixture(into controller: PlayerController) async throws {
+        let url = try fixtureDirectory().appending(path: "multichannel-5.1.m4a")
+        let metadata = try await MetadataService.shared.metadata(for: url)
+        var item = PlayerWindowCoordinator.makeMediaItem(for: url)
+        item.metadata = metadata
+        item.durationSeconds = metadata.duration ?? 0
+        item.hasVideoStream = false
+        controller.loadMedia(item)
+        controller.updateMetadata(item)
+    }
+
+    @MainActor
+    private func waitUntil(
+        timeout: Duration = .seconds(5),
+        _ condition: @escaping @MainActor () -> Bool
+    ) async -> Bool {
+        let clock = ContinuousClock()
+        let deadline = clock.now.advanced(by: timeout)
+        while !condition() {
+            guard clock.now < deadline else { return false }
+            try? await Task.sleep(for: .milliseconds(20))
+        }
+        return true
     }
 }

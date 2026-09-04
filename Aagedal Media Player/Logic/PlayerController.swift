@@ -76,6 +76,32 @@ final class PlayerController: ObservableObject {
     var chapterOptions: [ChapterOption] { trackSelection.chapterOptions }
     var selectedAudioTrackOrderIndex: Int { trackSelection.selectedAudioTrackOrderIndex }
     var selectedSubtitleTrackOrderIndex: Int { trackSelection.selectedSubtitleTrackOrderIndex }
+    @Published private(set) var audioChannelRouting = AudioChannelRouting()
+    private var audioChannelRoutingByTrackID: [Int: AudioChannelRouting] = [:]
+    private var sessionAudioChannelRouting: AudioChannelRouting?
+
+    var selectedAudioStream: MediaMetadata.AudioStream? {
+        guard audioTrackOptions.indices.contains(selectedAudioTrackOrderIndex),
+              let streams = mediaItem?.metadata?.audioStreams else { return nil }
+        let streamIndex = audioTrackOptions[selectedAudioTrackOrderIndex].streamIndex
+        if useMPV,
+           let stream = streams.first(where: { $0.index == streamIndex }) {
+            return stream
+        }
+        guard streams.indices.contains(streamIndex) else { return nil }
+        return streams[streamIndex]
+    }
+
+    var selectedAudioChannelCount: Int {
+        max(0, selectedAudioStream?.channels ?? 0)
+    }
+
+    var selectedAudioChannelLabels: [String] {
+        AudioChannelLabels.names(
+            count: selectedAudioChannelCount,
+            layout: selectedAudioStream?.channelLayout
+        )
+    }
 
     var currentChapterPosition: Int? {
         guard !chapterOptions.isEmpty else { return nil }
@@ -260,6 +286,7 @@ final class PlayerController: ObservableObject {
 
         // Detect HDR transfer function from metadata
         updateTransferFunction()
+        updateEffectiveAudioChannelRouting()
     }
 
     /// Detect and set the HDR transfer function from video metadata.
@@ -412,6 +439,7 @@ final class PlayerController: ObservableObject {
         playbackPhase = .preparing
         let backend = AVFoundationPlayerBackend(url: url, volume: volume, isMuted: effectiveIsMuted)
         backendAdapter = backend
+        backend.setAudioChannelRouting(audioChannelRouting)
         let player = backend.player
         guard let playerItem = player.currentItem else {
             reportPlaybackFailure(
@@ -472,6 +500,7 @@ final class PlayerController: ObservableObject {
             isMuted: effectiveIsMuted
         )
         backendAdapter = backend
+        backend.setAudioChannelRouting(audioChannelRouting)
         let mpv = backend.player
         if isAudioSuppressed {
             mpv.disableAudioTrack()
@@ -1238,6 +1267,7 @@ final class PlayerController: ObservableObject {
                 mpvPlayer: self.mpvPlayer,
                 useMPV: self.useMPV
             )
+            self.updateEffectiveAudioChannelRouting()
             if self.useMPV, self.isAudioSuppressed {
                 self.mpvPlayer?.disableAudioTrack()
             }
@@ -1273,6 +1303,9 @@ final class PlayerController: ObservableObject {
             mpvPlayer: mpvPlayer,
             useMPV: useMPV
         )
+        if changed {
+            updateEffectiveAudioChannelRouting()
+        }
         if useMPV, isAudioSuppressed {
             mpvPlayer?.disableAudioTrack()
         }
@@ -1290,6 +1323,7 @@ final class PlayerController: ObservableObject {
                 mpvPlayer: self.mpvPlayer,
                 useMPV: self.useMPV
             )
+            self.updateEffectiveAudioChannelRouting()
             if self.useMPV, self.isAudioSuppressed {
                 self.mpvPlayer?.disableAudioTrack()
             }
@@ -1298,6 +1332,74 @@ final class PlayerController: ObservableObject {
 
     func applySelectedAudioTrackToCurrentPlayerItem() {
         applySelectedAudioTrack()
+    }
+
+    // MARK: - Audio Channel Monitoring
+
+    func toggleAudioChannelMute(_ channel: Int) {
+        guard let trackID = selectedAudioTrackID else { return }
+        let routing = userAudioChannelRouting().togglingMute(for: channel)
+        audioChannelRoutingByTrackID[trackID] = routing
+        updateEffectiveAudioChannelRouting()
+    }
+
+    func toggleAudioChannelSolo(_ channel: Int) {
+        guard let trackID = selectedAudioTrackID else { return }
+        let routing = userAudioChannelRouting().togglingSolo(for: channel)
+        audioChannelRoutingByTrackID[trackID] = routing
+        updateEffectiveAudioChannelRouting()
+    }
+
+    func clearAudioChannelRouting() {
+        guard let trackID = selectedAudioTrackID else { return }
+        audioChannelRoutingByTrackID[trackID] = nil
+        updateEffectiveAudioChannelRouting()
+    }
+
+    /// Compare Mode uses a temporary override so inspecting matching A/B
+    /// channels never destroys the user's ordinary per-track monitoring state.
+    func setSessionAudioChannelRouting(_ routing: AudioChannelRouting?) {
+        sessionAudioChannelRouting = routing.map {
+            AudioChannelRouting(
+                channelCount: selectedAudioChannelCount,
+                mutedChannels: $0.mutedChannels,
+                soloedChannels: $0.soloedChannels
+            )
+        }
+        updateEffectiveAudioChannelRouting()
+    }
+
+    private var selectedAudioTrackID: Int? {
+        guard audioTrackOptions.indices.contains(selectedAudioTrackOrderIndex) else { return nil }
+        return audioTrackOptions[selectedAudioTrackOrderIndex].id
+    }
+
+    private func userAudioChannelRouting() -> AudioChannelRouting {
+        guard let trackID = selectedAudioTrackID else {
+            return AudioChannelRouting(channelCount: selectedAudioChannelCount)
+        }
+        let stored = audioChannelRoutingByTrackID[trackID]
+        return AudioChannelRouting(
+            channelCount: selectedAudioChannelCount,
+            mutedChannels: stored?.mutedChannels ?? [],
+            soloedChannels: stored?.soloedChannels ?? []
+        )
+    }
+
+    private func updateEffectiveAudioChannelRouting() {
+        let userRouting = userAudioChannelRouting()
+        let effectiveRouting: AudioChannelRouting
+        if let sessionAudioChannelRouting {
+            effectiveRouting = AudioChannelRouting(
+                channelCount: selectedAudioChannelCount,
+                mutedChannels: sessionAudioChannelRouting.mutedChannels,
+                soloedChannels: sessionAudioChannelRouting.soloedChannels
+            )
+        } else {
+            effectiveRouting = userRouting
+        }
+        audioChannelRouting = effectiveRouting
+        backendAdapter?.setAudioChannelRouting(effectiveRouting)
     }
 
     // MARK: - Subtitle Track Selection
@@ -1474,6 +1576,9 @@ final class PlayerController: ObservableObject {
         removeMPVLoopObserver()
         if resetAudioSelection {
             showAllMonoWaveforms = UserDefaults.standard.value(for: AppSettings.showAllMonoWaveforms)
+            audioChannelRoutingByTrackID.removeAll()
+            sessionAudioChannelRouting = nil
+            audioChannelRouting = AudioChannelRouting()
         }
         trackSelection.reset(preservingSelections: !resetAudioSelection)
     }
