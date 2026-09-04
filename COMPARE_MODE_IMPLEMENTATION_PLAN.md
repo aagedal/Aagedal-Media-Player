@@ -58,7 +58,11 @@ MPV/MPV, AVFoundation/AVFoundation, and both mixed-backend directions using
 generated fixtures. Eight-second sustained playback coverage now verifies that
 all four backend pairings keep advancing and reconverge within one second of a
 transient out-of-frame excursion. Longer production-resolution validation
-remains before Phase 1 acceptance is complete.
+remains before Phase 1 acceptance is complete. A repeatable opt-in profiler now
+generates UHD 10-bit HDR pairs and runs the same drift assertions for an
+extended duration across all four backend pairings, while reporting wall time,
+CPU time, and peak resident memory. It still needs to be run on the oldest
+supported Apple Silicon Mac with a complementary Instruments GPU/thermal pass.
 
 - [x] Define the implementation plan and release boundaries.
 - [x] Add a window-owned compare session with cancellation-safe secondary-file
@@ -195,3 +199,7 @@ production-resolution runs still require hands-on validation.
 - [ ] Record a short demo: source vs encode, timecode alignment, wipe, difference,
   and comparison-still export.
 - [ ] Benchmark sustained drift and CPU/GPU load on the oldest supported Mac.
+
+Run `scripts/profile-compare-mode.sh` for the automated decoder/drift baseline,
+then follow `docs/COMPARE_MODE_PERFORMANCE.md` for the Instruments visual-mode
+and GPU validation.

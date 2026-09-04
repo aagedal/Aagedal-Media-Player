@@ -39,6 +39,17 @@ and estimated renderer load for every supported update-rate setting. Timings
 are machine-dependent, so compare changes on the same hardware and profile on
 the oldest Mac supported for release when changing scope capture or rendering.
 
+Compare Mode has a separate opt-in production-resolution profile:
+
+```bash
+scripts/profile-compare-mode.sh | tee compare-mode-profile.txt
+```
+
+It generates disposable UHD 10-bit HDR sources and exercises all four MPV and
+AVFoundation backend pairings with extended drift assertions. See
+[the Compare Mode performance methodology](docs/COMPARE_MODE_PERFORMANCE.md)
+for configuration, pass criteria, and the complementary Instruments run.
+
 Long-recording audio waveform aggregation has a separate 1, 8, and 24-hour
 multichannel profile:
 

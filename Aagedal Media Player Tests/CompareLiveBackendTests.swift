@@ -20,6 +20,12 @@ import XCTest
 ///   -only-testing:"Aagedal Media Player Tests/CompareLiveBackendTests"
 @MainActor
 final class CompareLiveBackendTests: XCTestCase {
+    private struct ProfileConfiguration {
+        let fixtureDirectory: URL
+        let sustainedPlaybackDuration: TimeInterval
+        let emitsReport: Bool
+    }
+
     private struct DriftObservation {
         let sampleCount: Int
         let inToleranceCount: Int
@@ -138,25 +144,35 @@ final class CompareLiveBackendTests: XCTestCase {
             primary: primary,
             secondary: secondary,
             session: session,
-            driftTolerance: driftTolerance
+            driftTolerance: driftTolerance,
+            duration: sustainedPlaybackDuration
         )
         let pairDescription = "\(primaryBackend.rawValue)/\(secondaryBackend.rawValue)"
         let observationDescription = driftObservationDescription(
             observation,
             backendPair: pairDescription
         )
+        if profileConfiguration?.emitsReport == true
+            || ProcessInfo.processInfo.environment["COMPARE_PROFILE_REPORT"] == "1" {
+            let attachment = XCTAttachment(
+                string: "COMPARE_PROFILE \(observationDescription)"
+            )
+            attachment.name = "Compare Mode drift profile"
+            attachment.lifetime = .keepAlways
+            add(attachment)
+        }
         XCTAssertTrue(
             primary.isPlaying && secondary.isPlaying,
             "A decoder stopped during sustained playback. \(observationDescription)"
         )
         XCTAssertGreaterThanOrEqual(
             observation.primaryAdvance,
-            7,
+            sustainedPlaybackDuration - 1,
             "The primary clock stalled or reached EOF. \(observationDescription)"
         )
         XCTAssertGreaterThanOrEqual(
             observation.secondaryAdvance,
-            7,
+            sustainedPlaybackDuration - 1,
             "The secondary clock stalled or reached EOF. \(observationDescription)"
         )
         XCTAssertLessThanOrEqual(
@@ -244,11 +260,12 @@ final class CompareLiveBackendTests: XCTestCase {
         primary: PlayerController,
         secondary: PlayerController,
         session: CompareSessionController,
-        driftTolerance: TimeInterval
+        driftTolerance: TimeInterval,
+        duration: TimeInterval
     ) async -> DriftObservation {
         let clock = ContinuousClock()
         let start = clock.now
-        let deadline = start.advanced(by: .seconds(8))
+        let deadline = start.advanced(by: .seconds(duration))
         let primaryStart = primary.playbackTimeSnapshot()
         let secondaryStart = secondary.playbackTimeSnapshot()
         var sampleCount = 0
@@ -350,12 +367,31 @@ final class CompareLiveBackendTests: XCTestCase {
             "secondaryAdvance=\(String(format: "%.3f", observation.secondaryAdvance))s"
     }
 
+    /// The regular suite intentionally keeps this short. The Compare Mode
+    /// profiler opts into a longer run while exercising this exact same
+    /// assertion path.
+    private var sustainedPlaybackDuration: TimeInterval {
+        if let configuredDuration = profileConfiguration?.sustainedPlaybackDuration {
+            return configuredDuration
+        }
+        guard let rawValue = ProcessInfo.processInfo.environment[
+            "COMPARE_SUSTAINED_PLAYBACK_SECONDS"
+        ],
+        let requested = TimeInterval(rawValue),
+        requested.isFinite else { return 8 }
+        return min(max(requested, 2), 3_600)
+    }
+
     private func fixtureDirectory() throws -> URL {
         if let override = ProcessInfo.processInfo.environment["MEDIA_FIXTURE_DIR"],
            !override.isEmpty {
             return try validateFixtureDirectory(
                 URL(fileURLWithPath: override, isDirectory: true)
             )
+        }
+
+        if let configuredDirectory = profileConfiguration?.fixtureDirectory {
+            return try validateFixtureDirectory(configuredDirectory)
         }
 
         let sourceFile = URL(fileURLWithPath: #filePath)
@@ -384,5 +420,33 @@ final class CompareLiveBackendTests: XCTestCase {
             )
         }
         return url
+    }
+
+    private var profileConfiguration: ProfileConfiguration? {
+        let sourceFile = URL(fileURLWithPath: #filePath)
+        let repository = sourceFile.deletingLastPathComponent().deletingLastPathComponent()
+        let configurationURL = repository.appending(
+            path: "Test Fixtures/Generated/COMPARE_PROFILE.conf"
+        )
+        guard let contents = try? String(contentsOf: configurationURL, encoding: .utf8) else {
+            return nil
+        }
+
+        let values = contents.split(whereSeparator: \.isNewline).reduce(
+            into: [String: String]()
+        ) { result, line in
+            let pair = line.split(separator: "=", maxSplits: 1).map(String.init)
+            guard pair.count == 2 else { return }
+            result[pair[0]] = pair[1]
+        }
+        guard let fixturePath = values["fixture_dir"],
+              let secondsValue = values["seconds"],
+              let seconds = TimeInterval(secondsValue),
+              seconds.isFinite else { return nil }
+        return ProfileConfiguration(
+            fixtureDirectory: URL(fileURLWithPath: fixturePath, isDirectory: true),
+            sustainedPlaybackDuration: min(max(seconds, 2), 3_600),
+            emitsReport: values["report"] == "1"
+        )
     }
 }
