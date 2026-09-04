@@ -10,17 +10,15 @@ frame_rate="${COMPARE_PROFILE_FRAME_RATE:-24}"
 observation_seconds="${COMPARE_PROFILE_SECONDS:-30}"
 temporary_dir="$(mktemp -d "${TMPDIR:-/tmp/}aagedal-compare-profile.XXXXXX")"
 fixture_dir="${COMPARE_PROFILE_FIXTURE_DIR:-$temporary_dir/fixtures}"
+fixture_dir="${fixture_dir:A}"
 build_log="$temporary_dir/build.log"
 profile_log="$temporary_dir/profile.log"
 result_bundle="$temporary_dir/CompareModeProfile.xcresult"
 attachments_dir="$temporary_dir/attachments"
-profile_config="$repository_dir/Test Fixtures/Generated/COMPARE_PROFILE.conf"
-profile_config_created=false
+attachments_exported=false
+derived_data="$temporary_dir/DerivedData"
 
 cleanup() {
-  if [[ "$profile_config_created" == true ]]; then
-    rm -f "$profile_config"
-  fi
   rm -R "$temporary_dir"
 }
 trap cleanup EXIT
@@ -44,11 +42,6 @@ if [[ "$encoder_list" != *" libx265 "* ]]; then
 fi
 
 mkdir -p "$fixture_dir/compare"
-mkdir -p "${profile_config:h}"
-if [[ -e "$profile_config" ]]; then
-  print -u2 "A Compare Mode profile is already active: $profile_config"
-  exit 1
-fi
 
 ffmpeg() {
   "$ffmpeg_binary" -hide_banner -loglevel error -nostdin -y "$@"
@@ -84,43 +77,61 @@ generate_fixture "$fixture_dir/compare/source-b.mov" "$((fixture_seconds + 1))" 
   print "ffmpeg=$($ffmpeg_binary -hide_banner -version 2>&1 | head -n 1)"
 } > "$fixture_dir/MANIFEST.txt"
 
-profile_config_created=true
-{
-  print "fixture_dir=$fixture_dir"
-  print "seconds=$observation_seconds"
-  print "report=1"
-} > "$profile_config"
-
 cd "$repository_dir"
 print -u2 "Building the Compare Mode integration tests…"
 if ! xcodebuild build-for-testing \
   -project "Aagedal Media Player.xcodeproj" \
   -scheme "Aagedal Media Player" \
+  -configuration Release \
   -destination "platform=macOS" \
+  -derivedDataPath "$derived_data" \
+  ENABLE_TESTABILITY=YES \
   -only-testing:"Aagedal Media Player Tests/CompareLiveBackendTests" \
   > "$build_log" 2>&1; then
   tail -n 200 "$build_log" >&2
   exit 1
 fi
 
+xctestrun_files=("$derived_data"/Build/Products/*.xctestrun(N))
+if (( ${#xctestrun_files} != 1 )); then
+  print -u2 "Expected one xctestrun file, found ${#xctestrun_files}."
+  exit 1
+fi
+xctestrun_file="${xctestrun_files[1]}"
+test_environment_path="TestConfigurations.0.TestTargets.0.EnvironmentVariables"
+plutil -insert "$test_environment_path.MEDIA_FIXTURE_DIR" \
+  -string "$fixture_dir" "$xctestrun_file"
+plutil -insert "$test_environment_path.COMPARE_SUSTAINED_PLAYBACK_SECONDS" \
+  -string "$observation_seconds" "$xctestrun_file"
+plutil -insert "$test_environment_path.COMPARE_PROFILE_REPORT" \
+  -string "1" "$xctestrun_file"
+
 print -u2 "Profiling all four backend pairings for $observation_seconds seconds each…"
 set +e
-/usr/bin/time -lp env \
-  MEDIA_FIXTURE_DIR="$fixture_dir" \
-  COMPARE_SUSTAINED_PLAYBACK_SECONDS="$observation_seconds" \
-  COMPARE_PROFILE_REPORT=1 \
+/usr/bin/time -lp \
   xcodebuild test-without-building \
-    -project "Aagedal Media Player.xcodeproj" \
-    -scheme "Aagedal Media Player" \
+    -xctestrun "$xctestrun_file" \
     -destination "platform=macOS" \
+    -parallel-testing-enabled NO \
     -resultBundlePath "$result_bundle" \
-    -only-testing:"Aagedal Media Player Tests/CompareLiveBackendTests" \
+    -only-testing:"Aagedal Media Player Tests/CompareLiveBackendTests/testMPVPairAlignsBySourceTimecodeAndSharesTransport" \
+    -only-testing:"Aagedal Media Player Tests/CompareLiveBackendTests/testMPVPrimaryAndAVFoundationSecondaryShareTransport" \
+    -only-testing:"Aagedal Media Player Tests/CompareLiveBackendTests/testAVFoundationPairAlignsBySourceTimecodeAndSharesTransport" \
+    -only-testing:"Aagedal Media Player Tests/CompareLiveBackendTests/testAVFoundationPrimaryAndMPVSecondaryShareTransport" \
     > "$profile_log" 2>&1
 profile_status=$?
 set -e
 
-xcrun xcresulttool export attachments \
-  --path "$result_bundle" --output-path "$attachments_dir" >/dev/null
+if [[ -d "$result_bundle" ]]; then
+  if ! xcrun xcresulttool export attachments \
+    --path "$result_bundle" --output-path "$attachments_dir" >/dev/null; then
+    print -u2 "Could not export profile attachments; falling back to the test log."
+  else
+    attachments_exported=true
+  fi
+else
+  print -u2 "The test run did not produce an xcresult bundle."
+fi
 
 hardware_model="$(system_profiler SPHardwareDataType 2>/dev/null | awk -F': ' '/Model Name/ { print $2; exit }')"
 chip="$(system_profiler SPHardwareDataType 2>/dev/null | awk -F': ' '/Chip/ { print $2; exit }')"
@@ -134,7 +145,11 @@ print -r -- "- Fixture: $frame_size at $frame_rate fps, HEVC Main 10, BT.2020/PQ
 print -r -- "- Sustained observation: $observation_seconds seconds per backend pairing"
 print
 print '```text'
-rg --no-filename -o 'COMPARE_PROFILE.*' "$attachments_dir" || true
+if [[ "$attachments_exported" == true ]]; then
+  rg --no-filename -o 'COMPARE_PROFILE.*' "$attachments_dir" || true
+else
+  rg --no-filename -o 'COMPARE_PROFILE.*' "$profile_log" || true
+fi
 rg '\*\* TEST (SUCCEEDED|FAILED) \*\*|real |user |sys |maximum resident set size' "$profile_log" || true
 print '```'
 print

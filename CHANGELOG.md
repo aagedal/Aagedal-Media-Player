@@ -21,6 +21,7 @@ All notable changes to Aagedal Media Player.
 - Update SwiftMediaMetadata to 3.0.0 and use its renamed package product and importable module.
 - Keep Main Thread Checker and Thread Performance Checker enabled while retaining the required MoltenVK Metal API Validation exception.
 - Document and validate the intentional Apple-Silicon-only release architecture and security entitlements.
+- Make Compare Mode performance profiling serial, optimized, frame-rate-aware, and isolated from ordinary test runs.
 
 ### Fixed
 - Prevented superseded scope frames and media-operation tasks from publishing stale results, and stopped screenshots or exports from surviving their owning player window.

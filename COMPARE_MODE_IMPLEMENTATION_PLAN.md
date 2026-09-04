@@ -61,8 +61,14 @@ transient out-of-frame excursion. Longer production-resolution validation
 remains before Phase 1 acceptance is complete. A repeatable opt-in profiler now
 generates UHD 10-bit HDR pairs and runs the same drift assertions for an
 extended duration across all four backend pairings, while reporting wall time,
-CPU time, and peak resident memory. It still needs to be run on the oldest
-supported Apple Silicon Mac with a complementary Instruments GPU/thermal pass.
+CPU time, and peak resident memory. The profiler now runs only those four
+pairings, serially and with Release optimization, injects configuration into a
+disposable test run, derives tolerances from the fixture frame rate, and lets
+an excursion already active at the cutoff use only its remaining one-second
+recovery window. An eight-second UHD HDR smoke run passed on an M5 Pro with a
+0.647-second worst recovery and about 840 MiB peak resident memory. It still
+needs to be run for the full duration on the oldest supported Apple Silicon Mac
+with a complementary Instruments GPU/thermal pass.
 
 - [x] Define the implementation plan and release boundaries.
 - [x] Add a window-owned compare session with cancellation-safe secondary-file

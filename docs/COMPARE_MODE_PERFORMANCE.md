@@ -17,7 +17,13 @@ BT.2020/PQ signaling. It then runs the same source-timecode alignment,
 transport, decoder-advance, audio-suppression, and one-frame drift assertions
 used by `CompareLiveBackendTests` for 30 seconds across MPV/MPV,
 AVFoundation/AVFoundation, and both mixed-backend directions. Its report also
-captures wall time, CPU time, and peak resident memory for the test run.
+captures wall time, CPU time, and peak resident memory for the optimized,
+serial test run. The profiler injects its configuration into a disposable
+`.xctestrun` file, so concurrent ordinary tests in the checkout are unaffected.
+If the requested observation ends during an out-of-frame excursion, that
+pairing continues only until it reconverges or its one-second recovery deadline
+expires. This prevents the result from depending on which part of a correction
+cycle happens to coincide with the cutoff.
 
 Configuration is opt-in through environment variables:
 
@@ -36,7 +42,8 @@ or Instruments runs; otherwise the profiler removes its temporary fixtures.
 
 - All four decoder pairings keep both clocks advancing for the requested run.
 - Any excursion beyond one primary frame reconverges within one second.
-- Drift is within one primary frame during the final second.
+- An excursion active at the cutoff reconverges within its one-second deadline,
+  and the final sample is within the one-frame correction threshold.
 - MPV-backed source B keeps its audio track disabled while A is monitored.
 - The machine remains responsive and the comparison view remains interactive.
 

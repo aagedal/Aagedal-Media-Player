@@ -20,12 +20,6 @@ import XCTest
 ///   -only-testing:"Aagedal Media Player Tests/CompareLiveBackendTests"
 @MainActor
 final class CompareLiveBackendTests: XCTestCase {
-    private struct ProfileConfiguration {
-        let fixtureDirectory: URL
-        let sustainedPlaybackDuration: TimeInterval
-        let emitsReport: Bool
-    }
-
     private struct DriftObservation {
         let sampleCount: Int
         let inToleranceCount: Int
@@ -36,6 +30,7 @@ final class CompareLiveBackendTests: XCTestCase {
         let secondaryAdvance: TimeInterval
         let firstSignedDrift: TimeInterval
         let lastSignedDrift: TimeInterval
+        let finalEffectiveDrift: TimeInterval
         let minimumSecondaryRate: Float
         let maximumSecondaryRate: Float
 
@@ -154,12 +149,15 @@ final class CompareLiveBackendTests: XCTestCase {
         )
 
         let mapping = try XCTUnwrap(session.mapping)
+        let frameRate = primary.mediaItem?.metadata?.primaryVideoStream?.frameRate?.value
+        let driftPolicy = CompareDriftPolicy(primaryFrameRate: frameRate)
+        let frameDuration = driftPolicy.frameDuration
         XCTAssertEqual(mapping.mode, .sourceTimecode)
-        XCTAssertEqual(mapping.offset, 1, accuracy: 1.0 / 24.0)
+        XCTAssertEqual(mapping.offset, 1, accuracy: frameDuration)
 
         session.seek(primary: primary, to: 1.25)
         let primaryReachedSeekTarget = await waitUntil(
-            tolerance: 1.0 / 24.0,
+            tolerance: frameDuration,
             timeout: .seconds(8)
         ) {
             primary.playbackTimeSnapshot() - 1.25
@@ -169,7 +167,7 @@ final class CompareLiveBackendTests: XCTestCase {
             "Primary exact seek did not complete within one-frame tolerance."
         )
         let secondaryReachedSeekTarget = await waitUntil(
-            tolerance: 1.0 / 24.0,
+            tolerance: frameDuration,
             timeout: .seconds(8)
         ) {
             secondary.playbackTimeSnapshot() - 2.25
@@ -190,10 +188,7 @@ final class CompareLiveBackendTests: XCTestCase {
                 "Suppressed MPV source B unexpectedly re-enabled an audio track."
             )
         }
-        let frameRate = primary.mediaItem?.metadata?.primaryVideoStream?.frameRate?.value
-        let driftTolerance = CompareDriftPolicy(
-            primaryFrameRate: frameRate
-        ).correctionThreshold
+        let driftTolerance = driftPolicy.correctionThreshold
         let observation = await observeSustainedDrift(
             primary: primary,
             secondary: secondary,
@@ -206,8 +201,8 @@ final class CompareLiveBackendTests: XCTestCase {
             observation,
             backendPair: pairDescription
         )
-        if profileConfiguration?.emitsReport == true
-            || ProcessInfo.processInfo.environment["COMPARE_PROFILE_REPORT"] == "1" {
+        if ProcessInfo.processInfo.environment["COMPARE_PROFILE_REPORT"] == "1" {
+            print("COMPARE_PROFILE \(observationDescription)")
             let attachment = XCTAttachment(
                 string: "COMPARE_PROFILE \(observationDescription)"
             )
@@ -239,6 +234,11 @@ final class CompareLiveBackendTests: XCTestCase {
             1,
             "Drift did not reconverge during the final second. \(observationDescription)"
         )
+        XCTAssertLessThanOrEqual(
+            observation.finalEffectiveDrift,
+            driftTolerance,
+            "Drift finished outside one-frame tolerance. \(observationDescription)"
+        )
 
         session.pause(primary: primary)
         let bothPaused = await waitUntil { !primary.isPlaying && !secondary.isPlaying }
@@ -247,7 +247,7 @@ final class CompareLiveBackendTests: XCTestCase {
             forPrimaryTime: primary.playbackTimeSnapshot()
         )
         let secondaryReachedPauseTarget = await waitUntil(
-            tolerance: 1.0 / 24.0,
+            tolerance: frameDuration,
             timeout: .seconds(8)
         ) {
             secondary.playbackTimeSnapshot() - pausedExpectedTime
@@ -330,10 +330,24 @@ final class CompareLiveBackendTests: XCTestCase {
         var lastInTolerance = start
         var firstSignedDrift: TimeInterval?
         var lastSignedDrift: TimeInterval = 0
+        var finalEffectiveDrift: TimeInterval = 0
         var minimumSecondaryRate = Float.greatestFiniteMagnitude
         var maximumSecondaryRate: Float = 0
+        var primaryAdvanceAtDeadline: TimeInterval?
+        var secondaryAdvanceAtDeadline: TimeInterval?
 
-        while clock.now < deadline, primary.isPlaying, secondary.isPlaying {
+        while primary.isPlaying, secondary.isPlaying {
+            let loopTime = clock.now
+            let isWithinRequestedObservation = loopTime < deadline
+            if !isWithinRequestedObservation, primaryAdvanceAtDeadline == nil {
+                primaryAdvanceAtDeadline = primary.playbackTimeSnapshot() - primaryStart
+                secondaryAdvanceAtDeadline = secondary.playbackTimeSnapshot() - secondaryStart
+            }
+            let isAwaitingFinalRecovery = excursionStart.map {
+                durationSeconds(from: $0, to: loopTime) <= 1
+            } ?? false
+            guard isWithinRequestedObservation || isAwaitingFinalRecovery else { break }
+
             // Bracket the secondary clock read with primary reads so main-actor
             // scheduling time is removed from the effective drift measurement.
             let primaryBefore = primary.playbackTimeSnapshot()
@@ -353,6 +367,7 @@ final class CompareLiveBackendTests: XCTestCase {
             sampleCount += 1
             firstSignedDrift = firstSignedDrift ?? signedDrift
             lastSignedDrift = signedDrift
+            finalEffectiveDrift = effectiveDrift
             minimumSecondaryRate = min(minimumSecondaryRate, secondaryRate)
             maximumSecondaryRate = max(maximumSecondaryRate, secondaryRate)
             worstDrift = max(worstDrift, effectiveDrift)
@@ -386,10 +401,13 @@ final class CompareLiveBackendTests: XCTestCase {
             worstDrift: worstDrift,
             longestExcursion: longestExcursion,
             lastInToleranceAge: durationSeconds(from: lastInTolerance, to: end),
-            primaryAdvance: primary.playbackTimeSnapshot() - primaryStart,
-            secondaryAdvance: secondary.playbackTimeSnapshot() - secondaryStart,
+            primaryAdvance: primaryAdvanceAtDeadline
+                ?? primary.playbackTimeSnapshot() - primaryStart,
+            secondaryAdvance: secondaryAdvanceAtDeadline
+                ?? secondary.playbackTimeSnapshot() - secondaryStart,
             firstSignedDrift: firstSignedDrift ?? 0,
             lastSignedDrift: lastSignedDrift,
+            finalEffectiveDrift: finalEffectiveDrift,
             minimumSecondaryRate: minimumSecondaryRate.isFinite ? minimumSecondaryRate : 0,
             maximumSecondaryRate: maximumSecondaryRate
         )
@@ -415,6 +433,7 @@ final class CompareLiveBackendTests: XCTestCase {
             "longestExcursion=\(String(format: "%.3f", observation.longestExcursion))s, " +
             "signedDrift=\(String(format: "%.3f", observation.firstSignedDrift))s→" +
             "\(String(format: "%.3f", observation.lastSignedDrift))s, " +
+            "finalDrift=\(String(format: "%.3f", observation.finalEffectiveDrift))s, " +
             "secondaryRate=\(String(format: "%.2f", observation.minimumSecondaryRate))–" +
             "\(String(format: "%.2f", observation.maximumSecondaryRate)), " +
             "primaryAdvance=\(String(format: "%.3f", observation.primaryAdvance))s, " +
@@ -425,9 +444,6 @@ final class CompareLiveBackendTests: XCTestCase {
     /// profiler opts into a longer run while exercising this exact same
     /// assertion path.
     private var sustainedPlaybackDuration: TimeInterval {
-        if let configuredDuration = profileConfiguration?.sustainedPlaybackDuration {
-            return configuredDuration
-        }
         guard let rawValue = ProcessInfo.processInfo.environment[
             "COMPARE_SUSTAINED_PLAYBACK_SECONDS"
         ],
@@ -442,10 +458,6 @@ final class CompareLiveBackendTests: XCTestCase {
             return try validateFixtureDirectory(
                 URL(fileURLWithPath: override, isDirectory: true)
             )
-        }
-
-        if let configuredDirectory = profileConfiguration?.fixtureDirectory {
-            return try validateFixtureDirectory(configuredDirectory)
         }
 
         let sourceFile = URL(fileURLWithPath: #filePath)
@@ -476,31 +488,4 @@ final class CompareLiveBackendTests: XCTestCase {
         return url
     }
 
-    private var profileConfiguration: ProfileConfiguration? {
-        let sourceFile = URL(fileURLWithPath: #filePath)
-        let repository = sourceFile.deletingLastPathComponent().deletingLastPathComponent()
-        let configurationURL = repository.appending(
-            path: "Test Fixtures/Generated/COMPARE_PROFILE.conf"
-        )
-        guard let contents = try? String(contentsOf: configurationURL, encoding: .utf8) else {
-            return nil
-        }
-
-        let values = contents.split(whereSeparator: \.isNewline).reduce(
-            into: [String: String]()
-        ) { result, line in
-            let pair = line.split(separator: "=", maxSplits: 1).map(String.init)
-            guard pair.count == 2 else { return }
-            result[pair[0]] = pair[1]
-        }
-        guard let fixturePath = values["fixture_dir"],
-              let secondsValue = values["seconds"],
-              let seconds = TimeInterval(secondsValue),
-              seconds.isFinite else { return nil }
-        return ProfileConfiguration(
-            fixtureDirectory: URL(fileURLWithPath: fixturePath, isDirectory: true),
-            sustainedPlaybackDuration: min(max(seconds, 2), 3_600),
-            emitsReport: values["report"] == "1"
-        )
-    }
 }
