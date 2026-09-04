@@ -151,6 +151,8 @@ Acceptance:
 Status: Scope routing, the compact mismatch summary, explicit A/B and matching
 channel audio monitoring, annotated comparison-still export, and shared
 safe-area/aspect-ratio guides are implemented through 2026-09-04.
+The primary timeline now marks the playable A/B overlap and its adjacent legend
+shows the signed, frame-accurate B offset.
 Timestamp-aware scope-difference frame pairing is also implemented with bounded
 A/B capture histories. Live mixed-backend scope and guide validation at
 production resolution remains.
@@ -164,6 +166,7 @@ production resolution remains.
 - [x] Add a compact mismatch summary for codec, raster, frame rate, color,
   audio layout, and duration.
 - [x] Add safe-area and aspect-ratio overlays shared across both sources.
+- [x] Show the comparison offset and overlapping interval on the timeline.
 
 ## Phase 4 — Review workflow
 

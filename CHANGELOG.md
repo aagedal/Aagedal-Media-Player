@@ -17,6 +17,8 @@ All notable changes to Aagedal Media Player.
 - Mixed-backend Compare Mode validation for paired stepping, scrubbing, forward shuttle, supported frame rates, rotated anamorphic geometry, and SDR/HDR metadata.
 - Production-resolution Compare Mode profiling for the real hosted compositor,
   including sustained visual-control cadence and main-actor delay measurements.
+- A frame-accurate source-B offset readout and playable A/B overlap interval on
+  the comparison timeline.
 
 ### Changed
 - Split playback backends, track selection, media operations, window opening, overlays, settings, and command routing into focused components.

@@ -103,6 +103,43 @@ final class CompareTimelineMappingTests: XCTestCase {
         XCTAssertEqual(mapping.mode, .sourceTimecode)
         XCTAssertEqual(mapping.offset, 10)
         XCTAssertEqual(mapping.secondaryTime(forPrimaryTime: 25), 35)
+        XCTAssertEqual(mapping.offsetLabel(primaryFrameRate: 25), "B = A +00:00:10:00")
+    }
+
+    func testOffsetLabelUsesPrimaryFrameRateAndSignedDirection() {
+        let mapping = CompareTimelineMapping(
+            primaryStartSeconds: 100,
+            secondaryStartSeconds: 101.5,
+            secondaryDuration: 120
+        )
+
+        XCTAssertEqual(mapping.offsetLabel(primaryFrameRate: 24), "B = A −00:00:01:12")
+    }
+
+    func testOffsetLabelUsesPrimaryDropFrameConvention() {
+        let mapping = CompareTimelineMapping(
+            primaryStartSeconds: 60.06,
+            secondaryStartSeconds: 0,
+            secondaryDuration: 120
+        )
+
+        XCTAssertEqual(
+            mapping.offsetLabel(
+                primaryFrameRate: 30_000.0 / 1_001.0,
+                dropFrame: true
+            ),
+            "B = A +00:01:00;02"
+        )
+    }
+
+    func testZeroOffsetLabelMakesRelativeMappingExplicit() {
+        let mapping = CompareTimelineMapping(
+            primaryStartSeconds: nil,
+            secondaryStartSeconds: nil,
+            secondaryDuration: 120
+        )
+
+        XCTAssertEqual(mapping.offsetLabel(primaryFrameRate: 24), "B = A +00:00:00:00")
     }
 
     func testMissingTimecodeFallsBackToRelativeTimeline() {

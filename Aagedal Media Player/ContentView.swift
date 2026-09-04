@@ -595,8 +595,8 @@ struct ContentView: View {
                     }
                 }
 
-                if let alignment = compareSession.mapping?.mode.label {
-                    Text("\(alignment) · \(overlapStatus.label)")
+                if let mapping = compareSession.mapping {
+                    Text("\(mapping.mode.label) · \(overlapStatus.label)")
                         .font(.caption)
                         .foregroundStyle(
                             overlapStatus == .none
@@ -606,9 +606,9 @@ struct ContentView: View {
                         .help(
                             overlapStatus == .none
                                 ? "The source-timecode ranges do not overlap. Source B stays parked on its nearest boundary during playback."
-                                : "How the source timelines align and how much of source A overlaps source B"
+                                : "How the source timelines align. The timeline shows the exact B offset and shared playable interval."
                         )
-                        .accessibilityLabel("\(alignment), \(overlapStatus.label)")
+                        .accessibilityLabel("\(mapping.mode.label), \(overlapStatus.label)")
                 }
 
                 CompareMismatchIndicator(

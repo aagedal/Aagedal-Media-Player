@@ -155,7 +155,7 @@ Acceptance:
 
 - [ ] Show persistent A/B identity and compact codec, raster, frame-rate,
   duration, color-space, transfer-function, and audio-layout mismatches.
-- [ ] Show the comparison offset and overlapping interval on the timeline.
+- [x] Show the comparison offset and overlapping interval on the timeline.
 - [ ] Render existing chapter markers directly on the timeline.
 - [ ] Explain whether alignment is source-timecode, relative, or manually
   adjusted.

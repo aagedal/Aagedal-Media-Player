@@ -251,6 +251,24 @@ nonisolated struct CompareTimelineMapping: Equatable, Sendable {
             : .partial
     }
 
+    /// Describes the mapping equation for the relative point in B that matches
+    /// A's current relative time. A positive value means B is that far into
+    /// its file when A is at its first frame; a negative value means B begins
+    /// later than A.
+    func offsetLabel(
+        primaryFrameRate: Double?,
+        dropFrame: Bool = false
+    ) -> String {
+        let sign = offset < 0 ? "−" : "+"
+        let rate = TimecodeRate(
+            frameRate: primaryFrameRate ?? 30,
+            dropFrame: dropFrame
+        )
+        let frames = rate.frameCount(forSeconds: abs(offset)) ?? 0
+        let timecode = rate.timecode(forFrameCount: frames)
+        return "B = A \(sign)\(timecode)"
+    }
+
     func secondaryPlaybackDisposition(
         forPrimaryTime primaryTime: TimeInterval,
         primaryPlaybackSpeed: Float,
@@ -1196,6 +1214,15 @@ final class CompareSessionController: ObservableObject {
             primaryDuration: primaryDuration,
             secondaryDuration: secondaryController.mediaItem?.durationSeconds
         ) ?? .unknown
+    }
+
+    func primaryOverlapRange(
+        primaryDuration: TimeInterval
+    ) -> ClosedRange<TimeInterval>? {
+        mapping?.primaryOverlapRange(
+            primaryDuration: primaryDuration,
+            secondaryDuration: secondaryController.mediaItem?.durationSeconds
+        )
     }
 
     func captureComparisonStill(primary: PlayerController) {

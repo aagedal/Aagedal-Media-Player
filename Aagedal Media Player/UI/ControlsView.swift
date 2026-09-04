@@ -79,6 +79,12 @@ struct ControlsView: View {
 
     var body: some View {
         VStack(spacing: 8) {
+            if let item,
+               compareSession.isActive,
+               let mapping = compareSession.mapping {
+                comparisonTimelineLegend(mapping: mapping, item: item)
+            }
+
             // Timeline scrubber
             timelineSlider
 
@@ -249,6 +255,54 @@ struct ControlsView: View {
 
     // MARK: - Timeline
 
+    private func comparisonTimelineLegend(
+        mapping: CompareTimelineMapping,
+        item: MediaItem
+    ) -> some View {
+        let status = compareSession.overlapStatus(
+            primaryDuration: item.durationSeconds
+        )
+        let frameRate = item.metadata?.primaryVideoStream?.frameRate?.value
+        let dropFrame = item.metadata?.timecode?.contains(";") ?? false
+        let offsetLabel = mapping.offsetLabel(
+            primaryFrameRate: frameRate,
+            dropFrame: dropFrame
+        )
+        let statusColor: Color
+        let statusHelp: String
+        switch status {
+        case .none:
+            statusColor = .yellow
+            statusHelp = "The sources have no playable overlap. Source B stays parked on its nearest boundary."
+        case .unknown:
+            statusColor = .secondary
+            statusHelp = "The shared interval is unavailable until both source durations are known."
+        case .full, .partial:
+            statusColor = .cyan
+            statusHelp = "The cyan interval is playable in both sources. The equation shows how A's relative time maps to B."
+        }
+
+        return HStack(spacing: 6) {
+            Capsule()
+                .fill(statusColor)
+                .frame(width: 18, height: 4)
+
+            Text(status.label)
+                .foregroundStyle(statusColor)
+
+            Spacer(minLength: 8)
+
+            Text(offsetLabel)
+                .monospacedDigit()
+                .foregroundStyle(.secondary)
+        }
+        .font(.caption2)
+        .lineLimit(1)
+        .help(statusHelp)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(status.label). \(offsetLabel)")
+    }
+
     private var timelineSlider: some View {
         GeometryReader { geometry in
             let width = geometry.size.width
@@ -260,6 +314,40 @@ struct ControlsView: View {
                 RoundedRectangle(cornerRadius: 2)
                     .fill(Color.white.opacity(0.3))
                     .frame(height: 4)
+
+                // Compare overlap is expressed on A's authoritative timeline.
+                // Outside this interval B is held on its nearest boundary, so
+                // showing it here makes that transport behavior predictable.
+                if compareSession.isActive,
+                   duration > 0,
+                   let overlap = compareSession.primaryOverlapRange(
+                       primaryDuration: duration
+                   ) {
+                    let overlapStart = CGFloat(overlap.lowerBound / duration)
+                    let overlapEnd = CGFloat(overlap.upperBound / duration)
+
+                    Capsule()
+                        .fill(Color.cyan.opacity(0.7))
+                        .frame(
+                            width: max(0, (overlapEnd - overlapStart) * width),
+                            height: 6
+                        )
+                        .offset(x: overlapStart * width)
+                        .allowsHitTesting(false)
+
+                    if overlap.lowerBound > 0 {
+                        comparisonOverlapBoundary(
+                            x: overlapStart * width,
+                            width: width
+                        )
+                    }
+                    if overlap.upperBound < duration {
+                        comparisonOverlapBoundary(
+                            x: overlapEnd * width,
+                            width: width
+                        )
+                    }
+                }
 
                 // Trim region overlay
                 if duration > 0 {
@@ -405,7 +493,35 @@ struct ControlsView: View {
             mode: timecodeMode,
             isDuration: true
         )
-        return "\(current) of \(duration)"
+        let playbackValue = "\(current) of \(duration)"
+        guard compareSession.isActive else {
+            return playbackValue
+        }
+        guard let overlap = compareSession.primaryOverlapRange(
+            primaryDuration: item.durationSeconds
+        ) else {
+            return compareSession.overlapStatus(primaryDuration: item.durationSeconds) == .none
+                ? "\(playbackValue). No comparison overlap"
+                : playbackValue
+        }
+        let dropFrame = item.metadata?.timecode?.contains(";") ?? false
+        let rate = TimecodeFormatter.effectiveTimecodeRate(
+            for: item,
+            dropFrame: dropFrame
+        )
+        let overlapStartFrames = rate.frameCount(forSeconds: overlap.lowerBound) ?? 0
+        let overlapEndFrames = rate.frameCount(forSeconds: overlap.upperBound) ?? 0
+        let overlapStart = rate.timecode(forFrameCount: overlapStartFrames)
+        let overlapEnd = rate.timecode(forFrameCount: overlapEndFrames)
+        return "\(playbackValue). Comparison overlap \(overlapStart) to \(overlapEnd)"
+    }
+
+    private func comparisonOverlapBoundary(x: CGFloat, width: CGFloat) -> some View {
+        Rectangle()
+            .fill(Color.cyan)
+            .frame(width: 2, height: 12)
+            .offset(x: max(0, min(width - 2, x - 1)))
+            .allowsHitTesting(false)
     }
 
     private func adjustTimeline(byFrames frameCount: Int) {
