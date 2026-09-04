@@ -23,17 +23,26 @@ struct ComparePlayerView: View {
     var body: some View {
         GeometryReader { geometry in
             let size = geometry.size
-            let displayGeometry = displayGeometry(for: size)
-            let presentation = presentationGeometry(using: displayGeometry)
+            let fullDisplayGeometry = displayGeometry(for: size)
+            let surfaceSize = compareSession.frameResolution.surfaceSize(for: size)
+            let surfaceDisplayGeometry = displayGeometry(for: surfaceSize)
+            let presentation = presentationGeometry(using: surfaceDisplayGeometry)
+            let inverseRenderScale = 1 / compareSession.frameResolution.renderScale
 
             // Keep exactly one native surface for each controller across every
             // presentation mode. MPV binds its drawable during setup, so
             // conditionally rebuilding either PlayerView can strand playback
             // on an obsolete Metal layer.
             ZStack(alignment: .topLeading) {
-                comparisonSurfaces(size: size, presentation: presentation)
+                comparisonSurfaces(size: surfaceSize, presentation: presentation)
+                    // Composite wipes, overlays, and display differences at
+                    // the selected live-render size, then scale the finished
+                    // image back into the full comparison canvas. Guides and
+                    // pointer interaction remain full-resolution below.
+                    .scaleEffect(inverseRenderScale, anchor: .topLeading)
+                    .frame(width: size.width, height: size.height, alignment: .topLeading)
 
-                comparisonGuides(displayGeometry: displayGeometry)
+                comparisonGuides(displayGeometry: fullDisplayGeometry)
 
                 if compareSession.viewMode == .sideBySide {
                     Rectangle()
@@ -46,7 +55,9 @@ struct ComparePlayerView: View {
                 sourceBadges
 
                 if compareSession.viewMode.isWipe {
-                    wipeInteractionOverlay(referenceRect: displayGeometry.comparisonReferenceRect)
+                    wipeInteractionOverlay(
+                        referenceRect: fullDisplayGeometry.comparisonReferenceRect
+                    )
                 }
             }
             .frame(width: size.width, height: size.height)

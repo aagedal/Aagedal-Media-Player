@@ -34,6 +34,31 @@ nonisolated enum CompareViewMode: String, CaseIterable, Sendable {
     }
 }
 
+nonisolated enum CompareFrameResolution: String, CaseIterable, Sendable {
+    case full
+    case reduced
+
+    var label: String {
+        switch self {
+        case .full: "Full Frame"
+        case .reduced: "Reduced Frame (½)"
+        }
+    }
+
+    var renderScale: CGFloat {
+        switch self {
+        case .full: 1
+        case .reduced: 0.5
+        }
+    }
+
+    func surfaceSize(for canvasSize: CGSize) -> CGSize {
+        let width = canvasSize.width.isFinite ? max(0, canvasSize.width) : 0
+        let height = canvasSize.height.isFinite ? max(0, canvasSize.height) : 0
+        return CGSize(width: width * renderScale, height: height * renderScale)
+    }
+}
+
 nonisolated enum CompareAlignmentMode: Equatable, Sendable {
     case sourceTimecode
     case relative
@@ -44,6 +69,32 @@ nonisolated enum CompareAlignmentMode: Equatable, Sendable {
         case .relative: "Relative start"
         }
     }
+}
+
+nonisolated enum CompareOverlapStatus: Equatable, Sendable {
+    case full
+    case partial
+    case none
+    case unknown
+
+    var label: String {
+        switch self {
+        case .full: "Full overlap"
+        case .partial: "Partial overlap"
+        case .none: "No overlap"
+        case .unknown: "Overlap unknown"
+        }
+    }
+}
+
+/// Whether source B can advance with source A at the current mapped time.
+/// Outside the shared interval B must remain parked on its nearest boundary;
+/// otherwise an independent decoder clock makes it run away from the clamp and
+/// periodically snap back under drift correction.
+nonisolated enum CompareSecondaryPlaybackDisposition: Equatable, Sendable {
+    case advance
+    case holdAtStart
+    case holdAtEnd
 }
 
 nonisolated enum CompareScopeSource: String, CaseIterable, Sendable {
@@ -164,11 +215,70 @@ nonisolated struct CompareTimelineMapping: Equatable, Sendable {
     }
 
     func primaryOverlapRange(primaryDuration: TimeInterval) -> ClosedRange<TimeInterval>? {
+        primaryOverlapRange(
+            primaryDuration: primaryDuration,
+            secondaryDuration: secondaryDuration
+        )
+    }
+
+    func primaryOverlapRange(
+        primaryDuration: TimeInterval,
+        secondaryDuration overrideDuration: TimeInterval?
+    ) -> ClosedRange<TimeInterval>? {
         let primaryDuration = max(0, primaryDuration.isFinite ? primaryDuration : 0)
+        let secondaryDuration = resolvedSecondaryDuration(overrideDuration)
+        guard primaryDuration > 0, secondaryDuration > 0 else { return nil }
         let lowerBound = max(0, -offset)
         let upperBound = min(primaryDuration, secondaryDuration - offset)
-        guard upperBound >= lowerBound else { return nil }
+        // Timelines that merely touch at one endpoint share no playable span.
+        guard upperBound > lowerBound else { return nil }
         return lowerBound...upperBound
+    }
+
+    func overlapStatus(
+        primaryDuration: TimeInterval,
+        secondaryDuration overrideDuration: TimeInterval? = nil
+    ) -> CompareOverlapStatus {
+        let primaryDuration = max(0, primaryDuration.isFinite ? primaryDuration : 0)
+        let secondaryDuration = resolvedSecondaryDuration(overrideDuration)
+        guard primaryDuration > 0, secondaryDuration > 0 else { return .unknown }
+        guard let overlap = primaryOverlapRange(
+            primaryDuration: primaryDuration,
+            secondaryDuration: secondaryDuration
+        ) else { return .none }
+        return overlap.lowerBound <= 0 && overlap.upperBound >= primaryDuration
+            ? .full
+            : .partial
+    }
+
+    func secondaryPlaybackDisposition(
+        forPrimaryTime primaryTime: TimeInterval,
+        primaryPlaybackSpeed: Float,
+        secondaryDuration overrideDuration: TimeInterval? = nil
+    ) -> CompareSecondaryPlaybackDisposition {
+        let secondaryDuration = resolvedSecondaryDuration(overrideDuration)
+        guard secondaryDuration > 0,
+              primaryPlaybackSpeed.isFinite,
+              primaryPlaybackSpeed != 0 else { return .advance }
+        let primaryTime = primaryTime.isFinite ? primaryTime : 0
+        let unboundedSecondaryTime = primaryTime + offset
+
+        if unboundedSecondaryTime < 0
+            || (unboundedSecondaryTime == 0 && primaryPlaybackSpeed < 0) {
+            return .holdAtStart
+        }
+        if unboundedSecondaryTime > secondaryDuration
+            || (unboundedSecondaryTime == secondaryDuration && primaryPlaybackSpeed > 0) {
+            return .holdAtEnd
+        }
+        return .advance
+    }
+
+    private func resolvedSecondaryDuration(_ overrideDuration: TimeInterval?) -> TimeInterval {
+        let overrideDuration = overrideDuration.flatMap {
+            $0.isFinite && $0 > 0 ? $0 : nil
+        }
+        return overrideDuration ?? secondaryDuration
     }
 }
 
@@ -242,6 +352,7 @@ final class CompareSessionController: ObservableObject {
     let secondaryWaveformGenerator = AudioWaveformGenerator()
 
     @Published var viewMode: CompareViewMode = .sideBySide
+    @Published private(set) var frameResolution: CompareFrameResolution = .full
     @Published private(set) var wipePosition = 0.5
     @Published private(set) var overlayBlend = 0.5
     @Published private(set) var differenceGain = 1.0
@@ -272,6 +383,7 @@ final class CompareSessionController: ObservableObject {
     private var reviewExportTask: Task<Void, Never>?
     private var reviewExportSavePanel: NSSavePanel?
     private var shouldResumeAfterAudioTrackSelection = false
+    private var secondaryBoundaryHold: CompareSecondaryPlaybackDisposition?
     private var secondaryPlaybackPhaseCancellable: AnyCancellable?
     private var loadGeneration = OperationGeneration()
     private var reviewRevision: UInt64 = 0
@@ -337,6 +449,7 @@ final class CompareSessionController: ObservableObject {
         audioTrackSelectionTask = nil
         shouldResumeAfterAudioTrackSelection = false
         stopDriftCorrection()
+        secondaryBoundaryHold = nil
         secondaryWaveformGenerator.cancel()
         primary.setSessionAudioChannelRouting(nil)
         secondaryController.setSessionAudioChannelRouting(nil)
@@ -426,6 +539,7 @@ final class CompareSessionController: ObservableObject {
         audioTrackSelectionTask = nil
         shouldResumeAfterAudioTrackSelection = false
         stopDriftCorrection()
+        secondaryBoundaryHold = nil
         endSecondaryLoadSignpost()
         secondaryWaveformGenerator.cancel()
         primaryAudioController?.setSessionAudioChannelRouting(nil)
@@ -447,6 +561,7 @@ final class CompareSessionController: ObservableObject {
         isReviewSidecarWritable = false
         reviewExportState = .idle
         viewMode = .sideBySide
+        frameResolution = .full
         wipePosition = 0.5
         overlayBlend = 0.5
         differenceGain = 1
@@ -595,6 +710,18 @@ final class CompareSessionController: ObservableObject {
 
     func togglePrimarySecondary() {
         viewMode = viewMode == .primary ? .secondary : .primary
+    }
+
+    func setFrameResolution(_ resolution: CompareFrameResolution, primary: PlayerController) {
+        guard frameResolution != resolution else { return }
+        frameResolution = resolution
+        // MPV's Metal destination can retain its old drawable size after a
+        // large surface growth. Reuse the paired reload path so both backends
+        // restart at the same timeline position and the requested resolution
+        // is applied predictably in either direction.
+        if isActive, isSecondaryReady {
+            reload(primary: primary)
+        }
     }
 
     func setWipePosition(_ position: Double) {
@@ -943,9 +1070,7 @@ final class CompareSessionController: ObservableObject {
             return
         }
         primary.play()
-        if secondaryController.isReady {
-            secondaryController.play()
-        }
+        updateSecondaryTransport(primary: primary, forceRateMatch: true)
         startDriftCorrection(primary: primary)
     }
 
@@ -964,7 +1089,7 @@ final class CompareSessionController: ObservableObject {
         }
         synchronize(primary: primary)
         primary.startReverse()
-        secondaryController.startReverse()
+        updateSecondaryTransport(primary: primary, forceRateMatch: true)
         startDriftCorrection(primary: primary)
     }
 
@@ -975,7 +1100,7 @@ final class CompareSessionController: ObservableObject {
         }
         synchronize(primary: primary)
         primary.fastForward()
-        secondaryController.fastForward()
+        updateSecondaryTransport(primary: primary, forceRateMatch: true)
         startDriftCorrection(primary: primary)
     }
 
@@ -986,7 +1111,7 @@ final class CompareSessionController: ObservableObject {
         }
         synchronize(primary: primary)
         primary.slowForward()
-        secondaryController.slowForward()
+        updateSecondaryTransport(primary: primary, forceRateMatch: true)
         startDriftCorrection(primary: primary)
     }
 
@@ -997,7 +1122,7 @@ final class CompareSessionController: ObservableObject {
         }
         synchronize(primary: primary)
         primary.slowReverse()
-        secondaryController.slowReverse()
+        updateSecondaryTransport(primary: primary, forceRateMatch: true)
         startDriftCorrection(primary: primary)
     }
 
@@ -1017,6 +1142,9 @@ final class CompareSessionController: ObservableObject {
         primary.seekTo(time)
         guard isActive else { return }
         secondaryController.seekTo(mappedSecondaryTime(for: time))
+        if primary.isPlaying {
+            updateSecondaryTransport(primary: primary, at: time)
+        }
     }
 
     func scrub(primary: PlayerController, to time: TimeInterval) {
@@ -1061,6 +1189,13 @@ final class CompareSessionController: ObservableObject {
 
     func secondaryTime(forPrimaryTime primaryTime: TimeInterval) -> TimeInterval {
         mappedSecondaryTime(for: primaryTime)
+    }
+
+    func overlapStatus(primaryDuration: TimeInterval) -> CompareOverlapStatus {
+        mapping?.overlapStatus(
+            primaryDuration: primaryDuration,
+            secondaryDuration: secondaryController.mediaItem?.durationSeconds
+        ) ?? .unknown
     }
 
     func captureComparisonStill(primary: PlayerController) {
@@ -1116,7 +1251,10 @@ final class CompareSessionController: ObservableObject {
                         primary.play()
                     }
                     if primary.isPlaying {
-                        self.secondaryController.play()
+                        self.updateSecondaryTransport(
+                            primary: primary,
+                            forceRateMatch: true
+                        )
                         self.startDriftCorrection(primary: primary)
                     }
                     self.readinessTask = nil
@@ -1141,6 +1279,76 @@ final class CompareSessionController: ObservableObject {
         readinessTask = nil
     }
 
+    private func updateSecondaryTransport(
+        primary: PlayerController,
+        at primaryTimeOverride: TimeInterval? = nil,
+        forceRateMatch: Bool = false
+    ) {
+        guard isActive, secondaryController.isReady, let mapping else { return }
+        let primaryTime = primaryTimeOverride ?? primary.playbackTimeSnapshot()
+        let disposition = mapping.secondaryPlaybackDisposition(
+            forPrimaryTime: primaryTime,
+            primaryPlaybackSpeed: primary.currentPlaybackSpeed,
+            secondaryDuration: secondaryController.mediaItem?.durationSeconds
+        )
+
+        switch disposition {
+        case .advance:
+            let wasHeldAtBoundary = secondaryBoundaryHold != nil
+            secondaryBoundaryHold = nil
+            guard primary.isPlaying else { return }
+            if wasHeldAtBoundary {
+                secondaryController.seekTo(mappedSecondaryTime(for: primaryTime))
+            }
+            let speedMismatch = abs(
+                secondaryController.currentPlaybackSpeed - primary.currentPlaybackSpeed
+            ) > 0.001
+            if forceRateMatch || wasHeldAtBoundary
+                || !secondaryController.isPlaying || speedMismatch {
+                matchSecondaryTransport(to: primary.currentPlaybackSpeed)
+            }
+
+        case .holdAtStart, .holdAtEnd:
+            let enteredBoundary = secondaryBoundaryHold != disposition
+            secondaryBoundaryHold = disposition
+            if enteredBoundary || secondaryController.isPlaying {
+                secondaryController.pause()
+                secondaryController.seekTo(mappedSecondaryTime(for: primaryTime))
+            }
+        }
+    }
+
+    private func matchSecondaryTransport(to primarySpeed: Float) {
+        guard primarySpeed.isFinite, primarySpeed != 0 else {
+            secondaryController.pause()
+            return
+        }
+
+        if primarySpeed > 0 {
+            secondaryController.playForSynchronization(atRate: primarySpeed)
+            return
+        }
+
+        secondaryController.pause()
+        let targetMagnitude = abs(primarySpeed)
+        if targetMagnitude >= 1 {
+            secondaryController.startReverse()
+            for _ in 1..<min(8, max(1, Int(targetMagnitude.rounded()))) {
+                secondaryController.startReverse()
+            }
+            return
+        }
+
+        // Slow reverse exposes four discrete rates: .75, .5, .25, and .1.
+        // Step through the same public transport states until B matches A.
+        for _ in 0..<4 {
+            secondaryController.slowReverse()
+            if abs(secondaryController.currentPlaybackSpeed - primarySpeed) <= 0.001 {
+                break
+            }
+        }
+    }
+
     private func startDriftCorrection(primary: PlayerController) {
         guard isActive else { return }
         stopDriftCorrection()
@@ -1161,13 +1369,33 @@ final class CompareSessionController: ObservableObject {
                   self.isActive {
                 try? await Task.sleep(for: .seconds(sampleInterval))
                 guard !Task.isCancelled,
-                      primary.isPlaying,
-                      self.secondaryController.isPlaying else { continue }
+                      primary.isPlaying else { continue }
 
                 let primaryBefore = primary.playbackTimeSnapshot()
-                let actual = self.secondaryController.playbackTimeSnapshot()
                 let primaryAfter = primary.playbackTimeSnapshot()
                 let primaryTime = (primaryBefore + primaryAfter) / 2
+                let previousBoundaryHold = self.secondaryBoundaryHold
+                self.updateSecondaryTransport(primary: primary, at: primaryTime)
+                if self.secondaryBoundaryHold != nil {
+                    if isRateNudged {
+                        self.secondaryController.restoreSynchronizationPlaybackRate()
+                        isRateNudged = false
+                    }
+                    outOfToleranceSince = nil
+                    isWaitingForCorrectionToSettle = false
+                    continue
+                }
+                guard self.secondaryController.isPlaying else { continue }
+                if previousBoundaryHold != nil {
+                    // The newly resumed decoder has just been positioned at
+                    // the mapped time; let that seek settle before measuring.
+                    lastCorrectionTime = ProcessInfo.processInfo.systemUptime
+                    outOfToleranceSince = nil
+                    isWaitingForCorrectionToSettle = true
+                    continue
+                }
+
+                let actual = self.secondaryController.playbackTimeSnapshot()
                 let expected = self.mappedSecondaryTime(for: primaryTime)
                 let readUncertainty = abs(primaryAfter - primaryBefore) / 2
                 let sampleTime = ProcessInfo.processInfo.systemUptime

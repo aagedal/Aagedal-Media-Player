@@ -142,6 +142,171 @@ final class CompareTimelineMappingTests: XCTestCase {
         )
     }
 
+    func testForwardPlaybackDispositionAdvancesOnlyInsideSecondaryBounds() {
+        let mapping = CompareTimelineMapping(
+            primaryStartSeconds: 90,
+            secondaryStartSeconds: 100,
+            secondaryDuration: 20
+        )
+
+        XCTAssertEqual(
+            mapping.secondaryPlaybackDisposition(
+                forPrimaryTime: 9,
+                primaryPlaybackSpeed: 1,
+                secondaryDuration: 20
+            ),
+            .holdAtStart
+        )
+        XCTAssertEqual(
+            mapping.secondaryPlaybackDisposition(
+                forPrimaryTime: 10,
+                primaryPlaybackSpeed: 1,
+                secondaryDuration: 20
+            ),
+            .advance
+        )
+        XCTAssertEqual(
+            mapping.secondaryPlaybackDisposition(
+                forPrimaryTime: 20,
+                primaryPlaybackSpeed: 1,
+                secondaryDuration: 20
+            ),
+            .advance
+        )
+        XCTAssertEqual(
+            mapping.secondaryPlaybackDisposition(
+                forPrimaryTime: 30,
+                primaryPlaybackSpeed: 1,
+                secondaryDuration: 20
+            ),
+            .holdAtEnd
+        )
+        XCTAssertEqual(
+            mapping.secondaryPlaybackDisposition(
+                forPrimaryTime: 31,
+                primaryPlaybackSpeed: 1,
+                secondaryDuration: 20
+            ),
+            .holdAtEnd
+        )
+    }
+
+    func testReversePlaybackDispositionAdvancesOnlyInsideSecondaryBounds() {
+        let mapping = CompareTimelineMapping(
+            primaryStartSeconds: 90,
+            secondaryStartSeconds: 100,
+            secondaryDuration: 20
+        )
+
+        XCTAssertEqual(
+            mapping.secondaryPlaybackDisposition(
+                forPrimaryTime: 9,
+                primaryPlaybackSpeed: -1,
+                secondaryDuration: 20
+            ),
+            .holdAtStart
+        )
+        XCTAssertEqual(
+            mapping.secondaryPlaybackDisposition(
+                forPrimaryTime: 10,
+                primaryPlaybackSpeed: -1,
+                secondaryDuration: 20
+            ),
+            .holdAtStart
+        )
+        XCTAssertEqual(
+            mapping.secondaryPlaybackDisposition(
+                forPrimaryTime: 20,
+                primaryPlaybackSpeed: -1,
+                secondaryDuration: 20
+            ),
+            .advance
+        )
+        XCTAssertEqual(
+            mapping.secondaryPlaybackDisposition(
+                forPrimaryTime: 30,
+                primaryPlaybackSpeed: -1,
+                secondaryDuration: 20
+            ),
+            .advance
+        )
+        XCTAssertEqual(
+            mapping.secondaryPlaybackDisposition(
+                forPrimaryTime: 31,
+                primaryPlaybackSpeed: -1,
+                secondaryDuration: 20
+            ),
+            .holdAtEnd
+        )
+    }
+
+    func testPlaybackDispositionAdvancesWhenSecondaryDurationIsUnknown() {
+        let mapping = CompareTimelineMapping(
+            primaryStartSeconds: 90,
+            secondaryStartSeconds: 100,
+            secondaryDuration: 0
+        )
+
+        XCTAssertEqual(
+            mapping.secondaryPlaybackDisposition(
+                forPrimaryTime: 9,
+                primaryPlaybackSpeed: 1,
+                secondaryDuration: nil
+            ),
+            .advance
+        )
+        XCTAssertEqual(
+            mapping.secondaryPlaybackDisposition(
+                forPrimaryTime: 31,
+                primaryPlaybackSpeed: -1,
+                secondaryDuration: nil
+            ),
+            .advance
+        )
+    }
+
+    func testOverlapStatusDistinguishesFullPartialNoneAndUnknown() {
+        let relativeMapping = CompareTimelineMapping(
+            primaryStartSeconds: nil,
+            secondaryStartSeconds: nil,
+            secondaryDuration: 0
+        )
+        let disjointMapping = CompareTimelineMapping(
+            primaryStartSeconds: 100,
+            secondaryStartSeconds: 200,
+            secondaryDuration: 0
+        )
+
+        XCTAssertEqual(
+            relativeMapping.overlapStatus(
+                primaryDuration: 20,
+                secondaryDuration: 30
+            ),
+            .full
+        )
+        XCTAssertEqual(
+            relativeMapping.overlapStatus(
+                primaryDuration: 30,
+                secondaryDuration: 20
+            ),
+            .partial
+        )
+        XCTAssertEqual(
+            disjointMapping.overlapStatus(
+                primaryDuration: 10,
+                secondaryDuration: 10
+            ),
+            .none
+        )
+        XCTAssertEqual(
+            relativeMapping.overlapStatus(
+                primaryDuration: 20,
+                secondaryDuration: nil
+            ),
+            .unknown
+        )
+    }
+
     func testOverlapRangeAccountsForPositiveOffset() {
         let mapping = CompareTimelineMapping(
             primaryStartSeconds: 110,

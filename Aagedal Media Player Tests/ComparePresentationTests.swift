@@ -7,6 +7,48 @@ import XCTest
 
 @MainActor
 final class ComparePresentationTests: XCTestCase {
+    func testFrameResolutionDefaultsToFull() {
+        let session = CompareSessionController()
+
+        XCTAssertEqual(session.frameResolution, .full)
+    }
+
+    func testFrameResolutionProvidesExpectedRenderScaleAndSurfaceSize() {
+        let canvasSize = CGSize(width: 1_920, height: 1_080)
+
+        XCTAssertEqual(CompareFrameResolution.full.renderScale, 1)
+        XCTAssertEqual(
+            CompareFrameResolution.full.surfaceSize(for: canvasSize),
+            canvasSize
+        )
+        XCTAssertEqual(CompareFrameResolution.reduced.renderScale, 0.5)
+        XCTAssertEqual(
+            CompareFrameResolution.reduced.surfaceSize(for: canvasSize),
+            CGSize(width: 960, height: 540)
+        )
+    }
+
+    func testSettingFrameResolutionWhileInactiveChangesTheSelection() {
+        let primary = PlayerController()
+        let session = CompareSessionController()
+        let preparationID = primary.preparationID
+
+        session.setFrameResolution(.reduced, primary: primary)
+
+        XCTAssertEqual(session.frameResolution, .reduced)
+        XCTAssertEqual(primary.preparationID, preparationID)
+    }
+
+    func testStoppingSessionRestoresFullFrameResolution() {
+        let primary = PlayerController()
+        let session = CompareSessionController()
+        session.setFrameResolution(.reduced, primary: primary)
+
+        session.stop()
+
+        XCTAssertEqual(session.frameResolution, .full)
+    }
+
     func testWipePositionClampsToUnitInterval() {
         let session = CompareSessionController()
 

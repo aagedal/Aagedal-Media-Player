@@ -118,6 +118,14 @@ final class CompareLiveBackendTests: XCTestCase {
         )
     }
 
+    func testMPVPrimaryAndAVFoundationSecondaryKeepReducedSurfacesAcrossVisualModes() async throws {
+        try await exerciseVisualModes(
+            primaryBackend: .mpv,
+            secondaryBackend: .avFoundation,
+            frameResolution: .reduced
+        )
+    }
+
     func testMPVPrimaryAndAVFoundationSecondaryUseRelativeAlignmentForMismatchedMasters() async throws {
         try await exerciseRelativeAlignment(
             primaryBackend: .mpv,
@@ -343,6 +351,25 @@ final class CompareLiveBackendTests: XCTestCase {
             secondary.playbackTimeSnapshot()
         }
         XCTAssertTrue(secondaryReturnedToFirstFrame)
+
+        let primaryPlaybackStart = primary.playbackTimeSnapshot()
+        session.play(primary: primary)
+        let primaryAdvanced = await waitUntil({
+            primary.playbackTimeSnapshot() - primaryPlaybackStart >= 0.25
+        }, timeout: .seconds(3))
+        XCTAssertTrue(primaryAdvanced, "Primary did not advance across the disjoint range.")
+        XCTAssertTrue(primary.isPlaying)
+        XCTAssertFalse(
+            secondary.isPlaying,
+            "Secondary playback must stay paused before its source-timecode range."
+        )
+        XCTAssertEqual(
+            secondary.playbackTimeSnapshot(),
+            0,
+            accuracy: 1.0 / 24.0,
+            "Secondary playback moved away from its first-frame clamp."
+        )
+        session.pause(primary: primary)
     }
 
     func testMixedBackendsIsolateMatchingMultichannelAudioAndRestoreOnStop() async throws {
@@ -682,7 +709,8 @@ final class CompareLiveBackendTests: XCTestCase {
 
     private func exerciseVisualModes(
         primaryBackend: PlaybackBackend,
-        secondaryBackend: PlaybackBackend
+        secondaryBackend: PlaybackBackend,
+        frameResolution: CompareFrameResolution = .full
     ) async throws {
         let fixtures = try fixtureDirectory()
         let primaryURL = fixtures.appending(path: "compare/source-a.mov")
@@ -717,12 +745,6 @@ final class CompareLiveBackendTests: XCTestCase {
             return
         }
 
-        let primaryPreparationID = primary.preparationID
-        let secondaryPreparationID = secondary.preparationID
-        let primaryMPV = primary.mpvPlayer
-        let primaryAVPlayer = primary.player
-        let secondaryMPV = secondary.mpvPlayer
-        let secondaryAVPlayer = secondary.player
         let primaryItem = try XCTUnwrap(primary.mediaItem)
         let hostingView = NSHostingView(
             rootView: ComparePlayerView(
@@ -763,6 +785,29 @@ final class CompareLiveBackendTests: XCTestCase {
             return
         }
 
+        if frameResolution != .full {
+            let primaryPreparationBeforeReload = primary.preparationID
+            let secondaryPreparationBeforeReload = secondary.preparationID
+            session.setFrameResolution(frameResolution, primary: primary)
+
+            guard await waitUntil({
+                primary.preparationID > primaryPreparationBeforeReload &&
+                    secondary.preparationID > secondaryPreparationBeforeReload &&
+                    primary.isReady && secondary.isReady
+            }) else {
+                XCTFail("Both decoders did not become ready after the resolution reload.")
+                return
+            }
+        }
+        XCTAssertEqual(session.frameResolution, frameResolution)
+
+        let primaryPreparationID = primary.preparationID
+        let secondaryPreparationID = secondary.preparationID
+        let primaryMPV = primary.mpvPlayer
+        let primaryAVPlayer = primary.player
+        let secondaryMPV = secondary.mpvPlayer
+        let secondaryAVPlayer = secondary.player
+
         XCTAssertEqual(primary.preparationID, primaryPreparationID)
         XCTAssertEqual(secondary.preparationID, secondaryPreparationID)
         XCTAssertTrue(primary.mpvPlayer === primaryMPV)
@@ -774,6 +819,27 @@ final class CompareLiveBackendTests: XCTestCase {
         let avPlayerView = try XCTUnwrap(avPlayerViews(in: hostingView).first)
         let metalLayerIdentity = ObjectIdentifier(metalLayer)
         let avPlayerViewIdentity = ObjectIdentifier(avPlayerView)
+        let expectedSurfaceSize = frameResolution.surfaceSize(for: visualCanvasSize)
+        XCTAssertEqual(
+            metalLayer.bounds.width,
+            expectedSurfaceSize.width,
+            accuracy: 1
+        )
+        XCTAssertEqual(
+            metalLayer.bounds.height,
+            expectedSurfaceSize.height,
+            accuracy: 1
+        )
+        XCTAssertEqual(
+            avPlayerView.bounds.width,
+            expectedSurfaceSize.width,
+            accuracy: 1
+        )
+        XCTAssertEqual(
+            avPlayerView.bounds.height,
+            expectedSurfaceSize.height,
+            accuracy: 1
+        )
 
         session.play(primary: primary)
         guard await waitUntil({ primary.isPlaying && secondary.isPlaying }) else {

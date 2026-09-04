@@ -822,6 +822,20 @@ final class PlayerController: ObservableObject {
         syncIsPlaying()
     }
 
+    /// Starts forward playback at an exact transport rate. Compare Mode uses
+    /// this when source B enters the shared timeline after being parked on a
+    /// clamped boundary, including during forward shuttle playback.
+    func playForSynchronization(atRate rate: Float) {
+        guard isReady, rate.isFinite, rate > 0 else { return }
+        logPlaybackTransition("playForSynchronization")
+        stopReverse()
+        guard let backendAdapter else { return }
+        backendAdapter.rate = rate
+        currentPlaybackSpeed = rate
+        backendAdapter.play()
+        syncIsPlaying()
+    }
+
     /// Applies a temporary backend rate without changing the transport speed
     /// shown to the user. Compare Mode uses this for small clock corrections.
     func setSynchronizationPlaybackRate(_ rate: Float) {

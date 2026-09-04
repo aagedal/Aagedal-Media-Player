@@ -373,6 +373,9 @@ struct ContentView: View {
 
     private var topToolbar: some View {
         let comparedChannels = compareSession.availableComparedAudioChannels(primary: controller)
+        let overlapStatus = compareSession.overlapStatus(
+            primaryDuration: controller.mediaItem?.durationSeconds ?? 0
+        )
 
         return HStack(spacing: 10) {
             Spacer()
@@ -392,6 +395,33 @@ struct ContentView: View {
                 .pickerStyle(.menu)
                 .frame(width: 150)
                 .help("Choose comparison view. Press B to toggle A/B.")
+
+                Menu {
+                    Picker(
+                        "Frame resolution",
+                        selection: Binding(
+                            get: { compareSession.frameResolution },
+                            set: { compareSession.setFrameResolution($0, primary: controller) }
+                        )
+                    ) {
+                        ForEach(CompareFrameResolution.allCases, id: \.self) { resolution in
+                            Text(resolution.label).tag(resolution)
+                        }
+                    }
+                } label: {
+                    Label(
+                        compareSession.frameResolution == .full ? "Full" : "½",
+                        systemImage: "rectangle.on.rectangle"
+                    )
+                }
+                .menuStyle(.borderlessButton)
+                .fixedSize()
+                .disabled(!compareSession.isSecondaryReady)
+                .help(
+                    "Choose the live comparison render resolution. Reduced Frame can improve playback performance; source files and exports remain full resolution."
+                )
+                .accessibilityLabel("Comparison frame resolution")
+                .accessibilityValue(compareSession.frameResolution.label)
 
                 Picker(
                     "Audio source",
@@ -566,9 +596,19 @@ struct ContentView: View {
                 }
 
                 if let alignment = compareSession.mapping?.mode.label {
-                    Text(alignment)
+                    Text("\(alignment) · \(overlapStatus.label)")
                         .font(.caption)
-                        .foregroundStyle(.white.opacity(0.72))
+                        .foregroundStyle(
+                            overlapStatus == .none
+                                ? Color.yellow
+                                : Color.white.opacity(0.72)
+                        )
+                        .help(
+                            overlapStatus == .none
+                                ? "The source-timecode ranges do not overlap. Source B stays parked on its nearest boundary during playback."
+                                : "How the source timelines align and how much of source A overlaps source B"
+                        )
+                        .accessibilityLabel("\(alignment), \(overlapStatus.label)")
                 }
 
                 CompareMismatchIndicator(

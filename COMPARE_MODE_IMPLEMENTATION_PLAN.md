@@ -63,7 +63,10 @@ MPV/MPV, AVFoundation/AVFoundation, and both mixed-backend directions using
 generated fixtures. Additional mixed-backend fixtures now verify relative
 alignment when neither file has source timecode while codec, raster, frame
 rate, audio codec, and duration differ. A disjoint source-timecode pair also
-verifies no-overlap detection and clamping B to its first frame. Eight-second
+verifies no-overlap detection, keeps B parked on its first frame while A plays,
+and surfaces the overlap status in the toolbar. Boundary-aware transport also
+holds B at either clamp until the primary timeline enters the shared range in
+the active playback direction. Eight-second
 sustained playback coverage now verifies that all four backend pairings keep
 advancing and reconverge within one second of a transient out-of-frame
 excursion. Additional mixed-backend checks exercise every supported frame-rate
@@ -123,8 +126,10 @@ visual mode during playback in both mixed-backend directions, verifying that
 the MPV and AVFoundation surfaces and decoder instances remain stable. The
 opt-in production profiler now sustains that workload at the configured render
 size, sweeps wipe, overlay, and difference controls, checks paired drift, and
-measures main-actor scheduling delay. Hands-on pixel and Instruments GPU
-validation at production resolution remains.
+measures main-actor scheduling delay. A symmetric half-resolution live-render
+option now reduces both native surfaces and the comparison composite while
+leaving source files, scopes, and exports unchanged. Hands-on pixel and
+Instruments GPU validation at production resolution remains.
 
 - [x] Add a draggable vertical/horizontal wipe.
 - [x] Add opacity overlay with an adjustable blend amount.
@@ -200,8 +205,9 @@ belongs in a separate offline feature with defined normalization.
 
 Two UHD/HDR decoders plus scopes can be expensive. Add signposts for decoder
 load and drift correction, and profile the oldest supported Apple Silicon Mac.
-The UI should permit reduced-frame comparison if sustained real-time playback
-is not possible.
+The UI now permits symmetric half-resolution live comparison if sustained
+full-frame rendering is not possible. Changing render resolution intentionally
+uses the paired reload path so MPV cannot retain a stale MoltenVK destination.
 
 ## Verification matrix
 
@@ -228,7 +234,8 @@ directions for timecode alignment, shared transport, and eight seconds of
 sustained playback without a decoder stall or an out-of-frame excursion that
 persists longer than one second. Mixed-backend fixtures also cover relative
 alignment with simultaneous codec/raster/rate/duration differences, plus a
-disjoint source-timecode range. Generated integration checks now cover isolated
+disjoint source-timecode range whose B decoder remains parked while A plays.
+Generated integration checks now cover isolated
 rate variants, rotated/anamorphic pairing, and SDR/HDR pairing. The full
 raster/color matrix and longer production-resolution runs still require
 hands-on validation. Hosted mixed-backend checks mount `ComparePlayerView`,
