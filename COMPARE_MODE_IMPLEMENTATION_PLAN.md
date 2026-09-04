@@ -45,8 +45,10 @@ clear place to add source selection for those tools.
 
 ## Phase 1 — Usable comparison foundation
 
-Status: Foundation implemented on 2026-09-02. Live backend/drift validation
-remains before Phase 1 acceptance is complete.
+Status: Foundation implemented on 2026-09-02. Backend-clock drift sampling, a
+one-primary-frame correction policy, correction cooldown, and Instruments
+signposts for secondary load/drift profiling were added on 2026-09-04. Live
+backend/drift validation remains before Phase 1 acceptance is complete.
 
 - [x] Define the implementation plan and release boundaries.
 - [x] Add a window-owned compare session with cancellation-safe secondary-file

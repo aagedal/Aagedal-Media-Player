@@ -5,6 +5,7 @@
 import AppKit
 import Combine
 import Foundation
+import OSLog
 import UniformTypeIdentifiers
 
 nonisolated enum CompareViewMode: String, CaseIterable, Sendable {
@@ -171,10 +172,59 @@ nonisolated struct CompareTimelineMapping: Equatable, Sendable {
     }
 }
 
+/// Decides when the secondary decoder must be re-synchronized with the
+/// primary backend clock. The tolerance is exactly one primary frame; a short
+/// cooldown prevents a decoder with an outstanding seek from being flooded
+/// with duplicate corrections.
+nonisolated struct CompareDriftPolicy: Equatable, Sendable {
+    static let fallbackFrameRate = 30.0
+    static let correctionCooldown: TimeInterval = 0.25
+
+    let frameRate: Double
+
+    init(primaryFrameRate: Double?) {
+        if let primaryFrameRate,
+           primaryFrameRate.isFinite,
+           primaryFrameRate > 0 {
+            frameRate = primaryFrameRate
+        } else {
+            frameRate = Self.fallbackFrameRate
+        }
+    }
+
+    var frameDuration: TimeInterval { 1 / frameRate }
+
+    func signedDrift(
+        actualSecondaryTime: TimeInterval,
+        expectedSecondaryTime: TimeInterval
+    ) -> TimeInterval? {
+        guard actualSecondaryTime.isFinite, expectedSecondaryTime.isFinite else { return nil }
+        return actualSecondaryTime - expectedSecondaryTime
+    }
+
+    func correctionTarget(
+        actualSecondaryTime: TimeInterval,
+        expectedSecondaryTime: TimeInterval,
+        timeSinceLastCorrection: TimeInterval
+    ) -> TimeInterval? {
+        guard timeSinceLastCorrection >= Self.correctionCooldown,
+              let drift = signedDrift(
+                actualSecondaryTime: actualSecondaryTime,
+                expectedSecondaryTime: expectedSecondaryTime
+              ),
+              abs(drift) > frameDuration else { return nil }
+        return expectedSecondaryTime
+    }
+}
+
 @MainActor
 final class CompareSessionController: ObservableObject {
     nonisolated static let minimumDifferenceGain = 1.0
     nonisolated static let maximumDifferenceGain = 16.0
+    private nonisolated static let signposter = OSSignposter(
+        subsystem: "com.aagedal.MediaPlayer",
+        category: "CompareMode"
+    )
 
     let secondaryController: PlayerController
     let secondaryWaveformGenerator = AudioWaveformGenerator()
@@ -201,6 +251,8 @@ final class CompareSessionController: ObservableObject {
     private var loadTask: Task<Void, Never>?
     private var readinessTask: Task<Void, Never>?
     private var driftCorrectionTask: Task<Void, Never>?
+    private var secondaryLoadSignpostState: OSSignpostIntervalState?
+    private var driftMonitoringSignpostState: OSSignpostIntervalState?
     private var audioTrackSelectionTask: Task<Void, Never>?
     private var reviewLoadTask: Task<Void, Never>?
     private var reviewSaveTask: Task<Void, Never>?
@@ -229,6 +281,8 @@ final class CompareSessionController: ObservableObject {
                 guard case .failed(let failure) = phase,
                       self.isActive,
                       let primary = self.primaryAudioController else { return }
+                self.endSecondaryLoadSignpost()
+                Self.signposter.emitEvent("Secondary decoder failed")
                 self.selectAudioSource(.primary, primary: primary)
                 self.loadError = "The comparison file could not be played: \(failure.message)"
             }
@@ -242,6 +296,7 @@ final class CompareSessionController: ObservableObject {
         primaryAudioController = primary
 
         let generation = loadGeneration.advance()
+        beginSecondaryLoadSignpost()
         loadTask?.cancel()
         readinessTask?.cancel()
         reviewLoadTask?.cancel()
@@ -311,7 +366,7 @@ final class CompareSessionController: ObservableObject {
                 )
             }
             let secondaryTime = newMapping.secondaryTime(
-                forPrimaryTime: primary.currentPlaybackTime
+                forPrimaryTime: primary.playbackTimeSnapshot()
             )
             self.secondaryController.loadMedia(item, startTime: secondaryTime)
             if item.metadata != nil {
@@ -338,6 +393,7 @@ final class CompareSessionController: ObservableObject {
         audioTrackSelectionTask = nil
         shouldResumeAfterAudioTrackSelection = false
         stopDriftCorrection()
+        endSecondaryLoadSignpost()
         secondaryWaveformGenerator.cancel()
         secondaryController.teardown()
         secondaryController.setAudioSuppressed(true)
@@ -901,7 +957,7 @@ final class CompareSessionController: ObservableObject {
         primary.pause()
         secondaryController.pause()
         stopDriftCorrection()
-        let primaryTime = primary.currentPlaybackTime
+        let primaryTime = primary.playbackTimeSnapshot()
         let secondaryTime = mappedSecondaryTime(for: primaryTime)
         primary.preparePlayback(startTime: primaryTime, resetAudioSelection: false)
         secondaryController.preparePlayback(startTime: secondaryTime, resetAudioSelection: false)
@@ -916,7 +972,7 @@ final class CompareSessionController: ObservableObject {
 
     func synchronize(primary: PlayerController) {
         guard isActive, secondaryController.isReady else { return }
-        let expected = mappedSecondaryTime(for: primary.currentPlaybackTime)
+        let expected = mappedSecondaryTime(for: primary.playbackTimeSnapshot())
         secondaryController.seekTo(expected)
     }
 
@@ -929,7 +985,7 @@ final class CompareSessionController: ObservableObject {
               isSecondaryReady,
               let secondaryItem = secondaryController.mediaItem,
               let mapping else { return }
-        let primaryTime = primary.currentPlaybackTime
+        let primaryTime = primary.playbackTimeSnapshot()
         primary.captureComparisonStill(
             secondaryItem: secondaryItem,
             secondaryTime: secondaryTime(forPrimaryTime: primaryTime),
@@ -958,6 +1014,13 @@ final class CompareSessionController: ObservableObject {
                       self.isActive else { return }
                 let primaryIsReady = primary.isReady
                 if self.secondaryController.isReady && (!resumePlayback || primaryIsReady) {
+                    self.endSecondaryLoadSignpost()
+                    let primaryBackend = primary.useMPV ? "MPV" : "AVFoundation"
+                    let secondaryBackend = self.secondaryController.useMPV ? "MPV" : "AVFoundation"
+                    Self.signposter.emitEvent(
+                        "Secondary decoder ready",
+                        "primary=\(primaryBackend, privacy: .public) secondary=\(secondaryBackend, privacy: .public)"
+                    )
                     self.synchronize(primary: primary)
                     if primary.frameCapture.isCapturing {
                         // Loading/replacing B tears down its backend and capture
@@ -979,6 +1042,8 @@ final class CompareSessionController: ObservableObject {
                 try? await Task.sleep(for: .milliseconds(25))
             }
             guard !Task.isCancelled, self.loadGeneration.isCurrent(generation) else { return }
+            self.endSecondaryLoadSignpost()
+            Self.signposter.emitEvent("Secondary decoder readiness timeout")
             self.selectAudioSource(.primary, primary: primary)
             self.loadError = "The comparison file did not become ready for playback."
             self.readinessTask = nil
@@ -988,24 +1053,43 @@ final class CompareSessionController: ObservableObject {
     private func startDriftCorrection(primary: PlayerController) {
         guard isActive else { return }
         stopDriftCorrection()
+        driftMonitoringSignpostState = Self.signposter.beginInterval("Drift monitoring")
         let generation = loadGeneration.current
+        let frameRate = primary.mediaItem?.metadata?.primaryVideoStream?.frameRate?.value
+        let policy = CompareDriftPolicy(primaryFrameRate: frameRate)
+        let sampleInterval = min(policy.frameDuration, 0.05)
         driftCorrectionTask = Task { @MainActor [weak self, weak primary] in
             guard let self, let primary else { return }
+            var lastCorrectionTime = -TimeInterval.infinity
             while !Task.isCancelled,
                   self.loadGeneration.isCurrent(generation),
                   self.isActive {
-                try? await Task.sleep(for: .milliseconds(250))
+                try? await Task.sleep(for: .seconds(sampleInterval))
                 guard !Task.isCancelled,
                       primary.isPlaying,
                       self.secondaryController.isPlaying else { continue }
 
-                let expected = self.mappedSecondaryTime(for: primary.currentPlaybackTime)
-                let drift = abs(self.secondaryController.currentPlaybackTime - expected)
-                let frameRate = primary.mediaItem?.metadata?.primaryVideoStream?.frameRate?.value
-                let frameDuration = 1 / max(frameRate ?? 30, 1)
-                if drift > max(frameDuration, 0.05) {
-                    self.secondaryController.seekTo(expected)
-                }
+                let expected = self.mappedSecondaryTime(
+                    for: primary.playbackTimeSnapshot()
+                )
+                let actual = self.secondaryController.playbackTimeSnapshot()
+                let sampleTime = ProcessInfo.processInfo.systemUptime
+                guard let target = policy.correctionTarget(
+                    actualSecondaryTime: actual,
+                    expectedSecondaryTime: expected,
+                    timeSinceLastCorrection: sampleTime - lastCorrectionTime
+                ) else { continue }
+
+                lastCorrectionTime = sampleTime
+                let signedDrift = policy.signedDrift(
+                    actualSecondaryTime: actual,
+                    expectedSecondaryTime: expected
+                ) ?? 0
+                Self.signposter.emitEvent(
+                    "Drift correction seek",
+                    "drift_ms=\(signedDrift * 1_000)"
+                )
+                self.secondaryController.seekTo(target)
             }
         }
     }
@@ -1013,5 +1097,20 @@ final class CompareSessionController: ObservableObject {
     private func stopDriftCorrection() {
         driftCorrectionTask?.cancel()
         driftCorrectionTask = nil
+        if let state = driftMonitoringSignpostState {
+            Self.signposter.endInterval("Drift monitoring", state)
+            driftMonitoringSignpostState = nil
+        }
+    }
+
+    private func beginSecondaryLoadSignpost() {
+        endSecondaryLoadSignpost()
+        secondaryLoadSignpostState = Self.signposter.beginInterval("Secondary decoder load")
+    }
+
+    private func endSecondaryLoadSignpost() {
+        guard let state = secondaryLoadSignpostState else { return }
+        Self.signposter.endInterval("Secondary decoder load", state)
+        secondaryLoadSignpostState = nil
     }
 }

@@ -6,6 +6,95 @@ import XCTest
 @testable import Aagedal_Media_Player
 
 final class CompareTimelineMappingTests: XCTestCase {
+    func testDriftPolicyUsesOnePrimaryFrameAcrossVerificationRates() {
+        let rates = [
+            24_000.0 / 1_001.0,
+            24,
+            25,
+            30_000.0 / 1_001.0,
+            50,
+            60_000.0 / 1_001.0,
+            60,
+        ]
+
+        for rate in rates {
+            let policy = CompareDriftPolicy(primaryFrameRate: rate)
+            // Stay clear of binary floating-point noise at the exact frame
+            // boundary while still exercising both sides of the policy.
+            let withinOneFrame = 10 + (0.999 * policy.frameDuration)
+            let beyondOneFrame = 10 + (1.001 * policy.frameDuration)
+
+            XCTAssertNil(
+                policy.correctionTarget(
+                    actualSecondaryTime: withinOneFrame,
+                    expectedSecondaryTime: 10,
+                    timeSinceLastCorrection: .infinity
+                ),
+                "rate: \(rate)"
+            )
+            XCTAssertEqual(
+                policy.correctionTarget(
+                    actualSecondaryTime: beyondOneFrame,
+                    expectedSecondaryTime: 10,
+                    timeSinceLastCorrection: .infinity
+                ),
+                10,
+                "rate: \(rate)"
+            )
+        }
+    }
+
+    func testDriftPolicyPreservesSignedDirectionAndRejectsNonFiniteSamples() {
+        let policy = CompareDriftPolicy(primaryFrameRate: 25)
+
+        XCTAssertEqual(
+            policy.signedDrift(actualSecondaryTime: 9.9, expectedSecondaryTime: 10)!,
+            -0.1,
+            accuracy: 0.000_001
+        )
+        XCTAssertEqual(
+            policy.signedDrift(actualSecondaryTime: 10.1, expectedSecondaryTime: 10)!,
+            0.1,
+            accuracy: 0.000_001
+        )
+        XCTAssertNil(
+            policy.correctionTarget(
+                actualSecondaryTime: .nan,
+                expectedSecondaryTime: 10,
+                timeSinceLastCorrection: .infinity
+            )
+        )
+    }
+
+    func testDriftPolicyCooldownPreventsRepeatedCorrectionSeeks() {
+        let policy = CompareDriftPolicy(primaryFrameRate: 60)
+        let actual = 10 + (2 * policy.frameDuration)
+
+        XCTAssertNil(
+            policy.correctionTarget(
+                actualSecondaryTime: actual,
+                expectedSecondaryTime: 10,
+                timeSinceLastCorrection: CompareDriftPolicy.correctionCooldown - 0.001
+            )
+        )
+        XCTAssertEqual(
+            policy.correctionTarget(
+                actualSecondaryTime: actual,
+                expectedSecondaryTime: 10,
+                timeSinceLastCorrection: CompareDriftPolicy.correctionCooldown
+            ),
+            10
+        )
+    }
+
+    func testDriftPolicyFallsBackToThirtyFramesForInvalidRates() {
+        for rate in [nil, 0, -1, .infinity, .nan] as [Double?] {
+            let policy = CompareDriftPolicy(primaryFrameRate: rate)
+            XCTAssertEqual(policy.frameRate, 30)
+            XCTAssertEqual(policy.frameDuration, 1.0 / 30.0, accuracy: 0.000_001)
+        }
+    }
+
     func testSourceTimecodeMappingUsesAbsoluteTimeline() {
         let mapping = CompareTimelineMapping(
             primaryStartSeconds: 3_600,
