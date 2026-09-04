@@ -5,6 +5,7 @@
 import CoreGraphics
 import CoreText
 import Foundation
+import ImageIO
 
 nonisolated enum CompareReviewPDFError: Error, LocalizedError {
     case couldNotCreateDocument
@@ -30,7 +31,10 @@ nonisolated enum CompareReviewPDFRenderer {
     private static let noteLineHeight: CGFloat = 14
     private static let minimumRowHeight: CGFloat = 80
 
-    static func render(snapshot: CompareReviewReportSnapshot) throws -> Data {
+    static func render(
+        snapshot: CompareReviewReportSnapshot,
+        annotatedStills: [Int: Data] = [:]
+    ) throws -> Data {
         let output = NSMutableData()
         guard let consumer = CGDataConsumer(data: output as CFMutableData) else {
             throw CompareReviewPDFError.couldNotCreateDocument
@@ -158,10 +162,21 @@ nonisolated enum CompareReviewPDFRenderer {
             )
             var lineIndex = 0
             var isContinuation = false
+            let stillImage: CGImage? = annotatedStills[row.markerNumber].flatMap { data in
+                guard let source = CGImageSourceCreateWithData(data as CFData, nil) else {
+                    return nil
+                }
+                return CGImageSourceCreateImageAtIndex(source, 0, nil)
+            }
 
             repeat {
+                let stillSize = isContinuation
+                    ? .zero
+                    : fittedStillSize(stillImage, maximumWidth: contentWidth - 12)
+                let stillHeight = stillSize.height
+                let stillSpace = stillHeight > 0 ? stillHeight + 12 : 0
                 let available = pageRect.height - margin - cursor
-                if available < minimumRowHeight {
+                if available < minimumRowHeight + stillSpace {
                     endPage()
                     beginPage()
                 }
@@ -169,13 +184,14 @@ nonisolated enum CompareReviewPDFRenderer {
                 let pageAvailable = pageRect.height - margin - cursor
                 let maximumLines = max(
                     1,
-                    Int(floor((pageAvailable - 20) / noteLineHeight))
+                    Int(floor((pageAvailable - 20 - stillSpace) / noteLineHeight))
                 )
                 let lineCount = min(maximumLines, noteLines.count - lineIndex)
-                let rowHeight = max(
+                let textHeight = max(
                     minimumRowHeight,
                     20 + CGFloat(lineCount) * noteLineHeight
                 )
+                let rowHeight = textHeight + stillSpace
                 let rowRect = rectFromTop(
                     x: margin,
                     top: cursor,
@@ -244,6 +260,19 @@ nonisolated enum CompareReviewPDFRenderer {
                     )
                 }
 
+                if let stillImage, stillHeight > 0 {
+                    let stillRect = rectFromTop(
+                        x: margin + (contentWidth - stillSize.width) / 2,
+                        top: cursor + textHeight + 6,
+                        width: stillSize.width,
+                        height: stillHeight
+                    )
+                    context.saveGState()
+                    context.interpolationQuality = .high
+                    context.draw(stillImage, in: stillRect)
+                    context.restoreGState()
+                }
+
                 lineIndex += lineCount
                 cursor += rowHeight + rowGap
                 isContinuation = lineIndex < noteLines.count
@@ -285,6 +314,21 @@ nonisolated enum CompareReviewPDFRenderer {
 
     private static func displayTimecode(source: String?, relative: String) -> String {
         source ?? relative
+    }
+
+    private static func fittedStillSize(
+        _ image: CGImage?,
+        maximumWidth: CGFloat
+    ) -> CGSize {
+        guard let image, image.width > 0, image.height > 0 else { return .zero }
+        let scale = min(
+            maximumWidth / CGFloat(image.width),
+            270 / CGFloat(image.height)
+        )
+        return CGSize(
+            width: CGFloat(image.width) * scale,
+            height: CGFloat(image.height) * scale
+        )
     }
 
     private static func reportDateFormatter() -> DateFormatter {

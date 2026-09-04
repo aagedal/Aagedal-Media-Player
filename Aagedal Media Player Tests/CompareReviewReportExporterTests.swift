@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import CoreGraphics
+import ImageIO
 import XCTest
 @testable import Aagedal_Media_Player
 
@@ -129,6 +130,114 @@ final class CompareReviewReportExporterTests: XCTestCase {
         let document = try XCTUnwrap(CGPDFDocument(provider))
 
         XCTAssertGreaterThan(document.numberOfPages, 1)
+    }
+
+    func testAnnotatedStillPreparationUsesStoredFrameTimesAndCachesDuplicatePairs() async throws {
+        let primary = makeItem(
+            path: "/tmp/Master.mov",
+            duration: 10,
+            startTimecode: "01:00:00:00",
+            frameRate: "24000/1001"
+        )
+        let secondary = makeItem(
+            path: "/tmp/Encode.mp4",
+            duration: 10,
+            frameRate: "30000/1001"
+        )
+        let notes = ["First", "Same frame, second note"].map { text in
+            CompareReviewNote(
+                primaryFrame: 24,
+                primaryTime: 0,
+                secondaryFrame: 30,
+                secondaryTime: 0,
+                primaryRateNumerator: 24_000,
+                primaryRateDenominator: 1_001,
+                secondaryRateNumerator: 30_000,
+                secondaryRateDenominator: 1_001,
+                text: text
+            )
+        }
+        let snapshot = CompareReviewReportSnapshot(
+            primaryItem: primary,
+            secondaryItem: secondary,
+            alignmentMode: .sourceTimecode,
+            notes: notes
+        )
+        let recorder = ReportFrameRequestRecorder()
+        let red = try makeSolidImage(red: 1, green: 0, blue: 0)
+        let blue = try makeSolidImage(red: 0, green: 0, blue: 1)
+        let primaryURL = primary.url
+
+        let stills = try await CompareReviewReportExporter.annotatedStillData(
+            snapshot: snapshot
+        ) { url, time in
+            await recorder.record(url: url, time: time)
+            return url == primaryURL ? red : blue
+        }
+        let requests = await recorder.requests
+
+        XCTAssertEqual(stills.count, 2)
+        XCTAssertEqual(requests.count, 2, "Duplicate A/B frame pairs should be extracted once")
+        XCTAssertEqual(requests[0].url, primary.url)
+        XCTAssertEqual(requests[0].time, 1.001, accuracy: 0.000_001)
+        XCTAssertEqual(requests[1].url, secondary.url)
+        XCTAssertEqual(requests[1].time, 1.001, accuracy: 0.000_001)
+
+        let data = try XCTUnwrap(stills[1])
+        let source = try XCTUnwrap(CGImageSourceCreateWithData(data as CFData, nil))
+        let image = try XCTUnwrap(CGImageSourceCreateImageAtIndex(source, 0, nil))
+        XCTAssertEqual(image.width, 1_284)
+        XCTAssertEqual(image.height, 760)
+    }
+
+    func testPDFEmbedsAnnotatedComparisonStill() throws {
+        let snapshot = CompareReviewReportSnapshot(
+            primaryItem: makeItem(path: "/tmp/Master.mov", duration: 5),
+            secondaryItem: makeItem(path: "/tmp/Encode.mp4", duration: 5),
+            alignmentMode: .relative,
+            notes: [CompareReviewNote(
+                primaryFrame: 0,
+                primaryTime: 0,
+                secondaryFrame: 0,
+                secondaryTime: 0,
+                text: "Red in A, blue in B"
+            )]
+        )
+        let red = try makeSolidImage(red: 1, green: 0, blue: 0)
+        let blue = try makeSolidImage(red: 0, green: 0, blue: 1)
+        let still = try ComparisonStillRenderer.render(
+            primaryImage: red,
+            secondaryImage: blue,
+            details: ComparisonStillDetails(
+                primary: ComparisonStillSourceDetails(
+                    filename: "Master.mov",
+                    timecode: "REL TC 00:00:00:00",
+                    technicalLines: []
+                ),
+                secondary: ComparisonStillSourceDetails(
+                    filename: "Encode.mp4",
+                    timecode: "REL TC 00:00:00:00",
+                    technicalLines: []
+                ),
+                alignmentLabel: "Relative start"
+            ),
+            maximumPanelWidth: ComparisonStillLayout.minimumPanelWidth,
+            maximumImageHeight: 360
+        )
+        let stillData = try ComparisonStillRenderer.jpegData(still, quality: 0.95)
+
+        let pdfData = try CompareReviewReportExporter.data(
+            for: .pdf,
+            snapshot: snapshot,
+            annotatedStills: [1: stillData]
+        )
+        let provider = try XCTUnwrap(CGDataProvider(data: pdfData as CFData))
+        let document = try XCTUnwrap(CGPDFDocument(provider))
+        let page = try XCTUnwrap(document.page(at: 1))
+        let colors = rasterizedColorCounts(page: page)
+
+        XCTAssertGreaterThan(colors.red, 1_000)
+        XCTAssertGreaterThan(colors.blue, 1_000)
     }
 
     func testResolveMarkerEDLPreservesDropFrameBoundaryAndSanitizesNote() throws {
@@ -328,5 +437,72 @@ final class CompareReviewReportExporterTests: XCTestCase {
             durationSeconds: duration,
             metadata: metadata
         )
+    }
+
+    private func makeSolidImage(
+        red: CGFloat,
+        green: CGFloat,
+        blue: CGFloat,
+        width: Int = 320,
+        height: Int = 180
+    ) throws -> CGImage {
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        let context = try XCTUnwrap(CGContext(
+            data: nil,
+            width: width,
+            height: height,
+            bitsPerComponent: 8,
+            bytesPerRow: 0,
+            space: colorSpace,
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ))
+        context.setFillColor(CGColor(red: red, green: green, blue: blue, alpha: 1))
+        context.fill(CGRect(x: 0, y: 0, width: width, height: height))
+        return try XCTUnwrap(context.makeImage())
+    }
+
+    private func rasterizedColorCounts(page: CGPDFPage) -> (red: Int, blue: Int) {
+        let width = 595
+        let height = 842
+        var pixels = [UInt8](repeating: 0, count: width * height * 4)
+        pixels.withUnsafeMutableBytes { bytes in
+            guard let context = CGContext(
+                data: bytes.baseAddress,
+                width: width,
+                height: height,
+                bitsPerComponent: 8,
+                bytesPerRow: width * 4,
+                space: CGColorSpaceCreateDeviceRGB(),
+                bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+            ) else { return }
+            context.setFillColor(CGColor(gray: 1, alpha: 1))
+            context.fill(CGRect(x: 0, y: 0, width: width, height: height))
+            context.concatenate(page.getDrawingTransform(
+                .mediaBox,
+                rect: CGRect(x: 0, y: 0, width: width, height: height),
+                rotate: 0,
+                preserveAspectRatio: true
+            ))
+            context.drawPDFPage(page)
+        }
+
+        var redCount = 0
+        var blueCount = 0
+        for index in stride(from: 0, to: pixels.count, by: 4) {
+            let red = pixels[index]
+            let green = pixels[index + 1]
+            let blue = pixels[index + 2]
+            if red > 170, green < 110, blue < 110 { redCount += 1 }
+            if blue > 170, red < 110, green < 110 { blueCount += 1 }
+        }
+        return (redCount, blueCount)
+    }
+}
+
+private actor ReportFrameRequestRecorder {
+    private(set) var requests: [(url: URL, time: TimeInterval)] = []
+
+    func record(url: URL, time: TimeInterval) {
+        requests.append((url, time))
     }
 }

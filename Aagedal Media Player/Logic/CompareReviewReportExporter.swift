@@ -2,6 +2,7 @@
 // Copyright © 2026 Truls Aagedal
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+import CoreGraphics
 import Foundation
 
 nonisolated enum CompareReviewReportFormat: String, CaseIterable, Sendable {
@@ -60,9 +61,11 @@ nonisolated struct CompareReviewReportRow: Equatable, Sendable {
     let primarySourceTimecode: String?
     let primaryRelativeTimecode: String
     let primaryFrame: Int64
+    let primaryTime: TimeInterval
     let secondarySourceTimecode: String?
     let secondaryRelativeTimecode: String
     let secondaryFrame: Int64
+    let secondaryTime: TimeInterval
     let note: String
     let createdAt: Date
     let updatedAt: Date
@@ -72,8 +75,11 @@ nonisolated struct CompareReviewReportRow: Equatable, Sendable {
 /// user edits notes or replaces source B while the save panel is open.
 nonisolated struct CompareReviewReportSnapshot: Equatable, Sendable {
     let primaryURL: URL
+    let secondaryURL: URL
     let primaryFilename: String
     let secondaryFilename: String
+    let primaryTechnicalLines: [String]
+    let secondaryTechnicalLines: [String]
     let alignmentLabel: String
     let primaryRateNumerator: Int64
     let primaryRateDenominator: Int64
@@ -90,8 +96,15 @@ nonisolated struct CompareReviewReportSnapshot: Equatable, Sendable {
         notes: [CompareReviewNote]
     ) {
         primaryURL = primaryItem.url
+        secondaryURL = secondaryItem.url
         primaryFilename = primaryItem.url.lastPathComponent
         secondaryFilename = secondaryItem.url.lastPathComponent
+        primaryTechnicalLines = ComparisonStillSourceDetails.technicalLines(
+            for: CompareMediaDescriptor(item: primaryItem)
+        )
+        secondaryTechnicalLines = ComparisonStillSourceDetails.technicalLines(
+            for: CompareMediaDescriptor(item: secondaryItem)
+        )
         alignmentLabel = alignmentMode.label
 
         let startTimecode = TimecodeFormatter.effectiveStartTimecode(for: primaryItem)
@@ -142,6 +155,10 @@ nonisolated struct CompareReviewReportSnapshot: Equatable, Sendable {
                     mode: .relative
                 ),
                 primaryFrame: note.primaryFrame,
+                primaryTime: ComparisonStillFrameExtractor.clampedTime(
+                    primaryTime,
+                    for: primaryItem
+                ),
                 secondarySourceTimecode: Self.sourceTimecode(
                     item: secondaryItem,
                     time: secondaryTime
@@ -152,6 +169,10 @@ nonisolated struct CompareReviewReportSnapshot: Equatable, Sendable {
                     mode: .relative
                 ),
                 secondaryFrame: note.secondaryFrame,
+                secondaryTime: ComparisonStillFrameExtractor.clampedTime(
+                    secondaryTime,
+                    for: secondaryItem
+                ),
                 note: note.text,
                 createdAt: note.createdAt,
                 updatedAt: note.updatedAt
@@ -177,6 +198,80 @@ nonisolated struct CompareReviewReportSnapshot: Equatable, Sendable {
 }
 
 nonisolated enum CompareReviewReportExporter {
+    typealias FrameImageProvider = @Sendable (URL, TimeInterval) async throws -> CGImage
+
+    private struct FramePair: Hashable {
+        let primaryFrame: Int64
+        let secondaryFrame: Int64
+    }
+
+    /// PDF stills are prepared asynchronously and compressed before the
+    /// synchronous Core Graphics renderer sees them. This bounds memory for
+    /// long reviews while preserving the same cross-backend extraction path
+    /// used by the standalone comparison-still export.
+    static func annotatedStillData(
+        snapshot: CompareReviewReportSnapshot,
+        frameImageProvider: @escaping FrameImageProvider = ComparisonStillFrameExtractor.image
+    ) async throws -> [Int: Data] {
+        var results: [Int: Data] = [:]
+        var cache: [FramePair: Data] = [:]
+        results.reserveCapacity(snapshot.rows.count)
+
+        for row in snapshot.rows {
+            try Task.checkCancellation()
+            let pair = FramePair(
+                primaryFrame: row.primaryFrame,
+                secondaryFrame: row.secondaryFrame
+            )
+            if let cached = cache[pair] {
+                results[row.markerNumber] = cached
+                continue
+            }
+
+            let primaryImage = try await frameImageProvider(
+                snapshot.primaryURL,
+                row.primaryTime
+            )
+            try Task.checkCancellation()
+            let secondaryImage = try await frameImageProvider(
+                snapshot.secondaryURL,
+                row.secondaryTime
+            )
+            try Task.checkCancellation()
+
+            let details = ComparisonStillDetails(
+                primary: ComparisonStillSourceDetails(
+                    filename: snapshot.primaryFilename,
+                    timecode: reportTimecode(
+                        source: row.primarySourceTimecode,
+                        relative: row.primaryRelativeTimecode
+                    ),
+                    technicalLines: snapshot.primaryTechnicalLines
+                ),
+                secondary: ComparisonStillSourceDetails(
+                    filename: snapshot.secondaryFilename,
+                    timecode: reportTimecode(
+                        source: row.secondarySourceTimecode,
+                        relative: row.secondaryRelativeTimecode
+                    ),
+                    technicalLines: snapshot.secondaryTechnicalLines
+                ),
+                alignmentLabel: snapshot.alignmentLabel
+            )
+            let image = try ComparisonStillRenderer.render(
+                primaryImage: primaryImage,
+                secondaryImage: secondaryImage,
+                details: details,
+                maximumPanelWidth: ComparisonStillLayout.minimumPanelWidth,
+                maximumImageHeight: 360
+            )
+            let data = try ComparisonStillRenderer.jpegData(image)
+            cache[pair] = data
+            results[row.markerNumber] = data
+        }
+        return results
+    }
+
     static let csvColumns = [
         "Marker",
         "Source A",
@@ -195,13 +290,17 @@ nonisolated enum CompareReviewReportExporter {
 
     static func data(
         for format: CompareReviewReportFormat,
-        snapshot: CompareReviewReportSnapshot
+        snapshot: CompareReviewReportSnapshot,
+        annotatedStills: [Int: Data] = [:]
     ) throws -> Data {
         switch format {
         case .csv:
             Data(csv(snapshot: snapshot).utf8)
         case .pdf:
-            try CompareReviewPDFRenderer.render(snapshot: snapshot)
+            try CompareReviewPDFRenderer.render(
+                snapshot: snapshot,
+                annotatedStills: annotatedStills
+            )
         case .resolveMarkersEDL:
             Data(try resolveMarkersEDL(snapshot: snapshot).utf8)
         case .finalCutProXML:
@@ -374,6 +473,10 @@ nonisolated enum CompareReviewReportExporter {
     ) -> String {
         let secondaryTimecode = row.secondarySourceTimecode ?? row.secondaryRelativeTimecode
         return "\(row.note) | Source B: \(snapshot.secondaryFilename), \(secondaryTimecode), frame \(row.secondaryFrame) | Alignment: \(snapshot.alignmentLabel)"
+    }
+
+    private static func reportTimecode(source: String?, relative: String) -> String {
+        "\(source == nil ? "REL TC" : "SRC TC") \(source ?? relative)"
     }
 
     private static func edlText(_ value: String) -> String {

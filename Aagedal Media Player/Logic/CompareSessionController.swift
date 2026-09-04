@@ -553,9 +553,18 @@ final class CompareSessionController: ObservableObject {
                 self.reviewExportTask = Task { @MainActor [weak self] in
                     defer { output.discard() }
                     do {
+                        let annotatedStills = if format == .pdf {
+                            try await CompareReviewReportExporter.annotatedStillData(
+                                snapshot: snapshot
+                            )
+                        } else {
+                            [Int: Data]()
+                        }
+                        try Task.checkCancellation()
                         let data = try CompareReviewReportExporter.data(
                             for: format,
-                            snapshot: snapshot
+                            snapshot: snapshot,
+                            annotatedStills: annotatedStills
                         )
                         try data.write(to: output.temporaryURL, options: .atomic)
                         try Task.checkCancellation()

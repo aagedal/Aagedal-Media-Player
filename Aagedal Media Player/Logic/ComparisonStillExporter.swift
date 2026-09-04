@@ -99,11 +99,20 @@ nonisolated struct ComparisonStillLayout: Equatable, Sendable {
     var canvasWidth: Int { panelWidth * 2 + Self.panelGap }
     var canvasHeight: Int { Self.headerHeight + imageHeight + Self.footerHeight }
 
-    init(primarySize: CGSize, secondarySize: CGSize) {
+    init(
+        primarySize: CGSize,
+        secondarySize: CGSize,
+        maximumPanelWidth: Int = Self.maximumPanelWidth,
+        maximumImageHeight: Int = Self.maximumImageHeight
+    ) {
         let widestSource = max(primarySize.width, secondarySize.width)
+        let maximumPanelWidth = min(
+            max(maximumPanelWidth, Self.minimumPanelWidth),
+            Self.maximumPanelWidth
+        )
         let resolvedPanelWidth = min(
             max(Int(widestSource.rounded(.up)), Self.minimumPanelWidth),
-            Self.maximumPanelWidth
+            maximumPanelWidth
         )
         panelWidth = resolvedPanelWidth
 
@@ -111,9 +120,13 @@ nonisolated struct ComparisonStillLayout: Equatable, Sendable {
             guard size.width > 0, size.height > 0 else { return nil }
             return size.height * CGFloat(resolvedPanelWidth) / size.width
         }
+        let maximumImageHeight = min(
+            max(maximumImageHeight, 360),
+            Self.maximumImageHeight
+        )
         imageHeight = min(
             max(Int((fittedHeights.max() ?? 360).rounded(.up)), 360),
-            Self.maximumImageHeight
+            maximumImageHeight
         )
     }
 
@@ -146,7 +159,7 @@ enum ComparisonStillExportError: Error, LocalizedError {
         case .couldNotCreateCanvas:
             "Could not create the comparison image canvas."
         case .couldNotCreateEncoder:
-            "Could not create the PNG encoder."
+            "Could not create the comparison image encoder."
         case .couldNotWriteImage:
             "Could not write the comparison image."
         case .couldNotDecodeExtractedFrame:
@@ -159,13 +172,17 @@ nonisolated enum ComparisonStillRenderer {
     static func render(
         primaryImage: CGImage,
         secondaryImage: CGImage,
-        details: ComparisonStillDetails
+        details: ComparisonStillDetails,
+        maximumPanelWidth: Int = ComparisonStillLayout.maximumPanelWidth,
+        maximumImageHeight: Int = ComparisonStillLayout.maximumImageHeight
     ) throws -> CGImage {
         let primarySize = CGSize(width: primaryImage.width, height: primaryImage.height)
         let secondarySize = CGSize(width: secondaryImage.width, height: secondaryImage.height)
         let layout = ComparisonStillLayout(
             primarySize: primarySize,
-            secondarySize: secondarySize
+            secondarySize: secondarySize,
+            maximumPanelWidth: maximumPanelWidth,
+            maximumImageHeight: maximumImageHeight
         )
         let colorSpace = CGColorSpace(name: CGColorSpace.sRGB) ?? CGColorSpaceCreateDeviceRGB()
         guard let context = CGContext(
@@ -219,6 +236,25 @@ nonisolated enum ComparisonStillRenderer {
         guard CGImageDestinationFinalize(destination) else {
             throw ComparisonStillExportError.couldNotWriteImage
         }
+    }
+
+    static func jpegData(_ image: CGImage, quality: Double = 0.86) throws -> Data {
+        let output = NSMutableData()
+        guard let destination = CGImageDestinationCreateWithData(
+            output as CFMutableData,
+            UTType.jpeg.identifier as CFString,
+            1,
+            nil
+        ) else {
+            throw ComparisonStillExportError.couldNotCreateEncoder
+        }
+        CGImageDestinationAddImage(destination, image, [
+            kCGImageDestinationLossyCompressionQuality: min(max(quality, 0), 1),
+        ] as CFDictionary)
+        guard CGImageDestinationFinalize(destination) else {
+            throw ComparisonStillExportError.couldNotWriteImage
+        }
+        return output as Data
     }
 
     private static func drawImage(_ image: CGImage, in rect: CGRect, context: CGContext) {
