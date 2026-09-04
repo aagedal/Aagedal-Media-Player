@@ -166,9 +166,9 @@ is not possible.
 
 ## Release and marketing work
 
-- Add a first-run callout for Compare Mode without interrupting playback.
-- Replace the README's “just checking playback” positioning with a professional
+- [x] Add a first-run callout for Compare Mode without interrupting playback.
+- [x] Replace the README's “just checking playback” positioning with a professional
   inspection message.
-- Record a short demo: source vs encode, timecode alignment, wipe, difference,
+- [ ] Record a short demo: source vs encode, timecode alignment, wipe, difference,
   and comparison-still export.
-- Benchmark sustained drift and CPU/GPU load on the oldest supported Mac.
+- [ ] Benchmark sustained drift and CPU/GPU load on the oldest supported Mac.

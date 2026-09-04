@@ -21,10 +21,13 @@ struct ContentView: View {
     @State private var isTimelineFocused = false
     @State private var isPlaybackControlsFocused = false
     @State private var showReviewNotes = false
+    @State private var showCompareModeCallout = false
     @FocusState private var isInspectorButtonFocused: Bool
     @State private var timecodeActivationTrigger: String?
     @AppStorage(AppSettings.showCursorHideHint.key)
     private var showCursorHideHint = AppSettings.showCursorHideHint.defaultValue
+    @AppStorage(AppSettings.didShowCompareModeCallout.key)
+    private var didShowCompareModeCallout = AppSettings.didShowCompareModeCallout.defaultValue
     @ObservedObject private var updateChecker = UpdateChecker.shared
     @State private var updateBannerDismissed = false
     @State private var scopeWindowController: ScopeWindowController?
@@ -43,7 +46,11 @@ struct ContentView: View {
     private var nsWindow: NSWindow? { windowCoordinator.window }
     private var showOverlay: Bool { overlayController.isVisible }
     private var isControlInteractionActive: Bool {
-        isEditingTimecode || isPlaybackControlsFocused || isInspectorButtonFocused || showReviewNotes
+        isEditingTimecode
+            || isPlaybackControlsFocused
+            || isInspectorButtonFocused
+            || showReviewNotes
+            || showCompareModeCallout
     }
 
     private var videoAspectRatio: CGFloat? {
@@ -224,6 +231,15 @@ struct ContentView: View {
         .onChange(of: compareSession.isActive) { _, isActive in
             if !isActive {
                 showReviewNotes = false
+            } else {
+                showCompareModeCallout = false
+            }
+        }
+        .onChange(of: isMediaLoaded) { _, isLoaded in
+            if isLoaded {
+                presentCompareModeCalloutIfNeeded()
+            } else {
+                showCompareModeCallout = false
             }
         }
         .onChange(of: controller.trimExportState) { _, state in
@@ -576,6 +592,9 @@ struct ContentView: View {
                 .help("Add comparison file")
                 .accessibilityLabel("Add comparison file")
                 .disabled(controller.mediaItem == nil || compareSession.isLoading)
+                .popover(isPresented: $showCompareModeCallout, arrowEdge: .top) {
+                    compareModeCallout
+                }
             }
 
             Button(action: { showInspector.toggle() }) {
@@ -621,6 +640,45 @@ struct ContentView: View {
             : compareSession.aspectRatioGuide.label
         let labels = [safeArea, aspectRatio].compactMap { $0 }
         return labels.isEmpty ? "Off" : labels.joined(separator: ", ")
+    }
+
+    private var compareModeCallout: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Compare two masters", systemImage: "rectangle.split.2x1")
+                .font(.headline)
+
+            Text(
+                "Add source B to align it with this file, then inspect both with "
+                    + "A/B switching, wipes, overlays, difference view, and one shared transport."
+            )
+            .fixedSize(horizontal: false, vertical: true)
+
+            HStack {
+                Spacer()
+
+                Button("Got It") {
+                    showCompareModeCallout = false
+                }
+
+                Button("Choose Source B\u{2026}") {
+                    showCompareModeCallout = false
+                    DispatchQueue.main.async {
+                        openCompareFilePanel()
+                    }
+                }
+                .keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding(16)
+        .frame(width: 360)
+    }
+
+    private func presentCompareModeCalloutIfNeeded() {
+        guard isMediaLoaded,
+              !compareSession.isActive,
+              !didShowCompareModeCallout else { return }
+        didShowCompareModeCallout = true
+        showCompareModeCallout = true
     }
 
     private func announce(_ message: String) {
@@ -707,6 +765,8 @@ struct ContentView: View {
 
     private func openCompareFilePanel() {
         guard controller.mediaItem != nil else { return }
+        didShowCompareModeCallout = true
+        showCompareModeCallout = false
         let panel = NSOpenPanel()
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false

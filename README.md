@@ -3,7 +3,9 @@
 # Aagedal Media Player
 ![SCR-20260221-pzdf](https://github.com/user-attachments/assets/5c066416-8542-402f-83df-f49cc01a9bc4)
 
-Based on the same fast engine as [Aagedal Media Converter](https://github.com/aagedal/Aagedal-Media-Converter), but now for quickly just checking playback of files.
+A fast, private professional media inspection player for macOS. Compare masters,
+inspect picture and sound, verify metadata and timecode, and export review evidence
+without uploading your media.
 
 ## Roadmap
 
@@ -53,6 +55,14 @@ preflight, signing, architecture, entitlement, and ffmpeg provenance guidance is
 in [docs/RELEASE.md](docs/RELEASE.md).
 
 ## Features
+
+### Compare Mode
+Load a second master in the same window and inspect both with shared, frame-accurate
+transport. Compare Mode aligns sources by embedded timecode when possible and offers
+side-by-side, instant A/B, draggable wipe, opacity overlay, and display-space
+difference views. Source B stays silent unless you explicitly switch monitoring,
+and annotated stills and review reports keep filenames, timecode, alignment, and
+technical context attached.
 
 ### File support
 Playback (almost) every audio and video file in existence, through a combination of the mpv and AVFoundation.

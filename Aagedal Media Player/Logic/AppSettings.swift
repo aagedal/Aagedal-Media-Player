@@ -19,6 +19,10 @@ nonisolated enum AppSettings {
     static let allowMultipleWindows = AppSetting(key: "allowMultipleWindows", defaultValue: false)
     static let syncPlaybackControls = AppSetting(key: "syncPlaybackControls", defaultValue: false)
     static let showCursorHideHint = AppSetting(key: "showCursorHideHint", defaultValue: true)
+    static let didShowCompareModeCallout = AppSetting(
+        key: "didShowCompareModeCallout",
+        defaultValue: false
+    )
     static let precisionScrubFactor = AppSetting(key: "precisionScrubFactor", defaultValue: 10.0)
     static let openAtSourceResolution = AppSetting(key: "openAtSourceResolution", defaultValue: true)
     static let clampWindowToScreen = AppSetting(key: "clampWindowToScreen", defaultValue: true)
@@ -69,6 +73,7 @@ nonisolated enum AppSettings {
             allowMultipleWindows.key: allowMultipleWindows.defaultValue,
             syncPlaybackControls.key: syncPlaybackControls.defaultValue,
             showCursorHideHint.key: showCursorHideHint.defaultValue,
+            didShowCompareModeCallout.key: didShowCompareModeCallout.defaultValue,
             precisionScrubFactor.key: precisionScrubFactor.defaultValue,
             openAtSourceResolution.key: openAtSourceResolution.defaultValue,
             clampWindowToScreen.key: clampWindowToScreen.defaultValue,

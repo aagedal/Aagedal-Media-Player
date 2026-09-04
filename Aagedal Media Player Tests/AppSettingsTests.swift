@@ -33,6 +33,7 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertEqual(defaults.value(for: AppSettings.scopeFrameRate), 15)
         XCTAssertEqual(defaults.value(for: AppSettings.audioWaveformColor), "FF2D78")
         XCTAssertEqual(defaults.value(for: AppSettings.playbackVolume), 100)
+        XCTAssertFalse(defaults.value(for: AppSettings.didShowCompareModeCallout))
     }
 
     func testPersistedValueOverridesRegisteredDefault() {
@@ -66,5 +67,6 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertEqual(AppSettings.trimExportFormat.key, "trimExportFormat")
         XCTAssertEqual(AppSettings.scopeResolution.key, "scopeResolution")
         XCTAssertEqual(AppSettings.playbackVolume.key, "playbackVolume")
+        XCTAssertEqual(AppSettings.didShowCompareModeCallout.key, "didShowCompareModeCallout")
     }
 }
