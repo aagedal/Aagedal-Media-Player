@@ -51,6 +51,16 @@ final class CompareLiveBackendTests: XCTestCase {
         case avFoundation(AVFoundationRenderSurface)
     }
 
+    private final class ScopeRenderProbe {
+        private(set) var renderCount = 0
+        private(set) var renderedSources = Set<CompareScopeSource>()
+
+        func record(source: CompareScopeSource) {
+            renderCount += 1
+            renderedSources.insert(source)
+        }
+    }
+
     private var retainedPlaybackSurfaces: [RetainedPlaybackSurface] = []
 
     override func tearDown() {
@@ -84,8 +94,18 @@ final class CompareLiveBackendTests: XCTestCase {
     private struct VisualModeObservation {
         let updateCount: Int
         let coveredModeCount: Int
+        let coveredGuideStateCount: Int
         let maximumSchedulingDelay: TimeInterval
         let canvasPixelSize: CGSize
+    }
+
+    private struct ScopeObservation {
+        let renderUpdateCount: Int
+        let coveredSourceCount: Int
+        let renderedSources: String
+        let maximumSchedulingDelay: TimeInterval
+        let primaryCaptureAdvance: UInt64
+        let secondaryCaptureAdvance: UInt64
     }
 
     func testMPVPairAlignsBySourceTimecodeAndSharesTransport() async throws {
@@ -113,6 +133,20 @@ final class CompareLiveBackendTests: XCTestCase {
 
     func testAVFoundationPrimaryAndMPVSecondaryKeepSurfacesAcrossVisualModes() async throws {
         try await exerciseVisualModes(
+            primaryBackend: .avFoundation,
+            secondaryBackend: .mpv
+        )
+    }
+
+    func testMPVPrimaryAndAVFoundationSecondaryRenderLiveComparisonScopes() async throws {
+        try await exerciseLiveScopes(
+            primaryBackend: .mpv,
+            secondaryBackend: .avFoundation
+        )
+    }
+
+    func testAVFoundationPrimaryAndMPVSecondaryRenderLiveComparisonScopes() async throws {
+        try await exerciseLiveScopes(
             primaryBackend: .avFoundation,
             secondaryBackend: .mpv
         )
@@ -891,6 +925,11 @@ final class CompareLiveBackendTests: XCTestCase {
                 CompareViewMode.allCases.count,
                 visualDescription
             )
+            XCTAssertEqual(
+                visualObservation.coveredGuideStateCount,
+                CompareSafeAreaGuide.allCases.count * CompareAspectRatioGuide.allCases.count,
+                visualDescription
+            )
             XCTAssertGreaterThanOrEqual(
                 visualObservation.updateCount,
                 Int(sustainedPlaybackDuration * 4),
@@ -957,6 +996,195 @@ final class CompareLiveBackendTests: XCTestCase {
         )
         XCTAssertGreaterThan(primary.playbackTimeSnapshot() - primaryStart, 0.5)
         XCTAssertGreaterThan(secondary.playbackTimeSnapshot() - secondaryStart, 0.5)
+    }
+
+    private func exerciseLiveScopes(
+        primaryBackend: PlaybackBackend,
+        secondaryBackend: PlaybackBackend
+    ) async throws {
+        let fixtures = try fixtureDirectory()
+        let primaryURL = fixtures.appending(path: "compare/source-a.mov")
+        let secondaryURL = fixtures.appending(path: "compare/source-b.mov")
+        let primary = makeController(forcedBackend: primaryBackend)
+        let secondary = makeController(forcedBackend: secondaryBackend)
+        let session = CompareSessionController(secondaryController: secondary)
+        let renderProbe = ScopeRenderProbe()
+
+        defer {
+            primary.frameCapture.stopCapture(rebuildPipeline: false)
+            secondary.frameCapture.stopCapture(rebuildPipeline: false)
+            session.stop()
+            primary.teardown()
+        }
+
+        try await loadPrimary(primary, url: primaryURL)
+        try await attachRenderSurface(to: primary)
+        guard await waitUntil({ primary.isReady }) else {
+            XCTFail("Primary decoder did not become ready for live-scope validation.")
+            return
+        }
+
+        session.loadSecondary(secondaryURL, alignedWith: primary)
+        guard await waitUntil({ session.secondaryURL == secondaryURL }) else {
+            XCTFail("Comparison metadata did not load for live-scope validation.")
+            return
+        }
+        try await attachRenderSurface(to: secondary)
+        guard await waitUntil({ session.isSecondaryReady }) else {
+            XCTFail(
+                "Secondary decoder did not become ready for live-scope validation: " +
+                    (session.loadError ?? "no backend diagnostic")
+            )
+            return
+        }
+
+        let primaryPreparationID = primary.preparationID
+        let secondaryPreparationID = secondary.preparationID
+        let primaryMPV = primary.mpvPlayer
+        let primaryAVPlayer = primary.player
+        let secondaryMPV = secondary.mpvPlayer
+        let secondaryAVPlayer = secondary.player
+        let hostingView = NSHostingView(
+            rootView: ScopeView(
+                primaryController: primary,
+                secondaryController: secondary,
+                primaryFrameCapture: primary.frameCapture,
+                secondaryFrameCapture: secondary.frameCapture,
+                compareSession: session,
+                onRender: { renderProbe.record(source: $0) }
+            )
+        )
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 700, height: 320),
+            styleMask: [.borderless],
+            backing: .buffered,
+            defer: false
+        )
+        window.isReleasedWhenClosed = false
+        window.contentView = hostingView
+        hostingView.frame = window.contentView?.bounds ?? .zero
+        hostingView.layoutSubtreeIfNeeded()
+
+        defer {
+            window.contentView = nil
+            window.close()
+        }
+
+        primary.frameCapture.startCapture()
+        secondary.frameCapture.startCapture()
+        session.play(primary: primary)
+        guard await waitUntil({
+            primary.isPlaying && secondary.isPlaying &&
+                primary.frameCapture.currentSample != nil &&
+                secondary.frameCapture.currentSample != nil
+        }) else {
+            XCTFail("Both decoders and frame captures did not start for live-scope validation.")
+            return
+        }
+
+        let frameRate = primary.mediaItem?.metadata?.primaryVideoStream?.frameRate?.value
+        let driftPolicy = CompareDriftPolicy(primaryFrameRate: frameRate)
+        let scopeTask = Task { @MainActor in
+            await self.observeSustainedScopes(
+                session: session,
+                renderProbe: renderProbe,
+                primaryFrameCapture: primary.frameCapture,
+                secondaryFrameCapture: secondary.frameCapture,
+                hostingView: hostingView,
+                window: window,
+                duration: self.sustainedPlaybackDuration
+            )
+        }
+        let driftObservation = await observeSustainedDrift(
+            primary: primary,
+            secondary: secondary,
+            session: session,
+            driftTolerance: driftPolicy.correctionThreshold,
+            duration: sustainedPlaybackDuration
+        )
+        let scopeObservation = await scopeTask.value
+        let pairDescription = "\(primaryBackend.rawValue)/\(secondaryBackend.rawValue)"
+        let driftDescription = driftObservationDescription(
+            driftObservation,
+            backendPair: pairDescription
+        )
+        let scopeDescription = scopeObservationDescription(
+            scopeObservation,
+            backendPair: pairDescription
+        )
+
+        if isCompareProfile {
+            print("COMPARE_PROFILE_SCOPE \(scopeDescription), \(driftDescription)")
+            let attachment = XCTAttachment(
+                string: "COMPARE_PROFILE_SCOPE \(scopeDescription), \(driftDescription)"
+            )
+            attachment.name = "Compare Mode live-scope profile"
+            attachment.lifetime = .keepAlways
+            add(attachment)
+        }
+
+        XCTAssertEqual(
+            scopeObservation.coveredSourceCount,
+            CompareScopeSource.allCases.count,
+            "Every comparison scope source must produce live output. \(scopeDescription)"
+        )
+        XCTAssertGreaterThanOrEqual(
+            scopeObservation.renderUpdateCount,
+            CompareScopeSource.allCases.count,
+            "Live scopes did not publish fresh output for every source. \(scopeDescription)"
+        )
+        XCTAssertGreaterThan(
+            scopeObservation.primaryCaptureAdvance,
+            0,
+            "Source A scope capture stalled. \(scopeDescription)"
+        )
+        XCTAssertGreaterThan(
+            scopeObservation.secondaryCaptureAdvance,
+            0,
+            "Source B scope capture stalled. \(scopeDescription)"
+        )
+        XCTAssertLessThanOrEqual(
+            scopeObservation.maximumSchedulingDelay,
+            0.25,
+            "Live scope updates stalled the main actor. \(scopeDescription)"
+        )
+        XCTAssertEqual(primary.preparationID, primaryPreparationID)
+        XCTAssertEqual(secondary.preparationID, secondaryPreparationID)
+        XCTAssertTrue(primary.mpvPlayer === primaryMPV)
+        XCTAssertTrue(primary.player === primaryAVPlayer)
+        XCTAssertTrue(secondary.mpvPlayer === secondaryMPV)
+        XCTAssertTrue(secondary.player === secondaryAVPlayer)
+        XCTAssertTrue(
+            primary.isPlaying && secondary.isPlaying,
+            "A decoder stopped during live-scope playback. \(driftDescription)"
+        )
+        if isCompareProfile {
+            // Release profiling owns the one-second recovery contract. Debug
+            // instrumentation can lengthen AVFoundation's initial live-scope
+            // pipeline transition without representing release playback.
+            assertSustainedPlayback(
+                driftObservation,
+                duration: sustainedPlaybackDuration,
+                driftTolerance: driftPolicy.correctionThreshold,
+                description: driftDescription
+            )
+        } else {
+            XCTAssertGreaterThanOrEqual(
+                driftObservation.primaryAdvance,
+                sustainedPlaybackDuration - 1,
+                "The primary clock stalled during live scopes. \(driftDescription)"
+            )
+            XCTAssertGreaterThanOrEqual(
+                driftObservation.secondaryAdvance,
+                sustainedPlaybackDuration - 1,
+                "The secondary clock stalled during live scopes. \(driftDescription)"
+            )
+            XCTAssertLessThanOrEqual(
+                driftObservation.finalEffectiveDrift,
+                driftPolicy.correctionThreshold,
+                "Live-scope drift did not finish within one frame. \(driftDescription)"
+            )
+        }
     }
 
     private func assertStableVisualSurfaces(
@@ -1153,6 +1381,7 @@ final class CompareLiveBackendTests: XCTestCase {
         var expectedUpdate = start
         var updateCount = 0
         var coveredModes = Set<CompareViewMode>()
+        var coveredGuideStates = Set<String>()
         var maximumSchedulingDelay: TimeInterval = 0
 
         while clock.now < deadline {
@@ -1165,6 +1394,16 @@ final class CompareLiveBackendTests: XCTestCase {
             let mode = CompareViewMode.allCases[updateCount % CompareViewMode.allCases.count]
             coveredModes.insert(mode)
             session.viewMode = mode
+            let safeAreaGuide = CompareSafeAreaGuide.allCases[
+                updateCount % CompareSafeAreaGuide.allCases.count
+            ]
+            let aspectRatioGuide = CompareAspectRatioGuide.allCases[
+                (updateCount / CompareSafeAreaGuide.allCases.count) %
+                    CompareAspectRatioGuide.allCases.count
+            ]
+            session.safeAreaGuide = safeAreaGuide
+            session.aspectRatioGuide = aspectRatioGuide
+            coveredGuideStates.insert("\(safeAreaGuide.rawValue)/\(aspectRatioGuide.rawValue)")
             switch mode {
             case .verticalWipe, .horizontalWipe:
                 session.setWipePosition(Double(updateCount % 11) / 10)
@@ -1197,8 +1436,80 @@ final class CompareLiveBackendTests: XCTestCase {
         return VisualModeObservation(
             updateCount: updateCount,
             coveredModeCount: coveredModes.count,
+            coveredGuideStateCount: coveredGuideStates.count,
             maximumSchedulingDelay: maximumSchedulingDelay,
             canvasPixelSize: canvasPixelSize
+        )
+    }
+
+    private func observeSustainedScopes(
+        session: CompareSessionController,
+        renderProbe: ScopeRenderProbe,
+        primaryFrameCapture: FrameCapture,
+        secondaryFrameCapture: FrameCapture,
+        hostingView: NSView,
+        window: NSWindow,
+        duration: TimeInterval
+    ) async -> ScopeObservation {
+        let clock = ContinuousClock()
+        let cadence: Duration = .milliseconds(100)
+        let sourceHoldTicks = 12
+        let start = clock.now
+        let deadline = start.advanced(by: .seconds(duration))
+        let primaryStartSequence = primaryFrameCapture.currentSample?.sequence ?? 0
+        let secondaryStartSequence = secondaryFrameCapture.currentSample?.sequence ?? 0
+        var expectedUpdate = start
+        var tickCount = 0
+        var maximumSchedulingDelay: TimeInterval = 0
+
+        while clock.now < deadline {
+            let now = clock.now
+            maximumSchedulingDelay = max(
+                maximumSchedulingDelay,
+                max(0, durationSeconds(from: expectedUpdate, to: now))
+            )
+
+            if tickCount % sourceHoldTicks == 0 {
+                let sourceIndex = (tickCount / sourceHoldTicks) % CompareScopeSource.allCases.count
+                let source = CompareScopeSource.allCases[sourceIndex]
+                session.scopeSource = source
+                if source == .difference {
+                    let gainRange = CompareSessionController.maximumDifferenceGain -
+                        CompareSessionController.minimumDifferenceGain
+                    session.setDifferenceGain(
+                        CompareSessionController.minimumDifferenceGain +
+                            gainRange * Double((tickCount / sourceHoldTicks) % 5) / 4
+                    )
+                }
+            }
+
+            hostingView.layoutSubtreeIfNeeded()
+            window.displayIfNeeded()
+            tickCount += 1
+
+            expectedUpdate = expectedUpdate.advanced(by: cadence)
+            let remaining = clock.now.duration(to: expectedUpdate)
+            if remaining > .zero {
+                try? await Task.sleep(for: remaining)
+            } else if durationSeconds(from: expectedUpdate, to: clock.now) > 0.1 {
+                expectedUpdate = clock.now
+            }
+        }
+
+        let primaryEndSequence = primaryFrameCapture.currentSample?.sequence ?? 0
+        let secondaryEndSequence = secondaryFrameCapture.currentSample?.sequence ?? 0
+        return ScopeObservation(
+            renderUpdateCount: renderProbe.renderCount,
+            coveredSourceCount: renderProbe.renderedSources.count,
+            renderedSources: renderProbe.renderedSources
+                .map(\.rawValue)
+                .sorted()
+                .joined(separator: ","),
+            maximumSchedulingDelay: maximumSchedulingDelay,
+            primaryCaptureAdvance: primaryEndSequence >= primaryStartSequence
+                ? primaryEndSequence - primaryStartSequence : 0,
+            secondaryCaptureAdvance: secondaryEndSequence >= secondaryStartSequence
+                ? secondaryEndSequence - secondaryStartSequence : 0
         )
     }
 
@@ -1362,6 +1673,22 @@ final class CompareLiveBackendTests: XCTestCase {
             "\(Int(observation.canvasPixelSize.height)), " +
             "visualUpdates=\(observation.updateCount), " +
             "coveredModes=\(observation.coveredModeCount)/\(CompareViewMode.allCases.count), " +
+            "coveredGuideStates=\(observation.coveredGuideStateCount)/" +
+            "\(CompareSafeAreaGuide.allCases.count * CompareAspectRatioGuide.allCases.count), " +
+            "maxMainActorDelay=" +
+            "\(String(format: "%.3f", observation.maximumSchedulingDelay))s"
+    }
+
+    private func scopeObservationDescription(
+        _ observation: ScopeObservation,
+        backendPair: String
+    ) -> String {
+        "pair=\(backendPair), " +
+            "scopeRenders=\(observation.renderUpdateCount), " +
+            "coveredSources=\(observation.coveredSourceCount)/\(CompareScopeSource.allCases.count), " +
+            "renderedSourceNames=\(observation.renderedSources), " +
+            "captureAdvance=\(observation.primaryCaptureAdvance)/" +
+            "\(observation.secondaryCaptureAdvance), " +
             "maxMainActorDelay=" +
             "\(String(format: "%.3f", observation.maximumSchedulingDelay))s"
     }

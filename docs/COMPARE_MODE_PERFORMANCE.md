@@ -19,9 +19,13 @@ used by `CompareLiveBackendTests` for 30 seconds across MPV/MPV,
 AVFoundation/AVFoundation, and both mixed-backend directions. Two additional
 mixed-backend passes mount the real comparison canvas at the configured render
 size, repeatedly exercise all seven presentation modes and their adjustable
-controls, and measure the worst main-actor scheduling delay while continuing
-to verify drift and decoder/surface identity. Its report also captures wall
-time, CPU time, and peak resident memory for the optimized, serial test run.
+controls plus every safe-area/aspect-ratio guide combination, and measure the
+worst main-actor scheduling delay while continuing to verify drift and
+decoder/surface identity. Two further mixed-backend passes mount the real live
+scopes, capture frames from both decoders, cycle A, B, and display-difference
+scope sources with difference gain, and apply the same drift and responsiveness
+checks. Its report also captures wall time, CPU time, and peak resident memory
+for the optimized, serial test run.
 The profiler injects its configuration into a disposable `.xctestrun` file, so
 concurrent ordinary tests in the checkout are unaffected. Each transport-only
 backend is attached to a retained render output matching the fixture size;
@@ -58,17 +62,21 @@ or Instruments runs; otherwise the profiler removes its temporary fixtures.
   and the final sample is within the one-frame correction threshold.
 - MPV-backed source B keeps its audio track disabled while A is monitored.
 - Both mixed-backend comparison canvases cover every visual mode repeatedly,
-  keep their original decoder and native-surface identities, and deliver at
-  least four control updates per second without a main-actor delay over 250 ms.
+  cover every guide combination, keep their original decoder and native-surface
+  identities, and deliver at least four control updates per second without a
+  main-actor delay over 250 ms.
+- Both mixed-backend live-scope passes advance A and B capture, publish fresh
+  waveform and vectorscope output for A, B, and display difference, retain the
+  original decoders, and keep main-actor scheduling delay below 250 ms.
 - The machine remains responsive and the comparison view remains interactive.
 
-The automated report exercises wipe, overlay, and difference rendering, but it
-does not measure GPU utilization or mount live scopes. For release validation,
-retain the fixtures and perform a second run in the app while recording the
-existing `CompareMode` signposts in Instruments. Also record the
-`ScopePerformance` category when exercising scope sources. Exercise the visual
-modes and scope sources, record CPU/GPU utilization and thermal behavior, and
-attach those observations to the saved profile report.
+The automated report exercises wipe, overlay, difference rendering, shared
+guides, and live scopes, but it does not measure GPU utilization. For release
+validation, retain the fixtures and perform a second run in the app while
+recording the existing `CompareMode` and `ScopePerformance` signposts in
+Instruments. Exercise the visual modes and scope sources, record CPU/GPU
+utilization and thermal behavior, and attach those observations to the saved
+profile report.
 
 The script prints its drift and resource report even when an assertion fails,
 then returns the failing `xcodebuild` status so it can be used as a release or

@@ -2,11 +2,12 @@
 // Copyright © 2026 Truls Aagedal
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-/// Scheduling state for a single-flight, latest-value-wins worker.
+/// Scheduling state for a bounded single-flight worker.
 ///
-/// At most one generation is active and one newer generation is pending. A
-/// further submission replaces the pending generation instead of growing a
-/// queue, which keeps scope work bounded when capture runs faster than compute.
+/// At most one generation is active and one newer generation is pending. Each
+/// completed active frame is publishable, while further submissions replace
+/// the pending generation instead of growing a queue. Publishing active work
+/// prevents live scopes from starving when capture runs faster than compute.
 nonisolated struct LatestFrameGate: Sendable {
     nonisolated struct Submission: Equatable, Sendable {
         let generation: UInt64
@@ -15,7 +16,6 @@ nonisolated struct LatestFrameGate: Sendable {
     }
 
     nonisolated struct Completion: Equatable, Sendable {
-        let shouldPublish: Bool
         let nextGeneration: UInt64?
     }
 
@@ -47,12 +47,11 @@ nonisolated struct LatestFrameGate: Sendable {
     mutating func complete(_ generation: UInt64) -> Completion? {
         guard activeGeneration == generation else { return nil }
 
-        let shouldPublish = generation == latestGeneration
         let next = pendingGeneration
         activeGeneration = next
         pendingGeneration = nil
 
-        return Completion(shouldPublish: shouldPublish, nextGeneration: next)
+        return Completion(nextGeneration: next)
     }
 
     mutating func reset() {

@@ -93,7 +93,14 @@ run also passed there: both 3840×2160 canvases delivered 80 updates, covered al
 seven modes, stayed under 51 ms worst main-actor delay, reconverged within
 0.599 seconds, and used about 848 MiB peak resident memory. The profiler still
 needs to be run for the full duration on the oldest supported Apple Silicon Mac
-with a complementary Instruments GPU/thermal and live-scope pass.
+with a complementary Instruments GPU/thermal pass. An eight-second UHD HDR
+profile of the new live-scope workload passed on the M5 Pro in both
+mixed-backend directions: A, B, and display difference produced 95/99 fresh
+scope renders, worst main-actor delay stayed under 87 ms, drift recovery stayed
+within the one-second-plus-sample allowance, and peak resident memory for the
+complete serial profile was about 855 MiB.
+The full project test suite also passed after the live-scope scheduling and
+AVFoundation correction changes, preserving the existing single-file coverage.
 
 - [x] Define the implementation plan and release boundaries.
 - [x] Add a window-owned compare session with cancellation-safe secondary-file
@@ -154,8 +161,12 @@ safe-area/aspect-ratio guides are implemented through 2026-09-04.
 The primary timeline now marks the playable A/B overlap and its adjacent legend
 shows the signed, frame-accurate B offset.
 Timestamp-aware scope-difference frame pairing is also implemented with bounded
-A/B capture histories. Live mixed-backend scope and guide validation at
-production resolution remains.
+A/B capture histories. The production profiler now mounts live mixed-backend
+scopes in both directions, cycles A, B, and display difference with gain,
+requires fresh waveform/vectorscope output, and sweeps every safe-area and
+aspect-ratio guide combination. Its first eight-second UHD HDR run passed on an
+M5 Pro; Instruments GPU/thermal validation and a full-duration run on the
+oldest supported Mac remain.
 
 - [x] Let scopes inspect A, B, or their display-space difference.
 - [x] Add explicit A/B audio switching.
@@ -243,11 +254,14 @@ rate variants, rotated/anamorphic pairing, and SDR/HDR pairing. The full
 raster/color matrix and longer production-resolution runs still require
 hands-on validation. Hosted mixed-backend checks mount `ComparePlayerView`,
 cycle all seven presentation modes during playback, move both wipe variants,
-and verify that neither native surface nor decoder is rebuilt. In profiling
-mode those checks use the configured production render size, repeatedly sweep
-the visual controls for the full observation, measure main-actor response, and
-apply the same decoder-advance and drift-recovery assertions. Live scopes,
-pixel correctness, GPU utilization, and thermal behavior remain manual gates.
+verify that neither native surface nor decoder is rebuilt, and exercise every
+safe-area/aspect-ratio guide combination. In profiling mode those checks use
+the configured production render size, repeatedly sweep the visual controls
+for the full observation, measure main-actor response, and apply the same
+decoder-advance and drift-recovery assertions. Separate hosted scope passes
+exercise A, B, and timestamp-paired display difference in both mixed-backend
+directions. Hands-on pixel correctness plus Instruments GPU utilization and
+thermal behavior remain manual gates.
 
 ## Release and marketing work
 

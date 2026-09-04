@@ -19,6 +19,8 @@ struct ScopeView: View {
     @ObservedObject var compareSession: CompareSessionController
     var isOverlay = false
     var transparentBackground = false
+    /// Optional profiler hook fired only after both scope images are published.
+    var onRender: ((CompareScopeSource) -> Void)? = nil
     @StateObject private var renderWorker = ScopeRenderWorker()
     @State private var waveformMode: WaveformMode = .luma
     @State private var vectorscopeGraticule: CGImage?
@@ -140,6 +142,7 @@ struct ScopeView: View {
             handleSecondaryCapturedSample()
         }
         .onChange(of: compareSession.scopeSource) {
+            renderWorker.cancel(clearImages: false)
             resetDifferencePair()
             if selectedSource == .difference {
                 refreshDifferencePair()
@@ -150,7 +153,13 @@ struct ScopeView: View {
             guard selectedSource == .difference else { return }
             submitScopeFrame()
         }
+        .onChange(of: renderWorker.renderSequence) {
+            guard renderWorker.waveformImage != nil,
+                  renderWorker.vectorscopeImage != nil else { return }
+            onRender?(selectedSource)
+        }
         .onChange(of: compareSession.isActive) {
+            renderWorker.cancel(clearImages: false)
             resetDifferencePair()
             if compareSession.isActive, selectedSource == .difference {
                 refreshDifferencePair()
@@ -158,6 +167,9 @@ struct ScopeView: View {
             submitScopeFrame()
         }
         .onChange(of: compareSession.mapping) {
+            if selectedSource == .difference {
+                renderWorker.cancel(clearImages: false)
+            }
             resetDifferencePair()
             if selectedSource == .difference {
                 refreshDifferencePair()

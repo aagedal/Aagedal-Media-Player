@@ -20,7 +20,7 @@ final class LatestFrameGateTests: XCTestCase {
         XCTAssertEqual(gate.pendingGeneration, third.generation)
     }
 
-    func testStaleCompletionStartsNewestPendingWithoutPublishing() {
+    func testActiveCompletionPublishesAndStartsNewestPending() {
         var gate = LatestFrameGate()
         let first = gate.submit()
         _ = gate.submit()
@@ -29,13 +29,13 @@ final class LatestFrameGateTests: XCTestCase {
         let firstCompletion = gate.complete(first.generation)
         XCTAssertEqual(
             firstCompletion,
-            LatestFrameGate.Completion(shouldPublish: false, nextGeneration: latest.generation)
+            LatestFrameGate.Completion(nextGeneration: latest.generation)
         )
 
         let latestCompletion = gate.complete(latest.generation)
         XCTAssertEqual(
             latestCompletion,
-            LatestFrameGate.Completion(shouldPublish: true, nextGeneration: nil)
+            LatestFrameGate.Completion(nextGeneration: nil)
         )
     }
 

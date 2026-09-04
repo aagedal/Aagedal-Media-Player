@@ -309,7 +309,7 @@ nonisolated struct CompareDriftPolicy: Equatable, Sendable {
     static let correctionCooldown: TimeInterval = 0.25
     static let correctionSettlementTimeout: TimeInterval = 1
     static let clockComparisonTolerance: TimeInterval = 0.001
-    static let avFoundationRateNudgeFraction = 0.15
+    static let avFoundationRateNudgeFraction = 0.25
     static let maximumRateCorrectionFraction = 0.5
     static let rateCorrectionGain = 2.0
     static let hardSeekThreshold: TimeInterval = 1

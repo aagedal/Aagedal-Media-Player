@@ -225,6 +225,7 @@ final class ScopeRenderWorker: ObservableObject {
     @Published private(set) var waveformImage: CGImage?
     @Published private(set) var vectorscopeImage: CGImage?
     @Published private(set) var hdrPeakNits: Float = 10_000
+    @Published private(set) var renderSequence: UInt64 = 0
 
     private nonisolated static let signposter = OSSignposter(
         subsystem: "com.aagedal.MediaPlayer",
@@ -358,14 +359,11 @@ final class ScopeRenderWorker: ObservableObject {
         guard let completion = gate.complete(generation) else { return }
         computeTask = nil
 
-        if completion.shouldPublish {
-            waveformImage = result.waveformImage
-            vectorscopeImage = result.vectorscopeImage
-            if let peakNits = result.hdrPeakNits {
-                hdrPeakNits = peakNits
-            }
-        } else {
-            Self.signposter.emitEvent("Stale scope result discarded")
+        waveformImage = result.waveformImage
+        vectorscopeImage = result.vectorscopeImage
+        renderSequence &+= 1
+        if let peakNits = result.hdrPeakNits {
+            hdrPeakNits = peakNits
         }
 
         guard let nextGeneration = completion.nextGeneration,

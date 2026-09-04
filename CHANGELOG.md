@@ -17,6 +17,8 @@ All notable changes to Aagedal Media Player.
 - Mixed-backend Compare Mode validation for paired stepping, scrubbing, forward shuttle, supported frame rates, rotated anamorphic geometry, and SDR/HDR metadata.
 - Production-resolution Compare Mode profiling for the real hosted compositor,
   including sustained visual-control cadence and main-actor delay measurements.
+- Mixed-backend live-scope profiling across A, B, and display-difference sources,
+  plus production-size safe-area and aspect-ratio guide sweeps.
 - A frame-accurate source-B offset readout and playable A/B overlap interval on
   the comparison timeline.
 
@@ -44,6 +46,8 @@ All notable changes to Aagedal Media Player.
 - Restored bundled audio-decoder and EBU R128 capabilities required by waveform and LUFS analysis.
 - Kept update status truthful after failures and recorded every successful manual or automatic fallback check.
 - Prevented a Compare Mode readiness timeout from replacing a specific source-B decoder failure, and covered stale secondary metadata completions during rapid replacement and teardown.
+- Prevented live scopes from starving when frame capture outpaces waveform and
+  vectorscope computation.
 
 ## [1.6.0] — 2026-05-24
 
