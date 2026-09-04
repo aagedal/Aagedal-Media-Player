@@ -52,7 +52,10 @@ audio, and Instruments signposts for secondary load/drift profiling were added
 through 2026-09-04.
 Deterministic coverage now verifies rapid B replacement, stopping during
 metadata loading or suspended backend preparation, and preservation of
-specific decoder failures. Real-decoder
+specific decoder failures. A real `NSWindow` close integration test now
+verifies that window teardown cancels an in-flight B metadata load, restores
+audio safety, resets both controller paths, and rejects the late completion.
+Real-decoder
 integration coverage now verifies source-timecode alignment, paired
 seek/play/pause, frame stepping, scrubbing, forward shuttle acceleration,
 one-frame drift convergence, and audio suppression for
@@ -106,8 +109,11 @@ Acceptance:
 
 ## Phase 2 — Visual comparison tools
 
-Status: Planned Phase 2 implementation completed through 2026-09-03. Live
-mixed-backend visual validation remains.
+Status: Planned Phase 2 implementation completed through 2026-09-03. Hosted
+real-decoder coverage now mounts the actual comparison canvas and cycles every
+visual mode during playback in both mixed-backend directions, verifying that
+the MPV and AVFoundation surfaces and decoder instances remain stable. Hands-on
+pixel, interaction, and GPU validation at production resolution remains.
 
 - [x] Add a draggable vertical/horizontal wipe.
 - [x] Add opacity overlay with an adjustable blend amount.
@@ -130,7 +136,8 @@ Status: Scope routing, the compact mismatch summary, explicit A/B and matching
 channel audio monitoring, annotated comparison-still export, and shared
 safe-area/aspect-ratio guides are implemented through 2026-09-04.
 Timestamp-aware scope-difference frame pairing is also implemented with bounded
-A/B capture histories. Live mixed-backend visual validation remains.
+A/B capture histories. Live mixed-backend scope and guide validation at
+production resolution remains.
 
 - [x] Let scopes inspect A, B, or their display-space difference.
 - [x] Add explicit A/B audio switching.
@@ -202,8 +209,9 @@ is not possible.
 The metadata-loading portion of rapid replacement and removal is covered by
 automated lifecycle tests. A suspended backend-selection test also verifies
 that stopping the compare session tears down B and rejects the decoder's late
-completion. Full window-close integration remains part of live mixed-backend
-validation. Small real-decoder
+completion. Window-close integration now drives a real `NSWindow` close while
+B metadata is loading and verifies that the late completion cannot recreate
+its decoder. Small real-decoder
 fixtures now cover MPV/MPV, AVFoundation/AVFoundation, and both mixed-backend
 directions for timecode alignment, shared transport, and eight seconds of
 sustained playback without a decoder stall or an out-of-frame excursion that
@@ -212,7 +220,9 @@ alignment with simultaneous codec/raster/rate/duration differences, plus a
 disjoint source-timecode range. Generated integration checks now cover isolated
 rate variants, rotated/anamorphic pairing, and SDR/HDR pairing. The full
 raster/color matrix and longer production-resolution runs still require
-hands-on validation.
+hands-on validation. Hosted mixed-backend checks mount `ComparePlayerView`,
+cycle all seven presentation modes during playback, move both wipe variants,
+and verify that neither native surface nor decoder is rebuilt.
 
 ## Release and marketing work
 

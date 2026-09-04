@@ -4,7 +4,9 @@
 
 import AppKit
 import AVFoundation
+import AVKit
 import Foundation
+import SwiftUI
 import XCTest
 @testable import Aagedal_Media_Player
 
@@ -90,6 +92,20 @@ final class CompareLiveBackendTests: XCTestCase {
 
     func testAVFoundationPrimaryAndMPVSecondaryShareTransport() async throws {
         try await exercisePair(primaryBackend: .avFoundation, secondaryBackend: .mpv)
+    }
+
+    func testMPVPrimaryAndAVFoundationSecondaryKeepSurfacesAcrossVisualModes() async throws {
+        try await exerciseVisualModes(
+            primaryBackend: .mpv,
+            secondaryBackend: .avFoundation
+        )
+    }
+
+    func testAVFoundationPrimaryAndMPVSecondaryKeepSurfacesAcrossVisualModes() async throws {
+        try await exerciseVisualModes(
+            primaryBackend: .avFoundation,
+            secondaryBackend: .mpv
+        )
     }
 
     func testMPVPrimaryAndAVFoundationSecondaryUseRelativeAlignmentForMismatchedMasters() async throws {
@@ -652,6 +668,142 @@ final class CompareLiveBackendTests: XCTestCase {
         XCTAssertTrue(secondary.isAudioSuppressed)
     }
 
+    private func exerciseVisualModes(
+        primaryBackend: PlaybackBackend,
+        secondaryBackend: PlaybackBackend
+    ) async throws {
+        let fixtures = try fixtureDirectory()
+        let primaryURL = fixtures.appending(path: "compare/source-a.mov")
+        let secondaryURL = fixtures.appending(path: "compare/source-b.mov")
+        let primary = makeController(forcedBackend: primaryBackend)
+        let secondary = makeController(forcedBackend: secondaryBackend)
+        let session = CompareSessionController(secondaryController: secondary)
+
+        defer {
+            session.stop()
+            primary.teardown()
+        }
+
+        try await loadPrimary(primary, url: primaryURL)
+        try await attachRenderSurface(to: primary)
+        guard await waitUntil({ primary.isReady }) else {
+            XCTFail("Primary decoder did not become ready for visual-mode validation.")
+            return
+        }
+
+        session.loadSecondary(secondaryURL, alignedWith: primary)
+        guard await waitUntil({ session.secondaryURL == secondaryURL }) else {
+            XCTFail("Comparison metadata did not load for visual-mode validation.")
+            return
+        }
+        try await attachRenderSurface(to: secondary)
+        guard await waitUntil({ session.isSecondaryReady }) else {
+            XCTFail(
+                "Secondary decoder did not become ready for visual-mode validation: " +
+                    (session.loadError ?? "no backend diagnostic")
+            )
+            return
+        }
+
+        let primaryPreparationID = primary.preparationID
+        let secondaryPreparationID = secondary.preparationID
+        let primaryMPV = primary.mpvPlayer
+        let primaryAVPlayer = primary.player
+        let secondaryMPV = secondary.mpvPlayer
+        let secondaryAVPlayer = secondary.player
+        let primaryItem = try XCTUnwrap(primary.mediaItem)
+        let hostingView = NSHostingView(
+            rootView: ComparePlayerView(
+                primaryController: primary,
+                compareSession: session,
+                primaryWaveformGenerator: AudioWaveformGenerator(),
+                primaryItem: primaryItem,
+                showsAudioWaveform: false,
+                isEditingTimecode: .constant(false),
+                isTimelineFocused: .constant(false),
+                isOverlayControlFocused: false,
+                isTextInputActive: false,
+                timecodeActivationTrigger: .constant(nil)
+            )
+        )
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 960, height: 540),
+            styleMask: [.borderless],
+            backing: .buffered,
+            defer: false
+        )
+        window.isReleasedWhenClosed = false
+        window.contentView = hostingView
+        hostingView.frame = window.contentView?.bounds ?? .zero
+        hostingView.layoutSubtreeIfNeeded()
+
+        defer {
+            window.contentView = nil
+            window.close()
+        }
+
+        let mountedSurfaces = await waitUntil {
+            self.metalLayers(in: hostingView).count == 1 &&
+                self.avPlayerViews(in: hostingView).count == 1
+        }
+        guard mountedSurfaces else {
+            XCTFail("The hosted comparison canvas did not mount both native surfaces.")
+            return
+        }
+
+        XCTAssertEqual(primary.preparationID, primaryPreparationID)
+        XCTAssertEqual(secondary.preparationID, secondaryPreparationID)
+        XCTAssertTrue(primary.mpvPlayer === primaryMPV)
+        XCTAssertTrue(primary.player === primaryAVPlayer)
+        XCTAssertTrue(secondary.mpvPlayer === secondaryMPV)
+        XCTAssertTrue(secondary.player === secondaryAVPlayer)
+
+        let metalLayer = try XCTUnwrap(metalLayers(in: hostingView).first)
+        let avPlayerView = try XCTUnwrap(avPlayerViews(in: hostingView).first)
+        let metalLayerIdentity = ObjectIdentifier(metalLayer)
+        let avPlayerViewIdentity = ObjectIdentifier(avPlayerView)
+
+        session.play(primary: primary)
+        guard await waitUntil({ primary.isPlaying && secondary.isPlaying }) else {
+            XCTFail("Both decoders did not start for visual-mode validation.")
+            return
+        }
+        let primaryStart = primary.playbackTimeSnapshot()
+        let secondaryStart = secondary.playbackTimeSnapshot()
+
+        for mode in CompareViewMode.allCases {
+            session.viewMode = mode
+            if mode.isWipe {
+                session.moveWipe(by: 0.1)
+            }
+            hostingView.layoutSubtreeIfNeeded()
+            try await Task.sleep(for: .milliseconds(120))
+
+            XCTAssertEqual(session.viewMode, mode, mode.label)
+            XCTAssertEqual(primary.preparationID, primaryPreparationID, mode.label)
+            XCTAssertEqual(secondary.preparationID, secondaryPreparationID, mode.label)
+            XCTAssertTrue(primary.mpvPlayer === primaryMPV, mode.label)
+            XCTAssertTrue(primary.player === primaryAVPlayer, mode.label)
+            XCTAssertTrue(secondary.mpvPlayer === secondaryMPV, mode.label)
+            XCTAssertTrue(secondary.player === secondaryAVPlayer, mode.label)
+            XCTAssertEqual(
+                metalLayers(in: hostingView).first.map(ObjectIdentifier.init),
+                Optional(metalLayerIdentity),
+                mode.label
+            )
+            XCTAssertEqual(
+                avPlayerViews(in: hostingView).first.map(ObjectIdentifier.init),
+                Optional(avPlayerViewIdentity),
+                mode.label
+            )
+            XCTAssertTrue(primary.isPlaying && secondary.isPlaying, mode.label)
+        }
+
+        XCTAssertGreaterThan(primary.playbackTimeSnapshot() - primaryStart, 0.5)
+        XCTAssertGreaterThan(secondary.playbackTimeSnapshot() - secondaryStart, 0.5)
+        XCTAssertEqual(session.wipePosition, 0.7, accuracy: 0.000_001)
+    }
+
     private func exercisePreparedPair(
         primaryURL: URL,
         secondaryURL: URL,
@@ -755,6 +907,18 @@ final class CompareLiveBackendTests: XCTestCase {
             XCTAssertEqual(surface.playerLayer.frame.size, size)
             retainedPlaybackSurfaces.append(.avFoundation(surface))
         }
+    }
+
+    private func metalLayers(in view: NSView) -> [MPVMetalLayer] {
+        descendantViews(in: view).compactMap { $0.layer as? MPVMetalLayer }
+    }
+
+    private func avPlayerViews(in view: NSView) -> [AVPlayerView] {
+        descendantViews(in: view).compactMap { $0 as? AVPlayerView }
+    }
+
+    private func descendantViews(in view: NSView) -> [NSView] {
+        [view] + view.subviews.flatMap(descendantViews(in:))
     }
 
     private var renderSurfaceSize: CGSize {

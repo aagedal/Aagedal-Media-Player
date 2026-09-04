@@ -189,7 +189,16 @@ struct ContentView: View {
                 videoSourceSize: videoSourceSize,
                 showTrafficLights: overlayController.isWindowHovered && !overlayController.isRightEdgeHovered,
                 onWindowAvailable: { window in
-                    windowCoordinator.accept(window)
+                    windowCoordinator.accept(
+                        window,
+                        onClose: { [controller, compareSession, audioWaveformGenerator] in
+                            Self.stopPlaybackForWindowClose(
+                                controller: controller,
+                                compareSession: compareSession,
+                                audioWaveformGenerator: audioWaveformGenerator
+                            )
+                        }
+                    )
                 }
             )
         )
@@ -284,13 +293,11 @@ struct ContentView: View {
             audioWaveformWindowController?.close()
             audioWaveformWindowController = nil
             showAudioWaveformOverlay = false
-            audioWaveformGenerator.cancel()
-            if compareSession.isActive {
-                compareSession.pause(primary: controller)
-            }
-            compareSession.stop()
-            controller.cancelMediaOperationsForWindowClose()
-            controller.teardown()
+            Self.stopPlaybackForWindowClose(
+                controller: controller,
+                compareSession: compareSession,
+                audioWaveformGenerator: audioWaveformGenerator
+            )
             windowCoordinator.tearDown()
         }
     }
@@ -728,6 +735,20 @@ struct ContentView: View {
 
     private func announce(_ message: String) {
         AccessibilityNotification.Announcement(message).post()
+    }
+
+    private static func stopPlaybackForWindowClose(
+        controller: PlayerController,
+        compareSession: CompareSessionController,
+        audioWaveformGenerator: AudioWaveformGenerator
+    ) {
+        audioWaveformGenerator.cancel()
+        if compareSession.isActive {
+            compareSession.pause(primary: controller)
+        }
+        compareSession.stop()
+        controller.cancelMediaOperationsForWindowClose()
+        controller.teardown()
     }
 
     // MARK: - Cursor Hide Zone

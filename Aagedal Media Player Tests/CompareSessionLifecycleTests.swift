@@ -2,6 +2,7 @@
 // Copyright © 2026 Truls Aagedal
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+import AppKit
 import Foundation
 import XCTest
 @testable import Aagedal_Media_Player
@@ -57,6 +58,79 @@ final class CompareSessionLifecycleTests: XCTestCase {
         XCTAssertFalse(session.isLoading)
         XCTAssertFalse(primary.isAudioSuppressed)
         XCTAssertTrue(secondary.isAudioSuppressed)
+    }
+
+    func testClosingAcceptedWindowStopsMetadataLoadAndRejectsLateCompletion() async {
+        let loader = ControlledCompareMetadataLoader()
+        let primary = PlayerController()
+        let secondary = PlayerController()
+        let session = makeSession(loader: loader, secondary: secondary)
+        let windowCoordinator = PlayerWindowCoordinator()
+        let windowManager = WindowManager.shared
+        let previousWindowsToAllow = windowManager.windowsToAllow
+        windowManager.windowsToAllow += 1
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 711, height: 400),
+            styleMask: [.titled, .closable],
+            backing: .buffered,
+            defer: false
+        )
+        window.isReleasedWhenClosed = false
+        let url = URL(fileURLWithPath: "/tmp/compare-window-close.mov")
+        var closeHandlerCallCount = 0
+
+        defer {
+            session.stop()
+            primary.teardown()
+            windowCoordinator.tearDown()
+            windowManager.windowsToAllow = previousWindowsToAllow
+        }
+
+        XCTAssertTrue(
+            windowCoordinator.accept(
+                window,
+                onClose: {
+                    closeHandlerCallCount += 1
+                    session.stop()
+                    primary.cancelMediaOperationsForWindowClose()
+                    primary.teardown()
+                }
+            )
+        )
+        session.loadSecondary(url, alignedWith: primary)
+        let requested = await waitUntil { loader.hasRequest(for: url) }
+        XCTAssertTrue(requested)
+        let preparationIDBeforeClose = secondary.preparationID
+
+        window.close()
+
+        XCTAssertEqual(closeHandlerCallCount, 1)
+        XCTAssertNil(windowCoordinator.window)
+        XCTAssertFalse(
+            windowCoordinator.accept(window) {
+                closeHandlerCallCount += 1
+            }
+        )
+        XCTAssertNil(session.secondaryURL)
+        XCTAssertNil(session.mapping)
+        XCTAssertFalse(session.isActive)
+        XCTAssertFalse(session.isLoading)
+        XCTAssertFalse(session.isSecondaryReady)
+        XCTAssertGreaterThan(secondary.preparationID, preparationIDBeforeClose)
+        XCTAssertEqual(secondary.playbackPhase, .idle)
+        XCTAssertNil(secondary.player)
+        XCTAssertNil(secondary.mpvPlayer)
+        XCTAssertFalse(primary.isAudioSuppressed)
+        XCTAssertTrue(secondary.isAudioSuppressed)
+
+        loader.succeed(url, metadata: metadata(duration: 10))
+        await settleMainActorTasks()
+
+        XCTAssertEqual(closeHandlerCallCount, 1)
+        XCTAssertFalse(session.isActive)
+        XCTAssertNil(session.secondaryURL)
+        XCTAssertNil(secondary.player)
+        XCTAssertNil(secondary.mpvPlayer)
     }
 
     func testStopDuringBackendPreparationRejectsLateDecoderCompletion() async {

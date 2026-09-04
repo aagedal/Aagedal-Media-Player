@@ -19,6 +19,9 @@ final class PlayerWindowCoordinator: ObservableObject {
 
     private var fileOpenTask: Task<Void, Never>?
     private var folderNavigationTask: Task<Void, Never>?
+    private var windowWillCloseObserver: NSObjectProtocol?
+    private var windowCloseHandler: (() -> Void)?
+    private weak var closedWindow: NSWindow?
     private var droppedURLResults: DroppedURLResults?
     private var droppedURLLoadProgresses: [Progress] = []
     private var siblingMediaURLs: [URL] = []
@@ -36,8 +39,20 @@ final class PlayerWindowCoordinator: ObservableObject {
     /// Extra URL-routing windows are rejected unless WindowManager explicitly
     /// reserved a slot for them.
     @discardableResult
-    func accept(_ candidate: NSWindow) -> Bool {
-        guard window !== candidate else { return true }
+    func accept(
+        _ candidate: NSWindow,
+        onClose: (() -> Void)? = nil
+    ) -> Bool {
+        // Published teardown state can trigger one last SwiftUI update while
+        // the native window is closing. Never let that update re-register the
+        // same window or reinstall its close callback.
+        guard closedWindow !== candidate else { return false }
+        if window === candidate {
+            if let onClose {
+                windowCloseHandler = onClose
+            }
+            return true
+        }
 
         let manager = WindowManager.shared
         if manager.hasWindows && manager.windowsToAllow <= 0 {
@@ -52,9 +67,11 @@ final class PlayerWindowCoordinator: ObservableObject {
             manager.windowsToAllow -= 1
         }
 
+        windowCloseHandler = onClose
         cascade(candidate, after: manager.windows.values.compactMap(\.window).count)
         window = candidate
         manager.register(id: id, window: candidate)
+        observeWindowClose(candidate)
         return true
     }
 
@@ -211,6 +228,11 @@ final class PlayerWindowCoordinator: ObservableObject {
     }
 
     func tearDown() {
+        if let windowWillCloseObserver {
+            NotificationCenter.default.removeObserver(windowWillCloseObserver)
+            self.windowWillCloseObserver = nil
+        }
+        windowCloseHandler = nil
         fileOpenTask?.cancel()
         fileOpenTask = nil
         folderNavigationTask?.cancel()
@@ -222,6 +244,26 @@ final class PlayerWindowCoordinator: ObservableObject {
         canOpenNextFile = false
         WindowManager.shared.unregister(id: id)
         window = nil
+    }
+
+    private func observeWindowClose(_ window: NSWindow) {
+        if let windowWillCloseObserver {
+            NotificationCenter.default.removeObserver(windowWillCloseObserver)
+        }
+        windowWillCloseObserver = NotificationCenter.default.addObserver(
+            forName: NSWindow.willCloseNotification,
+            object: window,
+            queue: .main
+        ) { [weak self, weak window] _ in
+            MainActor.assumeIsolated {
+                guard let self, let window, self.window === window else { return }
+                self.closedWindow = window
+                let closeHandler = self.windowCloseHandler
+                self.windowCloseHandler = nil
+                closeHandler?()
+                self.tearDown()
+            }
+        }
     }
 
     private func cancelDroppedURLLoads() {
