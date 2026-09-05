@@ -20,6 +20,31 @@ final class InspectionLoupeState: ObservableObject {
         pointer = location
     }
 
+    /// Shared by the live canvas hover handler and pointer-to-lens rendering
+    /// tests. Coordinates remain in the full canvas even at reduced render size.
+    /// Blended/difference images use A as their picture-coordinate reference;
+    /// a fully B overlay uses B, matching the picture actually visible.
+    func follow(
+        _ location: CGPoint,
+        geometry: CompareDisplayGeometry,
+        isComparing: Bool,
+        mode: CompareViewMode,
+        wipePosition: Double,
+        overlayBlend: Double
+    ) {
+        let mode: CompareViewMode = isComparing ? mode : .primary
+        let source: CompareSource = mode == .secondary
+            || (mode == .sideBySide && location.x >= geometry.canvasSize.width / 2)
+            || (mode.isWipe && geometry.secondaryClipRect(for: mode, wipePosition: wipePosition).contains(location))
+            || (mode == .overlay && CompareSessionController.clampedUnitValue(overlayBlend) == 1)
+            ? .secondary : .primary
+        let rect = CompareDisplayGeometry.aspectFitRect(
+            aspectRatio: source == .primary ? geometry.primaryAspectRatio : geometry.secondaryAspectRatio,
+            in: geometry.presentationClipRect(for: source, mode: mode)
+        )
+        follow(location, pictureRect: rect)
+    }
+
     func reset() {
         normalizedPoint = CGPoint(x: 0.5, y: 0.5)
         pointer = nil

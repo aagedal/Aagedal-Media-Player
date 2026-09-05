@@ -74,6 +74,31 @@ The render size defaults to `COMPARE_PROFILE_SIZE`. Use
 for a separate Reduced Frame fallback measurement. Set `FFMPEG` when the
 desired full ffmpeg is not first on `PATH`.
 
+## Reflected UHD/HDR sources
+
+Run a separate profile with `COMPARE_PROFILE_REFLECTED=1` to apply container
+horizontal reflection to both generated sources. This exercises MPV's
+reflection correction with VideoToolbox copyback and its vertical video filter,
+alongside AVFoundation's native transform handling, in all eight scenarios.
+The encoded raster remains UHD 10-bit HDR; reflection is display metadata.
+Each test verifies the actual source transforms before starting its workload.
+
+```bash
+COMPARE_PROFILE_REFLECTED=1 \
+COMPARE_PROFILE_SECONDS=120 \
+COMPARE_PROFILE_FIXTURE_DIR="$PWD/build/compare-profile-reflected/fixtures" \
+COMPARE_PROFILE_DERIVED_DATA="$PWD/build/compare-profile-reflected/DerivedData" \
+COMPARE_PROFILE_ARTIFACT_DIR="$PWD/build/compare-profile-reflected/preparation-artifacts" \
+scripts/profile-compare-mode.sh
+```
+
+Use the same warm-up, cooldown, reuse, and measured-run procedure as the normal
+baseline. Reuse rejects a reflection setting that differs from the manifest;
+older manifests without a reflection field describe unreflected sources.
+The report records the selected reflection setting. This workload measures
+transport, comparison rendering, and scopes; loupe capture cadence and direct
+app CPU/GPU measurements still require the hands-on Instruments pass.
+
 ## Automated coverage and pass criteria
 
 The profiler creates 3840×2160, 24 fps, 10-bit HEVC fixtures with BT.2020/PQ

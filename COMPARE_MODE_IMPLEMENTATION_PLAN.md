@@ -406,3 +406,28 @@ and no skips. Xcode static analysis and all 61 release-preflight checks pass.
 End-to-end pointer registration in every live comparison mode, reflected
 UHD/HDR filter performance, the base-M1 profile, accessibility, and editor
 round-trips remain release gates.
+
+## Pointer routing and reflected profiling continuation — 2026-09-05
+
+The canvas hover handler now shares its production pointer routing with
+rendered-lens tests. Another 120 paired lens renders cover all seven modes,
+unequal A/B display and coded aspects, all magnifications, and 1×/2× scale.
+Black-bar and divider regressions preserve the previous inspected point.
+A fully B overlay now follows B's fitted geometry instead of A's, fixing
+registration for differing aspect ratios. Native hover/fullscreen/resizing
+validation remains a hands-on gate.
+
+The profiler accepts `COMPARE_PROFILE_REFLECTED=1` for horizontally reflected
+UHD HDR sources. It records reflection in the manifest and report, rejects
+incompatible fixture reuse, and verifies both actual transforms in XCTest.
+Twelve shell configuration checks supplement the metric rejection tests.
+The first reflected run exposed an early-exit race in the loop-resume check:
+it now waits for both playing and aligned states within the unchanged deadline
+and drift tolerance. See `docs/COMPARE_MODE_REFLECTED_PROFILE_2026-09-05.md`
+for the measured results and limits.
+
+The complete Release suite passes 333 tests with no failures or skips. The
+corrected reflected UHD/HDR smoke profile passes all eight scenarios, with
+0.754-second worst recovery and 89 ms worst main-actor delay. The 120-second
+base-M1 release and hands-on Instruments/loupe gates remain open.
+Static analysis and all 61 release-preflight checks pass.

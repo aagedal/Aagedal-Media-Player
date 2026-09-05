@@ -9,7 +9,8 @@ The pointer selects a normalized coordinate inside the visible picture. Black
 bars do not change the selected coordinate. Compare Mode uses that coordinate
 for both source previews, even when their display aspects differ. Wipe modes
 select coordinates from the source under the pointer; overlay and difference
-modes use A's picture coordinates. The loupe previews always show A and B
+modes use A's picture coordinates, except that a fully B (100%) overlay uses
+B's picture coordinates. The loupe previews always show A and B
 separately, regardless of the comparison presentation mode.
 
 Pin picture position holds the inspected coordinate while using transport.
@@ -44,7 +45,9 @@ picture and every decoder capture together. The probe belongs to the playback
 preparation and cannot construct a backend after replacement or teardown.
 AVFoundation already applies the complete transform. Production-resolution
 performance of the additional filter on reflected media remains a release
-profiling gate; ordinary unreflected media receives no additional video filter.
+profiling gate. Use `COMPARE_PROFILE_REFLECTED=1` with the profiler described
+in `docs/COMPARE_MODE_PERFORMANCE.md` to exercise that path; ordinary
+unreflected media receives no additional video filter.
 
 ## Generated pixel fixtures
 
@@ -61,7 +64,11 @@ The rendered-lens matrix separately checks the normalized picture positions
 across four coded-raster/fitted-picture combinations, every visible
 magnification, and 1×/2× display scale. This separation checks both decoder
 orientation and the loupe's display-aspect mapping. It does not constitute
-end-to-end pointer registration in every live comparison presentation mode.
+native-event pointer registration in every live comparison presentation mode.
+A further 120 paired rendered-lens cases exercise the production canvas-pointer
+routing in all seven comparison modes, with differing A/B display aspects,
+all magnifications, and 1×/2× scale. State regressions reject each visible
+source's black bars and verify that a fully B overlay follows B's coordinates.
 
 ## Validation gates
 
@@ -78,6 +85,11 @@ and all 61 release-preflight checks passed.
 Continuation verification on 2026-09-05: 329 Release tests pass with no
 failures or skips, including 20 live decoder fixture cases and 128 rendered
 lens cases. Static analysis and all 61 release-preflight checks pass.
+
+Pointer-routing continuation: the complete Release suite passes 333 tests
+without failures or skips. The reflected UHD/HDR eight-scenario smoke profile
+also passes; static analysis and all 61 release-preflight checks pass. See
+`COMPARE_MODE_REFLECTED_PROFILE_2026-09-05.md` for profiling limits.
 
 Before release:
 

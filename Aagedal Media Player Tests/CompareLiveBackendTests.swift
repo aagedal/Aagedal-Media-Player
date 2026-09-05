@@ -63,6 +63,20 @@ final class CompareLiveBackendTests: XCTestCase {
 
     private var retainedPlaybackSurfaces: [RetainedPlaybackSurface] = []
 
+    override func setUp() async throws {
+        try await super.setUp()
+        guard ProcessInfo.processInfo.environment["COMPARE_PROFILE_REPORT"] == "1" else { return }
+        let expectsReflection = ProcessInfo.processInfo.environment["COMPARE_PROFILE_REFLECTED"] == "1"
+        let fixtures = try fixtureDirectory()
+        for source in ["source-a.mov", "source-b.mov"] {
+            let reflected = await MPVDisplayTransform.requiresReflectionCorrection(
+                url: fixtures.appending(path: "compare/\(source)")
+            )
+            XCTAssertEqual(reflected, expectsReflection,
+                           "The profile must exercise the requested display-transform path: \(source)")
+        }
+    }
+
     override func tearDown() {
         for case .avFoundation(let surface) in retainedPlaybackSurfaces {
             surface.playerLayer.player = nil
@@ -803,18 +817,21 @@ final class CompareLiveBackendTests: XCTestCase {
             primary.isPlaying && primary.playbackTimeSnapshot() < 0.5
         }, timeout: .seconds(3))
         XCTAssertTrue(primaryWrapped, "Primary did not loop back to its first frame.")
-        let secondaryFollowedLoop = await waitUntil(
-            tolerance: driftPolicy.correctionThreshold,
-            timeout: .seconds(2)
-        ) {
+        // Decoder position and playing state arrive independently. Wait for
+        // both within the same deadline: a settled seek alone can precede the
+        // asynchronous resume notification, particularly after MPV reaches EOF.
+        let secondaryFollowedLoop = await waitUntil({
             let expected = session.secondaryTime(
                 forPrimaryTime: primary.playbackTimeSnapshot()
             )
-            return secondary.playbackTimeSnapshot() - expected
-        }
+            return secondary.isPlaying
+                && abs(secondary.playbackTimeSnapshot() - expected) <= driftPolicy.correctionThreshold
+        }, timeout: .seconds(2))
         XCTAssertTrue(
-            secondaryFollowedLoop && secondary.isPlaying,
-            "Secondary did not resume at the mapped frame after A looped."
+            secondaryFollowedLoop,
+            "Secondary did not resume at the mapped frame after A looped. "
+                + "A=\(primary.playbackTimeSnapshot()), B=\(secondary.playbackTimeSnapshot()), "
+                + "B playing=\(secondary.isPlaying), tolerance=\(driftPolicy.correctionThreshold)"
         )
         session.setLoopPlayback(false, primary: primary)
         session.pause(primary: primary)

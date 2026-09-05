@@ -74,6 +74,53 @@ final class InspectionLoupeRenderingTests: XCTestCase {
         }
     }
 
+    func testCanvasPointerRoutesToPairedRenderedLensesAcrossEveryCompareMode() throws {
+        let geometry = CompareDisplayGeometry(
+            canvasSize: CGSize(width: 800, height: 600),
+            primaryAspectRatio: 2, secondaryAspectRatio: 0.5
+        )
+        // Explicit canvas points and independently calculated expectations
+        // exercise both panes, both sides of each wipe, and different bars.
+        let cases: [(CompareViewMode, CGPoint, CGPoint, NSColor)] = [
+            (.primary, CGPoint(x: 200, y: 200), CGPoint(x: 0.25, y: 0.25), red),
+            (.secondary, CGPoint(x: 475, y: 450), CGPoint(x: 0.75, y: 0.75), yellow),
+            (.sideBySide, CGPoint(x: 100, y: 250), CGPoint(x: 0.25, y: 0.25), red),
+            (.sideBySide, CGPoint(x: 675, y: 450), CGPoint(x: 0.75, y: 0.75), yellow),
+            (.verticalWipe, CGPoint(x: 325, y: 150), CGPoint(x: 0.25, y: 0.25), red),
+            (.verticalWipe, CGPoint(x: 600, y: 400), CGPoint(x: 0.75, y: 0.75), yellow),
+            (.horizontalWipe, CGPoint(x: 325, y: 150), CGPoint(x: 0.25, y: 0.25), red),
+            (.horizontalWipe, CGPoint(x: 600, y: 400), CGPoint(x: 0.75, y: 0.75), yellow),
+            (.overlay, CGPoint(x: 200, y: 200), CGPoint(x: 0.25, y: 0.25), red),
+            (.difference, CGPoint(x: 600, y: 400), CGPoint(x: 0.75, y: 0.75), yellow)
+        ]
+        // Raster aspect deliberately differs from display aspect (PAR or
+        // display transforms); each paired lens must show the same region.
+        let images = [try makeAsymmetricImage(width: 720, height: 576),
+                      try makeAsymmetricImage(width: 300, height: 600)]
+        for (mode, pointer, expectedPoint, color) in cases {
+            let state = InspectionLoupeState()
+            state.isEnabled = true
+            state.follow(pointer, geometry: geometry, isComparing: true,
+                         mode: mode, wipePosition: 0.5, overlayBlend: 0.5)
+            XCTAssertEqual(state.normalizedPoint, expectedPoint, "Mode: \(mode)")
+            XCTAssertEqual(state.pointer, pointer)
+            for (index, source) in [CompareSource.primary, .secondary].enumerated() {
+                let picture = CompareDisplayGeometry.aspectFitRect(
+                    aspectRatio: source == .primary ? 2 : 0.5,
+                    in: geometry.presentationClipRect(for: source, mode: mode)
+                )
+                for scale: CGFloat in [1, 2] {
+                    for magnification in [LoupeMagnification.twoTimes, .fourTimes, .eightTimes] {
+                        let bitmap = try render(images[index], point: state.normalizedPoint,
+                                                magnification: magnification, scale: scale,
+                                                pictureSize: picture.size)
+                        try assertColor(color, in: bitmap, at: CGPoint(x: 92, y: 72), scale: scale)
+                    }
+                }
+            }
+        }
+    }
+
     private func render(
         _ image: CGImage,
         point: CGPoint,

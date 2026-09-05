@@ -149,17 +149,14 @@ struct ContentView: View {
             }
             .onContinuousHover { phase in
                 if case .active(let location) = phase {
-                    let source: CompareSource = compareSession.isActive
-                        && (compareSession.viewMode == .secondary
-                            || (compareSession.viewMode == .sideBySide && location.x > canvas.size.width / 2)
-                            || (compareSession.viewMode.isWipe
-                                && geometry.secondaryClipRect(for: compareSession.viewMode, wipePosition: compareSession.wipePosition).contains(location)))
-                        ? .secondary : .primary
-                    let rect = CompareDisplayGeometry.aspectFitRect(
-                        aspectRatio: source == .primary ? geometry.primaryAspectRatio : geometry.secondaryAspectRatio,
-                        in: geometry.presentationClipRect(for: source, mode: compareSession.isActive ? compareSession.viewMode : .primary)
+                    loupe.follow(
+                        location,
+                        geometry: geometry,
+                        isComparing: compareSession.isActive,
+                        mode: compareSession.viewMode,
+                        wipePosition: compareSession.wipePosition,
+                        overlayBlend: compareSession.overlayBlend
                     )
-                    loupe.follow(location, pictureRect: rect)
                 }
             }
         }

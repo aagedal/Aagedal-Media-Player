@@ -57,6 +57,66 @@ final class InspectionLoupeStateTests: XCTestCase {
         XCTAssertEqual(state.pointer, CGPoint(x: 700, y: 160))
     }
 
+    func testCompareCanvasRejectsTheVisibleSourcesBlackBars() {
+        let geometry = CompareDisplayGeometry(
+            canvasSize: CGSize(width: 800, height: 600),
+            primaryAspectRatio: 2, secondaryAspectRatio: 0.5
+        )
+        let state = InspectionLoupeState()
+        state.isEnabled = true
+        state.follow(CGPoint(x: 300, y: 360), pictureRect: picture)
+        let cases: [(CompareViewMode, CGPoint)] = [
+            (.primary, CGPoint(x: 200, y: 50)),
+            (.secondary, CGPoint(x: 100, y: 300)),
+            (.sideBySide, CGPoint(x: 100, y: 150)),
+            (.sideBySide, CGPoint(x: 425, y: 300)),
+            // The divider's right edge belongs to B, including its black bar.
+            (.sideBySide, CGPoint(x: 400, y: 300)),
+            (.verticalWipe, CGPoint(x: 100, y: 300)),
+            (.verticalWipe, CGPoint(x: 600, y: 50)),
+            (.horizontalWipe, CGPoint(x: 100, y: 150)),
+            (.horizontalWipe, CGPoint(x: 600, y: 550)),
+            (.overlay, CGPoint(x: 400, y: 50)),
+            (.difference, CGPoint(x: 400, y: 50))
+        ]
+        for (mode, pointer) in cases {
+            state.follow(pointer, geometry: geometry, isComparing: true,
+                         mode: mode, wipePosition: 0.5, overlayBlend: 0.5)
+            XCTAssertEqual(state.normalizedPoint, CGPoint(x: 0.25, y: 0.75), "Mode: \(mode)")
+            XCTAssertEqual(state.pointer, CGPoint(x: 300, y: 360), "Mode: \(mode)")
+        }
+    }
+
+    func testFullySecondaryOverlayFollowsBAndRejectsItsPillarbox() {
+        let geometry = CompareDisplayGeometry(
+            canvasSize: CGSize(width: 800, height: 600),
+            primaryAspectRatio: 2, secondaryAspectRatio: 0.5
+        )
+        let state = InspectionLoupeState()
+        state.isEnabled = true
+        state.follow(CGPoint(x: 325, y: 150), geometry: geometry, isComparing: true,
+                     mode: .overlay, wipePosition: 0.5, overlayBlend: 1)
+        XCTAssertEqual(state.normalizedPoint, CGPoint(x: 0.25, y: 0.25))
+        state.follow(CGPoint(x: 100, y: 300), geometry: geometry, isComparing: true,
+                     mode: .overlay, wipePosition: 0.5, overlayBlend: 1)
+        XCTAssertEqual(state.normalizedPoint, CGPoint(x: 0.25, y: 0.25))
+        XCTAssertEqual(state.pointer, CGPoint(x: 325, y: 150))
+    }
+
+    func testInactiveCompareUsesARegardlessOfStoredPresentation() {
+        let geometry = CompareDisplayGeometry(
+            canvasSize: CGSize(width: 800, height: 600),
+            primaryAspectRatio: 2, secondaryAspectRatio: 0.5
+        )
+        let state = InspectionLoupeState()
+        state.isEnabled = true
+        for mode in CompareViewMode.allCases {
+            state.follow(CGPoint(x: 600, y: 400), geometry: geometry, isComparing: false,
+                         mode: mode, wipePosition: 1, overlayBlend: 1)
+            XCTAssertEqual(state.normalizedPoint, CGPoint(x: 0.75, y: 0.75))
+        }
+    }
+
     func testCenterAndPinKeepsLoupeEnabledAndSelectedMagnification() {
         let state = InspectionLoupeState()
         state.isEnabled = true

@@ -10,6 +10,7 @@ render_size="${COMPARE_PROFILE_RENDER_SIZE:-$frame_size}"
 frame_rate="${COMPARE_PROFILE_FRAME_RATE:-24}"
 observation_seconds="${COMPARE_PROFILE_SECONDS:-30}"
 reuse_fixtures="${COMPARE_PROFILE_REUSE_FIXTURES:-0}"
+reflected="${COMPARE_PROFILE_REFLECTED:-0}"
 temporary_dir="$(mktemp -d "${TMPDIR:-/tmp/}aagedal-compare-profile.XXXXXX")"
 fixture_dir="${COMPARE_PROFILE_FIXTURE_DIR:-$temporary_dir/fixtures}"
 fixture_dir="${fixture_dir:A}"
@@ -46,6 +47,11 @@ trap cleanup EXIT
 
 if [[ "$reuse_fixtures" != 0 && "$reuse_fixtures" != 1 ]]; then
   print -u2 "COMPARE_PROFILE_REUSE_FIXTURES must be 0 or 1."
+  exit 1
+fi
+
+if [[ "$reflected" != 0 && "$reflected" != 1 ]]; then
+  print -u2 "COMPARE_PROFILE_REFLECTED must be 0 or 1."
   exit 1
 fi
 
@@ -107,7 +113,11 @@ validate_reused_fixtures() {
     print -u2 "Run once with COMPARE_PROFILE_REUSE_FIXTURES=0 to regenerate them."
     return 1
   fi
-  if [[ "$(manifest_value schema)" != 5 \
+  local fixture_reflected="$(manifest_value reflected)"
+  # Older profiler manifests describe the original unreflected fixtures.
+  fixture_reflected="${fixture_reflected:-0}"
+  if [[ "$fixture_reflected" != "$reflected" \
+        || "$(manifest_value schema)" != 5 \
         || "$(manifest_value size)" != "$frame_size" \
         || "$(manifest_value frame_rate)" != "$frame_rate" \
         || "$(manifest_value duration)" != "$fixture_seconds" ]]; then
@@ -145,8 +155,12 @@ generate_fixture() {
   local duration="$2"
   local tone="$3"
   local timecode="$4"
+  local display_options=()
+  if [[ "$reflected" == 1 ]]; then
+    display_options=(-noautorotate -display_hflip:v)
+  fi
 
-  ffmpeg \
+  ffmpeg "${display_options[@]}" \
     -f lavfi -i "testsrc2=size=${frame_size}:rate=${frame_rate}:duration=${duration}" \
     -f lavfi -i "sine=frequency=${tone}:sample_rate=48000:duration=${duration}" \
     -map 0:v:0 -map 1:a:0 \
@@ -170,6 +184,7 @@ else
     # CompareLiveBackendTests owns this contract; keep the generated profile
     # tree directly consumable by the same schema-5 fixture validator.
     print "schema=5"
+    print "reflected=$reflected"
     print "size=$frame_size"
     print "frame_rate=$frame_rate"
     print "duration=$fixture_seconds"
@@ -212,6 +227,7 @@ set_test_environment() {
 set_test_environment MEDIA_FIXTURE_DIR "$fixture_dir"
 set_test_environment COMPARE_SUSTAINED_PLAYBACK_SECONDS "$observation_seconds"
 set_test_environment COMPARE_PROFILE_REPORT 1
+set_test_environment COMPARE_PROFILE_REFLECTED "$reflected"
 set_test_environment COMPARE_PROFILE_RENDER_SIZE "$render_size"
 
 print -u2 "Profiling all four backend pairings plus mixed-backend visual and live-scope canvases for $observation_seconds seconds each…"
@@ -294,6 +310,7 @@ print -r -- "- Thermal state before measured run: ${pre_profile_thermal:-Unavail
 print -r -- "- Thermal state after measured run: ${post_profile_thermal:-Unavailable}"
 print -r -- "- Thermal sampling: pmset every 2 seconds during the run (thermal.log retained with raw artifacts)"
 print -r -- "- Fixture: $frame_size at $frame_rate fps, HEVC Main 10, BT.2020/PQ"
+print -r -- "- Container horizontal reflection (both sources): $reflected"
 print -r -- "- Fixture bytes (A/B): ${source_a_bytes:-Unknown}/${source_b_bytes:-Unknown}"
 print -r -- "- Approximate fixture bitrate Mbps (A/B): ${source_a_bitrate:-Unknown}/${source_b_bitrate:-Unknown}"
 print -r -- "- Fixture encoder: ${fixture_ffmpeg:-Unknown}"

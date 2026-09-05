@@ -151,8 +151,10 @@ checks; static analysis and all 61 release-preflight checks also pass.
   ratios, rotations, and letterbox/pillarbox regions. Automated decoder checks
   now verify ten asymmetric fixtures on both backends, including reflected
   rotations and PAR. A 128-case rendered-lens matrix covers display geometry,
-  magnification, and display scale. End-to-end pointer registration across all
-  live presentation modes remains; pure mapping excludes black bars.
+  magnification, and display scale. Another 120 paired lens renders cover the
+  production pointer routing in all seven modes, including differing aspects.
+  The fully B overlay now follows B geometry. Native-event pointer registration
+  across live presentation modes remains; automated mapping excludes black bars.
 - [ ] Add optional whole-viewport zoom and pan after the loupe interaction is
   proven, with a one-action return to Fit.
 - [x] Describe loupe imagery as display-space output without RGB/code values.
