@@ -49,6 +49,7 @@ All notable changes to Aagedal Media Player.
   primary-file loop boundaries across all backend combinations.
 
 ### Fixed
+- Explicitly nonisolated comparison-guide geometry avoids a Swift `Shape` conformance error under main-actor default isolation.
 - Prevent AVFoundation loupe freezes under UHD/HDR load by acquiring the current pixel buffer before asynchronous metadata and image conversion.
 - Loupe pointer registration when a comparison overlay shows 100% B with an aspect ratio different from A.
 - Preserve reflected QuickTime display transforms in MPV playback and decoder captures, including rotated mirrors, using a reflection-only VideoToolbox copyback/filter path.

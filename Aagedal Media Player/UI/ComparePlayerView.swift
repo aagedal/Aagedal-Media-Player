@@ -474,7 +474,8 @@ struct ComparePlayerView: View {
     }
 }
 
-private struct CompareGuideMatteShape: Shape {
+// Geometry-only value: Shape can request its path outside the main actor.
+nonisolated private struct CompareGuideMatteShape: Shape {
     let outerRect: CGRect
     let innerRect: CGRect
 
