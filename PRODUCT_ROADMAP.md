@@ -148,8 +148,11 @@ checks; static analysis and all 61 release-preflight checks also pass.
 - [x] In Compare Mode, inspect the same normalized image coordinate in paired
   A/B loupes. Samples are independently captured, not frame-locked.
 - [ ] Complete live-pixel validation for differing raster sizes, pixel aspect
-  ratios, rotations, and letterbox/pillarbox regions. Pure picture-coordinate
-  mapping excludes black bars; the capture path uses display-oriented imagery.
+  ratios, rotations, and letterbox/pillarbox regions. Automated decoder checks
+  now verify ten asymmetric fixtures on both backends, including reflected
+  rotations and PAR. A 128-case rendered-lens matrix covers display geometry,
+  magnification, and display scale. End-to-end pointer registration across all
+  live presentation modes remains; pure mapping excludes black bars.
 - [ ] Add optional whole-viewport zoom and pan after the loupe interaction is
   proven, with a one-action return to Fit.
 - [x] Describe loupe imagery as display-space output without RGB/code values.

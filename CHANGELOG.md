@@ -47,6 +47,7 @@ All notable changes to Aagedal Media Player.
   primary-file loop boundaries across all backend combinations.
 
 ### Fixed
+- Preserve reflected QuickTime display transforms in MPV playback and decoder captures, including rotated mirrors, using a reflection-only VideoToolbox copyback/filter path.
 - Prevent AVFoundation seeks from truncating a mapped frame boundary to the preceding frame because of floating-point rounding.
 - Prevented superseded scope frames and media-operation tasks from publishing stale results, and stopped screenshots or exports from surviving their owning player window.
 - Kept sorted AVFoundation audio-track labels and backend selections aligned when display order differs from source stream order.

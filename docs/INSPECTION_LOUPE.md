@@ -35,6 +35,34 @@ mapping can differ from the live display. The independently captured A/B
 previews are not timestamp-paired and are not evidence of continuous frame lock.
 Exact source-pixel 1:1 and whole-viewport pan/zoom remain deferred.
 
+The bundled MPV loses the reflection component of QuickTime display matrices.
+Playback preparation now detects a reflected first-track transform and applies
+a vertical video filter before MPV's existing rotation. Reflected files use
+VideoToolbox copyback so the software filter receives CPU-accessible frames;
+unreflected files keep their existing hardware decoding path. This corrects the native
+picture and every decoder capture together. The probe belongs to the playback
+preparation and cannot construct a backend after replacement or teardown.
+AVFoundation already applies the complete transform. Production-resolution
+performance of the additional filter on reflected media remains a release
+profiling gate; ordinary unreflected media receives no additional video filter.
+
+## Generated pixel fixtures
+
+Run `scripts/generate-test-fixtures.sh` to regenerate the optional decoder
+fixtures, including the `loupe/` set. Distinct red, green, blue, and yellow
+quadrants make rotation, reflection, and axis inversion observable. Cases cover
+landscape and portrait rasters, 4:3 pixel aspect ratio, 90° rotation with PAR,
+180° and 270° rotations, container horizontal/vertical mirroring, and
+horizontal mirroring combined with 90°/270° rotation. The live tests
+read the images published by `LoupeFrameCapture` from each backend while paused.
+They require all fixture files and report a skip if the set is missing.
+
+The rendered-lens matrix separately checks the normalized picture positions
+across four coded-raster/fitted-picture combinations, every visible
+magnification, and 1×/2× display scale. This separation checks both decoder
+orientation and the loupe's display-aspect mapping. It does not constitute
+end-to-end pointer registration in every live comparison presentation mode.
+
 ## Validation gates
 
 Automated checks cover normalized coordinates and black bars, magnification,

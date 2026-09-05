@@ -112,8 +112,8 @@ final class MPVPlayerBackend: PlayerBackendAdapter {
         set { player.isMuted = newValue }
     }
 
-    init(url: URL, startTime: TimeInterval, volume: Double, isMuted: Bool) {
-        player = MPVPlayer()
+    init(url: URL, startTime: TimeInterval, volume: Double, isMuted: Bool, correctsReflection: Bool = false) {
+        player = MPVPlayer(correctsReflection: correctsReflection)
         self.volume = volume
         self.isMuted = isMuted
         player.load(url: url, startTime: startTime, autostart: false)

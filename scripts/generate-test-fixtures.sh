@@ -136,6 +136,32 @@ ffmpeg \
     -an -c:v libx264 -preset ultrafast -crf 28 -pix_fmt yuv420p \
     -movflags +faststart "$output_dir/portrait.mp4"
 
+# Asymmetric quadrant colors make display rotation and reflection observable in
+# actual decoder captures: top-left red, top-right green, bottom-left blue,
+# bottom-right yellow. Keep edges on even pixels for 4:2:0 chroma sampling.
+mkdir -p "$output_dir/loupe"
+generate_loupe_fixture() {
+    local name="$1" width="$2" height="$3" par="$4" rotation="$5" mirror="$6" vertical_mirror="${7:-0}"
+    local display_options=(-display_rotation:v "$rotation")
+    if [[ "$mirror" == 1 ]]; then display_options+=(-display_hflip:v); fi
+    if [[ "$vertical_mirror" == 1 ]]; then display_options+=(-display_vflip:v); fi
+    ffmpeg -noautorotate "${display_options[@]}" \
+        -f lavfi -i "color=c=red:size=${width}x${height}:rate=24:duration=2" \
+        -vf "drawbox=x=iw/2:y=0:w=iw/2:h=ih/2:color=lime:t=fill,drawbox=x=0:y=ih/2:w=iw/2:h=ih/2:color=blue:t=fill,drawbox=x=iw/2:y=ih/2:w=iw/2:h=ih/2:color=yellow:t=fill,setsar=$par" \
+        -an -c:v libx264 -preset ultrafast -crf 12 -pix_fmt yuv420p \
+        -movflags +faststart "$output_dir/loupe/$name.mp4"
+}
+generate_loupe_fixture landscape 320 180 1 0 0
+generate_loupe_fixture portrait 180 320 1 0 0
+generate_loupe_fixture par 240 180 4/3 0 0
+generate_loupe_fixture rotate-90-par 240 180 4/3 90 0
+generate_loupe_fixture rotate-180 320 180 1 180 0
+generate_loupe_fixture rotate-270 320 180 1 270 0
+generate_loupe_fixture mirror 320 180 1 0 1
+generate_loupe_fixture mirror-90 320 180 1 90 1
+generate_loupe_fixture mirror-270 320 180 1 270 1
+generate_loupe_fixture mirror-vertical 320 180 1 0 0 1
+
 # A small HDR10 clip carrying BT.2020/PQ, mastering-display, and MaxCLL/MaxFALL
 # metadata. repeat-headers keeps the metadata available to prefix-only readers.
 ffmpeg \

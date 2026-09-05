@@ -108,6 +108,94 @@ final class CompareLiveBackendTests: XCTestCase {
         let secondaryCaptureAdvance: UInt64
     }
 
+    func testMPVLoupeCapturesOrientedAsymmetricPixels() async throws {
+        try await exerciseOrientedLoupePixels(backend: .mpv)
+    }
+
+    func testAVFoundationLoupeCapturesOrientedAsymmetricPixels() async throws {
+        try await exerciseOrientedLoupePixels(backend: .avFoundation)
+    }
+
+    private func exerciseOrientedLoupePixels(backend: PlaybackBackend) async throws {
+        // Expected colors are in display order: top-left, top-right,
+        // bottom-left, bottom-right. Positive container rotation is CCW.
+        let cases: [(String, [String])] = [
+            ("landscape", ["red", "green", "blue", "yellow"]),
+            ("portrait", ["red", "green", "blue", "yellow"]),
+            ("par", ["red", "green", "blue", "yellow"]),
+            ("rotate-90-par", ["green", "yellow", "red", "blue"]),
+            ("rotate-180", ["yellow", "blue", "green", "red"]),
+            ("rotate-270", ["blue", "red", "yellow", "green"]),
+            ("mirror", ["green", "red", "yellow", "blue"]),
+            ("mirror-90", ["yellow", "green", "blue", "red"]),
+            ("mirror-270", ["red", "blue", "green", "yellow"]),
+            ("mirror-vertical", ["blue", "yellow", "red", "green"]),
+        ]
+        let fixtures = try fixtureDirectory(requiredFiles: cases.map { "loupe/\($0.0).mp4" })
+        for (name, expected) in cases {
+            let controller = makeController(forcedBackend: backend)
+            let capture = LoupeFrameCapture()
+            defer { capture.stop(); controller.teardown() }
+            let url = fixtures.appending(path: "loupe/\(name).mp4")
+            let reflectionDetected = await MPVDisplayTransform.requiresReflectionCorrection(url: url)
+            XCTAssertEqual(reflectionDetected, name.hasPrefix("mirror"), name)
+            let metadata = try await MetadataService.shared.metadata(for: url)
+            let stream = try XCTUnwrap(metadata.primaryVideoStream)
+            let isPortrait = ["portrait", "rotate-90-par", "rotate-270", "mirror-90", "mirror-270"].contains(name)
+            XCTAssertEqual(stream.displayAspectRatio?.reducedStringValue,
+                           isPortrait ? "9:16" : "16:9", name)
+            if name.contains("par") {
+                XCTAssertEqual(stream.width, 240, name)
+                XCTAssertEqual(stream.height, 180, name)
+                XCTAssertEqual(stream.pixelAspectRatio?.reducedStringValue, "4:3", name)
+            }
+            try await loadPrimary(controller, url: url)
+            try await attachRenderSurface(to: controller)
+            guard await waitUntil({ controller.isReady }) else {
+                XCTFail("\(backend.rawValue)/\(name): decoder did not become ready")
+                continue
+            }
+            controller.pause()
+            capture.start(controller: controller)
+            guard await waitUntil({ capture.image != nil }) else {
+                XCTFail("\(backend.rawValue)/\(name): paused loupe produced no image")
+                continue
+            }
+            let image = try XCTUnwrap(capture.image)
+            // MPV screenshots include PAR correction, while AV retains the
+            // oriented coded raster and lets the loupe view apply display aspect.
+            let expectedAspect: Double = if backend == .avFoundation && name.contains("par") {
+                isPortrait ? 3.0 / 4.0 : 4.0 / 3.0
+            } else {
+                isPortrait ? 9.0 / 16.0 : 16.0 / 9.0
+            }
+            XCTAssertEqual(Double(image.width) / Double(image.height), expectedAspect,
+                           accuracy: 0.01, "\(backend.rawValue)/\(name) captured aspect")
+            let bitmap = NSBitmapImageRep(cgImage: image)
+            let positions: [(Double, Double)] = [(0.25, 0.25), (0.75, 0.25), (0.25, 0.75), (0.75, 0.75)]
+            for (index, point) in positions.enumerated() {
+                let color = try XCTUnwrap(bitmap.colorAt(
+                    x: Int(Double(image.width) * point.0),
+                    y: Int(Double(image.height) * point.1)
+                )?.usingColorSpace(.deviceRGB))
+                // Wide thresholds allow codec/color-management variation, while
+                // each quadrant remains distinct from every other quadrant.
+                let channels = [color.redComponent, color.greenComponent, color.blueComponent]
+                let target: [CGFloat] = switch expected[index] {
+                case "red": [1, 0, 0]
+                case "green": [0, 1, 0]
+                case "blue": [0, 0, 1]
+                default: [1, 1, 0]
+                }
+                for channel in 0..<3 {
+                    XCTAssertEqual(channels[channel], target[channel], accuracy: 0.25,
+                        "\(backend.rawValue)/\(name) quadrant \(index) expected \(expected[index]), got \(channels)")
+                }
+            }
+            XCTAssertFalse(controller.isPlaying, "Capturing oriented pixels must preserve pause")
+        }
+    }
+
     func testMPVPairAlignsBySourceTimecodeAndSharesTransport() async throws {
         try await exercisePair(primaryBackend: .mpv, secondaryBackend: .mpv)
     }

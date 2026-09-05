@@ -61,6 +61,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
     /// fall back to a different reverse-playback strategy.
     let backwardPlaybackFailed = PassthroughSubject<Void, Never>()
 
+    private var correctsReflection = false
     private var isInitialized = false
     private var startPaused = false
     private nonisolated(unsafe) var wakeupContext: UnsafeMutableRawPointer?
@@ -80,6 +81,11 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
 
     override init() {
         super.init()
+    }
+
+    convenience init(correctsReflection: Bool) {
+        self.init()
+        self.correctsReflection = correctsReflection
     }
 
     deinit {
@@ -168,7 +174,13 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         checkError(mpv_set_option_string(mpv, "vo", "gpu-next"), context: "vo")
         checkError(mpv_set_option_string(mpv, "gpu-api", "vulkan"), context: "gpu-api")
         checkError(mpv_set_option_string(mpv, "gpu-context", "moltenvk"), context: "gpu-context")
-        checkError(mpv_set_option_string(mpv, "hwdec", "videotoolbox"), context: "hwdec")
+        checkError(mpv_set_option_string(mpv, "hwdec", correctsReflection ? "videotoolbox-copy" : "videotoolbox"), context: "hwdec")
+        if correctsReflection {
+            // A reflected matrix decomposes into the rotation MPV already
+            // applies and a vertical flip in coded-raster coordinates. A video
+            // filter fixes the surface, scopes, and screenshots together.
+            checkError(mpv_set_option_string(mpv, "vf", "lavfi=[vflip]"), context: "display reflection")
+        }
 
         checkError(mpv_set_option_string(mpv, "framedrop", "decoder+vo"), context: "framedrop")
 

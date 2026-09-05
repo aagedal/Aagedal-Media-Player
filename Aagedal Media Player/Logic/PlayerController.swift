@@ -422,6 +422,9 @@ final class PlayerController: ObservableObject {
         let detector = proResRAWDetector
         playbackPreparationTask = Task { @MainActor [weak self] in
             let isProResRAW = await detector(url, cachedMetadata)
+            guard !Task.isCancelled else { return }
+            let correctsReflection = isProResRAW ? false
+                : await MPVDisplayTransform.requiresReflectionCorrection(url: url)
             // A newer preparePlayback or teardown may have superseded this
             // work even when the underlying AVAsset load ignored cancellation.
             guard let self,
@@ -433,7 +436,7 @@ final class PlayerController: ObservableObject {
                 self.setupAVPlayer(url: url, startTime: startTime, wasCapturing: wasCapturing)
             } else {
                 self.logger.info("Using MPV player for \(url.lastPathComponent)")
-                self.setupMPV(url: url, startTime: startTime)
+                self.setupMPV(url: url, startTime: startTime, correctsReflection: correctsReflection)
                 if wasCapturing { self.frameCapture.startCapture() }
             }
             self.playbackPreparationTask = nil
@@ -499,13 +502,14 @@ final class PlayerController: ObservableObject {
         if wasCapturing { frameCapture.startCapture() }
     }
 
-    func setupMPV(url: URL, startTime: Double) {
+    func setupMPV(url: URL, startTime: Double, correctsReflection: Bool = false) {
         playbackPhase = .preparing
         let backend = MPVPlayerBackend(
             url: url,
             startTime: startTime,
             volume: volume,
-            isMuted: effectiveIsMuted
+            isMuted: effectiveIsMuted,
+            correctsReflection: correctsReflection
         )
         backendAdapter = backend
         backend.setAudioChannelRouting(audioChannelRouting)

@@ -45,15 +45,45 @@ final class InspectionLoupeRenderingTests: XCTestCase {
         }
     }
 
+    func testPairedLensesKeepPictureCoordinatesAcrossRasterAndDisplayAspects() throws {
+        // The coded raster and fitted picture deliberately have different
+        // aspects, as with anamorphic media and differently sized A/B panes.
+        let sources: [(CGSize, CGSize)] = [
+            (CGSize(width: 720, height: 576), CGSize(width: 320, height: 180)),
+            (CGSize(width: 576, height: 720), CGSize(width: 180, height: 320)),
+            (CGSize(width: 300, height: 300), CGSize(width: 240, height: 240)),
+            (CGSize(width: 640, height: 180), CGSize(width: 320, height: 90))
+        ]
+        for (raster, picture) in sources {
+            let image = try makeAsymmetricImage(width: Int(raster.width), height: Int(raster.height))
+            for scale: CGFloat in [1, 2] {
+                for magnification in [LoupeMagnification.twoTimes, .fourTimes, .eightTimes] {
+                    for (point, color) in [
+                        (CGPoint(x: 0.25, y: 0.20), red),
+                        (CGPoint(x: 0.80, y: 0.20), NSColor.green),
+                        (CGPoint(x: 0.25, y: 0.75), NSColor.blue),
+                        (CGPoint(x: 0.80, y: 0.75), yellow)
+                    ] {
+                        let rendered = try render(image, point: point,
+                                                  magnification: magnification, scale: scale,
+                                                  pictureSize: picture)
+                        try assertColor(color, in: rendered, at: CGPoint(x: 92, y: 72), scale: scale)
+                    }
+                }
+            }
+        }
+    }
+
     private func render(
         _ image: CGImage,
         point: CGPoint,
         magnification: LoupeMagnification,
-        scale: CGFloat
+        scale: CGFloat,
+        pictureSize: CGSize = CGSize(width: 200, height: 100)
     ) throws -> CGImage {
         let lens = InspectionLoupeLens(
             image: image, source: "A", size: CGSize(width: 160, height: 120),
-            pictureSize: CGSize(width: 200, height: 100),
+            pictureSize: pictureSize,
             normalizedPoint: point, magnification: magnification
         )
         .environment(\.displayScale, scale)
@@ -98,15 +128,13 @@ final class InspectionLoupeRenderingTests: XCTestCase {
 
     /// Deliberately unequal regions reveal image-axis inversions and incorrect
     /// centering that a symmetric checkerboard or solid image could conceal.
-    private func makeAsymmetricImage() throws -> CGImage {
-        let width = 400
-        let height = 200
+    private func makeAsymmetricImage(width: Int = 400, height: Int = 200) throws -> CGImage {
         var pixels = [UInt8](repeating: 255, count: width * height * 4)
         for y in 0..<height {
             for x in 0..<width {
                 let index = (y * width + x) * 4
-                let upper = y < 80
-                let left = x < 240
+                let upper = y < height * 2 / 5
+                let left = x < width * 3 / 5
                 pixels[index] = (upper && left) || (!upper && !left) ? 255 : 0
                 pixels[index + 1] = left ? 0 : 255
                 pixels[index + 2] = !upper && left ? 255 : 0

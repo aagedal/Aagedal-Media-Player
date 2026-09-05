@@ -428,6 +428,29 @@ pass; details are recorded with the loupe continuation in `COMPARE_MODE_IMPLEMEN
 Acceptance: adding a comparison offset cannot truncate a precise AVFoundation
 seek to the preceding frame through floating-point rounding.
 
+## Phase 30 — Reflected QuickTime playback orientation
+
+Status: Implemented on 2026-09-05; final regression validation recorded below.
+Asymmetric live-loupe fixtures exposed the bundled MPV retaining only rotation
+from reflected QuickTime display matrices. A file-owned reflection correction
+now applies to the decoder output, preserving agreement between playback,
+scopes, and loupe captures.
+
+- [x] Detect a negative display-transform determinant during MPV preparation.
+- [x] Revalidate preparation identity and cancellation after the transform load.
+- [x] Restore reflection before MPV rotation using a vertical filter and
+  VideoToolbox copyback for reflected files only.
+- [x] Preserve the existing decoding path for unreflected files.
+- [x] Cover rotation, translation, reflection, and invalid transforms in pure
+  tests.
+- [x] Verify ten asymmetric real-media fixtures on each backend, including
+  PAR, horizontal/vertical reflection, and reflected quarter-turn rotations.
+
+Acceptance: reflected QuickTime source points appear in their intended display
+quadrants in both backends and captured inspection imagery. Production UHD/HDR
+performance of the reflection-only copyback/filter path remains a release gate
+in `docs/INSPECTION_LOUPE.md`.
+
 ## Delivery order
 
 1. Phase 10 correctness fixes and regression tests.
@@ -451,3 +474,4 @@ seek to the preceding frame through floating-point rounding.
 19. Phase 27 playback-preparation ownership.
 20. Phase 28 metadata-copy feedback ownership.
 21. Phase 29 AVFoundation frame-boundary seek precision.
+22. Phase 30 reflected QuickTime playback orientation.
