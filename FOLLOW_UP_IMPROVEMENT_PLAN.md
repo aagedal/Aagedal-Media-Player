@@ -409,6 +409,25 @@ Acceptance: repeated metadata copies each receive their full confirmation
 interval, and no copy-feedback task remains owned by a closed or repurposed
 metadata inspector.
 
+## Phase 29 — AVFoundation frame-boundary seek precision
+
+Status: Completed on 2026-09-05 after the inspection-loupe pixel tests exposed
+an off-by-one-frame comparison seek. The 319-test Release suite, static analysis, and all 61 release-preflight checks
+pass; details are recorded with the loupe continuation in `COMPARE_MODE_IMPLEMENTATION_PLAN.md`.
+
+- [x] Replace truncating seconds-to-CMTime conversion with explicitly rounded
+  integer ticks at a timescale supporting the standard rational frame rates.
+- [x] Apply the conversion to precise backend seeks, initial preparation,
+  readiness replay, and interactive scrub targets.
+- [x] Reject negative, non-finite, and unrepresentable targets safely.
+- [x] Cover offset addition just below a frame boundary and integer/fractional
+  frame-rate round trips.
+- [x] Verify both backend clocks and changed captured pixels after a paused
+  mapped frame step in both mixed-backend directions.
+
+Acceptance: adding a comparison offset cannot truncate a precise AVFoundation
+seek to the preceding frame through floating-point rounding.
+
 ## Delivery order
 
 1. Phase 10 correctness fixes and regression tests.
@@ -431,3 +450,4 @@ metadata inspector.
 18. Phase 26 SwiftMediaMetadata 3.0.0 migration.
 19. Phase 27 playback-preparation ownership.
 20. Phase 28 metadata-copy feedback ownership.
+21. Phase 29 AVFoundation frame-boundary seek precision.

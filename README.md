@@ -82,6 +82,18 @@ with optional matching-channel isolation for multichannel A/B checks. Annotated
 stills and review reports keep filenames, timecode, alignment, and technical
 context attached.
 
+### Inspection loupe
+Open the magnifying-glass control (Command-Shift-M) to enable a 2×, 4×, or 8×
+preview. Move over the fitted picture, or pin the position to operate playback
+controls. Position sliders and Center and pin support inspection without precise
+pointer movement. Compare Mode shows paired A/B loupes at the same normalized
+picture coordinate.
+
+The preview uses display-space captures at up to 10 fps. HDR appearance may
+differ from the live display, and the A/B samples are not frame-locked. Exact
+source-pixel 1:1 inspection and whole-viewport zoom remain planned. See
+[the loupe validation guide](docs/INSPECTION_LOUPE.md).
+
 ### File support
 Playback (almost) every audio and video file in existence, through a combination of the mpv and AVFoundation.
 As of 2026-02-21, it supports more codecs than IINA; ProRes RAW, Advanced Professional Video (APV), and VVC (H.266).

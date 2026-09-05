@@ -5,6 +5,7 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Added
+- A pointer-following 2×/4×/8× inspection loupe with pinning, keyboard-accessible picture positioning, and paired A/B display previews.
 - Manual comparison alignment in signed seconds or source-A frames, one-frame nudges, and automatic-alignment reset.
 - Chapter markers on the playback timeline with current-chapter accessibility feedback.
 - A visible multi-window transport-sync indicator and explicit transport versus one-shot alignment commands.
@@ -45,6 +46,7 @@ All notable changes to Aagedal Media Player.
   primary-file loop boundaries across all backend combinations.
 
 ### Fixed
+- Prevent AVFoundation seeks from truncating a mapped frame boundary to the preceding frame because of floating-point rounding.
 - Prevented superseded scope frames and media-operation tasks from publishing stale results, and stopped screenshots or exports from surviving their owning player window.
 - Kept sorted AVFoundation audio-track labels and backend selections aligned when display order differs from source stream order.
 - Prevented superseded audio/chapter discovery and track-selection work from affecting a replacement file.

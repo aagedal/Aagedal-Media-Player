@@ -487,8 +487,9 @@ final class PlayerController: ObservableObject {
         refreshAudioTrackOptions(playerItem: playerItem)
         refreshChapterOptions(playerItem: playerItem)
 
-        let seekTime = CMTime(seconds: startTime, preferredTimescale: 600)
-        player.seek(to: seekTime, toleranceBefore: .zero, toleranceAfter: .zero)
+        if let seekTime = PlaybackSeekTime.make(seconds: startTime) {
+            player.seek(to: seekTime, toleranceBefore: .zero, toleranceAfter: .zero)
+        }
 
         installLoopObserver(for: playerItem)
         installPlaybackTimeObserver(for: player)
@@ -1220,9 +1221,9 @@ final class PlayerController: ObservableObject {
               let player else { return }
 
         pendingScrubTime = nil
+        guard let seekTime = PlaybackSeekTime.make(seconds: time) else { return }
         avPlayerScrubSeekInProgress = true
         let generation = scrubGeneration
-        let seekTime = CMTime(seconds: time, preferredTimescale: 600)
         let tolerance = CMTime(seconds: 1.0 / effectiveFPS, preferredTimescale: 600)
 
         player.seek(

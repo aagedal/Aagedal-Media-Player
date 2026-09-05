@@ -72,7 +72,7 @@ final class AVFoundationPlayerBackend: PlayerBackendAdapter {
     }
 
     func seek(to time: TimeInterval) {
-        let target = CMTime(seconds: time, preferredTimescale: 600)
+        guard let target = PlaybackSeekTime.make(seconds: time) else { return }
         player.seek(to: target, toleranceBefore: .zero, toleranceAfter: .zero)
     }
 

@@ -17,6 +17,10 @@ struct ContentView: View {
     @State private var timecodeMode: TimecodeDisplayMode = .relative
     @State private var isDropTargeted = false
     @State private var showInspector = false
+    @StateObject private var loupe = InspectionLoupeState()
+    @StateObject private var loupePrimaryCapture = LoupeFrameCapture()
+    @StateObject private var loupeSecondaryCapture = LoupeFrameCapture()
+    @State private var showLoupeControls = false
     @State private var isEditingTimecode = false
     @State private var isTimelineFocused = false
     @State private var isPlaybackControlsFocused = false
@@ -49,6 +53,7 @@ struct ContentView: View {
         isEditingTimecode
             || isPlaybackControlsFocused
             || isInspectorButtonFocused
+            || showLoupeControls
             || showReviewNotes
             || showCompareModeCallout
     }
@@ -88,42 +93,90 @@ struct ContentView: View {
             ))
     }
 
+    private var inspectionCanvas: some View {
+        GeometryReader { canvas in
+            let geometry = CompareDisplayGeometry(
+                canvasSize: canvas.size,
+                primaryAspectRatio: controller.videoAspectRatio ?? controller.mediaItem?.videoDisplayAspectRatio.map { CGFloat($0) },
+                secondaryAspectRatio: compareSession.secondaryController.videoAspectRatio
+                    ?? compareSession.secondaryController.mediaItem?.videoDisplayAspectRatio.map { CGFloat($0) }
+            )
+            ZStack {
+                if let item = controller.mediaItem {
+                    if compareSession.isActive {
+                        ComparePlayerView(
+                            primaryController: controller,
+                            compareSession: compareSession,
+                            primaryWaveformGenerator: audioWaveformGenerator,
+                            primaryItem: item,
+                            showsAudioWaveform: showAudioWaveformOverlay,
+                            isEditingTimecode: $isEditingTimecode,
+                            isTimelineFocused: $isTimelineFocused,
+                            isOverlayControlFocused: isControlInteractionActive,
+                            isTextInputActive: showReviewNotes || showLoupeControls,
+                            timecodeActivationTrigger: $timecodeActivationTrigger
+                        )
+                    } else {
+                        PlayerView(
+                            controller: controller,
+                            audioWaveformGenerator: audioWaveformGenerator,
+                            item: item,
+                            showsAudioWaveform: showAudioWaveformOverlay,
+                            isEditingTimecode: $isEditingTimecode,
+                            isTimelineFocused: $isTimelineFocused,
+                            isOverlayControlFocused: isControlInteractionActive,
+                            isTextInputActive: showReviewNotes || showLoupeControls,
+                            timecodeActivationTrigger: $timecodeActivationTrigger,
+                            compareSession: compareSession
+                        )
+                    }
+                } else {
+                    DropZoneView(isDropTargeted: isDropTargeted, onOpenFile: openFilePanel)
+                }
+
+                if loupe.isEnabled, controller.mediaItem?.presentationKind != .audioOnly, isMediaLoaded {
+                    InspectionLoupeOverlay(
+                        state: loupe,
+                        primary: controller,
+                        secondary: compareSession.secondaryController,
+                        primaryCapture: loupePrimaryCapture,
+                        secondaryCapture: loupeSecondaryCapture,
+                        isComparing: compareSession.isActive,
+                        geometry: geometry,
+                        mode: compareSession.viewMode
+                    )
+                }
+            }
+            .onContinuousHover { phase in
+                if case .active(let location) = phase {
+                    let source: CompareSource = compareSession.isActive
+                        && (compareSession.viewMode == .secondary
+                            || (compareSession.viewMode == .sideBySide && location.x > canvas.size.width / 2)
+                            || (compareSession.viewMode.isWipe
+                                && geometry.secondaryClipRect(for: compareSession.viewMode, wipePosition: compareSession.wipePosition).contains(location)))
+                        ? .secondary : .primary
+                    let rect = CompareDisplayGeometry.aspectFitRect(
+                        aspectRatio: source == .primary ? geometry.primaryAspectRatio : geometry.secondaryAspectRatio,
+                        in: geometry.presentationClipRect(for: source, mode: compareSession.isActive ? compareSession.viewMode : .primary)
+                    )
+                    loupe.follow(location, pictureRect: rect)
+                }
+            }
+        }
+        .onChange(of: controller.mediaItem?.url) { _, _ in loupe.close() }
+        .onChange(of: loupe.isEnabled) { _, enabled in
+            if !enabled {
+                loupePrimaryCapture.stop()
+                loupeSecondaryCapture.stop()
+            }
+        }
+    }
+
     // MARK: - Content Layers
 
     private var contentLayers: some View {
         ZStack {
-            // Layer 1: content (player or drop zone)
-            if let item = controller.mediaItem {
-                if compareSession.isActive {
-                    ComparePlayerView(
-                        primaryController: controller,
-                        compareSession: compareSession,
-                        primaryWaveformGenerator: audioWaveformGenerator,
-                        primaryItem: item,
-                        showsAudioWaveform: showAudioWaveformOverlay,
-                        isEditingTimecode: $isEditingTimecode,
-                        isTimelineFocused: $isTimelineFocused,
-                        isOverlayControlFocused: isControlInteractionActive,
-                        isTextInputActive: showReviewNotes,
-                        timecodeActivationTrigger: $timecodeActivationTrigger
-                    )
-                } else {
-                    PlayerView(
-                        controller: controller,
-                        audioWaveformGenerator: audioWaveformGenerator,
-                        item: item,
-                        showsAudioWaveform: showAudioWaveformOverlay,
-                        isEditingTimecode: $isEditingTimecode,
-                        isTimelineFocused: $isTimelineFocused,
-                        isOverlayControlFocused: isControlInteractionActive,
-                        isTextInputActive: showReviewNotes,
-                        timecodeActivationTrigger: $timecodeActivationTrigger,
-                        compareSession: compareSession
-                    )
-                }
-            } else {
-                DropZoneView(isDropTargeted: isDropTargeted, onOpenFile: openFilePanel)
-            }
+            inspectionCanvas
 
             // Layer 2: export/screenshot feedback (fades with overlay controls)
             MediaOperationFeedbackOverlay(controller: controller)
@@ -191,7 +244,9 @@ struct ContentView: View {
                 onWindowAvailable: { window in
                     windowCoordinator.accept(
                         window,
-                        onClose: { [controller, compareSession, audioWaveformGenerator] in
+                        onClose: { [controller, compareSession, audioWaveformGenerator, loupePrimaryCapture, loupeSecondaryCapture] in
+                            loupePrimaryCapture.stop()
+                            loupeSecondaryCapture.stop()
                             Self.stopPlaybackForWindowClose(
                                 controller: controller,
                                 compareSession: compareSession,
@@ -282,6 +337,8 @@ struct ContentView: View {
             )
         }
         .onDisappear {
+            loupePrimaryCapture.stop()
+            loupeSecondaryCapture.stop()
             overlayController.tearDown()
             scopeWindowController?.close()
             scopeWindowController = nil
@@ -695,6 +752,9 @@ struct ContentView: View {
                     compareModeCallout
                 }
             }
+
+            InspectionLoupeControl(state: loupe, isPresented: $showLoupeControls)
+                .disabled(!isMediaLoaded || controller.mediaItem?.presentationKind == .audioOnly)
 
             Button(action: { showInspector.toggle() }) {
                 Image(systemName: "info.circle")

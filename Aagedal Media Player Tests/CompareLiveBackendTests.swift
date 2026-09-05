@@ -152,6 +152,14 @@ final class CompareLiveBackendTests: XCTestCase {
         )
     }
 
+    func testMPVPrimaryAndAVFoundationSecondaryCapturePausedLoupesAlongsideScopes() async throws {
+        try await exerciseLiveLoupes(primaryBackend: .mpv, secondaryBackend: .avFoundation)
+    }
+
+    func testAVFoundationPrimaryAndMPVSecondaryCapturePausedLoupesAlongsideScopes() async throws {
+        try await exerciseLiveLoupes(primaryBackend: .avFoundation, secondaryBackend: .mpv)
+    }
+
     func testMPVPrimaryAndAVFoundationSecondaryKeepReducedSurfacesAcrossVisualModes() async throws {
         try await exerciseVisualModes(
             primaryBackend: .mpv,
@@ -1146,6 +1154,194 @@ final class CompareLiveBackendTests: XCTestCase {
         )
         XCTAssertGreaterThan(primary.playbackTimeSnapshot() - primaryStart, 0.5)
         XCTAssertGreaterThan(secondary.playbackTimeSnapshot() - secondaryStart, 0.5)
+    }
+
+    private func exerciseLiveLoupes(
+        primaryBackend: PlaybackBackend,
+        secondaryBackend: PlaybackBackend
+    ) async throws {
+        let fixtures = try fixtureDirectory()
+        let primaryURL = fixtures.appending(path: "compare/source-a.mov")
+        let secondaryURL = fixtures.appending(path: "compare/source-b.mov")
+        let primary = makeController(forcedBackend: primaryBackend)
+        let secondary = makeController(forcedBackend: secondaryBackend)
+        let session = CompareSessionController(secondaryController: secondary)
+        let primaryLoupe = LoupeFrameCapture()
+        let secondaryLoupe = LoupeFrameCapture()
+
+        defer {
+            primaryLoupe.stop()
+            secondaryLoupe.stop()
+            primary.frameCapture.stopCapture(rebuildPipeline: false)
+            secondary.frameCapture.stopCapture(rebuildPipeline: false)
+            session.stop()
+            primary.teardown()
+        }
+
+        try await loadPrimary(primary, url: primaryURL)
+        try await attachRenderSurface(to: primary)
+        guard await waitUntil({ primary.isReady }) else {
+            XCTFail("Primary decoder did not become ready for loupe validation.")
+            return
+        }
+        session.loadSecondary(secondaryURL, alignedWith: primary)
+        guard await waitUntil({ session.secondaryURL == secondaryURL }) else {
+            XCTFail("Comparison metadata did not load for loupe validation.")
+            return
+        }
+        try await attachRenderSurface(to: secondary)
+        guard await waitUntil({ session.isSecondaryReady }) else {
+            XCTFail("Secondary decoder did not become ready for loupe validation.")
+            return
+        }
+        session.pause(primary: primary)
+        session.seek(primary: primary, to: 1)
+        guard await waitUntil({
+            abs(primary.playbackTimeSnapshot() - 1) < 0.03 &&
+                abs(secondary.playbackTimeSnapshot() - 2) < 0.03
+        }) else {
+            XCTFail("Paused loupe setup seek did not complete.")
+            return
+        }
+
+        primary.frameCapture.startCapture()
+        secondary.frameCapture.startCapture()
+        let avItem = try XCTUnwrap(
+            primaryBackend == .avFoundation
+                ? primary.player?.currentItem : secondary.player?.currentItem
+        )
+        let scopeOutputCount = avItem.outputs.count
+        let primaryPreparationID = primary.preparationID
+        let secondaryPreparationID = secondary.preparationID
+        primaryLoupe.start(controller: primary)
+        secondaryLoupe.start(controller: secondary)
+        guard await waitUntil({ primaryLoupe.image != nil && secondaryLoupe.image != nil }) else {
+            XCTFail("Both paused decoders must provide loupe images without starting playback.")
+            return
+        }
+        XCTAssertFalse(primary.isPlaying)
+        XCTAssertFalse(secondary.isPlaying)
+        for image in [try XCTUnwrap(primaryLoupe.image), try XCTUnwrap(secondaryLoupe.image)] {
+            XCTAssertEqual(image.width, 320)
+            XCTAssertEqual(image.height, 180)
+        }
+        XCTAssertEqual(avItem.outputs.count, scopeOutputCount + 1)
+        let initialPrimaryPixels = try XCTUnwrap(loupePixels(primaryLoupe.image))
+        let initialSecondaryPixels = try XCTUnwrap(loupePixels(secondaryLoupe.image))
+
+        session.seek(primary: primary, to: 3)
+        guard await waitUntil({
+            self.loupePixels(primaryLoupe.image).map { $0 != initialPrimaryPixels } == true &&
+                self.loupePixels(secondaryLoupe.image).map { $0 != initialSecondaryPixels } == true
+        }) else {
+            XCTFail("Paired paused seeks must refresh the pixels in both loupes.")
+            return
+        }
+        // A fresh screenshot can arrive before the MPV time observation used
+        // by relative frame stepping. Wait for the decoder and published clocks
+        // so the next action starts from the requested frame on both backends.
+        guard await waitUntil({
+            abs(primary.playbackTimeSnapshot() - 3) < 0.001 &&
+                abs(secondary.playbackTimeSnapshot() - 4) < 0.001 &&
+                abs(primary.currentPlaybackTime - 3) < 0.001 &&
+                abs(secondary.currentPlaybackTime - 4) < 0.001
+        }) else {
+            XCTFail("Paused seek clocks did not settle: " +
+                "A=\(primary.playbackTimeSnapshot())/\(primary.currentPlaybackTime), " +
+                "B=\(secondary.playbackTimeSnapshot())/\(secondary.currentPlaybackTime).")
+            return
+        }
+        let soughtPrimaryPixels = try XCTUnwrap(loupePixels(primaryLoupe.image))
+        let soughtSecondaryPixels = try XCTUnwrap(loupePixels(secondaryLoupe.image))
+        session.seekByFrames(primary: primary, frameCount: 1)
+        let steppedClocks = await waitUntil({
+            abs(primary.playbackTimeSnapshot() - (3 + 1.0 / 24.0)) < 0.001 &&
+                abs(secondary.playbackTimeSnapshot() - (4 + 1.0 / 24.0)) < 0.001
+        })
+        XCTAssertTrue(steppedClocks, "A paused frame step must advance both backend clocks.")
+        let steppedImages = await waitUntil({
+            self.loupePixels(primaryLoupe.image).map { $0 != soughtPrimaryPixels } == true &&
+                self.loupePixels(secondaryLoupe.image).map { $0 != soughtSecondaryPixels } == true
+        })
+        XCTAssertTrue(steppedImages, "A paused frame step must refresh both loupe images: " +
+            "A(\(primaryBackend.rawValue)) changed=\(loupePixels(primaryLoupe.image) != soughtPrimaryPixels), " +
+            "clock=\(primary.playbackTimeSnapshot())/\(primary.currentPlaybackTime); " +
+            "B(\(secondaryBackend.rawValue)) changed=\(loupePixels(secondaryLoupe.image) != soughtSecondaryPixels), " +
+            "clock=\(secondary.playbackTimeSnapshot())/\(secondary.currentPlaybackTime).")
+        let simultaneousScopeSamples = await waitUntil({
+            primary.frameCapture.currentSample != nil && secondary.frameCapture.currentSample != nil
+        })
+        XCTAssertTrue(simultaneousScopeSamples, "Both scope captures must receive frames alongside the loupes.")
+
+        let pausedPrimaryPixels = try XCTUnwrap(loupePixels(primaryLoupe.image))
+        let pausedSecondaryPixels = try XCTUnwrap(loupePixels(secondaryLoupe.image))
+        session.play(primary: primary)
+        let liveImages = await waitUntil({
+            self.loupePixels(primaryLoupe.image).map { $0 != pausedPrimaryPixels } == true &&
+                self.loupePixels(secondaryLoupe.image).map { $0 != pausedSecondaryPixels } == true
+        })
+        XCTAssertTrue(liveImages, "Normal playback must refresh both loupe previews alongside scopes.")
+        session.pause(primary: primary)
+
+        primaryLoupe.stop()
+        secondaryLoupe.stop()
+        XCTAssertNil(primaryLoupe.image)
+        XCTAssertNil(secondaryLoupe.image)
+        XCTAssertEqual(avItem.outputs.count, scopeOutputCount)
+        XCTAssertTrue(primary.frameCapture.isCapturing)
+        XCTAssertTrue(secondary.frameCapture.isCapturing)
+        let primarySequence = primary.frameCapture.currentSample?.sequence ?? 0
+        let secondarySequence = secondary.frameCapture.currentSample?.sequence ?? 0
+        session.play(primary: primary)
+        let scopesContinued = await waitUntil({
+            (primary.frameCapture.currentSample?.sequence ?? 0) > primarySequence &&
+                (secondary.frameCapture.currentSample?.sequence ?? 0) > secondarySequence
+        })
+        XCTAssertTrue(scopesContinued, "Stopping loupes must leave both scope captures running.")
+        XCTAssertNil(primaryLoupe.image, "Stopped captures must reject pending images.")
+        XCTAssertNil(secondaryLoupe.image, "Stopped captures must reject pending images.")
+        session.pause(primary: primary)
+
+        primaryLoupe.start(controller: primary)
+        secondaryLoupe.start(controller: secondary)
+        let restarted = await waitUntil({ primaryLoupe.image != nil && secondaryLoupe.image != nil })
+        XCTAssertTrue(restarted, "Both loupe captures must restart after being stopped.")
+        XCTAssertEqual(primary.preparationID, primaryPreparationID)
+        XCTAssertEqual(secondary.preparationID, secondaryPreparationID)
+        XCTAssertEqual(avItem.outputs.count, scopeOutputCount + 1)
+
+        session.stop()
+        primary.teardown()
+        let clearedAfterTeardown = await waitUntil({
+            primaryLoupe.image == nil && secondaryLoupe.image == nil
+        }, timeout: .seconds(2))
+        XCTAssertTrue(clearedAfterTeardown, "Controller teardown must invalidate displayed loupe images.")
+        primaryLoupe.start(controller: primary)
+        secondaryLoupe.start(controller: secondary)
+        try await Task.sleep(for: .milliseconds(200))
+        XCTAssertNil(primaryLoupe.image, "A torn-down controller must not resume loupe capture.")
+        XCTAssertNil(secondaryLoupe.image, "A torn-down controller must not resume loupe capture.")
+    }
+
+    /// Normalize pixels before comparison so row padding and backend pixel
+    /// formats cannot make an unchanged decoded frame appear fresh.
+    private func loupePixels(_ image: CGImage?) -> Data? {
+        guard let image else { return nil }
+        var pixels = Data(count: image.width * image.height * 4)
+        let rendered = pixels.withUnsafeMutableBytes { bytes -> Bool in
+            guard let context = CGContext(
+                data: bytes.baseAddress,
+                width: image.width,
+                height: image.height,
+                bitsPerComponent: 8,
+                bytesPerRow: image.width * 4,
+                space: CGColorSpaceCreateDeviceRGB(),
+                bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+            ) else { return false }
+            context.draw(image, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
+            return true
+        }
+        return rendered ? pixels : nil
     }
 
     private func exerciseLiveScopes(

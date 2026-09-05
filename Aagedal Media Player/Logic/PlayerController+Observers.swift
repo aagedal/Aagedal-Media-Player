@@ -350,8 +350,7 @@ extension PlayerController {
                             self.canNativeReverse = item.canPlayReverse
                             self.canNativeSlowReverse = item.canPlaySlowReverse
 
-                            if let observedPlayer {
-                                let seekTime = CMTime(seconds: startTime, preferredTimescale: 600)
+                            if let observedPlayer, let seekTime = PlaybackSeekTime.make(seconds: startTime) {
                                 await observedPlayer.seek(to: seekTime, toleranceBefore: .zero, toleranceAfter: .zero)
                                 guard self.isCurrent(identity) else { return }
                             }
@@ -379,8 +378,7 @@ extension PlayerController {
                             self.canNativeReverse = item.canPlayReverse
                             self.canNativeSlowReverse = item.canPlaySlowReverse
 
-                            if let observedPlayer {
-                                let seekTime = CMTime(seconds: startTime, preferredTimescale: 600)
+                            if let observedPlayer, let seekTime = PlaybackSeekTime.make(seconds: startTime) {
                                 await observedPlayer.seek(to: seekTime, toleranceBefore: .zero, toleranceAfter: .zero)
                                 guard self.isCurrent(identity) else { return }
                             }

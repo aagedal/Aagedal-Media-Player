@@ -125,23 +125,37 @@ Add a loupe first, then reuse its coordinate and magnification model for an
 optional pan-and-zoom viewport. The loupe preserves full-frame context and is
 the more useful default for quick inspection.
 
-- [ ] Show a pointer-following loupe over the fitted video without changing the
+Status: Initial display-space loupe implemented on 2026-09-05. It follows the
+pointer inside the fitted picture, supports 2×/4×/8× magnification, pinning,
+and keyboard-accessible position sliders. Compare Mode displays paired A/B
+previews at the same normalized picture coordinate. Capture is capped at 10 fps
+with one worker per source and independent scope-output ownership. Production
+performance, transformed live-pixel registration, and hands-on accessibility
+validation remain before milestone acceptance. The complete 319-test Release
+suite passes with no skips, including mixed-backend capture and rendered-pixel
+checks; static analysis and all 61 release-preflight checks also pass.
+
+- [x] Show a pointer-following loupe over the fitted video without changing the
   player window or playback layout.
-- [ ] Offer useful fixed magnifications such as 2×, 4×, and 8×, plus a 1:1
-  source-pixel view that accounts for Retina display scale.
-- [ ] Allow the loupe to be pinned so the pointer can operate playback controls.
-- [ ] Keep the loupe live while paused, scrubbing, frame stepping, and during
-  normal playback when the backend can sustain it.
-- [ ] In Compare Mode, inspect the same normalized image coordinate in A and B;
-  offer paired loupes or an instant A/B loupe toggle.
-- [ ] Handle differing raster sizes, pixel aspect ratios, rotations, and
-  letterbox/pillarbox regions without sampling the wrong source coordinate.
+- [x] Offer fixed magnifications of 2×, 4×, and 8×.
+- [ ] Offer a verified 1:1 source-pixel view accounting for Retina display scale.
+  MPV's current screenshot path may resample for display geometry, so this
+  cannot yet be presented as exact source-pixel inspection.
+- [x] Allow the loupe to be pinned so the pointer can operate playback controls.
+- [x] Refresh from the active decoder while paused, seeking, stepping, and
+  playing, with bounded capture work. Production-resolution cadence remains a
+  validation gate; the preview is capped at 10 fps.
+- [x] In Compare Mode, inspect the same normalized image coordinate in paired
+  A/B loupes. Samples are independently captured, not frame-locked.
+- [ ] Complete live-pixel validation for differing raster sizes, pixel aspect
+  ratios, rotations, and letterbox/pillarbox regions. Pure picture-coordinate
+  mapping excludes black bars; the capture path uses display-oriented imagery.
 - [ ] Add optional whole-viewport zoom and pan after the loupe interaction is
   proven, with a one-action return to Fit.
-- [ ] Describe loupe imagery as display-space output; do not expose RGB/code
-  values unless the sampling pipeline can define their color transform.
-- [ ] Make activation, magnification, pinning, and reset available from the
-  keyboard and accessible without precise pointer movement.
+- [x] Describe loupe imagery as display-space output without RGB/code values.
+- [x] Make activation, magnification, pinning, and reset available from the
+  keyboard and accessible without precise pointer movement. Hands-on VoiceOver
+  and Full Keyboard Access validation remains.
 
 Acceptance:
 

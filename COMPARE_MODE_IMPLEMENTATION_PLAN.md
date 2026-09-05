@@ -358,3 +358,25 @@ manual alignment, boundary holds, and automatic restoration on both
 MPV/AVFoundation directions. Xcode static analysis passes, and release preflight
 passes all 61 checks. This does not replace the oldest-supported-hardware,
 hands-on accessibility, or editor round-trip release gates.
+
+## Inspection loupe follow-up — 2026-09-05
+
+The roadmap's initial loupe is implemented with pointer-following 2×/4×/8×
+magnification, pinning, accessible picture-position sliders, and paired A/B
+previews at the same normalized picture coordinate. It uses bounded capture
+from the existing decoders and independent AV output ownership alongside
+scopes. The previews are display-space, independently sampled images; exact
+source-pixel 1:1, whole-viewport zoom, and production/hands-on validation remain
+in `PRODUCT_ROADMAP.md` and `docs/INSPECTION_LOUPE.md`.
+
+The paused-step pixel check exposed a pre-existing AVFoundation seek issue:
+adding the comparison offset could leave a Double infinitesimally below the
+intended frame boundary, then conversion to a 600-tick CMTime truncated it to
+the preceding frame. AV seeks now use explicitly rounded 120,000-tick times,
+including initial preparation and readiness replays. The regression verifies
+both backend clocks and changed loupe pixels after a mapped 24 fps frame step.
+
+Verification: the complete Release suite passes 319 tests with zero failures
+and no skips, including both mixed-backend loupe checks and 32 rendered-pixel
+cases across magnifications and display scales. Xcode static analysis and all
+61 release-preflight checks pass. The hands-on and hardware gates remain open.
