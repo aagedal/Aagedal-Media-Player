@@ -381,6 +381,7 @@ nonisolated enum ComparisonStillRenderer {
         maximumWidth: CGFloat? = nil,
         context: CGContext
     ) {
+        guard !text.isEmpty else { return }
         let font = CTFontCreateWithName(weight.fontName, fontSize, nil)
         let attributed = NSAttributedString(string: text, attributes: [
             NSAttributedString.Key(kCTFontAttributeName as String): font,

@@ -336,6 +336,48 @@ final class ComparePresentationTests: XCTestCase {
         )
     }
 
+    func testSideBySideTransformedPicturesMatchTheirGuidesAcrossAspectAndResolutionMatrix() {
+        let canvas = CGSize(width: 1_919, height: 1_079)
+        let aspects: [CGFloat] = [9.0 / 16.0, 1, 4.0 / 3.0, 16.0 / 9.0, 2.39]
+        for primaryAspect in aspects {
+            for secondaryAspect in aspects {
+                let full = CompareDisplayGeometry(
+                    canvasSize: canvas,
+                    primaryAspectRatio: primaryAspect,
+                    secondaryAspectRatio: secondaryAspect
+                )
+                for resolution in [CompareFrameResolution.full, .reduced] {
+                    let geometry = CompareDisplayGeometry(
+                        canvasSize: resolution.surfaceSize(for: canvas),
+                        primaryAspectRatio: primaryAspect,
+                        secondaryAspectRatio: secondaryAspect
+                    )
+                    let guides = full.guideReferenceRects(for: .sideBySide)
+                    for (index, source) in [CompareSource.primary, .secondary].enumerated() {
+                        let picture = source == .primary
+                            ? geometry.primaryReferenceRect : geometry.secondaryReferenceRect
+                        let transform = geometry.sideBySideTransform(for: source)
+                        let visible = CGRect(
+                            x: (picture.minX * transform.scale + transform.offset.x) / resolution.renderScale,
+                            y: (picture.minY * transform.scale + transform.offset.y) / resolution.renderScale,
+                            width: picture.width * transform.scale / resolution.renderScale,
+                            height: picture.height * transform.scale / resolution.renderScale
+                        )
+                        XCTAssertEqual(visible.minX, guides[index].minX, accuracy: 0.000_001)
+                        XCTAssertEqual(visible.minY, guides[index].minY, accuracy: 0.000_001)
+                        XCTAssertEqual(visible.width, guides[index].width, accuracy: 0.000_001)
+                        XCTAssertEqual(visible.height, guides[index].height, accuracy: 0.000_001)
+                        let pane = full.presentationClipRect(for: source, mode: .sideBySide)
+                        XCTAssertGreaterThanOrEqual(visible.minX, pane.minX - 0.000_001)
+                        XCTAssertLessThanOrEqual(visible.maxX, pane.maxX + 0.000_001)
+                        XCTAssertGreaterThanOrEqual(visible.minY, pane.minY - 0.000_001)
+                        XCTAssertLessThanOrEqual(visible.maxY, pane.maxY + 0.000_001)
+                    }
+                }
+            }
+        }
+    }
+
     func testCompositedGuidesUseOneSharedComparisonFrame() {
         let geometry = CompareDisplayGeometry(
             canvasSize: CGSize(width: 1_920, height: 1_200),

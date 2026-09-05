@@ -7,6 +7,7 @@ import Foundation
 nonisolated enum CompareReviewSidecarError: Error, LocalizedError {
     case unsupportedSchema(Int)
     case sourcePairMismatch
+    case invalidNote(Int, String)
 
     var errorDescription: String? {
         switch self {
@@ -14,6 +15,8 @@ nonisolated enum CompareReviewSidecarError: Error, LocalizedError {
             "The comparison notes use unsupported schema version \(version)."
         case .sourcePairMismatch:
             "The comparison notes sidecar belongs to a different source pair."
+        case .invalidNote(let number, let reason):
+            "Comparison note \(number) is invalid: \(reason). Restore a valid sidecar backup or move this sidecar aside before creating a new review."
         }
     }
 }
@@ -43,6 +46,12 @@ nonisolated protocol CompareReviewSidecarStoring: Sendable {
 actor CompareReviewSidecarStore: CompareReviewSidecarStoring {
     static let shared = CompareReviewSidecarStore()
 
+    // TimecodeRate.init(frameRate:) represents non-broadcast fractional rates
+    // with this denominator before reducing the fraction. Reserve that export
+    // precision even if a sidecar claims its marker was captured at an integer rate.
+    private static let decimalRateTimebase: Int64 = 1_000_000
+    private static let sourceTimecodeDaySeconds: Int64 = 86_400
+
     private var latestRevisionByURL: [URL: UInt64] = [:]
 
     nonisolated static func sidecarURL(primaryURL: URL, secondaryURL: URL) -> URL {
@@ -70,6 +79,7 @@ actor CompareReviewSidecarStore: CompareReviewSidecarStoring {
         guard document.belongsTo(primaryURL: primaryURL, secondaryURL: secondaryURL) else {
             throw CompareReviewSidecarError.sourcePairMismatch
         }
+        try Self.validate(document)
         return document
     }
 
@@ -123,17 +133,53 @@ actor CompareReviewSidecarStore: CompareReviewSidecarStoring {
     ) throws {
         let latestRevision = latestRevisionByURL[url] ?? 0
         guard revision >= latestRevision else { return }
-        latestRevisionByURL[url] = revision
-
         try write(document, to: url)
+        latestRevisionByURL[url] = revision
     }
 
     private func write(_ document: CompareReviewDocument, to url: URL) throws {
+        try Self.validate(document)
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         encoder.dateEncodingStrategy = .millisecondsSince1970
         let data = try encoder.encode(document)
         try data.write(to: url, options: .atomic)
+    }
+
+    private static func validate(_ document: CompareReviewDocument) throws {
+        var ids = Set<UUID>()
+        for (index, note) in document.notes.enumerated() {
+            let number = index + 1
+            guard ids.insert(note.id).inserted else {
+                throw CompareReviewSidecarError.invalidNote(number, "duplicate note identifier")
+            }
+            for (source, frame, time, numerator, denominator) in [
+                ("A", note.primaryFrame, note.primaryTime, note.primaryRateNumerator, note.primaryRateDenominator),
+                ("B", note.secondaryFrame, note.secondaryTime, note.secondaryRateNumerator, note.secondaryRateDenominator),
+            ] {
+                guard frame >= 0, time.isFinite, time >= 0 else {
+                    throw CompareReviewSidecarError.invalidNote(number, "source \(source) has a negative or non-finite position")
+                }
+                guard numerator > 0, denominator > 0 else {
+                    throw CompareReviewSidecarError.invalidNote(number, "source \(source) has a nonpositive frame rate")
+                }
+                // Reports add a source timecode (less than 24 hours) and a
+                // one-frame marker duration, then form an Int64 rational time.
+                // Reserve the decimal-rate fallback timebase too, rather than
+                // trusting a forged integer rate to make a huge frame safe.
+                let nominalRate = max(1, (Double(numerator) / Double(denominator)).rounded())
+                guard nominalRate < Double(Int64.max / sourceTimecodeDaySeconds) else {
+                    throw CompareReviewSidecarError.invalidNote(number, "source \(source) frame rate exceeds the supported timecode range")
+                }
+                let sourceTimecodeFrames = Int64(nominalRate) * sourceTimecodeDaySeconds
+                let (endFrame, frameOverflow) = frame.addingReportingOverflow(sourceTimecodeFrames)
+                let (exclusiveEnd, endOverflow) = endFrame.addingReportingOverflow(1)
+                let (_, timeOverflow) = exclusiveEnd.multipliedReportingOverflow(by: max(decimalRateTimebase, denominator))
+                guard !frameOverflow, !endOverflow, !timeOverflow else {
+                    throw CompareReviewSidecarError.invalidNote(number, "source \(source) position exceeds the supported frame range")
+                }
+            }
+        }
     }
 
     nonisolated private static func shortened(_ name: String) -> String {

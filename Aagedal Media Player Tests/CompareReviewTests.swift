@@ -274,6 +274,142 @@ final class CompareReviewSidecarStoreTests: XCTestCase {
         )
     }
 
+    func testMalformedNotePositionsAndRatesAreRejectedWithoutChangingSidecar() async throws {
+        let fixture = try makeFixture()
+        defer { try? FileManager.default.removeItem(at: fixture.directory) }
+        let store = CompareReviewSidecarStore()
+        let document = CompareReviewDocument(
+            primaryURL: fixture.primary,
+            secondaryURL: fixture.secondary,
+            notes: [CompareReviewNote(
+                primaryFrame: 42, primaryTime: 1.4,
+                secondaryFrame: 42, secondaryTime: 1.4, text: "Keep this review"
+            )]
+        )
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .millisecondsSince1970
+        let validJSON = try XCTUnwrap(JSONSerialization.jsonObject(with: encoder.encode(document)) as? [String: Any])
+        let invalidValues: [(String, NSNumber)] = [
+            ("primaryFrame", -1), ("secondaryFrame", -1),
+            ("primaryTime", -0.1), ("secondaryTime", -0.1),
+            ("primaryRateNumerator", 0), ("secondaryRateNumerator", -1),
+            ("primaryRateDenominator", 0), ("secondaryRateDenominator", -1),
+            ("primaryFrame", NSNumber(value: Int64.max)),
+            ("secondaryFrame", NSNumber(value: Int64.max)),
+            ("primaryRateNumerator", NSNumber(value: Int64.max)),
+            ("secondaryRateDenominator", NSNumber(value: Int64.max)),
+            // Below Int64.max, but unsafe after the decimal-rate export scale.
+            ("primaryFrame", NSNumber(value: Int64.max / 1_000_000)),
+        ]
+        for (field, value) in invalidValues {
+            var json = validJSON
+            var notes = try XCTUnwrap(json["notes"] as? [[String: Any]])
+            notes[0][field] = value
+            json["notes"] = notes
+            let original = try JSONSerialization.data(withJSONObject: json, options: .sortedKeys)
+            try original.write(to: fixture.sidecar)
+
+            do {
+                _ = try await store.load(from: fixture.sidecar, primaryURL: fixture.primary, secondaryURL: fixture.secondary)
+                XCTFail("Expected invalid \(field)=\(value) to be rejected")
+            } catch let error as CompareReviewSidecarError {
+                guard case .invalidNote(1, _) = error else {
+                    return XCTFail("Expected an actionable invalid-note error: \(error)")
+                }
+                XCTAssertTrue(error.localizedDescription.contains("Restore a valid sidecar backup"))
+            }
+            do {
+                _ = try await store.apply(.delete(document.notes[0].id), to: fixture.sidecar, primaryURL: fixture.primary, secondaryURL: fixture.secondary)
+                XCTFail("An edit must not overwrite invalid \(field)=\(value)")
+            } catch let error as CompareReviewSidecarError {
+                guard case .invalidNote = error else { return XCTFail("Unexpected error: \(error)") }
+            }
+            XCTAssertEqual(try Data(contentsOf: fixture.sidecar), original)
+        }
+    }
+
+    func testDuplicateNoteIdentifiersAreRejectedWithoutChangingSidecar() async throws {
+        let fixture = try makeFixture()
+        defer { try? FileManager.default.removeItem(at: fixture.directory) }
+        let note = CompareReviewNote(
+            primaryFrame: 1, primaryTime: 1.0 / 30,
+            secondaryFrame: 1, secondaryTime: 1.0 / 30, text: "Duplicated"
+        )
+        let document = CompareReviewDocument(
+            primaryURL: fixture.primary, secondaryURL: fixture.secondary, notes: [note, note]
+        )
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .millisecondsSince1970
+        let original = try encoder.encode(document)
+        try original.write(to: fixture.sidecar)
+        let store = CompareReviewSidecarStore()
+        do {
+            _ = try await store.load(from: fixture.sidecar, primaryURL: fixture.primary, secondaryURL: fixture.secondary)
+            XCTFail("Expected duplicate IDs to be rejected")
+        } catch let error as CompareReviewSidecarError {
+            guard case .invalidNote(2, "duplicate note identifier") = error else {
+                return XCTFail("Unexpected error: \(error)")
+            }
+        }
+        do {
+            _ = try await store.apply(.upsert(note), to: fixture.sidecar, primaryURL: fixture.primary, secondaryURL: fixture.secondary)
+            XCTFail("An edit must not overwrite duplicate IDs")
+        } catch let error as CompareReviewSidecarError {
+            guard case .invalidNote = error else { return XCTFail("Unexpected error: \(error)") }
+        }
+        XCTAssertEqual(try Data(contentsOf: fixture.sidecar), original)
+    }
+
+    func testLongReviewsAtFractionalRatesRemainValid() async throws {
+        let fixture = try makeFixture()
+        defer { try? FileManager.default.removeItem(at: fixture.directory) }
+        let rates: [(Int64, Int64)] = [(24_000, 1_001), (30_000, 1_001), (60_000, 1_001), (23_987_654, 1_000_000)]
+        let notes = rates.map { numerator, denominator in
+            CompareReviewNote(
+                primaryFrame: 3_000_000_000, primaryTime: 125_000_000,
+                secondaryFrame: 3_000_000_000, secondaryTime: 125_000_000,
+                primaryRateNumerator: numerator, primaryRateDenominator: denominator,
+                secondaryRateNumerator: numerator, secondaryRateDenominator: denominator,
+                text: "Preserve stored coordinates and rates",
+                createdAt: Date(timeIntervalSince1970: 1_700_000_000),
+                updatedAt: Date(timeIntervalSince1970: 1_700_000_001)
+            )
+        }
+        let document = CompareReviewDocument(primaryURL: fixture.primary, secondaryURL: fixture.secondary, notes: notes)
+        let store = CompareReviewSidecarStore()
+        try await store.save(document, to: fixture.sidecar, revision: 1)
+        let loaded = try await store.load(from: fixture.sidecar, primaryURL: fixture.primary, secondaryURL: fixture.secondary)
+        XCTAssertEqual(loaded, document)
+    }
+
+    func testRejectedSavePreservesPreviousDocumentAndDoesNotAdvanceRevision() async throws {
+        let fixture = try makeFixture()
+        defer { try? FileManager.default.removeItem(at: fixture.directory) }
+        let note = CompareReviewNote(
+            primaryFrame: 0, primaryTime: 0,
+            secondaryFrame: 0, secondaryTime: 0, text: "Original",
+            createdAt: Date(timeIntervalSince1970: 1_700_000_000),
+            updatedAt: Date(timeIntervalSince1970: 1_700_000_001)
+        )
+        var document = CompareReviewDocument(primaryURL: fixture.primary, secondaryURL: fixture.secondary, notes: [note])
+        let store = CompareReviewSidecarStore()
+        try await store.save(document, to: fixture.sidecar, revision: 1)
+        let original = try Data(contentsOf: fixture.sidecar)
+        document.notes.append(note)
+        do {
+            try await store.save(document, to: fixture.sidecar, revision: 99)
+            XCTFail("Invalid save must be rejected")
+        } catch let error as CompareReviewSidecarError {
+            guard case .invalidNote = error else { return XCTFail("Unexpected error: \(error)") }
+        }
+        XCTAssertEqual(try Data(contentsOf: fixture.sidecar), original)
+        document.notes = [note]
+        document.notes[0].text = "Valid follow-up"
+        try await store.save(document, to: fixture.sidecar, revision: 2)
+        let loaded = try await store.load(from: fixture.sidecar, primaryURL: fixture.primary, secondaryURL: fixture.secondary)
+        XCTAssertEqual(loaded, document)
+    }
+
     private func makeFixture() throws -> (
         directory: URL,
         primary: URL,

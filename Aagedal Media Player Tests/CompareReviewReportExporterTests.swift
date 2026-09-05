@@ -305,7 +305,7 @@ final class CompareReviewReportExporterTests: XCTestCase {
             )]
         )
 
-        let xml = CompareReviewReportExporter.finalCutProXML(snapshot: snapshot)
+        let xml = try CompareReviewReportExporter.finalCutProXML(snapshot: snapshot)
         let document = try XMLDocument(xmlString: xml)
 
         XCTAssertEqual(document.rootElement()?.name, "fcpxml")
@@ -324,6 +324,125 @@ final class CompareReviewReportExporterTests: XCTestCase {
             ),
             "Master & \"approved\"_vs_Encode & web_review.fcpxml"
         )
+    }
+
+    func testFinalCutProXMLPreservesDropFrameMarkerAtMinuteBoundary() throws {
+        for (numerator, startFrame, markerFrame) in [
+            (Int64(30_000), Int64(107_892), Int64(1_800)),
+            (Int64(60_000), Int64(215_784), Int64(3_600)),
+        ] {
+            let snapshot = CompareReviewReportSnapshot(
+                primaryItem: makeItem(
+                    path: "/tmp/Master.mov",
+                    duration: 120,
+                    startTimecode: "01:00:00;00",
+                    frameRate: "\(numerator)/1001"
+                ),
+                secondaryItem: makeItem(path: "/tmp/Encode.mp4", duration: 120),
+                alignmentMode: .sourceTimecode,
+                notes: [CompareReviewNote(
+                    primaryFrame: markerFrame,
+                    primaryTime: 60.06,
+                    secondaryFrame: 1_800,
+                    secondaryTime: 60,
+                    primaryRateNumerator: numerator,
+                    primaryRateDenominator: 1_001,
+                    text: "First frame after the dropped labels"
+                )]
+            )
+            let document = try XMLDocument(xmlString: CompareReviewReportExporter.finalCutProXML(snapshot: snapshot))
+            let clip = try XCTUnwrap(try document.nodes(forXPath: "//asset-clip").first as? XMLElement)
+            let marker = try XCTUnwrap(try document.nodes(forXPath: "//marker").first as? XMLElement)
+            XCTAssertEqual(clip.attribute(forName: "tcFormat")?.stringValue, "DF")
+            XCTAssertEqual(snapshot.primaryStartFrame, startFrame)
+            // Both rates describe the same instant, without a decimal-second roundoff.
+            XCTAssertEqual(marker.attribute(forName: "start")?.stringValue, "9150141/2500s")
+            XCTAssertEqual(snapshot.rows.first?.primarySourceTimecode, numerator == 30_000 ? "01:01:00;02" : "01:01:00;04")
+        }
+    }
+
+    func testFinalCutProXMLKeepsTabsAndUnicodeWhileReplacingInvalidXMLScalars() throws {
+        let snapshot = CompareReviewReportSnapshot(
+            primaryItem: makeItem(path: "/tmp/Master.mov", duration: 5),
+            secondaryItem: makeItem(path: "/tmp/Encode.mp4", duration: 5),
+            alignmentMode: .relative,
+            notes: [CompareReviewNote(
+                primaryFrame: 0,
+                primaryTime: 0,
+                secondaryFrame: 0,
+                secondaryTime: 0,
+                text: "Blå 🎬\tcolumn\r\nnext\u{0}\u{8}\u{FFFE}\u{FFFF}"
+            )]
+        )
+        let document = try XMLDocument(xmlString: CompareReviewReportExporter.finalCutProXML(snapshot: snapshot))
+        let marker = try XCTUnwrap(try document.nodes(forXPath: "//marker").first as? XMLElement)
+        XCTAssertEqual(
+            marker.attribute(forName: "note")?.stringValue,
+            "Blå 🎬\tcolumn\nnext���� | Source B: Encode.mp4, 00:00:00:00, frame 0 | Alignment: Relative start"
+        )
+        let clip = try XCTUnwrap(try document.nodes(forXPath: "//asset-clip").first as? XMLElement)
+        XCTAssertEqual(clip.attribute(forName: "tcFormat")?.stringValue, "NDF")
+    }
+
+    func testFinalCutProXMLRejectsOverflowAtActualMetadataRate() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let primary = makeItem(
+            path: directory.appendingPathComponent("Master.mov").path,
+            duration: 5,
+            startTimecode: "12:00:00:00",
+            frameRate: "23987653/1000000"
+        )
+        let secondary = makeItem(path: directory.appendingPathComponent("Encode.mp4").path, duration: 5)
+        // This position fits the sidecar's claimed 1 fps rate, including its
+        // 24-hour source-timecode allowance. The actual metadata uses 24 fps
+        // labels and therefore a larger nonzero source start.
+        let note = CompareReviewNote(
+            primaryFrame: Int64.max / 1_000_000 - 86_400 - 1,
+            primaryTime: 0, secondaryFrame: 0, secondaryTime: 0,
+            primaryRateNumerator: 1, primaryRateDenominator: 1, text: "Oversized"
+        )
+        let store = CompareReviewSidecarStore()
+        let sidecar = directory.appendingPathComponent("review.json")
+        try await store.save(
+            CompareReviewDocument(primaryURL: primary.url, secondaryURL: secondary.url, notes: [note]),
+            to: sidecar, revision: 1
+        )
+        let loaded = try await store.load(from: sidecar, primaryURL: primary.url, secondaryURL: secondary.url)
+        let snapshot = CompareReviewReportSnapshot(
+            primaryItem: primary, secondaryItem: secondary,
+            alignmentMode: .sourceTimecode, notes: try XCTUnwrap(loaded).notes
+        )
+        XCTAssertThrowsError(try CompareReviewReportExporter.data(for: .finalCutProXML, snapshot: snapshot)) { error in
+            guard case CompareReviewReportExportError.unrepresentableFinalCutProTime = error else {
+                return XCTFail("Expected actionable export range error, got \(error)")
+            }
+        }
+    }
+
+    func testFinalCutProXMLReducesRationalTimeBeforeMultiplication() throws {
+        let numerator: Int64 = 23_987_653
+        let denominator: Int64 = 1_000_000
+        let wholeRateUnits = Int64.max / denominator / numerator + 1
+        let frame = wholeRateUnits * numerator - 1
+        let snapshot = CompareReviewReportSnapshot(
+            primaryItem: makeItem(
+                path: "/tmp/Master.mov", duration: 5,
+                startTimecode: "00:00:00:01", frameRate: "\(numerator)/\(denominator)"
+            ),
+            secondaryItem: makeItem(path: "/tmp/Encode.mp4", duration: 5),
+            alignmentMode: .sourceTimecode,
+            notes: [CompareReviewNote(
+                primaryFrame: frame, primaryTime: 0,
+                secondaryFrame: 0, secondaryTime: 0,
+                primaryRateNumerator: numerator, primaryRateDenominator: denominator,
+                text: "Representable after cancellation"
+            )]
+        )
+        let document = try XMLDocument(xmlString: CompareReviewReportExporter.finalCutProXML(snapshot: snapshot))
+        let marker = try XCTUnwrap(try document.nodes(forXPath: "//marker").first as? XMLElement)
+        XCTAssertEqual(marker.attribute(forName: "start")?.stringValue, "\(wholeRateUnits * denominator)/1s")
     }
 
     func testAvidMarkersAreTabDelimitedAndUsePrimaryFrameCoordinates() {

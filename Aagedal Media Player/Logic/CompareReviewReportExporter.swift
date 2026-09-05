@@ -45,6 +45,7 @@ nonisolated enum CompareReviewExportState: Equatable, Sendable {
 nonisolated enum CompareReviewReportExportError: Error, LocalizedError {
     case tooManyResolveMarkers(Int)
     case unsupportedResolveFrameRate(Int64)
+    case unrepresentableFinalCutProTime
 
     var errorDescription: String? {
         switch self {
@@ -52,6 +53,8 @@ nonisolated enum CompareReviewReportExportError: Error, LocalizedError {
             "DaVinci Resolve marker EDL supports at most 999 markers; this review has \(count)."
         case .unsupportedResolveFrameRate(let nominalFPS):
             "DaVinci Resolve marker EDL export does not support \(nominalFPS) fps media."
+        case .unrepresentableFinalCutProTime:
+            "A comparison marker exceeds the supported Final Cut Pro time range at source A's frame rate. Check the review's frame positions before exporting again."
         }
     }
 }
@@ -304,7 +307,7 @@ nonisolated enum CompareReviewReportExporter {
         case .resolveMarkersEDL:
             Data(try resolveMarkersEDL(snapshot: snapshot).utf8)
         case .finalCutProXML:
-            Data(finalCutProXML(snapshot: snapshot).utf8)
+            Data(try finalCutProXML(snapshot: snapshot).utf8)
         case .avidMarkersText:
             Data(avidMarkersText(snapshot: snapshot).utf8)
         }
@@ -405,18 +408,18 @@ nonisolated enum CompareReviewReportExporter {
 
     /// FCPXML browser-clip markers stay attached to source A and use rational
     /// time values so fractional rates never pass through floating point.
-    static func finalCutProXML(snapshot: CompareReviewReportSnapshot) -> String {
-        let frameDuration = rationalTime(
+    static func finalCutProXML(snapshot: CompareReviewReportSnapshot) throws -> String {
+        let frameDuration = try rationalTime(
             frames: 1,
             rateNumerator: snapshot.primaryRateNumerator,
             rateDenominator: snapshot.primaryRateDenominator
         )
-        let sourceStart = rationalTime(
+        let sourceStart = try rationalTime(
             frames: snapshot.primaryStartFrame,
             rateNumerator: snapshot.primaryRateNumerator,
             rateDenominator: snapshot.primaryRateDenominator
         )
-        let duration = rationalTime(
+        let duration = try rationalTime(
             frames: snapshot.primaryDurationFrames,
             rateNumerator: snapshot.primaryRateNumerator,
             rateDenominator: snapshot.primaryRateDenominator
@@ -434,12 +437,16 @@ nonisolated enum CompareReviewReportExporter {
             "    </asset>",
             "  </resources>",
             "  <event name=\"Aagedal Compare Review\">",
-            "    <asset-clip name=\"\(xmlAttribute(reviewName))\" ref=\"r2\" format=\"r1\" start=\"\(sourceStart)\" duration=\"\(duration)\">",
+            "    <asset-clip name=\"\(xmlAttribute(reviewName))\" ref=\"r2\" format=\"r1\" start=\"\(sourceStart)\" duration=\"\(duration)\" tcFormat=\"\(snapshot.primaryUsesDropFrame ? "DF" : "NDF")\">",
         ]
 
         for row in snapshot.rows {
-            let markerStart = rationalTime(
-                frames: snapshot.primaryStartFrame + row.primaryFrame,
+            let (markerFrame, overflow) = snapshot.primaryStartFrame.addingReportingOverflow(row.primaryFrame)
+            guard !overflow else {
+                throw CompareReviewReportExportError.unrepresentableFinalCutProTime
+            }
+            let markerStart = try rationalTime(
+                frames: markerFrame,
                 rateNumerator: snapshot.primaryRateNumerator,
                 rateDenominator: snapshot.primaryRateDenominator
             )
@@ -497,11 +504,23 @@ nonisolated enum CompareReviewReportExporter {
     }
 
     private static func xmlAttribute(_ value: String) -> String {
-        value
+        // Pasted notes can contain characters that XML 1.0 cannot represent,
+        // even as numeric references. Replace only those scalars, preserving
+        // Unicode text and encoding tabs so attribute normalization keeps them.
+        let validXML = String(String.UnicodeScalarView(value.unicodeScalars.map { scalar in
+            switch scalar.value {
+            case 0x09, 0x0A, 0x0D, 0x20...0xD7FF, 0xE000...0xFFFD, 0x10000...0x10FFFF:
+                scalar
+            default:
+                Unicode.Scalar(0xFFFD)!
+            }
+        }))
+        return validXML
             .replacingOccurrences(of: "&", with: "&amp;")
             .replacingOccurrences(of: "\"", with: "&quot;")
             .replacingOccurrences(of: "<", with: "&lt;")
             .replacingOccurrences(of: ">", with: "&gt;")
+            .replacingOccurrences(of: "\t", with: "&#9;")
             .replacingOccurrences(of: "\r\n", with: "&#10;")
             .replacingOccurrences(of: "\r", with: "&#10;")
             .replacingOccurrences(of: "\n", with: "&#10;")
@@ -511,11 +530,19 @@ nonisolated enum CompareReviewReportExporter {
         frames: Int64,
         rateNumerator: Int64,
         rateDenominator: Int64
-    ) -> String {
-        let numerator = max(0, frames) * max(1, rateDenominator)
-        let denominator = max(1, rateNumerator)
-        let divisor = greatestCommonDivisor(numerator, denominator)
-        return "\(numerator / divisor)/\(denominator / divisor)s"
+    ) throws -> String {
+        // Cancel denominator factors before multiplication: the final rational
+        // time may fit Int64 even when the unreduced intermediate would not.
+        let frameCount = max(0, frames)
+        let rateDivisor = greatestCommonDivisor(max(1, rateDenominator), max(1, rateNumerator))
+        let scale = max(1, rateDenominator) / rateDivisor
+        let denominator = max(1, rateNumerator) / rateDivisor
+        let frameDivisor = greatestCommonDivisor(frameCount, denominator)
+        let (numerator, overflow) = (frameCount / frameDivisor).multipliedReportingOverflow(by: scale)
+        guard !overflow else {
+            throw CompareReviewReportExportError.unrepresentableFinalCutProTime
+        }
+        return "\(numerator)/\(denominator / frameDivisor)s"
     }
 
     private static func greatestCommonDivisor(_ lhs: Int64, _ rhs: Int64) -> Int64 {

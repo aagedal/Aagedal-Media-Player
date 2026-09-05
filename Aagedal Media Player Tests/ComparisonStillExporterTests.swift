@@ -181,6 +181,82 @@ final class ComparisonStillExporterTests: XCTestCase {
         let decoded = try XCTUnwrap(CGImageSourceCreateImageAtIndex(source, 0, nil))
         XCTAssertEqual(decoded.width, 32)
         XCTAssertEqual(decoded.height, 18)
+        XCTAssertEqual(try pixel(in: decoded, x: 16, y: 9), try pixel(in: image, x: 16, y: 9))
+    }
+
+    func testRenderedPixelsPreserveSourceCornersAndAspectFitBars() throws {
+        // Asymmetric corners catch mirrored or vertically inverted exports,
+        // while the different rasters exercise both letterbox and pillarbox.
+        let primary = try makeCornerImage(width: 160, height: 90)
+        let secondary = try makeCornerImage(width: 90, height: 160, secondaryPalette: true)
+        let sourceDetails = ComparisonStillSourceDetails(
+            filename: "corners.mov", timecode: "REL TC 00:00:00:00", technicalLines: []
+        )
+        let rendered = try ComparisonStillRenderer.render(
+            primaryImage: primary,
+            secondaryImage: secondary,
+            details: ComparisonStillDetails(
+                primary: sourceDetails, secondary: sourceDetails, alignmentLabel: "Relative"
+            ),
+            maximumPanelWidth: 640,
+            maximumImageHeight: 640
+        )
+
+        // Expected picture bounds are independent of ComparisonStillLayout:
+        // A is 640×360 centered in a 640-high panel; B is 360×640.
+        let pictures = [
+            CGRect(x: 0, y: 390, width: 640, height: 360),
+            CGRect(x: 784, y: 250, width: 360, height: 640)
+        ]
+        for (index, picture) in pictures.enumerated() {
+            let samples: [(CGFloat, CGFloat, [UInt8])] = index == 0
+                ? [(0.25, 0.25, [255, 0, 0, 255]),
+                   (0.75, 0.25, [0, 255, 0, 255]),
+                   (0.25, 0.75, [0, 0, 255, 255]),
+                   (0.75, 0.75, [255, 255, 0, 255])]
+                : [(0.25, 0.25, [0, 255, 255, 255]),
+                   (0.75, 0.25, [255, 0, 255, 255]),
+                   (0.25, 0.75, [255, 255, 255, 255]),
+                   (0.75, 0.75, [0, 0, 0, 255])]
+            for (x, y, expected) in samples {
+                XCTAssertEqual(
+                    try pixel(in: rendered,
+                              x: Int(picture.minX + picture.width * x),
+                              y: Int(picture.minY + picture.height * y)),
+                    expected
+                )
+            }
+        }
+
+        let bars = try [
+            pixel(in: rendered, x: 320, y: 300),
+            pixel(in: rendered, x: 320, y: 850),
+            pixel(in: rendered, x: 700, y: 570),
+            pixel(in: rendered, x: 1_200, y: 570)
+        ]
+        for bar in bars {
+            XCTAssertEqual(bar, bars[0])
+            XCTAssertEqual(bar[0], bar[1])
+            XCTAssertEqual(bar[1], bar[2])
+            XCTAssertLessThan(bar[0], 64)
+            XCTAssertEqual(bar[3], 255)
+        }
+        let divider = try pixel(in: rendered, x: 642, y: 570)
+        XCTAssertGreaterThan(divider[0], bars[0][0])
+        XCTAssertEqual(divider[0], divider[1])
+        XCTAssertEqual(divider[1], divider[2])
+    }
+
+    func testRendererAcceptsEmptyOptionalAnnotations() throws {
+        let image = try makeImage(width: 16, height: 9, red: 1, green: 0, blue: 0)
+        let empty = ComparisonStillSourceDetails(
+            filename: "", timecode: "", technicalLines: ["", ""]
+        )
+        let rendered = try ComparisonStillRenderer.render(
+            primaryImage: image, secondaryImage: image,
+            details: ComparisonStillDetails(primary: empty, secondary: empty, alignmentLabel: "")
+        )
+        XCTAssertEqual(rendered.width, 1_284)
     }
 
     func testFrameExtractorReadsMPVOnlyGeneratedFixtureThroughFallback() async throws {
@@ -218,5 +294,36 @@ final class ComparisonStillExporterTests: XCTestCase {
         context.setFillColor(red: red, green: green, blue: blue, alpha: 1)
         context.fill(CGRect(x: 0, y: 0, width: width, height: height))
         return try XCTUnwrap(context.makeImage())
+    }
+
+    private func makeCornerImage(width: Int, height: Int, secondaryPalette: Bool = false) throws -> CGImage {
+        let context = try XCTUnwrap(CGContext(
+            data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
+            space: XCTUnwrap(CGColorSpace(name: CGColorSpace.sRGB)),
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ))
+        let colors: [(CGFloat, CGFloat, CGFloat)] = secondaryPalette
+            ? [(0, 1, 1), (1, 0, 1), (1, 1, 1), (0, 0, 0)]
+            : [(1, 0, 0), (0, 1, 0), (0, 0, 1), (1, 1, 0)]
+        for (index, color) in colors.enumerated() {
+            context.setFillColor(red: color.0, green: color.1, blue: color.2, alpha: 1)
+            context.fill(CGRect(
+                x: index % 2 * width / 2, y: index / 2 * height / 2,
+                width: width / 2, height: height / 2
+            ))
+        }
+        return try XCTUnwrap(context.makeImage())
+    }
+
+    /// Sample in the same bottom-left drawing coordinates used by the exporter.
+    private func pixel(in image: CGImage, x: Int, y: Int) throws -> [UInt8] {
+        let context = try XCTUnwrap(CGContext(
+            data: nil, width: 1, height: 1, bitsPerComponent: 8, bytesPerRow: 4,
+            space: XCTUnwrap(CGColorSpace(name: CGColorSpace.sRGB)),
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue | CGBitmapInfo.byteOrder32Big.rawValue
+        ))
+        context.draw(image, in: CGRect(x: -x, y: -y, width: image.width, height: image.height))
+        let data = try XCTUnwrap(context.data).assumingMemoryBound(to: UInt8.self)
+        return Array(UnsafeBufferPointer(start: data, count: 4))
     }
 }
