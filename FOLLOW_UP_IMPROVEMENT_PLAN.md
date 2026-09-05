@@ -473,6 +473,29 @@ The eight-second reflected UHD/HDR loupe checks pass after the fix; complete
 profile results and remaining hardware gates are recorded in
 `docs/INSPECTION_LOUPE_PROFILE_2026-09-05.md`.
 
+## Phase 32 — MPV native surface sizing
+
+Status: Completed on 2026-09-06. All 343 Release tests pass with no failures
+or skips; static analysis and all 61 release-preflight checks pass.
+A native loupe acceptance check exposed comparison pictures retaining the
+fixed 640×480 bootstrap dimensions after the window enlarged.
+
+- [x] Supply the fitted picture size before attaching MPV to its Metal layer.
+- [x] Explicitly update the retained view and drawable when SwiftUI geometry
+  changes, including when AppKit does not deliver a layout callback.
+- [x] Defer attachment until initial dimensions are finite and usable.
+- [x] Preserve existing single-source and coordinated comparison reload policy.
+- [x] Cover initial sizing, grow/shrink updates, layer identity, invalid geometry,
+  and one-shot reload ownership with focused regressions.
+- [x] Repeat the native narrow-to-large MPV/MPV reproduction and visually verify
+  fitted pictures in side-by-side, A, B, Vertical Wipe, and fullscreen/exit.
+- [x] Pass the full Release suite, static analysis, and release preflight.
+
+Acceptance: comparison pictures occupy their fitted panes after native window
+changes. The targeted desktop check is recorded in
+`docs/INSPECTION_LOUPE_NATIVE_CHECK_2026-09-06.md`; it does not replace the
+remaining all-mode pointer, accessibility, transformed-media, or base-M1 gates.
+
 ## Delivery order
 
 1. Phase 10 correctness fixes and regression tests.
@@ -498,3 +521,4 @@ profile results and remaining hardware gates are recorded in
 21. Phase 29 AVFoundation frame-boundary seek precision.
 22. Phase 30 reflected QuickTime playback orientation.
 23. Phase 31 AVFoundation live-loupe frame acquisition.
+24. Phase 32 MPV native surface sizing.

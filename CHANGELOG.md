@@ -50,6 +50,7 @@ All notable changes to Aagedal Media Player.
   primary-file loop boundaries across all backend combinations.
 
 ### Fixed
+- MPV comparison pictures now initialize and resize to their fitted panes instead of retaining a small bootstrap surface after window growth.
 - Keep pinned inspection loupes inside the picture canvas when the window shrinks.
 - Explicitly nonisolated comparison-guide geometry avoids a Swift `Shape` conformance error under main-actor default isolation.
 - Prevent AVFoundation loupe freezes under UHD/HDR load by acquiring the current pixel buffer before asynchronous metadata and image conversion.

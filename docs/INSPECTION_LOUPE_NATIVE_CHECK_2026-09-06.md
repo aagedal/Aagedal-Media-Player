@@ -49,3 +49,26 @@ All seven presentation modes, transformed fixtures, fullscreen, real pointer
 movement, display changes, simultaneous scopes, teardown instrumentation, and
 base-M1 performance remain in the
 [manual acceptance run sheet](INSPECTION_LOUPE_MANUAL_TESTS.md).
+
+## Surface-sizing correction and repeat check
+
+The corrected Release build supplies the fitted picture dimensions before MPV
+attaches and explicitly updates the retained native view and drawable when
+SwiftUI geometry changes. Repeating the original sequence (landscape A at
+270 points, add portrait B, native zoom to 1728 points) now fits A across its
+pane width and centers it vertically; B fits the pane height and centers
+horizontally. Both pictures corrected while paused, without needing playback
+to refresh them.
+
+The repeat check also visually confirmed fitted pictures in A-only, B-only,
+and Vertical Wipe modes. Entering fullscreen through the player control and
+returning with Escape to a 960-point-wide window preserved the fitted wipe
+pictures. These observations establish the reproduced live-picture correction;
+they do not establish real-pointer loupe registration or all-mode acceptance.
+Hosted regression tests separately check retained native-layer identity and
+actual drawable dimensions through grow/shrink updates.
+
+Final verification repeated the 270-to-1728-point comparison sequence after
+restoring the one-shot reload safeguard; the live pictures remained correctly
+fitted. All 343 Release tests pass without failures or skips; static analysis
+and all 61 release-preflight checks pass.

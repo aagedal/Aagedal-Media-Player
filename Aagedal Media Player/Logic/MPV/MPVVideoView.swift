@@ -19,6 +19,8 @@ nonisolated let scalingLogger = Logger(subsystem: "com.aagedal.MediaPlayer", cat
 final class MPVViewController: NSViewController {
     let player: MPVPlayer
     private var managesSurfaceReloads: Bool
+    private var surfaceSize: CGSize
+    private var hasAttachedDrawable = false
     private var metalLayer: MPVMetalLayer!
 
     // nonisolated(unsafe) because we tear these down from `deinit` which runs
@@ -47,10 +49,12 @@ final class MPVViewController: NSViewController {
     /// otherwise the reload itself (which recreates the view controller
     /// via SwiftUI's preparationID-based .id()) could re-enter and loop.
     private var hasAutoReloadedForLayoutJump = false
+    private let layoutReload = DeferredMainActorTask()
 
-    init(player: MPVPlayer, managesSurfaceReloads: Bool) {
+    init(player: MPVPlayer, managesSurfaceReloads: Bool, surfaceSize: CGSize) {
         self.player = player
         self.managesSurfaceReloads = managesSurfaceReloads
+        self.surfaceSize = surfaceSize
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -60,6 +64,36 @@ final class MPVViewController: NSViewController {
 
     func setManagesSurfaceReloads(_ managesSurfaceReloads: Bool) {
         self.managesSurfaceReloads = managesSurfaceReloads
+        if !managesSurfaceReloads { layoutReload.cancel() }
+    }
+
+    /// SwiftUI can update a composited comparison surface without delivering
+    /// viewDidLayout. Keep the actual native drawable at the proposed picture
+    /// size, including when the controller is retained across view modes.
+    func setSurfaceSize(_ size: CGSize) {
+        guard size.width.isFinite, size.height.isFinite,
+              size.width > 1, size.height > 1 else { return }
+        surfaceSize = size
+        guard isViewLoaded else { return }
+        let oldDrawableSize = metalLayer.drawableSize
+        if view.frame.size != size { view.setFrameSize(size) }
+        metalLayer.frame = view.bounds
+        metalLayer.contentsScale = view.window?.backingScaleFactor
+            ?? NSScreen.main?.backingScaleFactor ?? 2
+        metalLayer.drawableSize = CGSize(
+            width: size.width * metalLayer.contentsScale,
+            height: size.height * metalLayer.contentsScale
+        )
+        handleDrawableGrowth(from: oldDrawableSize, to: metalLayer.drawableSize)
+        attachDrawableIfSized()
+    }
+
+    private func attachDrawableIfSized() {
+        guard !hasAttachedDrawable,
+              surfaceSize.width.isFinite, surfaceSize.height.isFinite,
+              surfaceSize.width > 1, surfaceSize.height > 1 else { return }
+        hasAttachedDrawable = true
+        player.attachDrawable(metalLayer)
     }
 
     deinit {
@@ -75,7 +109,9 @@ final class MPVViewController: NSViewController {
     }
 
     override func loadView() {
-        let view = NSView(frame: .init(x: 0, y: 0, width: 640, height: 480))
+        let valid = surfaceSize.width.isFinite && surfaceSize.height.isFinite
+            && surfaceSize.width > 1 && surfaceSize.height > 1
+        let view = NSView(frame: CGRect(origin: .zero, size: valid ? surfaceSize : .zero))
         view.autoresizingMask = [.width, .height]
         self.view = view
     }
@@ -86,6 +122,12 @@ final class MPVViewController: NSViewController {
         metalLayer = MPVMetalLayer()
         metalLayer.frame = view.bounds
         metalLayer.contentsScale = NSScreen.main?.backingScaleFactor ?? 2.0
+        if view.bounds.width > 1, view.bounds.height > 1 {
+            metalLayer.drawableSize = CGSize(
+                width: view.bounds.width * metalLayer.contentsScale,
+                height: view.bounds.height * metalLayer.contentsScale
+            )
+        }
         metalLayer.framebufferOnly = true
         metalLayer.backgroundColor = NSColor.black.cgColor
 
@@ -95,7 +137,10 @@ final class MPVViewController: NSViewController {
 
         scalingLogger.info("viewDidLoad: bounds=\(String(describing: self.view.bounds)) initial drawableSize=\(String(describing: self.metalLayer.drawableSize))")
 
-        // Attach immediately. viewDidLayout is *not* a reliable trigger
+        // Initialize against the fitted SwiftUI picture size, not a temporary
+        // 640×480 view: MPV can retain that initial destination rectangle even
+        // after the Metal swapchain grows. Attach immediately. viewDidLayout is
+        // *not* a reliable trigger
         // because SwiftUI's NSViewControllerRepresentable can recreate the
         // view at bounds matching the previous instance (same-aspect swap,
         // rapid Force Reloads), in which case viewDidLayout never fires
@@ -103,12 +148,17 @@ final class MPVViewController: NSViewController {
         // loadfile stuck forever. Subsequent bounds changes from
         // viewDidLayout update drawableSize, and MoltenVK recreates the
         // swapchain to match.
-        player.attachDrawable(metalLayer)
+        attachDrawableIfSized()
     }
 
     override func viewWillAppear() {
         super.viewWillAppear()
         installWindowObservers(on: view.window)
+    }
+
+    override func viewWillDisappear() {
+        layoutReload.cancel()
+        super.viewWillDisappear()
     }
 
     override func viewDidLayout() {
@@ -143,25 +193,29 @@ final class MPVViewController: NSViewController {
 
             lastNudgedDrawableSize = newDrawableSize
 
-            // Auto Force Reload on initial layout-settle. Skip when
-            // already in fullscreen (didEnterFullScreen handles that
-            // path and we don't want both firing). One-shot per
-            // MPVViewController so the reload itself can't re-enter:
-            // after .reloadPlayer, the controller's preparationID
-            // changes, SwiftUI rebuilds the MPVVideoView, a fresh
-            // MPVViewController is created with hasAutoReloadedForLayoutJump=false,
-            // and the new instance's first viewDidLayout sees the
-            // already-settled window — no jump, no reload.
-            if !hasAutoReloadedForLayoutJump,
-               !isFullScreen,
-               shouldAutoReloadForLayoutJump(from: oldDrawableSize, to: newDrawableSize) {
-                hasAutoReloadedForLayoutJump = true
-                requestReloadForSurfaceChange(
-                    reason: "viewDidLayout drawableSize jumped \(Int(oldDrawableSize.width))x\(Int(oldDrawableSize.height)) → \(Int(newDrawableSize.width))x\(Int(newDrawableSize.height))"
-                )
-            }
+            handleDrawableGrowth(from: oldDrawableSize, to: newDrawableSize)
         } else {
             scalingLogger.debug("viewDidLayout: bounds=\(String(describing: self.view.bounds)) skipped (newDrawable=\(String(describing: newDrawableSize)) <=1)")
+        }
+    }
+
+    /// Both AppKit layout and explicit SwiftUI sizing share the same one-shot
+    /// decision. The explicit path must supply the drawable size from before
+    /// mutation, otherwise a later layout observes equal sizes and misses it.
+    private func handleDrawableGrowth(from old: CGSize, to new: CGSize) {
+        guard managesSurfaceReloads, hasAttachedDrawable,
+              !hasAutoReloadedForLayoutJump,
+              let window = view.window,
+              !window.styleMask.contains(.fullScreen),
+              shouldAutoReloadForLayoutJump(from: old, to: new) else { return }
+        hasAutoReloadedForLayoutJump = true
+        // Explicit sizing runs inside updateNSViewController. Post on the next
+        // main-actor turn so reload cannot publish state during SwiftUI's update.
+        layoutReload.schedule { [weak self, weak window] in
+            guard let self, let window, self.view.window === window else { return }
+            self.requestReloadForSurfaceChange(
+                reason: "drawableSize jumped \(Int(old.width))x\(Int(old.height)) → \(Int(new.width))x\(Int(new.height))"
+            )
         }
     }
 
@@ -294,11 +348,13 @@ struct MPVVideoView: NSViewControllerRepresentable {
     let player: MPVPlayer
     let keyHandler: (String, NSEvent.ModifierFlags, NSEvent.SpecialKey?) -> Bool
     let managesSurfaceReloads: Bool
+    let surfaceSize: CGSize
 
     func makeNSViewController(context: Context) -> MPVViewController {
         let viewController = MPVViewController(
             player: player,
-            managesSurfaceReloads: managesSurfaceReloads
+            managesSurfaceReloads: managesSurfaceReloads,
+            surfaceSize: surfaceSize
         )
         context.coordinator.viewController = viewController
         return viewController
@@ -306,6 +362,7 @@ struct MPVVideoView: NSViewControllerRepresentable {
 
     func updateNSViewController(_ nsViewController: MPVViewController, context: Context) {
         nsViewController.setManagesSurfaceReloads(managesSurfaceReloads)
+        nsViewController.setSurfaceSize(surfaceSize)
         context.coordinator.viewController = nsViewController
         context.coordinator.keyHandler = keyHandler
     }

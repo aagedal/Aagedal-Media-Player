@@ -5,6 +5,7 @@
 import AppKit
 import AVFoundation
 import AVKit
+import Combine
 import Foundation
 import SwiftUI
 import XCTest
@@ -83,6 +84,110 @@ final class CompareLiveBackendTests: XCTestCase {
         }
         retainedPlaybackSurfaces.removeAll()
         super.tearDown()
+    }
+
+    func testMPVSurfaceInitializesAtFittedSizeAndUpdatesRetainedDrawableAfterResize() async throws {
+        let player = MPVPlayer()
+        defer { player.destroy() }
+        let initial = CGSize(width: 270, height: 480)
+        func root(size: CGSize) -> some View {
+            MPVVideoView(
+                player: player, keyHandler: { _, _, _ in false },
+                managesSurfaceReloads: false, surfaceSize: size
+            )
+            .frame(width: size.width, height: size.height)
+        }
+        let hostingView = NSHostingView(rootView: root(size: initial))
+        let window = NSWindow(
+            contentRect: CGRect(origin: .zero, size: initial),
+            styleMask: [.borderless], backing: .buffered, defer: false
+        )
+        window.isReleasedWhenClosed = false
+        window.contentView = hostingView
+        defer {
+            window.contentView = nil
+            window.close()
+        }
+        hostingView.layoutSubtreeIfNeeded()
+        let mounted = await waitUntil { self.metalLayers(in: hostingView).count == 1 }
+        XCTAssertTrue(mounted)
+        let layer = try XCTUnwrap(metalLayers(in: hostingView).first)
+        let identity = ObjectIdentifier(layer)
+        XCTAssertEqual(layer.bounds.size, initial)
+        XCTAssertEqual(layer.drawableSize.width, initial.width * layer.contentsScale, accuracy: 1)
+        XCTAssertEqual(layer.drawableSize.height, initial.height * layer.contentsScale, accuracy: 1)
+
+        for resized in [CGSize(width: 540, height: 960), CGSize(width: 180, height: 320)] {
+            window.setContentSize(resized)
+            hostingView.rootView = root(size: resized)
+            hostingView.layoutSubtreeIfNeeded()
+            let settled = await waitUntil {
+                layer.bounds.size == resized &&
+                    abs(layer.drawableSize.width - resized.width * layer.contentsScale) < 1 &&
+                    abs(layer.drawableSize.height - resized.height * layer.contentsScale) < 1
+            }
+            XCTAssertTrue(settled, "A retained comparison surface must resize without requesting reload.")
+            XCTAssertEqual(metalLayers(in: hostingView).first.map(ObjectIdentifier.init), identity)
+        }
+    }
+
+    func testMPVSurfaceWaitsForValidInitialGeometry() {
+        let player = MPVPlayer()
+        defer { player.destroy() }
+        let controller = MPVViewController(
+            player: player, managesSurfaceReloads: false,
+            surfaceSize: CGSize(width: CGFloat.nan, height: 0)
+        )
+        _ = controller.view
+        XCTAssertEqual(controller.view.bounds.size, .zero)
+        controller.setSurfaceSize(CGSize(width: 960, height: 540))
+        XCTAssertEqual(controller.view.bounds.size, CGSize(width: 960, height: 540))
+        let layer = controller.view.layer as? MPVMetalLayer
+        XCTAssertEqual(layer?.drawableSize.width, 960 * (layer?.contentsScale ?? 0))
+        XCTAssertEqual(layer?.drawableSize.height, 540 * (layer?.contentsScale ?? 0))
+        controller.setSurfaceSize(CGSize(width: CGFloat.infinity, height: -1))
+        XCTAssertEqual(controller.view.bounds.size, CGSize(width: 960, height: 540))
+    }
+
+    func testExplicitMPVSurfaceGrowthDefersOneReloadAndRespectsPairedOwnership() async throws {
+        for ownsReload in [true, false] {
+            let player = MPVPlayer()
+            defer { player.destroy() }
+            let controller = MPVViewController(
+                player: player, managesSurfaceReloads: ownsReload,
+                surfaceSize: CGSize(width: 320, height: 180)
+            )
+            let window = NSWindow(
+                contentRect: CGRect(x: 0, y: 0, width: 320, height: 180),
+                styleMask: [.borderless], backing: .buffered, defer: false
+            )
+            window.isReleasedWhenClosed = false
+            window.contentViewController = controller
+            defer {
+                window.contentViewController = nil
+                window.close()
+            }
+            var reloadCount = 0
+            let observation = NotificationCenter.default.appCommandPublisher.sink { notification in
+                if let command = notification.appCommand, case .reloadPlayer = command {
+                    reloadCount += 1
+                }
+            }
+            defer { observation.cancel() }
+
+            controller.setSurfaceSize(CGSize(width: 640, height: 360))
+            controller.viewDidLayout()
+            XCTAssertEqual(reloadCount, 0, "SwiftUI sizing must not synchronously publish a reload.")
+            if ownsReload {
+                let reloaded = await waitUntil { reloadCount == 1 }
+                XCTAssertTrue(reloaded, "Explicit drawable growth must retain the single-source workaround.")
+            }
+            controller.setSurfaceSize(CGSize(width: 1280, height: 720))
+            controller.viewDidLayout()
+            try await Task.sleep(for: .milliseconds(50))
+            XCTAssertEqual(reloadCount, ownsReload ? 1 : 0,
+                           "Only the owning surface may request one layout-growth reload.")
+        }
     }
 
     private struct DriftObservation {

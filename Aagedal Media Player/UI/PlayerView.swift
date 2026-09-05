@@ -75,18 +75,22 @@ struct PlayerView: View {
                 }
             } else if controller.useMPV, let mpvPlayer = controller.mpvPlayer {
                 // MPV backend — .id() forces view recreation on each new load
-                MPVVideoView(
-                    player: mpvPlayer,
-                    keyHandler: handleKeyEvent,
-                    managesSurfaceReloads: managesMPVSurfaceReloads
-                )
-                    .aspectRatio(playerAspectRatio, contentMode: .fit)
+                GeometryReader { geometry in
+                    let picture = CompareDisplayGeometry.aspectFitRect(
+                        aspectRatio: playerAspectRatio,
+                        in: CGRect(origin: .zero, size: geometry.size)
+                    )
+                    MPVVideoView(
+                        player: mpvPlayer,
+                        keyHandler: handleKeyEvent,
+                        managesSurfaceReloads: managesMPVSurfaceReloads,
+                        surfaceSize: picture.size
+                    )
+                    .frame(width: picture.width, height: picture.height)
+                    .position(x: picture.midX, y: picture.midY)
                     .id(controller.preparationID)
-                    .ignoresSafeArea()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .onReceive(controller.playbackTimePublisher) { time in
-                        // Time synced via publisher
-                    }
+                }
+                .ignoresSafeArea()
             }
 
             if item.presentationKind == .audioOnly {

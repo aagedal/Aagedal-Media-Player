@@ -524,3 +524,26 @@ A partial native loupe check records accessible controls, pinning, 4× selection
 and hide/show retention in `docs/INSPECTION_LOUPE_NATIVE_CHECK_2026-09-06.md`.
 It does not close hover, Full Keyboard Access, VoiceOver, or hardware gates.
 It also exposed a live comparison-surface resize issue for investigation.
+
+## Native MPV picture sizing — 2026-09-06
+
+The partial native loupe check uncovered live comparison pictures staying at
+small bootstrap dimensions after window growth. MPV now receives the fitted
+picture size before attachment; retained native views and drawables also receive
+explicit geometry updates rather than depending solely on AppKit layout
+callbacks. Invalid initial dimensions defer attachment until usable geometry
+arrives. The existing coordinated reload policy is preserved, including its
+one-shot growth safeguard; deferred requests avoid changing SwiftUI state from
+inside representable updates and cancel when their owner disappears.
+
+Three regressions cover initial geometry, retained layer identity through
+grow/shrink changes, invalid dimensions, and deferred single-owner reloads.
+Native repeat checks verify fitted decoded pictures after narrow-to-large
+window zoom, A/B switching, Vertical Wipe, and fullscreen/exit. The full
+pointer and accessibility matrices remain open; see
+`docs/INSPECTION_LOUPE_NATIVE_CHECK_2026-09-06.md` for scope and evidence.
+
+Final verification: all 343 Release tests pass with no failures or skips;
+static analysis, all 61 release-preflight checks, and both profiler-validator
+groups pass. The final build also repeats the original narrow-to-large native
+MPV/MPV reproduction successfully after the reload safeguard was restored.
