@@ -75,6 +75,10 @@ Verification on 2026-09-05: the complete Release suite passed 319 tests with
 zero failures and no skips, including 32 rendered lens cases. Static analysis
 and all 61 release-preflight checks passed.
 
+Continuation verification on 2026-09-05: 329 Release tests pass with no
+failures or skips, including 20 live decoder fixture cases and 128 rendered
+lens cases. Static analysis and all 61 release-preflight checks pass.
+
 Before release:
 
 - Check visible registration with asymmetric corner/edge fixtures at all

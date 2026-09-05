@@ -430,7 +430,8 @@ seek to the preceding frame through floating-point rounding.
 
 ## Phase 30 — Reflected QuickTime playback orientation
 
-Status: Implemented on 2026-09-05; final regression validation recorded below.
+Status: Completed on 2026-09-05. The 329-test Release suite passes without
+failures or skips; static analysis and all 61 release-preflight checks pass.
 Asymmetric live-loupe fixtures exposed the bundled MPV retaining only rotation
 from reflected QuickTime display matrices. A file-owned reflection correction
 now applies to the decoder output, preserving agreement between playback,

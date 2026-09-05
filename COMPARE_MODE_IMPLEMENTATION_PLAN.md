@@ -380,3 +380,29 @@ Verification: the complete Release suite passes 319 tests with zero failures
 and no skips, including both mixed-backend loupe checks and 32 rendered-pixel
 cases across magnifications and display scales. Xcode static analysis and all
 61 release-preflight checks pass. The hands-on and hardware gates remain open.
+
+## Loupe registration and audio-layout continuation — 2026-09-05
+
+Selected-track audio details now show numbered A/B channel roles, unmatched
+roles, layout mismatches, and explicit positional pairing when layouts are
+unknown. See `docs/COMPARE_MODE_AUDIO.md` for operation and remaining hands-on
+routing/accessibility checks.
+
+Ten asymmetric fixtures now verify real paused captures on each backend,
+including differing rasters, PAR, all quarter-turn rotations, horizontal and
+vertical mirroring, and reflected quarter-turns. A separate 128-case lens
+rendering matrix verifies normalized picture positions at different coded and
+display aspects, magnifications, and display scales.
+
+These checks exposed MPV losing reflection from QuickTime display matrices.
+Playback preparation now detects reflected transforms and restores reflection
+before MPV rotation, using VideoToolbox copyback and a vertical video filter for
+reflected media. Playback, scopes, and loupe captures share the corrected output.
+Unreflected media retains its existing decode path. The asynchronous transform
+probe is guarded by playback-preparation identity and cancellation.
+
+Verification: the complete Release suite passes 329 tests with zero failures
+and no skips. Xcode static analysis and all 61 release-preflight checks pass.
+End-to-end pointer registration in every live comparison mode, reflected
+UHD/HDR filter performance, the base-M1 profile, accessibility, and editor
+round-trips remain release gates.
