@@ -123,6 +123,10 @@ profiling exposed and fixed an AVFoundation capture-timestamp race. See
 The final ten-scenario reflected UHD/HDR smoke profile passes; the paired
 loupes deliver 5.11–5.75 fresh frames per second on the M5 Pro.
 
+Use [the manual acceptance run sheet](INSPECTION_LOUPE_MANUAL_TESTS.md) to record
+the remaining checks and evidence. Hiding with Show loupe retains position,
+pinning, and magnification; replacing A resets position/pinning and disables it.
+
 Before release:
 
 - Check visible registration with asymmetric corner/edge fixtures at all

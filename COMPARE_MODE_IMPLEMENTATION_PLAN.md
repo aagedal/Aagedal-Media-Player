@@ -464,3 +464,26 @@ Loupe capture rates are 5.11–5.75 fresh frames per second, worst main-actor de
 is 116 ms, and worst drift recovery across all workloads is 0.732 seconds. The
 report retains the initial capture failures and an intermediate scope-only
 280 ms delay failure; no thresholds were relaxed for the final passing run.
+
+## Manual loupe acceptance preparation — 2026-09-05
+
+The remaining native-pointer, fullscreen, accessibility, and release-floor
+performance gates now have an actionable run sheet at
+`docs/INSPECTION_LOUPE_MANUAL_TESTS.md`, including transformed fixture names,
+expected behavior for all seven modes, and a results template. No hands-on
+checks have been recorded as passed.
+
+Synthetic NSHostingView event injection did not provide representative native
+input evidence: correctly typed events did not reliably reach the hover
+handler without real desktop-pointer state. The experimental code was removed;
+no product behavior changed. Existing coordinate/rendered-pixel tests remain,
+and real pointer dispatch over native playback surfaces needs manual testing.
+
+Exact source-pixel 1:1 remains deferred because MPV's display-space screenshot
+can resample pixel aspect ratio/rotation; captured-bitmap pixel sizing alone
+does not establish original source-pixel registration. Whole-viewport zoom/pan
+remains sequenced after loupe interaction acceptance.
+
+Verification after removing the experiment: all 335 Release tests pass with
+zero failures and no skips; release preflight passes all 61 checks. The
+retained changes are documentation only.

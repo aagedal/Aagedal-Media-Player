@@ -160,6 +160,8 @@ also pass.
   production pointer routing in all seven modes, including differing aspects.
   The fully B overlay now follows B geometry. Native-event pointer registration
   across live presentation modes remains; automated mapping excludes black bars.
+  Use `docs/INSPECTION_LOUPE_MANUAL_TESTS.md` for the remaining hands-on
+  registration, accessibility, and release-floor performance checks.
 - [ ] Add optional whole-viewport zoom and pan after the loupe interaction is
   proven, with a one-action return to Fit.
 - [x] Describe loupe imagery as display-space output without RGB/code values.
