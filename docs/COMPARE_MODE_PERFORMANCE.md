@@ -55,8 +55,9 @@ scripts/profile-compare-mode.sh 2>&1 | tee "$profile_root/measured-report.md"
 Release build rather than compiling into a new temporary directory. Reused
 fixtures are accepted only when their manifest, resolution, frame rate, and
 duration match the requested profile. Each artifact directory must be new; it
-retains the build log, test log, fixture manifest, result bundle, and exported
-attachments without silently overwriting an earlier run.
+retains the build log, test log, fixture manifest, result bundle, exported
+attachments, and a thermal observation log without silently overwriting an
+earlier run. Available logs are also retained if setup or building fails.
 
 The profiler defaults to a 30-second development run. Other supported options
 are:
@@ -103,17 +104,30 @@ The automated gate requires:
 
 The Markdown report records source revision and cleanliness, Xcode and macOS,
 hardware identity, power and thermal snapshots, fixture sizes, drift metrics,
-wall time, CPU time, and peak resident memory. `/usr/bin/time` wraps the entire
-eight-test serial run, so its CPU and memory values are whole-suite aggregates,
-not per-mode measurements. CPU, GPU, and memory are recorded baselines until
-release budgets are chosen; the drift and responsiveness limits above are the
-current numeric pass/fail gates.
+wall time, CPU time, and peak resident memory from command accounting.
+`/usr/bin/time` wraps `xcodebuild` for the eight-test serial run, but XCTest can
+launch the app through macOS services outside that command's accounted process
+tree. Those CPU and memory numbers therefore must not be treated as app
+resource totals or per-mode measurements. Measure the app directly in
+Instruments for CPU, GPU, and memory baselines. The drift and responsiveness
+limits above are the current numeric pass/fail gates.
 
 If the requested observation ends during an out-of-frame excursion, that
 pairing continues only until it reconverges or its one-second recovery deadline
 expires. This prevents the result from depending on the part of a correction
 cycle that coincides with the cutoff. The script prints its report even when a
-test assertion fails and returns the failing `xcodebuild` status.
+test assertion fails and returns the failing `xcodebuild` status. It requires
+each of the eight expected scenario/backend combinations exactly once; skipped,
+missing, duplicate, or malformed scenario records reject the run. Run
+`scripts/test-compare-profile-validation.sh` to verify those rejection paths
+without starting decoders.
+
+`thermal.log` samples `pmset -g therm` every two seconds throughout the measured
+run, with UTC timestamps. The report lists distinct observations so pressure
+between the endpoint snapshots is visible. These are system observations, not
+GPU utilization measurements or a per-process thermal model. Review them for
+reported limits before accepting a release baseline; unavailable observations
+do not establish that there was no thermal pressure.
 
 ## Instruments run sheet
 

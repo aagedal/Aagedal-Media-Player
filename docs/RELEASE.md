@@ -32,6 +32,21 @@ expectation and this rationale.
 
 ## Preflight and release
 
+Review all release plans before selecting a candidate:
+
+- [`IMPROVEMENT_PLAN.md`](../IMPROVEMENT_PLAN.md) and
+  [`FOLLOW_UP_IMPROVEMENT_PLAN.md`](../FOLLOW_UP_IMPROVEMENT_PLAN.md) track the
+  completed reliability work. Re-run their regression and static-analysis
+  checks against the candidate; historical passes are not release evidence.
+- [`PRODUCT_ROADMAP.md`](../PRODUCT_ROADMAP.md) tracks remaining product and
+  release gates, including representative-media smoke checks and the beta.
+- [`COMPARE_MODE_IMPLEMENTATION_PLAN.md`](../COMPARE_MODE_IMPLEMENTATION_PLAN.md)
+  tracks Compare Mode acceptance. Feature checkboxes do not replace the
+  base-M1 performance gate, hands-on visual checks, editor round trips, or demo.
+  Use the [performance run sheet](COMPARE_MODE_PERFORMANCE.md),
+  [marker interchange run sheet](COMPARE_MODE_INTERCHANGE.md), and
+  [demo run sheet](COMPARE_MODE_DEMO.md) to retain that evidence.
+
 Before release, update the project version/build and add the matching
 `CHANGELOG.md` section. Then run:
 

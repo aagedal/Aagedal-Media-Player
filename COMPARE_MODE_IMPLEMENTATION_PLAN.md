@@ -113,8 +113,30 @@ each, and aggregate peak resident memory was about 853 MiB. This battery-power
 development result does not replace the 120-second base-M1 release gate. The
 profiler now rejects skipped or metric-free XCTest runs and validates reusable
 fixtures against the test suite's manifest contract.
+The release-validation continuation requires each of the eight expected
+scenario/backend combinations exactly once, preserves original Xcode failure
+codes, retains logs on setup failures, and samples thermal observations every
+two seconds throughout the run. Its standalone rejection tests cover missing,
+duplicate, unexpected, malformed, skipped, and empty scenario output.
+A full 120-second-per-scenario UHD HDR development run now passed all eight
+scenarios on the M5 Pro: worst drift recovery was 0.910 seconds, worst
+main-actor delay was 96 ms, and both visual passes delivered 1,200 updates.
+The MPV/AVFoundation scope workload was within one frame for 84.4% of samples
+while meeting the recovery gate; this is not continuous frame lock. See
+`docs/COMPARE_MODE_PROFILE_2026-09-05.md` for all results and conditions.
+Historical profiler CPU/RSS values above are command-accounting observations;
+XCTest's separately hosted app may be excluded. Direct app CPU/GPU/memory and
+thermal measurements still require Instruments, along with the controlled
+base-M1 release run.
 The full project test suite also passed after the loop, scrub, lifecycle, and
 AVFoundation correction changes, preserving the existing single-file coverage.
+In this continuation the initial complete Release suite passed 274 tests, and
+all 64 focused tests passed after the additional evidence-export/sidecar fixes.
+Static analysis and all 61 release-preflight checks passed. A later complete
+suite attempt encountered native audio startup timeouts and playback stalls;
+a fresh-process disjoint-range retry reproduced the failure. A clean complete
+suite remains required before release. The dated profile record retains both
+the successful benchmark and these later unsuccessful playback checks.
 
 - [x] Define the implementation plan and release boundaries.
 - [x] Add a window-owned compare session with cancellation-safe secondary-file
@@ -151,6 +173,12 @@ measures main-actor scheduling delay. A symmetric half-resolution live-render
 option now reduces both native surfaces and the comparison composite while
 leaving source files, scopes, and exports unchanged. Hands-on pixel and
 Instruments GPU validation at production resolution remains.
+Exported-still pixel tests now verify distinct A/B corner colors, orientation,
+letterbox/pillarbox placement, divider pixels, and PNG pixel preservation.
+An additional 25-aspect-pair matrix verifies side-by-side picture/guide
+registration at full and reduced resolution on an odd-sized canvas. Empty
+still annotations also return safely without accessing nonexistent CoreText
+attributes. These checks do not replace live-compositor pixel validation.
 
 - [x] Add a draggable vertical/horizontal wipe.
 - [x] Add opacity overlay with an adjustable blend amount.
@@ -199,6 +227,17 @@ Status: Frame-accurate comparison notes, pair-specific non-destructive JSON
 sidecars, CSV/PDF review reports with annotated A/B stills, and source-A marker
 interchange for DaVinci Resolve, Final Cut Pro, and Avid Media Composer are
 implemented through 2026-09-04. Editor round-trip validation remains.
+FCPXML now explicitly preserves DF/NDF display interpretation and safely
+encodes pasted Unicode and tabs while replacing XML-invalid characters.
+Parser-based tests verify 29.97/59.94 drop-frame minute-boundary positions and
+text integrity. Follow `docs/COMPARE_MODE_INTERCHANGE.md` for the remaining
+editor import/re-export evidence.
+Sidecar loading and writing now reject duplicate note identifiers, invalid
+positions/rates, and values that overflow frame arithmetic. Invalid documents
+remain untouched, and rejected saves do not suppress a later valid revision.
+FCPXML also reduces rational timestamps before multiplication and reports an
+actionable export error when the actual media rate makes a timestamp
+unrepresentable, even if a sidecar supplied a different stored rate.
 
 - [x] Add frame-accurate markers and notes on the comparison timeline.
 - [x] Store notes in a non-destructive sidecar file.
@@ -281,6 +320,11 @@ thermal behavior remain manual gates.
 
 ## Release and marketing work
 
+- [x] Review the separate `IMPROVEMENT_PLAN.md` and
+  `FOLLOW_UP_IMPROVEMENT_PLAN.md` before release preparation. Both mark their
+  engineering phases complete; `docs/RELEASE.md` now requires reviewing them
+  and the outstanding `PRODUCT_ROADMAP.md` gates for each candidate. Historical
+  completion does not replace current tests, analysis, and release preflight.
 - [x] Add a first-run callout for Compare Mode without interrupting playback.
 - [x] Replace the README's “just checking playback” positioning with a professional
   inspection message.

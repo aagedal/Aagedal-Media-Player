@@ -15,6 +15,8 @@ fixture_dir="${COMPARE_PROFILE_FIXTURE_DIR:-$temporary_dir/fixtures}"
 fixture_dir="${fixture_dir:A}"
 build_log="$temporary_dir/build.log"
 profile_log="$temporary_dir/profile.log"
+thermal_log="$temporary_dir/thermal.log"
+thermal_sampler_pid=""
 result_bundle="$temporary_dir/CompareModeProfile.xcresult"
 attachments_dir="$temporary_dir/attachments"
 attachments_exported=false
@@ -29,7 +31,16 @@ fi
 xcode_version="$(xcodebuild -version 2>/dev/null | /usr/bin/paste -s -d ' ' - || true)"
 
 cleanup() {
+  local original_status=$?
+  if [[ -n "$thermal_sampler_pid" ]]; then
+    kill "$thermal_sampler_pid" 2>/dev/null || true
+    wait "$thermal_sampler_pid" 2>/dev/null || true
+  fi
+  if (( ${+functions[retain_artifacts]} )) && [[ -d "$artifact_dir" ]]; then
+    retain_artifacts || print -u2 "Could not retain every profiling artifact."
+  fi
   rm -Rf -- "$temporary_dir"
+  return "$original_status"
 }
 trap cleanup EXIT
 
@@ -72,11 +83,13 @@ fi
 
 retain_artifacts() {
   [[ -n "$artifact_dir" ]] || return 0
-  [[ -f "$build_log" ]] && cp "$build_log" "$artifact_dir/build.log"
-  [[ -f "$profile_log" ]] && cp "$profile_log" "$artifact_dir/profile.log"
-  [[ -f "$fixture_dir/MANIFEST.txt" ]] && cp "$fixture_dir/MANIFEST.txt" "$artifact_dir/fixture-manifest.txt"
-  [[ -d "$result_bundle" ]] && cp -R "$result_bundle" "$artifact_dir/CompareModeProfile.xcresult"
-  [[ -d "$attachments_dir" ]] && cp -R "$attachments_dir" "$artifact_dir/attachments"
+  if [[ -f "$build_log" ]]; then cp "$build_log" "$artifact_dir/build.log" || return 1; fi
+  if [[ -f "$profile_log" ]]; then cp "$profile_log" "$artifact_dir/profile.log" || return 1; fi
+  if [[ -f "$thermal_log" ]]; then cp "$thermal_log" "$artifact_dir/thermal.log" || return 1; fi
+  if [[ -f "$fixture_dir/MANIFEST.txt" ]]; then cp "$fixture_dir/MANIFEST.txt" "$artifact_dir/fixture-manifest.txt" || return 1; fi
+  if [[ -d "$result_bundle" ]]; then cp -R "$result_bundle" "$artifact_dir/CompareModeProfile.xcresult" || return 1; fi
+  if [[ -d "$attachments_dir" ]]; then cp -R "$attachments_dir" "$artifact_dir/attachments" || return 1; fi
+  return 0
 }
 
 manifest_value() {
@@ -166,7 +179,7 @@ fi
 
 cd "$repository_dir"
 print -u2 "Building the Compare Mode integration tests…"
-if ! xcodebuild build-for-testing \
+if xcodebuild build-for-testing \
   -project "Aagedal Media Player.xcodeproj" \
   -scheme "Aagedal Media Player" \
   -configuration Release \
@@ -175,9 +188,11 @@ if ! xcodebuild build-for-testing \
   ENABLE_TESTABILITY=YES \
   -only-testing:"Aagedal Media Player Tests/CompareLiveBackendTests" \
   > "$build_log" 2>&1; then
+  :
+else
+  build_status=$?
   tail -n 200 "$build_log" >&2
-  retain_artifacts
-  exit 1
+  exit "$build_status"
 fi
 
 xctestrun_files=("$derived_data"/Build/Products/*.xctestrun(N))
@@ -203,6 +218,16 @@ print -u2 "Profiling all four backend pairings plus mixed-backend visual and liv
 pre_profile_power="$(pmset -g batt 2>/dev/null | head -n 1 || true)"
 pre_profile_low_power="$(pmset -g custom 2>/dev/null | /usr/bin/awk '/Power:$/ { power = $0; sub(/:$/, "", power) } /lowpowermode/ { values = values (values ? ", " : "") power "=" $NF } END { print values }' || true)"
 pre_profile_thermal="$(pmset -g therm 2>/dev/null | tr '\n' ' ' | sed 's/[[:space:]]\{1,\}/ /g' || true)"
+# Sample throughout the run: endpoint snapshots can miss transient pressure.
+# pmset reports system thermal/speed-limit information, not per-process state.
+(
+  while true; do
+    print -r -- "timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    pmset -g therm 2>&1 || true
+    sleep 2
+  done
+) > "$thermal_log" &
+thermal_sampler_pid=$!
 set +e
 /usr/bin/time -lp \
   xcodebuild test-without-building \
@@ -221,21 +246,18 @@ set +e
     > "$profile_log" 2>&1
 profile_status=$?
 set -e
+kill "$thermal_sampler_pid" 2>/dev/null || true
+wait "$thermal_sampler_pid" 2>/dev/null || true
+thermal_sampler_pid=""
 post_profile_thermal="$(pmset -g therm 2>/dev/null | tr '\n' ' ' | sed 's/[[:space:]]\{1,\}/ /g' || true)"
 
-# XCTest treats XCTSkip as a successful test process. A profiling run with
-# missing/stale fixtures must never be reported as a passing benchmark.
-profile_metric_count="$(
-  { /usr/bin/grep -a -E '^COMPARE_PROFILE(_VISUAL|_SCOPE)? ' "$profile_log" || true; } \
-    | /usr/bin/wc -l \
-    | /usr/bin/tr -d '[:space:]'
-)"
-if /usr/bin/grep -a -q 'Test skipped' "$profile_log"; then
-  print -u2 "Compare Mode profiling tests were skipped; rejecting the run."
-  profile_status=1
-elif (( ${profile_metric_count:-0} < 8 )); then
-  print -u2 "Expected eight Compare Mode profile metrics, found ${profile_metric_count:-0}; rejecting the run."
-  profile_status=1
+# XCTest treats XCTSkip as a successful test process. Require each expected
+# scenario exactly once, so duplicates cannot hide missing scenarios. Preserve
+# xcodebuild's original failure status when validation also fails.
+if ! /usr/bin/awk -f "$repository_dir/scripts/validate-compare-profile.awk" "$profile_log"; then
+  if (( profile_status == 0 )); then
+    profile_status=1
+  fi
 fi
 
 if [[ -d "$result_bundle" ]]; then
@@ -270,13 +292,14 @@ print -r -- "- Power before measured run: ${pre_profile_power:-Unknown}"
 print -r -- "- Low Power Mode values before measured run: ${pre_profile_low_power:-Unknown}"
 print -r -- "- Thermal state before measured run: ${pre_profile_thermal:-Unavailable}"
 print -r -- "- Thermal state after measured run: ${post_profile_thermal:-Unavailable}"
+print -r -- "- Thermal sampling: pmset every 2 seconds during the run (thermal.log retained with raw artifacts)"
 print -r -- "- Fixture: $frame_size at $frame_rate fps, HEVC Main 10, BT.2020/PQ"
 print -r -- "- Fixture bytes (A/B): ${source_a_bytes:-Unknown}/${source_b_bytes:-Unknown}"
 print -r -- "- Approximate fixture bitrate Mbps (A/B): ${source_a_bitrate:-Unknown}/${source_b_bitrate:-Unknown}"
 print -r -- "- Fixture encoder: ${fixture_ffmpeg:-Unknown}"
 print -r -- "- Render surface: $render_size per decoder"
 print -r -- "- Sustained observation: $observation_seconds seconds per backend pairing"
-print -r -- "- Resource totals: aggregate for the complete optimized serial test run"
+print -r -- "- Resource totals: xcodebuild command accounting; separately hosted app processes may be excluded"
 print
 print '```text'
 if [[ "$attachments_exported" == true ]]; then
@@ -287,12 +310,16 @@ fi
 /usr/bin/grep -a -E '\*\* TEST (SUCCEEDED|FAILED) \*\*|real |user |sys |maximum resident set size' "$profile_log" || true
 print '```'
 print
+print 'Distinct thermal observations during the run:'
+print '```text'
+/usr/bin/awk '!/^timestamp=/ && NF' "$thermal_log" | /usr/bin/sort -u
+print '```'
+print
 print "Decoder drift signposts are available in Instruments under the CompareMode category."
 if [[ -n "${COMPARE_PROFILE_FIXTURE_DIR:-}" ]]; then
   print "Fixtures retained at: $fixture_dir"
 fi
 if [[ -n "$artifact_dir" ]]; then
-  retain_artifacts
   print "Raw artifacts retained at: $artifact_dir"
 fi
 
