@@ -130,11 +130,11 @@ struct InspectionLoupeOverlay: View {
         let lensSize = CGSize(width: width, height: min(140, max(60, geometry.canvasSize.height / 3)))
         let totalWidth = width * count + (isComparing ? 6 : 0)
         let totalHeight = lensSize.height + 26
-        let pointer = state.pointer ?? CGPoint(x: geometry.canvasSize.width / 2, y: geometry.canvasSize.height / 2)
-        let x = min(max(totalWidth / 2 + 8, pointer.x), max(totalWidth / 2 + 8, geometry.canvasSize.width - totalWidth / 2 - 8))
-        let preferredY = pointer.y + totalHeight / 2 + 24
-        let y = preferredY + totalHeight / 2 < geometry.canvasSize.height - 8
-            ? preferredY : max(totalHeight / 2 + 8, pointer.y - totalHeight / 2 - 24)
+        let center = LoupeGeometry.overlayCenter(
+            canvasSize: geometry.canvasSize,
+            overlaySize: CGSize(width: totalWidth, height: totalHeight),
+            pointer: state.pointer
+        )
 
         HStack(spacing: 6) {
             lens(image: primaryCapture.image, source: isComparing ? "A" : "Picture", size: lensSize, pictureRect: pictureRect(for: .primary))
@@ -142,7 +142,7 @@ struct InspectionLoupeOverlay: View {
                 lens(image: secondaryCapture.image, source: "B", size: lensSize, pictureRect: pictureRect(for: .secondary))
             }
         }
-        .position(x: x, y: y)
+        .position(center)
         .allowsHitTesting(false)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(isComparing ? "A and B" : "Picture") loupe, \(state.magnification.label), \(state.isPinned ? "pinned" : "following pointer")")

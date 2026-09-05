@@ -487,3 +487,21 @@ remains sequenced after loupe interaction acceptance.
 Verification after removing the experiment: all 335 Release tests pass with
 zero failures and no skips; release preflight passes all 61 checks. The
 retained changes are documentation only.
+
+## Pinned loupe resize correction — 2026-09-06
+
+A continuation audit found that a pinned loupe retained its original pointer
+position after the window shrank. Vertical placement could then put the lenses
+below the current canvas. Overlay placement now clamps both axes to the current
+canvas, reduces margins when space is tight, and centers unavoidable overflow
+when the canvas is smaller than the lenses. The inspected normalized picture
+coordinate remains unchanged.
+
+Three regression tests cover stale pointer coordinates after resize,
+above/below placement, and small canvases. The manual acceptance run sheet now
+explicitly includes pinning near the bottom-right corner before shrinking the
+window. Native resizing, keyboard/VoiceOver, editor round trips, and the
+release-floor hardware profile remain open gates.
+
+Verification: all 338 Release tests pass with zero failures and no skips;
+Xcode static analysis and all 61 release-preflight checks pass.

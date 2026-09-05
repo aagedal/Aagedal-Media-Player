@@ -6,6 +6,45 @@ import XCTest
 @testable import Aagedal_Media_Player
 
 final class LoupeGeometryTests: XCTestCase {
+    func testPinnedOverlayRemainsInsideCanvasAfterResize() {
+        let canvas = CGSize(width: 500, height: 400)
+        let overlay = CGSize(width: 366, height: 166)
+        for pointer in [CGPoint(x: 900, y: 800), CGPoint(x: -100, y: -100)] {
+            let center = LoupeGeometry.overlayCenter(canvasSize: canvas, overlaySize: overlay, pointer: pointer)
+            XCTAssertGreaterThanOrEqual(center.x - overlay.width / 2, 8)
+            XCTAssertGreaterThanOrEqual(center.y - overlay.height / 2, 8)
+            XCTAssertLessThanOrEqual(center.x + overlay.width / 2, canvas.width - 8)
+            XCTAssertLessThanOrEqual(center.y + overlay.height / 2, canvas.height - 8)
+        }
+    }
+
+    func testOverlayPrefersBelowPointerAndFlipsAboveNearBottom() {
+        let canvas = CGSize(width: 800, height: 600)
+        let overlay = CGSize(width: 180, height: 166)
+        XCTAssertEqual(
+            LoupeGeometry.overlayCenter(canvasSize: canvas, overlaySize: overlay, pointer: CGPoint(x: 400, y: 200)),
+            CGPoint(x: 400, y: 307)
+        )
+        XCTAssertEqual(
+            LoupeGeometry.overlayCenter(canvasSize: canvas, overlaySize: overlay, pointer: CGPoint(x: 400, y: 500)),
+            CGPoint(x: 400, y: 393)
+        )
+    }
+
+    func testSmallCanvasReducesMarginAndCentersOversizedOverlay() {
+        let overlay = CGSize(width: 180, height: 166)
+        XCTAssertEqual(
+            LoupeGeometry.overlayCenter(canvasSize: CGSize(width: 186, height: 172), overlaySize: overlay,
+                                       pointer: CGPoint(x: 900, y: 800)),
+            CGPoint(x: 93, y: 86)
+        )
+        XCTAssertEqual(
+            LoupeGeometry.overlayCenter(canvasSize: CGSize(width: 100, height: 80), overlaySize: overlay,
+                                       pointer: CGPoint(x: 900, y: 800)),
+            CGPoint(x: 50, y: 40)
+        )
+    }
+
     func testLetterboxedPictureMapsTopLeftCenterAndBottomRight() {
         let picture = CGRect(x: 0, y: 60, width: 1_920, height: 1_080)
 

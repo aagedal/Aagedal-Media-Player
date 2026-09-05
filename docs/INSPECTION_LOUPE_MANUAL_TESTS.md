@@ -56,6 +56,11 @@ replace these checks on the shipping app and release-floor hardware.
   **Expected:** the inspected coordinate stays fixed and the preview updates
   to the resulting picture. **Center and pin** selects the center and stays
   pinned; either position slider changes the coordinate and pins it.
+- [ ] Pin near the bottom-right corner of a large window, then shrink the
+  window substantially, including in paired A/B mode.
+  **Expected:** lenses remain visible within the smaller canvas and the
+  inspected picture coordinate stays fixed. Automated placement regressions
+  cover stale pointer coordinates; verify native resizing here.
 - [ ] Hide using **Show loupe**, then show it again, including rapid repeats.
   **Expected:** hiding retains magnification, pin state, and chosen position;
   no obsolete capture appears on reopening. Hidden loupes stop scheduling

@@ -34,6 +34,30 @@ nonisolated enum LoupeMagnification: String, CaseIterable, Identifiable, Sendabl
 /// Coordinates use a top-left origin throughout, matching SwiftUI's picture
 /// and lens layout. Picture bounds must exclude letterbox and pillarbox bars.
 nonisolated enum LoupeGeometry {
+    /// Keep the floating lenses within the current canvas even when a pinned
+    /// pointer still contains coordinates from a larger window. If the canvas
+    /// cannot fit an axis, center that axis so overflow is shared on both sides.
+    static func overlayCenter(canvasSize: CGSize, overlaySize: CGSize, pointer: CGPoint?) -> CGPoint {
+        guard validSize(canvasSize), validSize(overlaySize) else { return .zero }
+        let pointer = pointer ?? CGPoint(x: canvasSize.width / 2, y: canvasSize.height / 2)
+        let pointerX = pointer.x.isFinite ? pointer.x : canvasSize.width / 2
+        let pointerY = pointer.y.isFinite ? pointer.y : canvasSize.height / 2
+        let below = pointerY + overlaySize.height / 2 + 24
+        let preferredY = below + overlaySize.height / 2 <= canvasSize.height - 8
+            ? below : pointerY - overlaySize.height / 2 - 24
+
+        func boundedCenter(_ preferred: CGFloat, extent: CGFloat, canvas: CGFloat) -> CGFloat {
+            guard extent <= canvas else { return canvas / 2 }
+            let margin = min(8, (canvas - extent) / 2)
+            return min(max(preferred, extent / 2 + margin), canvas - extent / 2 - margin)
+        }
+
+        return CGPoint(
+            x: boundedCenter(pointerX, extent: overlaySize.width, canvas: canvasSize.width),
+            y: boundedCenter(preferredY, extent: overlaySize.height, canvas: canvasSize.height)
+        )
+    }
+
     static func normalizedPoint(location: CGPoint, in picture: CGRect) -> CGPoint? {
         guard validSize(picture.size),
               picture.origin.x.isFinite, picture.origin.y.isFinite,
