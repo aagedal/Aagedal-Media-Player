@@ -9,6 +9,47 @@ import XCTest
 
 @MainActor
 final class CompareSessionLifecycleTests: XCTestCase {
+    func testManualAlignmentRestoresAutomaticAndResetsOnReplacementAndStop() async {
+        let loader = ControlledCompareMetadataLoader()
+        let primary = PlayerController()
+        let session = makeSession(loader: loader)
+        let firstURL = URL(fileURLWithPath: "/tmp/compare-offset-first.mov")
+        let secondURL = URL(fileURLWithPath: "/tmp/compare-offset-second.mov")
+        session.loadSecondary(firstURL, alignedWith: primary)
+        let requestedFirst = await waitUntil { loader.hasRequest(for: firstURL) }
+        XCTAssertTrue(requestedFirst)
+        loader.succeed(firstURL, metadata: metadata(duration: 20))
+        let loadedFirst = await waitUntil { session.mapping != nil }
+        XCTAssertTrue(loadedFirst)
+        let automatic = session.mapping
+
+        session.setManualOffset(-2, primary: primary)
+        XCTAssertEqual(session.mapping?.mode, .manual)
+        XCTAssertEqual(session.secondaryTime(forPrimaryTime: 5), 3)
+        for invalid in [Double.nan, .infinity, 1e30, -1e30] {
+            session.setManualOffset(invalid, primary: primary)
+            XCTAssertEqual(session.mapping?.offset, -2)
+        }
+        session.setManualOffset(nil, primary: primary)
+        XCTAssertEqual(session.mapping, automatic)
+        session.setManualOffset(3, primary: primary)
+
+        session.loadSecondary(secondURL, alignedWith: primary)
+        XCTAssertNil(session.mapping)
+        let requestedSecond = await waitUntil { loader.hasRequest(for: secondURL) }
+        XCTAssertTrue(requestedSecond)
+        loader.succeed(secondURL, metadata: metadata(duration: 10))
+        let loadedSecond = await waitUntil { session.mapping != nil }
+        XCTAssertTrue(loadedSecond)
+        XCTAssertEqual(session.mapping?.mode, .relative)
+        XCTAssertEqual(session.mapping?.offset, 0)
+        session.setManualOffset(4, primary: primary)
+        session.stop()
+        session.setManualOffset(8, primary: primary)
+        XCTAssertNil(session.mapping)
+        primary.teardown()
+    }
+
     func testRapidReplacementIgnoresStaleMetadataCompletion() async throws {
         let loader = ControlledCompareMetadataLoader()
         let primary = PlayerController()

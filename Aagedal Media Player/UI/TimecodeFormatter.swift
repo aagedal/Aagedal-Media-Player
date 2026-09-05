@@ -90,8 +90,10 @@ nonisolated struct TimecodeRate: Equatable, Sendable {
     func frameCount(forSeconds seconds: Double) -> Int64? {
         guard seconds.isFinite else { return nil }
         let frames = seconds * Double(numerator) / Double(denominator)
-        guard frames >= Double(Int64.min), frames <= Double(Int64.max) else { return nil }
-        return Int64(frames.rounded())
+        let rounded = frames.rounded()
+        // Double(Int64.max) rounds up to 2^63, which cannot be converted to Int64.
+        guard rounded >= Double(Int64.min), rounded < Double(Int64.max) else { return nil }
+        return Int64(rounded)
     }
 
     func seconds(forFrameCount frames: Int64) -> Double {

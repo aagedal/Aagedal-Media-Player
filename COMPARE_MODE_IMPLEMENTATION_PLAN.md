@@ -33,7 +33,7 @@ primary `PlayerController`. The compare session owns:
 
 - a secondary `PlayerController`;
 - the selected compare presentation mode;
-- source-timecode or relative alignment mapping;
+- source-timecode, relative, or session-local manual alignment mapping;
 - paired transport operations;
 - loading, failure, and teardown state;
 - temporary suppression of source B audio.
@@ -341,3 +341,20 @@ thermal behavior remain manual gates.
 Run `scripts/profile-compare-mode.sh` for the automated decoder/drift baseline,
 then follow `docs/COMPARE_MODE_PERFORMANCE.md` for the Instruments visual-mode
 and GPU validation.
+
+## Manual alignment follow-up — 2026-09-05
+
+The alignment control accepts a signed total B offset in seconds or source-A
+frames, with one-frame nudges and an Automatic reset. The mapping is
+`B time = A time + offset`; manual values replace the automatic offset.
+It updates the timeline overlap, playback mapping, and newly captured review
+positions. Existing notes retain their original A/B positions. Replacing or
+removing B clears the override; reloading the same pair retains it. Invalid or
+unrepresentable values are rejected. See `docs/COMPARE_MODE_ALIGNMENT.md` for
+operation and validation. Hands-on verification remains in the release matrix.
+
+Verification: the expanded 290-test suite passes with no skips, including
+manual alignment, boundary holds, and automatic restoration on both
+MPV/AVFoundation directions. Xcode static analysis passes, and release preflight
+passes all 61 checks. This does not replace the oldest-supported-hardware,
+hands-on accessibility, or editor round-trip release gates.

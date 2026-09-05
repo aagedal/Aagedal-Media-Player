@@ -174,6 +174,14 @@ final class CompareLiveBackendTests: XCTestCase {
         )
     }
 
+    func testMPVPrimaryAndAVFoundationSecondaryApplyManualAlignmentDuringTransport() async throws {
+        try await exerciseManualAlignment(primaryBackend: .mpv, secondaryBackend: .avFoundation)
+    }
+
+    func testAVFoundationPrimaryAndMPVSecondaryApplyManualAlignmentDuringTransport() async throws {
+        try await exerciseManualAlignment(primaryBackend: .avFoundation, secondaryBackend: .mpv)
+    }
+
     func testSupportedFrameRatesUseRelativeAlignmentAndPairedSeek() async throws {
         let fixtures = try fixtureDirectory(requiredFiles: [
             "rates/23.976.mp4",
@@ -716,6 +724,93 @@ final class CompareLiveBackendTests: XCTestCase {
         session.pause(primary: primary)
         XCTAssertFalse(primary.isAudioSuppressed)
         XCTAssertTrue(secondary.isAudioSuppressed)
+    }
+
+    private func exerciseManualAlignment(
+        primaryBackend: PlaybackBackend,
+        secondaryBackend: PlaybackBackend
+    ) async throws {
+        let fixtures = try fixtureDirectory()
+        let tolerance = 1.0 / 24.0
+        try await exercisePreparedPair(
+            primaryURL: fixtures.appending(path: "compare/source-a.mov"),
+            secondaryURL: fixtures.appending(path: "compare/source-b.mov"),
+            primaryBackend: primaryBackend,
+            secondaryBackend: secondaryBackend,
+            seekTarget: 2,
+            tolerance: tolerance,
+            description: "manual alignment \(primaryBackend.rawValue)/\(secondaryBackend.rawValue)"
+        ) { primary, secondary, session in
+            let automaticMapping = try XCTUnwrap(session.mapping)
+            XCTAssertEqual(automaticMapping.mode, .sourceTimecode)
+            session.pause(primary: primary)
+            session.seek(primary: primary, to: 2)
+            guard await self.waitUntil(tolerance: tolerance, difference: {
+                primary.playbackTimeSnapshot() - 2
+            }) else {
+                XCTFail("Primary setup seek did not settle.")
+                return
+            }
+
+            for offset in [0.5, -0.5] {
+                session.setManualOffset(offset, primary: primary)
+                XCTAssertEqual(session.mapping?.mode, .manual)
+                let secondaryAligned = await self.waitUntil(tolerance: tolerance) {
+                    secondary.playbackTimeSnapshot() - (2 + offset)
+                }
+                XCTAssertTrue(secondaryAligned, "Paused offset \(offset) did not reach B's decoder.")
+                XCTAssertFalse(primary.isPlaying)
+                XCTAssertFalse(secondary.isPlaying)
+                XCTAssertEqual(primary.playbackTimeSnapshot(), 2, accuracy: tolerance)
+            }
+
+            session.play(primary: primary)
+            let bothPlaying = await self.waitUntil { primary.isPlaying && secondary.isPlaying }
+            XCTAssertTrue(bothPlaying)
+
+            // Changing alignment can move the entire pair outside overlap.
+            // A must keep advancing while B stays at the corresponding edge.
+            let secondaryDuration = try XCTUnwrap(secondary.mediaItem).durationSeconds
+            for offset in [-20.0, secondaryDuration] {
+                session.setManualOffset(offset, primary: primary)
+                XCTAssertEqual(
+                    session.overlapStatus(primaryDuration: primary.mediaItem?.durationSeconds ?? 0),
+                    .none
+                )
+                let boundary = offset < 0 ? 0 : secondaryDuration
+                let reachedBoundary = await self.waitUntil(tolerance: tolerance + 0.001) {
+                    secondary.playbackTimeSnapshot() - boundary
+                }
+                XCTAssertTrue(reachedBoundary, "B did not reach boundary for offset \(offset).")
+                let primaryStart = primary.playbackTimeSnapshot()
+                let primaryAdvanced = await self.waitUntil({
+                    primary.playbackTimeSnapshot() - primaryStart >= 0.15
+                }, timeout: .seconds(2))
+                XCTAssertTrue(primaryAdvanced, "Alignment change stopped A.")
+                XCTAssertFalse(secondary.isPlaying)
+                XCTAssertEqual(secondary.playbackTimeSnapshot(), boundary, accuracy: tolerance + 0.001)
+
+                session.setManualOffset(0.5, primary: primary)
+                let resumedAndAligned = await self.waitUntil({
+                    primary.isPlaying && secondary.isPlaying
+                        && abs(secondary.playbackTimeSnapshot()
+                               - session.secondaryTime(forPrimaryTime: primary.playbackTimeSnapshot()))
+                            <= tolerance + 0.001
+                }, timeout: .seconds(3))
+                XCTAssertTrue(resumedAndAligned, "B did not resume at the edited mapping.")
+            }
+
+            session.setManualOffset(nil, primary: primary)
+            XCTAssertEqual(session.mapping, automaticMapping)
+            let restoredWhilePlaying = await self.waitUntil({
+                primary.isPlaying && secondary.isPlaying
+                    && abs(secondary.playbackTimeSnapshot()
+                           - session.secondaryTime(forPrimaryTime: primary.playbackTimeSnapshot()))
+                        <= tolerance + 0.001
+            }, timeout: .seconds(3))
+            XCTAssertTrue(restoredWhilePlaying, "Automatic alignment did not restore during playback.")
+            session.pause(primary: primary)
+        }
     }
 
     private func exerciseRelativeAlignment(
@@ -1286,7 +1381,7 @@ final class CompareLiveBackendTests: XCTestCase {
             _ primary: PlayerController,
             _ secondary: PlayerController,
             _ session: CompareSessionController
-        ) throws -> Void
+        ) async throws -> Void
     ) async throws {
         let primary = makeController(forcedBackend: primaryBackend)
         let secondary = makeController(forcedBackend: secondaryBackend)
@@ -1318,7 +1413,7 @@ final class CompareLiveBackendTests: XCTestCase {
             return
         }
 
-        try assertions(primary, secondary, session)
+        try await assertions(primary, secondary, session)
 
         session.seek(primary: primary, to: seekTarget)
         let primaryReachedTarget = await waitUntil(tolerance: tolerance) {

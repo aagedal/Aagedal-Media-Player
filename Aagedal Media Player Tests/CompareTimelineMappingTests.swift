@@ -6,6 +6,59 @@ import XCTest
 @testable import Aagedal_Media_Player
 
 final class CompareTimelineMappingTests: XCTestCase {
+    func testManualOffsetOverridesTimecodeAndMovesOverlap() {
+        let mapping = CompareTimelineMapping(
+            primaryStartSeconds: 3_600,
+            secondaryStartSeconds: 7_200,
+            secondaryDuration: 20,
+            manualOffset: -2
+        )
+        XCTAssertEqual(mapping.mode, .manual)
+        XCTAssertEqual(mapping.offset, -2)
+        XCTAssertEqual(mapping.secondaryTime(forPrimaryTime: 5), 3)
+        XCTAssertEqual(mapping.primaryOverlapRange(primaryDuration: 30), 2...22)
+        XCTAssertEqual(mapping.secondaryTime(forPrimaryTime: 0), 0)
+        XCTAssertEqual(mapping.secondaryTime(forPrimaryTime: 30), 20)
+    }
+
+    func testManualZeroAndFractionalFrameOffsets() {
+        for fps in [24_000.0 / 1_001, 25, 30_000.0 / 1_001, 60_000.0 / 1_001] {
+            let rate = TimecodeRate(frameRate: fps)
+            let mapping = CompareTimelineMapping(
+                primaryStartSeconds: nil,
+                secondaryStartSeconds: nil,
+                secondaryDuration: 20,
+                manualOffset: rate.seconds(forFrameCount: 1)
+            )
+            XCTAssertEqual(mapping.secondaryTime(forPrimaryTime: 1), 1 + 1 / fps, accuracy: 0.000_001)
+        }
+        let zero = CompareTimelineMapping(
+            primaryStartSeconds: 100, secondaryStartSeconds: 50,
+            secondaryDuration: 20, manualOffset: 0
+        )
+        XCTAssertEqual(zero.mode, .manual)
+        XCTAssertEqual(zero.offset, 0)
+    }
+
+    func testManualOffsetLabelPreservesWholeDays() {
+        let mapping = CompareTimelineMapping(
+            primaryStartSeconds: nil, secondaryStartSeconds: nil,
+            secondaryDuration: 200_000, manualOffset: -90_000
+        )
+        XCTAssertEqual(mapping.offsetLabel(primaryFrameRate: 25), "B = A −1d 01:00:00:00")
+    }
+
+    func testNonfiniteManualOffsetFallsBackToAutomaticAlignment() {
+        for offset in [Double.nan, .infinity, -.infinity] {
+            let mapping = CompareTimelineMapping(
+                primaryStartSeconds: 100, secondaryStartSeconds: 50,
+                secondaryDuration: 20, manualOffset: offset
+            )
+            XCTAssertEqual(mapping.mode, .sourceTimecode)
+            XCTAssertEqual(mapping.offset, 50)
+        }
+    }
+
     func testDriftPolicyUsesOnePrimaryFramePlusClockMarginAcrossVerificationRates() {
         let rates = [
             24_000.0 / 1_001.0,

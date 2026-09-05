@@ -328,3 +328,22 @@ struct UpdateAvailableBanner: View {
         .allowsHitTesting(true)
     }
 }
+
+/// Ordinary windows share commands, but keep independent playback clocks.
+struct TransportSyncStatusView: View {
+    @ObservedObject private var windowManager = WindowManager.shared
+    @AppStorage(AppSettings.syncPlaybackControls.key)
+    private var syncPlaybackControls = AppSettings.syncPlaybackControls.defaultValue
+
+    var body: some View {
+        if syncPlaybackControls, windowManager.mediaWindowCount > 1 {
+            Label("Transport Sync", systemImage: "link")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize()
+                .help("Playback commands are shared across \(windowManager.mediaWindowCount) windows. Their playback clocks are independent; they are not continuously frame-locked. Use Playback > Align Windows to Current Timecode Once for a one-time alignment, or open a comparison file in Compare Mode.")
+                .accessibilityLabel("Transport sync active across \(windowManager.mediaWindowCount) windows")
+                .accessibilityHint("Shared playback commands; windows are not continuously frame-locked.")
+        }
+    }
+}

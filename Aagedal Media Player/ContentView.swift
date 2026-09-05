@@ -378,6 +378,7 @@ struct ContentView: View {
         )
 
         return HStack(spacing: 10) {
+            TransportSyncStatusView()
             Spacer()
 
             if compareSession.isLoading {
@@ -601,6 +602,7 @@ struct ContentView: View {
                 }
 
                 if let mapping = compareSession.mapping {
+                    CompareAlignmentControl(session: compareSession, primary: controller)
                     Text("\(mapping.mode.label) · \(overlapStatus.label)")
                         .font(.caption)
                         .foregroundStyle(
@@ -610,7 +612,7 @@ struct ContentView: View {
                         )
                         .help(
                             overlapStatus == .none
-                                ? "The source-timecode ranges do not overlap. Source B stays parked on its nearest boundary during playback."
+                                ? "The aligned timelines do not overlap. Source B stays parked on its nearest boundary during playback."
                                 : "How the source timelines align. The timeline shows the exact B offset and shared playable interval."
                         )
                         .accessibilityLabel("\(mapping.mode.label), \(overlapStatus.label)")

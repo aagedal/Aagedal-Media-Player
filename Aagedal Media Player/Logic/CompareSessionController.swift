@@ -62,11 +62,13 @@ nonisolated enum CompareFrameResolution: String, CaseIterable, Sendable {
 nonisolated enum CompareAlignmentMode: Equatable, Sendable {
     case sourceTimecode
     case relative
+    case manual
 
     var label: String {
         switch self {
         case .sourceTimecode: "Source timecode"
         case .relative: "Relative start"
+        case .manual: "Manual offset"
         }
     }
 }
@@ -186,9 +188,13 @@ nonisolated struct CompareTimelineMapping: Equatable, Sendable {
     init(
         primaryStartSeconds: TimeInterval?,
         secondaryStartSeconds: TimeInterval?,
-        secondaryDuration: TimeInterval
+        secondaryDuration: TimeInterval,
+        manualOffset: TimeInterval? = nil
     ) {
-        if let primaryStartSeconds,
+        if let manualOffset, manualOffset.isFinite {
+            mode = .manual
+            offset = manualOffset
+        } else if let primaryStartSeconds,
            let secondaryStartSeconds,
            primaryStartSeconds.isFinite,
            secondaryStartSeconds.isFinite {
@@ -265,8 +271,12 @@ nonisolated struct CompareTimelineMapping: Equatable, Sendable {
             dropFrame: dropFrame
         )
         let frames = rate.frameCount(forSeconds: abs(offset)) ?? 0
+        let framesPerDay = rate.nominalFPS * 86_400
+            - (rate.isDropFrame ? rate.droppedFramesPerMinute * 54 * 24 : 0)
+        let days = frames / framesPerDay
+        let dayLabel = days > 0 ? "\(days)d " : ""
         let timecode = rate.timecode(forFrameCount: frames)
-        return "B = A \(sign)\(timecode)"
+        return "B = A \(sign)\(dayLabel)\(timecode)"
     }
 
     func secondaryPlaybackDisposition(
@@ -393,6 +403,7 @@ final class CompareSessionController: ObservableObject {
     @Published private(set) var comparedAudioChannel: CompareAudioChannelOption?
     @Published private(set) var secondaryURL: URL?
     @Published private(set) var mapping: CompareTimelineMapping?
+    private var automaticMapping: CompareTimelineMapping?
     @Published private(set) var isLoading = false
     @Published private(set) var isSecondaryReady = false
     @Published private(set) var loadError: String?
@@ -510,6 +521,7 @@ final class CompareSessionController: ObservableObject {
         loadError = nil
         secondaryURL = nil
         mapping = nil
+        automaticMapping = nil
         reviewNotes = []
         reviewSidecarURL = nil
         reviewError = nil
@@ -546,6 +558,7 @@ final class CompareSessionController: ObservableObject {
                 secondaryDuration: item.durationSeconds
             )
 
+            self.automaticMapping = newMapping
             self.mapping = newMapping
             self.secondaryURL = url
             self.isLoading = false
@@ -602,6 +615,7 @@ final class CompareSessionController: ObservableObject {
         primaryLoopCancellable = nil
         secondaryURL = nil
         mapping = nil
+        automaticMapping = nil
         isLoading = false
         isSecondaryReady = false
         loadError = nil
@@ -761,6 +775,30 @@ final class CompareSessionController: ObservableObject {
 
     func togglePrimarySecondary() {
         viewMode = viewMode == .primary ? .secondary : .primary
+    }
+
+    /// The explicit offset replaces automatic alignment: B time = A time + offset.
+    /// It belongs to this pair and is cleared when B is replaced or removed.
+    func setManualOffset(_ seconds: TimeInterval?, primary: PlayerController) {
+        guard isActive, let automaticMapping else { return }
+        let rate = TimecodeRate(frameRate: primary.mediaItem?.metadata?.primaryVideoStream?.frameRate?.value ?? 30)
+        if let seconds, rate.frameCount(forSeconds: abs(seconds)) == nil { return }
+        if let seconds {
+            mapping = CompareTimelineMapping(
+                primaryStartSeconds: nil,
+                secondaryStartSeconds: nil,
+                secondaryDuration: automaticMapping.secondaryDuration,
+                manualOffset: seconds
+            )
+        } else {
+            mapping = automaticMapping
+        }
+        secondaryBoundaryHold = nil
+        synchronize(primary: primary)
+        if primary.isPlaying && !isScrubbing {
+            updateSecondaryTransport(primary: primary, forceRateMatch: true)
+            startDriftCorrection(primary: primary)
+        }
     }
 
     func setFrameResolution(_ resolution: CompareFrameResolution, primary: PlayerController) {

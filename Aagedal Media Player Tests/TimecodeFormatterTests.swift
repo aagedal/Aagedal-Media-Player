@@ -7,6 +7,14 @@ import XCTest
 
 final class TimecodeFormatterTests: XCTestCase {
     @MainActor
+    func testFrameCountRejectsRoundedIntegerOverflow() {
+        let rate = TimecodeRate(frameRate: 1)
+        XCTAssertNil(rate.frameCount(forSeconds: Double(Int64.max)))
+        XCTAssertNil(rate.frameCount(forSeconds: .greatestFiniteMagnitude))
+        XCTAssertEqual(rate.frameCount(forSeconds: Double(Int64.min)), Int64.min)
+    }
+
+    @MainActor
     func testTwentyFourFPSFormatting() {
         XCTAssertEqual(
             TimecodeFormatter.timecode(from: 3_661.5, frameRate: 24),

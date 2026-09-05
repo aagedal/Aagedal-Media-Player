@@ -245,7 +245,16 @@ private struct GeneralSettingsView: View {
             Section("Windows") {
                 Toggle("Allow Multiple Windows", isOn: $allowMultipleWindows)
                 if allowMultipleWindows {
-                    Toggle("Sync Playback Controls", isOn: $syncPlaybackControls)
+                    Toggle("Sync Transport Commands Across Windows", isOn: $syncPlaybackControls)
+                    Text("Shares playback and navigation commands. Windows keep independent playback clocks and are not continuously frame-locked.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text("Playback > Align Windows to Current Timecode Once seeks other windows once, using source timecode when both files have it, otherwise relative time. This works independently of transport sync.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text("For two-file inspection, open a comparison file in Compare Mode to use a shared timeline and explicit alignment.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
                 Toggle("Show Cursor Hide Zone Indicator", isOn: $showCursorHideHint)
                 Toggle("Open Windows at Source Resolution", isOn: $openAtSourceResolution)
@@ -786,6 +795,7 @@ private struct KeyboardShortcutsView: View {
 
                 shortcutSection("General", shortcuts: [
                     ("\u{2318}N", "New window (multi-window mode)"),
+                    ("\u{21E7}\u{2318}S", "Align windows to current timecode once"),
                     ("\u{2318}W", "Close window"),
                     ("\u{2318}S", "Screenshot"),
                     ("\u{2318}F", "Toggle fullscreen"),

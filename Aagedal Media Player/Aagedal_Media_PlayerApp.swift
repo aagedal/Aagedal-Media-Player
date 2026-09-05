@@ -52,6 +52,8 @@ struct Aagedal_Media_PlayerApp: App {
     @FocusedValue(\.isCompareModeActive) private var isCompareModeActive
     @AppStorage(AppSettings.allowMultipleWindows.key)
     private var allowMultipleWindows = AppSettings.allowMultipleWindows.defaultValue
+    @AppStorage(AppSettings.syncPlaybackControls.key)
+    private var syncPlaybackControls = AppSettings.syncPlaybackControls.defaultValue
 
     /// Construct Sparkle eagerly so the updater attaches to the run loop
     /// before the first window appears. Inert for Homebrew installs and when
@@ -220,10 +222,13 @@ struct Aagedal_Media_PlayerApp: App {
 
                 Divider()
 
-                Button("Sync Timecode") {
+                Toggle("Sync Transport Commands Across Windows", isOn: $syncPlaybackControls)
+
+                Button("Align Windows to Current Timecode Once") {
                     NotificationCenter.default.post(.syncTimecode)
                 }
                 .keyboardShortcut("s", modifiers: [.command, .shift])
+                .disabled(!mediaLoaded)
 
                 Divider()
 

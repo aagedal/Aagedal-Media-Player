@@ -6,17 +6,18 @@
 
 import SwiftUI
 import AppKit
+import Combine
 
 @MainActor
-final class WindowManager {
+final class WindowManager: ObservableObject {
     static let shared = WindowManager()
 
     struct WeakWindow {
         weak var window: NSWindow?
     }
 
-    private(set) var windows: [UUID: WeakWindow] = [:]
-    private var windowsWithMedia: Set<UUID> = []
+    @Published private(set) var windows: [UUID: WeakWindow] = [:]
+    @Published private var windowsWithMedia: Set<UUID> = []
 
     /// URLs queued for new windows that haven't appeared yet.
     /// Each new window's `.task` pops one URL from this array.
@@ -51,6 +52,12 @@ final class WindowManager {
     }
 
     private init() {}
+
+    /// Count registered, live player windows with an opened or reserved file.
+    /// Compare Mode's secondary player belongs to the same window.
+    var mediaWindowCount: Int {
+        windowsWithMedia.filter { windows[$0]?.window != nil }.count
+    }
 
     /// True once at least one window has been registered and is still alive.
     var hasWindows: Bool {

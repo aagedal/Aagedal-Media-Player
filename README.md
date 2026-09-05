@@ -7,6 +7,11 @@ A fast, private professional media inspection player for macOS. Compare masters,
 inspect picture and sound, verify metadata and timecode, and export review evidence
 without uploading your media.
 
+Compare Mode supports [manual alignment](docs/COMPARE_MODE_ALIGNMENT.md) in
+seconds or source-A frames. Ordinary windows can also share transport commands;
+see [window synchronization](docs/WINDOW_SYNCHRONIZATION.md) for its scope and
+the separate one-time timecode alignment command.
+
 ## Roadmap
 
 See [PRODUCT_ROADMAP.md](PRODUCT_ROADMAP.md) for the release sequence from the

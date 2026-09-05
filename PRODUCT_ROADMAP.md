@@ -157,11 +157,12 @@ Acceptance:
 - [x] Show persistent A/B identity and compact codec, raster, frame-rate,
   duration, color-space, transfer-function, and audio-layout mismatches.
 - [x] Show the comparison offset and overlapping interval on the timeline.
-- [ ] Render existing chapter markers directly on the timeline.
-- [x] Explain whether alignment is source-timecode or relative. Manual
-  adjustment remains future work.
-- [ ] Allow a manual frame/time offset when embedded timecode is missing or
-  intentionally different.
+- [x] Render existing chapter markers directly on the timeline.
+- [x] Explain whether alignment is source-timecode, relative, or a manual offset.
+- [x] Allow a manual frame/time offset when embedded timecode is missing or
+  intentionally different. The alignment control accepts signed seconds or
+  source-A frames, supports one-frame nudges, and restores automatic alignment.
+  Overrides are session-local and reset when B is replaced or removed.
 
 ### Milestone F — Clarify synchronization
 
@@ -169,13 +170,20 @@ Compare Mode should replace the multi-window settings puzzle for the common
 two-file workflow. Ordinary multi-window synchronization remains useful, but
 its scope and state must be explicit.
 
-- [ ] Show when playback-command synchronization is active.
-- [ ] Distinguish transport synchronization from one-shot timecode alignment in
+- [x] Show when playback-command synchronization is active.
+- [x] Distinguish transport synchronization from one-shot timecode alignment in
   settings and menus.
-- [ ] Explain that ordinary windows are synchronized but not continuously
+- [x] Explain that ordinary windows are synchronized but not continuously
   frame-locked.
-- [ ] Provide a direct “Compare these windows” path where technically safe, or
-  document why a file must be reopened inside a compare session.
+- [x] Provide a direct “Compare these windows” path where technically safe, or
+  document why a file must be reopened inside a compare session. See
+  `docs/WINDOW_SYNCHRONIZATION.md` for scope, ownership, and the reopen workflow.
+
+The September 5 implementation adds observable participant counts and an active
+transport-sync indicator. Hands-on keyboard/VoiceOver and live-media checks
+remain part of the 1.7 verification gate, not implied by these code completions.
+The expanded 290-test suite passes without skips; static analysis and the
+61-check release preflight also pass.
 
 ### 1.7 release gates
 

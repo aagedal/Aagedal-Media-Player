@@ -5,6 +5,9 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Added
+- Manual comparison alignment in signed seconds or source-A frames, one-frame nudges, and automatic-alignment reset.
+- Chapter markers on the playback timeline with current-chapter accessibility feedback.
+- A visible multi-window transport-sync indicator and explicit transport versus one-shot alignment commands.
 - Drop-frame-correct SMPTE timecode handling and regression coverage for supported frame rates.
 - Collision-safe, atomic screenshot and trim output with visible completion and failure actions.
 - Cancellation-aware ffmpeg execution, bounded scope scheduling, and generated media fixtures.

@@ -398,6 +398,12 @@ struct ControlsView: View {
                     }
                 }
 
+                ChapterTimelineMarkers(
+                    chapters: controller.chapterOptions,
+                    duration: duration,
+                    width: width
+                )
+
                 // Playhead — thin vertical line
                 Rectangle()
                     .fill(Color(red: 1.0, green: 0.071, blue: 0.361)) // #FF125C
@@ -464,6 +470,9 @@ struct ControlsView: View {
             .accessibilityLabel("Playback position")
             .accessibilityValue(timelineAccessibilityValue)
             .accessibilityHint("Use Left and Right Arrow to seek one frame.")
+            .help(controller.chapterOptions.isEmpty
+                  ? "Drag to seek. Hold Option for precision scrubbing."
+                  : "Diamonds mark chapters. Use the Chapters menu to jump to a chapter. Hold Option for precision scrubbing.")
             .accessibilityAdjustableAction { direction in
                 switch direction {
                 case .increment:
@@ -497,7 +506,10 @@ struct ControlsView: View {
             mode: timecodeMode,
             isDuration: true
         )
-        let playbackValue = "\(current) of \(duration)"
+        let chapterTitle = controller.chapterOptions.last {
+            $0.time.isFinite && $0.time <= displayTime + 0.001
+        }?.title
+        let playbackValue = "\(current) of \(duration)" + (chapterTitle.map { ". Chapter: \($0)" } ?? "")
         guard compareSession.isActive else {
             return playbackValue
         }
