@@ -93,6 +93,39 @@ final class CompareTimelineMappingTests: XCTestCase {
         }
     }
 
+    func testDriftPolicyDetectsOnlyForwardTimelineWraps() {
+        let policy = CompareDriftPolicy(primaryFrameRate: 24)
+
+        XCTAssertTrue(
+            policy.didWrapForward(
+                previousPrimaryTime: 11.95,
+                currentPrimaryTime: 0.02,
+                primaryPlaybackSpeed: 1
+            )
+        )
+        XCTAssertFalse(
+            policy.didWrapForward(
+                previousPrimaryTime: 1,
+                currentPrimaryTime: 1 - policy.frameDuration,
+                primaryPlaybackSpeed: 1
+            )
+        )
+        XCTAssertFalse(
+            policy.didWrapForward(
+                previousPrimaryTime: 10,
+                currentPrimaryTime: 9,
+                primaryPlaybackSpeed: -1
+            )
+        )
+        XCTAssertFalse(
+            policy.didWrapForward(
+                previousPrimaryTime: .nan,
+                currentPrimaryTime: 0,
+                primaryPlaybackSpeed: 1
+            )
+        )
+    }
+
     func testSourceTimecodeMappingUsesAbsoluteTimeline() {
         let mapping = CompareTimelineMapping(
             primaryStartSeconds: 3_600,

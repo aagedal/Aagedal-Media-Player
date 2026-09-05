@@ -307,9 +307,9 @@ nonisolated struct CompareTimelineMapping: Equatable, Sendable {
 nonisolated struct CompareDriftPolicy: Equatable, Sendable {
     static let fallbackFrameRate = 30.0
     static let correctionCooldown: TimeInterval = 0.25
-    static let correctionSettlementTimeout: TimeInterval = 1
+    static let correctionSettlementTimeout: TimeInterval = 0.25
+    static let maximumRateNudgeDuration: TimeInterval = 0.5
     static let clockComparisonTolerance: TimeInterval = 0.001
-    static let avFoundationRateNudgeFraction = 0.25
     static let maximumRateCorrectionFraction = 0.5
     static let rateCorrectionGain = 2.0
     static let hardSeekThreshold: TimeInterval = 1
@@ -352,6 +352,18 @@ nonisolated struct CompareDriftPolicy: Equatable, Sendable {
               ),
               abs(drift) > correctionThreshold else { return nil }
         return expectedSecondaryTime
+    }
+
+    func didWrapForward(
+        previousPrimaryTime: TimeInterval,
+        currentPrimaryTime: TimeInterval,
+        primaryPlaybackSpeed: Float
+    ) -> Bool {
+        guard previousPrimaryTime.isFinite,
+              currentPrimaryTime.isFinite,
+              primaryPlaybackSpeed.isFinite,
+              primaryPlaybackSpeed > 0 else { return false }
+        return currentPrimaryTime + correctionThreshold < previousPrimaryTime
     }
 }
 
@@ -402,11 +414,13 @@ final class CompareSessionController: ObservableObject {
     private var reviewExportSavePanel: NSSavePanel?
     private var shouldResumeAfterAudioTrackSelection = false
     private var secondaryBoundaryHold: CompareSecondaryPlaybackDisposition?
+    private var isScrubbing = false
     private var secondaryPlaybackPhaseCancellable: AnyCancellable?
+    private var primaryLoopCancellable: AnyCancellable?
     private var loadGeneration = OperationGeneration()
     private var reviewRevision: UInt64 = 0
     private var isReviewSidecarWritable = false
-    private let reviewStore = CompareReviewSidecarStore.shared
+    private let reviewStore: any CompareReviewSidecarStoring
     private let metadataLoader: MetadataLoader
     private weak var primaryAudioController: PlayerController?
 
@@ -417,11 +431,13 @@ final class CompareSessionController: ObservableObject {
 
     init(
         secondaryController: PlayerController? = nil,
+        reviewStore: any CompareReviewSidecarStoring = CompareReviewSidecarStore.shared,
         metadataLoader: @escaping MetadataLoader = { url in
             try await MetadataService.shared.metadata(for: url)
         }
     ) {
         self.secondaryController = secondaryController ?? PlayerController()
+        self.reviewStore = reviewStore
         self.metadataLoader = metadataLoader
         self.secondaryController.setAudioSuppressed(true)
         secondaryPlaybackPhaseCancellable = self.secondaryController.$playbackPhase
@@ -454,18 +470,29 @@ final class CompareSessionController: ObservableObject {
             primaryAudioController?.setAudioSuppressed(false)
         }
         primaryAudioController = primary
+        primaryLoopCancellable?.cancel()
+        primaryLoopCancellable = primary.$playbackLoopCount
+            .dropFirst()
+            .sink { [weak self, weak primary] _ in
+                guard let self, let primary else { return }
+                self.synchronizeAfterPrimaryLoop(primary: primary)
+            }
 
         let generation = loadGeneration.advance()
         beginSecondaryLoadSignpost()
         loadTask?.cancel()
         readinessTask?.cancel()
         reviewLoadTask?.cancel()
+        reviewSaveTask?.cancel()
+        reviewSaveTask = nil
+        reviewRevision &+= 1
         reviewExportTask?.cancel()
         reviewExportSavePanel?.cancel(nil)
         reviewExportSavePanel = nil
         audioTrackSelectionTask?.cancel()
         audioTrackSelectionTask = nil
         shouldResumeAfterAudioTrackSelection = false
+        isScrubbing = false
         stopDriftCorrection()
         secondaryBoundaryHold = nil
         secondaryWaveformGenerator.cancel()
@@ -549,6 +576,9 @@ final class CompareSessionController: ObservableObject {
         readinessTask = nil
         reviewLoadTask?.cancel()
         reviewLoadTask = nil
+        reviewSaveTask?.cancel()
+        reviewSaveTask = nil
+        reviewRevision &+= 1
         reviewExportTask?.cancel()
         reviewExportTask = nil
         reviewExportSavePanel?.cancel(nil)
@@ -556,6 +586,7 @@ final class CompareSessionController: ObservableObject {
         audioTrackSelectionTask?.cancel()
         audioTrackSelectionTask = nil
         shouldResumeAfterAudioTrackSelection = false
+        isScrubbing = false
         stopDriftCorrection()
         secondaryBoundaryHold = nil
         endSecondaryLoadSignpost()
@@ -567,6 +598,8 @@ final class CompareSessionController: ObservableObject {
         secondaryController.setAudioSuppressed(true)
         primaryAudioController?.setAudioSuppressed(false)
         primaryAudioController = nil
+        primaryLoopCancellable?.cancel()
+        primaryLoopCancellable = nil
         secondaryURL = nil
         mapping = nil
         isLoading = false
@@ -756,6 +789,10 @@ final class CompareSessionController: ObservableObject {
 
     func setDifferenceGain(_ gain: Double) {
         differenceGain = Self.clampedDifferenceGain(gain)
+    }
+
+    func setLoopPlayback(_ enabled: Bool, primary: PlayerController) {
+        primary.updateLoopPlayback(enabled)
     }
 
     nonisolated static func clampedUnitValue(_ value: Double) -> Double {
@@ -1048,6 +1085,7 @@ final class CompareSessionController: ObservableObject {
         guard let reviewSidecarURL else { return }
         reviewRevision &+= 1
         let revision = reviewRevision
+        let generation = loadGeneration.current
         let previousSave = reviewSaveTask
         let reviewStore = reviewStore
         reviewSaveTask = Task { @MainActor [weak self] in
@@ -1061,13 +1099,17 @@ final class CompareSessionController: ObservableObject {
                     secondaryURL: secondaryURL
                 )
                 guard let self else { return }
-                guard !Task.isCancelled, revision == self.reviewRevision else { return }
+                guard !Task.isCancelled,
+                      self.loadGeneration.isCurrent(generation),
+                      revision == self.reviewRevision else { return }
                 self.reviewNotes = document.notes
                 self.reviewError = nil
                 self.reviewSaveTask = nil
             } catch {
                 guard let self else { return }
-                guard !Task.isCancelled, revision == self.reviewRevision else { return }
+                guard !Task.isCancelled,
+                      self.loadGeneration.isCurrent(generation),
+                      revision == self.reviewRevision else { return }
                 self.reviewError = "Could not save comparison notes: \(error.localizedDescription)"
                 self.reviewSaveTask = nil
             }
@@ -1093,6 +1135,7 @@ final class CompareSessionController: ObservableObject {
     }
 
     func pause(primary: PlayerController) {
+        isScrubbing = false
         primary.pause()
         guard isActive else { return }
         secondaryController.pause()
@@ -1157,6 +1200,7 @@ final class CompareSessionController: ObservableObject {
     }
 
     func seek(primary: PlayerController, to time: TimeInterval) {
+        isScrubbing = false
         primary.seekTo(time)
         guard isActive else { return }
         secondaryController.seekTo(mappedSecondaryTime(for: time))
@@ -1166,6 +1210,13 @@ final class CompareSessionController: ObservableObject {
     }
 
     func scrub(primary: PlayerController, to time: TimeInterval) {
+        if !isScrubbing {
+            isScrubbing = true
+            // Interactive seeks own both decoder clocks until the drag ends.
+            // Suspending the correction loop prevents it from issuing a rate
+            // nudge or hard seek against either backend's scrub throttling.
+            stopDriftCorrection()
+        }
         primary.scrub(to: time)
         guard isActive else { return }
         secondaryController.scrub(to: mappedSecondaryTime(for: time))
@@ -1173,8 +1224,16 @@ final class CompareSessionController: ObservableObject {
 
     func endScrubbing(primary: PlayerController, at time: TimeInterval) {
         primary.endScrubbing(at: time)
-        guard isActive else { return }
+        guard isActive else {
+            isScrubbing = false
+            return
+        }
         secondaryController.endScrubbing(at: mappedSecondaryTime(for: time))
+        isScrubbing = false
+        if primary.isPlaying {
+            updateSecondaryTransport(primary: primary, at: time, forceRateMatch: true)
+            startDriftCorrection(primary: primary)
+        }
     }
 
     func reload(primary: PlayerController) {
@@ -1301,7 +1360,23 @@ final class CompareSessionController: ObservableObject {
         }
         endSecondaryLoadSignpost()
         Self.signposter.emitEvent("Secondary decoder readiness timeout")
+        // Treat the timeout as terminal for this decoder attempt. In
+        // particular, invalidate an asynchronous backend selection that may
+        // ignore task cancellation; otherwise it can publish `.ready` after
+        // this error and leave the session in a contradictory half-revived
+        // state. Keep the selected URL/mapping so the failed Compare session
+        // still exposes Replace and Exit in the toolbar.
+        readinessTask?.cancel()
+        audioTrackSelectionTask?.cancel()
+        audioTrackSelectionTask = nil
+        shouldResumeAfterAudioTrackSelection = false
+        stopDriftCorrection()
+        secondaryBoundaryHold = nil
+        selectComparedAudioChannel(nil, primary: primary)
         selectAudioSource(.primary, primary: primary)
+        secondaryController.teardown()
+        secondaryController.setAudioSuppressed(true)
+        isSecondaryReady = false
         loadError = "The comparison file did not become ready for playback."
         readinessTask = nil
     }
@@ -1343,6 +1418,19 @@ final class CompareSessionController: ObservableObject {
                 secondaryController.seekTo(mappedSecondaryTime(for: primaryTime))
             }
         }
+    }
+
+    private func synchronizeAfterPrimaryLoop(primary: PlayerController) {
+        guard isActive, secondaryController.isReady else { return }
+        let primaryTime = primary.playbackTimeSnapshot()
+        secondaryBoundaryHold = nil
+        secondaryController.seekTo(mappedSecondaryTime(for: primaryTime))
+        updateSecondaryTransport(
+            primary: primary,
+            at: primaryTime,
+            forceRateMatch: true
+        )
+        Self.signposter.emitEvent("Primary loop synchronized")
     }
 
     private func matchSecondaryTransport(to primarySpeed: Float) {
@@ -1390,7 +1478,9 @@ final class CompareSessionController: ObservableObject {
             var outOfToleranceSince: TimeInterval?
             var isWaitingForCorrectionToSettle = false
             var isRateNudged = false
+            var rateNudgeStartTime: TimeInterval?
             let monitoringStartTime = ProcessInfo.processInfo.systemUptime
+            var previousPrimaryTime = primary.playbackTimeSnapshot()
             while !Task.isCancelled,
                   self.loadGeneration.isCurrent(generation),
                   self.isActive {
@@ -1401,12 +1491,43 @@ final class CompareSessionController: ObservableObject {
                 let primaryBefore = primary.playbackTimeSnapshot()
                 let primaryAfter = primary.playbackTimeSnapshot()
                 let primaryTime = (primaryBefore + primaryAfter) / 2
+                let didWrapForward = policy.didWrapForward(
+                    previousPrimaryTime: previousPrimaryTime,
+                    currentPrimaryTime: primaryTime,
+                    primaryPlaybackSpeed: primary.currentPlaybackSpeed
+                )
+                previousPrimaryTime = primaryTime
+                if didWrapForward {
+                    // A's backend loops independently. Reposition B before
+                    // asking it to resume so a decoder parked at EOF cannot
+                    // remain stopped until the ordinary drift cooldown fires.
+                    if isRateNudged {
+                        self.secondaryController.restoreSynchronizationPlaybackRate()
+                    }
+                    self.secondaryBoundaryHold = nil
+                    self.secondaryController.seekTo(
+                        self.mappedSecondaryTime(for: primaryTime)
+                    )
+                    self.updateSecondaryTransport(
+                        primary: primary,
+                        at: primaryTime,
+                        forceRateMatch: true
+                    )
+                    lastCorrectionTime = ProcessInfo.processInfo.systemUptime
+                    outOfToleranceSince = nil
+                    isWaitingForCorrectionToSettle = true
+                    isRateNudged = false
+                    rateNudgeStartTime = nil
+                    Self.signposter.emitEvent("Primary loop synchronized")
+                    continue
+                }
                 let previousBoundaryHold = self.secondaryBoundaryHold
                 self.updateSecondaryTransport(primary: primary, at: primaryTime)
                 if self.secondaryBoundaryHold != nil {
                     if isRateNudged {
                         self.secondaryController.restoreSynchronizationPlaybackRate()
                         isRateNudged = false
+                        rateNudgeStartTime = nil
                     }
                     outOfToleranceSince = nil
                     isWaitingForCorrectionToSettle = false
@@ -1439,6 +1560,7 @@ final class CompareSessionController: ObservableObject {
                     if isRateNudged {
                         self.secondaryController.restoreSynchronizationPlaybackRate()
                         isRateNudged = false
+                        rateNudgeStartTime = nil
                     }
                     outOfToleranceSince = nil
                     isWaitingForCorrectionToSettle = false
@@ -1452,37 +1574,47 @@ final class CompareSessionController: ObservableObject {
                     guard sampleTime - lastCorrectionTime >=
                             CompareDriftPolicy.correctionSettlementTimeout else { continue }
                     isWaitingForCorrectionToSettle = false
-                    outOfToleranceSince = sampleTime
-                    continue
+                    // A seek that has not settled by this point gets one
+                    // immediate retry instead of consuming another complete
+                    // cooldown and exceeding the one-second recovery budget.
+                    outOfToleranceSince = sampleTime - CompareDriftPolicy.correctionCooldown
                 }
 
-                if absoluteDrift > policy.correctionThreshold,
+                let didExhaustRateNudge = isRateNudged
+                    && sampleTime - (rateNudgeStartTime ?? sampleTime)
+                        >= CompareDriftPolicy.maximumRateNudgeDuration
+                if didExhaustRateNudge {
+                    self.secondaryController.restoreSynchronizationPlaybackRate()
+                    isRateNudged = false
+                    rateNudgeStartTime = nil
+                    outOfToleranceSince = sampleTime - CompareDriftPolicy.correctionCooldown
+                }
+
+                if self.secondaryController.useMPV,
+                   absoluteDrift > policy.correctionThreshold,
                    !primary.isReversing,
                    !self.secondaryController.isReversing,
-                   absoluteDrift < CompareDriftPolicy.hardSeekThreshold {
-                    let multiplier: Double
-                    if self.secondaryController.useMPV {
-                        let maximumCorrection =
-                            CompareDriftPolicy.maximumRateCorrectionFraction
-                        let unboundedCorrection =
-                            -signedDrift * CompareDriftPolicy.rateCorrectionGain
-                        let rateCorrection = min(
-                            maximumCorrection,
-                            max(-maximumCorrection, unboundedCorrection)
-                        )
-                        multiplier = 1 + rateCorrection
-                    } else {
-                        // Reassigning AVPlayer.rate on every clock sample can
-                        // repeatedly restart its timebase. Hold one modest
-                        // nudge until the clocks enter the convergence band.
-                        guard !isRateNudged else { continue }
-                        multiplier = signedDrift > 0
-                            ? 1 - CompareDriftPolicy.avFoundationRateNudgeFraction
-                            : 1 + CompareDriftPolicy.avFoundationRateNudgeFraction
-                    }
+                   absoluteDrift < CompareDriftPolicy.hardSeekThreshold,
+                   !didExhaustRateNudge {
+                    // MPV applies fine-grained rate changes predictably. AVPlayer
+                    // can remain outside a frame for seconds after a nudge under
+                    // simultaneous UHD rendering/scope load, so AVFoundation
+                    // secondaries take the bounded seek path below instead.
+                    let maximumCorrection =
+                        CompareDriftPolicy.maximumRateCorrectionFraction
+                    let unboundedCorrection =
+                        -signedDrift * CompareDriftPolicy.rateCorrectionGain
+                    let rateCorrection = min(
+                        maximumCorrection,
+                        max(-maximumCorrection, unboundedCorrection)
+                    )
+                    let multiplier = 1 + rateCorrection
                     self.secondaryController.setSynchronizationPlaybackRate(
                         baseRate * Float(multiplier)
                     )
+                    if !isRateNudged {
+                        rateNudgeStartTime = sampleTime
+                    }
                     isRateNudged = true
                     Self.signposter.emitEvent(
                         "Drift correction rate",
@@ -1496,22 +1628,44 @@ final class CompareSessionController: ObservableObject {
                 if isRateNudged {
                     self.secondaryController.restoreSynchronizationPlaybackRate()
                     isRateNudged = false
+                    rateNudgeStartTime = nil
                 }
 
                 guard absoluteDrift > policy.correctionThreshold,
                       sampleTime - lastCorrectionTime >=
                         CompareDriftPolicy.correctionCooldown else { continue }
 
-                guard let excursionStart = outOfToleranceSince else {
-                    outOfToleranceSince = sampleTime
-                    continue
+                if outOfToleranceSince == nil {
+                    // MPV can absorb a short excursion with a rate nudge. An
+                    // AVFoundation secondary cannot reliably decode UHD faster
+                    // than realtime, so start its precise correction now.
+                    outOfToleranceSince = self.secondaryController.useMPV
+                        ? sampleTime
+                        : sampleTime - CompareDriftPolicy.correctionCooldown
                 }
+                guard let excursionStart = outOfToleranceSince else { continue }
                 guard sampleTime - excursionStart >= CompareDriftPolicy.correctionCooldown,
-                      let target = policy.correctionTarget(
+                      var target = policy.correctionTarget(
                         actualSecondaryTime: actual,
                         expectedSecondaryTime: expected,
                         timeSinceLastCorrection: sampleTime - lastCorrectionTime
                       ) else { continue }
+
+                if !self.secondaryController.useMPV,
+                   primary.currentPlaybackSpeed > 0 {
+                    // AVPlayer's exact asynchronous seek resumes from the
+                    // requested item time after decoder latency. Aim modestly
+                    // ahead on the shared clock so completion lands on the
+                    // current frame instead of perpetually one seek-latency
+                    // behind an MPV primary.
+                    let seekLead = min(
+                        0.2,
+                        max(policy.frameDuration, absoluteDrift)
+                    )
+                    target = self.mappedSecondaryTime(
+                        for: primaryTime + seekLead * Double(primary.currentPlaybackSpeed)
+                    )
+                }
 
                 lastCorrectionTime = sampleTime
                 outOfToleranceSince = nil

@@ -182,7 +182,11 @@ struct ControlsView: View {
         // Loop toggle
         Button(action: {
             if let item = item {
-                controller.updateLoopPlayback(!item.loopPlayback)
+                if compareSession.isActive {
+                    compareSession.setLoopPlayback(!item.loopPlayback, primary: controller)
+                } else {
+                    controller.updateLoopPlayback(!item.loopPlayback)
+                }
             }
         }) {
             Image(systemName: (item?.loopPlayback ?? false) ? "repeat.1" : "repeat")

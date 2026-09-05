@@ -215,12 +215,117 @@ final class CompareSessionLifecycleTests: XCTestCase {
         session.stop()
     }
 
+    func testReadinessTimeoutInvalidatesLateBackendCompletionAndRestoresAudioSafety() async {
+        let loader = ControlledCompareMetadataLoader()
+        let detector = ControlledCompareProResRAWDetector()
+        let primary = PlayerController()
+        let secondary = PlayerController { _, _ in
+            await detector.result()
+        }
+        let session = makeSession(loader: loader, secondary: secondary)
+        let url = URL(fileURLWithPath: "/tmp/compare-readiness-timeout.mov")
+
+        session.loadSecondary(url, alignedWith: primary)
+        let requested = await waitUntil { loader.hasRequest(for: url) }
+        guard requested else {
+            XCTFail("Comparison metadata loading did not start.")
+            session.stop()
+            return
+        }
+
+        loader.succeed(url, metadata: metadata(duration: 10))
+        await detector.waitUntilStarted()
+        let activePreparationID = secondary.preparationID
+        XCTAssertEqual(session.secondaryURL, url)
+        XCTAssertEqual(secondary.playbackPhase, .preparing)
+
+        session.selectAudioSource(.secondary, primary: primary)
+        XCTAssertTrue(primary.isAudioSuppressed)
+        XCTAssertFalse(secondary.isAudioSuppressed)
+
+        session.handleSecondaryReadinessTimeout(primary: primary)
+
+        XCTAssertTrue(session.isActive)
+        XCTAssertEqual(session.secondaryURL, url)
+        XCTAssertNotNil(session.mapping)
+        XCTAssertFalse(session.isSecondaryReady)
+        XCTAssertEqual(
+            session.loadError,
+            "The comparison file did not become ready for playback."
+        )
+        XCTAssertEqual(session.audioSource, .primary)
+        XCTAssertFalse(primary.isAudioSuppressed)
+        XCTAssertTrue(secondary.isAudioSuppressed)
+        XCTAssertGreaterThan(secondary.preparationID, activePreparationID)
+        XCTAssertEqual(secondary.playbackPhase, .idle)
+        XCTAssertNil(secondary.player)
+        XCTAssertNil(secondary.mpvPlayer)
+
+        detector.resume(returning: false)
+        await settleMainActorTasks()
+
+        XCTAssertTrue(session.isActive)
+        XCTAssertFalse(session.isSecondaryReady)
+        XCTAssertEqual(secondary.playbackPhase, .idle)
+        XCTAssertNil(secondary.player)
+        XCTAssertNil(secondary.mpvPlayer)
+        XCTAssertFalse(primary.isAudioSuppressed)
+        XCTAssertTrue(secondary.isAudioSuppressed)
+        session.stop()
+    }
+
+    func testStopRejectsLateReviewSaveCompletion() async throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(
+            at: directory,
+            withIntermediateDirectories: true
+        )
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let primaryURL = directory.appendingPathComponent("Master.mov")
+        let secondaryURL = directory.appendingPathComponent("Encode.mov")
+        try Data("primary".utf8).write(to: primaryURL)
+        try Data("secondary".utf8).write(to: secondaryURL)
+
+        let loader = ControlledCompareMetadataLoader()
+        let reviewStore = ControlledCompareReviewStore()
+        let primary = PlayerController()
+        var primaryItem = PlayerWindowCoordinator.makeMediaItem(for: primaryURL)
+        primaryItem.durationSeconds = 10
+        primaryItem.metadata = metadata(duration: 10)
+        primary.loadMedia(primaryItem)
+        let session = makeSession(loader: loader, reviewStore: reviewStore)
+
+        session.loadSecondary(secondaryURL, alignedWith: primary)
+        let requested = await waitUntil { loader.hasRequest(for: secondaryURL) }
+        XCTAssertTrue(requested)
+        loader.succeed(secondaryURL, metadata: metadata(duration: 10))
+        let reviewLoaded = await waitUntil { session.canEditReviewNotes }
+        XCTAssertTrue(reviewLoaded)
+
+        XCTAssertTrue(session.addReviewNote("Pending write", primary: primary))
+        await reviewStore.waitUntilApplyStarted()
+        XCTAssertEqual(session.reviewNotes.map(\.text), ["Pending write"])
+
+        session.stop()
+        await reviewStore.completeApply()
+        await settleMainActorTasks()
+
+        XCTAssertFalse(session.isActive)
+        XCTAssertTrue(session.reviewNotes.isEmpty)
+        XCTAssertNil(session.reviewError)
+        primary.teardown()
+    }
+
     private func makeSession(
         loader: ControlledCompareMetadataLoader,
-        secondary: PlayerController = PlayerController()
+        secondary: PlayerController = PlayerController(),
+        reviewStore: any CompareReviewSidecarStoring = CompareReviewSidecarStore.shared
     ) -> CompareSessionController {
         CompareSessionController(
             secondaryController: secondary,
+            reviewStore: reviewStore,
             metadataLoader: { url in
                 try await loader.load(url)
             }
@@ -307,5 +412,56 @@ private final class ControlledCompareProResRAWDetector {
     func resume(returning value: Bool) {
         continuation?.resume(returning: value)
         continuation = nil
+    }
+}
+
+private actor ControlledCompareReviewStore: CompareReviewSidecarStoring {
+    private var applyContinuation: CheckedContinuation<CompareReviewDocument, Error>?
+    private var pendingDocument: CompareReviewDocument?
+    private var didStartApply = false
+
+    func load(
+        from url: URL,
+        primaryURL: URL,
+        secondaryURL: URL
+    ) async throws -> CompareReviewDocument? {
+        nil
+    }
+
+    func apply(
+        _ mutation: CompareReviewMutation,
+        to url: URL,
+        primaryURL: URL,
+        secondaryURL: URL
+    ) async throws -> CompareReviewDocument {
+        let notes: [CompareReviewNote]
+        switch mutation {
+        case .upsert(let note):
+            notes = [note]
+        case .delete:
+            notes = []
+        }
+        pendingDocument = CompareReviewDocument(
+            primaryURL: primaryURL,
+            secondaryURL: secondaryURL,
+            notes: notes
+        )
+        didStartApply = true
+        return try await withCheckedThrowingContinuation { continuation in
+            applyContinuation = continuation
+        }
+    }
+
+    func waitUntilApplyStarted() async {
+        while !didStartApply {
+            await Task.yield()
+        }
+    }
+
+    func completeApply() {
+        guard let pendingDocument else { return }
+        applyContinuation?.resume(returning: pendingDocument)
+        applyContinuation = nil
+        self.pendingDocument = nil
     }
 }

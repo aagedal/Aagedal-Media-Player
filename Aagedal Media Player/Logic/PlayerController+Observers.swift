@@ -127,6 +127,7 @@ extension PlayerController {
                           let observedPlayer,
                           self.isCurrent(identity) else { return }
                     observedPlayer.play()
+                    self.recordPlaybackLoop()
                 }
             }
         } else if currentPlaybackSpeed != 1.0 {
@@ -144,6 +145,7 @@ extension PlayerController {
 
     func installMPVLoopObserver() {
         removeMPVLoopObserver()
+        previousMPVLoopTime = nil
 
         guard useMPV, let observedMPV = mpvPlayer else { return }
         let observedPreparationID = preparationID
@@ -161,18 +163,17 @@ extension PlayerController {
                 let duration = item.durationSeconds
                 let tolerance = 0.05
 
-                if duration > 0, currentTime >= duration - tolerance {
-                    if item.loopPlayback {
-                        let wasPlaying = mpv.isPlaying
-                        mpv.seek(to: 0)
-                        if wasPlaying {
-                            mpv.play()
-                        }
-                    } else if self.currentPlaybackSpeed != 1.0 {
-                        // Pause and reset speed at end of file
-                        mpv.pause()
-                        self.resetPlaybackSpeed()
+                if item.loopPlayback {
+                    if let previousTime = self.previousMPVLoopTime,
+                       currentTime + tolerance < previousTime {
+                        self.recordPlaybackLoop()
                     }
+                    self.previousMPVLoopTime = currentTime
+                } else if duration > 0, currentTime >= duration - tolerance,
+                          self.currentPlaybackSpeed != 1.0 {
+                    // Pause and reset speed at end of file
+                    mpv.pause()
+                    self.resetPlaybackSpeed()
                 }
             }
         }
@@ -181,6 +182,7 @@ extension PlayerController {
     func removeMPVLoopObserver() {
         mpvLoopObserverTimer?.invalidate()
         mpvLoopObserverTimer = nil
+        previousMPVLoopTime = nil
     }
 
     // MARK: - Playback Time Observer (UI Updates)

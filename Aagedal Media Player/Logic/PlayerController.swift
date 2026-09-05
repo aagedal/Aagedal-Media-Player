@@ -68,6 +68,7 @@ final class PlayerController: ObservableObject {
     @Published var currentPlaybackTime: Double = 0
     @Published private(set) var isPlaying: Bool = false
     @Published private(set) var currentPlaybackSpeed: Float = 1.0
+    @Published private(set) var playbackLoopCount: UInt64 = 0
     @Published private(set) var isReversing: Bool = false
     private let trackSelection = TrackSelectionController()
     private var trackSelectionCancellable: AnyCancellable?
@@ -79,6 +80,7 @@ final class PlayerController: ObservableObject {
     @Published private(set) var audioChannelRouting = AudioChannelRouting()
     private var audioChannelRoutingByTrackID: [Int: AudioChannelRouting] = [:]
     private var sessionAudioChannelRouting: AudioChannelRouting?
+    var previousMPVLoopTime: TimeInterval?
 
     var selectedAudioStream: MediaMetadata.AudioStream? {
         guard audioTrackOptions.indices.contains(selectedAudioTrackOrderIndex),
@@ -348,7 +350,12 @@ final class PlayerController: ObservableObject {
 
     func updateLoopPlayback(_ loop: Bool) {
         mediaItem?.loopPlayback = loop
+        mpvPlayer?.setLooping(loop)
         updatePlayerActionAtEnd()
+    }
+
+    func recordPlaybackLoop() {
+        playbackLoopCount &+= 1
     }
 
     // MARK: - Playback Preparation
@@ -502,6 +509,7 @@ final class PlayerController: ObservableObject {
         backendAdapter = backend
         backend.setAudioChannelRouting(audioChannelRouting)
         let mpv = backend.player
+        mpv.setLooping(mediaItem?.loopPlayback ?? false)
         if isAudioSuppressed {
             mpv.disableAudioTrack()
         }

@@ -384,9 +384,14 @@ struct ContentView: View {
                 ProgressView()
                     .controlSize(.small)
                     .help("Loading comparison file")
-            }
 
-            if compareSession.isActive {
+                Button("Cancel") {
+                    compareSession.stop()
+                }
+                .buttonStyle(.plain)
+                .help("Cancel loading the comparison file")
+                .accessibilityLabel("Cancel loading comparison file")
+            } else if compareSession.isActive {
                 Picker("Compare view", selection: $compareSession.viewMode) {
                     ForEach(CompareViewMode.allCases, id: \.self) { mode in
                         Text(mode.label).tag(mode)

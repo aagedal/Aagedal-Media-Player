@@ -23,9 +23,24 @@ nonisolated enum CompareReviewMutation: Sendable {
     case delete(UUID)
 }
 
+nonisolated protocol CompareReviewSidecarStoring: Sendable {
+    func load(
+        from url: URL,
+        primaryURL: URL,
+        secondaryURL: URL
+    ) async throws -> CompareReviewDocument?
+
+    func apply(
+        _ mutation: CompareReviewMutation,
+        to url: URL,
+        primaryURL: URL,
+        secondaryURL: URL
+    ) async throws -> CompareReviewDocument
+}
+
 /// Serializes sidecar access and rejects late writes from an older in-memory
 /// revision. Source media is never opened for writing.
-actor CompareReviewSidecarStore {
+actor CompareReviewSidecarStore: CompareReviewSidecarStoring {
     static let shared = CompareReviewSidecarStore()
 
     private var latestRevisionByURL: [URL: UInt64] = [:]

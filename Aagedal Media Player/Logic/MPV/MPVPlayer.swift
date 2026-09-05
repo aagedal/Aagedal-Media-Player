@@ -69,6 +69,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
     private var pendingURL: URL?
     private var pendingStartTime: Double = 0
     private var pendingAutostart: Bool = false
+    private var shouldLoop = false
     private var isAudioTrackDisabled = false
     private var audioChannelRouting = AudioChannelRouting()
     private(set) var isAudioChannelFilterActive = false
@@ -216,6 +217,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         setDouble(MPVProperty.volume, volume)
         setFlag(MPVProperty.mute, isMuted)
         applyAudioChannelRouting()
+        setLooping(shouldLoop)
 
         mpv_observe_property(mpv, 0, MPVProperty.timePos, MPV_FORMAT_DOUBLE)
         mpv_observe_property(mpv, 0, MPVProperty.duration, MPV_FORMAT_DOUBLE)
@@ -287,6 +289,12 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         } else {
             play()
         }
+    }
+
+    func setLooping(_ enabled: Bool) {
+        shouldLoop = enabled
+        guard mpv != nil else { return }
+        command("set", args: ["loop-file", enabled ? "inf" : "no"])
     }
 
     func stop() {

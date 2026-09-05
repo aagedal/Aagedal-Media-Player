@@ -532,6 +532,33 @@ final class CompareLiveBackendTests: XCTestCase {
         session.play(primary: primary)
         let bothStartedPlaying = await waitUntil { primary.isPlaying && secondary.isPlaying }
         XCTAssertTrue(bothStartedPlaying)
+
+        // Keep playback active while the user drags for longer than the drift
+        // correction cooldown. The session must give scrubbing exclusive
+        // ownership of both clocks, then restart paired correction on release.
+        for target in stride(from: 1.5, through: 2.1, by: 0.1) {
+            session.scrub(primary: primary, to: target)
+            try await Task.sleep(for: .milliseconds(50))
+        }
+        session.endScrubbing(primary: primary, at: 2.25)
+        let activeScrubKeptPlaying = await waitUntil {
+            primary.isPlaying && secondary.isPlaying
+        }
+        XCTAssertTrue(activeScrubKeptPlaying, "Active scrub did not resume paired playback.")
+        let activeScrubConverged = await waitUntil(
+            tolerance: driftPolicy.correctionThreshold,
+            timeout: .seconds(2)
+        ) {
+            let expected = session.secondaryTime(
+                forPrimaryTime: primary.playbackTimeSnapshot()
+            )
+            return secondary.playbackTimeSnapshot() - expected
+        }
+        XCTAssertTrue(
+            activeScrubConverged,
+            "Active scrub did not restore one-frame paired synchronization."
+        )
+
         try await Task.sleep(for: .milliseconds(750))
         if secondaryBackend == .mpv {
             XCTAssertEqual(
@@ -659,6 +686,34 @@ final class CompareLiveBackendTests: XCTestCase {
             !primary.isPlaying && !secondary.isPlaying
         }
         XCTAssertTrue(shuttlePaused, "Paired forward shuttle did not pause.")
+
+        session.setLoopPlayback(true, primary: primary)
+        let loopSetupTime = max(0, (primary.mediaItem?.durationSeconds ?? 0) - 0.25)
+        session.seek(primary: primary, to: loopSetupTime)
+        let reachedLoopStart = await waitUntil(tolerance: frameDuration) {
+            primary.playbackTimeSnapshot() - loopSetupTime
+        }
+        XCTAssertTrue(reachedLoopStart, "Primary loop setup seek failed.")
+        session.play(primary: primary)
+        let primaryWrapped = await waitUntil({
+            primary.isPlaying && primary.playbackTimeSnapshot() < 0.5
+        }, timeout: .seconds(3))
+        XCTAssertTrue(primaryWrapped, "Primary did not loop back to its first frame.")
+        let secondaryFollowedLoop = await waitUntil(
+            tolerance: driftPolicy.correctionThreshold,
+            timeout: .seconds(2)
+        ) {
+            let expected = session.secondaryTime(
+                forPrimaryTime: primary.playbackTimeSnapshot()
+            )
+            return secondary.playbackTimeSnapshot() - expected
+        }
+        XCTAssertTrue(
+            secondaryFollowedLoop && secondary.isPlaying,
+            "Secondary did not resume at the mapped frame after A looped."
+        )
+        session.setLoopPlayback(false, primary: primary)
+        session.pause(primary: primary)
         XCTAssertFalse(primary.isAudioSuppressed)
         XCTAssertTrue(secondary.isAudioSuppressed)
     }
