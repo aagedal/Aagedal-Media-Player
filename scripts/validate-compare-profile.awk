@@ -9,6 +9,8 @@ BEGIN {
     expected["COMPARE_PROFILE_VISUAL avFoundation/mpv"] = 1
     expected["COMPARE_PROFILE_SCOPE mpv/avFoundation"] = 1
     expected["COMPARE_PROFILE_SCOPE avFoundation/mpv"] = 1
+    expected["COMPARE_PROFILE_LOUPE mpv/avFoundation"] = 1
+    expected["COMPARE_PROFILE_LOUPE avFoundation/mpv"] = 1
 }
 function reject(message) {
     print "Compare Mode profile rejected: " message > "/dev/stderr"
@@ -18,7 +20,7 @@ function reject(message) {
 tolower($0) ~ /test skipped|test case .*skipped|[1-9][0-9]* tests? skipped|executed .*with [1-9][0-9]* tests? skipped/ {
     reject("test skipped")
 }
-/^COMPARE_PROFILE(_VISUAL|_SCOPE)? / {
+/^COMPARE_PROFILE[^ ]* / {
     pair = $2
     if (pair !~ /^pair=[A-Za-z]+\/[A-Za-z]+,$/) {
         reject("malformed metric: " $0)

@@ -122,6 +122,53 @@ final class CompareLiveBackendTests: XCTestCase {
         let secondaryCaptureAdvance: UInt64
     }
 
+    /// Hosts the production surfaces and overlay with externally observable captures.
+    private struct LoupeProfileCanvas: View {
+        @ObservedObject var state: InspectionLoupeState
+        @ObservedObject var primary: PlayerController
+        @ObservedObject var session: CompareSessionController
+        let primaryItem: MediaItem
+        let primaryCapture: LoupeFrameCapture
+        let secondaryCapture: LoupeFrameCapture
+        let waveform = AudioWaveformGenerator()
+
+        var body: some View {
+            GeometryReader { geometry in
+                ZStack {
+                    ComparePlayerView(
+                        primaryController: primary, compareSession: session,
+                        primaryWaveformGenerator: waveform, primaryItem: primaryItem,
+                        showsAudioWaveform: false, isEditingTimecode: .constant(false),
+                        isTimelineFocused: .constant(false), isOverlayControlFocused: false,
+                        isTextInputActive: false, timecodeActivationTrigger: .constant(nil)
+                    )
+                    if state.isEnabled {
+                        InspectionLoupeOverlay(
+                            state: state, primary: primary, secondary: session.secondaryController,
+                            primaryCapture: primaryCapture, secondaryCapture: secondaryCapture,
+                            isComparing: true,
+                            geometry: CompareDisplayGeometry(
+                                canvasSize: geometry.size,
+                                primaryAspectRatio: primary.videoAspectRatio ?? primaryItem.videoDisplayAspectRatio.map { CGFloat($0) },
+                                secondaryAspectRatio: session.secondaryController.videoAspectRatio
+                                    ?? session.secondaryController.mediaItem?.videoDisplayAspectRatio.map { CGFloat($0) }
+                            ),
+                            mode: session.viewMode
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    func testMPVPrimaryAndAVFoundationSecondaryProfileLiveLoupes() async throws {
+        try await exerciseLoupeProfile(primaryBackend: .mpv, secondaryBackend: .avFoundation)
+    }
+
+    func testAVFoundationPrimaryAndMPVSecondaryProfileLiveLoupes() async throws {
+        try await exerciseLoupeProfile(primaryBackend: .avFoundation, secondaryBackend: .mpv)
+    }
+
     func testMPVLoupeCapturesOrientedAsymmetricPixels() async throws {
         try await exerciseOrientedLoupePixels(backend: .mpv)
     }
@@ -1261,6 +1308,240 @@ final class CompareLiveBackendTests: XCTestCase {
         XCTAssertGreaterThan(secondary.playbackTimeSnapshot() - secondaryStart, 0.5)
     }
 
+    private func exerciseLoupeProfile(
+        primaryBackend: PlaybackBackend,
+        secondaryBackend: PlaybackBackend
+    ) async throws {
+        let fixtures = try fixtureDirectory()
+        let primary = makeController(forcedBackend: primaryBackend)
+        let secondary = makeController(forcedBackend: secondaryBackend)
+        let session = CompareSessionController(secondaryController: secondary)
+        let state = InspectionLoupeState()
+        let scopeProbe = ScopeRenderProbe()
+        let primaryLoupe = LoupeFrameCapture()
+        let secondaryLoupe = LoupeFrameCapture()
+        defer {
+            primaryLoupe.stop()
+            secondaryLoupe.stop()
+            primary.frameCapture.stopCapture(rebuildPipeline: false)
+            secondary.frameCapture.stopCapture(rebuildPipeline: false)
+            session.stop()
+            primary.teardown()
+        }
+        try await loadPrimary(primary, url: fixtures.appending(path: "compare/source-a.mov"))
+        try await attachRenderSurface(to: primary)
+        guard await waitUntil({ primary.isReady }) else {
+            XCTFail("Primary decoder did not become ready for loupe profiling.")
+            return
+        }
+        let secondaryURL = fixtures.appending(path: "compare/source-b.mov")
+        session.loadSecondary(secondaryURL, alignedWith: primary)
+        guard await waitUntil({ session.secondaryURL == secondaryURL }) else {
+            XCTFail("Comparison metadata did not load for loupe profiling.")
+            return
+        }
+        try await attachRenderSurface(to: secondary)
+        guard await waitUntil({ session.isSecondaryReady }) else {
+            XCTFail("Secondary decoder did not become ready for loupe profiling.")
+            return
+        }
+        primary.frameCapture.startCapture()
+        secondary.frameCapture.startCapture()
+        let avItem = try XCTUnwrap(
+            primaryBackend == .avFoundation ? primary.player?.currentItem : secondary.player?.currentItem
+        )
+        let primaryPreparationID = primary.preparationID
+        let secondaryPreparationID = secondary.preparationID
+        session.viewMode = .sideBySide
+        let primaryItem = try XCTUnwrap(primary.mediaItem)
+        let hostingView = NSHostingView(rootView: VStack(spacing: 0) {
+            LoupeProfileCanvas(
+                state: state, primary: primary, session: session,
+                primaryItem: primaryItem, primaryCapture: primaryLoupe, secondaryCapture: secondaryLoupe
+            ).frame(height: visualCanvasSize.height)
+            ScopeView(
+                primaryController: primary, secondaryController: secondary,
+                primaryFrameCapture: primary.frameCapture, secondaryFrameCapture: secondary.frameCapture,
+                compareSession: session, onRender: { scopeProbe.record(source: $0) }
+            ).frame(height: 200)
+        })
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: visualCanvasSize.width, height: visualCanvasSize.height + 200),
+            styleMask: [.borderless], backing: .buffered, defer: false
+        )
+        window.isReleasedWhenClosed = false
+        window.contentView = hostingView
+        hostingView.frame = window.contentView?.bounds ?? .zero
+        hostingView.layoutSubtreeIfNeeded()
+        defer {
+            window.contentView = nil
+            window.close()
+        }
+        guard await waitUntil({
+            self.metalLayers(in: hostingView).count == 1 && self.avPlayerViews(in: hostingView).count == 1
+        }) else {
+            XCTFail("Loupe profile canvas did not mount both native surfaces.")
+            return
+        }
+        let originalOutputCount = avItem.outputs.count
+        let metalLayer = try XCTUnwrap(metalLayers(in: hostingView).first)
+        let avPlayerView = try XCTUnwrap(avPlayerViews(in: hostingView).first)
+        let metalLayerIdentity = ObjectIdentifier(metalLayer)
+        let avPlayerViewIdentity = ObjectIdentifier(avPlayerView)
+        for size in [metalLayer.bounds.size, avPlayerView.bounds.size] {
+            XCTAssertEqual(size.width, visualCanvasSize.width, accuracy: 1)
+            XCTAssertEqual(size.height, visualCanvasSize.height, accuracy: 1)
+        }
+        let canvasPixelSize = hostingView.convertToBacking(
+            CGRect(origin: .zero, size: visualCanvasSize)
+        ).size
+        if isCompareProfile {
+            XCTAssertEqual(canvasPixelSize.width, renderSurfaceSize.width, accuracy: 1)
+            XCTAssertEqual(canvasPixelSize.height, renderSurfaceSize.height, accuracy: 1)
+        }
+        let primaryMPV = primary.mpvPlayer
+        let primaryAVPlayer = primary.player
+        let secondaryMPV = secondary.mpvPlayer
+        let secondaryAVPlayer = secondary.player
+        state.isEnabled = true
+        session.play(primary: primary)
+        guard await waitUntil({
+            primary.isPlaying && secondary.isPlaying && primaryLoupe.image != nil && secondaryLoupe.image != nil
+                && primary.frameCapture.currentSample != nil && secondary.frameCapture.currentSample != nil
+        }) else {
+            XCTFail("Both production loupe captures must start with the visible overlay.")
+            return
+        }
+        XCTAssertEqual(avItem.outputs.count, originalOutputCount + 1)
+        // Let decoder synchronization settle before measuring sustained load.
+        try await Task.sleep(for: .milliseconds(750))
+        let duration = sustainedPlaybackDuration
+        let driftPolicy = CompareDriftPolicy(
+            primaryFrameRate: primary.mediaItem?.metadata?.primaryVideoStream?.frameRate?.value
+        )
+        let driftTask = Task { @MainActor in
+            await self.observeSustainedDrift(
+                primary: primary, secondary: secondary, session: session,
+                driftTolerance: driftPolicy.correctionThreshold, duration: duration
+            )
+        }
+        defer { driftTask.cancel() }
+        let scopeRenderStart = scopeProbe.renderCount
+        let primaryScopeStart = primary.frameCapture.currentSample?.sequence ?? 0
+        let secondaryScopeStart = secondary.frameCapture.currentSample?.sequence ?? 0
+        let clock = ContinuousClock()
+        let start = clock.now
+        let deadline = start.advanced(by: .seconds(duration))
+        var expectedUpdate = start
+        var updateCount = 0
+        var coveredMagnifications = Set<LoupeMagnification>()
+        let magnifications: [LoupeMagnification] = [.twoTimes, .fourTimes, .eightTimes]
+        var previousImages = [primaryLoupe.image, secondaryLoupe.image]
+        var previousPixels = previousImages.map { loupePixels($0, sampleSize: CGSize(width: 32, height: 18)) }
+        var freshCaptures = [0, 0]
+        var lastFresh = [start, start]
+        var maxCaptureGap: [TimeInterval] = [0, 0]
+        var maxMainActorDelay: TimeInterval = 0
+        while clock.now < deadline {
+            let now = clock.now
+            maxMainActorDelay = max(maxMainActorDelay, max(0, durationSeconds(from: expectedUpdate, to: now)))
+            // Poll faster than capture cadence; retain image references so allocator
+            // address reuse cannot hide a publication. Pixel checks reject repeats.
+            for (index, image) in [primaryLoupe.image, secondaryLoupe.image].enumerated() {
+                if let image, image !== previousImages[index] {
+                    previousImages[index] = image
+                    if let pixels = loupePixels(image, sampleSize: CGSize(width: 32, height: 18)),
+                       pixels != previousPixels[index] {
+                        previousPixels[index] = pixels
+                        freshCaptures[index] += 1
+                        maxCaptureGap[index] = max(maxCaptureGap[index], durationSeconds(from: lastFresh[index], to: now))
+                        lastFresh[index] = now
+                    }
+                }
+            }
+            session.scopeSource = CompareScopeSource.allCases[(updateCount / 10) % CompareScopeSource.allCases.count]
+            state.magnification = magnifications[(updateCount / 4) % magnifications.count]
+            coveredMagnifications.insert(state.magnification)
+            state.normalizedPoint = CGPoint(x: Double(updateCount % 19) / 18, y: Double((updateCount * 7) % 19) / 18)
+            state.pointer = CGPoint(x: state.normalizedPoint.x * visualCanvasSize.width,
+                                    y: state.normalizedPoint.y * visualCanvasSize.height)
+            hostingView.layoutSubtreeIfNeeded()
+            window.displayIfNeeded()
+            // Include the final iteration: it has no next wakeup to expose
+            // synchronous pixel sampling, layout, or display work that stalls.
+            maxMainActorDelay = max(maxMainActorDelay, durationSeconds(from: now, to: clock.now))
+            updateCount += 1
+            expectedUpdate = expectedUpdate.advanced(by: .milliseconds(50))
+            let remaining = clock.now.duration(to: expectedUpdate)
+            if remaining > .zero { try await Task.sleep(for: remaining) }
+            else if durationSeconds(from: expectedUpdate, to: clock.now) > 0.05 { expectedUpdate = clock.now }
+        }
+        let observationSeconds = durationSeconds(from: start, to: clock.now)
+        for index in 0..<2 {
+            maxCaptureGap[index] = max(maxCaptureGap[index], durationSeconds(from: lastFresh[index], to: clock.now))
+        }
+        let drift = await driftTask.value
+        let pair = "\(primaryBackend.rawValue)/\(secondaryBackend.rawValue)"
+        let driftDescription = driftObservationDescription(drift, backendPair: pair)
+        let description = "pair=\(pair), canvas=\(Int(canvasPixelSize.width))x\(Int(canvasPixelSize.height)), " +
+            "loupeUpdates=\(updateCount), coveredMagnifications=\(coveredMagnifications.count)/3, " +
+            "scopeRenders=\(scopeProbe.renderCount - scopeRenderStart), coveredScopeSources=\(scopeProbe.renderedSources.count)/\(CompareScopeSource.allCases.count), " +
+            "freshCaptures=\(freshCaptures[0])/\(freshCaptures[1]), " +
+            "observationSeconds=\(String(format: "%.3f", observationSeconds)), " +
+            "captureFPS=\(String(format: "%.2f", Double(freshCaptures[0]) / observationSeconds))/" +
+            "\(String(format: "%.2f", Double(freshCaptures[1]) / observationSeconds)), " +
+            "maxCaptureGap=\(String(format: "%.3f", maxCaptureGap[0]))s/\(String(format: "%.3f", maxCaptureGap[1]))s, " +
+            "maxMainActorDelay=\(String(format: "%.3f", maxMainActorDelay))s"
+        if isCompareProfile {
+            let report = "COMPARE_PROFILE_LOUPE \(description), \(driftDescription)"
+            print(report)
+            let attachment = XCTAttachment(string: report)
+            attachment.name = "Compare Mode live-loupe profile"
+            attachment.lifetime = .keepAlways
+            add(attachment)
+        }
+        XCTAssertEqual(coveredMagnifications.count, 3, description)
+        XCTAssertGreaterThanOrEqual(updateCount, Int(duration * 4), description)
+        XCTAssertLessThanOrEqual(maxMainActorDelay, 0.25, description)
+        for index in 0..<2 {
+            XCTAssertGreaterThanOrEqual(Double(freshCaptures[index]) / observationSeconds, 2, "Source \(index) capture stalled. " + description)
+            XCTAssertLessThanOrEqual(maxCaptureGap[index], 1, "Source \(index) capture stalled. " + description)
+        }
+        XCTAssertGreaterThanOrEqual(scopeProbe.renderCount - scopeRenderStart, CompareScopeSource.allCases.count, description)
+        XCTAssertEqual(scopeProbe.renderedSources.count, CompareScopeSource.allCases.count, description)
+        XCTAssertGreaterThan(primary.frameCapture.currentSample?.sequence ?? 0, primaryScopeStart)
+        XCTAssertGreaterThan(secondary.frameCapture.currentSample?.sequence ?? 0, secondaryScopeStart)
+        assertStableVisualSurfaces(
+            primary: primary, secondary: secondary, hostingView: hostingView,
+            primaryPreparationID: primaryPreparationID, secondaryPreparationID: secondaryPreparationID,
+            primaryMPV: primaryMPV, primaryAVPlayer: primaryAVPlayer,
+            secondaryMPV: secondaryMPV, secondaryAVPlayer: secondaryAVPlayer,
+            metalLayerIdentity: metalLayerIdentity, avPlayerViewIdentity: avPlayerViewIdentity,
+            description: description
+        )
+        XCTAssertTrue(primary.isPlaying && secondary.isPlaying, driftDescription)
+        if isCompareProfile {
+            assertSustainedPlayback(drift, duration: duration,
+                                    driftTolerance: driftPolicy.correctionThreshold, description: driftDescription)
+        } else {
+            XCTAssertGreaterThanOrEqual(drift.primaryAdvance, duration - 1, driftDescription)
+            XCTAssertGreaterThanOrEqual(drift.secondaryAdvance, duration - 1, driftDescription)
+            XCTAssertLessThanOrEqual(drift.finalEffectiveDrift, driftPolicy.correctionThreshold, driftDescription)
+        }
+        // Exercise the production onDisappear cleanup while playback continues.
+        state.close()
+        hostingView.layoutSubtreeIfNeeded()
+        let released = await waitUntil({
+            primaryLoupe.image == nil && secondaryLoupe.image == nil && avItem.outputs.count == originalOutputCount
+        })
+        XCTAssertTrue(released, "Closing the overlay must release both images and its AV output.")
+        XCTAssertTrue(primary.frameCapture.isCapturing)
+        XCTAssertTrue(secondary.frameCapture.isCapturing)
+        try await Task.sleep(for: .milliseconds(250))
+        XCTAssertNil(primaryLoupe.image, "A pending capture must not republish after closing the loupe.")
+        XCTAssertNil(secondaryLoupe.image, "A pending capture must not republish after closing the loupe.")
+    }
+
     private func exerciseLiveLoupes(
         primaryBackend: PlaybackBackend,
         secondaryBackend: PlaybackBackend
@@ -1430,20 +1711,22 @@ final class CompareLiveBackendTests: XCTestCase {
 
     /// Normalize pixels before comparison so row padding and backend pixel
     /// formats cannot make an unchanged decoded frame appear fresh.
-    private func loupePixels(_ image: CGImage?) -> Data? {
+    private func loupePixels(_ image: CGImage?, sampleSize: CGSize? = nil) -> Data? {
         guard let image else { return nil }
-        var pixels = Data(count: image.width * image.height * 4)
+        let width = sampleSize.map { Int($0.width) } ?? image.width
+        let height = sampleSize.map { Int($0.height) } ?? image.height
+        var pixels = Data(count: width * height * 4)
         let rendered = pixels.withUnsafeMutableBytes { bytes -> Bool in
             guard let context = CGContext(
                 data: bytes.baseAddress,
-                width: image.width,
-                height: image.height,
+                width: width,
+                height: height,
                 bitsPerComponent: 8,
-                bytesPerRow: image.width * 4,
+                bytesPerRow: width * 4,
                 space: CGColorSpaceCreateDeviceRGB(),
                 bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
             ) else { return false }
-            context.draw(image, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
+            context.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
             return true
         }
         return rendered ? pixels : nil

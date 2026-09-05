@@ -10,9 +10,10 @@ HDR streams are sustainable on release hardware.
 While the app supports every Apple Silicon Mac capable of running macOS 15,
 the release floor is a base 2020 M1 MacBook Air with 8 GB unified memory and a
 7-core GPU. Revisit that named floor whenever the supported-hardware policy
-changes. The release run observes each of the eight serial scenarios for 120
+changes. The release run observes each of the ten serial scenarios for 120
 seconds: four decoder pairings, two real mixed-backend comparison canvases,
-and two mixed-backend live-scope canvases.
+two mixed-backend live-scope canvases, and two mixed-backend loupe canvases
+with simultaneous scopes.
 
 Use these conditions for a comparable result:
 
@@ -79,7 +80,7 @@ desired full ffmpeg is not first on `PATH`.
 Run a separate profile with `COMPARE_PROFILE_REFLECTED=1` to apply container
 horizontal reflection to both generated sources. This exercises MPV's
 reflection correction with VideoToolbox copyback and its vertical video filter,
-alongside AVFoundation's native transform handling, in all eight scenarios.
+alongside AVFoundation's native transform handling, in all ten scenarios.
 The encoded raster remains UHD 10-bit HDR; reflection is display metadata.
 Each test verifies the actual source transforms before starting its workload.
 
@@ -96,7 +97,7 @@ Use the same warm-up, cooldown, reuse, and measured-run procedure as the normal
 baseline. Reuse rejects a reflection setting that differs from the manifest;
 older manifests without a reflection field describe unreflected sources.
 The report records the selected reflection setting. This workload measures
-transport, comparison rendering, and scopes; loupe capture cadence and direct
+transport, comparison rendering, scopes, and live loupe capture cadence. Direct
 app CPU/GPU measurements still require the hands-on Instruments pass.
 
 ## Automated coverage and pass criteria
@@ -108,7 +109,10 @@ audio-suppression, and one-frame drift assertions from
 mixed-backend directions. The visual passes repeatedly exercise all seven
 presentation modes, their adjustable controls, and every safe-area/aspect-ratio
 guide combination. The scope passes cycle A, B, and timestamp-paired display
-difference while rendering live waveform and vectorscope output.
+difference while rendering live waveform and vectorscope output. The loupe
+passes host the production paired loupe overlay, sweep picture positions and
+2×/4×/8× magnification, and check fresh captures from both decoders while scopes
+remain active.
 
 The automated gate requires:
 
@@ -124,13 +128,17 @@ The automated gate requires:
 - Both live-scope passes advance A and B capture, publish fresh waveform and
   vectorscope output for every source, retain decoder identity, and keep
   main-actor delay at or below 250 ms.
+- Both loupe passes publish at least two visibly changed captures per second
+  per source, with no capture gap above one second, while exercising every
+  magnification. Main-actor delay stays at or below 250 ms. These are minimum
+  responsiveness gates; the capture cap remains 10 fps.
 - Playback remains responsive without a decoder stall or a reported thermal
   limit during the measured run.
 
 The Markdown report records source revision and cleanliness, Xcode and macOS,
 hardware identity, power and thermal snapshots, fixture sizes, drift metrics,
 wall time, CPU time, and peak resident memory from command accounting.
-`/usr/bin/time` wraps `xcodebuild` for the eight-test serial run, but XCTest can
+`/usr/bin/time` wraps `xcodebuild` for the ten-test serial run, but XCTest can
 launch the app through macOS services outside that command's accounted process
 tree. Those CPU and memory numbers therefore must not be treated as app
 resource totals or per-mode measurements. Measure the app directly in
@@ -142,7 +150,7 @@ pairing continues only until it reconverges or its one-second recovery deadline
 expires. This prevents the result from depending on the part of a correction
 cycle that coincides with the cutoff. The script prints its report even when a
 test assertion fails and returns the failing `xcodebuild` status. It requires
-each of the eight expected scenario/backend combinations exactly once; skipped,
+each of the ten expected scenario/backend combinations exactly once; skipped,
 missing, duplicate, or malformed scenario records reject the run. Run
 `scripts/test-compare-profile-validation.sh` to verify those rejection paths
 without starting decoders.
@@ -175,11 +183,14 @@ the retained fixtures for a hands-on Release-app run:
 4. Enable scopes and dwell for 30 seconds each on A, B, and display difference,
    including a difference-gain change. Confirm waveform and vectorscope remain
    live.
-5. Record median and peak CPU and GPU utilization, peak resident memory, worst
+5. Enable the paired loupes with scopes still running. Move the picture point,
+   switch 2×/4×/8× magnification, pin/unpin, and close/reopen while playing.
+   Check registration, capture cadence, and unchanged controls at Full Frame.
+6. Record median and peak CPU and GPU utilization, peak resident memory, worst
    visible interaction delay, drift/correction events, and thermal state before
    and after the trace. Save the trace beside `measured-report.md` or record its
    external location and checksum there.
-6. If Full Frame fails, repeat once at Reduced Frame (1/2) and keep both
+7. If Full Frame fails, repeat once at Reduced Frame (1/2) and keep both
    results. Reduced Frame is an explicit fallback result, not a passing
    substitute for the Full Frame release gate.
 

@@ -5,6 +5,7 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Added
+- Production-resolution paired-loupe profiling with simultaneous scopes, fresh-pixel cadence, capture-gap, responsiveness, and teardown checks.
 - Opt-in reflected UHD/HDR comparison profiling with verified source transforms and safe fixture reuse.
 - Selected-track A/B audio layout details, numbered channel labels, unmatched speaker roles, and explicit positional matching for unknown layouts.
 - A pointer-following 2×/4×/8× inspection loupe with pinning, keyboard-accessible picture positioning, and paired A/B display previews.
@@ -48,6 +49,7 @@ All notable changes to Aagedal Media Player.
   primary-file loop boundaries across all backend combinations.
 
 ### Fixed
+- Prevent AVFoundation loupe freezes under UHD/HDR load by acquiring the current pixel buffer before asynchronous metadata and image conversion.
 - Loupe pointer registration when a comparison overlay shows 100% B with an aspect ratio different from A.
 - Preserve reflected QuickTime display transforms in MPV playback and decoder captures, including rotated mirrors, using a reflection-only VideoToolbox copyback/filter path.
 - Prevent AVFoundation seeks from truncating a mapped frame boundary to the preceding frame because of floating-point rounding.

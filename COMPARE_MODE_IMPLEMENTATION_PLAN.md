@@ -431,3 +431,36 @@ corrected reflected UHD/HDR smoke profile passes all eight scenarios, with
 0.754-second worst recovery and 89 ms worst main-actor delay. The 120-second
 base-M1 release and hands-on Instruments/loupe gates remain open.
 Static analysis and all 61 release-preflight checks pass.
+
+## Loupe cadence profiling continuation — 2026-09-05
+
+The production profiler now includes paired-loupe workloads in both
+mixed-backend directions, with simultaneous scopes. The hosted production
+overlay sweeps picture positions and 2×/4×/8× magnification. Metrics record
+changed-pixel captures per source, actual observation duration and capture
+rates, maximum capture gaps, main-actor delay, and the existing playback drift
+measurements. Closing the overlay verifies image/output release while scopes
+continue. The shell validator now requires all ten scenario/backend records;
+legacy eight-scenario, duplicate-loupe, and unknown-workload reports are rejected.
+
+The 120-second base-M1 runs, direct Instruments CPU/GPU/memory measurements,
+native-event registration, keyboard/VoiceOver, and editor round-trips remain
+release gates. Exact 1:1 source pixels and whole-viewport pan/zoom remain deferred
+until the loupe interaction is validated. See `docs/INSPECTION_LOUPE.md` and
+`docs/COMPARE_MODE_PERFORMANCE.md` for the repeatable procedure.
+
+The first UHD/HDR run exposed AVFoundation loupe captures using a timestamp
+that became obsolete during background metadata awaits. Pixel-buffer acquisition
+now occurs immediately at the current playback time; conversion stays in the
+bounded background worker. Failed and corrected profile evidence is recorded in
+`docs/INSPECTION_LOUPE_PROFILE_2026-09-05.md`.
+
+Verification: all 335 Release tests pass with no failures or skips; Xcode static
+analysis and all 61 release-preflight checks pass. Profiler rejection and
+reflection-configuration checks also pass.
+
+The complete ten-scenario reflected UHD/HDR smoke profile passes with no skips.
+Loupe capture rates are 5.11–5.75 fresh frames per second, worst main-actor delay
+is 116 ms, and worst drift recovery across all workloads is 0.732 seconds. The
+report retains the initial capture failures and an intermediate scope-only
+280 ms delay failure; no thresholds were relaxed for the final passing run.

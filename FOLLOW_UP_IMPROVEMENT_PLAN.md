@@ -452,6 +452,27 @@ quadrants in both backends and captured inspection imagery. Production UHD/HDR
 performance of the reflection-only copyback/filter path remains a release gate
 in `docs/INSPECTION_LOUPE.md`.
 
+## Phase 31 — AVFoundation live-loupe frame acquisition
+
+Status: Engineering complete on 2026-09-05. The 335-test Release suite passes
+without failures or skips; static analysis and all 61 release-preflight checks
+pass. Production loupe profiling exposed stale AVFoundation frame requests
+while UHD/HDR playback and scopes continued.
+
+- [x] Acquire the current AV pixel buffer before dispatching background work.
+- [x] Keep metadata loading and image conversion in the single background worker.
+- [x] Release the worker slot immediately when no buffer is available.
+- [x] Preserve preparation identity and stop/replacement rejection.
+- [x] Add hosted mixed-backend loupe and scope workloads with changed-pixel
+  cadence, capture-gap, responsiveness, decoder identity, and cleanup checks.
+- [x] Verify paused, transformed, stepped, and playing capture with the full suite.
+
+Acceptance: the production workload publishes fresh loupes independently from
+both decoders, with the existing bounded worker ownership and safe teardown.
+The eight-second reflected UHD/HDR loupe checks pass after the fix; complete
+profile results and remaining hardware gates are recorded in
+`docs/INSPECTION_LOUPE_PROFILE_2026-09-05.md`.
+
 ## Delivery order
 
 1. Phase 10 correctness fixes and regression tests.
@@ -476,3 +497,4 @@ in `docs/INSPECTION_LOUPE.md`.
 20. Phase 28 metadata-copy feedback ownership.
 21. Phase 29 AVFoundation frame-boundary seek precision.
 22. Phase 30 reflected QuickTime playback orientation.
+23. Phase 31 AVFoundation live-loupe frame acquisition.

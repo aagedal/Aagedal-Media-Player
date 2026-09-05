@@ -135,7 +135,16 @@ final class LoupeFrameCapture: ObservableObject {
         if controller.useMPV, let mpv = controller.mpvPlayer {
             request = .mpv(mpv)
         } else if let item = attachedItem, let output, let player = controller.player {
-            request = .av(item.asset, output, player.currentTime())
+            // Acquire the frame while its playback timestamp is current. At
+            // production resolutions, a worker hop and metadata awaits can let
+            // that frame age out of the output before it is copied.
+            guard let buffer = output.copyPixelBuffer(
+                forItemTime: player.currentTime(), itemTimeForDisplay: nil
+            ) else {
+                _ = gate.complete(token)
+                return
+            }
+            request = .av(item.asset, buffer)
         } else {
             _ = gate.complete(token)
             return
@@ -151,12 +160,12 @@ final class LoupeFrameCapture: ObservableObject {
         }
     }
 
-    // AVFoundation output references are immutable during work; AVFoundation
-    // supports copying buffers independently of playback. All ownership changes
-    // remain on MainActor, and a worker retains its asset/output until completion.
+    // The main actor acquires the AV buffer at the current playback timestamp.
+    // The worker retains that immutable snapshot and its asset until conversion
+    // completes; all output attachment and removal remain on MainActor.
     private nonisolated enum Request: @unchecked Sendable {
         case mpv(MPVPlayer)
-        case av(AVAsset, AVPlayerItemVideoOutput, CMTime)
+        case av(AVAsset, CVPixelBuffer)
     }
 
     private nonisolated static let context = CIContext(options: [.cacheIntermediates: false])
@@ -166,10 +175,9 @@ final class LoupeFrameCapture: ObservableObject {
         case .mpv(let mpv):
             guard let raw = mpv.screenshotRaw() else { return nil }
             return image(from: raw)
-        case .av(let asset, let output, let time):
+        case .av(let asset, let buffer):
             guard let track = try? await asset.loadTracks(withMediaType: .video).first,
-                  let transform = try? await track.load(.preferredTransform),
-                  let buffer = output.copyPixelBuffer(forItemTime: time, itemTimeForDisplay: nil) else { return nil }
+                  let transform = try? await track.load(.preferredTransform) else { return nil }
             // Preferred transform supplies container rotation/mirroring. Keep
             // the full oriented raster; the UI applies display aspect (PAR).
             let oriented = CIImage(cvPixelBuffer: buffer).transformed(by: coreImageTransform(transform))

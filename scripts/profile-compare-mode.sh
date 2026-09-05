@@ -230,7 +230,7 @@ set_test_environment COMPARE_PROFILE_REPORT 1
 set_test_environment COMPARE_PROFILE_REFLECTED "$reflected"
 set_test_environment COMPARE_PROFILE_RENDER_SIZE "$render_size"
 
-print -u2 "Profiling all four backend pairings plus mixed-backend visual and live-scope canvases for $observation_seconds seconds each…"
+print -u2 "Profiling all four backend pairings plus mixed-backend visual, live-scope, and loupe canvases for $observation_seconds seconds each…"
 pre_profile_power="$(pmset -g batt 2>/dev/null | head -n 1 || true)"
 pre_profile_low_power="$(pmset -g custom 2>/dev/null | /usr/bin/awk '/Power:$/ { power = $0; sub(/:$/, "", power) } /lowpowermode/ { values = values (values ? ", " : "") power "=" $NF } END { print values }' || true)"
 pre_profile_thermal="$(pmset -g therm 2>/dev/null | tr '\n' ' ' | sed 's/[[:space:]]\{1,\}/ /g' || true)"
@@ -259,6 +259,8 @@ set +e
     -only-testing:"Aagedal Media Player Tests/CompareLiveBackendTests/testAVFoundationPrimaryAndMPVSecondaryKeepSurfacesAcrossVisualModes" \
     -only-testing:"Aagedal Media Player Tests/CompareLiveBackendTests/testMPVPrimaryAndAVFoundationSecondaryRenderLiveComparisonScopes" \
     -only-testing:"Aagedal Media Player Tests/CompareLiveBackendTests/testAVFoundationPrimaryAndMPVSecondaryRenderLiveComparisonScopes" \
+    -only-testing:"Aagedal Media Player Tests/CompareLiveBackendTests/testMPVPrimaryAndAVFoundationSecondaryProfileLiveLoupes" \
+    -only-testing:"Aagedal Media Player Tests/CompareLiveBackendTests/testAVFoundationPrimaryAndMPVSecondaryProfileLiveLoupes" \
     > "$profile_log" 2>&1
 profile_status=$?
 set -e

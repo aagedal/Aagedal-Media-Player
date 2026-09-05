@@ -21,6 +21,9 @@ B retains the chosen picture coordinate and clears the obsolete B image.
 ## Capture and interpretation
 
 Capture uses the existing MPV decoder or a dedicated AVPlayerItemVideoOutput.
+AVFoundation copies the current pixel buffer before background metadata and
+image conversion, so a queued worker does not request an obsolete playback
+timestamp.
 It does not create a decoder, take ownership of scopes, or change the playback
 layout. Each source has at most one capture/conversion worker, with a minimum
 100 ms between starts. A worker already inside a native screenshot call cannot
@@ -70,6 +73,28 @@ routing in all seven comparison modes, with differing A/B display aspects,
 all magnifications, and 1×/2× scale. State regressions reject each visible
 source's black bars and verify that a fully B overlay follows B's coordinates.
 
+## Production cadence profiler
+
+`scripts/profile-compare-mode.sh` includes a paired-loupe workload in each
+mixed-backend direction, in addition to decoder, visual-mode, and scope runs.
+It hosts the production comparison canvas, paired preview overlay, and scopes
+at the configured profile resolution. The workload sweeps picture positions
+and all three magnifications while both scopes continue capturing.
+
+`COMPARE_PROFILE_LOUPE` records actual observation time, fresh A/B capture
+counts and rates, longest capture gaps, main-actor delay, and playback drift.
+Freshness requires a changed image with changed normalized sampled pixels;
+repeated screenshots do not count. Sampling is performed at 32×18 to bound
+measurement overhead. This measures publication of changing captures on the
+moving generated fixture, not display scanout cadence or timestamp pairing.
+
+The development gates require at least two changed captures per second from
+each source, no gap above one second, and at most 250 ms main-actor delay.
+The 10 fps UI label remains a capture ceiling, not a guaranteed frame rate.
+Closing the overlay must clear both images and release its separate AV output
+while scopes remain active. Follow `COMPARE_MODE_PERFORMANCE.md` for reflected
+fixtures, retained reports, the 120-second base-M1 run, and Instruments.
+
 ## Validation gates
 
 Automated checks cover normalized coordinates and black bars, magnification,
@@ -90,6 +115,13 @@ Pointer-routing continuation: the complete Release suite passes 333 tests
 without failures or skips. The reflected UHD/HDR eight-scenario smoke profile
 also passes; static analysis and all 61 release-preflight checks pass. See
 `COMPARE_MODE_REFLECTED_PROFILE_2026-09-05.md` for profiling limits.
+
+Live-cadence continuation: the 335-test Release suite passes without failures
+or skips; static analysis and all 61 release-preflight checks pass. Production
+profiling exposed and fixed an AVFoundation capture-timestamp race. See
+`INSPECTION_LOUPE_PROFILE_2026-09-05.md` for failed and corrected measurements.
+The final ten-scenario reflected UHD/HDR smoke profile passes; the paired
+loupes deliver 5.11–5.75 fresh frames per second on the M5 Pro.
 
 Before release:
 

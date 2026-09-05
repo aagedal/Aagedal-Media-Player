@@ -129,11 +129,16 @@ Status: Initial display-space loupe implemented on 2026-09-05. It follows the
 pointer inside the fitted picture, supports 2×/4×/8× magnification, pinning,
 and keyboard-accessible position sliders. Compare Mode displays paired A/B
 previews at the same normalized picture coordinate. Capture is capped at 10 fps
-with one worker per source and independent scope-output ownership. Production
-performance, transformed live-pixel registration, and hands-on accessibility
-validation remain before milestone acceptance. The complete 319-test Release
-suite passes with no skips, including mixed-backend capture and rendered-pixel
-checks; static analysis and all 61 release-preflight checks also pass.
+with one worker per source and independent scope-output ownership. The
+production profiler now also measures paired loupes with simultaneous scopes;
+it exposed and fixed stale AVFoundation frame requests under UHD/HDR load. See
+`docs/INSPECTION_LOUPE_PROFILE_2026-09-05.md` for measured cadence and limits.
+Production performance on the release-floor Mac, transformed live-pixel
+registration, and hands-on accessibility
+validation remain before milestone acceptance. The complete 335-test Release
+suite passes with no skips, including mixed-backend capture, hosted loupe/scopes,
+and rendered-pixel checks; static analysis and all 61 release-preflight checks
+also pass.
 
 - [x] Show a pointer-following loupe over the fitted video without changing the
   player window or playback layout.

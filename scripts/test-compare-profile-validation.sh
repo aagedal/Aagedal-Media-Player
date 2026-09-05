@@ -13,6 +13,8 @@ COMPARE_PROFILE_VISUAL pair=mpv/avFoundation, visualUpdates=100
 COMPARE_PROFILE_VISUAL pair=avFoundation/mpv, visualUpdates=100
 COMPARE_PROFILE_SCOPE pair=mpv/avFoundation, scopeRenders=100
 COMPARE_PROFILE_SCOPE pair=avFoundation/mpv, scopeRenders=100
+COMPARE_PROFILE_LOUPE pair=mpv/avFoundation, freshCaptures=80/80
+COMPARE_PROFILE_LOUPE pair=avFoundation/mpv, freshCaptures=80/80
 METRICS
 validate() {
   /usr/bin/awk -f "$script_dir/validate-compare-profile.awk" "$1" 2> "$test_dir/errors.log"
@@ -23,12 +25,12 @@ expect_rejected() {
     exit 1
   fi
 }
-print 'Executed 8 tests, with 0 tests skipped and 0 failures' >> "$test_dir/valid.log"
+print 'Executed 10 tests, with 0 tests skipped and 0 failures' >> "$test_dir/valid.log"
 validate "$test_dir/valid.log"
-head -n 7 "$test_dir/valid.log" > "$test_dir/invalid.log"
+head -n 9 "$test_dir/valid.log" > "$test_dir/invalid.log"
 expect_rejected 'missing scenario'
 head -n 1 "$test_dir/valid.log" >> "$test_dir/invalid.log"
-expect_rejected 'eight lines with duplicate masking missing scenario'
+expect_rejected 'ten lines with duplicate masking missing scenario'
 cat "$test_dir/valid.log" > "$test_dir/invalid.log"
 head -n 1 "$test_dir/valid.log" >> "$test_dir/invalid.log"
 expect_rejected 'duplicate alongside complete set'
@@ -36,9 +38,17 @@ cat "$test_dir/valid.log" > "$test_dir/invalid.log"
 print 'COMPARE_PROFILE_SCOPE pair=mpv/mpv, scopeRenders=100' >> "$test_dir/invalid.log"
 expect_rejected 'unexpected scenario'
 cat "$test_dir/valid.log" > "$test_dir/invalid.log"
+print 'COMPARE_PROFILE_UNKNOWN pair=mpv/avFoundation, samples=100' >> "$test_dir/invalid.log"
+expect_rejected 'unexpected workload prefix'
+/usr/bin/awk '!/^COMPARE_PROFILE_LOUPE /' "$test_dir/valid.log" > "$test_dir/invalid.log"
+expect_rejected 'legacy run without loupe workloads'
+cat "$test_dir/valid.log" > "$test_dir/invalid.log"
+print 'COMPARE_PROFILE_LOUPE pair=mpv/avFoundation, freshCaptures=80/80' >> "$test_dir/invalid.log"
+expect_rejected 'duplicate loupe workload'
+cat "$test_dir/valid.log" > "$test_dir/invalid.log"
 print 'COMPARE_PROFILE pair=unknown' >> "$test_dir/invalid.log"
 expect_rejected 'malformed metric'
-for skip in 'Test skipped: fixtures absent' "Test Case '-[Tests testProfile]' skipped (0.1 seconds)." 'Executed 8 tests, with 1 test skipped and 0 failures'; do
+for skip in 'Test skipped: fixtures absent' "Test Case '-[Tests testProfile]' skipped (0.1 seconds)." 'Executed 10 tests, with 1 test skipped and 0 failures'; do
   cat "$test_dir/valid.log" > "$test_dir/invalid.log"
   print -r -- "$skip" >> "$test_dir/invalid.log"
   expect_rejected "$skip"
