@@ -64,11 +64,14 @@ when the full installations are not first on `PATH`.
    compression differences are clear. Keep the `display-space` label visible;
    do not describe this view as PSNR, SSIM, VMAF, or objective pixel analysis.
 6. **Evidence export (44–55 s):** Return to a useful comparison view and press
-   Command-S. End on the exported annotated still with filenames, source
-   timecode, alignment, view mode, and technical context visible.
+   Command-S. End on the exported annotated side-by-side still with filenames,
+   source timecode, alignment, inspection view, and technical context visible.
+   The inspection-view annotation records the selected mode; the exported
+   picture layout remains A | B, including when inspecting a wipe or difference.
 
-The synchronized loupe is a separate, unfinished roadmap milestone and is not
-part of this Compare Mode release-demo gate.
+The implemented display-space loupe has separate acceptance gates and is not
+part of this Compare Mode release-demo gate. Its A/B captures are independent,
+not frame-locked.
 
 ## Take acceptance
 

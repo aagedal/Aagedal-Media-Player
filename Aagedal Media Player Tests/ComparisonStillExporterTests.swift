@@ -9,6 +9,61 @@ import XCTest
 
 @MainActor
 final class ComparisonStillExporterTests: XCTestCase {
+    func testInspectionViewAnnotationNamesTheCapturedModeAndFixedExportLayout() {
+        let source = ComparisonStillSourceDetails(filename: "a.mov", timecode: "", technicalLines: [])
+        let modes: [(CompareViewMode, String)] = [
+            (.sideBySide, "A | B"), (.primary, "A"), (.secondary, "B"),
+            (.verticalWipe, "Vertical Wipe"), (.horizontalWipe, "Horizontal Wipe"),
+            (.overlay, "Overlay"), (.difference, "Display Difference")
+        ]
+        for (mode, label) in modes {
+            let details = ComparisonStillDetails(
+                primary: source, secondary: source, alignmentLabel: "Relative start",
+                inspectionView: mode
+            )
+            XCTAssertEqual(details.inspectionView, mode)
+            XCTAssertEqual(details.inspectionViewAnnotation,
+                           "Inspection view: \(label)  •  Export layout: A | B")
+        }
+
+        // Note reports have no recorded inspection mode. Do not infer the live
+        // session's mode or label their fixed export layout as a captured mode.
+        let unrecorded = ComparisonStillDetails(primary: source, secondary: source, alignmentLabel: "")
+        XCTAssertNil(unrecorded.inspectionView)
+        XCTAssertEqual(unrecorded.inspectionViewAnnotation,
+                       "Inspection view: Unrecorded  •  Export layout: A | B")
+    }
+
+    func testCapturedInspectionViewChangesRenderedHeaderOnly() throws {
+        let image = try makeImage(width: 16, height: 9, red: 1, green: 0, blue: 0)
+        let source = ComparisonStillSourceDetails(filename: "a.mov", timecode: "", technicalLines: [])
+        func render(_ mode: CompareViewMode?) throws -> CGImage {
+            try ComparisonStillRenderer.render(
+                primaryImage: image, secondaryImage: image,
+                details: ComparisonStillDetails(
+                    primary: source, secondary: source, alignmentLabel: "Relative start",
+                    inspectionView: mode
+                )
+            )
+        }
+        let baseline = try render(nil)
+        let imageAndFooter = CGRect(
+            x: 0, y: ComparisonStillLayout.headerHeight,
+            width: baseline.width, height: baseline.height - ComparisonStillLayout.headerHeight
+        )
+        let baselineBody = try XCTUnwrap(baseline.cropping(to: imageAndFooter))
+        let baselineBodyData = try renderedBytes(baselineBody)
+        for mode in [CompareViewMode.verticalWipe, .difference] {
+            let rendered = try render(mode)
+            XCTAssertEqual(rendered.width, baseline.width)
+            XCTAssertEqual(rendered.height, baseline.height)
+            XCTAssertNotEqual(try XCTUnwrap(rendered.dataProvider?.data) as Data,
+                              try XCTUnwrap(baseline.dataProvider?.data) as Data)
+            let body = try XCTUnwrap(rendered.cropping(to: imageAndFooter))
+            XCTAssertEqual(try renderedBytes(body), baselineBodyData)
+        }
+    }
+
     func testLayoutAspectFitsLandscapeAndPortraitWithoutStretching() {
         let landscape = CGSize(width: 1_920, height: 1_080)
         let portrait = CGSize(width: 1_080, height: 1_920)
@@ -313,6 +368,20 @@ final class ComparisonStillExporterTests: XCTestCase {
             ))
         }
         return try XCTUnwrap(context.makeImage())
+    }
+
+    private func renderedBytes(_ image: CGImage) throws -> Data {
+        // A cropped CGImage may retain its original provider. Redraw it so the
+        // comparison contains only the visible crop, excluding header storage.
+        let bytesPerRow = image.width * 4
+        let context = try XCTUnwrap(CGContext(
+            data: nil, width: image.width, height: image.height,
+            bitsPerComponent: 8, bytesPerRow: bytesPerRow,
+            space: XCTUnwrap(CGColorSpace(name: CGColorSpace.sRGB)),
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ))
+        context.draw(image, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
+        return Data(bytes: try XCTUnwrap(context.data), count: bytesPerRow * image.height)
     }
 
     /// Sample in the same bottom-left drawing coordinates used by the exporter.

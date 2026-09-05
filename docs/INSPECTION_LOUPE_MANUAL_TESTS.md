@@ -1,7 +1,8 @@
 # Inspection loupe manual acceptance
 
-Status: **Not performed.** This run sheet covers the remaining hands-on 1.7
-loupe gates. Automated decoder, geometry, and rendering tests do not
+Status: **Hands-on acceptance incomplete.** A [partial native control check](INSPECTION_LOUPE_NATIVE_CHECK_2026-09-06.md)
+records desktop-automation observations and their limits. This run sheet covers
+the remaining hands-on 1.7 loupe gates. Automated decoder, geometry, and rendering tests do not
 replace these checks on the shipping app and release-floor hardware.
 
 ## Preparation

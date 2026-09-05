@@ -1331,7 +1331,8 @@ final class CompareSessionController: ObservableObject {
         primary.captureComparisonStill(
             secondaryItem: secondaryItem,
             secondaryTime: secondaryTime(forPrimaryTime: primaryTime),
-            alignmentMode: mapping.mode
+            alignmentMode: mapping.mode,
+            inspectionView: viewMode
         )
     }
 

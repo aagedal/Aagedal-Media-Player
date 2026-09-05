@@ -7,10 +7,34 @@ A fast, private professional media inspection player for macOS. Compare masters,
 inspect picture and sound, verify metadata and timecode, and export review evidence
 without uploading your media.
 
-Compare Mode supports [manual alignment](docs/COMPARE_MODE_ALIGNMENT.md) in
-seconds or source-A frames. Ordinary windows can also share transport commands;
-see [window synchronization](docs/WINDOW_SYNCHRONIZATION.md) for its scope and
-the separate one-time timecode alignment command.
+## Inspect a reference against an encode
+
+1. Open the reference file as A, then use the toolbar's **Add comparison file**
+   control to load its delivery encode as B. B starts silent.
+2. Check the alignment status and overlapping interval. **Source timecode**
+   aligns embedded timecodes; **Relative start** aligns file starts when either
+   timecode is missing. Use [manual alignment](docs/COMPARE_MODE_ALIGNMENT.md)
+   for an intentional offset in seconds or A frames.
+3. Play, pause, scrub, or frame-step with the shared transport. Choose
+   **Vertical Wipe** from **Compare view** and drag the divider across fine
+   detail, or press **B** to switch between A and B. **Display Difference**
+   highlights visible differences; it is not an objective quality score.
+4. Press **Command-Shift-M**, enable **Show loupe**, and inspect a detail at
+   2×, 4×, or 8×. **Pin picture position** keeps that location while you operate
+   playback. The paired previews use the same normalized picture coordinate;
+   their captures are independent, not frame-locked or exact source-pixel 1:1.
+5. Pause at a useful comparison point and choose **File > Export Comparison
+   Still** (**Command-S**). The annotated PNG places A and B side by side with
+   filenames, timecodes, alignment, inspection view, and technical details. It uses that fixed
+   layout regardless of the live wipe, overlay, or difference selection.
+
+Loupe and still imagery are display-space previews; HDR appearance can differ
+from the live display. For a repeatable local example, generate the reference
+and encode pair in [the demo guide](docs/COMPARE_MODE_DEMO.md).
+
+Ordinary windows can also share transport commands; see
+[window synchronization](docs/WINDOW_SYNCHRONIZATION.md) for its scope and the
+separate one-time timecode alignment command.
 
 ## Roadmap
 

@@ -505,3 +505,22 @@ release-floor hardware profile remain open gates.
 
 Verification: all 338 Release tests pass with zero failures and no skips;
 Xcode static analysis and all 61 release-preflight checks pass.
+
+## Inspection workflow and still context — 2026-09-06
+
+The README now walks through reference-versus-encode inspection, alignment,
+shared transport, wipe, loupe, and evidence export. Release imagery and the
+recorded demo remain open.
+
+A documentation cross-check exposed missing inspection-view context in the
+comparison still. The export now snapshots the selected mode before asynchronous
+capture or save-panel work and labels it separately from its fixed A | B
+picture layout. Historical review-note images without a recorded mode explicitly
+say Unrecorded. Two regressions cover all mode labels, missing historical data,
+and actual rendered header changes with unchanged picture/footer pixels.
+The 26 comparison-still and review-report tests pass.
+
+A partial native loupe check records accessible controls, pinning, 4× selection,
+and hide/show retention in `docs/INSPECTION_LOUPE_NATIVE_CHECK_2026-09-06.md`.
+It does not close hover, Full Keyboard Access, VoiceOver, or hardware gates.
+It also exposed a live comparison-surface resize issue for investigation.

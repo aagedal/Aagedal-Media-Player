@@ -73,15 +73,22 @@ nonisolated struct ComparisonStillDetails: Equatable, Sendable {
     let primary: ComparisonStillSourceDetails
     let secondary: ComparisonStillSourceDetails
     let alignmentLabel: String
+    let inspectionView: CompareViewMode?
+
+    var inspectionViewAnnotation: String {
+        "Inspection view: \(inspectionView?.label ?? "Unrecorded")  •  Export layout: A | B"
+    }
 
     init(
         primary: ComparisonStillSourceDetails,
         secondary: ComparisonStillSourceDetails,
-        alignmentLabel: String
+        alignmentLabel: String,
+        inspectionView: CompareViewMode? = nil
     ) {
         self.primary = primary
         self.secondary = secondary
         self.alignmentLabel = alignmentLabel
+        self.inspectionView = inspectionView
     }
 }
 
@@ -280,8 +287,16 @@ nonisolated enum ComparisonStillRenderer {
         )
         drawText(
             "Alignment: \(details.alignmentLabel)  •  Display-space PNG",
-            at: CGPoint(x: 32, y: headerBottom + 38),
+            at: CGPoint(x: 32, y: headerBottom + 48),
             fontSize: 24,
+            weight: .regular,
+            color: CGColor(gray: 0.72, alpha: 1),
+            context: context
+        )
+        drawText(
+            details.inspectionViewAnnotation,
+            at: CGPoint(x: 32, y: headerBottom + 16),
+            fontSize: 20,
             weight: .regular,
             color: CGColor(gray: 0.72, alpha: 1),
             context: context

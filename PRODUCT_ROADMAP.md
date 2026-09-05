@@ -117,7 +117,8 @@ purpose obvious.
   playback.
 - [x] Replace the README's “quickly just checking playback” language with the
   product positioning above.
-- [ ] Refresh README and release imagery around a real inspection workflow.
+- [x] Refresh the README around a reference-versus-encode inspection workflow.
+- [ ] Refresh release imagery around that workflow.
 
 ### Milestone D — Detail inspection without resizing the window
 

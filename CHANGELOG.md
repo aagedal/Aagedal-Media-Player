@@ -5,6 +5,7 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Added
+- Comparison stills record the inspection view selected at export time and identify their fixed side-by-side layout.
 - Production-resolution paired-loupe profiling with simultaneous scopes, fresh-pixel cadence, capture-gap, responsiveness, and teardown checks.
 - Opt-in reflected UHD/HDR comparison profiling with verified source transforms and safe fixture reuse.
 - Selected-track A/B audio layout details, numbered channel labels, unmatched speaker roles, and explicit positional matching for unknown layouts.

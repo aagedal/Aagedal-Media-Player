@@ -82,7 +82,8 @@ final class MediaOperationsController: ObservableObject {
         secondaryItem: MediaItem,
         primaryTime: TimeInterval,
         secondaryTime: TimeInterval,
-        alignmentMode: CompareAlignmentMode
+        alignmentMode: CompareAlignmentMode,
+        inspectionView: CompareViewMode
     ) {
         guard !screenshotState.isInFlight else { return }
         screenshotFeedbackDismissal.cancel()
@@ -101,7 +102,8 @@ final class MediaOperationsController: ObservableObject {
         let details = ComparisonStillDetails(
             primary: ComparisonStillSourceDetails(item: primaryItem, time: clampedPrimaryTime),
             secondary: ComparisonStillSourceDetails(item: secondaryItem, time: clampedSecondaryTime),
-            alignmentLabel: alignmentMode.label
+            alignmentLabel: alignmentMode.label,
+            inspectionView: inspectionView
         )
 
         taskOwner.start(.screenshot) { [weak self] token, _ in

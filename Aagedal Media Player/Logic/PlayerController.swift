@@ -1496,7 +1496,8 @@ final class PlayerController: ObservableObject {
     func captureComparisonStill(
         secondaryItem: MediaItem,
         secondaryTime: TimeInterval,
-        alignmentMode: CompareAlignmentMode
+        alignmentMode: CompareAlignmentMode,
+        inspectionView: CompareViewMode
     ) {
         guard let primaryItem = mediaItem else { return }
         mediaOperations.captureComparisonStill(
@@ -1504,7 +1505,8 @@ final class PlayerController: ObservableObject {
             secondaryItem: secondaryItem,
             primaryTime: currentPlaybackTime,
             secondaryTime: secondaryTime,
-            alignmentMode: alignmentMode
+            alignmentMode: alignmentMode,
+            inspectionView: inspectionView
         )
     }
 
