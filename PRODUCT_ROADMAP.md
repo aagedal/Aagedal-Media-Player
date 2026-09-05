@@ -224,7 +224,10 @@ confidence as the picture.
 - [ ] Add peak and true-peak meters with clear dBFS/dBTP units.
 - [ ] Add live momentary and short-term loudness, plus integrated loudness over
   a selected range or full file.
-- [ ] Show channel labels and layout mismatches clearly in Compare Mode.
+- [x] Show channel labels and layout mismatches clearly in Compare Mode.
+  Selected-track details list numbered A/B speaker roles, unmatched channels,
+  and explicit positional fallback when roles cannot be established. See
+  `docs/COMPARE_MODE_AUDIO.md`; hands-on audio/accessibility checks remain.
 - [x] Support A/B audio switching and optional channel-by-channel comparison.
 - [ ] Define calibration, ballistics, hold behavior, and EBU/ATSC presets before
   presenting measurements as compliance information.

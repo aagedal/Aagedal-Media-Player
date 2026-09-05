@@ -551,6 +551,11 @@ struct ContentView: View {
                 .accessibilityLabel("Compared audio channel")
                 .accessibilityValue(compareSession.comparedAudioChannel?.label ?? "All channels")
 
+                CompareAudioLayoutIndicator(
+                    primaryController: controller,
+                    secondaryController: compareSession.secondaryController
+                )
+
                 Menu {
                     Picker("Safe Area", selection: $compareSession.safeAreaGuide) {
                         ForEach(CompareSafeAreaGuide.allCases, id: \.self) { guide in

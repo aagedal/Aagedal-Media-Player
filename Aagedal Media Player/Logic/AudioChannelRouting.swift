@@ -96,7 +96,7 @@ nonisolated enum AudioChannelLabels {
                 "7.1": ["Left", "Right", "Center", "LFE", "Back Left", "Back Right", "Side Left", "Side Right"],
                 "7.1(wide)": ["Left", "Right", "Center", "LFE", "Back Left", "Back Right", "Front Left of Center", "Front Right of Center"],
             ]
-            if let names = knownLayouts[layout.lowercased()], names.count == count {
+            if let names = knownLayouts[layout.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()], names.count == count {
                 return names
             }
         }
@@ -139,7 +139,7 @@ nonisolated enum CompareAudioChannelMatcher {
             return primaryLabels.indices.map { index in
                 CompareAudioChannelOption(
                     id: "ordinal-\(index)",
-                    label: primaryLabels[index],
+                    label: "Channel \(index + 1) (by position)",
                     primaryIndex: index,
                     secondaryIndex: index
                 )
@@ -161,5 +161,59 @@ nonisolated enum CompareAudioChannelMatcher {
                 secondaryIndex: secondaryIndex
             )
         }
+    }
+}
+
+/// Describes the selected tracks, including roles excluded from channel isolation.
+nonisolated struct CompareAudioLayoutSummary: Equatable, Sendable {
+    let primaryLabels: [String]
+    let secondaryLabels: [String]
+    let primaryLayout: String
+    let secondaryLayout: String
+    let unmatchedPrimary: [String]
+    let unmatchedSecondary: [String]
+    let usesOrdinalMatching: Bool
+    let hasMatchingChannels: Bool
+    let hasMismatch: Bool
+
+    init(primaryCount: Int, primaryLayout: String?, secondaryCount: Int, secondaryLayout: String?) {
+        let primaryLabels = AudioChannelLabels.names(count: primaryCount, layout: primaryLayout)
+        let secondaryLabels = AudioChannelLabels.names(count: secondaryCount, layout: secondaryLayout)
+        self.primaryLabels = primaryLabels
+        self.secondaryLabels = secondaryLabels
+        self.primaryLayout = Self.layoutDescription(count: primaryCount, layout: primaryLayout)
+        self.secondaryLayout = Self.layoutDescription(count: secondaryCount, layout: secondaryLayout)
+        let bothKnown = AudioChannelLabels.hasKnownLayout(count: primaryCount, layout: primaryLayout)
+            && AudioChannelLabels.hasKnownLayout(count: secondaryCount, layout: secondaryLayout)
+        usesOrdinalMatching = primaryCount > 0 && primaryCount == secondaryCount && !bothKnown
+        let options = CompareAudioChannelMatcher.options(
+            primaryCount: primaryCount, primaryLayout: primaryLayout,
+            secondaryCount: secondaryCount, secondaryLayout: secondaryLayout
+        )
+        hasMatchingChannels = !options.isEmpty
+        let matchedPrimary = Set(options.map(\.primaryIndex))
+        let matchedSecondary = Set(options.map(\.secondaryIndex))
+        unmatchedPrimary = primaryLabels.indices.filter { !matchedPrimary.contains($0) }.map { primaryLabels[$0] }
+        unmatchedSecondary = secondaryLabels.indices.filter { !matchedSecondary.contains($0) }.map { secondaryLabels[$0] }
+        hasMismatch = primaryCount != secondaryCount
+            || (bothKnown && primaryLabels != secondaryLabels)
+            || (!bothKnown && self.primaryLayout.lowercased() != self.secondaryLayout.lowercased())
+    }
+
+
+    var matchingExplanation: String {
+        if !hasMatchingChannels {
+            return "No reliable channel pairs are available for these selected tracks. Use All Channels to monitor each source."
+        }
+        if usesOrdinalMatching {
+            return "Channels are paired by position. Speaker roles cannot be verified for an unspecified or unrecognized layout."
+        }
+        return "Channel isolation pairs matching speaker roles. Channels without a match remain available in All Channels."
+    }
+
+    private static func layoutDescription(count: Int, layout: String?) -> String {
+        guard count > 0 else { return "No active audio channels" }
+        let trimmed = layout?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return "\(count) ch · \(trimmed.isEmpty ? "Layout unspecified" : trimmed)"
     }
 }

@@ -5,6 +5,7 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Added
+- Selected-track A/B audio layout details, numbered channel labels, unmatched speaker roles, and explicit positional matching for unknown layouts.
 - A pointer-following 2×/4×/8× inspection loupe with pinning, keyboard-accessible picture positioning, and paired A/B display previews.
 - Manual comparison alignment in signed seconds or source-A frames, one-frame nudges, and automatic-alignment reset.
 - Chapter markers on the playback timeline with current-chapter accessibility feedback.
