@@ -1,6 +1,6 @@
 # Aagedal Media Player Product Roadmap
 
-Last updated: 2026-09-02
+Last updated: 2026-09-05
 
 ## Product direction
 
@@ -79,7 +79,8 @@ Release promise:
 
 ### Milestone A — Comparison foundation
 
-Status: Implemented; live mixed-backend and drift validation remains.
+Status: Implemented and validated with generated real-decoder fixtures. The
+oldest-supported-hardware release profile remains a separate release gate.
 
 - [x] Load source B inside the current window.
 - [x] Align by source timecode with relative-start fallback.
@@ -88,19 +89,19 @@ Status: Implemented; live mixed-backend and drift validation remains.
 - [x] Keep B silent by default without changing persisted mute preferences.
 - [x] Add cancellation-safe replacement and teardown.
 - [x] Add pure alignment and overlap tests.
-- [ ] Validate MPV/MPV, AVFoundation/AVFoundation, and mixed-backend pairs.
-- [ ] Measure sustained drift and confirm correction stays within one A-frame at
+- [x] Validate MPV/MPV, AVFoundation/AVFoundation, and mixed-backend pairs.
+- [x] Measure sustained drift and confirm correction stays within one A-frame at
   normal speed.
 
 ### Milestone B — The demo-worthy comparison tools
 
-- [ ] Add a draggable vertical and horizontal wipe.
-- [ ] Add instant A/B switching with a dedicated keyboard shortcut.
-- [ ] Add opacity overlay with an adjustable blend amount.
-- [ ] Add a GPU-backed display-space difference view with gain control.
-- [ ] Normalize rotation, pixel aspect ratio, and display geometry.
-- [ ] Add explicit A/B audio monitoring.
-- [ ] Export a comparison still containing filenames, timecode, view mode, and
+- [x] Add a draggable vertical and horizontal wipe.
+- [x] Add instant A/B switching with a dedicated keyboard shortcut.
+- [x] Add opacity overlay with an adjustable blend amount.
+- [x] Add a GPU-backed display-space difference view with gain control.
+- [x] Normalize rotation, pixel aspect ratio, and display geometry.
+- [x] Add explicit A/B audio monitoring.
+- [x] Export a comparison still containing filenames, timecode, view mode, and
   selected technical metadata.
 
 ### Milestone C — Make professional inspection visible
@@ -109,12 +110,12 @@ The current interface hides important tools behind menus and shortcuts. Add a
 compact QC toolbar that remains quiet during playback but makes the product's
 purpose obvious.
 
-- [ ] Add visible Compare, Scopes, Waveform, and Inspector controls.
-- [ ] Use selected/active states that remain legible over light and dark video.
-- [ ] Keep every action keyboard reachable and VoiceOver-labelled.
-- [ ] Add a first-run callout that introduces the QC toolbar without blocking
+- [x] Add visible Compare, Scopes, Waveform, and Inspector controls.
+- [x] Use selected/active states that remain legible over light and dark video.
+- [x] Keep every action keyboard reachable and VoiceOver-labelled.
+- [x] Add a first-run callout that introduces Compare Mode without blocking
   playback.
-- [ ] Replace the README's “quickly just checking playback” language with the
+- [x] Replace the README's “quickly just checking playback” language with the
   product positioning above.
 - [ ] Refresh README and release imagery around a real inspection workflow.
 
@@ -153,12 +154,12 @@ Acceptance:
 
 ### Milestone E — Comparison-aware information
 
-- [ ] Show persistent A/B identity and compact codec, raster, frame-rate,
+- [x] Show persistent A/B identity and compact codec, raster, frame-rate,
   duration, color-space, transfer-function, and audio-layout mismatches.
 - [x] Show the comparison offset and overlapping interval on the timeline.
 - [ ] Render existing chapter markers directly on the timeline.
-- [ ] Explain whether alignment is source-timecode, relative, or manually
-  adjusted.
+- [x] Explain whether alignment is source-timecode or relative. Manual
+  adjustment remains future work.
 - [ ] Allow a manual frame/time offset when embedded timecode is missing or
   intentionally different.
 
@@ -182,11 +183,11 @@ its scope and state must be explicit.
   `COMPARE_MODE_IMPLEMENTATION_PLAN.md`.
 - [ ] Profile two-stream UHD/HDR playback on the oldest supported Apple Silicon
   Mac.
-- [ ] Confirm all existing single-file playback tests and shortcuts remain
+- [x] Confirm all existing single-file playback tests and shortcuts remain
   unchanged.
-- [ ] Record the release demo: source versus encode, automatic alignment, wipe,
-  synchronized loupe, difference view, mismatch summary, and comparison-still
-  export.
+- [ ] Record the release demo: source versus encode, automatic alignment, A/B,
+  wipe, difference view, mismatch summary, and comparison-still export. Use
+  `docs/COMPARE_MODE_DEMO.md`; synchronized loupe remains a separate milestone.
 - [ ] Complete a short hands-on beta with editors, colorists, or finishing
   artists using their own source/encode pairs.
 

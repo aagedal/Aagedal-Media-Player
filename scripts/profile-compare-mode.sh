@@ -9,6 +9,7 @@ frame_size="${COMPARE_PROFILE_SIZE:-3840x2160}"
 render_size="${COMPARE_PROFILE_RENDER_SIZE:-$frame_size}"
 frame_rate="${COMPARE_PROFILE_FRAME_RATE:-24}"
 observation_seconds="${COMPARE_PROFILE_SECONDS:-30}"
+reuse_fixtures="${COMPARE_PROFILE_REUSE_FIXTURES:-0}"
 temporary_dir="$(mktemp -d "${TMPDIR:-/tmp/}aagedal-compare-profile.XXXXXX")"
 fixture_dir="${COMPARE_PROFILE_FIXTURE_DIR:-$temporary_dir/fixtures}"
 fixture_dir="${fixture_dir:A}"
@@ -17,16 +18,23 @@ profile_log="$temporary_dir/profile.log"
 result_bundle="$temporary_dir/CompareModeProfile.xcresult"
 attachments_dir="$temporary_dir/attachments"
 attachments_exported=false
-derived_data="$temporary_dir/DerivedData"
+derived_data="${COMPARE_PROFILE_DERIVED_DATA:-$temporary_dir/DerivedData}"
+derived_data="${derived_data:A}"
+artifact_dir="${COMPARE_PROFILE_ARTIFACT_DIR:-}"
+git_revision="$(git -C "$repository_dir" rev-parse HEAD 2>/dev/null || true)"
+git_state="clean"
+if [[ -n "$(git -C "$repository_dir" status --porcelain 2>/dev/null)" ]]; then
+  git_state="dirty"
+fi
+xcode_version="$(xcodebuild -version 2>/dev/null | /usr/bin/paste -s -d ' ' - || true)"
 
 cleanup() {
   rm -Rf -- "$temporary_dir"
 }
 trap cleanup EXIT
 
-if [[ -z "$ffmpeg_binary" || ! -x "$ffmpeg_binary" ]]; then
-  print -u2 "A full ffmpeg installation is required to create profiling inputs."
-  print -u2 "Install ffmpeg or set FFMPEG=/path/to/ffmpeg."
+if [[ "$reuse_fixtures" != 0 && "$reuse_fixtures" != 1 ]]; then
+  print -u2 "COMPARE_PROFILE_REUSE_FIXTURES must be 0 or 1."
   exit 1
 fi
 
@@ -36,9 +44,80 @@ if ! [[ "$observation_seconds" == <8-3600> ]]; then
 fi
 fixture_seconds=$((observation_seconds + 5))
 
-encoder_list="$($ffmpeg_binary -hide_banner -encoders 2>/dev/null)"
-if [[ "$encoder_list" != *" libx265 "* ]]; then
-  print -u2 "The selected ffmpeg does not include libx265: $ffmpeg_binary"
+size_pattern='^[1-9][0-9]*x[1-9][0-9]*$'
+rate_pattern='^([1-9][0-9]*)(\.[0-9]+|/[1-9][0-9]*)?$'
+if ! [[ "$frame_size" =~ $size_pattern ]]; then
+  print -u2 "COMPARE_PROFILE_SIZE must use WIDTHxHEIGHT with positive integers."
+  exit 1
+fi
+
+if ! [[ "$render_size" =~ $size_pattern ]]; then
+  print -u2 "COMPARE_PROFILE_RENDER_SIZE must use WIDTHxHEIGHT with positive integers."
+  exit 1
+fi
+
+if ! [[ "$frame_rate" =~ $rate_pattern ]]; then
+  print -u2 "COMPARE_PROFILE_FRAME_RATE must be a positive number or fraction."
+  exit 1
+fi
+
+if [[ -n "$artifact_dir" ]]; then
+  artifact_dir="${artifact_dir:A}"
+  if [[ -e "$artifact_dir" ]]; then
+    print -u2 "COMPARE_PROFILE_ARTIFACT_DIR must name a new directory: $artifact_dir"
+    exit 1
+  fi
+  mkdir -p "$artifact_dir"
+fi
+
+retain_artifacts() {
+  [[ -n "$artifact_dir" ]] || return 0
+  [[ -f "$build_log" ]] && cp "$build_log" "$artifact_dir/build.log"
+  [[ -f "$profile_log" ]] && cp "$profile_log" "$artifact_dir/profile.log"
+  [[ -f "$fixture_dir/MANIFEST.txt" ]] && cp "$fixture_dir/MANIFEST.txt" "$artifact_dir/fixture-manifest.txt"
+  [[ -d "$result_bundle" ]] && cp -R "$result_bundle" "$artifact_dir/CompareModeProfile.xcresult"
+  [[ -d "$attachments_dir" ]] && cp -R "$attachments_dir" "$artifact_dir/attachments"
+}
+
+manifest_value() {
+  local key="$1"
+  /usr/bin/awk -F= -v key="$key" '$1 == key { print substr($0, index($0, "=") + 1); exit }' \
+    "$fixture_dir/MANIFEST.txt"
+}
+
+validate_reused_fixtures() {
+  local manifest="$fixture_dir/MANIFEST.txt"
+  local source_a="$fixture_dir/compare/source-a.mov"
+  local source_b="$fixture_dir/compare/source-b.mov"
+  if [[ ! -f "$manifest" || ! -s "$source_a" || ! -s "$source_b" ]]; then
+    print -u2 "Reusable fixtures are incomplete in $fixture_dir."
+    print -u2 "Run once with COMPARE_PROFILE_REUSE_FIXTURES=0 to regenerate them."
+    return 1
+  fi
+  if [[ "$(manifest_value schema)" != 5 \
+        || "$(manifest_value size)" != "$frame_size" \
+        || "$(manifest_value frame_rate)" != "$frame_rate" \
+        || "$(manifest_value duration)" != "$fixture_seconds" ]]; then
+    print -u2 "Reusable fixtures do not match this profile configuration."
+    print -u2 "Run once with COMPARE_PROFILE_REUSE_FIXTURES=0 to regenerate them."
+    return 1
+  fi
+}
+
+if [[ "$reuse_fixtures" == 0 ]]; then
+  if [[ -z "$ffmpeg_binary" || ! -x "$ffmpeg_binary" ]]; then
+    print -u2 "A full ffmpeg installation is required to create profiling inputs."
+    print -u2 "Install ffmpeg or set FFMPEG=/path/to/ffmpeg."
+    exit 1
+  fi
+
+  encoder_list="$($ffmpeg_binary -hide_banner -encoders 2>/dev/null)"
+  if [[ "$encoder_list" != *" libx265 "* ]]; then
+    print -u2 "The selected ffmpeg does not include libx265: $ffmpeg_binary"
+    exit 1
+  fi
+elif [[ -z "${COMPARE_PROFILE_FIXTURE_DIR:-}" ]]; then
+  print -u2 "COMPARE_PROFILE_REUSE_FIXTURES=1 requires COMPARE_PROFILE_FIXTURE_DIR."
   exit 1
 fi
 
@@ -65,18 +144,25 @@ generate_fixture() {
     "$destination"
 }
 
-print -u2 "Generating $frame_size, ${frame_rate} fps, 10-bit HDR comparison fixtures…"
-generate_fixture "$fixture_dir/compare/source-a.mov" "$fixture_seconds" 440 "01:00:00:00"
-generate_fixture "$fixture_dir/compare/source-b.mov" "$((fixture_seconds + 1))" 660 "00:59:59:00"
+if [[ "$reuse_fixtures" == 1 ]]; then
+  validate_reused_fixtures
+  print -u2 "Reusing validated comparison fixtures from $fixture_dir…"
+else
+  print -u2 "Generating $frame_size, ${frame_rate} fps, 10-bit HDR comparison fixtures…"
+  generate_fixture "$fixture_dir/compare/source-a.mov" "$fixture_seconds" 440 "01:00:00:00"
+  generate_fixture "$fixture_dir/compare/source-b.mov" "$((fixture_seconds + 1))" 660 "00:59:59:00"
 
-{
-  print "Aagedal Media Player Compare Mode profiling fixtures"
-  print "schema=5"
-  print "size=$frame_size"
-  print "frame_rate=$frame_rate"
-  print "duration=$fixture_seconds"
-  print "ffmpeg=$($ffmpeg_binary -hide_banner -version 2>&1 | head -n 1)"
-} > "$fixture_dir/MANIFEST.txt"
+  {
+    print "Aagedal Media Player Compare Mode profiling fixtures"
+    # CompareLiveBackendTests owns this contract; keep the generated profile
+    # tree directly consumable by the same schema-5 fixture validator.
+    print "schema=5"
+    print "size=$frame_size"
+    print "frame_rate=$frame_rate"
+    print "duration=$fixture_seconds"
+    print "ffmpeg=$($ffmpeg_binary -hide_banner -version 2>&1 | head -n 1)"
+  } > "$fixture_dir/MANIFEST.txt"
+fi
 
 cd "$repository_dir"
 print -u2 "Building the Compare Mode integration tests…"
@@ -90,6 +176,7 @@ if ! xcodebuild build-for-testing \
   -only-testing:"Aagedal Media Player Tests/CompareLiveBackendTests" \
   > "$build_log" 2>&1; then
   tail -n 200 "$build_log" >&2
+  retain_artifacts
   exit 1
 fi
 
@@ -100,16 +187,22 @@ if (( ${#xctestrun_files} != 1 )); then
 fi
 xctestrun_file="${xctestrun_files[1]}"
 test_environment_path="TestConfigurations.0.TestTargets.0.EnvironmentVariables"
-plutil -insert "$test_environment_path.MEDIA_FIXTURE_DIR" \
-  -string "$fixture_dir" "$xctestrun_file"
-plutil -insert "$test_environment_path.COMPARE_SUSTAINED_PLAYBACK_SECONDS" \
-  -string "$observation_seconds" "$xctestrun_file"
-plutil -insert "$test_environment_path.COMPARE_PROFILE_REPORT" \
-  -string "1" "$xctestrun_file"
-plutil -insert "$test_environment_path.COMPARE_PROFILE_RENDER_SIZE" \
-  -string "$render_size" "$xctestrun_file"
+set_test_environment() {
+  local key="$1"
+  local value="$2"
+  if ! plutil -replace "$test_environment_path.$key" -string "$value" "$xctestrun_file" 2>/dev/null; then
+    plutil -insert "$test_environment_path.$key" -string "$value" "$xctestrun_file"
+  fi
+}
+set_test_environment MEDIA_FIXTURE_DIR "$fixture_dir"
+set_test_environment COMPARE_SUSTAINED_PLAYBACK_SECONDS "$observation_seconds"
+set_test_environment COMPARE_PROFILE_REPORT 1
+set_test_environment COMPARE_PROFILE_RENDER_SIZE "$render_size"
 
 print -u2 "Profiling all four backend pairings plus mixed-backend visual and live-scope canvases for $observation_seconds seconds each…"
+pre_profile_power="$(pmset -g batt 2>/dev/null | head -n 1 || true)"
+pre_profile_low_power="$(pmset -g custom 2>/dev/null | /usr/bin/awk '/Power:$/ { power = $0; sub(/:$/, "", power) } /lowpowermode/ { values = values (values ? ", " : "") power "=" $NF } END { print values }' || true)"
+pre_profile_thermal="$(pmset -g therm 2>/dev/null | tr '\n' ' ' | sed 's/[[:space:]]\{1,\}/ /g' || true)"
 set +e
 /usr/bin/time -lp \
   xcodebuild test-without-building \
@@ -128,6 +221,22 @@ set +e
     > "$profile_log" 2>&1
 profile_status=$?
 set -e
+post_profile_thermal="$(pmset -g therm 2>/dev/null | tr '\n' ' ' | sed 's/[[:space:]]\{1,\}/ /g' || true)"
+
+# XCTest treats XCTSkip as a successful test process. A profiling run with
+# missing/stale fixtures must never be reported as a passing benchmark.
+profile_metric_count="$(
+  { /usr/bin/grep -a -E '^COMPARE_PROFILE(_VISUAL|_SCOPE)? ' "$profile_log" || true; } \
+    | /usr/bin/wc -l \
+    | /usr/bin/tr -d '[:space:]'
+)"
+if /usr/bin/grep -a -q 'Test skipped' "$profile_log"; then
+  print -u2 "Compare Mode profiling tests were skipped; rejecting the run."
+  profile_status=1
+elif (( ${profile_metric_count:-0} < 8 )); then
+  print -u2 "Expected eight Compare Mode profile metrics, found ${profile_metric_count:-0}; rejecting the run."
+  profile_status=1
+fi
 
 if [[ -d "$result_bundle" ]]; then
   if ! xcrun xcresulttool export attachments \
@@ -143,27 +252,48 @@ fi
 hardware_model="$(system_profiler SPHardwareDataType 2>/dev/null | awk -F': ' '/Model Name/ { print $2; exit }')"
 chip="$(system_profiler SPHardwareDataType 2>/dev/null | awk -F': ' '/Chip/ { print $2; exit }')"
 memory="$(system_profiler SPHardwareDataType 2>/dev/null | awk -F': ' '/Memory/ { print $2; exit }')"
+model_identifier="$(system_profiler SPHardwareDataType 2>/dev/null | awk -F': ' '/Model Identifier/ { print $2; exit }')"
+source_a_bytes="$(stat -f %z "$fixture_dir/compare/source-a.mov" 2>/dev/null || true)"
+source_b_bytes="$(stat -f %z "$fixture_dir/compare/source-b.mov" 2>/dev/null || true)"
+source_a_bitrate="$(/usr/bin/awk -v file_bytes="$source_a_bytes" -v seconds="$fixture_seconds" 'BEGIN { if (file_bytes > 0 && seconds > 0) printf "%.2f", file_bytes * 8 / seconds / 1000000 }')"
+source_b_bitrate="$(/usr/bin/awk -v file_bytes="$source_b_bytes" -v seconds="$((fixture_seconds + 1))" 'BEGIN { if (file_bytes > 0 && seconds > 0) printf "%.2f", file_bytes * 8 / seconds / 1000000 }')"
+fixture_ffmpeg="$(manifest_value ffmpeg)"
 
 print "# Compare Mode production-resolution profile"
 print
 print -r -- "- Hardware: ${hardware_model:-Unknown} / ${chip:-Unknown} / ${memory:-Unknown}"
+print -r -- "- Model identifier: ${model_identifier:-Unknown}"
 print -r -- "- macOS: $(sw_vers -productVersion)"
+print -r -- "- Xcode: ${xcode_version:-Unknown}"
+print -r -- "- Git: ${git_revision:-Unknown} ($git_state at profile start)"
+print -r -- "- Power before measured run: ${pre_profile_power:-Unknown}"
+print -r -- "- Low Power Mode values before measured run: ${pre_profile_low_power:-Unknown}"
+print -r -- "- Thermal state before measured run: ${pre_profile_thermal:-Unavailable}"
+print -r -- "- Thermal state after measured run: ${post_profile_thermal:-Unavailable}"
 print -r -- "- Fixture: $frame_size at $frame_rate fps, HEVC Main 10, BT.2020/PQ"
+print -r -- "- Fixture bytes (A/B): ${source_a_bytes:-Unknown}/${source_b_bytes:-Unknown}"
+print -r -- "- Approximate fixture bitrate Mbps (A/B): ${source_a_bitrate:-Unknown}/${source_b_bitrate:-Unknown}"
+print -r -- "- Fixture encoder: ${fixture_ffmpeg:-Unknown}"
 print -r -- "- Render surface: $render_size per decoder"
 print -r -- "- Sustained observation: $observation_seconds seconds per backend pairing"
+print -r -- "- Resource totals: aggregate for the complete optimized serial test run"
 print
 print '```text'
 if [[ "$attachments_exported" == true ]]; then
-  rg --no-filename -o 'COMPARE_PROFILE.*' "$attachments_dir" || true
+  /usr/bin/grep -R -a -h -o 'COMPARE_PROFILE.*' "$attachments_dir" 2>/dev/null || true
 else
-  rg --no-filename -o 'COMPARE_PROFILE.*' "$profile_log" || true
+  /usr/bin/grep -a -h -o 'COMPARE_PROFILE.*' "$profile_log" 2>/dev/null || true
 fi
-rg '\*\* TEST (SUCCEEDED|FAILED) \*\*|real |user |sys |maximum resident set size' "$profile_log" || true
+/usr/bin/grep -a -E '\*\* TEST (SUCCEEDED|FAILED) \*\*|real |user |sys |maximum resident set size' "$profile_log" || true
 print '```'
 print
 print "Decoder drift signposts are available in Instruments under the CompareMode category."
 if [[ -n "${COMPARE_PROFILE_FIXTURE_DIR:-}" ]]; then
   print "Fixtures retained at: $fixture_dir"
+fi
+if [[ -n "$artifact_dir" ]]; then
+  retain_artifacts
+  print "Raw artifacts retained at: $artifact_dir"
 fi
 
 if (( profile_status != 0 )); then

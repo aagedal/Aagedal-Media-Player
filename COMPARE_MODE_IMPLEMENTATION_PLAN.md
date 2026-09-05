@@ -55,6 +55,11 @@ metadata loading or suspended backend preparation, and preservation of
 specific decoder failures. A real `NSWindow` close integration test now
 verifies that window teardown cancels an in-flight B metadata load, restores
 audio safety, resets both controller paths, and rejects the late completion.
+The 2026-09-05 hardening pass also added an explicit cancel action while B
+metadata loads, made decoder-readiness timeout a terminal preparation result,
+invalidated late review-sidecar save completions, suspended drift correction
+during active scrubbing, and synchronized B when A loops across every backend
+pairing.
 Real-decoder
 integration coverage now verifies source-timecode alignment, paired
 seek/play/pause, frame stepping, scrubbing, forward shuttle acceleration,
@@ -92,14 +97,23 @@ and about 847 MiB peak resident memory. The extended eight-second visual smoke
 run also passed there: both 3840×2160 canvases delivered 80 updates, covered all
 seven modes, stayed under 51 ms worst main-actor delay, reconverged within
 0.599 seconds, and used about 848 MiB peak resident memory. The profiler still
-needs to be run for the full duration on the oldest supported Apple Silicon Mac
-with a complementary Instruments GPU/thermal pass. An eight-second UHD HDR
+needs to be run for the defined 120-second-per-scenario release duration on the
+oldest supported Apple Silicon Mac with a complementary Instruments GPU/thermal
+pass. An eight-second UHD HDR
 profile of the new live-scope workload passed on the M5 Pro in both
 mixed-backend directions: A, B, and display difference produced 95/99 fresh
 scope renders, worst main-actor delay stayed under 87 ms, drift recovery stayed
 within the one-second-plus-sample allowance, and peak resident memory for the
-complete serial profile was about 855 MiB.
-The full project test suite also passed after the live-scope scheduling and
+complete serial profile was about 855 MiB. After making AVFoundation correction
+latency-aware, a complete 30-second-per-scenario UHD HDR development profile
+also passed on the M5 Pro: all eight serial decoder, visual, and live-scope
+scenarios met the drift gates; the worst excursion was 0.739 seconds, the
+largest main-actor delay was 96 ms, the visual passes delivered 300 updates
+each, and aggregate peak resident memory was about 853 MiB. This battery-power
+development result does not replace the 120-second base-M1 release gate. The
+profiler now rejects skipped or metric-free XCTest runs and validates reusable
+fixtures against the test suite's manifest contract.
+The full project test suite also passed after the loop, scrub, lifecycle, and
 AVFoundation correction changes, preserving the existing single-file coverage.
 
 - [x] Define the implementation plan and release boundaries.
@@ -199,9 +213,11 @@ implemented through 2026-09-04. Editor round-trip validation remains.
 
 Starting two independent decoders together is not frame lock. The session needs
 one master clock, measured drift, and conservative correction. Phase 1 now uses
-bounded backend-aware rate correction for ordinary drift and reserves a seek
-for gross errors. Production-resolution profiling still needs to confirm the
-chosen bounds under sustained decoder load.
+bounded backend-aware correction: MPV can use a temporary rate adjustment,
+while AVFoundation uses a latency-compensated precise seek when it cannot
+sustain faster-than-realtime UHD decoding. The 30-second-per-scenario M5 Pro
+profile confirms those bounds under that development load; the 120-second
+base-M1 release profile remains outstanding.
 
 ### Mixed backends
 
@@ -251,7 +267,7 @@ alignment with simultaneous codec/raster/rate/duration differences, plus a
 disjoint source-timecode range whose B decoder remains parked while A plays.
 Generated integration checks now cover isolated
 rate variants, rotated/anamorphic pairing, and SDR/HDR pairing. The full
-raster/color matrix and longer production-resolution runs still require
+raster/color matrix and 120-second release-floor production run still require
 hands-on validation. Hosted mixed-backend checks mount `ComparePlayerView`,
 cycle all seven presentation modes during playback, move both wipe variants,
 verify that neither native surface nor decoder is rebuilt, and exercise every
@@ -268,9 +284,15 @@ thermal behavior remain manual gates.
 - [x] Add a first-run callout for Compare Mode without interrupting playback.
 - [x] Replace the README's “just checking playback” positioning with a professional
   inspection message.
-- [ ] Record a short demo: source vs encode, timecode alignment, wipe, difference,
-  and comparison-still export.
+- [x] Prepare deterministic source-derived demo fixtures and a release-demo run
+  sheet.
+- [ ] Record the short demo: source vs encode, timecode alignment, wipe,
+  difference, and comparison-still export. Follow
+  `docs/COMPARE_MODE_DEMO.md`; the recording and final imagery remain manual.
 - [ ] Benchmark sustained drift and CPU/GPU load on the oldest supported Mac.
+  The gate is a 120-second-per-scenario automated run plus the Instruments pass
+  on the base 2020 M1 MacBook Air defined in
+  `docs/COMPARE_MODE_PERFORMANCE.md`.
 
 Run `scripts/profile-compare-mode.sh` for the automated decoder/drift baseline,
 then follow `docs/COMPARE_MODE_PERFORMANCE.md` for the Instruments visual-mode

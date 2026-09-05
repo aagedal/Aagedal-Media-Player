@@ -5,84 +5,154 @@ ordinary test suite uses small generated fixtures to catch synchronization and
 lifecycle regressions quickly, but those clips do not establish that two UHD
 HDR streams are sustainable on release hardware.
 
-Run the production-resolution profile on the oldest supported Apple Silicon
-Mac before a Compare Mode release:
+## Release baseline
+
+While the app supports every Apple Silicon Mac capable of running macOS 15,
+the release floor is a base 2020 M1 MacBook Air with 8 GB unified memory and a
+7-core GPU. Revisit that named floor whenever the supported-hardware policy
+changes. The release run observes each of the eight serial scenarios for 120
+seconds: four decoder pairings, two real mixed-backend comparison canvases,
+and two mixed-backend live-scope canvases.
+
+Use these conditions for a comparable result:
+
+- Install the release's minimum or current supported macOS version and record
+  the exact version.
+- Connect AC power, disable Low Power Mode, disconnect external displays, and
+  close unrelated foreground applications.
+- Generate fixtures and warm the build cache before the measured run. Fixture
+  encoding and a clean Release build can otherwise preheat the fanless M1.
+- Let `pmset -g therm` return to its idle state before each measured run. Record
+  ambient conditions if the machine is visibly heat-soaked.
+- Keep the app's comparison render setting at Full Frame for the primary gate.
+
+Prepare a uniquely named local result directory. `build/` is ignored by Git:
 
 ```bash
-scripts/profile-compare-mode.sh | tee compare-mode-profile.txt
+profile_root="$PWD/build/compare-profile-m1"
+mkdir -p "$profile_root"
+
+COMPARE_PROFILE_SECONDS=120 \
+COMPARE_PROFILE_FIXTURE_DIR="$profile_root/fixtures" \
+COMPARE_PROFILE_DERIVED_DATA="$profile_root/DerivedData" \
+COMPARE_PROFILE_ARTIFACT_DIR="$profile_root/preparation-artifacts" \
+scripts/profile-compare-mode.sh 2>&1 | tee "$profile_root/preparation-report.md"
 ```
 
-The profiler generates disposable 3840×2160, 24 fps, 10-bit HEVC fixtures with
-BT.2020/PQ signaling. It then runs the same source-timecode alignment,
-transport, decoder-advance, audio-suppression, and one-frame drift assertions
-used by `CompareLiveBackendTests` for 30 seconds across MPV/MPV,
-AVFoundation/AVFoundation, and both mixed-backend directions. Two additional
-mixed-backend passes mount the real comparison canvas at the configured render
-size, repeatedly exercise all seven presentation modes and their adjustable
-controls plus every safe-area/aspect-ratio guide combination, and measure the
-worst main-actor scheduling delay while continuing to verify drift and
-decoder/surface identity. Two further mixed-backend passes mount the real live
-scopes, capture frames from both decoders, cycle A, B, and display-difference
-scope sources with difference gain, and apply the same drift and responsiveness
-checks. Its report also captures wall time, CPU time, and peak resident memory
-for the optimized, serial test run.
-The profiler injects its configuration into a disposable `.xctestrun` file, so
-concurrent ordinary tests in the checkout are unaffected. Each transport-only
-backend is attached to a retained render output matching the fixture size;
-ordinary integration-test runs continue to use small 320×180 outputs and a
-960×540 hosted comparison canvas.
-If the requested observation ends during an out-of-frame excursion, that
-pairing continues only until it reconverges or its one-second recovery deadline
-expires. This prevents the result from depending on which part of a correction
-cycle happens to coincide with the cutoff.
-
-Configuration is opt-in through environment variables:
+Discard the preparation numbers, wait for the machine to return to its idle
+thermal state, then run the measured baseline without regenerating fixtures:
 
 ```bash
 COMPARE_PROFILE_SECONDS=120 \
+COMPARE_PROFILE_FIXTURE_DIR="$profile_root/fixtures" \
+COMPARE_PROFILE_REUSE_FIXTURES=1 \
+COMPARE_PROFILE_DERIVED_DATA="$profile_root/DerivedData" \
+COMPARE_PROFILE_ARTIFACT_DIR="$profile_root/measured-artifacts" \
+scripts/profile-compare-mode.sh 2>&1 | tee "$profile_root/measured-report.md"
+```
+
+`COMPARE_PROFILE_DERIVED_DATA` lets Xcode validate and incrementally reuse the
+Release build rather than compiling into a new temporary directory. Reused
+fixtures are accepted only when their manifest, resolution, frame rate, and
+duration match the requested profile. Each artifact directory must be new; it
+retains the build log, test log, fixture manifest, result bundle, and exported
+attachments without silently overwriting an earlier run.
+
+The profiler defaults to a 30-second development run. Other supported options
+are:
+
+```bash
 COMPARE_PROFILE_SIZE=3840x2160 \
 COMPARE_PROFILE_RENDER_SIZE=3840x2160 \
 COMPARE_PROFILE_FRAME_RATE=24 \
-scripts/profile-compare-mode.sh | tee compare-mode-profile.txt
+scripts/profile-compare-mode.sh
 ```
 
-The render size defaults to `COMPARE_PROFILE_SIZE`; override it only when a
-separate output-resolution comparison is intentional.
+The render size defaults to `COMPARE_PROFILE_SIZE`. Use
+`COMPARE_PROFILE_RENDER_SIZE=1920x1080` with the same UHD source fixtures only
+for a separate Reduced Frame fallback measurement. Set `FFMPEG` when the
+desired full ffmpeg is not first on `PATH`.
 
-Set `FFMPEG` when the desired full ffmpeg is not first on `PATH`. Set
-`COMPARE_PROFILE_FIXTURE_DIR` to retain the generated media for repeated manual
-or Instruments runs; otherwise the profiler removes its temporary fixtures.
+## Automated coverage and pass criteria
 
-## Pass criteria
+The profiler creates 3840×2160, 24 fps, 10-bit HEVC fixtures with BT.2020/PQ
+signaling. It runs the source-timecode alignment, transport, decoder-advance,
+audio-suppression, and one-frame drift assertions from
+`CompareLiveBackendTests` across MPV/MPV, AVFoundation/AVFoundation, and both
+mixed-backend directions. The visual passes repeatedly exercise all seven
+presentation modes, their adjustable controls, and every safe-area/aspect-ratio
+guide combination. The scope passes cycle A, B, and timestamp-paired display
+difference while rendering live waveform and vectorscope output.
+
+The automated gate requires:
 
 - All four decoder pairings keep both clocks advancing for the requested run.
-- Any excursion beyond one primary frame reconverges within one second, with
-  one 25 ms sampling interval of measurement tolerance.
-- An excursion active at the cutoff reconverges within its one-second deadline,
-  and the final sample is within the one-frame correction threshold.
+- Any excursion beyond one primary frame reconverges within one second plus
+  one 25 ms sampling interval.
+- An excursion active at the cutoff reconverges within its deadline, and the
+  final sample is within the one-frame correction threshold.
 - MPV-backed source B keeps its audio track disabled while A is monitored.
-- Both mixed-backend comparison canvases cover every visual mode repeatedly,
-  cover every guide combination, keep their original decoder and native-surface
-  identities, and deliver at least four control updates per second without a
-  main-actor delay over 250 ms.
-- Both mixed-backend live-scope passes advance A and B capture, publish fresh
-  waveform and vectorscope output for A, B, and display difference, retain the
-  original decoders, and keep main-actor scheduling delay below 250 ms.
-- The machine remains responsive and the comparison view remains interactive.
+- Both comparison canvases cover every mode and guide state, retain decoder
+  and native-surface identity, deliver at least four control updates per
+  second, and keep main-actor delay at or below 250 ms.
+- Both live-scope passes advance A and B capture, publish fresh waveform and
+  vectorscope output for every source, retain decoder identity, and keep
+  main-actor delay at or below 250 ms.
+- Playback remains responsive without a decoder stall or a reported thermal
+  limit during the measured run.
 
-The automated report exercises wipe, overlay, difference rendering, shared
-guides, and live scopes, but it does not measure GPU utilization. For release
-validation, retain the fixtures and perform a second run in the app while
-recording the existing `CompareMode` and `ScopePerformance` signposts in
-Instruments. Exercise the visual modes and scope sources, record CPU/GPU
-utilization and thermal behavior, and attach those observations to the saved
-profile report.
+The Markdown report records source revision and cleanliness, Xcode and macOS,
+hardware identity, power and thermal snapshots, fixture sizes, drift metrics,
+wall time, CPU time, and peak resident memory. `/usr/bin/time` wraps the entire
+eight-test serial run, so its CPU and memory values are whole-suite aggregates,
+not per-mode measurements. CPU, GPU, and memory are recorded baselines until
+release budgets are chosen; the drift and responsiveness limits above are the
+current numeric pass/fail gates.
 
-The script prints its drift and resource report even when an assertion fails,
-then returns the failing `xcodebuild` status so it can be used as a release or
-continuous-integration gate.
+If the requested observation ends during an out-of-frame excursion, that
+pairing continues only until it reconverges or its one-second recovery deadline
+expires. This prevents the result from depending on the part of a correction
+cycle that coincides with the cutoff. The script prints its report even when a
+test assertion fails and returns the failing `xcodebuild` status.
 
-Synthetic test patterns are deliberately reproducible and frame-sized, but
-they do not represent every production codec, bitrate, GOP structure, or HDR
-master. Follow the profile with representative source/encode pairs from the
-release verification matrix.
+## Instruments run sheet
+
+The automated report does not measure GPU utilization. After it passes, use
+the retained fixtures for a hands-on Release-app run:
+
+1. Open the Release app from the retained DerivedData products. Open
+   `source-a.mov`, add `source-b.mov`, and verify Source Timecode alignment and
+   the active decoder identities before recording. The automated tests force
+   all four backend pairings; ordinary app selection may choose MPV for both
+   synthetic HEVC files, so record the actual pair and also use representative
+   release media for codec-specific manual coverage.
+2. In Instruments, record the `CompareMode` and `ScopePerformance` points of
+   interest alongside Time Profiler and Metal System Trace data. If those
+   instruments cannot share one document on the installed Xcode, make two
+   passes with the same sequence and duration.
+3. At Full Frame, dwell for 30 seconds in A, B, side by side, vertical wipe,
+   horizontal wipe, overlay, and display difference. Move each wipe and sweep
+   overlay blend and difference gain during its interval.
+4. Enable scopes and dwell for 30 seconds each on A, B, and display difference,
+   including a difference-gain change. Confirm waveform and vectorscope remain
+   live.
+5. Record median and peak CPU and GPU utilization, peak resident memory, worst
+   visible interaction delay, drift/correction events, and thermal state before
+   and after the trace. Save the trace beside `measured-report.md` or record its
+   external location and checksum there.
+6. If Full Frame fails, repeat once at Reduced Frame (1/2) and keep both
+   results. Reduced Frame is an explicit fallback result, not a passing
+   substitute for the Full Frame release gate.
+
+Use a compact results table in the saved report:
+
+| Run | Backends | Render | CPU median/peak | GPU median/peak | Peak RSS | Worst drift/recovery | Thermal before/after | Result |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Automated | All forced pairs | Full | | n/a | | | | |
+| Instruments | Record actual pair | Full | | | | | | |
+| Instruments fallback | Record actual pair | Reduced | | | | | | |
+
+Synthetic test patterns are reproducible and frame-sized, but they do not
+represent every production codec, bitrate, GOP structure, or HDR master.
+Follow the profile with representative source/encode pairs from the release
+verification matrix.

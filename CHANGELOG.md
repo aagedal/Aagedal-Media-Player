@@ -21,6 +21,8 @@ All notable changes to Aagedal Media Player.
   plus production-size safe-area and aspect-ratio guide sweeps.
 - A frame-accurate source-B offset readout and playable A/B overlap interval on
   the comparison timeline.
+- Deterministic source-derived Compare Mode demo fixtures and a concise release
+  recording run sheet.
 
 ### Changed
 - Split playback backends, track selection, media operations, window opening, overlays, settings, and command routing into focused components.
@@ -33,6 +35,11 @@ All notable changes to Aagedal Media Player.
   production-render-sized, and isolated from ordinary test runs.
 - Make Compare Mode profiler cleanup non-interactive for read-only package
   checkout files.
+- Make Compare Mode profiling reusable and auditable with validated fixture and
+  build caches, retained artifacts, machine/power provenance, and rejection of
+  skipped or metric-free runs.
+- Keep paired playback synchronized through active timeline scrubbing and
+  primary-file loop boundaries across all backend combinations.
 
 ### Fixed
 - Prevented superseded scope frames and media-operation tasks from publishing stale results, and stopped screenshots or exports from surviving their owning player window.
@@ -48,6 +55,11 @@ All notable changes to Aagedal Media Player.
 - Prevented a Compare Mode readiness timeout from replacing a specific source-B decoder failure, and covered stale secondary metadata completions during rapid replacement and teardown.
 - Prevented live scopes from starving when frame capture outpaces waveform and
   vectorscope computation.
+- Prevented late Compare Mode readiness and review-save completions from
+  reviving failed or stopped state, and added a visible cancel action while B
+  metadata is loading.
+- Kept an AVFoundation secondary within the one-frame recovery budget under
+  sustained UHD/HDR load by compensating its exact asynchronous seek latency.
 
 ## [1.6.0] — 2026-05-24
 
