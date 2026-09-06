@@ -230,6 +230,47 @@ final class CompareReviewReportExporterTests: XCTestCase {
         XCTAssertEqual(values["B Frame"], "600")
     }
 
+    func testEditorMarkerNotesPreserveSourceIdentityAndSecondaryTimebase() throws {
+        let primary = makeItem(path: "/tmp/original/Same.mov", duration: 20)
+        let secondary = makeItem(path: "/tmp/replacement/Same.mov", duration: 20, startTimecode: "02:00:00:00")
+        for storedSecondaryRate: Int64 in [24, 30] {
+            let snapshot = CompareReviewReportSnapshot(
+                primaryItem: primary, secondaryItem: secondary, alignmentMode: .relative,
+                notes: [CompareReviewNote(
+                    primaryFrame: 30, primaryTime: 0, secondaryFrame: 240, secondaryTime: 0,
+                    secondaryRateNumerator: storedSecondaryRate, text: "Inspect source identity"
+                )]
+            )
+            for format: CompareReviewReportFormat in [.resolveMarkersEDL, .finalCutProXML, .avidMarkersText] {
+                let text = String(decoding: try CompareReviewReportExporter.data(for: format, snapshot: snapshot), as: UTF8.self)
+                XCTAssertTrue(text.contains("Source A URL: file:///tmp/original/Same.mov"))
+                XCTAssertTrue(text.contains("Source B URL: file:///tmp/replacement/Same.mov"))
+                XCTAssertTrue(text.contains("A rate: 30/1"))
+                XCTAssertTrue(text.contains("B rate: \(storedSecondaryRate)/1"))
+                XCTAssertTrue(text.contains(storedSecondaryRate == 24 ? "REL TC 00:00:10:00" : "SRC TC 02:00:08:00"))
+            }
+        }
+    }
+
+    func testAvidRejectsOversizedTextInsteadOfSilentlyLosingFindingMetadata() throws {
+        let snapshot = CompareReviewReportSnapshot(
+            primaryItem: makeItem(path: "/tmp/Master.mov", duration: 5),
+            secondaryItem: makeItem(path: "/tmp/Encode.mp4", duration: 5),
+            alignmentMode: .relative,
+            notes: [CompareReviewNote(
+                primaryFrame: 0, primaryTime: 0, secondaryFrame: 0, secondaryTime: 0,
+                text: String(repeating: "a", count: 32_000)
+            )]
+        )
+        XCTAssertThrowsError(try CompareReviewReportExporter.avidMarkersText(snapshot: snapshot)) { error in
+            guard case CompareReviewReportExportError.avidMarkerTextTooLong(1) = error else {
+                return XCTFail("Expected actionable text length error, got \(error)")
+            }
+        }
+        XCTAssertNoThrow(try CompareReviewReportExporter.data(for: .csv, snapshot: snapshot))
+        XCTAssertNoThrow(try CompareReviewReportExporter.data(for: .finalCutProXML, snapshot: snapshot))
+    }
+
     func testCSVSortsMarkersAndEscapesMultilineUnicodeNotes() {
         let primary = makeItem(
             path: "/tmp/Master, final.mov",
@@ -599,7 +640,7 @@ final class CompareReviewReportExporterTests: XCTestCase {
         let marker = try XCTUnwrap(try document.nodes(forXPath: "//marker").first as? XMLElement)
         XCTAssertEqual(
             marker.attribute(forName: "note")?.stringValue,
-            "Blå 🎬\tcolumn\nnext���� | Source B: Encode.mp4, 00:00:00:00, frame 0 | Alignment: Relative start | Severity: Info | Category: General | Status: Open"
+            "Blå 🎬\tcolumn\nnext���� | Source B: Encode.mp4, REL TC 00:00:00:00, frame 0 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 30/1 | B rate: 30/1 | Source A URL: file:///tmp/Master.mov | Source B URL: file:///tmp/Encode.mp4"
         )
         let clip = try XCTUnwrap(try document.nodes(forXPath: "//asset-clip").first as? XMLElement)
         XCTAssertEqual(clip.attribute(forName: "tcFormat")?.stringValue, "NDF")

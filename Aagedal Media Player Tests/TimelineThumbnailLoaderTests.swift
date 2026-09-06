@@ -18,6 +18,10 @@ final class TimelineThumbnailLoaderTests: XCTestCase {
         XCTAssertEqual(try XCTUnwrap(TimelineThumbnailLoader.Request(item: media, time: 2.74)).time, 2.5)
         XCTAssertEqual(try XCTUnwrap(TimelineThumbnailLoader.Request(item: media, time: -1)).time, 0)
         XCTAssertLessThan(try XCTUnwrap(TimelineThumbnailLoader.Request(item: media, time: 99)).time, 10)
+        XCTAssertEqual(
+            try XCTUnwrap(TimelineThumbnailLoader.Request(item: media, time: .greatestFiniteMagnitude)).time,
+            try XCTUnwrap(TimelineThumbnailLoader.Request(item: media, time: 99)).time
+        )
         XCTAssertNil(TimelineThumbnailLoader.Request(item: media, time: .nan))
         XCTAssertNil(TimelineThumbnailLoader.Request(item: item(duration: .infinity), time: 1))
         var audio = media
@@ -89,6 +93,35 @@ final class TimelineThumbnailLoaderTests: XCTestCase {
         recorder.finish()
         try await waitUntil { loader.imageTime == 2 }
         XCTAssertNotNil(loader.image)
+        XCTAssertEqual(loader.cachedCount, 1)
+    }
+
+    func testURLReplacementWithSameMediaIDInvalidatesCacheAndSerializesDecode() async throws {
+        let recorder = SuspendedExtractor()
+        let loader = TimelineThumbnailLoader(debounce: .zero) { _, time in
+            await recorder.extract(time: time)
+        }
+        var media = item()
+        loader.request(item: media, time: 1)
+        try await waitUntil { recorder.times.count == 1 }
+        recorder.finish()
+        try await waitUntil { loader.imageTime == 1 }
+        XCTAssertEqual(loader.cachedCount, 1)
+
+        loader.request(item: media, time: 2)
+        try await waitUntil { recorder.times.count == 2 }
+        media.url = URL(fileURLWithPath: "/tmp/replacement.mov")
+        loader.request(item: media, time: 1)
+        XCTAssertNil(loader.image, "A cached frame from the previous URL must not be shown")
+        XCTAssertEqual(loader.cachedCount, 0)
+        XCTAssertEqual(recorder.times, [1, 2])
+        recorder.finish()
+        try await waitUntil { recorder.times.count == 3 }
+        XCTAssertNil(loader.image)
+        XCTAssertEqual(loader.cachedCount, 0, "The old URL's in-flight result must be discarded")
+        XCTAssertEqual(recorder.maximumActive, 1)
+        recorder.finish()
+        try await waitUntil { loader.imageTime == 1 }
         XCTAssertEqual(loader.cachedCount, 1)
     }
 

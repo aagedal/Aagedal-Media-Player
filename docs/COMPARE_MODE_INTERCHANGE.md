@@ -11,7 +11,10 @@ Use disposable editor projects and generated or permission-cleared media.
 Use `scripts/generate-test-fixtures.sh` for the existing rate and timecode
 fixtures. Keep the source media in place while importing: FCPXML references
 source A's file URL. Notes belong to source A; source B's filename, aligned
-timecode, and frame are carried in the note text. Severity, category, and status
+timecode, and frame are carried in the note text. Editor notes also retain both
+current source URLs and each finding's stored rational A/B rates. B timecode
+is explicitly labelled SRC or REL so missing or incompatible metadata cannot
+make relative positions look like source timecodes. Severity, category, and status
 labels are also carried in marker text; these are not editor-native workflow
 fields. CSV appends `Severity`, `Category`, `Status`, and `A End Frame (Inclusive)`
 after its existing columns, followed by `A Rate Numerator`, `A Rate Denominator`,
@@ -88,6 +91,11 @@ midnight. This prevents wrapped labels from aliasing another timeline position.
 CSV/PDF preserve frame coordinates, and FCPXML/Avid use rational times or
 frame positions; use those formats for these findings. Include a near-midnight
 source in acceptance tests and verify the EDL failure before publication.
+
+Avid export rejects marker text exceeding the app's 32,000-character export
+limit after flattening line breaks and tabs. This includes appended provenance
+and classification fields. Shorten the note or select CSV, PDF, or FCPXML;
+findings are never silently truncated to meet this limit.
 
 ## Evidence record
 

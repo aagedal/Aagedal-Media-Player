@@ -21,8 +21,11 @@ final class TimelineThumbnailLoader: ObservableObject {
                   item.durationSeconds > 0, time.isFinite else { return nil }
             mediaID = item.id
             url = item.url
+            // Bound the input and avoid multiplication so a finite, far-outside
+            // time cannot overflow into a preview of the first frame.
+            let boundedTime = min(max(0, time), item.durationSeconds)
             self.time = ComparisonStillFrameExtractor.clampedTime(
-                (max(0, time) * 2).rounded(.down) / 2, for: item
+                boundedTime - boundedTime.truncatingRemainder(dividingBy: 0.5), for: item
             )
         }
     }
@@ -31,6 +34,7 @@ final class TimelineThumbnailLoader: ObservableObject {
     @Published private(set) var imageTime: Double?
     private(set) var cachedCount = 0
     private var mediaID: UUID?
+    private var mediaURL: URL?
     private var cache: [Double: CGImage] = [:]
     private var recency: [Double] = []
     private var desired: Request?
@@ -54,12 +58,13 @@ final class TimelineThumbnailLoader: ObservableObject {
 
     func request(item: MediaItem, time: Double) {
         guard let request = Request(item: item, time: time) else { hide(); return }
-        if mediaID != request.mediaID {
+        if mediaID != request.mediaID || mediaURL != request.url {
             worker?.cancel()
             cache.removeAll()
             recency.removeAll()
             cachedCount = 0
             mediaID = request.mediaID
+            mediaURL = request.url
         }
         guard desired != request else { return }
         desired = request
@@ -78,6 +83,7 @@ final class TimelineThumbnailLoader: ObservableObject {
         // the preview cannot overlap it with another decoder.
         if clearCache {
             mediaID = nil
+            mediaURL = nil
             cache.removeAll()
             recency.removeAll()
             cachedCount = 0
@@ -96,7 +102,7 @@ final class TimelineThumbnailLoader: ObservableObject {
                 if self.cache[request.time] != nil { break }
                 let result = try? await self.extract(request.url, request.time)
                 if Task.isCancelled { break }
-                if self.mediaID == request.mediaID, let result {
+                if self.mediaID == request.mediaID, self.mediaURL == request.url, let result {
                     self.cache[request.time] = result
                     self.touch(request.time)
                     while self.recency.count > Self.cacheLimit {

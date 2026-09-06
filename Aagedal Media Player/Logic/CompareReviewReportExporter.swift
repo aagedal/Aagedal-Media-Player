@@ -44,6 +44,7 @@ nonisolated enum CompareReviewExportState: Equatable, Sendable {
 
 nonisolated enum CompareReviewReportExportError: Error, LocalizedError {
     case tooManyResolveMarkers(Int)
+    case avidMarkerTextTooLong(Int)
     case unsupportedResolveFrameRate(Int64)
     case resolveTimecodeWrap(Int)
     case unrepresentableMarkerRange
@@ -52,6 +53,8 @@ nonisolated enum CompareReviewReportExportError: Error, LocalizedError {
 
     var errorDescription: String? {
         switch self {
+        case .avidMarkerTextTooLong(let marker):
+            "Review marker \(marker) exceeds the 32,000-character Avid marker export limit. Shorten the note or use CSV, PDF, or Final Cut Pro XML to preserve the complete finding."
         case .tooManyResolveMarkers(let count):
             "DaVinci Resolve marker EDL supports at most 999 markers; this review has \(count)."
         case .unsupportedResolveFrameRate(let nominalFPS):
@@ -475,13 +478,17 @@ nonisolated enum CompareReviewReportExporter {
     /// Avid's marker interchange is a tab-delimited, frame-addressed format.
     static func avidMarkersText(snapshot: CompareReviewReportSnapshot) throws -> String {
         try validateEditorMarkerRates(snapshot)
-        return snapshot.rows.map { row in
-            [
+        return try snapshot.rows.map { row in
+            let text = avidText(markerNote(row: row, snapshot: snapshot))
+            guard text.count <= 32_000 else {
+                throw CompareReviewReportExportError.avidMarkerTextTooLong(row.markerNumber)
+            }
+            return [
                 "Aagedal",
                 String(row.primaryFrame),
                 "V1",
                 "blue",
-                avidText(markerNote(row: row, snapshot: snapshot)),
+                text,
             ].joined(separator: "\t")
         }.joined(separator: "\r\n") + "\r\n"
     }
@@ -579,8 +586,12 @@ nonisolated enum CompareReviewReportExporter {
         row: CompareReviewReportRow,
         snapshot: CompareReviewReportSnapshot
     ) -> String {
-        let secondaryTimecode = row.secondarySourceTimecode ?? row.secondaryRelativeTimecode
-        return "\(row.note) | Source B: \(snapshot.secondaryFilename), \(secondaryTimecode), frame \(row.secondaryFrame) | Alignment: \(snapshot.alignmentLabel) | \(row.classificationLabel)\(row.rangeLabel.map { " | \($0)" } ?? "")"
+        let secondaryTimecode = reportTimecode(
+            source: row.secondarySourceTimecode, relative: row.secondaryRelativeTimecode
+        )
+        // Preserve the current pair and stored timebases even when filenames
+        // collide or replacement metadata cannot establish a source timecode.
+        return "\(row.note) | Source B: \(snapshot.secondaryFilename), \(secondaryTimecode), frame \(row.secondaryFrame) | Alignment: \(snapshot.alignmentLabel) | \(row.classificationLabel)\(row.rangeLabel.map { " | \($0)" } ?? "") | A rate: \(row.primaryRateNumerator)/\(row.primaryRateDenominator) | B rate: \(row.secondaryRateNumerator)/\(row.secondaryRateDenominator) | Source A URL: \(snapshot.primaryURL.absoluteString) | Source B URL: \(snapshot.secondaryURL.absoluteString)"
     }
 
     private static func markerDurationFrames(_ row: CompareReviewReportRow) throws -> Int64 {
@@ -606,12 +617,11 @@ nonisolated enum CompareReviewReportExporter {
     }
 
     private static func avidText(_ value: String) -> String {
-        String(value
+        value
             .replacingOccurrences(of: "\t", with: " ")
             .replacingOccurrences(of: "\r\n", with: " ")
             .replacingOccurrences(of: "\r", with: " ")
             .replacingOccurrences(of: "\n", with: " ")
-            .prefix(32_000))
     }
 
     private static func xmlAttribute(_ value: String) -> String {
