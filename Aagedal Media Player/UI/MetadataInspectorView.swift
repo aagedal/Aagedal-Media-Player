@@ -10,9 +10,12 @@ import AppKit
 struct MetadataInspectorView: View {
     let item: MediaItem
     let useMPV: Bool
+    let trimIn: Double?
+    let trimOut: Double?
     @Binding var isPresented: Bool
     @State private var showCopiedConfirmation = false
     @State private var copiedConfirmationTask = DeferredMainActorTask()
+    @State private var measureSelectedRange = false
     @State private var lufsResults: [Int: FFmpegService.LUFSResult] = [:]
     @State private var lufsAnalyzing: Set<Int> = []
     @State private var lufsErrors: [Int: String] = [:]
@@ -237,11 +240,24 @@ struct MetadataInspectorView: View {
         .onExitCommand {
             isPresented = false
         }
+        .onChange(of: measureSelectedRange) {
+            cancelLUFSAnalyses(resetResults: true)
+        }
+        .onChange(of: selectedLoudnessRange) {
+            if measureSelectedRange { cancelLUFSAnalyses(resetResults: true) }
+        }
         .onChange(of: item.url) {
             copiedConfirmationTask.cancel()
             showCopiedConfirmation = false
             cancelLUFSAnalyses(resetResults: true)
         }
+    }
+
+    private var selectedLoudnessRange: FFmpegService.LoudnessRange? {
+        guard let trimIn, let trimOut,
+              let duration = metadata?.duration, duration.isFinite,
+              trimOut <= duration else { return nil }
+        return try? FFmpegService.LoudnessRange(start: trimIn, end: trimOut)
     }
 
     // MARK: - Actions
@@ -252,10 +268,7 @@ struct MetadataInspectorView: View {
 
     private func copyMetadataAsJSON() {
         guard let metadata = metadata else { return }
-        let export = MetadataExport(metadata: metadata, lufsResults: lufsResults)
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = [.prettyPrinted]
-        guard let data = try? encoder.encode(export),
+        guard let data = try? Self.metadataJSON(metadata: metadata, lufsResults: lufsResults),
               let json = String(data: data, encoding: .utf8) else { return }
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(json, forType: .string)
@@ -264,6 +277,14 @@ struct MetadataInspectorView: View {
         copiedConfirmationTask.schedule(after: .seconds(1.5)) {
             withAnimation { showCopiedConfirmation = false }
         }
+    }
+
+    static func metadataJSON(metadata: MediaMetadata, lufsResults: [Int: FFmpegService.LUFSResult]) throws -> Data {
+        let export = MetadataExport(metadata: metadata, lufsResults: lufsResults)
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted]
+        encoder.nonConformingFloatEncodingStrategy = .convertToString(positiveInfinity: "Infinity", negativeInfinity: "-Infinity", nan: "NaN")
+        return try encoder.encode(export)
     }
 
     /// Encodable wrapper that outputs keys in metadata view order and includes LUFS results.
@@ -349,6 +370,22 @@ struct MetadataInspectorView: View {
 
     @ViewBuilder
     private func lufsSection(streamIndex: Int) -> some View {
+        Picker("Loudness Analysis", selection: $measureSelectedRange) {
+            Text("Whole File").tag(false)
+            Text("In–Out Range").tag(true)
+        }
+        .pickerStyle(.segmented)
+        if measureSelectedRange {
+            if let range = selectedLoudnessRange {
+                Text(String(format: "Selected range: %.3f–%.3f s", range.start, range.end))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else {
+                Text("Set valid In and Out points within the file to measure a range.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
         if let result = lufsResults[streamIndex] {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Integrated Loudness")
@@ -381,6 +418,12 @@ struct MetadataInspectorView: View {
                 Text("Analyzing loudness…")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                Button("Cancel") {
+                    lufsGenerations.invalidate(for: streamIndex)
+                    lufsTasks.removeValue(forKey: streamIndex)?.cancel()
+                    lufsAnalyzing.remove(streamIndex)
+                }
+                .controlSize(.small)
             }
         } else {
             if let error = lufsErrors[streamIndex] {
@@ -395,10 +438,13 @@ struct MetadataInspectorView: View {
             }
             .buttonStyle(.bordered)
             .controlSize(.small)
+            .disabled(measureSelectedRange && selectedLoudnessRange == nil)
         }
     }
 
     private func runLUFSAnalysis(streamIndex: Int) {
+        let range = measureSelectedRange ? selectedLoudnessRange : nil
+        guard !measureSelectedRange || range != nil else { return }
         lufsErrors.removeValue(forKey: streamIndex)
         lufsAnalyzing.insert(streamIndex)
         let url = item.url
@@ -406,7 +452,7 @@ struct MetadataInspectorView: View {
         let generation = lufsGenerations.begin(for: streamIndex)
         lufsTasks[streamIndex] = Task(priority: .userInitiated) {
             do {
-                let result = try await FFmpegService.analyzeLUFS(url: url, audioStreamIndex: streamIndex)
+                let result = try await FFmpegService.analyzeLUFS(url: url, audioStreamIndex: streamIndex, range: range)
                 guard !Task.isCancelled,
                       lufsGenerations.finish(generation, for: streamIndex) else { return }
                 lufsAnalyzing.remove(streamIndex)

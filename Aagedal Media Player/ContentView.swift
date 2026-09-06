@@ -258,7 +258,7 @@ struct ContentView: View {
         }
         .inspector(isPresented: $showInspector) {
             if let item = controller.mediaItem {
-                MetadataInspectorView(item: item, useMPV: controller.useMPV, isPresented: $showInspector)
+                MetadataInspectorView(item: item, useMPV: controller.useMPV, trimIn: controller.trimIn, trimOut: controller.trimOut, isPresented: $showInspector)
             }
         }
         .onDrop(of: [.fileURL], isTargeted: $isDropTargeted) { providers in

@@ -11,6 +11,8 @@ enum FFmpegError: Error, LocalizedError, Equatable {
     case processFailed(String)
     case outputMissing
     case cancelled
+    case invalidLoudnessRange
+    case invalidAudioStream
 
     var errorDescription: String? {
         switch self {
@@ -20,6 +22,10 @@ enum FFmpegError: Error, LocalizedError, Equatable {
             return "ffmpeg failed: \(message)"
         case .outputMissing:
             return "ffmpeg produced no output file"
+        case .invalidLoudnessRange:
+            return "Choose a finite, non-negative In point and a later Out point for loudness analysis"
+        case .invalidAudioStream:
+            return "Choose a valid audio stream for loudness analysis"
         case .cancelled:
             return "ffmpeg operation was cancelled"
         }
@@ -117,26 +123,33 @@ enum FFmpegService {
 
     // MARK: - LUFS Analysis
 
+    struct LoudnessRange: Sendable, Codable, Equatable {
+        let start: Double
+        let end: Double
+
+        nonisolated init(start: Double, end: Double) throws {
+            guard start.isFinite, end.isFinite, start >= 0, end > start else {
+                throw FFmpegError.invalidLoudnessRange
+            }
+            self.start = start
+            self.end = end
+        }
+    }
+
     struct LUFSResult: Sendable, Codable {
         let integratedLoudness: Double
         let loudnessRange: Double
         let truePeak: Double
+        var analysisRange: LoudnessRange? = nil
     }
 
     /// Run the EBU R128 loudness analysis on a specific audio stream.
     /// `audioStreamIndex` is the zero-based index among audio streams (used with `-map 0:a:<index>`).
-    static func analyzeLUFS(url: URL, audioStreamIndex: Int) async throws -> LUFSResult {
+    static func analyzeLUFS(url: URL, audioStreamIndex: Int, range: LoudnessRange? = nil) async throws -> LUFSResult {
+        let arguments = try loudnessArguments(url: url, audioStreamIndex: audioStreamIndex, range: range)
         guard let path = ffmpegPath else {
             throw FFmpegError.ffmpegMissing
         }
-
-        let arguments = [
-            "-hide_banner", "-nostats",
-            "-i", url.path,
-            "-map", "0:a:\(audioStreamIndex)",
-            "-af", "ebur128=peak=true",
-            "-f", "null", "-",
-        ]
 
         let result: SubprocessResult
         do {
@@ -152,10 +165,32 @@ enum FFmpegService {
         guard result.terminationStatus == 0 else {
             throw FFmpegError.processFailed(output.trimmingCharacters(in: .whitespacesAndNewlines))
         }
-        guard let parsed = parseLUFSOutput(output) else {
+        guard var parsed = parseLUFSOutput(output) else {
             throw FFmpegError.processFailed("Could not parse LUFS output")
         }
+        parsed.analysisRange = range
         return parsed
+    }
+
+    /// Trim decoded samples before the loudness filter so its summary describes
+    /// only the selected interval, including non-keyframe boundaries.
+    nonisolated static func loudnessArguments(
+        url: URL, audioStreamIndex: Int, range: LoudnessRange? = nil
+    ) throws -> [String] {
+        guard audioStreamIndex >= 0 else { throw FFmpegError.invalidAudioStream }
+        var filter = "ebur128=peak=true"
+        var inputArguments = ["-hide_banner", "-nostats"]
+        if let range {
+            // Validate again because Codable can construct a range without its initializer.
+            _ = try LoudnessRange(start: range.start, end: range.end)
+            inputArguments += ["-t", String(range.end)]
+            filter = "atrim=start=\(range.start):end=\(range.end),asetpts=PTS-STARTPTS," + filter
+        }
+        return inputArguments + [
+            "-i", url.path,
+            "-map", "0:a:\(audioStreamIndex)",
+            "-af", filter, "-f", "null", "-",
+        ]
     }
 
     nonisolated private static func parseLUFSOutput(_ output: String) -> LUFSResult? {
