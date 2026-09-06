@@ -27,6 +27,7 @@ final class CompareLiveBackendTests: XCTestCase {
     private static let driftSamplingInterval: Duration = .milliseconds(25)
     private static let driftRecoveryMeasurementTolerance: TimeInterval = 0.025
 
+    @MainActor
     private final class AVFoundationRenderSurface {
         let hostView: NSView
         let playerLayer: AVPlayerLayer
@@ -78,12 +79,14 @@ final class CompareLiveBackendTests: XCTestCase {
         }
     }
 
-    override func tearDown() {
-        for case .avFoundation(let surface) in retainedPlaybackSurfaces {
-            surface.playerLayer.player = nil
+    override func tearDown() async throws {
+        await MainActor.run {
+            for case .avFoundation(let surface) in retainedPlaybackSurfaces {
+                surface.playerLayer.player = nil
+            }
+            retainedPlaybackSurfaces.removeAll()
         }
-        retainedPlaybackSurfaces.removeAll()
-        super.tearDown()
+        try await super.tearDown()
     }
 
     func testMPVSurfaceInitializesAtFittedSizeAndUpdatesRetainedDrawableAfterResize() async throws {

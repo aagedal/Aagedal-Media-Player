@@ -7,6 +7,11 @@ import XCTest
 
 @MainActor
 final class PlayerOverlayControllerTests: XCTestCase {
+    @MainActor
+    private final class PlaybackState {
+        var isPlaying = true
+    }
+
     func testRightEdgeHoverHidesAndLeavingRevealsOverlay() {
         let controller = PlayerOverlayController()
 
@@ -42,12 +47,12 @@ final class PlayerOverlayControllerTests: XCTestCase {
 
     func testScheduledHideUsesLatestPlaybackState() async {
         let controller = PlayerOverlayController(hideDelay: .milliseconds(10))
-        var isPlaying = true
+        let playback = PlaybackState()
         controller.scheduleHide(
-            isPlaying: { isPlaying },
+            isPlaying: { playback.isPlaying },
             isControlInteractionActive: { false }
         )
-        isPlaying = false
+        playback.isPlaying = false
 
         try? await Task.sleep(for: .milliseconds(30))
 
