@@ -57,7 +57,9 @@ final class CompareSessionLifecycleTests: XCTestCase {
         let firstURL = URL(fileURLWithPath: "/tmp/compare-first.mov")
         let secondURL = URL(fileURLWithPath: "/tmp/compare-second.mov")
 
+        session.reviewSearchQuery = "Previous pair"
         session.loadSecondary(firstURL, alignedWith: primary)
+        XCTAssertEqual(session.reviewSearchQuery, "")
         let requestedFirst = await waitUntil { loader.hasRequest(for: firstURL) }
         XCTAssertTrue(requestedFirst)
 
@@ -348,8 +350,14 @@ final class CompareSessionLifecycleTests: XCTestCase {
         XCTAssertTrue(session.addReviewNote("Pending write", primary: primary))
         await reviewStore.waitUntilApplyStarted()
         XCTAssertEqual(session.reviewNotes.map(\.text), ["Pending write"])
+        session.reviewSearchQuery = "missing"
+        XCTAssertTrue(session.filteredReviewNotes.isEmpty)
+        XCTAssertEqual(session.reviewNotes.count, 1)
+        session.reviewSearchQuery = "pending"
+        XCTAssertEqual(session.filteredReviewNotes, session.reviewNotes)
 
         session.stop()
+        XCTAssertEqual(session.reviewSearchQuery, "")
         await reviewStore.completeApply()
         await settleMainActorTasks()
 

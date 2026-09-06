@@ -5,6 +5,70 @@
 import XCTest
 @testable import Aagedal_Media_Player
 
+final class CompareReviewNavigationTests: XCTestCase {
+    private func note(_ frame: Int64, text: String = "Check", rate: Int64 = 24) -> CompareReviewNote {
+        CompareReviewNote(
+            primaryFrame: frame, primaryTime: Double(frame) / Double(rate),
+            secondaryFrame: frame, secondaryTime: Double(frame) / Double(rate),
+            primaryRateNumerator: rate, text: text
+        )
+    }
+
+    func testFilterTrimsWhitespaceAndMatchesCaseDiacriticsAndMultilineText() {
+        let notes = [note(0, text: "Café\nBLUE channel"), note(24, text: "Audio")]
+        XCTAssertEqual(CompareReviewNavigation.filtered(notes, query: " \n "), notes)
+        XCTAssertEqual(CompareReviewNavigation.filtered(notes, query: " CAFE "), [notes[0]])
+        XCTAssertEqual(CompareReviewNavigation.filtered(notes, query: "blue"), [notes[0]])
+        XCTAssertTrue(CompareReviewNavigation.filtered(notes, query: "missing").isEmpty)
+        XCTAssertEqual(notes.count, 2)
+    }
+
+    func testNavigationSkipsCurrentFrameDuplicatesAndDoesNotWrap() {
+        let notes = [note(48), note(24), note(0), note(24)]
+        XCTAssertEqual(CompareReviewNavigation.adjacent(
+            in: notes, to: 1, duration: 3, direction: .next
+        )?.primaryFrame, 48)
+        XCTAssertEqual(CompareReviewNavigation.adjacent(
+            in: notes, to: 1, duration: 3, direction: .previous
+        )?.primaryFrame, 0)
+        XCTAssertNil(CompareReviewNavigation.adjacent(
+            in: notes, to: 2, duration: 3, direction: .next
+        ))
+        XCTAssertNil(CompareReviewNavigation.adjacent(
+            in: notes, to: 0, duration: 3, direction: .previous
+        ))
+    }
+
+    func testNavigationUsesStoredRateAndToleratesFractionalFrameClockRounding() {
+        let current = CompareReviewNote(
+            primaryFrame: 100, primaryTime: 0, secondaryFrame: 0, secondaryTime: 0,
+            primaryRateNumerator: 30_000, primaryRateDenominator: 1_001, text: "Current"
+        )
+        let next = note(101, rate: 30)
+        let time = 100.0 * 1_001 / 30_000
+        XCTAssertEqual(CompareReviewNavigation.adjacent(
+            in: [next, current], to: time - 0.000001, duration: 10, direction: .next
+        )?.id, next.id)
+        XCTAssertNil(CompareReviewNavigation.adjacent(
+            in: [current], to: time + 0.000001, duration: 10, direction: .previous
+        ))
+    }
+
+    func testFilteredNavigationAndInvalidPlaybackState() {
+        let match = note(48, text: "Picture")
+        let notes = CompareReviewNavigation.filtered([note(24, text: "Audio"), match], query: "picture")
+        XCTAssertEqual(CompareReviewNavigation.adjacent(
+            in: notes, to: 0, duration: 3, direction: .next
+        ), match)
+        XCTAssertNil(CompareReviewNavigation.adjacent(
+            in: notes, to: .nan, duration: 3, direction: .next
+        ))
+        XCTAssertNil(CompareReviewNavigation.adjacent(
+            in: notes, to: 0, duration: 0, direction: .next
+        ))
+    }
+}
+
 final class CompareReviewTimelineTests: XCTestCase {
     func testFrameIndexSnapsAtFractionalFrameRate() {
         let rate = 24_000.0 / 1_001.0

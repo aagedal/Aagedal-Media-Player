@@ -50,6 +50,8 @@ struct ControlsView: View {
     private var waveformColorRaw = AppSettings.audioWaveformColor.defaultValue
     @AppStorage(AppSettings.precisionScrubFactor.key)
     private var precisionScrubFactor = AppSettings.precisionScrubFactor.defaultValue
+    @AppStorage(AppSettings.showTimelineDetails.key)
+    private var showTimelineDetails = AppSettings.showTimelineDetails.defaultValue
     @State private var isDragging = false
     @State private var dragTime: Double = 0
     @State private var wasPrecision = false
@@ -80,6 +82,7 @@ struct ControlsView: View {
     var body: some View {
         VStack(spacing: 8) {
             if let item,
+               showTimelineDetails,
                compareSession.isActive,
                let mapping = compareSession.mapping {
                 comparisonTimelineLegend(mapping: mapping, item: item)
@@ -322,7 +325,8 @@ struct ControlsView: View {
                 // Compare overlap is expressed on A's authoritative timeline.
                 // Outside this interval B is held on its nearest boundary, so
                 // showing it here makes that transport behavior predictable.
-                if compareSession.isActive,
+                if showTimelineDetails,
+                   compareSession.isActive,
                    duration > 0,
                    let overlap = compareSession.primaryOverlapRange(
                        primaryDuration: duration
@@ -385,24 +389,28 @@ struct ControlsView: View {
                     // Review markers are display-only here so the timeline's
                     // zero-distance scrub gesture remains unambiguous. The
                     // Review popover provides selection, editing, and delete.
-                    ForEach(compareSession.reviewNotes) { note in
-                        let noteTime = item.map {
-                            compareSession.reviewNotePrimaryTime(note, primaryItem: $0)
-                        } ?? note.primaryTime
-                        let markerFraction = CGFloat(noteTime / duration)
-                        Capsule()
-                            .fill(Color.orange)
-                            .frame(width: 3, height: 14)
-                            .offset(x: max(0, min(width - 3, markerFraction * width - 1.5)))
-                            .allowsHitTesting(false)
+                    if showTimelineDetails {
+                        ForEach(compareSession.filteredReviewNotes) { note in
+                            let noteTime = item.map {
+                                compareSession.reviewNotePrimaryTime(note, primaryItem: $0)
+                            } ?? note.primaryTime
+                            let markerFraction = CGFloat(noteTime / duration)
+                            Capsule()
+                                .fill(Color.orange)
+                                .frame(width: 3, height: 14)
+                                .offset(x: max(0, min(width - 3, markerFraction * width - 1.5)))
+                                .allowsHitTesting(false)
+                        }
                     }
                 }
 
-                ChapterTimelineMarkers(
-                    chapters: controller.chapterOptions,
-                    duration: duration,
-                    width: width
-                )
+                if showTimelineDetails {
+                    ChapterTimelineMarkers(
+                        chapters: controller.chapterOptions,
+                        duration: duration,
+                        width: width
+                    )
+                }
 
                 // Playhead — thin vertical line
                 Rectangle()
@@ -470,9 +478,23 @@ struct ControlsView: View {
             .accessibilityLabel("Playback position")
             .accessibilityValue(timelineAccessibilityValue)
             .accessibilityHint("Use Left and Right Arrow to seek one frame.")
-            .help(controller.chapterOptions.isEmpty
+            .help(!showTimelineDetails || controller.chapterOptions.isEmpty
                   ? "Drag to seek. Hold Option for precision scrubbing."
                   : "Diamonds mark chapters. Use the Chapters menu to jump to a chapter. Hold Option for precision scrubbing.")
+            .contextMenu {
+                Toggle("Show Timeline Details", isOn: $showTimelineDetails)
+                if compareSession.isActive {
+                    Divider()
+                    Button("Previous Matching Note") {
+                        compareSession.seekToAdjacentReviewNote(.previous, primary: controller)
+                    }
+                    .disabled(compareSession.adjacentReviewNote(.previous, primary: controller) == nil)
+                    Button("Next Matching Note") {
+                        compareSession.seekToAdjacentReviewNote(.next, primary: controller)
+                    }
+                    .disabled(compareSession.adjacentReviewNote(.next, primary: controller) == nil)
+                }
+            }
             .accessibilityAdjustableAction { direction in
                 switch direction {
                 case .increment:

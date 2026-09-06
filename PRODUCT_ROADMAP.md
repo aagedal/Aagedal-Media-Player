@@ -1,6 +1,6 @@
 # Aagedal Media Player Product Roadmap
 
-Last updated: 2026-09-05
+Last updated: 2026-09-06
 
 ## Product direction
 
@@ -251,11 +251,15 @@ confidence as the picture.
 
 - [ ] Add lightweight thumbnail navigation that is generated lazily and cached
   within a bounded budget.
-- [ ] Add visible chapter, trim, comparison-overlap, and mismatch markers.
+- [x] Add visible chapter, trim, and comparison-overlap markers.
+- [ ] Add mismatch markers to the timeline. The comparison mismatch summary
+  already exists; it does not establish time-localized mismatch findings.
 - [ ] Add an overview/zoom model for long-form media without sacrificing precise
   frame stepping.
-- [ ] Keep the minimal current timeline available when extra information is not
-  useful.
+- [x] Keep a minimal timeline available when extra information is not useful.
+  Turn off **Show Timeline Details** in Playback settings or the timeline
+  context menu to hide chapter/review markers and comparison overlap; active
+  trim points and the playhead remain visible.
 
 ### 1.8 release gates
 
@@ -271,15 +275,33 @@ Theme: turn an inspection finding into something another person can act on.
 Review notes follow Compare Mode and Audio QC because they are more valuable
 when attached to a strong inspection workflow.
 
-- [ ] Add frame-accurate markers with severity, category, status, and notes.
+Status: The comparison review foundation is already implemented as part of
+Compare Mode Phase 4. This does not move the full Review & Report milestone
+ahead of Audio QC or satisfy its release gates. The remaining work extends
+single-frame text notes into a structured review workflow.
+
+- [x] Add frame-accurate text notes and visible comparison-timeline markers.
+- [ ] Add severity, category, and status to markers.
 - [ ] Support region/range notes as well as single-frame notes.
-- [ ] Store review data in a documented, non-destructive sidecar format.
-- [ ] Attach annotated A/B comparison stills to findings.
-- [ ] Filter and navigate notes from the timeline.
-- [ ] Export CSV and PDF reports.
+- [x] Store review data in pair-specific, non-destructive JSON sidecars with
+  schema versioning and source-identity validation.
+- [x] Publish the sidecar schema and compatibility rules as user-facing format
+  documentation. See `docs/COMPARE_REVIEW_SIDECAR.md`.
+- [x] Include annotated A/B comparison stills for findings in PDF reports.
+  Images are extracted during export; persistent editable image attachments
+  are not part of the current sidecar format.
+- [x] Filter and navigate notes from the timeline. The Review popover's text
+  filter also filters timeline markers; previous/next matching-frame actions
+  are available there and in the timeline context menu. Navigation does not
+  wrap and skips duplicate notes at the current frame. Exports include all
+  notes regardless of the filter. Hands-on keyboard/VoiceOver acceptance
+  remains part of the release gates.
+- [x] Export CSV and PDF reports locally.
 - [ ] Export common NLE marker formats after validating round trips with target
-  editors.
-- [ ] Keep reports useful without requiring an account or cloud service.
+  editors. Resolve EDL, Final Cut Pro XML, and Avid marker-text exporters are
+  implemented and covered by automated tests; actual editor round trips remain
+  pending in `docs/COMPARE_MODE_INTERCHANGE.md`.
+- [x] Keep reports useful without requiring an account or cloud service.
 
 Release gates:
 
@@ -294,7 +316,9 @@ These ideas should not displace the committed inspection roadmap until direct
 user evidence shows stronger demand.
 
 - Playlists and screening queues.
-- Safe-area, aspect-ratio, title/action-safe, and custom guide overlays.
+- Extend guide overlays beyond the implemented shared Compare Mode safe-area,
+  aspect-ratio, and title/action-safe presets, including custom guides where
+  user validation supports them.
 - Offline objective analysis such as PSNR, SSIM, or VMAF with explicitly
   normalized inputs.
 - Caption presence, timing, and safe-area checks.

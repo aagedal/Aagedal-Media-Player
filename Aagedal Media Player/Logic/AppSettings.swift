@@ -24,6 +24,7 @@ nonisolated enum AppSettings {
         defaultValue: false
     )
     static let precisionScrubFactor = AppSetting(key: "precisionScrubFactor", defaultValue: 10.0)
+    static let showTimelineDetails = AppSetting(key: "showTimelineDetails", defaultValue: true)
     static let openAtSourceResolution = AppSetting(key: "openAtSourceResolution", defaultValue: true)
     static let clampWindowToScreen = AppSetting(key: "clampWindowToScreen", defaultValue: true)
     static let centerWindowAfterResize = AppSetting(key: "centerWindowAfterResize", defaultValue: true)
@@ -75,6 +76,7 @@ nonisolated enum AppSettings {
             showCursorHideHint.key: showCursorHideHint.defaultValue,
             didShowCompareModeCallout.key: didShowCompareModeCallout.defaultValue,
             precisionScrubFactor.key: precisionScrubFactor.defaultValue,
+            showTimelineDetails.key: showTimelineDetails.defaultValue,
             openAtSourceResolution.key: openAtSourceResolution.defaultValue,
             clampWindowToScreen.key: clampWindowToScreen.defaultValue,
             centerWindowAfterResize.key: centerWindowAfterResize.defaultValue,

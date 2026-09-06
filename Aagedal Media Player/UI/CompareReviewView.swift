@@ -18,7 +18,9 @@ struct CompareReviewView: View {
                 Text("Comparison Review")
                     .font(.headline)
                 Spacer()
-                Text("\(compareSession.reviewNotes.count) notes")
+                Text(compareSession.reviewSearchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                     ? "\(compareSession.reviewNotes.count) notes"
+                     : "\(compareSession.filteredReviewNotes.count) of \(compareSession.reviewNotes.count) notes")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -50,6 +52,23 @@ struct CompareReviewView: View {
 
             Divider()
 
+            HStack(spacing: 8) {
+                TextField("Filter review notes", text: $compareSession.reviewSearchQuery)
+                    .textFieldStyle(.roundedBorder)
+                    .accessibilityLabel("Filter review notes")
+                    .help("Filter note text and timeline markers. Exports always include all notes.")
+                if !compareSession.reviewSearchQuery.isEmpty {
+                    Button {
+                        compareSession.reviewSearchQuery = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                    }
+                    .accessibilityLabel("Clear review filter")
+                }
+                navigationButton(.previous, label: "Previous matching note", icon: "chevron.left")
+                navigationButton(.next, label: "Next matching note", icon: "chevron.right")
+            }
+
             if compareSession.reviewNotes.isEmpty {
                 ContentUnavailableView(
                     "No Review Notes",
@@ -57,10 +76,17 @@ struct CompareReviewView: View {
                     description: Text("Add a note to mark the current source A frame.")
                 )
                 .frame(maxWidth: .infinity, minHeight: 120)
+            } else if compareSession.filteredReviewNotes.isEmpty {
+                ContentUnavailableView(
+                    "No Matching Notes",
+                    systemImage: "magnifyingglass",
+                    description: Text("Change or clear the filter to see your notes.")
+                )
+                .frame(maxWidth: .infinity, minHeight: 120)
             } else {
                 ScrollView {
                     LazyVStack(spacing: 8) {
-                        ForEach(compareSession.reviewNotes) { note in
+                        ForEach(compareSession.filteredReviewNotes) { note in
                             noteRow(note)
                         }
                     }
@@ -131,6 +157,7 @@ struct CompareReviewView: View {
                 }
                 .menuStyle(.borderlessButton)
                 .fixedSize()
+                .help("Export all review notes, including notes hidden by the filter")
                 .disabled(
                     compareSession.reviewNotes.isEmpty
                         || compareSession.isReviewLoading
@@ -182,6 +209,19 @@ struct CompareReviewView: View {
                 compareSession.deleteReviewNote(id: note.id)
             }
         )
+    }
+
+    private func navigationButton(
+        _ direction: CompareReviewDirection, label: String, icon: String
+    ) -> some View {
+        Button {
+            compareSession.seekToAdjacentReviewNote(direction, primary: primaryController)
+        } label: {
+            Image(systemName: icon)
+        }
+        .accessibilityLabel(label)
+        .help(label)
+        .disabled(compareSession.adjacentReviewNote(direction, primary: primaryController) == nil)
     }
 
     private func addNote() {

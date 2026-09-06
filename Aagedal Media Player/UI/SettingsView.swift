@@ -233,6 +233,8 @@ private struct GeneralSettingsView: View {
     private var showCursorHideHint = AppSettings.showCursorHideHint.defaultValue
     @AppStorage(AppSettings.precisionScrubFactor.key)
     private var precisionScrubFactor = AppSettings.precisionScrubFactor.defaultValue
+    @AppStorage(AppSettings.showTimelineDetails.key)
+    private var showTimelineDetails = AppSettings.showTimelineDetails.defaultValue
     @AppStorage(AppSettings.openAtSourceResolution.key)
     private var openAtSourceResolution = AppSettings.openAtSourceResolution.defaultValue
     @AppStorage(AppSettings.clampWindowToScreen.key)
@@ -265,6 +267,10 @@ private struct GeneralSettingsView: View {
             }
 
             Section("Playback") {
+                Toggle("Show Timeline Details", isOn: $showTimelineDetails)
+                Text("Show chapters, review markers, and comparison overlap. Turn off for a minimal timeline; trim points remain visible.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
                 LabeledContent("Precision Scrub") {
                     HStack(spacing: 8) {
                         Slider(value: $precisionScrubFactor, in: 2...20, step: 1)

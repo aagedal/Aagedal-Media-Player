@@ -28,6 +28,7 @@ final class AppSettingsTests: XCTestCase {
         AppSettings.registerDefaults(in: defaults)
 
         XCTAssertTrue(defaults.value(for: AppSettings.openAtSourceResolution))
+        XCTAssertTrue(defaults.value(for: AppSettings.showTimelineDetails))
         XCTAssertEqual(defaults.value(for: AppSettings.precisionScrubFactor), 10)
         XCTAssertEqual(defaults.value(for: AppSettings.scopeResolution), 720)
         XCTAssertEqual(defaults.value(for: AppSettings.scopeFrameRate), 15)
@@ -52,6 +53,13 @@ final class AppSettingsTests: XCTestCase {
             defaults.value(for: AppSettings.updateCheckInterval),
             AppSettings.updateCheckInterval.defaultValue
         )
+    }
+
+    func testMinimalTimelinePreferenceSurvivesDefaultsRegistration() {
+        defaults.set(false, for: AppSettings.showTimelineDetails)
+        AppSettings.registerDefaults(in: defaults)
+
+        XCTAssertFalse(defaults.value(for: AppSettings.showTimelineDetails))
     }
 
     func testTypedWritesRoundTrip() {

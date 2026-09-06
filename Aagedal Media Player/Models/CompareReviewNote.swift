@@ -4,6 +4,49 @@
 
 import Foundation
 
+nonisolated enum CompareReviewDirection {
+    case previous
+    case next
+}
+
+nonisolated enum CompareReviewNavigation {
+    static func filtered(_ notes: [CompareReviewNote], query: String) -> [CompareReviewNote] {
+        let query = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else { return notes }
+        return notes.filter { $0.text.localizedStandardContains(query) }
+    }
+
+    /// Navigate distinct marked frames without wrapping. Half a stored frame
+    /// treats small backend-clock rounding differences as the current marker.
+    static func adjacent(
+        in notes: [CompareReviewNote],
+        to time: TimeInterval,
+        duration: TimeInterval,
+        direction: CompareReviewDirection
+    ) -> CompareReviewNote? {
+        guard time.isFinite, duration.isFinite, duration > 0 else { return nil }
+        let candidates = notes.compactMap { note -> (CompareReviewNote, TimeInterval)? in
+            let rate = Double(note.primaryRateNumerator) / Double(note.primaryRateDenominator)
+            guard rate.isFinite, rate > 0 else { return nil }
+            let position = CompareReviewTimeline.time(
+                forFrame: note.primaryFrame, duration: duration, frameRate: rate
+            )
+            let delta = position - time
+            switch direction {
+            case .previous: guard delta < -0.5 / rate else { return nil }
+            case .next: guard delta > 0.5 / rate else { return nil }
+            }
+            return (note, position)
+        }
+        return candidates.sorted {
+            if $0.1 != $1.1 {
+                return direction == .next ? $0.1 < $1.1 : $0.1 > $1.1
+            }
+            return ($0.0.createdAt, $0.0.id.uuidString) < ($1.0.createdAt, $1.0.id.uuidString)
+        }.first?.0
+    }
+}
+
 nonisolated enum CompareReviewTimeline {
     static func frameIndex(
         for time: TimeInterval,

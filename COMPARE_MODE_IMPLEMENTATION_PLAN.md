@@ -245,6 +245,25 @@ unrepresentable, even if a sidecar supplied a different stored rate.
 - [x] Export PDF reports.
 - [x] Export common NLE marker formats.
 - [x] Include annotated comparison stills in reports.
+- [x] Filter note text and timeline markers, with previous/next matching-frame
+  navigation in the Review popover and timeline context menu.
+- [x] Document the versioned sidecar schema and compatibility rules in
+  `docs/COMPARE_REVIEW_SIDECAR.md`.
+
+The September 6 continuation adds case/diacritic-insensitive note filtering,
+non-wrapping navigation that skips the current marked frame, and a persistent
+**Show Timeline Details** option. Turning off details hides chapter/review
+markers and comparison overlap while preserving active trim points and the
+playhead. Filtering is session-local, clears when the source pair changes, and
+does not remove notes from saved sidecars or reports. The sidecar documentation
+includes a JSON example checked with the production parser. Structured review
+fields, range notes, relinking, and editor round trips remain roadmap work.
+
+Verification: all 348 Release tests pass without failures or skips, including
+new filtering, fractional-rate navigation, filter-lifecycle, and persisted
+timeline-preference coverage. Static analysis and all 61 release-preflight
+checks pass. Native
+keyboard/VoiceOver acceptance remains separate from these automated checks.
 
 ## Technical risks
 

@@ -106,7 +106,8 @@ with optional matching-channel isolation for multichannel A/B checks. Annotated
 stills and review reports keep filenames, timecode, alignment, and technical
 context attached. Selected-track audio details show A/B channel labels, layout
 mismatches, and unmatched speaker roles; see [audio inspection](docs/COMPARE_MODE_AUDIO.md)
-for semantic versus positional channel pairing.
+for semantic versus positional channel pairing. Review storage, schema, and
+portability limits are documented in [comparison review sidecars](docs/COMPARE_REVIEW_SIDECAR.md).
 
 ### Inspection loupe
 Open the magnifying-glass control (Command-Shift-M) to enable a 2×, 4×, or 8×

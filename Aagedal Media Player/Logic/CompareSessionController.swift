@@ -408,6 +408,11 @@ final class CompareSessionController: ObservableObject {
     @Published private(set) var isSecondaryReady = false
     @Published private(set) var loadError: String?
     @Published private(set) var reviewNotes: [CompareReviewNote] = []
+    @Published var reviewSearchQuery = ""
+
+    var filteredReviewNotes: [CompareReviewNote] {
+        CompareReviewNavigation.filtered(reviewNotes, query: reviewSearchQuery)
+    }
     @Published private(set) var reviewSidecarURL: URL?
     @Published private(set) var reviewError: String?
     @Published private(set) var isReviewLoading = false
@@ -523,6 +528,7 @@ final class CompareSessionController: ObservableObject {
         mapping = nil
         automaticMapping = nil
         reviewNotes = []
+        reviewSearchQuery = ""
         reviewSidecarURL = nil
         reviewError = nil
         isReviewLoading = false
@@ -620,6 +626,7 @@ final class CompareSessionController: ObservableObject {
         isSecondaryReady = false
         loadError = nil
         reviewNotes = []
+        reviewSearchQuery = ""
         reviewSidecarURL = nil
         reviewError = nil
         isReviewLoading = false
@@ -1058,6 +1065,25 @@ final class CompareSessionController: ObservableObject {
         let time = primary.mediaItem.map { reviewNotePrimaryTime(note, primaryItem: $0) }
             ?? note.primaryTime
         seek(primary: primary, to: time)
+    }
+
+    func adjacentReviewNote(
+        _ direction: CompareReviewDirection, primary: PlayerController
+    ) -> CompareReviewNote? {
+        guard isActive, !isReviewLoading, let item = primary.mediaItem else { return nil }
+        return CompareReviewNavigation.adjacent(
+            in: filteredReviewNotes,
+            to: primary.playbackTimeSnapshot(),
+            duration: item.durationSeconds,
+            direction: direction
+        )
+    }
+
+    func seekToAdjacentReviewNote(
+        _ direction: CompareReviewDirection, primary: PlayerController
+    ) {
+        guard let note = adjacentReviewNote(direction, primary: primary) else { return }
+        seekToReviewNote(note, primary: primary)
     }
 
     func reviewNotePrimaryTime(_ note: CompareReviewNote, primaryItem: MediaItem) -> TimeInterval {
