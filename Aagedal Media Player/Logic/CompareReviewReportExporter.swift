@@ -76,6 +76,8 @@ nonisolated struct CompareReviewReportRow: Equatable, Sendable {
     let secondarySourceTimecode: String?
     let secondaryRelativeTimecode: String
     let secondaryFrame: Int64
+    let secondaryRateNumerator: Int64
+    let secondaryRateDenominator: Int64
     let secondaryTime: TimeInterval
     let note: String
     let primaryEndFrame: Int64?
@@ -194,6 +196,8 @@ nonisolated struct CompareReviewReportSnapshot: Equatable, Sendable {
                     mode: .relative
                 ),
                 secondaryFrame: note.secondaryFrame,
+                secondaryRateNumerator: note.secondaryRateNumerator,
+                secondaryRateDenominator: note.secondaryRateDenominator,
                 secondaryTime: ComparisonStillFrameExtractor.clampedTime(
                     secondaryTime,
                     for: secondaryItem
@@ -325,6 +329,12 @@ nonisolated enum CompareReviewReportExporter {
         "Category",
         "Status",
         "A End Frame (Inclusive)",
+        "A Rate Numerator",
+        "A Rate Denominator",
+        "B Rate Numerator",
+        "B Rate Denominator",
+        "Source A URL",
+        "Source B URL",
     ]
 
     static func data(
@@ -385,6 +395,12 @@ nonisolated enum CompareReviewReportExporter {
                 row.category.title,
                 row.status.title,
                 row.primaryEndFrame.map(String.init) ?? "",
+                String(row.primaryRateNumerator),
+                String(row.primaryRateDenominator),
+                String(row.secondaryRateNumerator),
+                String(row.secondaryRateDenominator),
+                snapshot.primaryURL.absoluteString,
+                snapshot.secondaryURL.absoluteString,
             ])
         }
 

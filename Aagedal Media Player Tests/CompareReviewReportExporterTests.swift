@@ -86,6 +86,38 @@ final class CompareReviewReportExporterTests: XCTestCase {
         XCTAssertNotEqual(stills[1], stills[2])
     }
 
+    func testCSVPreservesStoredRationalRatesAndDistinguishesSameNamedSources() throws {
+        let primary = makeItem(path: "/tmp/original/Master.mov", duration: 20, frameRate: "30/1")
+        let secondary = makeItem(path: "/tmp/replacement/Master.mov", duration: 20, frameRate: "30/1")
+        let snapshot = CompareReviewReportSnapshot(
+            primaryItem: primary,
+            secondaryItem: secondary,
+            alignmentMode: .relative,
+            notes: [CompareReviewNote(
+                primaryFrame: 240, primaryTime: 0,
+                secondaryFrame: 600, secondaryTime: 0,
+                primaryRateNumerator: 24_000, primaryRateDenominator: 1_001,
+                secondaryRateNumerator: 60_000, secondaryRateDenominator: 1_001,
+                text: "Original capture rates survive replacement metadata"
+            )]
+        )
+        let csv = CompareReviewReportExporter.csv(snapshot: snapshot)
+        let records = csv.components(separatedBy: "\r\n")
+        let headings = records[0].components(separatedBy: ",")
+        let fields = records[1].components(separatedBy: ",")
+        XCTAssertEqual(fields.count, headings.count)
+        let values = Dictionary(uniqueKeysWithValues: zip(headings, fields))
+        XCTAssertEqual(values["A Rate Numerator"], "24000")
+        XCTAssertEqual(values["A Rate Denominator"], "1001")
+        XCTAssertEqual(values["B Rate Numerator"], "60000")
+        XCTAssertEqual(values["B Rate Denominator"], "1001")
+        XCTAssertEqual(values["Source A URL"], primary.url.absoluteString)
+        XCTAssertEqual(values["Source B URL"], secondary.url.absoluteString)
+        XCTAssertNotEqual(values["Source A URL"], values["Source B URL"])
+        XCTAssertEqual(values["A Frame"], "240")
+        XCTAssertEqual(values["B Frame"], "600")
+    }
+
     func testCSVSortsMarkersAndEscapesMultilineUnicodeNotes() {
         let primary = makeItem(
             path: "/tmp/Master, final.mov",
@@ -598,7 +630,7 @@ final class CompareReviewReportExporterTests: XCTestCase {
 
         let csv = CompareReviewReportExporter.csv(snapshot: snapshot)
         XCTAssertTrue(csv.contains("Updated,Severity,Category,Status,A End Frame (Inclusive)"))
-        XCTAssertTrue(csv.contains(",Major,Picture,In Progress,71\r\n"))
+        XCTAssertTrue(csv.contains(",Major,Picture,In Progress,71,24000,1001,30,1,"))
 
         let edl = try CompareReviewReportExporter.resolveMarkersEDL(snapshot: snapshot)
         XCTAssertTrue(edl.contains("00:00:02:00 00:00:03:00 00:00:02:00 00:00:03:00"))

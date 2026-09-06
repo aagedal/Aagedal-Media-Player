@@ -14,8 +14,14 @@ source A's file URL. Notes belong to source A; source B's filename, aligned
 timecode, and frame are carried in the note text. Severity, category, and status
 labels are also carried in marker text; these are not editor-native workflow
 fields. CSV appends `Severity`, `Category`, `Status`, and `A End Frame (Inclusive)`
-after its existing columns. PDF reports show classification labels and the
-inclusive A frame range beside the finding text.
+after its existing columns, followed by `A Rate Numerator`, `A Rate Denominator`,
+`B Rate Numerator`, `B Rate Denominator`, `Source A URL`, and `Source B URL`.
+The rate columns preserve each note's stored capture timebase exactly, including
+when replacement media has different metadata. The URLs distinguish equal
+filenames in different directories; they identify the currently loaded source
+pair, while the JSON sidecar retains filesystem identity. These appended fields
+leave the original column positions intact. PDF reports show classification
+labels and the inclusive A frame range beside the finding text.
 
 For each supported target editor, create a review containing:
 
