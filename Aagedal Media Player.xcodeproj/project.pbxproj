@@ -12,11 +12,6 @@
 		8EA00007AAAA000000000001 /* SwiftMediaMetadata in Frameworks */ = {isa = PBXBuildFile; productRef = 8EA00008AAAA000000000001 /* SwiftMediaMetadata */; };
 /* End PBXBuildFile section */
 
-/* Begin PBXFileReference section */
-		8EB2F2832F49166000B196AD /* Aagedal Media Player.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Aagedal Media Player.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		8EB2F4012F50000000B196AD /* Aagedal Media Player Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Aagedal Media Player Tests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-/* End PBXFileReference section */
-
 /* Begin PBXContainerItemProxy section */
 		8EB2F40B2F50000000B196AD /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -26,6 +21,11 @@
 			remoteInfo = "Aagedal Media Player";
 		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		8EB2F2832F49166000B196AD /* Aagedal Media Player.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Aagedal Media Player.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		8EB2F4012F50000000B196AD /* Aagedal Media Player Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Aagedal Media Player Tests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
 		8EB2F3B22F4A56AD00B196AD /* Exceptions for "Aagedal Media Player" folder in "Aagedal Media Player" target */ = {
@@ -54,13 +54,6 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		8EB2F4042F50000000B196AD /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		8EB2F2802F49166000B196AD /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -68,6 +61,13 @@
 				8EA00001AAAA000000000001 /* MPVKit-GPL in Frameworks */,
 				8EA00004AAAA000000000001 /* Sparkle in Frameworks */,
 				8EA00007AAAA000000000001 /* SwiftMediaMetadata in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8EB2F4042F50000000B196AD /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -95,29 +95,6 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		8EB2F4062F50000000B196AD /* Aagedal Media Player Tests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 8EB2F4092F50000000B196AD /* Build configuration list for PBXNativeTarget "Aagedal Media Player Tests" */;
-			buildPhases = (
-				8EB2F4032F50000000B196AD /* Sources */,
-				8EB2F4042F50000000B196AD /* Frameworks */,
-				8EB2F4052F50000000B196AD /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				8EB2F40A2F50000000B196AD /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				8EB2F4022F50000000B196AD /* Aagedal Media Player Tests */,
-			);
-			name = "Aagedal Media Player Tests";
-			packageProductDependencies = (
-			);
-			productName = "Aagedal Media Player Tests";
-			productReference = 8EB2F4012F50000000B196AD /* Aagedal Media Player Tests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
-		};
 		8EB2F2822F49166000B196AD /* Aagedal Media Player */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 8EB2F28E2F49166300B196AD /* Build configuration list for PBXNativeTarget "Aagedal Media Player" */;
@@ -142,6 +119,29 @@
 			productName = "Aagedal Media Player";
 			productReference = 8EB2F2832F49166000B196AD /* Aagedal Media Player.app */;
 			productType = "com.apple.product-type.application";
+		};
+		8EB2F4062F50000000B196AD /* Aagedal Media Player Tests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8EB2F4092F50000000B196AD /* Build configuration list for PBXNativeTarget "Aagedal Media Player Tests" */;
+			buildPhases = (
+				8EB2F4032F50000000B196AD /* Sources */,
+				8EB2F4042F50000000B196AD /* Frameworks */,
+				8EB2F4052F50000000B196AD /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				8EB2F40A2F50000000B196AD /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				8EB2F4022F50000000B196AD /* Aagedal Media Player Tests */,
+			);
+			name = "Aagedal Media Player Tests";
+			packageProductDependencies = (
+			);
+			productName = "Aagedal Media Player Tests";
+			productReference = 8EB2F4012F50000000B196AD /* Aagedal Media Player Tests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
 
@@ -188,14 +188,14 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		8EB2F4052F50000000B196AD /* Resources */ = {
+		8EB2F2812F49166000B196AD /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		8EB2F2812F49166000B196AD /* Resources */ = {
+		8EB2F4052F50000000B196AD /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -205,14 +205,14 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		8EB2F4032F50000000B196AD /* Sources */ = {
+		8EB2F27F2F49166000B196AD /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		8EB2F27F2F49166000B196AD /* Sources */ = {
+		8EB2F4032F50000000B196AD /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -221,37 +221,15 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		8EB2F40A2F50000000B196AD /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8EB2F2822F49166000B196AD /* Aagedal Media Player */;
+			targetProxy = 8EB2F40B2F50000000B196AD /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
-		8EB2F4072F50000000B196AD /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 3R5QGG9DW6;
-				GENERATE_INFOPLIST_FILE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.aagedal.MediaPlayerTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_VERSION = 6.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Aagedal Media Player.app/Contents/MacOS/Aagedal Media Player";
-			};
-			name = Debug;
-		};
-		8EB2F4082F50000000B196AD /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 3R5QGG9DW6;
-				GENERATE_INFOPLIST_FILE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.aagedal.MediaPlayerTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_VERSION = 6.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Aagedal Media Player.app/Contents/MacOS/Aagedal Media Player";
-			};
-			name = Release;
-		};
 		8EB2F28C2F49166300B196AD /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -449,18 +427,39 @@
 			};
 			name = Release;
 		};
+		8EB2F4072F50000000B196AD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 3R5QGG9DW6;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.aagedal.MediaPlayerTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 6.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Aagedal Media Player.app/Contents/MacOS/Aagedal Media Player";
+			};
+			name = Debug;
+		};
+		8EB2F4082F50000000B196AD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 3R5QGG9DW6;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.aagedal.MediaPlayerTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 6.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Aagedal Media Player.app/Contents/MacOS/Aagedal Media Player";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		8EB2F4092F50000000B196AD /* Build configuration list for PBXNativeTarget "Aagedal Media Player Tests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				8EB2F4072F50000000B196AD /* Debug */,
-				8EB2F4082F50000000B196AD /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		8EB2F27E2F49166000B196AD /* Build configuration list for PBXProject "Aagedal Media Player" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -479,15 +478,16 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-/* End XCConfigurationList section */
-
-/* Begin PBXTargetDependency section */
-		8EB2F40A2F50000000B196AD /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 8EB2F2822F49166000B196AD /* Aagedal Media Player */;
-			targetProxy = 8EB2F40B2F50000000B196AD /* PBXContainerItemProxy */;
+		8EB2F4092F50000000B196AD /* Build configuration list for PBXNativeTarget "Aagedal Media Player Tests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8EB2F4072F50000000B196AD /* Debug */,
+				8EB2F4082F50000000B196AD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
-/* End PBXTargetDependency section */
+/* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
 		8EA00003AAAA000000000001 /* XCRemoteSwiftPackageReference "MPVKit" */ = {
