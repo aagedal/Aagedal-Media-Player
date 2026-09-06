@@ -20,14 +20,25 @@ struct ComparePlayerView: View {
         compareSession.secondaryController
     }
 
+    /// A uses the same native surface before, during, and after comparison.
+    /// Keeping the single-source presentation here avoids rebinding an already
+    /// initialized MPV context to a new (and therefore blank) Metal layer.
+    private var viewMode: CompareViewMode {
+        compareSession.isActive ? compareSession.viewMode : .primary
+    }
+
+    private var frameResolution: CompareFrameResolution {
+        compareSession.isActive ? compareSession.frameResolution : .full
+    }
+
     var body: some View {
         GeometryReader { geometry in
             let size = geometry.size
             let fullDisplayGeometry = displayGeometry(for: size)
-            let surfaceSize = compareSession.frameResolution.surfaceSize(for: size)
+            let surfaceSize = frameResolution.surfaceSize(for: size)
             let surfaceDisplayGeometry = displayGeometry(for: surfaceSize)
             let presentation = presentationGeometry(using: surfaceDisplayGeometry)
-            let inverseRenderScale = 1 / compareSession.frameResolution.renderScale
+            let inverseRenderScale = 1 / frameResolution.renderScale
 
             // Keep exactly one native surface for each controller across every
             // presentation mode. MPV binds its drawable during setup, so
@@ -42,9 +53,11 @@ struct ComparePlayerView: View {
                     .scaleEffect(inverseRenderScale, anchor: .topLeading)
                     .frame(width: size.width, height: size.height, alignment: .topLeading)
 
-                comparisonGuides(displayGeometry: fullDisplayGeometry)
+                if compareSession.isActive {
+                    comparisonGuides(displayGeometry: fullDisplayGeometry)
+                }
 
-                if compareSession.viewMode == .sideBySide {
+                if viewMode == .sideBySide {
                     Rectangle()
                         .fill(.white.opacity(0.25))
                         .frame(width: 1, height: size.height)
@@ -52,9 +65,11 @@ struct ComparePlayerView: View {
                         .allowsHitTesting(false)
                 }
 
-                sourceBadges
+                if compareSession.isActive {
+                    sourceBadges
+                }
 
-                if compareSession.viewMode.isWipe {
+                if viewMode.isWipe {
                     wipeInteractionOverlay(
                         referenceRect: fullDisplayGeometry.comparisonReferenceRect
                     )
@@ -74,7 +89,7 @@ struct ComparePlayerView: View {
             ZStack(alignment: .topLeading) {
                 ForEach(
                     Array(
-                        displayGeometry.guideReferenceRects(for: compareSession.viewMode)
+                        displayGeometry.guideReferenceRects(for: viewMode)
                             .enumerated()
                     ),
                     id: \.offset
@@ -200,7 +215,7 @@ struct ComparePlayerView: View {
                     y: presentation.secondaryTransform.offset.y
                 )
                 .opacity(presentation.secondaryOpacity)
-                .blendMode(compareSession.viewMode == .difference ? .difference : .normal)
+                .blendMode(viewMode == .difference ? .difference : .normal)
                 .mask(alignment: .topLeading) {
                     Rectangle()
                         .frame(
@@ -265,11 +280,11 @@ struct ComparePlayerView: View {
 
     private var sourceBadges: some View {
         HStack(alignment: .top, spacing: 8) {
-            if compareSession.viewMode != .secondary {
+            if viewMode != .secondary {
                 sourceBadge("A", name: primaryItem.name, audioSource: .primary)
             }
             Spacer(minLength: 8)
-            if compareSession.viewMode != .primary,
+            if viewMode != .primary,
                let secondaryItem = secondaryController.mediaItem {
                 sourceBadge("B", name: secondaryItem.name, audioSource: .secondary)
             }
@@ -306,7 +321,7 @@ struct ComparePlayerView: View {
 
     private func wipeInteractionOverlay(referenceRect: CGRect) -> some View {
         ZStack(alignment: .topLeading) {
-            if compareSession.viewMode == .verticalWipe {
+            if viewMode == .verticalWipe {
                 Color.clear
                     .contentShape(Rectangle())
                     .frame(width: 24, height: referenceRect.height)
@@ -364,7 +379,7 @@ struct ComparePlayerView: View {
         DragGesture(minimumDistance: 0, coordinateSpace: .named("compareCanvas"))
             .onChanged { value in
                 let position: Double
-                if compareSession.viewMode == .verticalWipe {
+                if viewMode == .verticalWipe {
                     position = referenceRect.width > 0
                         ? Double((value.location.x - referenceRect.minX) / referenceRect.width)
                         : 0.5
@@ -411,7 +426,7 @@ struct ComparePlayerView: View {
     }
 
     private func presentationGeometry(using displayGeometry: CompareDisplayGeometry) -> PresentationGeometry {
-        let mode = compareSession.viewMode
+        let mode = viewMode
         let sideBySide = mode == .sideBySide
 
         // Side-by-side is a visual transform over two full-size render
@@ -453,11 +468,11 @@ struct ComparePlayerView: View {
     }
 
     private var differenceContrast: Double {
-        compareSession.viewMode == .difference ? compareSession.differenceGain : 1
+        viewMode == .difference ? compareSession.differenceGain : 1
     }
 
     private var differenceBrightness: Double {
-        guard compareSession.viewMode == .difference else { return 0 }
+        guard viewMode == .difference else { return 0 }
         return CompareSessionController.differenceBrightness(
             forGain: compareSession.differenceGain
         )

@@ -46,6 +46,15 @@ struct ContentView: View {
 
     private let rightEdgeWidth: CGFloat = 60
 
+    init() {}
+
+    /// Allows native lifecycle checks to drive the same window hierarchy used
+    /// in production, including the transition into and out of comparison.
+    init(controller: PlayerController, compareSession: CompareSessionController) {
+        _controller = StateObject(wrappedValue: controller)
+        _compareSession = StateObject(wrappedValue: compareSession)
+    }
+
     private var isMediaLoaded: Bool { controller.mediaItem != nil }
     private var nsWindow: NSWindow? { windowCoordinator.window }
     private var showOverlay: Bool { overlayController.isVisible }
@@ -103,33 +112,20 @@ struct ContentView: View {
             )
             ZStack {
                 if let item = controller.mediaItem {
-                    if compareSession.isActive {
-                        ComparePlayerView(
-                            primaryController: controller,
-                            compareSession: compareSession,
-                            primaryWaveformGenerator: audioWaveformGenerator,
-                            primaryItem: item,
-                            showsAudioWaveform: showAudioWaveformOverlay,
-                            isEditingTimecode: $isEditingTimecode,
-                            isTimelineFocused: $isTimelineFocused,
-                            isOverlayControlFocused: isControlInteractionActive,
-                            isTextInputActive: showReviewNotes || showLoupeControls,
-                            timecodeActivationTrigger: $timecodeActivationTrigger
-                        )
-                    } else {
-                        PlayerView(
-                            controller: controller,
-                            audioWaveformGenerator: audioWaveformGenerator,
-                            item: item,
-                            showsAudioWaveform: showAudioWaveformOverlay,
-                            isEditingTimecode: $isEditingTimecode,
-                            isTimelineFocused: $isTimelineFocused,
-                            isOverlayControlFocused: isControlInteractionActive,
-                            isTextInputActive: showReviewNotes || showLoupeControls,
-                            timecodeActivationTrigger: $timecodeActivationTrigger,
-                            compareSession: compareSession
-                        )
-                    }
+                    // Keep A's native drawable mounted when comparison starts,
+                    // stops, or replaces B. MPV binds wid once per context.
+                    ComparePlayerView(
+                        primaryController: controller,
+                        compareSession: compareSession,
+                        primaryWaveformGenerator: audioWaveformGenerator,
+                        primaryItem: item,
+                        showsAudioWaveform: showAudioWaveformOverlay,
+                        isEditingTimecode: $isEditingTimecode,
+                        isTimelineFocused: $isTimelineFocused,
+                        isOverlayControlFocused: isControlInteractionActive,
+                        isTextInputActive: showReviewNotes || showLoupeControls,
+                        timecodeActivationTrigger: $timecodeActivationTrigger
+                    )
                 } else {
                     DropZoneView(isDropTargeted: isDropTargeted, onOpenFile: openFilePanel)
                 }

@@ -38,6 +38,9 @@ All notable changes to Aagedal Media Player.
   recording run sheet.
 
 ### Changed
+- Keep source A visible when entering Compare Mode, replacing B, or returning to single-source playback by retaining its native video surface.
+- Editor-marker reports preserve full A/B source URLs, stored rational rates, and explicit source/relative B timecodes; oversized Avid notes fail visibly instead of being truncated.
+- Timeline thumbnails invalidate cached images when a source URL changes and safely clamp extreme requested timestamps.
 - Preserve recorded review timecodes after relinking; omit unavailable annotated stills with an explanation and reject ambiguous midnight-wrapping Resolve EDL markers.
 - CSV review reports now append exact stored A/B rational frame rates and full source URLs, preserving existing column positions.
 - Split playback backends, track selection, media operations, window opening, overlays, settings, and command routing into focused components.

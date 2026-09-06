@@ -54,8 +54,10 @@ release-preflight checks pass.
 `TimelineViewportTests` covers full-duration fit, clamped panning, range
 clipping, offscreen points, invalid geometry, and adjacent fractional-rate
 frames in a 24-hour recording. Existing playback/compare tests protect frame
-stepping and coordinated seeking. The native acceptance checks below remain
-pending; model tests are not evidence of pointer or assistive-technology use.
+stepping and coordinated seeking. A focused native zoom/overview/frame-step/Fit check is recorded in
+`TIMELINE_NATIVE_CHECK_2026-09-06.md`. The broader checks below remain pending;
+model tests and accessibility action calls do not establish full pointer,
+keyboard, or VoiceOver acceptance.
 
 - In single-source and Compare Mode, zoom a long recording, scrub with and
   without Option, and confirm adjacent-frame keyboard steps.

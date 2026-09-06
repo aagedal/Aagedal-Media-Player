@@ -604,12 +604,53 @@ Acceptance: a report preserves the finding's recorded coordinates and never
 silently labels a clamped image as its original frame. Native editor round
 trips remain in `docs/COMPARE_MODE_INTERCHANGE.md`.
 
+## Phase 38 — Thumbnail and editor-marker source integrity
+
+Status: Completed on 2026-09-06. The 393-test Release suite passes without
+failures or skips; static analysis and all 61 release-preflight checks pass.
+
+- [x] Invalidate thumbnail cache entries when a source URL changes even if the
+  media identifier remains unchanged.
+- [x] Reject obsolete decoder results while keeping replacement work serialized.
+- [x] Clamp extreme finite thumbnail timestamps before safe quantization.
+- [x] Preserve full current A/B URLs, stored rational rates, and explicit B
+  source/relative timecode labels in editor-marker note text.
+- [x] Reject oversized Avid marker text with an actionable alternate-format
+  message instead of silently truncating a finding.
+- [x] Add focused source-replacement, overflow, provenance, and text-limit tests.
+
+Acceptance: thumbnail images belong to the requested source, and editor export
+cannot silently discard finding text or make same-named sources ambiguous.
+Actual editor import/re-export remains an independent gate.
+
+## Phase 39 — Primary drawable ownership across comparison transitions
+
+Status: Completed on 2026-09-06. All 394 Release tests pass without failures
+or skips in an isolated run. Final static analysis and all 61 release-preflight
+checks pass. Native paused entry, B replacement, and exit were repeated after
+tests finished; both pictures and A's paused frame remained correct. See
+`docs/COMPARE_SURFACE_NATIVE_CHECK_2026-09-06.md`.
+
+- [x] Preserve the primary native video surface when entering comparison,
+  replacing B, and exiting comparison.
+- [x] Present inactive sessions as full-resolution source A, independent of
+  saved comparison view, gain, guides, and live-render resolution.
+- [x] Add a real ContentView/MPV regression for paused entry and B replacement
+  and exit during playback, retaining the drawable and preparation identities.
+- [x] Pass the final Release suite and static analysis.
+- [x] Repeat the original native paused-entry reproduction and verify A/B
+  images on entry, replacement, and exit.
+
+Acceptance: changing comparison membership cannot leave A rendering into an
+obsolete detached layer, and single-source viewing ignores comparison effects.
+
 ## Remaining work after this continuation
 
 - Native timeline zoom/hover, comparison review, relinking, channel controls,
-  and loupe pointer/Full Keyboard Access/VoiceOver acceptance. The native UI
-  automation connection timed out during this continuation; no new native
-  acceptance is claimed.
+  and loupe pointer/Full Keyboard Access/VoiceOver acceptance. A focused native
+  timeline check now confirms zoom, overview adjustment without seeking,
+  frame-step reveal, and Fit in single-source and comparison views. The wider
+  pointer and assistive-technology matrix remains open.
 - Actual marker import/re-export in Resolve, Final Cut Pro, and Avid, including
   fractional rates, drop-frame boundaries, inclusive ranges, and source identity.
 - Oldest-supported Apple Silicon UHD/HDR playback, reflected loupe/scopes,
@@ -657,3 +698,7 @@ trips remain in `docs/COMPARE_MODE_INTERCHANGE.md`.
 
 28. Phase 36 bounded timeline thumbnails.
 29. Phase 37 review report coordinate integrity.
+
+30. Phase 38 thumbnail and editor-marker source integrity.
+
+31. Phase 39 primary drawable ownership across comparison transitions.

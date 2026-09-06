@@ -149,6 +149,91 @@ final class CompareLiveBackendTests: XCTestCase {
         XCTAssertEqual(controller.view.bounds.size, CGSize(width: 960, height: 540))
     }
 
+    func testPrimaryMPVSurfaceSurvivesComparisonEntryReplacementAndExit() async throws {
+        let fixtures = try fixtureDirectory(requiredFiles: [
+            "compare/relative-a.mov", "compare/relative-b.mov",
+        ])
+        let primary = makeController(forcedBackend: .mpv)
+        let secondary = makeController(forcedBackend: .mpv)
+        let session = CompareSessionController(secondaryController: secondary)
+        defer {
+            session.stop()
+            primary.teardown()
+        }
+        try await loadPrimary(primary, url: fixtures.appending(path: "compare/relative-a.mov"))
+        // Host the real window content: a canvas-only test would miss the old
+        // ContentView branch that replaced A's PlayerView on isActive changes.
+        session.viewMode = .difference
+        session.setDifferenceGain(8)
+        session.setFrameResolution(.reduced, primary: primary)
+        session.safeAreaGuide = .actionAndTitle
+        session.aspectRatioGuide = .fourByThree
+        let hostingView = NSHostingView(rootView: ContentView(controller: primary, compareSession: session))
+        let window = NSWindow(
+            contentRect: CGRect(x: 0, y: 0, width: 640, height: 360),
+            styleMask: [.borderless], backing: .buffered, defer: false
+        )
+        window.isReleasedWhenClosed = false
+        window.contentView = hostingView
+        defer {
+            window.contentView = nil
+            window.close()
+        }
+        hostingView.layoutSubtreeIfNeeded()
+        let ready = await waitUntil { primary.isReady && self.metalLayers(in: hostingView).count == 1 }
+        XCTAssertTrue(ready)
+        let originalLayer = try XCTUnwrap(metalLayers(in: hostingView).first)
+        let originalPreparation = primary.preparationID
+        let inactivePictureSize = originalLayer.bounds.size
+        XCTAssertGreaterThan(inactivePictureSize.width, 1)
+        XCTAssertGreaterThan(inactivePictureSize.height, 1)
+        session.viewMode = .sideBySide
+        session.setFrameResolution(.full, primary: primary)
+        primary.seekTo(1)
+        let sought = await waitUntil(tolerance: 0.05) { primary.playbackTimeSnapshot() - 1 }
+        XCTAssertTrue(sought)
+        hostingView.layoutSubtreeIfNeeded()
+        XCTAssertEqual(originalLayer.bounds.size, inactivePictureSize,
+                       "Inactive A's drawable must not resize when saved comparison resolution changes")
+
+        func assertPrimarySurfaceIsRetained() {
+            XCTAssertTrue(metalLayers(in: hostingView).contains { $0 === originalLayer },
+                          "A's initialized MPV context must keep its mounted Metal drawable")
+            XCTAssertEqual(primary.preparationID, originalPreparation,
+                           "Changing B must not reload A or interrupt its transport")
+        }
+
+        let secondaryURL = fixtures.appending(path: "compare/relative-b.mov")
+        session.loadSecondary(secondaryURL, alignedWith: primary)
+        let entered = await waitUntil { session.isSecondaryReady && self.metalLayers(in: hostingView).count == 2 }
+        XCTAssertTrue(entered)
+        assertPrimarySurfaceIsRetained()
+        XCTAssertFalse(primary.isPlaying)
+        XCTAssertEqual(primary.playbackTimeSnapshot(), 1, accuracy: 0.05)
+
+        // Replacing B briefly deactivates comparison while metadata loads.
+        // A must stay mounted through that intermediate single-source state.
+        session.play(primary: primary)
+        let playing = await waitUntil { primary.isPlaying }
+        XCTAssertTrue(playing)
+        session.loadSecondary(secondaryURL, alignedWith: primary)
+        XCTAssertFalse(session.isActive)
+        hostingView.layoutSubtreeIfNeeded()
+        assertPrimarySurfaceIsRetained()
+        let replaced = await waitUntil { session.isSecondaryReady && self.metalLayers(in: hostingView).count == 2 }
+        XCTAssertTrue(replaced)
+        assertPrimarySurfaceIsRetained()
+        XCTAssertTrue(primary.isPlaying)
+
+        session.stop()
+        let exited = await waitUntil { self.metalLayers(in: hostingView).count == 1 }
+        XCTAssertTrue(exited)
+        assertPrimarySurfaceIsRetained()
+        XCTAssertTrue(primary.isPlaying)
+        primary.pause()
+        XCTAssertNotNil(primary.mpvPlayer?.screenshotRaw())
+    }
+
     func testExplicitMPVSurfaceGrowthDefersOneReloadAndRespectsPairedOwnership() async throws {
         for ownsReload in [true, false] {
             let player = MPVPlayer()
