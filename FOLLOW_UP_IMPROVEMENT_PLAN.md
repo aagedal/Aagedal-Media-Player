@@ -644,9 +644,50 @@ tests finished; both pictures and A's paused frame remained correct. See
 Acceptance: changing comparison membership cannot leave A rendering into an
 obsolete detached layer, and single-source viewing ignores comparison effects.
 
+## Phase 40 — Selected-range loudness analysis
+
+Status: Completed on 2026-09-06. All 400 Release tests pass, static analysis
+passes, and release preflight passes all 61 checks. The new silence-export
+regression uses lossless ALAC/M4A, supported by the metadata parser.
+
+- [x] Measure integrated loudness, loudness range, and true peak for the
+  selected In–Out interval or the whole source audio stream.
+- [x] Trim decoded samples before measurement, preserve source-relative
+  timestamp offsets, and stop input at Out.
+- [x] Cancel per-stream work explicitly and invalidate selected-range results
+  when markers, scope, or media change.
+- [x] Preserve measured range bounds and digital-silence values in copied JSON.
+- [x] Add real bundled-ffmpeg tests for level separation, nonzero container
+  timestamps, delayed audio streams, and silence export.
+- [x] Pass the final integrated Release suite, static analysis, and preflight.
+
+Acceptance: range measurements describe the selected source samples and carry
+their interval into metadata export. Live metering and standards compliance
+are outside this phase. See `docs/AUDIO_LOUDNESS.md`.
+
+## Phase 41 — Reproducible long-file thumbnail profiling
+
+Status: Completed on 2026-09-06. All 120 production-loader requests pass over
+synthetic 1/8/24-hour long-GOP files on the M5 Pro. The final 400-test Release
+suite, static analysis, and all 61 preflight checks pass. Test-only AppKit
+surface teardown and overlay state now also obey explicit main-actor isolation.
+
+- [x] Exercise the production loader against explicitly selected long files.
+- [x] Measure 40 distributed non-keyframe requests with the real hover delay,
+  image dimensions, cache cap, cached reopening, and teardown checks.
+- [x] Retain environment, input hashes, XCTest artifacts, latency distribution,
+  sampled app-process resident memory, and pixel-cache storage bounds.
+- [x] Reject missing/incomplete profile records even when XCTest returns success.
+- [x] Record the final 1/8/24-hour local baseline and integrated verification.
+
+Acceptance: maintainers can repeat the same production thumbnail workload on
+representative sources and the release-floor Mac. The harness does not replace
+native hover acceptance or concurrent UHD/HDR playback profiling. See
+`docs/TIMELINE_THUMBNAIL_PERFORMANCE.md`.
+
 ## Remaining work after this continuation
 
-- Native timeline zoom/hover, comparison review, relinking, channel controls,
+- Native timeline zoom/hover, comparison review, relinking, channel/loudness controls,
   and loupe pointer/Full Keyboard Access/VoiceOver acceptance. A focused native
   timeline check now confirms zoom, overview adjustment without seeking,
   frame-step reveal, and Fit in single-source and comparison views. The wider
@@ -657,7 +698,7 @@ obsolete detached layer, and single-source viewing ignores comparison effects.
   and long-file thumbnail performance profiling.
 - Release signing/notarization/update-feed validation, representative-media
   smoke tests, refreshed screenshots/demo, publication, and hands-on editor beta.
-- Peak/true-peak meters, live loudness and selected-range integrated loudness,
+- Peak/true-peak meters and live momentary/short-term loudness,
   calibration/ballistics/presets, reference accuracy, and multichannel profiling.
 - Verified 1:1 source-pixel inspection, whole-viewport zoom/pan after loupe
   acceptance, and time-localized mismatch markers after a detection model is

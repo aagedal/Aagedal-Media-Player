@@ -2,12 +2,98 @@
 // Copyright © 2026 Truls Aagedal
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+import AVFoundation
 import CoreGraphics
+import Darwin
 import XCTest
 @testable import Aagedal_Media_Player
 
 @MainActor
 final class TimelineThumbnailLoaderTests: XCTestCase {
+    /// Opt-in production-decoder profile. The script provides explicit files;
+    /// ordinary regression runs do not depend on long-form profiling media.
+    func testProductionThumbnailProfileWhenRequested() async throws {
+        guard let input = ProcessInfo.processInfo.environment["TIMELINE_PROFILE_INPUTS"] else { return }
+        let paths = try JSONDecoder().decode([String].self, from: Data(input.utf8))
+        XCTAssertFalse(paths.isEmpty)
+        for path in paths {
+            let url = URL(fileURLWithPath: path)
+            let asset = AVURLAsset(url: url)
+            let duration = try await asset.load(.duration).seconds
+            XCTAssertTrue(duration.isFinite && duration >= 40, "Profile inputs must be at least 40 seconds")
+            guard duration.isFinite && duration >= 40 else { continue }
+            let media = MediaItem(url: url, name: url.lastPathComponent, size: 0,
+                                  durationSeconds: duration)
+            let loader = TimelineThumbnailLoader()
+            defer { loader.hide(clearCache: true) }
+            var latencies: [Double] = []
+            let initialResident = try residentBytes()
+            var peakResident = initialResident
+            var maximumImageBytes = 0
+            // A coprime permutation forces distributed cold seeks rather than
+            // benefitting from sequential decoder read-ahead.
+            for index in 0..<40 {
+                // Offset inside each interval so the 1/8/24-hour fixtures do
+                // not accidentally request only their ten-second keyframes.
+                let time = duration * (Double((index * 17) % 40) + 0.413) / 40
+                let requested = try XCTUnwrap(TimelineThumbnailLoader.Request(item: media, time: time))
+                let start = ContinuousClock.now
+                loader.request(item: media, time: time)
+                let deadline = start.advanced(by: .seconds(30))
+                while loader.imageTime != requested.time, ContinuousClock.now < deadline {
+                    peakResident = max(peakResident, try residentBytes())
+                    try await Task.sleep(for: .milliseconds(10))
+                }
+                XCTAssertEqual(loader.imageTime, requested.time, "No preview for \(url.lastPathComponent) at \(time)")
+                let image = try XCTUnwrap(loader.image)
+                XCTAssertLessThanOrEqual(image.width, 240)
+                XCTAssertLessThanOrEqual(image.height, 135)
+                maximumImageBytes = max(maximumImageBytes, image.bytesPerRow * image.height)
+                XCTAssertLessThanOrEqual(loader.cachedCount, TimelineThumbnailLoader.cacheLimit)
+                let elapsed = start.duration(to: .now).components
+                latencies.append(Double(elapsed.seconds) + Double(elapsed.attoseconds) / 1e18)
+            }
+            XCTAssertEqual(loader.cachedCount, TimelineThumbnailLoader.cacheLimit)
+            // The last requested image is cached: reopening must be immediate.
+            let lastTime = try XCTUnwrap(loader.imageTime)
+            loader.hide()
+            loader.request(item: media, time: lastTime)
+            XCTAssertNotNil(loader.image)
+            XCTAssertEqual(loader.imageTime, lastTime)
+            latencies.sort()
+            let report: [String: Any] = [
+                "file": url.lastPathComponent, "durationSeconds": duration,
+                "samples": latencies.count, "cachedImages": loader.cachedCount,
+                "medianSeconds": (latencies[19] + latencies[20]) / 2,
+                "p95Seconds": latencies[37], "maximumSeconds": latencies[39],
+                "initialResidentBytes": initialResident, "sampledPeakResidentBytes": peakResident,
+                "cachePixelBytesUpperBound": maximumImageBytes * TimelineThumbnailLoader.cacheLimit,
+            ]
+            let data = try JSONSerialization.data(withJSONObject: report, options: [.sortedKeys])
+            let line = "TIMELINE_PROFILE " + String(decoding: data, as: UTF8.self)
+            print(line)
+            let attachment = XCTAttachment(string: line)
+            attachment.name = "Timeline thumbnail profile — \(url.lastPathComponent)"
+            attachment.lifetime = .keepAlways
+            add(attachment)
+            loader.hide(clearCache: true)
+            XCTAssertEqual(loader.cachedCount, 0)
+            XCTAssertNil(loader.image)
+        }
+    }
+
+    private func residentBytes() throws -> UInt64 {
+        var info = mach_task_basic_info()
+        var count = mach_msg_type_number_t(MemoryLayout<mach_task_basic_info>.size / MemoryLayout<natural_t>.size)
+        let result = withUnsafeMutablePointer(to: &info) { pointer in
+            pointer.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
+                task_info(mach_task_self_, task_flavor_t(MACH_TASK_BASIC_INFO), $0, &count)
+            }
+        }
+        guard result == KERN_SUCCESS else { throw NSError(domain: NSMachErrorDomain, code: Int(result)) }
+        return UInt64(info.resident_size)
+    }
+
     private func item(duration: Double = 10) -> MediaItem {
         MediaItem(url: URL(fileURLWithPath: "/tmp/thumbnail.mov"), name: "Preview", size: 0,
                   durationSeconds: duration)

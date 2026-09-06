@@ -5,6 +5,8 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Added
+- Offline integrated loudness, loudness range, and true-peak analysis over selected In–Out points, with per-stream cancellation and measured-range provenance in copied metadata.
+- Reproducible production timeline-thumbnail profiling with long-file seek latency, cache bounds, and sampled resident-memory measurements.
 - Lazy timeline hover thumbnails with a bounded cache and cancellation on media replacement or dismissal.
 - Per-window timeline zoom up to 64×, with a full-duration overview for panning and a one-action return to Fit.
 - Deliberate comparison-review relinking after media moves, with an explicit A/B mapping preview, preserved findings, and protection against destination overwrites.

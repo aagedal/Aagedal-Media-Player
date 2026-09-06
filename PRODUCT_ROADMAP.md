@@ -235,8 +235,12 @@ confidence as the picture.
 
 - [x] Add per-channel mute and solo without changing the encoded file.
 - [ ] Add peak and true-peak meters with clear dBFS/dBTP units.
-- [ ] Add live momentary and short-term loudness, plus integrated loudness over
-  a selected range or full file.
+- [x] Add offline integrated loudness over a selected range or full file.
+  The metadata inspector measures each source audio stream over Whole File or
+  existing In–Out points, with cancellation and range provenance in copied
+  JSON. See `docs/AUDIO_LOUDNESS.md`; live meters and accuracy validation
+  against trusted references remain separate work.
+- [ ] Add live momentary and short-term loudness.
 - [x] Show channel labels and layout mismatches clearly in Compare Mode.
   Selected-track details list numbered A/B speaker roles, unmatched channels,
   and explicit positional fallback when roles cannot be established. See
@@ -271,6 +275,10 @@ confidence as the picture.
 
 - [ ] Validate meter accuracy against trusted reference files and tools.
 - [ ] Confirm meter and thumbnail work remains bounded during long playback.
+  A production-loader thumbnail profiler now checks 40 distributed requests
+  per input with cache bounds and sampled memory/latency reporting. See
+  `docs/TIMELINE_THUMBNAIL_PERFORMANCE.md`; concurrent playback, UHD/HDR, and
+  release-floor hardware acceptance remain open.
 - [ ] Complete keyboard and VoiceOver coverage for channel controls and the
   richer timeline.
 

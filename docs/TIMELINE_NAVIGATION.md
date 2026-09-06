@@ -38,6 +38,10 @@ controls, or replacing the primary source cancels pending work. Source
 replacement clears the cache.
 Unsupported or unreadable frames leave the preview hidden.
 
+For reproducible long-file latency and cache/memory checks, use
+`scripts/profile-timeline-thumbnails.sh`. The methodology and limits are in
+`TIMELINE_THUMBNAIL_PERFORMANCE.md`.
+
 Native hover acceptance remains pending: confirm preview alignment at 1× and
 64×, no seek on hover, cancellation on exit/replacement, audio-only behavior,
 and narrow/fullscreen positioning. Also profile long-GOP and UHD/HDR files on

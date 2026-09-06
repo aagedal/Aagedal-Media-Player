@@ -87,6 +87,17 @@ multichannel profile:
 scripts/profile-audio-waveforms.sh
 ```
 
+Profile production timeline thumbnail requests against long recordings:
+
+```bash
+scripts/profile-timeline-thumbnails.sh /tmp/thumbnail-profile /path/to/long-recording.mov
+```
+
+The artifact directory must be new. The profile retains its environment,
+input hashes, test results, and latency/memory measurements. See
+[timeline profiling](docs/TIMELINE_THUMBNAIL_PERFORMANCE.md) for methodology
+and the remaining playback/UHD/HDR and release-floor checks.
+
 Its report includes decode time, fixed accumulator size, and resident-memory
 growth. See [docs/AUDIO_WAVEFORM_PERFORMANCE.md](docs/AUDIO_WAVEFORM_PERFORMANCE.md)
 for the current baseline and methodology.
