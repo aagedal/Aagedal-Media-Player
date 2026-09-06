@@ -249,8 +249,11 @@ confidence as the picture.
 
 ### Inspection timeline
 
-- [ ] Add lightweight thumbnail navigation that is generated lazily and cached
-  within a bounded budget.
+- [x] Add lightweight thumbnail navigation that is generated lazily and cached
+  within a bounded budget. Approximate source-A hover previews use one decoder
+  worker, a 180 ms delay, and at most 32 small cached images per window. Native
+  hover acceptance and release-floor profiling remain in
+  `docs/TIMELINE_NAVIGATION.md`.
 - [x] Add visible chapter, trim, and comparison-overlap markers.
 - [ ] Add mismatch markers to the timeline. The comparison mismatch summary
   already exists; it does not establish time-localized mismatch findings.

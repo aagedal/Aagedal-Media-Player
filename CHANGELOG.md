@@ -5,6 +5,7 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Added
+- Lazy timeline hover thumbnails with a bounded cache and cancellation on media replacement or dismissal.
 - Per-window timeline zoom up to 64×, with a full-duration overview for panning and a one-action return to Fit.
 - Deliberate comparison-review relinking after media moves, with an explicit A/B mapping preview, preserved findings, and protection against destination overwrites.
 - Review-note severity, category, and status with searchable classifications and inclusive frame ranges, timeline bands, and CSV/PDF/editor export support.
@@ -37,6 +38,7 @@ All notable changes to Aagedal Media Player.
   recording run sheet.
 
 ### Changed
+- Preserve recorded review timecodes after relinking; omit unavailable annotated stills with an explanation and reject ambiguous midnight-wrapping Resolve EDL markers.
 - CSV review reports now append exact stored A/B rational frame rates and full source URLs, preserving existing column positions.
 - Split playback backends, track selection, media operations, window opening, overlays, settings, and command routing into focused components.
 - Extract the update settings pane and publish typed update-check outcomes with retry guidance.

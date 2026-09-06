@@ -160,6 +160,12 @@ struct ControlsView: View {
         .onChange(of: showTimelineDetails) { _, visible in
             if !visible { timelineThumbnail.hide(); thumbnailHoverX = nil }
         }
+        .onChange(of: timelineViewport) { _, _ in
+            // Zoom, panning, and playhead following change the time under a
+            // stationary pointer. Never retain a preview from the old mapping.
+            timelineThumbnail.hide()
+            thumbnailHoverX = nil
+        }
         .onDisappear {
             timelineThumbnail.hide(clearCache: true)
             deferredTimecodeActivation.cancel()

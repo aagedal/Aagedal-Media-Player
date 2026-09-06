@@ -563,6 +563,65 @@ Keyboard Access, and VoiceOver checks remain in `docs/TIMELINE_NAVIGATION.md`.
 Native editor round trips and release-floor playback/loupe profiling remain
 separate release gates; this phase does not claim them complete.
 
+## Phase 36 — Bounded timeline thumbnails
+
+Status: Engineering complete on 2026-09-06. The 386-test Release suite and
+40 final focused tests pass without failures or skips. Static analysis and
+all 61 release-preflight checks pass.
+
+- [x] Add approximate hover previews mapped through the visible timeline.
+- [x] Debounce requests, coalesce pointer movement, and allow one decoder worker.
+- [x] Bound the per-window cache to 32 images fitted within 240 × 135 pixels.
+- [x] Cancel on dismissal and replacement; reject obsolete results and clear
+  the cache when source A changes.
+- [x] Preserve display aspect ratio in the ffmpeg fallback, including rotated
+  anamorphic media, and leave audio-only sources without preview work.
+- [x] Pass integrated Release tests and static analysis.
+
+Acceptance: lazy navigation does not seek or accumulate decoder work. Preview
+timecodes are approximate, and native hover/accessibility checks and long-file
+release-floor profiling remain in `docs/TIMELINE_NAVIGATION.md`.
+
+## Phase 37 — Review report coordinate integrity
+
+Status: Engineering complete on 2026-09-06. The 386-test Release suite and
+40 final focused tests pass without failures or skips. Static analysis and
+all 61 release-preflight checks pass.
+
+- [x] Derive report relative timecodes from stored rational frame coordinates,
+  without clamping to shorter replacement media.
+- [x] Add source-timecode offsets with integer frame arithmetic only when the
+  current source rate agrees with the stored rate.
+- [x] Omit unavailable annotated A/B stills, keeping the finding and an explicit
+  PDF explanation instead of substituting an unrelated last frame.
+- [x] Reject Resolve EDL positions and exclusive endpoints reaching the
+  24-hour wrap boundary with an actionable alternate-format message.
+- [x] Cover shorter A/B replacements, unavailable EOF frames, changed rates,
+  preserved PDF text, and near-midnight NDF/DF boundaries.
+- [x] Pass integrated Release tests and static analysis.
+
+Acceptance: a report preserves the finding's recorded coordinates and never
+silently labels a clamped image as its original frame. Native editor round
+trips remain in `docs/COMPARE_MODE_INTERCHANGE.md`.
+
+## Remaining work after this continuation
+
+- Native timeline zoom/hover, comparison review, relinking, channel controls,
+  and loupe pointer/Full Keyboard Access/VoiceOver acceptance. The native UI
+  automation connection timed out during this continuation; no new native
+  acceptance is claimed.
+- Actual marker import/re-export in Resolve, Final Cut Pro, and Avid, including
+  fractional rates, drop-frame boundaries, inclusive ranges, and source identity.
+- Oldest-supported Apple Silicon UHD/HDR playback, reflected loupe/scopes,
+  and long-file thumbnail performance profiling.
+- Release signing/notarization/update-feed validation, representative-media
+  smoke tests, refreshed screenshots/demo, publication, and hands-on editor beta.
+- Peak/true-peak meters, live loudness and selected-range integrated loudness,
+  calibration/ballistics/presets, reference accuracy, and multichannel profiling.
+- Verified 1:1 source-pixel inspection, whole-viewport zoom/pan after loupe
+  acceptance, and time-localized mismatch markers after a detection model is
+  defined. See `PRODUCT_ROADMAP.md` for milestone sequencing.
+
 ## Delivery order
 
 1. Phase 10 correctness fixes and regression tests.
@@ -595,3 +654,6 @@ separate release gates; this phase does not claim them complete.
 26. Phase 34 review-sidecar relinking and export consistency.
 
 27. Phase 35 timeline viewport and report provenance.
+
+28. Phase 36 bounded timeline thumbnails.
+29. Phase 37 review report coordinate integrity.

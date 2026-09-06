@@ -154,7 +154,9 @@ nonisolated enum CompareReviewPDFRenderer {
         beginPage()
 
         for row in snapshot.rows {
-            let details = [row.classificationLabel, row.rangeLabel, row.note]
+            let unavailableStill = row.hasAvailableStillFrames ? nil
+                : "Still unavailable: recorded frame is outside the available A/B media."
+            let details = [row.classificationLabel, row.rangeLabel, row.note, unavailableStill]
                 .compactMap { $0 }.joined(separator: "\n")
             let noteLines = wrappedLines(
                 details,

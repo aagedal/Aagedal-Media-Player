@@ -112,8 +112,12 @@ is no stored B endpoint. End frames receive the same arithmetic bounds checks
 as start frames.
 
 Frame indices are authoritative. The sidecar does not store embedded source
-start timecode or DF/NDF display flags. Reports derive those from the loaded
-media. The app trims new note text and rejects blank text in the UI; the store
+start timecode or DF/NDF display flags. Reports derive source timecode from the
+loaded media only when its rate agrees with the finding's stored rate;
+relative timecode always uses the stored frame and rate without duration
+clamping. A PDF omits its paired still when either frame is unavailable in
+the loaded media, while retaining the finding and an explanation.
+The app trims new note text and rejects blank text in the UI; the store
 itself does not impose that text restriction or require the seconds fields to
 equal frame/rate. Loading also does not check positions against media duration;
 playback navigation bounds the destination using the loaded media.

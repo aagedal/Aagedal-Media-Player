@@ -21,10 +21,35 @@ Chapter, trim, review, and overlap marks use the same viewport. Offscreen
 points are hidden; ranges crossing an edge are clipped. **Show Timeline
 Details** continues to control optional marks independently of zoom.
 
+## Hover thumbnails
+
+With **Show Timeline Details** enabled, pausing the pointer over the scrubber
+requests a small preview at that position in the visible interval. In Compare
+Mode the preview belongs to source A. The approximate timecode (`≈`) reflects
+the thumbnail request, not a frame-accurate inspection measurement; use frame
+stepping and the loupe for inspection. Hovering never seeks or changes playback.
+
+Requests settle for 180 ms before extraction and use half-second buckets.
+Only one decoder request runs at a time; newer pointer positions replace
+pending requests. Each window caches at most 32 images, each fitted within
+240 × 135 pixels. Audio-only sources generate no previews. Moving off the
+timeline, changing the visible interval, scrubbing, hiding details, closing the
+controls, or replacing the primary source cancels pending work. Source
+replacement clears the cache.
+Unsupported or unreadable frames leave the preview hidden.
+
+Native hover acceptance remains pending: confirm preview alignment at 1× and
+64×, no seek on hover, cancellation on exit/replacement, audio-only behavior,
+and narrow/fullscreen positioning. Also profile long-GOP and UHD/HDR files on
+the release-floor Mac while playback and other inspection tools are active.
+
 ## Verification
 
-The 382-test Release suite passed on 2026-09-06 with no failures or skips.
-Static analysis and all 61 release-preflight checks also passed.
+The continuation passed the 386-test Release suite and 40 final focused tests
+on 2026-09-06 without failures or skips. The focused tests include request
+quantization, cache limits, cancellation-ignoring decoder replacement, and real
+rotated anamorphic ffmpeg extraction. Static analysis and all 61
+release-preflight checks pass.
 
 `TimelineViewportTests` covers full-duration fit, clamped panning, range
 clipping, offscreen points, invalid geometry, and adjacent fractional-rate

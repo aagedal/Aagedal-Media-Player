@@ -23,6 +23,14 @@ pair, while the JSON sidecar retains filesystem identity. These appended fields
 leave the original column positions intact. PDF reports show classification
 labels and the inclusive A frame range beside the finding text.
 
+Report relative timecodes are derived from each finding's stored frame and
+rational rate, even after relinking to shorter media. Source timecodes are
+shown only when the current source rate agrees with the stored rate; otherwise
+they are unavailable. Reports do not retime findings to replacement metadata.
+If either recorded A/B frame is outside the available media duration, the PDF
+keeps the finding and explains that its still is unavailable rather than
+substituting a different frame.
+
 For each supported target editor, create a review containing:
 
 - Notes on the first frame, adjacent frames, and the final playable frame.
@@ -74,6 +82,12 @@ Avid range duration is claimed.
 Resolve EDL deliberately rejects more than 999 markers and rates above 60
 nominal fps. Verify that these failures remain actionable in the app. Keep
 unsupported cases distinct from failed imports at supported rates.
+EDL also rejects a marker whose source position or exclusive end reaches or
+passes the 24-hour timecode boundary, including the final frame before
+midnight. This prevents wrapped labels from aliasing another timeline position.
+CSV/PDF preserve frame coordinates, and FCPXML/Avid use rational times or
+frame positions; use those formats for these findings. Include a near-midnight
+source in acceptance tests and verify the EDL failure before publication.
 
 ## Evidence record
 

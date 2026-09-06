@@ -471,9 +471,9 @@ nonisolated enum ComparisonStillFrameExtractor {
         func cancel() { generator.cancelAllCGImageGeneration() }
     }
 
-    private static func ffmpegImage(from url: URL, at time: TimeInterval, maximumSize: CGSize) async throws -> CGImage {
+    static func ffmpegImage(from url: URL, at time: TimeInterval, maximumSize: CGSize) async throws -> CGImage {
         let scale = maximumSize.width > 0 && maximumSize.height > 0
-            ? "scale=\(Int(maximumSize.width)):\(Int(maximumSize.height)):force_original_aspect_ratio=decrease,setsar=1"
+            ? "scale=w='max(1,min(\(Int(maximumSize.width)),\(Int(maximumSize.height))*dar))':h='max(1,min(\(Int(maximumSize.height)),\(Int(maximumSize.width))/dar))',setsar=1"
             : "scale=iw*sar:ih,setsar=1"
         let sink = LockedDataSink()
         try await FFmpegService.runStreamingOutput(

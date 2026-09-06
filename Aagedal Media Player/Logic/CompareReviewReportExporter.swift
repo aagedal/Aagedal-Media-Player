@@ -45,6 +45,7 @@ nonisolated enum CompareReviewExportState: Equatable, Sendable {
 nonisolated enum CompareReviewReportExportError: Error, LocalizedError {
     case tooManyResolveMarkers(Int)
     case unsupportedResolveFrameRate(Int64)
+    case resolveTimecodeWrap(Int)
     case unrepresentableMarkerRange
     case unrepresentableFinalCutProTime
     case incompatiblePrimaryFrameRate(Int)
@@ -55,6 +56,8 @@ nonisolated enum CompareReviewReportExportError: Error, LocalizedError {
             "DaVinci Resolve marker EDL supports at most 999 markers; this review has \(count)."
         case .unsupportedResolveFrameRate(let nominalFPS):
             "DaVinci Resolve marker EDL export does not support \(nominalFPS) fps media."
+        case .resolveTimecodeWrap(let marker):
+            "Review marker \(marker) reaches or crosses the 24-hour source timecode boundary. Resolve marker EDL cannot preserve that position unambiguously. Use CSV, PDF, Final Cut Pro XML, or Avid markers instead."
         case .unrepresentableMarkerRange:
             "A comparison marker range exceeds the supported frame range. Check the review’s frame positions before exporting again."
         case .unrepresentableFinalCutProTime:
@@ -79,6 +82,7 @@ nonisolated struct CompareReviewReportRow: Equatable, Sendable {
     let secondaryRateNumerator: Int64
     let secondaryRateDenominator: Int64
     let secondaryTime: TimeInterval
+    let hasAvailableStillFrames: Bool
     let note: String
     let primaryEndFrame: Int64?
     let severity: CompareReviewSeverity
@@ -153,20 +157,13 @@ nonisolated struct CompareReviewReportSnapshot: Equatable, Sendable {
         }
 
         rows = sortedNotes.enumerated().map { index, note in
-            let primaryTime = CompareReviewTimeline.time(
-                forFrame: note.primaryFrame,
-                duration: primaryItem.durationSeconds,
-                frameRate: Double(note.primaryRateNumerator)
-                    / Double(note.primaryRateDenominator),
-                fallback: note.primaryTime
-            )
-            let secondaryTime = CompareReviewTimeline.time(
-                forFrame: note.secondaryFrame,
-                duration: secondaryItem.durationSeconds,
-                frameRate: Double(note.secondaryRateNumerator)
-                    / Double(note.secondaryRateDenominator),
-                fallback: note.secondaryTime
-            )
+            let primaryTime = Double(note.primaryFrame) * Double(note.primaryRateDenominator)
+                / Double(note.primaryRateNumerator)
+            let secondaryTime = Double(note.secondaryFrame) * Double(note.secondaryRateDenominator)
+                / Double(note.secondaryRateNumerator)
+            let hasAvailableStillFrames = Self.hasAvailableFrame(at: primaryTime, duration: primaryItem.durationSeconds)
+                && Self.hasAvailableFrame(at: secondaryTime, duration: secondaryItem.durationSeconds)
+
 
             return CompareReviewReportRow(
                 markerNumber: index + 1,
@@ -183,10 +180,7 @@ nonisolated struct CompareReviewReportSnapshot: Equatable, Sendable {
                 primaryFrame: note.primaryFrame,
                 primaryRateNumerator: note.primaryRateNumerator,
                 primaryRateDenominator: note.primaryRateDenominator,
-                primaryTime: ComparisonStillFrameExtractor.clampedTime(
-                    primaryTime,
-                    for: primaryItem
-                ),
+                primaryTime: primaryTime,
                 secondarySourceTimecode: Self.sourceTimecode(
                     item: secondaryItem,
                     frame: note.secondaryFrame,
@@ -200,10 +194,8 @@ nonisolated struct CompareReviewReportSnapshot: Equatable, Sendable {
                 secondaryFrame: note.secondaryFrame,
                 secondaryRateNumerator: note.secondaryRateNumerator,
                 secondaryRateDenominator: note.secondaryRateDenominator,
-                secondaryTime: ComparisonStillFrameExtractor.clampedTime(
-                    secondaryTime,
-                    for: secondaryItem
-                ),
+                secondaryTime: secondaryTime,
+                hasAvailableStillFrames: hasAvailableStillFrames,
                 note: note.text,
                 primaryEndFrame: note.primaryEndFrame,
                 severity: note.severity,
@@ -221,6 +213,10 @@ nonisolated struct CompareReviewReportSnapshot: Equatable, Sendable {
             $0 == Int64.max ? Int64.max : $0 + 1
         } ?? 0
         primaryDurationFrames = max(1, durationFrames, finalMarkerFrame)
+    }
+
+    private static func hasAvailableFrame(at time: TimeInterval, duration: TimeInterval) -> Bool {
+        time.isFinite && time >= 0 && duration.isFinite && duration > 0 && time < duration
     }
 
     @MainActor
@@ -260,7 +256,9 @@ nonisolated enum CompareReviewReportExporter {
     /// used by the standalone comparison-still export.
     static func annotatedStillData(
         snapshot: CompareReviewReportSnapshot,
-        frameImageProvider: @escaping FrameImageProvider = ComparisonStillFrameExtractor.image
+        frameImageProvider: @escaping FrameImageProvider = { url, time in
+            try await ComparisonStillFrameExtractor.image(from: url, at: time)
+        }
     ) async throws -> [Int: Data] {
         var results: [Int: Data] = [:]
         var cache: [FramePair: Data] = [:]
@@ -268,6 +266,9 @@ nonisolated enum CompareReviewReportExporter {
 
         for row in snapshot.rows {
             try Task.checkCancellation()
+            // Shorter replacement media must not supply its last frame under
+            // a caption describing the original, now unavailable marker.
+            guard row.hasAvailableStillFrames else { continue }
             let pair = FramePair(
                 primaryTime: row.primaryTime,
                 secondaryTime: row.secondaryTime,
@@ -447,6 +448,10 @@ nonisolated enum CompareReviewReportExporter {
             let (endFrame, endOverflow) = markerFrame.addingReportingOverflow(durationFrames)
             guard !startOverflow, !endOverflow else {
                 throw CompareReviewReportExportError.unrepresentableMarkerRange
+            }
+            let framesPerDay = rate.nominalFPS * 86_400 - rate.droppedFramesPerMinute * 1_296
+            guard markerFrame >= 0, endFrame < framesPerDay else {
+                throw CompareReviewReportExportError.resolveTimecodeWrap(row.markerNumber)
             }
             let input = rate.timecode(forFrameCount: markerFrame)
             let output = rate.timecode(forFrameCount: endFrame)

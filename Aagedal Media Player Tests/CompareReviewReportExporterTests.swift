@@ -27,8 +27,79 @@ final class CompareReviewReportExporterTests: XCTestCase {
         XCTAssertEqual(row.primarySourceTimecode, "01:00:02:00")
         XCTAssertEqual(row.secondaryRelativeTimecode, "00:01:00:00")
         XCTAssertEqual(row.secondarySourceTimecode, "02:01:00;02")
-        XCTAssertLessThan(row.primaryTime, 1, "Still extraction remains bounded by available media")
-        XCTAssertLessThan(row.secondaryTime, 1)
+        XCTAssertEqual(row.primaryTime, 2.002, accuracy: 0.000_001)
+        XCTAssertEqual(row.secondaryTime, 60.06, accuracy: 0.000_001)
+        XCTAssertFalse(row.hasAvailableStillFrames)
+    }
+
+    func testAnnotatedStillsSkipUnavailablePairsAndPreserveReportText() async throws {
+        let notes = [Int64(29), 30, 60].map { frame in
+            CompareReviewNote(
+                primaryFrame: frame, primaryTime: 0, secondaryFrame: frame, secondaryTime: 0,
+                text: "Finding at frame \(frame)"
+            )
+        }
+        // Test availability independently for each member of the pair.
+        for (primaryDuration, secondaryDuration) in [(1.0, 3.0), (3.0, 1.0)] {
+            let snapshot = CompareReviewReportSnapshot(
+                primaryItem: makeItem(path: "/tmp/Master.mov", duration: primaryDuration),
+                secondaryItem: makeItem(path: "/tmp/Encode.mp4", duration: secondaryDuration),
+                alignmentMode: .relative, notes: notes
+            )
+            let recorder = ReportFrameRequestRecorder()
+            let frameImage = try makeSolidImage(red: 1, green: 0, blue: 0)
+            let stills = try await CompareReviewReportExporter.annotatedStillData(snapshot: snapshot) { url, time in
+                await recorder.record(url: url, time: time)
+                return frameImage
+            }
+            XCTAssertEqual(Set(stills.keys), [1])
+            let requests = await recorder.requests
+            XCTAssertEqual(requests.count, 2)
+            XCTAssertTrue(requests.allSatisfy { abs($0.time - 29.0 / 30.0) < 0.000_001 })
+            let pdf = try XCTUnwrap(PDFDocument(data: CompareReviewReportExporter.data(
+                for: .pdf, snapshot: snapshot, annotatedStills: stills
+            )))
+            let reportText = try XCTUnwrap(pdf.string)
+            XCTAssertTrue(reportText.contains("Finding at frame 30"))
+            XCTAssertTrue(reportText.contains("Finding at frame 60"))
+            XCTAssertTrue(reportText.contains("Still unavailable:"))
+        }
+    }
+
+    func testResolveEDLRejectsMidnightWrapIncludingExclusiveEndpoint() throws {
+        for (frameRate, startTimecode, numerator, denominator, lastFrame): (String, String, Int64, Int64, Int64) in [
+            ("30/1", "23:59:59:00", 30, 1, 29),
+            ("30000/1001", "23:59:59;00", 30_000, 1_001, 29),
+            ("60000/1001", "23:59:59;00", 60_000, 1_001, 59),
+        ] {
+            for (frame, endFrame, isRepresentable): (Int64, Int64?, Bool) in [
+                (lastFrame - 1, nil, true), (lastFrame, nil, false),
+                (lastFrame + 1, nil, false), (lastFrame - 1, lastFrame, false),
+            ] {
+                let snapshot = CompareReviewReportSnapshot(
+                    primaryItem: makeItem(path: "/tmp/Master.mov", duration: 10, startTimecode: startTimecode, frameRate: frameRate),
+                    secondaryItem: makeItem(path: "/tmp/Encode.mp4", duration: 10),
+                    alignmentMode: .sourceTimecode,
+                    notes: [CompareReviewNote(
+                        primaryFrame: frame, primaryTime: 0, secondaryFrame: 0, secondaryTime: 0,
+                        primaryRateNumerator: numerator, primaryRateDenominator: denominator,
+                        text: "Near midnight", primaryEndFrame: endFrame
+                    )]
+                )
+                if isRepresentable {
+                    XCTAssertNoThrow(try CompareReviewReportExporter.resolveMarkersEDL(snapshot: snapshot))
+                } else {
+                    XCTAssertThrowsError(try CompareReviewReportExporter.resolveMarkersEDL(snapshot: snapshot)) { error in
+                        guard case CompareReviewReportExportError.resolveTimecodeWrap(1) = error else {
+                            return XCTFail("Expected actionable midnight-wrap error, got \(error)")
+                        }
+                    }
+                    // Formats with rational times or absolute frames keep the position.
+                    XCTAssertNoThrow(try CompareReviewReportExporter.finalCutProXML(snapshot: snapshot))
+                    XCTAssertNoThrow(try CompareReviewReportExporter.avidMarkersText(snapshot: snapshot))
+                }
+            }
+        }
     }
 
     func testReportsDoNotInventSourceTimecodesFromChangedRates() throws {
