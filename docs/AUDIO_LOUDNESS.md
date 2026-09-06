@@ -35,12 +35,16 @@ encoded as strings (`"-Infinity"`, `"Infinity"`, or `"NaN"`).
 - Very short or silent selections may not yield meaningful integrated
   loudness or loudness range. Read the values in the context of the selected
   duration; there is no target-level pass/fail indicator.
+- A selection with no decoded samples reports an error instead of a loudness
+  result. This can happen before a delayed audio stream starts, even when the
+  range is within the file's duration. Digital silence still contains samples
+  and remains measurable.
 - Range selection requires a known file duration. Unknown-duration sources can
   still use whole-file analysis.
 
 ## Validation
 
-The complete 400-test Release suite, static analysis, and all 61 release
+The complete 404-test Release suite, static analysis, and all 61 release
 preflight checks pass on 2026-09-06. The silence fixture uses lossless ALAC in
 M4A so it also exercises the metadata parser's supported audio-container path.
 
@@ -56,8 +60,52 @@ timeline. A generated digital-silence case exercises the actual metadata JSON
 export path and verifies that a negative-infinite peak still exports. This verifies selected
 sample isolation; it is not a standards certification test.
 
+Additional generated fixtures compare mono, 5.1, and quiet mono tracks in the
+same container. They verify independent stream selection, the expected R128
+surround-channel weighting and LFE exclusion, unchanged per-channel true peak,
+and selected-range consistency. Malformed audio and nonexistent stream
+selections must fail instead of returning a measurement. A deterministically
+pre-cancelled analysis must report cancellation, after which a fresh analysis
+of the same file succeeds. These checks do not replace calibrated reference
+measurements, multichannel performance profiling, or native concurrent-job
+cancellation acceptance.
+
+Empty-range fixtures check both an interval beyond EOF and an interval before
+a delayed stream begins. Analysis requires FFmpeg's output clock to advance
+before accepting its summary, because FFmpeg can otherwise report success
+with default loudness and peak values despite processing no audio samples.
+The same fixture verifies that real digital silence and the delayed stream's
+audible interval continue to produce results.
+
 Manual checks: mark an In/Out range, measure it, change a marker while another
 measurement is running, and confirm no old result appears. Switch back to
 Whole File and verify the range label disappears. Copy both result types and
 check their JSON bounds. Cancel one stream while another is running and confirm
 only the chosen stream stops.
+
+## Keyboard and accessibility acceptance
+
+Channel Solo and Mute items in the playback audio menu use native checked
+controls. The menu's accessible value includes which channels are enabled;
+this describes channel routing, independently of master mute and volume.
+Loudness scope, measurement, and cancellation controls identify their audio
+stream, and each result exposes its metric label together with its value.
+
+Before claiming Full Keyboard Access or VoiceOver acceptance:
+
+1. Open a multitrack, multichannel file and navigate to the audio menu using
+   the keyboard. Solo a channel, mute it, then choose All Channels. Verify
+   checked states, enabled-channel descriptions, and audible output agree.
+2. Traverse the inspector's controls for each stream. Confirm the stream
+   identity and Whole File/In–Out scope are announced without ambiguity.
+3. Start two stream measurements and cancel one. Verify the chosen job stops,
+   focus remains usable, and the other result includes its metric and units.
+4. Select an interval before a delayed stream begins. Verify the empty-audio
+   explanation can be reached, then change to an interval containing samples
+   and retry successfully.
+
+These are remaining native acceptance checks; source changes and automated
+analysis tests do not establish spoken narration or full keyboard traversal.
+
+A focused native control check is recorded in
+`AUDIO_QC_NATIVE_CHECK_2026-09-06.md`; it does not close the wider acceptance matrix.

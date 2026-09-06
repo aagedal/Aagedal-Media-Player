@@ -12,6 +12,7 @@ enum FFmpegError: Error, LocalizedError, Equatable {
     case outputMissing
     case cancelled
     case invalidLoudnessRange
+    case loudnessNoSamples
     case invalidAudioStream
 
     var errorDescription: String? {
@@ -24,6 +25,8 @@ enum FFmpegError: Error, LocalizedError, Equatable {
             return "ffmpeg produced no output file"
         case .invalidLoudnessRange:
             return "Choose a finite, non-negative In point and a later Out point for loudness analysis"
+        case .loudnessNoSamples:
+            return "No audio samples were found in the selected stream and interval. Choose a range containing audio or measure the whole file."
         case .invalidAudioStream:
             return "Choose a valid audio stream for loudness analysis"
         case .cancelled:
@@ -165,6 +168,17 @@ enum FFmpegService {
         guard result.terminationStatus == 0 else {
             throw FFmpegError.processFailed(output.trimmingCharacters(in: .whitespacesAndNewlines))
         }
+        // FFmpeg reports success and a plausible ebur128 summary even when
+        // atrim passes no frames. Progress reports N/A for that empty output;
+        // actual samples (including digital silence) advance the output clock.
+        // SubprocessService retains only a bounded tail, including final progress.
+        let progress = String(data: result.standardOutput, encoding: .utf8) ?? ""
+        let hasSamples = progress.split(whereSeparator: \.isNewline).contains { line in
+            guard line.hasPrefix("out_time_us="),
+                  let microseconds = Double(line.dropFirst("out_time_us=".count)) else { return false }
+            return microseconds.isFinite && microseconds > 0
+        }
+        guard hasSamples else { throw FFmpegError.loudnessNoSamples }
         guard var parsed = parseLUFSOutput(output) else {
             throw FFmpegError.processFailed("Could not parse LUFS output")
         }
@@ -179,7 +193,7 @@ enum FFmpegService {
     ) throws -> [String] {
         guard audioStreamIndex >= 0 else { throw FFmpegError.invalidAudioStream }
         var filter = "ebur128=peak=true"
-        var inputArguments = ["-hide_banner", "-nostats"]
+        var inputArguments = ["-hide_banner", "-nostats", "-progress", "pipe:1"]
         if let range {
             // Validate again because Codable can construct a range without its initializer.
             _ = try LoudnessRange(start: range.start, end: range.end)

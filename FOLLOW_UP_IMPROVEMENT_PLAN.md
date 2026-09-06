@@ -685,13 +685,38 @@ representative sources and the release-floor Mac. The harness does not replace
 native hover acceptance or concurrent UHD/HDR playback profiling. See
 `docs/TIMELINE_THUMBNAIL_PERFORMANCE.md`.
 
+## Phase 42 — Audio QC edge cases and accessible monitoring controls
+
+Status: Completed on 2026-09-06. All 404 Release tests pass without failures
+or skips, static analysis passes, and all 61 preflight checks pass. Focused
+native audio-menu and inspector checks are recorded in
+`docs/AUDIO_QC_NATIVE_CHECK_2026-09-06.md`.
+
+- [x] Reject a successful FFmpeg summary when the selected stream contributes
+  no samples, including ranges before a delayed stream or after its end.
+- [x] Preserve valid digital-silence measurements and show an actionable
+  empty-selection error in the inspector.
+- [x] Cover 5.1 weighting and LFE exclusion, independent multi-track selection,
+  malformed audio, missing streams, and cancellation followed by retry.
+- [x] Expose channel Solo/Mute as native checked controls and describe enabled
+  channels in the audio menu's accessible value.
+- [x] Identify each loudness scope/measure/cancel control by audio stream and
+  combine metric labels with their values for accessibility.
+- [x] Pass the integrated Release suite, static analysis, and release preflight.
+
+Acceptance: absent audio cannot masquerade as a measured 0 dB peak, and audio
+monitoring state is exposed to accessibility clients. Native VoiceOver/Full
+Keyboard Access and calibrated reference/performance checks remain separate.
+
 ## Remaining work after this continuation
 
 - Native timeline zoom/hover, comparison review, relinking, channel/loudness controls,
   and loupe pointer/Full Keyboard Access/VoiceOver acceptance. A focused native
   timeline check now confirms zoom, overview adjustment without seeking,
   frame-step reveal, and Fit in single-source and comparison views. The wider
-  pointer and assistive-technology matrix remains open.
+  pointer and assistive-technology matrix remains open. Phase 42 also verifies
+  native channel-routing summaries and loudness metric labels; spoken narration,
+  keyboard traversal, and concurrent analysis acceptance remain open.
 - Actual marker import/re-export in Resolve, Final Cut Pro, and Avid, including
   fractional rates, drop-frame boundaries, inclusive ranges, and source identity.
 - Oldest-supported Apple Silicon UHD/HDR playback, reflected loupe/scopes,
@@ -743,3 +768,7 @@ native hover acceptance or concurrent UHD/HDR playback profiling. See
 30. Phase 38 thumbnail and editor-marker source integrity.
 
 31. Phase 39 primary drawable ownership across comparison transitions.
+
+32. Phase 40 selected-range loudness analysis.
+33. Phase 41 long-file thumbnail profiling.
+34. Phase 42 audio QC edge cases and accessible monitoring controls.

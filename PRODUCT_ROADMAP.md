@@ -249,7 +249,10 @@ confidence as the picture.
 - [ ] Define calibration, ballistics, hold behavior, and EBU/ATSC presets before
   presenting measurements as compliance information.
 - [ ] Test and profile multichannel, multi-track, very long, and malformed
-  sources without unbounded memory or background work.
+  sources without unbounded memory or background work. Automated offline
+  analysis now covers three-track isolation, 5.1 channel weighting, malformed
+  input, missing streams, and cancellation/retry. Long-file loudness profiling
+  and calibrated reference accuracy remain; see `docs/AUDIO_LOUDNESS.md`.
 
 ### Inspection timeline
 

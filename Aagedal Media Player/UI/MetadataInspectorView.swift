@@ -375,6 +375,8 @@ struct MetadataInspectorView: View {
             Text("In–Out Range").tag(true)
         }
         .pickerStyle(.segmented)
+        .accessibilityLabel("Loudness analysis scope for audio stream \(streamIndex + 1)")
+        .accessibilityHint("Changes the measurement scope for all audio streams.")
         if measureSelectedRange {
             if let range = selectedLoudnessRange {
                 Text(String(format: "Selected range: %.3f–%.3f s", range.start, range.end))
@@ -395,6 +397,7 @@ struct MetadataInspectorView: View {
                     .font(.system(.body, design: .monospaced))
                     .textSelection(.enabled)
             }
+            .accessibilityElement(children: .combine)
             VStack(alignment: .leading, spacing: 2) {
                 Text("Loudness Range")
                     .font(.caption)
@@ -403,6 +406,7 @@ struct MetadataInspectorView: View {
                     .font(.system(.body, design: .monospaced))
                     .textSelection(.enabled)
             }
+            .accessibilityElement(children: .combine)
             VStack(alignment: .leading, spacing: 2) {
                 Text("True Peak")
                     .font(.caption)
@@ -411,10 +415,12 @@ struct MetadataInspectorView: View {
                     .font(.system(.body, design: .monospaced))
                     .textSelection(.enabled)
             }
+            .accessibilityElement(children: .combine)
         } else if lufsAnalyzing.contains(streamIndex) {
             HStack(spacing: 6) {
                 ProgressView()
                     .controlSize(.small)
+                    .accessibilityHidden(true)
                 Text("Analyzing loudness…")
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -424,6 +430,7 @@ struct MetadataInspectorView: View {
                     lufsAnalyzing.remove(streamIndex)
                 }
                 .controlSize(.small)
+                .accessibilityLabel("Cancel loudness analysis for audio stream \(streamIndex + 1)")
             }
         } else {
             if let error = lufsErrors[streamIndex] {
@@ -439,6 +446,10 @@ struct MetadataInspectorView: View {
             .buttonStyle(.bordered)
             .controlSize(.small)
             .disabled(measureSelectedRange && selectedLoudnessRange == nil)
+            .accessibilityLabel("Measure loudness for audio stream \(streamIndex + 1)")
+            .accessibilityHint(measureSelectedRange
+                ? "Measures the selected In to Out range. Requires valid In and Out points."
+                : "Measures the whole source audio stream.")
         }
     }
 
@@ -463,7 +474,9 @@ struct MetadataInspectorView: View {
                 lufsAnalyzing.remove(streamIndex)
                 lufsTasks.removeValue(forKey: streamIndex)
                 if !Task.isCancelled, error as? FFmpegError != .cancelled {
-                    lufsErrors[streamIndex] = "LUFS analysis failed"
+                    lufsErrors[streamIndex] = error as? FFmpegError == .loudnessNoSamples
+                        ? error.localizedDescription
+                        : "LUFS analysis failed"
                 }
             }
         }

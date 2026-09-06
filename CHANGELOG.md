@@ -62,6 +62,8 @@ All notable changes to Aagedal Media Player.
   primary-file loop boundaries across all backend combinations.
 
 ### Fixed
+- Reject empty loudness selections instead of displaying FFmpeg’s default summary as a measured peak.
+- Expose channel solo/mute checked states and stream-specific loudness controls to accessibility clients.
 - Reject editor-marker exports with incompatible stored frame rates and keep mixed-rate review findings from reusing the wrong annotated PDF still.
 - MPV comparison pictures now initialize and resize to their fitted panes instead of retaining a small bootstrap surface after window growth.
 - Keep pinned inspection loupes inside the picture canvas when the window shrinks.

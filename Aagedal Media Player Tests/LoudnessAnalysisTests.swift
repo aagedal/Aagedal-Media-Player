@@ -119,4 +119,114 @@ final class LoudnessAnalysisTests: XCTestCase {
         XCTAssertEqual(bounds["end"], 1)
     }
 
+    func testMultichannelStreamWeightingAndIndependentTrackSelection() async throws {
+        guard FFmpegService.ffmpegPath != nil else { throw XCTSkip("Bundled ffmpeg is required") }
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("multichannel-loudness-\(UUID().uuidString).mka")
+        defer { try? FileManager.default.removeItem(at: url) }
+        // All six channels have the same samples. R128 sums three front
+        // channels and two surrounds weighted by 1.41, excluding the LFE.
+        // The third track is 20 dB quieter to catch accidental stream mixing.
+        try await FFmpegService.run(arguments: [
+            "-hide_banner", "-loglevel", "error", "-f", "lavfi",
+            "-i", "sine=frequency=1000:sample_rate=48000:duration=3",
+            "-filter_complex", "[0:a]asplit=3[mono][surround][quiet];[surround]pan=5.1|FL=c0|FR=c0|FC=c0|LFE=c0|BL=c0|BR=c0[six];[quiet]volume=0.1[low]",
+            "-map", "[mono]", "-map", "[six]", "-map", "[low]",
+            "-c:a", "pcm_s24le", "-y", url.path,
+        ])
+        let mono = try await FFmpegService.analyzeLUFS(url: url, audioStreamIndex: 0)
+        let surround = try await FFmpegService.analyzeLUFS(url: url, audioStreamIndex: 1)
+        let quiet = try await FFmpegService.analyzeLUFS(url: url, audioStreamIndex: 2)
+        XCTAssertEqual(surround.integratedLoudness - mono.integratedLoudness, 10 * log10(3 + 2 * 1.41), accuracy: 0.2)
+        XCTAssertEqual(surround.truePeak, mono.truePeak, accuracy: 0.1, "True peak is a channel maximum, not the summed loudness")
+        XCTAssertEqual(mono.integratedLoudness - quiet.integratedLoudness, 20, accuracy: 0.2)
+        XCTAssertEqual(mono.truePeak - quiet.truePeak, 20, accuracy: 0.2)
+        XCTAssertNil(surround.analysisRange)
+
+        let range = try FFmpegService.LoudnessRange(start: 0.25, end: 2.75)
+        let selected = try await FFmpegService.analyzeLUFS(url: url, audioStreamIndex: 1, range: range)
+        XCTAssertEqual(selected.integratedLoudness, surround.integratedLoudness, accuracy: 0.1)
+        XCTAssertEqual(selected.truePeak, surround.truePeak, accuracy: 0.1)
+        XCTAssertEqual(selected.analysisRange, range)
+    }
+
+    func testMalformedAudioAndMissingStreamFailWithoutPublishingMeasurements() async throws {
+        guard FFmpegService.ffmpegPath != nil else { throw XCTSkip("Bundled ffmpeg is required") }
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("invalid-loudness-\(UUID().uuidString).wav")
+        defer { try? FileManager.default.removeItem(at: url) }
+        try Data("This is not a WAV file".utf8).write(to: url)
+        do {
+            _ = try await FFmpegService.analyzeLUFS(url: url, audioStreamIndex: 0)
+            XCTFail("Malformed audio must fail instead of returning a silence summary")
+        } catch FFmpegError.processFailed(let message) {
+            XCTAssertFalse(message.isEmpty)
+        }
+
+        try await FFmpegService.run(arguments: [
+            "-hide_banner", "-loglevel", "error", "-f", "lavfi",
+            "-i", "sine=frequency=1000:duration=1", "-y", url.path,
+        ])
+        do {
+            _ = try await FFmpegService.analyzeLUFS(url: url, audioStreamIndex: 1)
+            XCTFail("A missing stream must not fall back to a different audio track")
+        } catch FFmpegError.processFailed(let message) {
+            XCTAssertFalse(message.isEmpty)
+        }
+    }
+
+    func testCancelledAnalysisReturnsCancellationAndSubsequentAnalysisSucceeds() async throws {
+        guard FFmpegService.ffmpegPath != nil else { throw XCTSkip("Bundled ffmpeg is required") }
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("cancelled-loudness-\(UUID().uuidString).wav")
+        defer { try? FileManager.default.removeItem(at: url) }
+        try await FFmpegService.run(arguments: [
+            "-hide_banner", "-loglevel", "error", "-f", "lavfi",
+            "-i", "sine=frequency=1000:duration=1", "-y", url.path,
+        ])
+        // Main-actor serialization makes cancellation-before-start deterministic.
+        let task = Task { @MainActor in
+            try await FFmpegService.analyzeLUFS(url: url, audioStreamIndex: 0)
+        }
+        task.cancel()
+        do {
+            _ = try await task.value
+            XCTFail("Cancelled analysis must never return a measurement")
+        } catch {
+            XCTAssertEqual(error as? FFmpegError, .cancelled)
+        }
+        let retry = try await FFmpegService.analyzeLUFS(url: url, audioStreamIndex: 0)
+        XCTAssertTrue(retry.integratedLoudness.isFinite)
+        XCTAssertTrue(retry.truePeak.isFinite)
+    }
+
+    func testEmptySelectionsBeyondEOFAndBeforeDelayedStreamAreRejected() async throws {
+        guard FFmpegService.ffmpegPath != nil else { throw XCTSkip("Bundled ffmpeg is required") }
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("empty-loudness-\(UUID().uuidString).mka")
+        defer { try? FileManager.default.removeItem(at: url) }
+        // The file spans four seconds, but the second stream starts at second
+        // two. A valid interval in the media timeline can contain no samples
+        // for that stream. The first stream is real digital silence.
+        try await FFmpegService.run(arguments: [
+            "-hide_banner", "-loglevel", "error", "-f", "lavfi",
+            "-i", "anullsrc=r=48000:cl=mono:d=4", "-itsoffset", "2", "-f", "lavfi",
+            "-i", "sine=frequency=1000:sample_rate=48000:duration=2",
+            "-map", "0:a:0", "-map", "1:a:0", "-c:a", "pcm_s24le", "-y", url.path,
+        ])
+        let beforeAudio = try FFmpegService.LoudnessRange(start: 0.25, end: 1.25)
+        let beyondEOF = try FFmpegService.LoudnessRange(start: 8, end: 10)
+        for (stream, range) in [(0, beyondEOF), (1, beforeAudio)] {
+            do {
+                _ = try await FFmpegService.analyzeLUFS(url: url, audioStreamIndex: stream, range: range)
+                XCTFail("An interval without decoded samples must not return FFmpeg's default summary")
+            } catch {
+                XCTAssertEqual(error as? FFmpegError, .loudnessNoSamples)
+            }
+        }
+        let silence = try await FFmpegService.analyzeLUFS(url: url, audioStreamIndex: 0, range: beforeAudio)
+        XCTAssertEqual(silence.truePeak, -.infinity, "Actual silence has samples and must remain measurable")
+        let audible = try await FFmpegService.analyzeLUFS(
+            url: url, audioStreamIndex: 1,
+            range: FFmpegService.LoudnessRange(start: 2.25, end: 3.25)
+        )
+        XCTAssertTrue(audible.truePeak.isFinite)
+    }
+
 }

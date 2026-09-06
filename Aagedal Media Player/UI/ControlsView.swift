@@ -313,6 +313,7 @@ struct ControlsView: View {
                         timelineCenter = displayTime
                         timelineZoom = Double(zoom)
                     }
+                    .accessibilityAddTraits(timelineZoom == Double(zoom) ? .isSelected : [])
                 }
             } label: {
                 Label(timelineZoom == 1 ? "Fit" : "\(Int(timelineZoom))×", systemImage: "plus.magnifyingglass")
@@ -1160,34 +1161,35 @@ private struct AudioTrackPicker: View {
                             }
                         }
                     }
+                    .accessibilityAddTraits(controller.audioChannelRouting.isBypassed ? .isSelected : [])
+                    .accessibilityHint("Clear all channel solos and mutes.")
 
                     Menu("Solo") {
                         ForEach(Array(controller.selectedAudioChannelLabels.enumerated()), id: \.offset) { channel, name in
-                            Button {
-                                controller.toggleAudioChannelSolo(channel)
-                            } label: {
-                                HStack {
-                                    Text(name)
-                                    if controller.audioChannelRouting.soloedChannels == [channel] {
-                                        Image(systemName: "checkmark")
+                            Toggle(name, isOn: Binding(
+                                get: { controller.audioChannelRouting.soloedChannels == [channel] },
+                                set: { selected in
+                                    if selected != (controller.audioChannelRouting.soloedChannels == [channel]) {
+                                        controller.toggleAudioChannelSolo(channel)
                                     }
                                 }
-                            }
+                            ))
+                            .accessibilityLabel("Solo \(name)")
+                            .help("Isolate this channel. Existing channel mutes still apply.")
                         }
                     }
 
                     Menu("Mute") {
                         ForEach(Array(controller.selectedAudioChannelLabels.enumerated()), id: \.offset) { channel, name in
-                            Button {
-                                controller.toggleAudioChannelMute(channel)
-                            } label: {
-                                HStack {
-                                    Text(name)
-                                    if controller.audioChannelRouting.mutedChannels.contains(channel) {
-                                        Image(systemName: "checkmark")
+                            Toggle(name, isOn: Binding(
+                                get: { controller.audioChannelRouting.mutedChannels.contains(channel) },
+                                set: { muted in
+                                    if muted != controller.audioChannelRouting.mutedChannels.contains(channel) {
+                                        controller.toggleAudioChannelMute(channel)
                                     }
                                 }
-                            }
+                            ))
+                            .accessibilityLabel("Mute \(name)")
                         }
                     }
                 }
@@ -1200,6 +1202,24 @@ private struct AudioTrackPicker: View {
         .menuStyle(.borderlessButton)
         .help(label)
         .accessibilityLabel(label)
-        .accessibilityValue(selectedTitle)
+        .accessibilityValue(monitoringAccessibilityValue)
+    }
+
+    private var monitoringAccessibilityValue: String {
+        guard showsChannelControls, controller.selectedAudioChannelLabels.count > 1 else {
+            return selectedTitle
+        }
+        let audible = controller.selectedAudioChannelLabels.enumerated().compactMap { channel, name in
+            controller.audioChannelRouting.isAudible(channel) ? name : nil
+        }
+        let monitoring: String
+        if controller.audioChannelRouting.isBypassed {
+            monitoring = "All channels enabled"
+        } else if audible.isEmpty {
+            monitoring = "All channels disabled"
+        } else {
+            monitoring = "Enabled channels: " + audible.joined(separator: ", ")
+        }
+        return selectedTitle + ". " + monitoring
     }
 }
