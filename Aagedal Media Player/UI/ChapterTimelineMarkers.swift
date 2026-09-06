@@ -10,16 +10,18 @@ struct ChapterTimelineMarkers: View {
     let chapters: [TrackSelectionController.ChapterOption]
     let duration: Double
     let width: CGFloat
+    var viewport: TimelineViewport? = nil
 
     var body: some View {
         if duration.isFinite, duration > 0, width.isFinite, width > 0 {
-            ForEach(chapters.filter { $0.time.isFinite && $0.time >= 0 && $0.time <= duration }) { chapter in
+            let visible = viewport ?? TimelineViewport(duration: duration)
+            ForEach(chapters.filter { visible.contains($0.time) }) { chapter in
                 Image(systemName: "diamond.fill")
                     .font(.system(size: 6))
                     .foregroundStyle(.white.opacity(0.85))
                     .frame(width: 6, height: 6)
                     .offset(
-                        x: max(0, min(width - 6, width * CGFloat(chapter.time / duration) - 3)),
+                        x: max(0, min(width - 6, width * CGFloat(visible.fraction(for: chapter.time)) - 3)),
                         y: 6
                     )
             }

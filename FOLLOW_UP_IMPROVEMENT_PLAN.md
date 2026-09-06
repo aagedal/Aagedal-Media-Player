@@ -539,6 +539,30 @@ mapping while preserving note data and existing files. Relinking does not
 retime findings, infer content equality, or merge reviews. Hands-on keyboard/
 VoiceOver acceptance and editor round trips remain release gates.
 
+## Phase 35 — Timeline viewport and report provenance
+
+Status: Engineering complete on 2026-09-06. All 382 Release tests pass without
+failures or skips; static analysis and all 61 release-preflight checks pass.
+
+- [x] Add per-window 2×–64× timeline zoom around the playhead and one-action Fit.
+- [x] Add a full-duration overview for panning without seeking, with keyboard
+  and VoiceOver adjustment hooks and focus-held controls.
+- [x] Map normal and precision scrubbing into the visible interval while
+  retaining existing frame-step and comparison transport commands.
+- [x] Clip chapter, trim, review-range, and comparison-overlap geometry to the
+  viewport; hide offscreen point markers rather than piling them at the edges.
+- [x] Reset zoom on primary replacement and reveal playback outside the viewport.
+- [x] Preserve exact stored A/B rational rates and full source URLs in appended
+  CSV columns without moving existing report fields.
+- [x] Cover long-recording fractional-frame mapping, viewport boundaries,
+  invalid geometry, clipped ranges, same-named sources, and changed loaded rates.
+
+Acceptance: timeline zoom changes display geometry only, and CSV reports retain
+unambiguous source paths and stored timebases. Native timeline pointer, Full
+Keyboard Access, and VoiceOver checks remain in `docs/TIMELINE_NAVIGATION.md`.
+Native editor round trips and release-floor playback/loupe profiling remain
+separate release gates; this phase does not claim them complete.
+
 ## Delivery order
 
 1. Phase 10 correctness fixes and regression tests.
@@ -569,3 +593,5 @@ VoiceOver acceptance and editor round trips remain release gates.
 25. Phase 33 structured comparison reviews.
 
 26. Phase 34 review-sidecar relinking and export consistency.
+
+27. Phase 35 timeline viewport and report provenance.

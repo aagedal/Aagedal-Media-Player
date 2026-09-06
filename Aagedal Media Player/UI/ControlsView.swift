@@ -9,6 +9,9 @@ import AVFoundation
 
 private enum PlaybackControlFocus: Hashable {
     case timeline
+    case timelineZoom
+    case timelineOverview
+    case timelineFit
     case playPause
     case mute
     case volume
@@ -52,6 +55,9 @@ struct ControlsView: View {
     private var precisionScrubFactor = AppSettings.precisionScrubFactor.defaultValue
     @AppStorage(AppSettings.showTimelineDetails.key)
     private var showTimelineDetails = AppSettings.showTimelineDetails.defaultValue
+    @State private var timelineZoom: Double = 1
+    @State private var timelineCenter: Double = 0
+    @State private var isPanningOverview = false
     @State private var isDragging = false
     @State private var dragTime: Double = 0
     @State private var wasPrecision = false
@@ -87,6 +93,8 @@ struct ControlsView: View {
                let mapping = compareSession.mapping {
                 comparisonTimelineLegend(mapping: mapping, item: item)
             }
+
+            timelineNavigation
 
             // Timeline scrubber
             timelineSlider
@@ -130,11 +138,24 @@ struct ControlsView: View {
             }
         }
         .onChange(of: focusedControl) { _, focus in
-            isTimelineFocused = focus == .timeline
+            isTimelineFocused = focus == .timeline || focus == .timelineOverview
             isControlsFocused = focus != nil
+        }
+        .onChange(of: item?.id) { _, _ in
+            timelineZoom = 1
+            timelineCenter = 0
+            isPanningOverview = false
+            isDragging = false
+            wasPrecision = false
+        }
+        .onChange(of: controller.currentPlaybackTime) { _, time in
+            if !isDragging, !isPanningOverview, !timelineViewport.contains(time) {
+                timelineCenter = time
+            }
         }
         .onDisappear {
             deferredTimecodeActivation.cancel()
+            isPanningOverview = false
             isTimelineFocused = false
             isControlsFocused = false
         }
@@ -262,6 +283,109 @@ struct ControlsView: View {
 
     // MARK: - Timeline
 
+    private var timelineViewport: TimelineViewport {
+        TimelineViewport(
+            duration: item?.durationSeconds ?? 0,
+            zoom: timelineZoom,
+            center: timelineCenter
+        )
+    }
+
+    private var timelineNavigation: some View {
+        HStack(spacing: 8) {
+            Menu {
+                ForEach([1, 2, 4, 8, 16, 32, 64], id: \.self) { zoom in
+                    Button(zoom == 1 ? "Fit Entire Timeline" : "\(zoom)× Around Playhead") {
+                        timelineCenter = displayTime
+                        timelineZoom = Double(zoom)
+                    }
+                }
+            } label: {
+                Label(timelineZoom == 1 ? "Fit" : "\(Int(timelineZoom))×", systemImage: "plus.magnifyingglass")
+                    .font(.caption)
+            }
+            .fixedSize()
+            .focused($focusedControl, equals: .timelineZoom)
+            .modifier(PlaybackControlFocusRing(isFocused: focusedControl == .timelineZoom))
+            .accessibilityLabel("Timeline zoom")
+            .accessibilityValue(timelineZoom == 1 ? "Entire duration" : "\(Int(timelineZoom)) times")
+            .help("Zoom around the playhead, or fit the entire duration.")
+
+            if timelineZoom > 1 {
+                timelineOverview
+                Button("Fit") {
+                    timelineZoom = 1
+                    focusedControl = .timelineZoom
+                }
+                    .font(.caption)
+                    .focused($focusedControl, equals: .timelineFit)
+                    .modifier(PlaybackControlFocusRing(isFocused: focusedControl == .timelineFit))
+                    .help("Show the entire timeline")
+                    .accessibilityLabel("Fit entire timeline")
+            } else {
+                Spacer(minLength: 0)
+            }
+        }
+    }
+
+    /// Panning this full-duration overview changes only the visible interval.
+    /// Playback/seek updates reveal the playhead if it leaves that interval.
+    private var timelineOverview: some View {
+        GeometryReader { geometry in
+            let viewport = timelineViewport
+            let full = TimelineViewport(duration: viewport.duration)
+            let width = geometry.size.width
+            ZStack(alignment: .leading) {
+                Capsule().fill(.white.opacity(0.2)).frame(height: 4)
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(Color.accentColor.opacity(0.4))
+                    .overlay(RoundedRectangle(cornerRadius: 3).stroke(Color.accentColor))
+                    .frame(width: max(1, width / viewport.zoom), height: 12)
+                    .offset(x: width * full.fraction(for: viewport.start))
+                Rectangle().fill(.pink).frame(width: 2, height: 12)
+                    .offset(x: max(0, min(width - 2, width * full.fraction(for: displayTime))))
+            }
+            .frame(height: 20)
+            .contentShape(Rectangle())
+            .gesture(DragGesture(minimumDistance: 0)
+                .onChanged { value in
+                    guard width > 0 else { return }
+                    isPanningOverview = true
+                    focusedControl = .timelineOverview
+                    timelineCenter = full.time(at: value.location.x / width)
+                }
+                .onEnded { _ in isPanningOverview = false }
+            )
+            .focusable()
+            .focused($focusedControl, equals: .timelineOverview)
+            .modifier(PlaybackControlFocusRing(isFocused: focusedControl == .timelineOverview))
+            .onKeyPress(.leftArrow) { panTimeline(-1); return .handled }
+            .onKeyPress(.rightArrow) { panTimeline(1); return .handled }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Timeline overview")
+            .accessibilityValue("Visible seconds \(viewport.start.formatted(.number.precision(.fractionLength(1)))) to \(viewport.end.formatted(.number.precision(.fractionLength(1)))) of \(viewport.duration.formatted(.number.precision(.fractionLength(1))))")
+            .accessibilityHint("Use Left and Right Arrow to move the visible interval without seeking.")
+            .accessibilityAdjustableAction { direction in
+                switch direction {
+                case .increment: panTimeline(1)
+                case .decrement: panTimeline(-1)
+                @unknown default: break
+                }
+            }
+            .help("Full-duration overview. Drag to move the visible interval without seeking.")
+        }
+        .frame(height: 20)
+    }
+
+    private func panTimeline(_ direction: Double) {
+        let viewport = timelineViewport
+        timelineCenter = TimelineViewport(
+            duration: viewport.duration,
+            zoom: viewport.zoom,
+            center: viewport.center + direction * viewport.span / 2
+        ).center
+    }
+
     private func comparisonTimelineLegend(
         mapping: CompareTimelineMapping,
         item: MediaItem
@@ -314,7 +438,8 @@ struct ControlsView: View {
         GeometryReader { geometry in
             let width = geometry.size.width
             let duration = item?.durationSeconds ?? 0
-            let progress = duration > 0 ? displayTime / duration : 0
+            let viewport = timelineViewport
+            let progress = viewport.fraction(for: displayTime)
 
             ZStack(alignment: .leading) {
                 // Track background
@@ -330,9 +455,9 @@ struct ControlsView: View {
                    duration > 0,
                    let overlap = compareSession.primaryOverlapRange(
                        primaryDuration: duration
-                   ) {
-                    let overlapStart = CGFloat(overlap.lowerBound / duration)
-                    let overlapEnd = CGFloat(overlap.upperBound / duration)
+                   ), let visibleOverlap = viewport.clipped(overlap) {
+                    let overlapStart = CGFloat(viewport.fraction(for: visibleOverlap.lowerBound))
+                    let overlapEnd = CGFloat(viewport.fraction(for: visibleOverlap.upperBound))
 
                     Capsule()
                         .fill(Color.cyan.opacity(0.7))
@@ -343,13 +468,13 @@ struct ControlsView: View {
                         .offset(x: overlapStart * width)
                         .allowsHitTesting(false)
 
-                    if overlap.lowerBound > 0 {
+                    if overlap.lowerBound > 0, viewport.contains(overlap.lowerBound) {
                         comparisonOverlapBoundary(
                             x: overlapStart * width,
                             width: width
                         )
                     }
-                    if overlap.upperBound < duration {
+                    if overlap.upperBound < duration, viewport.contains(overlap.upperBound) {
                         comparisonOverlapBoundary(
                             x: overlapEnd * width,
                             width: width
@@ -359,8 +484,8 @@ struct ControlsView: View {
 
                 // Trim region overlay
                 if duration > 0 {
-                    let trimInFrac = controller.trimIn.map { CGFloat($0 / duration) } ?? 0
-                    let trimOutFrac = controller.trimOut.map { CGFloat($0 / duration) } ?? 1
+                    let trimInFrac = controller.trimIn.map { CGFloat(viewport.fraction(for: $0)) } ?? 0
+                    let trimOutFrac = controller.trimOut.map { CGFloat(viewport.fraction(for: $0)) } ?? 1
 
                     if controller.trimIn != nil || controller.trimOut != nil {
                         // Shaded region between trim points
@@ -371,7 +496,7 @@ struct ControlsView: View {
                     }
 
                     // Trim-in marker
-                    if controller.trimIn != nil {
+                    if let trimIn = controller.trimIn, viewport.contains(trimIn) {
                         Rectangle()
                             .fill(Color.blue.opacity(0.8))
                             .frame(width: 2, height: 14)
@@ -379,7 +504,7 @@ struct ControlsView: View {
                     }
 
                     // Trim-out marker
-                    if controller.trimOut != nil {
+                    if let trimOut = controller.trimOut, viewport.contains(trimOut) {
                         Rectangle()
                             .fill(Color.blue.opacity(0.8))
                             .frame(width: 2, height: 14)
@@ -394,23 +519,25 @@ struct ControlsView: View {
                             let noteTime = item.map {
                                 compareSession.reviewNotePrimaryTime(note, primaryItem: $0)
                             } ?? note.primaryTime
-                            let markerFraction = CGFloat(noteTime / duration)
+                            let markerFraction = CGFloat(viewport.fraction(for: noteTime))
                             if let endFrame = note.primaryEndFrame {
                                 let rate = Double(note.primaryRateNumerator) / Double(note.primaryRateDenominator)
                                 let endTime = min(duration, (Double(endFrame) + 1) / rate)
                                 let startX = max(0, min(width, markerFraction * width))
-                                let endX = max(startX, min(width, CGFloat(endTime / duration) * width))
+                                let endX = max(startX, min(width, CGFloat(viewport.fraction(for: endTime)) * width))
                                 Rectangle()
                                     .fill(Color.orange.opacity(0.3))
                                     .frame(width: endX - startX, height: 8)
                                     .offset(x: startX)
                                     .allowsHitTesting(false)
                             }
-                            Capsule()
-                                .fill(Color.orange)
-                                .frame(width: 3, height: 14)
-                                .offset(x: max(0, min(width - 3, markerFraction * width - 1.5)))
-                                .allowsHitTesting(false)
+                            if viewport.contains(noteTime) {
+                                Capsule()
+                                    .fill(Color.orange)
+                                    .frame(width: 3, height: 14)
+                                    .offset(x: max(0, min(width - 3, markerFraction * width - 1.5)))
+                                    .allowsHitTesting(false)
+                            }
                         }
                     }
                 }
@@ -419,56 +546,61 @@ struct ControlsView: View {
                     ChapterTimelineMarkers(
                         chapters: controller.chapterOptions,
                         duration: duration,
-                        width: width
+                        width: width,
+                        viewport: viewport
                     )
                 }
 
                 // Playhead — thin vertical line
-                Rectangle()
-                    .fill(Color(red: 1.0, green: 0.071, blue: 0.361)) // #FF125C
-                    .frame(width: 2, height: 14)
-                    .offset(x: max(0, min(width - 2, width * CGFloat(progress) - 1)))
+                if viewport.contains(displayTime) {
+                    Rectangle()
+                        .fill(Color(red: 1.0, green: 0.071, blue: 0.361)) // #FF125C
+                        .frame(width: 2, height: 14)
+                        .offset(x: max(0, min(width - 2, width * CGFloat(progress) - 1)))
+                }
             }
             .frame(height: 20)
             .contentShape(Rectangle())
             .gesture(
                 DragGesture(minimumDistance: 0)
                     .onChanged { value in
+                        guard width > 0, viewport.span > 0 else { return }
                         if !isDragging {
                             focusedControl = .timeline
                             isDragging = true
                             wasPrecision = false
                             // Jump to click position
                             let clickFraction = max(0, min(1, value.location.x / width))
-                            dragTime = Double(clickFraction) * duration
+                            dragTime = viewport.time(at: Double(clickFraction))
                         }
                         let isPrecision = NSEvent.modifierFlags.contains(.option)
                         if isPrecision {
                             if !wasPrecision {
                                 // Entering precision: anchor at current playhead position
-                                precisionAnchorFraction = duration > 0 ? dragTime / duration : 0
+                                precisionAnchorFraction = viewport.fraction(for: dragTime)
                                 precisionAnchorX = value.location.x
                                 wasPrecision = true
                             }
                             let delta = (value.location.x - precisionAnchorX) / width
                             let fraction = max(0, min(1, precisionAnchorFraction + delta / precisionScrubFactor))
-                            dragTime = Double(fraction) * duration
+                            dragTime = viewport.time(at: Double(fraction))
                         } else {
                             wasPrecision = false
                             let fraction = max(0, min(1, value.location.x / width))
-                            dragTime = Double(fraction) * duration
+                            dragTime = viewport.time(at: Double(fraction))
                         }
                         scrub(to: dragTime)
                     }
                     .onEnded { value in
+                        guard width > 0, viewport.span > 0 else { return }
                         let isPrecision = NSEvent.modifierFlags.contains(.option)
                         if isPrecision && wasPrecision {
                             let delta = (value.location.x - precisionAnchorX) / width
                             let fraction = max(0, min(1, precisionAnchorFraction + delta / precisionScrubFactor))
-                            dragTime = Double(fraction) * duration
+                            dragTime = viewport.time(at: Double(fraction))
                         } else {
                             let fraction = max(0, min(1, value.location.x / width))
-                            dragTime = Double(fraction) * duration
+                            dragTime = viewport.time(at: Double(fraction))
                         }
                         endScrubbing(at: dragTime)
                         isDragging = false

@@ -254,8 +254,11 @@ confidence as the picture.
 - [x] Add visible chapter, trim, and comparison-overlap markers.
 - [ ] Add mismatch markers to the timeline. The comparison mismatch summary
   already exists; it does not establish time-localized mismatch findings.
-- [ ] Add an overview/zoom model for long-form media without sacrificing precise
-  frame stepping.
+- [x] Add an overview/zoom model for long-form media without sacrificing precise
+  frame stepping. Per-window 2×–64× zoom, a full-duration pan overview, and
+  one-action Fit use source-relative geometry; frame-step commands remain
+  unchanged. See `docs/TIMELINE_NAVIGATION.md` for behavior and pending native
+  keyboard, pointer, and VoiceOver acceptance.
 - [x] Keep a minimal timeline available when extra information is not useful.
   Turn off **Show Timeline Details** in Playback settings or the timeline
   context menu to hide chapter/review markers and comparison overlap; active

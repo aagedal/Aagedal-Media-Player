@@ -5,6 +5,7 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Added
+- Per-window timeline zoom up to 64×, with a full-duration overview for panning and a one-action return to Fit.
 - Deliberate comparison-review relinking after media moves, with an explicit A/B mapping preview, preserved findings, and protection against destination overwrites.
 - Review-note severity, category, and status with searchable classifications and inclusive frame ranges, timeline bands, and CSV/PDF/editor export support.
 - Schema 2 review sidecars that read legacy single-frame notes and protect structured findings from older app versions.
@@ -36,6 +37,7 @@ All notable changes to Aagedal Media Player.
   recording run sheet.
 
 ### Changed
+- CSV review reports now append exact stored A/B rational frame rates and full source URLs, preserving existing column positions.
 - Split playback backends, track selection, media operations, window opening, overlays, settings, and command routing into focused components.
 - Extract the update settings pane and publish typed update-check outcomes with retry guidance.
 - Update the bundled ffmpeg executable to 9.0.1 with Developer ID signing, Hardened Runtime, and secure-timestamp preflight validation.
