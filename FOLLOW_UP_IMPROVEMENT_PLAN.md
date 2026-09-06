@@ -496,6 +496,26 @@ changes. The targeted desktop check is recorded in
 `docs/INSPECTION_LOUPE_NATIVE_CHECK_2026-09-06.md`; it does not replace the
 remaining all-mode pointer, accessibility, transformed-media, or base-M1 gates.
 
+## Phase 33 — Structured comparison reviews
+
+Status: Completed on 2026-09-06. All 356 Release tests pass without failures
+or skips; static analysis and all 61 release-preflight checks pass.
+
+- [x] Add editable severity, category, and status with searchable labels.
+- [x] Add inclusive source-A range notes with explicit endpoint validation,
+  current-frame capture, end seeking, single-frame reset, and timeline bands.
+- [x] Read legacy schema 1 notes and write schema 2 to prevent older app versions
+  from silently dropping structured fields.
+- [x] Preserve classifications and ranges in CSV/PDF and editor-marker exports.
+- [x] Test migration, invalid data rejection, persistence, fractional-rate
+  duration arithmetic, and cross-format report content.
+- [x] Pass the complete Release suite, static analysis, and release preflight.
+
+Acceptance: classifying or extending a finding retains its original A/B anchor,
+text, and stored rational rates; legacy reviews remain readable. Spatial image
+annotations, deliberate relinking, editor round trips, and hands-on keyboard/
+VoiceOver acceptance remain roadmap and release work.
+
 ## Delivery order
 
 1. Phase 10 correctness fixes and regression tests.
@@ -522,3 +542,5 @@ remaining all-mode pointer, accessibility, transformed-media, or base-M1 gates.
 22. Phase 30 reflected QuickTime playback orientation.
 23. Phase 31 AVFoundation live-loupe frame acquisition.
 24. Phase 32 MPV native surface sizing.
+
+25. Phase 33 structured comparison reviews.

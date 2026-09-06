@@ -23,6 +23,16 @@ final class CompareReviewNavigationTests: XCTestCase {
         XCTAssertEqual(notes.count, 2)
     }
 
+    func testFilterMatchesClassificationTitles() {
+        var classified = note(24, text: "Inspect transition")
+        classified.severity = .critical
+        classified.category = .picture
+        classified.status = .inProgress
+        for query in ["critical", "picture", " in progress "] {
+            XCTAssertEqual(CompareReviewNavigation.filtered([note(0), classified], query: query), [classified])
+        }
+    }
+
     func testNavigationSkipsCurrentFrameDuplicatesAndDoesNotWrap() {
         let notes = [note(48), note(24), note(0), note(24)]
         XCTAssertEqual(CompareReviewNavigation.adjacent(
@@ -170,6 +180,120 @@ final class CompareReviewSidecarStoreTests: XCTestCase {
         )
 
         XCTAssertEqual(loaded, document)
+    }
+
+    func testLegacyNotesLoadWithDefaultsAndUpgradeOnMutation() async throws {
+        let fixture = try makeFixture()
+        defer { try? FileManager.default.removeItem(at: fixture.directory) }
+        let note = CompareReviewNote(
+            primaryFrame: 42, primaryTime: 1.4,
+            secondaryFrame: 42, secondaryTime: 1.4, text: "Legacy review",
+            createdAt: Date(timeIntervalSince1970: 1_700_000_000),
+            updatedAt: Date(timeIntervalSince1970: 1_700_000_001)
+        )
+        let document = CompareReviewDocument(
+            primaryURL: fixture.primary, secondaryURL: fixture.secondary,
+            notes: [note], schemaVersion: 1
+        )
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .millisecondsSince1970
+        var json = try XCTUnwrap(JSONSerialization.jsonObject(with: encoder.encode(document)) as? [String: Any])
+        var notes = try XCTUnwrap(json["notes"] as? [[String: Any]])
+        for field in ["severity", "category", "status", "primaryEndFrame"] {
+            notes[0].removeValue(forKey: field)
+        }
+        json["notes"] = notes
+        let original = try JSONSerialization.data(withJSONObject: json)
+        try original.write(to: fixture.sidecar)
+        let store = CompareReviewSidecarStore()
+        let loaded = try await store.load(from: fixture.sidecar, primaryURL: fixture.primary, secondaryURL: fixture.secondary)
+        XCTAssertEqual(loaded, document)
+        XCTAssertEqual(try Data(contentsOf: fixture.sidecar), original)
+
+        var changed = try XCTUnwrap(loaded?.notes.first)
+        changed.severity = .major
+        changed.category = .audio
+        changed.status = .resolved
+        changed.primaryEndFrame = 84
+        let updated = try await store.apply(.upsert(changed), to: fixture.sidecar, primaryURL: fixture.primary, secondaryURL: fixture.secondary)
+        XCTAssertEqual(updated.schemaVersion, 2)
+        let reloaded = try await store.load(from: fixture.sidecar, primaryURL: fixture.primary, secondaryURL: fixture.secondary)
+        XCTAssertEqual(reloaded, updated)
+        XCTAssertEqual(reloaded?.notes, [changed])
+    }
+
+    func testUnknownClassificationsRejectEditsWithoutLosingSidecarData() async throws {
+        let fixture = try makeFixture()
+        defer { try? FileManager.default.removeItem(at: fixture.directory) }
+        let note = CompareReviewNote(
+            primaryFrame: 0, primaryTime: 0, secondaryFrame: 0,
+            secondaryTime: 0, text: "Preserve unfamiliar fields"
+        )
+        let document = CompareReviewDocument(primaryURL: fixture.primary, secondaryURL: fixture.secondary, notes: [note])
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .millisecondsSince1970
+        let validJSON = try XCTUnwrap(JSONSerialization.jsonObject(with: encoder.encode(document)) as? [String: Any])
+        let store = CompareReviewSidecarStore()
+        for field in ["severity", "category", "status"] {
+            var json = validJSON
+            var notes = try XCTUnwrap(json["notes"] as? [[String: Any]])
+            notes[0][field] = "future-value"
+            json["notes"] = notes
+            let original = try JSONSerialization.data(withJSONObject: json)
+            try original.write(to: fixture.sidecar)
+            do {
+                _ = try await store.apply(.delete(note.id), to: fixture.sidecar, primaryURL: fixture.primary, secondaryURL: fixture.secondary)
+                XCTFail("Unknown classifications must not be silently reset")
+            } catch is DecodingError {
+                // The same decoder used by load protects mutation from data loss.
+            }
+            XCTAssertEqual(try Data(contentsOf: fixture.sidecar), original)
+        }
+    }
+
+    func testInclusiveRangesRoundTripAtStoredFractionalRate() async throws {
+        let fixture = try makeFixture()
+        defer { try? FileManager.default.removeItem(at: fixture.directory) }
+        let notes = [Int64(100), 101, 3_000_000_000].map { end in
+            CompareReviewNote(
+                primaryFrame: 100, primaryTime: 100 * 1_001.0 / 30_000,
+                secondaryFrame: 240, secondaryTime: 10,
+                primaryRateNumerator: 30_000, primaryRateDenominator: 1_001,
+                secondaryRateNumerator: 24, text: "Range",
+                severity: .critical, category: .sync, status: .inProgress,
+                primaryEndFrame: end,
+                createdAt: Date(timeIntervalSince1970: 1_700_000_000),
+                updatedAt: Date(timeIntervalSince1970: 1_700_000_001)
+            )
+        }
+        let document = CompareReviewDocument(primaryURL: fixture.primary, secondaryURL: fixture.secondary, notes: notes)
+        let store = CompareReviewSidecarStore()
+        try await store.save(document, to: fixture.sidecar, revision: 1)
+        let loaded = try await store.load(from: fixture.sidecar, primaryURL: fixture.primary, secondaryURL: fixture.secondary)
+        XCTAssertEqual(loaded, document)
+    }
+
+    func testInvalidRangeSavePreservesExistingSidecar() async throws {
+        let fixture = try makeFixture()
+        defer { try? FileManager.default.removeItem(at: fixture.directory) }
+        let note = CompareReviewNote(
+            primaryFrame: 42, primaryTime: 1.4,
+            secondaryFrame: 42, secondaryTime: 1.4, text: "Original"
+        )
+        var document = CompareReviewDocument(primaryURL: fixture.primary, secondaryURL: fixture.secondary, notes: [note])
+        let store = CompareReviewSidecarStore()
+        try await store.save(document, to: fixture.sidecar, revision: 1)
+        let original = try Data(contentsOf: fixture.sidecar)
+        for end in [Int64(-1), 41, Int64.max, Int64.max / 1_000_000] {
+            document.notes[0].primaryEndFrame = end
+            do {
+                try await store.save(document, to: fixture.sidecar, revision: 2)
+                XCTFail("Invalid range must be rejected")
+            } catch let error as CompareReviewSidecarError {
+                guard case .invalidNote = error else { return XCTFail("Unexpected error: \(error)") }
+            }
+            XCTAssertEqual(try Data(contentsOf: fixture.sidecar), original)
+        }
     }
 
     func testMissingSidecarLoadsAsNil() async throws {
@@ -355,6 +479,9 @@ final class CompareReviewSidecarStoreTests: XCTestCase {
         let validJSON = try XCTUnwrap(JSONSerialization.jsonObject(with: encoder.encode(document)) as? [String: Any])
         let invalidValues: [(String, NSNumber)] = [
             ("primaryFrame", -1), ("secondaryFrame", -1),
+            ("primaryEndFrame", -1), ("primaryEndFrame", 41),
+            ("primaryEndFrame", NSNumber(value: Int64.max)),
+            ("primaryEndFrame", NSNumber(value: Int64.max / 1_000_000)),
             ("primaryTime", -0.1), ("secondaryTime", -0.1),
             ("primaryRateNumerator", 0), ("secondaryRateNumerator", -1),
             ("primaryRateDenominator", 0), ("secondaryRateDenominator", -1),

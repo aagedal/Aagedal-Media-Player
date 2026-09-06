@@ -395,6 +395,17 @@ struct ControlsView: View {
                                 compareSession.reviewNotePrimaryTime(note, primaryItem: $0)
                             } ?? note.primaryTime
                             let markerFraction = CGFloat(noteTime / duration)
+                            if let endFrame = note.primaryEndFrame {
+                                let rate = Double(note.primaryRateNumerator) / Double(note.primaryRateDenominator)
+                                let endTime = min(duration, (Double(endFrame) + 1) / rate)
+                                let startX = max(0, min(width, markerFraction * width))
+                                let endX = max(startX, min(width, CGFloat(endTime / duration) * width))
+                                Rectangle()
+                                    .fill(Color.orange.opacity(0.3))
+                                    .frame(width: endX - startX, height: 8)
+                                    .offset(x: startX)
+                                    .allowsHitTesting(false)
+                            }
                             Capsule()
                                 .fill(Color.orange)
                                 .frame(width: 3, height: 14)

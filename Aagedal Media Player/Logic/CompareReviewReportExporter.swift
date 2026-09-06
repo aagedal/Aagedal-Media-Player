@@ -45,6 +45,7 @@ nonisolated enum CompareReviewExportState: Equatable, Sendable {
 nonisolated enum CompareReviewReportExportError: Error, LocalizedError {
     case tooManyResolveMarkers(Int)
     case unsupportedResolveFrameRate(Int64)
+    case unrepresentableMarkerRange
     case unrepresentableFinalCutProTime
 
     var errorDescription: String? {
@@ -53,6 +54,8 @@ nonisolated enum CompareReviewReportExportError: Error, LocalizedError {
             "DaVinci Resolve marker EDL supports at most 999 markers; this review has \(count)."
         case .unsupportedResolveFrameRate(let nominalFPS):
             "DaVinci Resolve marker EDL export does not support \(nominalFPS) fps media."
+        case .unrepresentableMarkerRange:
+            "A comparison marker range exceeds the supported frame range. Check the review’s frame positions before exporting again."
         case .unrepresentableFinalCutProTime:
             "A comparison marker exceeds the supported Final Cut Pro time range at source A's frame rate. Check the review's frame positions before exporting again."
         }
@@ -70,6 +73,18 @@ nonisolated struct CompareReviewReportRow: Equatable, Sendable {
     let secondaryFrame: Int64
     let secondaryTime: TimeInterval
     let note: String
+    let primaryEndFrame: Int64?
+    let severity: CompareReviewSeverity
+    let category: CompareReviewCategory
+    let status: CompareReviewStatus
+
+    var classificationLabel: String {
+        "Severity: \(severity.title) | Category: \(category.title) | Status: \(status.title)"
+    }
+
+    var rangeLabel: String? {
+        primaryEndFrame.map { "A frames \(primaryFrame)–\($0) (inclusive)" }
+    }
     let createdAt: Date
     let updatedAt: Date
 }
@@ -177,6 +192,10 @@ nonisolated struct CompareReviewReportSnapshot: Equatable, Sendable {
                     for: secondaryItem
                 ),
                 note: note.text,
+                primaryEndFrame: note.primaryEndFrame,
+                severity: note.severity,
+                category: note.category,
+                status: note.status,
                 createdAt: note.createdAt,
                 updatedAt: note.updatedAt
             )
@@ -185,7 +204,9 @@ nonisolated struct CompareReviewReportSnapshot: Equatable, Sendable {
         let durationFrames = Int64(
             (max(0, primaryItem.durationSeconds) * rate.value).rounded(.up)
         )
-        let finalMarkerFrame = rows.map(\.primaryFrame).max().map { $0 + 1 } ?? 0
+        let finalMarkerFrame = rows.map { $0.primaryEndFrame ?? $0.primaryFrame }.max().map {
+            $0 == Int64.max ? Int64.max : $0 + 1
+        } ?? 0
         primaryDurationFrames = max(1, durationFrames, finalMarkerFrame)
     }
 
@@ -289,6 +310,10 @@ nonisolated enum CompareReviewReportExporter {
         "Note",
         "Created",
         "Updated",
+        "Severity",
+        "Category",
+        "Status",
+        "A End Frame (Inclusive)",
     ]
 
     static func data(
@@ -345,6 +370,10 @@ nonisolated enum CompareReviewReportExporter {
                 row.note,
                 dateFormatter.string(from: row.createdAt),
                 dateFormatter.string(from: row.updatedAt),
+                row.severity.title,
+                row.category.title,
+                row.status.title,
+                row.primaryEndFrame.map(String.init) ?? "",
             ])
         }
 
@@ -353,7 +382,7 @@ nonisolated enum CompareReviewReportExporter {
             .joined(separator: "\r\n") + "\r\n"
     }
 
-    /// Resolve's marker-EDL extension uses one-frame CMX events with marker
+    /// Resolve's marker-EDL extension uses CMX events with marker
     /// metadata in comments. The target timeline must use source A's rate.
     static func resolveMarkersEDL(snapshot: CompareReviewReportSnapshot) throws -> String {
         let rate = TimecodeRate(
@@ -374,9 +403,14 @@ nonisolated enum CompareReviewReportExporter {
         ]
 
         for row in snapshot.rows {
-            let markerFrame = snapshot.primaryStartFrame + row.primaryFrame
+            let durationFrames = try markerDurationFrames(row)
+            let (markerFrame, startOverflow) = snapshot.primaryStartFrame.addingReportingOverflow(row.primaryFrame)
+            let (endFrame, endOverflow) = markerFrame.addingReportingOverflow(durationFrames)
+            guard !startOverflow, !endOverflow else {
+                throw CompareReviewReportExportError.unrepresentableMarkerRange
+            }
             let input = rate.timecode(forFrameCount: markerFrame)
-            let output = rate.timecode(forFrameCount: markerFrame + 1)
+            let output = rate.timecode(forFrameCount: endFrame)
             lines.append(String(
                 format: "%03d  001      V     C        %@ %@ %@ %@",
                 row.markerNumber,
@@ -386,7 +420,7 @@ nonisolated enum CompareReviewReportExporter {
                 output
             ))
             lines.append(
-                " |C:ResolveColorBlue |M:\(edlText(markerNote(row: row, snapshot: snapshot))) |D:1"
+                " |C:ResolveColorBlue |M:\(edlText(markerNote(row: row, snapshot: snapshot))) |D:\(durationFrames)"
             )
             lines.append("")
         }
@@ -450,8 +484,13 @@ nonisolated enum CompareReviewReportExporter {
                 rateNumerator: snapshot.primaryRateNumerator,
                 rateDenominator: snapshot.primaryRateDenominator
             )
+            let markerDuration = try rationalTime(
+                frames: markerDurationFrames(row),
+                rateNumerator: snapshot.primaryRateNumerator,
+                rateDenominator: snapshot.primaryRateDenominator
+            )
             lines.append(
-                "      <marker start=\"\(markerStart)\" duration=\"\(frameDuration)\" value=\"QC \(String(format: "%03d", row.markerNumber))\" note=\"\(xmlAttribute(markerNote(row: row, snapshot: snapshot)))\"/>"
+                "      <marker start=\"\(markerStart)\" duration=\"\(markerDuration)\" value=\"QC \(String(format: "%03d", row.markerNumber))\" note=\"\(xmlAttribute(markerNote(row: row, snapshot: snapshot)))\"/>"
             )
         }
 
@@ -479,7 +518,17 @@ nonisolated enum CompareReviewReportExporter {
         snapshot: CompareReviewReportSnapshot
     ) -> String {
         let secondaryTimecode = row.secondarySourceTimecode ?? row.secondaryRelativeTimecode
-        return "\(row.note) | Source B: \(snapshot.secondaryFilename), \(secondaryTimecode), frame \(row.secondaryFrame) | Alignment: \(snapshot.alignmentLabel)"
+        return "\(row.note) | Source B: \(snapshot.secondaryFilename), \(secondaryTimecode), frame \(row.secondaryFrame) | Alignment: \(snapshot.alignmentLabel) | \(row.classificationLabel)\(row.rangeLabel.map { " | \($0)" } ?? "")"
+    }
+
+    private static func markerDurationFrames(_ row: CompareReviewReportRow) throws -> Int64 {
+        guard let end = row.primaryEndFrame else { return 1 }
+        let (difference, subtractionOverflow) = end.subtractingReportingOverflow(row.primaryFrame)
+        let (duration, additionOverflow) = difference.addingReportingOverflow(1)
+        guard !subtractionOverflow, !additionOverflow, duration > 0 else {
+            throw CompareReviewReportExportError.unrepresentableMarkerRange
+        }
+        return duration
     }
 
     private static func reportTimecode(source: String?, relative: String) -> String {

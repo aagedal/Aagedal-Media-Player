@@ -4,6 +4,7 @@
 
 import CoreGraphics
 import ImageIO
+import PDFKit
 import XCTest
 @testable import Aagedal_Media_Player
 
@@ -378,7 +379,7 @@ final class CompareReviewReportExporterTests: XCTestCase {
         let marker = try XCTUnwrap(try document.nodes(forXPath: "//marker").first as? XMLElement)
         XCTAssertEqual(
             marker.attribute(forName: "note")?.stringValue,
-            "Blå 🎬\tcolumn\nnext���� | Source B: Encode.mp4, 00:00:00:00, frame 0 | Alignment: Relative start"
+            "Blå 🎬\tcolumn\nnext���� | Source B: Encode.mp4, 00:00:00:00, frame 0 | Alignment: Relative start | Severity: Info | Category: General | Status: Open"
         )
         let clip = try XCTUnwrap(try document.nodes(forXPath: "//asset-clip").first as? XMLElement)
         XCTAssertEqual(clip.attribute(forName: "tcFormat")?.stringValue, "NDF")
@@ -495,6 +496,98 @@ final class CompareReviewReportExporterTests: XCTestCase {
                 error.localizedDescription,
                 "DaVinci Resolve marker EDL supports at most 999 markers; this review has 1000."
             )
+        }
+    }
+
+    func testRangeAndClassificationArePreservedAcrossReportFormats() throws {
+        let note = CompareReviewNote(
+            primaryFrame: 48, primaryTime: 2.002,
+            secondaryFrame: 60, secondaryTime: 2,
+            primaryRateNumerator: 24_000, primaryRateDenominator: 1_001,
+            text: "Visible banding",
+            severity: .major, category: .picture, status: .inProgress,
+            primaryEndFrame: 71
+        )
+        let snapshot = CompareReviewReportSnapshot(
+            primaryItem: makeItem(path: "/tmp/Master.mov", duration: 1, frameRate: "24000/1001"),
+            secondaryItem: makeItem(path: "/tmp/Encode.mp4", duration: 5),
+            alignmentMode: .relative, notes: [note]
+        )
+        XCTAssertEqual(snapshot.primaryDurationFrames, 72, "Asset duration must include the last range frame")
+        let row = try XCTUnwrap(snapshot.rows.first)
+        XCTAssertEqual(row.primaryEndFrame, 71)
+        XCTAssertEqual(row.severity, .major)
+        XCTAssertEqual(row.category, .picture)
+        XCTAssertEqual(row.status, .inProgress)
+
+        let csv = CompareReviewReportExporter.csv(snapshot: snapshot)
+        XCTAssertTrue(csv.contains("Updated,Severity,Category,Status,A End Frame (Inclusive)"))
+        XCTAssertTrue(csv.contains(",Major,Picture,In Progress,71\r\n"))
+
+        let edl = try CompareReviewReportExporter.resolveMarkersEDL(snapshot: snapshot)
+        XCTAssertTrue(edl.contains("00:00:02:00 00:00:03:00 00:00:02:00 00:00:03:00"))
+        XCTAssertTrue(edl.contains("|D:24"))
+        XCTAssertTrue(edl.contains("Severity: Major / Category: Picture / Status: In Progress"))
+
+        let xml = try XMLDocument(xmlString: CompareReviewReportExporter.finalCutProXML(snapshot: snapshot))
+        let marker = try XCTUnwrap(try xml.nodes(forXPath: "//marker").first as? XMLElement)
+        XCTAssertEqual(marker.attribute(forName: "start")?.stringValue, "1001/500s")
+        XCTAssertEqual(marker.attribute(forName: "duration")?.stringValue, "1001/1000s")
+        XCTAssertTrue(marker.attribute(forName: "note")?.stringValue?.contains(row.classificationLabel) == true)
+
+        let avid = CompareReviewReportExporter.avidMarkersText(snapshot: snapshot)
+        XCTAssertTrue(avid.contains("A frames 48–71 (inclusive)"))
+        XCTAssertTrue(avid.contains(row.classificationLabel))
+        XCTAssertEqual(avid.dropLast(2).split(separator: "\t").count, 5)
+
+        let pdf = try XCTUnwrap(PDFDocument(data: CompareReviewReportExporter.data(for: .pdf, snapshot: snapshot)))
+        let pdfText = try XCTUnwrap(pdf.string)
+        XCTAssertTrue(pdfText.contains("Severity: Major"))
+        XCTAssertTrue(pdfText.contains("Category: Picture"))
+        XCTAssertTrue(pdfText.contains("Status: In Progress"))
+        XCTAssertTrue(pdfText.contains("A frames 48–71 (inclusive)"))
+    }
+
+    func testPointAndSingleFrameRangeKeepOneFrameMarkerDuration() throws {
+        for endFrame: Int64? in [nil, 48] {
+            let snapshot = CompareReviewReportSnapshot(
+                primaryItem: makeItem(path: "/tmp/Master.mov", duration: 5, frameRate: "24000/1001"),
+                secondaryItem: makeItem(path: "/tmp/Encode.mp4", duration: 5),
+                alignmentMode: .relative,
+                notes: [CompareReviewNote(
+                    primaryFrame: 48, primaryTime: 2.002,
+                    secondaryFrame: 60, secondaryTime: 2,
+                    primaryRateNumerator: 24_000, primaryRateDenominator: 1_001,
+                    text: "One frame", primaryEndFrame: endFrame
+                )]
+            )
+            let xml = try XMLDocument(xmlString: CompareReviewReportExporter.finalCutProXML(snapshot: snapshot))
+            let marker = try XCTUnwrap(try xml.nodes(forXPath: "//marker").first as? XMLElement)
+            XCTAssertEqual(marker.attribute(forName: "duration")?.stringValue, "1001/24000s")
+            XCTAssertTrue(try CompareReviewReportExporter.resolveMarkersEDL(snapshot: snapshot).contains("|D:1"))
+            let row = try XCTUnwrap(snapshot.rows.first)
+            XCTAssertEqual(row.severity, .info)
+            XCTAssertEqual(row.category, .general)
+            XCTAssertEqual(row.status, .open)
+        }
+    }
+
+    func testRangeExportRejectsReversedAndOverflowingDurations() {
+        for endFrame in [Int64(41), Int64.max] {
+            let startFrame: Int64 = endFrame == Int64.max ? 0 : 42
+            let snapshot = CompareReviewReportSnapshot(
+                primaryItem: makeItem(path: "/tmp/Master.mov", duration: 5),
+                secondaryItem: makeItem(path: "/tmp/Encode.mp4", duration: 5),
+                alignmentMode: .relative,
+                notes: [CompareReviewNote(
+                    primaryFrame: startFrame, primaryTime: 0,
+                    secondaryFrame: 0, secondaryTime: 0,
+                    text: "Invalid range", primaryEndFrame: endFrame
+                )]
+            )
+            for format: CompareReviewReportFormat in [.resolveMarkersEDL, .finalCutProXML] {
+                XCTAssertThrowsError(try CompareReviewReportExporter.data(for: format, snapshot: snapshot))
+            }
         }
     }
 

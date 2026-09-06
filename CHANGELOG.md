@@ -5,6 +5,8 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Added
+- Review-note severity, category, and status with searchable classifications and inclusive frame ranges, timeline bands, and CSV/PDF/editor export support.
+- Schema 2 review sidecars that read legacy single-frame notes and protect structured findings from older app versions.
 - Comparison stills record the inspection view selected at export time and identify their fixed side-by-side layout.
 - Production-resolution paired-loupe profiling with simultaneous scopes, fresh-pixel cadence, capture-gap, responsiveness, and teardown checks.
 - Opt-in reflected UHD/HDR comparison profiling with verified source transforms and safe fixture reuse.

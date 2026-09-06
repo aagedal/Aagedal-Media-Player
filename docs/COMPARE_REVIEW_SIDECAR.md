@@ -1,18 +1,19 @@
 # Comparison review sidecar format
 
-Schema version 1 stores single-frame text findings for an ordered source A/B
-pair in local JSON. Source media is never written. PDF images are generated at
-export time; this format contains no image attachments, severity, category,
-status, ranges, or alignment setting. CSV/PDF and editor-marker exports are
+Schema version 2 stores text findings, severity, category, status, and optional
+inclusive source-A frame ranges for an ordered source A/B pair in local JSON.
+Source media is never written. PDF images are generated at export time; this
+format contains no image attachments or alignment setting. CSV/PDF and editor-marker exports are
 separate representations, not sidecars. Editor acceptance is tracked in
 [marker interchange validation](COMPARE_MODE_INTERCHANGE.md).
 
 ## Finding and navigating notes
 
-Use **Filter review notes** in the Review popover to search note text without
+Use **Filter review notes** in the Review popover to search note text and classification labels without
 changing the saved review. Matching ignores case and diacritics and trims
 surrounding search whitespace. The note count shows matches out of the total,
-and orange timeline markers show the same matches. Clear the filter to restore
+and orange timeline markers show the same matches. Range findings also show
+an orange band spanning their inclusive A frame range. Clear the filter to restore
 the complete list. Changing the source pair or closing the comparison clears
 the filter; reopening the popover in the same session retains it.
 
@@ -22,6 +23,12 @@ These actions are also in the timeline context menu. They skip duplicate notes
 on the current frame and stop at either end rather than wrapping. Each row's
 timecode remains a direct seek action. Exports always include **all notes**,
 including those hidden by the filter.
+
+Expand a review row to choose severity, category, or status. To make a range,
+enter an inclusive A end frame and choose **Apply**, or set the end to the
+current A frame. The end must be at or after the note's start. Row actions can
+seek to the end or clear it to restore a single-frame finding. Classification
+and range edits are saved with the note and update its edit timestamp.
 
 For an uncluttered timeline, turn off **Show Timeline Details** in Settings →
 General → Playback or the timeline context menu. Chapter/review markers and
@@ -56,7 +63,7 @@ strings or seconds; fractional milliseconds are supported for note dates.
 
 | Top-level field | Type | Meaning |
 | --- | --- | --- |
-| `schemaVersion` | Integer | Required; currently exactly `1` on load. |
+| `schemaVersion` | Integer | Required; `1` and `2` load, all new writes use `2`. |
 | `primarySource` | Source identity object | Required; source A. |
 | `secondarySource` | Source identity object | Required; source B. |
 | `notes` | Array of note objects | Required; may be empty. |
@@ -86,7 +93,23 @@ Every note requires all of these fields:
 | `primaryRateNumerator`, `secondaryRateNumerator` | Signed 64-bit integers | Positive frame-rate numerators captured with the note. |
 | `primaryRateDenominator`, `secondaryRateDenominator` | Signed 64-bit integers | Positive frame-rate denominators; rate is numerator / denominator. |
 | `text` | String | Note text, including Unicode and line breaks. |
-| `createdAt`, `updatedAt` | Date numbers | Creation and last text-edit timestamps. |
+| `createdAt`, `updatedAt` | Date numbers | Creation and last note-edit timestamps. |
+
+Version 2 adds these note fields. Missing classification fields decode with
+the defaults shown, including when reading a version 1 review. Unknown enum
+values are rejected rather than silently discarded.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `severity` | String | `info` (default), `minor`, `major`, or `critical`. |
+| `category` | String | `general` (default), `picture`, `audio`, `sync`, or `metadata`. |
+| `status` | String | `open` (default), `inProgress`, or `resolved`. |
+| `primaryEndFrame` | Signed 64-bit integer, optional | Inclusive A end frame, at least `primaryFrame`; omitted or null means a single-frame finding. |
+
+An explicit end equal to the start also lasts one frame. A range from frame
+42 through 47 lasts six frames. B retains its captured start position; there
+is no stored B endpoint. End frames receive the same arithmetic bounds checks
+as start frames.
 
 Frame indices are authoritative. The sidecar does not store embedded source
 start timecode or DF/NDF display flags. Reports derive those from the loaded
@@ -95,13 +118,15 @@ itself does not impose that text restriction or require the seconds fields to
 equal frame/rate. Loading also does not check positions against media duration;
 playback navigation bounds the destination using the loaded media.
 
-## Example
+## Legacy version 1 example
 
-This minimal one-note document uses 24 fps, A frame 42 and B frame 48. The
+This minimal legacy one-note document uses 24 fps, A frame 42 and B frame 48. The
 identity objects omit optional file attributes for readability. The absolute
 paths must match the actual selected sources; copying this example does not
 relink a real review. The JSON below has been decoded and loaded through the
-production model and sidecar store with matching example URLs.
+production model and sidecar store with matching example URLs. It loads as
+Info / General / Open with no range, and its next successful write upgrades
+the schema to version 2.
 
 ```json
 {
@@ -132,12 +157,17 @@ production model and sidecar store with matching example URLs.
 The loader rejects malformed JSON, missing required fields, wrong field types,
 unrepresentable integers, unsupported schema versions, mismatched source
 identities, duplicate note UUIDs, negative/non-finite positions, and nonpositive
-rate components. It also rejects rates/positions that overflow its reserved
+rate components, unknown classification values, and end frames before their
+start. It also rejects rates/positions that overflow its reserved
 64-bit report arithmetic. That reserve includes 24 hours of source timecode,
 one marker-end frame, and a timebase of at least 1,000,000; a positive integer
 alone is therefore not sufficient for a valid frame position.
 
-Version 1 is the only supported load version; there is no automatic migration.
+Versions 1 and 2 are supported on load. Loading alone leaves the original file
+untouched; a successful save or mutation writes version 2. Older apps that
+only support version 1 reject version 2 and disable editing rather than
+rewrite it and lose classifications or ranges. Keep a backup if an older app
+must continue using the review.
 Unknown object keys are ignored by decoding and are not preserved on rewrite.
 Do not use extra keys for data that must survive an app edit. New interchange
 tools should preserve all required fields and avoid assuming future versions

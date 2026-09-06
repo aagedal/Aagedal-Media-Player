@@ -154,8 +154,10 @@ nonisolated enum CompareReviewPDFRenderer {
         beginPage()
 
         for row in snapshot.rows {
+            let details = [row.classificationLabel, row.rangeLabel, row.note]
+                .compactMap { $0 }.joined(separator: "\n")
             let noteLines = wrappedLines(
-                row.note,
+                details,
                 width: noteWidth - 12,
                 font: noteFont,
                 color: dark

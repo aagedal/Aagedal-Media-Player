@@ -13,7 +13,10 @@ nonisolated enum CompareReviewNavigation {
     static func filtered(_ notes: [CompareReviewNote], query: String) -> [CompareReviewNote] {
         let query = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !query.isEmpty else { return notes }
-        return notes.filter { $0.text.localizedStandardContains(query) }
+        return notes.filter {
+            [$0.text, $0.severity.title, $0.category.title, $0.status.title]
+                .contains { $0.localizedStandardContains(query) }
+        }
     }
 
     /// Navigate distinct marked frames without wrapping. Half a stored frame
@@ -74,6 +77,33 @@ nonisolated enum CompareReviewTimeline {
     }
 }
 
+nonisolated enum CompareReviewSeverity: String, Codable, CaseIterable, Identifiable, Sendable {
+    case info, minor, major, critical
+
+    var id: String { rawValue }
+    var title: String { rawValue.capitalized }
+}
+
+nonisolated enum CompareReviewCategory: String, Codable, CaseIterable, Identifiable, Sendable {
+    case general, picture, audio, sync, metadata
+
+    var id: String { rawValue }
+    var title: String { rawValue.capitalized }
+}
+
+nonisolated enum CompareReviewStatus: String, Codable, CaseIterable, Identifiable, Sendable {
+    case open, inProgress, resolved
+
+    var id: String { rawValue }
+    var title: String {
+        switch self {
+        case .open: "Open"
+        case .inProgress: "In Progress"
+        case .resolved: "Resolved"
+        }
+    }
+}
+
 /// A review note anchored to source A's frame timeline. Seconds are retained
 /// as a portable fallback, while the frame index is the authoritative marker.
 nonisolated struct CompareReviewNote: Identifiable, Codable, Equatable, Sendable {
@@ -87,6 +117,12 @@ nonisolated struct CompareReviewNote: Identifiable, Codable, Equatable, Sendable
     let secondaryRateNumerator: Int64
     let secondaryRateDenominator: Int64
     var text: String
+    var severity: CompareReviewSeverity
+    var category: CompareReviewCategory
+    var status: CompareReviewStatus
+    /// Inclusive source A endpoint, measured at the stored primary rational
+    /// frame rate. Nil denotes a single-frame note.
+    var primaryEndFrame: Int64?
     let createdAt: Date
     var updatedAt: Date
 
@@ -101,6 +137,10 @@ nonisolated struct CompareReviewNote: Identifiable, Codable, Equatable, Sendable
         secondaryRateNumerator: Int64 = 30,
         secondaryRateDenominator: Int64 = 1,
         text: String,
+        severity: CompareReviewSeverity = .info,
+        category: CompareReviewCategory = .general,
+        status: CompareReviewStatus = .open,
+        primaryEndFrame: Int64? = nil,
         createdAt: Date = Date(),
         updatedAt: Date = Date()
     ) {
@@ -114,8 +154,41 @@ nonisolated struct CompareReviewNote: Identifiable, Codable, Equatable, Sendable
         self.secondaryRateNumerator = max(1, secondaryRateNumerator)
         self.secondaryRateDenominator = max(1, secondaryRateDenominator)
         self.text = text
+        self.severity = severity
+        self.category = category
+        self.status = status
+        self.primaryEndFrame = primaryEndFrame
         self.createdAt = createdAt
         self.updatedAt = updatedAt
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, primaryFrame, primaryTime, secondaryFrame, secondaryTime
+        case primaryRateNumerator, primaryRateDenominator
+        case secondaryRateNumerator, secondaryRateDenominator
+        case text, severity, category, status, primaryEndFrame, createdAt, updatedAt
+    }
+
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        // Decode original coordinates directly: invalid sidecars must be
+        // rejected by the store, never silently repaired by the initializer.
+        id = try values.decode(UUID.self, forKey: .id)
+        primaryFrame = try values.decode(Int64.self, forKey: .primaryFrame)
+        primaryTime = try values.decode(TimeInterval.self, forKey: .primaryTime)
+        secondaryFrame = try values.decode(Int64.self, forKey: .secondaryFrame)
+        secondaryTime = try values.decode(TimeInterval.self, forKey: .secondaryTime)
+        primaryRateNumerator = try values.decode(Int64.self, forKey: .primaryRateNumerator)
+        primaryRateDenominator = try values.decode(Int64.self, forKey: .primaryRateDenominator)
+        secondaryRateNumerator = try values.decode(Int64.self, forKey: .secondaryRateNumerator)
+        secondaryRateDenominator = try values.decode(Int64.self, forKey: .secondaryRateDenominator)
+        text = try values.decode(String.self, forKey: .text)
+        severity = try values.decodeIfPresent(CompareReviewSeverity.self, forKey: .severity) ?? .info
+        category = try values.decodeIfPresent(CompareReviewCategory.self, forKey: .category) ?? .general
+        status = try values.decodeIfPresent(CompareReviewStatus.self, forKey: .status) ?? .open
+        primaryEndFrame = try values.decodeIfPresent(Int64.self, forKey: .primaryEndFrame)
+        createdAt = try values.decode(Date.self, forKey: .createdAt)
+        updatedAt = try values.decode(Date.self, forKey: .updatedAt)
     }
 }
 
@@ -168,9 +241,9 @@ nonisolated struct CompareReviewSourceIdentity: Codable, Equatable, Sendable {
 }
 
 nonisolated struct CompareReviewDocument: Codable, Equatable, Sendable {
-    static let currentSchemaVersion = 1
+    static let currentSchemaVersion = 2
 
-    let schemaVersion: Int
+    var schemaVersion: Int
     let primarySource: CompareReviewSourceIdentity
     let secondarySource: CompareReviewSourceIdentity
     var notes: [CompareReviewNote]

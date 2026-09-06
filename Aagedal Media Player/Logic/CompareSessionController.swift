@@ -1036,11 +1036,67 @@ final class CompareSessionController: ObservableObject {
     }
 
     func updateReviewNote(id: UUID, text: String) {
+        let text = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return }
+        mutateReviewNote(id: id) { $0.text = text }
+    }
+
+    func updateReviewClassification(
+        id: UUID,
+        severity: CompareReviewSeverity? = nil,
+        category: CompareReviewCategory? = nil,
+        status: CompareReviewStatus? = nil
+    ) {
+        mutateReviewNote(id: id) { note in
+            if let severity { note.severity = severity }
+            if let category { note.category = category }
+            if let status { note.status = status }
+        }
+    }
+
+    /// Range ends are inclusive and use the rate captured with the note.
+    @discardableResult
+    func updateReviewRange(id: UUID, endFrame: Int64?) -> Bool {
+        guard canEditReviewNotes,
+              let note = reviewNotes.first(where: { $0.id == id }),
+              let item = primaryAudioController?.mediaItem else { return false }
+        if let endFrame {
+            let rate = Double(note.primaryRateNumerator) / Double(note.primaryRateDenominator)
+            let lastFrame = CompareReviewTimeline.frameIndex(
+                for: item.durationSeconds, duration: item.durationSeconds, frameRate: rate
+            )
+            guard endFrame >= note.primaryFrame, endFrame <= lastFrame else { return false }
+        }
+        mutateReviewNote(id: id) { $0.primaryEndFrame = endFrame }
+        return true
+    }
+
+    @discardableResult
+    func endReviewRangeAtCurrentFrame(id: UUID, primary: PlayerController) -> Bool {
+        guard let note = reviewNotes.first(where: { $0.id == id }),
+              let item = primary.mediaItem else { return false }
+        pause(primary: primary)
+        let rate = Double(note.primaryRateNumerator) / Double(note.primaryRateDenominator)
+        return updateReviewRange(id: id, endFrame: CompareReviewTimeline.frameIndex(
+            for: primary.playbackTimeSnapshot(), duration: item.durationSeconds, frameRate: rate
+        ))
+    }
+
+    func seekToReviewRangeEnd(_ note: CompareReviewNote, primary: PlayerController) {
+        guard let item = primary.mediaItem else { return }
+        let rate = Double(note.primaryRateNumerator) / Double(note.primaryRateDenominator)
+        seek(primary: primary, to: CompareReviewTimeline.time(
+            forFrame: note.primaryEndFrame ?? note.primaryFrame,
+            duration: item.durationSeconds, frameRate: rate
+        ))
+    }
+
+    private func mutateReviewNote(id: UUID, mutation: (inout CompareReviewNote) -> Void) {
         guard let index = reviewNotes.firstIndex(where: { $0.id == id }),
               canEditReviewNotes,
               let primaryURL = primaryAudioController?.mediaItem?.url,
               let secondaryURL else { return }
-        reviewNotes[index].text = text
+        mutation(&reviewNotes[index])
         reviewNotes[index].updatedAt = Date()
         persistReviewMutation(
             .upsert(reviewNotes[index]),

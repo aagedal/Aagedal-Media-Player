@@ -277,12 +277,16 @@ when attached to a strong inspection workflow.
 
 Status: The comparison review foundation is already implemented as part of
 Compare Mode Phase 4. This does not move the full Review & Report milestone
-ahead of Audio QC or satisfy its release gates. The remaining work extends
-single-frame text notes into a structured review workflow.
+ahead of Audio QC or satisfy its release gates. The September 6 continuation adds structured classifications and inclusive
+source-A frame ranges. Relinking and editor acceptance remain.
 
 - [x] Add frame-accurate text notes and visible comparison-timeline markers.
-- [ ] Add severity, category, and status to markers.
-- [ ] Support region/range notes as well as single-frame notes.
+- [x] Add severity, category, and status to markers. Classification titles are
+  searchable alongside note text and are preserved in reports.
+- [x] Support temporal range notes as well as single-frame notes. Inclusive
+  source-A end frames can be entered or captured from playback; timeline bands
+  show the range. Spatial image-region annotations remain outside this scope.
+  Schema 2 writes preserve classifications/ranges and load legacy schema 1.
 - [x] Store review data in pair-specific, non-destructive JSON sidecars with
   schema versioning and source-identity validation.
 - [x] Publish the sidecar schema and compatibility rules as user-facing format

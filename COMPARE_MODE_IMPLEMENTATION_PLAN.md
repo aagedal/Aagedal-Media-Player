@@ -257,7 +257,8 @@ markers and comparison overlap while preserving active trim points and the
 playhead. Filtering is session-local, clears when the source pair changes, and
 does not remove notes from saved sidecars or reports. The sidecar documentation
 includes a JSON example checked with the production parser. Structured review
-fields, range notes, relinking, and editor round trips remain roadmap work.
+fields and ranges are implemented in the continuation below; relinking and
+editor round trips remain roadmap work.
 
 Verification: all 348 Release tests pass without failures or skips, including
 new filtering, fractional-rate navigation, filter-lifecycle, and persisted
@@ -566,3 +567,29 @@ Final verification: all 343 Release tests pass with no failures or skips;
 static analysis, all 61 release-preflight checks, and both profiler-validator
 groups pass. The final build also repeats the original narrow-to-large native
 MPV/MPV reproduction successfully after the reload safeguard was restored.
+
+
+## Structured review and range notes — 2026-09-06
+
+- [x] Add severity, category, and status controls to review findings.
+- [x] Include classification titles in the existing note/timeline search.
+- [x] Add inclusive source-A range endpoints, direct frame entry, current-frame
+  capture, seek-end and clear-range actions, and visible timeline range bands.
+- [x] Preserve existing single-frame notes when reading schema 1; write schema
+  2 so older readers reject unsupported structured reviews without rewriting.
+- [x] Preserve classifications and inclusive ranges in CSV/PDF and editor
+  exports. Resolve/FCPXML carry durations; Avid text records the A range in its
+  comment because its marker-text representation has no duration column.
+
+Range endpoints use the note's stored rational source-A rate. The UI rejects
+ends before the note start or beyond the loaded media. The sidecar additionally
+rejects invalid or overflowing endpoints. Source B retains its original mapped
+start position; no B interval or spatial image region is implied. Detailed
+format and compatibility rules are in `docs/COMPARE_REVIEW_SIDECAR.md`.
+
+Verification: all 356 Release tests pass without failures or skips, including
+legacy schema upgrades, invalid classifications/ranges, persisted controller
+edits, and cross-format range output. Static analysis and all 61 release-
+preflight checks pass. Native keyboard/VoiceOver acceptance and actual editor
+round trips remain open. A desktop-automation attempt did not expose the media
+chooser, so it provides no additional native review-control acceptance evidence.

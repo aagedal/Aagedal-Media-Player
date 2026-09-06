@@ -56,7 +56,7 @@ struct CompareReviewView: View {
                 TextField("Filter review notes", text: $compareSession.reviewSearchQuery)
                     .textFieldStyle(.roundedBorder)
                     .accessibilityLabel("Filter review notes")
-                    .help("Filter note text and timeline markers. Exports always include all notes.")
+                    .help("Filter note text, severity, category, status, and timeline markers. Exports always include all notes.")
                 if !compareSession.reviewSearchQuery.isEmpty {
                     Button {
                         compareSession.reviewSearchQuery = ""
@@ -207,6 +207,18 @@ struct CompareReviewView: View {
             },
             onDelete: {
                 compareSession.deleteReviewNote(id: note.id)
+            },
+            onClassification: { severity, category, status in
+                compareSession.updateReviewClassification(
+                    id: note.id, severity: severity, category: category, status: status
+                )
+            },
+            onRange: { compareSession.updateReviewRange(id: note.id, endFrame: $0) },
+            onCurrentEnd: {
+                compareSession.endReviewRangeAtCurrentFrame(id: note.id, primary: primaryController)
+            },
+            onSeekEnd: {
+                compareSession.seekToReviewRangeEnd(note, primary: primaryController)
             }
         )
     }
@@ -270,6 +282,13 @@ private struct CompareReviewNoteRow: View {
     let onSeek: () -> Void
     let onUpdate: (String) -> Void
     let onDelete: () -> Void
+    let onClassification: (CompareReviewSeverity?, CompareReviewCategory?, CompareReviewStatus?) -> Void
+    let onRange: (Int64?) -> Bool
+    let onCurrentEnd: () -> Bool
+    let onSeekEnd: () -> Void
+
+    @State private var endFrameDraft = ""
+    @State private var rangeError: String?
 
     @State private var draft: String
     @State private var isDeleting = false
@@ -281,7 +300,11 @@ private struct CompareReviewNoteRow: View {
         canEdit: Bool,
         onSeek: @escaping () -> Void,
         onUpdate: @escaping (String) -> Void,
-        onDelete: @escaping () -> Void
+        onDelete: @escaping () -> Void,
+        onClassification: @escaping (CompareReviewSeverity?, CompareReviewCategory?, CompareReviewStatus?) -> Void,
+        onRange: @escaping (Int64?) -> Bool,
+        onCurrentEnd: @escaping () -> Bool,
+        onSeekEnd: @escaping () -> Void
     ) {
         self.note = note
         self.timecodeLabel = timecodeLabel
@@ -289,51 +312,113 @@ private struct CompareReviewNoteRow: View {
         self.onSeek = onSeek
         self.onUpdate = onUpdate
         self.onDelete = onDelete
+        self.onClassification = onClassification
+        self.onRange = onRange
+        self.onCurrentEnd = onCurrentEnd
+        self.onSeekEnd = onSeekEnd
+        _endFrameDraft = State(initialValue: note.primaryEndFrame.map(String.init) ?? "")
         _draft = State(initialValue: note.text)
     }
 
     var body: some View {
-        HStack(alignment: .top, spacing: 8) {
-            Button(action: onSeek) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(timecodeLabel)
-                        .font(.caption.monospacedDigit())
-                    Text("Frame \(note.primaryFrame)")
-                        .font(.caption2.monospacedDigit())
-                        .foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .top, spacing: 8) {
+                Button(action: onSeek) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(timecodeLabel)
+                            .font(.caption.monospacedDigit())
+                        Text(note.primaryEndFrame.map { "Frames \(note.primaryFrame)–\($0)" } ?? "Frame \(note.primaryFrame)")
+                            .font(.caption2.monospacedDigit())
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(width: 94, alignment: .leading)
                 }
-                .frame(width: 94, alignment: .leading)
-            }
-            .buttonStyle(.plain)
-            .help("Seek both sources to this review note")
+                .buttonStyle(.plain)
+                .help("Seek both sources to this review note")
 
-            TextField("Review note", text: $draft, axis: .vertical)
-                .textFieldStyle(.roundedBorder)
-                .lineLimit(1...4)
-                .focused($isFocused)
+                TextField("Review note", text: $draft, axis: .vertical)
+                    .textFieldStyle(.roundedBorder)
+                    .lineLimit(1...4)
+                    .focused($isFocused)
+                    .disabled(!canEdit)
+                    .onSubmit(commit)
+                    .onChange(of: isFocused) { wasFocused, focused in
+                        if wasFocused && !focused { commit() }
+                    }
+                    .onChange(of: note.text) { _, text in
+                        if !isFocused { draft = text }
+                    }
+
+                Button(role: .destructive) {
+                    isDeleting = true
+                    onDelete()
+                } label: {
+                    Image(systemName: "trash")
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
+                .help("Delete review note")
                 .disabled(!canEdit)
-                .onSubmit(commit)
-                .onChange(of: isFocused) { wasFocused, focused in
-                    if wasFocused && !focused { commit() }
-                }
-                .onChange(of: note.text) { _, text in
-                    if !isFocused { draft = text }
-                }
-
-            Button(role: .destructive) {
-                isDeleting = true
-                onDelete()
-            } label: {
-                Image(systemName: "trash")
             }
-            .buttonStyle(.plain)
-            .foregroundStyle(.secondary)
-            .help("Delete review note")
-            .disabled(!canEdit)
+            DisclosureGroup("\(note.severity.title) · \(note.category.title) · \(note.status.title)") {
+                VStack(alignment: .leading, spacing: 8) {
+                    Picker("Severity", selection: Binding(
+                        get: { note.severity }, set: { onClassification($0, nil, nil) }
+                    )) {
+                        ForEach(CompareReviewSeverity.allCases) { Text($0.title).tag($0) }
+                    }
+                    Picker("Category", selection: Binding(
+                        get: { note.category }, set: { onClassification(nil, $0, nil) }
+                    )) {
+                        ForEach(CompareReviewCategory.allCases) { Text($0.title).tag($0) }
+                    }
+                    Picker("Status", selection: Binding(
+                        get: { note.status }, set: { onClassification(nil, nil, $0) }
+                    )) {
+                        ForEach(CompareReviewStatus.allCases) { Text($0.title).tag($0) }
+                    }
+                    HStack {
+                        TextField("End frame (inclusive)", text: $endFrameDraft)
+                            .textFieldStyle(.roundedBorder)
+                            .accessibilityLabel("Inclusive range end frame")
+                            .onSubmit(applyRange)
+                        Button("Apply", action: applyRange)
+                    }
+                    HStack {
+                        Button("End at current frame") {
+                            rangeError = onCurrentEnd() ? nil : "End must be at or after the note's start."
+                        }
+                        if note.primaryEndFrame != nil {
+                            Button("Seek end", action: onSeekEnd)
+                            Button("Clear range") {
+                                if onRange(nil) { endFrameDraft = ""; rangeError = nil }
+                            }
+                        }
+                    }
+                    if let rangeError {
+                        Text(rangeError).font(.caption).foregroundStyle(.red)
+                    }
+                }
+                .padding(.top, 6)
+                .disabled(!canEdit)
+            }
+            .font(.caption)
+        }
+        .onChange(of: note.primaryEndFrame) { _, end in
+            endFrameDraft = end.map(String.init) ?? ""
         }
         .padding(8)
         .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8))
         .onDisappear { commit() }
+    }
+
+    private func applyRange() {
+        guard let end = Int64(endFrameDraft.trimmingCharacters(in: .whitespacesAndNewlines)),
+              onRange(end) else {
+            rangeError = "Enter an end frame from the note's start through the last media frame."
+            return
+        }
+        rangeError = nil
     }
 
     private func commit() {

@@ -73,7 +73,7 @@ actor CompareReviewSidecarStore: CompareReviewSidecarStoring {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .millisecondsSince1970
         let document = try decoder.decode(CompareReviewDocument.self, from: data)
-        guard document.schemaVersion == CompareReviewDocument.currentSchemaVersion else {
+        guard (1...CompareReviewDocument.currentSchemaVersion).contains(document.schemaVersion) else {
             throw CompareReviewSidecarError.unsupportedSchema(document.schemaVersion)
         }
         guard document.belongsTo(primaryURL: primaryURL, secondaryURL: secondaryURL) else {
@@ -122,6 +122,7 @@ actor CompareReviewSidecarStore: CompareReviewSidecarStoring {
             return $0.id.uuidString < $1.id.uuidString
         }
 
+        document.schemaVersion = CompareReviewDocument.currentSchemaVersion
         try write(document, to: url)
         return document
     }
@@ -138,7 +139,12 @@ actor CompareReviewSidecarStore: CompareReviewSidecarStoring {
     }
 
     private func write(_ document: CompareReviewDocument, to url: URL) throws {
+        guard (1...CompareReviewDocument.currentSchemaVersion).contains(document.schemaVersion) else {
+            throw CompareReviewSidecarError.unsupportedSchema(document.schemaVersion)
+        }
         try Self.validate(document)
+        var document = document
+        document.schemaVersion = CompareReviewDocument.currentSchemaVersion
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         encoder.dateEncodingStrategy = .millisecondsSince1970
@@ -153,8 +159,12 @@ actor CompareReviewSidecarStore: CompareReviewSidecarStoring {
             guard ids.insert(note.id).inserted else {
                 throw CompareReviewSidecarError.invalidNote(number, "duplicate note identifier")
             }
+            if let endFrame = note.primaryEndFrame, endFrame < note.primaryFrame {
+                throw CompareReviewSidecarError.invalidNote(number, "source A range ends before its start")
+            }
             for (source, frame, time, numerator, denominator) in [
                 ("A", note.primaryFrame, note.primaryTime, note.primaryRateNumerator, note.primaryRateDenominator),
+                ("A range end", note.primaryEndFrame ?? note.primaryFrame, note.primaryTime, note.primaryRateNumerator, note.primaryRateDenominator),
                 ("B", note.secondaryFrame, note.secondaryTime, note.secondaryRateNumerator, note.secondaryRateDenominator),
             ] {
                 guard frame >= 0, time.isFinite, time >= 0 else {

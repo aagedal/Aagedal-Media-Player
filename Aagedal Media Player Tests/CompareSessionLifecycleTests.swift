@@ -367,6 +367,80 @@ final class CompareSessionLifecycleTests: XCTestCase {
         primary.teardown()
     }
 
+    func testReviewClassificationAndRangeEditsPreserveCoordinatesAndPersist() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let primaryURL = directory.appendingPathComponent("Master.mov")
+        let secondaryURL = directory.appendingPathComponent("Encode.mov")
+        try Data("primary".utf8).write(to: primaryURL)
+        try Data("secondary".utf8).write(to: secondaryURL)
+        let store = CompareReviewSidecarStore()
+        let sidecar = CompareReviewSidecarStore.sidecarURL(primaryURL: primaryURL, secondaryURL: secondaryURL)
+        let original = CompareReviewNote(
+            primaryFrame: 30, primaryTime: 1,
+            secondaryFrame: 48, secondaryTime: 2,
+            secondaryRateNumerator: 24, text: "Inspect transition"
+        )
+        try await store.save(
+            CompareReviewDocument(primaryURL: primaryURL, secondaryURL: secondaryURL, notes: [original]),
+            to: sidecar, revision: 1
+        )
+        let loader = ControlledCompareMetadataLoader()
+        let primary = PlayerController()
+        var item = PlayerWindowCoordinator.makeMediaItem(for: primaryURL)
+        item.durationSeconds = 10
+        item.metadata = metadata(duration: 10)
+        primary.loadMedia(item)
+        let session = makeSession(loader: loader, reviewStore: store)
+        defer { session.stop(); primary.teardown() }
+        session.loadSecondary(secondaryURL, alignedWith: primary)
+        let requested = await waitUntil { loader.hasRequest(for: secondaryURL) }
+        XCTAssertTrue(requested)
+        loader.succeed(secondaryURL, metadata: metadata(duration: 10))
+        let loaded = await waitUntil { session.canEditReviewNotes }
+        XCTAssertTrue(loaded)
+
+        session.updateReviewClassification(id: original.id, severity: .major, category: .picture, status: .inProgress)
+        XCTAssertTrue(session.updateReviewRange(id: original.id, endFrame: 90))
+        let ranged = try XCTUnwrap(session.reviewNotes.first)
+        XCTAssertEqual(ranged.primaryFrame, original.primaryFrame)
+        XCTAssertEqual(ranged.primaryTime, original.primaryTime)
+        XCTAssertEqual(ranged.secondaryFrame, original.secondaryFrame)
+        XCTAssertEqual(ranged.secondaryRateNumerator, original.secondaryRateNumerator)
+        XCTAssertEqual(ranged.text, original.text)
+        XCTAssertEqual(ranged.severity, .major)
+        XCTAssertEqual(ranged.category, .picture)
+        XCTAssertEqual(ranged.status, .inProgress)
+        XCTAssertEqual(ranged.primaryEndFrame, 90)
+        XCTAssertFalse(session.updateReviewRange(id: original.id, endFrame: 29))
+        XCTAssertFalse(session.updateReviewRange(id: original.id, endFrame: 300))
+        XCTAssertEqual(session.reviewNotes.first, ranged)
+
+        func waitForSavedNote(endFrame: Int64?, text: String) async throws -> CompareReviewNote? {
+            let clock = ContinuousClock()
+            let deadline = clock.now.advanced(by: .seconds(2))
+            while clock.now < deadline {
+                let saved = try await store.load(from: sidecar, primaryURL: primaryURL, secondaryURL: secondaryURL)?.notes.first
+                if saved?.primaryEndFrame == endFrame, saved?.text == text,
+                   saved?.severity == .major, saved?.category == .picture, saved?.status == .inProgress {
+                    return saved
+                }
+                await Task.yield()
+            }
+            return nil
+        }
+        let savedRange = try await waitForSavedNote(endFrame: 90, text: original.text)
+        XCTAssertNotNil(savedRange)
+        XCTAssertTrue(session.updateReviewRange(id: original.id, endFrame: nil))
+        session.updateReviewNote(id: original.id, text: "Updated text")
+        let savedSingle = try await waitForSavedNote(endFrame: nil, text: "Updated text")
+        XCTAssertNotNil(savedSingle)
+        XCTAssertEqual(savedSingle?.primaryFrame, original.primaryFrame)
+        XCTAssertEqual(savedSingle?.secondaryFrame, original.secondaryFrame)
+        XCTAssertNil(session.reviewError)
+    }
+
     private func makeSession(
         loader: ControlledCompareMetadataLoader,
         secondary: PlayerController = PlayerController(),
