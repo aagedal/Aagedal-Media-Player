@@ -111,6 +111,9 @@ portability limits are documented in [comparison review sidecars](docs/COMPARE_R
 Review findings support severity, category, status, and inclusive frame ranges.
 Expand a note to classify it or set its end frame; search matches note text and
 classifications. Reports include all findings, including filtered-out notes.
+After moving media, use **Relink Notes…** in Comparison Review to map an old
+sidecar to the loaded A/B pair. The confirmation shows both mappings; the
+original sidecar and any existing destination review are preserved.
 
 ### Inspection loupe
 Open the magnifying-glass control (Command-Shift-M) to enable a 2×, 4×, or 8×

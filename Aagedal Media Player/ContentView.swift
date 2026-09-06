@@ -279,6 +279,11 @@ struct ContentView: View {
         } message: {
             Text(compareSession.loadError ?? "The comparison file could not be loaded.")
         }
+        .modifier(CompareReviewRelinkPresentation(
+            primaryController: controller,
+            compareSession: compareSession,
+            showReviewNotes: $showReviewNotes
+        ))
         .onChange(of: controller.screenshotState) { _, state in
             switch state {
             case .succeeded:

@@ -257,8 +257,8 @@ markers and comparison overlap while preserving active trim points and the
 playhead. Filtering is session-local, clears when the source pair changes, and
 does not remove notes from saved sidecars or reports. The sidecar documentation
 includes a JSON example checked with the production parser. Structured review
-fields and ranges are implemented in the continuation below; relinking and
-editor round trips remain roadmap work.
+fields, ranges, and deliberate relinking are implemented in the continuations
+below; editor round trips remain roadmap work.
 
 Verification: all 348 Release tests pass without failures or skips, including
 new filtering, fractional-rate navigation, filter-lifecycle, and persisted
@@ -593,3 +593,27 @@ edits, and cross-format range output. Static analysis and all 61 release-
 preflight checks pass. Native keyboard/VoiceOver acceptance and actual editor
 round trips remain open. A desktop-automation attempt did not expose the media
 chooser, so it provides no additional native review-control acceptance evidence.
+
+## Review relinking and export consistency — 2026-09-06
+
+- [x] Preview a selected old sidecar and explicitly confirm its source A/B mapping
+  to the loaded pair after media moves.
+- [x] Preserve note IDs, text, timestamps, classifications, inclusive ranges,
+  frame anchors, and stored rational rates in a new pair-specific sidecar.
+- [x] Leave the original untouched and publish with an atomic exclusive rename;
+  reject existing destinations, changed previews, and unavailable current media.
+- [x] Cancel pending relinking on comparison close/replacement and reject stale
+  preview/write completions. Disable conflicting mutations and exports.
+- [x] Reject editor-marker exports at incompatible stored A rates and distinguish
+  PDF still-cache entries by extraction times and displayed timecodes.
+
+Relinking deliberately maps files; it does not prove content equality or retime
+findings. Original-rate media is required for editor exports. The documented
+empty-review workflow does not merge or overwrite existing reviews. Native
+keyboard/VoiceOver acceptance and actual editor round trips remain release gates.
+
+Verification: all 376 Release tests passed without failures or skips; the final
+failure-alert refinement also passed the 36 focused review tests. Release static
+analysis and all 61 preflight checks pass. The native picker/confirmation,
+Escape cancellation, malformed-file alert, Return confirmation, and preserved
+import are documented in `docs/COMPARE_REVIEW_RELINK_CHECK_2026-09-06.md`.

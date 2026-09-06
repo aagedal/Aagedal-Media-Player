@@ -5,6 +5,7 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Added
+- Deliberate comparison-review relinking after media moves, with an explicit A/B mapping preview, preserved findings, and protection against destination overwrites.
 - Review-note severity, category, and status with searchable classifications and inclusive frame ranges, timeline bands, and CSV/PDF/editor export support.
 - Schema 2 review sidecars that read legacy single-frame notes and protect structured findings from older app versions.
 - Comparison stills record the inspection view selected at export time and identify their fixed side-by-side layout.
@@ -52,6 +53,7 @@ All notable changes to Aagedal Media Player.
   primary-file loop boundaries across all backend combinations.
 
 ### Fixed
+- Reject editor-marker exports with incompatible stored frame rates and keep mixed-rate review findings from reusing the wrong annotated PDF still.
 - MPV comparison pictures now initialize and resize to their fitted panes instead of retaining a small bootstrap surface after window growth.
 - Keep pinned inspection loupes inside the picture canvas when the window shrinks.
 - Explicitly nonisolated comparison-guide geometry avoids a Swift `Shape` conformance error under main-actor default isolation.

@@ -278,7 +278,8 @@ when attached to a strong inspection workflow.
 Status: The comparison review foundation is already implemented as part of
 Compare Mode Phase 4. This does not move the full Review & Report milestone
 ahead of Audio QC or satisfy its release gates. The September 6 continuation adds structured classifications and inclusive
-source-A frame ranges. Relinking and editor acceptance remain.
+source-A frame ranges and deliberate relinking to relocated A/B sources.
+Editor acceptance and hands-on keyboard review remain.
 
 - [x] Add frame-accurate text notes and visible comparison-timeline markers.
 - [x] Add severity, category, and status to markers. Classification titles are
@@ -309,7 +310,10 @@ source-A frame ranges. Relinking and editor acceptance remain.
 
 Release gates:
 
-- [ ] Sidecars survive media moves through a deliberate relinking workflow.
+- [x] Sidecars survive media moves through a deliberate relinking workflow.
+  The old/new A/B mapping is explicitly confirmed, the original stays untouched,
+  and existing destinations are never overwritten. See
+  `docs/COMPARE_REVIEW_SIDECAR.md`; hands-on acceptance remains below.
 - [ ] Exports preserve frame rate, drop-frame rules, source timecode, and file
   identity without rounding errors.
 - [ ] A complete review can be created and exported using only the keyboard.

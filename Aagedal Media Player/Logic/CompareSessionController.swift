@@ -377,6 +377,16 @@ nonisolated struct CompareDriftPolicy: Equatable, Sendable {
     }
 }
 
+struct CompareReviewRelinkPreview: Identifiable {
+    let id = UUID()
+    let sourceURL: URL
+    let destinationURL: URL
+    let primaryURL: URL
+    let primaryPreparationID: Int
+    let secondaryURL: URL
+    let document: CompareReviewDocument
+}
+
 @MainActor
 final class CompareSessionController: ObservableObject {
     typealias MetadataLoader = @MainActor @Sendable (URL) async throws -> MediaMetadata
@@ -416,6 +426,13 @@ final class CompareSessionController: ObservableObject {
     @Published private(set) var reviewSidecarURL: URL?
     @Published private(set) var reviewError: String?
     @Published private(set) var isReviewLoading = false
+    @Published private(set) var reviewRelinkPreview: CompareReviewRelinkPreview?
+    @Published private(set) var reviewRelinkFailure: String?
+    @Published private(set) var isReviewRelinking = false
+    @Published private(set) var isReviewRelinkSaving = false
+    private var reviewRelinkTask: Task<Void, Never>?
+    private var reviewRelinkOpenPanel: NSOpenPanel?
+    private var reviewRelinkOperation = UUID()
     @Published private(set) var reviewExportState: CompareReviewExportState = .idle
 
     private var loadTask: Task<Void, Never>?
@@ -442,7 +459,7 @@ final class CompareSessionController: ObservableObject {
 
     var isActive: Bool { secondaryURL != nil }
     var canEditReviewNotes: Bool {
-        isActive && !isReviewLoading && isReviewSidecarWritable
+        isActive && !isReviewLoading && !isReviewRelinking && isReviewSidecarWritable
     }
 
     init(
@@ -498,6 +515,7 @@ final class CompareSessionController: ObservableObject {
         beginSecondaryLoadSignpost()
         loadTask?.cancel()
         readinessTask?.cancel()
+        cancelReviewRelink()
         reviewLoadTask?.cancel()
         reviewSaveTask?.cancel()
         reviewSaveTask = nil
@@ -593,6 +611,7 @@ final class CompareSessionController: ObservableObject {
         loadTask = nil
         readinessTask?.cancel()
         readinessTask = nil
+        cancelReviewRelink()
         reviewLoadTask?.cancel()
         reviewLoadTask = nil
         reviewSaveTask?.cancel()
@@ -859,6 +878,149 @@ final class CompareSessionController: ObservableObject {
         loadError = nil
     }
 
+    var canRelinkReviewNotes: Bool {
+        isActive && !isReviewLoading && !isReviewRelinking && !isLoading && reviewSaveTask == nil
+            && !reviewExportState.isInFlight && reviewNotes.isEmpty
+    }
+
+    func dismissReviewRelinkFailure() {
+        reviewRelinkFailure = nil
+    }
+
+    func cancelReviewRelink() {
+        reviewRelinkFailure = nil
+        reviewRelinkOperation = UUID()
+        reviewRelinkTask?.cancel()
+        reviewRelinkTask = nil
+        reviewRelinkOpenPanel?.cancel(nil)
+        reviewRelinkOpenPanel = nil
+        reviewRelinkPreview = nil
+        isReviewRelinking = false
+        isReviewRelinkSaving = false
+    }
+
+    func chooseReviewSidecarToRelink(primary: PlayerController) {
+        guard canRelinkReviewNotes, let primaryURL = primary.mediaItem?.url,
+              let secondaryURL else { return }
+        let primaryPreparationID = primary.preparationID
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.json]
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+        panel.message = "Choose the original comparison notes sidecar to relink to the currently loaded A/B sources."
+        reviewRelinkOpenPanel = panel
+        isReviewRelinking = true
+        let operation = UUID()
+        reviewRelinkOperation = operation
+        panel.begin { [weak self, weak primary] response in
+            Task { @MainActor in
+                guard let self, self.reviewRelinkOperation == operation else { return }
+                self.reviewRelinkOpenPanel = nil
+                self.isReviewRelinking = false
+                guard response == .OK, let sourceURL = panel.url, let primary,
+                      primary.mediaItem?.url == primaryURL, primary.preparationID == primaryPreparationID,
+                      self.secondaryURL == secondaryURL else { return }
+                self.previewReviewRelink(from: sourceURL, primary: primary)
+            }
+        }
+    }
+
+    func previewReviewRelink(from sourceURL: URL, primary: PlayerController) {
+        guard canRelinkReviewNotes,
+              let primaryURL = primary.mediaItem?.url,
+              let secondaryURL,
+              let destinationURL = reviewSidecarURL else { return }
+        let generation = loadGeneration.current
+        let primaryPreparationID = primary.preparationID
+        let operation = UUID()
+        reviewRelinkOperation = operation
+        isReviewRelinking = true
+        reviewError = nil
+        reviewRelinkTask = Task { @MainActor [weak self, weak primary] in
+            guard let self else { return }
+            do {
+                let document = try await self.reviewStore.previewRelink(from: sourceURL)
+                try Task.checkCancellation()
+                guard self.reviewRelinkOperation == operation,
+                      self.loadGeneration.isCurrent(generation),
+                      primary?.mediaItem?.url == primaryURL,
+                      primary?.preparationID == primaryPreparationID,
+                      self.secondaryURL == secondaryURL else {
+                    if self.reviewRelinkOperation == operation { self.cancelReviewRelink() }
+                    return
+                }
+                self.reviewRelinkPreview = CompareReviewRelinkPreview(
+                    sourceURL: sourceURL, destinationURL: destinationURL,
+                    primaryURL: primaryURL, primaryPreparationID: primaryPreparationID,
+                    secondaryURL: secondaryURL, document: document
+                )
+                self.reviewRelinkTask = nil
+            } catch {
+                guard self.reviewRelinkOperation == operation,
+                      self.loadGeneration.isCurrent(generation) else { return }
+                self.cancelReviewRelink()
+                guard primary?.mediaItem?.url == primaryURL,
+                      primary?.preparationID == primaryPreparationID, self.secondaryURL == secondaryURL else { return }
+                if !(error is CancellationError) {
+                    self.reviewError = "Could not preview comparison notes: \(error.localizedDescription)"
+                    self.reviewRelinkFailure = self.reviewError
+                }
+            }
+        }
+    }
+
+    /// Only called after the user approves the displayed old-to-current A/B mapping.
+    func confirmReviewRelink(primary: PlayerController) {
+        guard let preview = reviewRelinkPreview, isReviewRelinking,
+              reviewRelinkTask == nil,
+              primary.mediaItem?.url == preview.primaryURL,
+              primary.preparationID == preview.primaryPreparationID,
+              secondaryURL == preview.secondaryURL else {
+            cancelReviewRelink()
+            return
+        }
+        isReviewRelinkSaving = true
+        let generation = loadGeneration.current
+        let operation = reviewRelinkOperation
+        reviewRelinkTask = Task { @MainActor [weak self, weak primary] in
+            guard let self else { return }
+            do {
+                let document = try await self.reviewStore.relink(
+                    from: preview.sourceURL, to: preview.destinationURL,
+                    primaryURL: preview.primaryURL, secondaryURL: preview.secondaryURL,
+                    expectedDocument: preview.document
+                )
+                try Task.checkCancellation()
+                guard self.reviewRelinkOperation == operation,
+                      self.loadGeneration.isCurrent(generation),
+                      primary?.mediaItem?.url == preview.primaryURL,
+                      primary?.preparationID == preview.primaryPreparationID,
+                      self.secondaryURL == preview.secondaryURL else {
+                    if self.reviewRelinkOperation == operation { self.cancelReviewRelink() }
+                    return
+                }
+                self.reviewNotes = document.notes.sorted {
+                    ($0.primaryFrame, $0.createdAt) < ($1.primaryFrame, $1.createdAt)
+                }
+                self.reviewRevision &+= 1
+                self.isReviewSidecarWritable = true
+                self.reviewError = nil
+                self.cancelReviewRelink()
+            } catch {
+                guard self.reviewRelinkOperation == operation,
+                      self.loadGeneration.isCurrent(generation) else { return }
+                self.cancelReviewRelink()
+                guard primary?.mediaItem?.url == preview.primaryURL,
+                      primary?.preparationID == preview.primaryPreparationID,
+                      self.secondaryURL == preview.secondaryURL else { return }
+                if !(error is CancellationError) {
+                    self.reviewError = "Could not relink comparison notes: \(error.localizedDescription)"
+                    self.reviewRelinkFailure = self.reviewError
+                }
+            }
+        }
+    }
+
     func dismissReviewError() {
         reviewError = nil
     }
@@ -872,7 +1034,8 @@ final class CompareSessionController: ObservableObject {
         _ format: CompareReviewReportFormat,
         primary: PlayerController
     ) {
-        guard !reviewExportState.isInFlight,
+        guard !isReviewRelinking,
+              !reviewExportState.isInFlight,
               !isReviewLoading,
               let primaryItem = primary.mediaItem,
               let secondaryItem = secondaryController.mediaItem,
@@ -959,7 +1122,7 @@ final class CompareSessionController: ObservableObject {
     }
 
     func retryReviewLoad(primary: PlayerController) {
-        guard let primaryURL = primary.mediaItem?.url,
+        guard !isReviewRelinking, reviewSaveTask == nil, !reviewExportState.isInFlight, let primaryURL = primary.mediaItem?.url,
               let secondaryURL else { return }
         loadReviewNotes(
             primaryURL: primaryURL,
@@ -1157,6 +1320,7 @@ final class CompareSessionController: ObservableObject {
         secondaryURL: URL,
         generation: UInt64
     ) {
+        cancelReviewRelink()
         reviewLoadTask?.cancel()
         let sidecarURL = CompareReviewSidecarStore.sidecarURL(
             primaryURL: primaryURL,

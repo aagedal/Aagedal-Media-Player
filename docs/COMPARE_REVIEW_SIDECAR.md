@@ -204,10 +204,38 @@ original A/B positions when the offset changes. The override is session-local
 and is not restored from the sidecar. See
 [comparison alignment](COMPARE_MODE_ALIGNMENT.md).
 
-There is **no relinking workflow yet**. Moving/renaming media, copying it to
-another filesystem, swapping sources, or replacing a master can change naming
-or identity checks. Copying the JSON beside relocated media alone does not make
-it portable. The document includes absolute paths, filenames through those
-paths, file attributes, and review text: consider that when sharing it. Retain
-the original media pair and sidecar together as a backup; use exported reports
-for a review record that can be read independently of the app.
+Moving or renaming media can change the sidecar filename or source-identity
+checks. Copying the JSON beside relocated media alone does not reconnect it.
+Use the deliberate relinking workflow:
+
+1. Open the relocated original source A and add the relocated original source B
+   in the same order as the review. Relinking is available for an empty review;
+   it does not merge with findings already loaded for the pair.
+2. Open **Comparison Review → Relink Notes…** and select the old JSON sidecar.
+3. Check the old and current A/B paths and note count in the confirmation.
+   Confirm only when the loaded files are the intended originals.
+4. Confirm the mapping to create the new pair-specific sidecar beside A.
+
+Relinking retains note IDs, creation/edit timestamps, text, classifications,
+inclusive ranges, frame coordinates, and stored rational rates. It updates
+source identities and writes the current schema. It does not retime findings,
+swap A/B anchors, restore alignment, or prove that the media content is equal.
+Re-encoded or edited replacements may no longer match the stored frames.
+Editor-marker exports reject findings whose stored A rate differs from the
+loaded A rate, rather than silently placing them at a different time. Equivalent
+rational rates are accepted. CSV/PDF remain available; their preview positions
+use stored rates and are bounded to the loaded media duration.
+
+The original sidecar is left untouched. An existing destination is never
+replaced or merged, including an empty or invalid sidecar. If the old file
+already occupies the new pair's destination, move it aside to a backup location
+and select that backup for relinking. Resolve a destination conflict before
+retrying; retain any existing review rather than deleting it to make room.
+Malformed/unsupported sidecars and a sidecar changed after preview are rejected.
+Closing or changing the comparison invalidates pending preview/confirmation
+work. A completed disk write remains durable if its UI completion becomes stale.
+
+The document includes absolute paths, filenames through those paths, file
+attributes, and review text: consider that when sharing it. Retain the original
+media pair and sidecar together as a backup; use exported reports for a review
+record that can be read independently of the app.

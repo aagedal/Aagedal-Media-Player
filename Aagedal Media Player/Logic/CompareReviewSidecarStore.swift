@@ -3,11 +3,16 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import Foundation
+import Darwin
 
 nonisolated enum CompareReviewSidecarError: Error, LocalizedError {
     case unsupportedSchema(Int)
     case sourcePairMismatch
     case invalidNote(Int, String)
+    case relinkPreviewChanged
+    case relinkDestinationExists
+    case relinkSourceUnavailable(String)
+    case relinkUnavailable
 
     var errorDescription: String? {
         switch self {
@@ -17,6 +22,14 @@ nonisolated enum CompareReviewSidecarError: Error, LocalizedError {
             "The comparison notes sidecar belongs to a different source pair."
         case .invalidNote(let number, let reason):
             "Comparison note \(number) is invalid: \(reason). Restore a valid sidecar backup or move this sidecar aside before creating a new review."
+        case .relinkPreviewChanged:
+            "The selected review changed after preview. Select it again before relinking."
+        case .relinkDestinationExists:
+            "A review already exists at the destination. Move it aside before relinking; existing reviews are never overwritten."
+        case .relinkSourceUnavailable(let path):
+            "The replacement source is not a readable regular file: \(path)"
+        case .relinkUnavailable:
+            "Relinking is unavailable for this review store."
         }
     }
 }
@@ -27,6 +40,16 @@ nonisolated enum CompareReviewMutation: Sendable {
 }
 
 nonisolated protocol CompareReviewSidecarStoring: Sendable {
+    func previewRelink(from url: URL) async throws -> CompareReviewDocument
+
+    func relink(
+        from url: URL,
+        to destinationURL: URL,
+        primaryURL: URL,
+        secondaryURL: URL,
+        expectedDocument: CompareReviewDocument
+    ) async throws -> CompareReviewDocument
+
     func load(
         from url: URL,
         primaryURL: URL,
@@ -39,6 +62,22 @@ nonisolated protocol CompareReviewSidecarStoring: Sendable {
         primaryURL: URL,
         secondaryURL: URL
     ) async throws -> CompareReviewDocument
+}
+
+nonisolated extension CompareReviewSidecarStoring {
+    func previewRelink(from url: URL) async throws -> CompareReviewDocument {
+        throw CompareReviewSidecarError.relinkUnavailable
+    }
+
+    func relink(
+        from url: URL,
+        to destinationURL: URL,
+        primaryURL: URL,
+        secondaryURL: URL,
+        expectedDocument: CompareReviewDocument
+    ) async throws -> CompareReviewDocument {
+        throw CompareReviewSidecarError.relinkUnavailable
+    }
 }
 
 /// Serializes sidecar access and rejects late writes from an older in-memory
@@ -69,6 +108,21 @@ actor CompareReviewSidecarStore: CompareReviewSidecarStoring {
         secondaryURL: URL
     ) throws -> CompareReviewDocument? {
         guard FileManager.default.fileExists(atPath: url.path) else { return nil }
+        let document = try readDocument(from: url)
+        guard document.belongsTo(primaryURL: primaryURL, secondaryURL: secondaryURL) else {
+            throw CompareReviewSidecarError.sourcePairMismatch
+        }
+        return document
+    }
+
+    /// Reads the old review without attaching it to any currently loaded media.
+    /// Missing original media is expected when a review has been moved.
+    func previewRelink(from url: URL) async throws -> CompareReviewDocument {
+        try readDocument(from: url)
+    }
+
+    private func readDocument(from url: URL) throws -> CompareReviewDocument {
+        try Task.checkCancellation()
         let data = try Data(contentsOf: url)
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .millisecondsSince1970
@@ -76,10 +130,66 @@ actor CompareReviewSidecarStore: CompareReviewSidecarStoring {
         guard (1...CompareReviewDocument.currentSchemaVersion).contains(document.schemaVersion) else {
             throw CompareReviewSidecarError.unsupportedSchema(document.schemaVersion)
         }
-        guard document.belongsTo(primaryURL: primaryURL, secondaryURL: secondaryURL) else {
-            throw CompareReviewSidecarError.sourcePairMismatch
-        }
         try Self.validate(document)
+        return document
+    }
+
+    /// Explicitly maps old A/B to new A/B, preserving every note coordinate and
+    /// classification. Publication uses an exclusive rename of a completed
+    /// sibling file so competing stores cannot overwrite an existing review.
+    func relink(
+        from url: URL,
+        to destinationURL: URL,
+        primaryURL: URL,
+        secondaryURL: URL,
+        expectedDocument: CompareReviewDocument
+    ) async throws -> CompareReviewDocument {
+        try Task.checkCancellation()
+        let original = try readDocument(from: url)
+        guard original == expectedDocument else {
+            throw CompareReviewSidecarError.relinkPreviewChanged
+        }
+        let fileManager = FileManager.default
+        for source in [primaryURL, secondaryURL] {
+            let canonical = source.standardizedFileURL.resolvingSymlinksInPath()
+            let attributes = try? fileManager.attributesOfItem(atPath: canonical.path)
+            guard source.isFileURL,
+                  attributes?[.type] as? FileAttributeType == .typeRegular,
+                  fileManager.isReadableFile(atPath: canonical.path) else {
+                throw CompareReviewSidecarError.relinkSourceUnavailable(source.path)
+            }
+        }
+        guard url.standardizedFileURL.resolvingSymlinksInPath() != destinationURL.standardizedFileURL.resolvingSymlinksInPath(),
+              !fileManager.fileExists(atPath: destinationURL.path) else {
+            throw CompareReviewSidecarError.relinkDestinationExists
+        }
+        let document = CompareReviewDocument(
+            primaryURL: primaryURL, secondaryURL: secondaryURL, notes: original.notes
+        )
+        let temporaryURL = destinationURL.deletingLastPathComponent()
+            .appendingPathComponent(".\(UUID().uuidString).aagedal-compare.partial")
+        defer { try? fileManager.removeItem(at: temporaryURL) }
+        try write(document, to: temporaryURL)
+        try Task.checkCancellation()
+        // RENAME_EXCL refuses every existing directory entry, including a
+        // dangling symlink, without a check-then-rename overwrite race. Unlike
+        // hard links, same-volume renames also work on external exFAT volumes.
+        let result = temporaryURL.withUnsafeFileSystemRepresentation { temporaryPath in
+            destinationURL.withUnsafeFileSystemRepresentation { destinationPath in
+                guard let temporaryPath, let destinationPath else {
+                    errno = EINVAL
+                    return Int32(-1)
+                }
+                return renamex_np(temporaryPath, destinationPath, UInt32(RENAME_EXCL))
+            }
+        }
+        guard result == 0 else {
+            let failure = errno
+            if failure == EEXIST {
+                throw CompareReviewSidecarError.relinkDestinationExists
+            }
+            throw POSIXError(POSIXErrorCode(rawValue: failure) ?? .EIO)
+        }
         return document
     }
 

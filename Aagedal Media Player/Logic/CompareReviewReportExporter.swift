@@ -47,6 +47,7 @@ nonisolated enum CompareReviewReportExportError: Error, LocalizedError {
     case unsupportedResolveFrameRate(Int64)
     case unrepresentableMarkerRange
     case unrepresentableFinalCutProTime
+    case incompatiblePrimaryFrameRate(Int)
 
     var errorDescription: String? {
         switch self {
@@ -58,6 +59,8 @@ nonisolated enum CompareReviewReportExportError: Error, LocalizedError {
             "A comparison marker range exceeds the supported frame range. Check the review’s frame positions before exporting again."
         case .unrepresentableFinalCutProTime:
             "A comparison marker exceeds the supported Final Cut Pro time range at source A's frame rate. Check the review's frame positions before exporting again."
+        case .incompatiblePrimaryFrameRate(let marker):
+            "Review marker \(marker) was captured at a different source A frame rate. Load media at the original review frame rate before exporting editor markers. CSV and PDF reports remain available; markers are not automatically retimed."
         }
     }
 }
@@ -67,6 +70,8 @@ nonisolated struct CompareReviewReportRow: Equatable, Sendable {
     let primarySourceTimecode: String?
     let primaryRelativeTimecode: String
     let primaryFrame: Int64
+    let primaryRateNumerator: Int64
+    let primaryRateDenominator: Int64
     let primaryTime: TimeInterval
     let secondarySourceTimecode: String?
     let secondaryRelativeTimecode: String
@@ -173,6 +178,8 @@ nonisolated struct CompareReviewReportSnapshot: Equatable, Sendable {
                     mode: .relative
                 ),
                 primaryFrame: note.primaryFrame,
+                primaryRateNumerator: note.primaryRateNumerator,
+                primaryRateDenominator: note.primaryRateDenominator,
                 primaryTime: ComparisonStillFrameExtractor.clampedTime(
                     primaryTime,
                     for: primaryItem
@@ -225,8 +232,10 @@ nonisolated enum CompareReviewReportExporter {
     typealias FrameImageProvider = @Sendable (URL, TimeInterval) async throws -> CGImage
 
     private struct FramePair: Hashable {
-        let primaryFrame: Int64
-        let secondaryFrame: Int64
+        let primaryTime: TimeInterval
+        let secondaryTime: TimeInterval
+        let primaryTimecode: String
+        let secondaryTimecode: String
     }
 
     /// PDF stills are prepared asynchronously and compressed before the
@@ -244,8 +253,10 @@ nonisolated enum CompareReviewReportExporter {
         for row in snapshot.rows {
             try Task.checkCancellation()
             let pair = FramePair(
-                primaryFrame: row.primaryFrame,
-                secondaryFrame: row.secondaryFrame
+                primaryTime: row.primaryTime,
+                secondaryTime: row.secondaryTime,
+                primaryTimecode: reportTimecode(source: row.primarySourceTimecode, relative: row.primaryRelativeTimecode),
+                secondaryTimecode: reportTimecode(source: row.secondarySourceTimecode, relative: row.secondaryRelativeTimecode)
             )
             if let cached = cache[pair] {
                 results[row.markerNumber] = cached
@@ -334,7 +345,7 @@ nonisolated enum CompareReviewReportExporter {
         case .finalCutProXML:
             Data(try finalCutProXML(snapshot: snapshot).utf8)
         case .avidMarkersText:
-            Data(avidMarkersText(snapshot: snapshot).utf8)
+            Data(try avidMarkersText(snapshot: snapshot).utf8)
         }
     }
 
@@ -424,12 +435,14 @@ nonisolated enum CompareReviewReportExporter {
             )
             lines.append("")
         }
+        try validateEditorMarkerRates(snapshot)
         return lines.joined(separator: "\r\n")
     }
 
     /// Avid's marker interchange is a tab-delimited, frame-addressed format.
-    static func avidMarkersText(snapshot: CompareReviewReportSnapshot) -> String {
-        snapshot.rows.map { row in
+    static func avidMarkersText(snapshot: CompareReviewReportSnapshot) throws -> String {
+        try validateEditorMarkerRates(snapshot)
+        return snapshot.rows.map { row in
             [
                 "Aagedal",
                 String(row.primaryFrame),
@@ -500,7 +513,23 @@ nonisolated enum CompareReviewReportExporter {
             "</fcpxml>",
             "",
         ])
+        try validateEditorMarkerRates(snapshot)
         return lines.joined(separator: "\n")
+    }
+
+    /// Stored frames can only be emitted unchanged on an equivalent timebase.
+    /// Reduce each ratio separately to avoid overflowing cross multiplication.
+    private static func validateEditorMarkerRates(_ snapshot: CompareReviewReportSnapshot) throws {
+        let currentDivisor = greatestCommonDivisor(snapshot.primaryRateNumerator, snapshot.primaryRateDenominator)
+        let numerator = snapshot.primaryRateNumerator / currentDivisor
+        let denominator = snapshot.primaryRateDenominator / currentDivisor
+        for row in snapshot.rows {
+            let divisor = greatestCommonDivisor(row.primaryRateNumerator, row.primaryRateDenominator)
+            guard row.primaryRateNumerator / divisor == numerator,
+                  row.primaryRateDenominator / divisor == denominator else {
+                throw CompareReviewReportExportError.incompatiblePrimaryFrameRate(row.markerNumber)
+            }
+        }
     }
 
     private static func escapedCSVField(_ value: String) -> String {

@@ -4,6 +4,42 @@
 
 import SwiftUI
 
+/// The window owns relinking so its transient Review popover can close while
+/// the file picker and explicit mapping confirmation remain available.
+struct CompareReviewRelinkPresentation: ViewModifier {
+    @ObservedObject var primaryController: PlayerController
+    @ObservedObject var compareSession: CompareSessionController
+    @Binding var showReviewNotes: Bool
+
+    func body(content: Content) -> some View {
+        content
+            .sheet(item: Binding(
+                get: { compareSession.reviewRelinkPreview },
+                set: { if $0 == nil { compareSession.cancelReviewRelink() } }
+            )) { preview in
+                CompareReviewRelinkConfirmationView(
+                    preview: preview,
+                    primaryController: primaryController,
+                    compareSession: compareSession
+                )
+            }
+            .alert("Could Not Relink Notes", isPresented: Binding(
+                get: { compareSession.reviewRelinkFailure != nil },
+                set: { if !$0 { compareSession.dismissReviewRelinkFailure() } }
+            )) {
+                Button("OK") { compareSession.dismissReviewRelinkFailure() }
+            } message: {
+                Text(compareSession.reviewRelinkFailure ?? "")
+            }
+            .onChange(of: compareSession.isReviewRelinking) { _, isRelinking in
+                if isRelinking { showReviewNotes = false }
+            }
+            .onChange(of: primaryController.preparationID) { _, _ in
+                compareSession.cancelReviewRelink()
+            }
+    }
+}
+
 struct CompareReviewView: View {
     @ObservedObject var primaryController: PlayerController
     @ObservedObject var compareSession: CompareSessionController
@@ -126,6 +162,12 @@ struct CompareReviewView: View {
 
                 Spacer()
 
+                Button("Relink Notes…") {
+                    compareSession.chooseReviewSidecarToRelink(primary: primaryController)
+                }
+                .disabled(!compareSession.canRelinkReviewNotes)
+                .help("Relink an existing sidecar to the currently loaded A/B pair. Requires an empty review and a new destination sidecar.")
+
                 Menu {
                     Button("CSV Report…") {
                         compareSession.exportReviewReport(.csv, primary: primaryController)
@@ -161,6 +203,7 @@ struct CompareReviewView: View {
                 .disabled(
                     compareSession.reviewNotes.isEmpty
                         || compareSession.isReviewLoading
+                        || compareSession.isReviewRelinking
                         || compareSession.reviewExportState.isInFlight
                 )
             }
@@ -273,6 +316,60 @@ struct CompareReviewView: View {
             mode: timecodeMode
         )
     }
+}
+
+/// Hosted by the stable player window, because the review popover can close
+/// as soon as the native sidecar picker takes focus.
+struct CompareReviewRelinkConfirmationView: View {
+    let preview: CompareReviewRelinkPreview
+    @ObservedObject var primaryController: PlayerController
+    @ObservedObject var compareSession: CompareSessionController
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Relink \(preview.document.notes.count) Review Notes?").font(.headline)
+            Text("Confirm that the currently loaded files are the intended replacements. Media matches are not inferred; note frames and classifications remain unchanged.")
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
+                    relinkPath("Original sidecar", path: preview.sourceURL.path)
+                    relinkPath("Previous source A", path: preview.document.primarySource.canonicalPath)
+                    relinkPath("Current source A", path: preview.primaryURL.path)
+                    Divider()
+                    relinkPath("Previous source B", path: preview.document.secondarySource.canonicalPath)
+                    relinkPath("Current source B", path: preview.secondaryURL.path)
+                    Divider()
+                    relinkPath("New sidecar", path: preview.destinationURL.path)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .frame(maxHeight: 350)
+            Text("The original sidecar stays unchanged. The new sidecar must not already exist. If an old sidecar occupies that path, move it aside first, then select it again.")
+                .font(.callout)
+            HStack {
+                Spacer()
+                if compareSession.isReviewRelinkSaving {
+                    ProgressView().controlSize(.small)
+                }
+                Button("Cancel") { compareSession.cancelReviewRelink() }
+                    .keyboardShortcut(.cancelAction)
+                Button("Confirm A/B Mapping and Relink") {
+                    compareSession.confirmReviewRelink(primary: primaryController)
+                }
+                .keyboardShortcut(.defaultAction)
+                .disabled(compareSession.isReviewRelinkSaving)
+            }
+        }
+        .padding(24)
+        .frame(width: 560)
+    }
+
+    private func relinkPath(_ label: String, path: String) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(label).font(.caption).foregroundStyle(.secondary)
+            Text(path).font(.callout.monospaced()).textSelection(.enabled)
+        }
+    }
+
 }
 
 private struct CompareReviewNoteRow: View {

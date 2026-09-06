@@ -10,6 +10,82 @@ import XCTest
 
 @MainActor
 final class CompareReviewReportExporterTests: XCTestCase {
+    func testEditorExportsRejectChangedPrimaryRateWithoutRetimingReports() throws {
+        for storedRate: (Int64, Int64) in [(24, 1), (30_000, 1_001)] {
+            let snapshot = CompareReviewReportSnapshot(
+                primaryItem: makeItem(path: "/tmp/Replacement.mov", duration: 20),
+                secondaryItem: makeItem(path: "/tmp/Encode.mp4", duration: 20),
+                alignmentMode: .relative,
+                notes: [CompareReviewNote(
+                    primaryFrame: 240, primaryTime: 0, secondaryFrame: 240, secondaryTime: 8,
+                    primaryRateNumerator: storedRate.0, primaryRateDenominator: storedRate.1,
+                    text: "Original-rate finding", primaryEndFrame: 263
+                )]
+            )
+            for format: CompareReviewReportFormat in [.resolveMarkersEDL, .finalCutProXML, .avidMarkersText] {
+                XCTAssertThrowsError(try CompareReviewReportExporter.data(for: format, snapshot: snapshot)) { error in
+                    guard case CompareReviewReportExportError.incompatiblePrimaryFrameRate(1) = error else {
+                        return XCTFail("Expected frame-rate mismatch for \(format), got \(error)")
+                    }
+                    XCTAssertTrue(error.localizedDescription.contains("original review frame rate"))
+                }
+            }
+            XCTAssertEqual(snapshot.rows.first?.primaryFrame, 240)
+            XCTAssertEqual(try XCTUnwrap(snapshot.rows.first).primaryTime, 240 * Double(storedRate.1) / Double(storedRate.0), accuracy: 0.000_001)
+            XCTAssertNoThrow(try CompareReviewReportExporter.data(for: .csv, snapshot: snapshot))
+            XCTAssertNoThrow(try CompareReviewReportExporter.data(for: .pdf, snapshot: snapshot))
+        }
+    }
+
+    func testEditorExportsAcceptEquivalentRationalPrimaryRates() throws {
+        for (currentRate, numerator, denominator): (String, Int64, Int64) in [
+            ("30000/1001", 60_000, 2_002),
+            // Cross multiplication of this equivalent 30 fps ratio would overflow.
+            ("30/1", 9_000_000_000_000_000_000, 300_000_000_000_000_000),
+        ] {
+            let snapshot = CompareReviewReportSnapshot(
+                primaryItem: makeItem(path: "/tmp/Master.mov", duration: 20, frameRate: currentRate),
+                secondaryItem: makeItem(path: "/tmp/Encode.mp4", duration: 20),
+                alignmentMode: .relative,
+                notes: [CompareReviewNote(
+                    primaryFrame: 240, primaryTime: 0, secondaryFrame: 240, secondaryTime: 8,
+                    primaryRateNumerator: numerator, primaryRateDenominator: denominator,
+                    text: "Equivalent-rate finding"
+                )]
+            )
+            for format: CompareReviewReportFormat in [.resolveMarkersEDL, .finalCutProXML, .avidMarkersText] {
+                XCTAssertNoThrow(try CompareReviewReportExporter.data(for: format, snapshot: snapshot))
+            }
+        }
+    }
+
+    func testAnnotatedStillCacheSeparatesIdenticalFrameNumbersAtDifferentStoredRates() async throws {
+        let primary = makeItem(path: "/tmp/Master.mov", duration: 10)
+        let secondary = makeItem(path: "/tmp/Encode.mp4", duration: 10)
+        let notes = [Int64(24), 30].map { rate in
+            CompareReviewNote(
+                primaryFrame: 24, primaryTime: 0, secondaryFrame: 24, secondaryTime: 0,
+                primaryRateNumerator: rate, secondaryRateNumerator: rate, text: "Rate \(rate)"
+            )
+        }
+        let snapshot = CompareReviewReportSnapshot(
+            primaryItem: primary, secondaryItem: secondary, alignmentMode: .relative, notes: notes
+        )
+        let recorder = ReportFrameRequestRecorder()
+        let red = try makeSolidImage(red: 1, green: 0, blue: 0)
+        let blue = try makeSolidImage(red: 0, green: 0, blue: 1)
+        let stills = try await CompareReviewReportExporter.annotatedStillData(snapshot: snapshot) { url, time in
+            await recorder.record(url: url, time: time)
+            return time > 0.9 ? red : blue
+        }
+        let requests = await recorder.requests
+        XCTAssertEqual(requests.count, 4)
+        XCTAssertEqual(requests.filter { $0.url == primary.url }.map(\.time).sorted(), [0.8, 1])
+        XCTAssertEqual(requests.filter { $0.url == secondary.url }.map(\.time).sorted(), [0.8, 1])
+        XCTAssertEqual(stills.count, 2)
+        XCTAssertNotEqual(stills[1], stills[2])
+    }
+
     func testCSVSortsMarkersAndEscapesMultilineUnicodeNotes() {
         let primary = makeItem(
             path: "/tmp/Master, final.mov",
@@ -446,7 +522,7 @@ final class CompareReviewReportExporterTests: XCTestCase {
         XCTAssertEqual(marker.attribute(forName: "start")?.stringValue, "\(wholeRateUnits * denominator)/1s")
     }
 
-    func testAvidMarkersAreTabDelimitedAndUsePrimaryFrameCoordinates() {
+    func testAvidMarkersAreTabDelimitedAndUsePrimaryFrameCoordinates() throws {
         let snapshot = CompareReviewReportSnapshot(
             primaryItem: makeItem(path: "/tmp/Master.mov", duration: 5),
             secondaryItem: makeItem(path: "/tmp/Encode.mp4", duration: 5),
@@ -460,7 +536,7 @@ final class CompareReviewReportExporterTests: XCTestCase {
             )]
         )
 
-        let text = CompareReviewReportExporter.avidMarkersText(snapshot: snapshot)
+        let text = try CompareReviewReportExporter.avidMarkersText(snapshot: snapshot)
         let fields = text.dropLast(2).split(separator: "\t", omittingEmptySubsequences: false)
 
         XCTAssertEqual(fields.count, 5)
@@ -535,7 +611,7 @@ final class CompareReviewReportExporterTests: XCTestCase {
         XCTAssertEqual(marker.attribute(forName: "duration")?.stringValue, "1001/1000s")
         XCTAssertTrue(marker.attribute(forName: "note")?.stringValue?.contains(row.classificationLabel) == true)
 
-        let avid = CompareReviewReportExporter.avidMarkersText(snapshot: snapshot)
+        let avid = try CompareReviewReportExporter.avidMarkersText(snapshot: snapshot)
         XCTAssertTrue(avid.contains("A frames 48–71 (inclusive)"))
         XCTAssertTrue(avid.contains(row.classificationLabel))
         XCTAssertEqual(avid.dropLast(2).split(separator: "\t").count, 5)

@@ -513,8 +513,31 @@ or skips; static analysis and all 61 release-preflight checks pass.
 
 Acceptance: classifying or extending a finding retains its original A/B anchor,
 text, and stored rational rates; legacy reviews remain readable. Spatial image
-annotations, deliberate relinking, editor round trips, and hands-on keyboard/
-VoiceOver acceptance remain roadmap and release work.
+annotations, editor round trips, and hands-on keyboard/VoiceOver acceptance
+remain roadmap and release work. Phase 34 adds deliberate relinking.
+
+## Phase 34 — Review-sidecar relinking and export consistency
+
+Status: Completed on 2026-09-06. The 376-test Release suite passes without
+failures or skips; the final failure-alert change also passes all 36 focused
+review tests. Static analysis and all 61 release-preflight checks pass. Native
+picker, mapping confirmation, cancellation, visible failure, and successful
+import are recorded in `docs/COMPARE_REVIEW_RELINK_CHECK_2026-09-06.md`.
+
+- [x] Provide a deliberate old-to-current A/B mapping preview and confirmation.
+- [x] Preserve findings in a new pair-specific sidecar without overwriting the
+  original or any existing destination.
+- [x] Reject stale previews, invalid documents, unavailable media, concurrent
+  destination collisions, and cancelled work before publication.
+- [x] Isolate preview/confirmation/write state from replacement and closed sessions.
+- [x] Reject editor-marker exports whose stored A rate differs from loaded media;
+  accept mathematically equivalent rational rates without overflow.
+- [x] Prevent mixed-rate findings from sharing an incorrect annotated PDF still.
+
+Acceptance: relocated original media can recover its review through an explicit
+mapping while preserving note data and existing files. Relinking does not
+retime findings, infer content equality, or merge reviews. Hands-on keyboard/
+VoiceOver acceptance and editor round trips remain release gates.
 
 ## Delivery order
 
@@ -544,3 +567,5 @@ VoiceOver acceptance remain roadmap and release work.
 24. Phase 32 MPV native surface sizing.
 
 25. Phase 33 structured comparison reviews.
+
+26. Phase 34 review-sidecar relinking and export consistency.
