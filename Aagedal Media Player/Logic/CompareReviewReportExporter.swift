@@ -172,13 +172,14 @@ nonisolated struct CompareReviewReportSnapshot: Equatable, Sendable {
                 markerNumber: index + 1,
                 primarySourceTimecode: Self.sourceTimecode(
                     item: primaryItem,
-                    time: primaryTime
+                    frame: note.primaryFrame,
+                    numerator: note.primaryRateNumerator,
+                    denominator: note.primaryRateDenominator
                 ),
-                primaryRelativeTimecode: TimecodeFormatter.formatTimeForDisplayWithMode(
-                    seconds: primaryTime,
-                    item: primaryItem,
-                    mode: .relative
-                ),
+                primaryRelativeTimecode: TimecodeRate(
+                    numerator: Int(note.primaryRateNumerator),
+                    denominator: Int(note.primaryRateDenominator)
+                ).timecode(forFrameCount: note.primaryFrame),
                 primaryFrame: note.primaryFrame,
                 primaryRateNumerator: note.primaryRateNumerator,
                 primaryRateDenominator: note.primaryRateDenominator,
@@ -188,13 +189,14 @@ nonisolated struct CompareReviewReportSnapshot: Equatable, Sendable {
                 ),
                 secondarySourceTimecode: Self.sourceTimecode(
                     item: secondaryItem,
-                    time: secondaryTime
+                    frame: note.secondaryFrame,
+                    numerator: note.secondaryRateNumerator,
+                    denominator: note.secondaryRateDenominator
                 ),
-                secondaryRelativeTimecode: TimecodeFormatter.formatTimeForDisplayWithMode(
-                    seconds: secondaryTime,
-                    item: secondaryItem,
-                    mode: .relative
-                ),
+                secondaryRelativeTimecode: TimecodeRate(
+                    numerator: Int(note.secondaryRateNumerator),
+                    denominator: Int(note.secondaryRateDenominator)
+                ).timecode(forFrameCount: note.secondaryFrame),
                 secondaryFrame: note.secondaryFrame,
                 secondaryRateNumerator: note.secondaryRateNumerator,
                 secondaryRateDenominator: note.secondaryRateDenominator,
@@ -222,13 +224,23 @@ nonisolated struct CompareReviewReportSnapshot: Equatable, Sendable {
     }
 
     @MainActor
-    private static func sourceTimecode(item: MediaItem, time: TimeInterval) -> String? {
-        guard TimecodeFormatter.effectiveStartTimecode(for: item) != nil else { return nil }
-        return TimecodeFormatter.formatTimeForDisplayWithMode(
-            seconds: time,
-            item: item,
-            mode: .source
-        )
+    private static func sourceTimecode(
+        item: MediaItem,
+        frame: Int64,
+        numerator: Int64,
+        denominator: Int64
+    ) -> String? {
+        guard let start = TimecodeFormatter.effectiveStartTimecode(for: item) else { return nil }
+        let rate = TimecodeFormatter.effectiveTimecodeRate(for: item, dropFrame: start.contains(";"))
+        let storedRate = TimecodeRate(numerator: Int(numerator), denominator: Int(denominator))
+        // A replacement's metadata cannot establish a source timecode for a
+        // marker captured on another timebase. Keep its original relative TC.
+        guard rate.numerator == storedRate.numerator,
+              rate.denominator == storedRate.denominator,
+              let startFrame = rate.frameCount(forTimecode: start) else { return nil }
+        let (sourceFrame, overflow) = startFrame.addingReportingOverflow(frame)
+        guard !overflow else { return nil }
+        return rate.timecode(forFrameCount: sourceFrame)
     }
 }
 

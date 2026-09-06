@@ -10,6 +10,47 @@ import XCTest
 
 @MainActor
 final class CompareReviewReportExporterTests: XCTestCase {
+    func testReportTimecodesPreserveStoredFramesBeyondReplacementDuration() throws {
+        let snapshot = CompareReviewReportSnapshot(
+            primaryItem: makeItem(path: "/tmp/Master.mov", duration: 1, startTimecode: "01:00:00:00", frameRate: "24000/1001"),
+            secondaryItem: makeItem(path: "/tmp/Encode.mp4", duration: 1, startTimecode: "02:00:00;00", frameRate: "30000/1001"),
+            alignmentMode: .sourceTimecode,
+            notes: [CompareReviewNote(
+                primaryFrame: 48, primaryTime: 0, secondaryFrame: 1_800, secondaryTime: 0,
+                primaryRateNumerator: 24_000, primaryRateDenominator: 1_001,
+                secondaryRateNumerator: 30_000, secondaryRateDenominator: 1_001,
+                text: "Retain recorded coordinates"
+            )]
+        )
+        let row = try XCTUnwrap(snapshot.rows.first)
+        XCTAssertEqual(row.primaryRelativeTimecode, "00:00:02:00")
+        XCTAssertEqual(row.primarySourceTimecode, "01:00:02:00")
+        XCTAssertEqual(row.secondaryRelativeTimecode, "00:01:00:00")
+        XCTAssertEqual(row.secondarySourceTimecode, "02:01:00;02")
+        XCTAssertLessThan(row.primaryTime, 1, "Still extraction remains bounded by available media")
+        XCTAssertLessThan(row.secondaryTime, 1)
+    }
+
+    func testReportsDoNotInventSourceTimecodesFromChangedRates() throws {
+        let snapshot = CompareReviewReportSnapshot(
+            primaryItem: makeItem(path: "/tmp/Master.mov", duration: 20, startTimecode: "01:00:00:00", frameRate: "30/1"),
+            secondaryItem: makeItem(path: "/tmp/Encode.mp4", duration: 20, startTimecode: "02:00:00:00", frameRate: "24/1"),
+            alignmentMode: .sourceTimecode,
+            notes: [CompareReviewNote(
+                primaryFrame: 240, primaryTime: 0, secondaryFrame: 300, secondaryTime: 0,
+                primaryRateNumerator: 24, secondaryRateNumerator: 30,
+                text: "Original capture rates"
+            )]
+        )
+        let row = try XCTUnwrap(snapshot.rows.first)
+        XCTAssertEqual(row.primaryRelativeTimecode, "00:00:10:00")
+        XCTAssertEqual(row.secondaryRelativeTimecode, "00:00:10:00")
+        XCTAssertNil(row.primarySourceTimecode)
+        XCTAssertNil(row.secondarySourceTimecode)
+        let csv = CompareReviewReportExporter.csv(snapshot: snapshot)
+        XCTAssertTrue(csv.contains(",,00:00:10:00,240,,00:00:10:00,300,"))
+    }
+
     func testEditorExportsRejectChangedPrimaryRateWithoutRetimingReports() throws {
         for storedRate: (Int64, Int64) in [(24, 1), (30_000, 1_001)] {
             let snapshot = CompareReviewReportSnapshot(

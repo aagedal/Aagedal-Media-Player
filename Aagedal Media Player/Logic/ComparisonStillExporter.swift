@@ -431,15 +431,26 @@ nonisolated enum ComparisonStillFrameExtractor {
         return min(finiteTime, lastFrameTime)
     }
 
-    static func image(from url: URL, at time: TimeInterval) async throws -> CGImage {
+    static func image(
+        from url: URL, at time: TimeInterval, maximumSize: CGSize = .zero,
+        tolerance: CMTime = .zero
+    ) async throws -> CGImage {
         do {
             let asset = AVURLAsset(url: url)
             let generator = AVAssetImageGenerator(asset: asset)
             generator.appliesPreferredTrackTransform = true
-            generator.requestedTimeToleranceBefore = .zero
-            generator.requestedTimeToleranceAfter = .zero
+            generator.maximumSize = maximumSize
+            generator.requestedTimeToleranceBefore = tolerance
+            generator.requestedTimeToleranceAfter = tolerance
             let requestedTime = CMTime(seconds: max(0, time), preferredTimescale: 60_000)
-            let result = try await generator.image(at: requestedTime)
+            let cancellation = ImageGenerationCancellation(generator)
+            let result = try await withTaskCancellationHandler {
+                try Task.checkCancellation()
+                return try await generator.image(at: requestedTime)
+            } onCancel: {
+                cancellation.cancel()
+            }
+            try Task.checkCancellation()
             return result.image
         } catch is CancellationError {
             throw CancellationError()
@@ -449,11 +460,21 @@ nonisolated enum ComparisonStillFrameExtractor {
             // bundled ffmpeg fallback covers formats that only the MPV backend
             // can play, keeping comparison export independent of the active
             // playback backend.
-            return try await ffmpegImage(from: url, at: time)
+            return try await ffmpegImage(from: url, at: time, maximumSize: maximumSize)
         }
     }
 
-    private static func ffmpegImage(from url: URL, at time: TimeInterval) async throws -> CGImage {
+    // AVAssetImageGenerator supports cancelling generation from another queue.
+    private final class ImageGenerationCancellation: @unchecked Sendable {
+        private let generator: AVAssetImageGenerator
+        init(_ generator: AVAssetImageGenerator) { self.generator = generator }
+        func cancel() { generator.cancelAllCGImageGeneration() }
+    }
+
+    private static func ffmpegImage(from url: URL, at time: TimeInterval, maximumSize: CGSize) async throws -> CGImage {
+        let scale = maximumSize.width > 0 && maximumSize.height > 0
+            ? "scale=\(Int(maximumSize.width)):\(Int(maximumSize.height)):force_original_aspect_ratio=decrease,setsar=1"
+            : "scale=iw*sar:ih,setsar=1"
         let sink = LockedDataSink()
         try await FFmpegService.runStreamingOutput(
             arguments: [
@@ -461,7 +482,7 @@ nonisolated enum ComparisonStillFrameExtractor {
                 "-ss", String(max(0, time)),
                 "-i", url.path,
                 "-frames:v", "1",
-                "-vf", "scale=iw*sar:ih,setsar=1",
+                "-vf", scale,
                 "-c:v", "png",
                 "-f", "image2pipe",
                 "pipe:1",

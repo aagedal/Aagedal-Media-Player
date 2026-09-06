@@ -55,6 +55,8 @@ struct ControlsView: View {
     private var precisionScrubFactor = AppSettings.precisionScrubFactor.defaultValue
     @AppStorage(AppSettings.showTimelineDetails.key)
     private var showTimelineDetails = AppSettings.showTimelineDetails.defaultValue
+    @StateObject private var timelineThumbnail = TimelineThumbnailLoader()
+    @State private var thumbnailHoverX: CGFloat?
     @State private var timelineZoom: Double = 1
     @State private var timelineCenter: Double = 0
     @State private var isPanningOverview = false
@@ -142,6 +144,8 @@ struct ControlsView: View {
             isControlsFocused = focus != nil
         }
         .onChange(of: item?.id) { _, _ in
+            timelineThumbnail.hide(clearCache: true)
+            thumbnailHoverX = nil
             timelineZoom = 1
             timelineCenter = 0
             isPanningOverview = false
@@ -153,7 +157,11 @@ struct ControlsView: View {
                 timelineCenter = time
             }
         }
+        .onChange(of: showTimelineDetails) { _, visible in
+            if !visible { timelineThumbnail.hide(); thumbnailHoverX = nil }
+        }
         .onDisappear {
+            timelineThumbnail.hide(clearCache: true)
             deferredTimecodeActivation.cancel()
             isPanningOverview = false
             isTimelineFocused = false
@@ -568,6 +576,8 @@ struct ControlsView: View {
                         if !isDragging {
                             focusedControl = .timeline
                             isDragging = true
+                            timelineThumbnail.hide()
+                            thumbnailHoverX = nil
                             wasPrecision = false
                             // Jump to click position
                             let clickFraction = max(0, min(1, value.location.x / width))
@@ -607,6 +617,38 @@ struct ControlsView: View {
                         wasPrecision = false
                     }
             )
+            .onContinuousHover { phase in
+                switch phase {
+                case .active(let location):
+                    guard showTimelineDetails, !isDragging, width > 0,
+                          let item, item.hasVideoStream else { return }
+                    thumbnailHoverX = max(0, min(width, location.x))
+                    timelineThumbnail.request(item: item, time: viewport.time(at: location.x / width))
+                case .ended:
+                    thumbnailHoverX = nil
+                    timelineThumbnail.hide()
+                }
+            }
+            .overlay(alignment: .topLeading) {
+                if let x = thumbnailHoverX, let preview = timelineThumbnail.image,
+                   let time = timelineThumbnail.imageTime, let item {
+                    VStack(spacing: 4) {
+                        Image(decorative: preview, scale: 1)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 160, height: 90)
+                        Text("≈ " + TimecodeFormatter.formatTimeForDisplayWithMode(
+                            seconds: time, item: item, mode: timecodeMode
+                        ))
+                        .font(.caption.monospacedDigit())
+                    }
+                    .padding(6)
+                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 6))
+                    .offset(x: max(0, min(max(0, width - 172), x - 86)), y: -126)
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
+                }
+            }
             .focusable()
             .focused($focusedControl, equals: .timeline)
             .onKeyPress(.leftArrow) {
