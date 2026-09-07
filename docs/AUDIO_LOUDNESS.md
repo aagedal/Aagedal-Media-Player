@@ -66,9 +66,26 @@ surround-channel weighting and LFE exclusion, unchanged per-channel true peak,
 and selected-range consistency. Malformed audio and nonexistent stream
 selections must fail instead of returning a measurement. A deterministically
 pre-cancelled analysis must report cancellation, after which a fresh analysis
-of the same file succeeds. These checks do not replace calibrated reference
-measurements, multichannel performance profiling, or native concurrent-job
-cancellation acceptance.
+of the same file succeeds. Independent references and focused native
+concurrent-job checks are described below; broader playback/performance
+acceptance remains separate.
+
+Independent numerical references now supplement the relative-level fixtures.
+The tests write stereo Float32 WAV samples directly in Swift; FFmpeg is only
+the analyzer, not the signal generator or expected-value oracle. The selected
+[EBU Tech 3341 (2023), Table 1](https://tech.ebu.ch/docs/tech/tech3341.pdf)
+references cover:
+
+- Cases 1 and 2: absolute integrated calibration at −23 and −33 LUFS (±0.1 LU).
+- Case 4: a 100-second level sequence that exercises absolute and relative
+  gating, with an expected integrated result of −23 LUFS (±0.1 LU).
+- Cases 15–19: phase-sensitive true peaks at three frequencies, with 10 ms
+  fades and the specified +0.2/−0.4 dB tolerance. The final case reconstructs
+  above full scale despite unclipped input samples.
+
+This is a selected reference regression set, not full EBU/ITU certification.
+Remaining reference coverage includes authentic programme material, LRA,
+transient true peaks, and additional channel layouts/sample rates.
 
 Empty-range fixtures check both an interval beyond EOF and an interval before
 a delayed stream begins. Analysis requires FFmpeg's output clock to advance
@@ -114,3 +131,10 @@ For reproducible whole-file and early/late-range profiling on long multichannel
 files, use `scripts/profile-audio-loudness.sh`. The workload and local baseline
 are documented in `AUDIO_LOUDNESS_PERFORMANCE.md`; reference accuracy and
 concurrent playback acceptance remain separate.
+
+The [September 7 native check](AUDIO_QC_NATIVE_CHECK_2026-09-07.md) verifies two
+simultaneous stream jobs, independent cancellation and completion, and cleanup
+when the inspector is hidden and reopened. Inspector visibility now explicitly
+owns cancellation because native collapse can retain its SwiftUI content.
+Cancel Analysis has its own full-width row for an unambiguous target.
+Full Keyboard Access and spoken VoiceOver acceptance remain open.

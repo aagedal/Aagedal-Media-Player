@@ -8,6 +8,99 @@ import XCTest
 
 @MainActor
 final class LoudnessAnalysisTests: XCTestCase {
+    // Independently synthesize the specified PCM; FFmpeg is only the meter under test.
+    // EBU Tech 3341 (2023), Table 1: https://tech.ebu.ch/docs/tech/tech3341.pdf
+    func testEBUAbsoluteStereoCalibrationReferences() async throws {
+        guard FFmpegService.ffmpegPath != nil else { throw XCTSkip("Bundled ffmpeg is required") }
+        for level in [-23.0, -33.0] {
+            let url = try writeReferenceTone(segments: [(20, pow(10, level / 20))])
+            defer { try? FileManager.default.removeItem(at: url) }
+            let result = try await FFmpegService.analyzeLUFS(url: url, audioStreamIndex: 0)
+            XCTAssertEqual(result.integratedLoudness, level, accuracy: 0.1, "EBU cases 1 and 2")
+            XCTAssertEqual(result.truePeak, level, accuracy: 0.1)
+        }
+    }
+
+    func testEBUAbsoluteAndRelativeGatingReference() async throws {
+        guard FFmpegService.ffmpegPath != nil else { throw XCTSkip("Bundled ffmpeg is required") }
+        // Case 4: both the below-absolute-gate and below-relative-gate sections
+        // must be excluded from the integrated result.
+        let url = try writeReferenceTone(segments: [
+            (10, pow(10, -72.0 / 20)), (10, pow(10, -36.0 / 20)),
+            (60, pow(10, -23.0 / 20)),
+            (10, pow(10, -36.0 / 20)), (10, pow(10, -72.0 / 20)),
+        ])
+        defer { try? FileManager.default.removeItem(at: url) }
+        let result = try await FFmpegService.analyzeLUFS(url: url, audioStreamIndex: 0)
+        XCTAssertEqual(result.integratedLoudness, -23, accuracy: 0.1, "EBU case 4")
+    }
+
+    func testEBUPhaseSensitiveTruePeakReferences() async throws {
+        guard FFmpegService.ffmpegPath != nil else { throw XCTSkip("Bundled ffmpeg is required") }
+        // Cases 15–19. Case 16 has a sample peak near −9 dBFS but a true peak
+        // near −6 dBTP; case 19's unclipped samples reconstruct above full scale.
+        let cases: [(divisor: Double, phase: Double, amplitude: Double, expected: Double)] = [
+            (4, 0, 0.5, -6), (4, 45, 0.5, -6), (6, 60, 0.5, -6),
+            (8, 67.5, 0.5, -6), (4, 45, 1.41, 3),
+        ]
+        for (index, reference) in cases.enumerated() {
+            let url = try writeReferenceTone(
+                segments: [(2, reference.amplitude)], frequency: 48_000 / reference.divisor,
+                phase: reference.phase * .pi / 180, fadeSeconds: 0.01
+            )
+            defer { try? FileManager.default.removeItem(at: url) }
+            let result = try await FFmpegService.analyzeLUFS(url: url, audioStreamIndex: 0)
+            XCTAssertGreaterThanOrEqual(result.truePeak, reference.expected - 0.4, "EBU case \(index + 15)")
+            XCTAssertLessThanOrEqual(result.truePeak, reference.expected + 0.2, "EBU case \(index + 15)")
+        }
+    }
+
+    /// Little-endian stereo IEEE Float32 WAV, with identical in-phase channels.
+    /// Float PCM preserves the reference levels without integer quantization.
+    private func writeReferenceTone(
+        segments: [(seconds: Int, amplitude: Double)], frequency: Double = 1_000,
+        phase: Double = 0, fadeSeconds: Double = 0
+    ) throws -> URL {
+        let sampleRate = 48_000
+        let frames = segments.reduce(0) { $0 + $1.seconds * sampleRate }
+        let payloadBytes = frames * 2 * MemoryLayout<Float>.size
+        var data = Data(capacity: 44 + payloadBytes)
+        func appendInteger<T: FixedWidthInteger>(_ value: T) {
+            var littleEndian = value.littleEndian
+            withUnsafeBytes(of: &littleEndian) { data.append(contentsOf: $0) }
+        }
+        data.append(contentsOf: "RIFF".utf8)
+        appendInteger(UInt32(36 + payloadBytes))
+        data.append(contentsOf: "WAVEfmt ".utf8)
+        appendInteger(UInt32(16))
+        appendInteger(UInt16(3)) // WAVE_FORMAT_IEEE_FLOAT
+        appendInteger(UInt16(2))
+        appendInteger(UInt32(sampleRate))
+        appendInteger(UInt32(sampleRate * 8))
+        appendInteger(UInt16(8))
+        appendInteger(UInt16(32))
+        data.append(contentsOf: "data".utf8)
+        appendInteger(UInt32(payloadBytes))
+        let fadeFrames = Int(fadeSeconds * Double(sampleRate))
+        var frame = 0
+        for segment in segments {
+            for _ in 0..<(segment.seconds * sampleRate) {
+                let envelope = fadeFrames == 0 ? 1 : min(
+                    1, Double(min(frame, frames - 1 - frame)) / Double(fadeFrames)
+                )
+                let sample = Float(segment.amplitude * envelope * sin(
+                    2 * .pi * frequency * Double(frame) / Double(sampleRate) + phase
+                ))
+                appendInteger(sample.bitPattern)
+                appendInteger(sample.bitPattern)
+                frame += 1
+            }
+        }
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("ebu-reference-\(UUID().uuidString).wav")
+        try data.write(to: url)
+        return url
+    }
+
     func testWholeFileKeepsStreamSelectionWithoutTrimming() throws {
         let arguments = try FFmpegService.loudnessArguments(
             url: URL(fileURLWithPath: "/tmp/media with spaces.wav"), audioStreamIndex: 2

@@ -240,6 +240,15 @@ struct MetadataInspectorView: View {
         .onExitCommand {
             isPresented = false
         }
+        .onChange(of: isPresented) {
+            // A collapsed native inspector can retain its SwiftUI content,
+            // so disappearance alone does not own cancellation.
+            if !isPresented {
+                copiedConfirmationTask.cancel()
+                showCopiedConfirmation = false
+                cancelLUFSAnalyses(resetResults: false)
+            }
+        }
         .onChange(of: measureSelectedRange) {
             cancelLUFSAnalyses(resetResults: true)
         }
@@ -424,14 +433,21 @@ struct MetadataInspectorView: View {
                 Text("Analyzing loudness…")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                Button("Cancel") {
-                    lufsGenerations.invalidate(for: streamIndex)
-                    lufsTasks.removeValue(forKey: streamIndex)?.cancel()
-                    lufsAnalyzing.remove(streamIndex)
-                }
-                .controlSize(.small)
-                .accessibilityLabel("Cancel loudness analysis for audio stream \(streamIndex + 1)")
             }
+            // Keep the action in its own List row. Combining it with status
+            // text causes macOS to expose one row whose activation can miss
+            // the button and whose focus target is ambiguous.
+            Button {
+                lufsGenerations.invalidate(for: streamIndex)
+                lufsTasks.removeValue(forKey: streamIndex)?.cancel()
+                lufsAnalyzing.remove(streamIndex)
+            } label: {
+                Text("Cancel Analysis")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            .accessibilityLabel("Cancel loudness analysis for audio stream \(streamIndex + 1)")
         } else {
             if let error = lufsErrors[streamIndex] {
                 Text(error)
@@ -454,6 +470,7 @@ struct MetadataInspectorView: View {
     }
 
     private func runLUFSAnalysis(streamIndex: Int) {
+        guard isPresented else { return }
         let range = measureSelectedRange ? selectedLoudnessRange : nil
         guard !measureSelectedRange || range != nil else { return }
         lufsErrors.removeValue(forKey: streamIndex)

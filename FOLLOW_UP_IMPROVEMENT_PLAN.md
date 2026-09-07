@@ -752,12 +752,50 @@ and live meters remain separate. The eight-hour metadata discovery also exposed
 a roughly 2.3 GiB transient parent resident-memory spike; that memory gate remains open.
 See `docs/AUDIO_LOUDNESS_PERFORMANCE.md`.
 
+## Phase 45 — Native loudness cancellation and numerical references
+
+Status: Completed on 2026-09-07. All 409 Release tests, static analysis, and
+all 61 release-preflight checks pass. Final native cancellation, retry, and
+keyboard inspector hide/reopen checks also pass.
+
+- [x] Cancel active loudness work when the native inspector is hidden, even
+  when SwiftUI retains its content and does not call `onDisappear`.
+- [x] Give per-stream cancellation its own full-width action row.
+- [x] Add independently synthesized PCM references for absolute stereo levels,
+  absolute/relative gating, and phase-sensitive intersample true peaks.
+- [x] Exercise two simultaneous native stream measurements, individual
+  cancellation, surviving-job completion, and inspector hide/reopen cleanup.
+- [x] Pass the final integrated Release suite and static analysis.
+
+Acceptance: hiding analysis controls cannot leave their jobs running invisibly,
+while cancelling one stream leaves another independent job intact. Selected
+EBU numerical references are regression evidence, not complete certification.
+See `docs/AUDIO_QC_NATIVE_CHECK_2026-09-07.md` and `docs/AUDIO_LOUDNESS.md`.
+
+## Phase 46 — Metadata memory diagnosis and candidate dependency fix
+
+Status: Investigation complete on 2026-09-07; production integration remains open.
+
+- [x] Isolate the spike to RTMD detection's generic top-level box walk, which
+  materializes `mdat` even in ordinary audio-only M4A files.
+- [x] Preserve a minimal dependency patch using the existing skip-mdat walker.
+- [x] Add a reproducible baseline/patched harness with fresh processes,
+  source/input hashes, lifetime-peak RSS, and selected metadata parity checks.
+- [x] Verify one/eight-hour ALAC inputs: normal-read peaks fall from
+  564/4,447 MiB to 11/20 MiB, with all 12 workload/parity checks passing.
+- [ ] Validate real RTMD/raw and malformed-container behavior upstream, integrate
+  a reviewed dependency release, and repeat full-app memory profiling.
+
+Acceptance: the source of the memory spike and a measured candidate fix are now
+established. The app still uses the original pinned dependency; its memory gate
+remains open. See `docs/METADATA_MEMORY_PERFORMANCE.md`.
+
 ## Remaining work after this continuation
 
-- Profile and reduce the transient long-file metadata resident-memory spike
-  (roughly 2.3 GiB for the eight-hour ALAC fixture). The dependency maps and
-  retains the whole file; why so many pages become resident still needs an
-  allocation/page-access profile before a metadata-preserving dependency fix.
+- Integrate the measured metadata-memory dependency fix after real RTMD/raw
+  and malformed-container validation, then repeat full-app profiling. The
+  isolated candidate reduces the eight-hour peak from about 4.3 GiB to 20 MiB;
+  production still uses the original dependency. See Phase 46.
 
 - Native timeline zoom/hover, comparison review, relinking, channel/loudness controls,
   and loupe pointer/Full Keyboard Access/VoiceOver acceptance. A focused native
@@ -767,7 +805,9 @@ See `docs/AUDIO_LOUDNESS_PERFORMANCE.md`.
   seeking, and primary-replacement Fit reset. The wider
   pointer and assistive-technology matrix remains open. Phase 42 also verifies
   native channel-routing summaries and loudness metric labels; spoken narration,
-  keyboard traversal, and concurrent analysis acceptance remain open.
+  and keyboard traversal remain open. The September 7 check verifies concurrent
+  jobs, independent cancellation/completion, and inspector hide/reopen cleanup;
+  wider playback and assistive-technology acceptance remains open.
 - Actual marker import/re-export in Resolve, Final Cut Pro, and Avid, including
   fractional rates, drop-frame boundaries, inclusive ranges, and source identity.
 - Oldest-supported Apple Silicon UHD/HDR playback, reflected loupe/scopes,
@@ -775,7 +815,9 @@ See `docs/AUDIO_LOUDNESS_PERFORMANCE.md`.
 - Release signing/notarization/update-feed validation, representative-media
   smoke tests, refreshed screenshots/demo, publication, and hands-on editor beta.
 - Peak/true-peak meters and live momentary/short-term loudness,
-  calibration/ballistics/presets, reference accuracy, and multichannel profiling.
+  calibration/ballistics/presets, broader programme/LRA/transient reference
+  accuracy, and representative multichannel profiling. Selected absolute-level,
+  gating, and true-peak numerical references are now covered by Phase 45.
 - Verified 1:1 source-pixel inspection, whole-viewport zoom/pan after loupe
   acceptance, and time-localized mismatch markers after a detection model is
   defined. See `PRODUCT_ROADMAP.md` for milestone sequencing.
@@ -826,3 +868,6 @@ See `docs/AUDIO_LOUDNESS_PERFORMANCE.md`.
 
 35. Phase 43 stable MPV drawable sizing during playback.
 36. Phase 44 multichannel loudness profiling.
+
+37. Phase 45 native loudness cancellation and numerical references.
+38. Phase 46 metadata memory diagnosis and candidate dependency fix.
