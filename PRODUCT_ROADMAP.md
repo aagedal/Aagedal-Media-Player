@@ -278,6 +278,10 @@ confidence as the picture.
 ### 1.8 release gates
 
 - [ ] Validate meter accuracy against trusted reference files and tools.
+  Offline analysis now passes selected EBU absolute calibration, gating,
+  phase-sensitive true-peak, and synthetic LRA references. Calibration and LRA
+  cover 44.1/48/96 kHz. Authentic programme material, transient peaks, further
+  channel layouts, and future live-meter behavior remain; see `docs/AUDIO_LOUDNESS.md`.
 - [ ] Confirm meter and thumbnail work remains bounded during long playback.
   A production-loader thumbnail profiler now checks 40 distributed requests
   per input with cache bounds and sampled memory/latency reporting. See

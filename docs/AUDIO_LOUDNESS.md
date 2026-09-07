@@ -76,16 +76,32 @@ the analyzer, not the signal generator or expected-value oracle. The selected
 [EBU Tech 3341 (2023), Table 1](https://tech.ebu.ch/docs/tech/tech3341.pdf)
 references cover:
 
-- Cases 1 and 2: absolute integrated calibration at −23 and −33 LUFS (±0.1 LU).
+- Cases 1 and 2: absolute integrated calibration at −23 and −33 LUFS (±0.1 LU),
+  synthesized independently at 44.1, 48, and 96 kHz.
 - Case 4: a 100-second level sequence that exercises absolute and relative
   gating, with an expected integrated result of −23 LUFS (±0.1 LU).
 - Cases 15–19: phase-sensitive true peaks at three frequencies, with 10 ms
   fades and the specified +0.2/−0.4 dB tolerance. The final case reconstructs
   above full scale despite unclipped input samples.
 
+[EBU Tech 3342 (2023), Table 1](https://tech.ebu.ch/docs/tech/tech3342.pdf)
+cases 1–4 add independent loudness-range references at 44.1, 48, and 96 kHz.
+The four level sequences have expected ranges of 10, 5, 20, and 15 LU, using
+the specified ±1 LU tolerance. The five-segment fourth case checks that
+relative gating excludes the quietest sections instead of reporting the full
+30 dB level span. Each segment is a directly synthesized, in-phase stereo
+1 kHz tone lasting 20 seconds; each file receives a fresh analysis.
+
 This is a selected reference regression set, not full EBU/ITU certification.
-Remaining reference coverage includes authentic programme material, LRA,
-transient true peaks, and additional channel layouts/sample rates.
+Remaining reference coverage includes authentic programme material,
+transient true peaks, and additional channel layouts. True-peak phase
+references currently cover 48 kHz; the additional sample rates cover
+calibration and synthetic LRA.
+
+The expanded 410-test Release suite passes without failures or skips on
+2026-09-07, as do Xcode static analysis and all 61 release-preflight checks.
+The additional calibration/LRA coverage comprises 18 independently synthesized
+references across the three sample rates; it does not change analysis behavior.
 
 Empty-range fixtures check both an interval beyond EOF and an interval before
 a delayed stream begins. Analysis requires FFmpeg's output clock to advance

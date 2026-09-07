@@ -12,12 +12,43 @@ final class LoudnessAnalysisTests: XCTestCase {
     // EBU Tech 3341 (2023), Table 1: https://tech.ebu.ch/docs/tech/tech3341.pdf
     func testEBUAbsoluteStereoCalibrationReferences() async throws {
         guard FFmpegService.ffmpegPath != nil else { throw XCTSkip("Bundled ffmpeg is required") }
-        for level in [-23.0, -33.0] {
-            let url = try writeReferenceTone(segments: [(20, pow(10, level / 20))])
-            defer { try? FileManager.default.removeItem(at: url) }
-            let result = try await FFmpegService.analyzeLUFS(url: url, audioStreamIndex: 0)
-            XCTAssertEqual(result.integratedLoudness, level, accuracy: 0.1, "EBU cases 1 and 2")
-            XCTAssertEqual(result.truePeak, level, accuracy: 0.1)
+        for sampleRate in [44_100, 48_000, 96_000] {
+            for level in [-23.0, -33.0] {
+                let url = try writeReferenceTone(
+                    segments: [(20, pow(10, level / 20))], sampleRate: sampleRate
+                )
+                defer { try? FileManager.default.removeItem(at: url) }
+                let result = try await FFmpegService.analyzeLUFS(url: url, audioStreamIndex: 0)
+                XCTAssertEqual(result.integratedLoudness, level, accuracy: 0.1, "EBU cases 1 and 2 at \(sampleRate) Hz")
+                XCTAssertEqual(result.truePeak, level, accuracy: 0.1)
+            }
+        }
+    }
+
+    func testEBULoudnessRangeReferencesAcrossSampleRates() async throws {
+        guard FFmpegService.ffmpegPath != nil else { throw XCTSkip("Bundled ffmpeg is required") }
+        // EBU Tech 3342 (2023), Table 1, cases 1–4:
+        // https://tech.ebu.ch/docs/tech/tech3342.pdf
+        // Each in-phase stereo 1 kHz segment lasts 20 seconds. Case 4's
+        // −50 dBFS sections must be gated out; the LRA is 15 LU, not 30 LU.
+        // Section 3 states that the algorithm is independent of sample rate.
+        let references: [(levels: [Double], expected: Double)] = [
+            ([-20, -30], 10), ([-20, -15], 5), ([-40, -20], 20),
+            ([-50, -35, -20, -35, -50], 15),
+        ]
+        for sampleRate in [44_100, 48_000, 96_000] {
+            for (index, reference) in references.enumerated() {
+                let url = try writeReferenceTone(
+                    segments: reference.levels.map { (20, pow(10, $0 / 20)) },
+                    sampleRate: sampleRate
+                )
+                defer { try? FileManager.default.removeItem(at: url) }
+                let result = try await FFmpegService.analyzeLUFS(url: url, audioStreamIndex: 0)
+                XCTAssertEqual(
+                    result.loudnessRange, reference.expected, accuracy: 1,
+                    "EBU Tech 3342 case \(index + 1) at \(sampleRate) Hz"
+                )
+            }
         }
     }
 
@@ -59,9 +90,8 @@ final class LoudnessAnalysisTests: XCTestCase {
     /// Float PCM preserves the reference levels without integer quantization.
     private func writeReferenceTone(
         segments: [(seconds: Int, amplitude: Double)], frequency: Double = 1_000,
-        phase: Double = 0, fadeSeconds: Double = 0
+        phase: Double = 0, fadeSeconds: Double = 0, sampleRate: Int = 48_000
     ) throws -> URL {
-        let sampleRate = 48_000
         let frames = segments.reduce(0) { $0 + $1.seconds * sampleRate }
         let payloadBytes = frames * 2 * MemoryLayout<Float>.size
         var data = Data(capacity: 44 + payloadBytes)
