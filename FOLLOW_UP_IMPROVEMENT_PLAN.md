@@ -774,7 +774,8 @@ See `docs/AUDIO_QC_NATIVE_CHECK_2026-09-07.md` and `docs/AUDIO_LOUDNESS.md`.
 
 ## Phase 46 — Metadata memory diagnosis and candidate dependency fix
 
-Status: Investigation complete on 2026-09-07; production integration remains open.
+Status: Diagnosis and selected candidate validation complete on 2026-09-07;
+production integration remains open.
 
 - [x] Isolate the spike to RTMD detection's generic top-level box walk, which
   materializes `mdat` even in ordinary audio-only M4A files.
@@ -783,17 +784,52 @@ Status: Investigation complete on 2026-09-07; production integration remains ope
   source/input hashes, lifetime-peak RSS, and selected metadata parity checks.
 - [x] Verify one/eight-hour ALAC inputs: normal-read peaks fall from
   564/4,447 MiB to 11/20 MiB, with all 12 workload/parity checks passing.
-- [ ] Validate real RTMD/raw and malformed-container behavior upstream, integrate
-  a reviewed dependency release, and repeat full-app memory profiling.
+- [x] Validate 27 synthetic RTMD/container cases against original and candidate
+  builds: leading/trailing `moov`, absolute `stco`/`co64` offsets, extended/zero
+  atoms, malformed/truncated inputs, decoded frames, and complete motion samples.
+  All 54 isolated runs pass. See `docs/METADATA_CONTAINER_VALIDATION.md`.
+- [x] Validate the full paired memory workload matrix before summary publication;
+  reject invalid scalar types, non-finite metrics, incomplete snapshots, missing
+  workloads, and inconsistent raw/summary records. Eight validator regressions
+  and the retained 12-workload baseline pass.
+- [x] Compare a native Sony clip's 672 RTMD frames, first-frame snapshot,
+  2,000 Hz IMU rate, and complete 26,880-sample gyro/accelerometer streams;
+  compare exported metadata for Sony, BRAW, CRM, and R3D. All paired results match.
+  The final run verifies unchanged media and NRT sidecar hashes; see
+  `docs/METADATA_REAL_MEDIA_VALIDATION.md` for exact coverage and limitations.
+- [x] Run the candidate's local upstream library Release suite: 1,662 tests,
+  20 fixture-dependent skips, zero failures. CLI tests are excluded; the
+  selected local CRM is independently covered by the paired exporter check.
+- [ ] Complete upstream review and remaining fixture/CLI coverage, integrate a
+  reviewed dependency release, and repeat full-app memory profiling. The latest
+  remote tag is still 3.0.0 as checked on 2026-09-07.
 
 Acceptance: the source of the memory spike and a measured candidate fix are now
 established. The app still uses the original pinned dependency; its memory gate
 remains open. See `docs/METADATA_MEMORY_PERFORMANCE.md`.
 
+## Phase 47 — Loudness range references across sample rates
+
+Status: Completed on 2026-09-07. All 410 Release tests pass without failures
+or skips; Xcode static analysis and all 61 release-preflight checks pass.
+
+- [x] Add independently synthesized EBU Tech 3342 LRA cases 1–4 at 44.1, 48,
+  and 96 kHz, including exclusion of quiet sections by relative gating.
+- [x] Extend EBU absolute stereo calibration to those three sample rates.
+- [x] Verify all 18 calibration/LRA references through production analysis.
+- [x] Document the exact numerical scope without claiming full certification.
+
+Acceptance: selected offline LRA and calibration references pass at three
+sample rates. Authentic programme material, transient peaks, additional channel
+layouts, and live-meter behavior remain separate. See `docs/AUDIO_LOUDNESS.md`.
+
 ## Remaining work after this continuation
 
-- Integrate the measured metadata-memory dependency fix after real RTMD/raw
-  and malformed-container validation, then repeat full-app profiling. The
+- Integrate the measured metadata-memory dependency fix after upstream review,
+  broader camera/format acceptance, and remaining fixture/CLI coverage, then
+  repeat full-app profiling. Synthetic
+  containers, selected real Sony/raw media, and the candidate library suite now
+  pass, with 20 missing-fixture skips explicitly retained. The
   isolated candidate reduces the eight-hour peak from about 4.3 GiB to 20 MiB;
   production still uses the original dependency. See Phase 46.
 
@@ -815,9 +851,10 @@ remains open. See `docs/METADATA_MEMORY_PERFORMANCE.md`.
 - Release signing/notarization/update-feed validation, representative-media
   smoke tests, refreshed screenshots/demo, publication, and hands-on editor beta.
 - Peak/true-peak meters and live momentary/short-term loudness,
-  calibration/ballistics/presets, broader programme/LRA/transient reference
+  calibration/ballistics/presets, authentic programme/transient reference
   accuracy, and representative multichannel profiling. Selected absolute-level,
-  gating, and true-peak numerical references are now covered by Phase 45.
+  gating, and true-peak numerical references are covered by Phase 45; Phase 47
+  adds synthetic LRA and calibration at 44.1/48/96 kHz.
 - Verified 1:1 source-pixel inspection, whole-viewport zoom/pan after loupe
   acceptance, and time-localized mismatch markers after a detection model is
   defined. See `PRODUCT_ROADMAP.md` for milestone sequencing.
@@ -871,3 +908,4 @@ remains open. See `docs/METADATA_MEMORY_PERFORMANCE.md`.
 
 37. Phase 45 native loudness cancellation and numerical references.
 38. Phase 46 metadata memory diagnosis and candidate dependency fix.
+39. Phase 47 loudness range references across sample rates.
