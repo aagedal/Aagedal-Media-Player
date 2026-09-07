@@ -87,6 +87,10 @@ multichannel profile:
 scripts/profile-audio-waveforms.sh
 ```
 
+Its report includes decode time, fixed accumulator size, and resident-memory
+growth. See [docs/AUDIO_WAVEFORM_PERFORMANCE.md](docs/AUDIO_WAVEFORM_PERFORMANCE.md)
+for the current baseline and methodology.
+
 Profile production timeline thumbnail requests against long recordings:
 
 ```bash
@@ -98,9 +102,15 @@ input hashes, test results, and latency/memory measurements. See
 [timeline profiling](docs/TIMELINE_THUMBNAIL_PERFORMANCE.md) for methodology
 and the remaining playback/UHD/HDR and release-floor checks.
 
-Its report includes decode time, fixed accumulator size, and resident-memory
-growth. See [docs/AUDIO_WAVEFORM_PERFORMANCE.md](docs/AUDIO_WAVEFORM_PERFORMANCE.md)
-for the current baseline and methodology.
+Profile production whole-file and selected-range loudness on long multichannel files:
+
+```bash
+scripts/profile-audio-loudness.sh /tmp/loudness-profile /path/to/long-5.1.m4a
+```
+
+This also requires a new artifact directory and retains separately sampled app
+and FFmpeg memory. See [loudness profiling](docs/AUDIO_LOUDNESS_PERFORMANCE.md)
+for the workload, reproducible fixtures, and measurement limits.
 
 Release builds support Apple Silicon (`arm64`) on macOS 15 or later. Maintainer
 preflight, signing, architecture, entitlement, and ffmpeg provenance guidance is

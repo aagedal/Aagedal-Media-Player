@@ -1,6 +1,6 @@
 # Aagedal Media Player Product Roadmap
 
-Last updated: 2026-09-06
+Last updated: 2026-09-07
 
 ## Product direction
 
@@ -251,8 +251,9 @@ confidence as the picture.
 - [ ] Test and profile multichannel, multi-track, very long, and malformed
   sources without unbounded memory or background work. Automated offline
   analysis now covers three-track isolation, 5.1 channel weighting, malformed
-  input, missing streams, and cancellation/retry. Long-file loudness profiling
-  and calibrated reference accuracy remain; see `docs/AUDIO_LOUDNESS.md`.
+  input, missing streams, and cancellation/retry. A production long-file loudness profiler now records whole/early/late-range
+  timings and separately sampled app/FFmpeg memory. Representative multitrack
+  and release-floor profiling and calibrated reference accuracy remain; see `docs/AUDIO_LOUDNESS.md`.
 
 ### Inspection timeline
 

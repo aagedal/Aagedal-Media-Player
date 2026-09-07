@@ -708,12 +708,63 @@ Acceptance: absent audio cannot masquerade as a measured 0 dB peak, and audio
 monitoring state is exposed to accessibility clients. Native VoiceOver/Full
 Keyboard Access and calibrated reference/performance checks remain separate.
 
+## Phase 43 — Stable MPV drawable sizing during playback
+
+Status: Completed on 2026-09-07. All 406 Release tests pass without failures
+or skips; static analysis and all 61 release-preflight checks pass.
+
+- [x] Preserve AppKit-aligned native bounds when SwiftUI repeats an unchanged
+  fractional fitted-picture proposal during playback.
+- [x] Derive explicit drawable updates from the same native bounds used by
+  AppKit layout, preventing alternating one-pixel surface allocations.
+- [x] Retain immediate surface resizing when the actual proposal changes.
+- [x] Add a regression for repeated fractional proposals, native alignment,
+  stable drawable dimensions, and a subsequent real resize.
+- [x] Pass the integrated Release suite, static analysis, and release preflight.
+
+Acceptance: a stable window cannot continually rebuild the MPV swapchain just
+because SwiftUI and AppKit round a fitted picture differently. An 8K playback
+session exposed repeated 3111/3112-pixel allocations at unchanged native bounds;
+the regression recreates that proposal/alignment sequence. Representative native
+playback and release-floor performance remain separate checks.
+
+## Phase 44 — Reproducible multichannel loudness profiling
+
+Status: Completed on 2026-09-07. The isolated one/eight-hour 5.1 profile and
+its artifact validator pass. All 406 Release tests, five profile-validator tests,
+static analysis, and all 61 release-preflight checks pass.
+
+- [x] Exercise production whole-file and early/late 30-second range analysis
+  against explicitly selected long multichannel files.
+- [x] Record stream metadata, measurement values, wall time, and separately
+  sampled parent/FFmpeg child resident memory with a cancellation deadline.
+- [x] Retain hardware/build details, source hashes, raw XCTest attachments,
+  and validated machine-readable results.
+- [x] Reject incomplete inputs/scopes, invalid timing/ranges, inconsistent
+  stream metadata, and missing memory observations with validator regressions.
+- [x] Record an isolated one/eight-hour 5.1 baseline.
+- [x] Pass the integrated Release suite, static analysis, and release preflight.
+
+Acceptance: maintainers can repeat the real analysis workload on representative
+sources and the release-floor Mac. Sampled memory is an observation, not a proof
+of bounds for every codec; reference accuracy, concurrent-job UI acceptance,
+and live meters remain separate. The eight-hour metadata discovery also exposed
+a roughly 2.3 GiB transient parent resident-memory spike; that memory gate remains open.
+See `docs/AUDIO_LOUDNESS_PERFORMANCE.md`.
+
 ## Remaining work after this continuation
+
+- Profile and reduce the transient long-file metadata resident-memory spike
+  (roughly 2.3 GiB for the eight-hour ALAC fixture). The dependency maps and
+  retains the whole file; why so many pages become resident still needs an
+  allocation/page-access profile before a metadata-preserving dependency fix.
 
 - Native timeline zoom/hover, comparison review, relinking, channel/loudness controls,
   and loupe pointer/Full Keyboard Access/VoiceOver acceptance. A focused native
   timeline check now confirms zoom, overview adjustment without seeking,
-  frame-step reveal, and Fit in single-source and comparison views. The wider
+  frame-step reveal, and Fit in single-source and comparison views. The September 7
+  extension also verifies pointer scrubbing, paused overview panning, fullscreen
+  seeking, and primary-replacement Fit reset. The wider
   pointer and assistive-technology matrix remains open. Phase 42 also verifies
   native channel-routing summaries and loudness metric labels; spoken narration,
   keyboard traversal, and concurrent analysis acceptance remain open.
@@ -772,3 +823,6 @@ Keyboard Access and calibrated reference/performance checks remain separate.
 32. Phase 40 selected-range loudness analysis.
 33. Phase 41 long-file thumbnail profiling.
 34. Phase 42 audio QC edge cases and accessible monitoring controls.
+
+35. Phase 43 stable MPV drawable sizing during playback.
+36. Phase 44 multichannel loudness profiling.

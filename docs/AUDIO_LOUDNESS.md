@@ -109,3 +109,8 @@ analysis tests do not establish spoken narration or full keyboard traversal.
 
 A focused native control check is recorded in
 `AUDIO_QC_NATIVE_CHECK_2026-09-06.md`; it does not close the wider acceptance matrix.
+
+For reproducible whole-file and early/late-range profiling on long multichannel
+files, use `scripts/profile-audio-loudness.sh`. The workload and local baseline
+are documented in `AUDIO_LOUDNESS_PERFORMANCE.md`; reference accuracy and
+concurrent playback acceptance remain separate.

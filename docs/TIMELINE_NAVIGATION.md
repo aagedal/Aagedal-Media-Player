@@ -59,7 +59,10 @@ release-preflight checks pass.
 clipping, offscreen points, invalid geometry, and adjacent fractional-rate
 frames in a 24-hour recording. Existing playback/compare tests protect frame
 stepping and coordinated seeking. A focused native zoom/overview/frame-step/Fit check is recorded in
-`TIMELINE_NATIVE_CHECK_2026-09-06.md`. The broader checks below remain pending;
+`TIMELINE_NATIVE_CHECK_2026-09-06.md`. The September 7 extension in
+`TIMELINE_NATIVE_CHECK_2026-09-07.md` verifies pointer scrubbing, paused overview
+panning, fullscreen seeking, and primary-replacement Fit reset. The broader
+checks below remain pending;
 model tests and accessibility action calls do not establish full pointer,
 keyboard, or VoiceOver acceptance.
 

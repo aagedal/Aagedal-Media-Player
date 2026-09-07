@@ -5,6 +5,7 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Added
+- Reproducible multichannel loudness profiling for whole-file and early/late ranges, with separately sampled app and FFmpeg memory and validated result artifacts.
 - Offline integrated loudness, loudness range, and true-peak analysis over selected In–Out points, with per-stream cancellation and measured-range provenance in copied metadata.
 - Reproducible production timeline-thumbnail profiling with long-file seek latency, cache bounds, and sampled resident-memory measurements.
 - Lazy timeline hover thumbnails with a bounded cache and cancellation on media replacement or dismissal.
@@ -40,6 +41,7 @@ All notable changes to Aagedal Media Player.
   recording run sheet.
 
 ### Changed
+- Preserve AppKit-aligned MPV surface dimensions across unchanged SwiftUI updates, avoiding repeated one-pixel swapchain reallocations during playback.
 - Keep source A visible when entering Compare Mode, replacing B, or returning to single-source playback by retaining its native video surface.
 - Editor-marker reports preserve full A/B source URLs, stored rational rates, and explicit source/relative B timecodes; oversized Avid notes fail visibly instead of being truncated.
 - Timeline thumbnails invalidate cached images when a source URL changes and safely clamp extreme requested timestamps.
