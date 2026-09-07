@@ -131,15 +131,15 @@ was rerun for this artifact-validation change.
 ## Acceptance still required
 
 The synthetic ALAC files have no video or RTMD track. They establish the negative
-probe regression and audio metadata parity only. Before a dependency release is
-integrated, run its tests and verify real Sony RTMD clips, IMU rate and first-frame
-snapshot parity, absolute sample offsets, leading/trailing `moov`, extended-size
-and zero-size atoms, malformed/truncated boxes, and representative raw formats.
-The [synthetic container validation](METADATA_CONTAINER_VALIDATION.md) now checks
+probe regression and audio metadata parity only. The subsequent
+[synthetic container validation](METADATA_CONTAINER_VALIDATION.md) checks
 leading/trailing `moov`, absolute `stco`/`co64` sample offsets, extended/zero-size
-atoms, and selected malformed/truncated cases through public RTMD APIs. These
-fixtures supplement the real-content acceptance above; upstream tests must still
-check intended error semantics and broader format compatibility.
+atoms, and selected malformed/truncated cases through public RTMD APIs.
+[Real-media validation](METADATA_REAL_MEDIA_VALIDATION.md) adds one native Sony A1
+clip (all RTMD frames and IMU samples), BRAW/CRM/R3D exporter parity, and a passing
+upstream library suite with its skips documented. Broader camera/recording-mode
+coverage, raw formats and intended error semantics still require review; these
+checks do not establish compatibility for every clip or every internal field.
 
 After integrating a reviewed dependency release, repeat the isolated profile and
 full app metadata/loudness workload, including app-model conversion and release.

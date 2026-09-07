@@ -59,8 +59,8 @@ durable evidence. This run measures parser behavior, not memory usage.
 
 ## Remaining acceptance
 
-Synthetic RTMD decoding cannot establish compatibility with real Sony camera
-files. Real RTMD clips still need first-frame/IMU-rate and complete metadata parity,
-including representative bodies/recording modes. Representative raw formats,
-upstream dependency tests, a reviewed dependency release, and the full-app
-metadata/loudness memory profile remain required before production integration.
+Synthetic RTMD decoding alone cannot establish compatibility with real Sony
+camera files. The subsequent [real-media validation](METADATA_REAL_MEDIA_VALIDATION.md)
+checks one native Sony A1 clip, BRAW/CRM/R3D examples and the upstream library suite.
+Broader bodies/recording modes and formats, a reviewed dependency release, and the
+full-app metadata/loudness memory profile remain open before production integration.
