@@ -1,10 +1,13 @@
 # Timeline zoom and overview
 
-The timeline's **Fit** menu offers 2×, 4×, 8×, 16×, 32×, and 64× zoom,
+Right-click the timeline and choose **Timeline Zoom** for 2×, 4×, 8×, 16×, 32×, and 64× zoom,
 centered on the current playhead and clamped to the file's start and end.
 Choose **Fit Entire Timeline**, or the **Fit** button beside a zoomed overview,
 to return to the complete duration. Opening another primary file resets zoom.
-Zoom is local to each player window and does not change playback speed.
+The zoom menu and overview appear above the timeline only while zoomed; Fit
+removes that extra row. The empty player and ordinary full-duration timeline
+keep their compact layout. VoiceOver exposes Zoom Around Playhead and Fit as
+timeline actions. Zoom is local to each player window and does not change playback speed.
 
 While zoomed, the small bar above the scrubber shows the full duration, the
 visible interval, and the playhead. Drag the overview to move the visible

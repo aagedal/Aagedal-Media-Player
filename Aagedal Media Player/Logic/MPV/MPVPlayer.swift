@@ -36,7 +36,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
     @Published var timePos: Double = 0
     @Published var volume: Double = 100 {
         didSet {
-            setDouble(MPVProperty.volume, volume)
+            setDouble(MPVProperty.volume, PlaybackVolume.mpvValue(for: volume))
         }
     }
     @Published var isMuted: Bool = false {
@@ -226,7 +226,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
 
         // These values may have been assigned while load() was still pending,
         // before the drawable existed and mpv had an initialized context.
-        setDouble(MPVProperty.volume, volume)
+        setDouble(MPVProperty.volume, PlaybackVolume.mpvValue(for: volume))
         setFlag(MPVProperty.mute, isMuted)
         applyAudioChannelRouting()
         setLooping(shouldLoop)

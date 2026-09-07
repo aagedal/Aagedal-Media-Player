@@ -41,6 +41,8 @@ All notable changes to Aagedal Media Player.
   recording run sheet.
 
 ### Changed
+- Timeline zoom starts in the timeline context menu; its extra controls appear only while zoomed and disappear on Fit.
+- Volume now uses a continuous slider without tick marks, applies tracking changes directly to playback, and uses matching linear-amplitude percentages on MPV and AVPlayer.
 - Preserve AppKit-aligned MPV surface dimensions across unchanged SwiftUI updates, avoiding repeated one-pixel swapchain reallocations during playback.
 - Keep source A visible when entering Compare Mode, replacing B, or returning to single-source playback by retaining its native video surface.
 - Editor-marker reports preserve full A/B source URLs, stored rational rates, and explicit source/relative B timecodes; oversized Avid notes fail visibly instead of being truncated.

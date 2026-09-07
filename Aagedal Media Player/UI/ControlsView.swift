@@ -14,7 +14,6 @@ private enum PlaybackControlFocus: Hashable {
     case timelineFit
     case playPause
     case mute
-    case volume
     case audioTrack
     case subtitles
     case chapters
@@ -69,6 +68,7 @@ struct ControlsView: View {
     @State private var pendingCharacter: String?
     @State private var justActivated = false
     @State private var isNarrow = false
+    @State private var isVolumeFocused = false
     @State private var deferredTimecodeActivation = DeferredMainActorTask()
     @FocusState private var focusedControl: PlaybackControlFocus?
 
@@ -96,7 +96,9 @@ struct ControlsView: View {
                 comparisonTimelineLegend(mapping: mapping, item: item)
             }
 
-            timelineNavigation
+            if isLoaded, timelineZoom > 1 {
+                timelineNavigation
+            }
 
             // Timeline scrubber
             timelineSlider
@@ -141,7 +143,10 @@ struct ControlsView: View {
         }
         .onChange(of: focusedControl) { _, focus in
             isTimelineFocused = focus == .timeline || focus == .timelineOverview
-            isControlsFocused = focus != nil
+            isControlsFocused = focus != nil || isVolumeFocused
+        }
+        .onChange(of: isVolumeFocused) { _, focused in
+            isControlsFocused = focused || focusedControl != nil
         }
         .onChange(of: item?.id) { _, _ in
             timelineThumbnail.hide(clearCache: true)
@@ -172,6 +177,7 @@ struct ControlsView: View {
             isPanningOverview = false
             isTimelineFocused = false
             isControlsFocused = false
+            isVolumeFocused = false
         }
     }
 
@@ -266,7 +272,7 @@ struct ControlsView: View {
             .help(controller.isMuted ? "Unmute" : "Mute")
             .accessibilityLabel(controller.isMuted ? "Unmute" : "Mute")
 
-            Slider(
+            PlaybackVolumeSlider(
                 value: Binding(
                     get: { controller.volume },
                     set: { volume in
@@ -277,11 +283,11 @@ struct ControlsView: View {
                         }
                     }
                 ),
-                in: 0...100,
-                step: 1
+                onFocusChange: { focused in
+                    isVolumeFocused = focused
+                }
             )
-            .frame(width: isNarrow ? 54 : 72)
-            .focused($focusedControl, equals: .volume)
+            .frame(width: isNarrow ? 54 : 72, height: 22)
             .help("Volume: \(Int(controller.volume)) percent")
             .accessibilityLabel("Volume")
             .accessibilityValue("\(Int(controller.volume)) percent")
@@ -308,13 +314,7 @@ struct ControlsView: View {
     private var timelineNavigation: some View {
         HStack(spacing: 8) {
             Menu {
-                ForEach([1, 2, 4, 8, 16, 32, 64], id: \.self) { zoom in
-                    Button(zoom == 1 ? "Fit Entire Timeline" : "\(zoom)× Around Playhead") {
-                        timelineCenter = displayTime
-                        timelineZoom = Double(zoom)
-                    }
-                    .accessibilityAddTraits(timelineZoom == Double(zoom) ? .isSelected : [])
-                }
+                timelineZoomOptions
             } label: {
                 Label(timelineZoom == 1 ? "Fit" : "\(Int(timelineZoom))×", systemImage: "plus.magnifyingglass")
                     .font(.caption)
@@ -330,7 +330,7 @@ struct ControlsView: View {
                 timelineOverview
                 Button("Fit") {
                     timelineZoom = 1
-                    focusedControl = .timelineZoom
+                    focusedControl = .timeline
                 }
                     .font(.caption)
                     .focused($focusedControl, equals: .timelineFit)
@@ -340,6 +340,17 @@ struct ControlsView: View {
             } else {
                 Spacer(minLength: 0)
             }
+        }
+    }
+
+    private var timelineZoomOptions: some View {
+        ForEach([1, 2, 4, 8, 16, 32, 64], id: \.self) { zoom in
+            Button(zoom == 1 ? "Fit Entire Timeline" : "\(zoom)× Around Playhead") {
+                timelineCenter = displayTime
+                timelineZoom = Double(zoom)
+                if zoom == 1 { focusedControl = .timeline }
+            }
+            .accessibilityAddTraits(timelineZoom == Double(zoom) ? .isSelected : [])
         }
     }
 
@@ -674,6 +685,8 @@ struct ControlsView: View {
                   ? "Drag to seek. Hold Option for precision scrubbing."
                   : "Diamonds mark chapters. Use the Chapters menu to jump to a chapter. Hold Option for precision scrubbing.")
             .contextMenu {
+                Menu("Timeline Zoom") { timelineZoomOptions }
+                Divider()
                 Toggle("Show Timeline Details", isOn: $showTimelineDetails)
                 if compareSession.isActive {
                     Divider()
@@ -686,6 +699,14 @@ struct ControlsView: View {
                     }
                     .disabled(compareSession.adjacentReviewNote(.next, primary: controller) == nil)
                 }
+            }
+            .accessibilityAction(named: Text("Zoom timeline around playhead")) {
+                timelineCenter = displayTime
+                timelineZoom = min(64, timelineZoom * 2)
+            }
+            .accessibilityAction(named: Text("Fit entire timeline")) {
+                timelineZoom = 1
+                focusedControl = .timeline
             }
             .accessibilityAdjustableAction { direction in
                 switch direction {

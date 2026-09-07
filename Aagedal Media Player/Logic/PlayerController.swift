@@ -45,8 +45,8 @@ final class PlayerController: ObservableObject {
                 volume = clampedVolume
                 return
             }
-            UserDefaults.standard.set(volume, for: AppSettings.playbackVolume)
             backendAdapter?.volume = volume
+            UserDefaults.standard.set(volume, for: AppSettings.playbackVolume)
         }
     }
     @Published var isMuted: Bool = false {
