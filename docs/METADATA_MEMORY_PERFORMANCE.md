@@ -113,8 +113,11 @@ probe regression and audio metadata parity only. Before a dependency release is
 integrated, run its tests and verify real Sony RTMD clips, IMU rate and first-frame
 snapshot parity, absolute sample offsets, leading/trailing `moov`, extended-size
 and zero-size atoms, malformed/truncated boxes, and representative raw formats.
-The candidate skip walker has different malformed-input termination behavior
-from the generic walker; upstream tests must check intended error semantics.
+The [synthetic container validation](METADATA_CONTAINER_VALIDATION.md) now checks
+leading/trailing `moov`, absolute `stco`/`co64` sample offsets, extended/zero-size
+atoms, and selected malformed/truncated cases through public RTMD APIs. These
+fixtures supplement the real-content acceptance above; upstream tests must still
+check intended error semantics and broader format compatibility.
 
 After integrating a reviewed dependency release, repeat the isolated profile and
 full app metadata/loudness workload, including app-model conversion and release.
