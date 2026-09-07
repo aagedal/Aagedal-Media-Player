@@ -86,29 +86,113 @@ final class LoudnessAnalysisTests: XCTestCase {
         }
     }
 
-    /// Little-endian stereo IEEE Float32 WAV, with identical in-phase channels.
+    func testIndependentFrontChannelLayoutReferences() async throws {
+        guard FFmpegService.ffmpegPath != nil else { throw XCTSkip("Bundled ffmpeg is required") }
+        // A −23 dBFS, 1 kHz stereo sine is −23 LUFS (EBU Tech 3341 case 1).
+        // ITU-R BS.1770 front channels each have unit energy weight, so an
+        // isolated front channel is 10 log10(1/2) LU below that reference.
+        let references: [(name: String, mask: UInt32, gains: [Double], weight: Double)] = [
+            ("2.1 stereo pair", 0xB, [1, 1, 0], 2),
+            ("3.0 left", 0x7, [1, 0, 0], 1),
+            ("3.0 right", 0x7, [0, 1, 0], 1),
+            ("3.0 center", 0x7, [0, 0, 1], 1),
+            ("3.0 all fronts", 0x7, [1, 1, 1], 3),
+        ]
+        for reference in references {
+            let url = try writeReferenceTone(
+                segments: [(4, pow(10, -23.0 / 20))],
+                channelGains: reference.gains, channelMask: reference.mask
+            )
+            defer { try? FileManager.default.removeItem(at: url) }
+            let result = try await FFmpegService.analyzeLUFS(url: url, audioStreamIndex: 0)
+            XCTAssertEqual(result.integratedLoudness, -23 + 10 * log10(reference.weight / 2),
+                           accuracy: 0.1, reference.name)
+            XCTAssertEqual(result.truePeak, -23, accuracy: 0.1, reference.name)
+        }
+    }
+
+    func testIndependentSideSurroundChannelReferences() async throws {
+        guard FFmpegService.ffmpegPath != nil else { throw XCTSkip("Bundled ffmpeg is required") }
+        // ITU-R BS.2217-2 Table 1 assigns 1.41 energy weight to each side
+        // surround. Explicit WAV speaker masks distinguish side from back
+        // layouts; energize one channel at a time to catch order mistakes.
+        // WAVE order: FL, FR, FC, LFE, SL, SR (mask 0x60F).
+        for (channel, weight) in [(0, 1.0), (1, 1.0), (2, 1.0), (4, 1.41), (5, 1.41)] {
+            var gains = [Double](repeating: 0, count: 6)
+            gains[channel] = 1
+            let url = try writeReferenceTone(
+                segments: [(4, pow(10, -23.0 / 20))],
+                channelGains: gains, channelMask: 0x60F
+            )
+            defer { try? FileManager.default.removeItem(at: url) }
+            let result = try await FFmpegService.analyzeLUFS(url: url, audioStreamIndex: 0)
+            XCTAssertEqual(result.integratedLoudness, -23 + 10 * log10(weight / 2),
+                           accuracy: 0.1, "5.1(side) channel \(channel)")
+            XCTAssertEqual(result.truePeak, -23, accuracy: 0.1)
+        }
+    }
+
+    func testIndependentLFEExclusionStillIncludesLFETruePeakAcrossLayouts() async throws {
+        guard FFmpegService.ffmpegPath != nil else { throw XCTSkip("Bundled ffmpeg is required") }
+        // The LFE is 20 dB louder than the calibrated front stereo pair. It
+        // must dominate true peak while adding no energy to integrated LUFS.
+        // 7.1 coverage here concerns only fronts/LFE, not rear-speaker weights.
+        let references: [(name: String, mask: UInt32, gains: [Double])] = [
+            ("2.1", 0xB, [1, 1, 10]),
+            ("5.1(side)", 0x60F, [1, 1, 0, 10, 0, 0]),
+            ("7.1", 0x63F, [1, 1, 0, 10, 0, 0, 0, 0]),
+        ]
+        for reference in references {
+            let url = try writeReferenceTone(
+                segments: [(4, pow(10, -23.0 / 20))],
+                channelGains: reference.gains, channelMask: reference.mask
+            )
+            defer { try? FileManager.default.removeItem(at: url) }
+            let result = try await FFmpegService.analyzeLUFS(url: url, audioStreamIndex: 0)
+            XCTAssertEqual(result.integratedLoudness, -23, accuracy: 0.1, reference.name)
+            XCTAssertEqual(result.truePeak, -3, accuracy: 0.1, reference.name)
+        }
+    }
+
+    /// Little-endian IEEE Float32 WAV, with in-phase channels at explicit gains.
     /// Float PCM preserves the reference levels without integer quantization.
     private func writeReferenceTone(
         segments: [(seconds: Int, amplitude: Double)], frequency: Double = 1_000,
-        phase: Double = 0, fadeSeconds: Double = 0, sampleRate: Int = 48_000
+        phase: Double = 0, fadeSeconds: Double = 0, sampleRate: Int = 48_000,
+        channelGains: [Double] = [1, 1], channelMask: UInt32? = nil
     ) throws -> URL {
         let frames = segments.reduce(0) { $0 + $1.seconds * sampleRate }
-        let payloadBytes = frames * 2 * MemoryLayout<Float>.size
-        var data = Data(capacity: 44 + payloadBytes)
+        let blockAlign = channelGains.count * MemoryLayout<Float>.size
+        let payloadBytes = frames * blockAlign
+        let formatBytes = channelMask == nil ? 16 : 40
+        var data = Data(capacity: 28 + formatBytes + payloadBytes)
         func appendInteger<T: FixedWidthInteger>(_ value: T) {
             var littleEndian = value.littleEndian
             withUnsafeBytes(of: &littleEndian) { data.append(contentsOf: $0) }
         }
         data.append(contentsOf: "RIFF".utf8)
-        appendInteger(UInt32(36 + payloadBytes))
+        appendInteger(UInt32(20 + formatBytes + payloadBytes))
         data.append(contentsOf: "WAVEfmt ".utf8)
-        appendInteger(UInt32(16))
-        appendInteger(UInt16(3)) // WAVE_FORMAT_IEEE_FLOAT
-        appendInteger(UInt16(2))
+        appendInteger(UInt32(formatBytes))
+        appendInteger(UInt16(channelMask == nil ? 3 : 0xFFFE)) // IEEE_FLOAT or EXTENSIBLE
+        appendInteger(UInt16(channelGains.count))
         appendInteger(UInt32(sampleRate))
-        appendInteger(UInt32(sampleRate * 8))
-        appendInteger(UInt16(8))
+        appendInteger(UInt32(sampleRate * blockAlign))
+        appendInteger(UInt16(blockAlign))
         appendInteger(UInt16(32))
+        if let channelMask {
+            // WAVEFORMATEXTENSIBLE: ascending mask bits define channel order.
+            // https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/ksmedia/ns-ksmedia-waveformatextensible
+            precondition(channelMask.nonzeroBitCount == channelGains.count)
+            appendInteger(UInt16(22)) // Extension size
+            appendInteger(UInt16(32)) // Valid bits per sample
+            appendInteger(channelMask)
+            // KSDATAFORMAT_SUBTYPE_IEEE_FLOAT: 00000003-0000-0010-8000-00AA00389B71
+            appendInteger(UInt32(3))
+            appendInteger(UInt16(0))
+            appendInteger(UInt16(0x10))
+            data.append(contentsOf: [0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71])
+        }
         data.append(contentsOf: "data".utf8)
         appendInteger(UInt32(payloadBytes))
         let fadeFrames = Int(fadeSeconds * Double(sampleRate))
@@ -118,11 +202,12 @@ final class LoudnessAnalysisTests: XCTestCase {
                 let envelope = fadeFrames == 0 ? 1 : min(
                     1, Double(min(frame, frames - 1 - frame)) / Double(fadeFrames)
                 )
-                let sample = Float(segment.amplitude * envelope * sin(
+                let sample = segment.amplitude * envelope * sin(
                     2 * .pi * frequency * Double(frame) / Double(sampleRate) + phase
-                ))
-                appendInteger(sample.bitPattern)
-                appendInteger(sample.bitPattern)
+                )
+                for gain in channelGains {
+                    appendInteger(Float(sample * gain).bitPattern)
+                }
                 frame += 1
             }
         }

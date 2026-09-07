@@ -71,7 +71,7 @@ concurrent-job checks are described below; broader playback/performance
 acceptance remains separate.
 
 Independent numerical references now supplement the relative-level fixtures.
-The tests write stereo Float32 WAV samples directly in Swift; FFmpeg is only
+The tests write Float32 WAV samples directly in Swift; FFmpeg is only
 the analyzer, not the signal generator or expected-value oracle. The selected
 [EBU Tech 3341 (2023), Table 1](https://tech.ebu.ch/docs/tech/tech3341.pdf)
 references cover:
@@ -92,16 +92,30 @@ relative gating excludes the quietest sections instead of reporting the full
 30 dB level span. Each segment is a directly synthesized, in-phase stereo
 1 kHz tone lasting 20 seconds; each file receives a fresh analysis.
 
+Thirteen additional 48 kHz fixtures use explicit WAV speaker masks and
+independently synthesized channel samples for 2.1, 3.0, 5.1(side), and the
+front/LFE portion of 7.1. Isolated front and side speakers verify both their
+ordering and their expected loudness; the side surrounds use the 1.41 energy
+weight documented in [ITU-R BS.2217-2, Table 1](https://www.itu.int/dms_pub/itu-r/opb/rep/R-REP-BS.2217-2-2016-PDF-E.pdf).
+Expected levels derive from the calibrated stereo sine and the sum of channel
+energy weights, with a ±0.1 LU regression tolerance. A separate LFE signal
+20 dB above the stereo pair must leave integrated loudness at −23 LUFS while
+raising true peak to −3 dBTP in each LFE-bearing layout. The
+[WAVEFORMATEXTENSIBLE speaker mask](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/ksmedia/ns-ksmedia-waveformatextensible)
+sets channel positions directly; no FFmpeg pan or synthesis filter creates
+these fixtures.
+
 This is a selected reference regression set, not full EBU/ITU certification.
 Remaining reference coverage includes authentic programme material,
-transient true peaks, and additional channel layouts. True-peak phase
-references currently cover 48 kHz; the additional sample rates cover
-calibration and synthetic LRA.
+transient true peaks, 7.1 rear-speaker weighting, and immersive channel layouts.
+True-peak phase references currently cover 48 kHz; the additional sample rates
+cover calibration and synthetic LRA.
 
-The expanded 410-test Release suite passes without failures or skips on
+The expanded 415-test Release suite passes without failures or skips on
 2026-09-07, as do Xcode static analysis and all 61 release-preflight checks.
 The additional calibration/LRA coverage comprises 18 independently synthesized
-references across the three sample rates; it does not change analysis behavior.
+references across the three sample rates. The subsequent channel-layout coverage
+adds 13 references in three tests; neither changes production analysis behavior.
 
 Empty-range fixtures check both an interval beyond EOF and an interval before
 a delayed stream begins. Analysis requires FFmpeg's output clock to advance
