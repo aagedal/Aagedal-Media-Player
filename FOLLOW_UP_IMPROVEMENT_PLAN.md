@@ -800,7 +800,10 @@ production integration remains open.
 - [x] Run the candidate's local upstream library Release suite: 1,662 tests,
   20 fixture-dependent skips, zero failures. CLI tests are excluded; the
   selected local CRM is independently covered by the paired exporter check.
-- [ ] Complete upstream review and remaining fixture/CLI coverage, integrate a
+- [x] Run the unchanged candidate Release CLI suite offline: all 50 tests
+  pass without skips or failures. Require every pinned suite and both aggregate
+  totals; nine acceptance-validator regressions reject incomplete evidence.
+- [ ] Complete upstream review and remaining fixture coverage, integrate a
   reviewed dependency release, and repeat full-app memory profiling. The latest
   remote tag is still 3.0.0 as checked on 2026-09-07.
 
@@ -823,13 +826,49 @@ Acceptance: selected offline LRA and calibration references pass at three
 sample rates. Authentic programme material, transient peaks, additional channel
 layouts, and live-meter behavior remain separate. See `docs/AUDIO_LOUDNESS.md`.
 
+## Phase 48 — Independent channel-layout loudness references
+
+Status: Completed on 2026-09-07. All 415 Release tests pass without failures
+or skips; static analysis and all 61 release-preflight checks pass.
+
+- [x] Synthesize explicit WAVEFORMATEXTENSIBLE speaker layouts in Swift.
+- [x] Verify absolute front-channel calibration in 2.1 and 3.0 layouts.
+- [x] Check isolated front and side-surround weights in 5.1(side).
+- [x] Verify that loud LFE signals contribute to true peak but not integrated
+  loudness in 2.1, 5.1(side), and the front/LFE portion of 7.1.
+- [x] Pass the integrated Release suite and static analysis.
+
+Acceptance: 13 independent 48 kHz references supplement the existing stereo
+and sample-rate matrix. Programme material, transient peaks, 7.1 rear weighting,
+immersive layouts, and live meters remain separate. See `docs/AUDIO_LOUDNESS.md`.
+
+## Phase 49 — Native review feedback and accessible finding identity
+
+Status: Focused scope completed on 2026-09-07. Updated labels and saved-note
+restoration are verified in the rebuilt native app; all 415 Release tests,
+static analysis, and 61 release-preflight checks pass.
+
+- [x] Confirm native note creation via Return, filter-field Tab focus, and
+  filtering without deleting the stored finding.
+- [x] Save a CSV while its note is hidden by the filter and verify the finding,
+  exact source-frame rates, timecodes, and full A/B URLs in the output.
+- [x] Give Add, note text, and Delete explicit accessibility labels, including
+  source-A frame identity for repeated finding rows.
+- [x] Verify updated labels in the rebuilt native app.
+
+Acceptance: this is partial native review evidence. Full keyboard traversal,
+spoken VoiceOver, range editing, relinking, and narrow-window acceptance remain
+open. See `docs/COMPARE_REVIEW_NATIVE_CHECK_2026-09-07.md`.
+
 ## Remaining work after this continuation
 
 - Integrate the measured metadata-memory dependency fix after upstream review,
-  broader camera/format acceptance, and remaining fixture/CLI coverage, then
+  broader camera/format acceptance, and remaining fixture coverage, then
   repeat full-app profiling. Synthetic
   containers, selected real Sony/raw media, and the candidate library suite now
-  pass, with 20 missing-fixture skips explicitly retained. The
+  pass, with 20 missing-fixture skips explicitly retained. All 50 upstream CLI
+  tests now pass without skips; nine validator regressions require complete
+  pinned-suite evidence. The
   isolated candidate reduces the eight-hour peak from about 4.3 GiB to 20 MiB;
   production still uses the original dependency. See Phase 46.
 
@@ -844,6 +883,8 @@ layouts, and live-meter behavior remain separate. See `docs/AUDIO_LOUDNESS.md`.
   and keyboard traversal remain open. The September 7 check verifies concurrent
   jobs, independent cancellation/completion, and inspector hide/reopen cleanup;
   wider playback and assistive-technology acceptance remains open.
+  A focused native review check now covers note creation, filtering, and CSV
+  export of a filtered-out finding; full keyboard review and relinking remain.
 - Actual marker import/re-export in Resolve, Final Cut Pro, and Avid, including
   fractional rates, drop-frame boundaries, inclusive ranges, and source identity.
 - Oldest-supported Apple Silicon UHD/HDR playback, reflected loupe/scopes,
@@ -854,7 +895,8 @@ layouts, and live-meter behavior remain separate. See `docs/AUDIO_LOUDNESS.md`.
   calibration/ballistics/presets, authentic programme/transient reference
   accuracy, and representative multichannel profiling. Selected absolute-level,
   gating, and true-peak numerical references are covered by Phase 45; Phase 47
-  adds synthetic LRA and calibration at 44.1/48/96 kHz.
+  adds synthetic LRA and calibration at 44.1/48/96 kHz. Phase 48 adds independent
+  front/side/LFE references for 2.1, 3.0, 5.1(side), and part of 7.1.
 - Verified 1:1 source-pixel inspection, whole-viewport zoom/pan after loupe
   acceptance, and time-localized mismatch markers after a detection model is
   defined. See `PRODUCT_ROADMAP.md` for milestone sequencing.
@@ -909,3 +951,5 @@ layouts, and live-meter behavior remain separate. See `docs/AUDIO_LOUDNESS.md`.
 37. Phase 45 native loudness cancellation and numerical references.
 38. Phase 46 metadata memory diagnosis and candidate dependency fix.
 39. Phase 47 loudness range references across sample rates.
+40. Phase 48 independent channel-layout loudness references.
+41. Phase 49 native review feedback and accessible finding identity.

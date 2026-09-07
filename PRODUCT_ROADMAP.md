@@ -280,8 +280,10 @@ confidence as the picture.
 - [ ] Validate meter accuracy against trusted reference files and tools.
   Offline analysis now passes selected EBU absolute calibration, gating,
   phase-sensitive true-peak, and synthetic LRA references. Calibration and LRA
-  cover 44.1/48/96 kHz. Authentic programme material, transient peaks, further
-  channel layouts, and future live-meter behavior remain; see `docs/AUDIO_LOUDNESS.md`.
+  cover 44.1/48/96 kHz. Independent speaker-mask fixtures additionally cover
+  front/side/LFE behavior in 2.1, 3.0, 5.1(side), and part of 7.1. Authentic
+  programme material, transient peaks, 7.1 rear weighting, immersive layouts,
+  and future live-meter behavior remain; see `docs/AUDIO_LOUDNESS.md`.
 - [ ] Confirm meter and thumbnail work remains bounded during long playback.
   A production-loader thumbnail profiler now checks 40 distributed requests
   per input with cache bounds and sampled memory/latency reporting. See
@@ -339,6 +341,9 @@ Release gates:
 - [ ] Exports preserve frame rate, drop-frame rules, source timecode, and file
   identity without rounding errors.
 - [ ] A complete review can be created and exported using only the keyboard.
+  A focused native check confirms Return-to-add, Tab to the filter, and CSV
+  export retaining hidden findings; opening the review/export menus still used
+  accessibility clicks. See `docs/COMPARE_REVIEW_NATIVE_CHECK_2026-09-07.md`.
 
 ## Later / evaluate after user validation
 

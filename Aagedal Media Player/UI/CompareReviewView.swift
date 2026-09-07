@@ -73,6 +73,7 @@ struct CompareReviewView: View {
                     Image(systemName: "plus")
                 }
                 .buttonStyle(.borderedProminent)
+                .accessibilityLabel("Add review note")
                 .help("Add note at the current source A frame")
                 .disabled(!canAddNote)
             }
@@ -435,6 +436,7 @@ private struct CompareReviewNoteRow: View {
 
                 TextField("Review note", text: $draft, axis: .vertical)
                     .textFieldStyle(.roundedBorder)
+                    .accessibilityLabel("Review note at source A frame \(note.primaryFrame)")
                     .lineLimit(1...4)
                     .focused($isFocused)
                     .disabled(!canEdit)
@@ -454,6 +456,7 @@ private struct CompareReviewNoteRow: View {
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(.secondary)
+                .accessibilityLabel("Delete review note at source A frame \(note.primaryFrame)")
                 .help("Delete review note")
                 .disabled(!canEdit)
             }
