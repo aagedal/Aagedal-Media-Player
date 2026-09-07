@@ -73,16 +73,22 @@ final class MPVViewController: NSViewController {
     func setSurfaceSize(_ size: CGSize) {
         guard size.width.isFinite, size.height.isFinite,
               size.width > 1, size.height > 1 else { return }
+        let proposalChanged = surfaceSize != size
         surfaceSize = size
         guard isViewLoaded else { return }
         let oldDrawableSize = metalLayer.drawableSize
-        if view.frame.size != size { view.setFrameSize(size) }
+        // AppKit can align a fractional SwiftUI proposal to different native
+        // bounds. Reapplying that same proposal on each playback update would
+        // alternate the drawable size with viewDidLayout and rebuild MPV's
+        // swapchain continuously. Preserve the settled frame until the actual
+        // proposal changes, and size the drawable from the native bounds.
+        if proposalChanged, view.frame.size != size { view.setFrameSize(size) }
         metalLayer.frame = view.bounds
         metalLayer.contentsScale = view.window?.backingScaleFactor
             ?? NSScreen.main?.backingScaleFactor ?? 2
         metalLayer.drawableSize = CGSize(
-            width: size.width * metalLayer.contentsScale,
-            height: size.height * metalLayer.contentsScale
+            width: view.bounds.width * metalLayer.contentsScale,
+            height: view.bounds.height * metalLayer.contentsScale
         )
         handleDrawableGrowth(from: oldDrawableSize, to: metalLayer.drawableSize)
         attachDrawableIfSized()

@@ -134,6 +134,49 @@ final class CompareLiveBackendTests: XCTestCase {
         }
     }
 
+    func testRepeatedFractionalSurfaceProposalPreservesAppKitAlignedDrawable() throws {
+        let player = MPVPlayer()
+        defer { player.destroy() }
+        let proposed = CGSize(width: 1555.5555555555554, height: 875)
+        let aligned = CGSize(width: 1556, height: 875)
+        let controller = MPVViewController(
+            player: player, managesSurfaceReloads: false, surfaceSize: proposed
+        )
+        let window = NSWindow(
+            contentRect: CGRect(origin: .zero, size: aligned),
+            styleMask: [.borderless], backing: .buffered, defer: false
+        )
+        window.isReleasedWhenClosed = false
+        window.contentView = controller.view
+        defer {
+            window.contentView = nil
+            window.close()
+        }
+        let layer = try XCTUnwrap(controller.view.layer as? MPVMetalLayer)
+        // Reproduce AppKit's alignment after the fractional SwiftUI proposal.
+        controller.view.setFrameSize(aligned)
+        controller.viewDidLayout()
+        let settledDrawable = layer.drawableSize
+        for _ in 0..<10 {
+            controller.setSurfaceSize(proposed)
+            XCTAssertEqual(controller.view.bounds.size, aligned)
+            XCTAssertEqual(layer.drawableSize, settledDrawable,
+                           "Playback updates must not undo AppKit alignment and recreate the swapchain.")
+            controller.viewDidLayout()
+            XCTAssertEqual(layer.drawableSize, settledDrawable)
+        }
+
+        // A new proposal must still resize the retained surface immediately,
+        // even when SwiftUI does not deliver another viewDidLayout callback.
+        let resized = CGSize(width: 960, height: 540)
+        controller.setSurfaceSize(resized)
+        XCTAssertEqual(controller.view.bounds.size, resized)
+        XCTAssertEqual(layer.drawableSize, CGSize(
+            width: resized.width * layer.contentsScale,
+            height: resized.height * layer.contentsScale
+        ))
+    }
+
     func testMPVSurfaceWaitsForValidInitialGeometry() {
         let player = MPVPlayer()
         defer { player.destroy() }
