@@ -1,0 +1,11 @@
+--- a/Sources/SwiftMediaMetadata/Video/RTMDReader.swift
++++ b/Sources/SwiftMediaMetadata/Video/RTMDReader.swift
+@@ -234,7 +234,7 @@
+     }
+ 
+     private static func topLevelBox(named type: String, in fullData: Data) throws -> Data? {
+-        let boxes = try ISOBMFFBoxReader.parseBoxes(from: fullData)
++        let boxes = try ISOBMFFBoxReader.parseTopLevelBoxesSkippingMdat(fullData)
+         return boxes.first(where: { $0.type == type })?.data
+     }
+ 

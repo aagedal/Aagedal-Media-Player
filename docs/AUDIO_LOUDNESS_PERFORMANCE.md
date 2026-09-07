@@ -143,3 +143,9 @@ and eight-hour inputs and verify metadata parity before changing mapping lifetim
 or the dependency. The app cannot directly clear the dependency's internal source
 data, and bypassing its normal read wrapper would skip metadata postprocessing.
 This needs a measured dependency-level fix, not a loudness-filter workaround.
+
+The September 7 follow-up now isolates this cost to RTMD detection's generic
+box walker reading `mdat`. A candidate dependency patch reduces isolated
+one/eight-hour read peaks to about 11/20 MiB while preserving checked metadata.
+See [the measured investigation and reproduction harness](METADATA_MEMORY_PERFORMANCE.md).
+The production dependency is unchanged and full-app memory acceptance remains open.
