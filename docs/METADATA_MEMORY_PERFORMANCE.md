@@ -106,6 +106,28 @@ Raw final artifacts: `/tmp/aagedal-metadata-memory-20260907-c` (earlier paired
 run: `-b`). Temporary artifacts can be removed by the OS; the recipe, patch,
 revision, and result table are the durable record.
 
+## Validate retained artifacts
+
+```bash
+python3 scripts/validate-metadata-memory-profile.py /path/to/metadata-profile
+python3 scripts/test-metadata-memory-profile-validation.py
+```
+
+The profiler now runs the same validator before publishing its summary and
+records the validator's SHA-256. It requires every input's six baseline/fixed
+workloads exactly once, ordered phases, positive integer resident/peak readings,
+nondecreasing lifetime peaks, positive finite wall times, complete selected
+metadata snapshots, and parity for reads, RTMD presence, and skip-mdat results.
+The standalone command also reconciles `summary.json` against the raw JSONL
+records. It validates recorded evidence; it does not authenticate artifacts or
+re-hash source media that may have moved since profiling.
+
+Eight regression tests cover missing/duplicate workloads, invalid phase order,
+non-finite/invalid memory and timing, empty snapshots, each parity result, and
+malformed scalar types, and missing or inconsistent raw/summary files. The retained September 7 `-c`
+baseline passes the validator's complete 12-workload matrix. No memory workload
+was rerun for this artifact-validation change.
+
 ## Acceptance still required
 
 The synthetic ALAC files have no video or RTMD track. They establish the negative

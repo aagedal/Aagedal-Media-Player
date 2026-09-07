@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import runpy
 import shutil
 import subprocess
 
@@ -41,6 +42,7 @@ environment = {"dependencyRevision": revision,
                "probeSHA256": digest(root / "scripts/MetadataMemoryProfiler.swift"),
                "patchSHA256": digest(root / "docs/dependency-patches/swift-media-metadata-3.0.0-rtmd-skip-mdat.patch"),
                "harnessSHA256": digest(Path(__file__)),
+               "validatorSHA256": digest(root / "scripts/validate-metadata-memory-profile.py"),
                "appRevision": subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip(),
                "appWorkingTree": subprocess.check_output(["git", "-C", str(root), "status", "--short"], text=True),
                "inputs": [{"path": str(path), "bytes": path.stat().st_size, "sha256": digest(path)} for path in inputs]}
@@ -75,19 +77,8 @@ for variant in ("baseline", "fixed"):
             output = package / f"input-{index}-{mode}.jsonl"
             run([str(binary), mode, str(path)], output)
             phases = [json.loads(line) for line in output.read_text().splitlines()]
-            expected = ["initial", "retained", "released"] if mode == "read" else ["initial", "mapped", "probed", "released"]
-            if [phase["phase"] for phase in phases] != expected:
-                raise ValueError(f"Invalid phase sequence in {output}")
-            if any(phase["residentBytes"] <= 0 or phase["lifetimePeakResidentBytes"] <= 0 for phase in phases):
-                raise ValueError(f"Invalid memory measurements in {output}")
             records.append({"variant": variant, "input": str(path), "mode": mode, "phases": phases})
-for path in inputs:
-    reads = [record for record in records if record["input"] == str(path) and record["mode"] == "read"]
-    if reads[0]["phases"][1]["metadata"] != reads[1]["phases"][1]["metadata"]:
-        raise ValueError(f"Metadata snapshot changed for {path}")
-    for mode, keys in (("rtmd", ("hasRTMD",)), ("skip-mdat", ("boxTypes", "payloadBytes"))):
-        pair = [record for record in records if record["input"] == str(path) and record["mode"] == mode]
-        if any(pair[0]["phases"][2][key] != pair[1]["phases"][2][key] for key in keys):
-            raise ValueError(f"{mode} result changed for {path}")
+validate = runpy.run_path(str(root / "scripts/validate-metadata-memory-profile.py"))["validate"]
+validate(records, [str(path) for path in inputs])
 (artifacts / "summary.json").write_text(json.dumps({"snapshotParity": True, "records": records}, indent=2) + "\n")
 print(f"Profiles and matching metadata snapshots saved to {artifacts}")
