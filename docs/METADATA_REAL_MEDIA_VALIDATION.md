@@ -73,7 +73,8 @@ The candidate's library-only Release suite completed with **1,662 total tests,
 20 skipped, zero failures** (1,642 non-skipped tests). Eighteen skips were missing
 image/sidecar fixtures, one was a CRM test hard-coded to another developer's home,
 and one was an MXF MCA test hard-coded to that home. The local CRM clip was covered
-separately by the paired exporter check above. CLI tests were excluded. The
+separately by the paired exporter check above. CLI tests were excluded from that run; the separate CLI result below closes that
+coverage gap. The
 additional Swift Testing runner reported zero tests; the counts above are the
 completed XCTest suite, not that empty runner.
 
@@ -86,6 +87,54 @@ without repeating the unchanged library suite. The Sony `M01.XML` sidecar SHA-25
 was `f505eee20f16cca771ddd9b9e80bee462a0cfa6058c63c2c38296e73d8ffcf5f`; the candidate
 paths and presence/absence for all four clips are retained in `environment.json`. Temporary artifacts can be removed by the
 OS; this recipe, input hashes, coverage and result are the durable record.
+
+## Separate offline CLI validation
+
+The CLI suite can now run separately against the same candidate without fetching
+packages or changing the production checkout:
+
+```bash
+python3 scripts/validate-metadata-cli.py \
+  /path/to/SourcePackages/checkouts/SwiftMediaMetadata \
+  /path/to/swift-argument-parser \
+  /tmp/new-cli-validation
+```
+
+Both inputs must be clean git checkouts. The library must be at the pinned 3.0.0
+revision above; ArgumentParser must match its committed `Package.resolved`
+(1.7.1, `626b5b7b2f45e1b0b1c6f4a309296d1d21d7311b`). The script archives
+committed source into a new output directory, applies only the recorded RTMD
+patch, and changes only the copied manifest's ArgumentParser dependency to its
+local archived copy. All upstream CLI and test source remains unchanged.
+
+The command runs `swift test -c release --disable-sandbox --filter
+SwiftMediaMetadataCLITests` with `SWIFT_EXIF_RUN_CLI_TESTS=1` and an explicit
+`SWIFT_EXIF_CLI_BINARY` pointing at the candidate Release binary. This avoids
+accidentally using another Debug build or silently opting out of black-box tests.
+Build and test execution has a 30-minute timeout. Acceptance requires the exact
+pinned inventory of 28 black-box and 22 helper tests, with every individual suite
+and both 50-test aggregate summaries complete. Any failed/skipped tests, missing,
+duplicate or unexpected suite, wrong count, nonzero exit, timeout, or changed
+input checkout fails acceptance.
+The output records both source archive hashes, patch/script hashes, toolchain,
+exit status, test counts and full build/test log hash. The CLI tests create their
+own temporary synthetic fixtures; they do not use the camera originals above.
+This suite covers command behavior, not additional Sony camera modes or memory
+performance, and does not repeat the library-only suite.
+
+On 2026-09-07, this candidate Release suite passed **50 tests, zero skips and
+zero failures** in 2.685 seconds after a 97.46-second build using Apple Swift
+6.3.3 on arm64 macOS. Coverage includes 28 black-box tests for help/version,
+reading, writing, copying/remapping, stripping, diffing, argfiles and stay-open
+behavior, plus 22 date-format, group-prefix and mapping helper tests. Both source
+checkouts remained unchanged. The subsequent empty Swift Testing runner is not
+included in those XCTest counts. Artifacts: `/tmp/aagedal-metadata-cli-20260907`;
+CLI suite log SHA-256:
+`07c28a2da4073e1ac358ba957aeddc2e3665a7349a4bd2b2457e70ca0f230b4b`.
+The strengthened complete-inventory acceptance parser was verified against that
+retained log (`revalidated-summary.json`) and nine focused Python regression
+tests (`python3 scripts/test-metadata-cli-validation.py`); no second Swift build
+was needed.
 
 ## Remaining acceptance
 
