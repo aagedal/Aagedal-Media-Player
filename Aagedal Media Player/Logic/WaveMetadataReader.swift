@@ -79,6 +79,7 @@ nonisolated enum WaveMetadataReader {
         var formatSize: UInt64 = 0
         var audioBytes: UInt64?
         var factSamples: UInt32?
+        var broadcastWave: MediaMetadata.BroadcastWave?
         while position < end {
             try Task.checkCancellation()
             guard end - position >= 8 else { throw ReadError.invalidWave }
@@ -112,6 +113,12 @@ nonisolated enum WaveMetadataReader {
             } else if name == "fact", container == "RF64" {
                 guard factSamples == nil, count >= 4 else { throw ReadError.invalidWave }
                 factSamples = uint32(try readExactly(file, count: 4), 0)
+            } else if name == "bext" {
+                guard broadcastWave == nil, count >= 602 else { throw ReadError.invalidWave }
+                // The remaining coding history can be arbitrarily large. Keep a
+                // bounded prefix and seek past the rest with the enclosing loop.
+                let bytes = try readExactly(file, count: Int(min(count, 602 + 16_384)))
+                broadcastWave = readBroadcastWave(bytes, chunkSize: count)
             }
             position = payload + count + (count & 1)
             guard position <= end else { throw ReadError.invalidWave }
@@ -171,8 +178,50 @@ nonisolated enum WaveMetadataReader {
             formatName: "wav", containerLongName: "WAV / WAVE (Waveform Audio)",
             sizeBytes: Int64(size), bitRate: Int64(byteRate * 8), timecode: nil,
             comment: nil, encoder: nil, frameCount: nil,
-            videoStreams: [], audioStreams: [stream], subtitleStreams: [], chapters: []
+            videoStreams: [], audioStreams: [stream], subtitleStreams: [], chapters: [],
+            broadcastWave: broadcastWave
         )
+    }
+
+    private static func readBroadcastWave(_ bytes: Data, chunkSize: UInt64) -> MediaMetadata.BroadcastWave {
+        let version = uint16(bytes, 346)
+        // EBU Tech 3285 v2: older versions reserve the UMID/loudness bytes.
+        // Future versions retain only the common fixed fields here.
+        let hasUMID = version == 1 || version == 2
+        let umidBytes = bytes[348..<412]
+        let umid = hasUMID && umidBytes.contains(where: { $0 != 0 })
+            ? umidBytes.map { String(format: "%02X", $0) }.joined() : nil
+        func loudness(_ offset: Int, isRange: Bool = false) -> Double? {
+            guard version == 2 else { return nil }
+            let value = Int16(bitPattern: uint16(bytes, offset))
+            // Includes 0x7fff (unspecified) and all out-of-range values.
+            guard value >= (isRange ? 0 : -9_999), value <= 9_999 else { return nil }
+            return Double(value) / 100
+        }
+        return MediaMetadata.BroadcastWave(
+            version: version,
+            description: ascii(bytes, 0..<256),
+            originator: ascii(bytes, 256..<288),
+            originatorReference: ascii(bytes, 288..<320),
+            originationDate: ascii(bytes, 320..<330),
+            originationTime: ascii(bytes, 330..<338),
+            timeReferenceSamples: uint64(bytes, 338), umid: umid,
+            integratedLoudness: loudness(412), loudnessRange: loudness(414, isRange: true),
+            maxTruePeakLevel: loudness(416), maxMomentaryLoudness: loudness(418),
+            maxShortTermLoudness: loudness(420),
+            codingHistory: version <= 2 ? ascii(bytes, 602..<bytes.count, multiline: true) : nil,
+            codingHistoryTruncated: version <= 2 && chunkSize > UInt64(bytes.count)
+        )
+    }
+
+    private static func ascii(_ bytes: Data, _ range: Range<Int>, multiline: Bool = false) -> String? {
+        let value = bytes[range].prefix(while: { $0 != 0 })
+        // Do not guess encodings or display embedded control characters. A bad
+        // optional field does not discard the recording's technical metadata.
+        guard value.allSatisfy({ (32...126).contains($0) || (multiline && [9, 10, 13].contains($0)) }),
+              let text = String(data: Data(value), encoding: .ascii)?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !text.isEmpty else { return nil }
+        return text
     }
 
     private struct ExtendedSizes {

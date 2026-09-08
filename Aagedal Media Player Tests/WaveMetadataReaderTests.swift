@@ -259,6 +259,145 @@ final class WaveMetadataReaderTests: XCTestCase {
         XCTAssertEqual(try WaveMetadataReader.read(from: url)?.duration ?? -1, 10.0 / 48_000, accuracy: 0.0000001)
     }
 
+    func testBroadcastWaveFieldsAndVersionTwoLoudness() throws {
+        let metadata = try XCTUnwrap(read(wave(format: format(tag: 1, channels: 2, bits: 16),
+                                              audio: Data(count: 40), before: chunk("bext", bext()))))
+        let bwf = try XCTUnwrap(metadata.broadcastWave)
+        XCTAssertEqual(bwf.version, 2)
+        XCTAssertEqual(bwf.description, "Field recording")
+        XCTAssertEqual(bwf.originator, "Recorder")
+        XCTAssertEqual(bwf.originatorReference, "take-42")
+        XCTAssertEqual(bwf.originationDate, "2026-09-08")
+        XCTAssertEqual(bwf.originationTime, "12:34:56")
+        XCTAssertEqual(bwf.timeReferenceSamples, 0x1234_5678_9abc_def0)
+        XCTAssertEqual(bwf.umid, "01" + String(repeating: "00", count: 63))
+        XCTAssertEqual(bwf.integratedLoudness, -23.45)
+        XCTAssertEqual(bwf.loudnessRange, 4.56)
+        XCTAssertEqual(bwf.maxTruePeakLevel, -1.23)
+        XCTAssertEqual(bwf.maxMomentaryLoudness, -20)
+        XCTAssertEqual(bwf.maxShortTermLoudness, -21)
+        XCTAssertEqual(bwf.codingHistory, "A=PCM,F=48000,W=16,M=stereo")
+        XCTAssertFalse(bwf.codingHistoryTruncated)
+        XCTAssertNil(metadata.timecode) // A sample reference is not a video-frame timecode.
+    }
+
+    func testBroadcastWaveVersionGatesReservedFields() throws {
+        for version: UInt16 in [0, 1, 2, 3, .max] {
+            let metadata = try XCTUnwrap(read(wave(format: format(tag: 1, channels: 2, bits: 16),
+                audio: Data(count: 40), before: chunk("bext", bext(version: version)))))
+            let bwf = try XCTUnwrap(metadata.broadcastWave)
+            XCTAssertEqual(bwf.description, "Field recording")
+            XCTAssertEqual(bwf.umid != nil, version == 1 || version == 2)
+            XCTAssertEqual(bwf.integratedLoudness != nil, version == 2)
+            XCTAssertEqual(bwf.codingHistory != nil, version <= 2)
+        }
+    }
+
+    func testBroadcastWaveIgnoresInvalidAndUnspecifiedLoudness() throws {
+        for values: [Int16] in [[.max, .max, .max, .max, .max], [-10_000, -1, 10_000, .min, .max]] {
+            var bytes = bext()
+            for (index, value) in values.enumerated() {
+                bytes.replaceSubrange((412 + index * 2)..<(414 + index * 2), with: little(value))
+            }
+            let bwf = try XCTUnwrap(read(wave(format: format(tag: 1, channels: 2, bits: 16),
+                audio: Data(count: 40), before: chunk("bext", bytes)))?.broadcastWave)
+            XCTAssertNil(bwf.integratedLoudness)
+            XCTAssertNil(bwf.loudnessRange)
+            XCTAssertNil(bwf.maxTruePeakLevel)
+            XCTAssertNil(bwf.maxMomentaryLoudness)
+            XCTAssertNil(bwf.maxShortTermLoudness)
+        }
+    }
+
+    func testBroadcastWaveTextBoundsNullTerminationAndEmptyValues() throws {
+        var bytes = bext(history: "line one\r\nline two\r\n")
+        bytes.replaceSubrange(0..<256, with: Data(repeating: 65, count: 256))
+        bytes.replaceSubrange(256..<288, with: Data(count: 32))
+        bytes[288] = 255 // Invalid ASCII omits only this field.
+        bytes[320] = 1 // Control characters must not reach the inspector.
+        bytes.replaceSubrange(338..<346, with: little(UInt64.max))
+        bytes.replaceSubrange(348..<412, with: Data(count: 64))
+        let bwf = try XCTUnwrap(read(wave(format: format(tag: 1, channels: 2, bits: 16),
+            audio: Data(count: 40), before: chunk("bext", bytes)))?.broadcastWave)
+        XCTAssertEqual(bwf.description, String(repeating: "A", count: 256))
+        XCTAssertNil(bwf.originator)
+        XCTAssertNil(bwf.originatorReference)
+        XCTAssertNil(bwf.originationDate)
+        XCTAssertEqual(bwf.timeReferenceSamples, UInt64.max)
+        XCTAssertNil(bwf.umid)
+        XCTAssertEqual(bwf.codingHistory, "line one\r\nline two")
+    }
+
+    func testBroadcastWaveRejectsShortAndDuplicateChunks() throws {
+        let fmt = format(tag: 1, channels: 2, bits: 16)
+        XCTAssertThrowsError(try read(wave(format: fmt, audio: Data(count: 40), before: chunk("bext", Data(count: 601)))))
+        XCTAssertThrowsError(try read(wave(format: fmt, audio: Data(count: 40),
+            before: chunk("bext", bext()) + chunk("bext", bext()))))
+    }
+
+    func testBroadcastWaveExtendedLengthsAndChunkAfterAudio() throws {
+        let fmt = format(tag: 1, channels: 2, bits: 16)
+        let bytes = bext()
+        for container in ["RF64", "BW64"] {
+            let metadata = try read(extendedWave(container: container, format: fmt, audio: Data(count: 40),
+                samples: 10, before: extendedChunk("bext", bytes), table: [("bext", UInt64(bytes.count))]))
+            XCTAssertEqual(metadata?.broadcastWave?.originator, "Recorder")
+        }
+        let body = Data("WAVE".utf8) + chunk("fmt ", fmt) + chunk("data", Data(count: 40)) + chunk("bext", bytes)
+        XCTAssertEqual(try read(Data("RIFF".utf8) + little(UInt32(body.count)) + body)?.broadcastWave?.originator, "Recorder")
+    }
+
+    func testSparseBroadcastWaveHistoryIsBounded() throws {
+        let historySize: UInt32 = 1 << 30
+        let prefix = bext(history: "") + Data(repeating: 65, count: 16_384)
+        let tail = chunk("fmt ", format(tag: 1, channels: 2, bits: 16)) + chunk("data", Data(count: 40))
+        let chunkSize = UInt32(602) + historySize
+        let riffSize = UInt32(4 + 8 + tail.count) + chunkSize
+        let header = Data("RIFF".utf8) + little(riffSize) + Data("WAVEbext".utf8) + little(chunkSize)
+        let url = try write(header + prefix)
+        defer { try? FileManager.default.removeItem(at: url) }
+        let file = try FileHandle(forWritingTo: url)
+        try file.seek(toOffset: UInt64(header.count) + UInt64(chunkSize))
+        try file.write(contentsOf: tail)
+        try file.close()
+        let metadata = try XCTUnwrap(WaveMetadataReader.read(from: url))
+        XCTAssertEqual(metadata.broadcastWave?.codingHistory?.count, 16_384)
+        XCTAssertEqual(metadata.broadcastWave?.codingHistoryTruncated, true)
+        XCTAssertEqual(metadata.audioStreams.first?.codec, "pcm_s16le")
+    }
+
+    func testBroadcastWaveCodableAndInspectorJSONPreserveExactReference() throws {
+        let metadata = try XCTUnwrap(read(wave(format: format(tag: 1, channels: 2, bits: 16),
+            audio: Data(count: 40), before: chunk("bext", bext()))))
+        let encoded = try JSONEncoder().encode(metadata)
+        XCTAssertEqual(try JSONDecoder().decode(MediaMetadata.self, from: encoded), metadata)
+        let exported = try MetadataInspectorView.metadataJSON(metadata: metadata, lufsResults: [:])
+        let json = try XCTUnwrap(JSONSerialization.jsonObject(with: exported) as? [String: Any])
+        let bwf = try XCTUnwrap(json["broadcastWave"] as? [String: Any])
+        XCTAssertEqual((bwf["timeReferenceSamples"] as? NSNumber)?.uint64Value, 0x1234_5678_9abc_def0)
+        XCTAssertEqual(bwf["integratedLoudness"] as? Double, -23.45)
+        var withoutBWF = metadata
+        withoutBWF.broadcastWave = nil
+        let oldJSON = try JSONEncoder().encode(withoutBWF)
+        XCTAssertNil(try JSONDecoder().decode(MediaMetadata.self, from: oldJSON).broadcastWave)
+    }
+
+    private func bext(version: UInt16 = 2, history: String = "A=PCM,F=48000,W=16,M=stereo\r\n") -> Data {
+        var bytes = Data(count: 602)
+        for (offset, value) in [(0, "Field recording"), (256, "Recorder"), (288, "take-42"),
+                                (320, "2026-09-08"), (330, "12:34:56")] {
+            let data = Data(value.utf8)
+            bytes.replaceSubrange(offset..<(offset + data.count), with: data)
+        }
+        bytes.replaceSubrange(338..<346, with: little(UInt64(0x1234_5678_9abc_def0)))
+        bytes.replaceSubrange(346..<348, with: little(version))
+        bytes[348] = 1
+        for (index, value): (Int, Int16) in [-2345, 456, -123, -2000, -2100].enumerated() {
+            bytes.replaceSubrange((412 + index * 2)..<(414 + index * 2), with: little(value))
+        }
+        return bytes + Data(history.utf8)
+    }
+
     private func read(_ data: Data) throws -> MediaMetadata? {
         let url = try write(data)
         defer { try? FileManager.default.removeItem(at: url) }

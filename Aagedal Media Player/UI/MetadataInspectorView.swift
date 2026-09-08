@@ -150,6 +150,10 @@ struct MetadataInspectorView: View {
                     }
                 }
 
+                if let broadcastWave = metadata.broadcastWave {
+                    broadcastWaveSection(broadcastWave)
+                }
+
                 // Info (timecode, comment, encoder)
                 if metadata.timecode != nil || metadata.comment != nil || metadata.encoder != nil {
                     Section("Info") {
@@ -288,6 +292,39 @@ struct MetadataInspectorView: View {
         }
     }
 
+    @ViewBuilder
+    private func broadcastWaveSection(_ wave: MediaMetadata.BroadcastWave) -> some View {
+        Section("Broadcast WAVE") {
+            metadataRow("Version", value: String(wave.version))
+            if let value = wave.description { metadataRow("Description", value: value) }
+            if let value = wave.originator { metadataRow("Originator", value: value) }
+            if let value = wave.originatorReference { metadataRow("Originator Reference", value: value) }
+            if let value = wave.originationDate { metadataRow("Origination Date", value: value) }
+            if let value = wave.originationTime { metadataRow("Origination Time", value: value) }
+            metadataRow("Time Reference", value: "\(wave.timeReferenceSamples) samples since midnight")
+            if let value = wave.umid { metadataRow("UMID", value: value) }
+            if let value = wave.codingHistory { metadataRow("Coding History", value: value) }
+            if wave.codingHistoryTruncated {
+                Text("Coding history shows only the first 16 KiB.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        if wave.integratedLoudness != nil || wave.loudnessRange != nil || wave.maxTruePeakLevel != nil
+            || wave.maxMomentaryLoudness != nil || wave.maxShortTermLoudness != nil {
+            Section("Embedded BWF Loudness") {
+                if let value = wave.integratedLoudness { metadataRow("Integrated", value: String(format: "%.2f LUFS", value)) }
+                if let value = wave.loudnessRange { metadataRow("Range", value: String(format: "%.2f LU", value)) }
+                if let value = wave.maxTruePeakLevel { metadataRow("Max True Peak", value: String(format: "%.2f dBTP", value)) }
+                if let value = wave.maxMomentaryLoudness { metadataRow("Max Momentary", value: String(format: "%.2f LUFS", value)) }
+                if let value = wave.maxShortTermLoudness { metadataRow("Max Short-term", value: String(format: "%.2f LUFS", value)) }
+                Text("Values stored in the file by its producer.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
     static func metadataJSON(metadata: MediaMetadata, lufsResults: [Int: FFmpegService.LUFSResult]) throws -> Data {
         let export = MetadataExport(metadata: metadata, lufsResults: lufsResults)
         let encoder = JSONEncoder()
@@ -304,7 +341,7 @@ struct MetadataInspectorView: View {
         private enum CodingKeys: String, CodingKey {
             case duration, formatName, containerLongName, sizeBytes, bitRate
             case videoStreams, audioStreams, subtitleStreams, chapters
-            case timecode, comment, encoder, frameCount
+            case timecode, comment, encoder, frameCount, broadcastWave
         }
 
         func encode(to encoder: Encoder) throws {
@@ -344,6 +381,7 @@ struct MetadataInspectorView: View {
             try c.encodeIfPresent(metadata.comment, forKey: .comment)
             try c.encodeIfPresent(metadata.encoder, forKey: .encoder)
             try c.encodeIfPresent(metadata.frameCount, forKey: .frameCount)
+            try c.encodeIfPresent(metadata.broadcastWave, forKey: .broadcastWave)
         }
     }
 

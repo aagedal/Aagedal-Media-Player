@@ -189,6 +189,27 @@ struct MediaMetadata: Equatable, Sendable, Codable {
     let subtitleStreams: [SubtitleStream]
     let chapters: [Chapter]
 
+    /// Embedded bext values, independent of measurements performed by the player.
+    nonisolated struct BroadcastWave: Equatable, Sendable, Codable {
+        let version: UInt16
+        let description: String?
+        let originator: String?
+        let originatorReference: String?
+        let originationDate: String?
+        let originationTime: String?
+        let timeReferenceSamples: UInt64
+        let umid: String?
+        let integratedLoudness: Double?
+        let loudnessRange: Double?
+        let maxTruePeakLevel: Double?
+        let maxMomentaryLoudness: Double?
+        let maxShortTermLoudness: Double?
+        let codingHistory: String?
+        let codingHistoryTruncated: Bool
+    }
+
+    var broadcastWave: BroadcastWave? = nil
+
     var primaryVideoStream: VideoStream? {
         videoStreams.first
     }
