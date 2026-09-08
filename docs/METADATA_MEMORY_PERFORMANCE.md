@@ -137,7 +137,9 @@ leading/trailing `moov`, absolute `stco`/`co64` sample offsets, extended/zero-si
 atoms, and selected malformed/truncated cases through public RTMD APIs.
 [Real-media validation](METADATA_REAL_MEDIA_VALIDATION.md) adds one native Sony A1
 clip (all RTMD frames and IMU samples), BRAW/CRM/R3D exporter parity, and a passing
-upstream library suite with its skips documented. Broader camera/recording-mode
+upstream library suite with its skips documented. The September 8 expansion adds
+a longer Sony A1 clip (5,568 frames and 222,720 samples per motion stream), ProRes
+RAW HQ, ARRIRAW, and X-OCN LT exporter parity. Broader camera/recording-mode
 coverage, raw formats and intended error semantics still require review; these
 checks do not establish compatibility for every clip or every internal field.
 

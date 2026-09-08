@@ -136,12 +136,41 @@ retained log (`revalidated-summary.json`) and nine focused Python regression
 tests (`python3 scripts/test-metadata-cli-validation.py`); no second Swift build
 was needed.
 
+## Expanded local result — 2026-09-08
+
+A second paired Release run added a longer native Sony A1 clip, ProRes RAW HQ
+in MOV, ARRIRAW in MXF, and Sony X-OCN LT in MXF. All ten isolated executions
+(five workloads per variant) succeeded and every baseline/candidate result
+matched. The Sony check covered 5,568 RTMD frames, the first-frame snapshot,
+2,000 Hz IMU rate, and all 222,720 samples in each motion stream. Input media
+and every candidate NRT sidecar remained unchanged by the before/after hashes.
+
+| Local fixture | Bytes | Exported fields | Input SHA-256 |
+| --- | ---: | ---: | --- |
+| 20260502_TRA_MOV_0240.MP4 | 1,569,013,272 | 69 | `d8f32f9e827dba821a8101c7dd713580e37b03e9723c4ffbf136919829d6fbe1` |
+| a7s III ProRes RAW HQ.mov | 1,672,990,980 | 31 | `bb60c894a7ee17930c54161123dd98ba99f2df935a148cd3c70cef614787c5c2` |
+| DW0001C005_251020_113322_a1I7H.mxf | 1,989,333,076 | 33 | `5b315def2190009aa61eee6ef127404cf18a661df8ffeece880ef14c682b5361` |
+| S35 5.8 X-OCN LT 24p 17.9 (SCENE 4).mxf | 1,001,494,064 | 75 | `a1485b5820a4236503bebdc2e42c6e6417471506d288eb017759265b1a225a98` |
+
+Artifacts are at `/tmp/aagedal-metadata-real-20260908-expanded`. The command
+used the same pinned checkout and unchanged probe/script, with
+`--reuse-packages /tmp/aagedal-metadata-edges-20260907-final`; the harness verified
+the complete baseline/candidate library source inventories before rebuilding.
+The exact fixture paths, sidecar hashes, toolchain and all safe result digests
+are retained in `environment.json` and `summary.json`. The library and CLI
+suites were not repeated because their source and candidate patch were unchanged.
+This extends raw-format and longer-clip coverage; both native RTMD examples are
+still Sony A1 clips, and exporter parity does not establish complete extraction
+or metadata correctness in these formats. No memory measurements were taken.
+
 ## Remaining acceptance
 
-Coverage is limited to these exact clips and one Sony camera/recording example.
+Coverage is limited to these eight exact clips and two native Sony A1 examples.
 Broader Sony bodies/modes, more raw formats and unusual container/error cases
 remain relevant acceptance work. A reviewed upstream release is still needed;
-checking published tags on 2026-09-07 found no release newer than the pinned 3.0.0.
+Checking published tags with `git ls-remote --tags` on 2026-09-08 found no release
+newer than the pinned 3.0.0 (`c2d77c2`); `gh pr list --state all` returned no pull
+requests. This does not establish whether review occurred outside GitHub PRs.
 After integration, repeat the isolated memory profile and full-app
 metadata/loudness workload including conversion, concurrent work and release.
 App-wide bounded memory remains unproven by this parity check.
