@@ -803,9 +803,12 @@ production integration remains open.
 - [x] Run the unchanged candidate Release CLI suite offline: all 50 tests
   pass without skips or failures. Require every pinned suite and both aggregate
   totals; nine acceptance-validator regressions reject incomplete evidence.
+- [x] Extend paired native-media parity to a second Sony A1 clip (5,568 RTMD
+  frames and 222,720 samples per motion stream), ProRes RAW HQ, ARRIRAW, and
+  X-OCN LT. All five paired workloads pass on 2026-09-08 with unchanged inputs.
 - [ ] Complete upstream review and remaining fixture coverage, integrate a
   reviewed dependency release, and repeat full-app memory profiling. The latest
-  remote tag is still 3.0.0 as checked on 2026-09-07.
+  remote tag is still 3.0.0 as checked on 2026-09-08.
 
 Acceptance: the source of the memory spike and a measured candidate fix are now
 established. The app still uses the original pinned dependency; its memory gate
@@ -860,6 +863,31 @@ Acceptance: this is partial native review evidence. Full keyboard traversal,
 spoken VoiceOver, range editing, relinking, and narrow-window acceptance remain
 open. See `docs/COMPARE_REVIEW_NATIVE_CHECK_2026-09-07.md`.
 
+## Phase 50 — Broader true-peak references and 7.1 measurement qualification
+
+Status: Completed on 2026-09-08. All 417 Release tests pass with no skips or
+unexpected failures; two strict expected rear-weight discrepancies are recorded. Static
+analysis and all 61 release-preflight checks pass. The rebuilt native inspector
+shows the full qualification at its normal width.
+
+- [x] Extend independent phase-sensitive true-peak references to 44.1 and
+  96 kHz, retaining the existing 48 kHz cases.
+- [x] Test isolated 7.1 side and rear speakers against BS.1770-5 weights.
+  Rear references expose a bundled-analyzer discrepancy: −24.5 LUFS versus
+  the −26.0 LUFS reference. Strict expected failures retain the standards
+  target; separate assertions pin the diagnosed behavior.
+- [x] Show the known 7.1 weighting limitation beside inspector measurements
+  and retain it as `lufsWarning` in copied JSON for measured 7.1 streams.
+- [x] Cover measured/unmeasured and affected/unaffected JSON exports.
+- [x] Verify native layout and full accessibility text; explicitly allow wrapped
+  warning text so the standard-width inspector does not truncate it.
+- [x] Pass the integrated Release suite and static analysis.
+
+Acceptance: additional numerical coverage and truthful measurement qualification
+are in place. Correcting the analyzer's rear weighting remains open; the strict
+expected failures are not evidence of standards conformance. See
+`docs/AUDIO_LOUDNESS.md`.
+
 ## Remaining work after this continuation
 
 - Integrate the measured metadata-memory dependency fix after upstream review,
@@ -870,7 +898,9 @@ open. See `docs/COMPARE_REVIEW_NATIVE_CHECK_2026-09-07.md`.
   tests now pass without skips; nine validator regressions require complete
   pinned-suite evidence. The
   isolated candidate reduces the eight-hour peak from about 4.3 GiB to 20 MiB;
-  production still uses the original dependency. See Phase 46.
+  production still uses the original dependency. September 8 adds a longer Sony
+  clip, ProRes RAW HQ, ARRIRAW, and X-OCN LT parity; no newer upstream release
+  is available. See Phase 46.
 
 - Native timeline zoom/hover, comparison review, relinking, channel/loudness controls,
   and loupe pointer/Full Keyboard Access/VoiceOver acceptance. A focused native
@@ -891,6 +921,8 @@ open. See `docs/COMPARE_REVIEW_NATIVE_CHECK_2026-09-07.md`.
   and long-file thumbnail performance profiling.
 - Release signing/notarization/update-feed validation, representative-media
   smoke tests, refreshed screenshots/demo, publication, and hands-on editor beta.
+- Correct the diagnosed 7.1 rear-channel loudness weighting discrepancy in the
+  bundled analyzer; inspector and JSON now qualify affected measurements.
 - Peak/true-peak meters and live momentary/short-term loudness,
   calibration/ballistics/presets, authentic programme/transient reference
   accuracy, and representative multichannel profiling. Selected absolute-level,
@@ -953,3 +985,5 @@ open. See `docs/COMPARE_REVIEW_NATIVE_CHECK_2026-09-07.md`.
 39. Phase 47 loudness range references across sample rates.
 40. Phase 48 independent channel-layout loudness references.
 41. Phase 49 native review feedback and accessible finding identity.
+
+42. Phase 50 broader true-peak references and 7.1 measurement qualification.

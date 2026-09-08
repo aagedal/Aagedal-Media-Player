@@ -354,7 +354,7 @@ struct MetadataInspectorView: View {
         private enum CodingKeys: String, CodingKey {
             case index, languageCode, title, codec, codecLongName, profile
             case sampleRate, channels, channelLayout, bitDepth, bitRate
-            case isDefault, lufs
+            case isDefault, lufs, lufsWarning
         }
 
         func encode(to encoder: Encoder) throws {
@@ -372,13 +372,36 @@ struct MetadataInspectorView: View {
             try c.encodeIfPresent(stream.bitRate, forKey: .bitRate)
             try c.encode(stream.isDefault, forKey: .isDefault)
             try c.encodeIfPresent(lufs, forKey: .lufs)
+            if lufs != nil {
+                try c.encodeIfPresent(
+                    MetadataInspectorView.loudnessMeasurementWarning(channelLayout: stream.channelLayout),
+                    forKey: .lufsWarning
+                )
+            }
         }
     }
 
     // MARK: - LUFS Analysis
 
+    nonisolated static func loudnessMeasurementWarning(channelLayout: String?) -> String? {
+        guard channelLayout?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "7.1" else {
+            return nil
+        }
+        return "7.1 loudness limitation: rear channels are overweighted by the analyzer. A rear-only reference reads 1.5 LU high; programme loudness and loudness range may be affected. True peak is unaffected by this weighting issue."
+    }
+
     @ViewBuilder
     private func lufsSection(streamIndex: Int) -> some View {
+        if let streams = metadata?.audioStreams,
+           streams.indices.contains(streamIndex),
+           let warning = Self.loudnessMeasurementWarning(channelLayout: streams[streamIndex].channelLayout) {
+            Text(warning)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .lineLimit(nil)
+                .fixedSize(horizontal: false, vertical: true)
+                .textSelection(.enabled)
+        }
         Picker("Loudness Analysis", selection: $measureSelectedRange) {
             Text("Whole File").tag(false)
             Text("In–Out Range").tag(true)

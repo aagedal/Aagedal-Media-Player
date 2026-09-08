@@ -41,6 +41,7 @@ All notable changes to Aagedal Media Player.
   recording run sheet.
 
 ### Changed
+- Qualify 7.1 loudness measurements in the inspector and copied JSON because the bundled analyzer overweights rear channels; expanded independent references record this limitation.
 - Review-note accessibility labels identify Add, note text, and Delete actions, with source-A frame context for individual findings.
 - Timeline zoom starts in the timeline context menu; its extra controls appear only while zoomed and disappear on Fit.
 - Volume now uses a continuous slider without tick marks, applies tracking changes directly to playback, and uses matching linear-amplitude percentages on MPV and AVPlayer.

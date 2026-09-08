@@ -23,12 +23,18 @@ from publishing stale results.
 object. Range measurements also include `analysisRange.start` and
 `analysisRange.end` in seconds. Whole-file results omit `analysisRange`.
 Non-finite values, such as negative-infinite peak for digital silence, are
-encoded as strings (`"-Infinity"`, `"Infinity"`, or `"NaN"`).
+encoded as strings (`"-Infinity"`, `"Infinity"`, or `"NaN"`). Measured 7.1
+streams also export `lufsWarning`, preserving the rear-speaker weighting
+qualification shown in the inspector.
 
 ## Limits
 
 - These are offline summaries, not live momentary/short-term meters or a
   broadcast standards compliance verdict.
+- For conventional 7.1 streams, the bundled FFmpeg applies excessive loudness
+  weighting to the rear speakers: rear-only material reads about 1.5 LU high
+  against ITU-R BS.1770-5. Mixed material can also read high, depending on rear
+  content and gating. True peak is unaffected by this weighting limitation.
 - Analysis decodes the source up to the Out point, including material before
   the In point; a selection late in a long source can still take time. Cancel remains
   available while it runs.
@@ -80,9 +86,10 @@ references cover:
   synthesized independently at 44.1, 48, and 96 kHz.
 - Case 4: a 100-second level sequence that exercises absolute and relative
   gating, with an expected integrated result of −23 LUFS (±0.1 LU).
-- Cases 15–19: phase-sensitive true peaks at three frequencies, with 10 ms
-  fades and the specified +0.2/−0.4 dB tolerance. The final case reconstructs
-  above full scale despite unclipped input samples.
+- Cases 15–19: phase-sensitive true peaks at three frequencies relative to
+  each sample rate (44.1, 48, and 96 kHz), with 10 ms fades and the specified
+  +0.2/−0.4 dB tolerance. The final case reconstructs above full scale despite
+  unclipped input samples.
 
 [EBU Tech 3342 (2023), Table 1](https://tech.ebu.ch/docs/tech/tech3342.pdf)
 cases 1–4 add independent loudness-range references at 44.1, 48, and 96 kHz.
@@ -105,17 +112,38 @@ raising true peak to −3 dBTP in each LFE-bearing layout. The
 sets channel positions directly; no FFmpeg pan or synthesis filter creates
 these fixtures.
 
+Four further 7.1 fixtures independently isolate rear and side speakers.
+[ITU-R BS.1770-5, Annex 3, Tables 4–5](https://www.itu.int/dms_pubrec/itu-r/rec/bs/R-REC-BS.1770-5-202311-I!!PDF-E.pdf)
+assigns unit weight to the rear ±135° speakers and 1.41 to the side ±90°
+speakers. The bundled FFmpeg instead applies 1.41 to both pairs: each isolated
+rear reference reads −24.5 LUFS against an expected −26.0 LUFS. These two
+assertions are strict expected failures, so a backend correction requires
+removing the expectation; side loudness and all four true peaks remain ordinary
+passing assertions. The test deliberately retains the independent standard's
+expected levels rather than treating the backend discrepancy as correct.
+
 This is a selected reference regression set, not full EBU/ITU certification.
 Remaining reference coverage includes authentic programme material,
-transient true peaks, 7.1 rear-speaker weighting, and immersive channel layouts.
-True-peak phase references currently cover 48 kHz; the additional sample rates
-cover calibration and synthetic LRA.
+transient true peaks, and immersive channel layouts. Correct 7.1 rear-speaker
+weighting remains a backend limitation, now exposed by independent references.
 
 The expanded 415-test Release suite passes without failures or skips on
 2026-09-07, as do Xcode static analysis and all 61 release-preflight checks.
 The additional calibration/LRA coverage comprises 18 independently synthesized
 references across the three sample rates. The subsequent channel-layout coverage
 adds 13 references in three tests; neither changes production analysis behavior.
+
+On 2026-09-08 the focused 18-test Release loudness suite and complete 417-test
+Release suite pass with no skips or unexpected failures; Xcode static analysis
+also passes. The suites record the two strict expected rear-weight failures
+described above. This expansion adds ten phase references, four isolated 7.1
+speaker references, and JSON coverage ensuring the qualification accompanies
+only measured 7.1 results.
+The final suite was repeated after the inspector warning wrapping fix:
+417 tests passed in 104.997 seconds, followed by successful static analysis.
+Local artifacts: `/tmp/improvements-final-rebuilt-20260908.xcresult`,
+`/tmp/improvements-final-rebuilt-tests-20260908.log`, and
+`/tmp/improvements-final-analyze-20260908.log`.
 
 Empty-range fixtures check both an interval beyond EOF and an interval before
 a delayed stream begins. Analysis requires FFmpeg's output clock to advance
@@ -168,3 +196,14 @@ when the inspector is hidden and reopened. Inspector visibility now explicitly
 owns cancellation because native collapse can retain its SwiftUI content.
 Cancel Analysis has its own full-width row for an unambiguous target.
 Full Keyboard Access and spoken VoiceOver acceptance remain open.
+
+
+A September 8 native check used a generated one-second 48 kHz, 24-bit PCM
+7.1 MOV in the rebuilt Release app. The inspector identified `8 (7.1)`,
+exposed the complete qualification in its accessibility tree, and retained
+it while displaying a completed silence measurement (−70.0 LUFS, 0.0 LU,
+negative-infinite true peak). An initial screenshot caught truncation in the
+native List row. The final layout explicitly removes the row's line limit;
+a rebuilt screenshot confirms the entire qualification wraps at the normal
+approximately 270-pixel inspector width. This is layout and accessibility-tree
+evidence, not spoken VoiceOver or Full Keyboard Access acceptance.
