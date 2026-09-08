@@ -912,6 +912,28 @@ preserves source true peaks. This is selected numerical evidence, not complete
 standards certification. Native inspection of the revised explanatory text and
 broader programme/live-meter acceptance remain open. See `docs/AUDIO_LOUDNESS.md`.
 
+## Phase 52 — Transient true-peak references and native loudness layout
+
+Status: Completed on 2026-09-08. All 426 Release tests pass without failures,
+expected failures, or skips; static analysis and all 61 release-preflight
+checks pass.
+
+- [x] Add 12 independently synthesized, band-limited transient references at
+  44.1/48/96 kHz, with both polarities and peaks above full scale while stored
+  PCM samples remain below full scale.
+- [x] Verify reconstructed peaks against analytical maxima through the
+  production analyzer, including separation from sample-peak measurements.
+- [x] Confirm native pre/post-measurement 7.1 correction text, accessible
+  stream identity, and a rear-speaker measurement in the rebuilt app.
+- [x] Fix the truncated native Loudness Analysis heading by placing it above
+  the scope control; verify the normal-width layout after rebuilding.
+- [x] Pass the integrated Release suite and static analysis.
+
+Acceptance: selected transient reconstruction references and native correction
+layout are covered. Authentic programme material, broader transient families,
+Full Keyboard Access, and spoken VoiceOver remain separate acceptance work.
+See `docs/AUDIO_LOUDNESS.md` and `docs/AUDIO_QC_NATIVE_CHECK_2026-09-08.md`.
+
 ## Remaining work after this continuation
 
 - Integrate the measured metadata-memory dependency fix after upstream review,
@@ -945,16 +967,22 @@ broader programme/live-meter acceptance remain open. See `docs/AUDIO_LOUDNESS.md
   and long-file thumbnail performance profiling.
 - Release signing/notarization/update-feed validation, representative-media
   smoke tests, refreshed screenshots/demo, publication, and hands-on editor beta.
-- Verify revised native 7.1 correction text with pointer/keyboard/VoiceOver.
+- Complete Full Keyboard Access and spoken VoiceOver checks for the revised
+  native 7.1 correction text. Phase 52 verifies native text wrapping,
+  accessibility-tree content, measurement activation, and Command-I reopening.
   The diagnosed rear-weight discrepancy is corrected in Phase 51; unknown or
   other layouts do not receive that correction.
+- Investigate missing inspector metadata for the generated Float32 7.1 WAVE
+  used in the September 8 native check. Playback opened it, but measurement
+  required a sample-preserving MOV remux; see the Phase 52 native-check notes.
 - Peak/true-peak meters and live momentary/short-term loudness,
-  calibration/ballistics/presets, authentic programme/transient reference
+  calibration/ballistics/presets, authentic programme and broader transient reference
   accuracy, and representative multichannel profiling. Selected absolute-level,
   gating, and true-peak numerical references are covered by Phase 45; Phase 47
   adds synthetic LRA and calibration at 44.1/48/96 kHz. Phase 48 adds independent
   front/side/LFE references for 2.1, 3.0, 5.1(side), and part of 7.1. Phase 51
   adds corrected 7.1 references across all conventional speakers and three rates.
+  Phase 52 adds 12 analytical transient true-peak references at those rates.
 - Verified 1:1 source-pixel inspection, whole-viewport zoom/pan after loupe
   acceptance, and time-localized mismatch markers after a detection model is
   defined. See `PRODUCT_ROADMAP.md` for milestone sequencing.
@@ -1015,3 +1043,5 @@ broader programme/live-meter acceptance remain open. See `docs/AUDIO_LOUDNESS.md
 42. Phase 50 broader true-peak references and 7.1 measurement qualification.
 
 43. Phase 51 corrected conventional 7.1 loudness weighting.
+
+44. Phase 52 transient true-peak references and native loudness layout.

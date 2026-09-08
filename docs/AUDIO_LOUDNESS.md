@@ -138,8 +138,35 @@ also covered. The production profiler supplies the same layout metadata as the
 inspector so future conventional 7.1 profiles exercise this correction.
 
 This is a selected reference regression set, not full EBU/ITU certification.
-Remaining reference coverage includes authentic programme material,
-transient true peaks, and immersive channel layouts.
+Twelve independent transient references add a short, band-limited pulse at
+44.1, 48, and 96 kHz, each with amplitudes +0.5, −0.5, +1.2, and −1.2.
+The signal is `A × sinc(t / 8)² × cos(πt / 2)`, where
+`sinc(u) = sin(πu) / (πu)` and `t` is measured in sample periods from the
+pulse center. Its continuous absolute maximum is exactly `|A|`: both factors
+have magnitude at most one and reach one at the center. Its highest frequency
+is 3/8 of the sample rate, below Nyquist. The center lies halfway between two
+samples, keeping the sample peak more than 3 dB below the known continuous
+peak. Even the ±1.2 pulses have input samples below full scale.
+
+Swift writes one second of Float32 PCM directly, retaining over 2,000 envelope
+widths on either side of the center; the discarded envelope is below 3×10⁻⁸
+of the peak. The meter must recover `20 log10(|A|)` dBTP within +0.2/−0.4 dB
+and exceed sample peak by more than 2.5 dB. These analytic transient
+regressions exercise both polarities and above-full-scale reconstruction;
+they are not additional official EBU test vectors. Remaining reference
+coverage includes authentic programme material and immersive channel layouts;
+this single pulse family does not establish accuracy for every transient.
+
+The expanded focused Release loudness suite passes all 27 tests on 2026-09-08,
+with zero failures, expected failures, or skips. The final full Release suite
+passes all 426 tests in 110.897 seconds, also with no failures or skips, and
+Xcode static analysis succeeds. An earlier full run recorded five premature
+test-host exits while native UI checks were running; the clean full rerun with
+UI automation stopped passed without those exits. Local evidence:
+`/tmp/aagedal-transient-loudness-suite-20260908.xcresult`,
+`/tmp/aagedal-improvements-full-isolated-20260908.xcresult`, and
+`/tmp/aagedal-improvements-analyze-20260908.log`. The interrupted run is retained
+separately at `/tmp/aagedal-improvements-full-20260908.xcresult`.
 
 The expanded 415-test Release suite passes without failures or skips on
 2026-09-07, as do Xcode static analysis and all 61 release-preflight checks.
@@ -233,3 +260,9 @@ native List row. The final layout explicitly removes the row's line limit;
 a rebuilt screenshot confirms the entire qualification wraps at the normal
 approximately 270-pixel inspector width. This is layout and accessibility-tree
 evidence, not spoken VoiceOver or Full Keyboard Access acceptance.
+
+The later [September 8 correction check](AUDIO_QC_NATIVE_CHECK_2026-09-08.md)
+verifies the revised pre/post-measurement correction text using an isolated
+rear-speaker tone, and confirms the complete scope heading after moving it
+above the segmented control. Full Keyboard Access and spoken VoiceOver
+acceptance remain open.

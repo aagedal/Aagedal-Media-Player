@@ -1,6 +1,6 @@
 # Aagedal Media Player Product Roadmap
 
-Last updated: 2026-09-07
+Last updated: 2026-09-08
 
 ## Product direction
 
@@ -283,9 +283,11 @@ confidence as the picture.
   and phase-sensitive true peaks cover 44.1/48/96 kHz. Independent speaker-mask
   fixtures additionally cover
   front/side/LFE behavior in 2.1, 3.0, 5.1(side), and conventional 7.1. Authentic
-  programme material, transient peaks, immersive layouts,
+  programme material, broader transient families, immersive layouts,
   and future live-meter behavior remain. Conventional 7.1 rear weighting is now
   corrected with measurement provenance; see `docs/AUDIO_LOUDNESS.md`.
+  Twelve independent band-limited transient references now cover positive and
+  negative peaks, including above-full-scale reconstruction, at all three rates.
 - [ ] Confirm meter and thumbnail work remains bounded during long playback.
   A production-loader thumbnail profiler now checks 40 distributed requests
   per input with cache bounds and sampled memory/latency reporting. See

@@ -411,13 +411,19 @@ struct MetadataInspectorView: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .textSelection(.enabled)
         }
-        Picker("Loudness Analysis", selection: $measureSelectedRange) {
-            Text("Whole File").tag(false)
-            Text("In–Out Range").tag(true)
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Loudness Analysis")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Picker("Loudness Analysis", selection: $measureSelectedRange) {
+                Text("Whole File").tag(false)
+                Text("In–Out Range").tag(true)
+            }
+            .labelsHidden()
+            .pickerStyle(.segmented)
+            .accessibilityLabel("Loudness analysis scope for audio stream \(streamIndex + 1)")
+            .accessibilityHint("Changes the measurement scope for all audio streams.")
         }
-        .pickerStyle(.segmented)
-        .accessibilityLabel("Loudness analysis scope for audio stream \(streamIndex + 1)")
-        .accessibilityHint("Changes the measurement scope for all audio streams.")
         if measureSelectedRange {
             if let range = selectedLoudnessRange {
                 Text(String(format: "Selected range: %.3f–%.3f s", range.start, range.end))

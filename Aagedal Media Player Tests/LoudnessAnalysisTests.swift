@@ -90,6 +90,65 @@ final class LoudnessAnalysisTests: XCTestCase {
         }
     }
 
+    func testIndependentBandLimitedTransientTruePeakReferences() async throws {
+        guard FFmpegService.ffmpegPath != nil else { throw XCTSkip("Bundled ffmpeg is required") }
+        // x(t) = A sinc(t / 8)^2 cos(pi t / 2), with t in sample periods.
+        // Both factors have magnitude <= 1 and equal 1 at t = 0, so the
+        // continuous peak is exactly |A|. Its spectrum ends at 3 fs / 8,
+        // below Nyquist. Centering between samples hides roughly 3 dB of peak.
+        // Truncation is more than 2,000 envelope widths from the center;
+        // the discarded envelope is < 3e-8 of peak at every sample rate.
+        for sampleRate in [44_100, 48_000, 96_000] {
+            for amplitude in [0.5, -0.5, 1.2, -1.2] {
+                let center = Double(sampleRate) / 2 + 0.5
+                let samples = (0..<sampleRate).map { frame -> Float in
+                    let t = Double(frame) - center
+                    let argument = Double.pi * t / 8
+                    let sinc = argument == 0 ? 1 : sin(argument) / argument
+                    return Float(amplitude * sinc * sinc * cos(.pi * t / 2))
+                }
+                let samplePeak = Double(samples.map { abs($0) }.max() ?? 0)
+                let expected = 20 * log10(abs(amplitude))
+                XCTAssertLessThan(samplePeak, 1, "Even above-full-scale references have unclipped PCM")
+                XCTAssertLessThan(20 * log10(samplePeak), expected - 3)
+                let url = try writeReferenceMonoPCM(samples, sampleRate: sampleRate)
+                defer { try? FileManager.default.removeItem(at: url) }
+                let result = try await FFmpegService.analyzeLUFS(url: url, audioStreamIndex: 0)
+                let context = "Transient A=\(amplitude) at \(sampleRate) Hz"
+                // Regression tolerance matching the existing true-peak references;
+                // these analytic pulses are not additional EBU certification cases.
+                XCTAssertGreaterThanOrEqual(result.truePeak, expected - 0.4, context)
+                XCTAssertLessThanOrEqual(result.truePeak, expected + 0.2, context)
+                XCTAssertGreaterThan(result.truePeak, 20 * log10(samplePeak) + 2.5, context)
+            }
+        }
+    }
+
+    private func writeReferenceMonoPCM(_ samples: [Float], sampleRate: Int) throws -> URL {
+        let payloadBytes = samples.count * MemoryLayout<Float>.size
+        var data = Data(capacity: 44 + payloadBytes)
+        func appendInteger<T: FixedWidthInteger>(_ value: T) {
+            var littleEndian = value.littleEndian
+            withUnsafeBytes(of: &littleEndian) { data.append(contentsOf: $0) }
+        }
+        data.append(contentsOf: "RIFF".utf8)
+        appendInteger(UInt32(36 + payloadBytes))
+        data.append(contentsOf: "WAVEfmt ".utf8)
+        appendInteger(UInt32(16))
+        appendInteger(UInt16(3)) // IEEE Float32, mono
+        appendInteger(UInt16(1))
+        appendInteger(UInt32(sampleRate))
+        appendInteger(UInt32(sampleRate * 4))
+        appendInteger(UInt16(4))
+        appendInteger(UInt16(32))
+        data.append(contentsOf: "data".utf8)
+        appendInteger(UInt32(payloadBytes))
+        for sample in samples { appendInteger(sample.bitPattern) }
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("transient-reference-\(UUID().uuidString).wav")
+        try data.write(to: url)
+        return url
+    }
+
     func testIndependentFrontChannelLayoutReferences() async throws {
         guard FFmpegService.ffmpegPath != nil else { throw XCTSkip("Bundled ffmpeg is required") }
         // A −23 dBFS, 1 kHz stereo sine is −23 LUFS (EBU Tech 3341 case 1).
