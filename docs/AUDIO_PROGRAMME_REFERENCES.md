@@ -66,7 +66,60 @@ adds narrow/wide stereo programme references: integrated −23 ±0.1 LUFS in
 [Tech 3341 Table 1, cases 7–8](https://tech.ebu.ch/docs/tech/tech3341.pdf), and
 LRA 5 ±1 / 15 ±1 LU in [Tech 3342 Table 1, cases 5–6](https://tech.ebu.ch/docs/tech/tech3342.pdf).
 The official EBU ZIP returned HTTP 403 in this environment on 2026-09-08;
-those programme LRA cases remain unmeasured. Respect the EBU material's internal
+both the download linked by the publication page and its legacy
+`/docs/testmaterial/ebu-loudness-test-setv05.zip` address were retried with the
+same result. Those programme LRA cases remain unmeasured. Respect the EBU material's internal
 R&D terms and do not add its audio to the repository. Programme true-peak
 references, immersive layouts, live-meter behavior, and release-floor hardware
 profiling remain separate work.
+
+## Official eight-channel gain reference
+
+A separate optional check uses ITU's original
+[1770Conf-23LKFS-8channel archive](https://www.itu.int/dms_pub/itu-r/oth/11/02/R11020000010042ZIPM.zip).
+[BS.2217-2, printed page 5](https://www.itu.int/dms_pub/itu-r/opb/rep/R-REP-BS.2217-2-2016-PDF-E.pdf)
+specifies its eight-channel gain-check target as −23 LKFS; the report's
+page 1 specifies ±0.1 LKFS tolerance. This is a tone-based gain reference,
+so it adds independent conventional 7.1 weighting evidence without closing the
+authentic programme LRA or true-peak gaps above.
+
+The downloaded original contains 48 kHz, 16-bit PCM with **no speaker mask**.
+The ITU report specifies its channel order as L/R/C/LFE/Lss/Rss/Lrs/Rrs;
+conventional WAVE 7.1 stores the rear pair before the side pair. The test pins
+the complete original by SHA-256, reorders its PCM words to
+`[0,1,2,3,6,7,4,5]`, and writes a temporary WAVEFORMATEXTENSIBLE container with
+speaker mask `0x63f`. It performs no gain change, decoding, or resampling.
+An independently calculated SHA-256 pins the prepared PCM payload as well.
+Only the temporary, explicitly labelled 7.1 reference goes through production
+`MetadataService` and `FFmpegService.analyzeLUFS`. The test requires the
+conventional 7.1 weighting correction to be recorded in the result.
+
+This preparation is necessary: neither the original's channel count nor a
+decoder's guessed 7.1 order supplies its missing speaker metadata. This check
+does not establish direct support for the unlabelled original, nor immersive
+layouts. LRA and true peak are recorded only as unreferenced observations.
+
+Extract the official archive into an external directory and run with native
+player automation idle:
+
+```bash
+ITU_7_1_DERIVED_DATA=/tmp/aagedal-itu-7-1-build \
+  scripts/check-itu-seven-point-one-loudness.sh /tmp/new-itu-7-1-results /path/to/references
+```
+
+The runner builds Release with pinned package versions, injects the opt-in
+directory into a temporary XCTest manifest, and retains environment details,
+input hash, build/test logs, `.xcresult`, and `measurements.json`. It rejects
+missing/duplicate measurements, wrong source or prepared hashes, absent
+correction provenance, and results outside the official integrated tolerance.
+The downloaded audio is never added to the repository.
+
+The prepared official reference passed at **−23.0 LUFS** through the rebuilt
+Release app on the development M5 Pro on 2026-09-08, with conventional 7.1
+correction provenance present. Artifacts are retained in
+`/tmp/aagedal-itu-7-1-check-final-20260908`, including `measurements.json` and
+`ITUSevenPointOneLoudness.xcresult`. The original archive and extracted WAV
+remain outside the repository at `/tmp/itu-8channel-23-20260908.zip` and
+`/tmp/aagedal-itu-eight-channel-references-20260908`. These temporary locations
+are not durable archives; the source link, pinned hashes, and runner provide
+the reproducible record.
