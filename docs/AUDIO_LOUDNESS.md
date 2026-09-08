@@ -154,10 +154,39 @@ of the peak. The meter must recover `20 log10(|A|)` dBTP within +0.2/−0.4 dB
 and exceed sample peak by more than 2.5 dB. These analytic transient
 regressions exercise both polarities and above-full-scale reconstruction;
 they are not additional official EBU test vectors. Remaining reference
-coverage includes authentic programme material and immersive channel layouts;
-this single pulse family does not establish accuracy for every transient.
+coverage includes authentic programme material and immersive channel layouts.
 
-The expanded focused Release loudness suite passes all 27 tests on 2026-09-08,
+Eighteen further analytic cases cover two different pulse families at the same
+three sample rates: `0.8 × sinc(t / 12)³ × cos(πt / 3)` has signed envelope
+sidelobes and a spectral limit of 7/24 of the sample rate;
+`0.8 × sinc(t / 16)² × (cos(πt / 2) + cos(πt / 3)) / 2` combines two carriers
+and has a spectral limit of 5/16 of the sample rate. Each has an exact
+continuous absolute peak of 0.8 (−1.9382 dBTP), since all factors have
+magnitude at most one and equal one at the center. One-second Float32
+fixtures place the center halfway between samples. The discarded envelope
+bounds are below 1.7×10⁻¹⁰ and 5.4×10⁻⁸ of peak, respectively, at all three
+rates. These fixtures are finite approximations to the ideal band-limited
+functions, not exactly band-limited finite records.
+
+Each family is measured in the left channel alone, right channel alone, and
+both stereo channels with opposite polarities. The last placement would
+cancel in an incorrect stereo sum; true peak must remain the maximum of
+the individual channels. The same +0.2/−0.4 dB tolerance applies, and the
+measured peak must exceed sample peak by 0.8 dB. Independent bundled-FFmpeg
+probes of the mono formulas report −1.9 dBTP, except the two-carrier pulse at
+44.1 kHz, which reports −2.0 dBTP; their sample peaks are −3.2620 and
+−4.0514 dBFS. The new XCTest cases additionally exercise the production
+analyzer and all three stereo placements. Three analytic pulse families
+still do not establish accuracy for every transient or standards certification.
+
+The Phase 53 continuation passes all 435 integrated Release tests with zero
+failures or skips in 111.298 seconds, including the 18 additional transient
+cases and direct Float32 7.1 WAVE-to-loudness regression. Static analysis and
+all 61 release-preflight checks pass. Evidence is retained temporarily at
+`/tmp/aagedal-continuation-full-verified-20260908.xcresult` and
+`/tmp/aagedal-continuation-analyze-20260908.log`.
+
+The earlier Phase 52 focused Release loudness suite passes all 27 tests on 2026-09-08,
 with zero failures, expected failures, or skips. The final full Release suite
 passes all 426 tests in 110.897 seconds, also with no failures or skips, and
 Xcode static analysis succeeds. An earlier full run recorded five premature

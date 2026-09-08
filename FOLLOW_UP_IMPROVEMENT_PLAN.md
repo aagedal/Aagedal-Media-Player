@@ -934,6 +934,27 @@ layout are covered. Authentic programme material, broader transient families,
 Full Keyboard Access, and spoken VoiceOver remain separate acceptance work.
 See `docs/AUDIO_LOUDNESS.md` and `docs/AUDIO_QC_NATIVE_CHECK_2026-09-08.md`.
 
+## Phase 53 — Bounded WAVE metadata and broader transient references
+
+Status: Completed on 2026-09-08. All 435 Release tests pass without failures
+or skips; static analysis and all 61 release-preflight checks pass.
+
+- [x] Diagnose the missing Float32 WAVE inspector metadata: the production
+  video-metadata API does not handle RIFF/WAVE. The separate audio API copies
+  chunk payloads, omits duration, and guesses surround layout from channel count.
+- [x] Add bounded PCM/IEEE-float RIFF header reading, exact frame-derived
+  duration, and explicit extensible speaker-mask handling without remuxing.
+- [x] Cover classic/extensible formats, malformed headers, unknown masks,
+  out-of-order chunks, and a sparse 1 GiB recording with regression tests.
+- [x] Add 18 independent transient references spanning signed-sidelobe and
+  two-carrier pulses, three sample rates, and left/right/anti-phase stereo.
+- [x] Pass integrated Release regression and static analysis.
+
+Acceptance: supported PCM/IEEE-float RIFF WAVE files expose audio metadata
+without loading the recording into memory or guessing conventional 7.1.
+RF64/BW64, compressed WAVE, BWF tags, native inspector acceptance, authentic
+programme material, and live meters remain separate work.
+
 ## Remaining work after this continuation
 
 - Integrate the measured metadata-memory dependency fix after upstream review,
@@ -972,9 +993,9 @@ See `docs/AUDIO_LOUDNESS.md` and `docs/AUDIO_QC_NATIVE_CHECK_2026-09-08.md`.
   accessibility-tree content, measurement activation, and Command-I reopening.
   The diagnosed rear-weight discrepancy is corrected in Phase 51; unknown or
   other layouts do not receive that correction.
-- Investigate missing inspector metadata for the generated Float32 7.1 WAVE
-  used in the September 8 native check. Playback opened it, but measurement
-  required a sample-preserving MOV remux; see the Phase 52 native-check notes.
+- Confirm the repaired WAVE metadata path in the native inspector. Phase 53
+  adds bounded PCM/IEEE-float RIFF reading; RF64/BW64, compressed WAVE, and BWF
+  tag extraction remain outside this reader’s scope.
 - Peak/true-peak meters and live momentary/short-term loudness,
   calibration/ballistics/presets, authentic programme and broader transient reference
   accuracy, and representative multichannel profiling. Selected absolute-level,
@@ -982,7 +1003,8 @@ See `docs/AUDIO_LOUDNESS.md` and `docs/AUDIO_QC_NATIVE_CHECK_2026-09-08.md`.
   adds synthetic LRA and calibration at 44.1/48/96 kHz. Phase 48 adds independent
   front/side/LFE references for 2.1, 3.0, 5.1(side), and part of 7.1. Phase 51
   adds corrected 7.1 references across all conventional speakers and three rates.
-  Phase 52 adds 12 analytical transient true-peak references at those rates.
+  Phase 52 adds 12 analytical transient true-peak references at those rates;
+  Phase 53 adds 18 cases across two further pulse families and stereo placement.
 - Verified 1:1 source-pixel inspection, whole-viewport zoom/pan after loupe
   acceptance, and time-localized mismatch markers after a detection model is
   defined. See `PRODUCT_ROADMAP.md` for milestone sequencing.
@@ -1045,3 +1067,5 @@ See `docs/AUDIO_LOUDNESS.md` and `docs/AUDIO_QC_NATIVE_CHECK_2026-09-08.md`.
 43. Phase 51 corrected conventional 7.1 loudness weighting.
 
 44. Phase 52 transient true-peak references and native loudness layout.
+
+45. Phase 53 bounded WAVE metadata and broader transient references.

@@ -111,7 +111,7 @@ final class LoudnessAnalysisTests: XCTestCase {
                 let expected = 20 * log10(abs(amplitude))
                 XCTAssertLessThan(samplePeak, 1, "Even above-full-scale references have unclipped PCM")
                 XCTAssertLessThan(20 * log10(samplePeak), expected - 3)
-                let url = try writeReferenceMonoPCM(samples, sampleRate: sampleRate)
+                let url = try writeReferencePCM(samples, sampleRate: sampleRate)
                 defer { try? FileManager.default.removeItem(at: url) }
                 let result = try await FFmpegService.analyzeLUFS(url: url, audioStreamIndex: 0)
                 let context = "Transient A=\(amplitude) at \(sampleRate) Hz"
@@ -124,8 +124,54 @@ final class LoudnessAnalysisTests: XCTestCase {
         }
     }
 
-    private func writeReferenceMonoPCM(_ samples: [Float], sampleRate: Int) throws -> URL {
-        let payloadBytes = samples.count * MemoryLayout<Float>.size
+    func testIndependentTransientFamiliesAndStereoPlacement() async throws {
+        guard FFmpegService.ffmpegPath != nil else { throw XCTSkip("Bundled ffmpeg is required") }
+        // These independent continuous-time formulas have exact absolute peak A:
+        // every factor has magnitude <= 1 and reaches 1 at the half-sample center.
+        // Cubic sinc has signed sidelobes; the second family beats two carriers.
+        // Spectral supports end at 7 fs / 24 and 5 fs / 16, respectively.
+        let families: [(name: String, pulse: (Double) -> Double)] = [
+            ("cubic sinc", { t in
+                let argument = Double.pi * t / 12
+                let sinc = argument == 0 ? 1 : sin(argument) / argument
+                return sinc * sinc * sinc * cos(.pi * t / 3)
+            }),
+            ("two carriers", { t in
+                let argument = Double.pi * t / 16
+                let sinc = argument == 0 ? 1 : sin(argument) / argument
+                return sinc * sinc * (cos(.pi * t / 2) + cos(.pi * t / 3)) / 2
+            }),
+        ]
+        let placements: [(name: String, gains: [Float])] = [
+            ("left only", [1, 0]), ("right only", [0, 1]),
+            ("opposite polarity", [1, -1]),
+        ]
+        let amplitude = 0.8
+        let expected = 20 * log10(amplitude)
+        for sampleRate in [44_100, 48_000, 96_000] {
+            for family in families {
+                let center = Double(sampleRate) / 2 + 0.5
+                let samples = (0..<sampleRate).map { Float(amplitude * family.pulse(Double($0) - center)) }
+                let samplePeak = 20 * log10(Double(samples.map { abs($0) }.max() ?? 0))
+                XCTAssertLessThan(samplePeak, expected - 1.3, family.name)
+                for placement in placements {
+                    let url = try writeReferencePCM(samples, sampleRate: sampleRate, channelGains: placement.gains)
+                    defer { try? FileManager.default.removeItem(at: url) }
+                    let result = try await FFmpegService.analyzeLUFS(url: url, audioStreamIndex: 0)
+                    let context = "\(family.name), \(placement.name), \(sampleRate) Hz"
+                    XCTAssertGreaterThanOrEqual(result.truePeak, expected - 0.4, context)
+                    XCTAssertLessThanOrEqual(result.truePeak, expected + 0.2, context)
+                    // An accidental stereo sum cancels the opposite-polarity case;
+                    // per-channel true peak must retain the analytic amplitude.
+                    XCTAssertGreaterThan(result.truePeak, samplePeak + 0.8, context)
+                }
+            }
+        }
+    }
+
+    private func writeReferencePCM(_ samples: [Float], sampleRate: Int, channelGains: [Float] = [1]) throws -> URL {
+        let bytesPerFrame = channelGains.count * MemoryLayout<Float>.size
+        let payloadBytes = samples.count * bytesPerFrame
         var data = Data(capacity: 44 + payloadBytes)
         func appendInteger<T: FixedWidthInteger>(_ value: T) {
             var littleEndian = value.littleEndian
@@ -135,15 +181,17 @@ final class LoudnessAnalysisTests: XCTestCase {
         appendInteger(UInt32(36 + payloadBytes))
         data.append(contentsOf: "WAVEfmt ".utf8)
         appendInteger(UInt32(16))
-        appendInteger(UInt16(3)) // IEEE Float32, mono
-        appendInteger(UInt16(1))
+        appendInteger(UInt16(3)) // IEEE Float32
+        appendInteger(UInt16(channelGains.count))
         appendInteger(UInt32(sampleRate))
-        appendInteger(UInt32(sampleRate * 4))
-        appendInteger(UInt16(4))
+        appendInteger(UInt32(sampleRate * bytesPerFrame))
+        appendInteger(UInt16(bytesPerFrame))
         appendInteger(UInt16(32))
         data.append(contentsOf: "data".utf8)
         appendInteger(UInt32(payloadBytes))
-        for sample in samples { appendInteger(sample.bitPattern) }
+        for sample in samples {
+            for gain in channelGains { appendInteger((sample * gain).bitPattern) }
+        }
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("transient-reference-\(UUID().uuidString).wav")
         try data.write(to: url)
         return url

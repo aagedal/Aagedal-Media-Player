@@ -58,9 +58,14 @@ actor MetadataService {
     private func loadMetadata(for url: URL) async throws -> MediaMetadata {
         var video: VideoMetadata
         do {
+            if let wave = try await Task.detached(priority: .userInitiated, operation: {
+                try WaveMetadataReader.read(from: url)
+            }).value {
+                return wave
+            }
             video = try await readVideoMetadata(from: url)
         } catch {
-            logger.error("SwiftMediaMetadata read failed for \(url.path): \(error.localizedDescription)")
+            logger.error("Metadata read failed for \(url.path): \(error.localizedDescription)")
             throw MetadataError.readFailed(error.localizedDescription)
         }
 

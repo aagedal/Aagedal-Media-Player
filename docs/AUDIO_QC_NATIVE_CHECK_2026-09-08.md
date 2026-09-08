@@ -54,3 +54,36 @@ expected failures, or skips. Results are retained in
 Xcode static analysis and all 61 release-preflight checks pass. An earlier run overlapped native app
 automation and recorded five test-host exits rather than assertion failures;
 the clean run was performed with native automation stopped.
+
+## WAVE metadata follow-up
+
+The missing inspector metadata was traced to `MetadataService` calling only
+SwiftMediaMetadata's `readVideoMetadata` entry point. That API does not accept
+standalone RIFF/WAVE. The pinned dependency also has `AudioMetadata.read` and
+`WAVParser`, but the latter copies every chunk payload (including audio), does
+not compute duration, and labels any eight-channel stream `7.1` without reading
+its speaker mask. Using it directly would undermine both bounded metadata
+memory and the explicit speaker-layout requirement for the loudness correction.
+
+The app now reads ordinary little-endian RIFF PCM and IEEE-float WAVE headers
+on a background task, seeks over audio and ancillary payloads, and maps the
+result into the existing cached metadata path. WAVEFORMATEXTENSIBLE subformat
+GUIDs, frame alignment, chunk boundaries, and declared rates are checked. The
+conventional `7.1` label is supplied only for a matching eight-speaker `0x63f`
+mask; unspecified or unknown surround placement remains unknown. RF64,
+big-endian RIFX, compressed WAVE encodings, and BWF/INFO tag extraction remain
+outside this reader's scope.
+
+`WaveMetadataReaderTests` covers the original bundled-FFmpeg Float32 7.1
+fixture through `MetadataService` and production loudness analysis (rear
+correction, −23 LUFS, and −20 dBTP), synthetic format and mask cases, malformed
+headers and chunk sizes, and a sparse one-GiB audio payload that must be skipped.
+These are metadata integration regressions, not new native inspector or
+VoiceOver acceptance evidence.
+
+The Phase 53 integrated Release run passed all 435 tests with no failures or
+skips in 111.298 seconds; static analysis and all 61 preflight checks pass.
+Results: `/tmp/aagedal-continuation-full-verified-20260908.xcresult` and
+`/tmp/aagedal-continuation-analyze-20260908.log` (temporary storage).
+A further native comparison attempt encountered unresponsive picker automation;
+no additional keyboard, review, or inspector acceptance pass is claimed.

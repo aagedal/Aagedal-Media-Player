@@ -41,7 +41,7 @@ All notable changes to Aagedal Media Player.
   recording run sheet.
 
 ### Changed
-- Qualify 7.1 loudness measurements in the inspector and copied JSON because the bundled analyzer overweights rear channels; expanded independent references record this limitation.
+- Apply standards-based rear-speaker weighting to explicitly identified conventional 7.1 loudness analysis while preserving source samples and true peaks; retain qualification for unknown or uncorrected layouts.
 - Review-note accessibility labels identify Add, note text, and Delete actions, with source-A frame context for individual findings.
 - Timeline zoom starts in the timeline context menu; its extra controls appear only while zoomed and disappear on Fit.
 - Volume now uses a continuous slider without tick marks, applies tracking changes directly to playback, and uses matching linear-amplitude percentages on MPV and AVPlayer.
@@ -68,6 +68,7 @@ All notable changes to Aagedal Media Player.
   primary-file loop boundaries across all backend combinations.
 
 ### Fixed
+- Restore PCM and floating-point RIFF WAVE metadata and loudness access using bounded header reads and explicit surround speaker masks.
 - Reject empty loudness selections instead of displaying FFmpeg’s default summary as a measured peak.
 - Expose channel solo/mute checked states and stream-specific loudness controls to accessibility clients.
 - Reject editor-marker exports with incompatible stored frame rates and keep mixed-rate review findings from reusing the wrong annotated PDF still.

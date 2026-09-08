@@ -288,6 +288,8 @@ confidence as the picture.
   corrected with measurement provenance; see `docs/AUDIO_LOUDNESS.md`.
   Twelve independent band-limited transient references now cover positive and
   negative peaks, including above-full-scale reconstruction, at all three rates.
+  Eighteen further cases cover signed-sidelobe and two-carrier pulses in
+  left-only, right-only, and opposite-polarity stereo placements.
 - [ ] Confirm meter and thumbnail work remains bounded during long playback.
   A production-loader thumbnail profiler now checks 40 distributed requests
   per input with cache bounds and sampled memory/latency reporting. See
