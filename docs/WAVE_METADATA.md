@@ -1,8 +1,9 @@
 # Bounded WAVE metadata
 
 `WaveMetadataReader` supplies technical audio metadata for local little-endian
-RIFF, RF64, and BW64 files containing PCM integer or IEEE floating-point audio.
-It supports the corresponding WAVEFORMATEXTENSIBLE subformats and reports
+RIFF, RF64, and BW64 files, plus big-endian RIFX, containing PCM integer or
+IEEE floating-point audio. For the little-endian containers it also supports
+the corresponding WAVEFORMATEXTENSIBLE subformats and reports
 explicit, recognized speaker masks without inferring surround placement from
 channel count. Duration comes from complete sample frames in the data chunk.
 
@@ -27,10 +28,55 @@ RF64 `fact` chunks. BW64 reserves the corresponding eight `ds64` bytes, so they
 are ignored. This distinction follows [EBU Tech 3306 (RF64)](https://tech.ebu.ch/files/live/sites/tech/files/shared/tech/tech3306v1_0.pdf)
 and [ITU-R BS.2088 (BW64)](https://www.itu.int/rec/R-REC-BS.2088).
 
+## Big-endian RIFX
+
+RIFX uses big-endian container lengths, chunk lengths and base format fields,
+while keeping chunk identifiers in their original character order, as defined
+by [Microsoft/IBM Multimedia Programming Interface and Data Specifications 1.0,
+chapter 2](https://www.mmsp.ece.mcgill.ca/Documents/AudioFormats/WAVE/Docs/riffmci.pdf).
+Classic PCM integer (8/16/24/32/64-bit) and IEEE float (32/64-bit) metadata use
+the same frame-alignment and byte-rate validation as RIFF. Multibyte codecs
+report `be`; unsigned 8-bit PCM remains `pcm_u8`. Mono and stereo are identified
+from channel count; surround placement remains unknown without a supported
+explicit mask.
+
+RIFX WAVEFORMATEXTENSIBLE and Broadcast WAVE tag interpretation remain outside
+this implementation: extensible format tags report unsupported encoding, and
+`bext` payloads are skipped without populating `broadcastWave`. Chunk bounds
+are still validated. RIFX uses ordinary 32-bit lengths and never applies RF64
+`ds64` sentinel rules. Tests cover the metadata-service path, PCM/float widths,
+data before format, odd payload padding, mixed-endian/malformed fields,
+duplicate chunks and a sparse 1 GiB audio payload followed by an ancillary
+chunk. All 30 `WaveMetadataReaderTests` passed in the Release test host on
+2026-09-08, including six RIFX cases. Native playback and producer-authentic
+RIFX fixtures remain separate acceptance work.
+
+A decoder spot check on 2026-09-08 found that the bundled FFmpeg labels a
+classic RIFX 16-bit stereo fixture `pcm_s16le` and emits its big-endian sample
+bytes unchanged when asked for `s16le` output. Input bytes `12 34 FE DC` should
+become `34 12 DC FE`, but remained `12 34 FE DC`. Fixture:
+`/tmp/aagedal-rifx-s16be-20260908.wav`. `RIFXAudioDecoding` now detects the
+container signature, validates the metadata, and inserts the matching
+`-c:a pcm_*be` input decoder before `-i` for production loudness analysis and
+waveforms. Unsigned 8-bit uses `pcm_u8`. Invalid/unsupported RIFX headers fail
+instead of falling back to FFmpeg's incorrect codec guess. Regression tests
+decode known positive/negative samples at every supported PCM/float width,
+measure independently generated −23 dBFS stereo tones, and inspect actual
+waveform amplitudes.
+
+Playback and trim export currently report an actionable unsupported-format
+error directing users to convert to little-endian WAVE with a RIFX-capable
+converter. The guard checks the header even when metadata is unavailable.
+FFmpeg stream copy otherwise writes big-endian sample bytes under a
+little-endian codec tag. [mpv's audio decoder preference](https://mpv.io/manual/stable/#options-ad)
+selects a decoder matching the demuxed codec; it does not provide the same
+input-codec override. An upstream demuxer fix or a separately verified playback
+conversion path is still required before removing this guard.
+
 ## Broadcast WAVE tags
 
-An optional `broadcastWave` object now carries `bext` metadata into the inspector
-and its JSON export. Versions 0–2 expose description, originator/reference,
+For RIFF/RF64/BW64, an optional `broadcastWave` object carries `bext` metadata
+into the inspector and its JSON export. Versions 0–2 expose description, originator/reference,
 origination date/time, the exact unsigned 64-bit sample reference, and coding
 history. Dates and times remain producer-supplied text without timezone or
 calendar interpretation; the sample reference is not converted into a video
@@ -57,8 +103,9 @@ repeated table IDs, malformed/truncated/overflowing lengths, and the table cap.
 Sparse fixtures exercise 8 GiB audio and an odd ancillary chunk exceeding
 4 GiB without allocating or reading their payloads.
 
-Remaining exclusions: compressed WAVE encodings, big-endian RIFX, multiple data
-chunks and `wavl` playlists, INFO/XML/ADM tag extraction or interpretation,
+Remaining exclusions: compressed WAVE encodings, RIFX extensible formats and
+RIFX Broadcast WAVE tags, multiple data chunks and `wavl` playlists,
+INFO/XML/ADM tag extraction or interpretation,
 and tables above the documented cap. Container recognition does not validate
 ADM semantics or guarantee that every decoder can play a file.
 

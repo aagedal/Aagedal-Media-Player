@@ -254,6 +254,18 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
     // MARK: - Playback Control
 
     func load(url: URL, startTime: Double = 0, autostart: Bool = false) {
+        // libmpv's demuxer labels RIFX sample data as little-endian PCM. Its
+        // decoder preference option cannot override a mismatched codec ID.
+        if (try? RIFXAudioDecoding.isRIFX(url)) == true {
+            if mpv != nil { command("stop") }
+            pendingURL = nil
+            isFileLoaded = false
+            isPlaying = false
+            isBusy = false
+            errorStage = .loading
+            error = RIFXAudioDecoding.playbackUnavailable
+            return
+        }
         guard mpv != nil else {
             logger.info("MPV not initialized yet, storing pending load for: \(url.lastPathComponent)")
             pendingURL = url

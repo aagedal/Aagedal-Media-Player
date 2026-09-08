@@ -57,6 +57,113 @@ final class WaveMetadataReaderTests: XCTestCase {
         }
     }
 
+    func testRIFXClassicPCMAndFloatReadBigEndianFields() throws {
+        for (tag, bits, codec) in [(1, 8, "pcm_u8"), (1, 16, "pcm_s16be"),
+                                    (1, 24, "pcm_s24be"), (1, 32, "pcm_s32be"),
+                                    (1, 64, "pcm_s64be"), (3, 32, "pcm_f32be"), (3, 64, "pcm_f64be")] {
+            let data = wave(format: format(tag: tag, channels: 2, bits: bits, bigEndian: true),
+                            audio: Data(count: 2 * bits / 8 * 10),
+                            before: chunk("JUNK", Data([1, 2, 3]), bigEndian: true), bigEndian: true)
+            let metadata = try XCTUnwrap(read(data))
+            let audio = try XCTUnwrap(metadata.audioStreams.first)
+            XCTAssertEqual(audio.codec, codec)
+            XCTAssertEqual(audio.codecLongName, "PCM \(tag == 3 ? "floating-point" : "integer") \(bits)-bit big-endian")
+            XCTAssertEqual(audio.channels, 2)
+            XCTAssertEqual(audio.channelLayout, "stereo")
+            XCTAssertEqual(audio.sampleRate, 48_000)
+            XCTAssertEqual(audio.bitDepth, bits)
+            XCTAssertEqual(audio.bitRate, Int64(48_000 * 2 * bits))
+            XCTAssertEqual(metadata.duration ?? -1, 10.0 / 48_000, accuracy: 0.0000001)
+            XCTAssertEqual(metadata.sizeBytes, Int64(data.count))
+        }
+    }
+
+    func testRIFXReachesMetadataServiceWithoutInventingSurroundLayout() async throws {
+        let url = try write(wave(format: format(tag: 3, channels: 8, bits: 32, bigEndian: true),
+                                 audio: Data(count: 320), bigEndian: true))
+        defer { try? FileManager.default.removeItem(at: url) }
+        let metadata = try await MetadataService.shared.metadata(for: url)
+        XCTAssertEqual(metadata.formatName, "wav")
+        XCTAssertEqual(metadata.duration ?? -1, 10.0 / 48_000, accuracy: 0.0000001)
+        XCTAssertEqual(metadata.audioStreams.first?.codec, "pcm_f32be")
+        XCTAssertEqual(metadata.audioStreams.first?.channels, 8)
+        XCTAssertNil(metadata.audioStreams.first?.channelLayout)
+    }
+
+    func testRIFXDataBeforeFormatAndOddAudioPadding() throws {
+        let body = Data("WAVE".utf8) + chunk("data", Data([128, 128, 128]), bigEndian: true)
+            + chunk("fmt ", format(tag: 1, channels: 1, bits: 8, bigEndian: true), bigEndian: true)
+        let metadata = try XCTUnwrap(read(Data("RIFX".utf8) + big(UInt32(body.count)) + body))
+        XCTAssertEqual(metadata.audioStreams.first?.channelLayout, "mono")
+        XCTAssertEqual(metadata.duration ?? -1, 3.0 / 48_000, accuracy: 0.0000001)
+        let missingPad = wave(format: format(tag: 1, channels: 1, bits: 8, bigEndian: true),
+                              audio: Data([128]), bigEndian: true).dropLast()
+        var malformed = Data(missingPad)
+        malformed.replaceSubrange(4..<8, with: big(UInt32(malformed.count - 8)))
+        XCTAssertThrowsError(try read(malformed))
+    }
+
+    func testRIFXRejectsMalformedAndMixedEndianHeaders() throws {
+        let fmt = format(tag: 1, channels: 2, bits: 16, bigEndian: true)
+        let good = wave(format: fmt, audio: Data(count: 40), bigEndian: true)
+        for (range, replacement): (Range<Int>, Data) in [
+            (4..<8, little(UInt32(good.count - 8))),
+            (4..<8, big(UInt32.max)),
+            (16..<20, little(UInt32(16))),
+            (16..<20, big(UInt32.max)),
+            (20..<22, little(UInt16(1))),
+            (22..<24, big(UInt16(0))),
+            (24..<28, big(UInt32(0))),
+            (28..<32, big(UInt32(1))),
+            (32..<34, big(UInt16(0))),
+            (34..<36, big(UInt16(12)))
+        ] {
+            var malformed = good
+            malformed.replaceSubrange(range, with: replacement)
+            XCTAssertThrowsError(try read(malformed))
+        }
+        XCTAssertThrowsError(try read(good.dropLast()))
+        XCTAssertThrowsError(try read(wave(format: fmt, audio: Data(count: 39), bigEndian: true)))
+        XCTAssertThrowsError(try read(wave(format: Data(count: 12), audio: Data(), bigEndian: true)))
+        for duplicate in [chunk("fmt ", fmt, bigEndian: true), chunk("data", Data(count: 40), bigEndian: true)] {
+            XCTAssertThrowsError(try read(wave(format: fmt, audio: Data(count: 40), before: duplicate, bigEndian: true)))
+        }
+    }
+
+    func testRIFXRejectsCompressedAndExtensibleFormatsAndSkipsUnspecifiedTags() throws {
+        for tag in [6, 7, 0xfffe] {
+            XCTAssertThrowsError(try read(wave(format: format(tag: tag, channels: 2, bits: 32, bigEndian: true),
+                                               audio: Data(count: 40), bigEndian: true))) {
+                guard case WaveMetadataReader.ReadError.unsupportedFormat = $0 else {
+                    return XCTFail("Unsupported RIFX encoding should be explicit: \($0)")
+                }
+            }
+        }
+        // BWF is defined for little-endian RIFF; do not misreport tag byte order.
+        let metadata = try XCTUnwrap(read(wave(format: format(tag: 1, channels: 2, bits: 16, bigEndian: true),
+            audio: Data(count: 40), before: chunk("bext", bext(), bigEndian: true), bigEndian: true)))
+        XCTAssertNil(metadata.broadcastWave)
+        XCTAssertEqual(metadata.audioStreams.first?.codec, "pcm_s16be")
+    }
+
+    func testSparseRIFXAudioIsSkippedBeforeFollowingChunk() throws {
+        let audioSize: UInt32 = 1 << 30
+        let fmt = chunk("fmt ", format(tag: 3, channels: 8, bits: 32, bigEndian: true), bigEndian: true)
+        let tail = chunk("JUNK", Data([1, 2, 3]), bigEndian: true)
+        let header = Data("RIFX".utf8) + big(UInt32(4 + fmt.count + 8 + tail.count) + audioSize)
+            + Data("WAVE".utf8) + fmt + Data("data".utf8) + big(audioSize)
+        let url = try write(header)
+        defer { try? FileManager.default.removeItem(at: url) }
+        let file = try FileHandle(forWritingTo: url)
+        try file.seek(toOffset: UInt64(header.count) + UInt64(audioSize))
+        try file.write(contentsOf: tail)
+        try file.close()
+        let metadata = try XCTUnwrap(WaveMetadataReader.read(from: url))
+        XCTAssertEqual(metadata.sizeBytes, Int64(header.count + tail.count) + Int64(audioSize))
+        XCTAssertEqual(metadata.duration ?? -1, Double(audioSize) / (48_000 * 32), accuracy: 0.00001)
+        XCTAssertEqual(metadata.audioStreams.first?.codec, "pcm_f32be")
+    }
+
     func testUnknownOrMismatchedSurroundMaskDoesNotInvent71() throws {
         for mask: UInt32 in [0, 0x3f, 0xff] {
             let metadata = try XCTUnwrap(read(wave(format: format(tag: 0xfffe, channels: 8, bits: 32, mask: mask), audio: Data(count: 32))))
@@ -410,9 +517,11 @@ final class WaveMetadataReaderTests: XCTestCase {
         return url
     }
 
-    private func wave(format: Data, audio: Data, before: Data = Data()) -> Data {
-        let body = Data("WAVE".utf8) + before + chunk("fmt ", format) + chunk("data", audio)
-        return Data("RIFF".utf8) + little(UInt32(body.count)) + body
+    private func wave(format: Data, audio: Data, before: Data = Data(), bigEndian: Bool = false) -> Data {
+        let body = Data("WAVE".utf8) + before + chunk("fmt ", format, bigEndian: bigEndian)
+            + chunk("data", audio, bigEndian: bigEndian)
+        return Data((bigEndian ? "RIFX" : "RIFF").utf8)
+            + (bigEndian ? big(UInt32(body.count)) : little(UInt32(body.count))) + body
     }
 
     private func extendedWave(container: String = "RF64", format: Data, audio: Data, samples: UInt64,
@@ -428,11 +537,12 @@ final class WaveMetadataReaderTests: XCTestCase {
         Data(name.utf8) + little(UInt32.max) + payload + Data(count: payload.count % 2)
     }
 
-    private func chunk(_ name: String, _ payload: Data) -> Data {
-        Data(name.utf8) + little(UInt32(payload.count)) + payload + Data(count: payload.count % 2)
+    private func chunk(_ name: String, _ payload: Data, bigEndian: Bool = false) -> Data {
+        Data(name.utf8) + (bigEndian ? big(UInt32(payload.count)) : little(UInt32(payload.count)))
+            + payload + Data(count: payload.count % 2)
     }
 
-    private func format(tag: Int, channels: Int, bits: Int, mask: UInt32 = 0) -> Data {
+    private func format(tag: Int, channels: Int, bits: Int, mask: UInt32 = 0, bigEndian: Bool = false) -> Data {
         let alignment = channels * bits / 8
         var data = little(UInt16(tag)) + little(UInt16(channels)) + little(UInt32(48_000))
         data += little(UInt32(48_000 * alignment)) + little(UInt16(alignment)) + little(UInt16(bits))
@@ -440,7 +550,17 @@ final class WaveMetadataReaderTests: XCTestCase {
             data += little(UInt16(22)) + little(UInt16(bits)) + little(mask)
             data += Data([3, 0, 0, 0, 0, 0, 0x10, 0, 0x80, 0, 0, 0xaa, 0, 0x38, 0x9b, 0x71])
         }
+        if bigEndian {
+            for range in [0..<2, 2..<4, 4..<8, 8..<12, 12..<14, 14..<16] {
+                data.replaceSubrange(range, with: Array(data[range].reversed()))
+            }
+        }
         return data
+    }
+
+    private func big<T: FixedWidthInteger>(_ number: T) -> Data {
+        var value = number.bigEndian
+        return withUnsafeBytes(of: &value) { Data($0) }
     }
 
     private func little<T: FixedWidthInteger>(_ number: T) -> Data {

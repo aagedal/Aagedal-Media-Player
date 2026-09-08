@@ -309,6 +309,12 @@ final class MediaOperationsController: ObservableObject {
 
         trimExportFeedbackDismissal.cancel()
         trimExportState = .idle
+        // Stream copy would retain big-endian bytes under a little-endian
+        // WAVE codec tag, corrupting the exported sound without an error.
+        if (try? RIFXAudioDecoding.isRIFX(item.url)) == true {
+            trimExportState = .failed(RIFXAudioDecoding.trimUnavailable)
+            return
+        }
         guard let inPoint = trimIn, let outPoint = trimOut, outPoint > inPoint else {
             let missing = trimIn == nil && trimOut == nil ? "Set trim in and out points first."
                 : trimIn == nil ? "Set a trim in point first."

@@ -8,7 +8,7 @@ import Foundation
 /// Its separate audio parser copies data chunks and guesses surround layouts
 /// from channel count; neither is suitable for long recordings or the explicit
 /// speaker placement required by the loudness correction.
-/// Read only RIFF/RF64/BW64 headers here, seeking over audio and ancillary chunks so
+/// Read only RIFF/RIFX/RF64/BW64 headers here, seeking over audio and ancillary chunks so
 /// metadata memory use is independent of the recording's duration.
 nonisolated enum WaveMetadataReader {
     enum ReadError: Error, LocalizedError {
@@ -33,13 +33,14 @@ nonisolated enum WaveMetadataReader {
         guard header.count == 12,
               String(decoding: header[8..<12], as: UTF8.self) == "WAVE" else { return nil }
         let container = String(decoding: header[0..<4], as: UTF8.self)
-        guard ["RIFF", "RF64", "BW64"].contains(container) else { return nil }
+        guard ["RIFF", "RIFX", "RF64", "BW64"].contains(container) else { return nil }
         guard size <= UInt64(Int64.max) else { throw ReadError.invalidWave }
-        let size32 = uint32(header, 4)
+        let byteOrder: ByteOrder = container == "RIFX" ? .big : .little
+        let size32 = uint32(header, 4, byteOrder: byteOrder)
         var end = UInt64(size32) + 8
         var position: UInt64 = 12
         var sizes64: ExtendedSizes?
-        if container != "RIFF" {
+        if container == "RF64" || container == "BW64" {
             // The mandatory ds64 is first, and its own length is always 32-bit.
             guard size >= 20 else { throw ReadError.invalidWave }
             let chunk = try readExactly(file, count: 8)
@@ -86,7 +87,7 @@ nonisolated enum WaveMetadataReader {
             try file.seek(toOffset: position)
             let chunk = try readExactly(file, count: 8)
             let name = String(decoding: chunk[0..<4], as: UTF8.self)
-            let count32 = uint32(chunk, 4)
+            let count32 = uint32(chunk, 4, byteOrder: byteOrder)
             var count = UInt64(count32)
             if count32 == UInt32.max, sizes64 != nil {
                 if name == "data" {
@@ -113,7 +114,9 @@ nonisolated enum WaveMetadataReader {
             } else if name == "fact", container == "RF64" {
                 guard factSamples == nil, count >= 4 else { throw ReadError.invalidWave }
                 factSamples = uint32(try readExactly(file, count: 4), 0)
-            } else if name == "bext" {
+            } else if name == "bext", byteOrder == .little {
+                // BWF defines little-endian RIFF fields; RIFX tags are skipped
+                // until a producer-backed variant establishes their encoding.
                 guard broadcastWave == nil, count >= 602 else { throw ReadError.invalidWave }
                 // The remaining coding history can be arbitrarily large. Keep a
                 // bounded prefix and seek past the rest with the enclosing loop.
@@ -124,15 +127,17 @@ nonisolated enum WaveMetadataReader {
             guard position <= end else { throw ReadError.invalidWave }
         }
         guard let format, let audioBytes else { throw ReadError.invalidWave }
-        var tag = uint16(format, 0)
-        let channels = Int(uint16(format, 2))
-        let sampleRate = Int(uint32(format, 4))
-        let byteRate = UInt64(uint32(format, 8))
-        let alignment = UInt64(uint16(format, 12))
-        let bits = Int(uint16(format, 14))
+        var tag = uint16(format, 0, byteOrder: byteOrder)
+        let channels = Int(uint16(format, 2, byteOrder: byteOrder))
+        let sampleRate = Int(uint32(format, 4, byteOrder: byteOrder))
+        let byteRate = UInt64(uint32(format, 8, byteOrder: byteOrder))
+        let alignment = UInt64(uint16(format, 12, byteOrder: byteOrder))
+        let bits = Int(uint16(format, 14, byteOrder: byteOrder))
         var validBits = bits
         var mask: UInt32?
         if tag == 0xfffe {
+            // Extensible RIFX GUID/extension ordering is not established here.
+            guard byteOrder == .little else { throw ReadError.unsupportedFormat }
             guard format.count >= 40, uint16(format, 16) >= 22,
                   UInt64(uint16(format, 16)) <= formatSize - 18 else { throw ReadError.invalidWave }
             validBits = Int(uint16(format, 18))
@@ -165,10 +170,12 @@ nonisolated enum WaveMetadataReader {
         if let samples = declaredSamples, samples != 0, samples != sampleFrames {
             throw ReadError.invalidWave
         }
-        let codec = tag == 3 ? "pcm_f\(bits)le" : (bits == 8 ? "pcm_u8" : "pcm_s\(bits)le")
+        let suffix = byteOrder == .big ? "be" : "le"
+        let endianness = byteOrder == .big ? "big-endian" : "little-endian"
+        let codec = tag == 3 ? "pcm_f\(bits)\(suffix)" : (bits == 8 ? "pcm_u8" : "pcm_s\(bits)\(suffix)")
         let stream = MediaMetadata.AudioStream(
             index: 0, languageCode: nil, title: nil, codec: codec,
-            codecLongName: "PCM \(tag == 3 ? "floating-point" : "integer") \(bits)-bit little-endian",
+            codecLongName: "PCM \(tag == 3 ? "floating-point" : "integer") \(bits)-bit \(endianness)",
             profile: nil, sampleRate: sampleRate, channels: channels,
             channelLayout: channelLayout(mask: mask, channels: channels),
             bitDepth: validBits, bitRate: Int64(byteRate * 8), isDefault: true
@@ -254,12 +261,21 @@ nonisolated enum WaveMetadataReader {
         return data
     }
 
-    private static func uint16(_ data: Data, _ offset: Int) -> UInt16 {
-        UInt16(data[offset]) | UInt16(data[offset + 1]) << 8
+    private enum ByteOrder { case little, big }
+
+    private static func uint16(_ data: Data, _ offset: Int, byteOrder: ByteOrder = .little) -> UInt16 {
+        if byteOrder == .big {
+            return UInt16(data[offset]) << 8 | UInt16(data[offset + 1])
+        }
+        return UInt16(data[offset]) | UInt16(data[offset + 1]) << 8
     }
 
-    private static func uint32(_ data: Data, _ offset: Int) -> UInt32 {
-        UInt32(uint16(data, offset)) | UInt32(uint16(data, offset + 2)) << 16
+    private static func uint32(_ data: Data, _ offset: Int, byteOrder: ByteOrder = .little) -> UInt32 {
+        if byteOrder == .big {
+            return UInt32(uint16(data, offset, byteOrder: .big)) << 16
+                | UInt32(uint16(data, offset + 2, byteOrder: .big))
+        }
+        return UInt32(uint16(data, offset)) | UInt32(uint16(data, offset + 2)) << 16
     }
 
     private static func uint64(_ data: Data, _ offset: Int) -> UInt64 {

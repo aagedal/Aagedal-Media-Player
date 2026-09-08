@@ -160,7 +160,8 @@ enum FFmpegService {
     ) async throws -> LUFSResult {
         let arguments = try loudnessArguments(
             url: url, audioStreamIndex: audioStreamIndex, range: range,
-            channels: channels, channelLayout: channelLayout
+            channels: channels, channelLayout: channelLayout,
+            inputAudioArguments: RIFXAudioDecoding.ffmpegInputArguments(for: url)
         )
         guard let path = ffmpegPath else {
             throw FFmpegError.ffmpegMissing
@@ -211,7 +212,8 @@ enum FFmpegService {
     /// only the selected interval, including non-keyframe boundaries.
     nonisolated static func loudnessArguments(
         url: URL, audioStreamIndex: Int, range: LoudnessRange? = nil,
-        channels: Int? = nil, channelLayout: String? = nil
+        channels: Int? = nil, channelLayout: String? = nil,
+        inputAudioArguments: [String] = []
     ) throws -> [String] {
         guard audioStreamIndex >= 0 else { throw FFmpegError.invalidAudioStream }
         var filter = "ebur128=peak=true"
@@ -230,7 +232,7 @@ enum FFmpegService {
             inputArguments += ["-t", String(range.end)]
             filter = "atrim=start=\(range.start):end=\(range.end),asetpts=PTS-STARTPTS," + filter
         }
-        return inputArguments + [
+        return inputArguments + inputAudioArguments + [
             "-i", url.path,
             "-map", "0:a:\(audioStreamIndex)",
             "-af", filter, "-f", "null", "-",

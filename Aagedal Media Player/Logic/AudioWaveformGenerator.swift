@@ -330,7 +330,7 @@ final class AudioWaveformGenerator: ObservableObject {
 
     /// Decodes audio once as raw PCM via ffmpeg, then renders all channel waveforms natively.
     /// Returns images, cached amplitude data, and the computed width.
-    private static nonisolated func generateNativeWaveforms(
+    static nonisolated func generateNativeWaveforms(
         request: AudioWaveformGenerationRequest
     ) async throws -> AudioWaveformGenerationOutput {
         let width = max(400, min(request.maxWidth, Int(request.duration * request.pixelsPerSecond)))
@@ -348,6 +348,7 @@ final class AudioWaveformGenerator: ObservableObject {
 
         let arguments: [String] = [
             "-hide_banner", "-loglevel", "error",
+        ] + (try RIFXAudioDecoding.ffmpegInputArguments(for: request.url)) + [
             "-i", request.url.path,
             "-vn",
             "-map", "0:a:\(request.streamIndex)",
