@@ -119,6 +119,13 @@ externally downloaded reference files:
 scripts/check-itu-programme-loudness.sh /tmp/new-itu-results /path/to/references
 ```
 
+An additional original ITU eight-channel gain reference verifies conventional
+7.1 weighting after a documented lossless speaker-order preparation:
+
+```bash
+scripts/check-itu-seven-point-one-loudness.sh /tmp/new-itu-7-1-results /path/to/references
+```
+
 See [official programme references](docs/AUDIO_PROGRAMME_REFERENCES.md) for
 source downloads, expected values, and the distinction from live-meter validation.
 
@@ -210,7 +217,7 @@ Preview multichannel audio tracks as waveforms, with one waveform per channel. T
 
 
 ### Metadata
-Quickly check basic metadata like resolution, frame rate, codec, color space and chroma sub sampling information. Command + I. Includes button to analyze LUFS levels (EBU 128).
+Inspect resolution, frame rate, codec, color space, chroma subsampling, and audio metadata with Command + I. The inspector offers offline loudness analysis and displays Broadcast WAVE recording tags and embedded loudness separately from measured results. See [supported WAVE metadata](docs/WAVE_METADATA.md).
 <img width="1227" height="691" alt="SCR-20260309-udpk" src="https://github.com/user-attachments/assets/52a86143-f944-4137-988a-e7a2c585bbaa" />
 
 

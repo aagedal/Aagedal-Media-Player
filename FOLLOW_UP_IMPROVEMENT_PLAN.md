@@ -999,6 +999,61 @@ programme integrated-loudness evidence, not programme LRA/true-peak or complete
 meter certification. EBU programme LRA download returned HTTP 403; those cases
 remain open. See `docs/AUDIO_PROGRAMME_REFERENCES.md`.
 
+## Phase 56 — Broadcast WAVE recording metadata
+
+Status: Completed on 2026-09-08. All 453 Release tests pass with both ITU
+reference opt-ins enabled, along with static analysis, 61 release-preflight
+checks and focused native inspector acceptance.
+
+- [x] Read bounded `bext` recording identity, origination date/time, exact
+  64-bit sample references, raw UMID, and coding-history fields.
+- [x] Decode valid version-2 embedded loudness with sentinel/range checks and
+  display its producer provenance separately from the player's measurements.
+- [x] Preserve BWF values in metadata JSON without treating sample references
+  as video timecode or adding audio-sized allocations.
+- [x] Add eight regressions covering version gates, malformed/duplicate chunks,
+  RF64/BW64, JSON compatibility and sparse 1 GiB coding history.
+- [x] Pass integrated Release tests and native inspector acceptance.
+
+Acceptance: the reader retains at most 602 fixed bytes plus 16 KiB of coding
+history. ADM/iXML interpretation, compressed WAVE and spoken VoiceOver remain
+separate. See `docs/WAVE_METADATA.md`.
+
+## Phase 57 — Official eight-channel loudness evidence
+
+Status: Completed on 2026-09-08. The original reference passes through the
+rebuilt Release analyzer at −23.0 LUFS and in the full 453-test Release suite.
+
+- [x] Obtain and pin the original ITU eight-channel −23 LKFS gain reference.
+- [x] Prepare an explicit conventional 7.1 WAVE with a lossless channel reorder
+  from ITU's documented speaker order, pinning the resulting PCM hash.
+- [x] Add an opt-in production-analyzer test and result-validating runner.
+- [x] Verify the official −23 ±0.1 target and correction provenance.
+
+Acceptance: this is an original reference with documented sample-preserving
+speaker-order preparation. Its missing-mask original is not automatically
+interpreted as conventional 7.1 by the app. Programme LRA/true-peak and immersive
+layout conformance remain separate. See `docs/AUDIO_PROGRAMME_REFERENCES.md`.
+
+## Phase 58 — Narrow comparison controls and native relink edge cases
+
+Status: Completed on 2026-09-08. Rebuilt 270/1,728-point native toolbar checks,
+all 453 Release tests, static analysis and 61 release-preflight checks pass.
+
+- [x] Diagnose a comparison toolbar extending beyond the 270-point player.
+- [x] Collapse comparison settings into a scrollable popover when needed,
+  retaining direct Review, Exit, Loupe and Inspector access.
+- [x] Preserve settings, use labeled compact controls, and close the popover
+  before file/export panels or source transitions.
+- [x] Verify native relink picker and preview cancellation creates no sidecar.
+- [x] Verify a destination created after preview produces an actionable conflict
+  and preserves both original and destination bytes.
+- [x] Validate rebuilt narrow/wide native layouts and integrated regression.
+
+Acceptance: native pointer access at narrow widths and relink data safety are
+separate from complete Full Keyboard Access, spoken VoiceOver, and NLE round trips.
+See `docs/COMPARE_REVIEW_NATIVE_CHECK_2026-09-08.md`.
+
 ## Remaining work after this continuation
 
 - Integrate the measured metadata-memory dependency fix after upstream review,
@@ -1027,8 +1082,9 @@ remain open. See `docs/AUDIO_PROGRAMME_REFERENCES.md`.
   A focused native review check now covers note creation, filtering, and CSV
   export of a filtered-out finding. Phase 54 adds keyboard inclusive-range entry,
   distinct expanded labels, and successful explicit native relinking with
-  unchanged findings/original sidecar. Full keyboard review, spoken VoiceOver,
-  narrow layouts, relink cancellation and existing-destination conflicts remain.
+  unchanged findings/original sidecar. Phase 58 adds native cancellation and
+  a write-time destination-conflict check with unchanged bytes. Full keyboard
+  review, spoken VoiceOver, and broader narrow-layout acceptance remain.
 - Actual marker import/re-export in Resolve, Final Cut Pro, and Avid, including
   fractional rates, drop-frame boundaries, inclusive ranges, and source identity.
 - Oldest-supported Apple Silicon UHD/HDR playback, reflected loupe/scopes,
@@ -1040,13 +1096,15 @@ remain open. See `docs/AUDIO_PROGRAMME_REFERENCES.md`.
   accessibility-tree content, measurement activation, and Command-I reopening.
   The diagnosed rear-weight discrepancy is corrected in Phase 51; unknown or
   other layouts do not receive that correction.
-- Broader WAVE format support: compressed encodings and BWF/ADM tag extraction
-  remain outside the bounded reader. Phase 54 verifies RIFF/RF64/BW64 metadata
-  and corrected 7.1 loudness through the rebuilt native inspector.
+- Broader WAVE format support: compressed encodings, RIFX, and iXML/ADM tag
+  interpretation remain outside the bounded reader. Phase 54 verifies
+  RIFF/RF64/BW64 metadata and corrected 7.1 loudness. Phase 56 adds bounded
+  Broadcast WAVE recording tags; native validation is recorded with that phase.
 - Peak/true-peak meters and live momentary/short-term loudness,
   calibration/ballistics/presets, programme LRA/true-peak and broader transient
   reference accuracy, and representative multichannel profiling. Phase 55 adds
-  three original ITU programme integrated-loudness references. Selected absolute-level,
+  three original ITU programme integrated-loudness references. Phase 57 adds
+  a separately prepared official eight-channel gain reference. Selected absolute-level,
   gating, and true-peak numerical references are covered by Phase 45; Phase 47
   adds synthetic LRA and calibration at 44.1/48/96 kHz. Phase 48 adds independent
   front/side/LFE references for 2.1, 3.0, 5.1(side), and part of 7.1. Phase 51
@@ -1121,3 +1179,7 @@ remain open. See `docs/AUDIO_PROGRAMME_REFERENCES.md`.
 46. Phase 54 large WAVE containers and contextual review controls.
 
 47. Phase 55 original ITU programme loudness references.
+
+48. Phase 56 Broadcast WAVE recording metadata.
+49. Phase 57 official eight-channel loudness evidence.
+50. Phase 58 narrow comparison controls and native relink edge cases.

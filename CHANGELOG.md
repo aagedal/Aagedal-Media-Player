@@ -5,6 +5,8 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Added
+- Bounded Broadcast WAVE tags in the inspector and copied JSON, including exact sample references, recording identity, coding history, and separately labeled embedded loudness.
+- Optional official ITU eight-channel loudness verification with pinned originals and lossless speaker-order preparation for the conventional 7.1 analysis path.
 - Reproducible optional loudness checks against original ITU mono, stereo, and 5.1 programme references, with pinned input hashes and retained measurement evidence.
 - Bounded RF64/BW64 PCM and floating-point metadata reading for recordings beyond 4 GiB, with validated 64-bit chunk lengths and explicit speaker layouts.
 - Reproducible multichannel loudness profiling for whole-file and early/late ranges, with separately sampled app and FFmpeg memory and validated result artifacts.
@@ -43,6 +45,7 @@ All notable changes to Aagedal Media Player.
   recording run sheet.
 
 ### Changed
+- Comparison controls collapse into a scrollable popover when the toolbar is too narrow, keeping review, exit, loupe, and inspector actions visible.
 - Apply standards-based rear-speaker weighting to explicitly identified conventional 7.1 loudness analysis while preserving source samples and true peaks; retain qualification for unknown or uncorrected layouts.
 - Review-note accessibility labels identify seek, classification, inclusive-range, note-text, and deletion controls with source-A frame context; range actions adapt to available width and relink paths expose their full values.
 - Timeline zoom starts in the timeline context menu; its extra controls appear only while zoomed and disappear on Fit.

@@ -113,6 +113,9 @@ purpose obvious.
 - [x] Add visible Compare, Scopes, Waveform, and Inspector controls.
 - [x] Use selected/active states that remain legible over light and dark video.
 - [x] Keep every action keyboard reachable and VoiceOver-labelled.
+  Comparison controls now collapse into a scrollable popover at narrow widths,
+  preserving direct Review/Exit/Loupe/Inspector access. Native 270/1,728-point
+  checks pass; full assistive-technology acceptance remains a release gate.
 - [x] Add a first-run callout that introduces Compare Mode without blocking
   playback.
 - [x] Replace the README's “quickly just checking playback” language with the
@@ -292,7 +295,9 @@ confidence as the picture.
   left-only, right-only, and opposite-polarity stereo placements. Original ITU
   mono voice/music, stereo, and 5.1 programme references now pass integrated
   loudness checks with pinned file hashes; programme LRA/true-peak and live-meter
-  acceptance remain. See `docs/AUDIO_PROGRAMME_REFERENCES.md`.
+  acceptance remain. An original ITU eight-channel gain reference now has a
+  separate opt-in check using pinned sample-preserving speaker-order preparation
+  for explicit conventional 7.1. See `docs/AUDIO_PROGRAMME_REFERENCES.md`.
 - [ ] Confirm meter and thumbnail work remains bounded during long playback.
   A production-loader thumbnail profiler now checks 40 distributed requests
   per input with cache bounds and sampled memory/latency reporting. See
@@ -354,7 +359,9 @@ Release gates:
   export retaining hidden findings; opening the review/export menus still used
   accessibility clicks. The September 8 continuation adds keyboard inclusive-range
   submission, distinct expanded control labels and successful native relinking.
-  Full Keyboard Access, spoken VoiceOver and relink conflict handling remain; see
+  Native picker/preview cancellation and a destination created after preview
+  now preserve both sidecars correctly. Full Keyboard Access and spoken
+  VoiceOver remain; see
   `docs/COMPARE_REVIEW_NATIVE_CHECK_2026-09-08.md`.
 
 ## Later / evaluate after user validation

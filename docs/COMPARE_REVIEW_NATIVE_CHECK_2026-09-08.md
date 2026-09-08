@@ -41,8 +41,8 @@ This validates native saved-note restoration, contextual labels, keyboard range
 submission, and the successful explicit-relink path. Review opening and relink
 activation used accessibility actions; it is not an all-keyboard workflow.
 Full Keyboard Access and spoken VoiceOver were not enabled or claimed.
-Existing-destination conflicts, relink cancellation, broad pointer interaction,
-and narrow-window/focus-ring acceptance still require native checks. Export
+Relink cancellation and a destination created after preview are checked in the
+continuation below. Broad pointer interaction and focus-ring acceptance remain. Export
 and NLE round-trip acceptance are tracked separately.
 
 ## Integrated verification
@@ -56,3 +56,49 @@ Artifacts: `/tmp/aagedal-rf64-itu-full-20260908.xcresult`,
 `/tmp/aagedal-rf64-itu-analyze-20260908.log`, and
 `/tmp/aagedal-itu-programme-check-20260908`. Temporary artifacts may be removed;
 this record, reference hashes and reproduction scripts remain in the repository.
+
+## Continuation: cancellation and destination races
+
+A further native check used fresh A/B copies under
+`/tmp/aagedal-review-conflicts-20260908/cancel`. Escape cancelled both the
+relink file picker and the explicit mapping confirmation. The review remained
+empty and neither path created a destination sidecar.
+
+A second preview was opened against the original two-note sidecar. Before
+confirming, a disposable file was created at the exact displayed destination.
+Return then produced **Could Not Relink Notes**, explaining that a review already
+exists and will never be overwritten. The destination retained its exact bytes;
+SHA-256 also confirmed that the original sidecar remained unchanged. Evidence
+is retained in that temporary directory's `evidence.json`.
+
+The initial player window was only 270 points wide. Its original comparison
+toolbar extended beyond the visible window, preventing practical pointer access
+to Review. Expanding the window made the controls usable. This finding prompted
+the responsive toolbar change documented below; it is separate from the passed
+relink data-safety behavior. These checks used native accessibility actions and
+Escape/Return, not Full Keyboard Access or spoken VoiceOver.
+
+The expanded Release suite passes all 453 tests with no failures or skips,
+including both official ITU reference opt-ins and the eight BWF regressions.
+The run took 116.765 seconds (116.966 including suite overhead), retained in
+`/tmp/aagedal-bwf-toolbar-full-20260908.xcresult` and its matching log.
+
+## Rebuilt responsive-toolbar acceptance
+
+The verified Release build reopened fresh A/B copies in
+`/tmp/aagedal-review-conflicts-20260908/conflict`. At the native 270-point width,
+screenshots confirmed that Comparison controls, Review, Exit, Loupe and
+Inspector were all visible. The compact popover exposed the remaining controls;
+selecting Vertical Wipe and setting its slider to 75% updated native state.
+Scrolling reached **Replace comparison file**, which dismissed the popover and
+opened the native picker. Escape cancelled it without changing the pair.
+
+Review opened directly from the narrow toolbar. Typing a note and pressing
+Return created a frame-0 finding, independently confirmed in the saved sidecar.
+Expanding to 1,728 points restored the full toolbar and retained Vertical Wipe,
+75% and the saved note. Exit Compare Mode returned to single-source controls.
+
+This closes the reproduced toolbar-clipping case. Full Keyboard Access,
+spoken VoiceOver, every popover at every screen edge, all comparison modes,
+and focus rings during live resize remain broader acceptance work.
+Static analysis and all 61 source-tree release-preflight checks also pass.
