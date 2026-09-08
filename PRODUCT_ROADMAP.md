@@ -289,7 +289,10 @@ confidence as the picture.
   Twelve independent band-limited transient references now cover positive and
   negative peaks, including above-full-scale reconstruction, at all three rates.
   Eighteen further cases cover signed-sidelobe and two-carrier pulses in
-  left-only, right-only, and opposite-polarity stereo placements.
+  left-only, right-only, and opposite-polarity stereo placements. Original ITU
+  mono voice/music, stereo, and 5.1 programme references now pass integrated
+  loudness checks with pinned file hashes; programme LRA/true-peak and live-meter
+  acceptance remain. See `docs/AUDIO_PROGRAMME_REFERENCES.md`.
 - [ ] Confirm meter and thumbnail work remains bounded during long playback.
   A production-loader thumbnail profiler now checks 40 distributed requests
   per input with cache bounds and sampled memory/latency reporting. See
@@ -349,7 +352,10 @@ Release gates:
 - [ ] A complete review can be created and exported using only the keyboard.
   A focused native check confirms Return-to-add, Tab to the filter, and CSV
   export retaining hidden findings; opening the review/export menus still used
-  accessibility clicks. See `docs/COMPARE_REVIEW_NATIVE_CHECK_2026-09-07.md`.
+  accessibility clicks. The September 8 continuation adds keyboard inclusive-range
+  submission, distinct expanded control labels and successful native relinking.
+  Full Keyboard Access, spoken VoiceOver and relink conflict handling remain; see
+  `docs/COMPARE_REVIEW_NATIVE_CHECK_2026-09-08.md`.
 
 ## Later / evaluate after user validation
 

@@ -87,3 +87,11 @@ Results: `/tmp/aagedal-continuation-full-verified-20260908.xcresult` and
 `/tmp/aagedal-continuation-analyze-20260908.log` (temporary storage).
 A further native comparison attempt encountered unresponsive picker automation;
 no additional keyboard, review, or inspector acceptance pass is claimed.
+
+## Rebuilt RIFF/RF64/BW64 acceptance
+
+The later Phase 54 native check closes the ordinary-WAVE inspector gap: all
+three container variants show correct eight-channel Float32 metadata and measure
+−23.0 LUFS, 0.0 LU and −20.0 dBTP. See `WAVE_METADATA.md` for the exact scope.
+The older app was explicitly quit before opening the rebuilt Release product;
+test-host runs and native automation were kept separate.

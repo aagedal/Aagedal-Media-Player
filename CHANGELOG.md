@@ -5,6 +5,8 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Added
+- Reproducible optional loudness checks against original ITU mono, stereo, and 5.1 programme references, with pinned input hashes and retained measurement evidence.
+- Bounded RF64/BW64 PCM and floating-point metadata reading for recordings beyond 4 GiB, with validated 64-bit chunk lengths and explicit speaker layouts.
 - Reproducible multichannel loudness profiling for whole-file and early/late ranges, with separately sampled app and FFmpeg memory and validated result artifacts.
 - Offline integrated loudness, loudness range, and true-peak analysis over selected In–Out points, with per-stream cancellation and measured-range provenance in copied metadata.
 - Reproducible production timeline-thumbnail profiling with long-file seek latency, cache bounds, and sampled resident-memory measurements.
@@ -42,7 +44,7 @@ All notable changes to Aagedal Media Player.
 
 ### Changed
 - Apply standards-based rear-speaker weighting to explicitly identified conventional 7.1 loudness analysis while preserving source samples and true peaks; retain qualification for unknown or uncorrected layouts.
-- Review-note accessibility labels identify Add, note text, and Delete actions, with source-A frame context for individual findings.
+- Review-note accessibility labels identify seek, classification, inclusive-range, note-text, and deletion controls with source-A frame context; range actions adapt to available width and relink paths expose their full values.
 - Timeline zoom starts in the timeline context menu; its extra controls appear only while zoomed and disappear on Fit.
 - Volume now uses a continuous slider without tick marks, applies tracking changes directly to playback, and uses matching linear-amplitude percentages on MPV and AVPlayer.
 - Preserve AppKit-aligned MPV surface dimensions across unchanged SwiftUI updates, avoiding repeated one-pixel swapchain reallocations during playback.

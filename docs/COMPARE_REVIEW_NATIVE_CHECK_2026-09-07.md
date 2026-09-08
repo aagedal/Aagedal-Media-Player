@@ -48,3 +48,11 @@ handling, and complete narrow-window review layouts remain unverified.
 The current computer-use interface offers no pointer-only movement, so native
 timeline hover/no-seek acceptance also remains open. Real NLE import/re-export
 and release-floor performance require their separate validation matrices.
+
+## September 8 follow-up
+
+`COMPARE_REVIEW_NATIVE_CHECK_2026-09-08.md` records distinct expanded field
+labels, keyboard inclusive-range submission and successful native relinking
+with byte-for-byte preservation of the original sidecar and complete findings.
+Full keyboard/VoiceOver, compact layouts, relink cancellation and conflict
+acceptance remain separate.

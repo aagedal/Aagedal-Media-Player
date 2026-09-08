@@ -144,10 +144,12 @@ struct CompareReviewView: View {
                         }
                         .buttonStyle(.link)
                         .font(.caption)
+                        .accessibilityLabel("Retry loading review notes")
                     } else {
                         Button("Dismiss") { compareSession.dismissReviewError() }
                             .buttonStyle(.link)
                             .font(.caption)
+                            .accessibilityLabel("Dismiss review error")
                     }
                 }
             }
@@ -298,6 +300,7 @@ struct CompareReviewView: View {
             Button("Dismiss") { compareSession.dismissReviewExportFeedback() }
                 .buttonStyle(.link)
                 .font(.caption)
+                .accessibilityLabel("Dismiss review export result")
         }
     }
 
@@ -367,8 +370,14 @@ struct CompareReviewRelinkConfirmationView: View {
     private func relinkPath(_ label: String, path: String) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(label).font(.caption).foregroundStyle(.secondary)
-            Text(path).font(.callout.monospaced()).textSelection(.enabled)
+            Text(path)
+                .font(.callout.monospaced())
+                .textSelection(.enabled)
+                .fixedSize(horizontal: false, vertical: true)
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(label)
+        .accessibilityValue(path)
     }
 
 }
@@ -432,6 +441,7 @@ private struct CompareReviewNoteRow: View {
                     .frame(width: 94, alignment: .leading)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Seek to review note at source A frame \(note.primaryFrame)")
                 .help("Seek both sources to this review note")
 
                 TextField("Review note", text: $draft, axis: .vertical)
@@ -460,39 +470,40 @@ private struct CompareReviewNoteRow: View {
                 .help("Delete review note")
                 .disabled(!canEdit)
             }
-            DisclosureGroup("\(note.severity.title) · \(note.category.title) · \(note.status.title)") {
+            DisclosureGroup {
                 VStack(alignment: .leading, spacing: 8) {
                     Picker("Severity", selection: Binding(
                         get: { note.severity }, set: { onClassification($0, nil, nil) }
                     )) {
                         ForEach(CompareReviewSeverity.allCases) { Text($0.title).tag($0) }
                     }
+                    .accessibilityLabel("Severity for review note at source A frame \(note.primaryFrame)")
                     Picker("Category", selection: Binding(
                         get: { note.category }, set: { onClassification(nil, $0, nil) }
                     )) {
                         ForEach(CompareReviewCategory.allCases) { Text($0.title).tag($0) }
                     }
+                    .accessibilityLabel("Category for review note at source A frame \(note.primaryFrame)")
                     Picker("Status", selection: Binding(
                         get: { note.status }, set: { onClassification(nil, nil, $0) }
                     )) {
                         ForEach(CompareReviewStatus.allCases) { Text($0.title).tag($0) }
                     }
+                    .accessibilityLabel("Status for review note at source A frame \(note.primaryFrame)")
                     HStack {
                         TextField("End frame (inclusive)", text: $endFrameDraft)
                             .textFieldStyle(.roundedBorder)
-                            .accessibilityLabel("Inclusive range end frame")
+                            .accessibilityLabel("Inclusive range end frame for review note at source A frame \(note.primaryFrame)")
                             .onSubmit(applyRange)
                         Button("Apply", action: applyRange)
+                            .accessibilityLabel("Apply range end for review note at source A frame \(note.primaryFrame)")
                     }
-                    HStack {
-                        Button("End at current frame") {
-                            rangeError = onCurrentEnd() ? nil : "End must be at or after the note's start."
+                    ViewThatFits(in: .horizontal) {
+                        HStack {
+                            rangeActions
                         }
-                        if note.primaryEndFrame != nil {
-                            Button("Seek end", action: onSeekEnd)
-                            Button("Clear range") {
-                                if onRange(nil) { endFrameDraft = ""; rangeError = nil }
-                            }
+                        VStack(alignment: .leading, spacing: 6) {
+                            rangeActions
                         }
                     }
                     if let rangeError {
@@ -501,6 +512,10 @@ private struct CompareReviewNoteRow: View {
                 }
                 .padding(.top, 6)
                 .disabled(!canEdit)
+            } label: {
+                Text("\(note.severity.title) · \(note.category.title) · \(note.status.title)")
+                    // Labelling the group itself overrides its expanded controls.
+                    .accessibilityLabel("Classification and range for review note at source A frame \(note.primaryFrame): \(note.severity.title), \(note.category.title), \(note.status.title)")
             }
             .font(.caption)
         }
@@ -510,6 +525,22 @@ private struct CompareReviewNoteRow: View {
         .padding(8)
         .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8))
         .onDisappear { commit() }
+    }
+
+    @ViewBuilder
+    private var rangeActions: some View {
+        Button("End at current frame") {
+            rangeError = onCurrentEnd() ? nil : "End must be at or after the note's start."
+        }
+        .accessibilityLabel("End review note at source A frame \(note.primaryFrame) at the current frame")
+        if let endFrame = note.primaryEndFrame {
+            Button("Seek end", action: onSeekEnd)
+                .accessibilityLabel("Seek to source A frame \(endFrame), the end of review note at frame \(note.primaryFrame)")
+            Button("Clear range") {
+                if onRange(nil) { endFrameDraft = ""; rangeError = nil }
+            }
+            .accessibilityLabel("Clear range for review note at source A frame \(note.primaryFrame)")
+        }
     }
 
     private func applyRange() {

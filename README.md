@@ -112,6 +112,16 @@ This also requires a new artifact directory and retains separately sampled app
 and FFmpeg memory. See [loudness profiling](docs/AUDIO_LOUDNESS_PERFORMANCE.md)
 for the workload, reproducible fixtures, and measurement limits.
 
+Optional original ITU voice/music and stereo/5.1 programme loudness checks use
+externally downloaded reference files:
+
+```bash
+scripts/check-itu-programme-loudness.sh /tmp/new-itu-results /path/to/references
+```
+
+See [official programme references](docs/AUDIO_PROGRAMME_REFERENCES.md) for
+source downloads, expected values, and the distinction from live-meter validation.
+
 Release builds support Apple Silicon (`arm64`) on macOS 15 or later. Maintainer
 preflight, signing, architecture, entitlement, and ffmpeg provenance guidance is
 in [docs/RELEASE.md](docs/RELEASE.md).

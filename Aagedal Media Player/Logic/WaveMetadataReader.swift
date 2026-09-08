@@ -8,7 +8,7 @@ import Foundation
 /// Its separate audio parser copies data chunks and guesses surround layouts
 /// from channel count; neither is suitable for long recordings or the explicit
 /// speaker placement required by the loudness correction.
-/// Read only RIFF headers here, seeking over audio and ancillary chunks so
+/// Read only RIFF/RF64/BW64 headers here, seeking over audio and ancillary chunks so
 /// metadata memory use is independent of the recording's duration.
 nonisolated enum WaveMetadataReader {
     enum ReadError: Error, LocalizedError {
@@ -31,24 +31,76 @@ nonisolated enum WaveMetadataReader {
         try file.seek(toOffset: 0)
         let header = try file.read(upToCount: 12) ?? Data()
         guard header.count == 12,
-              String(decoding: header[0..<4], as: UTF8.self) == "RIFF",
               String(decoding: header[8..<12], as: UTF8.self) == "WAVE" else { return nil }
-        let end = UInt64(uint32(header, 4)) + 8
+        let container = String(decoding: header[0..<4], as: UTF8.self)
+        guard ["RIFF", "RF64", "BW64"].contains(container) else { return nil }
+        guard size <= UInt64(Int64.max) else { throw ReadError.invalidWave }
+        let size32 = uint32(header, 4)
+        var end = UInt64(size32) + 8
+        var position: UInt64 = 12
+        var sizes64: ExtendedSizes?
+        if container != "RIFF" {
+            // The mandatory ds64 is first, and its own length is always 32-bit.
+            guard size >= 20 else { throw ReadError.invalidWave }
+            let chunk = try readExactly(file, count: 8)
+            let count = UInt64(uint32(chunk, 4))
+            guard String(decoding: chunk[0..<4], as: UTF8.self) == "ds64",
+                  count >= 28, count != UInt64(UInt32.max), count <= size - 20 else {
+                throw ReadError.invalidWave
+            }
+            let fixed = try readExactly(file, count: 28)
+            let riffSize = uint64(fixed, 0)
+            if size32 == UInt32.max {
+                guard riffSize <= size - 8 else { throw ReadError.invalidWave }
+                end = riffSize + 8
+            }
+            guard end >= 20, end <= size, count <= end - 20,
+                  count & 1 <= end - 20 - count else { throw ReadError.invalidWave }
+            let entries = UInt64(uint32(fixed, 24))
+            guard entries <= (count - 28) / 12 else { throw ReadError.invalidWave }
+            // Bound header allocation even for hostile ds64 table lengths.
+            guard entries <= 4_096 else { throw ReadError.unsupportedFormat }
+            var table: [UInt32: [UInt64]] = [:]
+            for _ in 0..<entries {
+                try Task.checkCancellation()
+                let entry = try readExactly(file, count: 12)
+                table[uint32(entry, 0), default: []].append(uint64(entry, 4))
+            }
+            // Repeated IDs are resolved in occurrence order with constant-time pops.
+            for key in Array(table.keys) { table[key]?.reverse() }
+            sizes64 = ExtendedSizes(data: uint64(fixed, 8),
+                                    samples: container == "RF64" ? uint64(fixed, 16) : 0,
+                                    table: table)
+            position = 20 + count + (count & 1)
+        }
         guard end >= 12, end <= size else { throw ReadError.invalidWave }
 
-        var position: UInt64 = 12
         var format: Data?
         var formatSize: UInt64 = 0
         var audioBytes: UInt64?
+        var factSamples: UInt32?
         while position < end {
             try Task.checkCancellation()
             guard end - position >= 8 else { throw ReadError.invalidWave }
             try file.seek(toOffset: position)
             let chunk = try readExactly(file, count: 8)
             let name = String(decoding: chunk[0..<4], as: UTF8.self)
-            let count = UInt64(uint32(chunk, 4))
+            let count32 = uint32(chunk, 4)
+            var count = UInt64(count32)
+            if count32 == UInt32.max, sizes64 != nil {
+                if name == "data" {
+                    count = sizes64!.data
+                } else {
+                    guard let extended = sizes64!.table[uint32(chunk, 0)]?.popLast() else {
+                        throw ReadError.invalidWave
+                    }
+                    count = extended
+                }
+            }
             let payload = position + 8
-            guard count <= end - payload else { throw ReadError.invalidWave }
+            guard count <= end - payload,
+                  count & 1 <= end - payload - count else { throw ReadError.invalidWave }
+            if name == "ds64", sizes64 != nil { throw ReadError.invalidWave }
             if name == "fmt " {
                 guard format == nil, count >= 16 else { throw ReadError.invalidWave }
                 // Only the base and extensible format headers are needed.
@@ -57,6 +109,9 @@ nonisolated enum WaveMetadataReader {
             } else if name == "data" {
                 guard audioBytes == nil else { throw ReadError.invalidWave }
                 audioBytes = count
+            } else if name == "fact", container == "RF64" {
+                guard factSamples == nil, count >= 4 else { throw ReadError.invalidWave }
+                factSamples = uint32(try readExactly(file, count: 4), 0)
             }
             position = payload + count + (count & 1)
             guard position <= end else { throw ReadError.invalidWave }
@@ -91,6 +146,18 @@ nonisolated enum WaveMetadataReader {
         if tag == 3 && (bits != 32 && bits != 64 || validBits != bits) {
             throw ReadError.unsupportedFormat
         }
+        let sampleFrames = audioBytes / alignment
+        // RF64 replaces fact's sample count only when its 32-bit value is a
+        // sentinel. Some writers omit fact and provide the count only in ds64.
+        let declaredSamples: UInt64?
+        if let factSamples, factSamples != UInt32.max {
+            declaredSamples = UInt64(factSamples)
+        } else {
+            declaredSamples = sizes64?.samples
+        }
+        if let samples = declaredSamples, samples != 0, samples != sampleFrames {
+            throw ReadError.invalidWave
+        }
         let codec = tag == 3 ? "pcm_f\(bits)le" : (bits == 8 ? "pcm_u8" : "pcm_s\(bits)le")
         let stream = MediaMetadata.AudioStream(
             index: 0, languageCode: nil, title: nil, codec: codec,
@@ -100,12 +167,19 @@ nonisolated enum WaveMetadataReader {
             bitDepth: validBits, bitRate: Int64(byteRate * 8), isDefault: true
         )
         return MediaMetadata(
-            duration: Double(audioBytes / alignment) / Double(sampleRate),
+            duration: Double(sampleFrames) / Double(sampleRate),
             formatName: "wav", containerLongName: "WAV / WAVE (Waveform Audio)",
             sizeBytes: Int64(size), bitRate: Int64(byteRate * 8), timecode: nil,
             comment: nil, encoder: nil, frameCount: nil,
             videoStreams: [], audioStreams: [stream], subtitleStreams: [], chapters: []
         )
+    }
+
+    private struct ExtendedSizes {
+        let data: UInt64
+        // BW64 reserves this field; zero RF64 counts are treated as unspecified.
+        let samples: UInt64
+        var table: [UInt32: [UInt64]]
     }
 
     private static func channelLayout(mask: UInt32?, channels: Int) -> String? {
@@ -137,5 +211,9 @@ nonisolated enum WaveMetadataReader {
 
     private static func uint32(_ data: Data, _ offset: Int) -> UInt32 {
         UInt32(uint16(data, offset)) | UInt32(uint16(data, offset + 2)) << 16
+    }
+
+    private static func uint64(_ data: Data, _ offset: Int) -> UInt64 {
+        UInt64(uint32(data, offset)) | UInt64(uint32(data, offset + 4)) << 32
     }
 }

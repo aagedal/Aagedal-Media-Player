@@ -955,6 +955,50 @@ without loading the recording into memory or guessing conventional 7.1.
 RF64/BW64, compressed WAVE, BWF tags, native inspector acceptance, authentic
 programme material, and live meters remain separate work.
 
+## Phase 54 — Large WAVE containers and contextual review controls
+
+Status: Completed on 2026-09-08. All 444 Release tests, static analysis, and
+61 preflight checks pass. Focused native WAVE, review and relink checks pass.
+
+- [x] Extend bounded audio metadata reading to RF64/BW64, including 64-bit
+  data and ancillary sizes, repeated table IDs, and format-specific sample counts.
+- [x] Bound retained size-table entries and reject malformed headers, incomplete
+  frames, overflowing lengths, and inconsistent RF64 sample counts.
+- [x] Add eight regressions covering production FFmpeg RF64 output, sparse
+  8 GiB recordings, large ancillary chunks, and RF64 `fact` precedence.
+- [x] Give review seek, classification, and range controls source-frame context;
+  adapt range actions to available width and expose complete relink path values.
+- [x] Verify native RIFF/RF64/BW64 metadata and corrected rear-speaker loudness.
+- [x] Verify distinct expanded review labels, keyboard range submission and
+  explicit relinking with unchanged complete findings and original sidecar.
+- [x] Pass integrated Release regression, static analysis and preflight.
+
+Acceptance: technical RF64/BW64 metadata support does not imply ADM tag
+interpretation, live-meter conformance, or complete keyboard/VoiceOver acceptance.
+See `docs/WAVE_METADATA.md` for supported formats and resource bounds, and
+`docs/COMPARE_REVIEW_NATIVE_CHECK_2026-09-08.md` for native evidence and limits.
+
+## Phase 55 — Original ITU programme loudness references
+
+Status: Completed on 2026-09-08. The three official references pass in isolation
+and in the full 444-test Release suite, with no failures or skips. Static
+analysis and all 61 release-preflight checks pass.
+
+- [x] Obtain original mono voice/music, stereo, and six-channel programme
+  references directly from ITU, retaining media outside the repository.
+- [x] Pin original SHA-256 hashes and verify metadata plus whole-file integrated
+  loudness through the production service against the published −23 ±0.1 target.
+- [x] Add an explicit opt-in runner retaining results, hashes and build evidence;
+  require all three records so an unconfigured test cannot pass as validation.
+- [x] Record programme LRA and true peak as observations without reference claims.
+- [x] Pass the full integrated suite with original programme references enabled,
+  static analysis and release preflight.
+
+Acceptance: all three original files measure −23.0 LUFS. This adds authentic
+programme integrated-loudness evidence, not programme LRA/true-peak or complete
+meter certification. EBU programme LRA download returned HTTP 403; those cases
+remain open. See `docs/AUDIO_PROGRAMME_REFERENCES.md`.
+
 ## Remaining work after this continuation
 
 - Integrate the measured metadata-memory dependency fix after upstream review,
@@ -981,7 +1025,10 @@ programme material, and live meters remain separate work.
   jobs, independent cancellation/completion, and inspector hide/reopen cleanup;
   wider playback and assistive-technology acceptance remains open.
   A focused native review check now covers note creation, filtering, and CSV
-  export of a filtered-out finding; full keyboard review and relinking remain.
+  export of a filtered-out finding. Phase 54 adds keyboard inclusive-range entry,
+  distinct expanded labels, and successful explicit native relinking with
+  unchanged findings/original sidecar. Full keyboard review, spoken VoiceOver,
+  narrow layouts, relink cancellation and existing-destination conflicts remain.
 - Actual marker import/re-export in Resolve, Final Cut Pro, and Avid, including
   fractional rates, drop-frame boundaries, inclusive ranges, and source identity.
 - Oldest-supported Apple Silicon UHD/HDR playback, reflected loupe/scopes,
@@ -993,12 +1040,13 @@ programme material, and live meters remain separate work.
   accessibility-tree content, measurement activation, and Command-I reopening.
   The diagnosed rear-weight discrepancy is corrected in Phase 51; unknown or
   other layouts do not receive that correction.
-- Confirm the repaired WAVE metadata path in the native inspector. Phase 53
-  adds bounded PCM/IEEE-float RIFF reading; RF64/BW64, compressed WAVE, and BWF
-  tag extraction remain outside this reader’s scope.
+- Broader WAVE format support: compressed encodings and BWF/ADM tag extraction
+  remain outside the bounded reader. Phase 54 verifies RIFF/RF64/BW64 metadata
+  and corrected 7.1 loudness through the rebuilt native inspector.
 - Peak/true-peak meters and live momentary/short-term loudness,
-  calibration/ballistics/presets, authentic programme and broader transient reference
-  accuracy, and representative multichannel profiling. Selected absolute-level,
+  calibration/ballistics/presets, programme LRA/true-peak and broader transient
+  reference accuracy, and representative multichannel profiling. Phase 55 adds
+  three original ITU programme integrated-loudness references. Selected absolute-level,
   gating, and true-peak numerical references are covered by Phase 45; Phase 47
   adds synthetic LRA and calibration at 44.1/48/96 kHz. Phase 48 adds independent
   front/side/LFE references for 2.1, 3.0, 5.1(side), and part of 7.1. Phase 51
@@ -1069,3 +1117,7 @@ programme material, and live meters remain separate work.
 44. Phase 52 transient true-peak references and native loudness layout.
 
 45. Phase 53 bounded WAVE metadata and broader transient references.
+
+46. Phase 54 large WAVE containers and contextual review controls.
+
+47. Phase 55 original ITU programme loudness references.

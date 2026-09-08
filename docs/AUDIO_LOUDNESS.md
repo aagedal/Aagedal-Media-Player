@@ -240,6 +240,13 @@ Whole File and verify the range label disappears. Copy both result types and
 check their JSON bounds. Cancel one stream while another is running and confirm
 only the chosen stream stops.
 
+Original ITU voice/music, stereo and 5.1 programme files now supplement the
+synthetic references. All three pass the published −23 ±0.1 LKFS integrated
+target through the production service, with original file hashes checked before
+measurement. [Programme reference methodology and results](AUDIO_PROGRAMME_REFERENCES.md)
+describe downloads, reproduction and limits. Programme LRA and true-peak targets,
+additional content/layouts and live meters remain separate.
+
 ## Keyboard and accessibility acceptance
 
 Channel Solo and Mute items in the playback audio menu use native checked
