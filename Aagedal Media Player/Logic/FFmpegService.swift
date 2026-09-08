@@ -139,17 +139,29 @@ enum FFmpegService {
         }
     }
 
+    enum LoudnessWeightingCorrection: String, Sendable, Codable {
+        case bs1770Conventional7Point1RearChannels
+    }
+
     struct LUFSResult: Sendable, Codable {
         let integratedLoudness: Double
         let loudnessRange: Double
         let truePeak: Double
         var analysisRange: LoudnessRange? = nil
+        // Optional so previously exported results decode as uncorrected.
+        var weightingCorrection: LoudnessWeightingCorrection? = nil
     }
 
     /// Run the EBU R128 loudness analysis on a specific audio stream.
     /// `audioStreamIndex` is the zero-based index among audio streams (used with `-map 0:a:<index>`).
-    static func analyzeLUFS(url: URL, audioStreamIndex: Int, range: LoudnessRange? = nil) async throws -> LUFSResult {
-        let arguments = try loudnessArguments(url: url, audioStreamIndex: audioStreamIndex, range: range)
+    static func analyzeLUFS(
+        url: URL, audioStreamIndex: Int, range: LoudnessRange? = nil,
+        channels: Int? = nil, channelLayout: String? = nil
+    ) async throws -> LUFSResult {
+        let arguments = try loudnessArguments(
+            url: url, audioStreamIndex: audioStreamIndex, range: range,
+            channels: channels, channelLayout: channelLayout
+        )
         guard let path = ffmpegPath else {
             throw FFmpegError.ffmpegMissing
         }
@@ -183,16 +195,34 @@ enum FFmpegService {
             throw FFmpegError.processFailed("Could not parse LUFS output")
         }
         parsed.analysisRange = range
+        if usesConventional7Point1LoudnessCorrection(channels: channels, channelLayout: channelLayout) {
+            parsed.weightingCorrection = .bs1770Conventional7Point1RearChannels
+        }
         return parsed
+    }
+
+    nonisolated static func usesConventional7Point1LoudnessCorrection(
+        channels: Int?, channelLayout: String?
+    ) -> Bool {
+        channels == 8 && channelLayout?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "7.1"
     }
 
     /// Trim decoded samples before the loudness filter so its summary describes
     /// only the selected interval, including non-keyframe boundaries.
     nonisolated static func loudnessArguments(
-        url: URL, audioStreamIndex: Int, range: LoudnessRange? = nil
+        url: URL, audioStreamIndex: Int, range: LoudnessRange? = nil,
+        channels: Int? = nil, channelLayout: String? = nil
     ) throws -> [String] {
         guard audioStreamIndex >= 0 else { throw FFmpegError.invalidAudioStream }
         var filter = "ebur128=peak=true"
+        if usesConventional7Point1LoudnessCorrection(channels: channels, channelLayout: channelLayout) {
+            // BS.1770-5 Annex 3 assigns unit weight to conventional 7.1's rear
+            // speakers, but this FFmpeg weights BL/BR by 1.41. Relabel only in
+            // the analysis graph to select unit weights without scaling samples
+            // or changing true peaks. Named mappings require every source speaker.
+            // Use channelmap: pan can negotiate an unwanted input rematrix here.
+            filter = "channelmap=map=FL-FL|FR-FR|FC-FC|LFE-LFE|BL-FLC|BR-FRC|SL-SL|SR-SR:channel_layout=7.1(wide-side)," + filter
+        }
         var inputArguments = ["-hide_banner", "-nostats", "-progress", "pipe:1"]
         if let range {
             // Validate again because Codable can construct a range without its initializer.

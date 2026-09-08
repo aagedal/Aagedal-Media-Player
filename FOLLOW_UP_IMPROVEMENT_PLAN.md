@@ -884,9 +884,33 @@ shows the full qualification at its normal width.
 - [x] Pass the integrated Release suite and static analysis.
 
 Acceptance: additional numerical coverage and truthful measurement qualification
-are in place. Correcting the analyzer's rear weighting remains open; the strict
-expected failures are not evidence of standards conformance. See
+are in place. Rear weighting was subsequently corrected in Phase 51; these
+historical expected failures were not evidence of standards conformance. See
 `docs/AUDIO_LOUDNESS.md`.
+
+## Phase 51 — Correct conventional 7.1 loudness weighting
+
+Status: Completed on 2026-09-08. All 425 Release tests pass without failures,
+expected failures, or skips; static analysis and all 61 release-preflight checks pass.
+
+- [x] Correct conventional 7.1 rear-speaker energy weights inside the analysis
+  graph without altering source samples, playback, or true-peak amplitudes.
+- [x] Require explicit eight-channel `7.1` metadata; reject missing named input
+  speakers rather than silently remixing a mismatched source.
+- [x] Record correction provenance on results and copied JSON; preserve legacy
+  decoding and warnings for uncorrected measurements.
+- [x] Replace the expected rear-weight failures with standards assertions and
+  cover all seven non-LFE speakers at 44.1/48/96 kHz, mixed-channel levels,
+  selected ranges, LFE peaks, gating/LRA, and rear intersample peaks.
+- [x] Compare every Float32 sample through the complete production graph.
+- [x] Route stream metadata through the inspector and production profiler;
+  verify selection of a conventional 7.1 stream from a real multi-stream MOV.
+- [x] Pass final full Release regression, static analysis, and release preflight.
+
+Acceptance: conventional 7.1 offline analysis uses BS.1770-5 rear weights and
+preserves source true peaks. This is selected numerical evidence, not complete
+standards certification. Native inspection of the revised explanatory text and
+broader programme/live-meter acceptance remain open. See `docs/AUDIO_LOUDNESS.md`.
 
 ## Remaining work after this continuation
 
@@ -921,14 +945,16 @@ expected failures are not evidence of standards conformance. See
   and long-file thumbnail performance profiling.
 - Release signing/notarization/update-feed validation, representative-media
   smoke tests, refreshed screenshots/demo, publication, and hands-on editor beta.
-- Correct the diagnosed 7.1 rear-channel loudness weighting discrepancy in the
-  bundled analyzer; inspector and JSON now qualify affected measurements.
+- Verify revised native 7.1 correction text with pointer/keyboard/VoiceOver.
+  The diagnosed rear-weight discrepancy is corrected in Phase 51; unknown or
+  other layouts do not receive that correction.
 - Peak/true-peak meters and live momentary/short-term loudness,
   calibration/ballistics/presets, authentic programme/transient reference
   accuracy, and representative multichannel profiling. Selected absolute-level,
   gating, and true-peak numerical references are covered by Phase 45; Phase 47
   adds synthetic LRA and calibration at 44.1/48/96 kHz. Phase 48 adds independent
-  front/side/LFE references for 2.1, 3.0, 5.1(side), and part of 7.1.
+  front/side/LFE references for 2.1, 3.0, 5.1(side), and part of 7.1. Phase 51
+  adds corrected 7.1 references across all conventional speakers and three rates.
 - Verified 1:1 source-pixel inspection, whole-viewport zoom/pan after loupe
   acceptance, and time-localized mismatch markers after a detection model is
   defined. See `PRODUCT_ROADMAP.md` for milestone sequencing.
@@ -987,3 +1013,5 @@ expected failures are not evidence of standards conformance. See
 41. Phase 49 native review feedback and accessible finding identity.
 
 42. Phase 50 broader true-peak references and 7.1 measurement qualification.
+
+43. Phase 51 corrected conventional 7.1 loudness weighting.

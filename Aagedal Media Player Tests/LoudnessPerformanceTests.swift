@@ -38,7 +38,8 @@ final class LoudnessPerformanceTests: XCTestCase {
                     let worker = Task { @MainActor in
                         do {
                             outcome = .success(try await FFmpegService.analyzeLUFS(
-                                url: url, audioStreamIndex: streamIndex, range: range
+                                url: url, audioStreamIndex: streamIndex, range: range,
+                                channels: stream.channels, channelLayout: stream.channelLayout
                             ))
                         } catch { outcome = .failure(error) }
                     }

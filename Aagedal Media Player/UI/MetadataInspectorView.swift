@@ -354,7 +354,7 @@ struct MetadataInspectorView: View {
         private enum CodingKeys: String, CodingKey {
             case index, languageCode, title, codec, codecLongName, profile
             case sampleRate, channels, channelLayout, bitDepth, bitRate
-            case isDefault, lufs, lufsWarning
+            case isDefault, lufs, lufsWarning, lufsNote
         }
 
         func encode(to encoder: Encoder) throws {
@@ -374,28 +374,37 @@ struct MetadataInspectorView: View {
             try c.encodeIfPresent(lufs, forKey: .lufs)
             if lufs != nil {
                 try c.encodeIfPresent(
-                    MetadataInspectorView.loudnessMeasurementWarning(channelLayout: stream.channelLayout),
+                    MetadataInspectorView.loudnessMeasurementWarning(channelLayout: stream.channelLayout, result: lufs),
                     forKey: .lufsWarning
                 )
+                try c.encodeIfPresent(MetadataInspectorView.loudnessMeasurementNote(result: lufs), forKey: .lufsNote)
             }
         }
     }
 
     // MARK: - LUFS Analysis
 
-    nonisolated static func loudnessMeasurementWarning(channelLayout: String?) -> String? {
+    nonisolated static func loudnessMeasurementWarning(
+        channelLayout: String?, result: FFmpegService.LUFSResult? = nil
+    ) -> String? {
+        guard result?.weightingCorrection == nil else { return nil }
         guard channelLayout?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "7.1" else {
             return nil
         }
         return "7.1 loudness limitation: rear channels are overweighted by the analyzer. A rear-only reference reads 1.5 LU high; programme loudness and loudness range may be affected. True peak is unaffected by this weighting issue."
     }
 
+    nonisolated static func loudnessMeasurementNote(result: FFmpegService.LUFSResult?) -> String? {
+        guard result?.weightingCorrection == .bs1770Conventional7Point1RearChannels else { return nil }
+        return "7.1 loudness uses ITU-R BS.1770-5 rear-speaker weighting. True peak measures unchanged source samples."
+    }
+
     @ViewBuilder
     private func lufsSection(streamIndex: Int) -> some View {
         if let streams = metadata?.audioStreams,
            streams.indices.contains(streamIndex),
-           let warning = Self.loudnessMeasurementWarning(channelLayout: streams[streamIndex].channelLayout) {
-            Text(warning)
+           let note = loudnessSectionNote(stream: streams[streamIndex], result: lufsResults[streamIndex]) {
+            Text(note)
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .lineLimit(nil)
@@ -492,8 +501,21 @@ struct MetadataInspectorView: View {
         }
     }
 
+    private func loudnessSectionNote(
+        stream: MediaMetadata.AudioStream, result: FFmpegService.LUFSResult?
+    ) -> String? {
+        if let note = Self.loudnessMeasurementNote(result: result) { return note }
+        if result == nil,
+           FFmpegService.usesConventional7Point1LoudnessCorrection(channels: stream.channels, channelLayout: stream.channelLayout) {
+            return "7.1 analysis applies ITU-R BS.1770-5 rear-speaker weighting and measures true peak from unchanged source samples."
+        }
+        return Self.loudnessMeasurementWarning(channelLayout: stream.channelLayout, result: result)
+    }
+
     private func runLUFSAnalysis(streamIndex: Int) {
         guard isPresented else { return }
+        guard let streams = metadata?.audioStreams, streams.indices.contains(streamIndex) else { return }
+        let stream = streams[streamIndex]
         let range = measureSelectedRange ? selectedLoudnessRange : nil
         guard !measureSelectedRange || range != nil else { return }
         lufsErrors.removeValue(forKey: streamIndex)
@@ -503,7 +525,10 @@ struct MetadataInspectorView: View {
         let generation = lufsGenerations.begin(for: streamIndex)
         lufsTasks[streamIndex] = Task(priority: .userInitiated) {
             do {
-                let result = try await FFmpegService.analyzeLUFS(url: url, audioStreamIndex: streamIndex, range: range)
+                let result = try await FFmpegService.analyzeLUFS(
+                    url: url, audioStreamIndex: streamIndex, range: range,
+                    channels: stream.channels, channelLayout: stream.channelLayout
+                )
                 guard !Task.isCancelled,
                       lufsGenerations.finish(generation, for: streamIndex) else { return }
                 lufsAnalyzing.remove(streamIndex)

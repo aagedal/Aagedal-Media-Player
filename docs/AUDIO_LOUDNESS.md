@@ -23,18 +23,21 @@ from publishing stale results.
 object. Range measurements also include `analysisRange.start` and
 `analysisRange.end` in seconds. Whole-file results omit `analysisRange`.
 Non-finite values, such as negative-infinite peak for digital silence, are
-encoded as strings (`"-Infinity"`, `"Infinity"`, or `"NaN"`). Measured 7.1
-streams also export `lufsWarning`, preserving the rear-speaker weighting
-qualification shown in the inspector.
+encoded as strings (`"-Infinity"`, `"Infinity"`, or `"NaN"`). Corrected conventional 7.1
+measurements include `lufs.weightingCorrection` with value
+`bs1770Conventional7Point1RearChannels` and a readable `lufsNote`.
+Uncorrected 7.1 results retain `lufsWarning`. Previously exported results
+without correction provenance remain decodable and are treated as uncorrected.
 
 ## Limits
 
 - These are offline summaries, not live momentary/short-term meters or a
   broadcast standards compliance verdict.
-- For conventional 7.1 streams, the bundled FFmpeg applies excessive loudness
-  weighting to the rear speakers: rear-only material reads about 1.5 LU high
-  against ITU-R BS.1770-5. Mixed material can also read high, depending on rear
-  content and gating. True peak is unaffected by this weighting limitation.
+- Conventional eight-channel `7.1` analysis corrects the bundled FFmpeg's rear
+  weighting using an analysis-only channel-label mapping. Other eight-channel
+  layouts and streams without explicit matching metadata do not receive this
+  correction. Uncorrected 7.1 measurements remain qualified in the inspector
+  and JSON. This does not establish conformance for immersive layouts.
 - Analysis decodes the source up to the Out point, including material before
   the In point; a selection late in a long source can still take time. Cancel remains
   available while it runs.
@@ -112,20 +115,31 @@ raising true peak to −3 dBTP in each LFE-bearing layout. The
 sets channel positions directly; no FFmpeg pan or synthesis filter creates
 these fixtures.
 
-Four further 7.1 fixtures independently isolate rear and side speakers.
-[ITU-R BS.1770-5, Annex 3, Tables 4–5](https://www.itu.int/dms_pubrec/itu-r/rec/bs/R-REC-BS.1770-5-202311-I!!PDF-E.pdf)
-assigns unit weight to the rear ±135° speakers and 1.41 to the side ±90°
-speakers. The bundled FFmpeg instead applies 1.41 to both pairs: each isolated
-rear reference reads −24.5 LUFS against an expected −26.0 LUFS. These two
-assertions are strict expected failures, so a backend correction requires
-removing the expectation; side loudness and all four true peaks remain ordinary
-passing assertions. The test deliberately retains the independent standard's
-expected levels rather than treating the backend discrepancy as correct.
+Conventional 7.1 correction uses the rear ±135° unit energy weight and side
+±90° weight of 1.41 from
+[ITU-R BS.1770-5, Annex 3, Tables 4–5](https://www.itu.int/dms_pubrec/itu-r/rec/bs/R-REC-BS.1770-5-202311-I!!PDF-E.pdf).
+The bundled FFmpeg assigns 1.41 to both pairs. The app now applies
+[FFmpeg channelmap](https://ffmpeg.org/ffmpeg-filters.html#channelmap) after
+sample trimming, relabelling BL/BR as FLC/FRC in an analysis-only
+`7.1(wide-side)` layout. Those labels select unit weights without scaling
+samples, so integrated loudness, gating, and LRA receive corrected energy while
+true peaks retain original amplitudes. Playback and exported media are unchanged.
+The graph uses named inputs; a missing source speaker fails analysis instead of
+silently accepting an expanded stereo input. It requires both eight channels
+and explicit conventional `7.1` metadata, never channel count alone.
+
+Independent speaker-mask references now isolate all seven non-LFE speakers
+at 44.1, 48, and 96 kHz. The former two expected failures are normal standards
+assertions. Additional coverage checks mixed front/rear/side energy, loud LFE
+peaks, selected ranges, rear-pair relative gating/LRA, rear intersample peaks,
+and byte-for-byte Float32 sample preservation through the production graph.
+Legacy/corrected JSON provenance and mismatched source-layout rejection are
+also covered. The production profiler supplies the same layout metadata as the
+inspector so future conventional 7.1 profiles exercise this correction.
 
 This is a selected reference regression set, not full EBU/ITU certification.
 Remaining reference coverage includes authentic programme material,
-transient true peaks, and immersive channel layouts. Correct 7.1 rear-speaker
-weighting remains a backend limitation, now exposed by independent references.
+transient true peaks, and immersive channel layouts.
 
 The expanded 415-test Release suite passes without failures or skips on
 2026-09-07, as do Xcode static analysis and all 61 release-preflight checks.
@@ -135,8 +149,8 @@ adds 13 references in three tests; neither changes production analysis behavior.
 
 On 2026-09-08 the focused 18-test Release loudness suite and complete 417-test
 Release suite pass with no skips or unexpected failures; Xcode static analysis
-also passes. The suites record the two strict expected rear-weight failures
-described above. This expansion adds ten phase references, four isolated 7.1
+also passes. That earlier run recorded the two strict expected rear-weight failures
+subsequently corrected in Phase 51. This expansion adds ten phase references, four isolated 7.1
 speaker references, and JSON coverage ensuring the qualification accompanies
 only measured 7.1 results.
 The final suite was repeated after the inspector warning wrapping fix:
@@ -144,6 +158,18 @@ The final suite was repeated after the inspector warning wrapping fix:
 Local artifacts: `/tmp/improvements-final-rebuilt-20260908.xcresult`,
 `/tmp/improvements-final-rebuilt-tests-20260908.log`, and
 `/tmp/improvements-final-analyze-20260908.log`.
+
+Phase 51 validation on 2026-09-08 passes all 425 Release tests with zero
+failures, expected failures, or skips (110.435 seconds). Static analysis and
+all 61 release-preflight checks also pass. The final suite includes a
+multi-stream MOV test that obtains the selected 7.1 layout through production
+metadata parsing before measuring it. Local temporary artifacts:
+`/tmp/loudness-correction-full-20260908.xcresult`,
+`/tmp/loudness-correction-full-20260908.log`,
+`/tmp/loudness-correction-analyze-20260908.log`, and
+`/tmp/loudness-correction-preflight-approved-20260908.log`.
+Native layout/VoiceOver acceptance of the revised correction text remains open;
+the earlier native warning check below predates this correction.
 
 Empty-range fixtures check both an interval beyond EOF and an interval before
 a delayed stream begins. Analysis requires FFmpeg's output clock to advance

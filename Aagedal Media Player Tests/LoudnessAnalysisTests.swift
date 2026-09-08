@@ -142,39 +142,158 @@ final class LoudnessAnalysisTests: XCTestCase {
         // unit energy weight; side ±90° speakers have weight 1.41.
         // https://www.itu.int/dms_pubrec/itu-r/rec/bs/R-REC-BS.1770-5-202311-I!!PDF-E.pdf
         // WAVE mask 0x63F order: FL, FR, FC, LFE, BL, BR, SL, SR.
-        // These independent references expose the backend's known treatment
-        // of 7.1 rear speakers as 5.1 surrounds (+1.5 LU too much weight).
-        for (channel, weight) in [(4, 1.0), (5, 1.0), (6, 1.41), (7, 1.41)] {
-            var gains = [Double](repeating: 0, count: 8)
-            gains[channel] = 1
+        for sampleRate in [44_100, 48_000, 96_000] {
+            for (channel, weight) in [(0, 1.0), (1, 1.0), (2, 1.0), (4, 1.0), (5, 1.0), (6, 1.41), (7, 1.41)] {
+                var gains = [Double](repeating: 0, count: 8)
+                gains[channel] = 1
+                let url = try writeReferenceTone(
+                    segments: [(4, pow(10, -23.0 / 20))], sampleRate: sampleRate,
+                    channelGains: gains, channelMask: 0x63F
+                )
+                defer { try? FileManager.default.removeItem(at: url) }
+                let result = try await FFmpegService.analyzeLUFS(
+                    url: url, audioStreamIndex: 0, channels: 8, channelLayout: "7.1"
+                )
+                XCTAssertEqual(result.integratedLoudness, -23 + 10 * log10(weight / 2),
+                               accuracy: 0.1, "7.1 channel \(channel) at \(sampleRate) Hz")
+                XCTAssertEqual(result.truePeak, -23, accuracy: 0.1)
+                XCTAssertEqual(result.weightingCorrection, .bs1770Conventional7Point1RearChannels)
+            }
+        }
+    }
+
+    func testSevenPointOneMixedChannelsAndSelectedRange() async throws {
+        let url = try writeReferenceTone(
+            segments: [(4, pow(10, -23.0 / 20)), (4, pow(10, -43.0 / 20))],
+            channelGains: [1, 0.5, 0.25, 10, 0.75, 0.4, 0.6, 0.2], channelMask: 0x63F
+        )
+        defer { try? FileManager.default.removeItem(at: url) }
+        let energy = 1 + 0.25 + 0.0625 + 0.5625 + 0.16 + 1.41 * (0.36 + 0.04)
+        for (start, level) in [(0.25, -23.0), (4.25, -43.0)] {
+            let range = try FFmpegService.LoudnessRange(start: start, end: start + 3.5)
+            let result = try await FFmpegService.analyzeLUFS(
+                url: url, audioStreamIndex: 0, range: range, channels: 8, channelLayout: "7.1"
+            )
+            XCTAssertEqual(result.integratedLoudness, level + 10 * log10(energy / 2), accuracy: 0.1)
+            XCTAssertEqual(result.truePeak, level + 20, accuracy: 0.1, "LFE remains the unmodified peak")
+            XCTAssertEqual(result.analysisRange, range)
+        }
+    }
+
+    func testSevenPointOneCorrectionSelectsTheRequestedAudioStream() async throws {
+        let stereo = try writeReferenceTone(segments: [(3, pow(10, -43.0 / 20))])
+        let surround = try writeReferenceTone(
+            segments: [(3, pow(10, -23.0 / 20))],
+            channelGains: [0, 0, 0, 0, 1, 0, 0, 0], channelMask: 0x63F
+        )
+        let container = FileManager.default.temporaryDirectory.appendingPathComponent("loudness-streams-\(UUID().uuidString).mov")
+        defer {
+            for url in [stereo, surround, container] { try? FileManager.default.removeItem(at: url) }
+        }
+        try await FFmpegService.run(arguments: [
+            "-hide_banner", "-i", stereo.path, "-i", surround.path,
+            "-map", "0:a:0", "-map", "1:a:0", "-c:a", "pcm_f32le", container.path,
+        ])
+        let metadata = try await MetadataService.shared.metadata(for: container)
+        XCTAssertEqual(metadata.audioStreams.count, 2)
+        let stream = try XCTUnwrap(metadata.audioStreams.last)
+        XCTAssertEqual(stream.channels, 8)
+        XCTAssertEqual(stream.channelLayout, "7.1")
+        let result = try await FFmpegService.analyzeLUFS(
+            url: container, audioStreamIndex: 1, channels: stream.channels, channelLayout: stream.channelLayout
+        )
+        XCTAssertEqual(result.integratedLoudness, -26, accuracy: 0.1)
+        XCTAssertEqual(result.truePeak, -23, accuracy: 0.1)
+        XCTAssertEqual(result.weightingCorrection, .bs1770Conventional7Point1RearChannels)
+    }
+
+    func testSevenPointOneRearGatingAndLoudnessRange() async throws {
+        // Two rear speakers now have exactly the same energy weights as stereo.
+        // Relative-gated LRA should retain the 15 LU spread, excluding -50 LUFS.
+        let url = try writeReferenceTone(
+            segments: [-50.0, -35, -20, -35, -50].map { (20, pow(10, $0 / 20)) },
+            channelGains: [0, 0, 0, 0, 1, 1, 0, 0], channelMask: 0x63F
+        )
+        defer { try? FileManager.default.removeItem(at: url) }
+        let result = try await FFmpegService.analyzeLUFS(
+            url: url, audioStreamIndex: 0, channels: 8, channelLayout: "7.1"
+        )
+        XCTAssertEqual(result.loudnessRange, 15, accuracy: 1)
+        // The -35 sections survive the integrated gate; only -50 is excluded.
+        let gatedMean = 10 * log10((pow(10, -2) + 2 * pow(10, -3.5)) / 3)
+        XCTAssertEqual(result.integratedLoudness, gatedMean, accuracy: 0.2)
+        XCTAssertEqual(result.truePeak, -20, accuracy: 0.1)
+    }
+
+    func testSevenPointOneRearIntersamplePeakIsPreserved() async throws {
+        for sampleRate in [44_100, 48_000, 96_000] {
             let url = try writeReferenceTone(
-                segments: [(4, pow(10, -23.0 / 20))],
-                channelGains: gains, channelMask: 0x63F
+                segments: [(2, 0.5)], frequency: Double(sampleRate) / 4,
+                phase: .pi / 4, fadeSeconds: 0.01, sampleRate: sampleRate,
+                channelGains: [0, 0, 0, 0, 1, 0, 0, 0], channelMask: 0x63F
             )
             defer { try? FileManager.default.removeItem(at: url) }
-            let result = try await FFmpegService.analyzeLUFS(url: url, audioStreamIndex: 0)
-            let expected = -23 + 10 * log10(weight / 2)
-            if channel == 4 || channel == 5 {
-                // Pin the diagnosed discrepancy separately so an unrelated
-                // regression cannot hide behind the expected standards failure.
-                XCTAssertEqual(result.integratedLoudness, -24.5, accuracy: 0.1,
-                               "Current backend rear-weight discrepancy changed; reassess the expected failure")
-                let options = XCTExpectedFailure.Options()
-                options.isStrict = true
-                XCTExpectFailure(
-                    "Bundled FFmpeg weights 7.1 rear speakers by 1.41; BS.1770-5 requires 1.0",
-                    options: options
-                ) {
-                    XCTAssertEqual(result.integratedLoudness, expected, accuracy: 0.1,
-                                   "7.1 rear channel \(channel)")
-                }
-            } else {
-                XCTAssertEqual(result.integratedLoudness, expected, accuracy: 0.1,
-                               "7.1 side channel \(channel)")
-            }
-            XCTAssertEqual(result.truePeak, -23, accuracy: 0.1,
-                           "True peak must remain independent of channel loudness weight")
+            let original = try await FFmpegService.analyzeLUFS(url: url, audioStreamIndex: 0)
+            let corrected = try await FFmpegService.analyzeLUFS(
+                url: url, audioStreamIndex: 0, channels: 8, channelLayout: "7.1"
+            )
+            XCTAssertEqual(corrected.truePeak, original.truePeak, accuracy: 0.01)
+            XCTAssertGreaterThanOrEqual(corrected.truePeak, -6.4)
+            XCTAssertLessThanOrEqual(corrected.truePeak, -5.8)
         }
+    }
+
+    func testSevenPointOneAnalysisMappingPreservesEverySample() async throws {
+        let url = try writeReferenceTone(
+            segments: [(1, 0.5)], channelGains: [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3],
+            channelMask: 0x63F
+        )
+        let output = FileManager.default.temporaryDirectory.appendingPathComponent("mapped-\(UUID().uuidString).pcm")
+        defer {
+            try? FileManager.default.removeItem(at: url)
+            try? FileManager.default.removeItem(at: output)
+        }
+        let arguments = try FFmpegService.loudnessArguments(
+            url: url, audioStreamIndex: 0, channels: 8, channelLayout: "7.1"
+        )
+        let filterIndex = try XCTUnwrap(arguments.firstIndex(of: "-af"))
+        // Run the production graph including the meter, then compare its output
+        // against the independently written WAV payload (68-byte extended header).
+        try await FFmpegService.run(arguments: [
+            "-hide_banner", "-i", url.path, "-map", "0:a:0", "-af", arguments[filterIndex + 1],
+            "-c:a", "pcm_f32le", "-f", "f32le", output.path,
+        ])
+        XCTAssertEqual(try Data(contentsOf: output), try Data(contentsOf: url).dropFirst(68))
+    }
+
+    func testSevenPointOneIncorrectSourceLayoutFailsInsteadOfRemixing() async throws {
+        let url = try writeReferenceTone(segments: [(1, 0.5)])
+        defer { try? FileManager.default.removeItem(at: url) }
+        do {
+            _ = try await FFmpegService.analyzeLUFS(
+                url: url, audioStreamIndex: 0, channels: 8, channelLayout: "7.1"
+            )
+            XCTFail("A stereo source must not be silently expanded into a corrected 7.1 measurement")
+        } catch FFmpegError.processFailed { }
+    }
+
+    func testSevenPointOneCorrectionRequiresExplicitMatchingLayout() throws {
+        let url = URL(fileURLWithPath: "/tmp/test.wav")
+        for (channels, layout) in [(nil, nil), (8, nil), (nil, "7.1"), (6, "7.1"), (8, "7.1(wide)"), (8, "octagonal")] as [(Int?, String?)] {
+            let arguments = try FFmpegService.loudnessArguments(
+                url: url, audioStreamIndex: 0, channels: channels, channelLayout: layout
+            )
+            XCTAssertFalse(arguments.joined().contains("channelmap"))
+        }
+    }
+
+    func testLoudnessCorrectionCodableCompatibility() throws {
+        let legacy = Data(#"{"integratedLoudness":-23,"loudnessRange":0,"truePeak":-23}"#.utf8)
+        var result = try JSONDecoder().decode(FFmpegService.LUFSResult.self, from: legacy)
+        XCTAssertNil(result.weightingCorrection)
+        result.weightingCorrection = .bs1770Conventional7Point1RearChannels
+        let decoded = try JSONDecoder().decode(FFmpegService.LUFSResult.self, from: JSONEncoder().encode(result))
+        XCTAssertEqual(decoded.weightingCorrection, result.weightingCorrection)
     }
 
     func testIndependentLFEExclusionStillIncludesLFETruePeakAcrossLayouts() async throws {
@@ -192,7 +311,8 @@ final class LoudnessAnalysisTests: XCTestCase {
                 channelGains: reference.gains, channelMask: reference.mask
             )
             defer { try? FileManager.default.removeItem(at: url) }
-            let result = try await FFmpegService.analyzeLUFS(url: url, audioStreamIndex: 0)
+            let result = try await FFmpegService.analyzeLUFS(url: url, audioStreamIndex: 0,
+                channels: reference.gains.count, channelLayout: reference.name)
             XCTAssertEqual(result.integratedLoudness, -23, accuracy: 0.1, reference.name)
             XCTAssertEqual(result.truePeak, -3, accuracy: 0.1, reference.name)
         }
@@ -402,6 +522,15 @@ final class LoudnessAnalysisTests: XCTestCase {
         XCTAssertNotNil(exported[1]["lufs"])
         XCTAssertNil(exported[2]["lufsWarning"], "An unmeasured stream has no result to qualify")
         XCTAssertNil(exported[2]["lufs"])
+        var corrected = measurement
+        corrected.weightingCorrection = .bs1770Conventional7Point1RearChannels
+        let correctedData = try MetadataInspectorView.metadataJSON(metadata: metadata, lufsResults: [0: corrected])
+        let correctedObject = try XCTUnwrap(JSONSerialization.jsonObject(with: correctedData) as? [String: Any])
+        let correctedStreams = try XCTUnwrap(correctedObject["audioStreams"] as? [[String: Any]])
+        XCTAssertNil(correctedStreams[0]["lufsWarning"])
+        XCTAssertNotNil(correctedStreams[0]["lufsNote"])
+        let correctedLUFS = try XCTUnwrap(correctedStreams[0]["lufs"] as? [String: Any])
+        XCTAssertEqual(correctedLUFS["weightingCorrection"] as? String, "bs1770Conventional7Point1RearChannels")
     }
 
     func testMultichannelStreamWeightingAndIndependentTrackSelection() async throws {

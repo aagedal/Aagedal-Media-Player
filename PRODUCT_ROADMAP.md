@@ -282,10 +282,10 @@ confidence as the picture.
   phase-sensitive true-peak, and synthetic LRA references. Calibration, LRA,
   and phase-sensitive true peaks cover 44.1/48/96 kHz. Independent speaker-mask
   fixtures additionally cover
-  front/side/LFE behavior in 2.1, 3.0, 5.1(side), and part of 7.1. Authentic
-  programme material, transient peaks, correction of the diagnosed 7.1 rear
-  overweighting (now qualified in inspector/JSON), immersive layouts,
-  and future live-meter behavior remain; see `docs/AUDIO_LOUDNESS.md`.
+  front/side/LFE behavior in 2.1, 3.0, 5.1(side), and conventional 7.1. Authentic
+  programme material, transient peaks, immersive layouts,
+  and future live-meter behavior remain. Conventional 7.1 rear weighting is now
+  corrected with measurement provenance; see `docs/AUDIO_LOUDNESS.md`.
 - [ ] Confirm meter and thumbnail work remains bounded during long playback.
   A production-loader thumbnail profiler now checks 40 distributed requests
   per input with cache bounds and sampled memory/latency reporting. See
