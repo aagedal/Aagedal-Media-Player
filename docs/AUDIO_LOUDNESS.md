@@ -244,7 +244,14 @@ Original ITU voice/music, stereo and 5.1 programme files now supplement the
 synthetic references. All three pass the published −23 ±0.1 LKFS integrated
 target through the production service, with original file hashes checked before
 measurement. [Programme reference methodology and results](AUDIO_PROGRAMME_REFERENCES.md)
-describe downloads, reproduction and limits. Programme LRA and true-peak targets,
+describe downloads, reproduction and limits. The optional runner also compares
+their LRA to an independent standard-library PCM implementation of EBU Tech 3342,
+validated against all four official analytic tone sequences. Calculated values
+of 15.8698, 14.5295, and 10.9416 LU agree with production within 0.15 LU for
+mono, stereo, and six-channel programmes, respectively (±1 LU regression
+tolerance). These are independently derived values, not published programme
+LRA targets. The original EBU narrow/wide programme set remains inaccessible
+with HTTP 403; published programme LRA targets, programme true-peak targets,
 additional content/layouts and live meters remain separate.
 
 ## Keyboard and accessibility acceptance

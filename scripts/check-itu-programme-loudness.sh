@@ -93,6 +93,18 @@ for row in rows:
     if not math.isfinite(value) or abs(value + 23) > 0.1000001 or row['sampleRate'] != 48000:
         raise SystemExit(f'Invalid ITU programme result: {row["file"]}')
 (root / 'measurements.json').write_text(json.dumps(rows, indent=2, sort_keys=True) + '\n')
-print('All three official integrated loudness references passed. LRA and true peak are observations only.')
+print('All three official integrated loudness references passed. Checking independently calculated programme LRA next.')
 PY
+print -u2 'Validating the independent PCM LRA calculator against analytic references…'
+if ! /usr/bin/python3 scripts/test-itu-programme-lra-reference.py \
+  > "$artifact_dir/lra-calculator-tests.log" 2>&1; then
+  cat "$artifact_dir/lra-calculator-tests.log" >&2
+  exit 1
+fi
+# Keep the precise independent implementation alongside its hash and results.
+cp scripts/itu-programme-lra-reference.py scripts/test-itu-programme-lra-reference.py "$artifact_dir/"
+print -u2 'Comparing programme LRA to the independent PCM calculation…'
+/usr/bin/python3 scripts/itu-programme-lra-reference.py "$reference_dir" \
+  "$artifact_dir/measurements.json" "$artifact_dir/independent-lra-comparison.json" \
+  | tee "$artifact_dir/lra-comparison.log"
 print -r -- "Artifacts: $artifact_dir"

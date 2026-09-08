@@ -25,8 +25,9 @@ SHA-256 hashes of all three original files and requires the complete set before
 a run can pass. It checks source channels and sample rate as well as loudness.
 
 No programme-specific LRA or true-peak targets are supplied for these rows.
-The result artifact labels those measurements as unreferenced observations;
-they must not be presented as independent accuracy checks.
+The raw production artifact labels those measurements as unreferenced
+observations. A separate independent PCM calculation now checks programme LRA,
+as described below; true peak remains an unreferenced observation.
 
 ## Reproduction
 
@@ -45,6 +46,62 @@ It rejects missing or duplicate result records, including a test that returns
 without its opt-in environment. Ordinary regression runs do not require network
 access or downloaded programme media.
 
+## Independently calculated programme LRA
+
+`scripts/itu-programme-lra-reference.py` reads the same three hash-pinned
+original WAVs using Python's standard library, without FFmpeg, the app's DSP,
+or a third-party loudness library. It derives comparison values from
+[EBU Tech 3342 (2023), sections 3.1 and 5](https://tech.ebu.ch/docs/tech/tech3342.pdf),
+using the published 48 kHz K-weighting coefficients and energy weights in
+[ITU-R BS.1770-3, Annex 1, Tables 1–3](https://www.itu.int/dms_pubrec/itu-r/rec/bs/R-REC-BS.1770-3-201208-S!!PDF-E.pdf).
+Each input starts with fresh filter state. Three-second windows advance by
+100 ms; 1.5 seconds of trailing silence flush the file-based analysis, and
+only complete windows are retained. The calculator applies the absolute
+−70 LUFS gate, the −20 LU relative gate based on average energy, and the
+10th/95th percentile selection with the reference algorithm's rounding rule.
+The original six-channel order comes from BS.2217-2: L/R/C/LFE/Ls/Rs.
+Its LFE is excluded and surround channels receive 1.41 energy weights.
+
+The runner requires agreement within **±1 LU**, a project regression tolerance
+chosen to match Tech 3342's minimum-requirement test tolerance. These derived
+values are **not published ITU programme LRA targets**, and this comparison does
+not establish certification. Production analyzes the original file without
+the calculator's explicit trailing silence; window alignment and percentile
+implementations can also differ within this tolerance. The calculator supports
+only the pinned 48 kHz PCM16 mono, stereo, and specified six-channel references.
+
+Each runner invocation first checks the independent calculator against all four
+directly synthesized Tech 3342 tone sequences (10, 5, 20, and 15 LU), absolute
+stereo calibration, channel/polarity isolation, LFE exclusion, gating and
+percentile edge cases. Invalid formats, truncated PCM, changed source hashes,
+missing/duplicate production records and non-finite measurements are rejected.
+The runner retains `lra-calculator-tests.log`, a copy and SHA-256 of the
+calculator, and `independent-lra-comparison.json` with both calculated and app
+values, their differences, window/gate counts and explicit target provenance.
+The raw `measurements.json` retains its original observation labels.
+
+The fresh Release runner on 2026-09-08 passes all three official integrated
+targets and all three independent LRA comparisons. All nine calculator tests
+also pass.
+
+| Original programme | Independent LRA (LU) | App LRA (LU) | App minus reference (LU) |
+| --- | ---: | ---: | ---: |
+| Mono Voice+Music −23 | 15.8698 | 15.9 | +0.0302 |
+| Stereo VinL+R −23 | 14.5295 | 14.6 | +0.0705 |
+| 6ch VinCntr −23 | 10.9416 | 10.8 | −0.1416 |
+
+The fresh run is retained in `/tmp/aagedal-programme-lra-fresh-20260908`,
+including `independent-lra-comparison.json`, the complete production result
+bundle and all nine calculator checks. The earlier comparison against retained
+results remains at `/tmp/aagedal-programme-lra-independent-final-20260908.json`.
+To recheck an existing production result without rebuilding or launching the app:
+
+```bash
+python3 scripts/test-itu-programme-lra-reference.py
+python3 scripts/itu-programme-lra-reference.py /path/to/references \
+  /path/to/measurements.json /tmp/new-independent-lra-comparison.json
+```
+
 ## Measured result — 2026-09-08
 
 All three references passed at **−23.0 LUFS** through the rebuilt Release app
@@ -56,8 +113,9 @@ the analyzer uses its normal decoder layout handling. No 7.1 correction applies.
 Artifacts: `/tmp/aagedal-itu-programme-check-20260908`, including
 `measurements.json`, original hashes and `ITUProgrammeLoudness.xcresult`.
 Temporary storage is not a durable archive; source URLs, test hashes and the
-runner retain the reproducible record. Only integrated loudness is assessed
-against independent programme targets here.
+runner retain the reproducible record. Integrated loudness is assessed against
+published programme targets; the separate LRA calculation above adds independent
+implementation evidence.
 
 ## Remaining programme coverage
 
@@ -68,7 +126,10 @@ LRA 5 ±1 / 15 ±1 LU in [Tech 3342 Table 1, cases 5–6](https://tech.ebu.ch/do
 The official EBU ZIP returned HTTP 403 in this environment on 2026-09-08;
 both the download linked by the publication page and its legacy
 `/docs/testmaterial/ebu-loudness-test-setv05.zip` address were retried with the
-same result. Those programme LRA cases remain unmeasured. Respect the EBU material's internal
+same result. A fresh request to the publication page's current ZIP URL also
+returned HTTP 403 during the independent-calculator continuation. Those EBU
+programme LRA cases remain unmeasured; the derived ITU comparison above does
+not close that gap in published programme-target coverage. Respect the EBU material's internal
 R&D terms and do not add its audio to the repository. Programme true-peak
 references, immersive layouts, live-meter behavior, and release-floor hardware
 profiling remain separate work.
