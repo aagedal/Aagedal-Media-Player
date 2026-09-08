@@ -28,7 +28,7 @@ struct ContentView: View {
     @State private var showComparisonControls = false
     @State private var deferredComparisonAction = DeferredMainActorTask()
     @State private var showCompareModeCallout = false
-    @FocusState private var isInspectorButtonFocused: Bool
+    @State private var isToolbarControlFocused = false
     @State private var timecodeActivationTrigger: String?
     @AppStorage(AppSettings.showCursorHideHint.key)
     private var showCursorHideHint = AppSettings.showCursorHideHint.defaultValue
@@ -63,7 +63,7 @@ struct ContentView: View {
     private var isControlInteractionActive: Bool {
         isEditingTimecode
             || isPlaybackControlsFocused
-            || isInspectorButtonFocused
+            || isToolbarControlFocused
             || showLoupeControls
             || showReviewNotes
             || showComparisonControls
@@ -126,7 +126,7 @@ struct ContentView: View {
                         isEditingTimecode: $isEditingTimecode,
                         isTimelineFocused: $isTimelineFocused,
                         isOverlayControlFocused: isControlInteractionActive,
-                        isTextInputActive: showReviewNotes || showLoupeControls,
+                        isTextInputActive: showReviewNotes || showLoupeControls || showComparisonControls,
                         timecodeActivationTrigger: $timecodeActivationTrigger
                     )
                 } else {
@@ -464,6 +464,7 @@ struct ContentView: View {
                     compareSession.stop()
                 }
                 .buttonStyle(.plain)
+                .playerToolbarFocus()
                 .help("Cancel loading the comparison file")
                 .accessibilityLabel("Cancel loading comparison file")
             } else if compareSession.isActive {
@@ -485,19 +486,25 @@ struct ContentView: View {
                             .foregroundStyle(.white.opacity(0.9))
                     }
                     .buttonStyle(.plain)
+                    .playerToolbarFocus()
                     .help("Show comparison controls")
                     .accessibilityLabel("Comparison controls")
                     .popover(isPresented: $showComparisonControls, arrowEdge: .bottom) {
-                        ScrollView {
-                            VStack(alignment: .leading, spacing: 16) {
-                                Text("Comparison controls")
-                                    .font(.headline)
-                                TransportSyncStatusView()
-                                comparisonSettings(compact: true)
-                                comparisonFileActions(compact: true)
+                        ScrollViewReader { scrollView in
+                            ScrollView {
+                                VStack(alignment: .leading, spacing: 16) {
+                                    Text("Comparison controls")
+                                        .font(.headline)
+                                    TransportSyncStatusView()
+                                    comparisonSettings(compact: true)
+                                    comparisonFileActions(compact: true)
+                                }
+                                .padding(16)
+                                .frame(maxWidth: .infinity, alignment: .leading)
                             }
-                            .padding(16)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .onPreferenceChange(PlayerToolbarFocusPreference.self) { focusID in
+                                if let focusID { scrollView.scrollTo(focusID) }
+                            }
                         }
                         .frame(width: 300, height: 380)
                         .preferredColorScheme(.dark)
@@ -521,6 +528,7 @@ struct ContentView: View {
                     .foregroundColor(.white.opacity(0.9))
                 }
                 .buttonStyle(.plain)
+                .playerToolbarFocus()
                 .help("Add or edit frame-accurate comparison notes")
                 .accessibilityLabel("Comparison review notes")
                 .accessibilityValue("\(compareSession.reviewNotes.count) notes")
@@ -542,6 +550,7 @@ struct ContentView: View {
                         .foregroundColor(.white.opacity(0.9))
                 }
                 .buttonStyle(.plain)
+                .playerToolbarFocus()
                 .help("Exit Compare Mode")
                 .accessibilityLabel("Exit Compare Mode")
             } else {
@@ -551,6 +560,7 @@ struct ContentView: View {
                         .foregroundColor(.white.opacity(0.9))
                 }
                 .buttonStyle(.plain)
+                .playerToolbarFocus()
                 .help("Add comparison file")
                 .accessibilityLabel("Add comparison file")
                 .disabled(controller.mediaItem == nil || compareSession.isLoading)
@@ -560,6 +570,7 @@ struct ContentView: View {
             }
 
             InspectionLoupeControl(state: loupe, isPresented: $showLoupeControls)
+                .playerToolbarFocus()
                 .disabled(!isMediaLoaded || controller.mediaItem?.presentationKind == .audioOnly)
 
             Button(action: { showInspector.toggle() }) {
@@ -568,21 +579,17 @@ struct ContentView: View {
                     .foregroundColor(.white.opacity(0.9))
             }
             .buttonStyle(.plain)
-            .focused($isInspectorButtonFocused)
-            .overlay {
-                if isInspectorButtonFocused {
-                    Circle()
-                        .stroke(Color.accentColor, lineWidth: 2)
-                        .padding(1)
-                        .allowsHitTesting(false)
-                }
-            }
+            .playerToolbarFocus()
             .help("Show metadata inspector")
             .accessibilityLabel(showInspector ? "Hide metadata inspector" : "Show metadata inspector")
             .accessibilityValue(showInspector ? "Shown" : "Hidden")
             .accessibilityAddTraits(showInspector ? .isSelected : [])
             .disabled(controller.mediaItem == nil)
         }
+        .onPreferenceChange(PlayerToolbarFocusPreference.self) {
+            isToolbarControlFocused = $0 != nil
+        }
+        .onDisappear { isToolbarControlFocused = false }
         .padding(.leading, 16)
         .padding(.trailing, rightEdgeWidth + 16)
         .padding(.top, 28)
@@ -609,6 +616,7 @@ struct ContentView: View {
             }
         }
         .pickerStyle(.menu)
+        .playerToolbarFocus()
         .frame(width: compact ? 260 : 150)
         .help("Choose comparison view. Press B to toggle A/B.")
 
@@ -631,6 +639,7 @@ struct ContentView: View {
             )
         }
         .menuStyle(.borderlessButton)
+        .playerToolbarFocus()
         .fixedSize()
         .disabled(!compareSession.isSecondaryReady)
         .help(
@@ -656,6 +665,7 @@ struct ContentView: View {
             }
         }
         .pickerStyle(.menu)
+        .playerToolbarFocus()
         .frame(width: compact ? 260 : 100)
         .help("Choose the only comparison source that is audible")
         .accessibilityLabel("Comparison audio source")
@@ -694,6 +704,7 @@ struct ContentView: View {
             )
         }
         .menuStyle(.borderlessButton)
+        .playerToolbarFocus()
         .fixedSize()
         .disabled(comparedChannels.isEmpty)
         .help(
@@ -708,6 +719,7 @@ struct ContentView: View {
             primaryController: controller,
             secondaryController: compareSession.secondaryController
         )
+        .playerToolbarFocus()
 
         Menu {
             Picker("Safe Area", selection: $compareSession.safeAreaGuide) {
@@ -734,6 +746,7 @@ struct ContentView: View {
             }
         }
         .menuStyle(.borderlessButton)
+        .playerToolbarFocus()
         .fixedSize()
         .help("Configure safe-area and aspect-ratio guides shared by both sources")
         .accessibilityLabel("Comparison guides")
@@ -751,6 +764,7 @@ struct ContentView: View {
             .controlSize(.small)
             .frame(width: 110)
             .help("Wipe position. Drag the divider or press [ and ].")
+            .playerToolbarFocus()
             .accessibilityLabel("Wipe position")
             .accessibilityValue("\(Int(compareSession.wipePosition * 100)) percent")
         } else if compareSession.viewMode == .overlay {
@@ -765,6 +779,7 @@ struct ContentView: View {
                 .controlSize(.small)
                 .frame(width: 110)
                 .help("Overlay blend: A at the left, B at the right")
+                .playerToolbarFocus()
                 .accessibilityLabel("Overlay blend")
                 .accessibilityValue("\(Int(compareSession.overlayBlend * 100)) percent source B")
         } else if compareSession.viewMode == .difference {
@@ -780,6 +795,7 @@ struct ContentView: View {
                 .controlSize(.small)
                 .frame(width: 110)
                 .help("Amplify the post-display RGB difference. This is not an objective image-quality metric.")
+                .playerToolbarFocus()
                 .accessibilityLabel("Difference gain")
                 .accessibilityValue("\(compareSession.differenceGain.formatted()) times")
 
@@ -797,6 +813,7 @@ struct ContentView: View {
                 }
             }
             .pickerStyle(.menu)
+            .playerToolbarFocus()
             .frame(width: compact ? 260 : 130)
             .help("Choose whether scopes inspect source A, source B, or their display-space difference")
 
@@ -814,6 +831,7 @@ struct ContentView: View {
                 .controlSize(.small)
                 .frame(width: 65)
                 .help("Amplify the display-space scope difference. This is not an objective image-quality metric.")
+                .playerToolbarFocus()
                 .accessibilityLabel("Scope difference gain")
                 .accessibilityValue("\(compareSession.differenceGain.formatted()) times")
 
@@ -826,6 +844,7 @@ struct ContentView: View {
         if let mapping = compareSession.mapping {
             HStack {
                 CompareAlignmentControl(session: compareSession, primary: controller)
+                    .playerToolbarFocus()
                 if compact { Text("Adjust alignment").font(.caption) }
             }
             Text("\(mapping.mode.label) · \(overlapStatus.label)")
@@ -848,6 +867,7 @@ struct ContentView: View {
             secondaryController: compareSession.secondaryController,
             isActive: compareSession.isActive
         )
+        .playerToolbarFocus()
     }
 
     @ViewBuilder
@@ -870,6 +890,7 @@ struct ContentView: View {
             .foregroundColor(.white.opacity(0.9))
         }
         .buttonStyle(.plain)
+        .playerToolbarFocus()
         .help("Export an annotated comparison still (Command-S)")
         .accessibilityLabel("Export comparison still")
         .disabled(!compareSession.isSecondaryReady)
@@ -883,6 +904,7 @@ struct ContentView: View {
             .foregroundColor(.white.opacity(0.9))
         }
         .buttonStyle(.plain)
+        .playerToolbarFocus()
         .help("Replace comparison file")
         .accessibilityLabel("Replace comparison file")
     }

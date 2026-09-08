@@ -217,6 +217,14 @@ struct PlayerView: View {
             return false
         }
 
+        // Toolbar sliders and menus own their arrow keys, just as the timeline
+        // does. The AppKit monitor must not turn their adjustments into seeks.
+        if isOverlayControlFocused,
+           specialKey == .leftArrow || specialKey == .rightArrow
+            || specialKey == .upArrow || specialKey == .downArrow {
+            return false
+        }
+
         let lower = characters.lowercased()
 
         if let compareSession, compareSession.isActive {

@@ -617,3 +617,20 @@ failure-alert refinement also passed the 36 focused review tests. Release static
 analysis and all 61 preflight checks pass. The native picker/confirmation,
 Escape cancellation, malformed-file alert, Return confirmation, and preserved
 import are documented in `docs/COMPARE_REVIEW_RELINK_CHECK_2026-09-06.md`.
+
+## Native comparison keyboard continuation — 2026-09-08
+
+The compact and full toolbars now report every control's keyboard focus, show
+focus rings and retain the overlay. Space opens the focused action instead of
+starting playback; focused sliders and menus receive arrow keys. The compact
+settings popover scrolls to controls reached by Tab.
+
+Native Keyboard Navigation verifies comparison opening, point-note creation,
+reopening and CSV export, wipe adjustment without seeking, and visible keyboard
+access to replacement controls. Full Keyboard Access, spoken VoiceOver, complete
+structured editing, editor round trips and hardware gates remain open. See
+`docs/COMPARISON_KEYBOARD_NATIVE_CHECK_2026-09-08.md`.
+
+Verification: all 464 Release tests pass with zero failures and zero skips,
+including both original ITU reference sets. Release static analysis and all
+61 release-preflight checks pass.

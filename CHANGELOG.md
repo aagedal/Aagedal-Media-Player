@@ -5,6 +5,8 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Added
+- Bounded classic big-endian RIFX metadata, with verified PCM/float decoding for offline loudness and waveforms.
+- Independent PCM programme LRA comparisons alongside the original ITU integrated-loudness checks, with retained algorithm/source provenance.
 - Bounded Broadcast WAVE tags in the inspector and copied JSON, including exact sample references, recording identity, coding history, and separately labeled embedded loudness.
 - Optional official ITU eight-channel loudness verification with pinned originals and lossless speaker-order preparation for the conventional 7.1 analysis path.
 - Reproducible optional loudness checks against original ITU mono, stereo, and 5.1 programme references, with pinned input hashes and retained measurement evidence.
@@ -73,6 +75,8 @@ All notable changes to Aagedal Media Player.
   primary-file loop boundaries across all backend combinations.
 
 ### Fixed
+- Focused comparison toolbar controls receive Space and arrow keys without triggering playback; compact settings scroll to keyboard-focused controls and show focus rings.
+- RIFX playback and trim export fail with conversion guidance while their decoder paths misinterpret big-endian sample bytes.
 - Restore PCM and floating-point RIFF WAVE metadata and loudness access using bounded header reads and explicit surround speaker masks.
 - Reject empty loudness selections instead of displaying FFmpeg’s default summary as a measured peak.
 - Expose channel solo/mute checked states and stream-specific loudness controls to accessibility clients.

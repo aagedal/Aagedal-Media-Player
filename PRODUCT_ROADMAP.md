@@ -294,8 +294,9 @@ confidence as the picture.
   Eighteen further cases cover signed-sidelobe and two-carrier pulses in
   left-only, right-only, and opposite-polarity stereo placements. Original ITU
   mono voice/music, stereo, and 5.1 programme references now pass integrated
-  loudness checks with pinned file hashes; programme LRA/true-peak and live-meter
-  acceptance remain. An original ITU eight-channel gain reference now has a
+  loudness checks with pinned file hashes. Their LRA now agrees with a separate
+  PCM reference implementation; published EBU programme LRA targets, programme
+  true-peak and live-meter acceptance remain. An original ITU eight-channel gain reference now has a
   separate opt-in check using pinned sample-preserving speaker-order preparation
   for explicit conventional 7.1. See `docs/AUDIO_PROGRAMME_REFERENCES.md`.
 - [ ] Confirm meter and thumbnail work remains bounded during long playback.
@@ -355,6 +356,10 @@ Release gates:
 - [ ] Exports preserve frame rate, drop-frame rules, source timecode, and file
   identity without rounding errors.
 - [ ] A complete review can be created and exported using only the keyboard.
+  A native Keyboard Navigation check now passes a point-note creation,
+  reopening and CSV export workflow, with saved frame/source identity checks.
+  Complete structured-review editing and assistive-technology coverage remain;
+  see `docs/COMPARISON_KEYBOARD_NATIVE_CHECK_2026-09-08.md`.
   A focused native check confirms Return-to-add, Tab to the filter, and CSV
   export retaining hidden findings; opening the review/export menus still used
   accessibility clicks. The September 8 continuation adds keyboard inclusive-range

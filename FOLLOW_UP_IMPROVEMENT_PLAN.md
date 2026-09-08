@@ -1054,6 +1054,76 @@ Acceptance: native pointer access at narrow widths and relink data safety are
 separate from complete Full Keyboard Access, spoken VoiceOver, and NLE round trips.
 See `docs/COMPARE_REVIEW_NATIVE_CHECK_2026-09-08.md`.
 
+## Phase 59 — Big-endian WAVE metadata and safe offline decoding
+
+Status: Engineering complete on 2026-09-08. All 35 focused WAVE/RIFX tests pass.
+
+- [x] Read classic RIFX PCM/float metadata with bounded big-endian header reads,
+  correct codec labels, malformed-input checks and a sparse 1 GiB regression.
+- [x] Detect the bundled FFmpeg sample-byte-order error and select a validated
+  input decoder for offline loudness and waveform generation.
+- [x] Verify actual positive/negative samples at all seven encoding widths,
+  independent calibration tones and production waveform amplitudes.
+- [x] Reject unsafe RIFX playback and trim export with conversion guidance,
+  including without metadata. Native opening confirms the error reaches the UI.
+
+Acceptance: metadata and offline analysis support classic RIFX. Playback/export,
+RIFX extensible/BWF variants and producer-authentic acceptance remain separate.
+See `docs/WAVE_METADATA.md`.
+
+## Phase 60 — Independent programme loudness-range comparison
+
+Status: Completed on 2026-09-08. The fresh Release runner passes all three
+official integrated targets, all three independent LRA comparisons (largest
+difference 0.1416 LU), and nine calculator regressions.
+
+- [x] Calculate LRA directly from the three hash-pinned original ITU PCM files
+  using published K-weighting and EBU short-term gating/percentile rules.
+- [x] Check the calculator against all four synthesized EBU LRA sequences,
+  absolute calibration, channel isolation, gates and malformed inputs.
+- [x] Integrate it into the programme runner with retained source, hashes,
+  Python version, calculated/app values and explicit target provenance.
+
+Acceptance: these are independently calculated comparison values, separate
+from published programme LRA targets. EBU's original programme download still
+returns HTTP 403; those cases and programme true-peak targets remain open.
+See `docs/AUDIO_PROGRAMME_REFERENCES.md`.
+
+## Phase 61 — Comparison toolbar keyboard ownership and focus visibility
+
+Status: Native keyboard verification complete on 2026-09-08. Keyboard-only
+comparison opening, point-note creation/restoration/CSV export, wipe adjustment
+and focus-triggered scrolling pass. Integrated verification is recorded below.
+
+- [x] Reproduce Space starting playback while Add Comparison owns focus.
+- [x] Track all toolbar controls, preserve visible focus rings and overlay
+  visibility, and let focused controls receive Space and arrow keys.
+- [x] Keep raw keys in compact comparison settings instead of running playback
+  shortcuts while menus/sliders are being operated.
+- [x] Reveal controls reached below the compact popover's visible scroll area.
+- [x] Verify a keyboard-only point-note creation/reopen/CSV export workflow,
+  preserving text, exact A/B frame anchors/rates and source URLs.
+
+Acceptance: macOS Keyboard Navigation is distinct from Accessibility's Full
+Keyboard Access and spoken VoiceOver. Complete assistive-technology, editor
+round-trip and hardware matrices remain open. Native evidence is retained in
+`docs/COMPARISON_KEYBOARD_NATIVE_CHECK_2026-09-08.md`.
+
+## Integrated continuation verification — 2026-09-08
+
+All **464 Release tests pass with zero failures and zero skips**, with both
+original ITU reference sets enabled. The suite took 113.316 seconds (113.592
+including suite overhead). Release static analysis and all 61 release-preflight
+checks pass. Existing loudness/metadata/profile validators also pass, and the
+fresh programme runner includes all nine independent LRA calculator checks.
+
+Artifacts: `/tmp/aagedal-rifx-keyboard-full-20260908.xcresult`,
+`/tmp/aagedal-rifx-keyboard-full-20260908.log`,
+`/tmp/aagedal-rifx-keyboard-analyze-20260908.log` and
+`/tmp/aagedal-programme-lra-fresh-20260908`. These temporary artifacts are
+reproducible evidence, not a durable release archive. Native keyboard acceptance
+and RIFX error propagation are recorded separately from the XCTest run.
+
 ## Remaining work after this continuation
 
 - Integrate the measured metadata-memory dependency fix after upstream review,
@@ -1083,8 +1153,10 @@ See `docs/COMPARE_REVIEW_NATIVE_CHECK_2026-09-08.md`.
   export of a filtered-out finding. Phase 54 adds keyboard inclusive-range entry,
   distinct expanded labels, and successful explicit native relinking with
   unchanged findings/original sidecar. Phase 58 adds native cancellation and
-  a write-time destination-conflict check with unchanged bytes. Full keyboard
-  review, spoken VoiceOver, and broader narrow-layout acceptance remain.
+  a write-time destination-conflict check with unchanged bytes. Phase 61 adds
+  native keyboard-only comparison opening, review-note creation, CSV export
+  and compact wipe adjustment, plus focus ownership/scrolling fixes. Complete
+  keyboard review, spoken VoiceOver, and broader narrow-layout acceptance remain.
 - Actual marker import/re-export in Resolve, Final Cut Pro, and Avid, including
   fractional rates, drop-frame boundaries, inclusive ranges, and source identity.
 - Oldest-supported Apple Silicon UHD/HDR playback, reflected loupe/scopes,
@@ -1096,15 +1168,21 @@ See `docs/COMPARE_REVIEW_NATIVE_CHECK_2026-09-08.md`.
   accessibility-tree content, measurement activation, and Command-I reopening.
   The diagnosed rear-weight discrepancy is corrected in Phase 51; unknown or
   other layouts do not receive that correction.
-- Broader WAVE format support: compressed encodings, RIFX, and iXML/ADM tag
-  interpretation remain outside the bounded reader. Phase 54 verifies
+- Broader WAVE format support: compressed encodings, RIFX extensible/BWF variants, and
+  iXML/ADM tag interpretation remain outside the bounded reader. Phase 59 adds
+  classic RIFX metadata and corrected offline analysis/waveforms; RIFX playback
+  and trim export remain explicitly unavailable pending a verified decoder fix.
+  Phase 54 verifies
   RIFF/RF64/BW64 metadata and corrected 7.1 loudness. Phase 56 adds bounded
   Broadcast WAVE recording tags; native validation is recorded with that phase.
 - Peak/true-peak meters and live momentary/short-term loudness,
   calibration/ballistics/presets, programme LRA/true-peak and broader transient
   reference accuracy, and representative multichannel profiling. Phase 55 adds
   three original ITU programme integrated-loudness references. Phase 57 adds
-  a separately prepared official eight-channel gain reference. Selected absolute-level,
+  a separately prepared official eight-channel gain reference. Phase 60 adds
+  an independent PCM LRA comparison for the authentic ITU programmes; published
+  EBU programme LRA targets and programme true-peak coverage remain open.
+  Selected absolute-level,
   gating, and true-peak numerical references are covered by Phase 45; Phase 47
   adds synthetic LRA and calibration at 44.1/48/96 kHz. Phase 48 adds independent
   front/side/LFE references for 2.1, 3.0, 5.1(side), and part of 7.1. Phase 51
@@ -1183,3 +1261,7 @@ See `docs/COMPARE_REVIEW_NATIVE_CHECK_2026-09-08.md`.
 48. Phase 56 Broadcast WAVE recording metadata.
 49. Phase 57 official eight-channel loudness evidence.
 50. Phase 58 narrow comparison controls and native relink edge cases.
+
+51. Phase 59 big-endian WAVE metadata and safe offline decoding.
+52. Phase 60 independent programme LRA comparison.
+53. Phase 61 comparison toolbar keyboard ownership and focus visibility.
