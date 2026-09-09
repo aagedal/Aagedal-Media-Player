@@ -153,6 +153,9 @@ classifications. Reports include all findings, including filtered-out notes.
 After moving media, use **Relink Notes…** in Comparison Review to map an old
 sidecar to the loaded A/B pair. The confirmation shows both mappings; the
 original sidecar and any existing destination review are preserved.
+For older reviews with rounded broadcast rates, use **Notes → Migrate Rounded
+Timebases…** to preview and save a corrected copy while keeping recorded frame
+numbers. Use **Open Notes Copy…** to reopen it in a later session.
 
 ### Inspection loupe
 Open the magnifying-glass control (Command-Shift-M) to enable a 2×, 4×, or 8×
@@ -218,7 +221,7 @@ Preview multichannel audio tracks as waveforms, with one waveform per channel. T
 
 
 ### Metadata
-Inspect resolution, frame rate, codec, color space, chroma subsampling, and audio metadata with Command + I. The inspector offers offline loudness analysis and displays Broadcast WAVE recording tags and embedded loudness separately from measured results. Classic big-endian RIFX supports metadata, waveforms, and offline loudness; playback and trim export show conversion guidance until the decoder supports its sample byte order. See [supported WAVE metadata](docs/WAVE_METADATA.md).
+Inspect resolution, frame rate, codec, color space, chroma subsampling, and audio metadata with Command + I. The inspector offers offline loudness analysis and displays Broadcast WAVE recording tags and embedded loudness separately from measured results. It also reads UTF-8/UTF-16 iXML recording labels and optional track names with explicit source-channel and file-interleave indexes. Classic big-endian RIFX supports metadata, waveforms, and offline loudness; playback and trim export show conversion guidance until the decoder supports its sample byte order. See [supported WAVE metadata](docs/WAVE_METADATA.md).
 <img width="1227" height="691" alt="SCR-20260309-udpk" src="https://github.com/user-attachments/assets/52a86143-f944-4137-988a-e7a2c585bbaa" />
 
 

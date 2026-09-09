@@ -5,6 +5,8 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Added
+- Explicit migration of historical rounded review timebases into a new sidecar, with preview, retained frame coordinates, and deliberate copy reopening.
+- Bounded UTF-16 iXML recording metadata and optional recording track names with explicit source-channel and file-interleave indexes.
 - Bounded iXML recording labels in WAVE metadata and the inspector, including project, scene, take, sound roll, circled take, note, and file UID.
 - Independent BS.1770-5 true-peak comparisons for the original ITU mono, stereo, and 5.1 programme references.
 - Bounded classic big-endian RIFX metadata, with verified PCM/float decoding for offline loudness and waveforms.
@@ -49,6 +51,7 @@ All notable changes to Aagedal Media Player.
   recording run sheet.
 
 ### Changed
+- Preserve pending review-note edits before switching copies, migrating timebases or exporting, and keep the original review active if source timing changes during migration saving.
 - Preserve exact broadcast frame rates from decimal metadata so drop-frame review timecodes and editor-marker exports use the correct rational timebase. Existing reviews retain their stored rates and are never silently retimed.
 - Comparison controls collapse into a scrollable popover when the toolbar is too narrow, keeping review, exit, loupe, and inspector actions visible.
 - Apply standards-based rear-speaker weighting to explicitly identified conventional 7.1 loudness analysis while preserving source samples and true peaks; retain qualification for unknown or uncorrected layouts.

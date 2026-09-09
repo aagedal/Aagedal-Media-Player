@@ -1288,6 +1288,72 @@ EDL events and its source was imported into a disposable Resolve 21.1 project;
 actual marker import/re-export was not completed. See the native migration
 record above and `docs/COMPARE_MODE_INTERCHANGE.md` for exact evidence/limits.
 
+## Phase 68 — Bounded iXML recording track labels
+
+Status: Engineering complete on 2026-09-09. The first integrated run passes
+all 510 Release tests, including 53 WAVE reader tests and both original ITU
+reference sets. Final combined verification is recorded below.
+
+- [x] Read optional direct `TRACK_LIST` track names and explicit one-based
+  source-channel/file-interleave indexes, without inferring routing or timing.
+- [x] Preserve optional fields and producer document order; validate declared
+  counts and reject ambiguous duplicate indexes/fields without losing recording,
+  technical audio or Broadcast WAVE metadata.
+- [x] Bound track lists to 256 entries within the existing payload, field,
+  nesting and element limits; cover both UTF-16 byte orders and Unicode.
+- [x] Show the producer track labels/indexes in the inspector and copied JSON,
+  with backward-compatible decoding of metadata without a track list.
+
+Focused native UTF-16LE/UTF-16BE inspector acceptance passes, including Unicode
+track labels/indexes, unchanged stereo audio metadata and separate BWF values.
+Producer-authentic recorder and wider assistive-technology acceptance remain.
+Timing, speaker roles, track routing, vendor functions and ADM remain outside
+this implementation. See `docs/WAVE_METADATA.md`.
+
+## Phase 69 — Review transition persistence and native migration acceptance
+
+Status: Implementation complete on 2026-09-09; final combined verification
+is recorded below.
+
+- [x] Recheck both sources' timing after a migration save completes, keeping
+  the original review active if metadata changed while publication was pending.
+- [x] Flush pending note-text drafts before copy opening, migration, relinking
+  and report export; wait for persistence and reject failed or stale transitions.
+- [x] Lock editing while an action awaits saving; retain failed edits/deletions
+  across error dismissal and unrelated successful writes, retry them before the
+  next action, and clear completed drafts before they can mask newer note text.
+- [x] Add delayed-store regressions for A/B timing updates during migration,
+  successful/failed draft saves, and primary replacement during an action.
+- [x] Verify the corrected native migration sheet's scroll area and explanations.
+- [x] Save/adopt the native eight-note migration copy, preserving original
+  source/sidecar hashes and exact note identities, frames and inclusive ranges.
+- [x] Verify the default EDL filename has one extension and saves eight events.
+- [x] Reopen the source pair, confirm original-sidecar selection, then explicitly
+  reopen the migrated copy and confirm its active path and eight findings.
+- [x] In the final rebuilt app, edit an existing note without Return and export
+  CSV; verify the active copy and eight-row report preserve the new text while
+  original media/sidecar hashes remain unchanged.
+
+The native migration checks precede the subsequent draft-transition fix; the
+native pending-edit CSV check uses the final build. Broader keyboard/VoiceOver,
+native failure/retry and actual editor round-trip acceptance remain distinct.
+See `docs/COMPARE_REVIEW_MIGRATION_NATIVE_CHECK_2026-09-09.md`.
+
+## Integrated Phase 68–69 verification — 2026-09-09
+
+All **513 Release tests pass with zero failures**, including both original ITU
+reference sets, in 114.991 seconds (115.250 including suite overhead). Release
+static analysis and all 61 release-preflight checks pass. Independent review
+rechecked pending-action locking, failed-mutation retry and stale draft cleanup.
+
+Focused native acceptance now covers migration layout/save/adoption/copy reopening,
+the default EDL extension and eight-event output, UTF-16LE/BE recording and track
+labels, and pending note text reaching both the active copy and CSV export.
+Original review/media hashes stay unchanged; test edits affect only the migrated
+copy. The Resolve automation call stalled, and actual editor marker round trips
+remain open. Temporary evidence includes `/tmp/aagedal-review-final-full-20260909.xcresult`,
+its build/full/analyze logs, and `/tmp/aagedal-tracks-migration-preflight-20260909.log`.
+
 ## Remaining work after this continuation
 
 - Integrate the measured metadata-memory dependency fix after upstream review,
@@ -1339,6 +1405,7 @@ record above and `docs/COMPARE_MODE_INTERCHANGE.md` for exact evidence/limits.
 - Broader WAVE format support: compressed encodings, RIFX extensible/BWF variants,
   further iXML encodings/structures and ADM interpretation remain outside the
   bounded reader. Phases 62 and 66 add bounded UTF-8 and UTF-16 iXML recording labels;
+  Phase 68 adds bounded track names/indexes and native UTF-16 inspector checks;
   producer-authentic recorder acceptance remains. Phase 59 adds
   classic RIFX metadata and corrected offline analysis/waveforms; RIFX playback
   and trim export remain explicitly unavailable pending a verified decoder fix.
@@ -1364,8 +1431,10 @@ record above and `docs/COMPARE_MODE_INTERCHANGE.md` for exact evidence/limits.
 - Verified 1:1 source-pixel inspection, whole-viewport zoom/pan after loupe
   acceptance, and time-localized mismatch markers after a detection model is
   defined. See `PRODUCT_ROADMAP.md` for milestone sequencing.
-- Broader native/keyboard acceptance of historical review migration and copy
-  reopening. Phase 67 now implements explicit preview and a new corrected copy;
+- Broader keyboard/VoiceOver acceptance of historical review migration and copy
+  reopening, plus native failure/retry acceptance. Phase 69 completes
+  focused native preview layout, save/adoption, copy reopening and EDL naming;
+  a pending text edit also reaches the migrated copy and CSV in the final build;
   Phase 63 continues to preserve historical coordinates during ordinary loading.
 
 ## Delivery order
@@ -1446,3 +1515,5 @@ record above and `docs/COMPARE_MODE_INTERCHANGE.md` for exact evidence/limits.
 57. Phase 65 expanded metadata camera and library fixture acceptance.
 58. Phase 66 bounded UTF-16 iXML recording labels.
 59. Phase 67 deliberate historical review timebase migration.
+60. Phase 68 bounded iXML recording track labels.
+61. Phase 69 review transition persistence and native migration acceptance.

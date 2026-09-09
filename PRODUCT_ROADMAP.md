@@ -361,6 +361,8 @@ Release gates:
   Historical rounded broadcast timebases now have an explicit preview/save-copy
   migration that retains recorded frame numbers and source identities. Exact
   rates then enable editor exports; actual editor round trips remain required.
+  Focused native migration preview, save/adoption, explicit copy reopening and
+  default EDL filename checks now pass with original source/sidecar hash checks.
   See `docs/COMPARE_REVIEW_SIDECAR.md`.
 - [ ] A complete review can be created and exported using only the keyboard.
   A native Keyboard Navigation check now passes a point-note creation,
