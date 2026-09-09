@@ -97,3 +97,48 @@ Temporary artifacts may be removed by the OS. The harness, pinned hashes,
 coverage and recorded failure above are the durable evidence. This run does
 not measure memory, validate more Sony RTMD camera modes, or authorize changing
 the production dependency pin.
+
+## Real-codestream JXL diagnostic — 2026-09-10
+
+The independent diagnostic below resolves whether replacing the mislabeled
+container with a genuine bare codestream could satisfy the old assertion:
+
+```bash
+python3 scripts/diagnose-metadata-jxl-fixture.py \
+  /path/to/clean/SwiftMediaMetadata \
+  /path/to/TestImages/ShortPlantHDR_seq_000001.jxl \
+  /tmp/new-jxl-diagnostic
+python3 scripts/test-metadata-jxl-diagnostic.py
+```
+
+The harness archives the clean pinned source separately for baseline and RTMD
+candidate, stages an unchanged original, and builds a local probe without remote
+dependencies. The probe requires a container with exactly one complete `jxlc`
+box and no partial `jxlp` boxes, then extracts that real codestream in memory.
+It never substitutes a derived file into the upstream fixture suite or edits
+the suite's assertions. Seven checks require successful container and bare
+writes, byte-preserved codestreams, exactly one codestream after orientation
+wrapping, and orientation read-back. Four Python regressions reject missing,
+inconsistent, false or non-Boolean evidence and changed/wrong input identity.
+
+Both Release probes passed all seven checks with identical results, and the
+original fixture, staged copy and clean production checkout remained unchanged.
+Local evidence: `/tmp/aagedal-jxl-diagnostic-20260910`, including the source
+archive and tool hashes, build logs, both `probe.json` files and `summary.json`.
+This run exercised the separate probe; it did not rerun or change the twenty
+upstream fixture cases. The existing seven fixture-validator regressions also
+still pass.
+
+The source fixture contains `ftyp`, `Exif`, `jxlc`, and `xml ` boxes. Its actual
+bare codestream is 584,049 bytes with SHA-256
+`124ae9b5ecd477f23a3e87072dc01f4c20f78752cf4fa7dfbbbf05267561ac06`.
+This derived payload is diagnostic evidence; it is not an upstream-approved
+replacement fixture. Reconciliation must address the obsolete throw expectation
+as well as the original file's container identity. The library's pinned writer
+and its existing synthetic tests intentionally support these writes.
+
+The fixture gate still needs the exact `TRA03164.ARW` and `TRA03164.xmp`
+originals, reviewed upstream JXL fixture/assertion reconciliation, and a rerun
+of all twenty fixture cases with zero failures and no missing-fixture skips.
+The diagnostic does not complete those requirements, broader camera acceptance,
+upstream review of the RTMD fix, or full-app profiling after integration.
