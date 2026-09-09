@@ -216,6 +216,13 @@ struct MediaMetadata: Equatable, Sendable, Codable {
 
     /// Explicit iXML recording labels; no timing, speaker-layout or BWF inference.
     nonisolated struct IXMLRecording: Equatable, Sendable, Codable {
+        nonisolated struct Track: Equatable, Sendable, Codable {
+            /// Producer-supplied, one-based recorder source and file indexes.
+            let channelIndex: Int?
+            let interleaveIndex: Int?
+            let name: String?
+        }
+
         let version: String?
         let project: String?
         let scene: String?
@@ -224,6 +231,7 @@ struct MediaMetadata: Equatable, Sendable, Codable {
         let note: String?
         let circled: Bool?
         let fileUID: String?
+        var tracks: [Track]? = nil
     }
 
     var ixmlRecording: IXMLRecording? = nil

@@ -338,6 +338,19 @@ struct MetadataInspectorView: View {
             if let value = recording.note { metadataRow("Note", value: value) }
             if let value = recording.circled { metadataRow("Circled Take", value: value ? "Yes" : "No") }
             if let value = recording.fileUID { metadataRow("File UID", value: value) }
+            if let tracks = recording.tracks {
+                ForEach(tracks.indices, id: \.self) { index in
+                    VStack(alignment: .leading, spacing: 4) {
+                        if let value = tracks[index].name { metadataRow("Track Name", value: value) }
+                        if let value = tracks[index].channelIndex {
+                            metadataRow("Source Channel Index", value: String(value))
+                        }
+                        if let value = tracks[index].interleaveIndex {
+                            metadataRow("File Interleave Index", value: String(value))
+                        }
+                    }
+                }
+            }
             Text("Recording labels stored in the file by its producer.")
                 .font(.caption)
                 .foregroundStyle(.secondary)

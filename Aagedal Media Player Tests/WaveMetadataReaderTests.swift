@@ -691,6 +691,126 @@ final class WaveMetadataReaderTests: XCTestCase {
         XCTAssertEqual(metadata.audioStreams.first?.sampleRate, 48_000)
     }
 
+    func testIXMLTrackLabelsPreserveExplicitIndexesAndUnicodeWithoutRouting() throws {
+        let xml = """
+        <BWFXML><TRACK_LIST><TRACK_COUNT>2</TRACK_COUNT>
+        <TRACK><CHANNEL_INDEX>006</CHANNEL_INDEX><INTERLEAVE_INDEX>2</INTERLEAVE_INDEX>
+        <NAME> Sjø &amp; 声 🎙 </NAME><FUNCTION>LEFT</FUNCTION></TRACK>
+        <TRACK><NAME><![CDATA[Boom <main>]]></NAME><INTERLEAVE_INDEX>1</INTERLEAVE_INDEX>
+        <CHANNEL_INDEX>4</CHANNEL_INDEX><FUNCTION>RIGHT</FUNCTION></TRACK></TRACK_LIST></BWFXML>
+        """
+        for payload in [Data(xml.utf8), utf16XML(xml, bigEndian: false), utf16XML(xml, bigEndian: true)] {
+            let metadata = try XCTUnwrap(read(wave(format: format(tag: 1, channels: 8, bits: 16),
+                audio: Data(count: 160), before: chunk("iXML", payload) + chunk("bext", bext()))))
+            XCTAssertEqual(metadata.ixmlRecording?.tracks, [
+                .init(channelIndex: 6, interleaveIndex: 2, name: "Sjø & 声 🎙"),
+                .init(channelIndex: 4, interleaveIndex: 1, name: "Boom <main>")
+            ])
+            XCTAssertNil(metadata.audioStreams.first?.channelLayout)
+            XCTAssertEqual(metadata.audioStreams.first?.channels, 8)
+            XCTAssertEqual(metadata.audioStreams.first?.sampleRate, 48_000)
+            XCTAssertEqual(metadata.duration ?? -1, 10.0 / 48_000, accuracy: 0.000001)
+            XCTAssertEqual(metadata.broadcastWave?.description, "Field recording")
+            XCTAssertNil(metadata.timecode)
+            XCTAssertEqual(try JSONDecoder().decode(MediaMetadata.self, from: JSONEncoder().encode(metadata)), metadata)
+            let json = try XCTUnwrap(JSONSerialization.jsonObject(with:
+                MetadataInspectorView.metadataJSON(metadata: metadata, lufsResults: [:])) as? [String: Any])
+            let recording = try XCTUnwrap(json["ixmlRecording"] as? [String: Any])
+            let tracks = try XCTUnwrap(recording["tracks"] as? [[String: Any]])
+            XCTAssertEqual(tracks[0]["channelIndex"] as? Int, 6)
+            XCTAssertEqual(tracks[0]["interleaveIndex"] as? Int, 2)
+            XCTAssertEqual(tracks[0]["name"] as? String, "Sjø & 声 🎙")
+            XCTAssertNil(tracks[0]["function"])
+        }
+    }
+
+    func testIXMLTrackFieldsAreOptionalAndDoNotInferIndexesFromDocumentOrder() throws {
+        let xml = """
+        <BWFXML><TRACK_LIST><TRACK><NAME>Boom</NAME></TRACK>
+        <TRACK><CHANNEL_INDEX>7</CHANNEL_INDEX></TRACK><TRACK><INTERLEAVE_INDEX>3</INTERLEAVE_INDEX></TRACK>
+        <TRACK/><TRACK><FUNCTION>LEFT</FUNCTION></TRACK><TRACK_COUNT>5</TRACK_COUNT></TRACK_LIST></BWFXML>
+        """
+        let recording = try XCTUnwrap(read(wave(format: format(tag: 1, channels: 2, bits: 16),
+            audio: Data(count: 40), before: chunk("iXML", Data(xml.utf8))))?.ixmlRecording)
+        XCTAssertEqual(recording.tracks, [.init(channelIndex: nil, interleaveIndex: nil, name: "Boom"),
+                                        .init(channelIndex: 7, interleaveIndex: nil, name: nil),
+                                        .init(channelIndex: nil, interleaveIndex: 3, name: nil)])
+        let oldJSON = Data(#"{"project":"Old recording"}"#.utf8)
+        XCTAssertNil(try JSONDecoder().decode(MediaMetadata.IXMLRecording.self, from: oldJSON).tracks)
+    }
+
+    func testIXMLTrackListErrorsPreserveRecordingAudioAndBWF() throws {
+        let track = "<TRACK><INTERLEAVE_INDEX>1</INTERLEAVE_INDEX><NAME>Boom</NAME></TRACK>"
+        let lists = [
+            "<TRACK_LIST>\(track)</TRACK_LIST><TRACK_LIST>\(track)</TRACK_LIST>",
+            "<TRACK_LIST><TRACK_COUNT>2</TRACK_COUNT>\(track)</TRACK_LIST>",
+            "<TRACK_LIST><TRACK_COUNT>1</TRACK_COUNT>\(track)<TRACK_COUNT>1</TRACK_COUNT></TRACK_LIST>",
+            "<TRACK_LIST>\(track)\(track)</TRACK_LIST>",
+            "<TRACK_LIST><TRACK><NAME>A</NAME><NAME>B</NAME></TRACK></TRACK_LIST>",
+            "<TRACK_LIST><TRACK><CHANNEL_INDEX>1</CHANNEL_INDEX><CHANNEL_INDEX>2</CHANNEL_INDEX></TRACK></TRACK_LIST>",
+            "<TRACK_LIST><TRACK><INTERLEAVE_INDEX>1</INTERLEAVE_INDEX><INTERLEAVE_INDEX>2</INTERLEAVE_INDEX></TRACK></TRACK_LIST>"
+        ]
+        for list in lists {
+            let xml = "<BWFXML><PROJECT>Keep</PROJECT>\(list)</BWFXML>"
+            let metadata = try XCTUnwrap(read(wave(format: format(tag: 1, channels: 2, bits: 16),
+                audio: Data(count: 40), before: chunk("iXML", Data(xml.utf8)) + chunk("bext", bext()))))
+            XCTAssertEqual(metadata.ixmlRecording?.project, "Keep", list)
+            XCTAssertNil(metadata.ixmlRecording?.tracks, list)
+            XCTAssertEqual(metadata.audioStreams.first?.channels, 2)
+            XCTAssertEqual(metadata.broadcastWave?.description, "Field recording")
+        }
+    }
+
+    func testIXMLTrackNumbersRequireBoundedASCIIDecimalAndPositiveIndexes() throws {
+        for field in ["TRACK_COUNT", "CHANNEL_INDEX", "INTERLEAVE_INDEX"] {
+            for value in ["", "-1", "+1", "1.0", "١", "1 2", "9223372036854775808", "<V>1</V>",
+                          String(repeating: "0", count: 4_096) + "1"] + (field == "TRACK_COUNT" ? ["257"] : ["0"]) {
+                let scalar = "<\(field)>\(value)</\(field)>"
+                let content = field == "TRACK_COUNT" ? scalar + "<TRACK><NAME>Boom</NAME></TRACK>"
+                    : "<TRACK>\(scalar)<NAME>Boom</NAME></TRACK>"
+                let xml = "<BWFXML><PROJECT>Keep</PROJECT><TRACK_LIST>\(content)</TRACK_LIST></BWFXML>"
+                let recording = try XCTUnwrap(read(wave(format: format(tag: 1, channels: 2, bits: 16),
+                    audio: Data(count: 40), before: chunk("iXML", Data(xml.utf8))))?.ixmlRecording)
+                XCTAssertNil(recording.tracks, "\(field): \(value.prefix(30))")
+                XCTAssertEqual(recording.project, "Keep")
+            }
+        }
+    }
+
+    func testIXMLTrackNamesUseWholeFieldLimitsAndExactNamespaceScope() throws {
+        for name in [String(repeating: "é", count: 2_048), String(repeating: "é", count: 2_049),
+                     "mixed<EM>markup</EM>", "bad&#x7F;control", "  "] {
+            let xml = """
+            <BWFXML xmlns:v="urn:vendor"><PROJECT>Keep</PROJECT><v:TRACK_LIST><TRACK><NAME>Wrong</NAME></TRACK></v:TRACK_LIST>
+            <VENDOR><TRACK_LIST><TRACK><NAME>Wrong</NAME></TRACK></TRACK_LIST></VENDOR>
+            <TRACK_LIST><v:TRACK><NAME>Wrong</NAME></v:TRACK><TRACK><v:NAME>Wrong</v:NAME>
+            <VENDOR><NAME>Wrong</NAME><INTERLEAVE_INDEX>2</INTERLEAVE_INDEX></VENDOR>
+            <CHANNEL_INDEX>9</CHANNEL_INDEX><NAME>\(name)</NAME></TRACK><TRACK_COUNT>1</TRACK_COUNT></TRACK_LIST></BWFXML>
+            """
+            let tracks = try XCTUnwrap(read(wave(format: format(tag: 1, channels: 2, bits: 16),
+                audio: Data(count: 40), before: chunk("iXML", Data(xml.utf8))))?.ixmlRecording?.tracks)
+            XCTAssertEqual(tracks.count, 1)
+            XCTAssertEqual(tracks[0].channelIndex, 9)
+            XCTAssertNil(tracks[0].interleaveIndex)
+            XCTAssertEqual(tracks[0].name, name.utf8.count == 4_096 ? name : nil)
+        }
+    }
+
+    func testIXMLTrackListCountCapAndExtendedContainers() throws {
+        for count in [256, 257] {
+            let tracks = (1...count).map { "<TRACK><INTERLEAVE_INDEX>\($0)</INTERLEAVE_INDEX><NAME>Track \($0)</NAME></TRACK>" }.joined()
+            let xml = Data("<BWFXML><PROJECT>Keep</PROJECT><TRACK_LIST>\(tracks)</TRACK_LIST></BWFXML>".utf8)
+            for container in ["RF64", "BW64"] {
+                let recording = try XCTUnwrap(read(extendedWave(container: container,
+                    format: format(tag: 1, channels: 2, bits: 16), audio: Data(count: 40), samples: 10,
+                    before: extendedChunk("iXML", xml), table: [("iXML", UInt64(xml.count))]))?.ixmlRecording)
+                XCTAssertEqual(recording.project, "Keep")
+                XCTAssertEqual(recording.tracks?.count, count == 256 ? 256 : nil)
+                XCTAssertEqual(recording.tracks?.last?.interleaveIndex, count == 256 ? 256 : nil)
+            }
+        }
+    }
+
     func testIXMLRequiresExplicitCircledBoolean() throws {
         for value in ["TRUE", "FALSE", "true", "false", "1", "", "yes"] {
             let xml = "<BWFXML><PROJECT>Project</PROJECT><CIRCLED>\(value)</CIRCLED></BWFXML>"

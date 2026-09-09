@@ -1,5 +1,24 @@
 # Bounded WAVE metadata
 
+## Native UTF-16 and track-label check — 2026-09-09
+
+The rebuilt Release app opened both UTF-16LE and UTF-16BE synthetic fixtures
+in `/tmp/aagedal-track-inspector-20260909` through its native file picker.
+The inspector showed project `Fjell & sjø 🎙`, scene `021A`, take `0003`, and
+two track records in their producer order: `Sjø & 声 🎙` with source channel 6 /
+file interleave 2, followed by `Boom <main>` with source channel 4 / interleave 1.
+Scrolling and screenshots verified readable labels/indexes and the separate
+producer-value explanation. The accessibility tree retained every value.
+
+Both fixtures still reported two seconds of stereo PCM16 at 48 kHz, with normal
+Left/Right waveform labels. The separate Broadcast WAVE section kept description
+`Field recording`, originator `Recorder`, reference `take-42`, and exact
+`2174400000 samples since midnight`. Track labels did not alter playback layout.
+These are disposable synthetic recording fixtures with a BOM and an explicit
+UTF-16 declaration; native BOM-less declarations, producer-authentic recorder
+files, Full Keyboard Access and spoken VoiceOver remain separate acceptance.
+The 510-test integrated Release run includes all 53 WAVE reader regressions.
+
 ## Native iXML check — 2026-09-09
 
 The rebuilt Release app opened the disposable two-second PCM16 stereo 48 kHz
@@ -124,7 +143,7 @@ naming `UTF-16LE` or `UTF-16BE`. Generic `UTF-16` requires a BOM. Encoding names
 are case-insensitive and must agree with the detected byte order. The preflight
 follows [XML 1.0 section 4.3.3 and appendix F](https://www.w3.org/TR/xml/#charencoding).
 The XML payload's byte order is independent of the little-endian WAVE container.
-Documents require one unnamespaced `BWFXML` root. The reader reads only direct scalar
+Documents require one unnamespaced `BWFXML` root. The reader reads direct scalar
 children `IXML_VERSION`, `PROJECT`, `SCENE`, `TAKE`, `TAPE`, `NOTE`, `CIRCLED`
 and `FILE_UID`. These fields follow the [iXML object descriptions](https://www.gallery.co.uk/ixml/object_Details.html)
 and [published examples](https://www.gallery.co.uk/ixml/iXML_Example.html).
@@ -153,7 +172,28 @@ Duplicate chunks never cause another XML parse. Invalid RIFF chunk lengths
 and padding still reject the file. Ordinary XML whitespace after the root is
 accepted, including the space padding described by the [iXML chunk specification](https://www.gallery.co.uk/ixml/iXML_chunk.html).
 
-Nested `BEXT`, `SPEED`, `TRACK_LIST` and vendor-specific objects are ignored.
+An optional direct `TRACK_LIST` supplies `tracks` in the model and inspector JSON.
+Only its direct `TRACK` objects and their direct unnamespaced `CHANNEL_INDEX`,
+`INTERLEAVE_INDEX` and `NAME` fields are read. Indexes describe the recorder source
+and file interleave respectively, following the [iXML track object specification](https://www.gallery.co.uk/ixml/object_Details.html).
+They remain explicit, one-based producer values; document order never supplies
+a missing index. Each field is optional, and entries containing no usable fields
+are omitted. Display order preserves the document without assigning channel order.
+
+Implementation bounds allow at most 256 track objects, names/scalars up to 4 KiB
+of decoded UTF-8, and ASCII decimal indexes from 1 through `Int.max`. Invalid
+names are omitted whole. Duplicate lists or recognized track fields, malformed
+indexes, repeated interleave indexes, and excessive track counts omit the entire
+track list while preserving other recording labels. An optional `TRACK_COUNT`
+must be a decimal from 0 through 256 matching the number of direct track objects,
+including empty tracks; duplicates or mismatches omit the list. No track count or
+index is used to override or validate technical audio channel metadata. The
+existing XML payload, depth, element, encoding and entity restrictions still apply.
+Regressions cover UTF-8/UTF-16, Unicode names, out-of-order and missing indexes,
+namespace/nesting isolation, list errors, count/name limits, RF64/BW64 and JSON
+compatibility. Native track inspector and recorder-authentic acceptance remain.
+
+Nested `BEXT`, `SPEED`, track `FUNCTION`/mix objects and vendor-specific objects are ignored.
 iXML never overrides `bext` values, channel layout, sample rate, duration,
 timecode or measured loudness. No track routing, timing, ADM or conformance
 interpretation is attempted. RIFX iXML, UTF-32 and legacy text encodings remain
@@ -165,7 +205,8 @@ BOM/declaration combinations, non-BMP text, CDATA, encoded DTD/entity rejection,
 decoded UTF-8 field limits and unchanged structural/payload caps. The parser
 receives the original bytes and declaration together after preflight; no text
 repair or encoding-declaration rewriting occurs. Producer-authentic recorder
-fixtures and native UTF-16 inspector acceptance remain follow-up work.
+fixtures remain follow-up work; focused native UTF-16/track inspector acceptance
+is recorded above.
 
 Focused tests cover ordinary RIFF regressions, bundled-FFmpeg RF64 output through
 `MetadataService`, both extended containers and integer/float formats, explicit

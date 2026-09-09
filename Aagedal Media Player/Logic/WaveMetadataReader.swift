@@ -215,11 +215,12 @@ nonisolated enum WaveMetadataReader {
         guard parser.parse(), parser.parserError == nil, !delegate.invalid else { return nil }
         let fields = delegate.fields
         let circled: Bool? = fields["CIRCLED"] == "TRUE" ? true : (fields["CIRCLED"] == "FALSE" ? false : nil)
-        guard fields.keys.contains(where: { $0 != "CIRCLED" }) || circled != nil else { return nil }
+        let tracks = delegate.recordingTracks
+        guard fields.keys.contains(where: { $0 != "CIRCLED" }) || circled != nil || tracks != nil else { return nil }
         return MediaMetadata.IXMLRecording(
             version: fields["IXML_VERSION"], project: fields["PROJECT"], scene: fields["SCENE"],
             take: fields["TAKE"], tape: fields["TAPE"], note: fields["NOTE"],
-            circled: circled, fileUID: fields["FILE_UID"]
+            circled: circled, fileUID: fields["FILE_UID"], tracks: tracks
         )
     }
 
@@ -283,9 +284,27 @@ nonisolated enum WaveMetadataReader {
         private var elements = 0
         private var seenFields: Set<String> = []
         private var field: String?
+        private var fieldDepth = 0
         private var value = ""
         private var valueBytes = 0
         private var invalidField = false
+        private var sawTrackList = false
+        private var inTrackList = false
+        private var inTrack = false
+        private var invalidTracks = false
+        private var trackCount = 0
+        private var declaredTrackCount: Int?
+        private var sawTrackCount = false
+        private var trackFields: [String: String] = [:]
+        private var seenTrackFields: Set<String> = []
+        private var interleaveIndexes: Set<Int> = []
+        private var tracks: [MediaMetadata.IXMLRecording.Track] = []
+
+        var recordingTracks: [MediaMetadata.IXMLRecording.Track]? {
+            guard !invalidTracks, !tracks.isEmpty,
+                  declaredTrackCount == nil || declaredTrackCount == trackCount else { return nil }
+            return tracks
+        }
 
         func parser(_ parser: XMLParser, didStartElement elementName: String, namespaceURI: String?,
                     qualifiedName qName: String?, attributes attributeDict: [String: String]) {
@@ -296,15 +315,42 @@ nonisolated enum WaveMetadataReader {
                 guard elementName == "BWFXML", namespaceURI?.isEmpty != false else { return reject(parser) }
             } else if depth == 2, namespaceURI?.isEmpty != false, Self.recognized.contains(elementName) {
                 guard seenFields.insert(elementName).inserted else { return reject(parser) }
-                field = elementName
-                value = ""
-                valueBytes = 0
-                invalidField = false
-            } else if depth > 2, field != nil {
+                startField(elementName)
+            } else if field != nil, depth > fieldDepth {
                 // Recording labels are scalar text. Do not flatten markup or
                 // harvest same-named tags from SPEED, BEXT or vendor objects.
                 invalidField = true
+            } else if depth == 2, namespaceURI?.isEmpty != false, elementName == "TRACK_LIST" {
+                if sawTrackList { invalidTracks = true }
+                sawTrackList = true
+                inTrackList = true
+            } else if inTrackList, !invalidTracks, namespaceURI?.isEmpty != false {
+                if depth == 3, elementName == "TRACK_COUNT" {
+                    if sawTrackCount { invalidTracks = true }
+                    sawTrackCount = true
+                    startField(elementName)
+                } else if depth == 3, elementName == "TRACK" {
+                    trackCount += 1
+                    guard trackCount <= 256 else {
+                        invalidTracks = true
+                        return
+                    }
+                    inTrack = true
+                    trackFields = [:]
+                    seenTrackFields = []
+                } else if inTrack, depth == 4, ["CHANNEL_INDEX", "INTERLEAVE_INDEX", "NAME"].contains(elementName) {
+                    if !seenTrackFields.insert(elementName).inserted { invalidTracks = true }
+                    startField(elementName)
+                }
             }
+        }
+
+        private func startField(_ name: String) {
+            field = name
+            fieldDepth = depth
+            value = ""
+            valueBytes = 0
+            invalidField = false
         }
 
         func parser(_ parser: XMLParser, foundCharacters string: String) {
@@ -318,7 +364,7 @@ nonisolated enum WaveMetadataReader {
 
         private func append(_ string: String, parser: XMLParser) {
             guard !Task.isCancelled else { return reject(parser) }
-            guard depth == 2, let field, !invalidField else { return }
+            guard depth == fieldDepth, let field, !invalidField else { return }
             let count = string.utf8.count
             let limit = field == "NOTE" ? 16_384 : 4_096
             guard count <= limit - valueBytes else {
@@ -332,18 +378,48 @@ nonisolated enum WaveMetadataReader {
 
         func parser(_ parser: XMLParser, didEndElement elementName: String,
                     namespaceURI: String?, qualifiedName qName: String?) {
-            if depth == 2, let field {
+            if depth == fieldDepth, let field {
                 let text = value.trimmingCharacters(in: .whitespacesAndNewlines)
-                if !invalidField, !text.isEmpty,
-                   text.unicodeScalars.allSatisfy({
+                let validText = !invalidField && !text.isEmpty && text.unicodeScalars.allSatisfy({
                        !CharacterSet.controlCharacters.contains($0) || [9, 10, 13].contains($0.value)
-                   }) {
-                    fields[field] = text
+                   })
+                if fieldDepth == 2 {
+                    if validText { fields[field] = text }
+                } else if field == "TRACK_COUNT" {
+                    if validText, let count = Self.decimal(text), count <= 256 {
+                        declaredTrackCount = count
+                    } else {
+                        invalidTracks = true
+                    }
+                } else if field == "NAME" {
+                    if validText { trackFields[field] = text }
+                } else if validText, let index = Self.decimal(text), index > 0 {
+                    trackFields[field] = text
+                } else {
+                    invalidTracks = true
                 }
                 self.field = nil
                 value = ""
             }
+            if depth == 3, inTrack {
+                if !invalidTracks, !trackFields.isEmpty {
+                    let interleave = trackFields["INTERLEAVE_INDEX"].flatMap(Int.init)
+                    if let interleave, !interleaveIndexes.insert(interleave).inserted {
+                        invalidTracks = true
+                    } else {
+                        tracks.append(.init(channelIndex: trackFields["CHANNEL_INDEX"].flatMap(Int.init),
+                                            interleaveIndex: interleave, name: trackFields["NAME"]))
+                    }
+                }
+                inTrack = false
+            }
+            if depth == 2 { inTrackList = false }
             depth -= 1
+        }
+
+        private static func decimal(_ text: String) -> Int? {
+            guard !text.isEmpty, text.utf8.allSatisfy({ (48...57).contains($0) }) else { return nil }
+            return Int(text)
         }
 
         func parser(_ parser: XMLParser, resolveExternalEntityName name: String,
