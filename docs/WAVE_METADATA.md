@@ -118,7 +118,13 @@ and sparse 1 GiB coding history. Focused native acceptance is recorded below.
 RIFF/RF64/BW64 files can also expose an optional `ixmlRecording` object in the
 model and inspector JSON, with a separate **iXML Recording** inspector section.
 The reader accepts UTF-8 XML, including a UTF-8 BOM and an optional XML
-declaration, with one unnamespaced `BWFXML` root. It reads only direct scalar
+declaration, and little- or big-endian UTF-16. A UTF-16 BOM identifies the byte
+order; without a BOM the document must start with an XML declaration explicitly
+naming `UTF-16LE` or `UTF-16BE`. Generic `UTF-16` requires a BOM. Encoding names
+are case-insensitive and must agree with the detected byte order. The preflight
+follows [XML 1.0 section 4.3.3 and appendix F](https://www.w3.org/TR/xml/#charencoding).
+The XML payload's byte order is independent of the little-endian WAVE container.
+Documents require one unnamespaced `BWFXML` root. The reader reads only direct scalar
 children `IXML_VERSION`, `PROJECT`, `SCENE`, `TAKE`, `TAPE`, `NOTE`, `CIRCLED`
 and `FILE_UID`. These fields follow the [iXML object descriptions](https://www.gallery.co.uk/ixml/object_Details.html)
 and [published examples](https://www.gallery.co.uk/ixml/iXML_Example.html).
@@ -135,10 +141,12 @@ allows 16 KiB; an oversized field is omitted whole. A field containing nested
 markup is also omitted. Each callback that consumes text or starts an element
 checks cancellation; the caller propagates cancellation after parsing.
 
-DTD/entity declarations are rejected before parsing; external-entity resolution
-is disabled and its policy is `never`. This conservative preflight also rejects
-declaration markers inside comments or CDATA. NUL bytes, non-UTF-8 data,
-conflicting encoding declarations, malformed XML, duplicate recognized scalar
+DTD/entity declarations are rejected in decoded text before parsing, so UTF-16
+cannot conceal their markers. External-entity resolution is disabled and its
+policy is `never`. This conservative preflight also rejects declaration markers
+inside comments or CDATA. NUL characters, invalid Unicode (including malformed
+UTF-16 surrogate pairs and odd byte lengths), unsupported or conflicting encoding
+declarations, malformed XML, duplicate recognized scalar
 tags, excessive depth/element counts and duplicate `iXML` chunks omit the
 recording object while retaining valid technical audio and `bext` metadata.
 Duplicate chunks never cause another XML parse. Invalid RIFF chunk lengths
@@ -148,12 +156,16 @@ accepted, including the space padding described by the [iXML chunk specification
 Nested `BEXT`, `SPEED`, `TRACK_LIST` and vendor-specific objects are ignored.
 iXML never overrides `bext` values, channel layout, sample rate, duration,
 timecode or measured loudness. No track routing, timing, ADM or conformance
-interpretation is attempted. RIFX iXML and other Unicode encodings remain
+interpretation is attempted. RIFX iXML, UTF-32 and legacy text encodings remain
 unsupported. Tests cover recording values and Unicode, model/JSON/service
 integration, RF64/BW64 sizes, chunks after audio, namespace and nesting scope,
 malformed/hostile XML, duplicate chunks, field/depth/element/payload bounds,
-and a sparse 1 GiB skipped XML payload. Producer-authentic recorder fixtures
-and native inspector acceptance remain follow-up work.
+and a sparse 1 GiB skipped XML payload. Both UTF-16 byte orders additionally cover
+BOM/declaration combinations, non-BMP text, CDATA, encoded DTD/entity rejection,
+decoded UTF-8 field limits and unchanged structural/payload caps. The parser
+receives the original bytes and declaration together after preflight; no text
+repair or encoding-declaration rewriting occurs. Producer-authentic recorder
+fixtures and native UTF-16 inspector acceptance remain follow-up work.
 
 Focused tests cover ordinary RIFF regressions, bundled-FFmpeg RF64 output through
 `MetadataService`, both extended containers and integer/float formats, explicit

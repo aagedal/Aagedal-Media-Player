@@ -203,22 +203,11 @@ nonisolated enum WaveMetadataReader {
     }
 
     private static func readIXML(_ bytes: Data) -> MediaMetadata.IXMLRecording? {
-        // Restrict this implementation to UTF-8. Refuse declarations before
-        // XMLParser sees them, preventing both external access and expansion
-        // of internal entities. Even declarations inside comments are omitted.
-        guard !bytes.contains(0), var text = String(data: bytes, encoding: .utf8),
-              !text.contains("<!DOCTYPE"), !text.contains("<!ENTITY") else { return nil }
-        if text.first == "\u{FEFF}" { text.removeFirst() }
-        if text.hasPrefix("<?xml"), let end = text.range(of: "?>") {
-            let declaration = String(text[..<end.lowerBound])
-            if declaration.contains("encoding"),
-               declaration.range(of: #"\bencoding\s*=\s*(?:"UTF-8"|'UTF-8')"#,
-                                 options: [.regularExpression, .caseInsensitive]) == nil {
-                return nil
-            }
-        }
+        guard preflightIXML(bytes) else { return nil }
         let delegate = IXMLDelegate()
-        let parser = XMLParser(data: Data(text.utf8))
+        // Keep the original bytes/declaration together. The parser validates
+        // XML syntax after the decoded security and encoding checks below.
+        let parser = XMLParser(data: bytes)
         parser.delegate = delegate
         parser.shouldProcessNamespaces = true
         parser.shouldResolveExternalEntities = false
@@ -232,6 +221,56 @@ nonisolated enum WaveMetadataReader {
             take: fields["TAKE"], tape: fields["TAPE"], note: fields["NOTE"],
             circled: circled, fileUID: fields["FILE_UID"]
         )
+    }
+
+    private static func preflightIXML(_ bytes: Data) -> Bool {
+        let encoding: String.Encoding
+        let bomBytes: Int
+        let supportedNames: Set<String>
+        // XML 1.0 §4.3.3 / appendix F: a BOM identifies UTF-16; without
+        // one, the XML declaration must explicitly identify UTF-16LE/BE.
+        if bytes.starts(with: [0xff, 0xfe]) {
+            encoding = .utf16LittleEndian
+            bomBytes = 2
+            supportedNames = ["UTF-16", "UTF-16LE"]
+        } else if bytes.starts(with: [0xfe, 0xff]) {
+            encoding = .utf16BigEndian
+            bomBytes = 2
+            supportedNames = ["UTF-16", "UTF-16BE"]
+        } else if bytes.starts(with: [0x3c, 0, 0x3f, 0]) {
+            encoding = .utf16LittleEndian
+            bomBytes = 0
+            supportedNames = ["UTF-16LE"]
+        } else if bytes.starts(with: [0, 0x3c, 0, 0x3f]) {
+            encoding = .utf16BigEndian
+            bomBytes = 0
+            supportedNames = ["UTF-16BE"]
+        } else {
+            encoding = .utf8
+            bomBytes = bytes.starts(with: [0xef, 0xbb, 0xbf]) ? 3 : 0
+            supportedNames = ["UTF-8"]
+        }
+        let payload = bytes.dropFirst(bomBytes)
+        // Foundation can silently drop an odd final UTF-16 byte. Reject it
+        // explicitly; invalid surrogate sequences must also fail decoding.
+        guard encoding == .utf8 || payload.count.isMultiple(of: 2),
+              let text = String(data: payload, encoding: encoding),
+              !text.contains("\0"), !text.contains("<!DOCTYPE"), !text.contains("<!ENTITY") else { return false }
+        // Scan decoded characters, so UTF-16 cannot hide a DTD/entity from
+        // preflight. Conservative rejection also covers comments and CDATA.
+        var declaredEncoding: String?
+        if text.hasPrefix("<?xml"), let end = text.range(of: "?>") {
+            let declaration = String(text[..<end.lowerBound])
+            guard let pattern = try? NSRegularExpression(
+                pattern: #"\bencoding[ \t\r\n]*=[ \t\r\n]*(["'])([A-Za-z][A-Za-z0-9._-]*)\1"#
+            ) else { return false }
+            if let match = pattern.firstMatch(in: declaration, range: NSRange(declaration.startIndex..., in: declaration)),
+               let range = Range(match.range(at: 2), in: declaration) {
+                declaredEncoding = String(declaration[range]).uppercased()
+            }
+        }
+        if let declaredEncoding { return supportedNames.contains(declaredEncoding) }
+        return encoding == .utf8 || bomBytes > 0
     }
 
     private nonisolated final class IXMLDelegate: NSObject, XMLParserDelegate {
