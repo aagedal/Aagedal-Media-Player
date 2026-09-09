@@ -163,12 +163,46 @@ This extends raw-format and longer-clip coverage; both native RTMD examples are
 still Sony A1 clips, and exporter parity does not establish complete extraction
 or metadata correctness in these formats. No memory measurements were taken.
 
+## More camera/container coverage — 2026-09-09
+
+A paired Release run added GoPro Hero9, GoPro Hero12 with log enabled, DJI
+Action4 MP4, and Sony FX6 MXF clips. The existing `--raw` option now also accepts
+the clearer `--media` spelling for camera/container inputs. All twelve isolated
+executions passed: six workloads per variant, comprising the four new exporter
+checks plus the existing short Sony A1 metadata/full-RTMD control. Every baseline
+and candidate result matched and all original/sidecar hashes remained unchanged.
+
+| Local fixture | Bytes | Exported fields | Input SHA-256 |
+| --- | ---: | ---: | --- |
+| DolomitesSet1-Hero9-GX019609.MP4 | 825,867,613 | 41 | `e8e87cd4fdc21085fb1df8c540ed4ed8a2687f615a8d1c77c69da41cb8f6b20d` |
+| NightSEt1-Hero12-LOGEnabled-GX010055.MP4 | 188,649,225 | 41 | `69b74923c90fb14d330ac95426c9017c29e041786d20d6a19978884e99dc284a` |
+| NightSet1-Action4-DJI_20230905195641_0033_D.MP4 | 1,263,320,832 | 41 | `9bde57a41e90bc1fb4cd0aab7e0865f4786f939044d884424d9f10c2b4f20f00` |
+| OJ_FX6A0020.MXF | 245,605,936 | 45 | `ab07d7d507536717bb92fa15317b6c5961e711e22cb6384e5cf07274d550a439` |
+
+The three MP4 clips each returned one video and one audio stream and no Sony
+RTMD. The FX6 MXF returned one video and eight audio streams, also without Sony
+RTMD in the exporter. This extends exporter parity and the MP4 negative-probe
+camera coverage; it does not validate GoPro/DJI motion decoding or another Sony
+body's native RTMD frame stream. The reused A1 control retained 672 frames and
+26,880 samples in each motion stream. No memory measurement was taken.
+
+Artifacts: `/tmp/aagedal-metadata-real-20260909-cameras`. The run used
+`--reuse-packages /tmp/aagedal-metadata-edges-20260907-final`; source inventories
+were verified before reuse. The new inputs live under `Movies/TestVideo/GoPro`
+and `Movies/TestVideo/A1_v_FX6/FX6`; exact paths, hashes and safe exporter digests
+are in the environment/summary artifacts.
+
+The separate [upstream fixture run](METADATA_LIBRARY_FIXTURE_VALIDATION.md)
+now exercises the original 20 library skips: fourteen pass, five still lack
+ARW/sidecar originals, and one reveals an outdated JXL fixture/assertion
+expectation. That failure remains an explicit acceptance blocker.
+
 ## Remaining acceptance
 
-Coverage is limited to these eight exact clips and two native Sony A1 examples.
+Paired exporter coverage is limited to these twelve exact clips and two native Sony A1 examples.
 Broader Sony bodies/modes, more raw formats and unusual container/error cases
 remain relevant acceptance work. A reviewed upstream release is still needed;
-Checking published tags with `git ls-remote --tags` on 2026-09-08 found no release
+Checking published tags with `git ls-remote --tags` on 2026-09-09 found no release
 newer than the pinned 3.0.0 (`c2d77c2`); `gh pr list --state all` returned no pull
 requests. This does not establish whether review occurred outside GitHub PRs.
 After integration, repeat the isolated memory profile and full-app

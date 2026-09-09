@@ -27,7 +27,8 @@ def main():
     parser.add_argument("checkout", type=Path)
     parser.add_argument("artifacts", type=Path, help="new directory for safe digests, logs and source copies")
     parser.add_argument("--rtmd", type=Path, required=True, help="real Sony clip; full RTMD plus metadata export parity")
-    parser.add_argument("--raw", type=Path, nargs="+", required=True, help="representative raw clips for metadata export parity")
+    parser.add_argument("--media", "--raw", dest="raw", type=Path, nargs="+", required=True,
+                        help="representative camera/container clips for metadata export parity (--raw remains an alias)")
     parser.add_argument("--reuse-packages", type=Path, help="existing baseline/fixed isolated packages; library sources are verified before reuse")
     parser.add_argument("--upstream-tests", action="store_true", help="run candidate upstream library tests; excludes CLI and remote dependencies")
     args = parser.parse_args()

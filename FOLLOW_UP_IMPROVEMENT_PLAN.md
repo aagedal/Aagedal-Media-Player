@@ -1124,19 +1124,122 @@ Artifacts: `/tmp/aagedal-rifx-keyboard-full-20260908.xcresult`,
 reproducible evidence, not a durable release archive. Native keyboard acceptance
 and RIFX error propagation are recorded separately from the XCTest run.
 
+## Phase 62 — Bounded iXML recording labels
+
+Status: Implementation complete on 2026-09-09; integrated verification is
+recorded below.
+
+- [x] Read explicit UTF-8 BWFXML project, scene, take, tape/sound roll, note,
+  version, circled-take and UID labels from RIFF/RF64/BW64 without audio reads.
+- [x] Bound payload, nesting, element count and retained field sizes; reject
+  DTD/entities, malformed or ambiguous XML without losing valid PCM/BWF data.
+- [x] Keep iXML separate from Broadcast WAVE fields in the model, inspector
+  and copied JSON; do not infer timecode, speaker layout or loudness.
+- [x] Add eleven regressions including XML edge cases, sparse audio skipping,
+  and metadata-service/inspector JSON integration.
+
+Producer-authentic recorder fixtures, additional encodings and ADM remain
+separate acceptance work. See `docs/WAVE_METADATA.md`.
+
+## Phase 63 — Exact frame rates from decimal metadata
+
+Status: Native export reproduction diagnosed and corrected on 2026-09-09;
+integrated and rebuilt native verification are recorded below.
+
+- [x] Reproduce a real 29.97 review failing editor export because decoded
+  metadata was rounded to `29970/1000`, differing from stored `30000/1001`.
+- [x] Normalize known decimal broadcast rates to their rational timebases,
+  retain micro-fps precision for other decimals and reject unsafe numeric input.
+- [x] Preserve explicit rationals and existing review rates without silently
+  retiming historical findings or weakening editor-export compatibility checks.
+- [x] Require exact rational rates through generated-media metadata reads and
+  verify 29.97/59.94 drop-frame source labels plus CSV/EDL/FCPXML/Avid output.
+- [x] Add disposable editor acceptance fixture generation for eight structured
+  findings, fractional rates, duplicate/adjacent/final frames and DF boundaries.
+
+Old reviews captured with rounded rates retain their original coordinates;
+CSV/PDF remain available, while editor export rejects the differing timebase.
+An explicit migration workflow remains separate work. Actual editor round
+trips remain unverified; Final Cut Pro launch automation timed out in this run.
+
+## Phase 64 — Independent authentic-programme true-peak comparison
+
+Status: Independent calculation complete on 2026-09-09; current Release
+integration is recorded below.
+
+- [x] Calculate all three pinned original ITU 48 kHz PCM16 programmes with
+  the published BS.1770-5 Annex 2 four-phase FIR, including every channel/LFE.
+- [x] Use bounded PCM blocks and exact coefficient arithmetic; complete the
+  filter tail and skip only blocks with a proven upper bound below the peak.
+- [x] Add eleven calibration, channel/boundary and malformed-evidence checks.
+- [x] Integrate the independent comparison into the existing programme runner.
+
+Selected calculated values agree with production within the preselected
+0.4 dB project tolerance. This is distinct from published programme targets;
+the authentic EBU 5/15 LU LRA files remain unavailable from the official server.
+Broader content/rates and live meters remain open. See
+`docs/AUDIO_PROGRAMME_REFERENCES.md`.
+
+## Phase 65 — Expanded metadata camera and library fixture acceptance
+
+Status: Focused acceptance expansion complete on 2026-09-09; the overall
+dependency integration gate remains open.
+
+- [x] Verify GoPro Hero9/Hero12, DJI Action4 MP4 and Sony FX6 MXF exporter
+  parity alongside the Sony A1 control: all twelve isolated executions pass.
+- [x] Stage original local image/sidecar/CRM/MXF fixtures without changing
+  source originals or upstream assertions, except recorded path relocation.
+- [x] Exercise the original twenty skipped cases against candidate and clean
+  baseline: both report fourteen passed, five missing and one failed.
+- [x] Preserve the newly exposed JXL fixture/assertion disagreement as a failure;
+  add seven harness acceptance/rejection regressions and reproducible evidence.
+- [x] Recheck upstream release availability; no reviewed newer release found.
+
+Five cases still need the exact ARW/XMP originals. The JXL disagreement requires
+upstream reconciliation, broader native RTMD acceptance is still relevant, and
+the production pin remains unchanged. See
+`docs/METADATA_LIBRARY_FIXTURE_VALIDATION.md` and
+`docs/METADATA_REAL_MEDIA_VALIDATION.md`.
+
+## Integrated continuation verification — 2026-09-09
+
+All **479 Release tests pass with zero failures and zero skips**, including
+both original ITU reference sets, in 115.263 seconds (115.468 including suite
+overhead). Release static analysis and all 61 release-preflight checks pass.
+The fresh programme runner also completes its own build/test, nine independent
+LRA-calculator checks, eleven true-peak-calculator checks, and all three
+programme comparisons. The metadata fixture harness's seven regression checks
+pass; its preserved upstream JXL failure is a separate dependency gate.
+
+Native rebuilt-app acceptance confirms the iXML/BWF inspector sections and
+successful 29.97 CSV/FCPXML export of the unchanged eight-finding fixture.
+Saved bytes preserve exact DF boundary positions, inclusive durations,
+classifications, Unicode and full source URLs; original file/sidecar hashes
+remain unchanged. Actual editor round trips and spoken assistive-technology
+acceptance remain open.
+
+Artifacts: `/tmp/aagedal-continuation-full-20260909.xcresult`, corresponding
+build/full/analyze logs, `/tmp/aagedal-programme-complete-20260909`, and
+`/tmp/aagedal-fcpxml-20260909-final`. These temporary outputs supplement the
+committed scripts, tests and documented reproduction steps.
+
 ## Remaining work after this continuation
 
 - Integrate the measured metadata-memory dependency fix after upstream review,
   broader camera/format acceptance, and remaining fixture coverage, then
   repeat full-app profiling. Synthetic
   containers, selected real Sony/raw media, and the candidate library suite now
-  pass, with 20 missing-fixture skips explicitly retained. All 50 upstream CLI
+  pass. The September 9 fixture expansion exercises the original twenty skips:
+  fourteen pass, five still lack their exact ARW/XMP originals, and one JXL
+  expectation fails identically in baseline/candidate and needs reconciliation.
+  All 50 upstream CLI
   tests now pass without skips; nine validator regressions require complete
   pinned-suite evidence. The
   isolated candidate reduces the eight-hour peak from about 4.3 GiB to 20 MiB;
   production still uses the original dependency. September 8 adds a longer Sony
   clip, ProRes RAW HQ, ARRIRAW, and X-OCN LT parity; no newer upstream release
-  is available. See Phase 46.
+  is available. September 9 adds GoPro/DJI/Sony FX6 exporter parity. See Phases
+  46 and 65.
 
 - Native timeline zoom/hover, comparison review, relinking, channel/loudness controls,
   and loupe pointer/Full Keyboard Access/VoiceOver acceptance. A focused native
@@ -1168,8 +1271,10 @@ and RIFX error propagation are recorded separately from the XCTest run.
   accessibility-tree content, measurement activation, and Command-I reopening.
   The diagnosed rear-weight discrepancy is corrected in Phase 51; unknown or
   other layouts do not receive that correction.
-- Broader WAVE format support: compressed encodings, RIFX extensible/BWF variants, and
-  iXML/ADM tag interpretation remain outside the bounded reader. Phase 59 adds
+- Broader WAVE format support: compressed encodings, RIFX extensible/BWF variants,
+  further iXML encodings/structures and ADM interpretation remain outside the
+  bounded reader. Phase 62 adds bounded explicit UTF-8 iXML recording labels;
+  producer-authentic recorder acceptance remains. Phase 59 adds
   classic RIFX metadata and corrected offline analysis/waveforms; RIFX playback
   and trim export remain explicitly unavailable pending a verified decoder fix.
   Phase 54 verifies
@@ -1181,7 +1286,9 @@ and RIFX error propagation are recorded separately from the XCTest run.
   three original ITU programme integrated-loudness references. Phase 57 adds
   a separately prepared official eight-channel gain reference. Phase 60 adds
   an independent PCM LRA comparison for the authentic ITU programmes; published
-  EBU programme LRA targets and programme true-peak coverage remain open.
+  EBU programme LRA targets remain open. Phase 64 adds an independent true-peak
+  FIR comparison for those three original programmes; published programme
+  true-peak targets and broader authentic coverage remain open.
   Selected absolute-level,
   gating, and true-peak numerical references are covered by Phase 45; Phase 47
   adds synthetic LRA and calibration at 44.1/48/96 kHz. Phase 48 adds independent
@@ -1192,6 +1299,9 @@ and RIFX error propagation are recorded separately from the XCTest run.
 - Verified 1:1 source-pixel inspection, whole-viewport zoom/pan after loupe
   acceptance, and time-localized mismatch markers after a detection model is
   defined. See `PRODUCT_ROADMAP.md` for milestone sequencing.
+- A deliberate migration workflow for historical reviews captured with rounded
+  decimal timebases; Phase 63 preserves their stored coordinates and reports
+  rather than silently converting them to the corrected metadata rate.
 
 ## Delivery order
 

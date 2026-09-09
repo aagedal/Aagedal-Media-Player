@@ -139,7 +139,12 @@ atoms, and selected malformed/truncated cases through public RTMD APIs.
 clip (all RTMD frames and IMU samples), BRAW/CRM/R3D exporter parity, and a passing
 upstream library suite with its skips documented. The September 8 expansion adds
 a longer Sony A1 clip (5,568 frames and 222,720 samples per motion stream), ProRes
-RAW HQ, ARRIRAW, and X-OCN LT exporter parity. Broader camera/recording-mode
+RAW HQ, ARRIRAW, and X-OCN LT exporter parity. September 9 adds GoPro Hero9/Hero12,
+DJI Action4 MP4 and Sony FX6 MXF exporter parity. The focused
+[upstream fixture run](METADATA_LIBRARY_FIXTURE_VALIDATION.md) exercises the
+original 20 skips: fourteen pass, five ARW/sidecar cases still lack originals,
+and one JXL fixture/assertion mismatch remains a recorded failure.
+Broader camera/recording-mode
 coverage, raw formats and intended error semantics still require review; these
 checks do not establish compatibility for every clip or every internal field.
 

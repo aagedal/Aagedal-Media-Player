@@ -296,7 +296,10 @@ confidence as the picture.
   mono voice/music, stereo, and 5.1 programme references now pass integrated
   loudness checks with pinned file hashes. Their LRA now agrees with a separate
   PCM reference implementation; published EBU programme LRA targets, programme
-  true-peak and live-meter acceptance remain. An original ITU eight-channel gain reference now has a
+  published programme true-peak targets and live-meter acceptance remain.
+  The same original programmes now have an independent BS.1770-5 FIR true-peak
+  comparison at 48 kHz; these calculated values are distinct from published
+  reference targets. An original ITU eight-channel gain reference now has a
   separate opt-in check using pinned sample-preserving speaker-order preparation
   for explicit conventional 7.1. See `docs/AUDIO_PROGRAMME_REFERENCES.md`.
 - [ ] Confirm meter and thumbnail work remains bounded during long playback.
