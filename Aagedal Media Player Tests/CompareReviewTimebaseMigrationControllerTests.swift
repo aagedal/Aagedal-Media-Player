@@ -216,6 +216,75 @@ final class CompareReviewTimebaseMigrationControllerTests: XCTestCase {
         }
     }
 
+    func testMigrationPublicationFailureCanBeRetriedWithoutLosingTheActiveReview() async throws {
+        let f = try ReviewTimebaseMigrationFixture()
+        defer { f.remove() }
+        let (session, primary) = await makeSession(f)
+        defer { session.stop(); primary.teardown() }
+        let originalBytes = try Data(contentsOf: f.source)
+        let existingBytes = Data("An existing destination must survive".utf8)
+        try existingBytes.write(to: f.destination)
+        session.reviewSearchQuery = "Keep filter"
+
+        session.previewReviewTimebaseMigration(primary: primary, destinationURL: f.destination)
+        await assertEventually { session.reviewRelinkPreview != nil }
+        session.confirmReviewRelink(primary: primary)
+        await assertEventually { !session.isReviewRelinking }
+        XCTAssertNotNil(session.reviewRelinkFailure)
+        XCTAssertTrue(session.canEditReviewNotes)
+        XCTAssertFalse(session.isReviewRelinkSaving)
+        XCTAssertNil(session.reviewRelinkPreview)
+        XCTAssertEqual(session.reviewNotes, f.document.notes)
+        XCTAssertEqual(session.reviewSidecarURL, f.source)
+        XCTAssertEqual(try Data(contentsOf: f.destination), existingBytes)
+
+        session.dismissReviewRelinkFailure()
+        let retryURL = f.directory.appendingPathComponent("retry-migrated.json")
+        session.previewReviewTimebaseMigration(primary: primary, destinationURL: retryURL)
+        await assertEventually { session.reviewRelinkPreview != nil }
+        session.confirmReviewRelink(primary: primary)
+        await assertEventually { !session.isReviewRelinking }
+        XCTAssertNil(session.reviewRelinkFailure)
+        XCTAssertNil(session.reviewError)
+        XCTAssertEqual(session.reviewSidecarURL, retryURL)
+        XCTAssertEqual(session.reviewSearchQuery, "Keep filter")
+        XCTAssertEqual(session.reviewNotes.map(\.id), f.document.notes.map(\.id))
+        XCTAssertEqual(try Data(contentsOf: f.source), originalBytes)
+        XCTAssertEqual(try Data(contentsOf: f.destination), existingBytes)
+    }
+
+    func testFailedCopyOpeningRetainsEditableReviewAndCanBeRetried() async throws {
+        let f = try ReviewTimebaseMigrationFixture()
+        defer { f.remove() }
+        let (session, primary) = await makeSession(f)
+        defer { session.stop(); primary.teardown() }
+        try Data("Corrupt review".utf8).write(to: f.destination)
+        session.openReviewCopy(from: f.destination, primary: primary)
+        await assertEventually { !session.isReviewRelinking }
+        XCTAssertNotNil(session.reviewRelinkFailure)
+        XCTAssertTrue(session.canEditReviewNotes)
+        XCTAssertEqual(session.reviewSidecarURL, f.source)
+        XCTAssertEqual(session.reviewNotes, f.document.notes)
+
+        session.dismissReviewRelinkFailure()
+        session.updateReviewNote(id: f.document.notes[0].id, text: "Edit after failed opening")
+        await assertEventually { session.canManageReviewCopy }
+        let editedBytes = try Data(contentsOf: f.source)
+        try editedBytes.write(to: f.destination, options: .atomic)
+        session.openReviewCopy(from: f.destination, primary: primary)
+        await assertEventually { !session.isReviewRelinking }
+        XCTAssertNil(session.reviewRelinkFailure)
+        XCTAssertNil(session.reviewError)
+        XCTAssertEqual(session.reviewSidecarURL, f.destination)
+        XCTAssertEqual(session.reviewNotes[0].text, "Edit after failed opening")
+        session.updateReviewNote(id: f.document.notes[0].id, text: "Edit reopened copy")
+        await assertEventually { session.canManageReviewCopy }
+        let saved = try await CompareReviewSidecarStore().load(
+            from: f.destination, primaryURL: f.primary, secondaryURL: f.secondary)
+        XCTAssertEqual(saved?.notes[0].text, "Edit reopened copy")
+        XCTAssertEqual(try Data(contentsOf: f.source), editedBytes)
+    }
+
     func testSourceReplacementAfterPreviewPreservesOriginalActiveReview() async throws {
         let f = try ReviewTimebaseMigrationFixture()
         defer { f.remove() }

@@ -1354,6 +1354,40 @@ copy. The Resolve automation call stalled, and actual editor marker round trips
 remain open. Temporary evidence includes `/tmp/aagedal-review-final-full-20260909.xcresult`,
 its build/full/analyze logs, and `/tmp/aagedal-tracks-migration-preflight-20260909.log`.
 
+## Phase 70 — Review failure/retry regressions and JXL gate diagnosis
+
+Status: Complete on 2026-09-10 within the focused scope below. All 515 Release
+tests, static analysis and 61 release-preflight checks pass.
+
+- [x] Exercise a migration destination collision through the controller, preserving
+  the active review and both existing files before a successful new-destination retry.
+- [x] Exercise corrupt copy reopening, retained original editing after failure,
+  repaired-copy reopening, and subsequent writes isolated to the active copy.
+- [x] Verify native corrupt-copy error/repaired-copy reopening and isolated
+  subsequent editing, with original file hashes unchanged.
+- [x] Verify native migration publication conflict, preserved existing destination,
+  fresh-destination retry and correct active-copy adoption with all eight findings.
+- [x] Diagnose the upstream JXL fixture disagreement with the original container
+  and its genuine extracted codestream, without altering upstream assertions.
+- [x] Require seven identical baseline/candidate write/preservation/orientation
+  results and unchanged fixture/checkout hashes; add four evidence regressions.
+
+All 13 focused migration-controller tests pass. Both isolated Release JXL
+probes pass all seven checks, and all eleven JXL/fixture-harness regressions pass.
+The JXL throw expectation is obsolete even for the actual bare codestream;
+substituting the correct fixture alone cannot reconcile the upstream test.
+The production dependency pin remains unchanged. See
+`docs/METADATA_LIBRARY_FIXTURE_VALIDATION.md` for the reproducible diagnostic
+and remaining integration gates.
+
+The integrated suite passes 515 tests with zero failures and zero skips,
+including both official ITU reference sets, in 117.247 seconds (117.494 with
+suite overhead). Release static analysis and 61 release-preflight checks pass.
+Native corruption/conflict alerts and both retries pass in the rebuilt app;
+all original media/sidecar hashes remain unchanged. See
+`docs/COMPARE_REVIEW_MIGRATION_NATIVE_CHECK_2026-09-09.md` for reproduction,
+evidence and the distinction from broader keyboard/VoiceOver or disk-full checks.
+
 ## Remaining work after this continuation
 
 - Integrate the measured metadata-memory dependency fix after upstream review,
@@ -1363,6 +1397,9 @@ its build/full/analyze logs, and `/tmp/aagedal-tracks-migration-preflight-202609
   pass. The September 9 fixture expansion exercises the original twenty skips:
   fourteen pass, five still lack their exact ARW/XMP originals, and one JXL
   expectation fails identically in baseline/candidate and needs reconciliation.
+  Phase 70 proves successful byte-preserving writes with its genuine bare
+  codestream too; both the mislabeled fixture and obsolete throw assertion
+  need upstream reconciliation.
   All 50 upstream CLI
   tests now pass without skips; nine validator regressions require complete
   pinned-suite evidence. The
@@ -1432,7 +1469,9 @@ its build/full/analyze logs, and `/tmp/aagedal-tracks-migration-preflight-202609
   acceptance, and time-localized mismatch markers after a detection model is
   defined. See `PRODUCT_ROADMAP.md` for milestone sequencing.
 - Broader keyboard/VoiceOver acceptance of historical review migration and copy
-  reopening, plus native failure/retry acceptance. Phase 69 completes
+  reopening, plus broader disk-full/permission-denied save-failure acceptance.
+  Phase 70 completes native corrupt-copy and migration-destination-conflict
+  errors and successful retries with original-file preservation. Phase 69 completes
   focused native preview layout, save/adoption, copy reopening and EDL naming;
   a pending text edit also reaches the migrated copy and CSV in the final build;
   Phase 63 continues to preserve historical coordinates during ordinary loading.
@@ -1517,3 +1556,5 @@ its build/full/analyze logs, and `/tmp/aagedal-tracks-migration-preflight-202609
 59. Phase 67 deliberate historical review timebase migration.
 60. Phase 68 bounded iXML recording track labels.
 61. Phase 69 review transition persistence and native migration acceptance.
+
+62. Phase 70 review failure/retry regressions and JXL gate diagnosis.
