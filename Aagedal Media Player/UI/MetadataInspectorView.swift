@@ -153,6 +153,9 @@ struct MetadataInspectorView: View {
                 if let broadcastWave = metadata.broadcastWave {
                     broadcastWaveSection(broadcastWave)
                 }
+                if let recording = metadata.ixmlRecording {
+                    ixmlRecordingSection(recording)
+                }
 
                 // Info (timecode, comment, encoder)
                 if metadata.timecode != nil || metadata.comment != nil || metadata.encoder != nil {
@@ -325,6 +328,22 @@ struct MetadataInspectorView: View {
         }
     }
 
+    private func ixmlRecordingSection(_ recording: MediaMetadata.IXMLRecording) -> some View {
+        Section("iXML Recording") {
+            if let value = recording.version { metadataRow("iXML Version", value: value) }
+            if let value = recording.project { metadataRow("Project", value: value) }
+            if let value = recording.scene { metadataRow("Scene", value: value) }
+            if let value = recording.take { metadataRow("Take", value: value) }
+            if let value = recording.tape { metadataRow("Tape / Sound Roll", value: value) }
+            if let value = recording.note { metadataRow("Note", value: value) }
+            if let value = recording.circled { metadataRow("Circled Take", value: value ? "Yes" : "No") }
+            if let value = recording.fileUID { metadataRow("File UID", value: value) }
+            Text("Recording labels stored in the file by its producer.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+
     static func metadataJSON(metadata: MediaMetadata, lufsResults: [Int: FFmpegService.LUFSResult]) throws -> Data {
         let export = MetadataExport(metadata: metadata, lufsResults: lufsResults)
         let encoder = JSONEncoder()
@@ -341,7 +360,7 @@ struct MetadataInspectorView: View {
         private enum CodingKeys: String, CodingKey {
             case duration, formatName, containerLongName, sizeBytes, bitRate
             case videoStreams, audioStreams, subtitleStreams, chapters
-            case timecode, comment, encoder, frameCount, broadcastWave
+            case timecode, comment, encoder, frameCount, broadcastWave, ixmlRecording
         }
 
         func encode(to encoder: Encoder) throws {
@@ -382,6 +401,7 @@ struct MetadataInspectorView: View {
             try c.encodeIfPresent(metadata.encoder, forKey: .encoder)
             try c.encodeIfPresent(metadata.frameCount, forKey: .frameCount)
             try c.encodeIfPresent(metadata.broadcastWave, forKey: .broadcastWave)
+            try c.encodeIfPresent(metadata.ixmlRecording, forKey: .ixmlRecording)
         }
     }
 

@@ -83,25 +83,29 @@ struct MediaMetadata: Equatable, Sendable, Codable {
             let trimmed = frameRateString.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !trimmed.isEmpty else { return nil }
 
-            if let ratio = Ratio.parse(trimmed, separator: "/") {
-                self.numerator = ratio.numerator
-                self.denominator = ratio.denominator
-                if let value = ratio.doubleValue {
-                    self.stringValue = String(format: "%.3f", value)
-                } else {
-                    self.stringValue = trimmed
-                }
+            if trimmed.contains("/") {
+                let parts = trimmed.split(separator: "/", omittingEmptySubsequences: false)
+                guard parts.count == 2, let numerator = Int(parts[0]), let denominator = Int(parts[1]),
+                      numerator > 0, denominator > 0,
+                      Double(numerator) / Double(denominator) < Double(Int.max) / 1_000_000 else { return nil }
+                // Explicit fractions stay exact; never reinterpret stored or
+                // producer-declared rates as a nearby broadcast timebase.
+                self.numerator = numerator
+                self.denominator = denominator
+                self.stringValue = String(format: "%.3f", Double(numerator) / Double(denominator))
                 return
             }
 
-            if let value = Double(trimmed), value > 0 {
-                self.numerator = Int((value * 1_000).rounded())
-                self.denominator = 1_000
-                self.stringValue = String(format: "%.3f", value)
-                return
-            }
-
-            return nil
+            guard let value = Double(trimmed), value.isFinite, value > 0 else { return nil }
+            // Normalize broadcast decimal spellings to n/1001, retaining
+            // micro-fps precision otherwise. Bound TimecodeRate's integer
+            // conversion before handing untrusted metadata to it.
+            let scaled = (value * 1_000_000).rounded()
+            guard value >= 0.000_001, scaled.isFinite, scaled < Double(Int.max) else { return nil }
+            let rate = TimecodeRate(frameRate: value)
+            self.numerator = Int(rate.numerator)
+            self.denominator = Int(rate.denominator)
+            self.stringValue = String(format: "%.3f", rate.value)
         }
     }
 
@@ -209,6 +213,20 @@ struct MediaMetadata: Equatable, Sendable, Codable {
     }
 
     var broadcastWave: BroadcastWave? = nil
+
+    /// Explicit iXML recording labels; no timing, speaker-layout or BWF inference.
+    nonisolated struct IXMLRecording: Equatable, Sendable, Codable {
+        let version: String?
+        let project: String?
+        let scene: String?
+        let take: String?
+        let tape: String?
+        let note: String?
+        let circled: Bool?
+        let fileUID: String?
+    }
+
+    var ixmlRecording: IXMLRecording? = nil
 
     var primaryVideoStream: VideoStream? {
         videoStreams.first

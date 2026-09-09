@@ -81,6 +81,8 @@ nonisolated enum WaveMetadataReader {
         var audioBytes: UInt64?
         var factSamples: UInt32?
         var broadcastWave: MediaMetadata.BroadcastWave?
+        var ixmlRecording: MediaMetadata.IXMLRecording?
+        var sawIXML = false
         while position < end {
             try Task.checkCancellation()
             guard end - position >= 8 else { throw ReadError.invalidWave }
@@ -122,6 +124,16 @@ nonisolated enum WaveMetadataReader {
                 // bounded prefix and seek past the rest with the enclosing loop.
                 let bytes = try readExactly(file, count: Int(min(count, 602 + 16_384)))
                 broadcastWave = readBroadcastWave(bytes, chunkSize: count)
+            } else if name == "iXML", byteOrder == .little {
+                // Parse at most one bounded payload. Duplicate optional chunks
+                // are ambiguous, so omit their tags while retaining audio/BWF.
+                if !sawIXML, count > 0, count <= 262_144 {
+                    ixmlRecording = readIXML(try readExactly(file, count: Int(count)))
+                    try Task.checkCancellation()
+                } else {
+                    ixmlRecording = nil
+                }
+                sawIXML = true
             }
             position = payload + count + (count & 1)
             guard position <= end else { throw ReadError.invalidWave }
@@ -186,8 +198,125 @@ nonisolated enum WaveMetadataReader {
             sizeBytes: Int64(size), bitRate: Int64(byteRate * 8), timecode: nil,
             comment: nil, encoder: nil, frameCount: nil,
             videoStreams: [], audioStreams: [stream], subtitleStreams: [], chapters: [],
-            broadcastWave: broadcastWave
+            broadcastWave: broadcastWave, ixmlRecording: ixmlRecording
         )
+    }
+
+    private static func readIXML(_ bytes: Data) -> MediaMetadata.IXMLRecording? {
+        // Restrict this implementation to UTF-8. Refuse declarations before
+        // XMLParser sees them, preventing both external access and expansion
+        // of internal entities. Even declarations inside comments are omitted.
+        guard !bytes.contains(0), var text = String(data: bytes, encoding: .utf8),
+              !text.contains("<!DOCTYPE"), !text.contains("<!ENTITY") else { return nil }
+        if text.first == "\u{FEFF}" { text.removeFirst() }
+        if text.hasPrefix("<?xml"), let end = text.range(of: "?>") {
+            let declaration = String(text[..<end.lowerBound])
+            if declaration.contains("encoding"),
+               declaration.range(of: #"\bencoding\s*=\s*(?:"UTF-8"|'UTF-8')"#,
+                                 options: [.regularExpression, .caseInsensitive]) == nil {
+                return nil
+            }
+        }
+        let delegate = IXMLDelegate()
+        let parser = XMLParser(data: Data(text.utf8))
+        parser.delegate = delegate
+        parser.shouldProcessNamespaces = true
+        parser.shouldResolveExternalEntities = false
+        parser.externalEntityResolvingPolicy = .never
+        guard parser.parse(), parser.parserError == nil, !delegate.invalid else { return nil }
+        let fields = delegate.fields
+        let circled: Bool? = fields["CIRCLED"] == "TRUE" ? true : (fields["CIRCLED"] == "FALSE" ? false : nil)
+        guard fields.keys.contains(where: { $0 != "CIRCLED" }) || circled != nil else { return nil }
+        return MediaMetadata.IXMLRecording(
+            version: fields["IXML_VERSION"], project: fields["PROJECT"], scene: fields["SCENE"],
+            take: fields["TAKE"], tape: fields["TAPE"], note: fields["NOTE"],
+            circled: circled, fileUID: fields["FILE_UID"]
+        )
+    }
+
+    private nonisolated final class IXMLDelegate: NSObject, XMLParserDelegate {
+        private static let recognized: Set<String> = [
+            "IXML_VERSION", "PROJECT", "SCENE", "TAKE", "TAPE", "NOTE", "CIRCLED", "FILE_UID"
+        ]
+        private(set) var fields: [String: String] = [:]
+        private(set) var invalid = false
+        private var depth = 0
+        private var elements = 0
+        private var seenFields: Set<String> = []
+        private var field: String?
+        private var value = ""
+        private var valueBytes = 0
+        private var invalidField = false
+
+        func parser(_ parser: XMLParser, didStartElement elementName: String, namespaceURI: String?,
+                    qualifiedName qName: String?, attributes attributeDict: [String: String]) {
+            depth += 1
+            elements += 1
+            guard !Task.isCancelled, depth <= 16, elements <= 4_096 else { return reject(parser) }
+            if depth == 1 {
+                guard elementName == "BWFXML", namespaceURI?.isEmpty != false else { return reject(parser) }
+            } else if depth == 2, namespaceURI?.isEmpty != false, Self.recognized.contains(elementName) {
+                guard seenFields.insert(elementName).inserted else { return reject(parser) }
+                field = elementName
+                value = ""
+                valueBytes = 0
+                invalidField = false
+            } else if depth > 2, field != nil {
+                // Recording labels are scalar text. Do not flatten markup or
+                // harvest same-named tags from SPEED, BEXT or vendor objects.
+                invalidField = true
+            }
+        }
+
+        func parser(_ parser: XMLParser, foundCharacters string: String) {
+            append(string, parser: parser)
+        }
+
+        func parser(_ parser: XMLParser, foundCDATA CDATABlock: Data) {
+            guard let string = String(data: CDATABlock, encoding: .utf8) else { return reject(parser) }
+            append(string, parser: parser)
+        }
+
+        private func append(_ string: String, parser: XMLParser) {
+            guard !Task.isCancelled else { return reject(parser) }
+            guard depth == 2, let field, !invalidField else { return }
+            let count = string.utf8.count
+            let limit = field == "NOTE" ? 16_384 : 4_096
+            guard count <= limit - valueBytes else {
+                invalidField = true
+                value = ""
+                return
+            }
+            valueBytes += count
+            value += string
+        }
+
+        func parser(_ parser: XMLParser, didEndElement elementName: String,
+                    namespaceURI: String?, qualifiedName qName: String?) {
+            if depth == 2, let field {
+                let text = value.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !invalidField, !text.isEmpty,
+                   text.unicodeScalars.allSatisfy({
+                       !CharacterSet.controlCharacters.contains($0) || [9, 10, 13].contains($0.value)
+                   }) {
+                    fields[field] = text
+                }
+                self.field = nil
+                value = ""
+            }
+            depth -= 1
+        }
+
+        func parser(_ parser: XMLParser, resolveExternalEntityName name: String,
+                    systemID: String?) -> Data? {
+            reject(parser)
+            return nil
+        }
+
+        private func reject(_ parser: XMLParser) {
+            invalid = true
+            parser.abortParsing()
+        }
     }
 
     private static func readBroadcastWave(_ bytes: Data, chunkSize: UInt64) -> MediaMetadata.BroadcastWave {

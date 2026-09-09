@@ -1,5 +1,22 @@
 # Bounded WAVE metadata
 
+## Native iXML check — 2026-09-09
+
+The rebuilt Release app opened the disposable two-second PCM16 stereo 48 kHz
+fixture `/tmp/aagedal-native-ixml-20260909.wav`. Command-I exposed separate
+Broadcast WAVE and iXML Recording sections. Native scrolling and screenshots
+confirmed `Fjell & sjø`, scene `021A`, take `0003`, sound roll `Roll 7`, the note
+`Location dialogue; quiet take.`, circled take `Yes`, and UID `recorder-0003`.
+The BWF description stayed `Field recording` and its time reference remained
+`2174400000 samples since midnight`. The accessibility tree retained all
+labels/values. Playback stayed paused and the waveform/technical metadata
+identified stereo PCM16 at 48 kHz. This is focused synthetic native acceptance;
+producer-authentic recorder fixtures, Full Keyboard Access and spoken VoiceOver
+remain separate. The complete Release suite passes all 479 tests with no
+failures or skips, including all 41 WAVE reader tests.
+
+## Supported containers
+
 `WaveMetadataReader` supplies technical audio metadata for local little-endian
 RIFF, RF64, and BW64 files, plus big-endian RIFX, containing PCM integer or
 IEEE floating-point audio. For the little-endian containers it also supports
@@ -40,9 +57,9 @@ report `be`; unsigned 8-bit PCM remains `pcm_u8`. Mono and stereo are identified
 from channel count; surround placement remains unknown without a supported
 explicit mask.
 
-RIFX WAVEFORMATEXTENSIBLE and Broadcast WAVE tag interpretation remain outside
+RIFX WAVEFORMATEXTENSIBLE, Broadcast WAVE and iXML tag interpretation remain outside
 this implementation: extensible format tags report unsupported encoding, and
-`bext` payloads are skipped without populating `broadcastWave`. Chunk bounds
+`bext` and `iXML` payloads are skipped without populating their metadata objects. Chunk bounds
 are still validated. RIFX uses ordinary 32-bit lengths and never applies RF64
 `ds64` sentinel rules. Tests cover the metadata-service path, PCM/float widths,
 data before format, odd payload padding, mixed-endian/malformed fields,
@@ -96,6 +113,48 @@ made. Tests cover version gates, text and loudness validity, JSON round trips,
 64-bit references, RF64/BW64 table resolution, chunk ordering, malformed chunks,
 and sparse 1 GiB coding history. Focused native acceptance is recorded below.
 
+## iXML recording labels
+
+RIFF/RF64/BW64 files can also expose an optional `ixmlRecording` object in the
+model and inspector JSON, with a separate **iXML Recording** inspector section.
+The reader accepts UTF-8 XML, including a UTF-8 BOM and an optional XML
+declaration, with one unnamespaced `BWFXML` root. It reads only direct scalar
+children `IXML_VERSION`, `PROJECT`, `SCENE`, `TAKE`, `TAPE`, `NOTE`, `CIRCLED`
+and `FILE_UID`. These fields follow the [iXML object descriptions](https://www.gallery.co.uk/ixml/object_Details.html)
+and [published examples](https://www.gallery.co.uk/ixml/iXML_Example.html).
+Take and scene labels remain strings, preserving leading zeroes. `CIRCLED`
+is populated only for explicit `TRUE` or `FALSE`; absence or unrecognized text
+does not invent a default. XML escapes and CDATA are decoded, surrounding
+whitespace is trimmed, and blank or control-bearing fields are omitted.
+
+The entire chunk must fit within 256 KiB before any payload is read. A larger
+payload is skipped by seeking, with no partial XML parsing. Parsing is limited
+to 16 element levels and 4,096 elements, including ignored vendor objects.
+Each scalar field is limited to 4 KiB of decoded UTF-8, except `NOTE`, which
+allows 16 KiB; an oversized field is omitted whole. A field containing nested
+markup is also omitted. Each callback that consumes text or starts an element
+checks cancellation; the caller propagates cancellation after parsing.
+
+DTD/entity declarations are rejected before parsing; external-entity resolution
+is disabled and its policy is `never`. This conservative preflight also rejects
+declaration markers inside comments or CDATA. NUL bytes, non-UTF-8 data,
+conflicting encoding declarations, malformed XML, duplicate recognized scalar
+tags, excessive depth/element counts and duplicate `iXML` chunks omit the
+recording object while retaining valid technical audio and `bext` metadata.
+Duplicate chunks never cause another XML parse. Invalid RIFF chunk lengths
+and padding still reject the file. Ordinary XML whitespace after the root is
+accepted, including the space padding described by the [iXML chunk specification](https://www.gallery.co.uk/ixml/iXML_chunk.html).
+
+Nested `BEXT`, `SPEED`, `TRACK_LIST` and vendor-specific objects are ignored.
+iXML never overrides `bext` values, channel layout, sample rate, duration,
+timecode or measured loudness. No track routing, timing, ADM or conformance
+interpretation is attempted. RIFX iXML and other Unicode encodings remain
+unsupported. Tests cover recording values and Unicode, model/JSON/service
+integration, RF64/BW64 sizes, chunks after audio, namespace and nesting scope,
+malformed/hostile XML, duplicate chunks, field/depth/element/payload bounds,
+and a sparse 1 GiB skipped XML payload. Producer-authentic recorder fixtures
+and native inspector acceptance remain follow-up work.
+
 Focused tests cover ordinary RIFF regressions, bundled-FFmpeg RF64 output through
 `MetadataService`, both extended containers and integer/float formats, explicit
 speaker masks, inconsistent RF64 sample counts and `fact` precedence, the BW64 reserved field,
@@ -105,7 +164,8 @@ Sparse fixtures exercise 8 GiB audio and an odd ancillary chunk exceeding
 
 Remaining exclusions: compressed WAVE encodings, RIFX extensible formats and
 RIFX Broadcast WAVE tags, multiple data chunks and `wavl` playlists,
-INFO/XML/ADM tag extraction or interpretation,
+INFO/other XML/ADM tag extraction or interpretation, iXML fields beyond the
+recording labels documented above,
 and tables above the documented cap. Container recognition does not validate
 ADM semantics or guarantee that every decoder can play a file.
 

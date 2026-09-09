@@ -223,7 +223,7 @@ private enum MetadataMapper {
         let frameRate: MediaMetadata.FrameRate? = {
             let fps = stream.avgFrameRate ?? stream.frameRate ?? stream.rFrameRate
             guard let value = fps, value > 0 else { return nil }
-            return MediaMetadata.FrameRate(frameRateString: String(format: "%.6f", value))
+            return MediaMetadata.FrameRate(frameRateString: String(value))
         }()
 
         let colorPrimaries = stream.colorInfo?.primaries.flatMap(ColorMapping.primariesString(for:))

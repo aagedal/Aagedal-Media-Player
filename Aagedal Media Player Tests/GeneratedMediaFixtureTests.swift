@@ -11,22 +11,65 @@ final class GeneratedMediaFixtureTests: XCTestCase {
     @MainActor
     func testCommonFrameRates() async throws {
         let directory = try fixtureDirectory()
-        let expectedRates: [(String, Double)] = [
-            ("23.976", 24_000.0 / 1_001.0),
-            ("24", 24),
-            ("25", 25),
-            ("29.97", 30_000.0 / 1_001.0),
-            ("30", 30),
-            ("50", 50),
-            ("59.94", 60_000.0 / 1_001.0),
-            ("60", 60)
+        let expectedRates: [(String, Int, Int)] = [
+            ("23.976", 24_000, 1_001), ("24", 24, 1), ("25", 25, 1),
+            ("29.97", 30_000, 1_001), ("30", 30, 1), ("50", 50, 1),
+            ("59.94", 60_000, 1_001), ("60", 60, 1)
         ]
 
-        for (name, expectedRate) in expectedRates {
+        for (name, numerator, denominator) in expectedRates {
             let url = directory.appending(path: "rates/\(name).mp4")
             let metadata = try await MetadataService.shared.metadata(for: url)
-            let actualRate = try XCTUnwrap(metadata.primaryVideoStream?.frameRate?.value, name)
-            XCTAssertEqual(actualRate, expectedRate, accuracy: 0.001, name)
+            let actualRate = try XCTUnwrap(metadata.primaryVideoStream?.frameRate, name)
+            XCTAssertEqual(actualRate.numerator, numerator, name)
+            XCTAssertEqual(actualRate.denominator, denominator, name)
+        }
+    }
+
+    @MainActor
+    func testDropFrameSourcesPreserveExactRatesThroughReviewReportsAndEditorExports() async throws {
+        let directory = try fixtureDirectory()
+        for (name, numerator, frame, expectedLabel): (String, Int64, Int64, String) in [
+            ("29.97-minute", 30_000, 2, "00:01:00;02"),
+            ("59.94-minute", 60_000, 4, "00:01:00;04"),
+        ] {
+            let url = directory.appending(path: "drop-frame-boundaries/\(name).mov")
+            let metadata = try await MetadataService.shared.metadata(for: url)
+            let actualRate = try XCTUnwrap(metadata.primaryVideoStream?.frameRate, name)
+            XCTAssertEqual(actualRate.numerator, Int(numerator), name)
+            XCTAssertEqual(actualRate.denominator, 1_001, name)
+            var item = PlayerWindowCoordinator.makeMediaItem(for: url)
+            item.metadata = metadata
+            item.durationSeconds = metadata.duration ?? 0
+            let snapshot = CompareReviewReportSnapshot(
+                primaryItem: item, secondaryItem: item, alignmentMode: .sourceTimecode,
+                notes: [CompareReviewNote(
+                    primaryFrame: frame, primaryTime: 0, secondaryFrame: frame, secondaryTime: 0,
+                    primaryRateNumerator: numerator, primaryRateDenominator: 1_001,
+                    secondaryRateNumerator: numerator, secondaryRateDenominator: 1_001,
+                    text: "Generated source at the drop-frame minute boundary"
+                )]
+            )
+            XCTAssertEqual(snapshot.rows.first?.primarySourceTimecode, expectedLabel, name)
+            XCTAssertEqual(snapshot.rows.first?.secondarySourceTimecode, expectedLabel, name)
+            XCTAssertEqual(snapshot.primaryRateNumerator, numerator, name)
+            XCTAssertEqual(snapshot.primaryRateDenominator, 1_001, name)
+            XCTAssertTrue(snapshot.primaryUsesDropFrame, name)
+            for format: CompareReviewReportFormat in [.csv, .resolveMarkersEDL, .finalCutProXML, .avidMarkersText] {
+                let exported = String(decoding: try CompareReviewReportExporter.data(for: format, snapshot: snapshot), as: UTF8.self)
+                XCTAssertTrue(exported.contains(expectedLabel), "\(name) \(format)")
+            }
+            let legacySnapshot = CompareReviewReportSnapshot(
+                primaryItem: item, secondaryItem: item, alignmentMode: .sourceTimecode,
+                notes: [CompareReviewNote(
+                    primaryFrame: frame, primaryTime: 0, secondaryFrame: frame, secondaryTime: 0,
+                    primaryRateNumerator: numerator == 30_000 ? 29_970 : 59_940, primaryRateDenominator: 1_000,
+                    secondaryRateNumerator: numerator, secondaryRateDenominator: 1_001,
+                    text: "Legacy rounded review coordinates must not silently change timebase"
+                )]
+            )
+            XCTAssertNil(legacySnapshot.rows.first?.primarySourceTimecode, name)
+            XCTAssertThrowsError(try CompareReviewReportExporter.finalCutProXML(snapshot: legacySnapshot), name)
         }
     }
 

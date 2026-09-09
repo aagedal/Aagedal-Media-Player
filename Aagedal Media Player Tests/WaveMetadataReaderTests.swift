@@ -489,6 +489,189 @@ final class WaveMetadataReaderTests: XCTestCase {
         XCTAssertNil(try JSONDecoder().decode(MediaMetadata.self, from: oldJSON).broadcastWave)
     }
 
+    func testIXMLRecordingTagsPreserveUnicodeEscapesAndBWF() throws {
+        let xml = """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <BWFXML><IXML_VERSION>2.0</IXML_VERSION><PROJECT> Fjell &amp; sjø </PROJECT>
+        <SCENE>021A</SCENE><TAKE>0003</TAKE><TAPE>Roll 7</TAPE>
+        <NOTE><![CDATA[First line <quiet>]]>&#10;Second line</NOTE><CIRCLED>TRUE</CIRCLED>
+        <FILE_UID>recorder-0003</FILE_UID></BWFXML>
+        """
+        let metadata = try XCTUnwrap(read(wave(format: format(tag: 1, channels: 2, bits: 16),
+            audio: Data(count: 40), before: chunk("iXML", Data(xml.utf8)) + chunk("bext", bext()))))
+        let recording = try XCTUnwrap(metadata.ixmlRecording)
+        XCTAssertEqual(recording.version, "2.0")
+        XCTAssertEqual(recording.project, "Fjell & sjø")
+        XCTAssertEqual(recording.scene, "021A")
+        XCTAssertEqual(recording.take, "0003")
+        XCTAssertEqual(recording.tape, "Roll 7")
+        XCTAssertEqual(recording.note, "First line <quiet>\nSecond line")
+        XCTAssertEqual(recording.circled, true)
+        XCTAssertEqual(recording.fileUID, "recorder-0003")
+        XCTAssertEqual(metadata.broadcastWave?.description, "Field recording")
+        XCTAssertEqual(metadata.broadcastWave?.timeReferenceSamples, 0x1234_5678_9abc_def0)
+        XCTAssertNil(metadata.timecode)
+        XCTAssertNil(metadata.comment)
+    }
+
+    func testIXMLReachesMetadataServiceAndInspectorJSON() async throws {
+        let url = try write(wave(format: format(tag: 1, channels: 2, bits: 16), audio: Data(count: 40),
+            before: chunk("iXML", Data("<BWFXML><SCENE>007</SCENE><CIRCLED>FALSE</CIRCLED></BWFXML>".utf8))))
+        defer { try? FileManager.default.removeItem(at: url) }
+        let metadata = try await MetadataService.shared.metadata(for: url)
+        XCTAssertEqual(metadata.ixmlRecording?.scene, "007")
+        XCTAssertEqual(try JSONDecoder().decode(MediaMetadata.self, from: JSONEncoder().encode(metadata)), metadata)
+        let exported = try MetadataInspectorView.metadataJSON(metadata: metadata, lufsResults: [:])
+        let json = try XCTUnwrap(JSONSerialization.jsonObject(with: exported) as? [String: Any])
+        let tags = try XCTUnwrap(json["ixmlRecording"] as? [String: Any])
+        XCTAssertEqual(tags["scene"] as? String, "007")
+        XCTAssertEqual(tags["circled"] as? Bool, false)
+        XCTAssertNil(json["broadcastWave"])
+        var olderMetadata = metadata
+        olderMetadata.ixmlRecording = nil
+        XCTAssertNil(try JSONDecoder().decode(MediaMetadata.self, from: JSONEncoder().encode(olderMetadata)).ixmlRecording)
+    }
+
+    func testIXMLReadsExtendedLengthsAndChunkAfterAudio() throws {
+        let fmt = format(tag: 1, channels: 2, bits: 16)
+        let xml = Data("\u{FEFF}<?xml version='1.0' encoding='utf-8'?><BWFXML><TAKE>001</TAKE></BWFXML> ".utf8)
+        for container in ["RF64", "BW64"] {
+            let metadata = try read(extendedWave(container: container, format: fmt, audio: Data(count: 40),
+                samples: 10, before: extendedChunk("iXML", xml), table: [("iXML", UInt64(xml.count))]))
+            XCTAssertEqual(metadata?.ixmlRecording?.take, "001", container)
+        }
+        let body = Data("WAVE".utf8) + chunk("fmt ", fmt) + chunk("data", Data(count: 40)) + chunk("iXML", xml)
+        XCTAssertEqual(try read(Data("RIFF".utf8) + little(UInt32(body.count)) + body)?.ixmlRecording?.take, "001")
+    }
+
+    func testIXMLIgnoresNestedUnknownAndNamespacedFields() throws {
+        let xml = """
+        <BWFXML xmlns:vendor="urn:vendor"><PROJECT>Location</PROJECT><vendor:TAKE>wrong</vendor:TAKE>
+        <SPEED><NOTE>speed note</NOTE><FILE_SAMPLE_RATE>1</FILE_SAMPLE_RATE><TIMECODE_RATE>25/1</TIMECODE_RATE></SPEED>
+        <BEXT><BWF_DESCRIPTION>not bext</BWF_DESCRIPTION><BWF_TIME_REFERENCE_LOW>42</BWF_TIME_REFERENCE_LOW></BEXT>
+        <TRACK_LIST><TRACK><NAME>Left</NAME><FUNCTION>LEFT</FUNCTION></TRACK></TRACK_LIST>
+        <SCENE>mixed <EM>markup</EM></SCENE><NOTE>  </NOTE><FILE_UID>bad&#x7F;control</FILE_UID></BWFXML>
+        """
+        let metadata = try XCTUnwrap(read(wave(format: format(tag: 1, channels: 8, bits: 16),
+            audio: Data(count: 160), before: chunk("iXML", Data(xml.utf8)))))
+        XCTAssertEqual(metadata.ixmlRecording?.project, "Location")
+        XCTAssertNil(metadata.ixmlRecording?.take)
+        XCTAssertNil(metadata.ixmlRecording?.scene)
+        XCTAssertNil(metadata.ixmlRecording?.note)
+        XCTAssertNil(metadata.ixmlRecording?.fileUID)
+        XCTAssertNil(metadata.broadcastWave)
+        XCTAssertNil(metadata.timecode)
+        XCTAssertNil(metadata.audioStreams.first?.channelLayout)
+        XCTAssertEqual(metadata.audioStreams.first?.sampleRate, 48_000)
+    }
+
+    func testIXMLRequiresExplicitCircledBoolean() throws {
+        for value in ["TRUE", "FALSE", "true", "false", "1", "", "yes"] {
+            let xml = "<BWFXML><PROJECT>Project</PROJECT><CIRCLED>\(value)</CIRCLED></BWFXML>"
+            let tags = try read(wave(format: format(tag: 1, channels: 2, bits: 16), audio: Data(count: 40),
+                before: chunk("iXML", Data(xml.utf8))))?.ixmlRecording
+            XCTAssertEqual(tags?.circled, value == "TRUE" ? true : (value == "FALSE" ? false : nil), value)
+        }
+    }
+
+    func testIXMLRejectsMalformedOrUnsafeDocumentsWithoutDiscardingAudioOrBWF() throws {
+        let invalidXML = [
+            "", "<BWFXML><PROJECT>unfinished", "<OTHER><PROJECT>Wrong root</PROJECT></OTHER>",
+            "<BWFXML xmlns='urn:other'><PROJECT>Wrong namespace</PROJECT></BWFXML>",
+            "<BWFXML><TAKE>1</TAKE><TAKE>2</TAKE></BWFXML>",
+            "<BWFXML><PROJECT>One</PROJECT></BWFXML><BWFXML/>",
+            "<BWFXML><PROJECT>before\0after</PROJECT></BWFXML>",
+            "<?xml version='1.0' encoding='ISO-8859-1'?><BWFXML><PROJECT>Æ</PROJECT></BWFXML>",
+            "<!DOCTYPE BWFXML [<!ENTITY a 'expanded'>]><BWFXML><PROJECT>&a;</PROJECT></BWFXML>",
+            "<!DOCTYPE BWFXML SYSTEM 'https://example.invalid/ixml.dtd'><BWFXML><PROJECT>External DTD</PROJECT></BWFXML>",
+            "<!DOCTYPE BWFXML [<!ENTITY a SYSTEM 'file:///etc/passwd'>]><BWFXML><NOTE>&a;</NOTE></BWFXML>",
+            "<!DOCTYPE BWFXML [<!ENTITY a 'x'><!ENTITY b '&a;&a;'><!ENTITY c '&b;&b;'>]><BWFXML><NOTE>&c;</NOTE></BWFXML>",
+            "<BWFXML><PROJECT>&undefined;</PROJECT></BWFXML>"
+        ].map { Data($0.utf8) } + [
+            Data([0xff, 0xfe]) + "<BWFXML><PROJECT>UTF16</PROJECT></BWFXML>".data(using: .utf16LittleEndian)!,
+            Data("<BWFXML><PROJECT>".utf8) + Data([0xff]) + Data("</PROJECT></BWFXML>".utf8)
+        ]
+        for xml in invalidXML {
+            let metadata = try XCTUnwrap(read(wave(format: format(tag: 1, channels: 2, bits: 16),
+                audio: Data(count: 40), before: chunk("iXML", xml) + chunk("bext", bext()))))
+            XCTAssertNil(metadata.ixmlRecording, String(decoding: xml.prefix(100), as: UTF8.self))
+            XCTAssertEqual(metadata.broadcastWave?.description, "Field recording")
+            XCTAssertEqual(metadata.audioStreams.first?.codec, "pcm_s16le")
+        }
+    }
+
+    func testIXMLDuplicateChunksAreOmittedEvenWhenFirstInvalid() throws {
+        let valid = chunk("iXML", Data("<BWFXML><PROJECT>Project</PROJECT></BWFXML>".utf8))
+        let invalid = chunk("iXML", Data("invalid".utf8))
+        for before in [valid + valid, invalid + valid, valid + invalid] {
+            let metadata = try XCTUnwrap(read(wave(format: format(tag: 1, channels: 2, bits: 16),
+                audio: Data(count: 40), before: before)))
+            XCTAssertNil(metadata.ixmlRecording)
+            XCTAssertEqual(metadata.audioStreams.first?.sampleRate, 48_000)
+        }
+    }
+
+    func testIXMLFieldSizeBoundsOmitWholeFieldsWithoutTruncation() throws {
+        for excess in [0, 1] {
+            let project = String(repeating: "ø", count: 2_048) + String(repeating: "A", count: excess)
+            let note = String(repeating: "N", count: 16_384 + excess)
+            let xml = "<BWFXML><PROJECT>\(project)</PROJECT><NOTE>\(note)</NOTE><TAKE>005</TAKE></BWFXML>"
+            let tags = try XCTUnwrap(read(wave(format: format(tag: 1, channels: 2, bits: 16), audio: Data(count: 40),
+                before: chunk("iXML", Data(xml.utf8))))?.ixmlRecording)
+            XCTAssertEqual(tags.project, excess == 0 ? project : nil)
+            XCTAssertEqual(tags.note, excess == 0 ? note : nil)
+            XCTAssertEqual(tags.take, "005")
+        }
+    }
+
+    func testIXMLDepthAndElementBounds() throws {
+        for excess in [0, 1] {
+            let nesting = String(repeating: "<V>", count: 15 + excess) + String(repeating: "</V>", count: 15 + excess)
+            let elements = String(repeating: "<V/>", count: 4_094 + excess)
+            for children in [nesting, elements] {
+                let xml = "<BWFXML><PROJECT>Project</PROJECT>\(children)</BWFXML>"
+                let metadata = try XCTUnwrap(read(wave(format: format(tag: 1, channels: 2, bits: 16),
+                    audio: Data(count: 40), before: chunk("iXML", Data(xml.utf8)))))
+                XCTAssertEqual(metadata.ixmlRecording?.project, excess == 0 ? "Project" : nil)
+                XCTAssertEqual(metadata.audioStreams.first?.codec, "pcm_s16le")
+            }
+        }
+    }
+
+    func testIXMLPayloadCapAndSparseOversizedChunk() throws {
+        let xml = Data("<BWFXML><PROJECT>Project</PROJECT></BWFXML>".utf8)
+        let fmt = format(tag: 1, channels: 2, bits: 16)
+        for count in [262_144, 262_145] {
+            let payload = xml + Data(repeating: 32, count: count - xml.count)
+            XCTAssertEqual(try read(wave(format: fmt, audio: Data(count: 40), before: chunk("iXML", payload)))?
+                .ixmlRecording?.project, count == 262_144 ? "Project" : nil)
+        }
+        let chunkSize: UInt32 = 1 << 30
+        let tail = chunk("bext", bext()) + chunk("fmt ", fmt) + chunk("data", Data(count: 40))
+        let riffSize = UInt32(4 + 8 + tail.count) + chunkSize
+        let header = Data("RIFF".utf8) + little(riffSize) + Data("WAVEiXML".utf8) + little(chunkSize)
+        let url = try write(header + xml)
+        defer { try? FileManager.default.removeItem(at: url) }
+        let file = try FileHandle(forWritingTo: url)
+        try file.seek(toOffset: UInt64(header.count) + UInt64(chunkSize))
+        try file.write(contentsOf: tail)
+        try file.close()
+        let metadata = try XCTUnwrap(WaveMetadataReader.read(from: url))
+        XCTAssertNil(metadata.ixmlRecording)
+        XCTAssertEqual(metadata.broadcastWave?.description, "Field recording")
+        XCTAssertEqual(metadata.audioStreams.first?.codec, "pcm_s16le")
+    }
+
+    func testIXMLRIFXTagsAreSkippedAndChunkBoundsStillValidated() throws {
+        let xml = Data("<BWFXML><PROJECT>Project</PROJECT></BWFXML>".utf8)
+        let data = wave(format: format(tag: 1, channels: 2, bits: 16, bigEndian: true), audio: Data(count: 40),
+            before: chunk("iXML", xml, bigEndian: true), bigEndian: true)
+        XCTAssertNil(try read(data)?.ixmlRecording)
+        var invalid = data
+        invalid.replaceSubrange(16..<20, with: big(UInt32.max))
+        XCTAssertThrowsError(try read(invalid))
+    }
+
     private func bext(version: UInt16 = 2, history: String = "A=PCM,F=48000,W=16,M=stereo\r\n") -> Data {
         var bytes = Data(count: 602)
         for (offset, value) in [(0, "Field recording"), (256, "Recorder"), (288, "take-42"),

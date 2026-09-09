@@ -8,6 +8,33 @@ Use disposable editor projects and generated or permission-cleared media.
 
 ## Test cases
 
+For a reproducible eight-finding editor acceptance review, run:
+
+```bash
+python3 scripts/generate-review-interchange-fixtures.py /tmp/new-review-fixtures --rate 29.97
+```
+
+The new directory contains a 610-second generated source pair, a schema-2
+sidecar, and a manifest with input hashes. Open source A and compare source B,
+then export CSV and the desired editor format through the app. The findings
+cover first/adjacent/final frames, duplicate positions, Unicode and multiline
+text, every classification, and one/three-frame inclusive ranges. The 29.97
+and 59.94 variants start at `00:00:58;00` and straddle both minute and ten-minute
+drop-frame boundaries. `--rate 23.976` omits embedded source timecode. The
+generator uses Foundation's canonical paths to match the app's sidecar identity
+rules, including macOS's `/tmp` alias. Existing directories are rejected.
+
+Fixture generation and successful app exports do not establish editor acceptance.
+
+Decimal metadata rates within 0.001 fps of a known broadcast rate use its
+exact rational timebase, matching the existing timecode engine. Explicit
+fractions remain exact. The September 9 correction fixes decoded decimal
+rates previously rounded to thousandths of a frame per second, which caused
+false editor-export mismatches and missing source timecodes. Historical review
+notes retain their stored rates. If they use the former rounded fractions,
+CSV/PDF preserve them but editor export refuses the differing timebase; no
+automatic migration is performed.
+
 Use `scripts/generate-test-fixtures.sh` for the existing rate and timecode
 fixtures. Keep the source media in place while importing: FCPXML references
 source A's file URL. Notes belong to source A; source B's filename, aligned
@@ -98,6 +125,42 @@ and classification fields. Shorten the note or select CSV, PDF, or FCPXML;
 findings are never silently truncated to meet this limit.
 
 ## Evidence record
+
+### Native export correction — 2026-09-09
+
+On macOS 27.0, the generated 29.97 pair under
+`/tmp/aagedal-fcpxml-20260909-final` reproduced an editor-export rejection in
+the retained September 8 Release build: metadata reported a rounded decimal
+fraction while the eight findings stored `30000/1001`. Its CSV omitted source
+timecodes. The rebuilt September 9 app then opened the unchanged pair/sidecar,
+showed all eight findings and saved `source-a_vs_source-b_review.fcpxml` plus
+the separate `corrected-review.csv` through native menus/save panels.
+
+Parsing the saved bytes verifies all eight positions/durations, note text
+(including Unicode, tabs and line breaks), classifications and both source
+URLs. FCPXML has `1001/30000s` frame duration and `DF` display. Representative
+source-A coordinates are:
+
+| Relative frame | Source timecode | Inclusive duration |
+| --- | --- | --- |
+| 0 / 1 | 00:00:58;00 / 00:00:58;01 | One frame each |
+| 59 | 00:00:59;29 | Three frames |
+| 60 (two findings) | 00:01:00;02 | One frame each |
+| 16241 | 00:09:59;29 | Three frames |
+| 16242 | 00:10:00;00 | One frame |
+| 18280 | 00:11:08;00 | Final playable frame |
+
+Both movies and the original sidecar match their manifest hashes after export.
+`native-export-validation.json` records the assertions' results and output
+hashes in that disposable directory. The 59.94 and 23.976 fixture-generation
+variants also complete; the native export check above is specifically 29.97.
+Generated-media XCTest separately verifies both 29.97/59.94 drop-frame rates,
+source labels and all four text-based report formats. All 479 Release tests,
+static analysis and 61 release-preflight checks pass.
+
+Final Cut Pro launch automation timed out before an editor project opened.
+No import or re-export was performed, and no editor acceptance row below is
+marked passed. The native export result is independent of that outstanding gate.
 
 | Editor/version | Media/rate/start | Marker count | Frame accuracy | Text/duplicates | Re-export comparison | Result/artifacts |
 | --- | --- | --- | --- | --- | --- | --- |
