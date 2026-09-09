@@ -7,6 +7,102 @@ import XCTest
 
 @MainActor
 final class CompareReviewTimebaseMigrationControllerTests: XCTestCase {
+    func testReviewActionWaitsForDraftSaveAndRejectsFailureOrChangedPrimary() async throws {
+        for outcome in ["saved", "failed", "reloaded"] {
+            let f = try ReviewTimebaseMigrationFixture()
+            defer { f.remove() }
+            let store = DelayedMigrationControllerStore(
+                document: f.document, holdPreview: false, holdNoteSave: true
+            )
+            let (session, primary) = await makeSession(f, store: store)
+            defer { session.stop(); primary.teardown() }
+            session.updateReviewNote(id: f.document.notes[0].id, text: "Pending field draft")
+            var actionStarted = false
+            let action = session.performReviewActionAfterSaving(primary: primary) { session, _ in
+                actionStarted = true
+                XCTAssertEqual(session.reviewNotes[0].text, "Pending field draft")
+                XCTAssertTrue(session.canManageReviewCopy)
+            }
+            await assertEventuallyAsync { await store.noteSaveStarted }
+            XCTAssertFalse(actionStarted)
+            XCTAssertTrue(session.isReviewActionPending)
+            XCTAssertFalse(session.canEditReviewNotes)
+            session.updateReviewNote(id: f.document.notes[0].id, text: "Must not replace the flushed draft")
+            XCTAssertEqual(session.reviewNotes[0].text, "Pending field draft")
+            if outcome == "reloaded" { primary.loadMedia(f.item(url: f.primary)) }
+            await store.complete(error: outcome == "failed"
+                ? NSError(domain: "ReviewSaveTest", code: 1) : nil)
+            await action.value
+            XCTAssertFalse(session.isReviewActionPending)
+            XCTAssertEqual(actionStarted, outcome == "saved")
+            XCTAssertEqual(session.reviewNotes[0].text, "Pending field draft")
+            if outcome == "failed" { XCTAssertNotNil(session.reviewError) }
+        }
+    }
+
+    func testDismissedSaveFailureIsRetriedBeforeOpeningAnotherReview() async throws {
+        for deleteNote in [false, true] {
+            let f = try ReviewTimebaseMigrationFixture()
+            defer { f.remove() }
+            let store = DelayedMigrationControllerStore(document: f.document, holdPreview: false, holdNoteSave: true)
+            let (session, primary) = await makeSession(f, store: store)
+            defer { session.stop(); primary.teardown() }
+            if deleteNote { session.deleteReviewNote(id: f.document.notes[0].id) }
+            else { session.updateReviewNote(id: f.document.notes[0].id, text: "Retain failed edit") }
+            var actionStarted = false
+            let first = session.performReviewActionAfterSaving(primary: primary) { _, _ in actionStarted = true }
+            await assertEventuallyAsync { await store.noteSaveCount == 1 }
+            await store.complete(error: NSError(domain: "ReviewSaveTest", code: 1))
+            await first.value
+            XCTAssertFalse(actionStarted)
+            session.dismissReviewError()
+
+            let retry = session.performReviewActionAfterSaving(primary: primary) { _, _ in actionStarted = true }
+            await assertEventuallyAsync { await store.noteSaveCount == 2 }
+            XCTAssertFalse(actionStarted)
+            XCTAssertTrue(session.isReviewActionPending)
+            await store.complete()
+            await retry.value
+            XCTAssertTrue(actionStarted)
+            let persisted = try await store.load(from: f.source, primaryURL: f.primary, secondaryURL: f.secondary)
+            if deleteNote { XCTAssertTrue(persisted?.notes.isEmpty == true) }
+            else { XCTAssertEqual(persisted?.notes[0].text, "Retain failed edit") }
+        }
+    }
+
+    func testUnrelatedSuccessfulSaveRetainsEarlierFailedEditUntilRetry() async throws {
+        let f = try ReviewTimebaseMigrationFixture()
+        defer { f.remove() }
+        var document = f.document
+        let other = CompareReviewNote(primaryFrame: 10, primaryTime: 1, secondaryFrame: 10,
+            secondaryTime: 1, text: "Other finding")
+        document.notes.append(other)
+        let store = DelayedMigrationControllerStore(document: document, holdPreview: false, holdNoteSave: true)
+        let (session, primary) = await makeSession(f, store: store)
+        defer { session.stop(); primary.teardown() }
+        session.updateReviewNote(id: f.document.notes[0].id, text: "Failed finding edit")
+        await assertEventuallyAsync { await store.noteSaveCount == 1 }
+        await store.complete(error: NSError(domain: "ReviewSaveTest", code: 1))
+        await assertEventually { session.canManageReviewCopy }
+        session.updateReviewNote(id: other.id, text: "Successful other edit")
+        await assertEventuallyAsync { await store.noteSaveCount == 2 }
+        await store.complete()
+        await assertEventually { session.canManageReviewCopy }
+        XCTAssertEqual(session.reviewNotes.first { $0.id == f.document.notes[0].id }?.text, "Failed finding edit")
+        XCTAssertEqual(session.reviewNotes.first { $0.id == other.id }?.text, "Successful other edit")
+
+        var actionStarted = false
+        let retry = session.performReviewActionAfterSaving(primary: primary) { _, _ in actionStarted = true }
+        await assertEventuallyAsync { await store.noteSaveCount == 3 }
+        XCTAssertFalse(actionStarted)
+        await store.complete()
+        await retry.value
+        XCTAssertTrue(actionStarted)
+        let persisted = try await store.load(from: f.source, primaryURL: f.primary, secondaryURL: f.secondary)
+        XCTAssertEqual(persisted?.notes.first { $0.id == f.document.notes[0].id }?.text, "Failed finding edit")
+        XCTAssertEqual(persisted?.notes.first { $0.id == other.id }?.text, "Successful other edit")
+    }
+
     func testPreviewDoesNotWriteAndCancelRetainsOriginalAndFilter() async throws {
         let f = try ReviewTimebaseMigrationFixture()
         defer { f.remove() }
@@ -136,6 +232,33 @@ final class CompareReviewTimebaseMigrationControllerTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: f.destination.path))
     }
 
+    func testMetadataChangeDuringMigrationSaveDoesNotActivateTheCopy() async throws {
+        for changePrimary in [false, true] {
+            let f = try ReviewTimebaseMigrationFixture()
+            defer { f.remove() }
+            let store = DelayedMigrationControllerStore(document: f.document, holdPreview: false)
+            let (session, primary) = await makeSession(f, store: store)
+            defer { session.stop(); primary.teardown() }
+            session.previewReviewTimebaseMigration(primary: primary, destinationURL: f.destination)
+            await assertEventually { session.reviewRelinkPreview != nil }
+            session.confirmReviewRelink(primary: primary)
+            await assertEventuallyAsync { await store.saveStarted }
+
+            let controller = changePrimary ? primary : session.secondaryController
+            var changed = f.item(url: changePrimary ? f.primary : f.secondary)
+            changed.durationSeconds = 30
+            controller.updateMetadata(changed)
+            await store.complete()
+            await assertEventually { !session.isReviewRelinking }
+
+            XCTAssertEqual(session.reviewNotes, f.document.notes)
+            XCTAssertEqual(session.reviewSidecarURL, f.source)
+            XCTAssertTrue(session.canEditReviewNotes)
+            XCTAssertTrue(session.reviewRelinkFailure?.contains("Media timing changed while saving") == true)
+            XCTAssertTrue(session.reviewRelinkFailure?.contains(f.destination.path) == true)
+        }
+    }
+
     func testStopRejectsLateMigrationPreviewAndSaveCompletions() async throws {
         for holdPreview in [false, true] {
             let f = try ReviewTimebaseMigrationFixture()
@@ -207,17 +330,22 @@ final class CompareReviewTimebaseMigrationControllerTests: XCTestCase {
 }
 
 private actor DelayedMigrationControllerStore: CompareReviewSidecarStoring {
-    let document: CompareReviewDocument
+    var document: CompareReviewDocument
     let holdPreview: Bool
+    let holdNoteSave: Bool
     let previewDocument: CompareReviewDocument?
     private(set) var previewStarted = false
     private(set) var saveStarted = false
+    private(set) var noteSaveStarted = false
+    private(set) var noteSaveCount = 0
     private var result: CompareReviewDocument?
     private var continuation: CheckedContinuation<CompareReviewDocument, Error>?
 
-    init(document: CompareReviewDocument, holdPreview: Bool, previewDocument: CompareReviewDocument? = nil) {
+    init(document: CompareReviewDocument, holdPreview: Bool, previewDocument: CompareReviewDocument? = nil,
+         holdNoteSave: Bool = false) {
         self.document = document
         self.holdPreview = holdPreview
+        self.holdNoteSave = holdNoteSave
         self.previewDocument = previewDocument
     }
 
@@ -235,9 +363,10 @@ private actor DelayedMigrationControllerStore: CompareReviewSidecarStoring {
         return try await withCheckedThrowingContinuation { continuation = $0 }
     }
 
-    func complete() {
+    func complete(error: Error? = nil) {
         guard let result else { return }
-        continuation?.resume(returning: result)
+        if let error { continuation?.resume(throwing: error) }
+        else { document = result; continuation?.resume(returning: result) }
         continuation = nil
     }
 
@@ -245,6 +374,19 @@ private actor DelayedMigrationControllerStore: CompareReviewSidecarStoring {
 
     func apply(_ mutation: CompareReviewMutation, to url: URL, primaryURL: URL,
                secondaryURL: URL) async throws -> CompareReviewDocument {
-        throw CompareReviewTimebaseMigrationError.unavailable
+        guard holdNoteSave else {
+            throw CompareReviewTimebaseMigrationError.unavailable
+        }
+        noteSaveStarted = true
+        noteSaveCount += 1
+        var updated = document
+        switch mutation {
+        case .upsert(let note):
+            updated.notes.removeAll { $0.id == note.id }
+            updated.notes.append(note)
+        case .delete(let id): updated.notes.removeAll { $0.id == id }
+        }
+        result = updated
+        return try await withCheckedThrowingContinuation { continuation = $0 }
     }
 }

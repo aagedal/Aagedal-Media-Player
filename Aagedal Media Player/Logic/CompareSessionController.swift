@@ -427,6 +427,8 @@ final class CompareSessionController: ObservableObject {
     @Published private(set) var reviewSidecarURL: URL?
     @Published private(set) var reviewError: String?
     @Published private(set) var isReviewLoading = false
+    @Published private(set) var isReviewActionPending = false
+    private var reviewActionOperation = UUID()
     @Published private(set) var reviewRelinkPreview: CompareReviewRelinkPreview?
     @Published private(set) var reviewRelinkFailure: String?
     @Published private(set) var isReviewRelinking = false
@@ -453,6 +455,7 @@ final class CompareSessionController: ObservableObject {
     private var primaryLoopCancellable: AnyCancellable?
     private var loadGeneration = OperationGeneration()
     private var reviewRevision: UInt64 = 0
+    private var pendingReviewMutations: [UUID: (revision: UInt64, mutation: CompareReviewMutation)] = [:]
     private var isReviewSidecarWritable = false
     private let reviewStore: any CompareReviewSidecarStoring
     private let metadataLoader: MetadataLoader
@@ -460,7 +463,7 @@ final class CompareSessionController: ObservableObject {
 
     var isActive: Bool { secondaryURL != nil }
     var canEditReviewNotes: Bool {
-        isActive && !isReviewLoading && !isReviewRelinking && isReviewSidecarWritable
+        isActive && !isReviewLoading && !isReviewRelinking && !isReviewActionPending && isReviewSidecarWritable
     }
 
     init(
@@ -520,6 +523,7 @@ final class CompareSessionController: ObservableObject {
         reviewLoadTask?.cancel()
         reviewSaveTask?.cancel()
         reviewSaveTask = nil
+        pendingReviewMutations.removeAll()
         reviewRevision &+= 1
         reviewExportTask?.cancel()
         reviewExportSavePanel?.cancel(nil)
@@ -617,6 +621,7 @@ final class CompareSessionController: ObservableObject {
         reviewLoadTask = nil
         reviewSaveTask?.cancel()
         reviewSaveTask = nil
+        pendingReviewMutations.removeAll()
         reviewRevision &+= 1
         reviewExportTask?.cancel()
         reviewExportTask = nil
@@ -889,10 +894,51 @@ final class CompareSessionController: ObservableObject {
             && reviewSaveTask == nil && !reviewExportState.isInFlight
     }
 
+    /// Menu actions flush visible text drafts synchronously, then wait for
+    /// those edits to reach disk before switching reviews or taking a report
+    /// snapshot. A failed save or a changed session leaves the action canceled.
+    @discardableResult
+    func performReviewActionAfterSaving(
+        primary: PlayerController,
+        action: @escaping @MainActor (CompareSessionController, PlayerController) -> Void
+    ) -> Task<Void, Never> {
+        guard !isReviewActionPending else { return Task {} }
+        isReviewActionPending = true
+        let operation = UUID()
+        reviewActionOperation = operation
+        // A dismissed save error must not make an optimistic edit disposable.
+        // Retry retained mutations explicitly on the next requested action.
+        if reviewSaveTask == nil, let primaryURL = primary.mediaItem?.url, let secondaryURL {
+            for pending in pendingReviewMutations.values.sorted(by: { $0.revision < $1.revision }) {
+                persistReviewMutation(pending.mutation, primaryURL: primaryURL, secondaryURL: secondaryURL)
+            }
+        }
+        let pendingSave = reviewSaveTask
+        let generation = loadGeneration.current
+        let revision = reviewRevision
+        let preparationID = primary.preparationID
+        let primaryURL = primary.mediaItem?.url
+        let sidecarURL = reviewSidecarURL
+        return Task { @MainActor [weak self, weak primary] in
+            await pendingSave?.value
+            guard let self else { return }
+            defer {
+                if self.reviewActionOperation == operation { self.isReviewActionPending = false }
+            }
+            guard !Task.isCancelled, let primary, self.reviewActionOperation == operation,
+                  self.loadGeneration.isCurrent(generation), self.reviewRevision == revision,
+                  primary.preparationID == preparationID, primary.mediaItem?.url == primaryURL,
+                  self.reviewSidecarURL == sidecarURL, self.canManageReviewCopy,
+                  self.pendingReviewMutations.isEmpty else { return }
+            self.isReviewActionPending = false
+            action(self, primary)
+        }
+    }
+
     /// A copy can be reopened explicitly without changing media identities or
     /// overwriting the automatically discovered historical sidecar.
     func chooseReviewCopy(primary: PlayerController) {
-        guard canManageReviewCopy, let primaryURL = primary.mediaItem?.url,
+        guard canManageReviewCopy, pendingReviewMutations.isEmpty, let primaryURL = primary.mediaItem?.url,
               let secondaryURL else { return }
         let primaryPreparationID = primary.preparationID
         let panel = NSOpenPanel()
@@ -918,7 +964,7 @@ final class CompareSessionController: ObservableObject {
     }
 
     func openReviewCopy(from sourceURL: URL, primary: PlayerController) {
-        guard canManageReviewCopy, let primaryURL = primary.mediaItem?.url,
+        guard canManageReviewCopy, pendingReviewMutations.isEmpty, let primaryURL = primary.mediaItem?.url,
               let secondaryURL else { return }
         let generation = loadGeneration.current
         let preparationID = primary.preparationID
@@ -961,7 +1007,7 @@ final class CompareSessionController: ObservableObject {
     /// Preview a new copy only; no historical file or coordinate is changed
     /// until a user explicitly confirms the displayed proposal.
     func previewReviewTimebaseMigration(primary: PlayerController, destinationURL: URL? = nil) {
-        guard canManageReviewCopy, canEditReviewNotes, !reviewNotes.isEmpty, let sourceURL = reviewSidecarURL,
+        guard canManageReviewCopy, pendingReviewMutations.isEmpty, canEditReviewNotes, !reviewNotes.isEmpty, let sourceURL = reviewSidecarURL,
               let primaryItem = primary.mediaItem, let secondaryItem = secondaryController.mediaItem,
               primaryItem.metadata?.primaryVideoStream?.frameRate != nil,
               secondaryItem.metadata?.primaryVideoStream?.frameRate != nil else { return }
@@ -1017,6 +1063,8 @@ final class CompareSessionController: ObservableObject {
     }
 
     func cancelReviewRelink() {
+        reviewActionOperation = UUID()
+        isReviewActionPending = false
         reviewRelinkFailure = nil
         reviewRelinkOperation = UUID()
         reviewRelinkTask?.cancel()
@@ -1029,7 +1077,7 @@ final class CompareSessionController: ObservableObject {
     }
 
     func chooseReviewSidecarToRelink(primary: PlayerController) {
-        guard canRelinkReviewNotes, let primaryURL = primary.mediaItem?.url,
+        guard canRelinkReviewNotes, pendingReviewMutations.isEmpty, let primaryURL = primary.mediaItem?.url,
               let secondaryURL else { return }
         let primaryPreparationID = primary.preparationID
         let panel = NSOpenPanel()
@@ -1055,7 +1103,7 @@ final class CompareSessionController: ObservableObject {
     }
 
     func previewReviewRelink(from sourceURL: URL, primary: PlayerController) {
-        guard canRelinkReviewNotes,
+        guard canRelinkReviewNotes, pendingReviewMutations.isEmpty,
               let primaryURL = primary.mediaItem?.url,
               let secondaryURL,
               let destinationURL = reviewSidecarURL else { return }
@@ -1109,11 +1157,7 @@ final class CompareSessionController: ObservableObject {
             return
         }
         if let migration = preview.migration {
-            guard let primaryItem = primary.mediaItem, let secondaryItem = secondaryController.mediaItem,
-                  TimecodeFormatter.effectiveTimecodeRate(for: primaryItem) == migration.primaryRate,
-                  TimecodeFormatter.effectiveTimecodeRate(for: secondaryItem) == migration.secondaryRate,
-                  primaryItem.durationSeconds == migration.primaryDuration,
-                  secondaryItem.durationSeconds == migration.secondaryDuration else {
+            guard reviewTimebasesMatch(migration, primary: primary) else {
                 cancelReviewRelink()
                 reviewError = "Media timing changed after preview. Preview the migration again."
                 reviewRelinkFailure = reviewError
@@ -1147,6 +1191,13 @@ final class CompareSessionController: ObservableObject {
                     if self.reviewRelinkOperation == operation { self.cancelReviewRelink() }
                     return
                 }
+                if let migration = preview.migration,
+                   !self.reviewTimebasesMatch(migration, primary: primary) {
+                    self.cancelReviewRelink()
+                    self.reviewError = "Media timing changed while saving. The current review remains active; the saved copy is at \(preview.destinationURL.path)."
+                    self.reviewRelinkFailure = self.reviewError
+                    return
+                }
                 self.reviewNotes = document.notes.sorted {
                     ($0.primaryFrame, $0.createdAt) < ($1.primaryFrame, $1.createdAt)
                 }
@@ -1171,6 +1222,16 @@ final class CompareSessionController: ObservableObject {
         }
     }
 
+    private func reviewTimebasesMatch(_ migration: CompareReviewTimebaseMigration, primary: PlayerController?) -> Bool {
+        guard let primaryItem = primary?.mediaItem, let secondaryItem = secondaryController.mediaItem else {
+            return false
+        }
+        return TimecodeFormatter.effectiveTimecodeRate(for: primaryItem) == migration.primaryRate
+            && TimecodeFormatter.effectiveTimecodeRate(for: secondaryItem) == migration.secondaryRate
+            && primaryItem.durationSeconds == migration.primaryDuration
+            && secondaryItem.durationSeconds == migration.secondaryDuration
+    }
+
     func dismissReviewError() {
         reviewError = nil
     }
@@ -1184,7 +1245,7 @@ final class CompareSessionController: ObservableObject {
         _ format: CompareReviewReportFormat,
         primary: PlayerController
     ) {
-        guard !isReviewRelinking,
+        guard !isReviewRelinking, !isReviewActionPending, pendingReviewMutations.isEmpty,
               !reviewExportState.isInFlight,
               !isReviewLoading,
               let primaryItem = primary.mediaItem,
@@ -1475,6 +1536,7 @@ final class CompareSessionController: ObservableObject {
         generation: UInt64
     ) {
         cancelReviewRelink()
+        pendingReviewMutations.removeAll()
         reviewLoadTask?.cancel()
         let sidecarURL = CompareReviewSidecarStore.sidecarURL(
             primaryURL: primaryURL,
@@ -1523,6 +1585,12 @@ final class CompareSessionController: ObservableObject {
         guard let reviewSidecarURL else { return }
         reviewRevision &+= 1
         let revision = reviewRevision
+        let mutationID: UUID
+        switch mutation {
+        case .upsert(let note): mutationID = note.id
+        case .delete(let id): mutationID = id
+        }
+        pendingReviewMutations[mutationID] = (revision, mutation)
         let generation = loadGeneration.current
         let previousSave = reviewSaveTask
         let reviewStore = reviewStore
@@ -1538,10 +1606,28 @@ final class CompareSessionController: ObservableObject {
                 )
                 guard let self else { return }
                 guard !Task.isCancelled,
-                      self.loadGeneration.isCurrent(generation),
-                      revision == self.reviewRevision else { return }
-                self.reviewNotes = document.notes
-                self.reviewError = nil
+                      self.loadGeneration.isCurrent(generation) else { return }
+                if self.pendingReviewMutations[mutationID]?.revision == revision {
+                    self.pendingReviewMutations.removeValue(forKey: mutationID)
+                }
+                guard revision == self.reviewRevision else { return }
+                // A later successful edit can return a disk document that
+                // lacks an earlier failed edit to another note. Keep those
+                // outstanding mutations visible until their retry succeeds.
+                var notes = document.notes
+                for pending in self.pendingReviewMutations.values {
+                    switch pending.mutation {
+                    case .upsert(let note):
+                        notes.removeAll { $0.id == note.id }
+                        notes.append(note)
+                    case .delete(let id): notes.removeAll { $0.id == id }
+                    }
+                }
+                self.reviewNotes = notes.sorted {
+                    ($0.primaryFrame, $0.createdAt, $0.id.uuidString) < ($1.primaryFrame, $1.createdAt, $1.id.uuidString)
+                }
+                if self.pendingReviewMutations.isEmpty { self.reviewError = nil }
+                else { self.reviewError = "Some comparison note changes have not been saved. The next review action will retry them." }
                 self.reviewSaveTask = nil
             } catch {
                 guard let self else { return }

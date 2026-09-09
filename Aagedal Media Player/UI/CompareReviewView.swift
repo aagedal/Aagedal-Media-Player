@@ -53,6 +53,7 @@ struct CompareReviewView: View {
     let timecodeMode: TimecodeDisplayMode
 
     @State private var draft = ""
+    @State private var noteDrafts: [UUID: String] = [:]
     @FocusState private var isDraftFocused: Bool
 
     var body: some View {
@@ -174,12 +175,12 @@ struct CompareReviewView: View {
 
                 Menu("Notes") {
                     Button("Open Notes Copy…") {
-                        compareSession.chooseReviewCopy(primary: primaryController)
+                        performReviewAction { $0.chooseReviewCopy(primary: $1) }
                     }
                     .disabled(!compareSession.canManageReviewCopy)
                     .help("Open an existing sidecar for this exact A/B pair. Edits save to the selected copy.")
                     Button("Migrate Rounded Timebases…") {
-                        compareSession.previewReviewTimebaseMigration(primary: primaryController)
+                        performReviewAction { $0.previewReviewTimebaseMigration(primary: $1) }
                     }
                     .disabled(!compareSession.canManageReviewCopy || !compareSession.canEditReviewNotes || compareSession.reviewNotes.isEmpty
                               || primaryController.mediaItem?.metadata?.primaryVideoStream?.frameRate == nil
@@ -187,7 +188,7 @@ struct CompareReviewView: View {
                     .help("Preview correction of historical decimal broadcast rates and save a new copy, preserving recorded frame numbers.")
                     Divider()
                     Button("Relink Notes…") {
-                        compareSession.chooseReviewSidecarToRelink(primary: primaryController)
+                        performReviewAction { $0.chooseReviewSidecarToRelink(primary: $1) }
                     }
                     .disabled(!compareSession.canRelinkReviewNotes)
                     .help("Relink a sidecar to this A/B pair. Requires an empty review and a new destination.")
@@ -196,29 +197,20 @@ struct CompareReviewView: View {
 
                 Menu {
                     Button("CSV Report…") {
-                        compareSession.exportReviewReport(.csv, primary: primaryController)
+                        performReviewAction { $0.exportReviewReport(.csv, primary: $1) }
                     }
                     Button("PDF Report…") {
-                        compareSession.exportReviewReport(.pdf, primary: primaryController)
+                        performReviewAction { $0.exportReviewReport(.pdf, primary: $1) }
                     }
                     Divider()
                     Button("DaVinci Resolve Markers (.edl)…") {
-                        compareSession.exportReviewReport(
-                            .resolveMarkersEDL,
-                            primary: primaryController
-                        )
+                        performReviewAction { $0.exportReviewReport(.resolveMarkersEDL, primary: $1) }
                     }
                     Button("Final Cut Pro Markers (.fcpxml)…") {
-                        compareSession.exportReviewReport(
-                            .finalCutProXML,
-                            primary: primaryController
-                        )
+                        performReviewAction { $0.exportReviewReport(.finalCutProXML, primary: $1) }
                     }
                     Button("Avid Media Composer Markers (.txt)…") {
-                        compareSession.exportReviewReport(
-                            .avidMarkersText,
-                            primary: primaryController
-                        )
+                        performReviewAction { $0.exportReviewReport(.avidMarkersText, primary: $1) }
                     }
                 } label: {
                     Label("Export", systemImage: "square.and.arrow.up")
@@ -260,12 +252,19 @@ struct CompareReviewView: View {
         }
         .padding(14)
         .frame(width: 420)
+        .disabled(compareSession.isReviewActionPending)
         .onAppear { isDraftFocused = true }
+        .onChange(of: compareSession.reviewSidecarURL) { _, _ in noteDrafts.removeAll() }
+        .onChange(of: primaryController.preparationID) { _, _ in noteDrafts.removeAll() }
     }
 
     private func noteRow(_ note: CompareReviewNote) -> some View {
         CompareReviewNoteRow(
             note: note,
+            draft: Binding(
+                get: { noteDrafts[note.id] ?? note.text },
+                set: { if !compareSession.isReviewActionPending { noteDrafts[note.id] = $0 } }
+            ),
             timecodeLabel: timecodeLabel(for: note),
             canEdit: compareSession.canEditReviewNotes,
             onSeek: {
@@ -274,7 +273,9 @@ struct CompareReviewView: View {
             onUpdate: { text in
                 compareSession.updateReviewNote(id: note.id, text: text)
             },
+            onCommitFinished: { noteDrafts[note.id] = nil },
             onDelete: {
+                noteDrafts[note.id] = nil
                 compareSession.deleteReviewNote(id: note.id)
             },
             onClassification: { severity, category, status in
@@ -290,6 +291,23 @@ struct CompareReviewView: View {
                 compareSession.seekToReviewRangeEnd(note, primary: primaryController)
             }
         )
+    }
+
+    private func performReviewAction(
+        _ action: @escaping @MainActor (CompareSessionController, PlayerController) -> Void
+    ) {
+        guard !compareSession.isReviewActionPending else { return }
+        // TextField bindings record drafts immediately, before focus-loss or
+        // onDisappear callbacks. Flush them before an action disables editing
+        // or captures the notes for an export.
+        for note in compareSession.reviewNotes {
+            if let text = noteDrafts[note.id]?.trimmingCharacters(in: .whitespacesAndNewlines),
+               !text.isEmpty, text != note.text {
+                compareSession.updateReviewNote(id: note.id, text: text)
+            }
+        }
+        noteDrafts.removeAll()
+        compareSession.performReviewActionAfterSaving(primary: primaryController, action: action)
     }
 
     private func navigationButton(
@@ -411,6 +429,7 @@ private struct CompareReviewNoteRow: View {
     let canEdit: Bool
     let onSeek: () -> Void
     let onUpdate: (String) -> Void
+    let onCommitFinished: () -> Void
     let onDelete: () -> Void
     let onClassification: (CompareReviewSeverity?, CompareReviewCategory?, CompareReviewStatus?) -> Void
     let onRange: (Int64?) -> Bool
@@ -420,16 +439,18 @@ private struct CompareReviewNoteRow: View {
     @State private var endFrameDraft = ""
     @State private var rangeError: String?
 
-    @State private var draft: String
+    @Binding private var draft: String
     @State private var isDeleting = false
     @FocusState private var isFocused: Bool
 
     init(
         note: CompareReviewNote,
+        draft: Binding<String>,
         timecodeLabel: String,
         canEdit: Bool,
         onSeek: @escaping () -> Void,
         onUpdate: @escaping (String) -> Void,
+        onCommitFinished: @escaping () -> Void,
         onDelete: @escaping () -> Void,
         onClassification: @escaping (CompareReviewSeverity?, CompareReviewCategory?, CompareReviewStatus?) -> Void,
         onRange: @escaping (Int64?) -> Bool,
@@ -441,13 +462,14 @@ private struct CompareReviewNoteRow: View {
         self.canEdit = canEdit
         self.onSeek = onSeek
         self.onUpdate = onUpdate
+        self.onCommitFinished = onCommitFinished
         self.onDelete = onDelete
         self.onClassification = onClassification
         self.onRange = onRange
         self.onCurrentEnd = onCurrentEnd
         self.onSeekEnd = onSeekEnd
         _endFrameDraft = State(initialValue: note.primaryEndFrame.map(String.init) ?? "")
-        _draft = State(initialValue: note.text)
+        _draft = draft
     }
 
     var body: some View {
@@ -476,9 +498,6 @@ private struct CompareReviewNoteRow: View {
                     .onSubmit(commit)
                     .onChange(of: isFocused) { wasFocused, focused in
                         if wasFocused && !focused { commit() }
-                    }
-                    .onChange(of: note.text) { _, text in
-                        if !isFocused { draft = text }
                     }
 
                 Button(role: .destructive) {
@@ -577,6 +596,7 @@ private struct CompareReviewNoteRow: View {
 
     private func commit() {
         guard !isDeleting, canEdit else { return }
+        defer { onCommitFinished() }
         let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else {
             draft = note.text

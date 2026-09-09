@@ -241,8 +241,8 @@ pair requires the separate relinking workflow; migration never relinks.
 
 ## Writes, conflicts, and lifecycle
 
-The first native migration preview/cancellation check and its remaining
-acceptance work are recorded in
+Native migration preview, cancellation, save/adoption, copy reopening and
+remaining assistive-technology/editor acceptance are recorded in
 [the September 9 native check](COMPARE_REVIEW_MIGRATION_NATIVE_CHECK_2026-09-09.md).
 
 The shared in-process store serializes edits. Each UUID-addressed add/update or
@@ -259,6 +259,15 @@ visible edits must not be assumed durable after an error. Closing/replacing a
 session cancels pending work; there is no guarantee that an edit still awaiting
 its write has reached disk. Atomic replacement protects file integrity, not
 cross-process conflict resolution or unsaved edits.
+
+Notes/Export actions first commit pending note-text fields and wait for their
+saves. Editing is disabled during this transition, including if the popover is
+closed and reopened. Failed edits and deletions remain tracked in the current
+session even after dismissing the error; the next Notes/Export action retries
+them and continues only after every outstanding mutation is saved. A successful
+save to another note cannot hide an earlier failed change. These retained changes
+are session-local, not a durable recovery journal; replacing or closing the
+session still has the cancellation behavior described above.
 
 ## Alignment and portability
 

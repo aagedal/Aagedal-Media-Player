@@ -51,6 +51,54 @@ controller coverage exercises those persistence paths separately.
 
 ## Integrated verification
 
+### Completed native continuation
+
+The corrected Release app was exercised again after the Mac became available.
+The migration sheet now shows its 320-point scroll area, wrapped source/copy
+paths, visible note/rate details, complete explanations and both action buttons.
+**Save and Use Migrated Copy** published the `-exact-EC037D84.json` copy and
+the Review popover identified it as the active sidecar with all eight findings.
+
+Independent inspection of the saved JSON verifies all note UUIDs, text,
+classifications, creation timestamps, source identities and A/B frame indexes,
+including inclusive range endpoints. Both stored rates are `30000/1001`, with
+seconds recomputed exactly from those frame indexes. Both original movies and
+the original sidecar still match every hash in `original-hashes.json`.
+
+Native Resolve-marker export succeeded from the migrated copy. The save panel
+default was `source-a_vs_source-b_review.edl`, and the actual file has a single
+`.edl` extension and eight events. Its drop-frame boundaries and range durations
+include frame 59 at `00:00:59;29` with duration 3, duplicate frame 60 at
+`00:01:00;02`, and the final playable frame at `00:11:08;00`.
+
+Exiting and reopening Compare Mode loaded the original sidecar as documented.
+**Notes → Open Notes Copy…** then reopened the corrected copy explicitly; the
+popover again displayed that copy's full path and all eight findings. Cancelling
+a later copy picker retained the active review. This closes focused native
+layout, save/adoption, explicit reopening and default EDL-name acceptance.
+It does not complete editor import/re-export or full keyboard/VoiceOver coverage.
+
+The final rebuilt app also passed a pending-edit export check. Keyboard Tab
+navigation selected the existing frame-0 note in the migrated copy; its text
+was replaced with `Native pending edit — æøå` without pressing Return.
+The accessibility tree showed that draft while an independent disk read still
+contained the old text. Selecting **Export → CSV Report…** then saved an
+eight-row report containing the new text, and the active copy persisted it.
+Original movie/sidecar hashes remained unchanged. This checks the native
+text-to-export transition; delayed save failures and retry behavior are covered
+by injected-store regressions, not an induced native filesystem failure.
+
+### Final continuation verification
+
+The final combined Release suite passed **513 tests with zero failures** in
+114.991 seconds (115.250 including suite overhead), including both original ITU
+reference sets. Release static analysis and all 61 release-preflight checks pass.
+Artifacts are `/tmp/aagedal-review-final-full-20260909.xcresult`, its adjacent
+log, and `/tmp/aagedal-review-final-analyze-20260909.log`. No app source changed
+after this verification; subsequent edits only record evidence and remaining work.
+
+### Earlier Phase 66–67 verification
+
 The full Release suite passed **503 tests with zero failures**, with both
 original ITU reference sets enabled. It took 115.063 seconds (115.336 including
 suite overhead). It includes 47 WAVE reader tests and 18 migration model/store/
