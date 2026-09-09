@@ -15,11 +15,17 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("output", type=Path, help="New output directory")
     parser.add_argument("--rate", choices=("29.97", "59.94", "23.976"), default="29.97")
+    parser.add_argument("--historical-rounded", action="store_true",
+                        help="Store legacy rounded note rates and seconds for migration checks; source media keeps its exact rate")
     args = parser.parse_args()
     root = args.output.resolve()
     root.mkdir(parents=True, exist_ok=False)
     numerator = {"29.97": 30000, "59.94": 60000, "23.976": 24000}[args.rate]
     denominator = 1001
+    # Older note snapshots rounded the encoded frame rate to three decimals.
+    # Preserve frame ordinals, but reproduce that stored rate and its seconds.
+    stored_numerator = round(numerator * 1000 / denominator) if args.historical_rounded else numerator
+    stored_denominator = 1000 if args.historical_rounded else denominator
     nominal = round(numerator / denominator)
     frame_count = numerator * 610 // denominator
     primary, secondary = root / "source-a.mov", root / "source-b.mov"
@@ -52,10 +58,10 @@ def main():
     for i, frame in enumerate(anchors):
         note = dict(id=str(uuid.uuid5(uuid.NAMESPACE_URL, f"aagedal-interchange:{args.rate}:{i}")),
                     primaryFrame=frame, secondaryFrame=frame,
-                    primaryTime=frame * denominator / numerator,
-                    secondaryTime=frame * denominator / numerator,
-                    primaryRateNumerator=numerator, primaryRateDenominator=denominator,
-                    secondaryRateNumerator=numerator, secondaryRateDenominator=denominator,
+                    primaryTime=frame * stored_denominator / stored_numerator,
+                    secondaryTime=frame * stored_denominator / stored_numerator,
+                    primaryRateNumerator=stored_numerator, primaryRateDenominator=stored_denominator,
+                    secondaryRateNumerator=stored_numerator, secondaryRateDenominator=stored_denominator,
                     text=f"Fixture {i + 1}: æøå 日本語 & <picture> \"quoted\"\tcolumn\nSecond line",
                     severity=["info", "minor", "major", "critical"][i % 4],
                     category=["general", "picture", "audio", "sync", "metadata"][i % 5],
@@ -73,12 +79,17 @@ def main():
     sidecar = root / f"source-a vs source-b-{suffix:x}.aagedal-compare.json"
     sidecar.write_text(json.dumps(document, ensure_ascii=False, sort_keys=True, indent=2) + "\n")
     manifest = dict(rateNumerator=numerator, rateDenominator=denominator, durationFrames=frame_count,
+                    historicalRounded=args.historical_rounded,
+                    storedRateNumerator=stored_numerator, storedRateDenominator=stored_denominator,
                     sourceStartTimecode=None if args.rate == "23.976" else "00:00:58;00",
                     markerCount=len(notes), command=command,
                     sha256={path.name: hashlib.sha256(path.read_bytes()).hexdigest()
                             for path in (primary, secondary, sidecar)})
     (root / "fixture-manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
     print(f"Created {len(notes)} findings at {args.rate} fps in {root}")
+    if args.historical_rounded:
+        print(f"Migration fixture: both sources encode {numerator}/{denominator} fps; "
+              f"both note snapshots store {stored_numerator}/{stored_denominator} fps with matching portable seconds.")
     print("Open source-a.mov, compare source-b.mov, then export CSV and editor markers in the app.")
 
 

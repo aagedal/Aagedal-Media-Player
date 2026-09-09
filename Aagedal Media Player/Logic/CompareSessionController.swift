@@ -385,6 +385,7 @@ struct CompareReviewRelinkPreview: Identifiable {
     let primaryPreparationID: Int
     let secondaryURL: URL
     let document: CompareReviewDocument
+    var migration: CompareReviewTimebaseMigration? = nil
 }
 
 @MainActor
@@ -883,6 +884,134 @@ final class CompareSessionController: ObservableObject {
             && !reviewExportState.isInFlight && reviewNotes.isEmpty
     }
 
+    var canManageReviewCopy: Bool {
+        isActive && !isReviewLoading && !isReviewRelinking && !isLoading
+            && reviewSaveTask == nil && !reviewExportState.isInFlight
+    }
+
+    /// A copy can be reopened explicitly without changing media identities or
+    /// overwriting the automatically discovered historical sidecar.
+    func chooseReviewCopy(primary: PlayerController) {
+        guard canManageReviewCopy, let primaryURL = primary.mediaItem?.url,
+              let secondaryURL else { return }
+        let primaryPreparationID = primary.preparationID
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.json]
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+        panel.message = "Open a comparison review copy for the currently loaded A/B sources. Subsequent edits save to this copy."
+        reviewRelinkOpenPanel = panel
+        isReviewRelinking = true
+        let operation = UUID()
+        reviewRelinkOperation = operation
+        panel.begin { [weak self, weak primary] response in
+            Task { @MainActor in
+                guard let self, self.reviewRelinkOperation == operation else { return }
+                self.reviewRelinkOpenPanel = nil
+                self.isReviewRelinking = false
+                guard response == .OK, let sourceURL = panel.url, let primary,
+                      primary.mediaItem?.url == primaryURL, primary.preparationID == primaryPreparationID,
+                      self.secondaryURL == secondaryURL else { return }
+                self.openReviewCopy(from: sourceURL, primary: primary)
+            }
+        }
+    }
+
+    func openReviewCopy(from sourceURL: URL, primary: PlayerController) {
+        guard canManageReviewCopy, let primaryURL = primary.mediaItem?.url,
+              let secondaryURL else { return }
+        let generation = loadGeneration.current
+        let preparationID = primary.preparationID
+        let operation = UUID()
+        reviewRelinkOperation = operation
+        isReviewRelinking = true
+        reviewRelinkTask = Task { @MainActor [weak self, weak primary] in
+            guard let self else { return }
+            do {
+                guard let document = try await self.reviewStore.load(
+                    from: sourceURL, primaryURL: primaryURL, secondaryURL: secondaryURL
+                ) else { throw CompareReviewTimebaseMigrationError.unavailable }
+                try Task.checkCancellation()
+                guard self.reviewRelinkOperation == operation, self.loadGeneration.isCurrent(generation),
+                      primary?.preparationID == preparationID, primary?.mediaItem?.url == primaryURL,
+                      self.secondaryURL == secondaryURL else {
+                    if self.reviewRelinkOperation == operation { self.cancelReviewRelink() }
+                    return
+                }
+                self.reviewNotes = document.notes.sorted {
+                    ($0.primaryFrame, $0.createdAt) < ($1.primaryFrame, $1.createdAt)
+                }
+                self.reviewSidecarURL = sourceURL
+                self.isReviewSidecarWritable = true
+                self.reviewRevision &+= 1
+                self.reviewError = nil
+                self.reviewExportState = .idle
+                self.cancelReviewRelink()
+            } catch {
+                guard self.reviewRelinkOperation == operation, self.loadGeneration.isCurrent(generation) else { return }
+                self.cancelReviewRelink()
+                guard primary?.preparationID == preparationID, primary?.mediaItem?.url == primaryURL,
+                      self.secondaryURL == secondaryURL, !(error is CancellationError) else { return }
+                self.reviewError = "Could not open review copy: \(error.localizedDescription)"
+                self.reviewRelinkFailure = self.reviewError
+            }
+        }
+    }
+
+    /// Preview a new copy only; no historical file or coordinate is changed
+    /// until a user explicitly confirms the displayed proposal.
+    func previewReviewTimebaseMigration(primary: PlayerController, destinationURL: URL? = nil) {
+        guard canManageReviewCopy, canEditReviewNotes, !reviewNotes.isEmpty, let sourceURL = reviewSidecarURL,
+              let primaryItem = primary.mediaItem, let secondaryItem = secondaryController.mediaItem,
+              primaryItem.metadata?.primaryVideoStream?.frameRate != nil,
+              secondaryItem.metadata?.primaryVideoStream?.frameRate != nil else { return }
+        let generation = loadGeneration.current
+        let preparationID = primary.preparationID
+        let operation = UUID()
+        let primaryRate = TimecodeFormatter.effectiveTimecodeRate(for: primaryItem)
+        let secondaryRate = TimecodeFormatter.effectiveTimecodeRate(for: secondaryItem)
+        let destination = destinationURL ?? sourceURL.deletingLastPathComponent().appendingPathComponent(
+            "\(sourceURL.deletingPathExtension().lastPathComponent)-exact-\(UUID().uuidString.prefix(8)).json"
+        )
+        reviewRelinkOperation = operation
+        isReviewRelinking = true
+        reviewError = nil
+        reviewRelinkTask = Task { @MainActor [weak self, weak primary] in
+            guard let self else { return }
+            do {
+                let document = try await self.reviewStore.previewRelink(from: sourceURL)
+                guard try CompareReviewTimebaseMigration.hasSameSavedNotes(document.notes, self.reviewNotes) else {
+                    throw CompareReviewTimebaseMigrationError.previewChanged
+                }
+                let migration = try CompareReviewTimebaseMigration(
+                    document: document, primaryURL: primaryItem.url, secondaryURL: secondaryItem.url,
+                    primaryRate: primaryRate, secondaryRate: secondaryRate,
+                    primaryDuration: primaryItem.durationSeconds, secondaryDuration: secondaryItem.durationSeconds
+                )
+                try Task.checkCancellation()
+                guard self.reviewRelinkOperation == operation, self.loadGeneration.isCurrent(generation),
+                      primary?.preparationID == preparationID, primary?.mediaItem?.url == primaryItem.url,
+                      self.secondaryURL == secondaryItem.url else {
+                    if self.reviewRelinkOperation == operation { self.cancelReviewRelink() }
+                    return
+                }
+                self.reviewRelinkPreview = CompareReviewRelinkPreview(
+                    sourceURL: sourceURL, destinationURL: destination,
+                    primaryURL: primaryItem.url, primaryPreparationID: preparationID,
+                    secondaryURL: secondaryItem.url, document: document, migration: migration
+                )
+                self.reviewRelinkTask = nil
+            } catch {
+                guard self.reviewRelinkOperation == operation, self.loadGeneration.isCurrent(generation) else { return }
+                self.cancelReviewRelink()
+                guard primary?.preparationID == preparationID, primary?.mediaItem?.url == primaryItem.url,
+                      self.secondaryURL == secondaryItem.url, !(error is CancellationError) else { return }
+                self.reviewError = "Could not preview timebase migration: \(error.localizedDescription)"
+                self.reviewRelinkFailure = self.reviewError
+            }
+        }
+    }
+
     func dismissReviewRelinkFailure() {
         reviewRelinkFailure = nil
     }
@@ -979,17 +1108,36 @@ final class CompareSessionController: ObservableObject {
             cancelReviewRelink()
             return
         }
+        if let migration = preview.migration {
+            guard let primaryItem = primary.mediaItem, let secondaryItem = secondaryController.mediaItem,
+                  TimecodeFormatter.effectiveTimecodeRate(for: primaryItem) == migration.primaryRate,
+                  TimecodeFormatter.effectiveTimecodeRate(for: secondaryItem) == migration.secondaryRate,
+                  primaryItem.durationSeconds == migration.primaryDuration,
+                  secondaryItem.durationSeconds == migration.secondaryDuration else {
+                cancelReviewRelink()
+                reviewError = "Media timing changed after preview. Preview the migration again."
+                reviewRelinkFailure = reviewError
+                return
+            }
+        }
         isReviewRelinkSaving = true
         let generation = loadGeneration.current
         let operation = reviewRelinkOperation
         reviewRelinkTask = Task { @MainActor [weak self, weak primary] in
             guard let self else { return }
             do {
-                let document = try await self.reviewStore.relink(
-                    from: preview.sourceURL, to: preview.destinationURL,
-                    primaryURL: preview.primaryURL, secondaryURL: preview.secondaryURL,
-                    expectedDocument: preview.document
-                )
+                let document: CompareReviewDocument
+                if let migration = preview.migration {
+                    document = try await self.reviewStore.migrateTimebases(
+                        from: preview.sourceURL, to: preview.destinationURL, expectedMigration: migration
+                    )
+                } else {
+                    document = try await self.reviewStore.relink(
+                        from: preview.sourceURL, to: preview.destinationURL,
+                        primaryURL: preview.primaryURL, secondaryURL: preview.secondaryURL,
+                        expectedDocument: preview.document
+                    )
+                }
                 try Task.checkCancellation()
                 guard self.reviewRelinkOperation == operation,
                       self.loadGeneration.isCurrent(generation),
@@ -1004,7 +1152,9 @@ final class CompareSessionController: ObservableObject {
                 }
                 self.reviewRevision &+= 1
                 self.isReviewSidecarWritable = true
+                self.reviewSidecarURL = preview.destinationURL
                 self.reviewError = nil
+                self.reviewExportState = .idle
                 self.cancelReviewRelink()
             } catch {
                 guard self.reviewRelinkOperation == operation,
@@ -1014,7 +1164,7 @@ final class CompareSessionController: ObservableObject {
                       primary?.preparationID == preview.primaryPreparationID,
                       self.secondaryURL == preview.secondaryURL else { return }
                 if !(error is CancellationError) {
-                    self.reviewError = "Could not relink comparison notes: \(error.localizedDescription)"
+                    self.reviewError = "Could not save comparison review copy: \(error.localizedDescription)"
                     self.reviewRelinkFailure = self.reviewError
                 }
             }
@@ -1052,10 +1202,6 @@ final class CompareSessionController: ObservableObject {
         let panel = NSSavePanel()
         reviewExportSavePanel = panel
         reviewExportState = .exporting
-        panel.nameFieldStringValue = CompareReviewReportExporter.preferredFilename(
-            for: format,
-            snapshot: snapshot
-        )
         panel.allowedContentTypes = switch format {
         case .csv: [.commaSeparatedText]
         case .pdf: [.pdf]
@@ -1066,6 +1212,14 @@ final class CompareSessionController: ObservableObject {
         case .avidMarkersText:
             [.plainText]
         }
+        // Configure the file type before the full filename. With hidden
+        // extensions, setting the name first can treat its extension as part
+        // of the stem and append it again when the content type is applied.
+        panel.isExtensionHidden = false
+        panel.nameFieldStringValue = CompareReviewReportExporter.preferredFilename(
+            for: format,
+            snapshot: snapshot
+        )
         panel.canCreateDirectories = true
         panel.directoryURL = primaryItem.url.deletingLastPathComponent()
 

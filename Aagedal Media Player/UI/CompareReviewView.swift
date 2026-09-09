@@ -17,13 +17,20 @@ struct CompareReviewRelinkPresentation: ViewModifier {
                 get: { compareSession.reviewRelinkPreview },
                 set: { if $0 == nil { compareSession.cancelReviewRelink() } }
             )) { preview in
-                CompareReviewRelinkConfirmationView(
-                    preview: preview,
-                    primaryController: primaryController,
-                    compareSession: compareSession
-                )
+                if let migration = preview.migration {
+                    CompareReviewTimebaseMigrationConfirmationView(
+                        preview: preview, migration: migration,
+                        primaryController: primaryController, compareSession: compareSession
+                    )
+                } else {
+                    CompareReviewRelinkConfirmationView(
+                        preview: preview,
+                        primaryController: primaryController,
+                        compareSession: compareSession
+                    )
+                }
             }
-            .alert("Could Not Relink Notes", isPresented: Binding(
+            .alert("Could Not Complete Review Action", isPresented: Binding(
                 get: { compareSession.reviewRelinkFailure != nil },
                 set: { if !$0 { compareSession.dismissReviewRelinkFailure() } }
             )) {
@@ -165,11 +172,27 @@ struct CompareReviewView: View {
 
                 Spacer()
 
-                Button("Relink Notes…") {
-                    compareSession.chooseReviewSidecarToRelink(primary: primaryController)
+                Menu("Notes") {
+                    Button("Open Notes Copy…") {
+                        compareSession.chooseReviewCopy(primary: primaryController)
+                    }
+                    .disabled(!compareSession.canManageReviewCopy)
+                    .help("Open an existing sidecar for this exact A/B pair. Edits save to the selected copy.")
+                    Button("Migrate Rounded Timebases…") {
+                        compareSession.previewReviewTimebaseMigration(primary: primaryController)
+                    }
+                    .disabled(!compareSession.canManageReviewCopy || !compareSession.canEditReviewNotes || compareSession.reviewNotes.isEmpty
+                              || primaryController.mediaItem?.metadata?.primaryVideoStream?.frameRate == nil
+                              || compareSession.secondaryController.mediaItem?.metadata?.primaryVideoStream?.frameRate == nil)
+                    .help("Preview correction of historical decimal broadcast rates and save a new copy, preserving recorded frame numbers.")
+                    Divider()
+                    Button("Relink Notes…") {
+                        compareSession.chooseReviewSidecarToRelink(primary: primaryController)
+                    }
+                    .disabled(!compareSession.canRelinkReviewNotes)
+                    .help("Relink a sidecar to this A/B pair. Requires an empty review and a new destination.")
                 }
-                .disabled(!compareSession.canRelinkReviewNotes)
-                .help("Relink an existing sidecar to the currently loaded A/B pair. Requires an empty review and a new destination sidecar.")
+                .fixedSize()
 
                 Menu {
                     Button("CSV Report…") {

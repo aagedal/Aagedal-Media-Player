@@ -182,7 +182,68 @@ leaves note editing disabled and offers Retry. Restore a valid backup or move
 the problematic sidecar aside before starting a new review. Keep a backup
 before any manual JSON edits.
 
+## Deliberate migration of historical rounded timebases
+
+Historical reviews can store `29970/1000` (29.97) while current metadata correctly
+reports `30000/1001`. These are different rational rates. Loading, editing a
+finding, relinking, and exporting CSV/PDF retain the historical coordinates;
+editor-marker exports continue to reject an incompatible A rate.
+
+To produce a corrected review:
+
+1. Open the original A/B media and saved review. In **Comparison Review → Notes**,
+   choose **Migrate Rounded Timebases…**. If the historical review is already a
+   separate copy, use **Open Notes Copy…** to open it for the same loaded pair first.
+2. Review the original and destination paths, source paths, and each changed
+   finding. The proposal shows the recorded A/B frames, inclusive A endpoint,
+   old/new rational rates, frame-derived seconds, and stored fallback seconds.
+3. Choose **Save and Use Migrated Copy** only after reviewing that proposal.
+   Cancel leaves both the review and its active path unchanged.
+4. Inspect the resulting marked frames and ranges, then export editor markers
+   from the active copy. Subsequent note edits also save to this copy.
+
+The operation preserves **frame indices**, not elapsed seconds: A/B starts and
+inclusive A range endpoints keep exactly their recorded numbers. Corrected
+sources receive the loaded exact rational rate and fallback seconds recomputed
+as `frame × denominator / numerator`. It cannot recover a different intended
+frame if old rounding affected capture. The migrated file preserves source
+identities, UUIDs, text, classifications, ranges, and creation dates; changed
+notes receive the proposal's new edit timestamp. Already compatible notes and
+the unchanged source of a partially corrected note retain their original fields.
+The proposal includes all notes, even when the Review filter hides some.
+
+Migration is limited to the historical three-decimal rates `23.976`, `29.970`,
+`47.952`, `59.940`, and `119.880`, including equivalent unreduced fractions,
+when the loaded source has the corresponding exact `24000/1001`, `30000/1001`,
+`48000/1001`, `60000/1001`, or `120000/1001` rate. Every other stored source rate
+must already be equivalent to the loaded rate. Arbitrary rate changes, empty or
+already compatible reviews, unknown/invalid durations, unavailable A/B starts,
+and an inclusive A end outside the current media are rejected, without clamping
+or guessing a new position. Pending saves must finish; a disk review that differs
+from the displayed notes must be reconciled before migration.
+
+The original sidecar remains **byte-for-byte unchanged**. The new file has an
+`-exact-<identifier>.json` suffix beside it and is published with an exclusive
+rename; existing files, media, and dangling symlinks cannot be replaced. The
+store rereads and compares the original against the preview and checks the
+original A/B identities plus file-stat snapshots at confirmation. Changed media,
+changed reviews, canceled work, and a stale comparison session are rejected.
+A completed disk write remains durable if its UI completion later becomes stale.
+These checks do not lock media or other applications against concurrent changes.
+
+The selected copy is active for the current session. Automatically reopening
+A/B still discovers the original pair-specific sidecar; use **Notes → Open
+Notes Copy…** to reopen a migrated copy deliberately. Opening a copy validates
+its schema, notes, and ordered source identities before replacing the current
+review, performs no file writes, and preserves the search filter. The sidecar
+label identifies where subsequent edits will be saved. Opening another source
+pair requires the separate relinking workflow; migration never relinks.
+
 ## Writes, conflicts, and lifecycle
+
+The first native migration preview/cancellation check and its remaining
+acceptance work are recorded in
+[the September 9 native check](COMPARE_REVIEW_MIGRATION_NATIVE_CHECK_2026-09-09.md).
 
 The shared in-process store serializes edits. Each UUID-addressed add/update or
 delete reloads the latest disk document, applies that mutation, sorts notes by
@@ -215,7 +276,7 @@ Use the deliberate relinking workflow:
 1. Open the relocated original source A and add the relocated original source B
    in the same order as the review. Relinking is available for an empty review;
    it does not merge with findings already loaded for the pair.
-2. Open **Comparison Review → Relink Notes…** and select the old JSON sidecar.
+2. Open **Comparison Review → Notes → Relink Notes…** and select the old JSON sidecar.
 3. Check the old and current A/B paths and note count in the confirmation.
    Confirm only when the loaded files are the intended originals.
 4. Confirm the mapping to create the new pair-specific sidecar beside A.

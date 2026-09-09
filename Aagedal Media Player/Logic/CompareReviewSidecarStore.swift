@@ -42,6 +42,12 @@ nonisolated enum CompareReviewMutation: Sendable {
 nonisolated protocol CompareReviewSidecarStoring: Sendable {
     func previewRelink(from url: URL) async throws -> CompareReviewDocument
 
+    func migrateTimebases(
+        from url: URL,
+        to destinationURL: URL,
+        expectedMigration: CompareReviewTimebaseMigration
+    ) async throws -> CompareReviewDocument
+
     func relink(
         from url: URL,
         to destinationURL: URL,
@@ -65,6 +71,14 @@ nonisolated protocol CompareReviewSidecarStoring: Sendable {
 }
 
 nonisolated extension CompareReviewSidecarStoring {
+    func migrateTimebases(
+        from url: URL,
+        to destinationURL: URL,
+        expectedMigration: CompareReviewTimebaseMigration
+    ) async throws -> CompareReviewDocument {
+        throw CompareReviewTimebaseMigrationError.unavailable
+    }
+
     func previewRelink(from url: URL) async throws -> CompareReviewDocument {
         throw CompareReviewSidecarError.relinkUnavailable
     }
@@ -166,14 +180,53 @@ actor CompareReviewSidecarStore: CompareReviewSidecarStoring {
         let document = CompareReviewDocument(
             primaryURL: primaryURL, secondaryURL: secondaryURL, notes: original.notes
         )
+        try publishNew(document, to: destinationURL, destinationExists: CompareReviewSidecarError.relinkDestinationExists)
+        return document
+    }
+
+    /// Publish only the reviewed proposal, retaining the original sidecar and
+    /// its identities. Stat snapshots also reject replacement media between
+    /// preview and confirmation, including sidecars with legacy path-only IDs.
+    func migrateTimebases(
+        from url: URL,
+        to destinationURL: URL,
+        expectedMigration: CompareReviewTimebaseMigration
+    ) async throws -> CompareReviewDocument {
+        try Task.checkCancellation()
+        let original = try readDocument(from: url)
+        guard original == expectedMigration.original else {
+            throw CompareReviewTimebaseMigrationError.previewChanged
+        }
+        guard original.belongsTo(
+            primaryURL: URL(fileURLWithPath: expectedMigration.primarySource.canonicalPath),
+            secondaryURL: URL(fileURLWithPath: expectedMigration.secondarySource.canonicalPath)
+        ) else { throw CompareReviewTimebaseMigrationError.sourceChanged }
+        for source in [expectedMigration.primarySource, expectedMigration.secondarySource] {
+            let sourceURL = URL(fileURLWithPath: source.canonicalPath)
+            let attributes = try? FileManager.default.attributesOfItem(atPath: source.canonicalPath)
+            guard attributes?[.type] as? FileAttributeType == .typeRegular,
+                  FileManager.default.isReadableFile(atPath: source.canonicalPath),
+                  source == CompareReviewSourceIdentity(url: sourceURL) else {
+                throw CompareReviewTimebaseMigrationError.sourceChanged
+            }
+        }
+        guard url.standardizedFileURL.resolvingSymlinksInPath() != destinationURL.standardizedFileURL.resolvingSymlinksInPath() else {
+            throw CompareReviewTimebaseMigrationError.destinationExists
+        }
+        try publishNew(expectedMigration.migrated, to: destinationURL,
+                       destinationExists: CompareReviewTimebaseMigrationError.destinationExists)
+        return expectedMigration.migrated
+    }
+
+    private func publishNew(_ document: CompareReviewDocument, to destinationURL: URL, destinationExists: any Error) throws {
+        let fileManager = FileManager.default
         let temporaryURL = destinationURL.deletingLastPathComponent()
             .appendingPathComponent(".\(UUID().uuidString).aagedal-compare.partial")
         defer { try? fileManager.removeItem(at: temporaryURL) }
         try write(document, to: temporaryURL)
         try Task.checkCancellation()
-        // RENAME_EXCL refuses every existing directory entry, including a
-        // dangling symlink, without a check-then-rename overwrite race. Unlike
-        // hard links, same-volume renames also work on external exFAT volumes.
+        // Exclusive same-volume rename never replaces an existing entry,
+        // including a dangling symlink, and works on external exFAT volumes.
         let result = temporaryURL.withUnsafeFileSystemRepresentation { temporaryPath in
             destinationURL.withUnsafeFileSystemRepresentation { destinationPath in
                 guard let temporaryPath, let destinationPath else {
@@ -185,12 +238,9 @@ actor CompareReviewSidecarStore: CompareReviewSidecarStoring {
         }
         guard result == 0 else {
             let failure = errno
-            if failure == EEXIST {
-                throw CompareReviewSidecarError.relinkDestinationExists
-            }
+            if failure == EEXIST { throw destinationExists }
             throw POSIXError(POSIXErrorCode(rawValue: failure) ?? .EIO)
         }
-        return document
     }
 
     /// Applies one UUID-addressed edit to the latest on-disk document. A

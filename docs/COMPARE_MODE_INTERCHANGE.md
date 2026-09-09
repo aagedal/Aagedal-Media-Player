@@ -24,6 +24,13 @@ drop-frame boundaries. `--rate 23.976` omits embedded source timecode. The
 generator uses Foundation's canonical paths to match the app's sidecar identity
 rules, including macOS's `/tmp` alias. Existing directories are rejected.
 
+Add `--historical-rounded` to generate a migration acceptance review: media
+keeps its exact rate, while both note snapshots use the old three-decimal
+timebase and corresponding seconds. Frame ordinals and inclusive endpoints stay
+the same. The manifest distinguishes stored note rates from source rates. This
+option works with all three `--rate` choices and leaves the default exact-rate
+fixture behavior unchanged.
+
 Fixture generation and successful app exports do not establish editor acceptance.
 
 Decimal metadata rates within 0.001 fps of a known broadcast rate use its
@@ -33,7 +40,12 @@ rates previously rounded to thousandths of a frame per second, which caused
 false editor-export mismatches and missing source timecodes. Historical review
 notes retain their stored rates. If they use the former rounded fractions,
 CSV/PDF preserve them but editor export refuses the differing timebase; no
-automatic migration is performed.
+automatic migration is performed. **Review → Notes → Migrate Rounded
+Timebases…** now previews a deliberate correction for recognized historical
+broadcast decimals. It preserves recorded frame numbers and inclusive ranges,
+saves a new sidecar, and activates that copy for edits and exports. The original
+remains unchanged. Use **Notes → Open Notes Copy…** to reopen a migrated copy
+in a later session. See [the sidecar migration workflow](COMPARE_REVIEW_SIDECAR.md).
 
 Use `scripts/generate-test-fixtures.sh` for the existing rate and timecode
 fixtures. Keep the source media in place while importing: FCPXML references
@@ -167,6 +179,19 @@ marked passed. The native export result is independent of that outstanding gate.
 | Resolve | Pending | | | | | Not run |
 | Final Cut Pro | Pending | | | | | Not run |
 | Media Composer | Pending | | | | | Not run |
+
+### Resolve preparation — 2026-09-09 continuation
+
+The native player exported the unchanged eight-finding fixture as
+`/tmp/aagedal-fcpxml-20260909-final/resolve-marker-acceptance.edl` (4,312 bytes,
+SHA-256 `00190f47a33dcc91f0fe1be208c2194113afcd57f7b7ec074fabf514a78db3fc`).
+The EDL contains eight events, and source movies/original sidecar still match
+their fixture-manifest hashes. Resolve Studio 21.1.0 (21.1.00014) opened a new
+disposable project, **Aagedal Marker Acceptance 20260909**, imported source A,
+and accepted 29.97 fps. Its source viewer showed `00:00:58;00` through
+`00:11:08;00`. Native automation did not complete marker import or re-export;
+the acceptance table therefore remains pending. Final Cut Pro launch again
+timed out before an import workflow was available.
 
 Do not mark editor acceptance complete until the relevant rows contain actual
 results. Parser-based XCTest coverage does not establish editor compatibility.

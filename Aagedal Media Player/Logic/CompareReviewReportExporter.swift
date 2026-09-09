@@ -66,7 +66,7 @@ nonisolated enum CompareReviewReportExportError: Error, LocalizedError {
         case .unrepresentableFinalCutProTime:
             "A comparison marker exceeds the supported Final Cut Pro time range at source A's frame rate. Check the review's frame positions before exporting again."
         case .incompatiblePrimaryFrameRate(let marker):
-            "Review marker \(marker) was captured at a different source A frame rate. Load media at the original review frame rate before exporting editor markers. CSV and PDF reports remain available; markers are not automatically retimed."
+            "Review marker \(marker) was captured at a different source A frame rate. Load media at the original review frame rate, or use Notes → Migrate Rounded Timebases… for historical rounded broadcast rates. CSV and PDF reports remain available; markers are not automatically retimed."
         }
     }
 }

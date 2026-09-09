@@ -1,6 +1,6 @@
 # Aagedal Media Player Product Roadmap
 
-Last updated: 2026-09-08
+Last updated: 2026-09-09
 
 ## Product direction
 
@@ -358,6 +358,10 @@ Release gates:
   `docs/COMPARE_REVIEW_SIDECAR.md`; hands-on acceptance remains below.
 - [ ] Exports preserve frame rate, drop-frame rules, source timecode, and file
   identity without rounding errors.
+  Historical rounded broadcast timebases now have an explicit preview/save-copy
+  migration that retains recorded frame numbers and source identities. Exact
+  rates then enable editor exports; actual editor round trips remain required.
+  See `docs/COMPARE_REVIEW_SIDECAR.md`.
 - [ ] A complete review can be created and exported using only the keyboard.
   A native Keyboard Navigation check now passes a point-note creation,
   reopening and CSV export workflow, with saved frame/source identity checks.

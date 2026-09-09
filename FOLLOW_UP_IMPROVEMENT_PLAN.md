@@ -1223,6 +1223,71 @@ build/full/analyze logs, `/tmp/aagedal-programme-complete-20260909`, and
 `/tmp/aagedal-fcpxml-20260909-final`. These temporary outputs supplement the
 committed scripts, tests and documented reproduction steps.
 
+## Phase 66 — Bounded UTF-16 iXML recording labels
+
+Status: Engineering complete on 2026-09-09. All 47 WAVE reader tests pass in
+the 503-test Release suite; static analysis and 61 release-preflight checks pass.
+
+- [x] Read little- and big-endian UTF-16 iXML with a BOM, plus explicit
+  UTF-16LE/UTF-16BE declarations without one.
+- [x] Reject conflicting declarations, odd byte lengths, invalid surrogates,
+  NUL characters, and encoded DTD/entity declarations without losing technical
+  audio or Broadcast WAVE metadata.
+- [x] Retain the encoded payload cap and decoded field, depth, and element caps;
+  cover Unicode, CDATA, both byte orders, and malformed/bounded inputs.
+
+Acceptance scope: direct recording labels only. Native UTF-16 acceptance,
+authentic recorder fixtures, nested iXML timing/track objects, and other
+encodings remain separately tracked in `docs/WAVE_METADATA.md`.
+
+## Phase 67 — Deliberate historical review timebase migration
+
+Status: Engineering complete on 2026-09-09. All 18 migration regression tests
+pass in the 503-test Release suite. Native preview/cancellation was exercised;
+final save/reopen and corrected-sheet layout acceptance remain open.
+
+- [x] Preview recognized historical decimal broadcast rates against the loaded
+  sources' exact rational rates, including per-note frame/range/time changes.
+- [x] Preserve recorded A/B frames, inclusive A endpoints, finding identity,
+  text, classifications and source identities; recompute changed-source seconds.
+- [x] Save and adopt a new sidecar through exclusive publication, retaining the
+  original and refusing stale reviews, changed sources, and existing destinations.
+- [x] Reopen a same-pair review copy explicitly, with subsequent edits and
+  exports using the displayed active sidecar.
+- [x] Compare persisted note representations so JSON timestamp precision cannot
+  falsely report that a just-saved review changed before preview.
+- [x] Add regression coverage for rate limits, ranges, lifecycle, conflicts,
+  source replacement, copy reopening and restored editor exports.
+- [x] Configure report save-panel content types and visible extensions before
+  assigning the filename to address the native doubled EDL extension.
+- [x] Add a historical-rate option to the reusable interchange fixture generator.
+- [x] Inspect the native eight-finding migration preview and cancel without
+  changing original hashes or creating a copy; fix the discovered collapsed
+  preview scroll area and truncated explanations.
+
+Acceptance scope: this corrects stored timebases while retaining frame indexes;
+it cannot recover a different intended frame after historical capture rounding.
+Copy selection is explicit in each new session. Native migration acceptance and
+actual editor round trips remain separate from automated exporter checks. See
+`docs/COMPARE_REVIEW_SIDECAR.md` and
+`docs/COMPARE_REVIEW_MIGRATION_NATIVE_CHECK_2026-09-09.md`.
+
+## Integrated Phase 66–67 verification — 2026-09-09
+
+All **503 Release tests pass with zero failures**, with both original ITU
+reference sets enabled, in 115.063 seconds (115.336 including suite overhead).
+Release static analysis and all 61 release-preflight checks pass. A final
+view-only migration-sheet layout correction then passed a fresh Release build
+and static analysis. The 23.976 historical fixture generator also completed;
+all eight stored note rates/seconds and manifest values were checked.
+
+The Mac locked before the final native recheck. Native migration save/reopen,
+the corrected dialog layout/default EDL filename, and UTF-16 inspector acceptance
+are therefore still open. The existing Resolve fixture was exported as eight
+EDL events and its source was imported into a disposable Resolve 21.1 project;
+actual marker import/re-export was not completed. See the native migration
+record above and `docs/COMPARE_MODE_INTERCHANGE.md` for exact evidence/limits.
+
 ## Remaining work after this continuation
 
 - Integrate the measured metadata-memory dependency fix after upstream review,
@@ -1273,7 +1338,7 @@ committed scripts, tests and documented reproduction steps.
   other layouts do not receive that correction.
 - Broader WAVE format support: compressed encodings, RIFX extensible/BWF variants,
   further iXML encodings/structures and ADM interpretation remain outside the
-  bounded reader. Phase 62 adds bounded explicit UTF-8 iXML recording labels;
+  bounded reader. Phases 62 and 66 add bounded UTF-8 and UTF-16 iXML recording labels;
   producer-authentic recorder acceptance remains. Phase 59 adds
   classic RIFX metadata and corrected offline analysis/waveforms; RIFX playback
   and trim export remain explicitly unavailable pending a verified decoder fix.
@@ -1299,9 +1364,9 @@ committed scripts, tests and documented reproduction steps.
 - Verified 1:1 source-pixel inspection, whole-viewport zoom/pan after loupe
   acceptance, and time-localized mismatch markers after a detection model is
   defined. See `PRODUCT_ROADMAP.md` for milestone sequencing.
-- A deliberate migration workflow for historical reviews captured with rounded
-  decimal timebases; Phase 63 preserves their stored coordinates and reports
-  rather than silently converting them to the corrected metadata rate.
+- Broader native/keyboard acceptance of historical review migration and copy
+  reopening. Phase 67 now implements explicit preview and a new corrected copy;
+  Phase 63 continues to preserve historical coordinates during ordinary loading.
 
 ## Delivery order
 
@@ -1375,3 +1440,9 @@ committed scripts, tests and documented reproduction steps.
 51. Phase 59 big-endian WAVE metadata and safe offline decoding.
 52. Phase 60 independent programme LRA comparison.
 53. Phase 61 comparison toolbar keyboard ownership and focus visibility.
+54. Phase 62 bounded iXML recording labels.
+55. Phase 63 exact frame rates from decimal metadata.
+56. Phase 64 independent authentic-programme true-peak comparison.
+57. Phase 65 expanded metadata camera and library fixture acceptance.
+58. Phase 66 bounded UTF-16 iXML recording labels.
+59. Phase 67 deliberate historical review timebase migration.
