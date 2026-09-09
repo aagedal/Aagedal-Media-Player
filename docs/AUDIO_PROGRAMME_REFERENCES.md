@@ -27,7 +27,8 @@ a run can pass. It checks source channels and sample rate as well as loudness.
 No programme-specific LRA or true-peak targets are supplied for these rows.
 The raw production artifact labels those measurements as unreferenced
 observations. A separate independent PCM calculation now checks programme LRA,
-as described below; true peak remains an unreferenced observation.
+and a second independent calculation checks programme true peak, as described
+below. These calculated comparisons preserve the original observation labels.
 
 ## Reproduction
 
@@ -102,6 +103,83 @@ python3 scripts/itu-programme-lra-reference.py /path/to/references \
   /path/to/measurements.json /tmp/new-independent-lra-comparison.json
 ```
 
+## Independently calculated programme true peak
+
+`scripts/itu-programme-true-peak-reference.py` processes the same three original
+48 kHz PCM16 WAVs using only Python's standard library and the four-phase,
+12-tap-per-phase FIR coefficients published in
+[ITU-R BS.1770-5 Annex 2, printed pages 18–19](https://www.itu.int/dms_pubrec/itu-r/rec/bs/R-REC-BS.1770-5-202311-I!!PDF-E.pdf).
+The 4× interpolation calculates each channel independently, including LFE,
+and takes the maximum absolute reconstructed value. Fresh zero filter state
+and 11 trailing zero frames retain the complete FIR response at file boundaries.
+Every published coefficient is an exact multiple of 1/8192, so Python integer
+dot products represent the filter exactly before conversion to dBTP.
+
+Memory stays bounded to 4,096-frame chunks plus 11 preceding samples per
+channel. A triangle-inequality bound skips a block only when none of its FIR
+outputs can exceed the channel's established maximum. Tests compare this
+optimization against full convolution across several chunk sizes. The report
+retains per-channel sample/reconstructed peaks and evaluated/skipped block
+counts, together with original hashes and calculator/coefficient provenance.
+
+The **±0.4 dB project regression tolerance** was selected before these programme
+results were calculated: it uses the larger absolute error allowance of the
+[Tech 3341 Table 1 tone cases 15–19](https://tech.ebu.ch/docs/tech/tech3341.pdf)
+as a symmetric comparison budget. This is **not an official programme tolerance
+or a published programme true-peak target**. Two compliant meters can differ
+because of interpolation filters and grid under-read; this finite FIR is an
+independent estimate, not an exact continuous-waveform maximum.
+
+The runner first requires all 11 standalone calculator tests to pass. These
+cover all five analytic tone cases with both polarities, intersample peaks above
+full scale, channel isolation, LFE inclusion, final-sample flushing, chunk
+boundaries, safe block skipping, explicit silence, malformed PCM, complete
+source identity, invalid measurements, rejected comparisons, and preserved
+existing output files. The runner retains `true-peak-calculator-tests.log`,
+the calculator and its tests, and `independent-true-peak-comparison.json`.
+
+The independent comparison on 2026-09-09 passes against the retained Release
+production measurements from 2026-09-08:
+
+| Original programme | Independent true peak (dBTP) | App true peak (dBTP) | App minus reference (dB) |
+| --- | ---: | ---: | ---: |
+| Mono Voice+Music −23 | −4.7755 | −4.8 | −0.0245 |
+| Stereo VinL+R −23 | −7.9265 | −7.9 | +0.0265 |
+| 6ch VinCntr −23 | −6.8393 | −7.0 | −0.1607 |
+
+The largest reconstructed-versus-sample peak difference at these programmes'
+overall peaks is only 0.1982 dB. These programme comparisons alone therefore
+cannot reject a sample-peak-only implementation at the chosen tolerance;
+the existing phase-sensitive synthetic references supply that separate check.
+
+The complete standalone result is retained at
+`/tmp/aagedal-programme-true-peak-independent-20260909.json`. To reproduce
+against an existing production result without rebuilding or launching the app:
+
+```bash
+python3 scripts/test-itu-programme-true-peak-reference.py
+python3 scripts/itu-programme-true-peak-reference.py /path/to/references \
+  /path/to/measurements.json /tmp/new-independent-true-peak-comparison.json
+```
+
+The normal opt-in programme runner now runs both independent calculations after
+its fresh production measurements. It fails if either comparison exceeds its
+regression tolerance. These three authentic programme comparisons add true-peak
+implementation evidence; independently published programme true-peak targets,
+other sample rates, and broader programme genres remain separate coverage.
+
+## Fresh integrated run — 2026-09-09
+
+The updated programme runner completed end to end against the current Release
+build, retaining its own `.xcresult` and all three production measurement
+attachments at `/tmp/aagedal-programme-complete-20260909`. All three official
+integrated targets pass, all nine LRA and eleven true-peak calculator checks
+pass, and both independent programme comparisons reproduce the values above.
+This confirms the runner with fresh production evidence rather than only
+comparing earlier artifacts. Separately, the complete app suite passes all
+479 Release tests with both original ITU sets enabled, zero failures and zero
+skips. Static analysis and all 61 release-preflight checks pass.
+
 ## Measured result — 2026-09-08
 
 All three references passed at **−23.0 LUFS** through the rebuilt Release app
@@ -130,9 +208,12 @@ same result. A fresh request to the publication page's current ZIP URL also
 returned HTTP 403 during the independent-calculator continuation. Those EBU
 programme LRA cases remain unmeasured; the derived ITU comparison above does
 not close that gap in published programme-target coverage. Respect the EBU material's internal
-R&D terms and do not add its audio to the repository. Programme true-peak
-references, immersive layouts, live-meter behavior, and release-floor hardware
-profiling remain separate work.
+R&D terms and do not add its audio to the repository. The official v5 ZIP was
+retried on 2026-09-09 and still returned HTTP 403; the response headers are
+retained at `/tmp/aagedal-ebu-v05-download-20260909.headers`.
+The independent programme true-peak comparison above now adds coverage on the
+retained ITU originals. Published programme true-peak targets, immersive layouts,
+live-meter behavior, and release-floor hardware profiling remain separate work.
 
 ## Official eight-channel gain reference
 

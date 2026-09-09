@@ -107,4 +107,15 @@ print -u2 'Comparing programme LRA to the independent PCM calculation…'
 /usr/bin/python3 scripts/itu-programme-lra-reference.py "$reference_dir" \
   "$artifact_dir/measurements.json" "$artifact_dir/independent-lra-comparison.json" \
   | tee "$artifact_dir/lra-comparison.log"
+print -u2 'Validating the independent true-peak FIR calculator…'
+if ! /usr/bin/python3 scripts/test-itu-programme-true-peak-reference.py \
+  > "$artifact_dir/true-peak-calculator-tests.log" 2>&1; then
+  cat "$artifact_dir/true-peak-calculator-tests.log" >&2
+  exit 1
+fi
+cp scripts/itu-programme-true-peak-reference.py scripts/test-itu-programme-true-peak-reference.py "$artifact_dir/"
+print -u2 'Comparing programme true peak to the independent PCM calculation…'
+/usr/bin/python3 scripts/itu-programme-true-peak-reference.py "$reference_dir" \
+  "$artifact_dir/measurements.json" "$artifact_dir/independent-true-peak-comparison.json" \
+  | tee "$artifact_dir/true-peak-comparison.log"
 print -r -- "Artifacts: $artifact_dir"
