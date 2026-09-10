@@ -126,16 +126,40 @@ report `be`; unsigned 8-bit PCM remains `pcm_u8`. Mono and stereo are identified
 from channel count; surround placement remains unknown without a supported
 explicit mask.
 
-RIFX WAVEFORMATEXTENSIBLE, Broadcast WAVE and iXML tag interpretation remain outside
+RIFX WAVEFORMATEXTENSIBLE and Broadcast WAVE tag interpretation remain outside
 this implementation: extensible format tags report unsupported encoding, and
-`bext` and `iXML` payloads are skipped without populating their metadata objects. Chunk bounds
-are still validated. RIFX uses ordinary 32-bit lengths and never applies RF64
+`bext` payloads are skipped without populating their metadata objects. iXML uses
+the same bounded XML parser as other supported WAVE containers: chunk lengths
+are big-endian, while XML encoding is determined independently from the payload's
+BOM/declaration. UTF-8, UTF-16LE/BE and UTF-32LE/BE retain their existing strict
+validation and caps. Tests cover recording labels and tracks after audio,
+unchanged big-endian audio metadata and skipped BWF tags, malformed/duplicate
+documents, encoded entity rejection, the payload cap and mixed-endian/invalid
+chunk lengths. This is bounded metadata interoperability support; producer-authentic
+RIFX iXML acceptance remains open. RIFX uses ordinary 32-bit lengths and never applies RF64
 `ds64` sentinel rules. Tests cover the metadata-service path, PCM/float widths,
 data before format, odd payload padding, mixed-endian/malformed fields,
 duplicate chunks and a sparse 1 GiB audio payload followed by an ancillary
 chunk. All 30 `WaveMetadataReaderTests` passed in the Release test host on
 2026-09-08, including six RIFX cases. Native playback and producer-authentic
 RIFX fixtures remain separate acceptance work.
+
+Generate two silent RIFX fixtures with independently encoded UTF-32LE/BE iXML for
+future native inspector checks:
+
+```bash
+python3 scripts/generate-utf32-inspector-fixtures.py --container RIFX /tmp/new-rifx-utf32-inspector-fixtures
+```
+
+The default `--container RIFF` retains the exact previously documented fixture
+bytes. A lightweight Python verification on 2026-09-10 checked both containers'
+header/chunk lengths, format field byte order, two-second silent audio payload,
+XML BOM/declaration and decoded Unicode labels, and recorded SHA-256 hashes.
+The RIFX `utf32le.wav` hash is
+`4ab2ee69287694613b64de5ba266925c1efdb9a838aeb6bbb1bd2fead270045e`;
+`utf32be.wav` is
+`bea991ba4a3993b328a2b3c698fa9a59bb1b51c2ea9d53ed3917fb3964b8c5c7`.
+These generated-fixture checks do not establish native RIFX inspector acceptance.
 
 A decoder spot check on 2026-09-08 found that the bundled FFmpeg labels a
 classic RIFX 16-bit stereo fixture `pcm_s16le` and emits its big-endian sample
@@ -184,7 +208,7 @@ and sparse 1 GiB coding history. Focused native acceptance is recorded below.
 
 ## iXML recording labels
 
-RIFF/RF64/BW64 files can also expose an optional `ixmlRecording` object in the
+RIFF/RIFX/RF64/BW64 files can also expose an optional `ixmlRecording` object in the
 model and inspector JSON, with a separate **iXML Recording** inspector section.
 The reader accepts UTF-8 XML, including a UTF-8 BOM and an optional XML
 declaration, and little- or big-endian UTF-16 and UTF-32. A UTF-16 BOM identifies the byte
@@ -203,7 +227,7 @@ strict decoding and security checks, the reader transcodes UTF-32 to UTF-8 and
 replaces only the validated encoding-name value. The complete declaration and
 document still undergo XML syntax validation. This is bounded interoperability
 support, not a claim that recorders must emit UTF-32.
-The XML payload's byte order is independent of the little-endian WAVE container.
+The XML payload's byte order is independent of the WAVE container's byte order.
 Documents require one unnamespaced `BWFXML` root. The reader reads direct scalar
 children `IXML_VERSION`, `PROJECT`, `SCENE`, `TAKE`, `TAPE`, `NOTE`, `CIRCLED`
 and `FILE_UID`. These fields follow the [iXML object descriptions](https://www.gallery.co.uk/ixml/object_Details.html)
@@ -257,7 +281,7 @@ compatibility. Native track inspector and recorder-authentic acceptance remain.
 Nested `BEXT`, `SPEED`, track `FUNCTION`/mix objects and vendor-specific objects are ignored.
 iXML never overrides `bext` values, channel layout, sample rate, duration,
 timecode or measured loudness. No track routing, timing, ADM or conformance
-interpretation is attempted. RIFX iXML and legacy text encodings remain unsupported. Tests cover recording values and Unicode, model/JSON/service
+interpretation is attempted. Legacy text encodings remain unsupported. Tests cover recording values and Unicode, model/JSON/service
 integration, RF64/BW64 sizes, chunks after audio, namespace and nesting scope,
 malformed/hostile XML, duplicate chunks, field/depth/element/payload bounds,
 and a sparse 1 GiB skipped XML payload. Both UTF-16 and UTF-32 byte orders additionally cover

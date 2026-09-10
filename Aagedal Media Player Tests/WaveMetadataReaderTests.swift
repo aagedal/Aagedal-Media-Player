@@ -1039,13 +1039,60 @@ final class WaveMetadataReaderTests: XCTestCase {
         XCTAssertEqual(metadata.audioStreams.first?.codec, "pcm_s16le")
     }
 
-    func testIXMLRIFXTagsAreSkippedAndChunkBoundsStillValidated() throws {
+    func testIXMLRIFXEncodingIsIndependentOfContainerByteOrder() throws {
+        let xml = """
+        <BWFXML><PROJECT>Sjø 🎙</PROJECT><TRACK_LIST><TRACK>
+        <CHANNEL_INDEX>4</CHANNEL_INDEX><INTERLEAVE_INDEX>1</INTERLEAVE_INDEX><NAME>声</NAME>
+        </TRACK></TRACK_LIST></BWFXML>
+        """
+        for payload in [Data(xml.utf8), utf16XML(xml), utf16XML(xml, bigEndian: true),
+                        utf32XML(xml), utf32XML(xml, bigEndian: true)] {
+            let metadata = try XCTUnwrap(read(wave(
+                format: format(tag: 1, channels: 2, bits: 16, bigEndian: true), audio: Data(count: 40),
+                before: chunk("bext", bext(), bigEndian: true),
+                after: chunk("iXML", payload, bigEndian: true), bigEndian: true)))
+            XCTAssertEqual(metadata.ixmlRecording?.project, "Sjø 🎙")
+            XCTAssertEqual(metadata.ixmlRecording?.tracks,
+                           [.init(channelIndex: 4, interleaveIndex: 1, name: "声")])
+            XCTAssertEqual(metadata.audioStreams.first?.codec, "pcm_s16be")
+            XCTAssertEqual(metadata.duration ?? -1, 10.0 / 48_000, accuracy: 0.000001)
+            XCTAssertNil(metadata.broadcastWave)
+            XCTAssertNil(metadata.timecode)
+        }
+    }
+
+    func testIXMLRIFXInvalidDuplicateAndOversizedPayloadsPreserveAudio() throws {
+        let xml = "<BWFXML><PROJECT>Project</PROJECT></BWFXML>"
+        let valid = chunk("iXML", Data(xml.utf8), bigEndian: true)
+        let invalid = chunk("iXML", Data("<BWFXML>".utf8), bigEndian: true)
+        let hostile = "<!DOCTYPE BWFXML [<!ENTITY a 'expanded'>]><BWFXML><PROJECT>&a;</PROJECT></BWFXML>"
+        let rejected = [invalid, valid + valid, invalid + valid, valid + invalid,
+                        chunk("iXML", utf16XML(hostile), bigEndian: true),
+                        chunk("iXML", utf32XML(hostile, bigEndian: true), bigEndian: true),
+                        chunk("iXML", Data(xml.utf8) + Data(repeating: 32, count: 262_145 - xml.utf8.count),
+                              bigEndian: true)]
+        for chunks in rejected {
+            let metadata = try XCTUnwrap(read(wave(
+                format: format(tag: 1, channels: 2, bits: 16, bigEndian: true), audio: Data(count: 40),
+                before: chunks, bigEndian: true)))
+            XCTAssertNil(metadata.ixmlRecording)
+            XCTAssertEqual(metadata.audioStreams.first?.codec, "pcm_s16be")
+        }
+        let boundary = Data(xml.utf8) + Data(repeating: 32, count: 262_144 - xml.utf8.count)
+        XCTAssertEqual(try read(wave(format: format(tag: 1, channels: 2, bits: 16, bigEndian: true),
+            audio: Data(count: 40), before: chunk("iXML", boundary, bigEndian: true), bigEndian: true))?
+            .ixmlRecording?.project, "Project")
+    }
+
+    func testIXMLRIFXChunkBoundsAndByteOrderAreStillValidated() throws {
         let xml = Data("<BWFXML><PROJECT>Project</PROJECT></BWFXML>".utf8)
         let data = wave(format: format(tag: 1, channels: 2, bits: 16, bigEndian: true), audio: Data(count: 40),
             before: chunk("iXML", xml, bigEndian: true), bigEndian: true)
-        XCTAssertNil(try read(data)?.ixmlRecording)
+        XCTAssertEqual(try read(data)?.ixmlRecording?.project, "Project")
         var invalid = data
         invalid.replaceSubrange(16..<20, with: big(UInt32.max))
+        XCTAssertThrowsError(try read(invalid))
+        invalid.replaceSubrange(16..<20, with: little(UInt32(xml.count)))
         XCTAssertThrowsError(try read(invalid))
     }
 

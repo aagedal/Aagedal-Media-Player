@@ -11,15 +11,18 @@ from pathlib import Path
 import struct
 
 
-def chunk(tag, data):
-    return tag.encode("ascii") + struct.pack("<I", len(data)) + data + (b"\0" if len(data) % 2 else b"")
+def chunk(tag, data, byte_order):
+    return tag.encode("ascii") + struct.pack(byte_order + "I", len(data)) + data + (b"\0" if len(data) % 2 else b"")
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("output", type=Path, help="New output directory (must not exist)")
+    parser.add_argument("--container", choices=("RIFF", "RIFX"), default="RIFF",
+                        help="WAVE container byte order (default: RIFF)")
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=False)
+    byte_order = ">" if args.container == "RIFX" else "<"
     records = {}
     for order, bom in [("le", b"\xff\xfe\0\0"), ("be", b"\0\0\xfe\xff")]:
         xml = (
@@ -32,11 +35,11 @@ def main():
         )
         content = (
             b"WAVE"
-            + chunk("fmt ", struct.pack("<HHIIHH", 1, 2, 48000, 192000, 4, 16))
-            + chunk("iXML", bom + xml.encode("utf-32-" + order))
-            + chunk("data", bytes(384000))
+            + chunk("fmt ", struct.pack(byte_order + "HHIIHH", 1, 2, 48000, 192000, 4, 16), byte_order)
+            + chunk("iXML", bom + xml.encode("utf-32-" + order), byte_order)
+            + chunk("data", bytes(384000), byte_order)
         )
-        data = b"RIFF" + struct.pack("<I", len(content)) + content
+        data = args.container.encode("ascii") + struct.pack(byte_order + "I", len(content)) + content
         name = f"utf32{order}.wav"
         with (args.output / name).open("xb") as output:
             output.write(data)

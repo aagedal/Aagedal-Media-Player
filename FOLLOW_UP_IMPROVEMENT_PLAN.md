@@ -1575,6 +1575,51 @@ full-suite run is claimed. Complete Full Keyboard Access/spoken VoiceOver,
 broader narrow-window layouts and native disk-full copy/relink/migration flows
 remain separate acceptance work.
 
+## Phase 77 — Bounded RIFX iXML metadata
+
+Status: Complete on 2026-09-10 within the bounded scope below. All 530 Release
+tests, static analysis and 61 release-preflight checks pass.
+
+- [x] Read optional recording labels and explicit track indexes/names in classic
+  RIFX using the existing bounded XML reader, with container and XML byte order
+  handled independently.
+- [x] Cover all five supported UTF encodings, metadata after audio, duplicate,
+  malformed and hostile payloads, the exact payload cap and invalid chunk lengths.
+- [x] Keep RIFX BWF/extensible and playback/export restrictions intact; independently
+  review the parser change and tests.
+- [x] Extend the deterministic UTF-32 fixture generator with a RIFX option,
+  preserving default RIFF bytes; verify chunk/format endianness, XML and hashes.
+- [x] Pass the integrated Release suite, static analysis and release preflight.
+
+See `docs/WAVE_METADATA.md` for reproduction and limits. Producer-authentic
+RIFX and native RIFX iXML inspector acceptance remain open. Native app inspection
+stalled during this continuation, so no additional native acceptance is claimed.
+
+The separate metadata dependency check reconfirmed all 50 CLI tests with no
+failures or skips and all nine validator regressions. This was a fresh offline
+Release run against pinned sources; production dependencies remain unchanged.
+See `docs/METADATA_REAL_MEDIA_VALIDATION.md` for evidence and remaining gates.
+
+The first integrated app run passed 529 tests but was not accepted: Xcode
+reported that the host exited with code 0 before completing
+`testAVFoundationPairAlignsBySourceTimecodeAndSharesTransport`. That unchanged
+test then passed in isolation in 10.285 seconds. All 59 WAVE tests passed in
+the first run, and the APFS harness detached/removed its fixture. The interrupted
+run and isolated result are retained at `/tmp/aagedal-rifx-ixml-integrated-20260910`
+and `/tmp/aagedal-rifx-av-isolated-20260910.xcresult`; the host exit remains
+unexplained and is not counted as a passing run.
+
+The fresh complete rerun passes **530 Release tests with zero failures and zero
+skips**, including all 59 WAVE tests, both original ITU reference sets and actual
+APFS exhaustion/recovery, in 115.313 seconds (115.550 including suite overhead).
+The harness verified its completion proof, detached the volume and removed the
+image. Evidence: `/tmp/aagedal-rifx-ixml-integrated-final-20260910/Tests.xcresult`,
+its `run.log`, `tests.json`, environment/volume records and successful cleanup
+status. The build and 61-check preflight logs are
+`/tmp/aagedal-rifx-ixml-build-20260910.log` and
+`/tmp/aagedal-rifx-ixml-preflight-20260910.log`. Release static analysis passes;
+its log is `/tmp/aagedal-rifx-ixml-analyze-20260910.log`.
+
 ## Remaining work after this continuation
 
 - Integrate the measured metadata-memory dependency fix after upstream review,
@@ -1588,8 +1633,8 @@ remain separate acceptance work.
   codestream too; both the mislabeled fixture and obsolete throw assertion
   need upstream reconciliation.
   All 50 upstream CLI
-  tests now pass without skips; nine validator regressions require complete
-  pinned-suite evidence. The
+  tests pass without skips, reconfirmed on September 10; nine validator
+  regressions enforce complete pinned-suite evidence. The
   isolated candidate reduces the eight-hour peak from about 4.3 GiB to 20 MiB;
   production still uses the original dependency. September 8 adds a longer Sony
   clip, ProRes RAW HQ, ARRIRAW, and X-OCN LT parity; no newer upstream release
@@ -1631,7 +1676,8 @@ remain separate acceptance work.
   bounded reader. Phases 62 and 66 add bounded UTF-8 and UTF-16 iXML recording labels;
   Phase 68 adds bounded track names/indexes and native UTF-16 inspector checks;
   Phase 73 adds bounded UTF-32LE/BE recording labels and tracks;
-  Phase 75 verifies native UTF-32 inspector labels and track indexes; producer-authentic
+  Phase 75 verifies native UTF-32 inspector labels and track indexes;
+  Phase 77 adds bounded RIFX iXML labels/tracks and reproducible UTF-32 fixtures; producer-authentic
   recorder, broader native encoding/container and spoken VoiceOver acceptance remain. Phase 59 adds
   classic RIFX metadata and corrected offline analysis/waveforms; RIFX playback
   and trim export remain explicitly unavailable pending a verified decoder fix.
@@ -1762,3 +1808,4 @@ remain separate acceptance work.
 66. Phase 74 real APFS review save recovery.
 67. Phase 75 native UTF-32 inspector acceptance.
 68. Phase 76 native APFS disk-full edit and deletion recovery.
+69. Phase 77 bounded RIFX iXML metadata.

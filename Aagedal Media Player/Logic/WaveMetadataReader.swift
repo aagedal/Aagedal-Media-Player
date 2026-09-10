@@ -124,7 +124,9 @@ nonisolated enum WaveMetadataReader {
                 // bounded prefix and seek past the rest with the enclosing loop.
                 let bytes = try readExactly(file, count: Int(min(count, 602 + 16_384)))
                 broadcastWave = readBroadcastWave(bytes, chunkSize: count)
-            } else if name == "iXML", byteOrder == .little {
+            } else if name == "iXML" {
+                // XML carries its own encoding/BOM; container endianness only
+                // determines the enclosing chunk length, including in RIFX.
                 // Parse at most one bounded payload. Duplicate optional chunks
                 // are ambiguous, so omit their tags while retaining audio/BWF.
                 if !sawIXML, count > 0, count <= 262_144 {
