@@ -136,6 +136,25 @@ retained log (`revalidated-summary.json`) and nine focused Python regression
 tests (`python3 scripts/test-metadata-cli-validation.py`); no second Swift build
 was needed.
 
+On 2026-09-10, a fresh offline Release build and run again passed **all 50
+tests, zero skips and zero failures** in 3.401 seconds after a 100.44-second
+build, with the strengthened acceptance parser
+checking every pinned suite and both aggregate summaries. The nine Python
+validator regressions also passed. The exact ArgumentParser revision was
+recovered from the existing local SwiftPM repository cache into a clean
+temporary checkout; no package fetch or production dependency change was
+needed. Both input checkouts remained clean and their committed archive hashes
+were unchanged. The run used Apple Swift 6.3.3 on arm64 macOS.
+
+Fresh artifacts: `/tmp/aagedal-metadata-cli-20260910`, with source/toolchain
+identity in `environment.json` and complete suite coverage in `summary.json`.
+CLI suite log SHA-256:
+`2aabeabd300bd6bf8223f4bc1563cbf60113f3ba5f5b37dffbf19f243e6581dd`.
+This reconfirms the completed CLI gate. The outstanding dependency acceptance
+work remains upstream RTMD review, exact ARW/XMP fixture recovery and JXL
+fixture/assertion reconciliation, broader camera coverage, and full-app
+profiling after integration; this run does not complete those separate gates.
+
 ## Expanded local result — 2026-09-08
 
 A second paired Release run added a longer native Sony A1 clip, ProRes RAW HQ
