@@ -1422,6 +1422,49 @@ generation handling were re-reviewed after correction. Evidence:
 `aagedal-save-recovery-analyze-20260910.log` and
 `aagedal-save-recovery-preflight-20260910.log` in `/tmp`.
 
+## Phase 72 — Review save lifecycle and real filesystem recovery
+
+Status: Complete on 2026-09-10 within the scope below. All 524 Release tests,
+static analysis and 61 release-preflight checks pass.
+
+- [x] Reject every queued note write after comparison stop/replacement, including
+  unretained intermediate tasks waiting behind an already-started save.
+- [x] Add deterministic three-save regressions for both stop and source-B reload.
+  Both fail with the old guard: the middle write starts and replaces the saved
+  text. Both pass with the generation check before store entry.
+- [x] Add a bounded, opt-in real disk-full test for production atomic save/delete
+  failures, unchanged original bytes/media, no partial files, and revision recovery.
+- [x] Provide an owned 32 MiB HFS+ image harness with strict path/device/capacity
+  checks, bounded filler, retained evidence, full-suite support and cleanup.
+  Missing/skipped coverage cannot count as success.
+- [x] Verify native permission-denied note creation and deletion, retained error
+  and edits across popover reopening, Retry Save recovery, and active-copy isolation.
+- [x] Confirm the enlarged native popover shows the wrapped error and Retry Save
+  action, with original media/sidecar hashes and directory permissions preserved.
+
+The native check is recorded in
+`docs/COMPARE_REVIEW_SAVE_RECOVERY_NATIVE_CHECK_2026-09-10.md`. It combines
+keyboard text/file selection and accessibility actions; complete keyboard and
+spoken VoiceOver acceptance remain. The disk-image test establishes bounded
+HFS+ production-store behavior, not APFS or native disk-full interaction.
+An already-started write may finish after comparison invalidation, but its
+completion cannot mutate the replacement UI; queued writes never begin.
+
+The integrated suite passes **524 tests with zero failures and zero skips**,
+including the real disk-image test and both original ITU reference sets, in
+114.710 seconds (114.957 including suite overhead). The image reaches zero
+available blocks, preserves the existing sidecar through save/delete failures,
+then passes both retries after the owned filler is truncated and synchronized.
+The harness verifies execution proof and exits successfully after detaching
+and removing its image. POSIX canonical-path checks handle macOS's `/tmp`
+alias without relaxing the mount safeguards; fixed timestamps avoid JSON date
+precision affecting document equality.
+
+Evidence: `/tmp/aagedal-review-recovery-verified-20260910/Tests.xcresult`,
+its `run.log`, `tests.json`, volume/environment records and successful cleanup
+status; `/tmp/aagedal-review-queue-analyze-20260910.log` and
+`/tmp/aagedal-review-recovery-preflight-final-20260910.log`.
+
 ## Remaining work after this continuation
 
 - Integrate the measured metadata-memory dependency fix after upstream review,
@@ -1505,8 +1548,10 @@ generation handling were re-reviewed after correction. Evidence:
 - Broader keyboard/VoiceOver acceptance of historical review migration and copy
   reopening, plus broader disk-full/permission-denied save-failure acceptance.
   Phase 71 adds explicit Retry Save, real filesystem permission-denied recovery
-  coverage and injected disk-full regressions; native interaction and actual
-  volume-exhaustion checks remain open.
+  coverage and injected disk-full regressions. Phase 72 adds native permission
+  failure/retry for note creation and deletion plus actual bounded HFS+ exhaustion
+  coverage. Complete keyboard/VoiceOver, APFS exhaustion and native disk-full
+  interaction remain open.
   Phase 70 completes native corrupt-copy and migration-destination-conflict
   errors and successful retries with original-file preservation. Phase 69 completes
   focused native preview layout, save/adoption, copy reopening and EDL naming;
@@ -1596,3 +1641,4 @@ generation handling were re-reviewed after correction. Evidence:
 
 62. Phase 70 review failure/retry regressions and JXL gate diagnosis.
 63. Phase 71 explicit review save recovery.
+64. Phase 72 review save lifecycle and real filesystem recovery.

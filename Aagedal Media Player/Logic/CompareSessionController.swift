@@ -1618,7 +1618,11 @@ final class CompareSessionController: ObservableObject {
                 }
             }
             await previousSave?.value
-            guard !Task.isCancelled else { return }
+            // Only the tail task is retained for cancellation. Earlier queued
+            // writes must also reject a stopped or replaced comparison before
+            // beginning sidecar work after their predecessor finishes.
+            guard !Task.isCancelled,
+                  self?.loadGeneration.isCurrent(generation) == true else { return }
             do {
                 let document = try await reviewStore.apply(
                     mutation,

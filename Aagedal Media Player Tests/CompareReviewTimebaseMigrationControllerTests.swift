@@ -7,6 +7,53 @@ import XCTest
 
 @MainActor
 final class CompareReviewTimebaseMigrationControllerTests: XCTestCase {
+    func testStopPreventsEarlierQueuedReviewWritesFromStarting() async throws {
+        try await verifyQueuedWritesAreInvalidated(replaceComparison: false)
+    }
+
+    func testReplacementPreventsEarlierQueuedReviewWritesFromStarting() async throws {
+        try await verifyQueuedWritesAreInvalidated(replaceComparison: true)
+    }
+
+    private func verifyQueuedWritesAreInvalidated(replaceComparison: Bool) async throws {
+        let f = try ReviewTimebaseMigrationFixture()
+        defer { f.remove() }
+        let store = DelayedMigrationControllerStore(document: f.document,
+            holdPreview: false, holdNoteSave: true, holdOnlyFirstNoteSave: true)
+        let (session, primary) = await makeSession(f, store: store)
+        defer { session.stop(); primary.teardown() }
+
+        let noteID = f.document.notes[0].id
+        session.updateReviewNote(id: noteID, text: "Already started")
+        await assertEventuallyAsync { await store.noteSaveCount == 1 }
+        session.updateReviewNote(id: noteID, text: "Queued middle write")
+        session.updateReviewNote(id: noteID, text: "Queued tail write")
+        var actionStarted = false
+        let action = session.performReviewActionAfterSaving(primary: primary) { _, _ in
+            actionStarted = true
+        }
+        if replaceComparison {
+            session.loadSecondary(f.secondary, alignedWith: primary)
+            await assertEventually { session.canManageReviewCopy && !session.reviewNotes.isEmpty }
+        } else {
+            session.stop()
+        }
+        let currentNotes = session.reviewNotes
+        await store.complete()
+        // The action awaits the tail, which in turn awaits every predecessor.
+        await action.value
+
+        let saveCount = await store.noteSaveCount
+        XCTAssertEqual(saveCount, 1, "Invalidating a comparison cancels every queued write, including unretained middle tasks")
+        let persisted = try await store.load(from: f.source,
+            primaryURL: f.primary, secondaryURL: f.secondary)
+        XCTAssertEqual(persisted?.notes[0].text, "Already started")
+        XCTAssertFalse(actionStarted)
+        XCTAssertFalse(session.isReviewActionPending)
+        XCTAssertFalse(session.hasUnsavedReviewChanges)
+        XCTAssertEqual(session.reviewNotes, currentNotes)
+    }
+
     func testReviewActionWaitsForDraftSaveAndRejectsFailureOrChangedPrimary() async throws {
         for outcome in ["saved", "failed", "reloaded"] {
             let f = try ReviewTimebaseMigrationFixture()
@@ -490,6 +537,7 @@ private actor DelayedMigrationControllerStore: CompareReviewSidecarStoring {
     var document: CompareReviewDocument
     let holdPreview: Bool
     let holdNoteSave: Bool
+    let holdOnlyFirstNoteSave: Bool
     let previewDocument: CompareReviewDocument?
     private(set) var previewStarted = false
     private(set) var saveStarted = false
@@ -499,10 +547,11 @@ private actor DelayedMigrationControllerStore: CompareReviewSidecarStoring {
     private var continuation: CheckedContinuation<CompareReviewDocument, Error>?
 
     init(document: CompareReviewDocument, holdPreview: Bool, previewDocument: CompareReviewDocument? = nil,
-         holdNoteSave: Bool = false) {
+         holdNoteSave: Bool = false, holdOnlyFirstNoteSave: Bool = false) {
         self.document = document
         self.holdPreview = holdPreview
         self.holdNoteSave = holdNoteSave
+        self.holdOnlyFirstNoteSave = holdOnlyFirstNoteSave
         self.previewDocument = previewDocument
     }
 
@@ -542,6 +591,10 @@ private actor DelayedMigrationControllerStore: CompareReviewSidecarStoring {
             updated.notes.removeAll { $0.id == note.id }
             updated.notes.append(note)
         case .delete(let id): updated.notes.removeAll { $0.id == id }
+        }
+        if holdOnlyFirstNoteSave && noteSaveCount > 1 {
+            document = updated
+            return updated
         }
         result = updated
         return try await withCheckedThrowingContinuation { continuation = $0 }

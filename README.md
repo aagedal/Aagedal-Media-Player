@@ -53,8 +53,23 @@ xcodebuild test -project "Aagedal Media Player.xcodeproj" -scheme "Aagedal Media
 ```
 
 The generator requires a full ffmpeg installation with libx264/libx265. Set
-`FFMPEG=/path/to/ffmpeg` to select one explicitly. If fixtures are absent, only
+`FFMPEG=/path/to/ffmpeg` to select one explicitly. If fixtures are absent,
 the generated-media tests are skipped; all pure unit tests continue to run.
+External-reference and disk-full integration checks require their separate
+harnesses.
+
+Verify review-save recovery on a real full filesystem with an isolated 32 MiB
+disk image:
+
+```bash
+scripts/test-compare-review-disk-full.sh -configuration Release
+```
+
+The harness creates and validates its own temporary volume, checks production
+atomic writes and retry, then detaches and removes the image. It retains the
+test results and volume evidence in the printed artifact directory. The ordinary
+test suite skips this opt-in check. See [review persistence](docs/COMPARE_REVIEW_SIDECAR.md)
+for the recovery guarantees and remaining native acceptance.
 
 Scope rendering has an optimized profiling matrix covering every available
 scope resolution and the full 5–30 fps update-rate range:

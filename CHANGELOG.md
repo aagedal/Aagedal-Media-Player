@@ -82,6 +82,7 @@ All notable changes to Aagedal Media Player.
   primary-file loop boundaries across all backend combinations.
 
 ### Fixed
+- Prevent queued comparison-note saves from beginning after comparison mode closes or its source pair changes.
 - Focused comparison toolbar controls receive Space and arrow keys without triggering playback; compact settings scroll to keyboard-focused controls and show focus rings.
 - RIFX playback and trim export fail with conversion guidance while their decoder paths misinterpret big-endian sample bytes.
 - Restore PCM and floating-point RIFF WAVE metadata and loudness access using bounded header reads and explicit surround speaker masks.

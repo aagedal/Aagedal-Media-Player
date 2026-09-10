@@ -256,9 +256,12 @@ across the read/write cycle, so concurrent external editing can lose changes.
 The controller queues its saves in order and ignores stale UI completions after
 a pair replacement or newer revision. Save errors are shown in the Review UI;
 visible edits must not be assumed durable after an error. Closing/replacing a
-session cancels pending work; there is no guarantee that an edit still awaiting
-its write has reached disk. Atomic replacement protects file integrity, not
-cross-process conflict resolution or unsaved edits.
+session invalidates every queued write, including intermediate saves waiting
+behind an earlier operation. A write already inside the store may finish, but
+its completion cannot update the closed or replacement session. There is no
+guarantee that an edit still awaiting its write has reached disk. Atomic
+replacement protects file integrity, not cross-process conflict resolution or
+unsaved edits.
 
 Notes/Export actions first commit pending note-text fields and wait for their
 saves. Editing is disabled during this transition, including if the popover is
@@ -276,8 +279,26 @@ in disposable read-only directories for ordinary saves, relinking and timebase
 migration. They verify unchanged original sidecar/media bytes, no leftover
 temporary files, and successful retry after restoring directory permissions.
 Separate injected permission/disk-full errors cover retained edits/deletions,
-repeated failures and controller retry. These checks do not establish native
-Retry Save layout, keyboard/VoiceOver behavior or actual full-volume recovery.
+repeated failures and controller retry. Focused native permission-denied
+add/delete recovery, popover reopening and Retry Save layout are recorded in
+[the native save-recovery check](COMPARE_REVIEW_SAVE_RECOVERY_NATIVE_CHECK_2026-09-10.md).
+Full Keyboard Access and spoken VoiceOver remain separate acceptance gates.
+
+`scripts/test-compare-review-disk-full.sh` runs an opt-in production-store
+test on its own 32 MiB HFS+ disk image. It verifies the mount path, filesystem,
+device and capacity before writing at most 40 MiB of filler. Real out-of-space
+errors must preserve the existing sidecar and media for both save and delete;
+freeing the filler must allow a valid retry without a failed high revision
+blocking it. The harness retains test/volume evidence, rejects skipped or
+missing coverage, then detaches and removes its image. It never fills the host
+volume. This bounded HFS+ check does not establish APFS behavior or native
+disk-full alert/interaction acceptance.
+
+To use an existing test build, pass `--xctestrun /path/to/tests.xctestrun`.
+Set `AAGEDAL_DISK_FULL_FULL_SUITE=1` to run all tests while enabling this check;
+existing manifest environments, including optional ITU references, are retained.
+The supplied manifest stays unchanged. `AAGEDAL_DISK_FULL_OUTPUT` selects a new
+evidence directory. Ordinary test runs skip the disk-image test.
 
 ## Alignment and portability
 
