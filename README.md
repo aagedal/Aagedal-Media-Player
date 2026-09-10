@@ -59,10 +59,12 @@ External-reference and disk-full integration checks require their separate
 harnesses.
 
 Verify review-save recovery on a real full filesystem with an isolated 32 MiB
-disk image:
+HFS+ or 128 MiB APFS disk image:
 
 ```bash
 scripts/test-compare-review-disk-full.sh -configuration Release
+# Optional bounded APFS variant:
+AAGEDAL_DISK_FULL_FILESYSTEM=APFS scripts/test-compare-review-disk-full.sh -configuration Release
 ```
 
 The harness creates and validates its own temporary volume, checks production
@@ -236,7 +238,7 @@ Preview multichannel audio tracks as waveforms, with one waveform per channel. T
 
 
 ### Metadata
-Inspect resolution, frame rate, codec, color space, chroma subsampling, and audio metadata with Command + I. The inspector offers offline loudness analysis and displays Broadcast WAVE recording tags and embedded loudness separately from measured results. It also reads UTF-8/UTF-16 iXML recording labels and optional track names with explicit source-channel and file-interleave indexes. Classic big-endian RIFX supports metadata, waveforms, and offline loudness; playback and trim export show conversion guidance until the decoder supports its sample byte order. See [supported WAVE metadata](docs/WAVE_METADATA.md).
+Inspect resolution, frame rate, codec, color space, chroma subsampling, and audio metadata with Command + I. The inspector offers offline loudness analysis and displays Broadcast WAVE recording tags and embedded loudness separately from measured results. It also reads UTF-8/UTF-16/UTF-32 iXML recording labels and optional track names with explicit source-channel and file-interleave indexes. Classic big-endian RIFX supports metadata, waveforms, and offline loudness; playback and trim export show conversion guidance until the decoder supports its sample byte order. See [supported WAVE metadata](docs/WAVE_METADATA.md).
 <img width="1227" height="691" alt="SCR-20260309-udpk" src="https://github.com/user-attachments/assets/52a86143-f944-4137-988a-e7a2c585bbaa" />
 
 

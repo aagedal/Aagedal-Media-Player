@@ -5,6 +5,8 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Added
+- Optional bounded APFS disk-full integration checks for review save/delete preservation and retry, alongside HFS+ coverage.
+- Bounded UTF-32LE/BE iXML recording labels and track metadata, with strict Unicode validation and preserved parsing limits.
 - Explicit migration of historical rounded review timebases into a new sidecar, with preview, retained frame coordinates, and deliberate copy reopening.
 - Bounded UTF-16 iXML recording metadata and optional recording track names with explicit source-channel and file-interleave indexes.
 - Bounded iXML recording labels in WAVE metadata and the inspector, including project, scene, take, sound roll, circled take, note, and file UID.

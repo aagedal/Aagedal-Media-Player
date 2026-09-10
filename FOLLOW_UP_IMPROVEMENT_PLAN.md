@@ -1465,6 +1465,67 @@ its `run.log`, `tests.json`, volume/environment records and successful cleanup
 status; `/tmp/aagedal-review-queue-analyze-20260910.log` and
 `/tmp/aagedal-review-recovery-preflight-final-20260910.log`.
 
+## Phase 73 — Bounded UTF-32 iXML recording metadata
+
+Status: Complete on 2026-09-10 within the scope below. All 528 Release tests,
+static analysis and 61 release-preflight checks pass.
+
+- [x] Read UTF-32LE/BE recording labels and explicit track indexes/names in
+  RIFF/RF64/BW64 without changing audio routing or technical metadata.
+- [x] Detect four-byte signatures before overlapping UTF-16 BOMs and require
+  matching encoding declarations, with explicit byte order when no BOM exists.
+- [x] Reject incomplete code units, invalid scalars, conflicting declarations,
+  malformed XML and encoded DTD/entities; preserve existing payload/field/tree caps.
+- [x] Work around Darwin XMLParser's inconsistent UTF-32 support through strict
+  decoding and bounded UTF-8 transcoding, changing only the validated encoding name.
+- [x] Add Unicode/CDATA/JSON/container, invalid-input and boundary regressions;
+  independently review the conversion and security checks.
+
+See `docs/WAVE_METADATA.md` for the supported encoding contract. Authentic
+recorder files and spoken VoiceOver remain separate acceptance work.
+
+## Phase 74 — Real APFS review save recovery
+
+Status: Complete on 2026-09-10 within the scope below. Focused APFS/HFS+ and
+the integrated 528-test Release suite pass, with static analysis and all 61
+release-preflight checks.
+
+- [x] Extend the opt-in harness to a disposable 128 MiB APFS image, preserving
+  fixed filesystem-specific capacity/write caps and the default 32 MiB HFS+ path.
+- [x] Validate filesystem, canonical mount, device, capacity and per-run token
+  before filling; require both successful tests and completion proof.
+- [x] Verify actual APFS out-of-space save/delete errors, unchanged source and
+  sidecar bytes, no partial files, valid-revision recovery and successful retries.
+- [x] Recheck HFS+ with the same test bundle and verify both images are detached
+  and removed. Enable Release testability in direct harness builds.
+
+Both focused runs pass with zero failures or skips. APFS may report reserved
+free blocks despite returning ENOSPC; the test requires real errors rather than
+zero reported blocks. Native disk-full popover/alert interaction remains open.
+See `docs/COMPARE_REVIEW_APFS_DISK_FULL_CHECK_2026-09-10.md`.
+
+## Integrated Phase 73–74 verification — 2026-09-10
+
+All **528 Release tests pass with zero failures and zero skips**, including
+all 57 WAVE reader tests, both official ITU reference sets, and the real APFS
+exhaustion test, in 117.054 seconds (117.310 including suite overhead).
+Release static analysis and all 61 release-preflight checks pass. The APFS
+harness verifies its completion proof, detaches the image and removes the
+fixture. Separate focused HFS+ and APFS runs also pass.
+
+Final review tightened declaration recognition so similarly named processing
+instructions cannot replace XML declarations, and uses byte-based whitespace
+checks to preserve valid CRLF declarations in UTF-16/UTF-32. Native app access
+stalled before UTF-32 fixture opening; no native inspector acceptance is claimed.
+An earlier integrated run was interrupted by static analysis replacing the
+shared test product; the final passing run used no concurrent build actions.
+
+Evidence: `/private/tmp/aagedal-player-integrated-final-20260910/Tests.xcresult`,
+its `run.log`, `tests.json`, environment/volume records and successful cleanup
+status; `/tmp/aagedal-utf32-final-build.log`,
+`/tmp/aagedal-utf32-analyze-final.log`, and
+`/tmp/aagedal-utf32-preflight-final.log`.
+
 ## Remaining work after this continuation
 
 - Integrate the measured metadata-memory dependency fix after upstream review,
@@ -1517,10 +1578,11 @@ status; `/tmp/aagedal-review-queue-analyze-20260910.log` and
   The diagnosed rear-weight discrepancy is corrected in Phase 51; unknown or
   other layouts do not receive that correction.
 - Broader WAVE format support: compressed encodings, RIFX extensible/BWF variants,
-  further iXML encodings/structures and ADM interpretation remain outside the
+  legacy iXML encodings, further structures and ADM interpretation remain outside the
   bounded reader. Phases 62 and 66 add bounded UTF-8 and UTF-16 iXML recording labels;
   Phase 68 adds bounded track names/indexes and native UTF-16 inspector checks;
-  producer-authentic recorder acceptance remains. Phase 59 adds
+  Phase 73 adds bounded UTF-32LE/BE recording labels and tracks;
+  native UTF-32 inspector and producer-authentic recorder acceptance remain. Phase 59 adds
   classic RIFX metadata and corrected offline analysis/waveforms; RIFX playback
   and trim export remain explicitly unavailable pending a verified decoder fix.
   Phase 54 verifies
@@ -1550,8 +1612,9 @@ status; `/tmp/aagedal-review-queue-analyze-20260910.log` and
   Phase 71 adds explicit Retry Save, real filesystem permission-denied recovery
   coverage and injected disk-full regressions. Phase 72 adds native permission
   failure/retry for note creation and deletion plus actual bounded HFS+ exhaustion
-  coverage. Complete keyboard/VoiceOver, APFS exhaustion and native disk-full
-  interaction remain open.
+  coverage. Phase 74 adds actual bounded APFS exhaustion and recovery, plus
+  an HFS+ recheck. Complete keyboard/VoiceOver and native disk-full interaction
+  remain open.
   Phase 70 completes native corrupt-copy and migration-destination-conflict
   errors and successful retries with original-file preservation. Phase 69 completes
   focused native preview layout, save/adoption, copy reopening and EDL naming;
@@ -1642,3 +1705,6 @@ status; `/tmp/aagedal-review-queue-analyze-20260910.log` and
 62. Phase 70 review failure/retry regressions and JXL gate diagnosis.
 63. Phase 71 explicit review save recovery.
 64. Phase 72 review save lifecycle and real filesystem recovery.
+
+65. Phase 73 bounded UTF-32 iXML recording metadata.
+66. Phase 74 real APFS review save recovery.

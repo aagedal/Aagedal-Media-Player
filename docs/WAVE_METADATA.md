@@ -34,6 +34,24 @@ producer-authentic recorder fixtures, Full Keyboard Access and spoken VoiceOver
 remain separate. The complete Release suite passes all 479 tests with no
 failures or skips, including all 41 WAVE reader tests.
 
+## UTF-32 verification — 2026-09-10
+
+All 57 Release WAVE reader tests pass, and the integrated suite passes 528
+tests with zero failures or skips. Static analysis and 61 release-preflight
+checks pass. The WAVE suite covers both UTF-32 byte orders, matching BOM
+and declaration combinations, Unicode/CDATA and explicit track indexes,
+RIFF/RF64/BW64 chunk handling, JSON round trips, malformed scalars and XML,
+encoded entities, and unchanged field/payload/depth/element limits.
+Declaration detection requires XML whitespace after `<?xml`; similarly named
+processing instructions cannot substitute for an encoding declaration.
+
+The platform-parser probe confirmed inconsistent native UTF-32 handling,
+motivating strict transcoding rather than reliance on automatic detection.
+Native app access stalled before fixture opening; this continuation does not
+claim UTF-32 inspector or spoken VoiceOver acceptance. Disposable synthetic
+fixtures and their hashes are in `/tmp/aagedal-utf32-native-20260910/` for the
+remaining native check. Producer-authentic recorder files remain a separate gate.
+
 ## Supported containers
 
 `WaveMetadataReader` supplies technical audio metadata for local little-endian
@@ -137,11 +155,22 @@ and sparse 1 GiB coding history. Focused native acceptance is recorded below.
 RIFF/RF64/BW64 files can also expose an optional `ixmlRecording` object in the
 model and inspector JSON, with a separate **iXML Recording** inspector section.
 The reader accepts UTF-8 XML, including a UTF-8 BOM and an optional XML
-declaration, and little- or big-endian UTF-16. A UTF-16 BOM identifies the byte
+declaration, and little- or big-endian UTF-16 and UTF-32. A UTF-16 BOM identifies the byte
 order; without a BOM the document must start with an XML declaration explicitly
 naming `UTF-16LE` or `UTF-16BE`. Generic `UTF-16` requires a BOM. Encoding names
 are case-insensitive and must agree with the detected byte order. The preflight
 follows [XML 1.0 section 4.3.3 and appendix F](https://www.w3.org/TR/xml/#charencoding).
+UTF-32 requires an explicit encoding declaration. With a UTF-32 BOM, `UTF-32`
+or the matching `UTF-32LE`/`UTF-32BE` name is accepted; without a BOM, the
+matching explicit byte-order name is required. Four-byte signatures are checked
+before UTF-16 so their overlapping prefixes cannot select the wrong decoder.
+Incomplete code units, surrogate scalars, values above U+10FFFF, conflicting
+declarations and non-round-tripping Unicode are rejected. Unlike UTF-8/UTF-16,
+Darwin's XML parser does not reliably accept UTF-32LE or UTF-32 BOMs. After
+strict decoding and security checks, the reader transcodes UTF-32 to UTF-8 and
+replaces only the validated encoding-name value. The complete declaration and
+document still undergo XML syntax validation. This is bounded interoperability
+support, not a claim that recorders must emit UTF-32.
 The XML payload's byte order is independent of the little-endian WAVE container.
 Documents require one unnamespaced `BWFXML` root. The reader reads direct scalar
 children `IXML_VERSION`, `PROJECT`, `SCENE`, `TAKE`, `TAPE`, `NOTE`, `CIRCLED`
@@ -160,7 +189,7 @@ allows 16 KiB; an oversized field is omitted whole. A field containing nested
 markup is also omitted. Each callback that consumes text or starts an element
 checks cancellation; the caller propagates cancellation after parsing.
 
-DTD/entity declarations are rejected in decoded text before parsing, so UTF-16
+DTD/entity declarations are rejected in decoded text before parsing, so UTF-16/UTF-32
 cannot conceal their markers. External-entity resolution is disabled and its
 policy is `never`. This conservative preflight also rejects declaration markers
 inside comments or CDATA. NUL characters, invalid Unicode (including malformed
@@ -196,15 +225,14 @@ compatibility. Native track inspector and recorder-authentic acceptance remain.
 Nested `BEXT`, `SPEED`, track `FUNCTION`/mix objects and vendor-specific objects are ignored.
 iXML never overrides `bext` values, channel layout, sample rate, duration,
 timecode or measured loudness. No track routing, timing, ADM or conformance
-interpretation is attempted. RIFX iXML, UTF-32 and legacy text encodings remain
-unsupported. Tests cover recording values and Unicode, model/JSON/service
+interpretation is attempted. RIFX iXML and legacy text encodings remain unsupported. Tests cover recording values and Unicode, model/JSON/service
 integration, RF64/BW64 sizes, chunks after audio, namespace and nesting scope,
 malformed/hostile XML, duplicate chunks, field/depth/element/payload bounds,
-and a sparse 1 GiB skipped XML payload. Both UTF-16 byte orders additionally cover
+and a sparse 1 GiB skipped XML payload. Both UTF-16 and UTF-32 byte orders additionally cover
 BOM/declaration combinations, non-BMP text, CDATA, encoded DTD/entity rejection,
-decoded UTF-8 field limits and unchanged structural/payload caps. The parser
-receives the original bytes and declaration together after preflight; no text
-repair or encoding-declaration rewriting occurs. Producer-authentic recorder
+decoded UTF-8 field limits and unchanged structural/payload caps. UTF-8/UTF-16 retain their original bytes and declaration after preflight.
+UTF-32 uses the strictly validated transcoding path described above. No invalid
+Unicode or malformed XML is repaired. Producer-authentic recorder
 fixtures remain follow-up work; focused native UTF-16/track inspector acceptance
 is recorded above.
 

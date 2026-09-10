@@ -203,11 +203,11 @@ nonisolated enum WaveMetadataReader {
     }
 
     private static func readIXML(_ bytes: Data) -> MediaMetadata.IXMLRecording? {
-        guard preflightIXML(bytes) else { return nil }
+        guard let payload = preparedIXML(bytes) else { return nil }
         let delegate = IXMLDelegate()
-        // Keep the original bytes/declaration together. The parser validates
-        // XML syntax after the decoded security and encoding checks below.
-        let parser = XMLParser(data: bytes)
+        // UTF-32 is transcoded only after strict encoding/security checks.
+        // XMLParser still validates the complete document syntax.
+        let parser = XMLParser(data: payload)
         parser.delegate = delegate
         parser.shouldProcessNamespaces = true
         parser.shouldResolveExternalEntities = false
@@ -224,13 +224,30 @@ nonisolated enum WaveMetadataReader {
         )
     }
 
-    private static func preflightIXML(_ bytes: Data) -> Bool {
+    private static func preparedIXML(_ bytes: Data) -> Data? {
         let encoding: String.Encoding
         let bomBytes: Int
         let supportedNames: Set<String>
         // XML 1.0 §4.3.3 / appendix F: a BOM identifies UTF-16; without
         // one, the XML declaration must explicitly identify UTF-16LE/BE.
-        if bytes.starts(with: [0xff, 0xfe]) {
+        // Detect four-byte signatures before the overlapping UTF-16LE BOM.
+        if bytes.starts(with: [0xff, 0xfe, 0, 0]) {
+            encoding = .utf32LittleEndian
+            bomBytes = 4
+            supportedNames = ["UTF-32", "UTF-32LE"]
+        } else if bytes.starts(with: [0, 0, 0xfe, 0xff]) {
+            encoding = .utf32BigEndian
+            bomBytes = 4
+            supportedNames = ["UTF-32", "UTF-32BE"]
+        } else if bytes.starts(with: [0x3c, 0, 0, 0]) {
+            encoding = .utf32LittleEndian
+            bomBytes = 0
+            supportedNames = ["UTF-32LE"]
+        } else if bytes.starts(with: [0, 0, 0, 0x3c]) {
+            encoding = .utf32BigEndian
+            bomBytes = 0
+            supportedNames = ["UTF-32BE"]
+        } else if bytes.starts(with: [0xff, 0xfe]) {
             encoding = .utf16LittleEndian
             bomBytes = 2
             supportedNames = ["UTF-16", "UTF-16LE"]
@@ -252,26 +269,45 @@ nonisolated enum WaveMetadataReader {
             supportedNames = ["UTF-8"]
         }
         let payload = bytes.dropFirst(bomBytes)
-        // Foundation can silently drop an odd final UTF-16 byte. Reject it
-        // explicitly; invalid surrogate sequences must also fail decoding.
-        guard encoding == .utf8 || payload.count.isMultiple(of: 2),
+        let isUTF32 = encoding == .utf32LittleEndian || encoding == .utf32BigEndian
+        let unitWidth = isUTF32 ? 4 : (encoding == .utf8 ? 1 : 2)
+        // Foundation can silently drop incomplete code units. Exact round-trip
+        // validation also prevents replacement of invalid Unicode scalars.
+        guard payload.count.isMultiple(of: unitWidth),
               let text = String(data: payload, encoding: encoding),
-              !text.contains("\0"), !text.contains("<!DOCTYPE"), !text.contains("<!ENTITY") else { return false }
-        // Scan decoded characters, so UTF-16 cannot hide a DTD/entity from
+              text.data(using: encoding) == Data(payload),
+              !text.contains("\0"), !text.contains("<!DOCTYPE"), !text.contains("<!ENTITY") else { return nil }
+        // Scan decoded characters, so UTF-16/UTF-32 cannot hide a DTD/entity from
         // preflight. Conservative rejection also covers comments and CDATA.
         var declaredEncoding: String?
-        if text.hasPrefix("<?xml"), let end = text.range(of: "?>") {
+        var encodingRange: Range<String.Index>?
+        if text.utf8.starts(with: Array("<?xml".utf8)),
+           let separator = text.utf8.dropFirst(5).first, [9, 10, 13, 32].contains(separator),
+           let end = text.range(of: "?>") {
             let declaration = String(text[..<end.lowerBound])
             guard let pattern = try? NSRegularExpression(
                 pattern: #"\bencoding[ \t\r\n]*=[ \t\r\n]*(["'])([A-Za-z][A-Za-z0-9._-]*)\1"#
-            ) else { return false }
+            ) else { return nil }
             if let match = pattern.firstMatch(in: declaration, range: NSRange(declaration.startIndex..., in: declaration)),
                let range = Range(match.range(at: 2), in: declaration) {
                 declaredEncoding = String(declaration[range]).uppercased()
+                encodingRange = Range(match.range(at: 2), in: text)
             }
         }
-        if let declaredEncoding { return supportedNames.contains(declaredEncoding) }
-        return encoding == .utf8 || bomBytes > 0
+        if let declaredEncoding {
+            guard supportedNames.contains(declaredEncoding) else { return nil }
+        } else if isUTF32 || (encoding != .utf8 && bomBytes == 0) {
+            // XML requires declarations for encodings other than UTF-8/UTF-16.
+            return nil
+        }
+        if isUTF32 {
+            guard let encodingRange else { return nil }
+            // Darwin XMLParser does not reliably accept UTF-32LE or UTF-32
+            // BOMs. Normalize only the already-validated encoding name; keep
+            // all remaining declaration syntax for XMLParser to validate.
+            return Data(text.replacingCharacters(in: encodingRange, with: "UTF-8").utf8)
+        }
+        return bytes
     }
 
     private nonisolated final class IXMLDelegate: NSObject, XMLParserDelegate {
