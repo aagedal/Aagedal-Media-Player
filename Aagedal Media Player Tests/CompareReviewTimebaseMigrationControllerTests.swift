@@ -103,6 +103,94 @@ final class CompareReviewTimebaseMigrationControllerTests: XCTestCase {
         XCTAssertEqual(persisted?.notes.first { $0.id == other.id }?.text, "Successful other edit")
     }
 
+    func testReviewActionRetriesEarlierFailureBehindNewDraftSaveOnlyOnce() async throws {
+        for retryFails in [false, true] {
+            let f = try ReviewTimebaseMigrationFixture()
+            defer { f.remove() }
+            var document = f.document
+            let other = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
+                secondaryFrame: 10, secondaryTime: 1, text: "Other finding")
+            document.notes.append(other)
+            let store = DelayedMigrationControllerStore(document: document, holdPreview: false, holdNoteSave: true)
+            let (session, primary) = await makeSession(f, store: store)
+            defer { session.stop(); primary.teardown() }
+            session.updateReviewNote(id: document.notes[0].id, text: "Retained failed edit")
+            await assertEventuallyAsync { await store.noteSaveCount == 1 }
+            await store.complete(error: CocoaError(.fileWriteNoPermission))
+            await assertEventually { session.canManageReviewCopy }
+
+            // Match the view: flushing another visible text draft starts a
+            // write immediately before the Retry Save/menu action is queued.
+            session.updateReviewNote(id: other.id, text: "New visible draft")
+            var actionStarted = false
+            let action = session.performReviewActionAfterSaving(primary: primary) { _, _ in
+                actionStarted = true
+            }
+            await assertEventuallyAsync { await store.noteSaveCount == 2 }
+            XCTAssertFalse(actionStarted)
+            await store.complete()
+            await assertEventuallyAsync { await store.noteSaveCount == 3 }
+            XCTAssertFalse(actionStarted)
+            XCTAssertTrue(session.isReviewActionPending)
+            await store.complete(error: retryFails ? CocoaError(.fileWriteNoPermission) : nil)
+            await action.value
+            XCTAssertFalse(session.isReviewActionPending)
+            XCTAssertEqual(actionStarted, !retryFails)
+            XCTAssertEqual(session.hasUnsavedReviewChanges, retryFails)
+            let saveCount = await store.noteSaveCount
+            XCTAssertEqual(saveCount, 3, "A persistent error must not start an automatic retry loop")
+            let persisted = try await store.load(from: f.source, primaryURL: f.primary, secondaryURL: f.secondary)
+            XCTAssertEqual(persisted?.notes.first { $0.id == other.id }?.text, "New visible draft")
+            XCTAssertEqual(persisted?.notes.first { $0.id == document.notes[0].id }?.text,
+                retryFails ? document.notes[0].text : "Retained failed edit")
+            XCTAssertEqual(session.reviewNotes.first { $0.id == document.notes[0].id }?.text, "Retained failed edit")
+        }
+    }
+
+    func testPermissionAndDiskFullFailuresCanBeRetriedWithoutReloadingUnsavedChanges() async throws {
+        for failure in [CocoaError.Code.fileWriteNoPermission, .fileWriteOutOfSpace] {
+            for deleteNote in [false, true] {
+                let f = try ReviewTimebaseMigrationFixture()
+                defer { f.remove() }
+                let store = DelayedMigrationControllerStore(document: f.document, holdPreview: false, holdNoteSave: true)
+                let (session, primary) = await makeSession(f, store: store)
+                defer { session.stop(); primary.teardown() }
+                if deleteNote { session.deleteReviewNote(id: f.document.notes[0].id) }
+                else { session.updateReviewNote(id: f.document.notes[0].id, text: "Unsaved edit") }
+                await assertEventuallyAsync { await store.noteSaveCount == 1 }
+                let error = CocoaError(failure)
+                await store.complete(error: error)
+                await assertEventually { session.canManageReviewCopy }
+                XCTAssertTrue(session.hasUnsavedReviewChanges)
+                XCTAssertTrue(session.reviewError?.contains(error.localizedDescription) == true)
+                let optimisticNotes = session.reviewNotes
+                session.retryReviewLoad(primary: primary)
+                XCTAssertFalse(session.isReviewLoading)
+                XCTAssertEqual(session.reviewNotes, optimisticNotes)
+                XCTAssertTrue(session.hasUnsavedReviewChanges)
+
+                session.retryReviewSave(primary: primary)
+                await assertEventuallyAsync { await store.noteSaveCount == 2 }
+                session.retryReviewSave(primary: primary)
+                XCTAssertTrue(session.isReviewActionPending)
+                await store.complete(error: error)
+                await assertEventually { !session.isReviewActionPending }
+                XCTAssertTrue(session.hasUnsavedReviewChanges)
+                XCTAssertEqual(session.reviewNotes, optimisticNotes)
+
+                session.retryReviewSave(primary: primary)
+                await assertEventuallyAsync { await store.noteSaveCount == 3 }
+                await store.complete()
+                await assertEventually { !session.isReviewActionPending }
+                XCTAssertFalse(session.hasUnsavedReviewChanges)
+                XCTAssertNil(session.reviewError)
+                XCTAssertTrue(session.canEditReviewNotes)
+                let persisted = try await store.load(from: f.source, primaryURL: f.primary, secondaryURL: f.secondary)
+                XCTAssertEqual(persisted?.notes, optimisticNotes)
+            }
+        }
+    }
+
     func testPreviewDoesNotWriteAndCancelRetainsOriginalAndFilter() async throws {
         let f = try ReviewTimebaseMigrationFixture()
         defer { f.remove() }

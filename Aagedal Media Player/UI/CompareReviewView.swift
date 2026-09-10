@@ -146,7 +146,15 @@ struct CompareReviewView: View {
                     Text(reviewError)
                         .font(.caption)
                     Spacer()
-                    if !compareSession.canEditReviewNotes {
+                    if compareSession.hasUnsavedReviewChanges {
+                        Button("Retry Save") {
+                            performReviewAction { _, _ in }
+                        }
+                        .buttonStyle(.link)
+                        .font(.caption)
+                        .disabled(!compareSession.canManageReviewCopy || compareSession.isReviewActionPending)
+                        .accessibilityLabel("Retry saving review notes")
+                    } else if !compareSession.canEditReviewNotes {
                         Button("Retry") {
                             compareSession.retryReviewLoad(primary: primaryController)
                         }

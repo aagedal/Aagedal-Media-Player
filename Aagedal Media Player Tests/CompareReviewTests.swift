@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import XCTest
+import Darwin
 @testable import Aagedal_Media_Player
 
 final class CompareReviewNavigationTests: XCTestCase {
@@ -599,6 +600,100 @@ final class CompareReviewSidecarStoreTests: XCTestCase {
         try await store.save(document, to: fixture.sidecar, revision: 2)
         let loaded = try await store.load(from: fixture.sidecar, primaryURL: fixture.primary, secondaryURL: fixture.secondary)
         XCTAssertEqual(loaded, document)
+    }
+
+    func testReadOnlyDirectoryPreservesSidecarAndAllowsSaveAfterPermissionsAreRestored() async throws {
+        try XCTSkipIf(geteuid() == 0, "Root bypasses directory write permissions")
+        let fixture = try makeFixture()
+        let fileManager = FileManager.default
+        let permissions = try XCTUnwrap(
+            fileManager.attributesOfItem(atPath: fixture.directory.path)[.posixPermissions]
+        )
+        defer {
+            try? fileManager.setAttributes([.posixPermissions: permissions], ofItemAtPath: fixture.directory.path)
+            try? fileManager.removeItem(at: fixture.directory)
+        }
+        let media = Data("Source media must remain untouched".utf8)
+        try media.write(to: fixture.primary)
+        try media.write(to: fixture.secondary)
+        let note = CompareReviewNote(primaryFrame: 0, primaryTime: 0,
+            secondaryFrame: 0, secondaryTime: 0, text: "Original")
+        var document = CompareReviewDocument(primaryURL: fixture.primary,
+            secondaryURL: fixture.secondary, notes: [note])
+        let store = CompareReviewSidecarStore()
+        try await store.save(document, to: fixture.sidecar, revision: 1)
+        let original = try Data(contentsOf: fixture.sidecar)
+        let originalEntries = try fileManager.contentsOfDirectory(atPath: fixture.directory.path).sorted()
+        document.notes[0].text = "Recovered after restoring write permission"
+        // This exercises Foundation's actual atomic-write failure, without
+        // touching permissions outside this disposable fixture directory.
+        try fileManager.setAttributes([.posixPermissions: 0o555], ofItemAtPath: fixture.directory.path)
+        do {
+            try await store.save(document, to: fixture.sidecar, revision: 99)
+            XCTFail("A read-only directory must reject atomic replacement")
+        } catch {
+            let failure = error as NSError
+            XCTAssertEqual(failure.domain, NSCocoaErrorDomain)
+            XCTAssertEqual(failure.code, CocoaError.Code.fileWriteNoPermission.rawValue)
+        }
+        XCTAssertEqual(try Data(contentsOf: fixture.sidecar), original)
+        XCTAssertEqual(try fileManager.contentsOfDirectory(atPath: fixture.directory.path).sorted(), originalEntries)
+        try fileManager.setAttributes([.posixPermissions: permissions], ofItemAtPath: fixture.directory.path)
+        try await store.save(document, to: fixture.sidecar, revision: 2)
+        let recovered = try await store.load(from: fixture.sidecar,
+            primaryURL: fixture.primary, secondaryURL: fixture.secondary)
+        XCTAssertEqual(recovered?.notes[0].text, document.notes[0].text)
+        XCTAssertEqual(try Data(contentsOf: fixture.primary), media)
+        XCTAssertEqual(try Data(contentsOf: fixture.secondary), media)
+        XCTAssertEqual(try fileManager.contentsOfDirectory(atPath: fixture.directory.path).sorted(), originalEntries)
+    }
+
+    func testInjectedWriteFailuresPreserveSidecarAndMediaAndAllowRetry() async throws {
+        for failure in [POSIXErrorCode.EACCES, .ENOSPC] {
+            let fixture = try makeFixture()
+            defer { try? FileManager.default.removeItem(at: fixture.directory) }
+            let media = Data("Source media must remain untouched".utf8)
+            try media.write(to: fixture.primary)
+            try media.write(to: fixture.secondary)
+            let failureMarker = fixture.directory.appendingPathComponent("inject-write-failure")
+            let store = CompareReviewSidecarStore { data, url in
+                if FileManager.default.fileExists(atPath: failureMarker.path) {
+                    throw POSIXError(failure)
+                }
+                try data.write(to: url, options: .atomic)
+            }
+            let note = CompareReviewNote(primaryFrame: 0, primaryTime: 0,
+                secondaryFrame: 0, secondaryTime: 0, text: "Original")
+            var document = CompareReviewDocument(primaryURL: fixture.primary,
+                secondaryURL: fixture.secondary, notes: [note])
+            try await store.save(document, to: fixture.sidecar, revision: 1)
+            let original = try Data(contentsOf: fixture.sidecar)
+            document.notes[0].text = "Recovered edit"
+            try Data().write(to: failureMarker)
+            do {
+                try await store.save(document, to: fixture.sidecar, revision: 99)
+                XCTFail("Expected filesystem failure")
+            } catch let error as POSIXError { XCTAssertEqual(error.code, failure) }
+            XCTAssertEqual(try Data(contentsOf: fixture.sidecar), original)
+            do {
+                _ = try await store.apply(.delete(note.id), to: fixture.sidecar,
+                    primaryURL: fixture.primary, secondaryURL: fixture.secondary)
+                XCTFail("Expected failed deletion to preserve the sidecar")
+            } catch let error as POSIXError { XCTAssertEqual(error.code, failure) }
+            XCTAssertEqual(try Data(contentsOf: fixture.sidecar), original)
+            try FileManager.default.removeItem(at: failureMarker)
+            // A failed high revision must not suppress a later valid save.
+            try await store.save(document, to: fixture.sidecar, revision: 2)
+            let recovered = try await store.load(from: fixture.sidecar,
+                primaryURL: fixture.primary, secondaryURL: fixture.secondary)
+            XCTAssertEqual(recovered?.notes[0].text, "Recovered edit")
+            let deleted = try await store.apply(.delete(note.id), to: fixture.sidecar,
+                primaryURL: fixture.primary, secondaryURL: fixture.secondary)
+            XCTAssertTrue(deleted.notes.isEmpty)
+            XCTAssertEqual(try Data(contentsOf: fixture.primary), media)
+            XCTAssertEqual(try Data(contentsOf: fixture.secondary), media)
+            XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: fixture.directory.path).count, 3)
+        }
     }
 
     private func makeFixture() throws -> (

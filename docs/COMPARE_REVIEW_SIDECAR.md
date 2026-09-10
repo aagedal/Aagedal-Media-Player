@@ -263,11 +263,21 @@ cross-process conflict resolution or unsaved edits.
 Notes/Export actions first commit pending note-text fields and wait for their
 saves. Editing is disabled during this transition, including if the popover is
 closed and reopened. Failed edits and deletions remain tracked in the current
-session even after dismissing the error; the next Notes/Export action retries
-them and continues only after every outstanding mutation is saved. A successful
+session even after dismissing the error. **Retry Save** commits current text
+drafts and retries outstanding writes without switching reviews. The next
+Notes/Export action also retries them and continues only after every outstanding
+mutation is saved. Reload is refused while changes remain unsaved. A successful
 save to another note cannot hide an earlier failed change. These retained changes
 are session-local, not a durable recovery journal; replacing or closing the
 session still has the cancellation behavior described above.
+
+The September 10 recovery regressions exercise actual permission-denied writes
+in disposable read-only directories for ordinary saves, relinking and timebase
+migration. They verify unchanged original sidecar/media bytes, no leftover
+temporary files, and successful retry after restoring directory permissions.
+Separate injected permission/disk-full errors cover retained edits/deletions,
+repeated failures and controller retry. These checks do not establish native
+Retry Save layout, keyboard/VoiceOver behavior or actual full-volume recovery.
 
 ## Alignment and portability
 

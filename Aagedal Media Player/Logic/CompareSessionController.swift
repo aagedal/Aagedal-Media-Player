@@ -456,6 +456,7 @@ final class CompareSessionController: ObservableObject {
     private var loadGeneration = OperationGeneration()
     private var reviewRevision: UInt64 = 0
     private var pendingReviewMutations: [UUID: (revision: UInt64, mutation: CompareReviewMutation)] = [:]
+    private var queuedReviewMutationRevisions: Set<UInt64> = []
     private var isReviewSidecarWritable = false
     private let reviewStore: any CompareReviewSidecarStoring
     private let metadataLoader: MetadataLoader
@@ -524,6 +525,7 @@ final class CompareSessionController: ObservableObject {
         reviewSaveTask?.cancel()
         reviewSaveTask = nil
         pendingReviewMutations.removeAll()
+        queuedReviewMutationRevisions.removeAll()
         reviewRevision &+= 1
         reviewExportTask?.cancel()
         reviewExportSavePanel?.cancel(nil)
@@ -622,6 +624,7 @@ final class CompareSessionController: ObservableObject {
         reviewSaveTask?.cancel()
         reviewSaveTask = nil
         pendingReviewMutations.removeAll()
+        queuedReviewMutationRevisions.removeAll()
         reviewRevision &+= 1
         reviewExportTask?.cancel()
         reviewExportTask = nil
@@ -908,8 +911,13 @@ final class CompareSessionController: ObservableObject {
         reviewActionOperation = operation
         // A dismissed save error must not make an optimistic edit disposable.
         // Retry retained mutations explicitly on the next requested action.
-        if reviewSaveTask == nil, let primaryURL = primary.mediaItem?.url, let secondaryURL {
-            for pending in pendingReviewMutations.values.sorted(by: { $0.revision < $1.revision }) {
+        if let primaryURL = primary.mediaItem?.url, let secondaryURL {
+            // Draft flushing may already have queued a new save. Chain older
+            // failed changes behind it without duplicating any queued writes.
+            let retries = pendingReviewMutations.values
+                .filter { !queuedReviewMutationRevisions.contains($0.revision) }
+                .sorted(by: { $0.revision < $1.revision })
+            for pending in retries {
                 persistReviewMutation(pending.mutation, primaryURL: primaryURL, secondaryURL: secondaryURL)
             }
         }
@@ -1337,13 +1345,20 @@ final class CompareSessionController: ObservableObject {
     }
 
     func retryReviewLoad(primary: PlayerController) {
-        guard !isReviewRelinking, reviewSaveTask == nil, !reviewExportState.isInFlight, let primaryURL = primary.mediaItem?.url,
+        guard pendingReviewMutations.isEmpty, !isReviewRelinking, reviewSaveTask == nil, !reviewExportState.isInFlight, let primaryURL = primary.mediaItem?.url,
               let secondaryURL else { return }
         loadReviewNotes(
             primaryURL: primaryURL,
             secondaryURL: secondaryURL,
             generation: loadGeneration.current
         )
+    }
+
+    var hasUnsavedReviewChanges: Bool { !pendingReviewMutations.isEmpty }
+
+    func retryReviewSave(primary: PlayerController) {
+        guard hasUnsavedReviewChanges, canManageReviewCopy, !isReviewActionPending else { return }
+        performReviewActionAfterSaving(primary: primary) { _, _ in }
     }
 
     @discardableResult
@@ -1537,6 +1552,7 @@ final class CompareSessionController: ObservableObject {
     ) {
         cancelReviewRelink()
         pendingReviewMutations.removeAll()
+        queuedReviewMutationRevisions.removeAll()
         reviewLoadTask?.cancel()
         let sidecarURL = CompareReviewSidecarStore.sidecarURL(
             primaryURL: primaryURL,
@@ -1591,10 +1607,16 @@ final class CompareSessionController: ObservableObject {
         case .delete(let id): mutationID = id
         }
         pendingReviewMutations[mutationID] = (revision, mutation)
+        queuedReviewMutationRevisions.insert(revision)
         let generation = loadGeneration.current
         let previousSave = reviewSaveTask
         let reviewStore = reviewStore
         reviewSaveTask = Task { @MainActor [weak self] in
+            defer {
+                if let self, self.loadGeneration.isCurrent(generation) {
+                    self.queuedReviewMutationRevisions.remove(revision)
+                }
+            }
             await previousSave?.value
             guard !Task.isCancelled else { return }
             do {
@@ -1627,7 +1649,7 @@ final class CompareSessionController: ObservableObject {
                     ($0.primaryFrame, $0.createdAt, $0.id.uuidString) < ($1.primaryFrame, $1.createdAt, $1.id.uuidString)
                 }
                 if self.pendingReviewMutations.isEmpty { self.reviewError = nil }
-                else { self.reviewError = "Some comparison note changes have not been saved. The next review action will retry them." }
+                else { self.reviewError = "Some comparison note changes have not been saved. Choose Retry Save or another review action to retry them." }
                 self.reviewSaveTask = nil
             } catch {
                 guard let self else { return }

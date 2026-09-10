@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import XCTest
+import Darwin
 @testable import Aagedal_Media_Player
 
 final class CompareReviewRelinkingTests: XCTestCase {
@@ -84,6 +85,44 @@ final class CompareReviewRelinkingTests: XCTestCase {
         } catch CompareReviewSidecarError.relinkPreviewChanged {}
         XCTAssertFalse(FileManager.default.fileExists(atPath: f.destination.path))
         XCTAssertEqual(try Data(contentsOf: f.source), changedBytes)
+    }
+
+    func testReadOnlyDestinationRejectsRelinkAndAllowsRetryWithoutChangingOriginalFiles() async throws {
+        try XCTSkipIf(geteuid() == 0, "Root bypasses directory write permissions")
+        let f = try fixture()
+        let fileManager = FileManager.default
+        let permissions = try XCTUnwrap(fileManager.attributesOfItem(atPath: f.directory.path)[.posixPermissions])
+        defer {
+            try? fileManager.setAttributes([.posixPermissions: permissions], ofItemAtPath: f.directory.path)
+            try? fileManager.removeItem(at: f.directory)
+        }
+        let protectedFiles = [f.source, f.primary, f.secondary]
+        let originalBytes = try protectedFiles.map { try Data(contentsOf: $0) }
+        let originalEntries = try fileManager.contentsOfDirectory(atPath: f.directory.path).sorted()
+        let store = CompareReviewSidecarStore()
+        let preview = try await store.previewRelink(from: f.source)
+        try fileManager.setAttributes([.posixPermissions: 0o555], ofItemAtPath: f.directory.path)
+        do {
+            _ = try await store.relink(from: f.source, to: f.destination, primaryURL: f.primary,
+                secondaryURL: f.secondary, expectedDocument: preview)
+            XCTFail("Read-only destination must reject publication")
+        } catch {
+            let failure = error as NSError
+            XCTAssertEqual(failure.domain, NSCocoaErrorDomain)
+            XCTAssertEqual(failure.code, CocoaError.Code.fileWriteNoPermission.rawValue)
+        }
+        XCTAssertFalse(fileManager.fileExists(atPath: f.destination.path))
+        XCTAssertEqual(try fileManager.contentsOfDirectory(atPath: f.directory.path).sorted(), originalEntries)
+        XCTAssertEqual(try protectedFiles.map { try Data(contentsOf: $0) }, originalBytes)
+        try fileManager.setAttributes([.posixPermissions: permissions], ofItemAtPath: f.directory.path)
+        let result = try await store.relink(from: f.source, to: f.destination, primaryURL: f.primary,
+            secondaryURL: f.secondary, expectedDocument: preview)
+        let loaded = try await store.load(from: f.destination, primaryURL: f.primary, secondaryURL: f.secondary)
+        XCTAssertEqual(loaded, result)
+        XCTAssertEqual(result.notes, preview.notes)
+        XCTAssertEqual(try protectedFiles.map { try Data(contentsOf: $0) }, originalBytes)
+        XCTAssertEqual(try fileManager.contentsOfDirectory(atPath: f.directory.path).sorted(),
+            (originalEntries + [f.destination.lastPathComponent]).sorted())
     }
 
     func testExistingDestinationAndOriginalCannotBeOverwritten() async throws {

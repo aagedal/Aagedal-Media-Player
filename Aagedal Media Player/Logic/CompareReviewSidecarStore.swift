@@ -106,6 +106,15 @@ actor CompareReviewSidecarStore: CompareReviewSidecarStoring {
     private static let sourceTimecodeDaySeconds: Int64 = 86_400
 
     private var latestRevisionByURL: [URL: UInt64] = [:]
+    // Keep the atomic-write boundary injectable so disk-full and permission
+    // recovery can be tested without changing volume state or permissions.
+    private let writeData: @Sendable (Data, URL) throws -> Void
+
+    init(writeData: @escaping @Sendable (Data, URL) throws -> Void = { data, url in
+        try data.write(to: url, options: .atomic)
+    }) {
+        self.writeData = writeData
+    }
 
     nonisolated static func sidecarURL(primaryURL: URL, secondaryURL: URL) -> URL {
         let primaryName = shortened(primaryURL.deletingPathExtension().lastPathComponent)
@@ -309,7 +318,7 @@ actor CompareReviewSidecarStore: CompareReviewSidecarStoring {
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         encoder.dateEncodingStrategy = .millisecondsSince1970
         let data = try encoder.encode(document)
-        try data.write(to: url, options: .atomic)
+        try writeData(data, url)
     }
 
     private static func validate(_ document: CompareReviewDocument) throws {

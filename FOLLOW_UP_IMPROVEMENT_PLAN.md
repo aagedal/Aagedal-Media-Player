@@ -1388,6 +1388,40 @@ all original media/sidecar hashes remain unchanged. See
 `docs/COMPARE_REVIEW_MIGRATION_NATIVE_CHECK_2026-09-09.md` for reproduction,
 evidence and the distinction from broader keyboard/VoiceOver or disk-full checks.
 
+## Phase 71 — Explicit review save recovery
+
+Status: Complete on 2026-09-10 within the scope below. All 521 Release tests,
+static analysis and 61 release-preflight checks pass.
+
+- [x] Offer Retry Save for failed review edits/deletions, committing current
+  text drafts before retrying and suppressing duplicate retry actions.
+- [x] Chain retained failed edits behind freshly queued draft saves during the
+  same action, without duplicating writes or looping on persistent errors.
+- [x] Refuse review reload while unsaved mutations remain, preserving the
+  displayed edits and active review through repeated write failures.
+- [x] Cover injected permission-denied and disk-full errors at store/controller
+  boundaries, including revision recovery, edits/deletions and successful retry.
+- [x] Exercise the production atomic writer against a real read-only disposable
+  directory, preserve sidecar/media bytes and directory contents, then restore
+  permissions and retry successfully.
+- [x] Cover the same permission failure/retry through exclusive migration and
+  relink publication, preserving the original files and reviewed proposal.
+
+The permission test changes only its own temporary directory and restores its
+permissions during cleanup. Disk-full coverage injects errors; it does not fill
+a volume. Native Retry Save layout/keyboard/VoiceOver acceptance and actual
+volume-exhaustion behavior remain separate checks.
+
+The integrated suite passes 521 tests with zero failures and zero skips,
+including both original ITU reference sets, in 116.610 seconds (116.848 with
+suite overhead). All three real directory-permission failures and subsequent
+retries pass in the Release app-hosted XCTest bundle. An independent review
+identified the queued-draft retry edge case above; the final queue cleanup and
+generation handling were re-reviewed after correction. Evidence:
+`/tmp/aagedal-save-recovery-full-20260910.xcresult`, its `.log`, and the matching
+`aagedal-save-recovery-analyze-20260910.log` and
+`aagedal-save-recovery-preflight-20260910.log` in `/tmp`.
+
 ## Remaining work after this continuation
 
 - Integrate the measured metadata-memory dependency fix after upstream review,
@@ -1470,6 +1504,9 @@ evidence and the distinction from broader keyboard/VoiceOver or disk-full checks
   defined. See `PRODUCT_ROADMAP.md` for milestone sequencing.
 - Broader keyboard/VoiceOver acceptance of historical review migration and copy
   reopening, plus broader disk-full/permission-denied save-failure acceptance.
+  Phase 71 adds explicit Retry Save, real filesystem permission-denied recovery
+  coverage and injected disk-full regressions; native interaction and actual
+  volume-exhaustion checks remain open.
   Phase 70 completes native corrupt-copy and migration-destination-conflict
   errors and successful retries with original-file preservation. Phase 69 completes
   focused native preview layout, save/adoption, copy reopening and EDL naming;
@@ -1558,3 +1595,4 @@ evidence and the distinction from broader keyboard/VoiceOver or disk-full checks
 61. Phase 69 review transition persistence and native migration acceptance.
 
 62. Phase 70 review failure/retry regressions and JXL gate diagnosis.
+63. Phase 71 explicit review save recovery.
