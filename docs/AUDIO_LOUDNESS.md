@@ -250,9 +250,16 @@ validated against all four official analytic tone sequences. Calculated values
 of 15.8698, 14.5295, and 10.9416 LU agree with production within 0.15 LU for
 mono, stereo, and six-channel programmes, respectively (±1 LU regression
 tolerance). These are independently derived values, not published programme
-LRA targets. The original EBU narrow/wide programme set remains inaccessible
-with HTTP 403; published programme LRA targets, programme true-peak targets,
-additional content/layouts and live meters remain separate.
+LRA targets. The same runner now also compares programme true peaks to an
+independent implementation of the published ITU four-phase FIR; the three
+results agree within 0.17 dB against a ±0.4 dB project regression tolerance.
+Those are derived comparisons, not independently published programme targets.
+The original EBU narrow/wide programme set remains inaccessible with HTTP 403
+on September 10; its published programme LRA checks and independently
+published programme true-peak acceptance remain open. The
+[acceptance handoff](AUDIO_PROGRAMME_REFERENCES.md#published-target-acceptance-handoff--2026-09-10)
+separates their prerequisites. Additional content/layouts and live meters
+remain separate.
 
 ## Keyboard and accessibility acceptance
 

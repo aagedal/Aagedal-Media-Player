@@ -1526,6 +1526,32 @@ status; `/tmp/aagedal-utf32-final-build.log`,
 `/tmp/aagedal-utf32-analyze-final.log`, and
 `/tmp/aagedal-utf32-preflight-final.log`.
 
+## Phase 75 — Native UTF-32 inspector acceptance
+
+Status: Complete on 2026-09-10 within the focused synthetic scope below.
+
+- [x] Open UTF-32LE and UTF-32BE recording fixtures in the Phase 73 Release app
+  through its native file picker and inspect the Unicode labels and track indexes.
+- [x] Verify readable labels/indexes and producer-value explanation by native
+  scrolling/screenshots, with complete values in the accessibility tree.
+- [x] Confirm unchanged stereo PCM16/48 kHz/two-second metadata and Left/Right
+  waveform labels, with no source-byte changes.
+- [x] Retain a deterministic, collision-refusing fixture generator and confirm
+  its output is byte-identical to the native fixtures.
+
+See `docs/WAVE_METADATA.md` for build, exact observations, hashes and reproduction.
+This closes the stalled native UTF-32 inspector check, not producer-authentic
+recorder, BOM-less native, Full Keyboard Access or spoken VoiceOver acceptance.
+No app code changed; the existing 528-test integrated baseline remains the
+app verification evidence. The fixture generator was run and its hashes checked.
+
+The programme-reference follow-up also rechecked primary EBU/ITU documentation
+and the official EBU v5 download. The archive still returns HTTP 403; original
+programme LRA bytes remain unavailable. Published programme true-peak targets
+remain a separate gap. `docs/AUDIO_PROGRAMME_REFERENCES.md` now records precise
+acceptance prerequisites without treating independent calculations as published
+targets.
+
 ## Remaining work after this continuation
 
 - Integrate the measured metadata-memory dependency fix after upstream review,
@@ -1582,7 +1608,8 @@ status; `/tmp/aagedal-utf32-final-build.log`,
   bounded reader. Phases 62 and 66 add bounded UTF-8 and UTF-16 iXML recording labels;
   Phase 68 adds bounded track names/indexes and native UTF-16 inspector checks;
   Phase 73 adds bounded UTF-32LE/BE recording labels and tracks;
-  native UTF-32 inspector and producer-authentic recorder acceptance remain. Phase 59 adds
+  Phase 75 verifies native UTF-32 inspector labels and track indexes; producer-authentic
+  recorder, broader native encoding/container and spoken VoiceOver acceptance remain. Phase 59 adds
   classic RIFX metadata and corrected offline analysis/waveforms; RIFX playback
   and trim export remain explicitly unavailable pending a verified decoder fix.
   Phase 54 verifies
@@ -1708,3 +1735,4 @@ status; `/tmp/aagedal-utf32-final-build.log`,
 
 65. Phase 73 bounded UTF-32 iXML recording metadata.
 66. Phase 74 real APFS review save recovery.
+67. Phase 75 native UTF-32 inspector acceptance.

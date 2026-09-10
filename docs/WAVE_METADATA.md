@@ -47,10 +47,42 @@ processing instructions cannot substitute for an encoding declaration.
 
 The platform-parser probe confirmed inconsistent native UTF-32 handling,
 motivating strict transcoding rather than reliance on automatic detection.
-Native app access stalled before fixture opening; this continuation does not
-claim UTF-32 inspector or spoken VoiceOver acceptance. Disposable synthetic
-fixtures and their hashes are in `/tmp/aagedal-utf32-native-20260910/` for the
-remaining native check. Producer-authentic recorder files remain a separate gate.
+The subsequent native check below closes focused UTF-32 inspector acceptance.
+Producer-authentic recorder files and spoken VoiceOver remain separate gates.
+
+### Native UTF-32 inspector acceptance — 2026-09-10
+
+The Release app built from `ad0da1f`, at
+`/tmp/aagedal-player-utf32-derived-20260910/Build/Products/Release/Aagedal Media Player.app`,
+opened both byte-order fixtures through its native file picker on macOS 27.0
+(26A428). Command-I opened the inspector. Both files exposed project
+`Fjell & sjø 🎙`, scene `021A`, take `0003`, note `UTF-32 native validation`,
+track name `声 🎙`, source channel index `6`, and file interleave index `2`.
+Scrolling and screenshots verified readable recording labels, track indexes,
+and the separate producer-value explanation. The accessibility tree retained
+all values. Replacing LE with BE retained the inspector and updated the filename.
+
+Both files still reported two seconds of PCM_S16LE, stereo, 48 kHz, and 16-bit
+audio; the automatic waveform retained Left/Right labels. The XML byte order
+did not alter the little-endian audio format or route channel 6. Playback was
+paused, and the intentionally silent waveform was flat. Before/after SHA-256
+hashes matched for both files.
+
+Reproduce the exact fixture bytes with:
+
+```bash
+python3 scripts/generate-utf32-inspector-fixtures.py /tmp/new-utf32-inspector-fixtures
+```
+
+The generator refuses an existing output directory and records SHA-256 hashes.
+The native run used `/tmp/aagedal-utf32-native-20260910`; a separate generated
+copy was byte-identical. LE hash:
+`6c03abd714761e8588c688974d7ef4d53a1a3caa456e5e9c8f342d79adae905b`;
+BE hash: `aafa921a1925894a549f89e515be17507dbe233885acb805d704602b3f1740ef`.
+This check combines keyboard file selection/inspector opening and accessibility
+scrolling, not complete Full Keyboard Access or spoken VoiceOver. Native BOM-less
+UTF-32, RF64/BW64 variants, and producer-authentic recorder files remain separate
+acceptance work; their covered parser combinations remain automated evidence.
 
 ## Supported containers
 

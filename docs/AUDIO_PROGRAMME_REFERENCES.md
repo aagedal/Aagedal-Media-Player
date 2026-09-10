@@ -215,6 +215,47 @@ The independent programme true-peak comparison above now adds coverage on the
 retained ITU originals. Published programme true-peak targets, immersive layouts,
 live-meter behavior, and release-floor hardware profiling remain separate work.
 
+### Published-target acceptance handoff — 2026-09-10
+
+A fresh primary-source check confirms that the two outstanding programme
+checks have different prerequisites:
+
+| Check | Published target available? | What is needed to close it |
+| --- | --- | --- |
+| EBU narrow/wide programme LRA | Yes: Tech 3342 Table 1, cases 5–6, **5 ±1 LU** and **15 ±1 LU** | Obtain the original EBU programme files, pin their identity, and measure both through the production service. |
+| Independently published programme true peak | Not in the programme rows of the reviewed EBU/ITU documents | Identify an authoritative programme file **and its published true-peak value/tolerance**, then add a separate production comparison. |
+
+The [EBU publication page](https://tech.ebu.ch/publications/ebu_loudness_test_set)
+still identifies v5.0. A request to its previously documented
+`/files/live/sites/tech/files/shared/testmaterial/ebu-loudness-test-setv05.zip`
+address again returned HTTP 403 on September 10. Response headers are retained
+temporarily at `/tmp/aagedal-ebu-recheck-20260910.headers`. The download has not
+been validated or extracted. Repeating this request alone cannot advance the
+acceptance check; a successful authorized download is the next prerequisite.
+
+When the EBU originals become available, retain them outside the repository
+and inspect the included readme before selecting the two programme files.
+Record the archive source, original filenames, SHA-256, sample format and
+duration. Add an opt-in test following `ITUProgrammeLoudnessTests` and a runner
+that rejects missing or duplicate programme records. Analyze each entire file
+from the beginning with fresh meter state. Assert both the LRA targets above
+and the **−23 ±0.1 LUFS** integrated targets in
+[Tech 3341 Table 1, cases 7–8](https://tech.ebu.ch/docs/tech/tech3341.pdf).
+Keep true peak labelled as an observation unless the archive supplies a
+separately attributable target. Retain a fresh Release `.xcresult` and both
+programme measurements before changing the plan's acceptance status.
+
+Obtaining the EBU archive does **not by itself** establish a published
+programme true-peak target: Tech 3341 assigns true-peak targets to synthetic
+signals 15–23, while its authentic-programme rows specify integrated loudness.
+[BS.2217-2](https://www.itu.int/dms_pub/itu-r/opb/rep/R-REP-BS.2217-2-2016-PDF-E.pdf)
+likewise supplies integrated targets for the retained ITU programmes.
+The independent FIR comparison above remains valid regression evidence,
+with explicitly derived targets. Neither a general delivery peak ceiling nor
+the app's own measured peak should be substituted for a published reference
+value. This review did not identify a qualifying published programme true-peak
+target; it does not assert that no such dataset exists elsewhere.
+
 ## Official eight-channel gain reference
 
 A separate optional check uses ITU's original
