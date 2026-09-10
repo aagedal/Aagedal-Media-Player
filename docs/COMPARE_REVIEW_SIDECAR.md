@@ -285,14 +285,17 @@ add/delete recovery, popover reopening and Retry Save layout are recorded in
 Full Keyboard Access and spoken VoiceOver remain separate acceptance gates.
 
 `scripts/test-compare-review-disk-full.sh` runs an opt-in production-store
-test on its own 32 MiB HFS+ disk image. It verifies the mount path, filesystem,
-device and capacity before writing at most 40 MiB of filler. Real out-of-space
+test on its own disk image: 32 MiB HFS+ by default, or 128 MiB APFS with
+`AAGEDAL_DISK_FULL_FILESYSTEM=APFS`. It verifies the mount path, filesystem,
+device and capacity before writing at most 40 MiB (HFS+) or 136 MiB (APFS)
+of filler. Other filesystem selections are rejected before image creation. Real out-of-space
 errors must preserve the existing sidecar and media for both save and delete;
 freeing the filler must allow a valid retry without a failed high revision
 blocking it. The harness retains test/volume evidence, rejects skipped or
 missing coverage, then detaches and removes its image. It never fills the host
-volume. This bounded HFS+ check does not establish APFS behavior or native
-disk-full alert/interaction acceptance.
+volume. Native disk-full alert/interaction acceptance remains separate from
+this production-store integration check. The verified APFS and HFS+ runs are
+recorded in [the disk-full check](COMPARE_REVIEW_APFS_DISK_FULL_CHECK_2026-09-10.md).
 
 To use an existing test build, pass `--xctestrun /path/to/tests.xctestrun`.
 Set `AAGEDAL_DISK_FULL_FULL_SUITE=1` to run all tests while enabling this check;

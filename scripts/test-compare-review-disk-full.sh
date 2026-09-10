@@ -3,14 +3,20 @@
 # Copyright © 2026 Truls Aagedal
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-# Runs the optional real-ENOSPC test on a disposable 32 MiB HFS+ disk image.
+# Runs the optional real-ENOSPC test on a disposable bounded HFS+ or APFS disk image.
 # Usage: scripts/test-compare-review-disk-full.sh [xcodebuild test arguments...]
 # Or: scripts/test-compare-review-disk-full.sh --xctestrun /path/to/tests.xctestrun [arguments...]
 # Set AAGEDAL_DISK_FULL_FULL_SUITE=1 to run the full suite on the owned image.
 # Additional arguments can select a derived-data path/configuration. The harness
 # selects only this test by default and disables parallel execution.
 # AAGEDAL_DISK_FULL_OUTPUT optionally chooses a new evidence directory.
+# AAGEDAL_DISK_FULL_FILESYSTEM selects HFS+ (32 MiB, default) or APFS (128 MiB).
 set -euo pipefail
+case "${AAGEDAL_DISK_FULL_FILESYSTEM:-HFS+}" in
+    HFS+) filesystem=HFS+; filesystem_type=hfs; image_size=32m; maximum_bytes=41943040 ;;
+    APFS) filesystem=APFS; filesystem_type=apfs; image_size=128m; maximum_bytes=142606336 ;;
+    *) echo 'AAGEDAL_DISK_FULL_FILESYSTEM must be HFS+ or APFS' >&2; exit 2 ;;
+esac
 artifact_dir="${AAGEDAL_DISK_FULL_OUTPUT:-/private/tmp/aagedal-disk-full-evidence.$(date +%Y%m%dT%H%M%S).$$}"
 /bin/mkdir "$artifact_dir"
 artifact_dir="$(cd "$artifact_dir" && pwd)"
@@ -39,7 +45,7 @@ trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 /bin/mkdir "$mount_dir"
-/usr/bin/hdiutil create -size 32m -fs HFS+ -volname AagedalDiskFullTest "$fixture_dir/test.dmg"
+/usr/bin/hdiutil create -size "$image_size" -fs "$filesystem" -volname AagedalDiskFullTest "$fixture_dir/test.dmg"
 /usr/bin/hdiutil attach -nobrowse -mountpoint "$mount_dir" "$fixture_dir/test.dmg"
 mounted=1
 # Attest the mount before giving the test permission to fill it. The XCTest
@@ -47,11 +53,13 @@ mounted=1
 /usr/sbin/diskutil info -plist "$mount_dir" > "$artifact_dir/volume.plist"
 actual_mount="$(/usr/bin/plutil -extract MountPoint raw "$artifact_dir/volume.plist")"
 actual_size="$(/usr/bin/plutil -extract TotalSize raw "$artifact_dir/volume.plist")"
-[[ "$actual_mount" == "$mount_dir" && "$actual_size" =~ ^[0-9]+$ && "$actual_size" -le 41943040 && "$actual_size" -ge 8388608 ]]
+actual_filesystem="$(/usr/bin/plutil -extract FilesystemType raw "$artifact_dir/volume.plist")"
+[[ "$actual_mount" == "$mount_dir" && "$actual_size" =~ ^[0-9]+$ && "$actual_filesystem" == "$filesystem_type" && "$actual_size" -le "$maximum_bytes" && "$actual_size" -ge 8388608 ]]
 token="$(/usr/bin/uuidgen)"
 printf '%s' "$token" > "$mount_dir/.aagedal-disk-full-token"
 export TEST_RUNNER_AAGEDAL_DISK_FULL_MOUNT="$mount_dir"
 export TEST_RUNNER_AAGEDAL_DISK_FULL_TOKEN="$token"
+export TEST_RUNNER_AAGEDAL_DISK_FULL_FILESYSTEM="$filesystem_type"
 cd "$repository_dir"
 {
     git rev-parse HEAD
@@ -69,12 +77,12 @@ if [[ "${1:-}" == --xctestrun ]]; then
     [[ $# -ge 2 && -f "$2" ]] || { echo 'Expected an existing .xctestrun file' >&2; exit 2; }
     # Keep __TESTROOT__ paths valid by placing the temporary manifest beside
     # the supplied file. The original manifest and existing ITU env stay intact.
-    test_run_copy="$(/usr/bin/python3 - "$2" "$mount_dir" "$token" <<'PYTHON'
+    test_run_copy="$(/usr/bin/python3 - "$2" "$mount_dir" "$token" "$filesystem_type" <<'PYTHON'
 import os
 import plistlib
 import sys
 import tempfile
-source, mount, token = sys.argv[1:]
+source, mount, token, filesystem = sys.argv[1:]
 with open(source, "rb") as handle:
     manifest = plistlib.load(handle)
 target_count = 0
@@ -85,6 +93,7 @@ def inject(value):
             environment = value.setdefault("EnvironmentVariables", {})
             environment["AAGEDAL_DISK_FULL_MOUNT"] = mount
             environment["AAGEDAL_DISK_FULL_TOKEN"] = token
+            environment["AAGEDAL_DISK_FULL_FILESYSTEM"] = filesystem
             target_count += 1
         for child in value.values():
             inject(child)
@@ -111,7 +120,7 @@ PYTHON
         -destination 'platform=macOS' -resultBundlePath "$artifact_dir/Tests.xcresult" "$@" -parallel-testing-enabled NO ${test_selection[@]+"${test_selection[@]}"}
 else
     /usr/bin/xcodebuild test -project 'Aagedal Media Player.xcodeproj' \
-        -scheme 'Aagedal Media Player' -destination 'platform=macOS' -resultBundlePath "$artifact_dir/Tests.xcresult" "$@" \
+        -scheme 'Aagedal Media Player' -destination 'platform=macOS' -resultBundlePath "$artifact_dir/Tests.xcresult" "$@" ENABLE_TESTABILITY=YES \
         -parallel-testing-enabled NO ${test_selection[@]+"${test_selection[@]}"}
 fi
 # A skipped/missing optional test must never be reported as verified.

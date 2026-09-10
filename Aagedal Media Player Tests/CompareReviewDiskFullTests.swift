@@ -12,7 +12,8 @@ final class CompareReviewDiskFullTests: XCTestCase {
     func testRealVolumeExhaustionPreservesSidecarAndAllowsRetry() async throws {
         let environment = ProcessInfo.processInfo.environment
         guard let path = environment["AAGEDAL_DISK_FULL_MOUNT"],
-              let token = environment["AAGEDAL_DISK_FULL_TOKEN"] else {
+              let token = environment["AAGEDAL_DISK_FULL_TOKEN"],
+              let expectedFilesystem = environment["AAGEDAL_DISK_FULL_FILESYSTEM"] else {
             throw XCTSkip("Requires the disposable disk-image harness")
         }
         // Foundation's resolvingSymlinksInPath rewrites /private/tmp to /tmp
@@ -43,9 +44,17 @@ final class CompareReviewDiskFullTests: XCTestCase {
         let deviceName = withUnsafePointer(to: &filesystem.f_mntfromname) {
             $0.withMemoryRebound(to: CChar.self, capacity: Int(MAXPATHLEN)) { String(cString: $0) }
         }
+        // APFS needs a larger minimum container than the HFS+ fixture. Both
+        // allowlists remain fixed; caller-supplied sizes cannot relax the bounds.
+        let maximumBytes: UInt64
+        switch expectedFilesystem {
+        case "hfs": maximumBytes = 40 * 1024 * 1024
+        case "apfs": maximumBytes = 136 * 1024 * 1024
+        default: return XCTFail("Unrecognized fixture filesystem")
+        }
         let capacity = UInt64(filesystem.f_blocks) * UInt64(filesystem.f_bsize)
-        guard mountName == path, filesystemName == "hfs", deviceName.hasPrefix("/dev/disk"),
-              capacity >= 8 * 1024 * 1024, capacity <= 40 * 1024 * 1024
+        guard mountName == path, filesystemName == expectedFilesystem, deviceName.hasPrefix("/dev/disk"),
+              capacity >= 8 * 1024 * 1024, capacity <= maximumBytes
         else { return XCTFail("Refusing to fill a filesystem other than the bounded test image: mount=\(mountName), expected=\(path), type=\(filesystemName), device=\(deviceName), capacity=\(capacity)") }
 
         func logFreeSpace(_ phase: String) {
@@ -81,7 +90,7 @@ final class CompareReviewDiskFullTests: XCTestCase {
         // Fixed upper bound even if the mount validation were ever to regress.
         // Small blocks consume the final allocation units without sparse writes.
         let block = [UInt8](repeating: 0x61, count: 4096)
-        for _ in 0..<(40 * 1024 * 1024 / block.count) {
+        for _ in 0..<Int(maximumBytes / UInt64(block.count)) {
             let count = block.withUnsafeBytes { Darwin.write(descriptor, $0.baseAddress!, $0.count) }
             if count < 0 {
                 let failure = errno
@@ -128,7 +137,7 @@ final class CompareReviewDiskFullTests: XCTestCase {
             (originalEntries + ["filler"]).sorted())
         logFreeSpace("before releasing filler")
         // Explicitly release and synchronize the filler allocation before
-        // retrying. HFS+ can defer reclamation when a large file is unlinked.
+        // retrying. Filesystems can defer reclamation when a large file is unlinked.
         let releaseDescriptor = open(filler.path, O_WRONLY | O_NOFOLLOW)
         guard releaseDescriptor >= 0 else { throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO) }
         let truncateResult = ftruncate(releaseDescriptor, 0)
