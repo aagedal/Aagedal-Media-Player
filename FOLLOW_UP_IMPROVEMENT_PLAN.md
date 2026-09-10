@@ -1552,6 +1552,29 @@ remain a separate gap. `docs/AUDIO_PROGRAMME_REFERENCES.md` now records precise
 acceptance prerequisites without treating independent calculations as published
 targets.
 
+## Phase 76 — Native APFS disk-full edit and deletion recovery
+
+Status: Complete on 2026-09-10 within the focused native scope below.
+
+- [x] Add a reusable disposable 128 MiB APFS native fixture harness with
+  canonical-root, image/device/volume/token/capacity and descriptor safeguards.
+- [x] Observe actual native edit failure, error retention across popover
+  reopening, failure on retry while full, and successful retry after release.
+- [x] Observe actual native deletion failure and successful retry after release,
+  preserving the exact recovered sidecar bytes until retry succeeds.
+- [x] Verify source bytes, finding identity/coordinates/classification and
+  document fields, plus absence of partial files; retain original/recovered/
+  deleted sidecar evidence outside the volume.
+- [x] Detach and remove the owned disk image after closing test media.
+- [x] Pass 17 focused harness safety/proof tests and all 61 release-preflight
+  checks; independently review the harness safeguards and verification.
+
+See `docs/COMPARE_REVIEW_NATIVE_DISK_FULL_CHECK_2026-09-10.md` for exact native
+observations, reproduction, evidence and limits. No app code changed; no new
+full-suite run is claimed. Complete Full Keyboard Access/spoken VoiceOver,
+broader narrow-window layouts and native disk-full copy/relink/migration flows
+remain separate acceptance work.
+
 ## Remaining work after this continuation
 
 - Integrate the measured metadata-memory dependency fix after upstream review,
@@ -1640,8 +1663,10 @@ targets.
   coverage and injected disk-full regressions. Phase 72 adds native permission
   failure/retry for note creation and deletion plus actual bounded HFS+ exhaustion
   coverage. Phase 74 adds actual bounded APFS exhaustion and recovery, plus
-  an HFS+ recheck. Complete keyboard/VoiceOver and native disk-full interaction
-  remain open.
+  an HFS+ recheck. Phase 76 verifies native APFS edit/deletion out-of-space
+  errors, retained state and successful retries, with exact file preservation
+  and cleanup. Complete keyboard/VoiceOver, broader narrow layouts and native
+  copy/relink/migration disk-full interaction remain open.
   Phase 70 completes native corrupt-copy and migration-destination-conflict
   errors and successful retries with original-file preservation. Phase 69 completes
   focused native preview layout, save/adoption, copy reopening and EDL naming;
@@ -1736,3 +1761,4 @@ targets.
 65. Phase 73 bounded UTF-32 iXML recording metadata.
 66. Phase 74 real APFS review save recovery.
 67. Phase 75 native UTF-32 inspector acceptance.
+68. Phase 76 native APFS disk-full edit and deletion recovery.
