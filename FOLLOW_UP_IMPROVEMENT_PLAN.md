@@ -1730,6 +1730,34 @@ and adjacent `summary.json`, logs, completion proof and successful detach status
 Static analysis passes in `/tmp/aagedal-reload-analyze-20260911.log`; release
 preflight passes all 61 checks in `/tmp/aagedal-reload-preflight-20260911.log`.
 
+## Phase 81 — Live Audio QC measurement contract
+
+Status: Design prerequisite completed on 2026-09-11. No meter implementation,
+reference-accuracy, native accessibility or hardware acceptance is claimed.
+
+- [x] Define decoded source-PCM provenance independently of monitor volume,
+  mute/solo, A/B monitoring and downstream output gain.
+- [x] Specify per-channel sample/true peak and aggregate Momentary/Short-term
+  windows, units, calibration references, maxima and display ballistics.
+- [x] Define EBU production and ATSC exchange presets as reference guides,
+  including the current ATSC dialogue-assessment limitation; do not present
+  full-mix live readings as compliance or full EBU Mode.
+- [x] Specify pause, seek, loop, speed, reload, EOF, replacement and cancellation
+  behavior, plus bounded worker/PCM ownership and explicit overrun failure.
+- [x] Define numerical, real-source, lifecycle, release-floor performance and
+  keyboard/VoiceOver evidence required before accepting the actual live path.
+
+See `docs/LIVE_AUDIO_METER_DESIGN.md`. Official EBU R 128 v5, Tech 3341 v4,
+ITU-R BS.1770-5 and ATSC A/85:2026-07 sources were checked for the contract;
+product budgets and display choices are explicitly distinguished from standards.
+This closes only the roadmap's design checkbox and leaves live meters open.
+
+A separate attempt at native structured-review keyboard validation could not
+proceed because app-control initialization stalled. No new native acceptance
+is claimed. Multi-row offscreen traversal and complete classification/range
+editing, filtering/navigation and export remain to be verified with the
+keyboard, followed by Full Keyboard Access and spoken VoiceOver.
+
 ## Remaining work after this continuation
 
 - Integrate the measured metadata-memory dependency fix after upstream review,
@@ -1803,8 +1831,9 @@ preflight passes all 61 checks in `/tmp/aagedal-reload-preflight-20260911.log`.
   Phase 54 verifies
   RIFF/RF64/BW64 metadata and corrected 7.1 loudness. Phase 56 adds bounded
   Broadcast WAVE recording tags; native validation is recorded with that phase.
-- Peak/true-peak meters and live momentary/short-term loudness,
-  calibration/ballistics/presets, programme LRA/true-peak and broader transient
+- Implement and validate peak/true-peak meters and live momentary/short-term
+  loudness against the Phase 81 calibration/ballistics/preset contract;
+  programme LRA/true-peak and broader transient
   reference accuracy, and representative multichannel profiling. Phase 55 adds
   three original ITU programme integrated-loudness references. Phase 57 adds
   a separately prepared official eight-channel gain reference. Phase 60 adds
@@ -1934,3 +1963,5 @@ preflight passes all 61 checks in `/tmp/aagedal-reload-preflight-20260911.log`.
 71. Phase 79 native inspector correctness and review publication recovery.
 
 72. Phase 80 comparison reload transport and position ownership.
+
+73. Phase 81 live Audio QC measurement contract.

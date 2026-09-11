@@ -253,8 +253,12 @@ confidence as the picture.
   and explicit positional fallback when roles cannot be established. See
   `docs/COMPARE_MODE_AUDIO.md`; hands-on audio/accessibility checks remain.
 - [x] Support A/B audio switching and optional channel-by-channel comparison.
-- [ ] Define calibration, ballistics, hold behavior, and EBU/ATSC presets before
-  presenting measurements as compliance information.
+- [x] Define calibration, ballistics, hold behavior, and EBU/ATSC presets before
+  presenting measurements as compliance information. The implementation contract
+  in `docs/LIVE_AUDIO_METER_DESIGN.md` specifies source PCM provenance,
+  measurement windows, display timing, reset/lifecycle behavior and bounded
+  processing. Presets are reference guides; current ATSC dialogue assessment
+  and full EBU Mode are not claimed. Live implementation and validation remain.
 - [ ] Test and profile multichannel, multi-track, very long, and malformed
   sources without unbounded memory or background work. Automated offline
   analysis now covers three-track isolation, 5.1 channel weighting, malformed
