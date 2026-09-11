@@ -1692,6 +1692,44 @@ Build, analysis and preflight logs are `/tmp/aagedal-inspector-final-build-20260
 `/tmp/aagedal-inspector-final-analyze-20260911.log` and
 `/tmp/aagedal-inspector-final-preflight-20260911.log`.
 
+## Phase 80 — Comparison reload transport and position ownership
+
+Status: Completed on 2026-09-11. Inspector-driven and explicit paired reloads
+now retain playing/paused intent and the requested source-A position while the
+decoders are preparing. This does not change the existing reload behavior of
+returning shuttle/reverse playback to forward 1×.
+
+- [x] Honor an explicit Pause during a comparison reload without cancelling
+  the readiness work needed to finish source B's setup.
+- [x] Retain intent and nonzero position across overlapping refreshes, including
+  the interval where a newly constructed MPV decoder publishes a zero clock.
+- [x] Bind readiness completion to both source preparation identities, so a
+  superseded decoder cannot resume a replacement source.
+- [x] Start comparison correction from requested playing intent; asynchronous
+  backend playing notifications must not leave B paused after A resumes.
+- [x] Finish readiness for paused pairs as well as playing pairs.
+- [x] Distinguish a primary reload timeout from B's readiness failure, preserve
+  a ready B, and invalidate late primary backend selection before reporting it.
+- [x] Pass 24 real-decoder comparison cases across MPV/MPV, AVFoundation/AVFoundation
+  and both mixed directions, plus 12 single-source cases. Cases cover paused,
+  playing, Pause during reload, overlapping reloads, and superseded preparations.
+- [x] Pass ten comparison lifecycle tests, including a suspended primary
+  preparation completing after its reload timeout.
+
+The focused Release run passes all 12 test methods in
+`/tmp/aagedal-reload-ownership-second-tests-20260911.log`. The initial regression
+run exposed a real asynchronous playing-state handoff failure; the final
+implementation resumes both sources and verifies their clocks advance.
+Native inspector geometry, EOF, Full Keyboard Access and spoken VoiceOver
+acceptance are not implied by these decoder checks.
+
+Integrated Release verification passes all 537 tests with zero failures and
+zero skips, including both official ITU reference sets and real APFS review
+save/publication recovery. Evidence: `/tmp/aagedal-reload-final-apfs-20260911/Tests.xcresult`
+and adjacent `summary.json`, logs, completion proof and successful detach status.
+Static analysis passes in `/tmp/aagedal-reload-analyze-20260911.log`; release
+preflight passes all 61 checks in `/tmp/aagedal-reload-preflight-20260911.log`.
+
 ## Remaining work after this continuation
 
 - Integrate the measured metadata-memory dependency fix after upstream review,
@@ -1713,6 +1751,8 @@ Build, analysis and preflight logs are `/tmp/aagedal-inspector-final-build-20260
   is available. September 9 adds GoPro/DJI/Sony FX6 exporter parity. See Phases
   46 and 65.
 
+- Prioritize the candidate blockers in `docs/RELEASE_2_READINESS.md` before
+  optional additions; its release assessment does not narrow roadmap scope.
 - Native timeline zoom/hover, comparison review, relinking, channel/loudness controls,
   and loupe pointer/Full Keyboard Access/VoiceOver acceptance. A focused native
   timeline check now confirms zoom, overview adjustment without seeking,
@@ -1892,3 +1932,5 @@ Build, analysis and preflight logs are `/tmp/aagedal-inspector-final-build-20260
 
 70. Phase 78 classic RIFX Broadcast WAVE interoperability.
 71. Phase 79 native inspector correctness and review publication recovery.
+
+72. Phase 80 comparison reload transport and position ownership.

@@ -258,6 +258,33 @@ final class CompareSessionLifecycleTests: XCTestCase {
         session.stop()
     }
 
+    func testPrimaryReloadTimeoutPreservesReadySecondaryAndRejectsLatePreparation() async {
+        let detector = ControlledCompareProResRAWDetector()
+        let primary = PlayerController { _, _ in await detector.result() }
+        let secondary = PlayerController()
+        let session = CompareSessionController(secondaryController: secondary)
+        defer { session.stop(); primary.teardown() }
+        let item = PlayerWindowCoordinator.makeMediaItem(for: URL(fileURLWithPath: "/tmp/reload-primary-timeout.mov"))
+        primary.loadMedia(item)
+        await detector.waitUntilStarted()
+        let primaryPreparation = primary.preparationID
+        secondary.markPlaybackReady(isBuffering: false)
+        let secondaryPreparation = secondary.preparationID
+
+        session.handleReloadReadinessTimeout(primary: primary)
+
+        XCTAssertEqual(primary.playbackFailure?.message, "The primary file did not become ready after reloading.")
+        XCTAssertGreaterThan(primary.preparationID, primaryPreparation)
+        XCTAssertEqual(secondary.preparationID, secondaryPreparation)
+        XCTAssertTrue(secondary.isReady)
+        XCTAssertNil(session.loadError, "A's reload timeout must not be reported as a B-file failure.")
+        detector.resume(returning: false)
+        await settleMainActorTasks()
+        XCTAssertNotNil(primary.playbackFailure)
+        XCTAssertNil(primary.mpvPlayer)
+        XCTAssertNil(primary.player)
+    }
+
     func testReadinessTimeoutInvalidatesLateBackendCompletionAndRestoresAudioSafety() async {
         let loader = ControlledCompareMetadataLoader()
         let detector = ControlledCompareProResRAWDetector()

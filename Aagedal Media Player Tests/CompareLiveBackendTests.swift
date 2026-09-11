@@ -324,7 +324,7 @@ final class CompareLiveBackendTests: XCTestCase {
     func testSingleSourceReloadPreservesTransportAndRejectsSupersededResume() async throws {
         let fixtures = try fixtureDirectory()
         for backend in [PlaybackBackend.mpv, .avFoundation] {
-            for outcome in ["paused", "playing", "superseded", "stopped", "pausedDuringReload"] {
+            for outcome in ["paused", "playing", "superseded", "stopped", "pausedDuringReload", "repeatedReload"] {
                 let primary = makeController(forcedBackend: backend)
                 let session = CompareSessionController()
                 defer { session.stop(); primary.teardown() }
@@ -332,6 +332,9 @@ final class CompareLiveBackendTests: XCTestCase {
                 try await attachRenderSurface(to: primary)
                 let initiallyReady = await waitUntil { primary.isReady }
                 XCTAssertTrue(initiallyReady)
+                primary.seekTo(2)
+                let positioned = await waitUntil(tolerance: 0.05) { primary.playbackTimeSnapshot() - 2 }
+                XCTAssertTrue(positioned)
                 if outcome != "paused" {
                     primary.play()
                     let playing = await waitUntil { primary.isPlaying }
@@ -348,11 +351,20 @@ final class CompareLiveBackendTests: XCTestCase {
                     session.stop()
                 } else if outcome == "pausedDuringReload" {
                     session.pause(primary: primary)
+                } else if outcome == "repeatedReload" {
+                    let allocated = await waitUntil { primary.mpvPlayer != nil || primary.player != nil }
+                    XCTAssertTrue(allocated)
+                    // MPV has no drawable yet: its published clock is still
+                    // zero. A second refresh must retain the requested frame.
+                    session.reload(primary: primary)
                 }
                 try await attachRenderSurface(to: primary)
                 let reloadedReady = await waitUntil { primary.isReady }
                 XCTAssertTrue(reloadedReady)
-                if outcome == "playing" {
+                if outcome != "superseded" {
+                    XCTAssertGreaterThanOrEqual(primary.playbackTimeSnapshot(), 1.9, outcome)
+                }
+                if outcome == "playing" || outcome == "repeatedReload" {
                     let resumed = await waitUntil { primary.isPlaying }
                     XCTAssertTrue(resumed, "Reload must resume the previously playing \(backend) source")
                     let start = primary.playbackTimeSnapshot()
@@ -361,6 +373,81 @@ final class CompareLiveBackendTests: XCTestCase {
                 } else {
                     try await Task.sleep(for: .milliseconds(100))
                     XCTAssertFalse(primary.isPlaying, "\(outcome) \(backend) reload must stay paused")
+                }
+            }
+        }
+    }
+
+    func testComparisonReloadHonorsPauseAndDecoderOwnership() async throws {
+        let fixtures = try fixtureDirectory()
+        for primaryBackend in [PlaybackBackend.mpv, .avFoundation] {
+            for secondaryBackend in [PlaybackBackend.mpv, .avFoundation] {
+                for outcome in ["paused", "playing", "pausedDuringReload", "repeatedReload",
+                                "supersededPrimary", "supersededSecondary"] {
+                    let description = "\(primaryBackend)/\(secondaryBackend) \(outcome)"
+                    let primary = makeController(forcedBackend: primaryBackend)
+                    let secondary = makeController(forcedBackend: secondaryBackend)
+                    let session = CompareSessionController(secondaryController: secondary)
+                    defer {
+                        session.stop()
+                        primary.teardown()
+                        retainedPlaybackSurfaces.removeAll()
+                    }
+                    try await loadPrimary(primary, url: fixtures.appending(path: "compare/source-a.mov"))
+                    try await attachRenderSurface(to: primary)
+                    let primaryReady = await waitUntil { primary.isReady }
+                    XCTAssertTrue(primaryReady, description)
+                    session.loadSecondary(fixtures.appending(path: "compare/source-b.mov"), alignedWith: primary)
+                    let loaded = await waitUntil { session.secondaryURL != nil }
+                    XCTAssertTrue(loaded, description)
+                    try await attachRenderSurface(to: secondary)
+                    let pairReady = await waitUntil { secondary.isReady }
+                    XCTAssertTrue(pairReady, description)
+                    session.seek(primary: primary, to: 2)
+                    let positioned = await waitUntil {
+                        abs(primary.playbackTimeSnapshot() - 2) < 0.05 &&
+                            abs(secondary.playbackTimeSnapshot() - 3) < 0.05
+                    }
+                    XCTAssertTrue(positioned, description)
+                    if outcome != "paused" {
+                        session.play(primary: primary)
+                        let playing = await waitUntil { primary.isPlaying && secondary.isPlaying }
+                        XCTAssertTrue(playing, description)
+                    }
+                    session.reload(primary: primary)
+                    switch outcome {
+                    case "pausedDuringReload": session.pause(primary: primary)
+                    case "repeatedReload":
+                        let allocated = await waitUntil { primary.mpvPlayer != nil || primary.player != nil }
+                        XCTAssertTrue(allocated, description)
+                        session.reload(primary: primary)
+                    case "supersededPrimary": primary.preparePlayback(startTime: 0, resetAudioSelection: false)
+                    case "supersededSecondary": secondary.preparePlayback(startTime: 0, resetAudioSelection: false)
+                    default: break
+                    }
+                    try await attachRenderSurface(to: primary)
+                    try await attachRenderSurface(to: secondary)
+                    let reloaded = await waitUntil { primary.isReady && secondary.isReady }
+                    XCTAssertTrue(reloaded, description)
+                    if !outcome.hasPrefix("superseded") {
+                        XCTAssertGreaterThanOrEqual(primary.playbackTimeSnapshot(), 1.9, description)
+                        XCTAssertGreaterThanOrEqual(secondary.playbackTimeSnapshot(), 2.9, description)
+                    }
+                    if outcome == "playing" || outcome == "repeatedReload" {
+                        let resumed = await waitUntil { primary.isPlaying && secondary.isPlaying }
+                        XCTAssertTrue(resumed, description)
+                        let primaryStart = primary.playbackTimeSnapshot()
+                        let secondaryStart = secondary.playbackTimeSnapshot()
+                        let advanced = await waitUntil {
+                            primary.playbackTimeSnapshot() > primaryStart + 0.1 &&
+                                secondary.playbackTimeSnapshot() > secondaryStart + 0.1
+                        }
+                        XCTAssertTrue(advanced, description)
+                    } else {
+                        try await Task.sleep(for: .milliseconds(100))
+                        XCTAssertFalse(primary.isPlaying, description)
+                        XCTAssertFalse(secondary.isPlaying, description)
+                    }
                 }
             }
         }

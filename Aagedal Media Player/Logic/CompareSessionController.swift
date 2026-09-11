@@ -440,6 +440,7 @@ final class CompareSessionController: ObservableObject {
 
     private var loadTask: Task<Void, Never>?
     private var readinessTask: Task<Void, Never>?
+    private var pendingReload: (primary: Int, secondary: Int?, time: TimeInterval, shouldResume: Bool)?
     private var driftCorrectionTask: Task<Void, Never>?
     private var secondaryLoadSignpostState: OSSignpostIntervalState?
     private var driftMonitoringSignpostState: OSSignpostIntervalState?
@@ -495,6 +496,7 @@ final class CompareSessionController: ObservableObject {
         // backend diagnostic with a generic message.
         readinessTask?.cancel()
         readinessTask = nil
+        pendingReload = nil
         endSecondaryLoadSignpost()
         Self.signposter.emitEvent("Secondary decoder failed")
         selectComparedAudioChannel(nil, primary: primary)
@@ -517,6 +519,7 @@ final class CompareSessionController: ObservableObject {
             }
 
         let generation = loadGeneration.advance()
+        pendingReload = nil
         beginSecondaryLoadSignpost()
         loadTask?.cancel()
         readinessTask?.cancel()
@@ -618,6 +621,7 @@ final class CompareSessionController: ObservableObject {
         loadTask = nil
         readinessTask?.cancel()
         readinessTask = nil
+        pendingReload = nil
         cancelReviewRelink()
         reviewLoadTask?.cancel()
         reviewLoadTask = nil
@@ -1685,12 +1689,9 @@ final class CompareSessionController: ObservableObject {
     }
 
     func pause(primary: PlayerController) {
-        // Active comparison readiness also completes B's initial setup; only
-        // cancel the single-source reload resume introduced by that path.
-        if !isActive {
-            readinessTask?.cancel()
-            readinessTask = nil
-        }
+        // Keep comparison readiness alive to finish B's setup, but an explicit
+        // pause always overrides the transport intent captured before reload.
+        pendingReload?.shouldResume = false
         isScrubbing = false
         primary.pause()
         guard isActive else { return }
@@ -1793,12 +1794,18 @@ final class CompareSessionController: ObservableObject {
     }
 
     func reload(primary: PlayerController) {
+        // Repeated geometry refreshes can arrive before the previous decoder
+        // is ready. Preserve its intent only while it still owns these sources.
+        let existingReload = ownsPendingReload(primary: primary) ? pendingReload : nil
+        let wasPlaying = primary.isPlaying || existingReload?.shouldResume == true
+        let primaryTime = existingReload?.time ?? primary.playbackTimeSnapshot()
+        readinessTask?.cancel()
+        readinessTask = nil
+        pendingReload = nil
         guard isActive else {
-            readinessTask?.cancel()
-            let wasPlaying = primary.isPlaying
-            primary.preparePlayback(startTime: primary.currentPlaybackTime, resetAudioSelection: false)
-            guard wasPlaying else { readinessTask = nil; return }
+            primary.preparePlayback(startTime: primaryTime, resetAudioSelection: false)
             let preparationID = primary.preparationID
+            pendingReload = (preparationID, nil, primaryTime, wasPlaying)
             let generation = loadGeneration.current
             readinessTask = Task { @MainActor [weak self, weak primary] in
                 guard let self, let primary else { return }
@@ -1808,11 +1815,13 @@ final class CompareSessionController: ObservableObject {
                           !self.isActive,
                           primary.preparationID == preparationID else { return }
                     if primary.isReady {
-                        primary.play()
+                        if self.ownsPendingReload(primary: primary), self.pendingReload?.shouldResume == true { primary.play() }
+                        self.pendingReload = nil
                         self.readinessTask = nil
                         return
                     }
                     if primary.playbackPhase.failure != nil {
+                        self.pendingReload = nil
                         self.readinessTask = nil
                         return
                     }
@@ -1820,25 +1829,31 @@ final class CompareSessionController: ObservableObject {
                 }
                 guard !Task.isCancelled, self.loadGeneration.isCurrent(generation),
                       primary.preparationID == preparationID else { return }
+                self.pendingReload = nil
                 self.readinessTask = nil
             }
             return
         }
-        let wasPlaying = primary.isPlaying
         primary.pause()
         secondaryController.pause()
         stopDriftCorrection()
-        let primaryTime = primary.playbackTimeSnapshot()
         let secondaryTime = mappedSecondaryTime(for: primaryTime)
         primary.preparePlayback(startTime: primaryTime, resetAudioSelection: false)
         secondaryController.preparePlayback(startTime: secondaryTime, resetAudioSelection: false)
-        if wasPlaying {
-            startSecondaryWhenReady(
-                primary: primary,
-                generation: loadGeneration.current,
-                resumePlayback: true
-            )
-        }
+        pendingReload = (primary.preparationID, secondaryController.preparationID, primaryTime, wasPlaying)
+        startSecondaryWhenReady(
+            primary: primary,
+            generation: loadGeneration.current,
+            isReload: true
+        )
+    }
+
+    private func ownsPendingReload(primary: PlayerController) -> Bool {
+        guard let intent = pendingReload,
+              intent.primary == primary.preparationID else { return false }
+        return isActive
+            ? intent.secondary == secondaryController.preparationID
+            : intent.secondary == nil
     }
 
     func synchronize(primary: PlayerController) {
@@ -1891,17 +1906,26 @@ final class CompareSessionController: ObservableObject {
     private func startSecondaryWhenReady(
         primary: PlayerController,
         generation: UInt64,
-        resumePlayback: Bool = false
+        isReload: Bool = false
     ) {
         readinessTask?.cancel()
+        let primaryPreparationID = primary.preparationID
+        let secondaryPreparationID = secondaryController.preparationID
         readinessTask = Task { @MainActor [weak self, weak primary] in
             guard let self, let primary else { return }
             for _ in 0..<200 {
                 guard !Task.isCancelled,
                       self.loadGeneration.isCurrent(generation),
-                      self.isActive else { return }
+                      self.isActive,
+                      primary.preparationID == primaryPreparationID,
+                      self.secondaryController.preparationID == secondaryPreparationID else { return }
+                if primary.playbackPhase.failure != nil {
+                    self.pendingReload = nil
+                    self.readinessTask = nil
+                    return
+                }
                 let primaryIsReady = primary.isReady
-                if self.secondaryController.isReady && (!resumePlayback || primaryIsReady) {
+                if self.secondaryController.isReady && (!isReload || primaryIsReady) {
                     self.endSecondaryLoadSignpost()
                     let primaryBackend = primary.useMPV ? "MPV" : "AVFoundation"
                     let secondaryBackend = self.secondaryController.useMPV ? "MPV" : "AVFoundation"
@@ -1917,10 +1941,14 @@ final class CompareSessionController: ObservableObject {
                         self.secondaryController.frameCapture.stopCapture(rebuildPipeline: false)
                         self.secondaryController.frameCapture.startCapture()
                     }
-                    if resumePlayback {
-                        primary.play()
-                    }
-                    if primary.isPlaying {
+                    let shouldResume = isReload && self.ownsPendingReload(primary: primary)
+                        && self.pendingReload?.shouldResume == true
+                    if shouldResume { primary.play() }
+                    self.pendingReload = nil
+                    // Backend playing notifications arrive asynchronously.
+                    // Arm correction from the requested intent so B starts
+                    // when A acknowledges Play instead of staying paused.
+                    if shouldResume || primary.isPlaying {
                         self.updateSecondaryTransport(
                             primary: primary,
                             forceRateMatch: true
@@ -1932,8 +1960,41 @@ final class CompareSessionController: ObservableObject {
                 }
                 try? await Task.sleep(for: .milliseconds(25))
             }
-            guard !Task.isCancelled, self.loadGeneration.isCurrent(generation) else { return }
-            self.handleSecondaryReadinessTimeout(primary: primary)
+            guard !Task.isCancelled, self.loadGeneration.isCurrent(generation),
+                  primary.preparationID == primaryPreparationID,
+                  self.secondaryController.preparationID == secondaryPreparationID else { return }
+            self.pendingReload = nil
+            if isReload {
+                self.handleReloadReadinessTimeout(primary: primary)
+            } else {
+                self.handleSecondaryReadinessTimeout(primary: primary)
+            }
+        }
+    }
+
+    func handleReloadReadinessTimeout(primary: PlayerController) {
+        guard !primary.isReady else {
+            handleSecondaryReadinessTimeout(primary: primary)
+            return
+        }
+        // A paired reload waits for A too. Do not tear down a ready B or
+        // misidentify it as the file that failed when only A timed out.
+        let backend: PlaybackBackend = primary.useMPV ? .mpv : .avFoundation
+        primary.teardown(resetAudioSelection: false)
+        primary.reportPlaybackFailure(
+            backend: backend,
+            stage: .loading,
+            message: "The primary file did not become ready after reloading."
+        )
+        if !secondaryController.isReady {
+            handleSecondaryReadinessTimeout(primary: primary)
+        } else {
+            readinessTask?.cancel()
+            readinessTask = nil
+            pendingReload = nil
+            endSecondaryLoadSignpost()
+            stopDriftCorrection()
+            secondaryController.pause()
         }
     }
 

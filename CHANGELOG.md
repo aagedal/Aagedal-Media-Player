@@ -86,6 +86,9 @@ All notable changes to Aagedal Media Player.
   primary-file loop boundaries across all backend combinations.
 
 ### Fixed
+- Comparison reloads honor an explicit pause, reject superseded decoder resumes, and resume both sources after asynchronous backend readiness.
+- Overlapping inspector refreshes retain the requested playback position and playing intent instead of restarting from a temporary zero decoder clock.
+- A primary-source reload timeout reports the primary failure while preserving a ready comparison source.
 - Playback failure messages wrap beside a narrow metadata inspector, with adaptive action layout and scrolling in short windows.
 - Playback canvases respect inspector width, and recovery actions remain clear of the measured toolbar and transport controls.
 - Inspector transitions refresh MPV's drawing size after layout settles; single-source reloads preserve playing/paused intent and suppress stale resume work.
