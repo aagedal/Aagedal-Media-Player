@@ -1,6 +1,10 @@
 # Aagedal Media Player Product Roadmap
 
-Last updated: 2026-09-09
+Last updated: 2026-09-11
+
+See [2.0 release readiness](docs/RELEASE_2_READINESS.md) for the prioritized
+remaining release gates and the threshold for calling a candidate close to 2.0.
+This assessment does not change the milestone scope below.
 
 ## Product direction
 
