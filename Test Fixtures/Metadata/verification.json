@@ -1,0 +1,15 @@
+{
+  "sha256": "a85722e3dfba983a7555cafcd94b94a39a3986da8edff35b24d49b13bd744356",
+  "size_bytes": 772,
+  "container": "RIFX",
+  "sample_rate": 48000,
+  "channels": 2,
+  "sample_frames": 10,
+  "bext_version": 2,
+  "time_reference_samples": 1311768467463790320,
+  "time_reference_bytes_hex": "9abcdef012345678",
+  "coding_history": "A=PCM,F=48000,W=16,M=stereo\r\nA=PCM,F=48000,W=16,M=stereo,T=libsndfile-1.2.2\r\n",
+  "checks": "container/chunk bounds, format, silence, all fixed bext fields, coding history prefix",
+  "producer": "libsndfile-1.2.2",
+  "fixture": "libsndfile-rifx-bext.wav"
+}

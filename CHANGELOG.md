@@ -5,6 +5,7 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Added
+- Bounded Broadcast WAVE metadata in classic RIFX files, with container-endian version/loudness fields and exact low/high-word sample references.
 - Bounded iXML recording labels and track metadata in classic big-endian RIFX files, with independent XML encoding validation.
 - Optional bounded APFS disk-full integration checks for review save/delete preservation and retry, alongside HFS+ coverage.
 - Bounded UTF-32LE/BE iXML recording labels and track metadata, with strict Unicode validation and preserved parsing limits.

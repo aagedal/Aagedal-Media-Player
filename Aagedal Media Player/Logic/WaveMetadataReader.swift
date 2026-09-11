@@ -116,14 +116,14 @@ nonisolated enum WaveMetadataReader {
             } else if name == "fact", container == "RF64" {
                 guard factSamples == nil, count >= 4 else { throw ReadError.invalidWave }
                 factSamples = uint32(try readExactly(file, count: 4), 0)
-            } else if name == "bext", byteOrder == .little {
-                // BWF defines little-endian RIFF fields; RIFX tags are skipped
-                // until a producer-backed variant establishes their encoding.
+            } else if name == "bext" {
+                // RIFX follows libsndfile’s container-endian bext convention.
+                // Text and UMID bytes retain their stored order.
                 guard broadcastWave == nil, count >= 602 else { throw ReadError.invalidWave }
                 // The remaining coding history can be arbitrarily large. Keep a
                 // bounded prefix and seek past the rest with the enclosing loop.
                 let bytes = try readExactly(file, count: Int(min(count, 602 + 16_384)))
-                broadcastWave = readBroadcastWave(bytes, chunkSize: count)
+                broadcastWave = readBroadcastWave(bytes, chunkSize: count, byteOrder: byteOrder)
             } else if name == "iXML" {
                 // XML carries its own encoding/BOM; container endianness only
                 // determines the enclosing chunk length, including in RIFX.
@@ -472,8 +472,8 @@ nonisolated enum WaveMetadataReader {
         }
     }
 
-    private static func readBroadcastWave(_ bytes: Data, chunkSize: UInt64) -> MediaMetadata.BroadcastWave {
-        let version = uint16(bytes, 346)
+    private static func readBroadcastWave(_ bytes: Data, chunkSize: UInt64, byteOrder: ByteOrder) -> MediaMetadata.BroadcastWave {
+        let version = uint16(bytes, 346, byteOrder: byteOrder)
         // EBU Tech 3285 v2: older versions reserve the UMID/loudness bytes.
         // Future versions retain only the common fixed fields here.
         let hasUMID = version == 1 || version == 2
@@ -482,11 +482,15 @@ nonisolated enum WaveMetadataReader {
             ? umidBytes.map { String(format: "%02X", $0) }.joined() : nil
         func loudness(_ offset: Int, isRange: Bool = false) -> Double? {
             guard version == 2 else { return nil }
-            let value = Int16(bitPattern: uint16(bytes, offset))
+            let value = Int16(bitPattern: uint16(bytes, offset, byteOrder: byteOrder))
             // Includes 0x7fff (unspecified) and all out-of-range values.
             guard value >= (isRange ? 0 : -9_999), value <= 9_999 else { return nil }
             return Double(value) / 100
         }
+        // The reference is two DWORDs in low/high field order even in RIFX;
+        // reading it as a single big-endian UInt64 would swap the halves.
+        let reference = UInt64(uint32(bytes, 338, byteOrder: byteOrder))
+            | (UInt64(uint32(bytes, 342, byteOrder: byteOrder)) << 32)
         return MediaMetadata.BroadcastWave(
             version: version,
             description: ascii(bytes, 0..<256),
@@ -494,7 +498,7 @@ nonisolated enum WaveMetadataReader {
             originatorReference: ascii(bytes, 288..<320),
             originationDate: ascii(bytes, 320..<330),
             originationTime: ascii(bytes, 330..<338),
-            timeReferenceSamples: uint64(bytes, 338), umid: umid,
+            timeReferenceSamples: reference, umid: umid,
             integratedLoudness: loudness(412), loudnessRange: loudness(414, isRange: true),
             maxTruePeakLevel: loudness(416), maxMomentaryLoudness: loudness(418),
             maxShortTermLoudness: loudness(420),

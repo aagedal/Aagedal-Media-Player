@@ -130,7 +130,7 @@ final class WaveMetadataReaderTests: XCTestCase {
         }
     }
 
-    func testRIFXRejectsCompressedAndExtensibleFormatsAndSkipsUnspecifiedTags() throws {
+    func testRIFXRejectsCompressedAndExtensibleFormats() throws {
         for tag in [6, 7, 0xfffe] {
             XCTAssertThrowsError(try read(wave(format: format(tag: tag, channels: 2, bits: 32, bigEndian: true),
                                                audio: Data(count: 40), bigEndian: true))) {
@@ -139,11 +139,7 @@ final class WaveMetadataReaderTests: XCTestCase {
                 }
             }
         }
-        // BWF is defined for little-endian RIFF; do not misreport tag byte order.
-        let metadata = try XCTUnwrap(read(wave(format: format(tag: 1, channels: 2, bits: 16, bigEndian: true),
-            audio: Data(count: 40), before: chunk("bext", bext(), bigEndian: true), bigEndian: true)))
-        XCTAssertNil(metadata.broadcastWave)
-        XCTAssertEqual(metadata.audioStreams.first?.codec, "pcm_s16be")
+
     }
 
     func testSparseRIFXAudioIsSkippedBeforeFollowingChunk() throws {
@@ -388,6 +384,76 @@ final class WaveMetadataReaderTests: XCTestCase {
         XCTAssertNil(metadata.timecode) // A sample reference is not a video-frame timecode.
     }
 
+    func testLibsndfileProducedRIFXBroadcastWaveFixture() throws {
+        // Actual libsndfile 1.2.2 output, not packed by our test helpers.
+        // Regenerate with scripts/generate-libsndfile-rifx-bext-fixture.py.
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
+        let url = root.appendingPathComponent("Test Fixtures/Metadata/libsndfile-rifx-bext.wav")
+        let metadata = try XCTUnwrap(WaveMetadataReader.read(from: url))
+        let bwf = try XCTUnwrap(metadata.broadcastWave)
+        XCTAssertEqual(metadata.audioStreams.first?.codec, "pcm_s16be")
+        XCTAssertEqual(metadata.audioStreams.first?.sampleRate, 48_000)
+        XCTAssertEqual(metadata.audioStreams.first?.channels, 2)
+        XCTAssertEqual(metadata.duration ?? -1, 10.0 / 48_000, accuracy: 0.000001)
+        XCTAssertEqual(bwf.version, 2)
+        XCTAssertEqual(bwf.description, "libsndfile RIFX interoperability")
+        XCTAssertEqual(bwf.originator, "Aagedal fixture generator")
+        XCTAssertEqual(bwf.originatorReference, "rifx-bext-001")
+        XCTAssertEqual(bwf.originationDate, "2026-09-11")
+        XCTAssertEqual(bwf.originationTime, "12:34:56")
+        XCTAssertEqual(bwf.timeReferenceSamples, 0x1234_5678_9abc_def0)
+        XCTAssertEqual(bwf.umid, "01" + String(repeating: "00", count: 63))
+        XCTAssertEqual(bwf.integratedLoudness, -23.45)
+        XCTAssertEqual(bwf.loudnessRange, 4.56)
+        XCTAssertEqual(bwf.maxTruePeakLevel, -1.23)
+        XCTAssertEqual(bwf.maxMomentaryLoudness, -20)
+        XCTAssertEqual(bwf.maxShortTermLoudness, -21)
+        XCTAssertEqual(bwf.codingHistory,
+                       "A=PCM,F=48000,W=16,M=stereo\r\nA=PCM,F=48000,W=16,M=stereo,T=libsndfile-1.2.2")
+        XCTAssertFalse(bwf.codingHistoryTruncated)
+        XCTAssertNil(metadata.timecode)
+    }
+
+    func testRIFXBroadcastWaveMatchesLittleEndianFieldsBeforeAndAfterAudio() throws {
+        let expected = try XCTUnwrap(read(wave(format: format(tag: 1, channels: 2, bits: 16),
+            audio: Data(count: 40), before: chunk("bext", bext())))?.broadcastWave)
+        for afterAudio in [false, true] {
+            let tags = chunk("bext", bext(bigEndian: true), bigEndian: true)
+            let metadata = try XCTUnwrap(read(wave(
+                format: format(tag: 1, channels: 2, bits: 16, bigEndian: true), audio: Data(count: 40),
+                before: afterAudio ? Data() : tags, after: afterAudio ? tags : Data(), bigEndian: true)))
+            XCTAssertEqual(metadata.broadcastWave, expected)
+            XCTAssertEqual(metadata.broadcastWave?.timeReferenceSamples, 0x1234_5678_9abc_def0)
+            XCTAssertEqual(metadata.audioStreams.first?.codec, "pcm_s16be")
+            XCTAssertNil(metadata.timecode)
+        }
+    }
+
+    func testRIFXBroadcastWaveVersionGatesAndUnspecifiedLoudness() throws {
+        for version: UInt16 in [0, 1, 2, 3, .max] {
+            var bytes = bext(version: version, bigEndian: true)
+            bytes.replaceSubrange(412..<414, with: big(Int16.max))
+            bytes.replaceSubrange(414..<416, with: big(Int16(-1)))
+            let bwf = try XCTUnwrap(read(wave(format: format(tag: 1, channels: 2, bits: 16, bigEndian: true),
+                audio: Data(count: 40), before: chunk("bext", bytes, bigEndian: true), bigEndian: true))?.broadcastWave)
+            XCTAssertEqual(bwf.version, version)
+            XCTAssertEqual(bwf.umid != nil, version == 1 || version == 2)
+            XCTAssertEqual(bwf.codingHistory != nil, version <= 2)
+            XCTAssertNil(bwf.integratedLoudness)
+            XCTAssertNil(bwf.loudnessRange)
+            XCTAssertEqual(bwf.maxTruePeakLevel, version == 2 ? -1.23 : nil)
+        }
+    }
+
+    func testRIFXBroadcastWaveRejectsShortDuplicateAndMixedEndianChunkLengths() throws {
+        let fmt = format(tag: 1, channels: 2, bits: 16, bigEndian: true)
+        let valid = chunk("bext", bext(bigEndian: true), bigEndian: true)
+        for tags in [chunk("bext", Data(count: 601), bigEndian: true), valid + valid,
+                     chunk("bext", bext(bigEndian: true))] {
+            XCTAssertThrowsError(try read(wave(format: fmt, audio: Data(count: 40), before: tags, bigEndian: true)))
+        }
+    }
+
     func testBroadcastWaveVersionGatesReservedFields() throws {
         for version: UInt16 in [0, 1, 2, 3, .max] {
             let metadata = try XCTUnwrap(read(wave(format: format(tag: 1, channels: 2, bits: 16),
@@ -455,22 +521,26 @@ final class WaveMetadataReaderTests: XCTestCase {
     }
 
     func testSparseBroadcastWaveHistoryIsBounded() throws {
-        let historySize: UInt32 = 1 << 30
-        let prefix = bext(history: "") + Data(repeating: 65, count: 16_384)
-        let tail = chunk("fmt ", format(tag: 1, channels: 2, bits: 16)) + chunk("data", Data(count: 40))
-        let chunkSize = UInt32(602) + historySize
-        let riffSize = UInt32(4 + 8 + tail.count) + chunkSize
-        let header = Data("RIFF".utf8) + little(riffSize) + Data("WAVEbext".utf8) + little(chunkSize)
-        let url = try write(header + prefix)
-        defer { try? FileManager.default.removeItem(at: url) }
-        let file = try FileHandle(forWritingTo: url)
-        try file.seek(toOffset: UInt64(header.count) + UInt64(chunkSize))
-        try file.write(contentsOf: tail)
-        try file.close()
-        let metadata = try XCTUnwrap(WaveMetadataReader.read(from: url))
-        XCTAssertEqual(metadata.broadcastWave?.codingHistory?.count, 16_384)
-        XCTAssertEqual(metadata.broadcastWave?.codingHistoryTruncated, true)
-        XCTAssertEqual(metadata.audioStreams.first?.codec, "pcm_s16le")
+        for bigEndian in [false, true] {
+            let historySize: UInt32 = 1 << 30
+            let prefix = bext(history: "", bigEndian: bigEndian) + Data(repeating: 65, count: 16_384)
+            let tail = chunk("fmt ", format(tag: 1, channels: 2, bits: 16, bigEndian: bigEndian), bigEndian: bigEndian)
+                + chunk("data", Data(count: 40), bigEndian: bigEndian)
+            let chunkSize = UInt32(602) + historySize
+            let riffSize = UInt32(4 + 8 + tail.count) + chunkSize
+            let header = Data((bigEndian ? "RIFX" : "RIFF").utf8) + (bigEndian ? big(riffSize) : little(riffSize))
+                + Data("WAVEbext".utf8) + (bigEndian ? big(chunkSize) : little(chunkSize))
+            let url = try write(header + prefix)
+            defer { try? FileManager.default.removeItem(at: url) }
+            let file = try FileHandle(forWritingTo: url)
+            try file.seek(toOffset: UInt64(header.count) + UInt64(chunkSize))
+            try file.write(contentsOf: tail)
+            try file.close()
+            let metadata = try XCTUnwrap(WaveMetadataReader.read(from: url))
+            XCTAssertEqual(metadata.broadcastWave?.codingHistory?.count, 16_384)
+            XCTAssertEqual(metadata.broadcastWave?.codingHistoryTruncated, true)
+            XCTAssertEqual(metadata.audioStreams.first?.codec, bigEndian ? "pcm_s16be" : "pcm_s16le")
+        }
     }
 
     func testBroadcastWaveCodableAndInspectorJSONPreserveExactReference() throws {
@@ -1049,14 +1119,15 @@ final class WaveMetadataReaderTests: XCTestCase {
                         utf32XML(xml), utf32XML(xml, bigEndian: true)] {
             let metadata = try XCTUnwrap(read(wave(
                 format: format(tag: 1, channels: 2, bits: 16, bigEndian: true), audio: Data(count: 40),
-                before: chunk("bext", bext(), bigEndian: true),
+                before: chunk("bext", bext(bigEndian: true), bigEndian: true),
                 after: chunk("iXML", payload, bigEndian: true), bigEndian: true)))
             XCTAssertEqual(metadata.ixmlRecording?.project, "Sjø 🎙")
             XCTAssertEqual(metadata.ixmlRecording?.tracks,
                            [.init(channelIndex: 4, interleaveIndex: 1, name: "声")])
             XCTAssertEqual(metadata.audioStreams.first?.codec, "pcm_s16be")
             XCTAssertEqual(metadata.duration ?? -1, 10.0 / 48_000, accuracy: 0.000001)
-            XCTAssertNil(metadata.broadcastWave)
+            XCTAssertEqual(metadata.broadcastWave?.version, 2)
+            XCTAssertEqual(metadata.broadcastWave?.timeReferenceSamples, 0x1234_5678_9abc_def0)
             XCTAssertNil(metadata.timecode)
         }
     }
@@ -1107,7 +1178,7 @@ final class WaveMetadataReaderTests: XCTestCase {
         return prefix + text.data(using: bigEndian ? .utf16BigEndian : .utf16LittleEndian)!
     }
 
-    private func bext(version: UInt16 = 2, history: String = "A=PCM,F=48000,W=16,M=stereo\r\n") -> Data {
+    private func bext(version: UInt16 = 2, history: String = "A=PCM,F=48000,W=16,M=stereo\r\n", bigEndian: Bool = false) -> Data {
         var bytes = Data(count: 602)
         for (offset, value) in [(0, "Field recording"), (256, "Recorder"), (288, "take-42"),
                                 (320, "2026-09-08"), (330, "12:34:56")] {
@@ -1119,6 +1190,13 @@ final class WaveMetadataReaderTests: XCTestCase {
         bytes[348] = 1
         for (index, value): (Int, Int16) in [-2345, 456, -123, -2000, -2100].enumerated() {
             bytes.replaceSubrange((412 + index * 2)..<(414 + index * 2), with: little(value))
+        }
+        if bigEndian {
+            // Preserve Low/High DWORD field order; swap bytes within each field.
+            for range in [338..<342, 342..<346, 346..<348, 412..<414, 414..<416,
+                          416..<418, 418..<420, 420..<422] {
+                bytes.replaceSubrange(range, with: Array(bytes[range].reversed()))
+            }
         }
         return bytes + Data(history.utf8)
     }

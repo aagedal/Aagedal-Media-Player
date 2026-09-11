@@ -1620,6 +1620,42 @@ status. The build and 61-check preflight logs are
 `/tmp/aagedal-rifx-ixml-preflight-20260910.log`. Release static analysis passes;
 its log is `/tmp/aagedal-rifx-ixml-analyze-20260910.log`.
 
+## Phase 78 — Classic RIFX Broadcast WAVE interoperability
+
+Status: Complete on 2026-09-11 within the bounded scope below. All 534 Release
+tests, static analysis and 61 release-preflight checks pass.
+
+- [x] Extend bounded `bext` reading to classic RIFX using libsndfile's
+  container-endian convention, preserving low/high DWORD time-reference order.
+- [x] Cover recording-field parity, version gates, signed/sentinel loudness,
+  malformed/duplicate chunks, iXML coexistence and sparse 1 GiB history bounds.
+- [x] Independently review the parser against primary libsndfile source.
+- [x] Verify library-produced fixture interoperability and the integrated Release
+  suite, static analysis and release preflight.
+
+Actual libsndfile 1.2.2 output confirms the time-reference word order and all
+fixed recording/loudness fields. A 772-byte committed fixture is read by a
+normal regression test; a header-backed generator and independent byte checks
+retain reproducibility without adding a production dependency.
+
+The integrated run passes **534 tests with zero failures and zero skips**,
+including all 63 WAVE tests, both official ITU reference sets and actual APFS
+exhaustion/recovery, in 115.446 seconds (115.700 including suite overhead).
+The harness verifies its completion proof, detaches the volume and removes
+its fixture. Evidence: `/tmp/aagedal-rifx-bwf-integrated-20260911/Tests.xcresult`,
+`run.log`, `tests.json`, `summary.json`, environment/volume records and
+successful cleanup status. Final build, analysis, preflight and fixture
+reproduction logs are `/tmp/aagedal-rifx-bwf-build-final-20260911.log`,
+`/tmp/aagedal-rifx-bwf-analyze-20260911.log`,
+`/tmp/aagedal-rifx-bwf-preflight-20260911.log` and
+`/tmp/aagedal-rifx-bwf-fixture-20260911.log`.
+
+RIFX extensible formats and playback/export remain unsupported. This is a
+bounded interoperability extension; producer-authentic recorder and native
+RIFX inspector acceptance remain open. The native iXML attempt on September 11
+could not reliably enter the fixture path in the file picker, so it supplies
+no additional native acceptance evidence.
+
 ## Remaining work after this continuation
 
 - Integrate the measured metadata-memory dependency fix after upstream review,
@@ -1671,13 +1707,14 @@ its log is `/tmp/aagedal-rifx-ixml-analyze-20260910.log`.
   accessibility-tree content, measurement activation, and Command-I reopening.
   The diagnosed rear-weight discrepancy is corrected in Phase 51; unknown or
   other layouts do not receive that correction.
-- Broader WAVE format support: compressed encodings, RIFX extensible/BWF variants,
+- Broader WAVE format support: compressed encodings, RIFX extensible variants,
   legacy iXML encodings, further structures and ADM interpretation remain outside the
   bounded reader. Phases 62 and 66 add bounded UTF-8 and UTF-16 iXML recording labels;
   Phase 68 adds bounded track names/indexes and native UTF-16 inspector checks;
   Phase 73 adds bounded UTF-32LE/BE recording labels and tracks;
   Phase 75 verifies native UTF-32 inspector labels and track indexes;
-  Phase 77 adds bounded RIFX iXML labels/tracks and reproducible UTF-32 fixtures; producer-authentic
+  Phase 77 adds bounded RIFX iXML labels/tracks and reproducible UTF-32 fixtures;
+  Phase 78 adds bounded classic RIFX Broadcast WAVE interoperability; producer-authentic
   recorder, broader native encoding/container and spoken VoiceOver acceptance remain. Phase 59 adds
   classic RIFX metadata and corrected offline analysis/waveforms; RIFX playback
   and trim export remain explicitly unavailable pending a verified decoder fix.
@@ -1809,3 +1846,5 @@ its log is `/tmp/aagedal-rifx-ixml-analyze-20260910.log`.
 67. Phase 75 native UTF-32 inspector acceptance.
 68. Phase 76 native APFS disk-full edit and deletion recovery.
 69. Phase 77 bounded RIFX iXML metadata.
+
+70. Phase 78 classic RIFX Broadcast WAVE interoperability.

@@ -126,14 +126,21 @@ report `be`; unsigned 8-bit PCM remains `pcm_u8`. Mono and stereo are identified
 from channel count; surround placement remains unknown without a supported
 explicit mask.
 
-RIFX WAVEFORMATEXTENSIBLE and Broadcast WAVE tag interpretation remain outside
-this implementation: extensible format tags report unsupported encoding, and
-`bext` payloads are skipped without populating their metadata objects. iXML uses
+RIFX WAVEFORMATEXTENSIBLE remains outside this implementation: extensible format
+tags report unsupported encoding. Classic RIFX `bext` metadata follows the
+[libsndfile reader/writer convention](https://github.com/libsndfile/libsndfile/blob/master/src/wavlike.c):
+16-bit values and each 32-bit time-reference word use container byte order.
+The time reference retains **low word then high word** field order, so it is not
+a single big-endian 64-bit integer. Text and UMID bytes retain their original
+order. This is a bounded interoperability extension, not an EBU conformance
+claim; producer-authentic RIFX BWF acceptance remains open. See also
+[libsndfile’s RIFX byte-order selection](https://github.com/libsndfile/libsndfile/blob/master/src/wav.c).
+No byte-order guessing is performed for mixed-endian payloads. iXML uses
 the same bounded XML parser as other supported WAVE containers: chunk lengths
 are big-endian, while XML encoding is determined independently from the payload's
 BOM/declaration. UTF-8, UTF-16LE/BE and UTF-32LE/BE retain their existing strict
 validation and caps. Tests cover recording labels and tracks after audio,
-unchanged big-endian audio metadata and skipped BWF tags, malformed/duplicate
+unchanged big-endian audio metadata alongside BWF tags, malformed/duplicate
 documents, encoded entity rejection, the payload cap and mixed-endian/invalid
 chunk lengths. This is bounded metadata interoperability support; producer-authentic
 RIFX iXML acceptance remains open. RIFX uses ordinary 32-bit lengths and never applies RF64
@@ -185,7 +192,7 @@ conversion path is still required before removing this guard.
 
 ## Broadcast WAVE tags
 
-For RIFF/RF64/BW64, an optional `broadcastWave` object carries `bext` metadata
+For RIFF/RIFX/RF64/BW64, an optional `broadcastWave` object carries `bext` metadata
 into the inspector and its JSON export. Versions 0–2 expose description, originator/reference,
 origination date/time, the exact unsigned 64-bit sample reference, and coding
 history. Dates and times remain producer-supplied text without timezone or
@@ -299,8 +306,8 @@ repeated table IDs, malformed/truncated/overflowing lengths, and the table cap.
 Sparse fixtures exercise 8 GiB audio and an odd ancillary chunk exceeding
 4 GiB without allocating or reading their payloads.
 
-Remaining exclusions: compressed WAVE encodings, RIFX extensible formats and
-RIFX Broadcast WAVE tags, multiple data chunks and `wavl` playlists,
+Remaining exclusions: compressed WAVE encodings, RIFX extensible formats,
+multiple data chunks and `wavl` playlists,
 INFO/other XML/ADM tag extraction or interpretation, iXML fields beyond the
 recording labels documented above,
 and tables above the documented cap. Container recognition does not validate
@@ -338,3 +345,49 @@ values remain in the accessibility tree and JSON. This check used native
 accessibility actions and screenshots, not spoken VoiceOver or live meters.
 Fixture: `/tmp/aagedal-native-bwf-20260908.wav`. All 453 Release tests,
 static analysis and 61 release-preflight checks pass for this continuation.
+
+### RIFX Broadcast WAVE regression coverage
+
+The RIFX extension has focused tests comparing all decoded fields with the RIFF
+fixture, including a time reference with distinct nonzero high/low words,
+version 0/1/2/future field gates, signed/unspecified loudness, tags before and
+after audio, and coexisting UTF-8/16/32 iXML. Short/duplicate `bext` chunks and
+mixed-endian chunk lengths remain rejected. The sparse 1 GiB coding-history
+case runs for both RIFF and RIFX and retains only the 16 KiB prefix. This does
+not change the existing native playback or export restrictions.
+
+### Independently produced RIFX bext fixture
+
+`Test Fixtures/Metadata/libsndfile-rifx-bext.wav` is 772 bytes of actual
+libsndfile 1.2.2 output: classic PCM 16-bit stereo, 48 kHz, ten silent frames,
+and version-2 `bext`. Its SHA-256 is
+`a85722e3dfba983a7555cafcd94b94a39a3986da8edff35b24d49b13bd744356`.
+The adjacent `verification.json` records the checked fields and producer.
+A normal `WaveMetadataReaderTests` case reads this committed fixture directly;
+regeneration does not run in the test suite or require libsndfile on CI.
+
+Regenerate into a **new directory** with:
+
+```sh
+python3 scripts/generate-libsndfile-rifx-bext-fixture.py /tmp/new-libsndfile-rifx-bext
+```
+
+The script compiles a small helper against installed `sndfile.h`, requests
+`SF_FORMAT_WAV | SF_FORMAT_PCM_16 | SF_ENDIAN_BIG`, and sets metadata through
+`SFC_SET_BROADCAST_INFO`. It independently checks the emitted chunk bounds,
+base format, silence, text, UMID, signed loudness and time-reference words.
+The observed reference bytes are `9abcdef012345678`, confirming big-endian
+DWORDs stored low word first. libsndfile appends its own coding-history entry;
+the script preserves that evidence. The test asserts all decoded fixed fields.
+Use `--prefix` for another libsndfile installation. If the selected SDK and
+compiler disagree, use `--sdk` with the matching SDK. This host required
+`--sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk`.
+This establishes library-produced parser interoperability. Native inspector,
+recorder/DAW-produced files, playback, and export remain separate acceptance work.
+
+The September 11 integrated Release run passes all 534 tests with zero failures
+and zero skips, including 63 WAVE tests and the library-produced fixture,
+both official ITU reference sets and actual APFS save recovery. Static analysis
+and all 61 release-preflight checks pass. Test evidence is retained at
+`/tmp/aagedal-rifx-bwf-integrated-20260911/Tests.xcresult`; Phase 78 in
+`FOLLOW_UP_IMPROVEMENT_PLAN.md` records the remaining logs and acceptance limits.
