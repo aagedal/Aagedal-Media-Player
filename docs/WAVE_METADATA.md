@@ -425,3 +425,18 @@ export, new waveform accuracy, recorder-authentic file, Full Keyboard Access
 or spoken VoiceOver acceptance is claimed. Screenshots and accessibility
 observations were inspected during the task; no standalone screenshot files
 were retained.
+
+## Header-based offline WAVE decoding — September 11, 2026
+
+The bundled FFmpeg can misprobe a valid 96 kHz mono floating-point WAVE
+containing a negative-polarity 1 kHz tone as MPEG-TS. Offline loudness and
+waveform inputs now select the WAVE demuxer only after reading a 12-byte
+RIFF/RIFX/RF64/BW64 plus WAVE signature. File extensions alone never enable the
+override; RIFF AVI, non-WAVE RIFX and short/invalid headers are excluded. RIFX
+continues to require its validated big-endian PCM decoder override. This does
+not enable RIFX playback or trim export.
+
+The original signal now passes direct single-stream loudness analysis and
+mixed-rate programme analysis. Header-selection and existing real RIFX
+loudness/waveform regressions are covered by `RIFXAudioDecodingTests` and
+`ProgrammeLoudnessTests`.

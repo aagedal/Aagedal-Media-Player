@@ -163,28 +163,86 @@ enum FFmpegService {
             channels: channels, channelLayout: channelLayout,
             inputAudioArguments: RIFXAudioDecoding.ffmpegInputArguments(for: url)
         )
-        guard let path = ffmpegPath else {
-            throw FFmpegError.ffmpegMissing
+        var parsed = try await analyzeLoudness(arguments: arguments, range: range)
+        if usesConventional7Point1LoudnessCorrection(channels: channels, channelLayout: channelLayout) {
+            parsed.weightingCorrection = .bs1770Conventional7Point1RearChannels
         }
+        return parsed
+    }
 
+    /// Measure a programme assembled from explicitly assigned mono tracks.
+    /// Missing time in an assigned channel is silence on the file timeline.
+    static func analyzeProgrammeLUFS(
+        url: URL, mapping: ProgrammeLoudnessMapping,
+        audioStreams: [MediaMetadata.AudioStream], duration: Double?,
+        range: LoudnessRange? = nil
+    ) async throws -> ProgrammeLoudnessResult {
+        let arguments = try programmeLoudnessArguments(
+            url: url, mapping: mapping, audioStreams: audioStreams, duration: duration,
+            range: range, inputAudioArguments: RIFXAudioDecoding.ffmpegInputArguments(for: url)
+        )
+        return ProgrammeLoudnessResult(
+            mapping: mapping, loudness: try await analyzeLoudness(arguments: arguments, range: range)
+        )
+    }
+
+    nonisolated static func programmeLoudnessArguments(
+        url: URL, mapping: ProgrammeLoudnessMapping,
+        audioStreams: [MediaMetadata.AudioStream], duration: Double?,
+        range: LoudnessRange? = nil, inputAudioArguments: [String] = []
+    ) throws -> [String] {
+        try mapping.validate(audioStreams: audioStreams)
+        guard let duration, duration.isFinite, duration > 0,
+              duration < Double(Int64.max) / 1_000_000 else {
+            throw ProgrammeLoudnessError.durationRequired
+        }
+        if let range {
+            _ = try LoudnessRange(start: range.start, end: range.end)
+            guard range.start < duration, range.end <= duration else {
+                throw FFmpegError.invalidLoudnessRange
+            }
+        }
+        let end = range?.end ?? duration
+        let start = range?.start ?? 0
+        // Retain the highest source rate rather than silently reducing the
+        // bandwidth of high-rate channels before true-peak measurement.
+        let sampleRate = mapping.audioStreamIndices.compactMap { audioStreams[$0].sampleRate }.max()!
+        var chains = mapping.audioStreamIndices.enumerated().map { channel, stream in
+            // first_pts pads initial delay; async=1 fills/trims timestamp gaps
+            // without stretching. Never reset individual stream PTS before this.
+            // Finite padding prevents join ending at the shortest source, and
+            // equal trims bound every input and preserve file-relative ranges.
+            // https://ffmpeg.org/ffmpeg-resampler.html (async, first_pts)
+            // https://ffmpeg.org/ffmpeg-filters.html (apad, atrim, join)
+            "[0:a:\(stream)]aresample=\(sampleRate):async=1:first_pts=0," +
+            "apad=whole_dur=\(end),atrim=start=\(start):end=\(end)," +
+            "asetpts=PTS-STARTPTS[programme\(channel)]"
+        }
+        let inputs = mapping.audioStreamIndices.indices.map { "[programme\($0)]" }.joined()
+        let roles = mapping.layout.channelRoles.enumerated().map { "\($0.offset).0-\($0.element)" }.joined(separator: "|")
+        chains.append(inputs + "join=inputs=\(mapping.audioStreamIndices.count):" +
+                      "channel_layout=\(mapping.layout.ffmpegLayout):map=\(roles),ebur128=peak=true[programme]")
+        return ["-hide_banner", "-nostats", "-progress", "pipe:1", "-t", String(end)] +
+            inputAudioArguments + ["-i", url.path, "-filter_complex", chains.joined(separator: ";"),
+                                   "-map", "[programme]", "-f", "null", "-"]
+    }
+
+    private static func analyzeLoudness(arguments: [String], range: LoudnessRange?) async throws -> LUFSResult {
+        guard let path = ffmpegPath else { throw FFmpegError.ffmpegMissing }
         let result: SubprocessResult
         do {
             result = try await SubprocessService.run(
-                executableURL: URL(fileURLWithPath: path),
-                arguments: arguments
+                executableURL: URL(fileURLWithPath: path), arguments: arguments
             )
         } catch is CancellationError {
             throw FFmpegError.cancelled
         }
-
         let output = String(data: result.standardError, encoding: .utf8) ?? ""
         guard result.terminationStatus == 0 else {
             throw FFmpegError.processFailed(output.trimmingCharacters(in: .whitespacesAndNewlines))
         }
-        // FFmpeg reports success and a plausible ebur128 summary even when
-        // atrim passes no frames. Progress reports N/A for that empty output;
-        // actual samples (including digital silence) advance the output clock.
-        // SubprocessService retains only a bounded tail, including final progress.
+        // A successful empty ebur128 graph still reports a plausible summary.
+        // Require output samples; genuine digital silence advances this clock.
         let progress = String(data: result.standardOutput, encoding: .utf8) ?? ""
         let hasSamples = progress.split(whereSeparator: \.isNewline).contains { line in
             guard line.hasPrefix("out_time_us="),
@@ -196,9 +254,6 @@ enum FFmpegService {
             throw FFmpegError.processFailed("Could not parse LUFS output")
         }
         parsed.analysisRange = range
-        if usesConventional7Point1LoudnessCorrection(channels: channels, channelLayout: channelLayout) {
-            parsed.weightingCorrection = .bs1770Conventional7Point1RearChannels
-        }
         return parsed
     }
 

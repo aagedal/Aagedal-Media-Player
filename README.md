@@ -239,6 +239,8 @@ Preview multichannel audio tracks as waveforms, with one waveform per channel. T
 
 ### Metadata
 Inspect resolution, frame rate, codec, color space, chroma subsampling, and audio metadata with Command + I. The inspector offers offline loudness analysis and displays Broadcast WAVE recording tags and embedded loudness separately from measured results. It also reads UTF-8/UTF-16/UTF-32 iXML recording labels and optional track names with explicit source-channel and file-interleave indexes. Classic big-endian RIFX supports metadata, waveforms, and offline loudness; playback and trim export show conversion guidance until the decoder supports its sample byte order. See [supported WAVE metadata](docs/WAVE_METADATA.md).
+
+For stereo or 5.1 stored as separate mono tracks, **Programme Loudness** measures one programme using explicit speaker assignments. Spare tracks are excluded, and copied metadata includes both the result and its channel mapping. See [programme loudness](docs/PROGRAMME_LOUDNESS.md).
 <img width="1227" height="691" alt="SCR-20260309-udpk" src="https://github.com/user-attachments/assets/52a86143-f944-4137-988a-e7a2c585bbaa" />
 
 

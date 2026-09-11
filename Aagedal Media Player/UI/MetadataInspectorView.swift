@@ -16,6 +16,7 @@ struct MetadataInspectorView: View {
     @State private var showCopiedConfirmation = false
     @State private var copiedConfirmationTask = DeferredMainActorTask()
     @State private var measureSelectedRange = false
+    @StateObject private var programmeLoudness = ProgrammeLoudnessController()
     @State private var lufsResults: [Int: FFmpegService.LUFSResult] = [:]
     @State private var lufsAnalyzing: Set<Int> = []
     @State private var lufsErrors: [Int: String] = [:]
@@ -116,6 +117,14 @@ struct MetadataInspectorView: View {
                 }
 
                 // Audio
+                if metadata.audioStreams.filter({ $0.channels == 1 }).count >= 2 {
+                    ProgrammeLoudnessSection(
+                        item: item, streams: metadata.audioStreams, controller: programmeLoudness,
+                        measureSelectedRange: $measureSelectedRange, isPresented: $isPresented,
+                        selectedRange: selectedLoudnessRange
+                    )
+                }
+
                 ForEach(Array(metadata.audioStreams.enumerated()), id: \.offset) { index, stream in
                     let title = metadata.audioStreams.count > 1
                         ? "Audio \(streamLabel(stream, index: index + 1))"
@@ -259,6 +268,12 @@ struct MetadataInspectorView: View {
         .onChange(of: measureSelectedRange) {
             cancelLUFSAnalyses(resetResults: true)
         }
+        .onChange(of: metadata?.audioStreams) {
+            programmeLoudness.configure(url: item.url, audioStreams: metadata?.audioStreams ?? [])
+        }
+        .onChange(of: metadata?.duration) {
+            programmeLoudness.cancel(resetResult: true)
+        }
         .onChange(of: selectedLoudnessRange) {
             if measureSelectedRange { cancelLUFSAnalyses(resetResults: true) }
         }
@@ -284,7 +299,7 @@ struct MetadataInspectorView: View {
 
     private func copyMetadataAsJSON() {
         guard let metadata = metadata else { return }
-        guard let data = try? Self.metadataJSON(metadata: metadata, lufsResults: lufsResults),
+        guard let data = try? Self.metadataJSON(metadata: metadata, lufsResults: lufsResults, programmeLoudness: programmeLoudness.result),
               let json = String(data: data, encoding: .utf8) else { return }
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(json, forType: .string)
@@ -357,8 +372,11 @@ struct MetadataInspectorView: View {
         }
     }
 
-    static func metadataJSON(metadata: MediaMetadata, lufsResults: [Int: FFmpegService.LUFSResult]) throws -> Data {
-        let export = MetadataExport(metadata: metadata, lufsResults: lufsResults)
+    static func metadataJSON(
+        metadata: MediaMetadata, lufsResults: [Int: FFmpegService.LUFSResult],
+        programmeLoudness: ProgrammeLoudnessResult? = nil
+    ) throws -> Data {
+        let export = MetadataExport(metadata: metadata, lufsResults: lufsResults, programmeLoudness: programmeLoudness)
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted]
         encoder.nonConformingFloatEncodingStrategy = .convertToString(positiveInfinity: "Infinity", negativeInfinity: "-Infinity", nan: "NaN")
@@ -369,10 +387,11 @@ struct MetadataInspectorView: View {
     private struct MetadataExport: Encodable {
         let metadata: MediaMetadata
         let lufsResults: [Int: FFmpegService.LUFSResult]
+        let programmeLoudness: ProgrammeLoudnessResult?
 
         private enum CodingKeys: String, CodingKey {
             case duration, formatName, containerLongName, sizeBytes, bitRate
-            case videoStreams, audioStreams, subtitleStreams, chapters
+            case videoStreams, audioStreams, subtitleStreams, chapters, programmeLoudness
             case timecode, comment, encoder, frameCount, broadcastWave, ixmlRecording
         }
 
@@ -398,6 +417,8 @@ struct MetadataInspectorView: View {
                 }
                 try c.encode(streams, forKey: .audioStreams)
             }
+
+            try c.encodeIfPresent(programmeLoudness, forKey: .programmeLoudness)
 
             // Subtitles
             if !metadata.subtitleStreams.isEmpty {
@@ -625,6 +646,7 @@ struct MetadataInspectorView: View {
     }
 
     private func cancelLUFSAnalyses(resetResults: Bool) {
+        programmeLoudness.cancel(resetResult: resetResults)
         lufsGenerations.invalidateAll()
         lufsTasks.values.forEach { $0.cancel() }
         lufsTasks.removeAll()

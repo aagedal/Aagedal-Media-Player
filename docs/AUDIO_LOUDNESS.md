@@ -2,6 +2,10 @@
 
 The metadata inspector provides offline loudness analysis for each audio stream.
 Choose **Whole File** or **In–Out Range**, then **Measure LUFS** under that stream.
+For stereo or 5.1 stored as separate mono tracks, use the new **Programme
+Loudness** section to assign channels and measure one combined programme.
+See [programme loudness](PROGRAMME_LOUDNESS.md) for eight-mono-track workflows,
+explicit speaker mapping, excluded spare tracks and measurement provenance.
 The selected range uses the player's existing In and Out timeline markers, in
 seconds from the start of the media. Both markers must be finite, the In point
 must be non-negative, and the Out point must be later and within the known file

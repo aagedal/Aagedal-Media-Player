@@ -66,15 +66,32 @@ final class RIFXAudioDecodingTests: XCTestCase {
     func testOverrideUsesContainerSignatureAndRejectsInvalidRIFX() throws {
         let littleEndian = try writeWave(tag: 1, bits: 16, frames: 2, bigEndian: false) { _ in 0.25 }
         defer { try? FileManager.default.removeItem(at: littleEndian) }
-        XCTAssertEqual(try RIFXAudioDecoding.ffmpegInputArguments(for: littleEndian), [])
+        XCTAssertEqual(try RIFXAudioDecoding.ffmpegInputArguments(for: littleEndian), ["-f", "wav"])
         let bigEndian = try writeWave(tag: 1, bits: 16, frames: 2) { _ in 0.25 }
         defer { try? FileManager.default.removeItem(at: bigEndian) }
-        XCTAssertEqual(try RIFXAudioDecoding.ffmpegInputArguments(for: bigEndian), ["-c:a", "pcm_s16be"])
+        XCTAssertEqual(try RIFXAudioDecoding.ffmpegInputArguments(for: bigEndian), ["-f", "wav", "-c:a", "pcm_s16be"])
         var malformed = try Data(contentsOf: bigEndian)
         malformed[32] = 0
         malformed[33] = 1 // Incorrect block alignment for stereo s16.
         try malformed.write(to: bigEndian)
         XCTAssertThrowsError(try RIFXAudioDecoding.ffmpegInputArguments(for: bigEndian))
+    }
+
+    func testDemuxerSelectionUsesOnlyRecognizedWaveSignatures() throws {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("wave-signature-\(UUID().uuidString).wav")
+        defer { try? FileManager.default.removeItem(at: url) }
+        // These are deliberately only signature probes; decoding still validates
+        // the rest of the file and fails for incomplete or malformed containers.
+        for signature in ["RIFF", "RF64", "BW64"] {
+            try Data((signature + "1234WAVE").utf8).write(to: url)
+            XCTAssertEqual(try RIFXAudioDecoding.ffmpegInputArguments(for: url), ["-f", "wav"])
+            XCTAssertFalse(try RIFXAudioDecoding.isRIFX(url))
+        }
+        for header in ["RIFF1234AVI ", "RIFX1234AIFF", "NOPE1234WAVE", "RIFF", ""] {
+            try Data(header.utf8).write(to: url)
+            XCTAssertEqual(try RIFXAudioDecoding.ffmpegInputArguments(for: url), [], header)
+        }
+        XCTAssertEqual(try RIFXAudioDecoding.ffmpegInputArguments(for: URL(string: "https://example.com/audio.wav")!), [])
     }
 
     func testPlaybackAndTrimReportActionableErrorWithoutMetadata() throws {

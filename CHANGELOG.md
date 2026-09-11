@@ -5,6 +5,7 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Added
+- Programme loudness analysis for stereo or 5.1 stored as separate mono tracks, with explicit speaker mapping, whole-file/In–Out scope, cancellation and JSON provenance. Unassigned spare tracks are excluded.
 - Bounded Broadcast WAVE metadata in classic RIFX files, with container-endian version/loudness fields and exact low/high-word sample references.
 - Bounded iXML recording labels and track metadata in classic big-endian RIFX files, with independent XML encoding validation.
 - Optional bounded APFS disk-full integration checks for review save/delete preservation and retry, alongside HFS+ coverage.
@@ -86,6 +87,7 @@ All notable changes to Aagedal Media Player.
   primary-file loop boundaries across all backend combinations.
 
 ### Fixed
+- Header-verified WAVE demuxer selection prevents valid floating-point WAVE inputs being misidentified during offline loudness and waveform processing.
 - Comparison reloads honor an explicit pause, reject superseded decoder resumes, and resume both sources after asynchronous backend readiness.
 - Overlapping inspector refreshes retain the requested playback position and playing intent instead of restarting from a temporary zero decoder clock.
 - A primary-source reload timeout reports the primary failure while preserving a ready comparison source.

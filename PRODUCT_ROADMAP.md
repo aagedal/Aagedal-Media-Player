@@ -247,6 +247,11 @@ confidence as the picture.
   existing In–Out points, with cancellation and range provenance in copied
   JSON. See `docs/AUDIO_LOUDNESS.md`; live meters and accuracy validation
   against trusted references remain separate work.
+- [x] Measure a stereo or 5.1 programme stored as separate mono tracks, with
+  explicit speaker mapping and unassigned tracks excluded. Whole-file/range
+  results and mapping provenance are included in copied metadata. See
+  `docs/PROGRAMME_LOUDNESS.md`; native accessibility and production multitrack
+  profiling remain acceptance work.
 - [ ] Add live momentary and short-term loudness.
 - [x] Show channel labels and layout mismatches clearly in Compare Mode.
   Selected-track details list numbered A/B speaker roles, unmatched channels,

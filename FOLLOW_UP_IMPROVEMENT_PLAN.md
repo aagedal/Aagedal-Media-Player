@@ -1758,6 +1758,45 @@ is claimed. Multi-row offscreen traversal and complete classification/range
 editing, filtering/navigation and export remain to be verified with the
 keyboard, followed by Full Keyboard Access and spoken VoiceOver.
 
+## Phase 82 — Programme loudness for split-mono deliverables
+
+Status: Completed on 2026-09-11 in response to the request for overall LUFS
+from files containing eight separate mono tracks. Native accessibility and
+production-scale multitrack profiling remain separate acceptance work.
+
+- [x] Add Programme Loudness above the individual audio-stream sections, with
+  explicit Stereo or 5.1 speaker assignments and unassigned tracks excluded.
+- [x] Measure the assembled multichannel signal rather than averaging track
+  LUFS, downmixing or guessing a layout from silent tracks.
+- [x] Preserve file-relative timing across delayed/shorter channels, with finite
+  silence padding and exact Whole File/In–Out measurement provenance.
+- [x] Cancel on mapping, scope, media or inspector lifecycle changes and reject
+  stale completion; retain independent per-track jobs and retryable failures.
+- [x] Include a separate programme result, ordered audio-track assignments and
+  selected range in copied metadata JSON.
+- [x] Validate numerical stereo/surround references, LFE and surround weighting,
+  opposite polarity, loud/silent spare tracks, differing rates, delayed/shorter
+  channels, malformed input, cancellation and real metadata/controller export.
+- [x] Fix the discovered bundled-FFmpeg probing failure for valid negative-
+  polarity 96 kHz float WAVE inputs using header-verified WAVE demuxer selection;
+  retain the existing validated RIFX sample-decoder correction.
+
+The focused run passes all 19 programme/controller/RIFX test methods in
+`/tmp/aagedal-programme-focused-final-20260911.log`. A further end-to-end test
+uses an actual MOV with video followed by eight mono audio tracks, the real
+metadata loader, default controller mapping and exported JSON. It confirms
+that the metadata library's audio-relative track indices remain correct with
+a preceding video stream. See `docs/PROGRAMME_LOUDNESS.md` and
+`docs/WAVE_METADATA.md`.
+
+Final Release verification passes all 552 tests with zero failures and zero
+skips, including both official ITU reference sets and real APFS review recovery.
+The image completion proof and successful detach are retained beside
+`/tmp/aagedal-programme-release-apfs-20260911/Tests.xcresult` and `summary.json`.
+Build and static-analysis logs are `/tmp/aagedal-programme-release-build-20260911.log`
+and `/tmp/aagedal-programme-release-analyze-20260911.log`. All 61 release-preflight
+checks pass in `/tmp/aagedal-programme-preflight-20260911.log`.
+
 ## Remaining work after this continuation
 
 - Integrate the measured metadata-memory dependency fix after upstream review,
@@ -1965,3 +2004,5 @@ keyboard, followed by Full Keyboard Access and spoken VoiceOver.
 72. Phase 80 comparison reload transport and position ownership.
 
 73. Phase 81 live Audio QC measurement contract.
+
+74. Phase 82 programme loudness for split-mono deliverables.
