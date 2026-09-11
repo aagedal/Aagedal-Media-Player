@@ -21,6 +21,7 @@ struct PlayerView: View {
     var acceptsKeyboardInput = true
     var compareSession: CompareSessionController? = nil
     var managesMPVSurfaceReloads = true
+    var failureOverlayInsets = EdgeInsets()
     @AppStorage(AppSettings.automaticAudioOnlyWaveform.key)
     private var automaticAudioOnlyWaveform = AppSettings.automaticAudioOnlyWaveform.defaultValue
 
@@ -68,7 +69,7 @@ struct PlayerView: View {
                 )
                 .aspectRatio(playerAspectRatio, contentMode: .fit)
                 .id(controller.preparationID)
-                .ignoresSafeArea()
+                .ignoresSafeArea(.container, edges: .vertical)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .onReceive(controller.playbackTimePublisher) { time in
                     // Time synced via publisher
@@ -90,7 +91,7 @@ struct PlayerView: View {
                     .position(x: picture.midX, y: picture.midY)
                     .id(controller.preparationID)
                 }
-                .ignoresSafeArea()
+                .ignoresSafeArea(.container, edges: .vertical)
             }
 
             if item.presentationKind == .audioOnly {
@@ -125,42 +126,60 @@ struct PlayerView: View {
             stateProgressOverlay(label: "Buffering…")
 
         case .failed(let failure):
-            VStack(spacing: 12) {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundColor(.yellow)
-                    .font(.system(size: 40))
-                Text("Playback unavailable")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                Text(failure.message)
-                    .font(.footnote)
-                    .foregroundColor(.white.opacity(0.8))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
+            GeometryReader { geometry in
+                ScrollView(.vertical) {
+                    VStack(spacing: 12) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.yellow)
+                            .font(.system(size: 40))
+                        Text("Playback unavailable")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                        Text(failure.message)
+                            .font(.footnote)
+                            .foregroundColor(.white.opacity(0.8))
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
 
-                HStack {
-                    Button("Retry") {
-                        controller.preparePlayback(startTime: controller.currentPlaybackTime)
-                    }
-                    .buttonStyle(.borderedProminent)
-
-                    if failure.mediaURL?.isFileURL == true {
-                        Button("Reveal File") {
-                            revealFailedFile(failure)
+                        ViewThatFits(in: .horizontal) {
+                            HStack {
+                                playbackFailureActions(failure)
+                            }
+                            .fixedSize(horizontal: true, vertical: false)
+                            VStack(spacing: 8) {
+                                playbackFailureActions(failure)
+                            }
                         }
-                        .buttonStyle(.bordered)
                     }
-
-                    Button("Copy Diagnostics") {
-                        copyDiagnostics(failure)
-                    }
-                    .buttonStyle(.bordered)
+                    .frame(maxWidth: .infinity, minHeight: max(0, geometry.size.height - 48))
+                    .padding(24)
                 }
             }
-            .padding(24)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            // Keep recovery actions clear of the measured toolbar and transport
+            // even while those controls fade, so buttons never move on hover.
+            .padding(failureOverlayInsets)
             .background(Color.black.opacity(0.92))
         }
+    }
+
+    @ViewBuilder
+    private func playbackFailureActions(_ failure: PlaybackFailure) -> some View {
+        Button("Retry") {
+            controller.preparePlayback(startTime: controller.currentPlaybackTime)
+        }
+        .buttonStyle(.borderedProminent)
+
+        if failure.mediaURL?.isFileURL == true {
+            Button("Reveal File") {
+                revealFailedFile(failure)
+            }
+            .buttonStyle(.bordered)
+        }
+
+        Button("Copy Diagnostics") {
+            copyDiagnostics(failure)
+        }
+        .buttonStyle(.bordered)
     }
 
     private func stateProgressOverlay(label: String) -> some View {

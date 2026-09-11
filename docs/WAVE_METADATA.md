@@ -167,6 +167,7 @@ The RIFX `utf32le.wav` hash is
 `utf32be.wav` is
 `bea991ba4a3993b328a2b3c698fa9a59bb1b51c2ea9d53ed3917fb3964b8c5c7`.
 These generated-fixture checks do not establish native RIFX inspector acceptance.
+The focused September 11 native check below subsequently verifies both fixtures.
 
 A decoder spot check on 2026-09-08 found that the bundled FFmpeg labels a
 classic RIFX 16-bit stereo fixture `pcm_s16le` and emits its big-endian sample
@@ -382,8 +383,9 @@ the script preserves that evidence. The test asserts all decoded fixed fields.
 Use `--prefix` for another libsndfile installation. If the selected SDK and
 compiler disagree, use `--sdk` with the matching SDK. This host required
 `--sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk`.
-This establishes library-produced parser interoperability. Native inspector,
-recorder/DAW-produced files, playback, and export remain separate acceptance work.
+This establishes library-produced parser interoperability. Native inspector
+acceptance is recorded below; recorder/DAW-produced files, playback, and export
+remain separate acceptance work.
 
 The September 11 integrated Release run passes all 534 tests with zero failures
 and zero skips, including 63 WAVE tests and the library-produced fixture,
@@ -391,3 +393,35 @@ both official ITU reference sets and actual APFS save recovery. Static analysis
 and all 61 release-preflight checks pass. Test evidence is retained at
 `/tmp/aagedal-rifx-bwf-integrated-20260911/Tests.xcresult`; Phase 78 in
 `FOLLOW_UP_IMPROVEMENT_PLAN.md` records the remaining logs and acceptance limits.
+
+### Native RIFX inspector acceptance — September 11
+
+The Phase 78 Release app at
+`/private/tmp/aagedal-player-utf32-derived-20260910/Build/Products/Release/Aagedal Media Player.app`
+opened both generated RIFX UTF-32 fixtures through File → Open and the native
+Go to Folder field. Fixture directory: `/tmp/aagedal-rifx-native-20260911b`.
+Their hashes match the values above after inspection. An initial check using
+an older September 8 DerivedData app was excluded from acceptance.
+
+Both XML byte orders show project `Fjell & sjø 🎙`, scene `021A`, take `0003`,
+note `UTF-32 native validation`, track `声 🎙`, source channel index `6` and
+file interleave index `2`. Native scrolling and screenshots verified readable
+Unicode labels/indexes; the accessibility tree also contains the complete
+producer-label explanation. Both retain two-second duration, stereo identity
+and the PCM integer 16-bit big-endian audio summary.
+
+The committed libsndfile fixture also opened through the native picker. Its
+inspector reports PCM_S16BE, stereo, 48 kHz, 16-bit and Broadcast WAVE version 2.
+The tree retains all recording fields, the exact `1311768467463790320` sample
+reference, complete UMID and both coding-history lines. Scrolling verified
+the embedded values −23.45 LUFS, 4.56 LU, −1.23 dBTP, −20.00 LUFS and
+−21.00 LUFS, followed by the producer-value explanation. Long reference/UMID/
+history values truncate visually in the narrow inspector but remain complete
+in accessibility. The fixture hash is unchanged after inspection.
+
+This closes focused native RIFX iXML and library-produced BWF inspector checks.
+The expected playback-unavailable guard remains active. No audible playback,
+export, new waveform accuracy, recorder-authentic file, Full Keyboard Access
+or spoken VoiceOver acceptance is claimed. Screenshots and accessibility
+observations were inspected during the task; no standalone screenshot files
+were retained.

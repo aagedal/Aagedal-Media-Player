@@ -321,6 +321,51 @@ final class CompareLiveBackendTests: XCTestCase {
         }
     }
 
+    func testSingleSourceReloadPreservesTransportAndRejectsSupersededResume() async throws {
+        let fixtures = try fixtureDirectory()
+        for backend in [PlaybackBackend.mpv, .avFoundation] {
+            for outcome in ["paused", "playing", "superseded", "stopped", "pausedDuringReload"] {
+                let primary = makeController(forcedBackend: backend)
+                let session = CompareSessionController()
+                defer { session.stop(); primary.teardown() }
+                try await loadPrimary(primary, url: fixtures.appending(path: "compare/source-a.mov"))
+                try await attachRenderSurface(to: primary)
+                let initiallyReady = await waitUntil { primary.isReady }
+                XCTAssertTrue(initiallyReady)
+                if outcome != "paused" {
+                    primary.play()
+                    let playing = await waitUntil { primary.isPlaying }
+                    XCTAssertTrue(playing)
+                }
+                session.reload(primary: primary)
+                let reloadedPreparation = primary.preparationID
+                if outcome == "superseded" {
+                    // Same media URL, new preparation: an old resume must not
+                    // start the replacement decoder once it becomes ready.
+                    primary.preparePlayback(startTime: 0, resetAudioSelection: false)
+                    XCTAssertGreaterThan(primary.preparationID, reloadedPreparation)
+                } else if outcome == "stopped" {
+                    session.stop()
+                } else if outcome == "pausedDuringReload" {
+                    session.pause(primary: primary)
+                }
+                try await attachRenderSurface(to: primary)
+                let reloadedReady = await waitUntil { primary.isReady }
+                XCTAssertTrue(reloadedReady)
+                if outcome == "playing" {
+                    let resumed = await waitUntil { primary.isPlaying }
+                    XCTAssertTrue(resumed, "Reload must resume the previously playing \(backend) source")
+                    let start = primary.playbackTimeSnapshot()
+                    let advanced = await waitUntil { primary.playbackTimeSnapshot() > start + 0.1 }
+                    XCTAssertTrue(advanced)
+                } else {
+                    try await Task.sleep(for: .milliseconds(100))
+                    XCTAssertFalse(primary.isPlaying, "\(outcome) \(backend) reload must stay paused")
+                }
+            }
+        }
+    }
+
     private struct DriftObservation {
         let sampleCount: Int
         let inToleranceCount: Int

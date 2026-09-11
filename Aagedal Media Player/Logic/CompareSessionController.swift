@@ -1685,6 +1685,12 @@ final class CompareSessionController: ObservableObject {
     }
 
     func pause(primary: PlayerController) {
+        // Active comparison readiness also completes B's initial setup; only
+        // cancel the single-source reload resume introduced by that path.
+        if !isActive {
+            readinessTask?.cancel()
+            readinessTask = nil
+        }
         isScrubbing = false
         primary.pause()
         guard isActive else { return }
@@ -1788,7 +1794,34 @@ final class CompareSessionController: ObservableObject {
 
     func reload(primary: PlayerController) {
         guard isActive else {
+            readinessTask?.cancel()
+            let wasPlaying = primary.isPlaying
             primary.preparePlayback(startTime: primary.currentPlaybackTime, resetAudioSelection: false)
+            guard wasPlaying else { readinessTask = nil; return }
+            let preparationID = primary.preparationID
+            let generation = loadGeneration.current
+            readinessTask = Task { @MainActor [weak self, weak primary] in
+                guard let self, let primary else { return }
+                for _ in 0..<200 {
+                    guard !Task.isCancelled,
+                          self.loadGeneration.isCurrent(generation),
+                          !self.isActive,
+                          primary.preparationID == preparationID else { return }
+                    if primary.isReady {
+                        primary.play()
+                        self.readinessTask = nil
+                        return
+                    }
+                    if primary.playbackPhase.failure != nil {
+                        self.readinessTask = nil
+                        return
+                    }
+                    try? await Task.sleep(for: .milliseconds(25))
+                }
+                guard !Task.isCancelled, self.loadGeneration.isCurrent(generation),
+                      primary.preparationID == preparationID else { return }
+                self.readinessTask = nil
+            }
             return
         }
         let wasPlaying = primary.isPlaying

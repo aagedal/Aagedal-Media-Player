@@ -15,6 +15,12 @@ struct ComparePlayerView: View {
     let isOverlayControlFocused: Bool
     let isTextInputActive: Bool
     @Binding var timecodeActivationTrigger: String?
+    var failureOverlayInsets = EdgeInsets()
+
+    private var renderedFailureOverlayInsets: EdgeInsets {
+        EdgeInsets(top: failureOverlayInsets.top * frameResolution.renderScale, leading: 0,
+            bottom: failureOverlayInsets.bottom * frameResolution.renderScale, trailing: 0)
+    }
 
     private var secondaryController: PlayerController {
         compareSession.secondaryController
@@ -250,7 +256,8 @@ struct ComparePlayerView: View {
             isOverlayControlFocused: isOverlayControlFocused,
             isTextInputActive: isTextInputActive,
             timecodeActivationTrigger: $timecodeActivationTrigger,
-            compareSession: compareSession
+            compareSession: compareSession,
+            failureOverlayInsets: renderedFailureOverlayInsets
         )
     }
 
@@ -271,7 +278,8 @@ struct ComparePlayerView: View {
                 // A paired reload rebuilds both controllers. When A is also
                 // MPV-backed, let its surface own the window-level request so
                 // one fullscreen/resize event cannot rebuild the pair twice.
-                managesMPVSurfaceReloads: !primaryController.useMPV
+                managesMPVSurfaceReloads: !primaryController.useMPV,
+                failureOverlayInsets: renderedFailureOverlayInsets
             )
         } else {
             Color.black

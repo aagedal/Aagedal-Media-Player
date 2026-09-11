@@ -86,6 +86,9 @@ All notable changes to Aagedal Media Player.
   primary-file loop boundaries across all backend combinations.
 
 ### Fixed
+- Playback failure messages wrap beside a narrow metadata inspector, with adaptive action layout and scrolling in short windows.
+- Playback canvases respect inspector width, and recovery actions remain clear of the measured toolbar and transport controls.
+- Inspector transitions refresh MPV's drawing size after layout settles; single-source reloads preserve playing/paused intent and suppress stale resume work.
 - Prevent queued comparison-note saves from beginning after comparison mode closes or its source pair changes.
 - Focused comparison toolbar controls receive Space and arrow keys without triggering playback; compact settings scroll to keyboard-focused controls and show focus rings.
 - RIFX playback and trim export fail with conversion guidance while their decoder paths misinterpret big-endian sample bytes.

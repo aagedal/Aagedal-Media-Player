@@ -30,6 +30,10 @@ struct ContentView: View {
     @State private var showCompareModeCallout = false
     @State private var isToolbarControlFocused = false
     @State private var timecodeActivationTrigger: String?
+    @State private var topToolbarHeight: CGFloat = 0
+    @State private var playbackControlsHeight: CGFloat = 0
+    @State private var inspectorSurfaceReload = DeferredMainActorTask()
+    @State private var isInspectorSurfaceReloadPending = false
     @AppStorage(AppSettings.showCursorHideHint.key)
     private var showCursorHideHint = AppSettings.showCursorHideHint.defaultValue
     @AppStorage(AppSettings.didShowCompareModeCallout.key)
@@ -127,7 +131,9 @@ struct ContentView: View {
                         isTimelineFocused: $isTimelineFocused,
                         isOverlayControlFocused: isControlInteractionActive,
                         isTextInputActive: showReviewNotes || showLoupeControls || showComparisonControls,
-                        timecodeActivationTrigger: $timecodeActivationTrigger
+                        timecodeActivationTrigger: $timecodeActivationTrigger,
+                        failureOverlayInsets: EdgeInsets(top: topToolbarHeight, leading: 0,
+                            bottom: playbackControlsHeight, trailing: 0)
                     )
                 } else {
                     DropZoneView(isDropTargeted: isDropTargeted, onOpenFile: openFilePanel)
@@ -146,6 +152,9 @@ struct ContentView: View {
                     )
                 }
             }
+            .onGeometryChange(for: CGSize.self) { $0.size } action: { _ in
+                if isInspectorSurfaceReloadPending { scheduleInspectorSurfaceReload() }
+            }
             .onContinuousHover { phase in
                 if case .active(let location) = phase {
                     loupe.follow(
@@ -159,7 +168,26 @@ struct ContentView: View {
                 }
             }
         }
-        .onChange(of: controller.mediaItem?.url) { _, _ in loupe.close() }
+        .onChange(of: controller.mediaItem?.url) { _, _ in
+            loupe.close()
+            cancelInspectorSurfaceReload()
+        }
+        .onChange(of: compareSession.secondaryController.mediaItem?.url) { _, _ in
+            cancelInspectorSurfaceReload()
+        }
+        .onChange(of: controller.preparationID) { _, _ in
+            cancelInspectorSurfaceReload()
+        }
+        .onChange(of: compareSession.secondaryController.preparationID) { _, _ in
+            cancelInspectorSurfaceReload()
+        }
+        .onChange(of: compareSession.isActive) { _, _ in
+            cancelInspectorSurfaceReload()
+        }
+        .onChange(of: showInspector) { _, _ in
+            isInspectorSurfaceReloadPending = true
+            scheduleInspectorSurfaceReload()
+        }
         .onChange(of: loupe.isEnabled) { _, enabled in
             if !enabled {
                 loupePrimaryCapture.stop()
@@ -169,6 +197,43 @@ struct ContentView: View {
     }
 
     // MARK: - Content Layers
+
+    private func cancelInspectorSurfaceReload() {
+        inspectorSurfaceReload.cancel()
+        isInspectorSurfaceReloadPending = false
+    }
+
+    private var hasReadyMPVSurface: Bool {
+        (controller.mpvPlayer != nil && controller.playbackPhase.permitsPlaybackControls)
+            || (compareSession.isActive && compareSession.secondaryController.mpvPlayer != nil
+                && compareSession.secondaryController.playbackPhase.permitsPlaybackControls)
+    }
+
+    private func scheduleInspectorSurfaceReload() {
+        guard hasReadyMPVSurface else {
+            cancelInspectorSurfaceReload()
+            return
+        }
+        let primaryURL = controller.mediaItem?.url
+        let secondaryURL = compareSession.secondaryController.mediaItem?.url
+        let primaryPreparationID = controller.preparationID
+        let secondaryPreparationID = compareSession.secondaryController.preparationID
+        let wasComparing = compareSession.isActive
+        // Inspector animation changes the canvas without a window live-resize
+        // notification. Wait for geometry to settle, then use the existing
+        // paired reload to refresh MPV's cached destination rectangle, even
+        // for paused/EOF frames. Ordinary canvas changes never arm this work.
+        inspectorSurfaceReload.schedule(after: .milliseconds(300)) {
+            isInspectorSurfaceReloadPending = false
+            guard hasReadyMPVSurface,
+                  let primaryURL, controller.mediaItem?.url == primaryURL,
+                  compareSession.secondaryController.mediaItem?.url == secondaryURL,
+                  controller.preparationID == primaryPreparationID,
+                  compareSession.secondaryController.preparationID == secondaryPreparationID,
+                  compareSession.isActive == wasComparing else { return }
+            compareSession.reload(primary: controller)
+        }
+    }
 
     private var renderedContentLayers: some View {
         ZStack {
@@ -225,7 +290,9 @@ struct ContentView: View {
                 cursorHideZone
             }
         }
-        .ignoresSafeArea()
+        // Extend playback under the titlebar, but respect the inspector's
+        // horizontal safe area so the canvas and its controls stay visible.
+        .ignoresSafeArea(.container, edges: .vertical)
         .focusedSceneValue(\.isMediaLoaded, isMediaLoaded)
         .focusedSceneValue(\.isCompareModeActive, compareSession.isActive)
         .focusedSceneValue(\.canOpenPreviousFile, windowCoordinator.canOpenPreviousFile)
@@ -356,6 +423,7 @@ struct ContentView: View {
             )
         }
         .onDisappear {
+            cancelInspectorSurfaceReload()
             deferredComparisonAction.cancel()
             loupePrimaryCapture.stop()
             loupeSecondaryCapture.stop()
@@ -385,6 +453,9 @@ struct ContentView: View {
         VStack(spacing: 0) {
             if isMediaLoaded {
                 topToolbar
+                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: {
+                        topToolbarHeight = $0
+                    }
                     .transition(.move(edge: .top).combined(with: .opacity))
             }
 
@@ -402,6 +473,9 @@ struct ContentView: View {
             )
             .transition(.move(edge: .bottom).combined(with: .opacity))
             .frame(minWidth: 20)
+            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: {
+                playbackControlsHeight = $0
+            }
         }
         .onHover { hovering in
             overlayController.setControlsHovered(hovering)
