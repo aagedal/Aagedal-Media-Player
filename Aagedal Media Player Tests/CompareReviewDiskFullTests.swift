@@ -82,6 +82,29 @@ final class CompareReviewDiskFullTests: XCTestCase {
         let store = CompareReviewSidecarStore()
         try await store.save(document, to: sidecar, revision: 1)
         let original = try Data(contentsOf: sidecar)
+        // Exclusive publication has a different temporary-file/rename path
+        // from ordinary edits. Keep its reviewed source unchanged throughout
+        // exhaustion and retry, and require enough data to defeat metadata reserves.
+        let publicationSource = directory.appendingPathComponent("historical.json")
+        let relinkDestination = directory.appendingPathComponent("relinked.json")
+        let migrationDestination = directory.appendingPathComponent("migrated.json")
+        let historicalNote = CompareReviewNote(primaryFrame: 0, primaryTime: 0,
+            secondaryFrame: 0, secondaryTime: 0,
+            primaryRateNumerator: 29_970, primaryRateDenominator: 1_000,
+            secondaryRateNumerator: 29_970, secondaryRateDenominator: 1_000,
+            text: String(repeating: "Historical finding ", count: 16_384),
+            createdAt: note.createdAt, updatedAt: note.updatedAt)
+        let historical = CompareReviewDocument(primaryURL: primary, secondaryURL: secondary,
+            notes: [historicalNote])
+        try await store.save(historical, to: publicationSource, revision: 1)
+        let publicationBytes = try Data(contentsOf: publicationSource)
+        let reviewed = try await store.previewRelink(from: publicationSource)
+        let exactRate = TimecodeRate(numerator: 30_000, denominator: 1_001)
+        let migration = try CompareReviewTimebaseMigration(document: reviewed,
+            primaryURL: primary, secondaryURL: secondary,
+            primaryRate: exactRate, secondaryRate: exactRate,
+            primaryDuration: 60, secondaryDuration: 60,
+            migratedAt: Date(timeIntervalSince1970: 1_800_000_000))
         let originalEntries = try fileManager.contentsOfDirectory(atPath: directory.path).sorted()
         let filler = directory.appendingPathComponent("filler")
         let descriptor = open(filler.path, O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW, 0o600)
@@ -135,6 +158,33 @@ final class CompareReviewDiskFullTests: XCTestCase {
         XCTAssertEqual(try Data(contentsOf: sidecar), original)
         XCTAssertEqual(try fileManager.contentsOfDirectory(atPath: directory.path).sorted(),
             (originalEntries + ["filler"]).sorted())
+        for migrate in [false, true] {
+            do {
+                if migrate {
+                    _ = try await store.migrateTimebases(from: publicationSource,
+                        to: migrationDestination, expectedMigration: migration)
+                } else {
+                    _ = try await store.relink(from: publicationSource, to: relinkDestination,
+                        primaryURL: secondary, secondaryURL: primary, expectedDocument: reviewed)
+                }
+                XCTFail("Full test volume must reject exclusive \(migrate ? "migration" : "relink") publication")
+            } catch {
+                let failure = error as NSError
+                XCTAssertTrue(
+                    (failure.domain == NSCocoaErrorDomain && failure.code == CocoaError.Code.fileWriteOutOfSpace.rawValue) ||
+                    (failure.domain == NSPOSIXErrorDomain && failure.code == Int(ENOSPC)),
+                    "Expected ENOSPC/out-of-space, received \(failure)"
+                )
+            }
+            XCTAssertEqual(try Data(contentsOf: publicationSource), publicationBytes)
+            XCTAssertEqual(try Data(contentsOf: sidecar), original)
+            XCTAssertEqual(try Data(contentsOf: primary), media)
+            XCTAssertEqual(try Data(contentsOf: secondary), media)
+            XCTAssertFalse(fileManager.fileExists(atPath: relinkDestination.path))
+            XCTAssertFalse(fileManager.fileExists(atPath: migrationDestination.path))
+            XCTAssertEqual(try fileManager.contentsOfDirectory(atPath: directory.path).sorted(),
+                (originalEntries + ["filler"]).sorted(), "Failed publication must remove every partial file")
+        }
         logFreeSpace("before releasing filler")
         // Explicitly release and synchronize the filler allocation before
         // retrying. Filesystems can defer reclamation when a large file is unlinked.
@@ -172,6 +222,25 @@ final class CompareReviewDiskFullTests: XCTestCase {
         XCTAssertEqual(try Data(contentsOf: primary), media)
         XCTAssertEqual(try Data(contentsOf: secondary), media)
         XCTAssertEqual(try fileManager.contentsOfDirectory(atPath: directory.path).sorted(), originalEntries)
+        // Retry the exact reviewed proposals and destinations after releasing
+        // space. Failed publication must not leave a destination collision.
+        let relinked = try await store.relink(from: publicationSource, to: relinkDestination,
+            primaryURL: secondary, secondaryURL: primary, expectedDocument: reviewed)
+        let reopenedRelink = try await store.load(from: relinkDestination,
+            primaryURL: secondary, secondaryURL: primary)
+        XCTAssertEqual(reopenedRelink, relinked)
+        XCTAssertEqual(relinked.notes, reviewed.notes)
+        let migrated = try await store.migrateTimebases(from: publicationSource,
+            to: migrationDestination, expectedMigration: migration)
+        let reopenedMigration = try await store.load(from: migrationDestination,
+            primaryURL: primary, secondaryURL: secondary)
+        XCTAssertEqual(migrated, migration.migrated)
+        XCTAssertEqual(reopenedMigration, migration.migrated)
+        XCTAssertEqual(try Data(contentsOf: publicationSource), publicationBytes)
+        XCTAssertEqual(try Data(contentsOf: primary), media)
+        XCTAssertEqual(try Data(contentsOf: secondary), media)
+        XCTAssertEqual(try fileManager.contentsOfDirectory(atPath: directory.path).sorted(),
+            (originalEntries + [relinkDestination.lastPathComponent, migrationDestination.lastPathComponent]).sorted())
         // The harness also requires xcodebuild success, so failed assertions
         // cannot produce a successful run merely by reaching this proof write.
         print("Disk-full phase: completion proof")

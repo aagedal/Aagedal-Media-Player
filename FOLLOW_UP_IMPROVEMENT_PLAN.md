@@ -1656,6 +1656,42 @@ RIFX inspector acceptance remain open. The native iXML attempt on September 11
 could not reliably enter the fixture path in the file picker, so it supplies
 no additional native acceptance evidence.
 
+## Phase 79 — Native inspector correctness and review publication recovery
+
+Status: Complete on 2026-09-11 within the focused scope below. All 535 Release
+tests, static analysis and 61 release-preflight checks pass.
+
+- [x] Verify native RIFX UTF-32LE/BE iXML recording labels and track indexes.
+- [x] Verify native library-produced RIFX Broadcast WAVE fields and embedded
+  loudness, with unchanged fixture hashes.
+- [x] Extend real disk-full recovery coverage to exclusive relink and
+  historical-timebase migration publication, including failed-output cleanup,
+  original-byte preservation and same-proposal retries.
+- [x] Pass the 534-test integrated Release suite on APFS with both official
+  ITU reference sets; detach and remove the owned image.
+- [x] Verify responsive playback failure layout beside the metadata inspector,
+  preserving space for toolbar/transport and complete native video framing.
+- [x] Verify native inspector-transition MPV refresh with playing/paused intent
+  and the exact paused frame retained after reopening.
+- [x] Pass single-source reload transport regressions for both backends,
+  including superseded/stopped and explicit pause-during-reload coverage.
+- [x] Pass final-build integrated HFS+ recovery, static analysis and preflight.
+
+See `docs/WAVE_METADATA.md` and
+`docs/COMPARE_REVIEW_PUBLICATION_DISK_FULL_CHECK_2026-09-11.md` for observations,
+reproduction, evidence and acceptance limits. Native review publication
+disk-full interaction and spoken VoiceOver remain separate work.
+The responsive canvas, transport-clearance and inspector refresh check is
+recorded in `docs/INSPECTOR_CANVAS_LAYOUT_CHECK_2026-09-11.md`.
+
+Final Release evidence: `/tmp/aagedal-inspector-final-hfs-20260911/Tests.xcresult`
+and adjacent logs/summary report 535 passes, no failures and no skips, including
+both official ITU reference sets and all ten new transport regression outcomes.
+The HFS+ harness verifies its completion proof, detaches and removes the image.
+Build, analysis and preflight logs are `/tmp/aagedal-inspector-final-build-20260911.log`,
+`/tmp/aagedal-inspector-final-analyze-20260911.log` and
+`/tmp/aagedal-inspector-final-preflight-20260911.log`.
+
 ## Remaining work after this continuation
 
 - Integrate the measured metadata-memory dependency fix after upstream review,
@@ -1696,6 +1732,10 @@ no additional native acceptance evidence.
   native keyboard-only comparison opening, review-note creation, CSV export
   and compact wipe adjustment, plus focus ownership/scrolling fixes. Complete
   keyboard review, spoken VoiceOver, and broader narrow-layout acceptance remain.
+  Phase 79 verifies a narrow playback-error panel with visible transport controls
+  and MPV inspector-toggle framing with playing/paused intent preserved.
+  Stacked-action layouts, final-build EOF and broader comparison/native-backend
+  inspector transitions remain separate acceptance checks.
 - Actual marker import/re-export in Resolve, Final Cut Pro, and Avid, including
   fractional rates, drop-frame boundaries, inclusive ranges, and source identity.
 - Oldest-supported Apple Silicon UHD/HDR playback, reflected loupe/scopes,
@@ -1714,8 +1754,10 @@ no additional native acceptance evidence.
   Phase 73 adds bounded UTF-32LE/BE recording labels and tracks;
   Phase 75 verifies native UTF-32 inspector labels and track indexes;
   Phase 77 adds bounded RIFX iXML labels/tracks and reproducible UTF-32 fixtures;
-  Phase 78 adds bounded classic RIFX Broadcast WAVE interoperability; producer-authentic
-  recorder, broader native encoding/container and spoken VoiceOver acceptance remain. Phase 59 adds
+  Phase 78 adds bounded classic RIFX Broadcast WAVE interoperability; Phase 79
+  verifies native RIFX UTF-32 iXML and library-produced BWF inspectors.
+  Producer-authentic recorder, broader native encoding/container and spoken
+  VoiceOver acceptance remain. Phase 59 adds
   classic RIFX metadata and corrected offline analysis/waveforms; RIFX playback
   and trim export remain explicitly unavailable pending a verified decoder fix.
   Phase 54 verifies
@@ -1748,7 +1790,8 @@ no additional native acceptance evidence.
   coverage. Phase 74 adds actual bounded APFS exhaustion and recovery, plus
   an HFS+ recheck. Phase 76 verifies native APFS edit/deletion out-of-space
   errors, retained state and successful retries, with exact file preservation
-  and cleanup. Complete keyboard/VoiceOver, broader narrow layouts and native
+  and cleanup. Phase 79 extends real APFS/HFS+ publication failure/retry coverage
+  to relink and historical-timebase migration. Complete keyboard/VoiceOver, broader narrow layouts and native
   copy/relink/migration disk-full interaction remain open.
   Phase 70 completes native corrupt-copy and migration-destination-conflict
   errors and successful retries with original-file preservation. Phase 69 completes
@@ -1848,3 +1891,4 @@ no additional native acceptance evidence.
 69. Phase 77 bounded RIFX iXML metadata.
 
 70. Phase 78 classic RIFX Broadcast WAVE interoperability.
+71. Phase 79 native inspector correctness and review publication recovery.

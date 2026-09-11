@@ -291,11 +291,17 @@ device and capacity before writing at most 40 MiB (HFS+) or 136 MiB (APFS)
 of filler. Other filesystem selections are rejected before image creation. Real out-of-space
 errors must preserve the existing sidecar and media for both save and delete;
 freeing the filler must allow a valid retry without a failed high revision
-blocking it. The harness retains test/volume evidence, rejects skipped or
+blocking it. The same test also exercises exclusive relink and historical-timebase migration
+publication. Both must fail with out-of-space, leave no destination or partial
+files, preserve the reviewed source bytes, and succeed with the exact same
+proposal and destination after space is released. Reopened copies must match
+the expected notes and migrated document. The harness retains test/volume evidence, rejects skipped or
 missing coverage, then detaches and removes its image. It never fills the host
 volume. Native disk-full alert/interaction acceptance remains separate from
 this production-store integration check. The verified APFS and HFS+ runs are
 recorded in [the disk-full check](COMPARE_REVIEW_APFS_DISK_FULL_CHECK_2026-09-10.md).
+The relink/migration extension is recorded in
+[the publication recovery check](COMPARE_REVIEW_PUBLICATION_DISK_FULL_CHECK_2026-09-11.md).
 
 To use an existing test build, pass `--xctestrun /path/to/tests.xctestrun`.
 Set `AAGEDAL_DISK_FULL_FULL_SUITE=1` to run all tests while enabling this check;
