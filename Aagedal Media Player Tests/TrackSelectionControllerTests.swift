@@ -20,6 +20,7 @@ final class TrackSelectionControllerTests: XCTestCase {
 
         XCTAssertEqual(controller.audioTrackOptions.map(\.id), [4, 7])
         XCTAssertEqual(controller.audioTrackOptions.map(\.position), [0, 1])
+        XCTAssertEqual(controller.audioTrackOptions.map(\.audioStreamOrderIndex), [0, 1])
         XCTAssertEqual(controller.audioTrackOptions.map(\.streamIndex), [3, 6])
         XCTAssertEqual(controller.audioTrackOptions.map(\.title), ["English", "Track 7"])
         XCTAssertEqual(controller.subtitleTrackOptions.map(\.trackId), [9])

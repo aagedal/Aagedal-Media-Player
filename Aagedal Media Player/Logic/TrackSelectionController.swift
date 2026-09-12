@@ -20,6 +20,10 @@ final class TrackSelectionController: ObservableObject {
     struct AudioTrackOption: Identifiable, Equatable {
         let id: Int
         let position: Int
+        /// Zero-based audio-only ordinal used by FFmpeg's `0:a:N` selector.
+        /// This is deliberately separate from `streamIndex`, which may be a
+        /// container-wide identity (notably for MPV track IDs).
+        let audioStreamOrderIndex: Int
         let streamIndex: Int
         let mediaOptionIndex: Int?
         let title: String
@@ -267,9 +271,11 @@ final class TrackSelectionController: ObservableObject {
     ) {
         audioTrackOptions = audioIndexes.enumerated().compactMap { index, trackID in
             guard trackID > 0 else { return nil }
+            let audioOrder = audioIndexes[..<index].filter { $0 > 0 }.count
             return AudioTrackOption(
                 id: Int(trackID),
-                position: audioIndexes[..<index].filter { $0 > 0 }.count,
+                position: audioOrder,
+                audioStreamOrderIndex: audioOrder,
                 streamIndex: Int(trackID) - 1,
                 mediaOptionIndex: nil,
                 title: index < audioNames.count ? audioNames[index] : "Track \(trackID)",
@@ -381,6 +387,7 @@ final class TrackSelectionController: ObservableObject {
             return AudioTrackOption(
                 id: streamIndex,
                 position: position,
+                audioStreamOrderIndex: streamIndex,
                 streamIndex: streamIndex,
                 mediaOptionIndex: route.mediaOptionIndex,
                 title: title,

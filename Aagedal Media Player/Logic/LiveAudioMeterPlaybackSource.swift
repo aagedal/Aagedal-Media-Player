@@ -129,7 +129,7 @@ extension PlayerController {
             id: id,
             label: label,
             url: item.url,
-            audioStreamOrderIndex: option.streamIndex,
+            audioStreamOrderIndex: option.audioStreamOrderIndex,
             stream: stream,
             trackLabel: option.title,
             duration: item.durationSeconds
