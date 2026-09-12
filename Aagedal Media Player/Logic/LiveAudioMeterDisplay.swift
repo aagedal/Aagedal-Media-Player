@@ -4,11 +4,24 @@
 
 import Foundation
 
-nonisolated enum LiveAudioMeterDisplayError: Error, Equatable {
+nonisolated enum LiveAudioMeterDisplayError: Error, Equatable, LocalizedError {
     case invalidSampleRate
     case invalidLevel
     case discontinuousPosition
     case invalidReference
+
+    var errorDescription: String? {
+        switch self {
+        case .invalidSampleRate:
+            "The live meter display received an invalid source sample rate."
+        case .invalidLevel:
+            "The live meter received a malformed or non-finite level."
+        case .discontinuousPosition:
+            "The live meter snapshot stream has a gap, duplicate, or out-of-order source position."
+        case .invalidReference:
+            "The live meter reference contains a non-finite value."
+        }
+    }
 }
 
 /// Display-only ballistics. Call with every measured peak bucket, even when the

@@ -1803,8 +1803,9 @@ checks pass in `/tmp/aagedal-programme-preflight-20260911.log`.
 
 ## Phase 83 — Bounded live-meter calculation and display foundation
 
-Status: Implemented on 2026-09-12. This is the calculation/display foundation
-for Phase 81, not a live playback feature or completion of Audio QC.
+Status: Calculation, lifecycle and application integration implemented on
+2026-09-12, with the live-path acceptance work below still open. This does not
+complete Audio QC.
 
 - [x] Add a serial source-PCM measurement core with explicit rate/speaker order,
   bounded 250 ms blocks, fixed filter history and sixty energy buckets.
@@ -1838,23 +1839,30 @@ for Phase 81, not a live playback feature or completion of Audio QC.
 - [x] Add typed player clock/transport/scrub/EOF and discontinuity events, plus
   coordinator restart, unsupported-speed and ±250 ms drift policies with
   200/100 ms ahead suspend/resume hysteresis.
-- [ ] Add the owning window session/subscriptions and prove authoritative
-  decoder timestamps plus a worker-side ahead-of-playback bound.
-- [ ] Mount and connect the meter UI; complete real-path accuracy, routing
-  invariance, spoken accessibility and release-floor performance.
+- [x] Add the owning window session/subscriptions, source-readiness seam and
+  active-player command routing. Start/retry/reset at the current player clock
+  and tear down decoder work when the panel or player window closes.
+- [x] Mount and connect the activating meter panel, including A/B selection,
+  reference controls, clear/reset/retry actions and status diagnostics.
+- [ ] Prove authoritative decoder timestamps plus a worker-side
+  ahead-of-playback bound.
+- [ ] Complete real-path accuracy, routing invariance, spoken accessibility and
+  release-floor performance.
 
 The final combined Release run passes 578 tests with zero failures and zero skips,
 including the official ITU offline references and real APFS recovery, with
 verified image detach. Evidence is retained in
 `/tmp/aagedal-meter-programme-final-apfs-20260912/Tests.xcresult` and `summary.json`.
-All 61 preflight checks pass.
+That retained candidate passed all 61 preflight checks. The current working tree
+preflight instead stops on three bundled-FFmpeg signature/timestamp checks.
 
-The decoder/presentation/lifecycle continuation includes a 24-test focused
-decoder/coordinator/process run, including a paced real signed bundled-FFmpeg
-source decode, seven coordinator ownership tests and suspend/cancellation races.
-These components remain deliberately unmounted until the production playback
-path can enforce player-clock alignment and authoritative timestamp continuity;
-they do not mark live metering as shipped.
+The decoder/presentation/lifecycle continuation includes paced bundled-FFmpeg
+decode, coordinator ownership, suspend/cancellation and panel-session coverage.
+The mounted panel deliberately qualifies provenance until decode completion and
+does not mark live metering as release accepted: authoritative compressed-source
+timestamp continuity and worker-side ahead enforcement remain open.
+The integrated continuation passes the full 632-test Debug suite with no failures
+and one expected opt-in real-volume-exhaustion skip.
 
 See `docs/LIVE_AUDIO_METER_DSP.md`. A preliminary optimized standalone host
 check processed ten seconds of eight-channel 96 kHz PCM in about 0.13 seconds;
@@ -1921,8 +1929,9 @@ decoder/DSP generation across pause and buffering, and binds exact selected A/B
 audio-stream identity into source-sample-aligned decode requests. Player
 controllers publish typed transport/discontinuity events and the coordinator
 now applies tested clock drift, ahead hysteresis, restart and speed policies;
-the owning window session, authoritative compressed-source timestamps and
-worker-side ahead bound remain. The new
+the owning window session, source-readiness seam, activating panel and
+active-player command routing are now integrated. Authoritative compressed-source
+timestamps and a worker-side ahead bound remain. The new
 production-path metadata profiler observes RSS before the first uncached load,
 checks cache parity and caller release, and validates one fresh XCTest host per
 input; its 61-second ALAC end-to-end run validates the harness, not the long-file
@@ -1937,7 +1946,7 @@ Review commands now toggle Comparison Review and navigate previous/next matching
 notes without toolbar traversal. They do not replace native Full Keyboard Access
 or spoken VoiceOver acceptance.
 
-All 622 ordinary Debug tests pass; the optional real-volume-exhaustion test is
+All 632 ordinary Debug tests pass; the optional real-volume-exhaustion test is
 the sole skip. Static analysis passes. Release preflight remains blocked by the
 bundled FFmpeg's invalid/non-Developer-ID signature and missing secure timestamp,
 so candidate signing and distribution acceptance remain open.
@@ -2020,9 +2029,9 @@ so candidate signing and distribution acceptance remain open.
   Phase 83 implements and tests the bounded DSP/display foundation. The bounded,
   source-rate-paced decoder, lifecycle owner and selected-track request mapping
   now exist. Typed playback events plus coordinator clock/drift and ahead
-  hysteresis policies are tested; the owning meter-window session, authoritative
-  decoded timestamps, worker-side ahead bound and live reference validation
-  remain;
+  hysteresis policies are tested; the owning meter-window session and activating
+  UI are integrated. Authoritative decoded timestamps, a worker-side ahead bound
+  and live reference validation remain;
   Phase 84 adds production programme profiling and fixes silent long-range
   channel loss plus excessive shared-demux buffering; representative-media and
   release-floor memory acceptance remain.

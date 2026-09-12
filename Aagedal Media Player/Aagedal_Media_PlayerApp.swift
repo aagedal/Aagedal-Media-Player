@@ -158,6 +158,12 @@ struct Aagedal_Media_PlayerApp: App {
                 }
                 .keyboardShortcut("a", modifiers: [.command, .shift])
                 .disabled(!mediaLoaded)
+
+                Button("Live Audio Meter") {
+                    NotificationCenter.default.post(.toggleLiveAudioMeter)
+                }
+                .keyboardShortcut("l", modifiers: [.command, .shift])
+                .disabled(!mediaLoaded)
             }
             CommandMenu("Playback") {
                 Button("Play / Pause") {

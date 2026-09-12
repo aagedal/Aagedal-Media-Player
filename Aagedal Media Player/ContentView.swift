@@ -47,6 +47,7 @@ struct ContentView: View {
     @State private var audioWaveformWindowController: AudioWaveformWindowController?
     @State private var showAudioWaveformOverlay = false
     @StateObject private var audioWaveformGenerator = AudioWaveformGenerator()
+    @State private var liveAudioMeterWindowController: LiveAudioMeterWindowController?
     @AppStorage(AppSettings.audioWaveformBackground.key)
     private var audioWaveformBackground = AppSettings.audioWaveformBackground.defaultValue
 
@@ -106,7 +107,8 @@ struct ContentView: View {
                 openFilePanel: openFilePanel,
                 openFile: openFile,
                 openPreviousFile: openPreviousFile,
-                openNextFile: openNextFile
+                openNextFile: openNextFile,
+                toggleLiveAudioMeter: toggleLiveAudioMeter
             ))
     }
 
@@ -438,6 +440,8 @@ struct ContentView: View {
             }
             audioWaveformWindowController?.close()
             audioWaveformWindowController = nil
+            liveAudioMeterWindowController?.close()
+            liveAudioMeterWindowController = nil
             showAudioWaveformOverlay = false
             Self.stopPlaybackForWindowClose(
                 controller: controller,
@@ -648,6 +652,23 @@ struct ContentView: View {
                 .playerToolbarFocus()
                 .disabled(!isMediaLoaded || controller.mediaItem?.presentationKind == .audioOnly)
 
+            Button(action: toggleLiveAudioMeter) {
+                Image(systemName: "waveform.path.ecg")
+                    .font(.system(size: 16))
+                    .foregroundColor(.white.opacity(0.9))
+            }
+            .buttonStyle(.plain)
+            .playerToolbarFocus()
+            .help("Show live source-audio meters")
+            .accessibilityLabel("Live audio meter")
+            .accessibilityValue(
+                liveAudioMeterWindowController?.isVisible == true ? "Shown" : "Hidden"
+            )
+            .accessibilityAddTraits(
+                liveAudioMeterWindowController?.isVisible == true ? .isSelected : []
+            )
+            .disabled(!isMediaLoaded)
+
             Button(action: { showInspector.toggle() }) {
                 Image(systemName: "info.circle")
                     .font(.system(size: 16))
@@ -676,6 +697,23 @@ struct ContentView: View {
                 endPoint: .bottom
             )
         )
+    }
+
+    private func toggleLiveAudioMeter() {
+        if let existing = liveAudioMeterWindowController {
+            existing.close()
+            liveAudioMeterWindowController = nil
+            return
+        }
+        let meter = LiveAudioMeterWindowController(
+            primaryController: controller,
+            compareSession: compareSession,
+            windowCoordinator: windowCoordinator,
+            parentWindow: nsWindow,
+            onClose: { liveAudioMeterWindowController = nil }
+        )
+        liveAudioMeterWindowController = meter
+        meter.show()
     }
 
     @ViewBuilder

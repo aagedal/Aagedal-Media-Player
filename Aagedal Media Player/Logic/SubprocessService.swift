@@ -120,6 +120,8 @@ enum SubprocessService {
                 let stderrPipe = Pipe()
                 let stdoutCollector = BoundedDataCollector(limit: standardOutputLimit ?? outputLimit)
                 let stderrCollector = BoundedDataCollector(limit: outputLimit)
+                let stdoutCallbacks = SubprocessCallbackBarrier()
+                let stderrCallbacks = SubprocessCallbackBarrier()
                 let stdoutLines = LineBuffer(
                     onLine: onStandardOutputLine,
                     maximumPendingByteCount: outputLimit
@@ -129,19 +131,23 @@ enum SubprocessService {
                 process.standardError = stderrPipe
 
                 stdoutPipe.fileHandleForReading.readabilityHandler = { fileHandle in
-                    autoreleasepool {
-                        let data = fileHandle.availableData
-                        guard !data.isEmpty else { return }
-                        onStandardOutputData?(data)
-                        stdoutCollector.append(data)
-                        stdoutLines.append(data)
+                    stdoutCallbacks.perform {
+                        autoreleasepool {
+                            let data = fileHandle.availableData
+                            guard !data.isEmpty else { return }
+                            onStandardOutputData?(data)
+                            stdoutCollector.append(data)
+                            stdoutLines.append(data)
+                        }
                     }
                 }
                 stderrPipe.fileHandleForReading.readabilityHandler = { fileHandle in
-                    autoreleasepool {
-                        let data = fileHandle.availableData
-                        guard !data.isEmpty else { return }
-                        stderrCollector.append(data)
+                    stderrCallbacks.perform {
+                        autoreleasepool {
+                            let data = fileHandle.availableData
+                            guard !data.isEmpty else { return }
+                            stderrCollector.append(data)
+                        }
                     }
                 }
 
@@ -150,6 +156,8 @@ enum SubprocessService {
 
                     stdoutPipe.fileHandleForReading.readabilityHandler = nil
                     stderrPipe.fileHandleForReading.readabilityHandler = nil
+                    stdoutCallbacks.closeAndWait()
+                    stderrCallbacks.closeAndWait()
 
                     let stdoutTail = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
                     if !stdoutTail.isEmpty {
@@ -189,6 +197,31 @@ enum SubprocessService {
         } onCancel: {
             handle.cancel()
         }
+    }
+}
+
+/// Prevents process termination from completing while an admitted pipe callback
+/// is still delivering bytes. Without this barrier, a fast child exit can race
+/// the final readability callback and let callers finish a stream prematurely.
+private final class SubprocessCallbackBarrier: Sendable {
+    private let lock = NSLock()
+    private let group = DispatchGroup()
+    private nonisolated(unsafe) var isClosed = false
+
+    nonisolated func perform(_ body: () -> Void) {
+        let admitted = lock.withLock {
+            guard !isClosed else { return false }
+            group.enter()
+            return true
+        }
+        guard admitted else { return }
+        defer { group.leave() }
+        body()
+    }
+
+    nonisolated func closeAndWait() {
+        lock.withLock { isClosed = true }
+        group.wait()
     }
 }
 

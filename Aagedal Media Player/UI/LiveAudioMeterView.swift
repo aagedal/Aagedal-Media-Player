@@ -23,21 +23,24 @@ struct LiveAudioMeterView: View {
     let actions: Actions
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            header
-            controls
-            status
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                header
+                controls
+                status
 
-            if !state.channels.isEmpty {
-                channelMeters
-                loudnessMeters
-                thresholdAssessment
+                if !state.channels.isEmpty {
+                    channelMeters
+                    loudnessMeters
+                    thresholdAssessment
+                }
+
+                diagnostics
+                actionBar
             }
-
-            diagnostics
-            actionBar
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(16)
         .frame(minWidth: 620, idealWidth: 720, minHeight: 460)
     }
 

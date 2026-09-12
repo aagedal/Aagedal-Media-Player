@@ -5,14 +5,15 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Added
+- A per-player Live Audio Meter panel for source A or B, with current-clock start/retry/reset, late-metadata readiness, persisted reference controls, keyboard/menu access, and teardown with its owning playback window.
 - Opt-in production-path metadata memory profiling that starts before the first uncached load, records sampled and lifetime peak RSS, verifies cache parity, and validates one fresh XCTest host per long-file input.
 - Typed live-meter source identity and request construction for selected A/B tracks, with exact FFmpeg audio-stream order, source-sample start positions, explicit supported speaker maps and actionable format errors.
-- Source-rate-paced live-meter decoding with same-generation process suspension across pause and buffering, including cancellation-before-attachment and cancellation-while-stopped coverage. Playback-clock wiring and drift acceptance remain pending.
-- Generation-safe live-meter lifecycle ownership with stale-result rejection, bounded post-DSP presentation coalescing, clean discontinuity resets, retry/EOF handling and cancellation on source or window teardown. Playback wiring remains pending.
-- Bounded live source-audio decoding through the signed bundled FFmpeg, with explicit stream identity, disabled decoder gain processing, fixed Float32 buffering, actionable failures and versioned provenance. Transport lifecycle wiring remains pending.
-- Reusable accessible live-meter presentation and persisted EBU, ATSC and custom reference guides, with exact threshold wording, A/B source choice and expandable provenance diagnostics. The presentation is not yet mounted in the app.
+- Source-rate-paced live-meter decoding with same-generation process suspension across pause and buffering, including cancellation-before-attachment and cancellation-while-stopped coverage. Authoritative compressed-source timestamps and worker-side ahead enforcement remain pending.
+- Generation-safe live-meter lifecycle ownership with stale-result rejection, bounded post-DSP presentation coalescing, clean discontinuity resets, retry/EOF handling and cancellation on source or window teardown.
+- Bounded live source-audio decoding through the bundled FFmpeg, with explicit stream identity, disabled decoder gain processing, fixed Float32 buffering, actionable failures and versioned provenance.
+- Reusable accessible live-meter presentation and persisted EBU, ATSC and custom reference guides, with exact threshold wording, A/B source choice and expandable provenance diagnostics.
 - Production split-mono programme loudness profiling with per-layout/range readings, separate process-memory measurements and rejection of sleep-interrupted timing evidence.
-- Internal live-audio-meter calculation/display foundation with bounded source PCM, sample/true peaks, rolling Momentary/Short-term loudness and source-time ballistics. Playback integration and the meter panel remain pending.
+- Live-audio-meter calculation/display foundation with bounded source PCM, sample/true peaks, rolling Momentary/Short-term loudness and source-time ballistics.
 - Programme loudness analysis for stereo or 5.1 stored as separate mono tracks, with explicit speaker mapping, whole-file/In–Out scope, cancellation and JSON provenance. Unassigned spare tracks are excluded.
 - Bounded Broadcast WAVE metadata in classic RIFX files, with container-endian version/loudness fields and exact low/high-word sample references.
 - Bounded iXML recording labels and track metadata in classic big-endian RIFX files, with independent XML encoding validation.

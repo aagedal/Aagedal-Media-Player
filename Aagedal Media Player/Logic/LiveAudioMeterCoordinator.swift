@@ -336,9 +336,20 @@ final class LiveAudioMeterCoordinator: ObservableObject {
         decodeTask = Task { [weak self] in
             do {
                 let completion = try await operation(newRequest, decoderControl) { [weak self] snapshot in
-                    guard handoff.submit(snapshot) else { return }
-                    Task { @MainActor [weak self] in
-                        self?.drain(handoff, generation: ownedGeneration)
+                    switch handoff.submit(snapshot) {
+                    case .scheduleDrain:
+                        Task { @MainActor [weak self] in
+                            self?.drain(handoff, generation: ownedGeneration)
+                        }
+                    case .noDrain:
+                        break
+                    case .rejected(let error):
+                        // A malformed callback is a generation failure, not a
+                        // reason to leave an invalid handoff and worker alive.
+                        decoderControl.cancel()
+                        Task { @MainActor [weak self] in
+                            self?.fail(error, handoff: handoff, generation: ownedGeneration)
+                        }
                     }
                 }
                 try Task.checkCancellation()
@@ -371,8 +382,16 @@ final class LiveAudioMeterCoordinator: ObservableObject {
             handoff.invalidate()
             return
         }
+        if let rejection = handoff.rejection {
+            fail(rejection, handoff: handoff, generation: ownedGeneration)
+            return
+        }
         if let final = completion.finalSnapshot, final != snapshot {
             _ = handoff.submit(final)
+        }
+        if let rejection = handoff.rejection {
+            fail(rejection, handoff: handoff, generation: ownedGeneration)
+            return
         }
         if let pending = handoff.invalidateAndTakeLatest() { publish(pending) }
         provenance = completion.provenance
@@ -391,7 +410,15 @@ final class LiveAudioMeterCoordinator: ObservableObject {
             handoff.invalidate()
             return
         }
+        // A malformed snapshot cancels its worker. If that cancellation races
+        // this callback, retain the specific handoff rejection instead of
+        // replacing it with a generic decoder/cancellation diagnostic.
+        let presentedError = handoff.rejection ?? error
         handoff.invalidate()
+        // `fail` usually runs after decode has already thrown. Snapshot-handoff
+        // rejection is different: it originates in the callback while decode
+        // is still active, so explicitly cancel any such in-flight operation.
+        decodeTask?.cancel()
         decodeTask = nil
         decoderControl = nil
         self.handoff = nil
@@ -400,13 +427,18 @@ final class LiveAudioMeterCoordinator: ObservableObject {
         provenance = nil
         clockDrift = nil
         status = .unavailable(
-            reason: "Live source audio is unavailable.", diagnostic: error.localizedDescription
+            reason: "Live source audio is unavailable.",
+            diagnostic: presentedError.localizedDescription
         )
     }
 
     private func cancelled(handoff: SnapshotHandoff, generation ownedGeneration: UInt64) {
         guard generation == ownedGeneration, self.handoff === handoff else {
             handoff.invalidate()
+            return
+        }
+        if let rejection = handoff.rejection {
+            fail(rejection, handoff: handoff, generation: ownedGeneration)
             return
         }
         handoff.invalidate()
@@ -543,33 +575,56 @@ private extension LiveAudioMeterDecodeRequest {
 /// One-slot, post-DSP handoff. Submitting replaces only an unpublished UI
 /// snapshot; the decoder has already synchronously processed every PCM sample.
 nonisolated private final class SnapshotHandoff: @unchecked Sendable {
+    enum Submission: Sendable {
+        case scheduleDrain
+        case noDrain
+        case rejected(LiveAudioMeterDisplayError)
+    }
+
     private let lock = NSLock()
     private nonisolated(unsafe) var reducer: SnapshotReducer
     private nonisolated(unsafe) var pending: LiveAudioMeterReducedSnapshot?
     private nonisolated(unsafe) var drainScheduled = false
     private nonisolated(unsafe) var isValid = true
     private nonisolated(unsafe) var isSuspended = false
+    private nonisolated(unsafe) var storedRejection: LiveAudioMeterDisplayError?
 
     init(format: LiveAudioMeterFormat) {
         reducer = SnapshotReducer(format: format)
     }
 
-    /// Returns true only when a main-actor drain must be scheduled.
-    func submit(_ snapshot: LiveAudioMeterSnapshot) -> Bool {
+    /// Requests a main-actor drain only for valid snapshots. Invalid levels or
+    /// positions are retained as an explicit generation failure so completion
+    /// and cancellation races cannot conceal the original fault.
+    func submit(_ snapshot: LiveAudioMeterSnapshot) -> Submission {
         lock.withLock {
-            guard isValid else { return false }
-            guard let reduced = try? reducer.consume(snapshot) else {
+            guard isValid else { return .noDrain }
+            let reduced: LiveAudioMeterReducedSnapshot
+            do {
+                reduced = try reducer.consume(snapshot)
+            } catch let error as LiveAudioMeterDisplayError {
                 isValid = false
                 pending = nil
                 drainScheduled = false
-                return false
+                storedRejection = error
+                return .rejected(error)
+            } catch {
+                isValid = false
+                pending = nil
+                drainScheduled = false
+                storedRejection = .invalidLevel
+                return .rejected(.invalidLevel)
             }
             pending = reduced
-            guard !isSuspended else { return false }
-            guard !drainScheduled else { return false }
+            guard !isSuspended else { return .noDrain }
+            guard !drainScheduled else { return .noDrain }
             drainScheduled = true
-            return true
+            return .scheduleDrain
         }
+    }
+
+    var rejection: LiveAudioMeterDisplayError? {
+        lock.withLock { storedRejection }
     }
 
     func suspend() {

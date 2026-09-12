@@ -36,6 +36,15 @@ Ordinary windows can also share transport commands; see
 [window synchronization](docs/WINDOW_SYNCHRONIZATION.md) for its scope and the
 separate one-time timecode alignment command.
 
+## Inspect live source audio
+
+Choose **Live Audio Meter** from the View menu, press **Command-Shift-L**, or use
+the waveform-meter toolbar button. The per-player panel can meter source A or B
+independently of the audible comparison source and shows sample peak, true peak,
+Momentary and Short-term readings with EBU, ATSC or custom reference guides.
+These guides do not by themselves establish programme compliance; live-path
+compressed-source and release-floor acceptance remain in progress.
+
 ## Roadmap
 
 See [PRODUCT_ROADMAP.md](PRODUCT_ROADMAP.md) for the release sequence from the

@@ -46,4 +46,24 @@ final class WindowManagerTests: XCTestCase {
         manager.markHasMedia(id: id)
         XCTAssertEqual(manager.mediaWindowCount, baseline)
     }
+
+    func testKeyAuxiliaryPanelRoutesOnlyToItsOwningPlayerWindow() {
+        let manager = WindowManager.shared
+        let firstID = UUID()
+        let secondID = UUID()
+        let first = NSWindow(contentRect: .zero, styleMask: [], backing: .buffered, defer: true)
+        let second = NSWindow(contentRect: .zero, styleMask: [], backing: .buffered, defer: true)
+        let panel = NSPanel(contentRect: .zero, styleMask: [], backing: .buffered, defer: true)
+        defer {
+            first.removeChildWindow(panel)
+            manager.unregister(id: firstID)
+            manager.unregister(id: secondID)
+        }
+        manager.register(id: firstID, window: first)
+        manager.register(id: secondID, window: second)
+        first.addChildWindow(panel, ordered: .above)
+
+        XCTAssertTrue(manager.isActiveWindow(first, keyWindow: panel))
+        XCTAssertFalse(manager.isActiveWindow(second, keyWindow: panel))
+    }
 }

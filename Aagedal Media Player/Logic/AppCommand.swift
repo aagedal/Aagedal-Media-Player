@@ -38,6 +38,7 @@ enum AppCommand {
     case toggleScopes
     case toggleScopeParade
     case toggleAudioWaveform
+    case toggleLiveAudioMeter
     case toggleCompareReview
     case seekToCompareReviewNote(CompareReviewDirection)
 

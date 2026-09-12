@@ -130,10 +130,21 @@ final class WindowManager: ObservableObject {
     /// Returns true if this window should respond to key-window-only commands
     /// (file open, inspector, screenshot, export, fullscreen, timecode).
     func isActiveWindow(_ window: NSWindow?) -> Bool {
+        isActiveWindow(window, keyWindow: NSApp.keyWindow)
+    }
+
+    /// Auxiliary panels remain part of their owning player's command-routing
+    /// hierarchy even while the panel itself is key.
+    func isActiveWindow(_ window: NSWindow?, keyWindow: NSWindow?) -> Bool {
         guard let window else { return false }
         let liveWindows = windows.values.compactMap(\.window)
         if liveWindows.count <= 1 { return true }
-        return window.isKeyWindow
+        var candidate = keyWindow
+        while let current = candidate {
+            if current === window { return true }
+            candidate = current.parent
+        }
+        return false
     }
 
     /// Returns true if any window *other* than the given one has loaded media.

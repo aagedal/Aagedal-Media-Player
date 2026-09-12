@@ -1,14 +1,15 @@
 # Live audio meter calculation foundation
 
 Implementation: September 12, 2026. This completes bounded calculation,
-source-decoder, lifecycle-ownership and presentation foundations for the
+source-decoder, lifecycle ownership, presentation and window-session integration for the
 [live-meter contract](LIVE_AUDIO_METER_DESIGN.md). The source decoder is now
 wall-clock paced at 1× and its process can remain continuous across pause and
 buffering. Player controllers now publish typed clock, transport, scrub, seek,
 frame-step, loop, source and audio-track events, and the coordinator applies a
-tested drift/failure policy to them. No window-owned session subscribes that
-seam or exposes the presentation in the app yet. The live Audio QC roadmap and
-release gates remain open.
+tested drift/failure policy to them. A window-owned session now subscribes that
+seam and exposes an activating panel in the app. The live Audio QC roadmap and
+release gates remain open because timestamp authority, worker-side ahead
+enforcement and production acceptance are not complete.
 
 ## Measurement core
 
@@ -114,8 +115,9 @@ the reduced DSP endpoint with the measured source clock, fails outside ±250 ms,
 and uses 200/100 ms suspend/resume hysteresis inside that bound. Unsupported
 speed invalidates the segment and returning to forward 1× restarts at the
 current player clock. These policies are wired into the coordinator and covered
-by focused tests; the application still needs a window session to resolve the
-selected source, subscribe to the correct controller, and own its lifetime.
+by focused tests. `LiveAudioMeterSession` resolves the selected A/B source,
+subscribes to the correct controller, waits for track and late-metadata readiness,
+and owns decoder lifetime through panel or player-window closure.
 
 `LiveAudioMeterPlaybackSource` provides the typed handoff from a selected A/B
 track to the decoder. It preserves the zero-based audio-only stream order used
@@ -132,7 +134,10 @@ bars/holds/maxima, Momentary and Short-term loudness, EBU/ATSC/custom guides,
 status, diagnostics and measurement provenance. Reference preferences are
 persisted with finite-value validation. Exact, unrounded EBU (`>`) and ATSC
 (`≥`) decisions remain visible in text rather than colour alone. The view owns
-no decoder, DSP or playback state and is not yet mounted by the application.
+no decoder, DSP or playback state. `LiveAudioMeterWindowController` mounts it in
+an activating, resizable per-player panel and preserves command routing to the
+owning player while the panel is key. Active readings identify their source and
+track; complete decoder provenance remains pending until EOF.
 
 ## Verification and remaining integration
 
@@ -157,12 +162,18 @@ pause/buffering freeze and clean resume, every restart cause, retry, EOF, and
 cancellation before/after attachment and at deinitialization. These 54 focused
 tests pass; Release production verification remains the separate
 build/preflight gate.
-Final Xcode static analysis and all 61 release-preflight checks also pass.
 The focused decoder/coordinator/process run now passes 24 tests, including an
 actual paced one-second bundled-FFmpeg decode, same-generation pause/buffering
 continuity, suspend before and after attachment, resume, and cancellation while
 stopped. These are calculation and process-control tests; synthetic PCM is not evidence of a validated live
 source decoder or all programme/transient families.
+
+The mounted-session continuation passes the full 632-test Debug suite with no
+failures and one expected opt-in real-volume-exhaustion skip. It adds focused
+coverage for current-clock startup/retry, source replacement, late metadata,
+preference persistence, auxiliary-panel command routing, malformed-snapshot
+diagnostics and complete delivery of final subprocess bytes. Current release
+preflight still fails three bundled-FFmpeg signature/timestamp checks.
 
 A preliminary optimized standalone check on this development Mac processed ten
 seconds of eight-channel 96 kHz PCM in about 0.13 seconds. It excludes decoder,
@@ -170,16 +181,10 @@ UI, scheduling and thermal costs and is not a release-floor performance result.
 
 Remaining work:
 
-- Add the window-owned session that resolves the selected A/B source/track,
-  subscribes the coordinator to the correct player, and tears both down with
-  the window.
 - Prove decoded timestamps on real compressed sources (or change the decoder
   protocol so timestamps are authoritative) and enforce the 250 ms bound in
   the worker before additional PCM is accepted. Validate drift failure,
   seek/loop/reload, EOF revision, cancellation, retry and overrun end to end.
-- Mount the reusable meter presentation in the application and connect its A/B
-  selector, reference controls, clear/reset/retry actions and status diagnostics
-  to the owning playback window.
 - Production-path numerical references, compressed-source gain checks and
   monitor-routing invariance on both backends.
 - Base-M1 concurrent-playback performance, sustained bounded-work observation,

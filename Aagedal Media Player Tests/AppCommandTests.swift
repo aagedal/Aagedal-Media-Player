@@ -67,4 +67,20 @@ final class AppCommandTests: XCTestCase {
         XCTAssertEqual(direction, .previous)
         withExtendedLifetime(cancellable) {}
     }
+
+    @MainActor
+    func testLiveMeterUsesTypedCommandChannel() {
+        let center = NotificationCenter()
+        var receivedCommand: AppCommand?
+        let cancellable = center.appCommandPublisher.sink { notification in
+            receivedCommand = notification.appCommand
+        }
+
+        center.post(.toggleLiveAudioMeter)
+
+        guard case .toggleLiveAudioMeter = receivedCommand else {
+            return XCTFail("Expected the live-meter command")
+        }
+        withExtendedLifetime(cancellable) {}
+    }
 }

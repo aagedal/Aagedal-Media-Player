@@ -28,6 +28,7 @@ struct NotificationHandlers: ViewModifier {
     let openFile: (URL) -> Void
     let openPreviousFile: () -> Void
     let openNextFile: () -> Void
+    let toggleLiveAudioMeter: () -> Void
 
     func body(content: Content) -> some View {
         content
@@ -43,7 +44,8 @@ struct NotificationHandlers: ViewModifier {
                 showAudioWaveformOverlay: $showAudioWaveformOverlay,
                 audioWaveformGenerator: audioWaveformGenerator,
                 openFilePanel: openFilePanel, openFile: openFile,
-                openPreviousFile: openPreviousFile, openNextFile: openNextFile
+                openPreviousFile: openPreviousFile, openNextFile: openNextFile,
+                toggleLiveAudioMeter: toggleLiveAudioMeter
             ))
             .modifier(PlaybackHandlers(
                 controller: controller,
@@ -78,6 +80,7 @@ private struct FileAndWindowHandlers: ViewModifier {
     let openFile: (URL) -> Void
     let openPreviousFile: () -> Void
     let openNextFile: () -> Void
+    let toggleLiveAudioMeter: () -> Void
     @AppStorage(AppSettings.scopeDisplayMode.key)
     private var scopeDisplayMode = AppSettings.scopeDisplayMode.defaultValue
     @AppStorage(AppSettings.audioWaveformDisplayMode.key)
@@ -242,6 +245,12 @@ private struct FileAndWindowHandlers: ViewModifier {
                         wc.show()
                     }
                 }
+            }
+            .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
+                guard let command = notification.appCommand,
+                      case .toggleLiveAudioMeter = command else { return }
+                guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
+                toggleLiveAudioMeter()
             }
     }
 

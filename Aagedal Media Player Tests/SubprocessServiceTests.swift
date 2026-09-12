@@ -45,6 +45,22 @@ final class SubprocessServiceTests: XCTestCase {
         XCTAssertEqual(String(decoding: received.data, as: UTF8.self), "streamed-pcm")
     }
 
+    func testWaitsForFinalStreamingCallbackBeforeReturning() async throws {
+        let received = DataRecorder()
+        let result = try await SubprocessService.run(
+            executableURL: URL(fileURLWithPath: "/bin/sh"),
+            arguments: ["-c", "printf 'final-stream-chunk'"],
+            standardOutputLimit: 0,
+            onStandardOutputData: { data in
+                Thread.sleep(forTimeInterval: 0.1)
+                received.append(data)
+            }
+        )
+
+        XCTAssertEqual(result.terminationStatus, 0)
+        XCTAssertEqual(String(decoding: received.data, as: UTF8.self), "final-stream-chunk")
+    }
+
     func testTaskCancellationTerminatesChildProcess() async throws {
         let task = Task {
             try await SubprocessService.run(

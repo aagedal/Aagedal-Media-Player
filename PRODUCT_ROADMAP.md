@@ -247,7 +247,10 @@ confidence as the picture.
   decoder, generation-safe lifecycle owner and reusable accessible presentation
   now exist. Source decoding is paced at 1× and stays continuous across pause;
   selected A/B track identity is mapped without display-order ambiguity.
-  Player-clock/drift wiring and app-window integration remain. See
+  A per-player activating panel now owns the playback subscriptions, resolves
+  late source metadata, starts at the current player clock and exposes the A/B,
+  reset, retry and reference controls. Authoritative compressed-source timestamps,
+  a worker-side ahead bound and real-path acceptance remain. See
   `docs/LIVE_AUDIO_METER_DSP.md`.
 - [x] Add offline integrated loudness over a selected range or full file.
   The metadata inspector measures each source audio stream over Whole File or
@@ -261,8 +264,9 @@ confidence as the picture.
   profiling remain acceptance work.
 - [ ] Add live momentary and short-term loudness. The bounded calculation core
   now passes tone and time-varying reference checks, and its decoder/presentation
-  foundations include paced, suspendable decoding; real playback integration and live-path
-  acceptance remain.
+  foundations include paced, suspendable decoding. The window session and UI are
+  integrated; compressed-source timestamp, routing, accuracy, accessibility and
+  release-floor acceptance remain.
 - [x] Show channel labels and layout mismatches clearly in Compare Mode.
   Selected-track details list numbered A/B speaker roles, unmatched channels,
   and explicit positional fallback when roles cannot be established. See

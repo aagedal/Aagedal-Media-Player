@@ -197,6 +197,12 @@ final class PlayerController: ObservableObject {
     private let proResRAWDetector: ProResRAWDetector
     private let liveAudioMeterPlaybackSubject = PassthroughSubject<LiveAudioMeterPlaybackEvent, Never>()
 
+    /// Advances whenever selected-source metadata and audio-track routing have
+    /// finished rebuilding. Live-meter windows use this explicit readiness
+    /// seam instead of sampling `objectWillChange`, which fires before the
+    /// track controller has published its new values.
+    @Published private(set) var liveAudioMeterSourceRevision: UInt64 = 0
+
     var liveAudioMeterPlaybackEvents: AnyPublisher<LiveAudioMeterPlaybackEvent, Never> {
         liveAudioMeterPlaybackSubject.eraseToAnyPublisher()
     }
@@ -344,6 +350,10 @@ final class PlayerController: ObservableObject {
         // Detect HDR transfer function from metadata
         updateTransferFunction()
         updateEffectiveAudioChannelRouting()
+        // Track choices may have been built before a slow metadata preload
+        // completed. Rebuild them from the authoritative stream list; the
+        // refresh publishes the resolved-source revision after routing agrees.
+        refreshAudioTrackOptions(playerItem: player?.currentItem)
     }
 
     /// Detect and set the HDR transfer function from video metadata.
@@ -1383,6 +1393,7 @@ final class PlayerController: ObservableObject {
             if self.useMPV, self.isAudioSuppressed {
                 self.mpvPlayer?.disableAudioTrack()
             }
+            self.liveAudioMeterSourceRevision &+= 1
         }
     }
 
@@ -1697,6 +1708,7 @@ final class PlayerController: ObservableObject {
             audioChannelRouting = AudioChannelRouting()
         }
         trackSelection.reset(preservingSelections: !resetAudioSelection)
+        liveAudioMeterSourceRevision &+= 1
     }
 }
 

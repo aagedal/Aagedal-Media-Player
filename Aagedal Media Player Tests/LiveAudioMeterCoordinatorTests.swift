@@ -227,6 +227,48 @@ final class LiveAudioMeterCoordinatorTests: XCTestCase {
         await eventually { coordinator.status == .ended(frame: 0) }
     }
 
+    func testMalformedSnapshotFailsGenerationAndCancelsWorker() async throws {
+        let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
+        let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
+        coordinator.start(try request(stream: 0, startFrame: 0))
+        await decoder.waitUntilAttached(stream: 0)
+        decoder.emit(snapshot(endFrame: 2_400), stream: 0)
+        await eventually { coordinator.snapshot?.endFrame == 2_400 }
+
+        // Repeating a source endpoint would make display ballistics bridge a
+        // duplicate block. It must fail the segment rather than silently
+        // invalidating only the UI handoff while decode continues.
+        decoder.emit(snapshot(endFrame: 2_400), stream: 0)
+
+        await eventually {
+            guard case .unavailable(_, let diagnostic) = coordinator.status else { return false }
+            return diagnostic?.contains("gap, duplicate, or out-of-order") == true
+        }
+        XCTAssertNil(coordinator.snapshot)
+        XCTAssertNil(coordinator.reducedSnapshot)
+        await decoder.waitUntilCancelled(stream: 0)
+        XCTAssertEqual(decoder.activeCount, 0)
+    }
+
+    func testMalformedSnapshotWinsRaceWithDecoderFailureDiagnostic() async throws {
+        let decoder = ControlledLiveMeterDecoder(honorCancellation: false)
+        let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
+        coordinator.start(try request(stream: 0, startFrame: 0))
+        await decoder.waitUntilAttached(stream: 0)
+        decoder.emit(snapshot(endFrame: 2_400), stream: 0)
+        await eventually { coordinator.snapshot?.endFrame == 2_400 }
+
+        decoder.emit(snapshot(endFrame: 2_400), stream: 0)
+        decoder.fail(TestFailure.decode, stream: 0)
+
+        await eventually {
+            guard case .unavailable(_, let diagnostic) = coordinator.status else { return false }
+            return diagnostic?.contains("gap, duplicate, or out-of-order") == true
+        }
+        XCTAssertNil(coordinator.snapshot)
+        XCTAssertNil(coordinator.reducedSnapshot)
+    }
+
     func testAllDiscontinuityCausesStartCleanGenerations() async throws {
         let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
         let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
