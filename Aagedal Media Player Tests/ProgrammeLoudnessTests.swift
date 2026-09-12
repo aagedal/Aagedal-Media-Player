@@ -57,6 +57,7 @@ final class ProgrammeLoudnessTests: XCTestCase {
             audioStreams: streams(8), duration: 4, range: range)
         let graph = arguments[try XCTUnwrap(arguments.firstIndex(of: "-filter_complex")) + 1]
         XCTAssertTrue(graph.contains("[0:a:7]aresample=48000:async=1:first_pts=0"))
+        XCTAssertTrue(graph.contains("[5:a:2]aresample=48000:async=1:first_pts=0"))
         XCTAssertTrue(graph.contains("apad=whole_dur=3.75,atrim=start=1.25:end=3.75,asetpts=PTS-STARTPTS"))
         XCTAssertTrue(graph.contains("channel_layout=5.1(side):map=0.0-FL|1.0-FR|2.0-FC|3.0-LFE|4.0-SL|5.0-SR"))
         XCTAssertFalse(graph.contains("amix"))
@@ -68,6 +69,27 @@ final class ProgrammeLoudnessTests: XCTestCase {
         }
         XCTAssertThrowsError(try FFmpegService.programmeLoudnessArguments(url: temporary("mov"), mapping: mapping,
             audioStreams: streams(8), duration: 3, range: range))
+    }
+
+    func testIndependentInputsRepeatDecodeOptionsAndBoundsBeforeEachSource() throws {
+        let url = temporary("mov")
+        let mapping = ProgrammeLoudnessMapping(layout: .stereo, audioStreamIndices: [7, 2])
+        let range = try FFmpegService.LoudnessRange(start: 1.25, end: 3.75)
+        let arguments = try FFmpegService.programmeLoudnessArguments(
+            url: url, mapping: mapping, audioStreams: streams(8), duration: 4, range: range,
+            inputAudioArguments: ["-f", "wav"]
+        )
+        let graphIndex = try XCTUnwrap(arguments.firstIndex(of: "-filter_complex"))
+        XCTAssertEqual(Array(arguments[..<graphIndex]), [
+            "-hide_banner", "-nostats", "-progress", "pipe:1",
+            "-t", "3.75", "-f", "wav", "-i", url.path,
+            "-t", "3.75", "-f", "wav", "-i", url.path
+        ])
+        let graph = arguments[graphIndex + 1]
+        XCTAssertTrue(graph.contains("[0:a:7]"))
+        XCTAssertTrue(graph.contains("[1:a:2]"))
+        XCTAssertEqual(arguments.filter { $0 == "-progress" }.count, 1,
+                       "All independent demuxers belong to one monitored FFmpeg process.")
     }
 
     func testStereoInEightMonoTracksMatchesIndependentStereoIncludingOppositePolarity() async throws {

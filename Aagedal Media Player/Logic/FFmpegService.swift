@@ -214,7 +214,7 @@ enum FFmpegService {
             // equal trims bound every input and preserve file-relative ranges.
             // https://ffmpeg.org/ffmpeg-resampler.html (async, first_pts)
             // https://ffmpeg.org/ffmpeg-filters.html (apad, atrim, join)
-            "[0:a:\(stream)]aresample=\(sampleRate):async=1:first_pts=0," +
+            "[\(channel):a:\(stream)]aresample=\(sampleRate):async=1:first_pts=0," +
             "apad=whole_dur=\(end),atrim=start=\(start):end=\(end)," +
             "asetpts=PTS-STARTPTS[programme\(channel)]"
         }
@@ -222,9 +222,19 @@ enum FFmpegService {
         let roles = mapping.layout.channelRoles.enumerated().map { "\($0.offset).0-\($0.element)" }.joined(separator: "|")
         chains.append(inputs + "join=inputs=\(mapping.audioStreamIndices.count):" +
                       "channel_layout=\(mapping.layout.ffmpegLayout):map=\(roles),ebur128=peak=true[programme]")
-        return ["-hide_banner", "-nostats", "-progress", "pipe:1", "-t", String(end)] +
-            inputAudioArguments + ["-i", url.path, "-filter_complex", chains.joined(separator: ";"),
-                                   "-map", "[programme]", "-f", "null", "-"]
+        // Give each selected track an independent demuxer. With one shared
+        // input, advancing one branch can retain other tracks' compressed
+        // packets for much of a long file. Separate inputs preserve the same
+        // source timeline while allowing unused tracks to be discarded.
+        // The shared-input graph also lost all but its first channel in the
+        // final 30 seconds of an eight-hour split-mono ALAC regression file.
+        // This remains one cancellable process; container indexes still take
+        // memory proportional to the source's packet count.
+        let inputsArguments = mapping.audioStreamIndices.flatMap { _ in
+            ["-t", String(end)] + inputAudioArguments + ["-i", url.path]
+        }
+        return ["-hide_banner", "-nostats", "-progress", "pipe:1"] + inputsArguments +
+            ["-filter_complex", chains.joined(separator: ";"), "-map", "[programme]", "-f", "null", "-"]
     }
 
     private static func analyzeLoudness(arguments: [String], range: LoudnessRange?) async throws -> LUFSResult {
