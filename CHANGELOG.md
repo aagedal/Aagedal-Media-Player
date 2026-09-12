@@ -5,6 +5,7 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Added
+- Typed live-meter source identity and request construction for selected A/B tracks, with exact FFmpeg audio-stream order, source-sample start positions, explicit supported speaker maps and actionable format errors.
 - Source-rate-paced live-meter decoding with same-generation process suspension across pause and buffering, including cancellation-before-attachment and cancellation-while-stopped coverage. Playback-clock wiring and drift acceptance remain pending.
 - Generation-safe live-meter lifecycle ownership with stale-result rejection, bounded post-DSP presentation coalescing, clean discontinuity resets, retry/EOF handling and cancellation on source or window teardown. Playback wiring remains pending.
 - Bounded live source-audio decoding through the signed bundled FFmpeg, with explicit stream identity, disabled decoder gain processing, fixed Float32 buffering, actionable failures and versioned provenance. Transport lifecycle wiring remains pending.

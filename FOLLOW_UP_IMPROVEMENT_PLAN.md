@@ -1829,6 +1829,9 @@ for Phase 81, not a live playback feature or completion of Audio QC.
 - [x] Pace source decoding at native 1× with catch-up capped at 1×, and preserve
   one decoder/DSP generation across pause and buffering through race-safe
   process suspension. Cancellation still terminates a stopped process.
+- [x] Bind selected-track metadata to an immutable A/B meter source identity,
+  retaining FFmpeg audio-stream order, exact source-sample start positions,
+  explicit speaker maps and actionable unsupported-format failures.
 - [ ] Wire the decoder/coordinator to playback, with verified timestamps/drift,
   bounded ahead-of-playback work and typed discontinuity events.
 - [ ] Mount and connect the meter UI; complete real-path accuracy, routing

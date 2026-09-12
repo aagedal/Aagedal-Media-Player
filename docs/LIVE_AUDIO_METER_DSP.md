@@ -103,6 +103,15 @@ source identity is unchanged. Suspend-before-attachment is remembered, and
 cancellation still terminates a stopped process. Seek, loop, reload, speed and
 source discontinuities continue to create clean generations.
 
+`LiveAudioMeterPlaybackSource` provides the typed handoff from a selected A/B
+track to the decoder. It preserves the zero-based audio-only stream order used
+by `0:a:N`, keeps container stream identity separately for diagnostics, rounds
+start time once to an exact source-sample position, and clamps it to the source
+duration. Mono, stereo, `5.1(side)` and conventional `7.1` receive explicit DSP
+speaker maps. Other one-to-eight-channel layouts retain numbered peak meters
+but do not guess loudness weights; missing or unsupported format data produces
+an actionable failure.
+
 `LiveAudioMeterViewState` and `LiveAudioMeterView` provide a reusable,
 accessibility-labelled presentation for A/B source choice, sample and true-peak
 bars/holds/maxima, Momentary and Short-term loudness, EBU/ATSC/custom guides,

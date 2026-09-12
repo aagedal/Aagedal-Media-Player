@@ -246,7 +246,8 @@ confidence as the picture.
   reconstruction, ballistics and reference thresholds. A bounded bundled-FFmpeg
   decoder, generation-safe lifecycle owner and reusable accessible presentation
   now exist. Source decoding is paced at 1× and stays continuous across pause;
-  player-clock/drift wiring and app-window integration remain. See
+  selected A/B track identity is mapped without display-order ambiguity.
+  Player-clock/drift wiring and app-window integration remain. See
   `docs/LIVE_AUDIO_METER_DSP.md`.
 - [x] Add offline integrated loudness over a selected range or full file.
   The metadata inspector measures each source audio stream over Whole File or
