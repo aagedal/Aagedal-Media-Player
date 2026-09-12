@@ -88,7 +88,17 @@ nonisolated struct LiveAudioPeakDisplay: Sendable {
 
 /// Reference guides only; these do not assess programme or dialogue compliance.
 nonisolated struct LiveAudioMeterReference: Equatable, Sendable {
-    enum Preset: Equatable, Sendable { case ebuProduction, atscExchange, custom }
+    enum Preset: String, CaseIterable, Equatable, Sendable {
+        case ebuProduction, atscExchange, custom
+
+        var displayName: String {
+            switch self {
+            case .ebuProduction: "EBU R 128 — production reference"
+            case .atscExchange: "ATSC A/85 — exchange reference"
+            case .custom: "Custom reference"
+            }
+        }
+    }
     let preset: Preset
     let loudnessTarget: Double
     let truePeakCeiling: Double?

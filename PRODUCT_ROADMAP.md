@@ -243,8 +243,9 @@ confidence as the picture.
 - [x] Add per-channel mute and solo without changing the encoded file.
 - [ ] Add peak and true-peak meters with clear dBFS/dBTP units.
   The September 12 bounded DSP/display foundation covers per-channel peaks,
-  reconstruction, ballistics and reference thresholds; source-decoder and UI
-  integration remain. See `docs/LIVE_AUDIO_METER_DSP.md`.
+  reconstruction, ballistics and reference thresholds. A bounded bundled-FFmpeg
+  decoder and reusable accessible presentation now exist; transport coordination
+  and app-window integration remain. See `docs/LIVE_AUDIO_METER_DSP.md`.
 - [x] Add offline integrated loudness over a selected range or full file.
   The metadata inspector measures each source audio stream over Whole File or
   existing In–Out points, with cancellation and range provenance in copied
@@ -256,8 +257,9 @@ confidence as the picture.
   `docs/PROGRAMME_LOUDNESS.md`; native accessibility and production multitrack
   profiling remain acceptance work.
 - [ ] Add live momentary and short-term loudness. The bounded calculation core
-  now passes tone and time-varying reference checks; real playback integration
-  and live-path acceptance remain.
+  now passes tone and time-varying reference checks, and its decoder/presentation
+  foundations are implemented; real playback integration and live-path
+  acceptance remain.
 - [x] Show channel labels and layout mismatches clearly in Compare Mode.
   Selected-track details list numbered A/B speaker roles, unmatched channels,
   and explicit positional fallback when roles cannot be established. See

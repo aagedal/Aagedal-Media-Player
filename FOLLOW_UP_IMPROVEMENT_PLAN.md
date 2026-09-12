@@ -1816,16 +1816,27 @@ for Phase 81, not a live playback feature or completion of Audio QC.
 - [x] Cover calibration at all three initial sample rates, independent FFmpeg
   time-varying M/S comparisons, LFE/surround roles, polarity/intersample and
   signed above-full-scale transient peaks, block boundaries, reset and errors.
+- [x] Add a bundled-FFmpeg source decoder with explicit stream identity and gain
+  controls, versioned provenance, bounded Float32 framing, cancellation, EOF and
+  actionable malformed/truncated-PCM failures.
+- [x] Add reusable accessible meter presentation state and controls for A/B,
+  peak/loudness readings, exact reference-guide wording, diagnostics and
+  finite-value-validated persisted reference preferences.
 - [ ] Integrate a provenance-verified source decoder, window/generation ownership,
   transport pacing and discontinuity handling, bounded queues and cancellation.
-- [ ] Add the meter UI, persisted references and diagnostics; complete real-path
-  accuracy, routing invariance, accessibility and release-floor performance.
+- [ ] Mount and connect the meter UI; complete real-path accuracy, routing
+  invariance, spoken accessibility and release-floor performance.
 
 The final combined Release run passes 578 tests with zero failures and zero skips,
 including the official ITU offline references and real APFS recovery, with
 verified image detach. Evidence is retained in
 `/tmp/aagedal-meter-programme-final-apfs-20260912/Tests.xcresult` and `summary.json`.
 All 61 preflight checks pass.
+
+The decoder/presentation continuation passes 47 focused Debug tests, including
+a real signed bundled-FFmpeg source decode. These components remain deliberately
+unmounted until the transport coordinator can enforce pacing and lifecycle
+invalidation; they do not mark live metering as shipped.
 
 See `docs/LIVE_AUDIO_METER_DSP.md`. A preliminary optimized standalone host
 check processed ten seconds of eight-channel 96 kHz PCM in about 0.13 seconds;

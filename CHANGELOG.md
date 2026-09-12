@@ -5,6 +5,8 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Added
+- Bounded live source-audio decoding through the signed bundled FFmpeg, with explicit stream identity, disabled decoder gain processing, fixed Float32 buffering, actionable failures and versioned provenance. Transport lifecycle wiring remains pending.
+- Reusable accessible live-meter presentation and persisted EBU, ATSC and custom reference guides, with exact threshold wording, A/B source choice and expandable provenance diagnostics. The presentation is not yet mounted in the app.
 - Production split-mono programme loudness profiling with per-layout/range readings, separate process-memory measurements and rejection of sleep-interrupted timing evidence.
 - Internal live-audio-meter calculation/display foundation with bounded source PCM, sample/true peaks, rolling Momentary/Short-term loudness and source-time ballistics. Playback integration and the meter panel remain pending.
 - Programme loudness analysis for stereo or 5.1 stored as separate mono tracks, with explicit speaker mapping, whole-file/In–Out scope, cancellation and JSON provenance. Unassigned spare tracks are excluded.

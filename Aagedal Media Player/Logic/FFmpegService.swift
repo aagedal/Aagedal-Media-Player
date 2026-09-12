@@ -36,7 +36,7 @@ enum FFmpegError: Error, LocalizedError, Equatable {
 }
 
 enum FFmpegService {
-    static var ffmpegPath: String? {
+    nonisolated static var ffmpegPath: String? {
         Bundle.main.path(forResource: "ffmpeg", ofType: nil)
     }
 
@@ -47,8 +47,9 @@ enum FFmpegService {
     /// Run ffmpeg while consuming its standard output incrementally. The output
     /// is not retained by the subprocess service, keeping memory bounded for
     /// binary streams such as decoded PCM.
-    static func runStreamingOutput(
+    nonisolated static func runStreamingOutput(
         arguments: [String],
+        handle: SubprocessHandle? = nil,
         onStandardOutputData: @escaping @Sendable (Data) -> Void
     ) async throws {
         guard let path = ffmpegPath else {
@@ -61,6 +62,7 @@ enum FFmpegService {
                 executableURL: URL(fileURLWithPath: path),
                 arguments: arguments,
                 standardOutputLimit: 0,
+                handle: handle,
                 onStandardOutputData: onStandardOutputData
             )
         } catch is CancellationError {

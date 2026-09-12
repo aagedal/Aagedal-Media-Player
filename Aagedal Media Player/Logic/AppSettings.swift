@@ -64,6 +64,21 @@ nonisolated enum AppSettings {
     static let audioWaveformBoost = AppSetting(key: "audioWaveformBoost", defaultValue: 0.0)
     static let automaticAudioOnlyWaveform = AppSetting(key: "automaticAudioOnlyWaveform", defaultValue: true)
 
+    // Live audio meter reference guides. These preferences never alter the
+    // measured PCM or DSP values.
+    static let liveAudioMeterPreset = AppSetting(
+        key: "liveAudioMeterPreset",
+        defaultValue: "ebuProduction"
+    )
+    static let liveAudioMeterCustomLoudnessTarget = AppSetting(
+        key: "liveAudioMeterCustomLoudnessTarget",
+        defaultValue: -23.0
+    )
+    static let liveAudioMeterCustomTruePeakCeiling = AppSetting<Double?>(
+        key: "liveAudioMeterCustomTruePeakCeiling",
+        defaultValue: nil
+    )
+
     // Update checker
     static let updateLastChecked = AppSetting<Date?>(key: "updateLastChecked", defaultValue: nil)
     static let updateCheckInterval = AppSetting(key: "updateCheckInterval", defaultValue: 7.0 * 24 * 3_600)
@@ -107,6 +122,8 @@ nonisolated enum AppSettings {
             showAllMonoWaveforms.key: showAllMonoWaveforms.defaultValue,
             audioWaveformBoost.key: audioWaveformBoost.defaultValue,
             automaticAudioOnlyWaveform.key: automaticAudioOnlyWaveform.defaultValue,
+            liveAudioMeterPreset.key: liveAudioMeterPreset.defaultValue,
+            liveAudioMeterCustomLoudnessTarget.key: liveAudioMeterCustomLoudnessTarget.defaultValue,
             updateCheckInterval.key: updateCheckInterval.defaultValue,
             didShowAutoUpdateNotice.key: didShowAutoUpdateNotice.defaultValue,
         ])
@@ -114,11 +131,11 @@ nonisolated enum AppSettings {
 }
 
 extension UserDefaults {
-    func value<Value: Sendable>(for setting: AppSetting<Value>) -> Value {
+    nonisolated func value<Value: Sendable>(for setting: AppSetting<Value>) -> Value {
         object(forKey: setting.key) as? Value ?? setting.defaultValue
     }
 
-    func set<Value: Sendable>(_ value: Value, for setting: AppSetting<Value>) {
+    nonisolated func set<Value: Sendable>(_ value: Value, for setting: AppSetting<Value>) {
         set(value, forKey: setting.key)
     }
 }

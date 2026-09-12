@@ -1,9 +1,10 @@
 # Live audio meter calculation foundation
 
-Implementation: September 12, 2026. This completes a bounded calculation and
-display foundation for the [live-meter contract](LIVE_AUDIO_METER_DESIGN.md).
-It does **not** add a live meter panel or connect measurements to a playback
-decoder. The live Audio QC roadmap and release gates remain open.
+Implementation: September 12, 2026. This completes bounded calculation,
+source-decoder and presentation foundations for the
+[live-meter contract](LIVE_AUDIO_METER_DESIGN.md). It does **not** connect those
+pieces to playback transport or expose the presentation in an app window. The
+live Audio QC roadmap and release gates remain open.
 
 ## Measurement core
 
@@ -71,6 +72,30 @@ they never alter PCM or establish compliance. ATSC retains the explicit dialogue
 assessment limitation. Independent display maxima and reference changes retain
 and recompute the true-peak exceedance latch.
 
+## Decoder and presentation foundations
+
+`LiveAudioMeterDecoder` launches the signed bundled FFmpeg, identifies the
+selected source and zero-based audio-stream ordinal, disables supported decoder
+gain processing, preserves the declared sample rate/channel count, and streams
+little-endian Float32 PCM directly into the calculation core. Arbitrary stdout
+boundaries are reassembled into complete interleaved frames in a fixed 50 ms
+buffer. Truncated, non-finite or discontinuous input fails the segment rather
+than publishing partial success. Completion records the decoder version,
+arguments, source request and sample format as provenance.
+
+This decoder is deliberately not a playback coordinator. A direct call will
+decode as quickly as FFmpeg supplies samples; transport pacing, bounded
+ahead-of-playback ownership, pause/seek/reload invalidation and generation
+isolation still belong to the pending coordinator.
+
+`LiveAudioMeterViewState` and `LiveAudioMeterView` provide a reusable,
+accessibility-labelled presentation for A/B source choice, sample and true-peak
+bars/holds/maxima, Momentary and Short-term loudness, EBU/ATSC/custom guides,
+status, diagnostics and measurement provenance. Reference preferences are
+persisted with finite-value validation. Exact, unrounded EBU (`>`) and ATSC
+(`≥`) decisions remain visible in text rather than colour alone. The view owns
+no decoder, DSP or playback state and is not yet mounted by the application.
+
 ## Verification and remaining integration
 
 `LiveAudioMeterDSPTests` covers tone calibration at all three rates, warm-up,
@@ -82,8 +107,14 @@ hold, exact preset boundaries, invalid inputs and final-bucket revision.
 The full September 12 Release run passes 578 tests with zero failures or skips,
 including the official ITU offline references and actual APFS recovery. Evidence:
 `/tmp/aagedal-meter-programme-final-apfs-20260912/Tests.xcresult` and `summary.json`.
-The new calculation/display foundation contributes 23 tests, including explicit
-Annex 3 rear-versus-side speaker checks at every supported sample rate.
+The calculation/display foundation contributes 23 tests, including explicit
+Annex 3 rear-versus-side speaker checks at every supported sample rate. Nine
+decoder tests cover arbitrary byte boundaries, fixed buffering, malformed and
+truncated PCM, final revision, source identity/arguments, and a real bundled
+FFmpeg WAVE decode with versioned provenance. Six presentation tests cover
+preference validation and exact EBU/ATSC threshold wording. A focused Debug run
+of these suites plus settings/numeric-default regressions passes 47 tests;
+Release production verification remains the separate build/preflight gate.
 Final Xcode static analysis and all 61 release-preflight checks also pass.
 These are calculation tests; synthetic PCM is not evidence of a validated live
 source decoder or all programme/transient families.
@@ -94,13 +125,14 @@ UI, scheduling and thermal costs and is not a release-floor performance result.
 
 Remaining work:
 
-- A window-owned, generation-isolated source-PCM decoder and coordinator with
-  verified unprocessed signal provenance, stream identity and timestamps.
+- A window-owned, generation-isolated coordinator around the source-PCM decoder,
+  with verified playback timestamps and rejection of decoder/playback drift.
 - Forward 1× transport pacing, bounded ahead-of-playback buffering, pause/resume,
   seek/loop/reload invalidation, EOF revision, cancellation, retry and overrun
   behavior through the real playback paths.
-- The visible A/B measurement selector, source/track/interval diagnostics,
-  persisted reference preferences, peak/loudness views and accessible controls.
+- Mount the reusable meter presentation in the application and connect its A/B
+  selector, reference controls, clear/reset/retry actions and status diagnostics
+  to the owning playback window.
 - Production-path numerical references, compressed-source gain checks and
   monitor-routing invariance on both backends.
 - Base-M1 concurrent-playback performance, sustained bounded-work observation,
