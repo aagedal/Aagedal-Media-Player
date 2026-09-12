@@ -1878,13 +1878,18 @@ Status: Implemented on 2026-09-12, with remaining performance acceptance below.
   options, original timestamps, speaker order and existing interval behavior.
   The same eight-hour input now retains all six channels and the expected
   reading. Focused programme/controller/RIFX regressions pass.
+- [x] Add a compact late-range 5.1 regression with initial silence, distinct
+  FL/FR/FC/SL/SR energy, an LFE-only peak marker and louder unassigned tracks.
+  It proves that every assigned role contributes through the production service
+  without making routine tests decode an eight-hour PCM timeline.
 - [ ] Complete representative deliverable and base-M1 performance acceptance.
   Independent one/eight-hour process checks reduce memory, but per-input
   container indexes still grow with source packet count. The first eight-hour
   production run was interrupted by lid-closed system sleep and is excluded
-  from comparative timing. A compact automated fixture reproducing the original
-  eight-hour channel loss remains to be established; hash-pinned before/after
-  process evidence is retained.
+  from comparative timing. The compact regression covers late-range channel
+  contribution and the argument regression locks independent demux inputs, but
+  it does not recreate the packet-count scale trigger; hash-pinned before/after
+  eight-hour process evidence is retained.
 
 The corrected production one-hour run passes all six layout/scope workloads
 and the new no-sleep acceptance check: 5.1 whole-file child RSS falls from

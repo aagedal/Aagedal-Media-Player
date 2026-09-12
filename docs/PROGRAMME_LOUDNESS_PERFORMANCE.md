@@ -81,6 +81,15 @@ and event-type checks run with
 `python3 scripts/test-programme-profile-power.py`. The detector was also checked
 against the actual uninterrupted one-hour and interrupted eight-hour runs.
 
+`ProgrammeLoudnessTests.testLateSelectedRangeRetainsEveryAssignedFivePointOneChannel`
+is the compact automated channel-retention check. Its six-second, eight-mono-track
+fixture is silent before the final three-second selection. Distinct FL/FR/FC/SL/SR
+energy makes loss of any loudness-bearing role observable, an assigned hotter LFE
+must set true peak, and still-hotter unassigned tracks must not leak in. The test
+exercises the production analysis service and complements the argument-level
+independent-input check. It avoids an eight-hour PCM decode, so it does not
+reproduce or characterize the original packet-count scale trigger.
+
 ## Original shared-input baseline — 2026-09-12
 
 Apple M5 Pro (18 CPU cores), 64 GB RAM, macOS 27.0 (26A428), Xcode 26.6
@@ -157,10 +166,11 @@ The production graph (`c892eef`) now opens an independent demux input for each a
 mono track. Each input retains the same file timeline, duration limit and
 header-derived decoder arguments; resampling, finite padding, exact trimming,
 speaker roles and loudness filtering remain in place. This avoids the
-reproduced cross-track queue growth and loss of assigned channels. Twenty-two
-focused programme/controller/RIFX tests pass with the correction, including
+reproduced cross-track queue growth and loss of assigned channels. Focused
+programme/controller/RIFX tests pass with the correction, including
 delayed/shorter tracks, mixed rates, opposite polarity, loud spare tracks,
-surround/LFE weighting, exact range provenance and cancellation.
+surround/LFE weighting, compact late-range contribution, exact range provenance
+and cancellation.
 
 Independent process experiments on the same fixtures measured the 5.1 late
 selection at 126,156,800 bytes (120.31 MiB) child RSS for one hour and

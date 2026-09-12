@@ -164,6 +164,37 @@ final class ProgrammeLoudnessTests: XCTestCase {
         XCTAssertEqual(other.loudness.truePeak, result.loudness.truePeak, accuracy: 0.1)
     }
 
+    func testLateSelectedRangeRetainsEveryAssignedFivePointOneChannel() async throws {
+        // Keep the fixture short, but make the measured interval genuinely late:
+        // the first half is silent and every signal exists only in the final range.
+        // Distinct non-LFE gains make loss of any loudness-bearing role observable;
+        // the hotter LFE makes its otherwise loudness-excluded contribution visible
+        // in the programme true peak. Louder spare tracks must remain unassigned.
+        let gains = [1.0, 0.9, 0.8, 10, 0.7, 0.6, 20, 20]
+        let url = try await monoContainer(gains: gains, seconds: 6, activeFrom: 3)
+        let mapping = ProgrammeLoudnessMapping(
+            layout: .surround5Point1,
+            audioStreamIndices: [0, 1, 2, 3, 4, 5]
+        )
+        let range = try FFmpegService.LoudnessRange(start: 3, end: 6)
+        let result = try await FFmpegService.analyzeProgrammeLUFS(
+            url: url, mapping: mapping, audioStreams: streams(8), duration: 6, range: range
+        )
+
+        let loudnessEnergy = 1 + 0.81 + 0.64 + 1.41 * (0.49 + 0.36)
+        XCTAssertEqual(
+            result.loudness.integratedLoudness,
+            -23 + 10 * log10(loudnessEnergy / 2),
+            accuracy: 0.1,
+            "FL, FR, FC, SL and SR must all contribute to the late-range loudness."
+        )
+        XCTAssertEqual(
+            result.loudness.truePeak, -3, accuracy: 0.1,
+            "The assigned LFE must contribute to true peak while hotter unassigned tracks remain excluded."
+        )
+        XCTAssertEqual(result.loudness.analysisRange, range)
+    }
+
     func testUnequalDurationsAndDelayedChannelsKeepFileTimeline() async throws {
         let long = try tone(gains: [1], seconds: 6)
         let short = try tone(gains: [1], seconds: 2)
@@ -246,13 +277,15 @@ final class ProgrammeLoudnessTests: XCTestCase {
         XCTAssertEqual(retry.loudness.integratedLoudness, -23, accuracy: 0.1)
     }
 
-    private func monoContainer(gains: [Double], includeVideo: Bool = false) async throws -> URL {
+    private func monoContainer(
+        gains: [Double], includeVideo: Bool = false, seconds: Int = 4, activeFrom: Int = 0
+    ) async throws -> URL {
         var arguments = ["-hide_banner", "-loglevel", "error"]
         if includeVideo {
-            arguments += ["-f", "lavfi", "-i", "color=c=black:s=16x16:r=1:d=4"]
+            arguments += ["-f", "lavfi", "-i", "color=c=black:s=16x16:r=1:d=\(seconds)"]
         }
         for gain in gains {
-            let source = try tone(gains: [gain])
+            let source = try tone(gains: [gain], seconds: seconds, activeFrom: activeFrom)
             arguments += try RIFXAudioDecoding.ffmpegInputArguments(for: source) + ["-i", source.path]
         }
         if includeVideo { arguments += ["-map", "0:v:0", "-c:v", "mpeg4", "-q:v", "8"] }
@@ -264,7 +297,10 @@ final class ProgrammeLoudnessTests: XCTestCase {
 
     /// Independent EBU -23 dBFS, 1 kHz float-PCM signal and WAV channel masks.
     /// FFmpeg only muxes the mono files and measures the resulting programme.
-    private func tone(gains: [Double], seconds: Int = 4, mask: UInt32? = nil, rate: Int = 48_000) throws -> URL {
+    private func tone(
+        gains: [Double], seconds: Int = 4, mask: UInt32? = nil, rate: Int = 48_000, activeFrom: Int = 0
+    ) throws -> URL {
+        precondition((0...seconds).contains(activeFrom))
         let frames = seconds * rate
         let align = gains.count * 4
         let formatBytes = mask == nil ? 16 : 40
@@ -290,7 +326,9 @@ final class ProgrammeLoudnessTests: XCTestCase {
         append(UInt32(frames * align))
         let amplitude = pow(10, -23.0 / 20)
         for frame in 0..<frames {
-            let sample = amplitude * sin(2 * .pi * 1_000 * Double(frame) / Double(rate))
+            let sample = frame < activeFrom * rate
+                ? 0
+                : amplitude * sin(2 * .pi * 1_000 * Double(frame) / Double(rate))
             for gain in gains { append(Float(sample * gain).bitPattern) }
         }
         let url = temporary("wav")
