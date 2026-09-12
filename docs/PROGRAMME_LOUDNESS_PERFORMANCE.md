@@ -81,7 +81,7 @@ and event-type checks run with
 `python3 scripts/test-programme-profile-power.py`. The detector was also checked
 against the actual uninterrupted one-hour and interrupted eight-hour runs.
 
-## Local baseline — 2026-09-12
+## Original shared-input baseline — 2026-09-12
 
 Apple M5 Pro (18 CPU cores), 64 GB RAM, macOS 27.0 (26A428), Xcode 26.6
 (17F113). The power snapshot reported AC power and a discharging battery.
@@ -143,5 +143,59 @@ are diagnostic lower bounds, not clean benchmark results. More concerning,
 both late selections returned -21.1 LUFS despite the repeated identical tones:
 whole-file values were -18.1 LUFS stereo and -13.4 LUFS 5.1. Stereo whole-file
 true peak also differed (-17.5 versus -18.1 dBTP). Structural validity is not
-numerical correctness. These discrepancies require independent decode/graph
-investigation and a clean rerun before any acceptance claim.
+numerical correctness. Independent graph runs subsequently reproduced the late-range fault: the
+original shared-input 5.1 graph returned -21.1 LUFS with FL at -18.1 dBTP and
+the other five channel peaks at negative infinity, despite exit status zero
+and no warning. Separate input contexts returned the expected -13.4 LUFS and
+-18.1 dBTP on every assigned channel. This establishes a real old-graph
+correctness failure independent of the interrupted profile's timing. It does
+not establish why this large fixture triggers the problem.
+
+### Separate-input correction
+
+The production graph (`c892eef`) now opens an independent demux input for each assigned
+mono track. Each input retains the same file timeline, duration limit and
+header-derived decoder arguments; resampling, finite padding, exact trimming,
+speaker roles and loudness filtering remain in place. This avoids the
+reproduced cross-track queue growth and loss of assigned channels. Twenty-two
+focused programme/controller/RIFX tests pass with the correction, including
+delayed/shorter tracks, mixed rates, opposite polarity, loud spare tracks,
+surround/LFE weighting, exact range provenance and cancellation.
+
+Independent process experiments on the same fixtures measured the 5.1 late
+selection at 126,156,800 bytes (120.31 MiB) child RSS for one hour and
+643,661,824 bytes (613.84 MiB) for eight hours with separate inputs. All six channels in the eight-hour result
+returned -18.1 dBTP and the programme returned -13.4 LUFS. Artifacts:
+`/tmp/aagedal-programme-buffer-review/baseline-shared-input-8h.log` and
+`/tmp/aagedal-programme-buffer-review/separate-inputs-8h.log`. These isolated
+graph experiments support the correction but are distinct from the production
+service profiler. Per-input container indexes still grow with content duration;
+this is a reduction in measured memory, not a constant-memory guarantee.
+
+### Corrected production one-hour rerun
+
+The production service rerun at
+`/tmp/aagedal-programme-profile-20260912-separate-1h` passes all six workloads,
+artifact validation and the new power-event check, with no sleep observed during
+the measured interval. It uses the same one-hour fixture and M5 Pro host as the
+original baseline. Concurrent repository build/test activity remains a timing
+limitation. All Stereo scopes return -18.1 LUFS, all 5.1 scopes return -13.4 LUFS,
+and every scope returns 0.0 LU range and -18.1 dBTP.
+
+| Layout | Scope | Wall time | Parent initial RSS | Parent sampled peak RSS | Children sampled peak RSS |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Stereo | whole | 12.170 s | 672.81 MiB | 674.28 MiB | 52.50 MiB |
+| Stereo | early | 0.148 s | 669.03 MiB | 669.03 MiB | 51.58 MiB |
+| Stereo | late | 1.358 s | 669.03 MiB | 669.03 MiB | 54.09 MiB |
+| 5.1 | whole | 42.940 s | 669.06 MiB | 670.88 MiB | 125.89 MiB |
+| 5.1 | early | 0.402 s | 121.78 MiB | 121.80 MiB | 121.12 MiB |
+| 5.1 | late | 3.916 s | 121.80 MiB | 121.80 MiB | 121.83 MiB |
+
+Whole-file child sampled peaks fall from 165.44 to 52.50 MiB for Stereo and from
+565.20 to 125.89 MiB for 5.1 in these observations. The 5.1 late selection falls
+from 522.88 to 121.83 MiB. Parent metadata-related memory remains high until
+retained pages/caches are released, so this does not close full-app memory
+acceptance. A clean eight-hour **production service** rerun, representative
+production codecs/content, base-M1 measurement and actual elapsed-time soaks
+remain separate acceptance work. The independent eight-hour graph result above
+confirms the specific long-file channel-loss correction, not all those gates.

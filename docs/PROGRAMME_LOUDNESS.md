@@ -86,7 +86,9 @@ part of this implementation.
 Processing uses one cancellable FFmpeg job, bounded diagnostic retention and a
 streaming filter graph; no whole-file PCM output is created. Each assigned
 channel is padded and trimmed to the finite requested interval before explicit
-speaker-channel joining. The [production programme profiling harness](PROGRAMME_LOUDNESS_PERFORMANCE.md)
+speaker-channel joining. Each assigned track uses a separate demux input to
+avoid cross-track buffering and the reproduced loss of channels in a late
+selection from an eight-hour split-mono file. The [production programme profiling harness](PROGRAMME_LOUDNESS_PERFORMANCE.md)
 records whole-file and early/late range timing and parent/FFmpeg memory for
 stereo and 5.1 assemblies from eight mono tracks. Representative production
 content, base-M1 performance and hands-on keyboard/VoiceOver acceptance remain
