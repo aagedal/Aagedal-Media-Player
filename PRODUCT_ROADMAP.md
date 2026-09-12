@@ -249,8 +249,9 @@ confidence as the picture.
   selected A/B track identity is mapped without display-order ambiguity.
   A per-player activating panel now owns the playback subscriptions, resolves
   late source metadata, starts at the current player clock and exposes the A/B,
-  reset, retry and reference controls. Authoritative compressed-source timestamps,
-  a worker-side ahead bound and real-path acceptance remain. See
+  reset, retry and reference controls. Decoder-side PCM admission is now hard
+  bounded to 250 ms beyond the playback clock. Authoritative compressed-source
+  timestamps and real-path acceptance remain. See
   `docs/LIVE_AUDIO_METER_DSP.md`.
 - [x] Add offline integrated loudness over a selected range or full file.
   The metadata inspector measures each source audio stream over Whole File or

@@ -8,6 +8,7 @@ import Foundation
 typealias LiveAudioMeterDecodeOperation = @Sendable (
     LiveAudioMeterDecodeRequest,
     SubprocessHandle,
+    LiveAudioMeterWorkerGate,
     @escaping LiveAudioMeterPCMStreamProcessor.SnapshotHandler
 ) async throws -> LiveAudioMeterDecodeCompletion
 
@@ -82,20 +83,24 @@ final class LiveAudioMeterCoordinator: ObservableObject {
     private var request: LiveAudioMeterDecodeRequest?
     private var decodeTask: Task<Void, Never>?
     private var decoderControl: SubprocessHandle?
+    private var workerGate: LiveAudioMeterWorkerGate?
     private var handoff: SnapshotHandoff?
     private var isClosed = false
     private var isTransportSuspended = false
     private var isClockSuspended = false
     private var isWaitingForSupportedSpeed = false
 
-    init(decodeOperation: @escaping LiveAudioMeterDecodeOperation = { request, control, onSnapshot in
-        try await LiveAudioMeterDecoder.decode(request, handle: control, onSnapshot: onSnapshot)
+    init(decodeOperation: @escaping LiveAudioMeterDecodeOperation = { request, control, gate, onSnapshot in
+        try await LiveAudioMeterDecoder.decode(
+            request, handle: control, workerGate: gate, onSnapshot: onSnapshot
+        )
     }) {
         self.decodeOperation = decodeOperation
     }
 
     deinit {
         handoff?.invalidate()
+        workerGate?.cancel()
         decodeTask?.cancel()
     }
 
@@ -183,13 +188,16 @@ final class LiveAudioMeterCoordinator: ObservableObject {
             begin(repositioned, cause: .speedRestored)
         }
         if playback.phase == .buffering {
+            workerGate?.update(playbackTime: playback.time)
             markBuffering()
             return
         }
         guard playback.isPlaying else {
+            workerGate?.update(playbackTime: playback.time)
             pause()
             return
         }
+        workerGate?.update(playbackTime: playback.time)
         if isTransportSuspended, let request {
             resume(request)
         }
@@ -252,11 +260,14 @@ final class LiveAudioMeterCoordinator: ObservableObject {
                 ),
                 clearRequest: false
             )
-        case .ended:
+        case .ended(let playback):
             // The paced source decoder owns FIR-tail drainage and publishes
             // the authoritative final endpoint. Playback normally reports
             // `isPlaying == false` here, which must not suspend that drainage.
-            break
+            workerGate?.update(playbackTime: playback.time)
+            isTransportSuspended = false
+            isClockSuspended = false
+            applyWorkerSuspension()
         case .discontinuity(let cause, let playback):
             guard playback.supportsMeasurement else {
                 suspendForUnsupportedSpeed()
@@ -332,10 +343,14 @@ final class LiveAudioMeterCoordinator: ObservableObject {
         self.handoff = handoff
         let decoderControl = SubprocessHandle()
         self.decoderControl = decoderControl
+        let workerGate = LiveAudioMeterWorkerGate(request: newRequest)
+        self.workerGate = workerGate
         let operation = decodeOperation
         decodeTask = Task { [weak self] in
             do {
-                let completion = try await operation(newRequest, decoderControl) { [weak self] snapshot in
+                let completion = try await operation(
+                    newRequest, decoderControl, workerGate
+                ) { [weak self] snapshot in
                     switch handoff.submit(snapshot) {
                     case .scheduleDrain:
                         Task { @MainActor [weak self] in
@@ -397,6 +412,8 @@ final class LiveAudioMeterCoordinator: ObservableObject {
         provenance = completion.provenance
         decodeTask = nil
         decoderControl = nil
+        workerGate?.cancel()
+        self.workerGate = nil
         self.handoff = nil
         let endFrame = completion.finalSnapshot?.endFrame ?? snapshot?.endFrame
             ?? completion.provenance.request.startSourceFrame
@@ -421,6 +438,8 @@ final class LiveAudioMeterCoordinator: ObservableObject {
         decodeTask?.cancel()
         decodeTask = nil
         decoderControl = nil
+        workerGate?.cancel()
+        self.workerGate = nil
         self.handoff = nil
         snapshot = nil
         reducedSnapshot = nil
@@ -444,6 +463,8 @@ final class LiveAudioMeterCoordinator: ObservableObject {
         handoff.invalidate()
         decodeTask = nil
         decoderControl = nil
+        workerGate?.cancel()
+        self.workerGate = nil
         self.handoff = nil
         snapshot = nil
         reducedSnapshot = nil
@@ -496,10 +517,13 @@ final class LiveAudioMeterCoordinator: ObservableObject {
     private func invalidateWorker() {
         let oldHandoff = handoff
         let oldTask = decodeTask
+        let oldWorkerGate = workerGate
         handoff = nil
         decodeTask = nil
         decoderControl = nil
+        workerGate = nil
         oldHandoff?.invalidate()
+        oldWorkerGate?.cancel()
         oldTask?.cancel()
     }
 
@@ -515,10 +539,12 @@ final class LiveAudioMeterCoordinator: ObservableObject {
     private func applyWorkerSuspension() {
         if isTransportSuspended || isClockSuspended {
             handoff?.suspend()
+            workerGate?.suspend()
             decoderControl?.suspend()
             return
         }
         if let pending = handoff?.resumeAndTakeLatest() { publish(pending) }
+        workerGate?.resume()
         decoderControl?.resume()
     }
 

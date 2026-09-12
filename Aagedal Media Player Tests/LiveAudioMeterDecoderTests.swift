@@ -72,6 +72,64 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
         XCTAssertEqual(processor.maximumBufferedByteCount, 2_400 * 2 * MemoryLayout<Float>.size)
     }
 
+    func testWorkerGateBoundsSingleCallbackAndHonorsSuspendResume() async throws {
+        let request = try makeRequest()
+        let frames = 48_000
+        let samples = (0..<frames).flatMap { frame -> [Float] in
+            let sample = Float(0.2 * sin(2 * .pi * 997 * Double(frame) / 48_000))
+            return [sample, -sample]
+        }
+        let expected = try directSnapshots(request: request, samples: samples)
+        let received = SnapshotBox()
+        let gate = LiveAudioMeterWorkerGate(request: request)
+        let processor = try LiveAudioMeterPCMStreamProcessor(
+            request: request, workerGate: gate
+        ) { received.append($0) }
+        let data = bytes(samples)
+        gate.update(playbackTime: 0)
+
+        let consumeTask = Task.detached { try processor.consume(data) }
+        await eventually { received.values.last?.endFrame == 12_000 }
+        try await Task.sleep(for: .milliseconds(40))
+        XCTAssertEqual(received.values.last?.endFrame, 12_000)
+        XCTAssertEqual(gate.permittedEndFrame, 12_000)
+
+        gate.suspend()
+        gate.update(playbackTime: 0.1)
+        try await Task.sleep(for: .milliseconds(40))
+        XCTAssertEqual(received.values.last?.endFrame, 12_000)
+
+        gate.resume()
+        await eventually { received.values.last?.endFrame == 16_800 }
+        try await Task.sleep(for: .milliseconds(40))
+        XCTAssertEqual(received.values.last?.endFrame, 16_800)
+
+        gate.update(playbackTime: 1)
+        try await consumeTask.value
+        _ = try processor.finish()
+        XCTAssertEqual(received.values, expected)
+    }
+
+    func testWorkerGateCancellationReleasesBlockedConsumer() async throws {
+        let request = try makeRequest()
+        let gate = LiveAudioMeterWorkerGate(request: request)
+        let processor = try LiveAudioMeterPCMStreamProcessor(
+            request: request, workerGate: gate
+        ) { _ in }
+        let data = bytes([Float](repeating: 0, count: 48_000 * 2))
+        let consumeTask = Task.detached { try processor.consume(data) }
+
+        try await Task.sleep(for: .milliseconds(40))
+        gate.cancel()
+        do {
+            try await consumeTask.value
+            XCTFail("Expected gate cancellation")
+        } catch is CancellationError {
+            // Expected: cancellation wakes the condition instead of deadlocking
+            // process termination behind the stdout callback.
+        }
+    }
+
     func testEOFPublishesFinalRevisionAndCannotFinishTwice() throws {
         let request = try makeRequest(startFrame: 240)
         let received = SnapshotBox()
@@ -185,7 +243,16 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
         request: LiveAudioMeterDecodeRequest, samples: [Float]
     ) throws -> [LiveAudioMeterSnapshot] {
         var meter = try LiveAudioMeterDSP(format: request.format, startFrame: request.startSourceFrame)
-        var output = try meter.process(samples, startFrame: request.startSourceFrame)
+        let samplesPerBlock = request.format.sampleRate / 20 * request.format.channelCount
+        var output: [LiveAudioMeterSnapshot] = []
+        var sampleOffset = 0
+        while sampleOffset < samples.count {
+            let end = min(sampleOffset + samplesPerBlock, samples.count)
+            output += try meter.process(
+                Array(samples[sampleOffset..<end]), startFrame: meter.nextFrame
+            )
+            sampleOffset = end
+        }
         if let final = try meter.finish() { output.append(final) }
         return output
     }
@@ -197,6 +264,19 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
             withUnsafeBytes(of: &bits) { data.append(contentsOf: $0) }
         }
         return data
+    }
+
+    private func eventually(
+        timeout: Duration = .seconds(2),
+        _ condition: @escaping @Sendable () -> Bool
+    ) async {
+        let clock = ContinuousClock()
+        let deadline = clock.now.advanced(by: timeout)
+        while clock.now < deadline {
+            if condition() { return }
+            try? await Task.sleep(for: .milliseconds(5))
+        }
+        XCTFail("Condition not satisfied before timeout")
     }
 
     private func float32Wave(samples: [Float], channels: Int, sampleRate: Int) -> Data {

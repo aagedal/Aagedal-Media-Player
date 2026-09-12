@@ -151,6 +151,28 @@ final class LiveAudioMeterCoordinatorTests: XCTestCase {
         await decoder.waitUntilCancelled(stream: 0)
     }
 
+    func testWorkerGateTracksPlaybackClockAndCancelsWithGeneration() async throws {
+        let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
+        let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
+        coordinator.start(try request(stream: 0, startFrame: 0))
+        await decoder.waitUntilAttached(stream: 0)
+        let oldGate = try XCTUnwrap(decoder.gate(stream: 0))
+        XCTAssertEqual(oldGate.permittedEndFrame, 0)
+
+        coordinator.updatePlaybackClock(playback(time: 1, playing: true))
+        XCTAssertEqual(oldGate.permittedEndFrame, 60_000)
+
+        coordinator.restart(try request(stream: 1, startFrame: 48_000), because: .seek)
+        XCTAssertThrowsError(try oldGate.waitForByteCapacity(
+            processedEndFrame: 60_000,
+            pendingByteCount: 0,
+            bytesPerFrame: 2 * MemoryLayout<Float>.size
+        )) { error in
+            XCTAssertTrue(error is CancellationError)
+        }
+        coordinator.close()
+    }
+
     func testUnsupportedSpeedInvalidatesOnceAndRestartsAtRestoredClock() async throws {
         let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
         let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
@@ -419,6 +441,7 @@ private enum TestFailure: Error { case oldGeneration, decode }
 private final class ControlledLiveMeterDecoder: @unchecked Sendable {
     private struct Entry {
         let onSnapshot: LiveAudioMeterPCMStreamProcessor.SnapshotHandler
+        let workerGate: LiveAudioMeterWorkerGate
         let continuation: CheckedContinuation<LiveAudioMeterDecodeCompletion, Error>
     }
 
@@ -434,6 +457,7 @@ private final class ControlledLiveMeterDecoder: @unchecked Sendable {
     func decode(
         _ request: LiveAudioMeterDecodeRequest,
         control: SubprocessHandle,
+        workerGate: LiveAudioMeterWorkerGate,
         onSnapshot: @escaping LiveAudioMeterPCMStreamProcessor.SnapshotHandler
     ) async throws -> LiveAudioMeterDecodeCompletion {
         let stream = request.audioStreamOrderIndex
@@ -447,7 +471,9 @@ private final class ControlledLiveMeterDecoder: @unchecked Sendable {
                         cancelImmediately = true
                     } else {
                         entries[stream, default: []].append(Entry(
-                            onSnapshot: onSnapshot, continuation: continuation
+                            onSnapshot: onSnapshot,
+                            workerGate: workerGate,
+                            continuation: continuation
                         ))
                     }
                 }
@@ -472,6 +498,10 @@ private final class ControlledLiveMeterDecoder: @unchecked Sendable {
             guard index >= 0, requests[stream]?.indices.contains(index) == true else { return nil }
             return requests[stream]?[index]
         }
+    }
+
+    func gate(stream: Int) -> LiveAudioMeterWorkerGate? {
+        lock.withLock { entries[stream]?.first?.workerGate }
     }
 
     func emit(_ snapshot: LiveAudioMeterSnapshot, stream: Int) {

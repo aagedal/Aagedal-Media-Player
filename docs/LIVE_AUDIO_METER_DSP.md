@@ -8,8 +8,8 @@ buffering. Player controllers now publish typed clock, transport, scrub, seek,
 frame-step, loop, source and audio-track events, and the coordinator applies a
 tested drift/failure policy to them. A window-owned session now subscribes that
 seam and exposes an activating panel in the app. The live Audio QC roadmap and
-release gates remain open because timestamp authority, worker-side ahead
-enforcement and production acceptance are not complete.
+release gates remain open because timestamp authority and production acceptance
+are not complete.
 
 ## Measurement core
 
@@ -91,11 +91,15 @@ arguments, source request and sample format as provenance.
 This decoder is deliberately not a playback coordinator. It requests native
 1× input pacing and caps catch-up at 1× so a temporarily stalled reader cannot
 race forward afterward. The fixed 50 ms processor buffer remains below the
-DSP's 250 ms input ceiling. Wall-clock pacing does not prove alignment with the
-active player clock. Raw Float32 output also carries no decoder timestamp, so
-the sample-count endpoint after input seeking must still be validated on real
-compressed sources, and the worker must stop accepting bytes before it can
-exceed the ahead-of-playback budget.
+DSP's 250 ms input ceiling. A per-generation condition gate admits no PCM beyond
+the playback clock plus 250 ms; a large stdout callback blocks at the exact
+byte boundary and applies pipe backpressure before excess PCM is queued or
+processed. Pause and buffering suspend admission, resume wakes it, and
+generation cancellation wakes blocked consumers before process teardown.
+Wall-clock pacing and bounded admission still do not prove alignment with the
+active player clock. Raw Float32 output carries no decoder timestamp, so the
+sample-count endpoint after input seeking must still be validated on real
+compressed sources.
 
 `LiveAudioMeterCoordinator` now supplies the isolated window-ownership boundary:
 one decode task, monotonically changing generations, stale result rejection,
@@ -168,11 +172,12 @@ continuity, suspend before and after attachment, resume, and cancellation while
 stopped. These are calculation and process-control tests; synthetic PCM is not evidence of a validated live
 source decoder or all programme/transient families.
 
-The mounted-session continuation passes the full 632-test Debug suite with no
+The worker-gate continuation passes the full 635-test Debug suite with no
 failures and one expected opt-in real-volume-exhaustion skip. It adds focused
 coverage for current-clock startup/retry, source replacement, late metadata,
 preference persistence, auxiliary-panel command routing, malformed-snapshot
-diagnostics and complete delivery of final subprocess bytes. Current release
+diagnostics, complete delivery of final subprocess bytes, one-callback admission
+limits, suspend/resume and cancellation of blocked consumers. Current release
 preflight still fails three bundled-FFmpeg signature/timestamp checks.
 
 A preliminary optimized standalone check on this development Mac processed ten
@@ -182,8 +187,7 @@ UI, scheduling and thermal costs and is not a release-floor performance result.
 Remaining work:
 
 - Prove decoded timestamps on real compressed sources (or change the decoder
-  protocol so timestamps are authoritative) and enforce the 250 ms bound in
-  the worker before additional PCM is accepted. Validate drift failure,
+  protocol so timestamps are authoritative). Validate drift failure,
   seek/loop/reload, EOF revision, cancellation, retry and overrun end to end.
 - Production-path numerical references, compressed-source gain checks and
   monitor-routing invariance on both backends.

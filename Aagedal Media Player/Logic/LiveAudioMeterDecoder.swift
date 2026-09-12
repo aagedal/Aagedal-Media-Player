@@ -54,6 +54,85 @@ nonisolated struct LiveAudioMeterDecodeCompletion: Equatable, Sendable {
     let finalSnapshot: LiveAudioMeterSnapshot?
 }
 
+/// Hard source-frame admission bound shared by the playback owner and decoder
+/// worker. Blocking the stdout callback applies pipe backpressure before PCM is
+/// queued or processed beyond the current playback budget.
+nonisolated final class LiveAudioMeterWorkerGate: @unchecked Sendable {
+    private let condition = NSCondition()
+    private let sampleRate: Int
+    private let maximumAheadFrames: Int64
+    private nonisolated(unsafe) var maximumEndFrame: Int64
+    private nonisolated(unsafe) var isSuspended = false
+    private nonisolated(unsafe) var isCancelled = false
+
+    init(request: LiveAudioMeterDecodeRequest) {
+        sampleRate = request.format.sampleRate
+        maximumAheadFrames = Int64(
+            (LiveAudioMeterClockPolicy.maximumDrift * Double(request.format.sampleRate)).rounded(.down)
+        )
+        maximumEndFrame = request.startSourceFrame
+    }
+
+    func update(playbackTime: TimeInterval) {
+        guard playbackTime.isFinite, playbackTime >= 0 else { return }
+        let frameValue = (playbackTime * Double(sampleRate)).rounded(.down)
+        guard frameValue.isFinite, frameValue <= Double(Int64.max - maximumAheadFrames) else { return }
+        condition.withLock {
+            maximumEndFrame = Int64(frameValue) + maximumAheadFrames
+            condition.broadcast()
+        }
+    }
+
+    func suspend() {
+        condition.withLock { isSuspended = true }
+    }
+
+    func resume() {
+        condition.withLock {
+            isSuspended = false
+            condition.broadcast()
+        }
+    }
+
+    func cancel() {
+        condition.withLock {
+            isCancelled = true
+            condition.broadcast()
+        }
+    }
+
+    /// Returns the number of additional bytes that may be admitted without
+    /// moving processed plus pending PCM beyond the hard source-frame limit.
+    func waitForByteCapacity(
+        processedEndFrame: Int64,
+        pendingByteCount: Int,
+        bytesPerFrame: Int
+    ) throws -> Int {
+        condition.lock()
+        defer { condition.unlock() }
+        while true {
+            if isCancelled { throw CancellationError() }
+            if !isSuspended, maximumEndFrame > processedEndFrame {
+                let frameCapacity = maximumEndFrame - processedEndFrame
+                let (byteCapacity64, overflow) = frameCapacity.multipliedReportingOverflow(
+                    by: Int64(bytesPerFrame)
+                )
+                let available64 = overflow
+                    ? Int64.max
+                    : max(0, byteCapacity64 - Int64(pendingByteCount))
+                if available64 > 0 {
+                    return Int(min(available64, Int64(Int.max)))
+                }
+            }
+            condition.wait()
+        }
+    }
+
+    var permittedEndFrame: Int64 {
+        condition.withLock { maximumEndFrame }
+    }
+}
+
 /// Converts arbitrary stdout byte boundaries into bounded, frame-aligned DSP
 /// calls. It retains at most one 50-ms input block, never a stream-length PCM
 /// buffer or an output history.
@@ -62,14 +141,21 @@ nonisolated final class LiveAudioMeterPCMStreamProcessor: @unchecked Sendable {
 
     private let lock = NSLock()
     private let onSnapshot: SnapshotHandler
+    private let workerGate: LiveAudioMeterWorkerGate?
+    private let admissionLock = NSLock()
     private let blockFrames: Int
     private let bytesPerFrame: Int
     private nonisolated(unsafe) var meter: LiveAudioMeterDSP
     private nonisolated(unsafe) var pending: [UInt8] = []
     private nonisolated(unsafe) var isFinished = false
 
-    init(request: LiveAudioMeterDecodeRequest, onSnapshot: @escaping SnapshotHandler) throws {
+    init(
+        request: LiveAudioMeterDecodeRequest,
+        workerGate: LiveAudioMeterWorkerGate? = nil,
+        onSnapshot: @escaping SnapshotHandler
+    ) throws {
         meter = try LiveAudioMeterDSP(format: request.format, startFrame: request.startSourceFrame)
+        self.workerGate = workerGate
         self.onSnapshot = onSnapshot
         bytesPerFrame = request.format.channelCount * MemoryLayout<Float>.size
         // A peak publication block keeps latency and queued PCM below the DSP's
@@ -86,12 +172,26 @@ nonisolated final class LiveAudioMeterPCMStreamProcessor: @unchecked Sendable {
 
     func consume(_ data: Data) throws {
         guard !data.isEmpty else { return }
+        admissionLock.lock()
+        defer { admissionLock.unlock() }
         var cursor = data.startIndex
         while cursor < data.endIndex {
+            let admission = lock.withLock {
+                (processedEndFrame: meter.nextFrame, pendingByteCount: pending.count)
+            }
+            let gateCapacity = try workerGate?.waitForByteCapacity(
+                processedEndFrame: admission.processedEndFrame,
+                pendingByteCount: admission.pendingByteCount,
+                bytesPerFrame: bytesPerFrame
+            ) ?? Int.max
             let snapshots: [LiveAudioMeterSnapshot] = try lock.withLock {
                 guard !isFinished else { throw LiveAudioMeterDecoder.Failure.alreadyFinished }
                 let available = maximumBufferedByteCount - pending.count
-                let count = min(available, data.distance(from: cursor, to: data.endIndex))
+                let count = min(
+                    available,
+                    gateCapacity,
+                    data.distance(from: cursor, to: data.endIndex)
+                )
                 let end = data.index(cursor, offsetBy: count)
                 pending.append(contentsOf: data[cursor..<end])
                 cursor = end
@@ -108,6 +208,8 @@ nonisolated final class LiveAudioMeterPCMStreamProcessor: @unchecked Sendable {
 
     @discardableResult
     func finish() throws -> LiveAudioMeterSnapshot? {
+        admissionLock.lock()
+        defer { admissionLock.unlock() }
         var snapshots: [LiveAudioMeterSnapshot] = []
         let final: LiveAudioMeterSnapshot? = try lock.withLock {
             guard !isFinished else { throw LiveAudioMeterDecoder.Failure.alreadyFinished }
@@ -217,6 +319,7 @@ nonisolated enum LiveAudioMeterDecoder {
     static func decode(
         _ request: LiveAudioMeterDecodeRequest,
         handle: SubprocessHandle = SubprocessHandle(),
+        workerGate: LiveAudioMeterWorkerGate? = nil,
         onSnapshot: @escaping LiveAudioMeterPCMStreamProcessor.SnapshotHandler
     ) async throws -> LiveAudioMeterDecodeCompletion {
         guard let path = FFmpegService.ffmpegPath else { throw Failure.decoderUnavailable }
@@ -229,17 +332,26 @@ nonisolated enum LiveAudioMeterDecoder {
             throw Failure.decoderFailed(error.localizedDescription)
         }
         let decoderArguments = arguments(for: request, inputAudioArguments: inputArguments)
-        let processor = try LiveAudioMeterPCMStreamProcessor(request: request, onSnapshot: onSnapshot)
+        let processor = try LiveAudioMeterPCMStreamProcessor(
+            request: request, workerGate: workerGate, onSnapshot: onSnapshot
+        )
         let pipelineFailure = PipelineFailure()
 
         do {
-            try await FFmpegService.runStreamingOutput(arguments: decoderArguments, handle: handle) { data in
-                do {
-                    try processor.consume(data)
-                } catch {
-                    pipelineFailure.record(error)
-                    handle.cancel()
+            try await withTaskCancellationHandler {
+                try await FFmpegService.runStreamingOutput(
+                    arguments: decoderArguments, handle: handle
+                ) { data in
+                    do {
+                        try processor.consume(data)
+                    } catch {
+                        pipelineFailure.record(error)
+                        handle.cancel()
+                    }
                 }
+            } onCancel: {
+                workerGate?.cancel()
+                handle.cancel()
             }
             try Task.checkCancellation()
         } catch {

@@ -1804,8 +1804,8 @@ checks pass in `/tmp/aagedal-programme-preflight-20260911.log`.
 ## Phase 83 — Bounded live-meter calculation and display foundation
 
 Status: Calculation, lifecycle and application integration implemented on
-2026-09-12, with the live-path acceptance work below still open. This does not
-complete Audio QC.
+2026-09-12, with worker-side admission bounding added on 2026-09-13 and the
+live-path acceptance work below still open. This does not complete Audio QC.
 
 - [x] Add a serial source-PCM measurement core with explicit rate/speaker order,
   bounded 250 ms blocks, fixed filter history and sixty energy buckets.
@@ -1844,8 +1844,9 @@ complete Audio QC.
   and tear down decoder work when the panel or player window closes.
 - [x] Mount and connect the activating meter panel, including A/B selection,
   reference controls, clear/reset/retry actions and status diagnostics.
-- [ ] Prove authoritative decoder timestamps plus a worker-side
-  ahead-of-playback bound.
+- [x] Enforce an exact worker-side PCM admission bound no more than 250 ms ahead
+  of the playback clock, including pause/resume and cancellation wake-up.
+- [ ] Prove authoritative decoder timestamps on real compressed sources.
 - [ ] Complete real-path accuracy, routing invariance, spoken accessibility and
   release-floor performance.
 
@@ -1860,8 +1861,8 @@ The decoder/presentation/lifecycle continuation includes paced bundled-FFmpeg
 decode, coordinator ownership, suspend/cancellation and panel-session coverage.
 The mounted panel deliberately qualifies provenance until decode completion and
 does not mark live metering as release accepted: authoritative compressed-source
-timestamp continuity and worker-side ahead enforcement remain open.
-The integrated continuation passes the full 632-test Debug suite with no failures
+timestamp continuity and production-path acceptance remain open.
+The integrated continuation passes the full 635-test Debug suite with no failures
 and one expected opt-in real-volume-exhaustion skip.
 
 See `docs/LIVE_AUDIO_METER_DSP.md`. A preliminary optimized standalone host
@@ -1930,8 +1931,9 @@ audio-stream identity into source-sample-aligned decode requests. Player
 controllers publish typed transport/discontinuity events and the coordinator
 now applies tested clock drift, ahead hysteresis, restart and speed policies;
 the owning window session, source-readiness seam, activating panel and
-active-player command routing are now integrated. Authoritative compressed-source
-timestamps and a worker-side ahead bound remain. The new
+active-player command routing are now integrated. Worker-side PCM admission is
+hard bounded to 250 ms beyond the playback clock. Authoritative compressed-source
+timestamps remain. The new
 production-path metadata profiler observes RSS before the first uncached load,
 checks cache parity and caller release, and validates one fresh XCTest host per
 input; its 61-second ALAC end-to-end run validates the harness, not the long-file
@@ -1946,7 +1948,7 @@ Review commands now toggle Comparison Review and navigate previous/next matching
 notes without toolbar traversal. They do not replace native Full Keyboard Access
 or spoken VoiceOver acceptance.
 
-All 632 ordinary Debug tests pass; the optional real-volume-exhaustion test is
+All 635 ordinary Debug tests pass; the optional real-volume-exhaustion test is
 the sole skip. Static analysis passes. Release preflight remains blocked by the
 bundled FFmpeg's invalid/non-Developer-ID signature and missing secure timestamp,
 so candidate signing and distribution acceptance remain open.
@@ -2030,8 +2032,8 @@ so candidate signing and distribution acceptance remain open.
   source-rate-paced decoder, lifecycle owner and selected-track request mapping
   now exist. Typed playback events plus coordinator clock/drift and ahead
   hysteresis policies are tested; the owning meter-window session and activating
-  UI are integrated. Authoritative decoded timestamps, a worker-side ahead bound
-  and live reference validation remain;
+  UI and hard 250 ms worker admission bound are integrated. Authoritative decoded
+  timestamps and live reference validation remain;
   Phase 84 adds production programme profiling and fixes silent long-range
   channel loss plus excessive shared-demux buffering; representative-media and
   release-floor memory acceptance remain.

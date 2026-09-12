@@ -205,9 +205,11 @@ private actor MeterDecodeRecorder {
     func decode(
         _ request: LiveAudioMeterDecodeRequest,
         _ handle: SubprocessHandle,
+        _ workerGate: LiveAudioMeterWorkerGate,
         _ onSnapshot: @escaping LiveAudioMeterPCMStreamProcessor.SnapshotHandler
     ) async throws -> LiveAudioMeterDecodeCompletion {
         _ = handle
+        _ = workerGate
         _ = onSnapshot
         requests.append(request)
         do {
