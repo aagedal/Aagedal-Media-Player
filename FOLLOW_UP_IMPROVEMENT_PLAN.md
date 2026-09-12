@@ -1797,6 +1797,40 @@ Build and static-analysis logs are `/tmp/aagedal-programme-release-build-2026091
 and `/tmp/aagedal-programme-release-analyze-20260911.log`. All 61 release-preflight
 checks pass in `/tmp/aagedal-programme-preflight-20260911.log`.
 
+## Phase 83 — Bounded live-meter calculation and display foundation
+
+Status: Implemented on 2026-09-12. This is the calculation/display foundation
+for Phase 81, not a live playback feature or completion of Audio QC.
+
+- [x] Add a serial source-PCM measurement core with explicit rate/speaker order,
+  bounded 250 ms blocks, fixed filter history and sixty energy buckets.
+- [x] Compute per-channel sample/4× reconstructed true peaks, ungated 400 ms
+  Momentary and 3 s Short-term loudness, and independent segment maxima.
+- [x] Publish source-sample peak/loudness endpoints separately, reject gaps,
+  duplicate positions, malformed blocks and invalid PCM, and invalidate failed
+  segments instead of concealing missing samples.
+- [x] Drain EOF reconstruction without extending loudness windows or replacing
+  the final valid peak with silence. Cover exact and partial publication buckets.
+- [x] Add source-time peak decay/hold, final-peak revision, separate maxima,
+  EBU/ATSC/custom reference guides and exact unrounded ceiling comparisons.
+- [x] Cover calibration at all three initial sample rates, independent FFmpeg
+  time-varying M/S comparisons, LFE/surround roles, polarity/intersample and
+  signed above-full-scale transient peaks, block boundaries, reset and errors.
+- [ ] Integrate a provenance-verified source decoder, window/generation ownership,
+  transport pacing and discontinuity handling, bounded queues and cancellation.
+- [ ] Add the meter UI, persisted references and diagnostics; complete real-path
+  accuracy, routing invariance, accessibility and release-floor performance.
+
+The combined Release run passes 577 tests with zero failures and zero skips,
+including the official ITU offline references and real APFS recovery, with
+verified image detach. Evidence is retained in
+`/tmp/aagedal-meter-release-apfs-20260912/Tests.xcresult` and `summary.json`.
+All 61 preflight checks pass.
+
+See `docs/LIVE_AUDIO_METER_DSP.md`. A preliminary optimized standalone host
+check processed ten seconds of eight-channel 96 kHz PCM in about 0.13 seconds;
+this excludes decoder/UI costs and does not satisfy base-M1 acceptance.
+
 ## Remaining work after this continuation
 
 - Integrate the measured metadata-memory dependency fix after upstream review,
@@ -1872,6 +1906,8 @@ checks pass in `/tmp/aagedal-programme-preflight-20260911.log`.
   Broadcast WAVE recording tags; native validation is recorded with that phase.
 - Implement and validate peak/true-peak meters and live momentary/short-term
   loudness against the Phase 81 calibration/ballistics/preset contract;
+  Phase 83 implements and tests the bounded DSP/display foundation but has no
+  playback decoder or meter UI yet;
   programme LRA/true-peak and broader transient
   reference accuracy, and representative multichannel profiling. Phase 55 adds
   three original ITU programme integrated-loudness references. Phase 57 adds
@@ -2006,3 +2042,5 @@ checks pass in `/tmp/aagedal-programme-preflight-20260911.log`.
 73. Phase 81 live Audio QC measurement contract.
 
 74. Phase 82 programme loudness for split-mono deliverables.
+
+75. Phase 83 bounded live-meter calculation and display foundation.
