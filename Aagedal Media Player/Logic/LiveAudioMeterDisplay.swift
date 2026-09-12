@@ -56,6 +56,23 @@ nonisolated struct LiveAudioPeakDisplay: Sendable {
         }
     }
 
+    /// EOF may revise the last bucket after draining reconstruction history.
+    /// That drain adds no source time: only a higher final peak changes the bar
+    /// or marker, and an unchanged reading must not restart the marker hold.
+    mutating func reviseFinalPeak(level: Double, sourceSamplePosition position: Int64) throws {
+        guard sourceSamplePosition == position else {
+            throw LiveAudioMeterDisplayError.discontinuousPosition
+        }
+        guard Self.isValidLevel(level) else {
+            throw LiveAudioMeterDisplayError.invalidLevel
+        }
+        bar = max(bar ?? -.infinity, level)
+        if marker.map({ level > $0 }) ?? true {
+            marker = level
+            markerHoldUntil = Double(position) / sampleRate + 2
+        }
+    }
+
     /// A new measurement segment starts without bars or source-time history.
     mutating func reset() {
         bar = nil

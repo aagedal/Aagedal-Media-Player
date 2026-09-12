@@ -6,6 +6,49 @@
 import XCTest
 
 final class LiveAudioMeterDisplayTests: XCTestCase {
+    func testUnchangedFinalRevisionDoesNotAdvanceTimeOrRestartHold() throws {
+        var display = try LiveAudioPeakDisplay(sampleRate: 100)
+        try display.consume(level: 0, sourceSamplePosition: 0)
+        try display.consume(level: -80, sourceSamplePosition: 150)
+        try display.reviseFinalPeak(level: 0, sourceSamplePosition: 150)
+        XCTAssertEqual(display.bar, 0)
+        XCTAssertEqual(display.marker, 0)
+        XCTAssertEqual(display.sourceSamplePosition, 150)
+        try display.consume(level: -80, sourceSamplePosition: 250)
+        XCTAssertEqual(display.marker, -10, "The original hold expires at sample 200")
+    }
+
+    func testHigherFinalRevisionRaisesPeakAndRestartsHoldAtExistingEndpoint() throws {
+        var display = try LiveAudioPeakDisplay(sampleRate: 100)
+        try display.consume(level: -6, sourceSamplePosition: 0)
+        try display.consume(level: -80, sourceSamplePosition: 150)
+        try display.reviseFinalPeak(level: 2, sourceSamplePosition: 150)
+        XCTAssertEqual(display.bar, 2)
+        XCTAssertEqual(display.marker, 2)
+        try display.reviseFinalPeak(level: -20, sourceSamplePosition: 150)
+        XCTAssertEqual(display.bar, 2)
+        try display.consume(level: -80, sourceSamplePosition: 300)
+        XCTAssertEqual(display.marker, 2)
+        try display.consume(level: -80, sourceSamplePosition: 400)
+        XCTAssertEqual(display.marker, -8)
+    }
+
+    func testFinalRevisionRequiresExistingMatchingEndpointAndValidLevel() throws {
+        var display = try LiveAudioPeakDisplay(sampleRate: 100)
+        XCTAssertThrowsError(try display.reviseFinalPeak(level: 0, sourceSamplePosition: 0))
+        try display.consume(level: -.infinity, sourceSamplePosition: 100)
+        for position: Int64 in [0, 99, 101] {
+            XCTAssertThrowsError(try display.reviseFinalPeak(level: 0, sourceSamplePosition: position))
+        }
+        for value in [Double.nan, Double.infinity] {
+            XCTAssertThrowsError(try display.reviseFinalPeak(level: value, sourceSamplePosition: 100))
+        }
+        XCTAssertEqual(display.sourceSamplePosition, 100)
+        XCTAssertEqual(display.bar, -.infinity)
+        try display.reviseFinalPeak(level: -.infinity, sourceSamplePosition: 100)
+        XCTAssertEqual(display.marker, -.infinity)
+    }
+
     func testImmediateAttackAndTwentyDecibelsPerSourceSecondRelease() throws {
         var display = try LiveAudioPeakDisplay(sampleRate: 48_000)
         try display.consume(level: -30, sourceSamplePosition: 0)
