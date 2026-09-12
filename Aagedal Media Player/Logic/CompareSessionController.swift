@@ -1799,6 +1799,13 @@ final class CompareSessionController: ObservableObject {
         let existingReload = ownsPendingReload(primary: primary) ? pendingReload : nil
         let wasPlaying = primary.isPlaying || existingReload?.shouldResume == true
         let primaryTime = existingReload?.time ?? primary.playbackTimeSnapshot()
+        primary.publishLiveAudioMeterDiscontinuity(.geometryReload, at: primaryTime)
+        if isActive {
+            secondaryController.publishLiveAudioMeterDiscontinuity(
+                .geometryReload,
+                at: mappedSecondaryTime(for: primaryTime)
+            )
+        }
         readinessTask?.cancel()
         readinessTask = nil
         pendingReload = nil

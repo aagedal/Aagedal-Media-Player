@@ -92,6 +92,42 @@ final class LiveAudioMeterTransportTests: XCTestCase {
         withExtendedLifetime(subscription) {}
     }
 
+    func testReloadPublishesTypedGeometryBoundaryAtCurrentClock() {
+        let controller = PlayerController()
+        let comparison = CompareSessionController()
+        controller.currentPlaybackTime = 12.5
+        var boundaries: [(LiveAudioMeterPlaybackDiscontinuity, LiveAudioMeterPlaybackSnapshot)] = []
+        let subscription = controller.liveAudioMeterPlaybackEvents.sink { event in
+            if case let .discontinuity(cause, snapshot) = event {
+                boundaries.append((cause, snapshot))
+            }
+        }
+
+        comparison.reload(primary: controller)
+
+        XCTAssertEqual(boundaries.count, 1)
+        XCTAssertEqual(boundaries.first?.0, .geometryReload)
+        XCTAssertEqual(boundaries.first?.1.time, 12.5)
+        withExtendedLifetime(subscription) {}
+    }
+
+    func testPlayerPublishesTypedEndBoundary() {
+        let controller = PlayerController()
+        var received: LiveAudioMeterPlaybackEvent?
+        let subscription = controller.liveAudioMeterPlaybackEvents.sink { received = $0 }
+
+        controller.publishLiveAudioMeterEnded()
+
+        XCTAssertEqual(received, .ended(.init(
+            time: 0,
+            phase: .idle,
+            isPlaying: false,
+            rate: 1,
+            preparationID: 0
+        )))
+        withExtendedLifetime(subscription) {}
+    }
+
     private func snapshot(rate: Float) -> LiveAudioMeterPlaybackSnapshot {
         .init(time: 0, phase: .ready, isPlaying: true, rate: rate, preparationID: 1)
     }

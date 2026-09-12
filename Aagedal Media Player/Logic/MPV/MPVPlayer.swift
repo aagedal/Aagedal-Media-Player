@@ -47,6 +47,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
     @Published var isSeekable = false
     @Published var isBusy = false
     @Published var isFileLoaded = false
+    @Published private(set) var hasReachedEOF = false
     @Published var videoAspectRatio: CGFloat?
     @Published var videoSourceSize: NSSize?
     @Published var error: String?
@@ -649,10 +650,14 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
                                 DispatchQueue.main.async { self.isSeekable = value != 0 }
                             }
                         case MPVProperty.eofReached:
-                            if let value = UnsafePointer<Int>(OpaquePointer(property.data))?.pointee, value != 0 {
+                            if let value = UnsafePointer<Int>(OpaquePointer(property.data))?.pointee {
                                 DispatchQueue.main.async {
-                                    self.logger.info("EOF reached, pausing at last frame")
-                                    self.isPlaying = false
+                                    let reachedEOF = value != 0
+                                    if reachedEOF {
+                                        self.logger.info("EOF reached, pausing at last frame")
+                                        self.isPlaying = false
+                                    }
+                                    self.hasReachedEOF = reachedEOF
                                 }
                             }
                         case MPVProperty.videoParamsDw, MPVProperty.videoParamsDh, MPVProperty.videoParamsRotate:

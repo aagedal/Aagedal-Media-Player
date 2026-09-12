@@ -180,6 +180,7 @@ final class PlayerController: ObservableObject {
     private var mpvBackwardFailureCancellable: AnyCancellable?
     private var mpvErrorCancellable: AnyCancellable?
     private var mpvBusyCancellable: AnyCancellable?
+    private var mpvEOFCancellable: AnyCancellable?
 
     /// URLs where mpv's native `play-direction=backward` has previously
     /// failed (it emits "Backward playback is likely stuck/broken now."
@@ -668,6 +669,23 @@ final class PlayerController: ObservableObject {
                           player: self.mpvPlayer
                       ) else { return }
                 self.isPlaying = playing || self.isReversing
+            }
+
+        // MPV's eof-reached property is the authoritative end boundary. The
+        // timer observer remains responsible for legacy speed reset and loop
+        // detection, while live measurement receives exactly one event for
+        // each false-to-true EOF transition.
+        mpvEOFCancellable = mpv.$hasReachedEOF
+            .removeDuplicates()
+            .filter { $0 }
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self, weak mpv] _ in
+                guard let self, mpv != nil,
+                      observationIdentity.matches(
+                          preparationID: self.preparationID,
+                          player: self.mpvPlayer
+                      ) else { return }
+                self.publishLiveAudioMeterEnded()
             }
 
         // Forward MPV aspect ratio and source size
@@ -1670,6 +1688,7 @@ final class PlayerController: ObservableObject {
         mpvBackwardFailureCancellable = nil
         mpvErrorCancellable = nil
         mpvBusyCancellable = nil
+        mpvEOFCancellable = nil
         removeMPVLoopObserver()
         if resetAudioSelection {
             showAllMonoWaveforms = UserDefaults.standard.value(for: AppSettings.showAllMonoWaveforms)
