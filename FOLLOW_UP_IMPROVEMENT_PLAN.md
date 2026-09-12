@@ -1845,7 +1845,8 @@ live-path acceptance work below still open. This does not complete Audio QC.
 - [x] Mount and connect the activating meter panel, including A/B selection,
   reference controls, clear/reset/retry actions and status diagnostics.
 - [x] Enforce an exact worker-side PCM admission bound no more than 250 ms ahead
-  of the playback clock, including pause/resume and cancellation wake-up.
+  of the playback clock, including pause/resume, cancellation wake-up and actual
+  bundled-FFmpeg pipe backpressure.
 - [ ] Prove authoritative decoder timestamps on real compressed sources.
 - [ ] Complete real-path accuracy, routing invariance, spoken accessibility and
   release-floor performance.

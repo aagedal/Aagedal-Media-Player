@@ -193,7 +193,7 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
         XCTAssertTrue(received.values.isEmpty)
     }
 
-    func testBundledDecoderStreamsPCMAndReturnsVersionedProvenance() async throws {
+    func testBundledDecoderHonorsWorkerGateAndReturnsVersionedProvenance() async throws {
         guard FFmpegService.ffmpegPath != nil else { throw XCTSkip("Bundled ffmpeg is required") }
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("live-meter-decoder-\(UUID().uuidString).wav")
@@ -210,10 +210,27 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
             startSourceFrame: 0, startSourceTime: 0
         )
         let received = SnapshotBox()
+        let gate = LiveAudioMeterWorkerGate(request: request)
+        gate.update(playbackTime: 0)
 
         let clock = ContinuousClock()
         let started = clock.now
-        let completion = try await LiveAudioMeterDecoder.decode(request) { received.append($0) }
+        let decodeTask = Task {
+            try await LiveAudioMeterDecoder.decode(request, workerGate: gate) {
+                received.append($0)
+            }
+        }
+        await eventually(timeout: .seconds(3)) {
+            received.values.last?.endFrame == 12_000
+        }
+        try await Task.sleep(for: .milliseconds(100))
+        XCTAssertEqual(
+            received.values.last?.endFrame,
+            12_000,
+            "The real FFmpeg pipe must stop at the playback-clock admission boundary"
+        )
+        gate.update(playbackTime: 1)
+        let completion = try await decodeTask.value
         let elapsed = started.duration(to: clock.now)
 
         XCTAssertTrue(completion.provenance.decoderVersion.hasPrefix("ffmpeg version "))

@@ -177,8 +177,9 @@ failures and one expected opt-in real-volume-exhaustion skip. It adds focused
 coverage for current-clock startup/retry, source replacement, late metadata,
 preference persistence, auxiliary-panel command routing, malformed-snapshot
 diagnostics, complete delivery of final subprocess bytes, one-callback admission
-limits, suspend/resume and cancellation of blocked consumers. Current release
-preflight still fails three bundled-FFmpeg signature/timestamp checks.
+limits, suspend/resume, cancellation of blocked consumers and actual bundled-
+FFmpeg pipe backpressure at the playback boundary. Current release preflight
+still fails three bundled-FFmpeg signature/timestamp checks.
 
 A preliminary optimized standalone check on this development Mac processed ten
 seconds of eight-channel 96 kHz PCM in about 0.13 seconds. It excludes decoder,
