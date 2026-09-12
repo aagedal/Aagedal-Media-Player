@@ -808,7 +808,8 @@ production integration remains open.
   X-OCN LT. All five paired workloads pass on 2026-09-08 with unchanged inputs.
 - [ ] Complete upstream review and remaining fixture coverage, integrate a
   reviewed dependency release, and repeat full-app memory profiling. The latest
-  remote tag is still 3.0.0 as checked on 2026-09-08.
+  remote tag and upstream default branch are still at the pinned 3.0.0 revision,
+  as checked on 2026-09-12.
 
 Acceptance: the source of the memory spike and a measured candidate fix are now
 established. The app still uses the original pinned dependency; its memory gate
@@ -1822,8 +1823,12 @@ for Phase 81, not a live playback feature or completion of Audio QC.
 - [x] Add reusable accessible meter presentation state and controls for A/B,
   peak/loudness readings, exact reference-guide wording, diagnostics and
   finite-value-validated persisted reference preferences.
-- [ ] Integrate a provenance-verified source decoder, window/generation ownership,
-  transport pacing and discontinuity handling, bounded queues and cancellation.
+- [x] Add a window-scoped lifecycle coordinator with monotonically changing
+  generations, stale-result rejection, one-slot post-DSP UI coalescing,
+  cancellation/retry/EOF ownership and clean discontinuity restart causes.
+- [ ] Wire the decoder/coordinator to playback, with transport pacing, verified
+  timestamps/drift, bounded ahead-of-playback work and genuinely continuous
+  pause/resume through a controllable source-decoder session.
 - [ ] Mount and connect the meter UI; complete real-path accuracy, routing
   invariance, spoken accessibility and release-floor performance.
 
@@ -1833,10 +1838,11 @@ verified image detach. Evidence is retained in
 `/tmp/aagedal-meter-programme-final-apfs-20260912/Tests.xcresult` and `summary.json`.
 All 61 preflight checks pass.
 
-The decoder/presentation continuation passes 47 focused Debug tests, including
-a real signed bundled-FFmpeg source decode. These components remain deliberately
-unmounted until the transport coordinator can enforce pacing and lifecycle
-invalidation; they do not mark live metering as shipped.
+The decoder/presentation/lifecycle continuation passes 54 focused Debug tests,
+including a real signed bundled-FFmpeg source decode and seven coordinator
+ownership tests. These components remain deliberately unmounted until the
+production playback path can enforce transport pacing and timestamp continuity;
+they do not mark live metering as shipped.
 
 See `docs/LIVE_AUDIO_METER_DSP.md`. A preliminary optimized standalone host
 check processed ten seconds of eight-channel 96 kHz PCM in about 0.13 seconds;

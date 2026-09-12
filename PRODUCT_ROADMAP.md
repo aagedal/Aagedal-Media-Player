@@ -244,8 +244,9 @@ confidence as the picture.
 - [ ] Add peak and true-peak meters with clear dBFS/dBTP units.
   The September 12 bounded DSP/display foundation covers per-channel peaks,
   reconstruction, ballistics and reference thresholds. A bounded bundled-FFmpeg
-  decoder and reusable accessible presentation now exist; transport coordination
-  and app-window integration remain. See `docs/LIVE_AUDIO_METER_DSP.md`.
+  decoder, generation-safe lifecycle owner and reusable accessible presentation
+  now exist; transport-paced playback and app-window integration remain. See
+  `docs/LIVE_AUDIO_METER_DSP.md`.
 - [x] Add offline integrated loudness over a selected range or full file.
   The metadata inspector measures each source audio stream over Whole File or
   existing In–Out points, with cancellation and range provenance in copied

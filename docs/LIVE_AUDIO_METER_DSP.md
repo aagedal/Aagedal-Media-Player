@@ -1,10 +1,11 @@
 # Live audio meter calculation foundation
 
 Implementation: September 12, 2026. This completes bounded calculation,
-source-decoder and presentation foundations for the
+source-decoder, lifecycle-ownership and presentation foundations for the
 [live-meter contract](LIVE_AUDIO_METER_DESIGN.md). It does **not** connect those
-pieces to playback transport or expose the presentation in an app window. The
-live Audio QC roadmap and release gates remain open.
+pieces to playback transport, pace decoding against playback, or expose the
+presentation in an app window. The live Audio QC roadmap and release gates
+remain open.
 
 ## Measurement core
 
@@ -85,8 +86,16 @@ arguments, source request and sample format as provenance.
 
 This decoder is deliberately not a playback coordinator. A direct call will
 decode as quickly as FFmpeg supplies samples; transport pacing, bounded
-ahead-of-playback ownership, pause/seek/reload invalidation and generation
-isolation still belong to the pending coordinator.
+ahead-of-playback work and actual player-event integration remain outside it.
+
+`LiveAudioMeterCoordinator` now supplies the isolated window-ownership boundary:
+one decode task, monotonically changing generations, stale result rejection,
+one-slot post-DSP presentation coalescing, cancellation on replacement/close/
+deinitialization, clean restart causes, retry, EOF, and explicit lifecycle
+states. Because the decoder is not yet a controllable paced session, pause or
+buffering conservatively cancels the worker and freezes the displayed snapshot;
+resume requires a new source-position request and DSP generation. It does not
+pretend to preserve continuous filter history while FFmpeg runs ahead.
 
 `LiveAudioMeterViewState` and `LiveAudioMeterView` provide a reusable,
 accessibility-labelled presentation for A/B source choice, sample and true-peak
@@ -113,8 +122,12 @@ decoder tests cover arbitrary byte boundaries, fixed buffering, malformed and
 truncated PCM, final revision, source identity/arguments, and a real bundled
 FFmpeg WAVE decode with versioned provenance. Six presentation tests cover
 preference validation and exact EBU/ATSC threshold wording. A focused Debug run
-of these suites plus settings/numeric-default regressions passes 47 tests;
-Release production verification remains the separate build/preflight gate.
+of these suites plus settings/numeric-default regressions passes 47 tests. Seven
+coordinator tests cover stale callback rejection, one-slot UI coalescing,
+pause/buffering freeze and clean resume, every restart cause, retry, EOF, and
+cancellation before/after attachment and at deinitialization. These 54 focused
+tests pass; Release production verification remains the separate
+build/preflight gate.
 Final Xcode static analysis and all 61 release-preflight checks also pass.
 These are calculation tests; synthetic PCM is not evidence of a validated live
 source decoder or all programme/transient families.
@@ -125,11 +138,13 @@ UI, scheduling and thermal costs and is not a release-floor performance result.
 
 Remaining work:
 
-- A window-owned, generation-isolated coordinator around the source-PCM decoder,
-  with verified playback timestamps and rejection of decoder/playback drift.
-- Forward 1× transport pacing, bounded ahead-of-playback buffering, pause/resume,
+- Wire the generation-isolated coordinator and reusable presentation to their
+  owning player window, selected A/B source/track and actual playback events.
+- Forward 1× transport pacing, bounded ahead-of-playback buffering, genuinely
+  continuous pause/resume with a controllable decoder session,
   seek/loop/reload invalidation, EOF revision, cancellation, retry and overrun
-  behavior through the real playback paths.
+  behavior through the real playback paths, with verified timestamps and
+  rejection of decoder/playback drift.
 - Mount the reusable meter presentation in the application and connect its A/B
   selector, reference controls, clear/reset/retry actions and status diagnostics
   to the owning playback window.

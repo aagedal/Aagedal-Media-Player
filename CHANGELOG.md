@@ -5,6 +5,7 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Added
+- Generation-safe live-meter lifecycle ownership with stale-result rejection, bounded post-DSP presentation coalescing, clean discontinuity resets, retry/EOF handling and cancellation on source or window teardown. Playback wiring remains pending.
 - Bounded live source-audio decoding through the signed bundled FFmpeg, with explicit stream identity, disabled decoder gain processing, fixed Float32 buffering, actionable failures and versioned provenance. Transport lifecycle wiring remains pending.
 - Reusable accessible live-meter presentation and persisted EBU, ATSC and custom reference guides, with exact threshold wording, A/B source choice and expandable provenance diagnostics. The presentation is not yet mounted in the app.
 - Production split-mono programme loudness profiling with per-layout/range readings, separate process-memory measurements and rejection of sleep-interrupted timing evidence.

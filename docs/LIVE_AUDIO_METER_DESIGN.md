@@ -5,9 +5,11 @@ for live Audio QC; it does not implement meters, establish accuracy, or close
 the roadmap's live-meter/performance acceptance gates. Product decisions below
 are implementation requirements, distinct from the cited standards.
 
-September 12 continuation: the [DSP/display foundation](LIVE_AUDIO_METER_DSP.md)
-is implemented with focused numerical and boundary tests. Decoder, playback
-lifecycle and UI integration remain; the live acceptance matrix below is open.
+September 12 continuation: the
+[DSP/display/decoder/lifecycle/presentation foundations](LIVE_AUDIO_METER_DSP.md)
+are implemented with focused numerical and boundary tests. Actual playback
+lifecycle wiring, transport pacing, app integration and live-path acceptance
+remain; the live acceptance matrix below is open.
 
 ## Initial deliverable and measurement identity
 
