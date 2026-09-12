@@ -94,6 +94,7 @@ struct ContentView: View {
                 nsWindow: nsWindow,
                 isEditingTimecode: $isEditingTimecode,
                 showInspector: $showInspector,
+                showReviewNotes: $showReviewNotes,
                 scopeWindowController: $scopeWindowController,
                 showScopeOverlay: $showScopeOverlay,
                 audioWaveformWindowController: $audioWaveformWindowController,

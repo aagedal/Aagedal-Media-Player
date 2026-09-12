@@ -252,6 +252,27 @@ struct Aagedal_Media_PlayerApp: App {
                 .keyboardShortcut("r", modifiers: [.command, .shift])
                 .disabled(!mediaLoaded)
             }
+            CommandMenu("Review") {
+                Button("Toggle Comparison Review") {
+                    NotificationCenter.default.post(.toggleCompareReview)
+                }
+                .keyboardShortcut("r", modifiers: [.command, .option])
+                .disabled(isCompareModeActive != true)
+
+                Divider()
+
+                Button("Previous Review Note") {
+                    NotificationCenter.default.post(.seekToCompareReviewNote(.previous))
+                }
+                .keyboardShortcut("[", modifiers: [.command, .option])
+                .disabled(isCompareModeActive != true)
+
+                Button("Next Review Note") {
+                    NotificationCenter.default.post(.seekToCompareReviewNote(.next))
+                }
+                .keyboardShortcut("]", modifiers: [.command, .option])
+                .disabled(isCompareModeActive != true)
+            }
         }
 
         Settings {

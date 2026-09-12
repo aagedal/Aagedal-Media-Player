@@ -15,6 +15,7 @@ struct NotificationHandlers: ViewModifier {
     let nsWindow: NSWindow?
     @Binding var isEditingTimecode: Bool
     @Binding var showInspector: Bool
+    @Binding var showReviewNotes: Bool
     @Binding var scopeWindowController: ScopeWindowController?
     @Binding var showScopeOverlay: Bool
     @Binding var audioWaveformWindowController: AudioWaveformWindowController?
@@ -35,6 +36,7 @@ struct NotificationHandlers: ViewModifier {
                 compareSession: compareSession,
                 nsWindow: nsWindow,
                 showInspector: $showInspector,
+                showReviewNotes: $showReviewNotes,
                 scopeWindowController: $scopeWindowController,
                 showScopeOverlay: $showScopeOverlay,
                 audioWaveformWindowController: $audioWaveformWindowController,
@@ -66,6 +68,7 @@ private struct FileAndWindowHandlers: ViewModifier {
     @ObservedObject var compareSession: CompareSessionController
     let nsWindow: NSWindow?
     @Binding var showInspector: Bool
+    @Binding var showReviewNotes: Bool
     @Binding var scopeWindowController: ScopeWindowController?
     @Binding var showScopeOverlay: Bool
     @Binding var audioWaveformWindowController: AudioWaveformWindowController?
@@ -115,6 +118,18 @@ private struct FileAndWindowHandlers: ViewModifier {
                       case .toggleInspector = command else { return }
                 guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
                 showInspector.toggle()
+            }
+            .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
+                guard let command = notification.appCommand,
+                      case .toggleCompareReview = command else { return }
+                guard WindowManager.shared.isActiveWindow(nsWindow), compareSession.isActive else { return }
+                showReviewNotes.toggle()
+            }
+            .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
+                guard let command = notification.appCommand,
+                      case let .seekToCompareReviewNote(direction) = command else { return }
+                guard WindowManager.shared.isActiveWindow(nsWindow), compareSession.isActive else { return }
+                compareSession.seekToAdjacentReviewNote(direction, primary: controller)
             }
             .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
                 guard let command = notification.appCommand,

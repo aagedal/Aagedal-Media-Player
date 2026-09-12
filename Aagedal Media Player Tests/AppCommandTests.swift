@@ -50,4 +50,21 @@ final class AppCommandTests: XCTestCase {
         let notification = Notification(name: NSApplication.didBecomeActiveNotification)
         XCTAssertNil(notification.appCommand)
     }
+
+    @MainActor
+    func testCompareReviewNavigationRetainsTypedDirection() {
+        let center = NotificationCenter()
+        var receivedCommand: AppCommand?
+        let cancellable = center.appCommandPublisher.sink { notification in
+            receivedCommand = notification.appCommand
+        }
+
+        center.post(.seekToCompareReviewNote(.previous))
+
+        guard case let .seekToCompareReviewNote(direction) = receivedCommand else {
+            return XCTFail("Expected a typed comparison-review navigation command")
+        }
+        XCTAssertEqual(direction, .previous)
+        withExtendedLifetime(cancellable) {}
+    }
 }

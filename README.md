@@ -310,5 +310,8 @@ For stereo or 5.1 stored as separate mono tracks, **Programme Loudness** measure
 | Cmd + S | Save screenshot, or export an annotated still in Compare Mode |
 | Cmd + I | Toggle inspector |
 | Cmd + Shift + W | Toggle video scopes |
+| Cmd + Option + R | Toggle Comparison Review |
+| Cmd + Option + [ | Go to previous matching review note |
+| Cmd + Option + ] | Go to next matching review note |
 | Cmd + Shift + S | Sync timecode across windows |
 | Cmd + Shift + R | Reload player |

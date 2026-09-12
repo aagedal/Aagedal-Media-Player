@@ -55,6 +55,16 @@ for these desktop observations.
   picker. Escape keeps both sources and the stored finding, returning focus to
   Comparison Controls.
 
+## Direct review commands — 2026-09-12
+
+The Review menu now exposes direct, active-window commands for toggling the
+Comparison Review popover (`Command-Option-R`) and seeking to the previous or
+next matching finding (`Command-Option-[` / `Command-Option-]`). Typed command
+round-trip coverage protects the navigation direction, and the existing
+controller tests continue to cover filtered previous/next behavior. These
+shortcuts reduce toolbar traversal; they do not by themselves constitute a new
+native Full Keyboard Access or spoken VoiceOver acceptance run.
+
 ## Focused loupe check
 
 With Keyboard Navigation off, Tab from the loupe popover reached the timeline;
@@ -102,4 +112,3 @@ Artifacts: `/tmp/aagedal-rifx-keyboard-full-20260908.xcresult`,
 `/tmp/aagedal-programme-lra-fresh-20260908`. These temporary artifacts are
 reproducible evidence, not a durable release archive. Native keyboard acceptance
 and RIFX error propagation are recorded separately from the XCTest run.
-
