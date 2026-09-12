@@ -245,7 +245,8 @@ confidence as the picture.
   The September 12 bounded DSP/display foundation covers per-channel peaks,
   reconstruction, ballistics and reference thresholds. A bounded bundled-FFmpeg
   decoder, generation-safe lifecycle owner and reusable accessible presentation
-  now exist; transport-paced playback and app-window integration remain. See
+  now exist. Source decoding is paced at 1× and stays continuous across pause;
+  player-clock/drift wiring and app-window integration remain. See
   `docs/LIVE_AUDIO_METER_DSP.md`.
 - [x] Add offline integrated loudness over a selected range or full file.
   The metadata inspector measures each source audio stream over Whole File or
@@ -259,7 +260,7 @@ confidence as the picture.
   profiling remain acceptance work.
 - [ ] Add live momentary and short-term loudness. The bounded calculation core
   now passes tone and time-varying reference checks, and its decoder/presentation
-  foundations are implemented; real playback integration and live-path
+  foundations include paced, suspendable decoding; real playback integration and live-path
   acceptance remain.
 - [x] Show channel labels and layout mismatches clearly in Compare Mode.
   Selected-track details list numbered A/B speaker roles, unmatched channels,

@@ -15,11 +15,15 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
 
         XCTAssertEqual(arguments, [
             "-hide_banner", "-nostdin", "-loglevel", "error",
-            "-ss", "0.002000000", "-drc_scale", "0", "-target_level", "0",
+            "-ss", "0.002000000", "-readrate", "1", "-readrate_catchup", "1",
+            "-drc_scale", "0", "-target_level", "0",
             "-f", "wav", "-i", "/tmp/live-meter-source.wav",
             "-map", "0:a:2", "-vn", "-sn", "-dn", "-map_metadata", "-1",
             "-c:a", "pcm_f32le", "-f", "f32le", "pipe:1",
         ])
+        let inputIndex = try XCTUnwrap(arguments.firstIndex(of: "-i"))
+        XCTAssertLessThan(try XCTUnwrap(arguments.firstIndex(of: "-readrate")), inputIndex)
+        XCTAssertLessThan(try XCTUnwrap(arguments.firstIndex(of: "-readrate_catchup")), inputIndex)
         XCTAssertFalse(arguments.contains("-af"), "No normalization, volume, or rematrix filter is permitted")
         XCTAssertFalse(arguments.contains("-ar"), "The declared source rate must not be silently resampled")
         XCTAssertFalse(arguments.contains("-ac"), "The declared speaker layout must not be silently remixed")
@@ -136,7 +140,7 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("live-meter-decoder-\(UUID().uuidString).wav")
         defer { try? FileManager.default.removeItem(at: url) }
-        let frameCount = 4_800
+        let frameCount = 48_000
         let samples = (0..<frameCount).flatMap { frame -> [Float] in
             let value = Float(0.1 * sin(2 * .pi * 1_000 * Double(frame) / 48_000))
             return [value, value]
@@ -149,7 +153,10 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
         )
         let received = SnapshotBox()
 
+        let clock = ContinuousClock()
+        let started = clock.now
         let completion = try await LiveAudioMeterDecoder.decode(request) { received.append($0) }
+        let elapsed = started.duration(to: clock.now)
 
         XCTAssertTrue(completion.provenance.decoderVersion.hasPrefix("ffmpeg version "))
         XCTAssertEqual(completion.provenance.request, request)
@@ -159,6 +166,10 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
         XCTAssertEqual(completion.finalSnapshot?.endFrame, Int64(frameCount))
         XCTAssertTrue(completion.finalSnapshot?.isFinal == true)
         XCTAssertEqual(received.values.filter(\.isFinal).count, 1)
+        XCTAssertGreaterThanOrEqual(
+            elapsed, .milliseconds(500),
+            "A one-second source must not be drained materially faster than forward 1x playback"
+        )
     }
 
     private func makeRequest(startFrame: Int64 = 0) throws -> LiveAudioMeterDecodeRequest {

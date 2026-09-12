@@ -6,6 +6,7 @@ import Foundation
 
 typealias LiveAudioMeterDecodeOperation = @Sendable (
     LiveAudioMeterDecodeRequest,
+    SubprocessHandle,
     @escaping LiveAudioMeterPCMStreamProcessor.SnapshotHandler
 ) async throws -> LiveAudioMeterDecodeCompletion
 
@@ -49,11 +50,12 @@ final class LiveAudioMeterCoordinator {
     private let decodeOperation: LiveAudioMeterDecodeOperation
     private var request: LiveAudioMeterDecodeRequest?
     private var decodeTask: Task<Void, Never>?
+    private var decoderControl: SubprocessHandle?
     private var handoff: SnapshotHandoff?
     private var isClosed = false
 
-    init(decodeOperation: @escaping LiveAudioMeterDecodeOperation = { request, onSnapshot in
-        try await LiveAudioMeterDecoder.decode(request, onSnapshot: onSnapshot)
+    init(decodeOperation: @escaping LiveAudioMeterDecodeOperation = { request, control, onSnapshot in
+        try await LiveAudioMeterDecoder.decode(request, handle: control, onSnapshot: onSnapshot)
     }) {
         self.decodeOperation = decodeOperation
     }
@@ -90,12 +92,19 @@ final class LiveAudioMeterCoordinator {
         suspend(buffering: true)
     }
 
-    /// The current decoder cannot be safely paused. Resuming therefore requires
-    /// a new explicit source position and a fresh DSP generation; preserving
-    /// filter/window history awaits a genuinely controllable paced worker.
+    /// Resumes the same paced decoder and DSP generation when the selected
+    /// source is unchanged. A replacement source starts a clean segment.
     func resume(_ request: LiveAudioMeterDecodeRequest) {
         guard isSuspended(status) else { return }
-        begin(request, cause: .resumeAfterSuspension)
+        guard self.request?.hasSameSource(as: request) == true,
+              let decoderControl, let handoff, decodeTask != nil else {
+            begin(request, cause: .resumeAfterSuspension)
+            return
+        }
+        if let pending = handoff.resumeAndTakeLatest() { publish(pending) }
+        decoderControl.resume()
+        let frame = snapshot?.endFrame ?? status.frame ?? request.startSourceFrame
+        status = readinessStatus(frame: frame)
     }
 
     func suspendForUnsupportedSpeed() {
@@ -133,10 +142,12 @@ final class LiveAudioMeterCoordinator {
 
         let handoff = SnapshotHandoff()
         self.handoff = handoff
+        let decoderControl = SubprocessHandle()
+        self.decoderControl = decoderControl
         let operation = decodeOperation
         decodeTask = Task { [weak self] in
             do {
-                let completion = try await operation(newRequest) { [weak self] snapshot in
+                let completion = try await operation(newRequest, decoderControl) { [weak self] snapshot in
                     guard handoff.submit(snapshot) else { return }
                     Task { @MainActor [weak self] in
                         self?.drain(handoff, generation: ownedGeneration)
@@ -176,6 +187,7 @@ final class LiveAudioMeterCoordinator {
         if completion.finalSnapshot != snapshot { completion.finalSnapshot.map(publish) }
         provenance = completion.provenance
         decodeTask = nil
+        decoderControl = nil
         self.handoff = nil
         let endFrame = completion.finalSnapshot?.endFrame ?? snapshot?.endFrame
             ?? completion.provenance.request.startSourceFrame
@@ -191,6 +203,7 @@ final class LiveAudioMeterCoordinator {
         }
         handoff.invalidate()
         decodeTask = nil
+        decoderControl = nil
         self.handoff = nil
         snapshot = nil
         provenance = nil
@@ -206,6 +219,7 @@ final class LiveAudioMeterCoordinator {
         }
         handoff.invalidate()
         decodeTask = nil
+        decoderControl = nil
         self.handoff = nil
         snapshot = nil
         provenance = nil
@@ -253,6 +267,7 @@ final class LiveAudioMeterCoordinator {
         let oldTask = decodeTask
         handoff = nil
         decodeTask = nil
+        decoderControl = nil
         oldHandoff?.invalidate()
         oldTask?.cancel()
     }
@@ -260,10 +275,8 @@ final class LiveAudioMeterCoordinator {
     private func suspend(buffering: Bool) {
         guard !isClosed, let frame = status.frame, !isTerminal(status) else { return }
         if !isSuspended(status) {
-            // Invalidate ownership before cancellation so a decoder that ignores
-            // cancellation cannot advance the frozen presentation.
-            invalidateWorker()
-            generation &+= 1
+            handoff?.suspend()
+            decoderControl?.suspend()
         }
         status = buffering ? .buffering(frame: frame) : .paused(frame: frame)
     }
@@ -281,6 +294,14 @@ final class LiveAudioMeterCoordinator {
     }
 }
 
+private extension LiveAudioMeterDecodeRequest {
+    func hasSameSource(as other: Self) -> Bool {
+        url == other.url
+            && audioStreamOrderIndex == other.audioStreamOrderIndex
+            && format == other.format
+    }
+}
+
 /// One-slot, post-DSP handoff. Submitting replaces only an unpublished UI
 /// snapshot; the decoder has already synchronously processed every PCM sample.
 nonisolated private final class SnapshotHandoff: @unchecked Sendable {
@@ -288,21 +309,40 @@ nonisolated private final class SnapshotHandoff: @unchecked Sendable {
     private nonisolated(unsafe) var pending: LiveAudioMeterSnapshot?
     private nonisolated(unsafe) var drainScheduled = false
     private nonisolated(unsafe) var isValid = true
+    private nonisolated(unsafe) var isSuspended = false
 
     /// Returns true only when a main-actor drain must be scheduled.
     func submit(_ snapshot: LiveAudioMeterSnapshot) -> Bool {
         lock.withLock {
             guard isValid else { return false }
             pending = snapshot
+            guard !isSuspended else { return false }
             guard !drainScheduled else { return false }
             drainScheduled = true
             return true
         }
     }
 
+    func suspend() {
+        lock.withLock { isSuspended = true }
+    }
+
+    func resumeAndTakeLatest() -> LiveAudioMeterSnapshot? {
+        lock.withLock {
+            guard isValid else { return nil }
+            isSuspended = false
+            defer { pending = nil; drainScheduled = false }
+            return pending
+        }
+    }
+
     func takeLatest() -> LiveAudioMeterSnapshot? {
         lock.withLock {
             guard isValid else { return nil }
+            guard !isSuspended else {
+                drainScheduled = false
+                return nil
+            }
             defer { pending = nil; drainScheduled = false }
             return pending
         }

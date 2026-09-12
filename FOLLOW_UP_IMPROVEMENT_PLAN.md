@@ -1826,9 +1826,11 @@ for Phase 81, not a live playback feature or completion of Audio QC.
 - [x] Add a window-scoped lifecycle coordinator with monotonically changing
   generations, stale-result rejection, one-slot post-DSP UI coalescing,
   cancellation/retry/EOF ownership and clean discontinuity restart causes.
-- [ ] Wire the decoder/coordinator to playback, with transport pacing, verified
-  timestamps/drift, bounded ahead-of-playback work and genuinely continuous
-  pause/resume through a controllable source-decoder session.
+- [x] Pace source decoding at native 1× with catch-up capped at 1×, and preserve
+  one decoder/DSP generation across pause and buffering through race-safe
+  process suspension. Cancellation still terminates a stopped process.
+- [ ] Wire the decoder/coordinator to playback, with verified timestamps/drift,
+  bounded ahead-of-playback work and typed discontinuity events.
 - [ ] Mount and connect the meter UI; complete real-path accuracy, routing
   invariance, spoken accessibility and release-floor performance.
 
@@ -1838,10 +1840,11 @@ verified image detach. Evidence is retained in
 `/tmp/aagedal-meter-programme-final-apfs-20260912/Tests.xcresult` and `summary.json`.
 All 61 preflight checks pass.
 
-The decoder/presentation/lifecycle continuation passes 54 focused Debug tests,
-including a real signed bundled-FFmpeg source decode and seven coordinator
-ownership tests. These components remain deliberately unmounted until the
-production playback path can enforce transport pacing and timestamp continuity;
+The decoder/presentation/lifecycle continuation includes a 24-test focused
+decoder/coordinator/process run, including a paced real signed bundled-FFmpeg
+source decode, seven coordinator ownership tests and suspend/cancellation races.
+These components remain deliberately unmounted until the production playback
+path can enforce player-clock alignment and timestamp continuity;
 they do not mark live metering as shipped.
 
 See `docs/LIVE_AUDIO_METER_DSP.md`. A preliminary optimized standalone host

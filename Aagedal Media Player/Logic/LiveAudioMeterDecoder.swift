@@ -199,6 +199,10 @@ nonisolated enum LiveAudioMeterDecoder {
         return [
             "-hide_banner", "-nostdin", "-loglevel", "error",
             "-ss", sourceTimeArgument(request.startSourceTime),
+            // Keep decoded source time aligned with forward 1x playback. Capping
+            // catch-up at the requested rate prevents a temporarily stalled
+            // reader from racing ahead after it resumes.
+            "-readrate", "1", "-readrate_catchup", "1",
             // Native AC-3 DRC and xHE-AAC target normalization are explicitly
             // disabled. Other decoders report these private options as unused.
             "-drc_scale", "0", "-target_level", "0",
@@ -212,6 +216,7 @@ nonisolated enum LiveAudioMeterDecoder {
 
     static func decode(
         _ request: LiveAudioMeterDecodeRequest,
+        handle: SubprocessHandle = SubprocessHandle(),
         onSnapshot: @escaping LiveAudioMeterPCMStreamProcessor.SnapshotHandler
     ) async throws -> LiveAudioMeterDecodeCompletion {
         guard let path = FFmpegService.ffmpegPath else { throw Failure.decoderUnavailable }
@@ -225,7 +230,6 @@ nonisolated enum LiveAudioMeterDecoder {
         }
         let decoderArguments = arguments(for: request, inputAudioArguments: inputArguments)
         let processor = try LiveAudioMeterPCMStreamProcessor(request: request, onSnapshot: onSnapshot)
-        let handle = SubprocessHandle()
         let pipelineFailure = PipelineFailure()
 
         do {

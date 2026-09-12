@@ -52,7 +52,7 @@ final class LiveAudioMeterCoordinatorTests: XCTestCase {
         await eventually { coordinator.status == .ended(frame: 240_000) }
     }
 
-    func testPauseAndBufferingFreezeThenResumeAsFreshGeneration() async throws {
+    func testPauseAndBufferingFreezeThenResumeContinuousGeneration() async throws {
         let decoder = ControlledLiveMeterDecoder(honorCancellation: false)
         let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
         let initial = try request(stream: 0, startFrame: 0)
@@ -62,12 +62,12 @@ final class LiveAudioMeterCoordinatorTests: XCTestCase {
         await eventually { coordinator.snapshot?.endFrame == 2_400 }
 
         let runningGeneration = coordinator.generation
+        decoder.emit(snapshot(endFrame: 3_600), stream: 0)
         coordinator.pause()
         let suspendedGeneration = coordinator.generation
-        XCTAssertGreaterThan(suspendedGeneration, runningGeneration)
+        XCTAssertEqual(suspendedGeneration, runningGeneration)
         XCTAssertEqual(coordinator.status, .paused(frame: 2_400))
         decoder.emit(snapshot(endFrame: 4_800), stream: 0)
-        decoder.finish(completion(for: initial, finalFrame: 48_000), stream: 0)
         await Task.yield()
         XCTAssertEqual(coordinator.status, .paused(frame: 2_400))
         XCTAssertEqual(coordinator.snapshot?.endFrame, 2_400)
@@ -77,15 +77,14 @@ final class LiveAudioMeterCoordinatorTests: XCTestCase {
         XCTAssertEqual(coordinator.generation, suspendedGeneration)
         let resumed = try request(stream: 0, startFrame: 2_400)
         coordinator.resume(resumed)
-        await decoder.waitUntilAttached(stream: 0, occurrence: 2)
-        XCTAssertGreaterThan(coordinator.generation, suspendedGeneration)
-        XCTAssertEqual(coordinator.restartCause, .resumeAfterSuspension)
+        XCTAssertEqual(coordinator.generation, suspendedGeneration)
+        XCTAssertEqual(coordinator.restartCause, .initial)
         XCTAssertEqual(coordinator.status, .warmingUp(
-            frame: 2_400, momentaryReady: false, shortTermReady: false
+            frame: 4_800, momentaryReady: false, shortTermReady: false
         ))
-        XCTAssertNil(coordinator.snapshot, "A resumed decoder owns a clean DSP segment")
-        decoder.finish(completion(for: resumed, finalFrame: 2_400), stream: 0)
-        await eventually { coordinator.status == .ended(frame: 2_400) }
+        XCTAssertEqual(coordinator.snapshot?.endFrame, 4_800)
+        decoder.finish(completion(for: initial, finalFrame: 48_000), stream: 0)
+        await eventually { coordinator.status == .ended(frame: 48_000) }
     }
 
     func testRetryStartsNewGenerationAfterActionableFailure() async throws {
@@ -253,6 +252,7 @@ private final class ControlledLiveMeterDecoder: @unchecked Sendable {
 
     func decode(
         _ request: LiveAudioMeterDecodeRequest,
+        control: SubprocessHandle,
         onSnapshot: @escaping LiveAudioMeterPCMStreamProcessor.SnapshotHandler
     ) async throws -> LiveAudioMeterDecodeCompletion {
         let stream = request.audioStreamOrderIndex

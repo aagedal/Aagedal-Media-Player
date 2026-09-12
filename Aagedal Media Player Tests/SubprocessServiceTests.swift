@@ -81,6 +81,72 @@ final class SubprocessServiceTests: XCTestCase {
             XCTFail("Unexpected error: \(error)")
         }
     }
+
+    func testSuspendAndResumePreserveTheAttachedProcess() async throws {
+        let handle = SubprocessHandle()
+        let received = LineRecorder()
+        let task = Task {
+            try await SubprocessService.run(
+                executableURL: URL(fileURLWithPath: "/bin/sh"),
+                arguments: ["-c", "printf 'first\\n'; sleep 0.25; printf 'second\\n'"],
+                handle: handle,
+                onStandardOutputLine: { received.append($0) }
+            )
+        }
+
+        for _ in 0..<100 where received.lines.isEmpty {
+            try await Task.sleep(for: .milliseconds(5))
+        }
+        XCTAssertEqual(received.lines, ["first"])
+        handle.suspend()
+        try await Task.sleep(for: .milliseconds(350))
+        XCTAssertEqual(received.lines, ["first"])
+        handle.resume()
+
+        let result = try await task.value
+        XCTAssertEqual(result.terminationStatus, 0)
+        XCTAssertEqual(received.lines, ["first", "second"])
+    }
+
+    func testSuspendBeforeAttachmentIsRemembered() async throws {
+        let handle = SubprocessHandle()
+        let received = LineRecorder()
+        handle.suspend()
+        let task = Task {
+            try await SubprocessService.run(
+                executableURL: URL(fileURLWithPath: "/bin/sh"),
+                arguments: ["-c", "printf 'attached\\n'"],
+                handle: handle,
+                onStandardOutputLine: { received.append($0) }
+            )
+        }
+
+        try await Task.sleep(for: .milliseconds(100))
+        XCTAssertTrue(received.lines.isEmpty)
+        handle.resume()
+        _ = try await task.value
+        XCTAssertEqual(received.lines, ["attached"])
+    }
+
+    func testCancellationTerminatesSuspendedProcess() async throws {
+        let handle = SubprocessHandle()
+        let task = Task {
+            try await SubprocessService.run(
+                executableURL: URL(fileURLWithPath: "/bin/sleep"),
+                arguments: ["10"], handle: handle
+            )
+        }
+
+        try await Task.sleep(for: .milliseconds(50))
+        handle.suspend()
+        task.cancel()
+        do {
+            _ = try await task.value
+            XCTFail("Expected cancellation")
+        } catch is CancellationError {
+            // Expected.
+        }
+    }
 }
 
 private final class LineRecorder: Sendable {

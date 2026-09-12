@@ -11,6 +11,7 @@ final class SubprocessHandle: Sendable {
     private let lock = NSLock()
     private nonisolated(unsafe) var process: Process?
     private nonisolated(unsafe) var cancelled = false
+    private nonisolated(unsafe) var suspended = false
 
     nonisolated init() {}
 
@@ -19,13 +20,15 @@ final class SubprocessHandle: Sendable {
     }
 
     nonisolated func attach(_ process: Process) {
-        let shouldCancel = lock.withLock {
-            guard process.isRunning else { return false }
+        let signal = lock.withLock {
+            guard process.isRunning else { return Int32(0) }
             self.process = process
-            return cancelled
+            if cancelled { return SIGKILL }
+            if suspended { return SIGSTOP }
+            return Int32(0)
         }
-        if shouldCancel, process.isRunning {
-            kill(process.processIdentifier, SIGKILL)
+        if signal != 0, process.isRunning {
+            kill(process.processIdentifier, signal)
         }
     }
 
@@ -44,6 +47,31 @@ final class SubprocessHandle: Sendable {
         }
         if let attachedProcess, attachedProcess.isRunning {
             kill(attachedProcess.processIdentifier, SIGKILL)
+        }
+    }
+
+    /// Suspends an attached decoder without ending its stdout pipe or task.
+    /// A request made before process attachment is remembered, matching the
+    /// existing cancellation-before-attachment guarantee.
+    nonisolated func suspend() {
+        let attachedProcess: Process? = lock.withLock {
+            guard !cancelled else { return nil }
+            suspended = true
+            return process
+        }
+        if let attachedProcess, attachedProcess.isRunning {
+            kill(attachedProcess.processIdentifier, SIGSTOP)
+        }
+    }
+
+    nonisolated func resume() {
+        let attachedProcess: Process? = lock.withLock {
+            guard !cancelled else { return nil }
+            suspended = false
+            return process
+        }
+        if let attachedProcess, attachedProcess.isRunning {
+            kill(attachedProcess.processIdentifier, SIGCONT)
         }
     }
 }
