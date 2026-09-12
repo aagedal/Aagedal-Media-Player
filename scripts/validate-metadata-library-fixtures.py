@@ -9,6 +9,11 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from metadata_candidate import (add_candidate_arguments, resolve_candidate,
+                                validate_candidate_provenance)
 
 ROOT = Path(__file__).resolve().parent.parent
 REVISION = "c2d77c2dcefcb997623e52beca57bc61ce302cb9"
@@ -37,7 +42,7 @@ def digest(path):
     return value.hexdigest()
 
 
-def validate_result(output, code, missing_cases, timed_out=False):
+def validate_result(output, code, missing_cases, timed_out=False, candidate_provenance=None):
     """Only explicitly absent image fixtures may skip; every pinned case must finish."""
     errors = []
     cases = {}
@@ -72,6 +77,11 @@ def validate_result(output, code, missing_cases, timed_out=False):
             errors.append(f"Unexpected suite summary: {name}")
     if code != 0 or timed_out:
         errors.append("Fixture test process failed or timed out")
+    if candidate_provenance is not None:
+        try:
+            validate_candidate_provenance(candidate_provenance)
+        except (TypeError, ValueError) as error:
+            errors.append(f"Invalid candidate provenance: {error}")
     return {"passed": not errors, "allFixturesCovered": not errors and not missing_cases,
             "exitCode": code, "timedOut": timed_out, "cases": cases,
             "executed": len(cases), "passedCases": sum(value == "passed" for value in cases.values()),
@@ -91,10 +101,13 @@ def main():
     parser.add_argument("--mca", type=Path, required=True, help="original upstream four-track bmxtools MXF sample")
     parser.add_argument("--allow-missing-images", action="store_true", help="validate available fixtures, reporting exact remaining skips")
     parser.add_argument("--baseline-control", action="store_true", help="run unpatched 3.0.0 to diagnose pre-existing fixture failures")
+    add_candidate_arguments(parser)
     args = parser.parse_args()
     checkout = args.checkout.resolve(strict=True)
-    if git(checkout, "rev-parse", "HEAD").decode().strip() != REVISION or git(checkout, "status", "--porcelain").strip():
-        parser.error("Expected a clean pinned SwiftMediaMetadata 3.0.0 checkout")
+    patch = ROOT / "docs/dependency-patches/swift-media-metadata-3.0.0-rtmd-skip-mdat.patch"
+    candidate_source = resolve_candidate(args, parser, checkout, patch)
+    if args.baseline_control and candidate_source.mode == "exactCheckout":
+        parser.error("--baseline-control cannot be combined with exact candidate checkout mode")
     images = args.images.resolve(strict=True)
     if not images.is_dir():
         parser.error("Image fixtures must be a directory")
@@ -105,19 +118,19 @@ def main():
     if any(not path.is_file() for path in media.values()):
         parser.error("CRM and MCA inputs must be regular files")
     artifacts = args.artifacts.resolve()
-    if any(artifacts == source or source in artifacts.parents for source in [checkout, images, *media.values()]):
+    if any(artifacts == source or source in artifacts.parents
+           for source in [candidate_source.baseline, candidate_source.candidate, images, *media.values()]):
         parser.error("Artifacts must be outside input source paths")
     artifacts.mkdir(parents=True, exist_ok=False)
     variant = "baseline" if args.baseline_control else "candidate"
     package = artifacts / variant
-    archive = git(checkout, "archive", "HEAD")
+    source_variant = "baseline" if args.baseline_control else "fixed"
+    source_checkout = candidate_source.checkout_for(source_variant)
+    archive = candidate_source.archive_for(source_variant)
     package.mkdir()
     subprocess.run(["tar", "-xf", "-", "-C", str(package)], input=archive, check=True)
-    patch = ROOT / "docs/dependency-patches/swift-media-metadata-3.0.0-rtmd-skip-mdat.patch"
     if not args.baseline_control:
-        with (artifacts / "patch.log").open("w") as output:
-            subprocess.run(["patch", "-p1", "-i", str(patch)], cwd=package, stdout=output,
-                           stderr=subprocess.STDOUT, check=True, timeout=60)
+        candidate_source.apply_patch(package, artifacts / "patch.log")
     staged = [(images / name, package / "TestImages" / name) for name in IMAGE_TESTS if name not in missing]
     staged += [(source, package / "VideoFixtures" / name) for name, source in media.items()]
     inputs = []
@@ -145,7 +158,8 @@ def main():
 import PackageDescription
 let package = Package(name: "MetadataFixtureValidation", platforms: [.macOS(.v13)], targets: [.systemLibrary(name: "CZlib"), .target(name: "SwiftMediaMetadata", dependencies: ["CZlib"], resources: [.copy("Resources/GeoLocationDatabase.bin")], linkerSettings: [.linkedLibrary("z")]), .testTarget(name: "SwiftMediaMetadataTests", dependencies: ["SwiftMediaMetadata"], resources: [.copy("Fixtures/Resources")])])
 ''')
-    environment = {"dependencyRevision": REVISION, "variant": variant, "sourceArchiveSHA256": hashlib.sha256(archive).hexdigest(),
+    environment = {"dependencyRevision": REVISION, "candidateProvenance": candidate_source.provenance,
+                   "variant": variant, "sourceArchiveSHA256": hashlib.sha256(archive).hexdigest(),
                    "scriptSHA256": digest(Path(__file__)), "patchSHA256": digest(patch),
                    "toolchain": subprocess.check_output(["swift", "--version"], text=True),
                    "inputs": inputs, "missingImages": missing, "testPathRelocations": relocations,
@@ -163,11 +177,12 @@ let package = Package(name: "MetadataFixtureValidation", platforms: [.macOS(.v13
         except subprocess.TimeoutExpired:
             code, timed_out = None, True
     missing_cases = {f"RealFileTests/{name}" for image in missing for name in IMAGE_TESTS[image]}
-    summary = validate_result(log.read_text(), code, missing_cases, timed_out)
+    summary = validate_result(log.read_text(), code, missing_cases, timed_out,
+                              candidate_source.provenance)
     summary["logSHA256"] = digest(log)
     unchanged = all(digest(Path(item["path"])) == item["sha256"] and digest(Path(item["copy"])) == item["sha256"] for item in inputs)
     unchanged = unchanged and all(not (images / name).exists() for name in missing)
-    unchanged = unchanged and git(checkout, "rev-parse", "HEAD").decode().strip() == REVISION and not git(checkout, "status", "--porcelain").strip()
+    unchanged = unchanged and candidate_source.verify_unchanged()
     summary["inputsAndCheckoutUnchanged"] = unchanged
     if not unchanged:
         summary["errors"].append("Input fixtures, staged copies, absence, or checkout changed")

@@ -25,6 +25,16 @@ home paths get exactly one path-expression replacement each, resolving their
 staged fixture relative to `#filePath`; no assertion or skip condition changes.
 All other upstream test source remains unchanged. No original fixture is edited.
 
+For a reviewed source candidate, append
+`--candidate-checkout /path/to/clean/candidate --expected-candidate-sha FULL_SHA`.
+Both options must be present, `FULL_SHA` must be the full lowercase 40-character
+candidate `HEAD`, and the checkout must be separate and clean. In this mode the
+harness archives the exact candidate commit and does not apply the recorded
+patch. Omitting both options preserves patch mode. `--baseline-control` remains
+an unpatched pinned-source diagnostic and therefore cannot be combined with an
+exact candidate. The environment records both source identities and archive
+hashes, and incomplete or contradictory provenance fails validation.
+
 Release build/test execution has a 30-minute timeout. Inputs and staged copies
 are hashed before and after execution; the clean checkout and missing-fixture
 absence are rechecked. The environment records the committed archive hash,
@@ -39,9 +49,10 @@ all five XCTest summaries must be complete and consistent. Partial coverage is
 reported with `allFixturesCovered: false`. Failed tests always fail acceptance,
 including failures reproduced in the baseline. `--baseline-control` runs an
 unpatched source archive through the same fixture staging and assertions in a
-separate new output directory. Seven Python regression tests check complete and
+separate new output directory. Focused Python regression tests check complete and
 partial results, unexpected skips/failures, missing/duplicate cases or summaries,
 incorrect counts, process failure/timeouts, and empty alternate-runner output.
+They also reject incomplete candidate provenance.
 
 ## Local result — 2026-09-09
 

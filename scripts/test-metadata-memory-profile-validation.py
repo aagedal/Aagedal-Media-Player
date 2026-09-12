@@ -14,6 +14,15 @@ validator_path = Path(__file__).with_name("validate-metadata-memory-profile.py")
 validate = runpy.run_path(str(validator_path))["validate"]
 
 
+def patch_provenance():
+    revision = "c2d77c2dcefcb997623e52beca57bc61ce302cb9"
+    return {"schemaVersion": 1, "mode": "recordedPatch", "baselineRevision": revision,
+            "baselineCheckout": "/baseline", "baselineArchiveSHA256": "a" * 64,
+            "candidateExpectedRevision": revision, "candidateResolvedRevision": revision,
+            "candidateCheckout": "/baseline", "candidateArchiveSHA256": "a" * 64,
+            "patchSHA256": "b" * 64}
+
+
 def fixture():
     snapshot = dict(format="mp4", duration=3600, fileSize=1000, bitRate=None,
                     title=None, comment=None, videoStreamCount=0, subtitleStreamCount=0,
@@ -101,7 +110,9 @@ class MetadataMemoryValidationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             rows = fixture()
-            (root / "environment.json").write_text(json.dumps({"inputs": [{"path": "/fixture.m4a"}]}))
+            environment = {"inputs": [{"path": "/fixture.m4a"}],
+                           "candidateProvenance": patch_provenance()}
+            (root / "environment.json").write_text(json.dumps(environment))
             for row in rows:
                 directory = root / row["variant"]
                 directory.mkdir(exist_ok=True)
@@ -110,6 +121,11 @@ class MetadataMemoryValidationTests(unittest.TestCase):
             summary.write_text(json.dumps({"snapshotParity": True, "records": rows}))
             command = [sys.executable, str(validator_path), str(root)]
             self.assertEqual(subprocess.run(command, capture_output=True).returncode, 0)
+            environment["candidateProvenance"]["candidateResolvedRevision"] = "d" * 40
+            (root / "environment.json").write_text(json.dumps(environment))
+            self.assertNotEqual(subprocess.run(command, capture_output=True).returncode, 0)
+            environment["candidateProvenance"] = patch_provenance()
+            (root / "environment.json").write_text(json.dumps(environment))
             rows[0]["phases"][1]["metadata"]["hasRTMD"] = 0
             summary.write_text(json.dumps({"snapshotParity": True, "records": rows}))
             self.assertNotEqual(subprocess.run(command, capture_output=True).returncode, 0)

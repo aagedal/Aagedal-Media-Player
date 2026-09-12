@@ -6,6 +6,9 @@ import math
 from pathlib import Path
 import sys
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from metadata_candidate import validate_candidate_provenance
+
 
 def integer(value, label, minimum=0):
     if type(value) is not int or value < minimum:
@@ -118,6 +121,7 @@ def main():
         raise ValueError("Usage: validate-metadata-memory-profile.py ARTIFACT_DIRECTORY")
     root = Path(sys.argv[1])
     environment = json.loads((root / "environment.json").read_text())
+    validate_candidate_provenance(environment["candidateProvenance"])
     inputs = [item["path"] for item in environment["inputs"]]
     records = []
     for variant in ("baseline", "fixed"):

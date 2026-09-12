@@ -9,23 +9,29 @@ from pathlib import Path
 import runpy
 import shutil
 import subprocess
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from metadata_candidate import add_candidate_arguments, resolve_candidate
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("checkout", type=Path, help="resolved SwiftMediaMetadata 3.0.0 checkout")
 parser.add_argument("artifacts", type=Path, help="new artifact directory")
 parser.add_argument("inputs", type=Path, nargs="+")
+add_candidate_arguments(parser)
 args = parser.parse_args()
-checkout = args.checkout.resolve()
+checkout = args.checkout.resolve(strict=True)
 root = Path(__file__).resolve().parent.parent
+patch = root / "docs/dependency-patches/swift-media-metadata-3.0.0-rtmd-skip-mdat.patch"
+candidate_source = resolve_candidate(args, parser, checkout, patch)
 inputs = [path.resolve(strict=True) for path in args.inputs]
 if any(not path.is_file() for path in inputs) or len(set(inputs)) != len(inputs):
     parser.error("Inputs must be distinct regular files")
-revision = subprocess.check_output(["git", "-C", str(checkout), "rev-parse", "HEAD"], text=True).strip()
-if revision != "c2d77c2dcefcb997623e52beca57bc61ce302cb9":
-    parser.error("This patch/probe expects SwiftMediaMetadata 3.0.0 revision c2d77c2")
-if subprocess.check_output(["git", "-C", str(checkout), "status", "--porcelain"], text=True).strip():
-    parser.error("Dependency checkout must be clean")
+revision = candidate_source.provenance["baselineRevision"]
 artifacts = args.artifacts.resolve()
+if any(artifacts == source or source in artifacts.parents
+       for source in {candidate_source.baseline, candidate_source.candidate, *inputs}):
+    parser.error("Artifacts must be outside source checkout and input paths")
 artifacts.mkdir(parents=True, exist_ok=False)
 env = dict(os.environ, CLANG_MODULE_CACHE_PATH=str(artifacts / "module-cache"))
 def run(command, log, **kwargs):
@@ -39,8 +45,9 @@ def digest(path):
             sha.update(block)
     return sha.hexdigest()
 environment = {"dependencyRevision": revision,
+               "candidateProvenance": candidate_source.provenance,
                "probeSHA256": digest(root / "scripts/MetadataMemoryProfiler.swift"),
-               "patchSHA256": digest(root / "docs/dependency-patches/swift-media-metadata-3.0.0-rtmd-skip-mdat.patch"),
+               "patchSHA256": digest(patch),
                "harnessSHA256": digest(Path(__file__)),
                "validatorSHA256": digest(root / "scripts/validate-metadata-memory-profile.py"),
                "appRevision": subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip(),
@@ -60,15 +67,17 @@ for variant in ("baseline", "fixed"):
     package = artifacts / variant
     sources = package / "Sources"
     sources.mkdir(parents=True)
+    source_checkout = candidate_source.checkout_for(variant)
     for module in ("SwiftMediaMetadata", "CZlib"):
-        shutil.copytree(checkout / "Sources" / module, sources / module)
+        shutil.copytree(source_checkout / "Sources" / module, sources / module)
     (sources / "Probe").mkdir()
     shutil.copyfile(root / "scripts/MetadataMemoryProfiler.swift", sources / "Probe/main.swift")
     (package / "Package.swift").write_text(manifest)
     if variant == "fixed":
-        source = sources / "SwiftMediaMetadata/Video/RTMDReader.swift"
-        source.chmod(source.stat().st_mode | 0o200)
-        run(["patch", "-p1", "-i", str(root / "docs/dependency-patches/swift-media-metadata-3.0.0-rtmd-skip-mdat.patch")], package / "patch.log", cwd=package)
+        if candidate_source.mode == "recordedPatch":
+            source = sources / "SwiftMediaMetadata/Video/RTMDReader.swift"
+            source.chmod(source.stat().st_mode | 0o200)
+        candidate_source.apply_patch(package, package / "patch.log")
     print(f"Building {variant} dependency probe…", flush=True)
     run(["swift", "build", "--package-path", str(package), "-c", "release", "--disable-sandbox"], package / "build.log")
     binary = package / ".build/release/metadata-probe"
@@ -80,5 +89,7 @@ for variant in ("baseline", "fixed"):
             records.append({"variant": variant, "input": str(path), "mode": mode, "phases": phases})
 validate = runpy.run_path(str(root / "scripts/validate-metadata-memory-profile.py"))["validate"]
 validate(records, [str(path) for path in inputs])
+if not candidate_source.verify_unchanged():
+    raise ValueError("Baseline or candidate source checkout changed during validation")
 (artifacts / "summary.json").write_text(json.dumps({"snapshotParity": True, "records": records}, indent=2) + "\n")
 print(f"Profiles and matching metadata snapshots saved to {artifacts}")

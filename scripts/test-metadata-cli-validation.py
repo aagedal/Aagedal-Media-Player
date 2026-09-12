@@ -59,6 +59,9 @@ class AcceptanceTests(unittest.TestCase):
         for output in ("", "✔ Test run with 0 tests in 0 suites passed after 0.001 seconds."):
             self.assertFalse(validation.validate_result(output, 0)["passed"])
 
+    def test_incomplete_candidate_provenance_is_rejected(self):
+        self.assertFalse(validation.validate_result(log_with(), 0, candidate_provenance={})["passed"])
+
 
 if __name__ == "__main__":
     unittest.main()

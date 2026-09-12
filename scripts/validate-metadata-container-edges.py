@@ -9,6 +9,10 @@ from pathlib import Path
 import shutil
 import struct
 import subprocess
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from metadata_candidate import add_candidate_arguments, resolve_candidate
 
 REVISION = "c2d77c2dcefcb997623e52beca57bc61ce302cb9"
 ROOT = Path(__file__).resolve().parent.parent
@@ -89,15 +93,18 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("checkout", type=Path)
     parser.add_argument("artifacts", type=Path, help="new directory for source copies, fixtures and logs")
+    add_candidate_arguments(parser)
     args = parser.parse_args()
     checkout = args.checkout.resolve(strict=True)
-    revision = subprocess.check_output(["git", "-C", str(checkout), "rev-parse", "HEAD"], text=True).strip()
-    if revision != REVISION or subprocess.check_output(["git", "-C", str(checkout), "status", "--porcelain"], text=True).strip():
-        parser.error("Dependency checkout must be clean at SwiftMediaMetadata 3.0.0 c2d77c2")
+    patch = ROOT / "docs/dependency-patches/swift-media-metadata-3.0.0-rtmd-skip-mdat.patch"
+    candidate_source = resolve_candidate(args, parser, checkout, patch)
+    revision = candidate_source.provenance["baselineRevision"]
     artifacts = args.artifacts.resolve()
+    if any(artifacts == source or source in artifacts.parents
+           for source in (candidate_source.baseline, candidate_source.candidate)):
+        parser.error("Artifacts must be outside source checkouts")
     artifacts.mkdir(parents=True, exist_ok=False)
     env = dict(os.environ, CLANG_MODULE_CACHE_PATH=str(artifacts / "module-cache"))
-    patch = ROOT / "docs/dependency-patches/swift-media-metadata-3.0.0-rtmd-skip-mdat.patch"
     probe = ROOT / "scripts/MetadataContainerEdgeProbe.swift"
     cases = fixtures()
     fixture_dir = artifacts / "fixtures"
@@ -106,7 +113,8 @@ def main():
         (fixture_dir / f"{name}.mov").write_bytes(data)
     def digest(path):
         return hashlib.sha256(path.read_bytes()).hexdigest()
-    environment = {"dependencyRevision": revision, "toolchain": subprocess.check_output(["swift", "--version"], text=True),
+    environment = {"dependencyRevision": revision, "candidateProvenance": candidate_source.provenance,
+                   "toolchain": subprocess.check_output(["swift", "--version"], text=True),
                    "hashes": {str(path): digest(path) for path in [Path(__file__), patch, probe]},
                    "fixtures": {name: hashlib.sha256(data).hexdigest() for name, (data, _, _) in cases.items()}}
     (artifacts / "environment.json").write_text(json.dumps(environment, indent=2) + "\n")
@@ -119,16 +127,17 @@ let package = Package(name: "ContainerEdgeProbe", platforms: [.macOS(.v13)], tar
         package = artifacts / variant
         sources = package / "Sources"
         sources.mkdir(parents=True)
+        source_checkout = candidate_source.checkout_for(variant)
         for module in ("SwiftMediaMetadata", "CZlib"):
-            shutil.copytree(checkout / "Sources" / module, sources / module)
+            shutil.copytree(source_checkout / "Sources" / module, sources / module)
         (sources / "Probe").mkdir()
         shutil.copyfile(probe, sources / "Probe/main.swift")
         (package / "Package.swift").write_text(manifest)
         if variant == "fixed":
-            source = sources / "SwiftMediaMetadata/Video/RTMDReader.swift"
-            source.chmod(source.stat().st_mode | 0o200)
-            with (package / "patch.log").open("w") as output:
-                subprocess.run(["patch", "-p1", "-i", str(patch)], cwd=package, stdout=output, stderr=subprocess.STDOUT, check=True, timeout=60)
+            if candidate_source.mode == "recordedPatch":
+                source = sources / "SwiftMediaMetadata/Video/RTMDReader.swift"
+                source.chmod(source.stat().st_mode | 0o200)
+            candidate_source.apply_patch(package, package / "patch.log")
         print(f"Building {variant}…", flush=True)
         with (package / "build.log").open("w") as output:
             subprocess.run(["swift", "build", "--package-path", str(package), "-c", "release", "--disable-sandbox"], env=env, stdout=output, stderr=subprocess.STDOUT, check=True, timeout=1800)
@@ -159,6 +168,8 @@ let package = Package(name: "ContainerEdgeProbe", platforms: [.macOS(.v13)], tar
             elif (value["firstFrame"] is not None or value["imuRate"] is not None
                   or value.get("frames", []) or value.get("gyroscope", []) or value.get("accelerometer", [])):
                 errors.append(f"{variant}/{name}: unexpected sample decode")
+    if not candidate_source.verify_unchanged():
+        errors.append("Baseline or candidate source checkout changed")
     (artifacts / "summary.json").write_text(json.dumps({"passed": not errors, "caseCount": len(cases), "errors": errors, "results": results}, indent=2) + "\n")
     if errors:
         raise SystemExit("\n".join(errors))

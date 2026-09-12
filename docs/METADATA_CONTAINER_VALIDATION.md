@@ -20,6 +20,14 @@ value fails the run. Environment, harness/probe/patch and fixture SHA-256 hashes
 generated MOV files, build/patch logs, individual JSON results, and the final
 `summary.json` are retained in the output directory.
 
+To exercise a reviewed source commit rather than the recorded patch, append
+`--candidate-checkout /path/to/clean/candidate --expected-candidate-sha FULL_SHA`
+to the command. Both options are mandatory together; `FULL_SHA` must be the
+exact lowercase 40-character `HEAD`, and the candidate checkout must be separate
+and clean. With neither option, patch mode is unchanged. Source provenance records
+both archive hashes and whether the patch was applied, and both checkouts are
+reverified unchanged after the run.
+
 The fixtures are deliberately minimal parser inputs, not playable camera clips:
 
 - Eight positive cases combine leading/trailing `moov`, `stco`/`co64` offsets,

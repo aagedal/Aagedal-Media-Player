@@ -8,6 +8,11 @@ import os
 from pathlib import Path
 import re
 import subprocess
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from metadata_candidate import (add_candidate_arguments, resolve_candidate,
+                                validate_candidate_provenance)
 
 ROOT = Path(__file__).resolve().parent.parent
 REVISION = "c2d77c2dcefcb997623e52beca57bc61ce302cb9"
@@ -25,7 +30,7 @@ EXPECTED_SUITES = {
 HELPER_SUITES = {"Phase26DateFormatTests", "Phase26GroupPrefixTests", "Phase26TagsFromFileTests"}
 
 
-def validate_result(output, code, timed_out=False, unchanged=True):
+def validate_result(output, code, timed_out=False, unchanged=True, candidate_provenance=None):
     """Require every pinned XCTest suite and both completed aggregate summaries."""
     pattern = (r"^Test Suite '([^']+)' (passed|failed) at [^\n]+\n"
                r"[ \t]*Executed (\d+) tests?, with (?:(\d+) tests? skipped and )?(\d+) failures?[^\n]*$")
@@ -48,6 +53,11 @@ def validate_result(output, code, timed_out=False, unchanged=True):
         errors.append("Test process timed out")
     if not unchanged:
         errors.append("Source checkouts changed")
+    if candidate_provenance is not None:
+        try:
+            validate_candidate_provenance(candidate_provenance)
+        except (TypeError, ValueError) as error:
+            errors.append(f"Invalid candidate provenance: {error}")
     helpers = sum(suites.get(name, {}).get("executed", 0) for name in HELPER_SUITES)
     black_box = sum(suites.get(name, {}).get("executed", 0) for name in EXPECTED_SUITES
                     if name not in HELPER_SUITES | {"SwiftMediaMetadataPackageTests.xctest", "Selected tests"})
@@ -66,34 +76,40 @@ def main():
     parser.add_argument("checkout", type=Path, help="clean pinned SwiftMediaMetadata checkout")
     parser.add_argument("argument_parser", type=Path, help="clean local checkout at Package.resolved revision")
     parser.add_argument("artifacts", type=Path, help="new isolated output directory")
+    add_candidate_arguments(parser)
     args = parser.parse_args()
     checkout = args.checkout.resolve(strict=True)
     dependency = args.argument_parser.resolve(strict=True)
-    pins = json.loads((checkout / "Package.resolved").read_text())["pins"]
+    patch = ROOT / "docs/dependency-patches/swift-media-metadata-3.0.0-rtmd-skip-mdat.patch"
+    candidate_source = resolve_candidate(args, parser, checkout, patch)
+    candidate_checkout = candidate_source.checkout_for("fixed")
+    pins = json.loads((candidate_checkout / "Package.resolved").read_text())["pins"]
     pin = next(item for item in pins if item["identity"] == "swift-argument-parser")
-    for path, expected in [(checkout, REVISION), (dependency, pin["state"]["revision"])]:
-        if git(path, "rev-parse", "HEAD").decode().strip() != expected or git(path, "status", "--porcelain").strip():
-            parser.error(f"Expected clean checkout at {expected}: {path}")
+    expected_dependency = pin["state"]["revision"]
+    if (git(dependency, "rev-parse", "HEAD").decode().strip() != expected_dependency
+            or git(dependency, "status", "--porcelain").strip()):
+        parser.error(f"Expected clean checkout at {expected_dependency}: {dependency}")
     artifacts = args.artifacts.resolve()
-    if any(artifacts == source or source in artifacts.parents for source in (checkout, dependency)):
-        parser.error("Output must be outside both source checkouts")
+    if any(artifacts == source or source in artifacts.parents
+           for source in (candidate_source.baseline, candidate_source.candidate, dependency)):
+        parser.error("Output must be outside source checkouts")
     artifacts.mkdir(parents=True, exist_ok=False)
     package = artifacts / "candidate"
-    environment = {"dependencyRevision": REVISION, "argumentParser": pin["state"],
+    environment = {"dependencyRevision": REVISION, "candidateProvenance": candidate_source.provenance,
+                   "argumentParser": pin["state"],
                    "toolchain": subprocess.check_output(["swift", "--version"], text=True),
                    "scriptSHA256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
                    "sourceArchiveSHA256": {}}
     # Archive only tracked committed bytes; no upstream build state or manifests are modified.
-    for source, destination in [(checkout, package), (dependency, artifacts / "swift-argument-parser")]:
-        archive = git(source, "archive", "HEAD")
+    for source, destination, archive in [
+        (candidate_checkout, package, candidate_source.archive_for("fixed")),
+        (dependency, artifacts / "swift-argument-parser", git(dependency, "archive", "HEAD")),
+    ]:
         environment["sourceArchiveSHA256"][str(source)] = hashlib.sha256(archive).hexdigest()
         destination.mkdir()
         subprocess.run(["tar", "-xf", "-", "-C", str(destination)], input=archive, check=True)
-    patch = ROOT / "docs/dependency-patches/swift-media-metadata-3.0.0-rtmd-skip-mdat.patch"
     environment["patchSHA256"] = hashlib.sha256(patch.read_bytes()).hexdigest()
-    with (artifacts / "patch.log").open("w") as output:
-        subprocess.run(["patch", "-p1", "-i", str(patch)], cwd=package,
-                       stdout=output, stderr=subprocess.STDOUT, check=True, timeout=60)
+    candidate_source.apply_patch(package, artifacts / "patch.log")
     manifest = package / "Package.swift"
     text = manifest.read_text()
     original = '.package(url: "https://github.com/apple/swift-argument-parser", from: "1.5.0")'
@@ -114,10 +130,12 @@ def main():
                                   env=env, stdout=output, stderr=subprocess.STDOUT, timeout=1800).returncode
         except subprocess.TimeoutExpired:
             code, timed_out = None, True
-    unchanged = all(not git(source, "status", "--porcelain").strip() and
-                    hashlib.sha256(git(source, "archive", "HEAD")).hexdigest() == expected
-                    for source, expected in environment["sourceArchiveSHA256"].items())
-    summary = validate_result(log.read_text(), code, timed_out, unchanged)
+    dependency_archive = environment["sourceArchiveSHA256"][str(dependency)]
+    unchanged = (candidate_source.verify_unchanged()
+                 and not git(dependency, "status", "--porcelain").strip()
+                 and hashlib.sha256(git(dependency, "archive", "HEAD")).hexdigest() == dependency_archive)
+    summary = validate_result(log.read_text(), code, timed_out, unchanged,
+                              candidate_source.provenance)
     summary["logSHA256"] = hashlib.sha256(log.read_bytes()).hexdigest()
     (artifacts / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
     print(json.dumps(summary, indent=2))

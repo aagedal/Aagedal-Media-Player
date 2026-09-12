@@ -44,6 +44,26 @@ for later RTMD sample reads using absolute file offsets. It does not remove the
 normal `VideoMetadata.read(from:)` postprocessing or change source-data retention.
 The patch is for review/upstream integration; it is not applied to production.
 
+For acceptance of a reviewed commit, the same harness can use a separate exact
+candidate checkout instead of applying the recorded patch:
+
+```bash
+python3 scripts/profile-metadata-memory.py \
+  /path/to/clean/pinned-baseline /tmp/new-metadata-profile \
+  /path/to/1h-5.1.m4a /path/to/8h-5.1.m4a \
+  --candidate-checkout /path/to/clean/reviewed-candidate \
+  --expected-candidate-sha 0123456789abcdef0123456789abcdef01234567
+```
+
+Both candidate options are required together, and the expected SHA must be the
+full lowercase 40-character commit identity. The candidate must be a separate,
+clean checkout whose `HEAD` matches exactly. Omitting both options preserves the
+recorded-patch workflow above. The baseline and candidate remain unchanged;
+`environment.json` records the mode, expected and resolved revisions, both
+committed-source archive SHA-256 hashes, checkout paths, and a patch SHA-256 only
+when the patch was actually applied. The standalone artifact validator rejects
+missing, malformed, or internally inconsistent candidate provenance.
+
 Every input/variant/mode gets a fresh process:
 
 - `read`: normal synchronous `VideoMetadata.read(from:)`, retained-result RSS,
@@ -60,7 +80,7 @@ and VM behavior. The standalone process excludes app model conversion, AVAsset,
 playback, and concurrent jobs. It demonstrates this dependency path's cost, not
 full-app bounded memory.
 
-Artifacts include environment information, exact source revision, input sizes and
+Artifacts include environment information, exact source provenance, input sizes and
 SHA-256 hashes (including the probe, harness, and patch), build and patch logs,
 phase JSONL, and `summary.json`. Successful
 completion requires the expected phase sequence, positive memory measurements,
@@ -122,9 +142,10 @@ The standalone command also reconciles `summary.json` against the raw JSONL
 records. It validates recorded evidence; it does not authenticate artifacts or
 re-hash source media that may have moved since profiling.
 
-Eight regression tests cover missing/duplicate workloads, invalid phase order,
+The focused regressions cover missing/duplicate workloads, invalid phase order,
 non-finite/invalid memory and timing, empty snapshots, each parity result, and
-malformed scalar types, and missing or inconsistent raw/summary files. The retained September 7 `-c`
+malformed scalar types, missing or inconsistent raw/summary files, and invalid
+candidate provenance. The retained September 7 `-c`
 baseline passes the validator's complete 12-workload matrix. No memory workload
 was rerun for this artifact-validation change.
 

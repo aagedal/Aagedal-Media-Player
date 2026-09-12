@@ -9,6 +9,10 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from metadata_candidate import add_candidate_arguments, resolve_candidate
 
 ROOT = Path(__file__).resolve().parent.parent
 REVISION = "c2d77c2dcefcb997623e52beca57bc61ce302cb9"
@@ -31,26 +35,28 @@ def main():
                         help="representative camera/container clips for metadata export parity (--raw remains an alias)")
     parser.add_argument("--reuse-packages", type=Path, help="existing baseline/fixed isolated packages; library sources are verified before reuse")
     parser.add_argument("--upstream-tests", action="store_true", help="run candidate upstream library tests; excludes CLI and remote dependencies")
+    add_candidate_arguments(parser)
     args = parser.parse_args()
     checkout = args.checkout.resolve(strict=True)
-    revision = subprocess.check_output(["git", "-C", str(checkout), "rev-parse", "HEAD"], text=True).strip()
-    if revision != REVISION or subprocess.check_output(["git", "-C", str(checkout), "status", "--porcelain"], text=True).strip():
-        parser.error("Expected a clean SwiftMediaMetadata 3.0.0 c2d77c2 checkout")
+    patch = ROOT / "docs/dependency-patches/swift-media-metadata-3.0.0-rtmd-skip-mdat.patch"
+    candidate_source = resolve_candidate(args, parser, checkout, patch)
+    revision = candidate_source.provenance["baselineRevision"]
     inputs = [args.rtmd.resolve(strict=True)] + [path.resolve(strict=True) for path in args.raw]
     if len(set(inputs)) != len(inputs) or any(not path.is_file() for path in inputs):
         parser.error("Expected distinct regular media files")
     artifacts = args.artifacts.resolve()
-    artifacts.mkdir(parents=True, exist_ok=False)
     package_root = args.reuse_packages.resolve(strict=True) if args.reuse_packages else artifacts
-    if package_root == checkout or checkout in package_root.parents:
-        parser.error("Package copies must be outside the resolved checkout")
-    patch = ROOT / "docs/dependency-patches/swift-media-metadata-3.0.0-rtmd-skip-mdat.patch"
+    if any(package_root == source or source in package_root.parents
+           for source in (candidate_source.baseline, candidate_source.candidate)):
+        parser.error("Package copies must be outside source checkouts")
+    artifacts.mkdir(parents=True, exist_ok=False)
     probe = ROOT / "scripts/MetadataRealMediaProbe.swift"
     env = dict(os.environ, CLANG_MODULE_CACHE_PATH=str(artifacts / "module-cache"))
     # Mirror NRTXMLParser.sidecarCandidates at the pinned revision, including absence.
     sidecars = [path.with_name(path.stem + suffix) for path in inputs
                 for suffix in ("M01.XML", "M01.xml", "m01.XML", "m01.xml", ".XML", ".xml", ".M01", ".m01", ".NFO", ".nfo")]
-    environment = {"dependencyRevision": revision, "packageRoot": str(package_root),
+    environment = {"dependencyRevision": revision, "candidateProvenance": candidate_source.provenance,
+                   "packageRoot": str(package_root),
                    "toolchain": subprocess.check_output(["swift", "--version"], text=True),
                    "sourceHashes": {str(path): digest(path) for path in [Path(__file__), probe, patch]},
                    "sidecarCandidates": [{"path": str(path), "sha256": digest(path) if path.is_file() else None} for path in sidecars],
@@ -63,25 +69,27 @@ def main():
     errors = []
     for variant in ("baseline", "fixed"):
         package = package_root / variant
+        source_checkout = candidate_source.checkout_for(variant)
         if not args.reuse_packages:
             (package / "Sources").mkdir(parents=True)
             for module in ("SwiftMediaMetadata", "CZlib"):
-                shutil.copytree(checkout / "Sources" / module, package / "Sources" / module)
+                shutil.copytree(source_checkout / "Sources" / module, package / "Sources" / module)
             if variant == "fixed":
-                source = package / "Sources/SwiftMediaMetadata/Video/RTMDReader.swift"
-                source.chmod(source.stat().st_mode | 0o200)
-                with (artifacts / "patch.log").open("w") as output:
-                    subprocess.run(["patch", "-p1", "-i", str(patch)], cwd=package, stdout=output, stderr=subprocess.STDOUT, check=True, timeout=60)
+                if candidate_source.mode == "recordedPatch":
+                    source = package / "Sources/SwiftMediaMetadata/Video/RTMDReader.swift"
+                    source.chmod(source.stat().st_mode | 0o200)
+                candidate_source.apply_patch(package, artifacts / "patch.log")
         # Reject stale or independently edited reused library sources, including extra files.
         for module in ("SwiftMediaMetadata", "CZlib"):
-            original = checkout / "Sources" / module
+            original = source_checkout / "Sources" / module
             copied = package / "Sources" / module
             files = {path.relative_to(original) for path in original.rglob("*") if path.is_file()}
             if files != {path.relative_to(copied) for path in copied.rglob("*") if path.is_file()}:
                 raise ValueError(f"Unexpected {variant}/{module} source inventory")
             for relative in files:
                 expected = (original / relative).read_bytes()
-                if variant == "fixed" and str(relative) == "Video/RTMDReader.swift":
+                if (variant == "fixed" and candidate_source.mode == "recordedPatch"
+                        and str(relative) == "Video/RTMDReader.swift"):
                     old = b"let boxes = try ISOBMFFBoxReader.parseBoxes(from: fullData)"
                     if expected.count(old) != 1:
                         raise ValueError("Unexpected RTMD patch location")
@@ -94,7 +102,7 @@ def main():
         test_target = ""
         if args.upstream_tests and variant == "fixed":
             tests = package / "Tests/SwiftMediaMetadataTests"
-            original_tests = checkout / "Tests/SwiftMediaMetadataTests"
+            original_tests = source_checkout / "Tests/SwiftMediaMetadataTests"
             if tests.exists():
                 original_files = {path.relative_to(original_tests) for path in original_tests.rglob("*") if path.is_file()}
                 if (original_files != {path.relative_to(tests) for path in tests.rglob("*") if path.is_file()}
@@ -146,6 +154,8 @@ let package = Package(name: "RealMediaValidation", platforms: [.macOS(.v13)], ta
         path = Path(item["path"])
         if (digest(path) if path.is_file() else None) != item["sha256"]:
             errors.append("Sidecar contents or presence changed during validation")
+    if not candidate_source.verify_unchanged():
+        errors.append("Baseline or candidate source checkout changed")
     summary = {"passed": not errors, "errors": errors, "results": results, "upstreamLibraryTests": tests}
     (artifacts / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
     if errors:

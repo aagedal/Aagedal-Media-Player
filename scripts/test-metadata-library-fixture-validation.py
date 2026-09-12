@@ -67,6 +67,9 @@ class FixtureAcceptanceTests(unittest.TestCase):
     def test_empty_alternate_runner_cannot_replace_xctest(self):
         self.assertFalse(validation.validate_result("Test run with 0 tests passed after 0.001 seconds.\n", 0, set())["passed"])
 
+    def test_incomplete_candidate_provenance_is_rejected(self):
+        self.assertFalse(validation.validate_result(fixture_log(), 0, set(), candidate_provenance={})["passed"])
+
 
 if __name__ == "__main__":
     unittest.main()

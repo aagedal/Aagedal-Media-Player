@@ -6,6 +6,14 @@ with the proposed skip-mdat patch in isolated source copies. It supplements the
 [memory investigation](METADATA_MEMORY_PERFORMANCE.md); the production pin and
 resolved checkout remain unchanged.
 
+All paired checks can instead evaluate an exact reviewed source commit by adding
+`--candidate-checkout /path/to/clean/candidate --expected-candidate-sha FULL_SHA`.
+The options are inseparable, `FULL_SHA` must be a full lowercase 40-character
+commit matching candidate `HEAD`, and the checkout must be separate and clean.
+Omitting them preserves the recorded-patch candidate. The artifact environment
+records both source archive hashes and unambiguously records whether a patch or
+an exact checkout supplied the candidate; both source checkouts are reverified.
+
 ```bash
 python3 scripts/validate-metadata-real-media.py \
   /path/to/SourcePackages/checkouts/SwiftMediaMetadata \
@@ -97,7 +105,9 @@ packages or changing the production checkout:
 python3 scripts/validate-metadata-cli.py \
   /path/to/SourcePackages/checkouts/SwiftMediaMetadata \
   /path/to/swift-argument-parser \
-  /tmp/new-cli-validation
+  /tmp/new-cli-validation \
+  --candidate-checkout /path/to/clean/reviewed-candidate \
+  --expected-candidate-sha FULL_40_CHARACTER_SHA
 ```
 
 Both inputs must be clean git checkouts. The library must be at the pinned 3.0.0
@@ -106,6 +116,10 @@ revision above; ArgumentParser must match its committed `Package.resolved`
 committed source into a new output directory, applies only the recorded RTMD
 patch, and changes only the copied manifest's ArgumentParser dependency to its
 local archived copy. All upstream CLI and test source remains unchanged.
+The two candidate options shown are optional as a pair: when present, the script
+archives that exact clean commit without applying the patch and requires the
+local ArgumentParser checkout to match the candidate's `Package.resolved`.
+Omit both options for the original recorded-patch workflow.
 
 The command runs `swift test -c release --disable-sandbox --filter
 SwiftMediaMetadataCLITests` with `SWIFT_EXIF_RUN_CLI_TESTS=1` and an explicit
