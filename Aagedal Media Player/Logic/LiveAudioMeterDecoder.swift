@@ -298,22 +298,37 @@ nonisolated enum LiveAudioMeterDecoder {
         inputAudioArguments: [String] = []
     ) -> [String] {
         let source = request.url.isFileURL ? request.url.path : request.url.absoluteString
-        return [
+        // Keep long-source seeking bounded while preserving codec delay and
+        // edit-list accuracy at the requested sample boundary. Input seeking
+        // gets close; output seeking trims at most one decoded second exactly.
+        let decoderPreroll = min(request.startSourceTime, 1)
+        let inputSeekTime = request.startSourceTime - decoderPreroll
+        var arguments = [
             "-hide_banner", "-nostdin", "-loglevel", "error",
-            "-ss", sourceTimeArgument(request.startSourceTime),
+            "-ss", sourceTimeArgument(inputSeekTime), "-accurate_seek",
             // Keep decoded source time aligned with forward 1x playback. Capping
             // catch-up at the requested rate prevents a temporarily stalled
             // reader from racing ahead after it resumes.
             "-readrate", "1", "-readrate_catchup", "1",
-            // Native AC-3 DRC and xHE-AAC target normalization are explicitly
-            // disabled. Other decoders report these private options as unused.
-            "-drc_scale", "0", "-target_level", "0",
-        ] + inputAudioArguments + [
-            "-i", source,
+        ]
+        if decoderPreroll > 0 {
+            // Burst only the bounded preroll so readings begin without adding
+            // a seek-dependent delay; decoded output remains paced at 1x.
+            arguments += ["-readrate_initial_burst", sourceTimeArgument(decoderPreroll)]
+        }
+        // Native AC-3 DRC and xHE-AAC target normalization are explicitly
+        // disabled. Other decoders report these private options as unused.
+        arguments += ["-drc_scale", "0", "-target_level", "0"]
+        arguments += inputAudioArguments + ["-i", source]
+        if decoderPreroll > 0 {
+            arguments += ["-ss", sourceTimeArgument(decoderPreroll)]
+        }
+        arguments += [
             "-map", "0:a:\(request.audioStreamOrderIndex)",
             "-vn", "-sn", "-dn", "-map_metadata", "-1",
             "-c:a", "pcm_f32le", "-f", "f32le", "pipe:1",
         ]
+        return arguments
     }
 
     static func decode(

@@ -250,8 +250,9 @@ confidence as the picture.
   A per-player activating panel now owns the playback subscriptions, resolves
   late source metadata, starts at the current player clock and exposes the A/B,
   reset, retry and reference controls. Decoder-side PCM admission is now hard
-  bounded to 250 ms beyond the playback clock. Authoritative compressed-source
-  timestamps and real-path acceptance remain. See
+  bounded to 250 ms beyond the playback clock, and bounded precise seeking now
+  preserves generated AAC, ALAC and AC-3 intervals without unexpected gain.
+  Authoritative packet timestamps and representative real-path acceptance remain. See
   `docs/LIVE_AUDIO_METER_DSP.md`.
 - [x] Add offline integrated loudness over a selected range or full file.
   The metadata inspector measures each source audio stream over Whole File or

@@ -79,7 +79,7 @@ and recompute the true-peak exceedance latch.
 
 ## Decoder and presentation foundations
 
-`LiveAudioMeterDecoder` launches the signed bundled FFmpeg, identifies the
+`LiveAudioMeterDecoder` launches the bundled FFmpeg, identifies the
 selected source and zero-based audio-stream ordinal, disables supported decoder
 gain processing, preserves the declared sample rate/channel count, and streams
 little-endian Float32 PCM directly into the calculation core. Arbitrary stdout
@@ -87,6 +87,13 @@ boundaries are reassembled into complete interleaved frames in a fixed 50 ms
 buffer. Truncated, non-finite or discontinuous input fails the segment rather
 than publishing partial success. Completion records the decoder version,
 arguments, source request and sample format as provenance.
+
+Seeking uses a bounded hybrid: input seeking stops long files from decoding from
+the beginning, while at most one second of immediately burst decoder preroll is
+trimmed on the output side. This preserves exact generated AAC, ALAC and MP4
+AC-3 intervals at a requested source-sample boundary and avoids the AAC priming
+loss observed with input-only seeking. It is bounded seek evidence, not a claim
+that unframed raw PCM exposes authoritative packet timestamps.
 
 This decoder is deliberately not a playback coordinator. It requests native
 1× input pacing and caps catch-up at 1× so a temporarily stalled reader cannot
@@ -156,9 +163,11 @@ including the official ITU offline references and actual APFS recovery. Evidence
 `/tmp/aagedal-meter-programme-final-apfs-20260912/Tests.xcresult` and `summary.json`.
 The calculation/display foundation contributes 23 tests, including explicit
 Annex 3 rear-versus-side speaker checks at every supported sample rate. Nine
-decoder tests cover arbitrary byte boundaries, fixed buffering, malformed and
-truncated PCM, final revision, source identity/arguments, and a real bundled
-FFmpeg WAVE decode with versioned provenance. Six presentation tests cover
+original decoder tests cover arbitrary byte boundaries, fixed buffering,
+malformed and truncated PCM, final revision, source identity/arguments, and a
+real bundled-FFmpeg WAVE decode with versioned provenance. The decoder suite now
+has thirteen tests, adding worker admission/cancellation, bounded long-seek
+arguments and exact generated AAC/ALAC/AC-3 seek-interval and gain checks. Six presentation tests cover
 preference validation and exact EBU/ATSC threshold wording. A focused Debug run
 of these suites plus settings/numeric-default regressions passes 47 tests. Seven
 coordinator tests cover stale callback rejection, one-slot UI coalescing,
@@ -172,14 +181,15 @@ continuity, suspend before and after attachment, resume, and cancellation while
 stopped. These are calculation and process-control tests; synthetic PCM is not evidence of a validated live
 source decoder or all programme/transient families.
 
-The worker-gate continuation passes the full 635-test Debug suite with no
+The precise-seek continuation passes the full 637-test Debug suite with no
 failures and one expected opt-in real-volume-exhaustion skip. It adds focused
 coverage for current-clock startup/retry, source replacement, late metadata,
 preference persistence, auxiliary-panel command routing, malformed-snapshot
 diagnostics, complete delivery of final subprocess bytes, one-callback admission
-limits, suspend/resume, cancellation of blocked consumers and actual bundled-
-FFmpeg pipe backpressure at the playback boundary. Current release preflight
-still fails three bundled-FFmpeg signature/timestamp checks.
+limits, suspend/resume, cancellation of blocked consumers, actual bundled-
+FFmpeg pipe backpressure at the playback boundary and compressed-seek sample
+accuracy. Current release preflight still fails three bundled-FFmpeg
+signature/timestamp checks.
 
 A preliminary optimized standalone check on this development Mac processed ten
 seconds of eight-channel 96 kHz PCM in about 0.13 seconds. It excludes decoder,
@@ -187,8 +197,8 @@ UI, scheduling and thermal costs and is not a release-floor performance result.
 
 Remaining work:
 
-- Prove decoded timestamps on real compressed sources (or change the decoder
-  protocol so timestamps are authoritative). Validate drift failure,
+- Prove packet timestamps on representative real compressed sources (or change
+  the decoder protocol so timestamps are authoritative). Validate drift failure,
   seek/loop/reload, EOF revision, cancellation, retry and overrun end to end.
 - Production-path numerical references, compressed-source gain checks and
   monitor-routing invariance on both backends.

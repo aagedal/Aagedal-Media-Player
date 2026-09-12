@@ -15,9 +15,12 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
 
         XCTAssertEqual(arguments, [
             "-hide_banner", "-nostdin", "-loglevel", "error",
-            "-ss", "0.002000000", "-readrate", "1", "-readrate_catchup", "1",
+            "-ss", "0.000000000", "-accurate_seek",
+            "-readrate", "1", "-readrate_catchup", "1",
+            "-readrate_initial_burst", "0.002000000",
             "-drc_scale", "0", "-target_level", "0",
             "-f", "wav", "-i", "/tmp/live-meter-source.wav",
+            "-ss", "0.002000000",
             "-map", "0:a:2", "-vn", "-sn", "-dn", "-map_metadata", "-1",
             "-c:a", "pcm_f32le", "-f", "f32le", "pipe:1",
         ])
@@ -27,6 +30,21 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
         XCTAssertFalse(arguments.contains("-af"), "No normalization, volume, or rematrix filter is permitted")
         XCTAssertFalse(arguments.contains("-ar"), "The declared source rate must not be silently resampled")
         XCTAssertFalse(arguments.contains("-ac"), "The declared speaker layout must not be silently remixed")
+    }
+
+    func testLongSeekUsesBoundedAccurateDecoderPreroll() throws {
+        let request = try makeRequest(startFrame: 48_000 * 123)
+        let arguments = LiveAudioMeterDecoder.arguments(for: request)
+        let inputIndex = try XCTUnwrap(arguments.firstIndex(of: "-i"))
+        let seekIndexes = arguments.indices.filter { arguments[$0] == "-ss" }
+
+        XCTAssertEqual(seekIndexes.count, 2)
+        XCTAssertEqual(arguments[seekIndexes[0] + 1], "122.000000000")
+        XCTAssertLessThan(seekIndexes[0], inputIndex)
+        XCTAssertEqual(arguments[seekIndexes[1] + 1], "1.000000000")
+        XCTAssertGreaterThan(seekIndexes[1], inputIndex)
+        let burstIndex = try XCTUnwrap(arguments.firstIndex(of: "-readrate_initial_burst"))
+        XCTAssertEqual(arguments[burstIndex + 1], "1.000000000")
     }
 
     func testRequestRejectsInvalidOrInconsistentIdentity() throws {
@@ -245,6 +263,57 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
             elapsed, .milliseconds(500),
             "A one-second source must not be drained materially faster than forward 1x playback"
         )
+    }
+
+    func testBundledDecoderPreservesExactCompressedSeekIntervalsAndGain() async throws {
+        guard FFmpegService.ffmpegPath != nil else { throw XCTSkip("Bundled ffmpeg is required") }
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("live-meter-compressed-seek-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let waveURL = directory.appendingPathComponent("source.wav")
+        let frameCount = 96_000
+        let samples = (0..<frameCount).flatMap { frame -> [Float] in
+            let value: Float = frame < 48_000
+                ? 0
+                : Float(0.1 * sin(2 * .pi * 1_000 * Double(frame) / 48_000))
+            return [value, value]
+        }
+        try float32Wave(samples: samples, channels: 2, sampleRate: 48_000).write(to: waveURL)
+        let format = try LiveAudioMeterFormat(sampleRate: 48_000, layout: .stereo)
+
+        for (codec, filename) in [
+            ("aac", "source-aac.m4a"),
+            ("alac", "source-alac.m4a"),
+            ("ac3", "source-ac3.mp4"),
+        ] {
+            let compressedURL = directory.appendingPathComponent(filename)
+            try await FFmpegService.run(arguments: [
+                "-hide_banner", "-nostdin", "-loglevel", "error", "-y",
+                "-i", waveURL.path, "-c:a", codec, compressedURL.path,
+            ])
+            let request = try LiveAudioMeterDecodeRequest(
+                url: compressedURL,
+                audioStreamOrderIndex: 0,
+                format: format,
+                startSourceFrame: 48_000,
+                startSourceTime: 1
+            )
+            let completion = try await LiveAudioMeterDecoder.decode(request) { _ in }
+
+            XCTAssertEqual(
+                completion.finalSnapshot?.endFrame,
+                96_000,
+                "\(codec) seek must preserve the exact requested one-second source interval"
+            )
+            let samplePeak = try XCTUnwrap(completion.finalSnapshot?.samplePeakDBFS.first)
+            XCTAssertEqual(
+                samplePeak,
+                -20,
+                accuracy: 0.75,
+                "\(codec) decode must not apply unexpected gain normalization"
+            )
+        }
     }
 
     private func makeRequest(startFrame: Int64 = 0) throws -> LiveAudioMeterDecodeRequest {

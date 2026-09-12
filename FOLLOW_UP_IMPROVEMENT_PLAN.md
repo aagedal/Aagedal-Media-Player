@@ -1847,7 +1847,10 @@ live-path acceptance work below still open. This does not complete Audio QC.
 - [x] Enforce an exact worker-side PCM admission bound no more than 250 ms ahead
   of the playback clock, including pause/resume, cancellation wake-up and actual
   bundled-FFmpeg pipe backpressure.
-- [ ] Prove authoritative decoder timestamps on real compressed sources.
+- [x] Replace input-only seeking with bounded precise preroll and prove exact
+  generated AAC, ALAC and MP4 AC-3 intervals without unexpected decoder gain.
+- [ ] Prove authoritative decoder packet timestamps on representative real
+  compressed sources.
 - [ ] Complete real-path accuracy, routing invariance, spoken accessibility and
   release-floor performance.
 
@@ -1863,7 +1866,7 @@ decode, coordinator ownership, suspend/cancellation and panel-session coverage.
 The mounted panel deliberately qualifies provenance until decode completion and
 does not mark live metering as release accepted: authoritative compressed-source
 timestamp continuity and production-path acceptance remain open.
-The integrated continuation passes the full 635-test Debug suite with no failures
+The integrated continuation passes the full 637-test Debug suite with no failures
 and one expected opt-in real-volume-exhaustion skip.
 
 See `docs/LIVE_AUDIO_METER_DSP.md`. A preliminary optimized standalone host
@@ -1933,8 +1936,9 @@ controllers publish typed transport/discontinuity events and the coordinator
 now applies tested clock drift, ahead hysteresis, restart and speed policies;
 the owning window session, source-readiness seam, activating panel and
 active-player command routing are now integrated. Worker-side PCM admission is
-hard bounded to 250 ms beyond the playback clock. Authoritative compressed-source
-timestamps remain. The new
+hard bounded to 250 ms beyond the playback clock. Bounded precise seeking also
+preserves generated AAC, ALAC and AC-3 sample intervals and gain. Authoritative
+packet timestamps on representative sources remain. The new
 production-path metadata profiler observes RSS before the first uncached load,
 checks cache parity and caller release, and validates one fresh XCTest host per
 input; its 61-second ALAC end-to-end run validates the harness, not the long-file
@@ -1949,7 +1953,7 @@ Review commands now toggle Comparison Review and navigate previous/next matching
 notes without toolbar traversal. They do not replace native Full Keyboard Access
 or spoken VoiceOver acceptance.
 
-All 635 ordinary Debug tests pass; the optional real-volume-exhaustion test is
+All 637 ordinary Debug tests pass; the optional real-volume-exhaustion test is
 the sole skip. Static analysis passes. Release preflight remains blocked by the
 bundled FFmpeg's invalid/non-Developer-ID signature and missing secure timestamp,
 so candidate signing and distribution acceptance remain open.
@@ -2033,8 +2037,9 @@ so candidate signing and distribution acceptance remain open.
   source-rate-paced decoder, lifecycle owner and selected-track request mapping
   now exist. Typed playback events plus coordinator clock/drift and ahead
   hysteresis policies are tested; the owning meter-window session and activating
-  UI and hard 250 ms worker admission bound are integrated. Authoritative decoded
-  timestamps and live reference validation remain;
+  UI and hard 250 ms worker admission bound are integrated. Bounded precise seek
+  passes generated AAC/ALAC/AC-3 checks; authoritative packet timestamps on
+  representative sources and live reference validation remain;
   Phase 84 adds production programme profiling and fixes silent long-range
   channel loss plus excessive shared-demux buffering; representative-media and
   release-floor memory acceptance remain.
