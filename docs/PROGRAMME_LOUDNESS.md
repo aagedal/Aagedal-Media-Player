@@ -86,8 +86,11 @@ part of this implementation.
 Processing uses one cancellable FFmpeg job, bounded diagnostic retention and a
 streaming filter graph; no whole-file PCM output is created. Each assigned
 channel is padded and trimmed to the finite requested interval before explicit
-speaker-channel joining. Production-scale multitrack profiling and hands-on
-keyboard/VoiceOver acceptance remain separate checks.
+speaker-channel joining. The [production programme profiling harness](PROGRAMME_LOUDNESS_PERFORMANCE.md)
+records whole-file and early/late range timing and parent/FFmpeg memory for
+stereo and 5.1 assemblies from eight mono tracks. Representative production
+content, base-M1 performance and hands-on keyboard/VoiceOver acceptance remain
+separate checks.
 
 `ProgrammeLoudnessTests` compares split-mono programmes against independent PCM
 references, covering eight-track stereo with silent or loud spare tracks,
