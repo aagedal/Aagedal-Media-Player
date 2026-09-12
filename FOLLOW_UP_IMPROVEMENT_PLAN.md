@@ -806,6 +806,9 @@ production integration remains open.
 - [x] Extend paired native-media parity to a second Sony A1 clip (5,568 RTMD
   frames and 222,720 samples per motion stream), ProRes RAW HQ, ARRIRAW, and
   X-OCN LT. All five paired workloads pass on 2026-09-08 with unchanged inputs.
+- [x] Add an opt-in production `MetadataService` profiler that observes memory
+  before the uncached load, verifies cached-result parity and caller release,
+  and validates fresh-process artifacts for each supplied long input.
 - [ ] Complete upstream review and remaining fixture coverage, integrate a
   reviewed dependency release, and repeat full-app memory profiling. The latest
   remote tag and upstream default branch are still at the pinned 3.0.0 revision,
@@ -1903,6 +1906,21 @@ Evidence:
 
 The production metadata-memory dependency issue remains separate and unresolved.
 
+## Integrated continuation verification — 2026-09-12
+
+The live-meter decoder now runs at source-rate pace, preserves one controlled
+decoder/DSP generation across pause and buffering, and binds exact selected A/B
+audio-stream identity into source-sample-aligned decode requests. The new
+production-path metadata profiler observes RSS before the first uncached load,
+checks cache parity and caller release, and validates one fresh XCTest host per
+input; its 61-second ALAC end-to-end run validates the harness, not the long-file
+memory gate.
+
+All 607 ordinary Debug tests pass; the optional real-volume-exhaustion test is
+the sole skip. Static analysis passes. Release preflight remains blocked by the
+bundled FFmpeg's invalid/non-Developer-ID signature and missing secure timestamp,
+so candidate signing and distribution acceptance remain open.
+
 ## Remaining work after this continuation
 
 - Integrate the measured metadata-memory dependency fix after upstream review,
@@ -1978,8 +1996,10 @@ The production metadata-memory dependency issue remains separate and unresolved.
   Broadcast WAVE recording tags; native validation is recorded with that phase.
 - Implement and validate peak/true-peak meters and live momentary/short-term
   loudness against the Phase 81 calibration/ballistics/preset contract;
-  Phase 83 implements and tests the bounded DSP/display foundation but has no
-  playback decoder or meter UI yet;
+  Phase 83 implements and tests the bounded DSP/display foundation. The bounded,
+  source-rate-paced decoder, lifecycle owner and selected-track request mapping
+  now exist; playback-clock/drift events, ahead-of-playback bounds, meter-window
+  integration and live reference validation remain;
   Phase 84 adds production programme profiling and fixes silent long-range
   channel loss plus excessive shared-demux buffering; representative-media and
   release-floor memory acceptance remain.
