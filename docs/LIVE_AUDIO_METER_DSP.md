@@ -4,9 +4,11 @@ Implementation: September 12, 2026. This completes bounded calculation,
 source-decoder, lifecycle-ownership and presentation foundations for the
 [live-meter contract](LIVE_AUDIO_METER_DESIGN.md). The source decoder is now
 wall-clock paced at 1× and its process can remain continuous across pause and
-buffering, but these pieces are **not** yet connected to playback transport or
-exposed in an app window. The live Audio QC roadmap and release gates remain
-open.
+buffering. Player controllers now publish typed clock, transport, scrub, seek,
+frame-step, loop, source and audio-track events, and the coordinator applies a
+tested drift/failure policy to them. No window-owned session subscribes that
+seam or exposes the presentation in the app yet. The live Audio QC roadmap and
+release gates remain open.
 
 ## Measurement core
 
@@ -89,8 +91,10 @@ This decoder is deliberately not a playback coordinator. It requests native
 1× input pacing and caps catch-up at 1× so a temporarily stalled reader cannot
 race forward afterward. The fixed 50 ms processor buffer remains below the
 DSP's 250 ms input ceiling. Wall-clock pacing does not prove alignment with the
-active player clock; player-event integration, decoded-versus-playback drift
-checks and an explicit ahead-of-playback limit remain outside it.
+active player clock. Raw Float32 output also carries no decoder timestamp, so
+the sample-count endpoint after input seeking must still be validated on real
+compressed sources, and the worker must stop accepting bytes before it can
+exceed the ahead-of-playback budget.
 
 `LiveAudioMeterCoordinator` now supplies the isolated window-ownership boundary:
 one decode task, monotonically changing generations, stale result rejection,
@@ -102,6 +106,16 @@ freeze queued presentation, and resume the same decoder/DSP generation when the
 source identity is unchanged. Suspend-before-attachment is remembered, and
 cancellation still terminates a stopped process. Seek, loop, reload, speed and
 source discontinuities continue to create clean generations.
+
+`LiveAudioMeterPlaybackEvent` is the typed player seam for periodic clock and
+transport state, interactive scrubbing, EOF, seek/frame-step/loop boundaries,
+and source or selected-track replacement. `LiveAudioMeterClockPolicy` compares
+the reduced DSP endpoint with the measured source clock, fails outside ±250 ms,
+and uses 200/100 ms suspend/resume hysteresis inside that bound. Unsupported
+speed invalidates the segment and returning to forward 1× restarts at the
+current player clock. These policies are wired into the coordinator and covered
+by focused tests; the application still needs a window session to resolve the
+selected source, subscribe to the correct controller, and own its lifetime.
 
 `LiveAudioMeterPlaybackSource` provides the typed handoff from a selected A/B
 track to the decoder. It preserves the zero-based audio-only stream order used
@@ -156,12 +170,13 @@ UI, scheduling and thermal costs and is not a release-floor performance result.
 
 Remaining work:
 
-- Wire the generation-isolated coordinator and reusable presentation to their
-  owning player window, selected A/B source/track and actual playback events.
-- Connect the paced, suspendable decoder to real forward-1× transport events;
-  enforce an explicit ahead-of-playback limit, seek/loop/reload invalidation,
-  EOF revision, cancellation, retry and overrun behavior with verified
-  timestamps and rejection of decoder/playback drift.
+- Add the window-owned session that resolves the selected A/B source/track,
+  subscribes the coordinator to the correct player, and tears both down with
+  the window.
+- Prove decoded timestamps on real compressed sources (or change the decoder
+  protocol so timestamps are authoritative) and enforce the 250 ms bound in
+  the worker before additional PCM is accepted. Validate drift failure,
+  seek/loop/reload, EOF revision, cancellation, retry and overrun end to end.
 - Mount the reusable meter presentation in the application and connect its A/B
   selector, reference controls, clear/reset/retry actions and status diagnostics
   to the owning playback window.
