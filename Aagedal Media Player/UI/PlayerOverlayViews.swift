@@ -219,7 +219,7 @@ private struct ProgressCapsuleBorder: Shape {
         set { progress = newValue }
     }
 
-    func path(in rect: CGRect) -> Path {
+    nonisolated func path(in rect: CGRect) -> Path {
         let radius = rect.height / 2
         let straightLength = rect.width - 2 * radius
         let semicircleLength = .pi * radius

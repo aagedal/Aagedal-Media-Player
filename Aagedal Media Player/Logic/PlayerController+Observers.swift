@@ -150,7 +150,8 @@ extension PlayerController {
         guard useMPV, let observedMPV = mpvPlayer else { return }
         let observedPreparationID = preparationID
 
-        mpvLoopObserverTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
+        mpvLoopObserverTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self, weak observedMPV] _ in
+            guard let observedMPV else { return }
             Task { @MainActor [weak self, weak observedMPV] in
                 guard let self,
                       let observedMPV,

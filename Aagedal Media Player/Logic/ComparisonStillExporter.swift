@@ -2,7 +2,7 @@
 // Copyright © 2026 Truls Aagedal
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import AVFoundation
+@preconcurrency import AVFoundation
 import CoreGraphics
 import CoreText
 import Foundation
