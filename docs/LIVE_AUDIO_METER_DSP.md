@@ -15,8 +15,9 @@ unavailable; channel count never silently invents a speaker map.
 
 The two K-weighting stages use a sample-rate parameterization that reproduces
 the published 48 kHz coefficients. Each speaker is filtered independently;
-LFE contributes to peaks but not loudness. Conventional rear and side surround
-energy receives the 1.41 weight. The source specification is
+LFE contributes to peaks but not loudness. Side surround energy receives the 1.41 weight; conventional 7.1 rear
+±135° speakers retain unit weight under Annex 3, matching the existing offline
+correction rather than the bundled FFmpeg's default 7.1 map. The source specification is
 [ITU-R BS.1770-5](https://www.itu.int/dms_pubrec/itu-r/rec/bs/R-REC-BS.1770-5-202311-I!!PDF-E.pdf);
 the filter parameterization is also documented in
 [libebur128's filter initialization](https://github.com/jiixyj/libebur128/blob/master/ebur128/ebur128.c).
@@ -78,10 +79,12 @@ LFE/surround isolation, silence versus unknown roles, polarity and intersample
 peaks, arbitrary input-block boundaries, FIR tail, exact/partial-bucket EOF,
 maxima/reset and permanently invalidated bad input. Display tests cover decay,
 hold, exact preset boundaries, invalid inputs and final-bucket revision.
-The full September 12 Release run passes 577 tests with zero failures or skips,
+The full September 12 Release run passes 578 tests with zero failures or skips,
 including the official ITU offline references and actual APFS recovery. Evidence:
-`/tmp/aagedal-meter-release-apfs-20260912/Tests.xcresult` and `summary.json`.
-The new calculation/display foundation contributes 23 tests.
+`/tmp/aagedal-meter-programme-final-apfs-20260912/Tests.xcresult` and `summary.json`.
+The new calculation/display foundation contributes 23 tests, including explicit
+Annex 3 rear-versus-side speaker checks at every supported sample rate.
+Final Xcode static analysis and all 61 release-preflight checks also pass.
 These are calculation tests; synthetic PCM is not evidence of a validated live
 source decoder or all programme/transient families.
 

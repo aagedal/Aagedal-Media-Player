@@ -116,11 +116,19 @@ final class LiveAudioMeterDSPTests: XCTestCase {
     }
 
     func testLFEExcludedAndEveryConventionalSurroundWeighted() throws {
-        for layout in [LiveAudioMeterFormat.Layout.surround5Point1, .surround7Point1] {
+        // BS.1770-5 Annex 1 Table 3 and Annex 3 Tables 4–5: in
+        // conventional 7.1, rear ±135° channels have unit weight, distinct
+        // from the 1.41 side ±90° weight. Do not copy FFmpeg's default 7.1 map.
+        let references: [(LiveAudioMeterFormat.Layout, [Double])] = [
+            (.surround5Point1, [1, 1, 1, 0, 1.41, 1.41]),
+            (.surround7Point1, [1, 1, 1, 0, 1, 1, 1.41, 1.41])
+        ]
+        for rate in [44_100, 48_000, 96_000] {
+          for (layout, weights) in references {
             for selected in 0..<layout.channelCount {
-                var meter = try LiveAudioMeterDSP(format: .init(sampleRate: 48_000, layout: layout))
-                let readings = try feed(&meter, frames: 24_000) { frame, channel in
-                    channel == selected ? Float(pow(10, -23.0 / 20) * sin(2 * .pi * 1_000 * Double(frame) / 48_000)) : 0
+                var meter = try LiveAudioMeterDSP(format: .init(sampleRate: rate, layout: layout))
+                let readings = try feed(&meter, frames: rate / 2) { frame, channel in
+                    channel == selected ? Float(pow(10, -23.0 / 20) * sin(2 * .pi * 1_000 * Double(frame) / Double(rate))) : 0
                 }
                 let last = try XCTUnwrap(readings.last)
                 XCTAssertEqual(last.maximumSamplePeakDBFS[selected], -23, accuracy: 0.01)
@@ -128,10 +136,11 @@ final class LiveAudioMeterDSPTests: XCTestCase {
                 if selected == 3 {
                     XCTAssertEqual(last.momentaryLUFS, -.infinity)
                 } else {
-                    let expected = -23 - 10 * log10(2.0) + (selected >= 4 ? 10 * log10(1.41) : 0)
+                    let expected = -23 + 10 * log10(weights[selected] / 2)
                     XCTAssertEqual(try XCTUnwrap(last.momentaryLUFS), expected, accuracy: 0.1)
                 }
             }
+          }
         }
     }
 

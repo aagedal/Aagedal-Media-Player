@@ -16,7 +16,7 @@ nonisolated struct LiveAudioMeterFormat: Equatable, Sendable {
             case .mono: [1]
             case .stereo: [1, 1]
             case .surround5Point1: [1, 1, 1, 0, 1.41, 1.41] // FL FR FC LFE SL SR
-            case .surround7Point1: [1, 1, 1, 0, 1.41, 1.41, 1.41, 1.41] // FL FR FC LFE BL BR SL SR
+            case .surround7Point1: [1, 1, 1, 0, 1, 1, 1.41, 1.41] // FL FR FC LFE BL BR SL SR (Annex 3)
             case .unknown: nil
             }
         }
