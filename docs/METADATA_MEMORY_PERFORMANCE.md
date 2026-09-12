@@ -152,3 +152,31 @@ After integrating a reviewed dependency release, repeat the isolated profile and
 full app metadata/loudness workload, including app-model conversion and release.
 The app-wide bounded-memory gate and representative hardware/content acceptance
 remain open until those checks pass.
+
+## Production app profiling
+
+The opt-in production-path profile starts observing the XCTest host before its
+first uncached `MetadataService.metadata(for:)` call, samples current resident
+memory during that call, and records Darwin's process-lifetime peak before and
+after loading. It then verifies a cached read returns equal app metadata, drops
+both caller-owned values, and records current and lifetime-peak RSS again. The
+service intentionally retains its converted `MediaMetadata` value in `NSCache`;
+the release observation therefore covers caller values and the dependency result,
+not explicit cache eviction.
+
+```bash
+scripts/profile-production-metadata-memory.sh \
+  /tmp/new-production-metadata-memory-profile \
+  /path/to/1h-5.1.m4a /path/to/8h-5.1.m4a
+python3 scripts/test-production-metadata-memory-profile-validation.py
+```
+
+Each input runs in a fresh Release XCTest host so `ru_maxrss` belongs to that
+input. The artifact validator requires complete per-input phase observations,
+monotonic lifetime peaks, cache parity, consistent source/metadata sizes, a
+duration of at least 60 seconds, and at least one audio or video stream. The
+10 ms current-RSS samples may miss a short transient; the lifetime peak remains
+the authoritative backstop. This harness does not make the current dependency
+acceptable by itself. Run it before and after pinning the reviewed release, then
+retain the exact app revision, package resolution, source hashes, result bundles,
+logs, and validated `summary.json`.
