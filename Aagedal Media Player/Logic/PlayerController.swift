@@ -61,13 +61,21 @@ final class PlayerController: ObservableObject {
     private(set) var isAudioSuppressed = false
     private var effectiveIsMuted: Bool { isMuted || isAudioSuppressed }
     var player: AVPlayer? { backendAdapter?.avPlayer }
-    @Published private(set) var playbackPhase: PlaybackPhase = .idle
+    @Published private(set) var playbackPhase: PlaybackPhase = .idle {
+        didSet { publishLiveAudioMeterTransport() }
+    }
     var isPreparing: Bool { playbackPhase == .preparing }
     var isReady: Bool { playbackPhase.permitsPlaybackControls }
     var playbackFailure: PlaybackFailure? { playbackPhase.failure }
-    @Published var currentPlaybackTime: Double = 0
-    @Published private(set) var isPlaying: Bool = false
-    @Published private(set) var currentPlaybackSpeed: Float = 1.0
+    @Published var currentPlaybackTime: Double = 0 {
+        didSet { publishLiveAudioMeterClock() }
+    }
+    @Published private(set) var isPlaying: Bool = false {
+        didSet { publishLiveAudioMeterTransport() }
+    }
+    @Published private(set) var currentPlaybackSpeed: Float = 1.0 {
+        didSet { publishLiveAudioMeterTransport() }
+    }
     @Published private(set) var playbackLoopCount: UInt64 = 0
     @Published private(set) var isReversing: Bool = false
     private let trackSelection = TrackSelectionController()
@@ -186,6 +194,11 @@ final class PlayerController: ObservableObject {
     private var playbackPreparationTask: Task<Void, Never>?
     private var scopePlaybackResumeTask: Task<Void, Never>?
     private let proResRAWDetector: ProResRAWDetector
+    private let liveAudioMeterPlaybackSubject = PassthroughSubject<LiveAudioMeterPlaybackEvent, Never>()
+
+    var liveAudioMeterPlaybackEvents: AnyPublisher<LiveAudioMeterPlaybackEvent, Never> {
+        liveAudioMeterPlaybackSubject.eraseToAnyPublisher()
+    }
 
     /// Monotonically increasing counter invalidating stale async work from
     /// previous `preparePlayback` / `setupMPV` calls.
@@ -198,6 +211,46 @@ final class PlayerController: ObservableObject {
     // MARK: - Initialization
 
     var playbackTimePublisher: Published<Double>.Publisher { $currentPlaybackTime }
+
+    func liveAudioMeterPlaybackSnapshot() -> LiveAudioMeterPlaybackSnapshot {
+        liveAudioMeterPlaybackSnapshot(timeOverride: nil)
+    }
+
+    private func liveAudioMeterPlaybackSnapshot(
+        timeOverride: TimeInterval?
+    ) -> LiveAudioMeterPlaybackSnapshot {
+        LiveAudioMeterPlaybackSnapshot(
+            time: timeOverride ?? playbackTimeSnapshot(),
+            phase: playbackPhase,
+            isPlaying: isPlaying,
+            rate: currentPlaybackSpeed,
+            preparationID: preparationID
+        )
+    }
+
+    func publishLiveAudioMeterDiscontinuity(
+        _ cause: LiveAudioMeterPlaybackDiscontinuity,
+        at playbackTime: TimeInterval? = nil
+    ) {
+        liveAudioMeterPlaybackSubject.send(
+            .discontinuity(
+                cause,
+                snapshot: liveAudioMeterPlaybackSnapshot(timeOverride: playbackTime)
+            )
+        )
+    }
+
+    func publishLiveAudioMeterEnded() {
+        liveAudioMeterPlaybackSubject.send(.ended(liveAudioMeterPlaybackSnapshot()))
+    }
+
+    private func publishLiveAudioMeterClock() {
+        liveAudioMeterPlaybackSubject.send(.clock(liveAudioMeterPlaybackSnapshot()))
+    }
+
+    private func publishLiveAudioMeterTransport() {
+        liveAudioMeterPlaybackSubject.send(.transport(liveAudioMeterPlaybackSnapshot()))
+    }
 
     private let logger = Logger(subsystem: "com.aagedal.MediaPlayer", category: "PlayerController")
 
@@ -259,6 +312,7 @@ final class PlayerController: ObservableObject {
                 videoSourceSize = nil
             }
 
+            publishLiveAudioMeterDiscontinuity(.sourceReplacement)
             preparePlayback(startTime: max(0, startTime))
         }
     }
@@ -356,6 +410,7 @@ final class PlayerController: ObservableObject {
 
     func recordPlaybackLoop() {
         playbackLoopCount &+= 1
+        publishLiveAudioMeterDiscontinuity(.loopWrap)
     }
 
     // MARK: - Playback Preparation
@@ -1158,13 +1213,16 @@ final class PlayerController: ObservableObject {
     }
 
     func seekByFrames(_ frameCount: Int) {
+        let seconds: Double
         if let frameRate = mediaItem?.metadata?.primaryVideoStream?.frameRate,
            let frameRateValue = frameRate.value, frameRateValue > 0 {
-            let secondsPerFrame = 1.0 / frameRateValue
-            seek(by: Double(frameCount) * secondsPerFrame)
+            seconds = Double(frameCount) / frameRateValue
         } else {
-            seek(by: Double(frameCount) / 30.0)
+            seconds = Double(frameCount) / 30.0
         }
+        guard let item = mediaItem else { return }
+        let target = max(0, min((getCurrentTime() ?? 0) + seconds, item.durationSeconds))
+        performSeek(to: target, discontinuity: .frameStep)
     }
 
     /// Preview a position during an interactive drag without flooding the
@@ -1173,6 +1231,7 @@ final class PlayerController: ObservableObject {
         guard isReady, time.isFinite else { return }
 
         currentPlaybackTime = time
+        liveAudioMeterPlaybackSubject.send(.scrubbing(liveAudioMeterPlaybackSnapshot()))
         pendingScrubTime = time
 
         if useMPV {
@@ -1184,14 +1243,22 @@ final class PlayerController: ObservableObject {
 
     /// Finish an interactive drag with a frame-accurate seek.
     func endScrubbing(at time: Double) {
-        seekTo(time)
+        performSeek(to: time, discontinuity: .scrub)
     }
 
     func seekTo(_ time: Double) {
+        performSeek(to: time, discontinuity: .seek)
+    }
+
+    private func performSeek(
+        to time: Double,
+        discontinuity: LiveAudioMeterPlaybackDiscontinuity
+    ) {
         cancelPendingScrubSeeks()
         guard isReady, time.isFinite else { return }
 
         currentPlaybackTime = time
+        publishLiveAudioMeterDiscontinuity(discontinuity, at: time)
 
         backendAdapter?.seek(to: time)
     }
@@ -1332,6 +1399,7 @@ final class PlayerController: ObservableObject {
         )
         if changed {
             updateEffectiveAudioChannelRouting()
+            publishLiveAudioMeterDiscontinuity(.audioTrackReplacement)
         }
         if useMPV, isAudioSuppressed {
             mpvPlayer?.disableAudioTrack()

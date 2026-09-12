@@ -52,6 +52,126 @@ final class LiveAudioMeterCoordinatorTests: XCTestCase {
         await eventually { coordinator.status == .ended(frame: 240_000) }
     }
 
+    func testCoalescedSnapshotsRetainIntermediateTransientBallistics() async throws {
+        let decoder = ControlledLiveMeterDecoder(honorCancellation: false)
+        let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
+        coordinator.start(try request(stream: 0, startFrame: 0))
+        await decoder.waitUntilAttached(stream: 0)
+
+        decoder.emit(snapshot(endFrame: 2_400, peak: 0), stream: 0)
+        decoder.emit(snapshot(endFrame: 4_800, peak: -80), stream: 0)
+        await eventually { coordinator.reducedSnapshot?.measurement.endFrame == 4_800 }
+
+        XCTAssertEqual(coordinator.publishedSnapshotCount, 1)
+        XCTAssertEqual(coordinator.reducedSnapshot?.samplePeaks[0].current, -80)
+        XCTAssertEqual(try XCTUnwrap(coordinator.reducedSnapshot?.samplePeaks[0].bar), -1, accuracy: 0.000_001)
+        XCTAssertEqual(coordinator.reducedSnapshot?.samplePeaks[0].marker, 0)
+        XCTAssertEqual(coordinator.reducedSnapshot?.samplePeaks[0].maximum, 0)
+        coordinator.close()
+    }
+
+    func testClearMaximaPreservesBarsAndRebasesSubsequentMaxima() async throws {
+        let decoder = ControlledLiveMeterDecoder(honorCancellation: false)
+        let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
+        coordinator.start(try request(stream: 0, startFrame: 0))
+        await decoder.waitUntilAttached(stream: 0)
+        decoder.emit(snapshot(endFrame: 2_400, peak: -3), stream: 0)
+        await eventually { coordinator.reducedSnapshot != nil }
+        let bar = coordinator.reducedSnapshot?.samplePeaks[0].bar
+        let generation = coordinator.generation
+
+        coordinator.clearMaxima()
+
+        XCTAssertEqual(coordinator.generation, generation)
+        XCTAssertEqual(coordinator.reducedSnapshot?.samplePeaks[0].bar, bar)
+        XCTAssertNil(coordinator.reducedSnapshot?.samplePeaks[0].maximum)
+        decoder.emit(snapshot(endFrame: 4_800, peak: -12), stream: 0)
+        await eventually { coordinator.reducedSnapshot?.measurement.endFrame == 4_800 }
+        XCTAssertEqual(coordinator.reducedSnapshot?.samplePeaks[0].maximum, -12)
+        XCTAssertEqual(coordinator.reducedSnapshot?.samplePeaks[0].marker, -3)
+        coordinator.close()
+    }
+
+    func testRetryAndManualResetUseCurrentPlaybackClock() async throws {
+        let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
+        let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
+        coordinator.start(try request(stream: 0, startFrame: 0))
+        await decoder.waitUntilAttached(stream: 0)
+
+        XCTAssertTrue(coordinator.retry(at: 2.25))
+        await decoder.waitUntilAttached(stream: 0, occurrence: 2)
+        XCTAssertEqual(decoder.request(stream: 0, occurrence: 2)?.startSourceFrame, 108_000)
+        XCTAssertEqual(coordinator.restartCause, .retry)
+
+        XCTAssertTrue(coordinator.reset(at: 4.5))
+        await decoder.waitUntilAttached(stream: 0, occurrence: 3)
+        XCTAssertEqual(decoder.request(stream: 0, occurrence: 3)?.startSourceFrame, 216_000)
+        XCTAssertEqual(coordinator.restartCause, .manualReset)
+        coordinator.close()
+    }
+
+    func testTypedSeekRestartsWhileTrackReplacementRequiresNewIdentity() async throws {
+        let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
+        let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
+        coordinator.start(try request(stream: 0, startFrame: 0))
+        await decoder.waitUntilAttached(stream: 0)
+
+        coordinator.handlePlaybackEvent(.discontinuity(
+            .seek, snapshot: playback(time: 3, playing: true)
+        ))
+        await decoder.waitUntilAttached(stream: 0, occurrence: 2)
+        XCTAssertEqual(decoder.request(stream: 0, occurrence: 2)?.startSourceFrame, 144_000)
+        XCTAssertEqual(coordinator.restartCause, .seek)
+
+        coordinator.handlePlaybackEvent(.discontinuity(
+            .audioTrackReplacement, snapshot: playback(time: 3, playing: true)
+        ))
+        guard case .unavailable(let reason, _) = coordinator.status else {
+            return XCTFail("Expected source replacement to invalidate the old request")
+        }
+        XCTAssertEqual(reason, "The measured audio source changed.")
+    }
+
+    func testClockDriftFailureInvalidatesCurrentGeneration() async throws {
+        let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
+        let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
+        coordinator.start(try request(stream: 0, startFrame: 0))
+        await decoder.waitUntilAttached(stream: 0)
+        decoder.emit(snapshot(endFrame: 2_400), stream: 0)
+        await eventually { coordinator.reducedSnapshot != nil }
+
+        coordinator.updatePlaybackClock(playback(time: 0.31, playing: true))
+
+        guard case .unavailable(let reason, let diagnostic) = coordinator.status else {
+            return XCTFail("Expected excessive lag to invalidate the segment")
+        }
+        XCTAssertEqual(reason, "Live meters lost synchronization with playback.")
+        XCTAssertTrue(diagnostic?.contains("-260.0 ms") == true)
+        XCTAssertNil(coordinator.snapshot)
+        await decoder.waitUntilCancelled(stream: 0)
+    }
+
+    func testUnsupportedSpeedInvalidatesOnceAndRestartsAtRestoredClock() async throws {
+        let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
+        let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
+        coordinator.start(try request(stream: 0, startFrame: 0))
+        await decoder.waitUntilAttached(stream: 0)
+        let unsupported = LiveAudioMeterPlaybackSnapshot(
+            time: 1, phase: .ready, isPlaying: true, rate: 2, preparationID: 1
+        )
+
+        coordinator.updatePlaybackClock(unsupported)
+        let suspendedGeneration = coordinator.generation
+        coordinator.updatePlaybackClock(unsupported)
+        XCTAssertEqual(coordinator.generation, suspendedGeneration)
+
+        coordinator.updatePlaybackClock(playback(time: 2.5, playing: true))
+        await decoder.waitUntilAttached(stream: 0, occurrence: 2)
+        XCTAssertEqual(decoder.request(stream: 0, occurrence: 2)?.startSourceFrame, 120_000)
+        XCTAssertEqual(coordinator.restartCause, .speedRestored)
+        coordinator.close()
+    }
+
     func testPauseAndBufferingFreezeThenResumeContinuousGeneration() async throws {
         let decoder = ControlledLiveMeterDecoder(honorCancellation: false)
         let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
@@ -178,14 +298,32 @@ final class LiveAudioMeterCoordinatorTests: XCTestCase {
     }
 
     private func snapshot(endFrame: Int64, segmentStart: Int64 = 0) -> LiveAudioMeterSnapshot {
+        snapshot(endFrame: endFrame, segmentStart: segmentStart, peak: -12)
+    }
+
+    private func snapshot(
+        endFrame: Int64,
+        segmentStart: Int64 = 0,
+        peak: Double
+    ) -> LiveAudioMeterSnapshot {
         LiveAudioMeterSnapshot(
             endFrame: endFrame, segmentStartFrame: segmentStart,
-            samplePeakDBFS: [-12, -12], truePeakDBTP: [-11.8, -11.8],
+            samplePeakDBFS: [peak, peak], truePeakDBTP: [peak + 0.2, peak + 0.2],
             momentaryLUFS: endFrame - segmentStart >= 19_200 ? -23 : nil,
             shortTermLUFS: endFrame - segmentStart >= 144_000 ? -23 : nil,
-            loudnessEndFrame: nil, maximumSamplePeakDBFS: [-12, -12],
-            maximumTruePeakDBTP: [-11.8, -11.8], maximumMomentaryLUFS: nil,
+            loudnessEndFrame: nil, maximumSamplePeakDBFS: [peak, peak],
+            maximumTruePeakDBTP: [peak + 0.2, peak + 0.2], maximumMomentaryLUFS: nil,
             maximumShortTermLUFS: nil, isFinal: false
+        )
+    }
+
+    private func playback(time: TimeInterval, playing: Bool) -> LiveAudioMeterPlaybackSnapshot {
+        LiveAudioMeterPlaybackSnapshot(
+            time: time,
+            phase: .ready,
+            isPlaying: playing,
+            rate: 1,
+            preparationID: 1
         )
     }
 
@@ -247,6 +385,7 @@ private final class ControlledLiveMeterDecoder: @unchecked Sendable {
     private var entries: [Int: [Entry]] = [:]
     private var cancelled: Set<Int> = []
     private var attachmentCounts: [Int: Int] = [:]
+    private var requests: [Int: [LiveAudioMeterDecodeRequest]] = [:]
 
     init(honorCancellation: Bool) { self.honorCancellation = honorCancellation }
 
@@ -261,6 +400,7 @@ private final class ControlledLiveMeterDecoder: @unchecked Sendable {
                 var cancelImmediately = false
                 lock.withLock {
                     attachmentCounts[stream, default: 0] += 1
+                    requests[stream, default: []].append(request)
                     if cancelled.contains(stream), honorCancellation {
                         cancelImmediately = true
                     } else {
@@ -283,6 +423,14 @@ private final class ControlledLiveMeterDecoder: @unchecked Sendable {
 
     var activeCount: Int { lock.withLock { entries.values.reduce(0) { $0 + $1.count } } }
     func isActive(stream: Int) -> Bool { lock.withLock { entries[stream]?.isEmpty == false } }
+
+    func request(stream: Int, occurrence: Int) -> LiveAudioMeterDecodeRequest? {
+        lock.withLock {
+            let index = occurrence - 1
+            guard index >= 0, requests[stream]?.indices.contains(index) == true else { return nil }
+            return requests[stream]?[index]
+        }
+    }
 
     func emit(_ snapshot: LiveAudioMeterSnapshot, stream: Int) {
         let callback = lock.withLock { entries[stream]?.first?.onSnapshot }

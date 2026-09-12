@@ -130,9 +130,12 @@ extension PlayerController {
                     self.recordPlaybackLoop()
                 }
             }
-        } else if currentPlaybackSpeed != 1.0 {
-            // Reset speed when fast/slow playback reaches the end
-            resetPlaybackSpeed()
+        } else {
+            publishLiveAudioMeterEnded()
+            if currentPlaybackSpeed != 1.0 {
+                // Reset speed when fast/slow playback reaches the end
+                resetPlaybackSpeed()
+            }
         }
     }
 
