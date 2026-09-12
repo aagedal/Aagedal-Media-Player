@@ -31,6 +31,12 @@ final class ProgrammeLoudnessController: ObservableObject {
         self.analyzer = analyzer
     }
 
+    deinit {
+        // The analysis holds self weakly, so releasing the owner must also
+        // stop its subprocess when there is no inspector callback to cancel it.
+        task?.cancel()
+    }
+
     var monoStreamIndices: [Int] {
         audioStreams.indices.filter { audioStreams[$0].channels == 1 }
     }

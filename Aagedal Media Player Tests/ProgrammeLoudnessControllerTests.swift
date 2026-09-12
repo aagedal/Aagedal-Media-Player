@@ -52,6 +52,28 @@ final class ProgrammeLoudnessControllerTests: XCTestCase {
         XCTAssertEqual(controller.result?.loudness.integratedLoudness, -23, "Reopening the same inspector retains a completed measurement.")
     }
 
+    func testReleasingControllerCancelsItsAnalysis() async {
+        let started = expectation(description: "Analysis started")
+        let cancelled = expectation(description: "Analysis cancelled on controller release")
+        var controller: ProgrammeLoudnessController? = ProgrammeLoudnessController { _, _, _, _, _ in
+            started.fulfill()
+            do {
+                try await Task.sleep(for: .seconds(30))
+            } catch {
+                if Task.isCancelled { cancelled.fulfill() }
+                throw error
+            }
+            throw FFmpegError.processFailed("Analysis outlived its owner")
+        }
+        weak var releasedController = controller
+        controller?.configure(url: sourceURL, audioStreams: monoStreams(count: 2))
+        controller?.measure(duration: 12, range: nil)
+        await fulfillment(of: [started], timeout: 2)
+        controller = nil
+        XCTAssertNil(releasedController, "The analysis must not retain its controller.")
+        await fulfillment(of: [cancelled], timeout: 2)
+    }
+
     func testMappingChangesInvalidateAnalysisAndCompletedMeasurements() async {
         let probe = SuspendedProgrammeAnalysis()
         let controller = makeController(probe)
