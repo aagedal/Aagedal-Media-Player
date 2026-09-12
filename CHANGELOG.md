@@ -5,6 +5,7 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Added
+- Production split-mono programme loudness profiling with per-layout/range readings, separate process-memory measurements and rejection of sleep-interrupted timing evidence.
 - Internal live-audio-meter calculation/display foundation with bounded source PCM, sample/true peaks, rolling Momentary/Short-term loudness and source-time ballistics. Playback integration and the meter panel remain pending.
 - Programme loudness analysis for stereo or 5.1 stored as separate mono tracks, with explicit speaker mapping, whole-file/In–Out scope, cancellation and JSON provenance. Unassigned spare tracks are excluded.
 - Bounded Broadcast WAVE metadata in classic RIFX files, with container-endian version/loudness fields and exact low/high-word sample references.
@@ -88,6 +89,7 @@ All notable changes to Aagedal Media Player.
   primary-file loop boundaries across all backend combinations.
 
 ### Fixed
+- Long-range programme loudness analysis now preserves every assigned channel using independent input contexts, correcting silent channel loss and reducing excessive shared-input buffering.
 - Programme loudness analysis now cancels when its owning controller is released, including teardown outside inspector visibility callbacks.
 - Header-verified WAVE demuxer selection prevents valid floating-point WAVE inputs being misidentified during offline loudness and waveform processing.
 - Comparison reloads honor an explicit pause, reject superseded decoder resumes, and resume both sources after asynchronous backend readiness.

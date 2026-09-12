@@ -1821,15 +1821,64 @@ for Phase 81, not a live playback feature or completion of Audio QC.
 - [ ] Add the meter UI, persisted references and diagnostics; complete real-path
   accuracy, routing invariance, accessibility and release-floor performance.
 
-The combined Release run passes 577 tests with zero failures and zero skips,
+The final combined Release run passes 578 tests with zero failures and zero skips,
 including the official ITU offline references and real APFS recovery, with
 verified image detach. Evidence is retained in
-`/tmp/aagedal-meter-release-apfs-20260912/Tests.xcresult` and `summary.json`.
+`/tmp/aagedal-meter-programme-final-apfs-20260912/Tests.xcresult` and `summary.json`.
 All 61 preflight checks pass.
 
 See `docs/LIVE_AUDIO_METER_DSP.md`. A preliminary optimized standalone host
 check processed ten seconds of eight-channel 96 kHz PCM in about 0.13 seconds;
 this excludes decoder/UI costs and does not satisfy base-M1 acceptance.
+
+## Phase 84 — Programme analysis teardown, profiling and long-range integrity
+
+Status: Implemented on 2026-09-12, with remaining performance acceptance below.
+
+- [x] Cancel programme analysis when its owning controller is released. The new
+  regression fails before the fix and passes afterward, independently of SwiftUI
+  inspector-disappearance callbacks.
+- [x] Add an opt-in production profiler for eight mono tracks assembled as
+  Stereo and 5.1, with whole/early/late intervals, source mapping, input hashes,
+  measured readings and separately sampled parent/FFmpeg RSS.
+- [x] Validate retained result structure and reject performance acceptance when
+  system sleep occurs inside the profiling interval. Preserve interrupted
+  diagnostics without presenting them as clean timing evidence.
+- [x] Reproduce a long-range correctness fault in the shared-input graph: the
+  eight-hour 5.1 last-30-second selection silently retained only FL, returning
+  −21.1 LUFS instead of −13.4 LUFS despite successful process exit.
+- [x] Give every assigned channel an independent demux input inside one
+  cancellable FFmpeg process, retaining duration limits, header-derived input
+  options, original timestamps, speaker order and existing interval behavior.
+  The same eight-hour input now retains all six channels and the expected
+  reading. Focused programme/controller/RIFX regressions pass.
+- [ ] Complete representative deliverable and base-M1 performance acceptance.
+  Independent one/eight-hour process checks reduce memory, but per-input
+  container indexes still grow with source packet count. The first eight-hour
+  production run was interrupted by lid-closed system sleep and is excluded
+  from comparative timing. A compact automated fixture reproducing the original
+  eight-hour channel loss remains to be established; hash-pinned before/after
+  process evidence is retained.
+
+The corrected production one-hour run passes all six layout/scope workloads
+and the new no-sleep acceptance check: 5.1 whole-file child RSS falls from
+565.20 MiB to 125.89 MiB, and the late interval from 522.88 MiB to 121.83 MiB,
+with expected readings retained. Evidence is in
+`/tmp/aagedal-programme-profile-20260912-separate-1h`. These development-host
+results do not close representative-media or base-M1 acceptance.
+
+See `docs/PROGRAMME_LOUDNESS_PERFORMANCE.md` for measured results, recipes,
+input hashes, sleep qualifications and the remaining acceptance boundaries.
+Final verification passes all 578 Release tests with no failures or skips,
+including both official ITU reference sets and real APFS recovery; the disposable
+image detached successfully. Twelve programme/shared-validator and power-event
+Python tests pass. Xcode static analysis and all 61 release-preflight checks pass.
+Evidence:
+`/tmp/aagedal-meter-programme-final-apfs-20260912/Tests.xcresult`, `summary.json`,
+`/tmp/aagedal-meter-programme-analyze-20260912.log`, and
+`/tmp/aagedal-meter-programme-final-preflight-20260912.log`.
+
+The production metadata-memory dependency issue remains separate and unresolved.
 
 ## Remaining work after this continuation
 
@@ -1908,8 +1957,12 @@ this excludes decoder/UI costs and does not satisfy base-M1 acceptance.
   loudness against the Phase 81 calibration/ballistics/preset contract;
   Phase 83 implements and tests the bounded DSP/display foundation but has no
   playback decoder or meter UI yet;
-  programme LRA/true-peak and broader transient
-  reference accuracy, and representative multichannel profiling. Phase 55 adds
+  Phase 84 adds production programme profiling and fixes silent long-range
+  channel loss plus excessive shared-demux buffering; representative-media and
+  release-floor memory acceptance remain.
+  Programme LRA/true-peak and broader transient
+  reference accuracy remain open, along with representative multichannel
+  profiling. Phase 55 adds
   three original ITU programme integrated-loudness references. Phase 57 adds
   a separately prepared official eight-channel gain reference. Phase 60 adds
   an independent PCM LRA comparison for the authentic ITU programmes; published
@@ -2044,3 +2097,5 @@ this excludes decoder/UI costs and does not satisfy base-M1 acceptance.
 74. Phase 82 programme loudness for split-mono deliverables.
 
 75. Phase 83 bounded live-meter calculation and display foundation.
+
+76. Phase 84 programme analysis teardown, profiling and long-range integrity.
