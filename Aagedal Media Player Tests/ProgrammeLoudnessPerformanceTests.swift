@@ -11,7 +11,9 @@ import XCTest
 final class ProgrammeLoudnessPerformanceTests: XCTestCase {
     /// Explicit inputs keep long-running decoder workloads out of regression runs.
     func testProductionProgrammeLoudnessProfileWhenRequested() async throws {
-        guard let input = ProcessInfo.processInfo.environment["PROGRAMME_LOUDNESS_PROFILE_INPUTS"] else { return }
+        guard let input = ProcessInfo.processInfo.environment["PROGRAMME_LOUDNESS_PROFILE_INPUTS"] else {
+            throw XCTSkip("Set PROGRAMME_LOUDNESS_PROFILE_INPUTS to run the production programme profile")
+        }
         let paths = try JSONDecoder().decode([String].self, from: Data(input.utf8))
         XCTAssertFalse(paths.isEmpty)
         for (inputIndex, path) in paths.enumerated() {

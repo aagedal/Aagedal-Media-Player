@@ -14,7 +14,9 @@ final class ProductionMetadataMemoryPerformanceTests: XCTestCase {
     /// belongs to one uncached metadata load rather than a preceding fixture.
     func testProductionMetadataMemoryProfileWhenRequested() async throws {
         let environment = ProcessInfo.processInfo.environment
-        guard let path = environment["METADATA_MEMORY_PROFILE_INPUT"] else { return }
+        guard let path = environment["METADATA_MEMORY_PROFILE_INPUT"] else {
+            throw XCTSkip("Set METADATA_MEMORY_PROFILE_INPUT to run the production metadata-memory profile")
+        }
         let inputIndex = try XCTUnwrap(Int(environment["METADATA_MEMORY_PROFILE_INPUT_INDEX"] ?? ""))
         let url = URL(fileURLWithPath: path)
         let inputBytes = try fileSize(url)
