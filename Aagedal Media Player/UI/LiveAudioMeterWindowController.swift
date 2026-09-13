@@ -54,16 +54,36 @@ final class LiveAudioMeterWindowController {
     private var didCleanUp = false
     private var onClose: (() -> Void)?
 
-    init(
+    convenience init(
         primaryController: PlayerController,
         compareSession: CompareSessionController,
         windowCoordinator: PlayerWindowCoordinator,
         parentWindow: NSWindow?,
         onClose: @escaping () -> Void
     ) {
-        session = LiveAudioMeterSession(
-            primary: primaryController, comparison: compareSession
+        self.init(
+            primaryController: primaryController,
+            compareSession: compareSession,
+            windowCoordinator: windowCoordinator,
+            parentWindow: parentWindow,
+            session: LiveAudioMeterSession(
+                primary: primaryController, comparison: compareSession
+            ),
+            onClose: onClose
         )
+    }
+
+    /// Dependency seam for lifecycle tests. The production initializer above
+    /// still creates exactly one window-owned session.
+    init(
+        primaryController: PlayerController,
+        compareSession: CompareSessionController,
+        windowCoordinator: PlayerWindowCoordinator,
+        parentWindow: NSWindow?,
+        session: LiveAudioMeterSession,
+        onClose: @escaping () -> Void
+    ) {
+        self.session = session
         self.primaryController = primaryController
         self.compareSession = compareSession
         self.windowCoordinator = windowCoordinator
