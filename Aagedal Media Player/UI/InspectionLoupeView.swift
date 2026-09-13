@@ -9,7 +9,7 @@ import Combine
 final class InspectionLoupeState: ObservableObject {
     @Published var isEnabled = false
     @Published var isPinned = false
-    @Published var magnification: LoupeMagnification = .twoTimes
+    @Published private(set) var magnification: LoupeMagnification = .twoTimes
     @Published var normalizedPoint = CGPoint(x: 0.5, y: 0.5)
     @Published var pointer: CGPoint?
 
@@ -57,11 +57,27 @@ final class InspectionLoupeState: ObservableObject {
         normalizedPoint = CGPoint(x: 0.5, y: 0.5)
         pointer = nil
     }
+
+    func validateNativePixels(_ availability: LoupeNativePixelAvailability) {
+        if magnification == .nativePixels, !availability.isAvailable {
+            magnification = .twoTimes
+        }
+    }
+
+    func selectMagnification(
+        _ selection: LoupeMagnification,
+        nativePixelAvailability: LoupeNativePixelAvailability
+    ) {
+        magnification = selection == .nativePixels && !nativePixelAvailability.isAvailable
+            ? .twoTimes
+            : selection
+    }
 }
 
 struct InspectionLoupeControl: View {
     @ObservedObject var state: InspectionLoupeState
     @Binding var isPresented: Bool
+    let nativePixelAvailability: LoupeNativePixelAvailability
 
     var body: some View {
         Button { isPresented.toggle() } label: {
@@ -73,16 +89,27 @@ struct InspectionLoupeControl: View {
         .help("Inspection loupe controls (Command-Shift-M)")
         .accessibilityLabel("Inspection loupe")
         .accessibilityValue(state.isEnabled ? "Shown" : "Hidden")
+        .accessibilityHint(nativePixelAvailability.explanation)
         .accessibilityAddTraits(state.isEnabled ? .isSelected : [])
         .popover(isPresented: $isPresented) {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Inspection loupe").font(.headline)
                 Toggle("Show loupe", isOn: $state.isEnabled)
-                Picker("Magnification", selection: $state.magnification) {
-                    ForEach([LoupeMagnification.twoTimes, .fourTimes, .eightTimes]) { value in
+                Picker("Magnification", selection: Binding(
+                    get: { state.magnification },
+                    set: {
+                        state.selectMagnification(
+                            $0, nativePixelAvailability: nativePixelAvailability
+                        )
+                    }
+                )) {
+                    ForEach(LoupeMagnification.allCases) { value in
                         Text(value.label).tag(value)
+                            .disabled(value == .nativePixels && !nativePixelAvailability.isAvailable)
+                            .help(value == .nativePixels ? nativePixelAvailability.explanation : value.label)
                     }
                 }
+                .accessibilityHint(nativePixelAvailability.explanation)
                 Toggle("Pin picture position", isOn: $state.isPinned)
                 Slider(value: coordinate(\.x), in: 0...1) {
                     Text("Horizontal picture position")
@@ -97,6 +124,9 @@ struct InspectionLoupeControl: View {
                     .font(.caption)
                 Text("Display-space preview • up to 10 fps. Captures may differ from the live HDR display and are not pixel-value measurements or frame-locked A/B samples.")
                     .font(.caption).foregroundStyle(.secondary)
+                Text(nativePixelAvailability.explanation)
+                    .font(.caption).foregroundStyle(.secondary)
+                    .accessibilityLabel("1:1 source pixels. \(nativePixelAvailability.explanation)")
             }
             .padding(16)
             .frame(width: 320)
@@ -218,7 +248,7 @@ struct InspectionLoupeLens: View {
             }
             .frame(width: size.width, height: size.height, alignment: .topLeading)
             .clipped()
-            Text("\(source) · \(magnification.label) · Display preview")
+            Text("\(source) · \(magnification.label) · \(magnification == .nativePixels ? "Verified decoded raster" : "Display preview")")
                 .font(.caption2).foregroundStyle(.white)
                 .frame(width: size.width, height: 26)
                 .background(.black.opacity(0.85))

@@ -224,6 +224,7 @@ nonisolated struct LiveAudioMeterViewState: Equatable, Sendable {
     let sourceOptions: [LiveAudioMeterSourceOption]
     let selectedSourceID: String
     let measuredSourceLabel: String
+    let canRetry: Bool
     let channels: [LiveAudioMeterChannelState]
     let loudness: LiveAudioMeterLoudnessState
     let reference: LiveAudioMeterReference

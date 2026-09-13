@@ -31,6 +31,79 @@ nonisolated enum LoupeMagnification: String, CaseIterable, Identifiable, Sendabl
     }
 }
 
+/// Runtime evidence used before presenting a capture as one source pixel per
+/// physical display pixel. MPV screenshots have already passed through display
+/// geometry, so only an AVFoundation decoded raster can currently qualify.
+nonisolated struct LoupeNativePixelSource: Equatable, Sendable {
+    let name: String
+    let backend: PlaybackBackend?
+    let codedWidth: Int?
+    let codedHeight: Int?
+    let rotation: Int?
+    let capturedWidth: Int?
+    let capturedHeight: Int?
+}
+
+nonisolated enum LoupeNativePixelAvailability: Equatable, Sendable {
+    case available
+    case unavailable(String)
+
+    var isAvailable: Bool {
+        self == .available
+    }
+
+    var explanation: String {
+        switch self {
+        case .available:
+            "Verified AVFoundation raster: one captured source pixel per physical display pixel."
+        case .unavailable(let reason):
+            reason
+        }
+    }
+
+    static func evaluate(
+        primary: LoupeNativePixelSource,
+        secondary: LoupeNativePixelSource? = nil
+    ) -> Self {
+        for source in [primary, secondary].compactMap({ $0 }) {
+            guard let backend = source.backend else {
+                return .unavailable("1:1 source pixels are waiting for the \(source.name) playback backend.")
+            }
+            guard backend == .avFoundation else {
+                return .unavailable("1:1 source pixels require AVFoundation capture; \(source.name) uses mpv display-space capture.")
+            }
+            guard let codedWidth = source.codedWidth,
+                  let codedHeight = source.codedHeight,
+                  codedWidth > 0, codedHeight > 0,
+                  let capturedWidth = source.capturedWidth,
+                  let capturedHeight = source.capturedHeight,
+                  capturedWidth > 0, capturedHeight > 0 else {
+                return .unavailable("1:1 source pixels are waiting for a verifiable \(source.name) decoded raster.")
+            }
+
+            let normalizedRotation = ((source.rotation ?? 0) % 360 + 360) % 360
+            guard [0, 90, 180, 270].contains(normalizedRotation) else {
+                return .unavailable(
+                    "1:1 source pixels are unavailable because \(source.name) has an unsupported "
+                        + "\(normalizedRotation)-degree display transform."
+                )
+            }
+            let expectedWidth = normalizedRotation == 90 || normalizedRotation == 270
+                ? codedHeight : codedWidth
+            let expectedHeight = normalizedRotation == 90 || normalizedRotation == 270
+                ? codedWidth : codedHeight
+            guard capturedWidth == expectedWidth, capturedHeight == expectedHeight else {
+                return .unavailable(
+                    "1:1 source pixels are unavailable because \(source.name) captured "
+                        + "\(capturedWidth) × \(capturedHeight), not the expected oriented raster "
+                        + "\(expectedWidth) × \(expectedHeight)."
+                )
+            }
+        }
+        return .available
+    }
+}
+
 /// Coordinates use a top-left origin throughout, matching SwiftUI's picture
 /// and lens layout. Picture bounds must exclude letterbox and pillarbox bars.
 nonisolated enum LoupeGeometry {

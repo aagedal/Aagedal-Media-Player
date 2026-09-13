@@ -63,9 +63,14 @@ final class LiveAudioMeterSessionTests: XCTestCase {
 
         player.mediaItem = mediaItem(url: secondURL)
         player.publishLiveAudioMeterDiscontinuity(.sourceReplacement)
+        session.retry()
+        session.reset()
         try await Task.sleep(for: .milliseconds(30))
         let requestCountBeforeReadiness = await recorder.requestCountValue()
-        XCTAssertEqual(requestCountBeforeReadiness, 1, "Must not mix a new URL with stale track options")
+        XCTAssertEqual(
+            requestCountBeforeReadiness, 1,
+            "Retry/reset must not revive the old request or mix a new URL with stale track options"
+        )
 
         let oldRevision = player.liveAudioMeterSourceRevision
         player.refreshAudioTrackOptions(playerItem: nil)
@@ -73,6 +78,64 @@ final class LiveAudioMeterSessionTests: XCTestCase {
         await eventually { await recorder.requestCountValue() == 2 }
         let lastURL = await recorder.lastRequest()?.url
         XCTAssertEqual(lastURL, secondURL)
+
+        session.close()
+        await eventually { await recorder.cancellationCountValue() == 2 }
+    }
+
+    func testRetryAndResetCannotReviveOldTrackAfterUnsupportedTrackReplacement() async throws {
+        let player = PlayerController()
+        let url = URL(fileURLWithPath: "/tmp/track-replacement.mov")
+        player.mediaItem = mediaItem(url: url, audioStreams: [
+            audioStream(
+                index: 10, title: "Stereo mix", channels: 2, layout: "stereo"
+            ),
+            audioStream(
+                index: 20, title: "Unsupported rate", channels: 2, layout: "stereo",
+                sampleRate: 88_200, isDefault: false
+            ),
+            audioStream(
+                index: 30, title: "Alternate stereo", channels: 2, layout: "stereo",
+                isDefault: false
+            ),
+        ])
+        player.refreshAudioTrackOptions(playerItem: nil)
+        await eventually { player.liveAudioMeterSourceRevision > 0 }
+
+        let recorder = MeterDecodeRecorder()
+        let coordinator = LiveAudioMeterCoordinator(decodeOperation: recorder.decode)
+        let session = LiveAudioMeterSession(
+            primary: player,
+            comparison: CompareSessionController(),
+            defaults: isolatedDefaults(),
+            coordinator: coordinator
+        )
+        session.start()
+        await eventually { await recorder.requestCountValue() == 1 }
+        let initialStream = await recorder.lastRequest()?.audioStreamOrderIndex
+        XCTAssertEqual(initialStream, 0)
+
+        let selectedUnsupportedTrack = await player.selectAudioTrackAndWait(at: 1)
+        XCTAssertTrue(selectedUnsupportedTrack)
+        await eventually {
+            guard case .unavailable = session.viewState.status else { return false }
+            return session.viewState.measuredSourceLabel == "Source A"
+        }
+        XCTAssertFalse(session.viewState.canRetry)
+        session.retry()
+        session.reset()
+        try await Task.sleep(for: .milliseconds(30))
+        let requestCountWhileUnsupported = await recorder.requestCountValue()
+        XCTAssertEqual(
+            requestCountWhileUnsupported, 1,
+            "An unsupported replacement must not make Retry or Reset restart the old stream"
+        )
+
+        let selectedAlternateTrack = await player.selectAudioTrackAndWait(at: 2)
+        XCTAssertTrue(selectedAlternateTrack)
+        await eventually { await recorder.requestCountValue() == 2 }
+        let alternateStream = await recorder.lastRequest()?.audioStreamOrderIndex
+        XCTAssertEqual(alternateStream, 2)
 
         session.close()
         await eventually { await recorder.cancellationCountValue() == 2 }
@@ -291,6 +354,7 @@ final class LiveAudioMeterSessionTests: XCTestCase {
         title: String,
         channels: Int,
         layout: String,
+        sampleRate: Int? = 48_000,
         isDefault: Bool = true
     ) -> MediaMetadata.AudioStream {
         MediaMetadata.AudioStream(
@@ -300,7 +364,7 @@ final class LiveAudioMeterSessionTests: XCTestCase {
             codec: "aac",
             codecLongName: nil,
             profile: nil,
-            sampleRate: 48_000,
+            sampleRate: sampleRate,
             channels: channels,
             channelLayout: layout,
             bitDepth: nil,

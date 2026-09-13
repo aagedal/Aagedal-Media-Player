@@ -168,6 +168,7 @@ final class PlayerController: ObservableObject {
 
     // MARK: - Playback Backend State
     @Published private var backendAdapter: (any PlayerBackendAdapter)?
+    var playbackBackend: PlaybackBackend? { backendAdapter?.backend }
     var mpvPlayer: MPVPlayer? { backendAdapter?.mpvPlayer }
     var useMPV: Bool { backendAdapter?.backend == .mpv }
     // MPV loop observer

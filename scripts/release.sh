@@ -24,7 +24,24 @@
 #
 set -euo pipefail
 
+if ! WORKTREE_STATUS="$(git status --porcelain)"; then
+    echo "ERROR: could not inspect the release checkout." >&2
+    exit 2
+fi
+if [[ -n "$WORKTREE_STATUS" ]]; then
+    echo "ERROR: release requires a clean checkout." >&2
+    echo "Commit or stash every tracked and untracked change, then retry." >&2
+    exit 2
+fi
+
+SOURCE_COMMIT="$(git rev-parse --verify HEAD)"
+if [[ ! "$SOURCE_COMMIT" =~ ^[0-9a-f]{40}$ ]]; then
+    echo "ERROR: could not resolve HEAD to a full lowercase commit SHA." >&2
+    exit 2
+fi
+
 echo "==> scripts/release.sh starting"
+echo "==> Source commit: $SOURCE_COMMIT"
 
 # -----------------------------------------------------------------------------
 # Toolchain resolution
@@ -309,7 +326,7 @@ if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
         echo "==> Creating GitHub release $MARKETING_VERSION"
         gh release create "$MARKETING_VERSION" "$RELEASE_ZIP" \
             --repo "$GITHUB_REPOSITORY" \
-            --target main \
+            --target "$SOURCE_COMMIT" \
             --title "$MARKETING_VERSION" \
             --generate-notes
     fi

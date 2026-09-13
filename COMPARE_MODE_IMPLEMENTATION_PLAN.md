@@ -385,9 +385,10 @@ The roadmap's initial loupe is implemented with pointer-following 2×/4×/8×
 magnification, pinning, accessible picture-position sliders, and paired A/B
 previews at the same normalized picture coordinate. It uses bounded capture
 from the existing decoders and independent AV output ownership alongside
-scopes. The previews are display-space, independently sampled images; exact
-source-pixel 1:1, whole-viewport zoom, and production/hands-on validation remain
-in `PRODUCT_ROADMAP.md` and `docs/INSPECTION_LOUPE.md`.
+scopes. The previews are independently sampled images. A later continuation
+exposes native-pixel placement only for dimension-verified AVFoundation captures;
+MPV-backed source-pixel 1:1, whole-viewport zoom, and production/hands-on
+validation remain in `PRODUCT_ROADMAP.md` and `docs/INSPECTION_LOUPE.md`.
 
 The paused-step pixel check exposed a pre-existing AVFoundation seek issue:
 adding the comparison offset could leave a Double infinitesimally below the
@@ -465,8 +466,8 @@ legacy eight-scenario, duplicate-loupe, and unknown-workload reports are rejecte
 
 The 120-second base-M1 runs, direct Instruments CPU/GPU/memory measurements,
 native-event registration, keyboard/VoiceOver, and editor round-trips remain
-release gates. Exact 1:1 source pixels and whole-viewport pan/zoom remain deferred
-until the loupe interaction is validated. See `docs/INSPECTION_LOUPE.md` and
+release gates. MPV-backed 1:1 source pixels and whole-viewport pan/zoom remain
+deferred until the loupe interaction is validated. See `docs/INSPECTION_LOUPE.md` and
 `docs/COMPARE_MODE_PERFORMANCE.md` for the repeatable procedure.
 
 The first UHD/HDR run exposed AVFoundation loupe captures using a timestamp
@@ -499,10 +500,12 @@ handler without real desktop-pointer state. The experimental code was removed;
 no product behavior changed. Existing coordinate/rendered-pixel tests remain,
 and real pointer dispatch over native playback surfaces needs manual testing.
 
-Exact source-pixel 1:1 remains deferred because MPV's display-space screenshot
-can resample pixel aspect ratio/rotation; captured-bitmap pixel sizing alone
-does not establish original source-pixel registration. Whole-viewport zoom/pan
-remains sequenced after loupe interaction acceptance.
+A guarded 1:1 option now maps dimension-verified AVFoundation captures to
+physical display pixels. MPV-backed 1:1 remains deferred because its
+display-space screenshot can resample pixel aspect ratio/rotation; captured-
+bitmap pixel sizing alone does not establish original source-pixel registration
+for that backend. Whole-viewport zoom/pan remains sequenced after loupe
+interaction acceptance.
 
 Verification after removing the experiment: all 335 Release tests pass with
 zero failures and no skips; release preflight passes all 61 checks. The

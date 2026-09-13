@@ -2049,6 +2049,43 @@ test confuse host starvation with a source-integration failure. The full Debug
 suite passes 648 tests with seven explicit optional-input skips (655 total), and
 Xcode static analysis passes.
 
+## Phase 89 — Live-meter replacement recovery ownership
+
+Status: Focused lifecycle hardening implemented on 2026-09-13; representative
+real-media and native acceptance remain open.
+
+- [x] Prevent Retry and Reset from reviving the coordinator's retained old URL
+  or audio-stream request while replacement metadata and track selection are
+  unresolved.
+- [x] Cover a primary-media replacement followed by immediate Retry/Reset,
+  proving no request starts until the new source-readiness revision arrives.
+- [x] Cover an unsupported selected-track replacement followed by Retry/Reset,
+  then prove selecting a later supported track starts only that stream.
+
+All six `LiveAudioMeterSessionTests` pass in a focused Debug run. This closes a
+stale-request lifecycle defect found during local contract auditing; it does
+not validate representative compressed media, playback drift, release-floor
+performance, keyboard operation, or spoken VoiceOver.
+
+## Phase 90 — Distinct live-meter accessibility identity
+
+Status: Automated semantics hardening implemented on 2026-09-13; spoken
+VoiceOver acceptance remains open.
+
+- [x] Include the channel identity in every sample-peak and true-peak
+  accessibility label so multichannel rows no longer expose repeated,
+  ambiguous names such as only “Sample peak” or “True peak”.
+
+This improves the mounted meter's accessibility tree without claiming the
+remaining keyboard traversal or spoken VoiceOver release gate.
+
+The combined continuation passes the full Debug suite with 653 tests passed,
+seven explicit optional-input skips, and no failures (660 total). A subsequent
+focused invariant run adds the guarded unavailable-selection regression; the
+fast release-helper gate passes 99 Python validator tests plus the mocked
+comparison-profiler matrix. A clean-checkout optimized Release verifier remains
+the candidate gate after these changes are committed.
+
 ## Integrated continuation verification — 2026-09-13
 
 The live-meter decoder now runs at source-rate pace, preserves one controlled
@@ -2323,3 +2360,7 @@ remain open.
 79. Phase 87 reproducible candidate verification and mixed-backend pause ownership.
 
 80. Phase 88 live-meter source transitions and production-path integration.
+
+81. Phase 89 live-meter replacement recovery ownership.
+
+82. Phase 90 distinct live-meter accessibility identity.

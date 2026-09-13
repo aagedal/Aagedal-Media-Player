@@ -5,6 +5,13 @@ control, or press Command-Shift-M, then enable Show loupe. Choose 2×, 4×, or 8
 magnification relative to the fitted picture. In side-by-side comparison each
 magnification is relative to that source's fitted pane.
 
+For AVFoundation-backed sources, the control also enables **Native pixels**
+after the live captured dimensions match the expected rotation-aware coded
+raster. This maps one captured source pixel to one physical display pixel,
+including on Retina displays. Both sources must independently pass that check
+in Compare Mode. Source replacement, a verified dimension mismatch, or an MPV-
+backed source returns the loupe to 2× and explains why 1:1 is unavailable.
+
 The pointer selects a normalized coordinate inside the visible picture. Black
 bars do not change the selected coordinate. Compare Mode uses that coordinate
 for both source previews, even when their display aspects differ. Wipe modes
@@ -37,7 +44,9 @@ capture applies the track transform and the view applies display aspect ratio.
 This is not a source-code-value or objective color measurement: HDR and tone
 mapping can differ from the live display. The independently captured A/B
 previews are not timestamp-paired and are not evidence of continuous frame lock.
-Exact source-pixel 1:1 and whole-viewport pan/zoom remain deferred.
+Exact source-pixel 1:1 remains unavailable for MPV-backed media because its
+screenshot path may already be resampled for display geometry. Whole-viewport
+pan/zoom also remains deferred.
 
 The bundled MPV loses the reflection component of QuickTime display matrices.
 Playback preparation now detects a reflected first-track transform and applies

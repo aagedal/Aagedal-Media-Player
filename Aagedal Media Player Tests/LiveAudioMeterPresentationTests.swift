@@ -128,6 +128,7 @@ final class LiveAudioMeterPresentationTests: XCTestCase {
             ],
             selectedSourceID: "A",
             measuredSourceLabel: "A · Track 1",
+            canRetry: true,
             channels: maximumTruePeaks.enumerated().map { index, maximum in
                 LiveAudioMeterChannelState(
                     id: index,

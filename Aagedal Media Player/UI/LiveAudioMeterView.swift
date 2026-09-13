@@ -174,8 +174,14 @@ struct LiveAudioMeterView: View {
             ForEach(state.channels) { channel in
                 VStack(alignment: .leading, spacing: 5) {
                     Text(channel.label).font(.subheadline.bold())
-                    PeakMeterRow(label: "SP", unit: "dBFS", level: channel.samplePeak)
-                    PeakMeterRow(label: "TP", unit: "dBTP", level: channel.truePeak)
+                    PeakMeterRow(
+                        channelLabel: channel.label, abbreviation: "SP",
+                        meterName: "Sample peak", unit: "dBFS", level: channel.samplePeak
+                    )
+                    PeakMeterRow(
+                        channelLabel: channel.label, abbreviation: "TP",
+                        meterName: "True peak", unit: "dBTP", level: channel.truePeak
+                    )
                 }
                 .padding(8)
                 .background(.quaternary, in: RoundedRectangle(cornerRadius: 8))
@@ -267,7 +273,7 @@ struct LiveAudioMeterView: View {
             Button("Reset Meters", action: actions.resetMeters)
                 .disabled(state.channels.isEmpty)
                 .accessibilityHint("Starts a new measurement segment and clears meter filters, windows, bars, maxima, and latches.")
-            if case .unavailable = state.status {
+            if case .unavailable = state.status, state.canRetry {
                 Button("Retry", action: actions.retry)
                     .buttonStyle(.borderedProminent)
                     .accessibilityHint("Starts a new meter generation for the selected source.")
@@ -303,13 +309,15 @@ struct LiveAudioMeterView: View {
 }
 
 private struct PeakMeterRow: View {
-    let label: String
+    let channelLabel: String
+    let abbreviation: String
+    let meterName: String
     let unit: String
     let level: LiveAudioMeterLevelState
 
     var body: some View {
         HStack(spacing: 8) {
-            Text(label).font(.system(.caption, design: .monospaced).bold()).frame(width: 24)
+            Text(abbreviation).font(.system(.caption, design: .monospaced).bold()).frame(width: 24)
             MeterTrack(value: level.bar, marker: level.marker, lowerBound: -60, upperBound: 6)
                 .frame(height: 10)
             Text(MeterText.reading(level.current, unit: unit)).frame(width: 104, alignment: .trailing)
@@ -318,7 +326,7 @@ private struct PeakMeterRow: View {
         }
         .font(.system(.caption, design: .monospaced))
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(label == "SP" ? "Sample peak" : "True peak")")
+        .accessibilityLabel("\(channelLabel), \(meterName)")
         .accessibilityValue("Current \(MeterText.reading(level.current, unit: unit)); bar \(MeterText.reading(level.bar, unit: unit)); marker \(MeterText.reading(level.marker, unit: unit)); maximum \(MeterText.reading(level.maximum, unit: unit))")
     }
 }

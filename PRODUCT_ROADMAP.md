@@ -158,7 +158,10 @@ also pass.
 - [x] Offer fixed magnifications of 2×, 4×, and 8×.
 - [ ] Offer a verified 1:1 source-pixel view accounting for Retina display scale.
   MPV's current screenshot path may resample for display geometry, so this
-  cannot yet be presented as exact source-pixel inspection.
+  cannot yet be presented as exact source-pixel inspection. A guarded native-
+  pixel option is now exposed for AVFoundation-backed sources only after the
+  captured dimensions match the expected rotation-aware coded raster; mixed or
+  MPV-backed comparisons remain on the clearly labelled display-space modes.
 - [x] Allow the loupe to be pinned so the pointer can operate playback controls.
 - [x] Refresh from the active decoder while paused, seeking, stepping, and
   playing, with bounded capture work. Production-resolution cadence remains a

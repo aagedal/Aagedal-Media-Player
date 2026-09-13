@@ -209,8 +209,22 @@ diagnostics, complete delivery of final subprocess bytes, one-callback admission
 limits, suspend/resume, cancellation of blocked consumers, actual bundled-
 FFmpeg pipe backpressure at the playback boundary and compressed-seek sample
 accuracy, packet framing, both-side backpressure, safe process termination and
-source-relative gap retention. Static analysis passes. Current release preflight still fails strict bundled-FFmpeg
-code-signature verification.
+source-relative gap retention. Static analysis passes. All 61 release-preflight
+checks pass outside the restricted workspace sandbox; the sandbox cannot reach
+the normal code-signing trust services and reports a false-negative strict
+bundled-FFmpeg signature result.
+
+A subsequent focused session run passes all six tests and closes stale recovery
+after source changes: Retry and Reset cannot revive a retained old URL or stream
+while replacement metadata is unresolved, and an unsupported selected track
+cannot restart the prior track. The next source-readiness revision or a later
+supported track starts only its newly resolved request. This is synthetic
+lifecycle coverage, not representative-media or native accessibility evidence.
+
+Each peak row now includes its channel name in the accessibility label (for
+example, “Front left, Sample peak”), avoiding ambiguous repeated peak identities
+in multichannel layouts. Spoken VoiceOver and complete keyboard traversal remain
+native acceptance work.
 
 A preliminary optimized standalone check on this development Mac processed ten
 seconds of eight-channel 96 kHz PCM in about 0.13 seconds. It excludes decoder,

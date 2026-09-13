@@ -120,7 +120,7 @@ final class InspectionLoupeStateTests: XCTestCase {
     func testCenterAndPinKeepsLoupeEnabledAndSelectedMagnification() {
         let state = InspectionLoupeState()
         state.isEnabled = true
-        state.magnification = .eightTimes
+        state.selectMagnification(.eightTimes, nativePixelAvailability: .available)
         state.follow(CGPoint(x: 300, y: 360), pictureRect: picture)
 
         state.reset()
@@ -149,5 +149,27 @@ final class InspectionLoupeStateTests: XCTestCase {
         state.isEnabled = true
         state.follow(CGPoint(x: 700, y: 160), pictureRect: picture)
         XCTAssertEqual(state.normalizedPoint, CGPoint(x: 0.75, y: 0.25))
+    }
+
+    func testNativePixelSelectionFallsBackWhenVerificationIsInvalidated() {
+        let state = InspectionLoupeState()
+        state.selectMagnification(.nativePixels, nativePixelAvailability: .available)
+
+        state.validateNativePixels(.available)
+        XCTAssertEqual(state.magnification, .nativePixels)
+
+        state.validateNativePixels(.unavailable("Source changed."))
+        XCTAssertEqual(state.magnification, .twoTimes)
+    }
+
+    func testNativePixelSelectionIsRejectedWhileVerificationIsUnavailable() {
+        let state = InspectionLoupeState()
+
+        state.selectMagnification(
+            .nativePixels,
+            nativePixelAvailability: .unavailable("MPV capture is display-space only.")
+        )
+
+        XCTAssertEqual(state.magnification, .twoTimes)
     }
 }

@@ -6,6 +6,85 @@ import XCTest
 @testable import Aagedal_Media_Player
 
 final class LoupeGeometryTests: XCTestCase {
+    func testNativePixelsRequireAVFoundationAndMatchingOrientedRaster() {
+        let landscape = nativePixelSource()
+        XCTAssertEqual(
+            LoupeNativePixelAvailability.evaluate(primary: landscape),
+            .available
+        )
+        XCTAssertEqual(
+            LoupeNativePixelAvailability.evaluate(
+                primary: nativePixelSource(rotation: 90, capturedWidth: 1_080, capturedHeight: 1_920)
+            ),
+            .available
+        )
+        XCTAssertEqual(
+            LoupeNativePixelAvailability.evaluate(
+                primary: nativePixelSource(rotation: -90, capturedWidth: 1_080, capturedHeight: 1_920)
+            ),
+            .available
+        )
+        XCTAssertEqual(
+            LoupeNativePixelAvailability.evaluate(
+                primary: nativePixelSource(codedWidth: 720, codedHeight: 576,
+                                           rotation: 180, capturedWidth: 720, capturedHeight: 576)
+            ),
+            .available,
+            "A non-square-pixel raster and half-turn must retain coded dimensions."
+        )
+    }
+
+    func testNativePixelsRejectMPVUnverifiedAndMismatchedCaptures() {
+        let noBackend = LoupeNativePixelAvailability.evaluate(
+            primary: nativePixelSource(backend: nil)
+        )
+        XCTAssertFalse(noBackend.isAvailable)
+        XCTAssertTrue(noBackend.explanation.contains("playback backend"))
+
+        let mpv = LoupeNativePixelAvailability.evaluate(
+            primary: nativePixelSource(backend: .mpv)
+        )
+        XCTAssertFalse(mpv.isAvailable)
+        XCTAssertTrue(mpv.explanation.contains("mpv display-space"))
+
+        let waiting = LoupeNativePixelAvailability.evaluate(
+            primary: nativePixelSource(capturedWidth: nil, capturedHeight: nil)
+        )
+        XCTAssertFalse(waiting.isAvailable)
+        XCTAssertTrue(waiting.explanation.contains("waiting"))
+
+        let mismatch = LoupeNativePixelAvailability.evaluate(
+            primary: nativePixelSource(capturedWidth: 1_280, capturedHeight: 720)
+        )
+        XCTAssertFalse(mismatch.isAvailable)
+        XCTAssertTrue(mismatch.explanation.contains("1280 × 720"))
+        XCTAssertTrue(mismatch.explanation.contains("1920 × 1080"))
+
+        let unsupportedTransform = LoupeNativePixelAvailability.evaluate(
+            primary: nativePixelSource(rotation: 45)
+        )
+        XCTAssertFalse(unsupportedTransform.isAvailable)
+        XCTAssertTrue(unsupportedTransform.explanation.contains("45-degree"))
+    }
+
+    func testPairedNativePixelsRequireBothVerifiedSources() {
+        XCTAssertEqual(
+            LoupeNativePixelAvailability.evaluate(
+                primary: nativePixelSource(name: "source A"),
+                secondary: nativePixelSource(name: "source B", codedWidth: 720, codedHeight: 576,
+                                              capturedWidth: 720, capturedHeight: 576)
+            ),
+            .available
+        )
+
+        let mixed = LoupeNativePixelAvailability.evaluate(
+            primary: nativePixelSource(name: "source A"),
+            secondary: nativePixelSource(name: "source B", backend: .mpv)
+        )
+        XCTAssertFalse(mixed.isAvailable)
+        XCTAssertTrue(mixed.explanation.contains("source B"))
+    }
+
     func testPinnedOverlayRemainsInsideCanvasAfterResize() {
         let canvas = CGSize(width: 500, height: 400)
         let overlay = CGSize(width: 366, height: 166)
@@ -162,6 +241,26 @@ final class LoupeGeometryTests: XCTestCase {
             imageSize: CGSize(width: 3_840, height: 2_160), pictureSize: picture,
             normalizedPoint: point, lensSize: CGSize(width: 200, height: 160),
             magnification: mode, displayScale: displayScale
+        )
+    }
+
+    private func nativePixelSource(
+        name: String = "source",
+        backend: PlaybackBackend? = .avFoundation,
+        codedWidth: Int? = 1_920,
+        codedHeight: Int? = 1_080,
+        rotation: Int? = 0,
+        capturedWidth: Int? = 1_920,
+        capturedHeight: Int? = 1_080
+    ) -> LoupeNativePixelSource {
+        LoupeNativePixelSource(
+            name: name,
+            backend: backend,
+            codedWidth: codedWidth,
+            codedHeight: codedHeight,
+            rotation: rotation,
+            capturedWidth: capturedWidth,
+            capturedHeight: capturedHeight
         )
     }
 }

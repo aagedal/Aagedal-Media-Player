@@ -22,8 +22,10 @@ replace these checks on the shipping app and release-floor hardware.
   source with the remaining transformed fixtures. Record actual backends;
   ordinary app selection does not necessarily exercise both AVFoundation and
   MPV. Include representative production media on each backend.
-- Press Command-Shift-M and enable **Show loupe**. Exact source-pixel **1:1 is
-  unavailable**; the offered 2×/4×/8× modes magnify the fitted display picture.
+- Press Command-Shift-M and enable **Show loupe**. The 2×/4×/8× modes magnify
+  the fitted display picture. **Native pixels** is enabled only after every
+  visible AVFoundation capture matches its expected oriented coded raster; it
+  remains disabled for MPV and mixed-backend pairs with an accessible reason.
   HDR previews are not color/code-value measurements, and A/B captures are
   independent rather than frame-locked.
 

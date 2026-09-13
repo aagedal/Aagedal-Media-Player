@@ -22,7 +22,9 @@ without uploading your media.
 4. Press **Command-Shift-M**, enable **Show loupe**, and inspect a detail at
    2×, 4×, or 8×. **Pin picture position** keeps that location while you operate
    playback. The paired previews use the same normalized picture coordinate;
-   their captures are independent, not frame-locked or exact source-pixel 1:1.
+   their captures are independent and not frame-locked. A guarded native-pixel
+   option appears only when every visible source uses AVFoundation and its
+   captured dimensions match the expected oriented coded raster.
 5. Pause at a useful comparison point and choose **File > Export Comparison
    Still** (**Command-S**). The annotated PNG places A and B side by side with
    filenames, timecodes, alignment, inspection view, and technical details. It uses that fixed
@@ -191,8 +193,9 @@ pointer movement. Compare Mode shows paired A/B loupes at the same normalized
 picture coordinate.
 
 The preview uses display-space captures at up to 10 fps. HDR appearance may
-differ from the live display, and the A/B samples are not frame-locked. Exact
-source-pixel 1:1 inspection and whole-viewport zoom remain planned. See
+differ from the live display, and the A/B samples are not frame-locked. Verified
+AVFoundation captures also offer one source pixel per physical display pixel;
+MPV-backed 1:1 inspection and whole-viewport zoom remain planned. See
 [the loupe validation guide](docs/INSPECTION_LOUPE.md).
 
 ### File support

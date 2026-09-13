@@ -591,6 +591,22 @@ final class CompareLiveBackendTests: XCTestCase {
                 continue
             }
             let image = try XCTUnwrap(capture.image)
+            let availability = LoupeNativePixelAvailability.evaluate(
+                primary: LoupeNativePixelSource(
+                    name: name,
+                    backend: backend,
+                    codedWidth: stream.width,
+                    codedHeight: stream.height,
+                    rotation: stream.rotation,
+                    capturedWidth: image.width,
+                    capturedHeight: image.height
+                )
+            )
+            if backend == .avFoundation {
+                XCTAssertEqual(availability, .available, "\(name): \(availability.explanation)")
+            } else {
+                XCTAssertFalse(availability.isAvailable, "MPV captures must remain display-space only")
+            }
             // MPV screenshots include PAR correction, while AV retains the
             // oriented coded raster and lets the loupe view apply display aspect.
             let expectedAspect: Double = if backend == .avFoundation && name.contains("par") {
@@ -1866,7 +1882,10 @@ final class CompareLiveBackendTests: XCTestCase {
                 }
             }
             session.scopeSource = CompareScopeSource.allCases[(updateCount / 10) % CompareScopeSource.allCases.count]
-            state.magnification = magnifications[(updateCount / 4) % magnifications.count]
+            state.selectMagnification(
+                magnifications[(updateCount / 4) % magnifications.count],
+                nativePixelAvailability: .available
+            )
             coveredMagnifications.insert(state.magnification)
             state.normalizedPoint = CGPoint(x: Double(updateCount % 19) / 18, y: Double((updateCount * 7) % 19) / 18)
             state.pointer = CGPoint(x: state.normalizedPoint.x * visualCanvasSize.width,

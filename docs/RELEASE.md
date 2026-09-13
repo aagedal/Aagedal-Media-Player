@@ -56,9 +56,14 @@ scripts/verify-release-candidate.sh /tmp/aagedal-candidate-VERSION-BUILD
 ```
 
 The verifier records the exact commit, `Package.resolved` hash, host and Xcode
-version; runs the test suite and static analysis in Release with dependencies
-restricted to the resolved file; enables testability for the optimized test
-bundle; retains the `.xcresult` and complete logs; and runs source preflight.
+version; first runs the self-contained script-validator tests and shell/Python
+syntax checks; runs the test suite and static analysis in Release with
+dependencies restricted to the resolved file; enables testability for the
+optimized test bundle; retains the `.xcresult` and complete logs; and runs
+source preflight. Script checks are retained in `script-validator-tests.log`.
+The destructive disk-image check, external-reference checks, fixture generation,
+and production profilers remain explicit opt-ins rather than ordinary candidate
+verifier work.
 Opt-in reference, performance, and destructive-filesystem tests report named
 skips unless their documented harness supplies the required inputs. A passing
 ordinary suite therefore does not claim those acceptance gates ran.
@@ -86,9 +91,11 @@ artifact. If sandboxed and normal-Terminal results disagree, first confirm the
 tracked checksum, then require the normal-Terminal strict verification and full
 preflight to pass. Do not bypass or weaken the signature checks.
 
-Run `scripts/release.sh` only after those checks pass. The release script runs
-the preflight again before deleting `build/`, verifies the exported app's
-version, architecture, hardened-runtime Developer ID signature, and nested
+Run `scripts/release.sh` only after those checks pass. The release script refuses
+a dirty checkout, resolves and prints the full source commit before invoking the
+toolchain, and uses that exact commit as a newly created GitHub release's target.
+It runs the preflight again before deleting `build/`, verifies the exported
+app's version, architecture, hardened-runtime Developer ID signature, and nested
 signatures before notarization. The archive is restricted to the revisions in
 the tracked `Package.resolved`; it cannot silently resolve a newer branch head.
 After creating the distribution ZIP, it extracts

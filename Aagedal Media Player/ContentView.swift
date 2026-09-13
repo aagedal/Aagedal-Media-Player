@@ -85,6 +85,40 @@ struct ContentView: View {
         controller.videoSourceSize
     }
 
+    private var nativePixelLoupeAvailability: LoupeNativePixelAvailability {
+        LoupeNativePixelAvailability.evaluate(
+            primary: nativePixelSource(
+                name: compareSession.isActive ? "source A" : "source",
+                controller: controller,
+                image: loupePrimaryCapture.image
+            ),
+            secondary: compareSession.isActive
+                ? nativePixelSource(
+                    name: "source B",
+                    controller: compareSession.secondaryController,
+                    image: loupeSecondaryCapture.image
+                )
+                : nil
+        )
+    }
+
+    private func nativePixelSource(
+        name: String,
+        controller: PlayerController,
+        image: CGImage?
+    ) -> LoupeNativePixelSource {
+        let stream = controller.mediaItem?.metadata?.primaryVideoStream
+        return LoupeNativePixelSource(
+            name: name,
+            backend: controller.playbackBackend,
+            codedWidth: stream?.width,
+            codedHeight: stream?.height,
+            rotation: stream?.rotation,
+            capturedWidth: image?.width,
+            capturedHeight: image?.height
+        )
+    }
+
     // MARK: - Body
 
     var body: some View {
@@ -173,18 +207,23 @@ struct ContentView: View {
         }
         .onChange(of: controller.mediaItem?.url) { _, _ in
             loupe.close()
+            loupe.validateNativePixels(.unavailable("The source changed."))
             cancelInspectorSurfaceReload()
         }
         .onChange(of: compareSession.secondaryController.mediaItem?.url) { _, _ in
+            loupe.validateNativePixels(.unavailable("Source B changed."))
             cancelInspectorSurfaceReload()
         }
         .onChange(of: controller.preparationID) { _, _ in
+            loupe.validateNativePixels(.unavailable("Source A playback was reloaded."))
             cancelInspectorSurfaceReload()
         }
         .onChange(of: compareSession.secondaryController.preparationID) { _, _ in
+            loupe.validateNativePixels(.unavailable("Source B playback was reloaded."))
             cancelInspectorSurfaceReload()
         }
         .onChange(of: compareSession.isActive) { _, _ in
+            loupe.validateNativePixels(.unavailable("The comparison sources changed."))
             cancelInspectorSurfaceReload()
         }
         .onChange(of: showInspector) { _, _ in
@@ -196,6 +235,9 @@ struct ContentView: View {
                 loupePrimaryCapture.stop()
                 loupeSecondaryCapture.stop()
             }
+        }
+        .onChange(of: nativePixelLoupeAvailability) { _, availability in
+            loupe.validateNativePixels(availability)
         }
     }
 
@@ -653,7 +695,11 @@ struct ContentView: View {
                 }
             }
 
-            InspectionLoupeControl(state: loupe, isPresented: $showLoupeControls)
+            InspectionLoupeControl(
+                state: loupe,
+                isPresented: $showLoupeControls,
+                nativePixelAvailability: nativePixelLoupeAvailability
+            )
                 .playerToolbarFocus()
                 .disabled(!isMediaLoaded || controller.mediaItem?.presentationKind == .audioOnly)
 

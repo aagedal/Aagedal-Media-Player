@@ -16,7 +16,11 @@ if [[ -e "$artifact_dir" ]]; then
     exit 2
 fi
 
-if [[ -n "$(git status --porcelain)" ]]; then
+if ! worktree_status="$(git status --porcelain)"; then
+    echo "ERROR: could not inspect the release-candidate checkout." >&2
+    exit 2
+fi
+if [[ -n "$worktree_status" ]]; then
     echo "ERROR: release-candidate verification requires a clean checkout." >&2
     echo "Commit or stash every tracked and untracked change, then retry." >&2
     exit 2
@@ -36,6 +40,9 @@ mkdir -p "$artifact_dir"
     echo "host=$(sw_vers -productName) $(sw_vers -productVersion) ($(sw_vers -buildVersion))"
     xcodebuild -version
 } > "$artifact_dir/environment.txt"
+
+echo "==> Script-validator self-tests"
+scripts/test-script-validators.sh 2>&1 | tee "$artifact_dir/script-validator-tests.log"
 
 echo "==> Optimized Release tests"
 xcodebuild test \

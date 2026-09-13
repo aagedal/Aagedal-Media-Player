@@ -109,7 +109,12 @@ final class LiveAudioMeterSession: ObservableObject {
     }
 
     func reset() {
-        guard let player = selectedPlayer else { return }
+        // Source and track replacement deliberately retain the coordinator's
+        // previous request only as diagnostic/recovery context. Never let a
+        // user action revive that stale URL or stream while the replacement's
+        // track metadata is still rebuilding.
+        guard let player = selectedPlayer,
+              selectedSource != nil, !awaitsSourceReadiness else { return }
         if !coordinator.reset(at: player.playbackTimeSnapshot()) {
             reconcileSelectedSource()
         }
@@ -117,7 +122,8 @@ final class LiveAudioMeterSession: ObservableObject {
     }
 
     func retry() {
-        guard let player = selectedPlayer else { return }
+        guard let player = selectedPlayer,
+              selectedSource != nil, !awaitsSourceReadiness else { return }
         if coordinator.retry(at: player.playbackTimeSnapshot()) {
             coordinator.updatePlaybackClock(player.liveAudioMeterPlaybackSnapshot())
             return
@@ -162,6 +168,7 @@ final class LiveAudioMeterSession: ObservableObject {
             sourceOptions: sourceOptions,
             selectedSourceID: selectedSourceID,
             measuredSourceLabel: measuredSourceLabel,
+            canRetry: selectedSource != nil && !awaitsSourceReadiness,
             channels: channels,
             loudness: loudness,
             reference: reference,
