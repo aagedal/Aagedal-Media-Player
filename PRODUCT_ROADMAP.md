@@ -252,7 +252,8 @@ confidence as the picture.
   reset, retry and reference controls. Decoder-side PCM admission is now hard
   bounded to 250 ms beyond the playback clock, and bounded precise seeking now
   preserves generated AAC, ALAC and AC-3 intervals without unexpected gain.
-  Authoritative packet timestamps and representative real-path acceptance remain. See
+  Each raw PCM packet is now verified against FFmpeg's same-process
+  frame timestamp, size and checksum. Representative real-path acceptance remains. See
   `docs/LIVE_AUDIO_METER_DSP.md`.
 - [x] Add offline integrated loudness over a selected range or full file.
   The metadata inspector measures each source audio stream over Whole File or
@@ -267,7 +268,7 @@ confidence as the picture.
 - [ ] Add live momentary and short-term loudness. The bounded calculation core
   now passes tone and time-varying reference checks, and its decoder/presentation
   foundations include paced, suspendable decoding. The window session and UI are
-  integrated; compressed-source timestamp, routing, accuracy, accessibility and
+  integrated; compressed-source real-media, routing, accuracy, accessibility and
   release-floor acceptance remain.
 - [x] Show channel labels and layout mismatches clearly in Compare Mode.
   Selected-track details list numbered A/B speaker roles, unmatched channels,

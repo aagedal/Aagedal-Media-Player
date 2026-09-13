@@ -62,6 +62,12 @@ class Validation:
         if not condition:
             self.errors.append(message)
 
+    def require_after(self, prerequisite: bool, condition: bool, message: str) -> None:
+        """Evaluate a dependent assertion only when its authoritative check passed."""
+        self.checks += 1
+        if prerequisite and not condition:
+            self.errors.append(message)
+
     def equal(self, actual: object, expected: object, label: str) -> None:
         self.require(actual == expected, f"{label}: expected {expected!r}, found {actual!r}")
 
@@ -219,19 +225,27 @@ def validate_ffmpeg(validation: Validation) -> None:
     )
     details = command("/usr/bin/codesign", "-dvvv", str(FFMPEG))
     signature_details = details.stderr + details.stdout
-    validation.require(
+    signature_is_valid = result.returncode == 0
+    validation.require_after(
+        signature_is_valid,
         f"TeamIdentifier={EXPECTED_TEAM_ID}" in signature_details,
         f"bundled ffmpeg is not signed by team {EXPECTED_TEAM_ID}",
     )
-    validation.require(
+    validation.require_after(
+        signature_is_valid,
         "Authority=Developer ID Application:" in signature_details,
         "bundled ffmpeg does not have a Developer ID Application signature",
     )
-    validation.require(
+    validation.require_after(
+        signature_is_valid,
         "flags=0x10000(runtime)" in signature_details,
         "bundled ffmpeg lacks hardened runtime",
     )
-    validation.require("Timestamp=" in signature_details, "bundled ffmpeg lacks a secure timestamp")
+    validation.require_after(
+        signature_is_valid,
+        "Timestamp=" in signature_details,
+        "bundled ffmpeg lacks a secure timestamp",
+    )
 
     capability_commands = {
         "decoder": ("-decoders", ("aac", "flac", "pcm_f32le")),
@@ -308,15 +322,22 @@ def validate_exported_app(
     )
     details = command("/usr/bin/codesign", "-dvvv", str(app))
     signature_details = details.stderr + details.stdout
-    validation.require(
+    signature_is_valid = result.returncode == 0
+    validation.require_after(
+        signature_is_valid,
         f"TeamIdentifier={EXPECTED_TEAM_ID}" in signature_details,
         f"exported app is not signed by team {EXPECTED_TEAM_ID}",
     )
-    validation.require(
+    validation.require_after(
+        signature_is_valid,
         "Authority=Developer ID Application:" in signature_details,
         "exported app does not have a Developer ID Application signature",
     )
-    validation.require("flags=0x10000(runtime)" in signature_details, "exported app lacks hardened runtime")
+    validation.require_after(
+        signature_is_valid,
+        "flags=0x10000(runtime)" in signature_details,
+        "exported app lacks hardened runtime",
+    )
 
 
 def main() -> int:

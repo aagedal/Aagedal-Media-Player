@@ -50,6 +50,9 @@ enum FFmpegService {
     nonisolated static func runStreamingOutput(
         arguments: [String],
         handle: SubprocessHandle? = nil,
+        onStandardErrorLine: (@Sendable (String) -> Void)? = nil,
+        onProcessTermination: (@Sendable () -> Void)? = nil,
+        onStandardErrorEnd: (@Sendable () -> Void)? = nil,
         onStandardOutputData: @escaping @Sendable (Data) -> Void
     ) async throws {
         guard let path = ffmpegPath else {
@@ -63,7 +66,10 @@ enum FFmpegService {
                 arguments: arguments,
                 standardOutputLimit: 0,
                 handle: handle,
-                onStandardOutputData: onStandardOutputData
+                onStandardOutputData: onStandardOutputData,
+                onStandardErrorLine: onStandardErrorLine,
+                onProcessTermination: onProcessTermination,
+                onStandardErrorEnd: onStandardErrorEnd
             )
         } catch is CancellationError {
             throw FFmpegError.cancelled

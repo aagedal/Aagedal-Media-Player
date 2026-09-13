@@ -14,20 +14,24 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
         )
 
         XCTAssertEqual(arguments, [
-            "-hide_banner", "-nostdin", "-loglevel", "error",
+            "-hide_banner", "-nostdin", "-nostats", "-loglevel", "error",
             "-ss", "0.000000000", "-accurate_seek",
             "-readrate", "1", "-readrate_catchup", "1",
             "-readrate_initial_burst", "0.002000000",
             "-drc_scale", "0", "-target_level", "0",
             "-f", "wav", "-i", "/tmp/live-meter-source.wav",
-            "-ss", "0.002000000",
             "-map", "0:a:2", "-vn", "-sn", "-dn", "-map_metadata", "-1",
-            "-c:a", "pcm_f32le", "-f", "f32le", "pipe:1",
+            "-af", "asettb=expr=1/sr,atrim=start_pts=96,asetpts=PTS-96",
+            "-c:a", "pcm_f32le", "-f", "tee",
+            "[f=f32le]pipe:1|[f=framecrc]pipe:2",
         ])
         let inputIndex = try XCTUnwrap(arguments.firstIndex(of: "-i"))
         XCTAssertLessThan(try XCTUnwrap(arguments.firstIndex(of: "-readrate")), inputIndex)
         XCTAssertLessThan(try XCTUnwrap(arguments.firstIndex(of: "-readrate_catchup")), inputIndex)
-        XCTAssertFalse(arguments.contains("-af"), "No normalization, volume, or rematrix filter is permitted")
+        let filterIndex = try XCTUnwrap(arguments.firstIndex(of: "-af"))
+        XCTAssertFalse(arguments[filterIndex + 1].contains("volume"))
+        XCTAssertFalse(arguments[filterIndex + 1].contains("pan"))
+        XCTAssertFalse(arguments[filterIndex + 1].contains("channelmap"))
         XCTAssertFalse(arguments.contains("-ar"), "The declared source rate must not be silently resampled")
         XCTAssertFalse(arguments.contains("-ac"), "The declared speaker layout must not be silently remixed")
     }
@@ -38,13 +42,16 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
         let inputIndex = try XCTUnwrap(arguments.firstIndex(of: "-i"))
         let seekIndexes = arguments.indices.filter { arguments[$0] == "-ss" }
 
-        XCTAssertEqual(seekIndexes.count, 2)
+        XCTAssertEqual(seekIndexes.count, 1)
         XCTAssertEqual(arguments[seekIndexes[0] + 1], "122.000000000")
         XCTAssertLessThan(seekIndexes[0], inputIndex)
-        XCTAssertEqual(arguments[seekIndexes[1] + 1], "1.000000000")
-        XCTAssertGreaterThan(seekIndexes[1], inputIndex)
         let burstIndex = try XCTUnwrap(arguments.firstIndex(of: "-readrate_initial_burst"))
         XCTAssertEqual(arguments[burstIndex + 1], "1.000000000")
+        let filterIndex = try XCTUnwrap(arguments.firstIndex(of: "-af"))
+        XCTAssertEqual(
+            arguments[filterIndex + 1],
+            "asettb=expr=1/sr,atrim=start_pts=48000,asetpts=PTS-48000"
+        )
     }
 
     func testRequestRejectsInvalidOrInconsistentIdentity() throws {
@@ -61,6 +68,192 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
         )) { error in
             XCTAssertEqual(error as? LiveAudioMeterDecoder.Failure, .inconsistentStartPosition)
         }
+    }
+
+    func testTimestampedProcessorVerifiesContiguousPacketsAcrossArbitraryChunks() throws {
+        let request = try makeRequest()
+        let received = SnapshotBox()
+        let processor = try LiveAudioMeterTimestampedStreamProcessor(request: request) {
+            received.append($0)
+        }
+        let first = bytes([Float](repeating: 0.1, count: 128 * 2))
+        let second = bytes([Float](repeating: -0.2, count: 1_024 * 2))
+
+        XCTAssertNil(processor.consumeTimingLine("#tb 0: 1/48000"))
+        XCTAssertNil(processor.consumeTimingLine("#sample_rate 0: 48000"))
+        XCTAssertNil(processor.consumeTimingLine("unrelated ffmpeg diagnostic"))
+        XCTAssertNil(processor.consumeTimingLine(frameCRCLine(
+            pts: 0, frames: 128, data: first
+        )))
+        try processor.consumePCM(first.prefix(7))
+        try processor.consumePCM(first.dropFirst(7) + second.prefix(13))
+        XCTAssertNil(processor.consumeTimingLine(frameCRCLine(
+            pts: 128, frames: 1_024, data: second
+        )))
+        try processor.consumePCM(second.dropFirst(13))
+        processor.finishTiming()
+
+        let (final, summary) = try processor.finish()
+        XCTAssertEqual(summary, .init(packetCount: 2, frameCount: 1_152))
+        XCTAssertEqual(final?.endFrame, 1_152)
+        XCTAssertEqual(received.values.last?.endFrame, 1_152)
+    }
+
+    func testTimestampedProcessorRejectsMalformedGapAndChecksumMismatch() throws {
+        let request = try makeRequest()
+        let malformed = try LiveAudioMeterTimestampedStreamProcessor(request: request) { _ in }
+        XCTAssertEqual(
+            malformed.consumeTimingLine("0, NOPTS, NOPTS, 128, 1024, 0x00000000"),
+            .malformedFrameTimestamp
+        )
+
+        let gap = try LiveAudioMeterTimestampedStreamProcessor(request: request) { _ in }
+        XCTAssertNil(gap.consumeTimingLine("#tb 0: 1/48000"))
+        XCTAssertNil(gap.consumeTimingLine("#sample_rate 0: 48000"))
+        let packet = bytes([Float](repeating: 0, count: 1_024 * 2))
+        XCTAssertNil(gap.consumeTimingLine(frameCRCLine(pts: 0, frames: 1_024, data: packet)))
+        XCTAssertEqual(
+            gap.consumeTimingLine(frameCRCLine(pts: 1_025, frames: 1_024, data: packet)),
+            .timestampDiscontinuity(expectedFrame: 1_024, actualFrame: 1_025)
+        )
+
+        let checksum = try LiveAudioMeterTimestampedStreamProcessor(request: request) { _ in }
+        XCTAssertNil(checksum.consumeTimingLine("#tb 0: 1/48000"))
+        XCTAssertNil(checksum.consumeTimingLine("#sample_rate 0: 48000"))
+        XCTAssertNil(checksum.consumeTimingLine(
+            "0, 0, 0, 1024, \(packet.count), 0x00000001"
+        ))
+        XCTAssertThrowsError(try checksum.consumePCM(packet)) { error in
+            guard case .timestampChecksumMismatch = error as? LiveAudioMeterDecoder.Failure else {
+                return XCTFail("Expected checksum mismatch, got \(error)")
+            }
+        }
+    }
+
+    func testTimestampedProcessorRequiresHeadersEvenForEmptyStream() throws {
+        let request = try makeRequest()
+        let missingHeaders = try LiveAudioMeterTimestampedStreamProcessor(
+            request: request
+        ) { _ in }
+        missingHeaders.finishTiming()
+        XCTAssertThrowsError(try missingHeaders.finish()) { error in
+            XCTAssertEqual(
+                error as? LiveAudioMeterDecoder.Failure,
+                .missingFrameTimestampHeader
+            )
+        }
+
+        let headered = try LiveAudioMeterTimestampedStreamProcessor(request: request) { _ in }
+        XCTAssertNil(headered.consumeTimingLine("#tb 0: 1/48000"))
+        XCTAssertNil(headered.consumeTimingLine("#sample_rate 0: 48000"))
+        headered.finishTiming()
+        let (final, summary) = try headered.finish()
+        XCTAssertNil(final)
+        XCTAssertEqual(summary, .init(packetCount: 0, frameCount: 0))
+    }
+
+    func testTimestampedProcessorSupportsAllRatesAndMultichannelPacketSizes() throws {
+        for (sampleRate, layout) in [
+            (44_100, LiveAudioMeterFormat.Layout.surround5Point1),
+            (96_000, LiveAudioMeterFormat.Layout.surround7Point1),
+        ] {
+            let format = try LiveAudioMeterFormat(sampleRate: sampleRate, layout: layout)
+            let request = try LiveAudioMeterDecodeRequest(
+                url: URL(fileURLWithPath: "/tmp/source.wav"),
+                audioStreamOrderIndex: 0, format: format,
+                startSourceFrame: 0, startSourceTime: 0
+            )
+            let processor = try LiveAudioMeterTimestampedStreamProcessor(
+                request: request
+            ) { _ in }
+            let packet = bytes([Float](repeating: 0, count: 128 * format.channelCount))
+            XCTAssertNil(processor.consumeTimingLine("#tb 0: 1/\(sampleRate)"))
+            XCTAssertNil(processor.consumeTimingLine("#sample_rate 0: \(sampleRate)"))
+            XCTAssertNil(processor.consumeTimingLine(
+                frameCRCLine(pts: 0, frames: 128, data: packet)
+            ))
+            try processor.consumePCM(packet)
+            processor.finishTiming()
+            let (_, summary) = try processor.finish()
+            XCTAssertEqual(summary, .init(packetCount: 1, frameCount: 128))
+        }
+    }
+
+    func testTimestampedProcessorCancellationWakesBothUnmatchedSides() async throws {
+        let request = try makeRequest()
+        let pcmFirst = try LiveAudioMeterTimestampedStreamProcessor(request: request) { _ in }
+        let oversizedCallback = bytes([Float](repeating: 0, count: (12_000 + 1) * 2))
+        let pcmTask = Task.detached { try pcmFirst.consumePCM(oversizedCallback) }
+        try await Task.sleep(for: .milliseconds(40))
+        pcmFirst.cancel()
+        do {
+            try await pcmTask.value
+            XCTFail("Expected cancellation to wake PCM waiting for timestamps")
+        } catch let failure as LiveAudioMeterDecoder.Failure {
+            XCTAssertEqual(failure, .cancelled)
+        }
+
+        let timingFirst = try LiveAudioMeterTimestampedStreamProcessor(request: request) { _ in }
+        XCTAssertNil(timingFirst.consumeTimingLine("#tb 0: 1/48000"))
+        XCTAssertNil(timingFirst.consumeTimingLine("#sample_rate 0: 48000"))
+        let fullBound = bytes([Float](repeating: 0, count: 12_000 * 2))
+        XCTAssertNil(timingFirst.consumeTimingLine(
+            frameCRCLine(pts: 0, frames: 12_000, data: fullBound)
+        ))
+        let finalFrame = bytes([Float](repeating: 0, count: 2))
+        let finalRecord = frameCRCLine(pts: 12_000, frames: 1, data: finalFrame)
+        let timingTask = Task.detached { timingFirst.consumeTimingLine(finalRecord) }
+        try await Task.sleep(for: .milliseconds(40))
+        timingFirst.cancel()
+        let timingResult = await timingTask.value
+        XCTAssertNil(timingResult)
+        XCTAssertThrowsError(try timingFirst.finish()) { error in
+            XCTAssertEqual(error as? LiveAudioMeterDecoder.Failure, .cancelled)
+        }
+    }
+
+    func testTimestampedProcessorBackpressuresThenDrainsBothUnmatchedSides() async throws {
+        let request = try makeRequest()
+        let packet = bytes([Float](repeating: 0, count: 6_000 * 2))
+        let allPCM = packet + packet + packet
+
+        let pcmFirst = try LiveAudioMeterTimestampedStreamProcessor(request: request) { _ in }
+        XCTAssertNil(pcmFirst.consumeTimingLine("#tb 0: 1/48000"))
+        XCTAssertNil(pcmFirst.consumeTimingLine("#sample_rate 0: 48000"))
+        let pcmFinished = FlagBox()
+        let pcmTask = Task.detached {
+            defer { pcmFinished.set() }
+            try pcmFirst.consumePCM(allPCM)
+        }
+        try await Task.sleep(for: .milliseconds(40))
+        XCTAssertFalse(pcmFinished.value)
+        XCTAssertNil(pcmFirst.consumeTimingLine(frameCRCLine(pts: 0, frames: 6_000, data: packet)))
+        try await pcmTask.value
+        XCTAssertTrue(pcmFinished.value)
+        XCTAssertNil(pcmFirst.consumeTimingLine(frameCRCLine(pts: 6_000, frames: 6_000, data: packet)))
+        XCTAssertNil(pcmFirst.consumeTimingLine(frameCRCLine(pts: 12_000, frames: 6_000, data: packet)))
+        pcmFirst.finishTiming()
+        XCTAssertEqual(try pcmFirst.finish().1.frameCount, 18_000)
+
+        let timingFirst = try LiveAudioMeterTimestampedStreamProcessor(request: request) { _ in }
+        XCTAssertNil(timingFirst.consumeTimingLine("#tb 0: 1/48000"))
+        XCTAssertNil(timingFirst.consumeTimingLine("#sample_rate 0: 48000"))
+        XCTAssertNil(timingFirst.consumeTimingLine(frameCRCLine(pts: 0, frames: 6_000, data: packet)))
+        XCTAssertNil(timingFirst.consumeTimingLine(frameCRCLine(pts: 6_000, frames: 6_000, data: packet)))
+        let timingFinished = FlagBox()
+        let finalRecord = frameCRCLine(pts: 12_000, frames: 6_000, data: packet)
+        let timingTask = Task.detached {
+            defer { timingFinished.set() }
+            return timingFirst.consumeTimingLine(finalRecord)
+        }
+        try await Task.sleep(for: .milliseconds(40))
+        XCTAssertFalse(timingFinished.value)
+        try timingFirst.consumePCM(allPCM)
+        let timingResult = await timingTask.value
+        XCTAssertNil(timingResult)
+        XCTAssertTrue(timingFinished.value)
+        timingFirst.finishTiming()
+        XCTAssertEqual(try timingFirst.finish().1.frameCount, 18_000)
     }
 
     func testArbitraryByteBoundariesMatchDirectDSPAndStayBounded() throws {
@@ -256,6 +449,9 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
         XCTAssertEqual(completion.provenance.sampleFormat, "f32le")
         XCTAssertTrue(completion.provenance.dynamicRangeCompressionDisabled)
         XCTAssertTrue(completion.provenance.codecNormalizationDisabled)
+        XCTAssertEqual(completion.provenance.timestampSource, .ffmpegFrameCRC)
+        XCTAssertEqual(completion.provenance.timestampTimeBase, "1/48000")
+        XCTAssertEqual(completion.provenance.timestampFrameCount, Int64(frameCount))
         XCTAssertEqual(completion.finalSnapshot?.endFrame, Int64(frameCount))
         XCTAssertTrue(completion.finalSnapshot?.isFinal == true)
         XCTAssertEqual(received.values.filter(\.isFinal).count, 1)
@@ -263,6 +459,40 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
             elapsed, .milliseconds(500),
             "A one-second source must not be drained materially faster than forward 1x playback"
         )
+    }
+
+    func testBundledDecoderFrameCRCSupportsNon48kAndMultichannelPCM() async throws {
+        guard FFmpegService.ffmpegPath != nil else { throw XCTSkip("Bundled ffmpeg is required") }
+        let cases: [(Int, LiveAudioMeterFormat.Layout)] = [
+            (44_100, .stereo),
+            (96_000, .surround5Point1),
+        ]
+        for (sampleRate, layout) in cases {
+            let url = FileManager.default.temporaryDirectory.appendingPathComponent(
+                "live-meter-framecrc-\(sampleRate)-\(UUID().uuidString).wav"
+            )
+            defer { try? FileManager.default.removeItem(at: url) }
+            let frameCount = sampleRate / 20
+            let samples = [Float](
+                repeating: 0.05,
+                count: frameCount * layout.channelCount
+            )
+            try float32Wave(
+                samples: samples, channels: layout.channelCount, sampleRate: sampleRate
+            ).write(to: url)
+            let format = try LiveAudioMeterFormat(sampleRate: sampleRate, layout: layout)
+            let request = try LiveAudioMeterDecodeRequest(
+                url: url, audioStreamOrderIndex: 0, format: format,
+                startSourceFrame: 0, startSourceTime: 0
+            )
+
+            let completion = try await LiveAudioMeterDecoder.decode(request) { _ in }
+
+            XCTAssertEqual(completion.provenance.timestampTimeBase, "1/\(sampleRate)")
+            XCTAssertEqual(completion.provenance.timestampFrameCount, Int64(frameCount))
+            XCTAssertEqual(completion.finalSnapshot?.endFrame, Int64(frameCount))
+            XCTAssertEqual(completion.finalSnapshot?.samplePeakDBFS.count, layout.channelCount)
+        }
     }
 
     func testBundledDecoderPreservesExactCompressedSeekIntervalsAndGain() async throws {
@@ -313,7 +543,85 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
                 accuracy: 0.75,
                 "\(codec) decode must not apply unexpected gain normalization"
             )
+            XCTAssertEqual(completion.provenance.timestampFrameCount, 48_000)
         }
+    }
+
+    func testBundledDecoderRejectsCompressedTimestampGapInsteadOfConcatenatingPCM() async throws {
+        guard FFmpegService.ffmpegPath != nil else { throw XCTSkip("Bundled ffmpeg is required") }
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("live-meter-timestamp-gap-\(UUID().uuidString).m4a")
+        defer { try? FileManager.default.removeItem(at: url) }
+        try await FFmpegService.run(arguments: [
+            "-hide_banner", "-nostdin", "-loglevel", "error", "-y",
+            "-f", "lavfi", "-i", "sine=frequency=1000:sample_rate=48000:duration=1",
+            "-af", "aselect=not(between(t\\,0.4\\,0.5))",
+            "-c:a", "aac", url.path,
+        ])
+        let request = try LiveAudioMeterDecodeRequest(
+            url: url, audioStreamOrderIndex: 0,
+            format: LiveAudioMeterFormat(sampleRate: 48_000, layout: .mono),
+            startSourceFrame: 0, startSourceTime: 0
+        )
+
+        do {
+            _ = try await LiveAudioMeterDecoder.decode(request) { _ in }
+            XCTFail("A timestamp gap must not be presented as contiguous source PCM")
+        } catch let failure as LiveAudioMeterDecoder.Failure {
+            guard case .timestampDiscontinuity(let expected, let actual) = failure else {
+                return XCTFail("Expected timestamp discontinuity, got \(failure)")
+            }
+            XCTAssertGreaterThan(actual, expected)
+        }
+    }
+
+    func testBundledDecoderPreservesInitialAudioDelayWhenRequestStartsInsideGap() async throws {
+        guard FFmpegService.ffmpegPath != nil else { throw XCTSkip("Bundled ffmpeg is required") }
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("live-meter-initial-delay-\(UUID().uuidString).mkv")
+        defer { try? FileManager.default.removeItem(at: url) }
+        try await FFmpegService.run(arguments: [
+            "-hide_banner", "-nostdin", "-loglevel", "error", "-y",
+            "-f", "lavfi", "-i", "color=c=black:s=16x16:r=25:d=1",
+            "-f", "lavfi", "-i", "sine=frequency=1000:sample_rate=48000:duration=0.5",
+            "-filter_complex", "[1:a]asetpts=PTS+0.5/TB[a]",
+            "-map", "0:v:0", "-map", "[a]", "-c:v", "ffv1", "-c:a", "flac", url.path,
+        ])
+        let request = try LiveAudioMeterDecodeRequest(
+            url: url, audioStreamOrderIndex: 0,
+            format: LiveAudioMeterFormat(sampleRate: 48_000, layout: .mono),
+            startSourceFrame: 12_000, startSourceTime: 0.25
+        )
+
+        do {
+            _ = try await LiveAudioMeterDecoder.decode(request) { _ in }
+            XCTFail("The delayed track must not be shifted to the requested boundary")
+        } catch let failure as LiveAudioMeterDecoder.Failure {
+            guard case .timestampDiscontinuity(let expected, let actual) = failure else {
+                return XCTFail("Expected initial timestamp discontinuity, got \(failure)")
+            }
+            XCTAssertEqual(expected, 0)
+            XCTAssertGreaterThan(actual, expected)
+        }
+    }
+
+    private func frameCRCLine(
+        pts: Int64, frames: Int64, data: Data
+    ) -> String {
+        String(
+            format: "0, %lld, %lld, %lld, %d, 0x%08x",
+            pts, pts, frames, data.count, adler32(data)
+        )
+    }
+
+    private func adler32(_ data: Data) -> UInt32 {
+        var a: UInt32 = 0
+        var b: UInt32 = 0
+        for byte in data {
+            a = (a + UInt32(byte)) % 65_521
+            b = (b + a) % 65_521
+        }
+        return b << 16 | a
     }
 
     private func makeRequest(startFrame: Int64 = 0) throws -> LiveAudioMeterDecodeRequest {
@@ -399,5 +707,13 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
 
         var values: [LiveAudioMeterSnapshot] { lock.withLock { storage } }
         func append(_ snapshot: LiveAudioMeterSnapshot) { lock.withLock { storage.append(snapshot) } }
+    }
+
+    private final class FlagBox: @unchecked Sendable {
+        private let lock = NSLock()
+        private var storage = false
+
+        var value: Bool { lock.withLock { storage } }
+        func set() { lock.withLock { storage = true } }
     }
 }

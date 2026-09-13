@@ -8,8 +8,10 @@ buffering. Player controllers now publish typed clock, transport, scrub, seek,
 frame-step, loop, source and audio-track events, and the coordinator applies a
 tested drift/failure policy to them. A window-owned session now subscribes that
 seam and exposes an activating panel in the app. The live Audio QC roadmap and
-release gates remain open because timestamp authority and production acceptance
-are not complete.
+release gates remain open because representative-media and production acceptance
+are not complete. The decoder transport now verifies each raw PCM packet
+against FFmpeg's same-process frame timestamps, size and checksum; that closes
+the protocol-design gap without standing in for real-source acceptance.
 
 ## Measurement core
 
@@ -82,18 +84,24 @@ and recompute the true-peak exceedance latch.
 `LiveAudioMeterDecoder` launches the bundled FFmpeg, identifies the
 selected source and zero-based audio-stream ordinal, disables supported decoder
 gain processing, preserves the declared sample rate/channel count, and streams
-little-endian Float32 PCM directly into the calculation core. Arbitrary stdout
-boundaries are reassembled into complete interleaved frames in a fixed 50 ms
-buffer. Truncated, non-finite or discontinuous input fails the segment rather
-than publishing partial success. Completion records the decoder version,
-arguments, source request and sample format as provenance.
+little-endian Float32 PCM into the calculation core. FFmpeg's tee muxer writes
+each encoded packet as raw PCM on stdout and as a `framecrc` record on stderr.
+The meter admits a packet only after verifying its PTS/DTS continuity, declared
+`1/sampleRate` time base, frame and byte counts, and Adler-32 checksum against
+the exact PCM bytes. Arbitrary pipe boundaries are reassembled without treating
+callback order as timestamp order. During active streaming, unmatched data on
+either pipe is capped at 250 ms and applies backpressure; termination releases
+waiters so the OS-bounded final pipe tail can be reconciled or rejected. Missing headers, gaps, malformed records,
+checksum differences, truncated PCM and incomplete framing fail the segment.
+Completion records the decoder version, arguments, sample format, timestamp
+protocol, time base and verified frame count as provenance.
 
 Seeking uses a bounded hybrid: input seeking stops long files from decoding from
 the beginning, while at most one second of immediately burst decoder preroll is
 trimmed on the output side. This preserves exact generated AAC, ALAC and MP4
 AC-3 intervals at a requested source-sample boundary and avoids the AAC priming
-loss observed with input-only seeking. It is bounded seek evidence, not a claim
-that unframed raw PCM exposes authoritative packet timestamps.
+loss observed with input-only seeking. Generated fixtures establish exact seek
+behavior; representative production sources remain a separate acceptance gate.
 
 This decoder is deliberately not a playback coordinator. It requests native
 1× input pacing and caps catch-up at 1× so a temporarily stalled reader cannot
@@ -104,9 +112,9 @@ byte boundary and applies pipe backpressure before excess PCM is queued or
 processed. Pause and buffering suspend admission, resume wakes it, and
 generation cancellation wakes blocked consumers before process teardown.
 Wall-clock pacing and bounded admission still do not prove alignment with the
-active player clock. Raw Float32 output carries no decoder timestamp, so the
-sample-count endpoint after input seeking must still be validated on real
-compressed sources.
+active player clock. The timestamp-verified packet stream prevents decoder gaps from
+being hidden by contiguous raw bytes, but its seek alignment and clock behavior
+must still be validated on representative real compressed sources.
 
 `LiveAudioMeterCoordinator` now supplies the isolated window-ownership boundary:
 one decode task, monotonically changing generations, stale result rejection,
@@ -165,9 +173,11 @@ The calculation/display foundation contributes 23 tests, including explicit
 Annex 3 rear-versus-side speaker checks at every supported sample rate. Nine
 original decoder tests cover arbitrary byte boundaries, fixed buffering,
 malformed and truncated PCM, final revision, source identity/arguments, and a
-real bundled-FFmpeg WAVE decode with versioned provenance. The decoder suite now
-has thirteen tests, adding worker admission/cancellation, bounded long-seek
-arguments and exact generated AAC/ALAC/AC-3 seek-interval and gain checks. Six presentation tests cover
+real bundled-FFmpeg WAVE decode with versioned provenance. The decoder suite also
+covers worker admission/cancellation, bounded long-seek arguments, exact
+generated AAC/ALAC/AC-3 seek-interval and gain checks, packet framing/checksums,
+44.1/96 kHz and 5.1 framing, two-way backpressure/cancellation, final cross-pipe
+shutdown ordering, and actual initial/midstream timestamp-gap rejection. Six presentation tests cover
 preference validation and exact EBU/ATSC threshold wording. A focused Debug run
 of these suites plus settings/numeric-default regressions passes 47 tests. Seven
 coordinator tests cover stale callback rejection, one-slot UI coalescing,
@@ -181,15 +191,16 @@ continuity, suspend before and after attachment, resume, and cancellation while
 stopped. These are calculation and process-control tests; synthetic PCM is not evidence of a validated live
 source decoder or all programme/transient families.
 
-The precise-seek continuation passes the full 637-test Debug suite with no
+The timestamp-verified continuation passes the full 648-test Debug suite with no
 failures and one expected opt-in real-volume-exhaustion skip. It adds focused
 coverage for current-clock startup/retry, source replacement, late metadata,
 preference persistence, auxiliary-panel command routing, malformed-snapshot
 diagnostics, complete delivery of final subprocess bytes, one-callback admission
 limits, suspend/resume, cancellation of blocked consumers, actual bundled-
 FFmpeg pipe backpressure at the playback boundary and compressed-seek sample
-accuracy. Current release preflight still fails three bundled-FFmpeg
-signature/timestamp checks.
+accuracy, packet framing, both-side backpressure, safe process termination and
+source-relative gap retention. Static analysis passes. Current release preflight still fails strict bundled-FFmpeg
+code-signature verification.
 
 A preliminary optimized standalone check on this development Mac processed ten
 seconds of eight-channel 96 kHz PCM in about 0.13 seconds. It excludes decoder,
@@ -197,9 +208,9 @@ UI, scheduling and thermal costs and is not a release-floor performance result.
 
 Remaining work:
 
-- Prove packet timestamps on representative real compressed sources (or change
-  the decoder protocol so timestamps are authoritative). Validate drift failure,
-  seek/loop/reload, EOF revision, cancellation, retry and overrun end to end.
+- Validate the timestamp-verified decoder on representative real compressed
+  sources. Exercise drift failure, seek/loop/reload, EOF revision, cancellation,
+  retry and overrun end to end through the mounted production path.
 - Production-path numerical references, compressed-source gain checks and
   monitor-routing invariance on both backends.
 - Base-M1 concurrent-playback performance, sustained bounded-work observation,

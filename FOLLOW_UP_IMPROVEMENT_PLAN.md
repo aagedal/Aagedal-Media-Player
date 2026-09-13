@@ -1849,7 +1849,7 @@ live-path acceptance work below still open. This does not complete Audio QC.
   bundled-FFmpeg pipe backpressure.
 - [x] Replace input-only seeking with bounded precise preroll and prove exact
   generated AAC, ALAC and MP4 AC-3 intervals without unexpected decoder gain.
-- [ ] Prove authoritative decoder packet timestamps on representative real
+- [ ] Validate the timestamp-verified decoder on representative real
   compressed sources.
 - [ ] Complete real-path accuracy, routing invariance, spoken accessibility and
   release-floor performance.
@@ -1859,14 +1859,14 @@ including the official ITU offline references and real APFS recovery, with
 verified image detach. Evidence is retained in
 `/tmp/aagedal-meter-programme-final-apfs-20260912/Tests.xcresult` and `summary.json`.
 That retained candidate passed all 61 preflight checks. The current working tree
-preflight instead stops on three bundled-FFmpeg signature/timestamp checks.
+preflight instead stops at strict bundled-FFmpeg code-signature verification.
 
 The decoder/presentation/lifecycle continuation includes paced bundled-FFmpeg
 decode, coordinator ownership, suspend/cancellation and panel-session coverage.
 The mounted panel deliberately qualifies provenance until decode completion and
-does not mark live metering as release accepted: authoritative compressed-source
-timestamp continuity and production-path acceptance remain open.
-The integrated continuation passes the full 637-test Debug suite with no failures
+does not mark live metering as release accepted: representative compressed-source
+and production-path acceptance remain open.
+The integrated continuation passes the full 648-test Debug suite with no failures
 and one expected opt-in real-volume-exhaustion skip.
 
 See `docs/LIVE_AUDIO_METER_DSP.md`. A preliminary optimized standalone host
@@ -1927,6 +1927,32 @@ Evidence:
 
 The production metadata-memory dependency issue remains separate and unresolved.
 
+## Phase 85 — Timestamp-verified live-meter transport
+
+Status: Decoder protocol and focused regressions implemented on 2026-09-13;
+representative real-media and production-path acceptance remain open.
+
+- [x] Encode source PCM once and tee each FFmpeg packet to raw Float32 stdout
+  plus a same-process `framecrc` timestamp record on stderr.
+- [x] Require a `1/sampleRate` time base, declared sample rate, continuous
+  PTS/DTS, exact frame/byte counts and matching Adler-32 before admitting PCM.
+- [x] Bound steady-state unmatched timestamp and PCM data to 250 ms so callback
+  reordering applies pipe backpressure rather than playback-duration memory growth;
+  termination releases waiters to reconcile the OS-bounded final pipe tail.
+- [x] Drain the timestamp side channel before final stdout callbacks at process
+  termination, and wake both sides on cancellation or framing failure.
+- [x] Preserve exact generated AAC, ALAC and MP4 AC-3 seek/gain behavior, and
+  prove that an actual compressed timestamp gap fails instead of concatenating
+  discontinuous PCM.
+- [ ] Validate representative real compressed sources and the complete mounted
+  playback acceptance matrix, including routing, drift, accessibility and the
+  release-floor performance run.
+
+The focused timestamp processor, cross-pipe shutdown and compressed-gap regressions
+pass. The full 648-test Debug suite passes with the one expected opt-in real-volume-exhaustion
+skip, and static analysis passes. Release preflight stops only at strict
+verification of the bundled FFmpeg signature.
+
 ## Integrated continuation verification — 2026-09-12
 
 The live-meter decoder now runs at source-rate pace, preserves one controlled
@@ -1937,8 +1963,9 @@ now applies tested clock drift, ahead hysteresis, restart and speed policies;
 the owning window session, source-readiness seam, activating panel and
 active-player command routing are now integrated. Worker-side PCM admission is
 hard bounded to 250 ms beyond the playback clock. Bounded precise seeking also
-preserves generated AAC, ALAC and AC-3 sample intervals and gain. Authoritative
-packet timestamps on representative sources remain. The new
+preserves generated AAC, ALAC and AC-3 sample intervals and gain. Phase 85 now
+verifies every PCM packet against its same-process timestamp, size and
+checksum; representative compressed-source validation remains. The new
 production-path metadata profiler observes RSS before the first uncached load,
 checks cache parity and caller release, and validates one fresh XCTest host per
 input; its 61-second ALAC end-to-end run validates the harness, not the long-file
@@ -1953,10 +1980,11 @@ Review commands now toggle Comparison Review and navigate previous/next matching
 notes without toolbar traversal. They do not replace native Full Keyboard Access
 or spoken VoiceOver acceptance.
 
-All 637 ordinary Debug tests pass; the optional real-volume-exhaustion test is
-the sole skip. Static analysis passes. Release preflight remains blocked by the
-bundled FFmpeg's invalid/non-Developer-ID signature and missing secure timestamp,
-so candidate signing and distribution acceptance remain open.
+The full run passes all 648 ordinary Debug tests; the optional
+real-volume-exhaustion test is the sole skip. Static analysis passes. New focused
+Phase 85 regressions also pass. Release preflight remains blocked by strict
+verification of the bundled FFmpeg signature, so candidate signing and
+distribution acceptance remain open.
 
 ## Remaining work after this continuation
 
@@ -2038,8 +2066,9 @@ so candidate signing and distribution acceptance remain open.
   now exist. Typed playback events plus coordinator clock/drift and ahead
   hysteresis policies are tested; the owning meter-window session and activating
   UI and hard 250 ms worker admission bound are integrated. Bounded precise seek
-  passes generated AAC/ALAC/AC-3 checks; authoritative packet timestamps on
-  representative sources and live reference validation remain;
+  passes generated AAC/ALAC/AC-3 checks; Phase 85 verifies raw PCM packets
+  against same-process decoder timestamps, sizes and checksums. Representative
+  sources and live reference validation remain;
   Phase 84 adds production programme profiling and fixes silent long-range
   channel loss plus excessive shared-demux buffering; representative-media and
   release-floor memory acceptance remain.
@@ -2182,3 +2211,5 @@ so candidate signing and distribution acceptance remain open.
 75. Phase 83 bounded live-meter calculation and display foundation.
 
 76. Phase 84 programme analysis teardown, profiling and long-range integrity.
+
+77. Phase 85 timestamp-verified live-meter transport.

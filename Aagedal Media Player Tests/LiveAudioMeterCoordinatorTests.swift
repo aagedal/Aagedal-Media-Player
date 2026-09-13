@@ -401,7 +401,10 @@ final class LiveAudioMeterCoordinatorTests: XCTestCase {
             provenance: LiveAudioMeterDecodeProvenance(
                 request: request, decoderVersion: "ffmpeg version test", arguments: [],
                 sampleFormat: "f32le", dynamicRangeCompressionDisabled: true,
-                codecNormalizationDisabled: true
+                codecNormalizationDisabled: true,
+                timestampSource: .ffmpegFrameCRC,
+                timestampTimeBase: "1/\(request.format.sampleRate)",
+                timestampFrameCount: max(0, finalFrame - request.startSourceFrame)
             ),
             finalSnapshot: final
         )

@@ -41,12 +41,19 @@ nonisolated struct LiveAudioMeterDecodeRequest: Equatable, Sendable {
 
 /// Information needed to qualify a live reading as decoded source PCM.
 nonisolated struct LiveAudioMeterDecodeProvenance: Equatable, Sendable {
+    enum TimestampSource: String, Equatable, Sendable {
+        case ffmpegFrameCRC = "ffmpeg-framecrc-v1"
+    }
+
     let request: LiveAudioMeterDecodeRequest
     let decoderVersion: String
     let arguments: [String]
     let sampleFormat: String
     let dynamicRangeCompressionDisabled: Bool
     let codecNormalizationDisabled: Bool
+    let timestampSource: TimestampSource
+    let timestampTimeBase: String
+    let timestampFrameCount: Int64
 }
 
 nonisolated struct LiveAudioMeterDecodeCompletion: Equatable, Sendable {
@@ -170,6 +177,12 @@ nonisolated final class LiveAudioMeterPCMStreamProcessor: @unchecked Sendable {
         lock.withLock { pending.count }
     }
 
+    var receivedFrameCount: Int64 {
+        lock.withLock {
+            meter.nextFrame - meter.segmentStartFrame + Int64(pending.count / bytesPerFrame)
+        }
+    }
+
     func consume(_ data: Data) throws {
         guard !data.isEmpty else { return }
         admissionLock.lock()
@@ -255,6 +268,265 @@ nonisolated final class LiveAudioMeterPCMStreamProcessor: @unchecked Sendable {
     }
 }
 
+/// Couples raw PCM on stdout to FFmpeg framecrc records on stderr. No PCM
+/// reaches the meter until its exact packet size, PTS/DTS, and Adler-32 have
+/// been verified. During active streaming both unmatched sides are bounded to
+/// 250 ms; a temporarily faster output therefore applies pipe backpressure
+/// instead of accumulating with playback duration. Process termination releases
+/// waits so the OS-bounded final pipe tail can be reconciled or rejected.
+nonisolated final class LiveAudioMeterTimestampedStreamProcessor: @unchecked Sendable {
+    struct Summary: Equatable, Sendable {
+        let packetCount: Int64
+        let frameCount: Int64
+    }
+
+    private struct Record: Equatable, Sendable {
+        let pts: Int64
+        let frameCount: Int64
+        let byteCount: Int
+        let checksum: UInt32
+    }
+
+    private let condition = NSCondition()
+    private let admissionLock = NSLock()
+    private let downstream: LiveAudioMeterPCMStreamProcessor
+    private let expectedSampleRate: Int
+    private let bytesPerFrame: Int
+    let maximumUnmatchedByteCount: Int
+    private nonisolated(unsafe) var records: [Record] = []
+    private nonisolated(unsafe) var pendingPCM = Data()
+    private nonisolated(unsafe) var unmatchedTimingByteCount = 0
+    private nonisolated(unsafe) var packetCount: Int64 = 0
+    private nonisolated(unsafe) var expectedPTS: Int64 = 0
+    private nonisolated(unsafe) var hasTimeBase = false
+    private nonisolated(unsafe) var hasSampleRate = false
+    private nonisolated(unsafe) var terminationStarted = false
+    private nonisolated(unsafe) var timingEnded = false
+    private nonisolated(unsafe) var failure: LiveAudioMeterDecoder.Failure?
+
+    init(
+        request: LiveAudioMeterDecodeRequest,
+        workerGate: LiveAudioMeterWorkerGate? = nil,
+        onSnapshot: @escaping LiveAudioMeterPCMStreamProcessor.SnapshotHandler
+    ) throws {
+        downstream = try LiveAudioMeterPCMStreamProcessor(
+            request: request, workerGate: workerGate, onSnapshot: onSnapshot
+        )
+        expectedSampleRate = request.format.sampleRate
+        bytesPerFrame = request.format.channelCount * MemoryLayout<Float>.size
+        maximumUnmatchedByteCount = request.format.sampleRate / 4 * bytesPerFrame
+        pendingPCM.reserveCapacity(maximumUnmatchedByteCount)
+    }
+
+    func consumeTimingLine(_ line: String) -> LiveAudioMeterDecoder.Failure? {
+        let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.hasPrefix("#tb 0:") {
+            let actual = trimmed.dropFirst("#tb 0:".count)
+                .trimmingCharacters(in: .whitespaces)
+            return condition.withLock {
+                guard failure == nil else { return nil }
+                guard actual == "1/\(expectedSampleRate)" else {
+                    return failLocked(.timestampTimeBaseMismatch(
+                        expected: "1/\(expectedSampleRate)", actual: actual
+                    ))
+                }
+                hasTimeBase = true
+                return nil
+            }
+        }
+        if trimmed.hasPrefix("#sample_rate 0:") {
+            let actual = Int(trimmed.dropFirst("#sample_rate 0:".count)
+                .trimmingCharacters(in: .whitespaces))
+            return condition.withLock {
+                guard failure == nil else { return nil }
+                guard actual == expectedSampleRate else {
+                    return failLocked(.timestampSampleRateMismatch(
+                        expected: expectedSampleRate, actual: Int64(actual ?? -1)
+                    ))
+                }
+                hasSampleRate = true
+                return nil
+            }
+        }
+        guard let first = trimmed.first, first.isNumber else { return nil }
+        guard let record = Self.parseRecord(trimmed, bytesPerFrame: bytesPerFrame) else {
+            return condition.withLock { failLocked(.malformedFrameTimestamp) }
+        }
+
+        condition.lock()
+        defer { condition.unlock() }
+        guard failure == nil else { return nil }
+        guard hasTimeBase, hasSampleRate else {
+            return failLocked(.missingFrameTimestampHeader)
+        }
+        guard record.pts == expectedPTS else {
+            return failLocked(.timestampDiscontinuity(
+                expectedFrame: expectedPTS, actualFrame: record.pts
+            ))
+        }
+        guard record.byteCount <= maximumUnmatchedByteCount else {
+            return failLocked(.timestampPacketTooLarge(
+                byteCount: record.byteCount, maximum: maximumUnmatchedByteCount
+            ))
+        }
+        while failure == nil, !terminationStarted,
+              unmatchedTimingByteCount + record.byteCount > maximumUnmatchedByteCount {
+            condition.wait()
+        }
+        guard failure == nil else { return nil }
+        records.append(record)
+        unmatchedTimingByteCount += record.byteCount
+        packetCount += 1
+        expectedPTS += record.frameCount
+        condition.broadcast()
+        return nil
+    }
+
+    func consumePCM(_ data: Data) throws {
+        admissionLock.lock()
+        defer { admissionLock.unlock() }
+        var cursor = data.startIndex
+
+        while true {
+            condition.lock()
+            if let failure {
+                condition.unlock()
+                throw failure
+            }
+            if let record = records.first {
+                let needed = record.byteCount - pendingPCM.count
+                if needed > 0, cursor < data.endIndex {
+                    let count = min(needed, data.distance(from: cursor, to: data.endIndex))
+                    let end = data.index(cursor, offsetBy: count)
+                    pendingPCM.append(data[cursor..<end])
+                    cursor = end
+                }
+                if pendingPCM.count >= record.byteCount {
+                    let packet = Data(pendingPCM.prefix(record.byteCount))
+                    pendingPCM.removeFirst(record.byteCount)
+                    records.removeFirst()
+                    unmatchedTimingByteCount -= record.byteCount
+                    condition.broadcast()
+                    condition.unlock()
+                    let checksum = Self.adler32(packet)
+                    guard checksum == record.checksum else {
+                        let discovered = LiveAudioMeterDecoder.Failure.timestampChecksumMismatch(
+                            expected: record.checksum, actual: checksum
+                        )
+                        recordFailure(discovered)
+                        throw discovered
+                    }
+                    try downstream.consume(packet)
+                    continue
+                }
+            } else if cursor < data.endIndex {
+                let available = maximumUnmatchedByteCount - pendingPCM.count
+                if available > 0 {
+                    let count = min(available, data.distance(from: cursor, to: data.endIndex))
+                    let end = data.index(cursor, offsetBy: count)
+                    pendingPCM.append(data[cursor..<end])
+                    cursor = end
+                } else if timingEnded {
+                    let discovered = failLocked(.missingFrameTimestamps)
+                    condition.unlock()
+                    throw discovered
+                } else {
+                    condition.wait()
+                    condition.unlock()
+                    continue
+                }
+            }
+            condition.unlock()
+            if cursor == data.endIndex { return }
+        }
+    }
+
+    func prepareForProcessTermination() {
+        condition.withLock {
+            terminationStarted = true
+            condition.broadcast()
+        }
+    }
+
+    func finishTiming() {
+        condition.withLock {
+            timingEnded = true
+            condition.broadcast()
+        }
+    }
+
+    func cancel() {
+        recordFailure(.cancelled)
+    }
+
+    func finish() throws -> (LiveAudioMeterSnapshot?, Summary) {
+        try consumePCM(Data())
+        let summary: Summary = try condition.withLock {
+            if let failure { throw failure }
+            guard timingEnded else { throw LiveAudioMeterDecoder.Failure.missingFrameTimestamps }
+            guard hasTimeBase, hasSampleRate else {
+                throw LiveAudioMeterDecoder.Failure.missingFrameTimestampHeader
+            }
+            guard records.isEmpty, pendingPCM.isEmpty else {
+                throw LiveAudioMeterDecoder.Failure.timestampStreamIncomplete(
+                    pcmBytes: pendingPCM.count, timingBytes: unmatchedTimingByteCount
+                )
+            }
+            return Summary(packetCount: packetCount, frameCount: expectedPTS)
+        }
+        guard downstream.receivedFrameCount == summary.frameCount else {
+            throw LiveAudioMeterDecoder.Failure.timestampFrameCountMismatch(
+                expected: summary.frameCount, actual: downstream.receivedFrameCount
+            )
+        }
+        return (try downstream.finish(), summary)
+    }
+
+    private func recordFailure(_ discovered: LiveAudioMeterDecoder.Failure) {
+        condition.withLock { _ = failLocked(discovered) }
+    }
+
+    @discardableResult
+    private func failLocked(
+        _ discovered: LiveAudioMeterDecoder.Failure
+    ) -> LiveAudioMeterDecoder.Failure {
+        if failure == nil { failure = discovered }
+        condition.broadcast()
+        return failure ?? discovered
+    }
+
+    private static func parseRecord(_ line: String, bytesPerFrame: Int) -> Record? {
+        let fields = line.split(separator: ",", omittingEmptySubsequences: false).map {
+            $0.trimmingCharacters(in: .whitespaces)
+        }
+        guard fields.count == 6,
+              Int(fields[0]) == 0,
+              let dts = Int64(fields[1]),
+              let pts = Int64(fields[2]),
+              let frameCount = Int64(fields[3]), frameCount > 0,
+              let byteCount = Int(fields[4]), byteCount > 0,
+              dts == pts,
+              frameCount <= Int64.max / Int64(bytesPerFrame),
+              byteCount == Int(frameCount) * bytesPerFrame,
+              fields[5].hasPrefix("0x"),
+              let checksum = UInt32(fields[5].dropFirst(2), radix: 16) else { return nil }
+        return Record(
+            pts: pts, frameCount: frameCount, byteCount: byteCount, checksum: checksum
+        )
+    }
+
+    private static func adler32(_ data: Data) -> UInt32 {
+        let modulus: UInt32 = 65_521
+        var a: UInt32 = 0
+        var b: UInt32 = 0
+        for byte in data {
+            a = (a + UInt32(byte)) % modulus
+            b = (b + a) % modulus
+        }
+        return (b << 16) | a
+    }
+}
+
 /// Launches one bundled ffmpeg source decoder and streams its f32le output
 /// directly through `LiveAudioMeterDSP`.
 nonisolated enum LiveAudioMeterDecoder {
@@ -268,6 +540,16 @@ nonisolated enum LiveAudioMeterDecoder {
         case decoderFailed(String)
         case cancelled
         case alreadyFinished
+        case missingFrameTimestamps
+        case missingFrameTimestampHeader
+        case malformedFrameTimestamp
+        case timestampDiscontinuity(expectedFrame: Int64, actualFrame: Int64)
+        case timestampTimeBaseMismatch(expected: String, actual: String)
+        case timestampSampleRateMismatch(expected: Int, actual: Int64)
+        case timestampPacketTooLarge(byteCount: Int, maximum: Int)
+        case timestampChecksumMismatch(expected: UInt32, actual: UInt32)
+        case timestampStreamIncomplete(pcmBytes: Int, timingBytes: Int)
+        case timestampFrameCountMismatch(expected: Int64, actual: Int64)
 
         var errorDescription: String? {
             switch self {
@@ -289,6 +571,29 @@ nonisolated enum LiveAudioMeterDecoder {
                 "Live source-audio metering was cancelled."
             case .alreadyFinished:
                 "The live source-PCM stream has already ended. Start a new meter segment to retry."
+            case .missingFrameTimestamps:
+                "The decoder produced PCM without authoritative frame timestamps."
+            case .missingFrameTimestampHeader:
+                "The decoder timestamp stream did not declare its required time base and sample rate."
+            case .malformedFrameTimestamp:
+                "The decoder produced a malformed audio-frame timestamp."
+            case .timestampDiscontinuity(let expected, let actual):
+                "The decoder audio timestamp expected frame \(expected) but received \(actual)."
+            case .timestampTimeBaseMismatch(let expected, let actual):
+                "The decoder timestamp time base changed from \(expected) to \(actual)."
+            case .timestampSampleRateMismatch(let expected, let actual):
+                "The decoder timestamp rate changed from \(expected) Hz to \(actual) Hz."
+            case .timestampPacketTooLarge(let byteCount, let maximum):
+                "A decoder timestamp packet used \(byteCount) bytes, exceeding the \(maximum)-byte admission bound."
+            case .timestampChecksumMismatch(let expected, let actual):
+                String(
+                    format: "Decoded PCM checksum 0x%08x did not match timestamp packet 0x%08x.",
+                    actual, expected
+                )
+            case .timestampStreamIncomplete(let pcmBytes, let timingBytes):
+                "The decoder ended with \(pcmBytes) unmatched PCM byte(s) and \(timingBytes) unmatched timestamp byte(s)."
+            case .timestampFrameCountMismatch(let expected, let actual):
+                "The decoder timestamp stream described \(expected) frame(s), but PCM contained \(actual)."
             }
         }
     }
@@ -301,10 +606,12 @@ nonisolated enum LiveAudioMeterDecoder {
         // Keep long-source seeking bounded while preserving codec delay and
         // edit-list accuracy at the requested sample boundary. Input seeking
         // gets close; output seeking trims at most one decoded second exactly.
-        let decoderPreroll = min(request.startSourceTime, 1)
-        let inputSeekTime = request.startSourceTime - decoderPreroll
+        let decoderPrerollFrames = min(request.startSourceFrame, Int64(request.format.sampleRate))
+        let decoderPreroll = Double(decoderPrerollFrames) / Double(request.format.sampleRate)
+        let inputSeekFrames = request.startSourceFrame - decoderPrerollFrames
+        let inputSeekTime = Double(inputSeekFrames) / Double(request.format.sampleRate)
         var arguments = [
-            "-hide_banner", "-nostdin", "-loglevel", "error",
+            "-hide_banner", "-nostdin", "-nostats", "-loglevel", "error",
             "-ss", sourceTimeArgument(inputSeekTime), "-accurate_seek",
             // Keep decoded source time aligned with forward 1x playback. Capping
             // catch-up at the requested rate prevents a temporarily stalled
@@ -320,13 +627,17 @@ nonisolated enum LiveAudioMeterDecoder {
         // disabled. Other decoders report these private options as unused.
         arguments += ["-drc_scale", "0", "-target_level", "0"]
         arguments += inputAudioArguments + ["-i", source]
-        if decoderPreroll > 0 {
-            arguments += ["-ss", sourceTimeArgument(decoderPreroll)]
-        }
+        let timestampFilter = [
+            "asettb=expr=1/sr",
+            "atrim=start_pts=\(decoderPrerollFrames)",
+            "asetpts=PTS-\(decoderPrerollFrames)",
+        ]
         arguments += [
             "-map", "0:a:\(request.audioStreamOrderIndex)",
             "-vn", "-sn", "-dn", "-map_metadata", "-1",
-            "-c:a", "pcm_f32le", "-f", "f32le", "pipe:1",
+            "-af", timestampFilter.joined(separator: ","),
+            "-c:a", "pcm_f32le", "-f", "tee",
+            "[f=f32le]pipe:1|[f=framecrc]pipe:2",
         ]
         return arguments
     }
@@ -347,7 +658,7 @@ nonisolated enum LiveAudioMeterDecoder {
             throw Failure.decoderFailed(error.localizedDescription)
         }
         let decoderArguments = arguments(for: request, inputAudioArguments: inputArguments)
-        let processor = try LiveAudioMeterPCMStreamProcessor(
+        let processor = try LiveAudioMeterTimestampedStreamProcessor(
             request: request, workerGate: workerGate, onSnapshot: onSnapshot
         )
         let pipelineFailure = PipelineFailure()
@@ -355,17 +666,28 @@ nonisolated enum LiveAudioMeterDecoder {
         do {
             try await withTaskCancellationHandler {
                 try await FFmpegService.runStreamingOutput(
-                    arguments: decoderArguments, handle: handle
+                    arguments: decoderArguments,
+                    handle: handle,
+                    onStandardErrorLine: { line in
+                        guard let failure = processor.consumeTimingLine(line) else { return }
+                        pipelineFailure.record(failure)
+                        processor.cancel()
+                        handle.cancel()
+                    },
+                    onProcessTermination: { processor.prepareForProcessTermination() },
+                    onStandardErrorEnd: { processor.finishTiming() }
                 ) { data in
                     do {
-                        try processor.consume(data)
+                        try processor.consumePCM(data)
                     } catch {
                         pipelineFailure.record(error)
+                        processor.cancel()
                         handle.cancel()
                     }
                 }
             } onCancel: {
                 workerGate?.cancel()
+                processor.cancel()
                 handle.cancel()
             }
             try Task.checkCancellation()
@@ -374,7 +696,7 @@ nonisolated enum LiveAudioMeterDecoder {
             throw map(error)
         }
         if let failure = pipelineFailure.failure { throw failure }
-        let finalSnapshot = try processor.finish()
+        let (finalSnapshot, timestampSummary) = try processor.finish()
         return LiveAudioMeterDecodeCompletion(
             provenance: LiveAudioMeterDecodeProvenance(
                 request: request,
@@ -382,7 +704,10 @@ nonisolated enum LiveAudioMeterDecoder {
                 arguments: decoderArguments,
                 sampleFormat: "f32le",
                 dynamicRangeCompressionDisabled: true,
-                codecNormalizationDisabled: true
+                codecNormalizationDisabled: true,
+                timestampSource: .ffmpegFrameCRC,
+                timestampTimeBase: "1/\(request.format.sampleRate)",
+                timestampFrameCount: timestampSummary.frameCount
             ),
             finalSnapshot: finalSnapshot
         )

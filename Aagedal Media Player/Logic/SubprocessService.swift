@@ -105,7 +105,11 @@ enum SubprocessService {
         standardOutputLimit: Int? = nil,
         handle suppliedHandle: SubprocessHandle? = nil,
         onStandardOutputData: (@Sendable (Data) -> Void)? = nil,
-        onStandardOutputLine: (@Sendable (String) -> Void)? = nil
+        onStandardOutputLine: (@Sendable (String) -> Void)? = nil,
+        onStandardErrorData: (@Sendable (Data) -> Void)? = nil,
+        onStandardErrorLine: (@Sendable (String) -> Void)? = nil,
+        onProcessTermination: (@Sendable () -> Void)? = nil,
+        onStandardErrorEnd: (@Sendable () -> Void)? = nil
     ) async throws -> SubprocessResult {
         let handle = suppliedHandle ?? SubprocessHandle()
 
@@ -124,6 +128,10 @@ enum SubprocessService {
                 let stderrCallbacks = SubprocessCallbackBarrier()
                 let stdoutLines = LineBuffer(
                     onLine: onStandardOutputLine,
+                    maximumPendingByteCount: outputLimit
+                )
+                let stderrLines = LineBuffer(
+                    onLine: onStandardErrorLine,
                     maximumPendingByteCount: outputLimit
                 )
 
@@ -146,18 +154,35 @@ enum SubprocessService {
                         autoreleasepool {
                             let data = fileHandle.availableData
                             guard !data.isEmpty else { return }
+                            onStandardErrorData?(data)
                             stderrCollector.append(data)
+                            stderrLines.append(data)
                         }
                     }
                 }
 
                 process.terminationHandler = { terminatedProcess in
                     handle.detach(process)
+                    onProcessTermination?()
+
+                    // A binary stdout consumer may be waiting for a framing
+                    // record carried on stderr. Complete and drain that side
+                    // channel first so process exit cannot deadlock the final
+                    // stdout callback behind undelivered framing metadata.
+                    stderrPipe.fileHandleForReading.readabilityHandler = nil
+                    stderrCallbacks.closeAndWait()
+
+                    let stderrTail = stderrPipe.fileHandleForReading.readDataToEndOfFile()
+                    if !stderrTail.isEmpty {
+                        onStandardErrorData?(stderrTail)
+                        stderrCollector.append(stderrTail)
+                        stderrLines.append(stderrTail)
+                    }
+                    stderrLines.finish()
+                    onStandardErrorEnd?()
 
                     stdoutPipe.fileHandleForReading.readabilityHandler = nil
-                    stderrPipe.fileHandleForReading.readabilityHandler = nil
                     stdoutCallbacks.closeAndWait()
-                    stderrCallbacks.closeAndWait()
 
                     let stdoutTail = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
                     if !stdoutTail.isEmpty {
@@ -166,11 +191,6 @@ enum SubprocessService {
                         stdoutLines.append(stdoutTail)
                     }
                     stdoutLines.finish()
-
-                    let stderrTail = stderrPipe.fileHandleForReading.readDataToEndOfFile()
-                    if !stderrTail.isEmpty {
-                        stderrCollector.append(stderrTail)
-                    }
 
                     if handle.isCancelled {
                         continuation.resume(throwing: CancellationError())

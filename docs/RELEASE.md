@@ -61,6 +61,18 @@ It verifies project and Sparkle metadata, version/build monotonicity, appcast
 ordering, signatures and canonical download URLs, shared-scheme diagnostics,
 security settings, and the reviewed ffmpeg architecture/checksum.
 
+Strict signature verification is the prerequisite for interpreting signer,
+Hardened Runtime and timestamp details. When that check fails, the preflight
+reports the authoritative verification error and suppresses derivative claims
+about fields that `codesign` may mark unavailable. Reproduce the check in a
+normal Terminal and inspect the available signing identities before replacing
+or re-signing the reviewed binary:
+
+```bash
+security find-identity -v -p codesigning
+codesign --verify --strict --verbose=4 "Aagedal Media Player/Binaries/ffmpeg"
+```
+
 Run `scripts/release.sh` only after those checks pass. The release script runs
 the preflight again before deleting `build/`, verifies the exported app's
 version, architecture, hardened-runtime Developer ID signature, and nested
