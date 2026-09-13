@@ -65,6 +65,7 @@ All notable changes to Aagedal Media Player.
   recording run sheet.
 
 ### Changed
+- Apply continuous MPV volume-slider updates asynchronously so playback work cannot stall pointer tracking or make the audible response trail the control.
 - Add explicit Retry Save for failed review-note writes, flush current text drafts before retrying, and prevent reload from discarding unsaved changes.
 - Preserve pending review-note edits before switching copies, migrating timebases or exporting, and keep the original review active if source timing changes during migration saving.
 - Preserve exact broadcast frame rates from decimal metadata so drop-frame review timecodes and editor-marker exports use the correct rational timebase. Existing reviews retain their stored rates and are never silently retimed.

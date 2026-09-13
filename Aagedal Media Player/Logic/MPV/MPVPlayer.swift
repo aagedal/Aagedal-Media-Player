@@ -36,7 +36,11 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
     @Published var timePos: Double = 0
     @Published var volume: Double = 100 {
         didSet {
-            setDouble(MPVProperty.volume, PlaybackVolume.mpvValue(for: volume))
+            // Slider tracking can produce dozens of updates per second. A
+            // synchronous libmpv property write here blocks AppKit's nested
+            // tracking loop until mpv applies every intermediate value, which
+            // makes the thumb and audible gain trail the pointer.
+            setDoubleAsync(MPVProperty.volume, PlaybackVolume.mpvValue(for: volume))
         }
     }
     @Published var isMuted: Bool = false {
@@ -717,6 +721,12 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
                         }
                     }
 
+                case MPV_EVENT_SET_PROPERTY_REPLY:
+                    if pointee.error < 0 {
+                        let message = String(cString: mpv_error_string(pointee.error))
+                        self.logger.warning("Asynchronous MPV property update failed: \(message)")
+                    }
+
                 case MPV_EVENT_FILE_LOADED:
                     DispatchQueue.main.async {
                         self.logger.info("MPV file loaded")
@@ -935,6 +945,18 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         guard mpv != nil else { return }
         var data = value
         mpv_set_property(mpv, name, MPV_FORMAT_DOUBLE, &data)
+    }
+
+    /// Enqueues high-frequency property changes without waiting for mpv's
+    /// playback core. libmpv copies `data` before returning, so the stack value
+    /// does not need to outlive this call.
+    private func setDoubleAsync(_ name: String, _ value: Double) {
+        guard let mpvCtx = mpv else { return }
+        var data = value
+        let result = mpv_set_property_async(mpvCtx, 0, name, MPV_FORMAT_DOUBLE, &data)
+        if result < 0 {
+            logger.warning("Could not enqueue MPV property '\(name)': \(String(cString: mpv_error_string(result)))")
+        }
     }
 
     private nonisolated func getInt(_ name: String) -> Int {
