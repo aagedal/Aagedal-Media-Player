@@ -2098,17 +2098,20 @@ accessibility acceptance remains open.
   full application compile.
 - [x] Confirm in a native MPV/MPV comparison that `Command-Option-N` and
   `Command-Option-F` focus their named text fields.
-- [x] Run the canonical optimized verifier on the preceding clean commit
-  `3fdba621bb731aab234350df842e63fa0b4f405d`: 654 tests pass with seven
-  explicit skips (661 total), static analysis and all 61 preflight checks pass,
+- [x] Run the canonical optimized verifier on exact code commit
+  `43abae5cad3261f484dad239c54cb4cc9ea78e44`: 655 tests pass with seven
+  explicit skips (662 total), static analysis and all 61 preflight checks pass,
   and the fast helper gate passes 99 Python cases plus the mocked comparison
   profiler matrix.
 
 The retained candidate evidence is in
-`/tmp/aagedal-candidate-3fdba62-20260913`. Because that candidate predates this
-focused keyboard change, Phase 91 still needs an exact-commit verifier run after
-it is committed. The native check establishes direct field focus, not complete
-Full Keyboard Access or spoken VoiceOver acceptance.
+`/tmp/aagedal-candidate-43abae5-20260913-retry`. The first full run encountered
+two intermittent MPV integration-test failures: one test runner exited cleanly
+before executing a loupe test, and one transport assertion timed out. Both tests
+passed in a sequential isolation run and the fresh canonical retry passed the
+complete suite. Repeatability remains part of the final-candidate gate. The
+native check establishes direct field focus, not complete Full Keyboard Access
+or spoken VoiceOver acceptance.
 
 ## Integrated continuation verification — 2026-09-13
 

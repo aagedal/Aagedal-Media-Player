@@ -59,9 +59,13 @@ release-helper gate passes 99 self-contained Python cases plus the mocked
 comparison-profiler matrix. This remains regression evidence, not a replacement
 for the clean-checkout optimized Release verifier.
 The subsequent direct review-field continuation passes its focused six-test
-Debug suite and a native MPV/MPV focus check; it still requires exact-commit
-candidate verification after commit and does not claim spoken VoiceOver
-acceptance.
+Debug suite and a native MPV/MPV focus check. Its exact code commit
+`43abae5cad3261f484dad239c54cb4cc9ea78e44` also passes the canonical verifier
+on a fresh retry: 655 optimized Release tests pass with seven explicit skips
+(662 total), static analysis passes, and all 61 preflight checks pass. The first
+full run had two non-reproducible MPV integration-test failures; both passed in
+a sequential isolation run before the clean full retry. This is a candidate
+repeatability risk to watch, not spoken VoiceOver acceptance.
 The complete 61-check release preflight passes for 1.6.1 (163) when run
 outside the restricted workspace sandbox, where macOS can reach its normal
 code-signing trust services.
