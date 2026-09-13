@@ -46,6 +46,7 @@ python_tests=(
     scripts/test-programme-loudness-profile-validation.py
     scripts/test-programme-profile-power.py
     scripts/test-release-script-validation.py
+    scripts/test-release-xcresult-validation.py
     scripts/test_native_review_disk_full.py
 )
 

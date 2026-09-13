@@ -62,6 +62,10 @@ preflight checks.
 
 Source-tree verification now passes all 61 preflight checks and the release
 pipeline revalidates the exact packaged ZIP before update publication. The
+candidate verifier now rejects unexpected skips/runtime warnings and requires
+a separate clean-host repeat of the order-sensitive mixed-backend transport
+checks; release publication is bound to that exact commit/package evidence and
+the verified GitHub asset. The
 candidate archive, notarization, representative-media smoke run, screenshots,
 and publication remain release work rather than engineering-complete evidence.
 

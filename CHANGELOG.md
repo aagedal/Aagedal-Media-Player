@@ -66,6 +66,8 @@ All notable changes to Aagedal Media Player.
   recording run sheet.
 
 ### Changed
+- Candidate verification now rejects unexpected or unexplained XCTest skips, runtime warnings, expected failures, missing test coverage, and source/package changes during the run; historically order-sensitive mixed-backend transport cases run in a separate validated host.
+- Releases now require canonical evidence for the exact commit and resolved packages, require requested versions to match committed project metadata, and verify the published GitHub commit, draft state, and ZIP asset before changing the appcast.
 - Expose stable comparison-review accessibility identities, full active-sidecar paths, and dynamic loading/export/error status semantics for native keyboard and assistive-technology verification.
 - Expose native-pixel loupe placement only for dimension-verified AVFoundation captures, fall back safely when verification is lost, and keep MPV/mixed sources explicitly in display-space modes.
 - Prevent live-meter Retry/Reset from reviving a stale file or audio stream during replacement, and give every multichannel peak row a distinct channel-aware accessibility label.

@@ -812,7 +812,7 @@ production integration remains open.
 - [ ] Complete upstream review and remaining fixture coverage, integrate a
   reviewed dependency release, and repeat full-app memory profiling. The latest
   remote tag and upstream default branch are still at the pinned 3.0.0 revision,
-  as checked on 2026-09-12.
+  as checked directly against upstream refs on 2026-09-13.
 
 Acceptance: the source of the memory spike and a measured candidate fix are now
 established. The app still uses the original pinned dependency; its memory gate
@@ -2179,6 +2179,37 @@ regressions. A Debug application build and the 11 focused Review command and
 navigation tests pass. These hooks make repeatable native automation more
 practical; they do not claim Full Keyboard Access or spoken VoiceOver acceptance.
 
+## Phase 93 — Fail-closed candidate evidence and publication identity
+
+Status: Release-tool engineering complete on 2026-09-13. The optimized verifier
+is the authoritative post-commit candidate gate; final distribution remains a
+separate signed/notarized release operation.
+
+- [x] Export machine-readable XCTest summary/detail evidence and reject
+  failures, expected failures, runtime warnings, a drop below the recorded test
+  floor, non-descriptive skips and skips outside the seven named opt-in cases.
+- [x] Keep the broad suite process-isolated while moving the two historically
+  order-sensitive mixed-backend transport tests into a separately retained,
+  fresh serial result bundle that must pass both directions.
+- [x] Refuse candidate evidence inside the source checkout and recheck HEAD,
+  `Package.resolved` and checkout cleanliness after verification.
+- [x] Require release execution to consume both validated result bundles from
+  a completed candidate matching the exact source commit and package hash.
+- [x] Require release version/build arguments to equal committed Xcode project
+  metadata instead of allowing an artifact to diverge from its source.
+- [x] Fail closed when GitHub CLI is unavailable, verify an existing release's
+  commit and draft state before replacing an asset, and require the exact ZIP
+  to exist before changing the tracked appcast.
+
+The fast helper gate passes 112 Python cases plus the mocked comparison-profiler
+matrix. The new split was exercised in Debug: the 662-test aggregate passes
+with 655 passed, seven named skips, no failures or runtime warnings, and both
+excluded mixed-backend transport tests pass together in a fresh serial runner.
+An intentionally attempted one-host serial run reproduced resource/order
+failures in both transport directions, confirming that whole-suite serialization
+is not a valid stabilization strategy. Candidate evidence is valid only when the
+optimized Release verifier completes against the exact clean commit being shipped.
+
 ## Remaining work after this continuation
 
 - Integrate the measured metadata-memory dependency fix after upstream review,
@@ -2419,3 +2450,7 @@ practical; they do not claim Full Keyboard Access or spoken VoiceOver acceptance
 82. Phase 90 distinct live-meter accessibility identity.
 
 83. Phase 91 direct review entry and current candidate evidence.
+
+84. Phase 92 live-meter EOF ownership and review accessibility hooks.
+
+85. Phase 93 fail-closed candidate evidence and publication identity.

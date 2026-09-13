@@ -15,14 +15,19 @@
 #      then run it once — it prints the public key (paste into Info.plist as
 #      SUPublicEDKey) and stores the private key in your login Keychain.
 #   3. notarytool credentials stored in Keychain as the profile name below.
-#   4. GitHub CLI (`gh`) installed and authenticated (or the script will skip
-#      the upload step and print manual release instructions).
+#   4. GitHub CLI (`gh`) installed and authenticated. Publication fails closed
+#      when the release target or uploaded asset cannot be verified.
 #
 # Usage:
-#   scripts/release.sh                 # uses MARKETING_VERSION from the project
-#   scripts/release.sh 1.5.1 151       # override version + build number
+#   scripts/release.sh                 # uses committed project version/build
+#   scripts/release.sh 1.6.1 163       # asserts the committed values explicitly
 #
 set -euo pipefail
+
+if [[ $# -gt 2 ]]; then
+    echo "Usage: scripts/release.sh [MARKETING_VERSION [CURRENT_PROJECT_VERSION]]" >&2
+    exit 2
+fi
 
 if ! WORKTREE_STATUS="$(git status --porcelain)"; then
     echo "ERROR: could not inspect the release checkout." >&2
@@ -76,25 +81,70 @@ TAP_CASK_NAME="aagedal-media-player"
 TAP_CASK_FILE="${TAP_CASK_FILE:-Casks/$TAP_CASK_NAME.rb}"
 
 # -----------------------------------------------------------------------------
-# Resolve version / build
+# Resolve and bind version / build to committed source metadata
 # -----------------------------------------------------------------------------
 PROJECT="Aagedal Media Player.xcodeproj"
 SCHEME="Aagedal Media Player"
+RESOLVED_PACKAGES="$PROJECT/project.xcworkspace/xcshareddata/swiftpm/Package.resolved"
 
-if [[ -z "${1:-}" || -z "${2:-}" ]]; then
-    echo "    Reading version from xcodebuild -showBuildSettings (takes a few seconds)…"
-    BUILD_SETTINGS=$(xcodebuild -project "$PROJECT" -showBuildSettings -scheme "$SCHEME")
+echo "    Reading committed version from xcodebuild -showBuildSettings (takes a few seconds)…"
+BUILD_SETTINGS=$(xcodebuild -project "$PROJECT" -showBuildSettings -scheme "$SCHEME")
+PROJECT_MARKETING_VERSION=$(echo "$BUILD_SETTINGS" | awk -F' = ' '/^[[:space:]]*MARKETING_VERSION/{print $2; exit}')
+PROJECT_BUILD_VERSION=$(echo "$BUILD_SETTINGS" | awk -F' = ' '/^[[:space:]]*CURRENT_PROJECT_VERSION/{print $2; exit}')
+[[ -n "$PROJECT_MARKETING_VERSION" && -n "$PROJECT_BUILD_VERSION" ]] || {
+    echo "ERROR: could not read committed project version/build settings." >&2
+    exit 2
+}
+
+MARKETING_VERSION="${1:-$PROJECT_MARKETING_VERSION}"
+CURRENT_PROJECT_VERSION="${2:-$PROJECT_BUILD_VERSION}"
+if [[ "$MARKETING_VERSION" != "$PROJECT_MARKETING_VERSION" \
+   || "$CURRENT_PROJECT_VERSION" != "$PROJECT_BUILD_VERSION" ]]; then
+    echo "ERROR: release version/build must match the committed project metadata." >&2
+    echo "       Project: $PROJECT_MARKETING_VERSION ($PROJECT_BUILD_VERSION)" >&2
+    echo "       Requested: $MARKETING_VERSION ($CURRENT_PROJECT_VERSION)" >&2
+    echo "Update and commit the Xcode project metadata before releasing." >&2
+    exit 2
 fi
-if [[ -n "${1:-}" ]]; then
-    MARKETING_VERSION="$1"
-else
-    MARKETING_VERSION=$(echo "$BUILD_SETTINGS" | awk -F' = ' '/^[[:space:]]*MARKETING_VERSION/{print $2; exit}')
+
+# A release must consume the successful canonical verification for this exact
+# source and dependency graph. Re-validating the retained XCTest JSON prevents
+# a hand-edited status file or a newly unexpected skip from becoming evidence.
+CANDIDATE_EVIDENCE_DIR="${CANDIDATE_EVIDENCE_DIR:-}"
+if [[ -z "$CANDIDATE_EVIDENCE_DIR" ]]; then
+    echo "ERROR: set CANDIDATE_EVIDENCE_DIR to a completed canonical verifier output." >&2
+    exit 2
 fi
-if [[ -n "${2:-}" ]]; then
-    CURRENT_PROJECT_VERSION="$2"
-else
-    CURRENT_PROJECT_VERSION=$(echo "$BUILD_SETTINGS" | awk -F' = ' '/^[[:space:]]*CURRENT_PROJECT_VERSION/{print $2; exit}')
+CANDIDATE_ENVIRONMENT="$CANDIDATE_EVIDENCE_DIR/environment.txt"
+CANDIDATE_SUMMARY="$CANDIDATE_EVIDENCE_DIR/test-summary.json"
+CANDIDATE_DETAILS="$CANDIDATE_EVIDENCE_DIR/test-details.json"
+CANDIDATE_MIXED_SUMMARY="$CANDIDATE_EVIDENCE_DIR/mixed-backend-transport-summary.json"
+CANDIDATE_MIXED_DETAILS="$CANDIDATE_EVIDENCE_DIR/mixed-backend-transport-details.json"
+for required_evidence in \
+    "$CANDIDATE_ENVIRONMENT" "$CANDIDATE_SUMMARY" "$CANDIDATE_DETAILS" \
+    "$CANDIDATE_MIXED_SUMMARY" "$CANDIDATE_MIXED_DETAILS"; do
+    if [[ ! -f "$required_evidence" ]]; then
+        echo "ERROR: candidate evidence is incomplete: $required_evidence" >&2
+        exit 2
+    fi
+done
+EVIDENCE_SOURCE_COMMIT=$(awk -F= '$1 == "sourceCommit" { print $2; exit }' "$CANDIDATE_ENVIRONMENT")
+EVIDENCE_PACKAGE_SHA256=$(awk -F= '$1 == "packageResolvedSHA256" { print $2; exit }' "$CANDIDATE_ENVIRONMENT")
+EVIDENCE_STATUS=$(awk -F= '$1 == "status" { print $2; exit }' "$CANDIDATE_ENVIRONMENT")
+CURRENT_PACKAGE_SHA256=$(shasum -a 256 "$RESOLVED_PACKAGES" | awk '{print $1}')
+if [[ "$EVIDENCE_STATUS" != "passed" \
+   || "$EVIDENCE_SOURCE_COMMIT" != "$SOURCE_COMMIT" \
+   || "$EVIDENCE_PACKAGE_SHA256" != "$CURRENT_PACKAGE_SHA256" ]]; then
+    echo "ERROR: candidate evidence does not match this completed source checkout." >&2
+    echo "Run scripts/verify-release-candidate.sh again from the current clean commit." >&2
+    exit 2
 fi
+python3 scripts/validate-release-xcresult.py \
+    "$CANDIDATE_SUMMARY" "$CANDIDATE_DETAILS" --minimum-tests 662
+python3 scripts/validate-release-xcresult.py \
+    "$CANDIDATE_MIXED_SUMMARY" "$CANDIDATE_MIXED_DETAILS" --minimum-tests 2 \
+    --require-test "CompareLiveBackendTests/testAVFoundationPrimaryAndMPVSecondaryShareTransport()" \
+    --require-test "CompareLiveBackendTests/testMPVPrimaryAndAVFoundationSecondaryShareTransport()"
 
 echo "==> Building $MARKETING_VERSION ($CURRENT_PROJECT_VERSION)"
 
@@ -316,28 +366,55 @@ python3 scripts/release-preflight.py \
 # -----------------------------------------------------------------------------
 # Upload only after the pending feed has passed every deterministic check
 # -----------------------------------------------------------------------------
-if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
-    if gh release view "$MARKETING_VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-        echo "==> Uploading $RELEASE_ZIP_NAME to existing GitHub release $MARKETING_VERSION"
-        gh release upload "$MARKETING_VERSION" "$RELEASE_ZIP" \
-            --repo "$GITHUB_REPOSITORY" \
-            --clobber
-    else
-        echo "==> Creating GitHub release $MARKETING_VERSION"
-        gh release create "$MARKETING_VERSION" "$RELEASE_ZIP" \
-            --repo "$GITHUB_REPOSITORY" \
-            --target "$SOURCE_COMMIT" \
-            --title "$MARKETING_VERSION" \
-            --generate-notes
-    fi
-else
-    echo "==> GitHub CLI is unavailable or unauthenticated — skipping upload."
-    echo "    1. Create release $MARKETING_VERSION at https://github.com/$GITHUB_REPOSITORY/releases/new"
-    echo "    2. Attach $RELEASE_ZIP"
+if ! command -v gh >/dev/null 2>&1 || ! gh auth status >/dev/null 2>&1; then
+    echo "ERROR: GitHub CLI is unavailable or unauthenticated." >&2
+    echo "The signed artifact and pending appcast remain in $BUILD_DIR; appcast.xml was not changed." >&2
+    exit 1
 fi
 
-# Publish the already-validated feed locally only after the upload succeeds (or
-# after selecting the explicit manual-upload path above).
+verify_release_identity() {
+    local published_source_commit release_is_draft
+    published_source_commit=$(gh api \
+        "repos/$GITHUB_REPOSITORY/commits/$MARKETING_VERSION" --jq .sha)
+    [[ "$published_source_commit" == "$SOURCE_COMMIT" ]] || {
+        echo "ERROR: GitHub release $MARKETING_VERSION targets $published_source_commit, not $SOURCE_COMMIT." >&2
+        return 1
+    }
+    release_is_draft=$(gh release view "$MARKETING_VERSION" \
+        --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft)
+    [[ "$release_is_draft" == "false" ]] || {
+        echo "ERROR: GitHub release $MARKETING_VERSION is still a draft." >&2
+        return 1
+    }
+}
+
+if gh release view "$MARKETING_VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+    # Check before --clobber so an unrelated existing release is never mutated.
+    verify_release_identity
+    echo "==> Uploading $RELEASE_ZIP_NAME to existing GitHub release $MARKETING_VERSION"
+    gh release upload "$MARKETING_VERSION" "$RELEASE_ZIP" \
+        --repo "$GITHUB_REPOSITORY" \
+        --clobber
+else
+    echo "==> Creating GitHub release $MARKETING_VERSION"
+    gh release create "$MARKETING_VERSION" "$RELEASE_ZIP" \
+        --repo "$GITHUB_REPOSITORY" \
+        --target "$SOURCE_COMMIT" \
+        --title "$MARKETING_VERSION" \
+        --generate-notes
+fi
+
+# Recheck identity after mutation, then prove that the exact asset exists before
+# publishing its update URL.
+verify_release_identity
+if ! gh release view "$MARKETING_VERSION" --repo "$GITHUB_REPOSITORY" \
+    --json assets --jq '.assets[].name' | /usr/bin/grep -Fx "$RELEASE_ZIP_NAME" >/dev/null; then
+    echo "ERROR: GitHub release $MARKETING_VERSION does not contain $RELEASE_ZIP_NAME." >&2
+    exit 1
+fi
+
+# Publish the already-validated feed locally only after the release target and
+# exact downloadable asset have been verified.
 mv "$PENDING_APPCAST" "$APPCAST"
 
 echo "==> Prepended and validated appcast entry. Review and commit:"

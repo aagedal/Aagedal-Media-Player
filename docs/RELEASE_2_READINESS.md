@@ -10,7 +10,11 @@ panel, timestamp-verified decoder packets, an exact candidate-checkout
 validation mode, explicit optional-test skips, mixed-backend paused-alignment
 hardening, direct Review commands and focused review-field entry, deterministic paused-discontinuity ownership,
 dynamic A/B meter fallback, and compressed 5.1 production-path coverage. No new
-editor, accessibility or release-floor hardware acceptance is implied.
+editor, spoken accessibility or release-floor hardware acceptance is implied.
+The current continuation also fixes live-meter EOF drainage, adds stable native
+review accessibility hooks, validates XCTest result/skip evidence, isolates two
+order-sensitive mixed-backend transport checks, and binds release publication
+to the verified source/package identity and uploaded artifact.
 
 The Review & Report implementation is substantially present: structured point
 and range findings, versioned local sidecars, relinking, deliberate historical
@@ -33,6 +37,14 @@ The project still declares version 1.6.1.
 | Complete native workflows and accessibility | Finish keyboard-only structured review creation/edit/filter/navigation/export, relink/migration/recovery, timeline zoom/hover, and audio controls. Complete Full Keyboard Access and spoken VoiceOver, including narrow layouts and both backends. Focused existing native checks cover useful subsets; accessibility-tree labels are not spoken VoiceOver acceptance. See [review native checks](COMPARE_REVIEW_NATIVE_CHECK_2026-09-08.md), [timeline](TIMELINE_NAVIGATION.md), and [loupe manual tests](INSPECTION_LOUPE_MANUAL_TESTS.md). |
 | Representative-media visual correctness | Finish the comparison raster/color/backend matrix and live loupe registration across rotation, PAR, different raster sizes and black bars. Record what was actually observed; independently captured display-space loupes cannot be described as frame-locked or exact source pixels. See [comparison verification matrix](../COMPARE_MODE_IMPLEMENTATION_PLAN.md#verification-matrix). |
 | Candidate and distribution evidence | The canonical verifier now records the exact commit and resolved-package hash, runs the self-contained script-validator gate, and requires fresh optimized Release tests, static analysis and source preflight with every optional input identified as a skip. Repeat it against the final candidate, then complete representative-media smoke tests, archive/sign/notarize, stapler/Gatekeeper and update-feed validation. Retain current screenshots, a workflow demo and a short editor/colorist beta with resolved blocking findings. See [release procedure](RELEASE.md) and [demo run sheet](COMPARE_MODE_DEMO.md). |
+
+The verifier now enforces that requirement rather than relying on log review:
+unexpected or unexplained skips, runtime warnings, expected failures and a test
+count below the recorded floor fail validation. Release execution must consume
+matching aggregate and isolated-transport result evidence for the exact HEAD and
+`Package.resolved` hash. The release script also refuses version/build overrides
+that differ from committed project metadata and withholds appcast changes until
+the GitHub tag commit, non-draft state and exact ZIP asset are verified.
 
 The September 13 clean-checkout candidate verification at commit
 `3fdba621bb731aab234350df842e63fa0b4f405d` passes 654 optimized Release tests
@@ -80,6 +92,16 @@ be re-extracted and its app passes the app preflight, stapler validation, and
 Gatekeeper assessment. That automated gate has not yet produced candidate
 evidence because no exact candidate has completed archive, signing,
 notarization, packaging, and distribution validation.
+
+The September 13 Phase 92–93 continuation passes a split Debug verification:
+the process-isolated aggregate contains 662 tests (655 passed and the same seven
+named opt-in skips) with no failures or runtime warnings, while both mixed-
+backend transport directions pass in a fresh two-test serial runner. A one-host
+serial experiment reproduced late-class resource/order failures and is retained
+as diagnosis, not acceptance. The canonical verifier enforces both result
+bundles, rechecks source identity at completion, and release execution consumes
+only matching evidence. Candidate status therefore follows the retained verifier
+output for the exact clean commit rather than a durable claim in this document.
 
 ## Remaining scope that needs an explicit product decision
 

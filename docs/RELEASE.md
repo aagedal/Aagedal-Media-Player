@@ -60,7 +60,17 @@ version; first runs the self-contained script-validator tests and shell/Python
 syntax checks; runs the test suite and static analysis in Release with
 dependencies restricted to the resolved file; enables testability for the
 optimized test bundle; retains the `.xcresult` and complete logs; and runs
-source preflight. Script checks are retained in `script-validator-tests.log`.
+source preflight. It exports machine-readable XCTest evidence, rejects runtime
+warnings, expected failures, a drop below the recorded test-count floor, and
+any skip outside the named optional-input allowlist. Script checks are retained
+in `script-validator-tests.log`. The verifier also fails if HEAD, the resolved
+package hash, or checkout cleanliness changes during the run; write its output
+outside the source checkout. Because the two mixed-backend transport tests have
+shown order-sensitive behavior late in their long-lived hosted test class, the
+verifier excludes them from the aggregate result and runs them together in a
+fresh serial runner. It validates both result bundles, covering all 664 tests
+without treating test-host resource accumulation as a playback acceptance
+signal.
 The destructive disk-image check, external-reference checks, fixture generation,
 and production profilers remain explicit opt-ins rather than ordinary candidate
 verifier work.
@@ -91,9 +101,18 @@ artifact. If sandboxed and normal-Terminal results disagree, first confirm the
 tracked checksum, then require the normal-Terminal strict verification and full
 preflight to pass. Do not bypass or weaken the signature checks.
 
-Run `scripts/release.sh` only after those checks pass. The release script refuses
-a dirty checkout, resolves and prints the full source commit before invoking the
-toolchain, and uses that exact commit as a newly created GitHub release's target.
+Run `scripts/release.sh` only after those checks pass, pointing it at that exact
+evidence directory:
+
+```bash
+CANDIDATE_EVIDENCE_DIR=/tmp/aagedal-candidate-VERSION-BUILD scripts/release.sh
+```
+
+The release script refuses a dirty checkout, requires the version/build to
+match the committed Xcode project metadata, revalidates the candidate's XCTest
+summary and skip details, and requires its source commit and `Package.resolved`
+hash to match the checkout. It resolves and prints the full source commit before
+invoking the toolchain and uses that exact commit as a newly created GitHub release's target.
 It runs the preflight again before deleting `build/`, verifies the exported
 app's version, architecture, hardened-runtime Developer ID signature, and nested
 signatures before notarization. The archive is restricted to the revisions in
@@ -102,7 +121,9 @@ After creating the distribution ZIP, it extracts
 that exact artifact into `build/distribution-check`, repeats the app preflight,
 validates the stapled ticket, and requires Gatekeeper acceptance before signing
 the update or changing the appcast. It then validates the newly prepended appcast
-item.
+item. Publication requires an authenticated GitHub CLI and then verifies that
+the release tag resolves to the exact source commit, the release is not a draft,
+and the expected ZIP asset is present before changing the tracked appcast.
 
 To reproduce the packaged-artifact checks manually after notarization:
 
