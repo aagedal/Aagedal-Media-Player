@@ -1989,6 +1989,37 @@ real-volume-exhaustion skip (650 total), with no failures. Xcode static analysis
 passes. Candidate archive, Developer ID signing, notarization, final ZIP
 validation, representative smoke tests and publication have not been performed.
 
+## Phase 87 — Reproducible candidate verification and mixed-backend pause ownership
+
+Status: Engineering complete on 2026-09-13; optional inputs and distribution
+acceptance remain explicit open gates.
+
+- [x] Replace silent early returns in all six environment-dependent acceptance
+  tests with descriptive `XCTSkip` results, so an ordinary green suite cannot
+  be mistaken for having exercised external ITU media, production profiles or
+  long-file thumbnail inputs.
+- [x] Cover live-meter panel reuse, parent/child detachment, single close
+  notification and decode-worker cancellation when the owning player closes.
+- [x] Add one clean-checkout candidate verifier that records the source commit,
+  `Package.resolved` hash, host and Xcode versions, then retains optimized
+  Release test, static-analysis and preflight artifacts in a caller-selected
+  directory.
+- [x] Require both verification and release archives to honor only the versions
+  in `Package.resolved`.
+- [x] Keep the real mixed AVFoundation/MPV transport sample clear of fixture EOF,
+  tolerate only bounded asynchronous state publication, and repeat exact paired
+  alignment after both decoders acknowledge Pause.
+- [x] Run the canonical verifier from a fresh DerivedData directory at commit
+  `5ea936e8cc979c113e7084938a5fad1f2c58af13`: 645 tests pass and seven are
+  explicitly skipped (652 total), Release static analysis succeeds, and all 61
+  source-tree release-preflight checks pass for 1.6.1 (163).
+
+Evidence is retained in `/tmp/aagedal-candidate-5ea936e`, including
+`environment.txt`, `Tests.xcresult`, `tests.log`, `analyze.log` and
+`preflight.log`. This closes repeatable candidate-checkout verification; it does
+not claim that the six optional input families, real-volume APFS exhaustion,
+representative-media smoke tests or final distribution have been accepted.
+
 ## Integrated continuation verification — 2026-09-13
 
 The live-meter decoder now runs at source-rate pace, preserves one controlled
@@ -2016,11 +2047,14 @@ Review commands now toggle Comparison Review and navigate previous/next matching
 notes without toolbar traversal. They do not replace native Full Keyboard Access
 or spoken VoiceOver acceptance.
 
-The final optimized run passes 649 Release tests; the optional
-real-volume-exhaustion test is the sole skip (650 total). Static analysis passes.
-New focused Phase 85–86 regressions also pass without Thread Performance Checker
-warnings. All 61 release-preflight checks pass outside the restricted workspace
-sandbox, including strict verification of the bundled FFmpeg signature.
+The latest canonical clean-checkout run passes 645 Release tests with seven
+explicit skips (652 total): six inputs are opt-in and the bounded real-volume
+exhaustion check also remains opt-in. Release static analysis passes. New focused
+Phase 85–87 regressions also pass without Thread Performance Checker warnings.
+All 61 release-preflight checks pass outside the restricted workspace sandbox,
+including strict verification of the bundled FFmpeg signature. The verifier
+records the exact commit and resolved-package hash and retains the result bundle
+and logs; release archives now use the same resolved-package constraint.
 Candidate archive, signing, notarization, packaging, and distribution acceptance
 remain open.
 
@@ -2097,8 +2131,9 @@ remain open.
   Phase 54 verifies
   RIFF/RF64/BW64 metadata and corrected 7.1 loudness. Phase 56 adds bounded
   Broadcast WAVE recording tags; native validation is recorded with that phase.
-- Implement and validate peak/true-peak meters and live momentary/short-term
-  loudness against the Phase 81 calibration/ballistics/preset contract;
+- Validate the implemented peak/true-peak meters and live momentary/short-term
+  loudness against representative media and the Phase 81
+  calibration/ballistics/preset contract;
   Phase 83 implements and tests the bounded DSP/display foundation. The bounded,
   source-rate-paced decoder, lifecycle owner and selected-track request mapping
   now exist. Typed playback events plus coordinator clock/drift and ahead
@@ -2253,3 +2288,5 @@ remain open.
 77. Phase 85 timestamp-verified live-meter transport.
 
 78. Phase 86 ordered meter clears and packaged-artifact verification.
+
+79. Phase 87 reproducible candidate verification and mixed-backend pause ownership.

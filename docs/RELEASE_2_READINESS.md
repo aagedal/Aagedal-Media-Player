@@ -7,7 +7,8 @@ including the September 12 meter foundation and programme-loudness follow-up.
 The same continuation now adds selected-track meter identity, typed player
 events and clock policy, an owning per-window meter session and activating
 panel, timestamp-verified decoder packets, an exact candidate-checkout
-validation mode, and direct Review commands. No new editor, accessibility or
+validation mode, explicit optional-test skips, mixed-backend paused-alignment
+hardening, and direct Review commands. No new editor, accessibility or
 release-floor hardware acceptance is implied.
 
 The Review & Report implementation is substantially present: structured point
@@ -15,7 +16,8 @@ and range findings, versioned local sidecars, relinking, deliberate historical
 timebase migration, save recovery, and CSV/PDF/editor-format export. That makes
 the product a credible candidate for a focused beta. It does **not** yet make
 the committed 2.0 roadmap close to release-candidate acceptance: the preceding
-Audio QC milestone still includes unfinished live meters, and important
+Audio QC milestone still includes unfinished representative-media live-meter
+acceptance, and important
 performance and interoperability gates have no completed acceptance record.
 The project still declares version 1.6.1.
 
@@ -29,13 +31,18 @@ The project still declares version 1.6.1.
 | Release-floor playback and resource use | Run the named base 2020 M1 MacBook Air/8 GB gate: 120 seconds per comparison scenario, including UHD/HDR, mixed backends, reflected sources, scopes and loupe; retain decoder/drift results plus Instruments CPU/GPU and thermal observations. Complete concurrent-playback long-file thumbnail and multichannel loudness profiles. September 12 programme profiling exposed and corrected silent long-range channel loss; per-input container-index memory still grows with duration, and sleep-interrupted timings are excluded. See [programme profiling](PROGRAMME_LOUDNESS_PERFORMANCE.md). See [comparison performance](COMPARE_MODE_PERFORMANCE.md), [thumbnails](TIMELINE_THUMBNAIL_PERFORMANCE.md), and [loudness performance](AUDIO_LOUDNESS_PERFORMANCE.md). |
 | Complete native workflows and accessibility | Finish keyboard-only structured review creation/edit/filter/navigation/export, relink/migration/recovery, timeline zoom/hover, and audio controls. Complete Full Keyboard Access and spoken VoiceOver, including narrow layouts and both backends. Focused existing native checks cover useful subsets; accessibility-tree labels are not spoken VoiceOver acceptance. See [review native checks](COMPARE_REVIEW_NATIVE_CHECK_2026-09-08.md), [timeline](TIMELINE_NAVIGATION.md), and [loupe manual tests](INSPECTION_LOUPE_MANUAL_TESTS.md). |
 | Representative-media visual correctness | Finish the comparison raster/color/backend matrix and live loupe registration across rotation, PAR, different raster sizes and black bars. Record what was actually observed; independently captured display-space loupes cannot be described as frame-locked or exact source pixels. See [comparison verification matrix](../COMPARE_MODE_IMPLEMENTATION_PLAN.md#verification-matrix). |
-| Candidate and distribution evidence | Run fresh Release tests (with optional reference/real-filesystem coverage identified explicitly), static analysis and preflight against the exact candidate. Complete representative-media smoke tests, archive/sign/notarize, stapler/Gatekeeper and update-feed validation. Retain current screenshots, a workflow demo and a short editor/colorist beta with resolved blocking findings. See [release procedure](RELEASE.md) and [demo run sheet](COMPARE_MODE_DEMO.md). |
+| Candidate and distribution evidence | The canonical verifier now records the exact commit and resolved-package hash, and fresh optimized Release tests, static analysis and source preflight pass with every optional input identified as a skip. Repeat it against the final candidate, then complete representative-media smoke tests, archive/sign/notarize, stapler/Gatekeeper and update-feed validation. Retain current screenshots, a workflow demo and a short editor/colorist beta with resolved blocking findings. See [release procedure](RELEASE.md) and [demo run sheet](COMPARE_MODE_DEMO.md). |
 
-The September 13 continuation passes 649 optimized Release tests with one
-expected opt-in real-volume-exhaustion skip (650 total) and passes static
-analysis, including the new timestamp-framing, ordered maxima-reset and
-source-relative gap regressions. Focused subprocess/decoder verification also
-passes without the earlier callback-barrier priority-inversion diagnostics.
+The latest September 13 clean-checkout candidate verification at commit
+`5ea936e8cc979c113e7084938a5fad1f2c58af13` passes 645 optimized Release tests
+with seven explicit skips (652 total) and passes static analysis. Six skips name
+their required external reference/profile inputs; the seventh is the opt-in
+real-volume-exhaustion test. This includes timestamp framing, ordered
+maxima-reset, source-relative gap, live-meter window teardown, and hardened
+mixed-backend transport/pause coverage. Evidence, including the exact
+`Package.resolved` hash, is retained at `/tmp/aagedal-candidate-5ea936e`.
+Focused subprocess/decoder verification also passes without the earlier
+callback-barrier priority-inversion diagnostics.
 The complete 61-check release preflight passes for 1.6.1 (163) when run
 outside the restricted workspace sandbox, where macOS can reach its normal
 code-signing trust services.
