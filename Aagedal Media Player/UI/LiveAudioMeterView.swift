@@ -42,6 +42,7 @@ struct LiveAudioMeterView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .frame(minWidth: 620, idealWidth: 720, minHeight: 460)
+        .accessibilityIdentifier("live-audio-meter")
     }
 
     private var header: some View {
@@ -57,6 +58,7 @@ struct LiveAudioMeterView: View {
             Button("Close", action: actions.close)
                 .keyboardShortcut(.cancelAction)
                 .accessibilityHint("Closes the live meter and stops its measurement worker.")
+                .accessibilityIdentifier("live-audio-meter-close")
         }
     }
 
@@ -75,6 +77,7 @@ struct LiveAudioMeterView: View {
                 }
                 .labelsHidden()
                 .accessibilityHint("Selects the independently measured A or B source. It does not change audible monitoring.")
+                .accessibilityIdentifier("live-audio-meter-source")
             }
 
             GridRow {
@@ -89,6 +92,7 @@ struct LiveAudioMeterView: View {
                 }
                 .labelsHidden()
                 .accessibilityHint("Changes reference labels and guides only. It does not change audio or measured values.")
+                .accessibilityIdentifier("live-audio-meter-reference")
             }
 
             if preferences.preset == .custom {
@@ -100,6 +104,7 @@ struct LiveAudioMeterView: View {
                             set: actions.setCustomLoudnessTarget
                         ), format: .number.precision(.fractionLength(1)))
                         .frame(width: 90)
+                        .accessibilityIdentifier("live-audio-meter-custom-loudness-target")
                         Text("LUFS").foregroundStyle(.secondary)
                     }
                 }
@@ -112,6 +117,7 @@ struct LiveAudioMeterView: View {
                                 : nil)
                         }
                     ))
+                    .accessibilityIdentifier("live-audio-meter-custom-true-peak-enabled")
                     HStack {
                         if let ceiling = preferences.customTruePeakCeiling {
                             TextField("Custom true-peak ceiling", value: Binding(
@@ -119,6 +125,7 @@ struct LiveAudioMeterView: View {
                                 set: { actions.setCustomTruePeakCeiling($0) }
                             ), format: .number.precision(.fractionLength(1)))
                             .frame(width: 90)
+                            .accessibilityIdentifier("live-audio-meter-custom-true-peak-ceiling")
                             Text("dBTP").foregroundStyle(.secondary)
                         } else {
                             Text("No ceiling").foregroundStyle(.secondary)
@@ -161,6 +168,8 @@ struct LiveAudioMeterView: View {
             }
         }
         .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.updatesFrequently)
+        .accessibilityIdentifier("live-audio-meter-status")
     }
 
     private var channelMeters: some View {
@@ -176,11 +185,13 @@ struct LiveAudioMeterView: View {
                     Text(channel.label).font(.subheadline.bold())
                     PeakMeterRow(
                         channelLabel: channel.label, abbreviation: "SP",
-                        meterName: "Sample peak", unit: "dBFS", level: channel.samplePeak
+                        meterName: "Sample peak", unit: "dBFS", level: channel.samplePeak,
+                        identifier: "live-audio-meter-channel-\(channel.id)-sample-peak"
                     )
                     PeakMeterRow(
                         channelLabel: channel.label, abbreviation: "TP",
-                        meterName: "True peak", unit: "dBTP", level: channel.truePeak
+                        meterName: "True peak", unit: "dBTP", level: channel.truePeak,
+                        identifier: "live-audio-meter-channel-\(channel.id)-true-peak"
                     )
                 }
                 .padding(8)
@@ -200,12 +211,14 @@ struct LiveAudioMeterView: View {
             LoudnessMeterRow(
                 label: "Momentary (400 ms)", value: state.loudness.momentary,
                 maximum: state.loudness.maximumMomentary, target: state.reference.loudnessTarget,
-                unit: state.reference.loudnessUnit
+                unit: state.reference.loudnessUnit,
+                identifier: "live-audio-meter-momentary"
             )
             LoudnessMeterRow(
                 label: "Short-term (3 s)", value: state.loudness.shortTerm,
                 maximum: state.loudness.maximumShortTerm, target: state.reference.loudnessTarget,
-                unit: state.reference.loudnessUnit
+                unit: state.reference.loudnessUnit,
+                identifier: "live-audio-meter-short-term"
             )
             Text("The line is a programme reference, not a Momentary or Short-term pass region.")
                 .font(.caption).foregroundStyle(.secondary)
@@ -225,6 +238,7 @@ struct LiveAudioMeterView: View {
         .foregroundStyle(assessment.isExceeded ? Color.orange : Color.secondary)
         .font(.callout)
         .accessibilityValue(assessment.diagnosticText)
+        .accessibilityIdentifier("live-audio-meter-true-peak-assessment")
     }
 
     @ViewBuilder private var diagnostics: some View {
@@ -245,6 +259,7 @@ struct LiveAudioMeterView: View {
                 .font(.caption)
                 .textSelection(.enabled)
             }
+            .accessibilityIdentifier("live-audio-meter-provenance")
         }
         if !state.diagnostics.isEmpty {
             DisclosureGroup("Diagnostics") {
@@ -258,6 +273,7 @@ struct LiveAudioMeterView: View {
                     .accessibilityElement(children: .combine)
                 }
             }
+            .accessibilityIdentifier("live-audio-meter-diagnostics")
         }
         Text("Source measurement only. These live M/S readings and reference guides do not establish programme, delivery, EBU Mode, or CALM compliance.")
             .font(.caption)
@@ -270,13 +286,16 @@ struct LiveAudioMeterView: View {
             Button("Clear Maxima", action: actions.clearMaxima)
                 .disabled(state.channels.isEmpty)
                 .accessibilityHint("Clears peak and loudness maxima and threshold latches without resetting meter windows.")
+                .accessibilityIdentifier("live-audio-meter-clear-maxima")
             Button("Reset Meters", action: actions.resetMeters)
                 .disabled(state.channels.isEmpty)
                 .accessibilityHint("Starts a new measurement segment and clears meter filters, windows, bars, maxima, and latches.")
+                .accessibilityIdentifier("live-audio-meter-reset")
             if case .unavailable = state.status, state.canRetry {
                 Button("Retry", action: actions.retry)
                     .buttonStyle(.borderedProminent)
                     .accessibilityHint("Starts a new meter generation for the selected source.")
+                    .accessibilityIdentifier("live-audio-meter-retry")
             }
             Spacer()
         }
@@ -314,6 +333,7 @@ private struct PeakMeterRow: View {
     let meterName: String
     let unit: String
     let level: LiveAudioMeterLevelState
+    let identifier: String
 
     var body: some View {
         HStack(spacing: 8) {
@@ -328,6 +348,8 @@ private struct PeakMeterRow: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(channelLabel), \(meterName)")
         .accessibilityValue("Current \(MeterText.reading(level.current, unit: unit)); bar \(MeterText.reading(level.bar, unit: unit)); marker \(MeterText.reading(level.marker, unit: unit)); maximum \(MeterText.reading(level.maximum, unit: unit))")
+        .accessibilityAddTraits(.updatesFrequently)
+        .accessibilityIdentifier(identifier)
     }
 }
 
@@ -337,6 +359,7 @@ private struct LoudnessMeterRow: View {
     let maximum: Double?
     let target: Double
     let unit: String
+    let identifier: String
 
     var body: some View {
         HStack(spacing: 8) {
@@ -351,6 +374,8 @@ private struct LoudnessMeterRow: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(label)
         .accessibilityValue("Current \(MeterText.reading(value, unit: unit)); maximum \(MeterText.reading(maximum, unit: unit)); programme reference \(MeterText.reading(target, unit: unit))")
+        .accessibilityAddTraits(.updatesFrequently)
+        .accessibilityIdentifier(identifier)
     }
 }
 

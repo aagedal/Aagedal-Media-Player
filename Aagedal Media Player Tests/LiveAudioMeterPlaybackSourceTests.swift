@@ -56,6 +56,59 @@ final class LiveAudioMeterPlaybackSourceTests: XCTestCase {
         )
     }
 
+    func testExplicitNonstandardMonoAndStereoLayoutsKeepOnlyNumberedPeaks() throws {
+        let cases: [(channels: Int, layout: String)] = [
+            (1, "1 channels (LFE)"),
+            (2, "2 channels (FC+LFE)"),
+        ]
+
+        for value in cases {
+            let source = try makeSource(
+                sampleRate: 48_000, channels: value.channels, layout: value.layout
+            )
+            XCTAssertEqual(source.format.layout, .unknown(channels: value.channels))
+            XCTAssertEqual(
+                source.channelLabels,
+                (1...value.channels).map { "Channel \($0)" },
+                "An explicit nonstandard speaker map must not inherit mono/stereo labels"
+            )
+
+            var meter = try LiveAudioMeterDSP(format: source.format)
+            var lastSnapshot: LiveAudioMeterSnapshot?
+            let blockFrames = meter.maximumBlockFrames
+            var processedFrames = 0
+            while processedFrames < source.format.sampleRate * 3 {
+                let frames = min(blockFrames, source.format.sampleRate * 3 - processedFrames)
+                let snapshots = try meter.process(
+                    [Float](repeating: 0.25, count: frames * value.channels),
+                    startFrame: meter.nextFrame
+                )
+                lastSnapshot = snapshots.last ?? lastSnapshot
+                processedFrames += frames
+            }
+
+            let final = try XCTUnwrap(meter.finish() ?? lastSnapshot)
+            XCTAssertEqual(final.samplePeakDBFS.count, value.channels)
+            XCTAssertTrue(final.samplePeakDBFS.allSatisfy(\.isFinite))
+            XCTAssertNil(final.momentaryLUFS)
+            XCTAssertNil(final.shortTermLUFS)
+        }
+    }
+
+    func testAbsentAndCanonicalMonoStereoLayoutsRemainSupported() throws {
+        for (channels, layout, expected): (Int, String?, LiveAudioMeterFormat.Layout) in [
+            (1, nil, .mono),
+            (1, "mono", .mono),
+            (2, nil, .stereo),
+            (2, "stereo", .stereo),
+        ] {
+            let source = try makeSource(
+                sampleRate: 48_000, channels: channels, layout: layout
+            )
+            XCTAssertEqual(source.format.layout, expected)
+        }
+    }
+
     func testRejectsMissingAndUnsupportedTrackFormat() throws {
         XCTAssertThrowsError(try makeSource(sampleRate: nil, channels: 2, layout: "stereo")) { error in
             XCTAssertEqual(error as? LiveAudioMeterPlaybackSource.Failure, .missingSampleRate)

@@ -14,7 +14,11 @@ editor, spoken accessibility or release-floor hardware acceptance is implied.
 The current continuation also fixes live-meter EOF drainage, adds stable native
 review accessibility hooks, validates XCTest result/skip evidence, isolates two
 order-sensitive mixed-backend transport checks, and binds release publication
-to the verified source/package identity and uploaded artifact.
+to the verified source/package identity and uploaded artifact. The latest
+hardening additionally verifies decoded channel-layout identity, prevents
+unsupported-speed recovery from reviving a replaced meter source, exposes
+stable frequently-updated meter accessibility elements, reconciles every
+detailed XCTest outcome, and binds publication to the remote asset size/digest.
 
 The Review & Report implementation is substantially present: structured point
 and range findings, versioned local sidecars, relinking, deliberate historical

@@ -79,6 +79,35 @@ APPCAST="appcast.xml"
 TAP_LOCAL_PATH="${TAP_LOCAL_PATH:-}"
 TAP_CASK_NAME="aagedal-media-player"
 TAP_CASK_FILE="${TAP_CASK_FILE:-Casks/$TAP_CASK_NAME.rb}"
+CASK_PATH=""
+
+verify_tap_checkout() {
+    local tap_status
+    [[ -d "$TAP_LOCAL_PATH" ]] || {
+        echo "ERROR: TAP_LOCAL_PATH is not a directory: $TAP_LOCAL_PATH" >&2
+        return 1
+    }
+    CASK_PATH="$TAP_LOCAL_PATH/$TAP_CASK_FILE"
+    [[ -f "$CASK_PATH" ]] || {
+        echo "ERROR: cask file not found at $CASK_PATH" >&2
+        echo "       Set TAP_CASK_FILE to override the path inside the tap repo." >&2
+        return 1
+    }
+    if ! tap_status=$(git -C "$TAP_LOCAL_PATH" status --porcelain); then
+        echo "ERROR: could not inspect the Homebrew tap checkout at $TAP_LOCAL_PATH." >&2
+        return 1
+    fi
+    [[ -z "$tap_status" ]] || {
+        echo "ERROR: Homebrew tap checkout must be clean before automated publication." >&2
+        return 1
+    }
+}
+
+# A configured tap is part of the publication transaction. Reject an invalid or
+# dirty checkout before spending time on the archive or mutating GitHub state.
+if [[ -n "$TAP_LOCAL_PATH" ]]; then
+    verify_tap_checkout
+fi
 
 # -----------------------------------------------------------------------------
 # Resolve and bind version / build to committed source metadata
@@ -143,6 +172,7 @@ python3 scripts/validate-release-xcresult.py \
     "$CANDIDATE_SUMMARY" "$CANDIDATE_DETAILS" --minimum-tests 662
 python3 scripts/validate-release-xcresult.py \
     "$CANDIDATE_MIXED_SUMMARY" "$CANDIDATE_MIXED_DETAILS" --minimum-tests 2 \
+    --exact-tests 2 \
     --require-test "CompareLiveBackendTests/testAVFoundationPrimaryAndMPVSecondaryShareTransport()" \
     --require-test "CompareLiveBackendTests/testMPVPrimaryAndAVFoundationSecondaryShareTransport()"
 
@@ -373,17 +403,23 @@ if ! command -v gh >/dev/null 2>&1 || ! gh auth status >/dev/null 2>&1; then
 fi
 
 verify_release_identity() {
-    local published_source_commit release_is_draft
+    local published_source_commit release_state release_is_draft release_is_prerelease
     published_source_commit=$(gh api \
         "repos/$GITHUB_REPOSITORY/commits/$MARKETING_VERSION" --jq .sha)
     [[ "$published_source_commit" == "$SOURCE_COMMIT" ]] || {
         echo "ERROR: GitHub release $MARKETING_VERSION targets $published_source_commit, not $SOURCE_COMMIT." >&2
         return 1
     }
-    release_is_draft=$(gh release view "$MARKETING_VERSION" \
-        --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft)
+    release_state=$(gh release view "$MARKETING_VERSION" \
+        --repo "$GITHUB_REPOSITORY" --json isDraft,isPrerelease \
+        --jq '[.isDraft, .isPrerelease] | @tsv')
+    IFS=$'\t' read -r release_is_draft release_is_prerelease <<< "$release_state"
     [[ "$release_is_draft" == "false" ]] || {
         echo "ERROR: GitHub release $MARKETING_VERSION is still a draft." >&2
+        return 1
+    }
+    [[ "$release_is_prerelease" == "false" ]] || {
+        echo "ERROR: GitHub release $MARKETING_VERSION is a prerelease; refusing stable appcast publication." >&2
         return 1
     }
 }
@@ -404,14 +440,15 @@ else
         --generate-notes
 fi
 
-# Recheck identity after mutation, then prove that the exact asset exists before
+# Recheck identity after mutation, then prove that the remote asset's name,
+# byte size and GitHub-computed SHA-256 identify the exact local ZIP before
 # publishing its update URL.
 verify_release_identity
-if ! gh release view "$MARKETING_VERSION" --repo "$GITHUB_REPOSITORY" \
-    --json assets --jq '.assets[].name' | /usr/bin/grep -Fx "$RELEASE_ZIP_NAME" >/dev/null; then
-    echo "ERROR: GitHub release $MARKETING_VERSION does not contain $RELEASE_ZIP_NAME." >&2
-    exit 1
-fi
+ZIP_SHA256=$(shasum -a 256 "$RELEASE_ZIP" | awk '{print $1}')
+PUBLISHED_RELEASE_JSON="$BUILD_DIR/published-release.json"
+gh api "repos/$GITHUB_REPOSITORY/releases/tags/$MARKETING_VERSION" > "$PUBLISHED_RELEASE_JSON"
+python3 scripts/validate-github-release-asset.py \
+    "$PUBLISHED_RELEASE_JSON" "$RELEASE_ZIP_NAME" "$ZIP_SIZE" "$ZIP_SHA256"
 
 # Publish the already-validated feed locally only after the release target and
 # exact downloadable asset have been verified.
@@ -424,36 +461,25 @@ echo "    git add $APPCAST && git commit -m \"Release $MARKETING_VERSION\" && gi
 # -----------------------------------------------------------------------------
 # Update the Homebrew tap cask
 # -----------------------------------------------------------------------------
-SHA256=$(shasum -a 256 "$RELEASE_ZIP" | awk '{print $1}')
-echo "==> SHA256 of release zip: $SHA256"
+echo "==> SHA256 of release zip: $ZIP_SHA256"
 
-if [[ -n "$TAP_LOCAL_PATH" && -d "$TAP_LOCAL_PATH" ]]; then
-    CASK_PATH="$TAP_LOCAL_PATH/$TAP_CASK_FILE"
-    if [[ ! -f "$CASK_PATH" ]]; then
-        echo "ERROR: cask file not found at $CASK_PATH" >&2
-        echo "       Set TAP_CASK_FILE to override the path inside the tap repo." >&2
-        exit 1
-    fi
-
+if [[ -n "$TAP_LOCAL_PATH" ]]; then
+    # Recheck after the long-running build/notarization/upload sequence in case
+    # another process changed the tap while this release was being prepared.
+    verify_tap_checkout
     echo "==> Updating cask at $CASK_PATH"
     (
         cd "$TAP_LOCAL_PATH"
         git pull --rebase --quiet
     )
 
-    python3 - "$CASK_PATH" "$MARKETING_VERSION" "$SHA256" <<'PYEOF'
-import sys, re, pathlib
-path, version, sha = sys.argv[1], sys.argv[2], sys.argv[3]
-src = pathlib.Path(path).read_text()
-src = re.sub(r'(\bversion\s+)"[^"]*"', f'\\1"{version}"', src, count=1)
-src = re.sub(r'(\bsha256\s+)"[^"]*"', f'\\1"{sha}"',     src, count=1)
-pathlib.Path(path).write_text(src)
-PYEOF
+    python3 scripts/update-homebrew-cask.py \
+        "$CASK_PATH" "$MARKETING_VERSION" "$ZIP_SHA256"
 
     (
         cd "$TAP_LOCAL_PATH"
         if git diff --quiet -- "$TAP_CASK_FILE"; then
-            echo "==> Cask already at $MARKETING_VERSION ($SHA256). Nothing to commit."
+            echo "==> Cask already at $MARKETING_VERSION ($ZIP_SHA256). Nothing to commit."
         else
             git add "$TAP_CASK_FILE"
             git commit -m "$TAP_CASK_NAME $MARKETING_VERSION"
@@ -467,7 +493,7 @@ else
     cd <your tap checkout>
     # Edit $TAP_CASK_FILE:
     #   version "$MARKETING_VERSION"
-    #   sha256 "$SHA256"
+    #   sha256 "$ZIP_SHA256"
     git commit -am "$TAP_CASK_NAME $MARKETING_VERSION" && git push
 EOF
 fi

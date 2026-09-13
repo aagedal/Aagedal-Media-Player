@@ -66,6 +66,8 @@ All notable changes to Aagedal Media Player.
   recording run sheet.
 
 ### Changed
+- Require live-meter decoder timestamps to confirm the decoded channel layout before applying speaker-weighted loudness, keep explicit nonstandard layouts on numbered peak-only meters, and expose stable frequently-updated accessibility identities for native meter acceptance.
+- Reconcile every detailed XCTest result with candidate summary counts, require exactly the two isolated mixed-backend transport checks, verify uploaded release-asset size and GitHub SHA-256, reject prereleases from the stable appcast, and fail closed on dirty or ambiguous Homebrew cask updates.
 - Candidate verification now rejects unexpected or unexplained XCTest skips, runtime warnings, expected failures, missing test coverage, and source/package changes during the run; historically order-sensitive mixed-backend transport cases run in a separate validated host.
 - Releases now require canonical evidence for the exact commit and resolved packages, require requested versions to match committed project metadata, and verify the published GitHub commit, draft state, and ZIP asset before changing the appcast.
 - Expose stable comparison-review accessibility identities, full active-sidecar paths, and dynamic loading/export/error status semantics for native keyboard and assistive-technology verification.
@@ -107,6 +109,7 @@ All notable changes to Aagedal Media Player.
   primary-file loop boundaries across all backend combinations.
 
 ### Fixed
+- Prevent returning from an unsupported playback speed from restarting a retained pre-replacement live-meter source or audio track.
 - Keep live-meter EOF drainage authoritative across trailing pause or buffering events, and preserve a selected audio stream's final readings when its containing video continues.
 - Clearing live-meter maxima now resets worker-side DSP maxima in order, so stale in-flight or exact-EOF snapshots cannot restore readings from before the clear.
 - Complete subprocess pipe draining on a utility queue to avoid priority inversion while retaining timestamp-side-channel ordering at child-process exit.

@@ -287,20 +287,24 @@ final class LiveAudioMeterCoordinator: ObservableObject {
             isClockSuspended = false
             applyWorkerSuspension()
         case .discontinuity(let cause, let playback):
-            guard playback.supportsMeasurement else {
-                suspendForUnsupportedSpeed()
-                return
-            }
             switch cause {
             case .sourceReplacement, .audioTrackReplacement:
+                // Source identity changes remain authoritative even while the
+                // transport is at an unsupported speed. Otherwise the retained
+                // pre-replacement request could be restarted automatically when
+                // playback later returns to 1x.
                 invalidateCurrent(
                     status: .unavailable(
                         reason: "The measured audio source changed.",
                         diagnostic: "Resolve the selected track and start a new meter generation."
                     ),
-                    clearRequest: false
+                    clearRequest: true
                 )
             case .seek, .frameStep, .scrub, .loopWrap, .geometryReload:
+                guard playback.supportsMeasurement else {
+                    suspendForUnsupportedSpeed()
+                    return
+                }
                 guard let request,
                       let repositioned = try? request.repositioned(at: playback.time) else {
                     invalidateCurrent(
@@ -534,6 +538,7 @@ final class LiveAudioMeterCoordinator: ObservableObject {
         restartCause = nil
         isTransportSuspended = false
         isClockSuspended = false
+        isWaitingForSupportedSpeed = false
         hasReachedPlaybackEOF = false
         if clearRequest { request = nil }
         status = newStatus

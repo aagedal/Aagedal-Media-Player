@@ -2210,6 +2210,52 @@ failures in both transport directions, confirming that whole-suite serialization
 is not a valid stabilization strategy. Candidate evidence is valid only when the
 optimized Release verifier completes against the exact clean commit being shipped.
 
+## Phase 94 — Decoded speaker identity and stale speed recovery
+
+Status: Focused engineering complete on 2026-09-13; representative-media and
+spoken accessibility acceptance remain open.
+
+- [x] Require FFmpeg's frame-timestamp stream to declare its decoded channel
+  layout before accepting PCM, with exact identity for supported weighted
+  layouts and matching channel-count qualification for unknown layouts.
+- [x] Reject missing, unrecognized, count-mismatched, and semantically
+  contradictory layouts instead of trusting source metadata alone.
+- [x] Keep explicit nonstandard one/two-channel maps on numbered peak-only
+  meters, while retaining conventional mono/stereo fallback only when layout
+  metadata is absent.
+- [x] Prevent returning from unsupported playback speed from reviving the old
+  retained URL or stream after source/audio-track replacement.
+- [x] Expose stable native-automation identities for live-meter controls,
+  status, provenance, actions, and dynamic readings; mark changing values as
+  frequently updated.
+
+All 60 focused decoder, playback-source, coordinator, session, and generated
+compressed production-path tests pass in Debug. The real bundled FFmpeg path
+now proves stereo, `5.1(side)`, and `7.1` layout headers. This does not replace
+representative programme, release-floor, Full Keyboard Access, or spoken
+VoiceOver acceptance.
+
+## Phase 95 — Candidate-result and publication integrity
+
+Status: Release-helper engineering complete on 2026-09-13; a final signed and
+notarized distribution has not been produced.
+
+- [x] Reconcile every detailed XCTest case and status with the candidate
+  summary instead of validating only skip details.
+- [x] Require exactly the two named mixed-backend transport tests in their
+  isolated result bundle and reject unknown result states.
+- [x] Reject draft or prerelease GitHub releases from stable appcast
+  publication and verify the uploaded asset's state, name, byte size, and
+  GitHub-computed SHA-256 against the local ZIP.
+- [x] Validate configured Homebrew tap cleanliness before publication, recheck
+  it before editing, and require exactly one version and checksum declaration.
+- [x] Add self-contained regression coverage for result reconciliation,
+  release-asset validation, and exact cask rewriting.
+
+The focused helper suites and shell syntax checks pass. Final candidate
+verification and the signed/notarized distribution gate remain post-commit
+work against the exact source identity.
+
 ## Remaining work after this continuation
 
 - Integrate the measured metadata-memory dependency fix after upstream review,

@@ -30,6 +30,20 @@ nonisolated struct LiveAudioMeterFormat: Equatable, Sendable {
             case .surround7Point1: 8
             }
         }
+
+        /// Exact FFmpeg channel-layout identity required before applying the
+        /// corresponding speaker weights. Unknown layouts deliberately have no
+        /// expected name: the decoder validates only their channel count and the
+        /// DSP continues to withhold loudness without established speaker roles.
+        var ffmpegChannelLayoutName: String? {
+            switch self {
+            case .mono: "mono"
+            case .stereo: "stereo"
+            case .surround5Point1: "5.1(side)"
+            case .surround7Point1: "7.1"
+            case .unknown: nil
+            }
+        }
     }
 
     let sampleRate: Int

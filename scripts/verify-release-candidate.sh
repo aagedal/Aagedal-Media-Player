@@ -116,6 +116,7 @@ python3 scripts/validate-release-xcresult.py \
     "$artifact_dir/mixed-backend-transport-summary.json" \
     "$artifact_dir/mixed-backend-transport-details.json" \
     --minimum-tests 2 \
+    --exact-tests 2 \
     --require-test "CompareLiveBackendTests/testAVFoundationPrimaryAndMPVSecondaryShareTransport()" \
     --require-test "CompareLiveBackendTests/testMPVPrimaryAndAVFoundationSecondaryShareTransport()" \
     2>&1 | tee "$artifact_dir/mixed-backend-transport-validation.log"

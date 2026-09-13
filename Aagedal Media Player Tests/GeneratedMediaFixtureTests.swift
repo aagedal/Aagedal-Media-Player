@@ -266,9 +266,11 @@ final class GeneratedMediaFixtureTests: XCTestCase {
         )
         XCTAssertEqual(session.coordinator.generation, generation)
         XCTAssertEqual(session.viewState.selectedSourceID, LiveAudioMeterSession.primarySourceID)
-        XCTAssertEqual(session.viewState.channels.map(\.label), [
-            "Left", "Right", "Center", "LFE", "Back Left", "Back Right",
-        ])
+        XCTAssertEqual(
+            session.viewState.channels.map(\.label),
+            (1...6).map { "Channel \($0)" },
+            "The file declares a nonstandard 5.1 layout, so the meter must not invent speaker roles"
+        )
         XCTAssertTrue(
             session.viewState.channels.allSatisfy {
                 ($0.samplePeak.maximum ?? -.infinity) > -1

@@ -55,6 +55,7 @@ def validate(
     tests: dict[str, Any],
     minimum_tests: int,
     required_tests: set[str] | frozenset[str] = frozenset(),
+    exact_tests: int | None = None,
 ) -> tuple[int, int]:
     if summary.get("result") != "Passed":
         raise ValueError(f"test result is {summary.get('result')!r}, not 'Passed'")
@@ -76,6 +77,8 @@ def validate(
         raise ValueError(
             f"only {total} tests ran; the release floor requires at least {minimum_tests}"
         )
+    if exact_tests is not None and total != exact_tests:
+        raise ValueError(f"expected exactly {exact_tests} tests, but {total} ran")
 
     warnings = summary.get("runtimeWarnings")
     if not isinstance(warnings, list):
@@ -99,6 +102,7 @@ def validate(
         ) != 0:
             raise ValueError(f"device/configuration result {index} contains expected failures")
 
+    allowed_results = {"Passed", "Failed", "Skipped", "Expected Failure"}
     test_case_results: dict[str, str] = {}
     skipped_cases: dict[str, dict[str, Any]] = {}
     for node in child_objects(tests):
@@ -110,6 +114,8 @@ def validate(
         result = node.get("result")
         if not isinstance(result, str) or not result:
             raise ValueError(f"test case has no result: {identifier}")
+        if result not in allowed_results:
+            raise ValueError(f"test case has unknown result {result!r}: {identifier}")
         if identifier in test_case_results:
             raise ValueError(f"test case appears more than once: {identifier}")
         test_case_results[identifier] = result
@@ -126,6 +132,28 @@ def validate(
     )
     if nonpassing_required:
         raise ValueError("required tests did not pass: " + ", ".join(nonpassing_required))
+
+    detailed_counts = {
+        result: sum(case_result == result for case_result in test_case_results.values())
+        for result in allowed_results
+    }
+    if len(test_case_results) != total:
+        raise ValueError(
+            f"summary reports {total} total tests, but details contain "
+            f"{len(test_case_results)} test cases"
+        )
+    expected_detail_counts = {
+        "Passed": passed,
+        "Failed": failed,
+        "Skipped": skipped,
+        "Expected Failure": expected_failures,
+    }
+    for result, expected_count in expected_detail_counts.items():
+        if detailed_counts[result] != expected_count:
+            raise ValueError(
+                f"summary reports {expected_count} {result.lower()} tests, but details "
+                f"contain {detailed_counts[result]}"
+            )
 
     if len(skipped_cases) != skipped:
         raise ValueError(
@@ -157,10 +185,16 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument("summary", type=Path)
     parser.add_argument("tests", type=Path)
     parser.add_argument("--minimum-tests", type=int, required=True)
+    parser.add_argument("--exact-tests", type=int)
     parser.add_argument("--require-test", action="append", default=[])
     arguments = parser.parse_args()
     if arguments.minimum_tests < 1:
         parser.error("--minimum-tests must be positive")
+    if arguments.exact_tests is not None:
+        if arguments.exact_tests < 1:
+            parser.error("--exact-tests must be positive")
+        if arguments.exact_tests < arguments.minimum_tests:
+            parser.error("--exact-tests cannot be below --minimum-tests")
     return arguments
 
 
@@ -172,6 +206,7 @@ def main() -> None:
             load_object(arguments.tests),
             arguments.minimum_tests,
             set(arguments.require_test),
+            arguments.exact_tests,
         )
     except ValueError as error:
         raise SystemExit(f"ERROR: {error}") from error

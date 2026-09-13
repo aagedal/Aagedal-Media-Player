@@ -71,12 +71,17 @@ nonisolated struct LiveAudioMeterPlaybackSource: Equatable, Sendable {
         containerStreamIndex = stream.index
         self.trackLabel = trackLabel
         declaredChannelLayout = stream.channelLayout
-        channelLabels = AudioChannelLabels.names(count: channels, layout: stream.channelLayout)
         self.duration = duration.isFinite ? max(0, duration) : 0
+        let meterLayout = Self.meterLayout(channels: channels, declared: stream.channelLayout)
         format = try LiveAudioMeterFormat(
             sampleRate: sampleRate,
-            layout: Self.meterLayout(channels: channels, declared: stream.channelLayout)
+            layout: meterLayout
         )
+        if case .unknown = meterLayout {
+            channelLabels = (0..<channels).map { "Channel \($0 + 1)" }
+        } else {
+            channelLabels = AudioChannelLabels.names(count: channels, layout: stream.channelLayout)
+        }
     }
 
     func request(at playbackTime: TimeInterval) throws -> LiveAudioMeterDecodeRequest {
@@ -106,8 +111,13 @@ nonisolated struct LiveAudioMeterPlaybackSource: Equatable, Sendable {
     ) -> LiveAudioMeterFormat.Layout {
         let layout = declared?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         switch (channels, layout) {
-        case (1, _): return .mono
-        case (2, _): return .stereo
+        // Preserve the conventional fallback when metadata omits a mono/stereo
+        // layout, but never override an explicit, contradictory speaker map.
+        // For example, FFmpeg can report `1 channels (LFE)` or
+        // `2 channels (FC+LFE)`; treating those as mono/stereo would invent
+        // loudness weights and misleading channel labels.
+        case (1, nil), (1, ""), (1, "mono"): return .mono
+        case (2, nil), (2, ""), (2, "stereo"): return .stereo
         case (6, "5.1(side)"): return .surround5Point1
         case (8, "7.1"): return .surround7Point1
         default: return .unknown(channels: channels)

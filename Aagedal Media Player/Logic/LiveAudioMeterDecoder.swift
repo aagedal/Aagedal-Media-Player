@@ -323,6 +323,7 @@ nonisolated final class LiveAudioMeterTimestampedStreamProcessor: @unchecked Sen
     private let admissionLock = NSLock()
     private let downstream: LiveAudioMeterPCMStreamProcessor
     private let expectedSampleRate: Int
+    private let expectedLayout: LiveAudioMeterFormat.Layout
     private let bytesPerFrame: Int
     private let maximumTimestampJitterFrames: Int64
     let maximumUnmatchedByteCount: Int
@@ -333,6 +334,7 @@ nonisolated final class LiveAudioMeterTimestampedStreamProcessor: @unchecked Sen
     private nonisolated(unsafe) var expectedPTS: Int64 = 0
     private nonisolated(unsafe) var hasTimeBase = false
     private nonisolated(unsafe) var hasSampleRate = false
+    private nonisolated(unsafe) var hasChannelLayout = false
     private nonisolated(unsafe) var terminationStarted = false
     private nonisolated(unsafe) var timingEnded = false
     private nonisolated(unsafe) var failure: LiveAudioMeterDecoder.Failure?
@@ -346,6 +348,7 @@ nonisolated final class LiveAudioMeterTimestampedStreamProcessor: @unchecked Sen
             request: request, workerGate: workerGate, onSnapshot: onSnapshot
         )
         expectedSampleRate = request.format.sampleRate
+        expectedLayout = request.format.layout
         bytesPerFrame = request.format.channelCount * MemoryLayout<Float>.size
         // Extracted streams can retain a coarse container time base even after
         // FFmpeg expresses the decoded packets in 1/sampleRate units. Independent
@@ -388,6 +391,34 @@ nonisolated final class LiveAudioMeterTimestampedStreamProcessor: @unchecked Sen
                 return nil
             }
         }
+        if trimmed.hasPrefix("#channel_layout_name 0:") {
+            let actual = trimmed.dropFirst("#channel_layout_name 0:".count)
+                .trimmingCharacters(in: .whitespaces)
+            return condition.withLock {
+                guard failure == nil else { return nil }
+                guard !actual.isEmpty else {
+                    return failLocked(.unrecognizedTimestampChannelLayout(actual: actual))
+                }
+                if let expected = expectedLayout.ffmpegChannelLayoutName {
+                    guard actual == expected else {
+                        return failLocked(.timestampChannelLayoutMismatch(
+                            expected: expected, actual: actual
+                        ))
+                    }
+                } else {
+                    guard let actualCount = Self.channelCount(forFFmpegLayout: actual) else {
+                        return failLocked(.unrecognizedTimestampChannelLayout(actual: actual))
+                    }
+                    guard actualCount == expectedLayout.channelCount else {
+                        return failLocked(.timestampChannelCountMismatch(
+                            expected: expectedLayout.channelCount, actual: actualCount
+                        ))
+                    }
+                }
+                hasChannelLayout = true
+                return nil
+            }
+        }
         guard let first = trimmed.first, first.isNumber else { return nil }
         guard let record = Self.parseRecord(trimmed, bytesPerFrame: bytesPerFrame) else {
             return condition.withLock { failLocked(.malformedFrameTimestamp) }
@@ -398,6 +429,9 @@ nonisolated final class LiveAudioMeterTimestampedStreamProcessor: @unchecked Sen
         guard failure == nil else { return nil }
         guard hasTimeBase, hasSampleRate else {
             return failLocked(.missingFrameTimestampHeader)
+        }
+        guard hasChannelLayout else {
+            return failLocked(.missingTimestampChannelLayout)
         }
         let minimumPTS = expectedPTS - maximumTimestampJitterFrames
         let (maximumPTS, maximumPTSOverflow) = expectedPTS.addingReportingOverflow(
@@ -521,6 +555,9 @@ nonisolated final class LiveAudioMeterTimestampedStreamProcessor: @unchecked Sen
             guard hasTimeBase, hasSampleRate else {
                 throw LiveAudioMeterDecoder.Failure.missingFrameTimestampHeader
             }
+            guard hasChannelLayout else {
+                throw LiveAudioMeterDecoder.Failure.missingTimestampChannelLayout
+            }
             guard records.isEmpty, pendingPCM.isEmpty else {
                 throw LiveAudioMeterDecoder.Failure.timestampStreamIncomplete(
                     pcmBytes: pendingPCM.count, timingBytes: unmatchedTimingByteCount
@@ -569,6 +606,44 @@ nonisolated final class LiveAudioMeterTimestampedStreamProcessor: @unchecked Sen
         )
     }
 
+    /// Parses FFmpeg's canonical `av_channel_layout_describe` output only far
+    /// enough to prove the channel count for a layout whose speaker roles were
+    /// already unknown to the app. Named supported layouts take the exact-match
+    /// path above and never rely on this looser qualification.
+    private static func channelCount(forFFmpegLayout layout: String) -> Int? {
+        let trimmed = layout.trimmingCharacters(in: .whitespacesAndNewlines)
+        let namedCounts = [
+            "mono": 1, "stereo": 2, "downmix": 2,
+            "quad": 4, "quad(side)": 4,
+            "hexagonal": 6, "octagonal": 8, "cube": 8,
+        ]
+        if let count = namedCounts[trimmed] { return count }
+
+        if let first = trimmed.split(separator: " ", maxSplits: 1).first,
+           let count = Int(first) {
+            let prefix = "\(count) channels"
+            guard trimmed == prefix || trimmed.hasPrefix(prefix + " (") else { return nil }
+            return count > 0 ? count : nil
+        }
+
+        let base = trimmed.split(separator: "(", maxSplits: 1).first.map(String.init) ?? trimmed
+        let components = base.split(separator: ".", omittingEmptySubsequences: false)
+        if components.count >= 2 {
+            let counts = components.compactMap { Int($0) }
+            if counts.count == components.count {
+                let total = counts.reduce(0, +)
+                return total > 0 ? total : nil
+            }
+        }
+
+        let speakers = trimmed.split(separator: "+", omittingEmptySubsequences: true)
+        if speakers.count > 1,
+           speakers.allSatisfy({ !$0.trimmingCharacters(in: .whitespaces).isEmpty }) {
+            return speakers.count
+        }
+        return nil
+    }
+
     private static func adler32(_ data: Data) -> UInt32 {
         let modulus: UInt32 = 65_521
         var a: UInt32 = 0
@@ -596,10 +671,14 @@ nonisolated enum LiveAudioMeterDecoder {
         case alreadyFinished
         case missingFrameTimestamps
         case missingFrameTimestampHeader
+        case missingTimestampChannelLayout
         case malformedFrameTimestamp
         case timestampDiscontinuity(expectedFrame: Int64, actualFrame: Int64)
         case timestampTimeBaseMismatch(expected: String, actual: String)
         case timestampSampleRateMismatch(expected: Int, actual: Int64)
+        case timestampChannelLayoutMismatch(expected: String, actual: String)
+        case timestampChannelCountMismatch(expected: Int, actual: Int)
+        case unrecognizedTimestampChannelLayout(actual: String)
         case timestampPacketTooLarge(byteCount: Int, maximum: Int)
         case timestampChecksumMismatch(expected: UInt32, actual: UInt32)
         case timestampStreamIncomplete(pcmBytes: Int, timingBytes: Int)
@@ -629,6 +708,8 @@ nonisolated enum LiveAudioMeterDecoder {
                 "The decoder produced PCM without authoritative frame timestamps."
             case .missingFrameTimestampHeader:
                 "The decoder timestamp stream did not declare its required time base and sample rate."
+            case .missingTimestampChannelLayout:
+                "The decoder timestamp stream did not declare its channel layout."
             case .malformedFrameTimestamp:
                 "The decoder produced a malformed audio-frame timestamp."
             case .timestampDiscontinuity(let expected, let actual):
@@ -637,6 +718,12 @@ nonisolated enum LiveAudioMeterDecoder {
                 "The decoder timestamp time base changed from \(expected) to \(actual)."
             case .timestampSampleRateMismatch(let expected, let actual):
                 "The decoder timestamp rate changed from \(expected) Hz to \(actual) Hz."
+            case .timestampChannelLayoutMismatch(let expected, let actual):
+                "The decoder channel layout changed from \(expected) to \(actual); speaker weighting cannot be verified."
+            case .timestampChannelCountMismatch(let expected, let actual):
+                "The decoder channel layout has \(actual) channel(s), but the source metadata declared \(expected)."
+            case .unrecognizedTimestampChannelLayout(let actual):
+                "The decoder reported an unrecognized channel layout '\(actual)'; its channel count cannot be verified."
             case .timestampPacketTooLarge(let byteCount, let maximum):
                 "A decoder timestamp packet used \(byteCount) bytes, exceeding the \(maximum)-byte admission bound."
             case .timestampChecksumMismatch(let expected, let actual):

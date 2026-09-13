@@ -32,20 +32,26 @@ class ReleaseXCResultValidationTests(unittest.TestCase):
                 {"failedTests": 0, "expectedFailures": 0}
             ],
         }
+        self.skipped_case = {
+            "nodeType": "Test Case",
+            "result": "Skipped",
+            "nodeIdentifier": self.allowed,
+            "children": [
+                {
+                    "nodeType": "Skip Message",
+                    "name": "Test skipped - Requires an explicit external input",
+                }
+            ],
+        }
         self.tests = {
             "children": [
                 {
                     "nodeType": "Test Case",
-                    "result": "Skipped",
-                    "nodeIdentifier": self.allowed,
-                    "children": [
-                        {
-                            "nodeType": "Skip Message",
-                            "name": "Test skipped - Requires an explicit external input",
-                        }
-                    ],
+                    "result": "Passed",
+                    "nodeIdentifier": f"PassingTests/testCase{index}()",
                 }
-            ]
+                for index in range(661)
+            ] + [self.skipped_case]
         }
 
     def validate(self) -> tuple[int, int]:
@@ -57,23 +63,38 @@ class ReleaseXCResultValidationTests(unittest.TestCase):
     def test_accepts_no_skips_when_optional_inputs_are_supplied(self) -> None:
         self.summary["passedTests"] = 662
         self.summary["skippedTests"] = 0
-        self.tests["children"] = []
+        self.skipped_case["result"] = "Passed"
         self.assertEqual(self.validate(), (662, 0))
 
     def test_rejects_unexpected_skip(self) -> None:
-        self.tests["children"][0]["nodeIdentifier"] = "UnexpectedTests/testSilentSkip()"
+        self.skipped_case["nodeIdentifier"] = "UnexpectedTests/testSilentSkip()"
         with self.assertRaisesRegex(ValueError, "unexpected skipped tests"):
             self.validate()
 
     def test_rejects_missing_skip_reason(self) -> None:
-        self.tests["children"][0]["children"] = []
+        self.skipped_case["children"] = []
         with self.assertRaisesRegex(ValueError, "no descriptive skip reason"):
+            self.validate()
+
+    def test_rejects_missing_detailed_pass(self) -> None:
+        self.tests["children"].pop(0)
+        with self.assertRaisesRegex(ValueError, "details contain 661 test cases"):
+            self.validate()
+
+    def test_rejects_unknown_detailed_result(self) -> None:
+        self.tests["children"][0]["result"] = "Unknown"
+        with self.assertRaisesRegex(ValueError, "unknown result"):
+            self.validate()
+
+    def test_rejects_detailed_result_count_mismatch(self) -> None:
+        self.tests["children"][0]["result"] = "Skipped"
+        with self.assertRaisesRegex(ValueError, "details contain 660"):
             self.validate()
 
     def test_rejects_skip_count_mismatch(self) -> None:
         self.summary["skippedTests"] = 0
         self.summary["passedTests"] = 662
-        with self.assertRaisesRegex(ValueError, "details contain 1"):
+        with self.assertRaisesRegex(ValueError, "details contain 661"):
             self.validate()
 
     def test_rejects_test_count_below_release_floor(self) -> None:
@@ -114,6 +135,48 @@ class ReleaseXCResultValidationTests(unittest.TestCase):
         self.tests["children"][-1]["result"] = "Failed"
         with self.assertRaisesRegex(ValueError, "required tests did not pass"):
             VALIDATOR.validate(self.summary, self.tests, 662, {required})
+
+    def test_focused_evidence_requires_exactly_two_passing_tests(self) -> None:
+        required = {
+            "TransportTests/testPrimaryA()",
+            "TransportTests/testPrimaryB()",
+        }
+        summary = {
+            "result": "Passed",
+            "totalTestCount": 2,
+            "passedTests": 2,
+            "failedTests": 0,
+            "skippedTests": 0,
+            "expectedFailures": 0,
+            "runtimeWarnings": [],
+            "devicesAndConfigurations": [
+                {"failedTests": 0, "expectedFailures": 0}
+            ],
+        }
+        tests = {
+            "children": [
+                {
+                    "nodeType": "Test Case",
+                    "result": "Passed",
+                    "nodeIdentifier": identifier,
+                }
+                for identifier in sorted(required)
+            ]
+        }
+        self.assertEqual(
+            VALIDATOR.validate(summary, tests, 2, required, exact_tests=2),
+            (2, 0),
+        )
+
+        summary["totalTestCount"] = 3
+        summary["passedTests"] = 3
+        tests["children"].append({
+            "nodeType": "Test Case",
+            "result": "Passed",
+            "nodeIdentifier": "TransportTests/testUnexpected()",
+        })
+        with self.assertRaisesRegex(ValueError, "expected exactly 2 tests"):
+            VALIDATOR.validate(summary, tests, 2, required, exact_tests=2)
 
 
 if __name__ == "__main__":

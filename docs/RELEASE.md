@@ -122,8 +122,13 @@ that exact artifact into `build/distribution-check`, repeats the app preflight,
 validates the stapled ticket, and requires Gatekeeper acceptance before signing
 the update or changing the appcast. It then validates the newly prepended appcast
 item. Publication requires an authenticated GitHub CLI and then verifies that
-the release tag resolves to the exact source commit, the release is not a draft,
-and the expected ZIP asset is present before changing the tracked appcast.
+the release tag resolves to the exact source commit, the release is neither a
+draft nor a prerelease, and the expected ZIP asset's uploaded state, byte size,
+and GitHub-computed SHA-256 match the local distribution before changing the
+tracked appcast. If automated Homebrew publication is configured, its checkout
+and cask path are validated before archive work and checked again before a
+single exact version/SHA rewrite; unrelated or ambiguous cask content fails
+closed.
 
 To reproduce the packaged-artifact checks manually after notarization:
 

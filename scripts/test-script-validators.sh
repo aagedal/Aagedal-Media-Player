@@ -35,6 +35,8 @@ done
 
 python_tests=(
     scripts/test-audio-loudness-profile-validation.py
+    scripts/test-github-release-asset-validation.py
+    scripts/test-homebrew-cask-update.py
     scripts/test-itu-programme-lra-reference.py
     scripts/test-itu-programme-true-peak-reference.py
     scripts/test-metadata-candidate-validation.py

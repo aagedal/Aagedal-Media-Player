@@ -241,6 +241,43 @@ final class LiveAudioMeterCoordinatorTests: XCTestCase {
         coordinator.close()
     }
 
+    func testReplacementAtUnsupportedSpeedCannotReviveRetainedSourceAtOneTimes() async throws {
+        let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
+        let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
+        coordinator.start(try request(stream: 0, startFrame: 0))
+        await decoder.waitUntilAttached(stream: 0)
+        let unsupported = LiveAudioMeterPlaybackSnapshot(
+            time: 1, phase: .ready, isPlaying: true, rate: 2, preparationID: 1
+        )
+
+        coordinator.updatePlaybackClock(unsupported)
+        await decoder.waitUntilCancelled(stream: 0)
+        coordinator.handlePlaybackEvent(.discontinuity(
+            .audioTrackReplacement, snapshot: unsupported
+        ))
+        let replacementGeneration = coordinator.generation
+
+        coordinator.updatePlaybackClock(playback(time: 2.5, playing: true))
+        try await Task.sleep(for: .milliseconds(30))
+
+        XCTAssertEqual(coordinator.generation, replacementGeneration)
+        XCTAssertNil(
+            decoder.request(stream: 0, occurrence: 2),
+            "Returning to 1x must not restart the pre-replacement stream identity"
+        )
+        XCTAssertFalse(coordinator.retry(at: 2.5))
+        guard case .unavailable(let reason, _) = coordinator.status else {
+            return XCTFail("Expected replacement to remain unavailable until a new source resolves")
+        }
+        XCTAssertEqual(reason, "The measured audio source changed.")
+
+        let replacement = try request(stream: 1, startFrame: 120_000)
+        coordinator.restart(replacement, because: .sourceReplacement)
+        await decoder.waitUntilAttached(stream: 1)
+        XCTAssertEqual(decoder.request(stream: 1, occurrence: 1), replacement)
+        coordinator.close()
+    }
+
     func testPauseAndBufferingFreezeThenResumeContinuousGeneration() async throws {
         let decoder = ControlledLiveMeterDecoder(honorCancellation: false)
         let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)

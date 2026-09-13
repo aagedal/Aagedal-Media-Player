@@ -157,6 +157,13 @@ speaker maps. Other one-to-eight-channel layouts retain numbered peak meters
 but do not guess loudness weights; missing or unsupported format data produces
 an actionable failure.
 
+The frame-timestamp side channel also declares the layout produced by FFmpeg.
+Mono, stereo, `5.1(side)`, and conventional `7.1` must match the expected name
+exactly before their speaker weights can be used. Unknown layouts must still
+report a parseable matching channel count and remain peak-only. An absent,
+unrecognized, or contradictory decoder layout fails the measurement rather
+than allowing metadata labels to stand in for decoded-stream evidence.
+
 `LiveAudioMeterViewState` and `LiveAudioMeterView` provide a reusable,
 accessibility-labelled presentation for A/B source choice, sample and true-peak
 bars/holds/maxima, Momentary and Short-term loudness, EBU/ATSC/custom guides,
@@ -167,6 +174,10 @@ no decoder, DSP or playback state. `LiveAudioMeterWindowController` mounts it in
 an activating, resizable per-player panel and preserves command routing to the
 owning player while the panel is key. Active readings identify their source and
 track; complete decoder provenance remains pending until EOF.
+Stable identifiers cover the source/reference/custom controls, status, channel
+and loudness readings, diagnostics, provenance, and actions. Dynamic readings
+are marked as frequently updated so native accessibility checks can read them
+on demand without treating every visual refresh as a new announcement.
 
 ## Verification and remaining integration
 
@@ -220,6 +231,14 @@ while replacement metadata is unresolved, and an unsupported selected track
 cannot restart the prior track. The next source-readiness revision or a later
 supported track starts only its newly resolved request. This is synthetic
 lifecycle coverage, not representative-media or native accessibility evidence.
+
+The next 60-test focused integration run covers decoder, playback-source,
+coordinator, session, and the generated compressed production path. It confirms
+exact framecrc layout identity for real bundled-FFmpeg stereo, `5.1(side)`, and
+`7.1` decodes; rejects missing/mismatched layouts; retains peak-only readings
+for explicit nonstandard one/two-channel maps; and prevents unsupported-speed
+restoration from reviving a replaced source. All 60 tests pass in Debug. This is
+generated-media engineering evidence, not representative-programme acceptance.
 
 Each peak row now includes its channel name in the accessibility label (for
 example, “Front left, Sample peak”), avoiding ambiguous repeated peak identities
