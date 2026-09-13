@@ -1283,10 +1283,14 @@ final class CompareLiveBackendTests: XCTestCase {
             for offset in [0.5, -0.5] {
                 session.setManualOffset(offset, primary: primary)
                 XCTAssertEqual(session.mapping?.mode, .manual)
-                let secondaryAligned = await self.waitUntil(tolerance: tolerance) {
-                    secondary.playbackTimeSnapshot() - (2 + offset)
+                let secondaryAligned = await self.waitUntil {
+                    abs(secondary.playbackTimeSnapshot() - (2 + offset)) <= tolerance
+                        && !secondary.isPlaying
                 }
-                XCTAssertTrue(secondaryAligned, "Paused offset \(offset) did not reach B's decoder.")
+                XCTAssertTrue(
+                    secondaryAligned,
+                    "Paused offset \(offset) did not settle B's decoder and paused state."
+                )
                 XCTAssertFalse(primary.isPlaying)
                 XCTAssertFalse(secondary.isPlaying)
                 XCTAssertEqual(primary.playbackTimeSnapshot(), 2, accuracy: tolerance)

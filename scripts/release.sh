@@ -171,6 +171,25 @@ RELEASE_ZIP="$BUILD_DIR/$RELEASE_ZIP_NAME"
 ZIP_SIZE=$(/usr/bin/stat -f%z "$RELEASE_ZIP")
 echo "==> Release zip: $RELEASE_ZIP ($ZIP_SIZE bytes)"
 
+# Validate the artifact users will actually download, not only the exported app
+# from which it was created. This catches packaging damage, a missing stapled
+# ticket, and Gatekeeper rejection before signing or publishing the update.
+DISTRIBUTION_CHECK_DIR="$BUILD_DIR/distribution-check"
+/bin/mkdir -p "$DISTRIBUTION_CHECK_DIR"
+/usr/bin/ditto -x -k "$RELEASE_ZIP" "$DISTRIBUTION_CHECK_DIR"
+PACKAGED_APP_PATH="$DISTRIBUTION_CHECK_DIR/$SCHEME.app"
+[[ -d "$PACKAGED_APP_PATH" ]] || {
+    echo "ERROR: release zip contains no $SCHEME.app" >&2
+    exit 1
+}
+
+python3 scripts/release-preflight.py \
+    --version "$MARKETING_VERSION" \
+    --build "$CURRENT_PROJECT_VERSION" \
+    --app "$PACKAGED_APP_PATH"
+xcrun stapler validate "$PACKAGED_APP_PATH"
+/usr/sbin/spctl --assess --type execute --verbose=2 "$PACKAGED_APP_PATH"
+
 if [[ ! -x "$SIGN_UPDATE_BIN" ]]; then
     echo "ERROR: $SIGN_UPDATE_BIN not found or not executable." >&2
     exit 1

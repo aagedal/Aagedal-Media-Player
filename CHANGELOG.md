@@ -65,6 +65,7 @@ All notable changes to Aagedal Media Player.
   recording run sheet.
 
 ### Changed
+- Verify the exact final distribution ZIP by re-extracting it and repeating app preflight, notarization-ticket, and Gatekeeper checks before signing or publishing update metadata.
 - Apply continuous MPV volume-slider updates asynchronously so playback work cannot stall pointer tracking or make the audible response trail the control.
 - Add explicit Retry Save for failed review-note writes, flush current text drafts before retrying, and prevent reload from discarding unsaved changes.
 - Preserve pending review-note edits before switching copies, migrating timebases or exporting, and keep the original review active if source timing changes during migration saving.
@@ -97,6 +98,8 @@ All notable changes to Aagedal Media Player.
   primary-file loop boundaries across all backend combinations.
 
 ### Fixed
+- Clearing live-meter maxima now resets worker-side DSP maxima in order, so stale in-flight or exact-EOF snapshots cannot restore readings from before the clear.
+- Complete subprocess pipe draining on a utility queue to avoid priority inversion while retaining timestamp-side-channel ordering at child-process exit.
 - Long-range programme loudness analysis now preserves every assigned channel using independent input contexts, correcting silent channel loss and reducing excessive shared-input buffering.
 - Programme loudness analysis now cancels when its owning controller is released, including teardown outside inspector visibility callbacks.
 - Header-verified WAVE demuxer selection prevents valid floating-point WAVE inputs being misidentified during offline loudness and waveform processing.

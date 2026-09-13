@@ -1,6 +1,6 @@
 # Aagedal Media Player Product Roadmap
 
-Last updated: 2026-09-11
+Last updated: 2026-09-13
 
 See [2.0 release readiness](docs/RELEASE_2_READINESS.md) for the prioritized
 remaining release gates and the threshold for calling a candidate close to 2.0.
@@ -59,6 +59,11 @@ The completed work is tracked in `IMPROVEMENT_PLAN.md` and
 atomic output, cancellation-aware media operations, bounded scope and waveform
 work, actionable playback errors, accessibility, backend isolation, and release
 preflight checks.
+
+Source-tree verification now passes all 61 preflight checks and the release
+pipeline revalidates the exact packaged ZIP before update publication. The
+candidate archive, notarization, representative-media smoke run, screenshots,
+and publication remain release work rather than engineering-complete evidence.
 
 Release gates:
 

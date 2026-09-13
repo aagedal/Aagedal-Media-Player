@@ -69,6 +69,7 @@ nonisolated final class LiveAudioMeterWorkerGate: @unchecked Sendable {
     private let sampleRate: Int
     private let maximumAheadFrames: Int64
     private nonisolated(unsafe) var maximumEndFrame: Int64
+    private nonisolated(unsafe) var maximaResetRevision: UInt64 = 0
     private nonisolated(unsafe) var isSuspended = false
     private nonisolated(unsafe) var isCancelled = false
 
@@ -108,6 +109,16 @@ nonisolated final class LiveAudioMeterWorkerGate: @unchecked Sendable {
         }
     }
 
+    /// Orders a numerical-maxima clear relative to worker snapshots without
+    /// restarting source-time filters, windows, or peak ballistics.
+    @discardableResult
+    func clearMaxima() -> UInt64 {
+        condition.withLock {
+            maximaResetRevision += 1
+            return maximaResetRevision
+        }
+    }
+
     /// Returns the number of additional bytes that may be admitted without
     /// moving processed plus pending PCM beyond the hard source-frame limit.
     func waitForByteCapacity(
@@ -138,6 +149,10 @@ nonisolated final class LiveAudioMeterWorkerGate: @unchecked Sendable {
     var permittedEndFrame: Int64 {
         condition.withLock { maximumEndFrame }
     }
+
+    var currentMaximaResetRevision: UInt64 {
+        condition.withLock { maximaResetRevision }
+    }
 }
 
 /// Converts arbitrary stdout byte boundaries into bounded, frame-aligned DSP
@@ -155,6 +170,7 @@ nonisolated final class LiveAudioMeterPCMStreamProcessor: @unchecked Sendable {
     private nonisolated(unsafe) var meter: LiveAudioMeterDSP
     private nonisolated(unsafe) var pending: [UInt8] = []
     private nonisolated(unsafe) var isFinished = false
+    private nonisolated(unsafe) var appliedMaximaResetRevision: UInt64 = 0
 
     init(
         request: LiveAudioMeterDecodeRequest,
@@ -236,7 +252,8 @@ nonisolated final class LiveAudioMeterPCMStreamProcessor: @unchecked Sendable {
                 snapshots += try processPendingBlock()
             }
             do {
-                return try meter.finish()
+                applyPendingMaximaReset()
+                return try meter.finish().map(stampMaximaResetRevision)
             } catch let error as LiveAudioMeterDSP.Failure {
                 throw LiveAudioMeterDecoder.Failure.dsp(error)
             }
@@ -247,6 +264,7 @@ nonisolated final class LiveAudioMeterPCMStreamProcessor: @unchecked Sendable {
     }
 
     private func processPendingBlock() throws -> [LiveAudioMeterSnapshot] {
+        applyPendingMaximaReset()
         let sampleCount = pending.count / MemoryLayout<Float>.size
         var pcm: [Float] = []
         pcm.reserveCapacity(sampleCount)
@@ -262,9 +280,23 @@ nonisolated final class LiveAudioMeterPCMStreamProcessor: @unchecked Sendable {
         pending.removeAll(keepingCapacity: true)
         do {
             return try meter.process(pcm, startFrame: meter.nextFrame)
+                .map(stampMaximaResetRevision)
         } catch let error as LiveAudioMeterDSP.Failure {
             throw LiveAudioMeterDecoder.Failure.dsp(error)
         }
+    }
+
+    private func applyPendingMaximaReset() {
+        let requestedRevision = workerGate?.currentMaximaResetRevision ?? 0
+        guard requestedRevision != appliedMaximaResetRevision else { return }
+        meter.clearMaxima()
+        appliedMaximaResetRevision = requestedRevision
+    }
+
+    private func stampMaximaResetRevision(
+        _ snapshot: LiveAudioMeterSnapshot
+    ) -> LiveAudioMeterSnapshot {
+        snapshot.applyingMaximaResetRevision(appliedMaximaResetRevision)
     }
 }
 

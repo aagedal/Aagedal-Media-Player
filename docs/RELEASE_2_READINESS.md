@@ -31,12 +31,25 @@ The project still declares version 1.6.1.
 | Representative-media visual correctness | Finish the comparison raster/color/backend matrix and live loupe registration across rotation, PAR, different raster sizes and black bars. Record what was actually observed; independently captured display-space loupes cannot be described as frame-locked or exact source pixels. See [comparison verification matrix](../COMPARE_MODE_IMPLEMENTATION_PLAN.md#verification-matrix). |
 | Candidate and distribution evidence | Run fresh Release tests (with optional reference/real-filesystem coverage identified explicitly), static analysis and preflight against the exact candidate. Complete representative-media smoke tests, archive/sign/notarize, stapler/Gatekeeper and update-feed validation. Retain current screenshots, a workflow demo and a short editor/colorist beta with resolved blocking findings. See [release procedure](RELEASE.md) and [demo run sheet](COMPARE_MODE_DEMO.md). |
 
-The September 13 continuation passes 649 Debug tests with one expected opt-in
-real-volume-exhaustion skip and passes static analysis, including the new
-timestamp-framing and source-relative gap regressions. Release preflight stops
-on the repository's bundled FFmpeg because strict code-signature verification fails. Its dependent
-authority/timestamp details are not treated as trustworthy until that succeeds.
-This is an open candidate-signing gate, not completed distribution evidence.
+The September 13 continuation passes 649 optimized Release tests with one
+expected opt-in real-volume-exhaustion skip (650 total) and passes static
+analysis, including the new timestamp-framing, ordered maxima-reset and
+source-relative gap regressions. Focused subprocess/decoder verification also
+passes without the earlier callback-barrier priority-inversion diagnostics.
+The complete 61-check release preflight passes for 1.6.1 (163) when run
+outside the restricted workspace sandbox, where macOS can reach its normal
+code-signing trust services.
+Strict verification confirms that the tracked FFmpeg is signed by the expected
+Developer ID team with Hardened Runtime and a secure timestamp. The sandbox's
+`invalid signature` result was a trust-service access false negative, not an
+artifact defect; the exact tracked blob's checksum, CodeDirectory page hashes,
+and CMS signature were also verified unchanged. This is source-tree preflight
+evidence, not completed candidate signing or distribution evidence.
+The release pipeline now also fail-closes unless the final distribution ZIP can
+be re-extracted and its app passes the app preflight, stapler validation, and
+Gatekeeper assessment. That automated gate has not yet produced candidate
+evidence because no exact candidate has completed archive, signing,
+notarization, packaging, and distribution validation.
 
 ## Remaining scope that needs an explicit product decision
 

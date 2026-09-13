@@ -126,6 +126,10 @@ enum SubprocessService {
                 let stderrCollector = BoundedDataCollector(limit: outputLimit)
                 let stdoutCallbacks = SubprocessCallbackBarrier()
                 let stderrCallbacks = SubprocessCallbackBarrier()
+                let completionQueue = DispatchQueue(
+                    label: "com.aagedal.MediaPlayer.subprocess-completion",
+                    qos: .utility
+                )
                 let stdoutLines = LineBuffer(
                     onLine: onStandardOutputLine,
                     maximumPendingByteCount: outputLimit
@@ -162,45 +166,47 @@ enum SubprocessService {
                 }
 
                 process.terminationHandler = { terminatedProcess in
-                    handle.detach(process)
-                    onProcessTermination?()
+                    completionQueue.async {
+                        handle.detach(process)
+                        onProcessTermination?()
 
-                    // A binary stdout consumer may be waiting for a framing
-                    // record carried on stderr. Complete and drain that side
-                    // channel first so process exit cannot deadlock the final
-                    // stdout callback behind undelivered framing metadata.
-                    stderrPipe.fileHandleForReading.readabilityHandler = nil
-                    stderrCallbacks.closeAndWait()
+                        // A binary stdout consumer may be waiting for a framing
+                        // record carried on stderr. Complete and drain that side
+                        // channel first so process exit cannot deadlock the final
+                        // stdout callback behind undelivered framing metadata.
+                        stderrPipe.fileHandleForReading.readabilityHandler = nil
+                        stderrCallbacks.closeAndWait()
 
-                    let stderrTail = stderrPipe.fileHandleForReading.readDataToEndOfFile()
-                    if !stderrTail.isEmpty {
-                        onStandardErrorData?(stderrTail)
-                        stderrCollector.append(stderrTail)
-                        stderrLines.append(stderrTail)
-                    }
-                    stderrLines.finish()
-                    onStandardErrorEnd?()
+                        let stderrTail = stderrPipe.fileHandleForReading.readDataToEndOfFile()
+                        if !stderrTail.isEmpty {
+                            onStandardErrorData?(stderrTail)
+                            stderrCollector.append(stderrTail)
+                            stderrLines.append(stderrTail)
+                        }
+                        stderrLines.finish()
+                        onStandardErrorEnd?()
 
-                    stdoutPipe.fileHandleForReading.readabilityHandler = nil
-                    stdoutCallbacks.closeAndWait()
+                        stdoutPipe.fileHandleForReading.readabilityHandler = nil
+                        stdoutCallbacks.closeAndWait()
 
-                    let stdoutTail = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
-                    if !stdoutTail.isEmpty {
-                        onStandardOutputData?(stdoutTail)
-                        stdoutCollector.append(stdoutTail)
-                        stdoutLines.append(stdoutTail)
-                    }
-                    stdoutLines.finish()
+                        let stdoutTail = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
+                        if !stdoutTail.isEmpty {
+                            onStandardOutputData?(stdoutTail)
+                            stdoutCollector.append(stdoutTail)
+                            stdoutLines.append(stdoutTail)
+                        }
+                        stdoutLines.finish()
 
-                    if handle.isCancelled {
-                        continuation.resume(throwing: CancellationError())
-                    } else {
-                        continuation.resume(returning: SubprocessResult(
-                            terminationStatus: terminatedProcess.terminationStatus,
-                            terminationReason: terminatedProcess.terminationReason,
-                            standardOutput: stdoutCollector.data,
-                            standardError: stderrCollector.data
-                        ))
+                        if handle.isCancelled {
+                            continuation.resume(throwing: CancellationError())
+                        } else {
+                            continuation.resume(returning: SubprocessResult(
+                                terminationStatus: terminatedProcess.terminationStatus,
+                                terminationReason: terminatedProcess.terminationReason,
+                                standardOutput: stdoutCollector.data,
+                                standardError: stderrCollector.data
+                            ))
+                        }
                     }
                 }
 

@@ -85,8 +85,21 @@ final class LiveAudioMeterCoordinatorTests: XCTestCase {
         XCTAssertEqual(coordinator.generation, generation)
         XCTAssertEqual(coordinator.reducedSnapshot?.samplePeaks[0].bar, bar)
         XCTAssertNil(coordinator.reducedSnapshot?.samplePeaks[0].maximum)
-        decoder.emit(snapshot(endFrame: 4_800, peak: -12), stream: 0)
+
+        let staleFinal = snapshot(endFrame: 2_400, segmentStart: 0, isFinal: true)
+        decoder.emitPreservingRevision(staleFinal, stream: 0)
+        await eventually { coordinator.reducedSnapshot?.measurement.isFinal == true }
+        XCTAssertNil(
+            coordinator.reducedSnapshot?.samplePeaks[0].maximum,
+            "An in-flight pre-clear EOF revision must not relatch an old maximum"
+        )
+
+        decoder.emit(snapshot(endFrame: 4_800, peak: -.infinity), stream: 0)
         await eventually { coordinator.reducedSnapshot?.measurement.endFrame == 4_800 }
+        XCTAssertEqual(coordinator.reducedSnapshot?.samplePeaks[0].maximum, -.infinity)
+
+        decoder.emit(snapshot(endFrame: 7_200, peak: -12), stream: 0)
+        await eventually { coordinator.reducedSnapshot?.measurement.endFrame == 7_200 }
         XCTAssertEqual(coordinator.reducedSnapshot?.samplePeaks[0].maximum, -12)
         XCTAssertEqual(coordinator.reducedSnapshot?.samplePeaks[0].marker, -3)
         coordinator.close()
@@ -377,7 +390,7 @@ final class LiveAudioMeterCoordinatorTests: XCTestCase {
             shortTermLUFS: endFrame - segmentStart >= 144_000 ? -23 : nil,
             loudnessEndFrame: nil, maximumSamplePeakDBFS: [peak, peak],
             maximumTruePeakDBTP: [peak + 0.2, peak + 0.2], maximumMomentaryLUFS: nil,
-            maximumShortTermLUFS: nil, isFinal: false
+            maximumShortTermLUFS: nil, maximaResetRevision: 0, isFinal: false
         )
     }
 
@@ -422,7 +435,8 @@ final class LiveAudioMeterCoordinatorTests: XCTestCase {
             maximumSamplePeakDBFS: value.maximumSamplePeakDBFS,
             maximumTruePeakDBTP: value.maximumTruePeakDBTP,
             maximumMomentaryLUFS: value.maximumMomentaryLUFS,
-            maximumShortTermLUFS: value.maximumShortTermLUFS, isFinal: isFinal
+            maximumShortTermLUFS: value.maximumShortTermLUFS,
+            maximaResetRevision: value.maximaResetRevision, isFinal: isFinal
         )
     }
 
@@ -508,6 +522,13 @@ private final class ControlledLiveMeterDecoder: @unchecked Sendable {
     }
 
     func emit(_ snapshot: LiveAudioMeterSnapshot, stream: Int) {
+        let entry = lock.withLock { entries[stream]?.first }
+        entry?.onSnapshot(snapshot.applyingMaximaResetRevision(
+            entry?.workerGate.currentMaximaResetRevision ?? 0
+        ))
+    }
+
+    func emitPreservingRevision(_ snapshot: LiveAudioMeterSnapshot, stream: Int) {
         let callback = lock.withLock { entries[stream]?.first?.onSnapshot }
         callback?(snapshot)
     }

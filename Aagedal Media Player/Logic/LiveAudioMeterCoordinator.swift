@@ -147,7 +147,8 @@ final class LiveAudioMeterCoordinator: ObservableObject {
     /// decoder/DSP window history. The reducer also updates any unpublished
     /// coalesced snapshot atomically.
     func clearMaxima() {
-        handoff?.clearMaxima()
+        let revision = workerGate?.clearMaxima() ?? 0
+        handoff?.clearMaxima(minimumRevision: revision)
         reducedSnapshot = reducedSnapshot?.clearingMaxima()
     }
 
@@ -657,9 +658,9 @@ nonisolated private final class SnapshotHandoff: @unchecked Sendable {
         lock.withLock { isSuspended = true }
     }
 
-    func clearMaxima() {
+    func clearMaxima(minimumRevision: UInt64) {
         lock.withLock {
-            reducer.clearMaxima()
+            reducer.clearMaxima(minimumRevision: minimumRevision)
             pending = pending?.clearingMaxima()
         }
     }
@@ -712,6 +713,7 @@ nonisolated private struct SnapshotReducer: Sendable {
     private var trueMaxima: [Double?]
     private var maximumMomentary: Double?
     private var maximumShortTerm: Double?
+    private var minimumMaximaResetRevision: UInt64 = 0
 
     init(format: LiveAudioMeterFormat) {
         sampleDisplays = (0..<format.channelCount).map { _ in
@@ -724,7 +726,13 @@ nonisolated private struct SnapshotReducer: Sendable {
 
     mutating func consume(_ snapshot: LiveAudioMeterSnapshot) throws -> LiveAudioMeterReducedSnapshot {
         guard snapshot.samplePeakDBFS.count == sampleDisplays.count,
-              snapshot.truePeakDBTP.count == trueDisplays.count else {
+              snapshot.truePeakDBTP.count == trueDisplays.count,
+              snapshot.maximumSamplePeakDBFS.count == sampleDisplays.count,
+              snapshot.maximumTruePeakDBTP.count == trueDisplays.count,
+              snapshot.maximumSamplePeakDBFS.allSatisfy(LiveAudioPeakDisplay.isValidLevel),
+              snapshot.maximumTruePeakDBTP.allSatisfy(LiveAudioPeakDisplay.isValidLevel),
+              snapshot.maximumMomentaryLUFS.map(LiveAudioPeakDisplay.isValidLevel) ?? true,
+              snapshot.maximumShortTermLUFS.map(LiveAudioPeakDisplay.isValidLevel) ?? true else {
             throw LiveAudioMeterDisplayError.invalidLevel
         }
         for channel in sampleDisplays.indices {
@@ -740,11 +748,23 @@ nonisolated private struct SnapshotReducer: Sendable {
                 isFinal: snapshot.isFinal,
                 display: &trueDisplays[channel]
             )
-            sampleMaxima[channel] = Self.maximum(sampleMaxima[channel], snapshot.samplePeakDBFS[channel])
-            trueMaxima[channel] = Self.maximum(trueMaxima[channel], snapshot.truePeakDBTP[channel])
         }
-        maximumMomentary = Self.maximum(maximumMomentary, snapshot.momentaryLUFS)
-        maximumShortTerm = Self.maximum(maximumShortTerm, snapshot.shortTermLUFS)
+        if snapshot.maximaResetRevision >= minimumMaximaResetRevision {
+            for channel in sampleDisplays.indices {
+                sampleMaxima[channel] = Self.maximum(
+                    sampleMaxima[channel], snapshot.maximumSamplePeakDBFS[channel]
+                )
+                trueMaxima[channel] = Self.maximum(
+                    trueMaxima[channel], snapshot.maximumTruePeakDBTP[channel]
+                )
+            }
+            maximumMomentary = Self.maximum(
+                maximumMomentary, snapshot.maximumMomentaryLUFS
+            )
+            maximumShortTerm = Self.maximum(
+                maximumShortTerm, snapshot.maximumShortTermLUFS
+            )
+        }
         return LiveAudioMeterReducedSnapshot(
             measurement: snapshot,
             samplePeaks: sampleDisplays.indices.map { channel in
@@ -770,7 +790,8 @@ nonisolated private struct SnapshotReducer: Sendable {
         )
     }
 
-    mutating func clearMaxima() {
+    mutating func clearMaxima(minimumRevision: UInt64) {
+        minimumMaximaResetRevision = max(minimumMaximaResetRevision, minimumRevision)
         sampleMaxima = .init(repeating: nil, count: sampleMaxima.count)
         trueMaxima = .init(repeating: nil, count: trueMaxima.count)
         maximumMomentary = nil

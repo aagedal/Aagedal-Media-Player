@@ -60,7 +60,25 @@ nonisolated struct LiveAudioMeterSnapshot: Equatable, Sendable {
     let maximumTruePeakDBTP: [Double]
     let maximumMomentaryLUFS: Double?
     let maximumShortTermLUFS: Double?
+    /// Identifies the most recent worker-side Clear Maxima command applied
+    /// before this snapshot was calculated. Presentation ignores maxima from
+    /// older revisions without discarding their current readings/ballistics.
+    let maximaResetRevision: UInt64
     let isFinal: Bool
+
+    func applyingMaximaResetRevision(_ revision: UInt64) -> Self {
+        Self(
+            endFrame: endFrame, segmentStartFrame: segmentStartFrame,
+            samplePeakDBFS: samplePeakDBFS, truePeakDBTP: truePeakDBTP,
+            momentaryLUFS: momentaryLUFS, shortTermLUFS: shortTermLUFS,
+            loudnessEndFrame: loudnessEndFrame,
+            maximumSamplePeakDBFS: maximumSamplePeakDBFS,
+            maximumTruePeakDBTP: maximumTruePeakDBTP,
+            maximumMomentaryLUFS: maximumMomentaryLUFS,
+            maximumShortTermLUFS: maximumShortTermLUFS,
+            maximaResetRevision: revision, isFinal: isFinal
+        )
+    }
 }
 
 nonisolated struct LiveAudioMeterDSP: Sendable {
@@ -234,7 +252,7 @@ nonisolated struct LiveAudioMeterDSP: Sendable {
             shortTermLUFS: shortTerm, loudnessEndFrame: loudnessEndFrame, maximumSamplePeakDBFS: maximumSamplePeaks.map(Self.decibels),
             maximumTruePeakDBTP: maximumTruePeaks.map(Self.decibels),
             maximumMomentaryLUFS: maximumMomentary, maximumShortTermLUFS: maximumShortTerm,
-            isFinal: isFinal)
+            maximaResetRevision: 0, isFinal: isFinal)
     }
 
     private static func decibels(_ amplitude: Double) -> Double {

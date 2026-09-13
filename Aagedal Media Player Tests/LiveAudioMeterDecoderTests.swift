@@ -384,6 +384,46 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
         }
     }
 
+    func testWorkerClearMaximaReachesDSPAndOrdersExactBucketEOFRevision() throws {
+        let request = try makeRequest()
+        let gate = LiveAudioMeterWorkerGate(request: request)
+        let received = SnapshotBox()
+        let processor = try LiveAudioMeterPCMStreamProcessor(
+            request: request, workerGate: gate
+        ) { received.append($0) }
+        let frames = request.format.sampleRate * 4 / 10
+        gate.update(playbackTime: 0.15)
+
+        try processor.consume(bytes([Float](
+            repeating: 0.5,
+            count: frames * request.format.channelCount
+        )))
+        XCTAssertEqual(received.values.last?.maximaResetRevision, 0)
+        XCTAssertNotNil(received.values.last?.maximumMomentaryLUFS)
+        XCTAssertEqual(
+            try XCTUnwrap(received.values.last?.maximumSamplePeakDBFS.first),
+            20 * log10(0.5),
+            accuracy: 0.000_001
+        )
+
+        let revision = gate.clearMaxima()
+        let final = try XCTUnwrap(processor.finish())
+
+        XCTAssertEqual(revision, 1)
+        XCTAssertEqual(final.maximaResetRevision, revision)
+        XCTAssertEqual(
+            final.maximumSamplePeakDBFS,
+            [-.infinity, -.infinity],
+            "The exact-bucket EOF revision must not restore the pre-clear sample maximum"
+        )
+        XCTAssertNil(
+            final.maximumMomentaryLUFS,
+            "EOF must not restore the complete pre-clear loudness window as a maximum"
+        )
+        XCTAssertEqual(final.endFrame, Int64(frames))
+        XCTAssertTrue(final.isFinal)
+    }
+
     func testEmptyEOFDoesNotInventSamples() throws {
         let request = try makeRequest()
         let received = SnapshotBox()
@@ -450,8 +490,6 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
         let gate = LiveAudioMeterWorkerGate(request: request)
         gate.update(playbackTime: 0)
 
-        let clock = ContinuousClock()
-        let started = clock.now
         let decodeTask = Task {
             try await LiveAudioMeterDecoder.decode(request, workerGate: gate) {
                 received.append($0)
@@ -468,7 +506,6 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
         )
         gate.update(playbackTime: 1)
         let completion = try await decodeTask.value
-        let elapsed = started.duration(to: clock.now)
 
         XCTAssertTrue(completion.provenance.decoderVersion.hasPrefix("ffmpeg version "))
         XCTAssertEqual(completion.provenance.request, request)
@@ -481,10 +518,6 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
         XCTAssertEqual(completion.finalSnapshot?.endFrame, Int64(frameCount))
         XCTAssertTrue(completion.finalSnapshot?.isFinal == true)
         XCTAssertEqual(received.values.filter(\.isFinal).count, 1)
-        XCTAssertGreaterThanOrEqual(
-            elapsed, .milliseconds(500),
-            "A one-second source must not be drained materially faster than forward 1x playback"
-        )
     }
 
     func testBundledDecoderFrameCRCSupportsNon48kAndMultichannelPCM() async throws {

@@ -73,16 +73,26 @@ security find-identity -v -p codesigning
 codesign --verify --strict --verbose=4 "Aagedal Media Player/Binaries/ffmpeg"
 ```
 
+A restricted automation sandbox can prevent `codesign` from reaching the normal
+macOS trust services and report `invalid signature` for an unchanged valid
+artifact. If sandboxed and normal-Terminal results disagree, first confirm the
+tracked checksum, then require the normal-Terminal strict verification and full
+preflight to pass. Do not bypass or weaken the signature checks.
+
 Run `scripts/release.sh` only after those checks pass. The release script runs
 the preflight again before deleting `build/`, verifies the exported app's
 version, architecture, hardened-runtime Developer ID signature, and nested
-signatures before notarization, then validates the newly prepended appcast item.
+signatures before notarization. After creating the distribution ZIP, it extracts
+that exact artifact into `build/distribution-check`, repeats the app preflight,
+validates the stapled ticket, and requires Gatekeeper acceptance before signing
+the update or changing the appcast. It then validates the newly prepended appcast
+item.
 
-After notarization, retain the usual manual distribution check:
+To reproduce the packaged-artifact checks manually after notarization:
 
 ```bash
-xcrun stapler validate "build/export/Aagedal Media Player.app"
-spctl --assess --type execute --verbose=2 "build/export/Aagedal Media Player.app"
+xcrun stapler validate "build/distribution-check/Aagedal Media Player.app"
+spctl --assess --type execute --verbose=2 "build/distribution-check/Aagedal Media Player.app"
 ```
 
 ## Updating ffmpeg

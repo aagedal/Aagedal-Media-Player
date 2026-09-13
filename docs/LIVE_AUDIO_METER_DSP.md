@@ -70,6 +70,14 @@ independent numeric maxima. Peaks measured before clearing cannot relatch from
 a previously accumulated bucket; subsequently reconstructed samples can still
 contribute through the retained FIR history.
 
+The window coordinator now sends Clear Maxima to the serial DSP worker through
+an ordered revision on its bounded worker gate. Every worker snapshot carries
+the revision applied before calculation, and the one-slot presentation handoff
+rejects maxima from older revisions while continuing to consume their current
+readings for source-time ballistics. This also covers an in-flight or exact-
+bucket EOF revision: a pre-clear peak cannot reappear after the UI has cleared
+it, while FIR-tail peaks actually calculated after the clear remain eligible.
+
 ## Display foundation
 
 `LiveAudioPeakDisplay` supplies immediate attack, 20 dB/s decay and an independent

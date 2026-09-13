@@ -1955,10 +1955,41 @@ pass. A reported extracted stream's eight-frame timestamp overlap now has an
 exact regression and is normalized within the one-millisecond container-jitter
 bound; retesting that source remains representative-media acceptance. The full
 649-test Debug suite passes with the one expected opt-in real-volume-exhaustion
-skip, and static analysis passes. Release preflight stops only at strict
-verification of the bundled FFmpeg signature.
+skip, and static analysis passes. The complete 61-check release preflight also
+passes for 1.6.1 (163) outside the restricted workspace sandbox. Strict
+verification there confirms the expected Developer ID team, Hardened Runtime,
+and secure timestamp; the sandbox-only `invalid signature` result is not an
+artifact failure.
 
-## Integrated continuation verification — 2026-09-12
+## Phase 86 — Ordered meter clears and packaged-artifact verification
+
+Status: Engineering complete on 2026-09-13; candidate distribution and
+representative-media acceptance remain open.
+
+- [x] Carry a monotonic Clear Maxima revision through the playback owner,
+  worker gate, DSP and presentation reducer without restarting source-time
+  loudness windows or peak ballistics.
+- [x] Reject stale pre-clear numerical maxima while still accepting their
+  current readings, and use worker-authored maxima after the clear so an
+  in-flight or exact-bucket EOF snapshot cannot restore earlier peaks.
+- [x] Cover clear ordering, stale callbacks, silent `-.infinity` maxima,
+  subsequent rebasing and exact-bucket EOF with focused regressions.
+- [x] Move final subprocess callback-barrier draining to a utility queue so
+  timestamp-side-channel ordering no longer triggers priority-inversion
+  diagnostics.
+- [x] Re-extract the exact final distribution ZIP and require app preflight,
+  stapler validation and Gatekeeper assessment before Sparkle signing or
+  appcast publication.
+- [x] Confirm all 61 source-tree release-preflight checks outside the restricted
+  sandbox and distinguish its unavailable signing trust services from an
+  actual tracked-binary defect.
+
+The final optimized run passes 649 tests with one expected opt-in
+real-volume-exhaustion skip (650 total), with no failures. Xcode static analysis
+passes. Candidate archive, Developer ID signing, notarization, final ZIP
+validation, representative smoke tests and publication have not been performed.
+
+## Integrated continuation verification — 2026-09-13
 
 The live-meter decoder now runs at source-rate pace, preserves one controlled
 decoder/DSP generation across pause and buffering, and binds exact selected A/B
@@ -1985,11 +2016,13 @@ Review commands now toggle Comparison Review and navigate previous/next matching
 notes without toolbar traversal. They do not replace native Full Keyboard Access
 or spoken VoiceOver acceptance.
 
-The full run passes all 649 ordinary Debug tests; the optional
-real-volume-exhaustion test is the sole skip. Static analysis passes. New focused
-Phase 85 regressions also pass. Release preflight remains blocked by strict
-verification of the bundled FFmpeg signature, so candidate signing and
-distribution acceptance remain open.
+The final optimized run passes 649 Release tests; the optional
+real-volume-exhaustion test is the sole skip (650 total). Static analysis passes.
+New focused Phase 85–86 regressions also pass without Thread Performance Checker
+warnings. All 61 release-preflight checks pass outside the restricted workspace
+sandbox, including strict verification of the bundled FFmpeg signature.
+Candidate archive, signing, notarization, packaging, and distribution acceptance
+remain open.
 
 ## Remaining work after this continuation
 
@@ -2218,3 +2251,5 @@ distribution acceptance remain open.
 76. Phase 84 programme analysis teardown, profiling and long-range integrity.
 
 77. Phase 85 timestamp-verified live-meter transport.
+
+78. Phase 86 ordered meter clears and packaged-artifact verification.
