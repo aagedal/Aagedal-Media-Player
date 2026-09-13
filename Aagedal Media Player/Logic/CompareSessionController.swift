@@ -442,6 +442,7 @@ final class CompareSessionController: ObservableObject {
     private var readinessTask: Task<Void, Never>?
     private var pendingReload: (primary: Int, secondary: Int?, time: TimeInterval, shouldResume: Bool)?
     private var driftCorrectionTask: Task<Void, Never>?
+    private var pauseSynchronizationTask: Task<Void, Never>?
     private var secondaryLoadSignpostState: OSSignpostIntervalState?
     private var driftMonitoringSignpostState: OSSignpostIntervalState?
     private var audioTrackSelectionTask: Task<Void, Never>?
@@ -523,6 +524,8 @@ final class CompareSessionController: ObservableObject {
         beginSecondaryLoadSignpost()
         loadTask?.cancel()
         readinessTask?.cancel()
+        pauseSynchronizationTask?.cancel()
+        pauseSynchronizationTask = nil
         cancelReviewRelink()
         reviewLoadTask?.cancel()
         reviewSaveTask?.cancel()
@@ -621,6 +624,8 @@ final class CompareSessionController: ObservableObject {
         loadTask = nil
         readinessTask?.cancel()
         readinessTask = nil
+        pauseSynchronizationTask?.cancel()
+        pauseSynchronizationTask = nil
         pendingReload = nil
         cancelReviewRelink()
         reviewLoadTask?.cancel()
@@ -1679,6 +1684,8 @@ final class CompareSessionController: ObservableObject {
     }
 
     func play(primary: PlayerController) {
+        pauseSynchronizationTask?.cancel()
+        pauseSynchronizationTask = nil
         guard isActive else {
             primary.play()
             return
@@ -1698,6 +1705,31 @@ final class CompareSessionController: ObservableObject {
         secondaryController.pause()
         stopDriftCorrection()
         synchronize(primary: primary)
+
+        // AVPlayer and MPV acknowledge Pause asynchronously. Repeat the exact
+        // paired seek after both backends have published their settled paused
+        // state so the few milliseconds of primary clock movement between the
+        // request and acknowledgement cannot leave B one frame behind.
+        pauseSynchronizationTask?.cancel()
+        let generation = loadGeneration.current
+        pauseSynchronizationTask = Task { @MainActor [weak self, weak primary] in
+            guard let self, let primary else { return }
+            for _ in 0..<20 {
+                guard !Task.isCancelled,
+                      self.loadGeneration.isCurrent(generation),
+                      self.isActive else { return }
+                if !primary.isPlaying && !self.secondaryController.isPlaying {
+                    self.synchronize(primary: primary)
+                    self.pauseSynchronizationTask = nil
+                    return
+                }
+                try? await Task.sleep(for: .milliseconds(25))
+            }
+            if !Task.isCancelled,
+               self.loadGeneration.isCurrent(generation) {
+                self.pauseSynchronizationTask = nil
+            }
+        }
     }
 
     func reverse(primary: PlayerController) {

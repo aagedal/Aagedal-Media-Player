@@ -65,6 +65,7 @@ All notable changes to Aagedal Media Player.
   recording run sheet.
 
 ### Changed
+- Keep paired Compare playback inside the sustained-validation fixture range and repeat exact alignment after both backends acknowledge Pause, avoiding false EOF failures and one-frame paused drift across mixed backends.
 - Candidate verification now records exact source/package provenance, runs the optimized Release suite with explicit optional-test skips, analyzes the same resolved dependency set, and retains logs/results; release archives refuse package versions outside `Package.resolved`.
 - Verify the exact final distribution ZIP by re-extracting it and repeating app preflight, notarization-ticket, and Gatekeeper checks before signing or publishing update metadata.
 - Apply continuous MPV volume-slider updates asynchronously so playback work cannot stall pointer tracking or make the audible response trail the control.

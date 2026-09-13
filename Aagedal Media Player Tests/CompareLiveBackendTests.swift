@@ -1092,6 +1092,32 @@ final class CompareLiveBackendTests: XCTestCase {
             "Active scrub did not restore one-frame paired synchronization."
         )
 
+        // The scrub/recovery checks above deliberately allow several seconds
+        // for slow machines. Reposition before the fixed eight-second sample
+        // so that setup latency cannot carry the 12-second fixture to EOF and
+        // masquerade as a transport failure.
+        session.seek(primary: primary, to: 1.25)
+        let primaryReachedObservationStart = await waitUntil(
+            tolerance: frameDuration,
+            timeout: .seconds(8)
+        ) {
+            primary.playbackTimeSnapshot() - 1.25
+        }
+        XCTAssertTrue(
+            primaryReachedObservationStart,
+            "Primary did not reach the sustained-playback start position."
+        )
+        let secondaryReachedObservationStart = await waitUntil(
+            tolerance: frameDuration,
+            timeout: .seconds(8)
+        ) {
+            secondary.playbackTimeSnapshot() - 2.25
+        }
+        XCTAssertTrue(
+            secondaryReachedObservationStart,
+            "Secondary did not reach the sustained-playback start position."
+        )
+
         try await Task.sleep(for: .milliseconds(750))
         if secondaryBackend == .mpv {
             XCTAssertEqual(
@@ -1122,8 +1148,16 @@ final class CompareLiveBackendTests: XCTestCase {
             attachment.lifetime = .keepAlways
             add(attachment)
         }
+        // MPV can briefly publish a paused property while applying a drift
+        // correction rate. Require the coordinator to restore both transports
+        // promptly instead of sampling that asynchronous notification at one
+        // arbitrary instant immediately after the observation deadline.
+        let bothStillPlaying = await waitUntil(
+            { primary.isPlaying && secondary.isPlaying },
+            timeout: .seconds(1)
+        )
         XCTAssertTrue(
-            primary.isPlaying && secondary.isPlaying,
+            bothStillPlaying,
             "A decoder stopped during sustained playback. \(observationDescription)"
         )
         XCTAssertGreaterThanOrEqual(
