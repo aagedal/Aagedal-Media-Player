@@ -31,7 +31,7 @@ The project still declares version 1.6.1.
 | Representative-media visual correctness | Finish the comparison raster/color/backend matrix and live loupe registration across rotation, PAR, different raster sizes and black bars. Record what was actually observed; independently captured display-space loupes cannot be described as frame-locked or exact source pixels. See [comparison verification matrix](../COMPARE_MODE_IMPLEMENTATION_PLAN.md#verification-matrix). |
 | Candidate and distribution evidence | Run fresh Release tests (with optional reference/real-filesystem coverage identified explicitly), static analysis and preflight against the exact candidate. Complete representative-media smoke tests, archive/sign/notarize, stapler/Gatekeeper and update-feed validation. Retain current screenshots, a workflow demo and a short editor/colorist beta with resolved blocking findings. See [release procedure](RELEASE.md) and [demo run sheet](COMPARE_MODE_DEMO.md). |
 
-The September 13 continuation passes 648 Debug tests with one expected opt-in
+The September 13 continuation passes 649 Debug tests with one expected opt-in
 real-volume-exhaustion skip and passes static analysis, including the new
 timestamp-framing and source-relative gap regressions. Release preflight stops
 on the repository's bundled FFmpeg because strict code-signature verification fails. Its dependent

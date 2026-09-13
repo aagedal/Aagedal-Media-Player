@@ -253,7 +253,8 @@ confidence as the picture.
   bounded to 250 ms beyond the playback clock, and bounded precise seeking now
   preserves generated AAC, ALAC and AC-3 intervals without unexpected gain.
   Each raw PCM packet is now verified against FFmpeg's same-process
-  frame timestamp, size and checksum. Representative real-path acceptance remains. See
+  frame timestamp, size and checksum, with only up to one millisecond of container
+  timestamp quantization normalized. Representative real-path acceptance remains. See
   `docs/LIVE_AUDIO_METER_DSP.md`.
 - [x] Add offline integrated loudness over a selected range or full file.
   The metadata inspector measures each source audio stream over Whole File or

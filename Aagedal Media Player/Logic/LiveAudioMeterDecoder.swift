@@ -292,6 +292,7 @@ nonisolated final class LiveAudioMeterTimestampedStreamProcessor: @unchecked Sen
     private let downstream: LiveAudioMeterPCMStreamProcessor
     private let expectedSampleRate: Int
     private let bytesPerFrame: Int
+    private let maximumTimestampJitterFrames: Int64
     let maximumUnmatchedByteCount: Int
     private nonisolated(unsafe) var records: [Record] = []
     private nonisolated(unsafe) var pendingPCM = Data()
@@ -314,6 +315,13 @@ nonisolated final class LiveAudioMeterTimestampedStreamProcessor: @unchecked Sen
         )
         expectedSampleRate = request.format.sampleRate
         bytesPerFrame = request.format.channelCount * MemoryLayout<Float>.size
+        // Extracted streams can retain a coarse container time base even after
+        // FFmpeg expresses the decoded packets in 1/sampleRate units. Independent
+        // packet rounding can then move a timestamp by a few source frames (for
+        // example 128 followed by 120) although the checksummed PCM is complete.
+        // One millisecond covers that quantization without concealing an audible
+        // discontinuity.
+        maximumTimestampJitterFrames = Int64(max(1, request.format.sampleRate / 1_000))
         maximumUnmatchedByteCount = request.format.sampleRate / 4 * bytesPerFrame
         pendingPCM.reserveCapacity(maximumUnmatchedByteCount)
     }
@@ -359,10 +367,21 @@ nonisolated final class LiveAudioMeterTimestampedStreamProcessor: @unchecked Sen
         guard hasTimeBase, hasSampleRate else {
             return failLocked(.missingFrameTimestampHeader)
         }
-        guard record.pts == expectedPTS else {
+        let minimumPTS = expectedPTS - maximumTimestampJitterFrames
+        let (maximumPTS, maximumPTSOverflow) = expectedPTS.addingReportingOverflow(
+            maximumTimestampJitterFrames
+        )
+        guard record.pts >= minimumPTS,
+              maximumPTSOverflow || record.pts <= maximumPTS else {
             return failLocked(.timestampDiscontinuity(
                 expectedFrame: expectedPTS, actualFrame: record.pts
             ))
+        }
+        let (nextExpectedPTS, nextPTSOverflow) = expectedPTS.addingReportingOverflow(
+            record.frameCount
+        )
+        guard !nextPTSOverflow else {
+            return failLocked(.malformedFrameTimestamp)
         }
         guard record.byteCount <= maximumUnmatchedByteCount else {
             return failLocked(.timestampPacketTooLarge(
@@ -377,7 +396,10 @@ nonisolated final class LiveAudioMeterTimestampedStreamProcessor: @unchecked Sen
         records.append(record)
         unmatchedTimingByteCount += record.byteCount
         packetCount += 1
-        expectedPTS += record.frameCount
+        // Use the verified PCM frame count as the logical source position. The
+        // packet timestamp remains an independent continuity check, but bounded
+        // container rounding must not drop or duplicate decoded samples.
+        expectedPTS = nextExpectedPTS
         condition.broadcast()
         return nil
     }

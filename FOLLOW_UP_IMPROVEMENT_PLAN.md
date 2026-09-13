@@ -1866,7 +1866,7 @@ decode, coordinator ownership, suspend/cancellation and panel-session coverage.
 The mounted panel deliberately qualifies provenance until decode completion and
 does not mark live metering as release accepted: representative compressed-source
 and production-path acceptance remain open.
-The integrated continuation passes the full 648-test Debug suite with no failures
+The integrated continuation passes the full 649-test Debug suite with no failures
 and one expected opt-in real-volume-exhaustion skip.
 
 See `docs/LIVE_AUDIO_METER_DSP.md`. A preliminary optimized standalone host
@@ -1934,8 +1934,10 @@ representative real-media and production-path acceptance remain open.
 
 - [x] Encode source PCM once and tee each FFmpeg packet to raw Float32 stdout
   plus a same-process `framecrc` timestamp record on stderr.
-- [x] Require a `1/sampleRate` time base, declared sample rate, continuous
-  PTS/DTS, exact frame/byte counts and matching Adler-32 before admitting PCM.
+- [x] Require a `1/sampleRate` time base, declared sample rate, PTS/DTS within
+  one millisecond of decoded continuity, exact frame/byte counts and matching
+  Adler-32 before admitting PCM. Normalize only bounded container timestamp
+  quantization; material gaps still fail closed.
 - [x] Bound steady-state unmatched timestamp and PCM data to 250 ms so callback
   reordering applies pipe backpressure rather than playback-duration memory growth;
   termination releases waiters to reconcile the OS-bounded final pipe tail.
@@ -1949,7 +1951,10 @@ representative real-media and production-path acceptance remain open.
   release-floor performance run.
 
 The focused timestamp processor, cross-pipe shutdown and compressed-gap regressions
-pass. The full 648-test Debug suite passes with the one expected opt-in real-volume-exhaustion
+pass. A reported extracted stream's eight-frame timestamp overlap now has an
+exact regression and is normalized within the one-millisecond container-jitter
+bound; retesting that source remains representative-media acceptance. The full
+649-test Debug suite passes with the one expected opt-in real-volume-exhaustion
 skip, and static analysis passes. Release preflight stops only at strict
 verification of the bundled FFmpeg signature.
 
@@ -1980,7 +1985,7 @@ Review commands now toggle Comparison Review and navigate previous/next matching
 notes without toolbar traversal. They do not replace native Full Keyboard Access
 or spoken VoiceOver acceptance.
 
-The full run passes all 648 ordinary Debug tests; the optional
+The full run passes all 649 ordinary Debug tests; the optional
 real-volume-exhaustion test is the sole skip. Static analysis passes. New focused
 Phase 85 regressions also pass. Release preflight remains blocked by strict
 verification of the bundled FFmpeg signature, so candidate signing and

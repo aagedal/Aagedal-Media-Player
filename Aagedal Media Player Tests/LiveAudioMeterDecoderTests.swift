@@ -99,6 +99,32 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
         XCTAssertEqual(received.values.last?.endFrame, 1_152)
     }
 
+    func testTimestampedProcessorNormalizesSubMillisecondPacketTimestampJitter() throws {
+        let request = try makeRequest()
+        let received = SnapshotBox()
+        let processor = try LiveAudioMeterTimestampedStreamProcessor(request: request) {
+            received.append($0)
+        }
+        let first = bytes([Float](repeating: 0.1, count: 128 * 2))
+        let second = bytes([Float](repeating: 0.2, count: 128 * 2))
+        let third = bytes([Float](repeating: 0.3, count: 128 * 2))
+
+        XCTAssertNil(processor.consumeTimingLine("#tb 0: 1/48000"))
+        XCTAssertNil(processor.consumeTimingLine("#sample_rate 0: 48000"))
+        XCTAssertNil(processor.consumeTimingLine(frameCRCLine(pts: 0, frames: 128, data: first)))
+        // A real extracted stream reported this eight-frame overlap. It is
+        // 0.167 ms at 48 kHz and reflects timestamp quantization, not missing PCM.
+        XCTAssertNil(processor.consumeTimingLine(frameCRCLine(pts: 120, frames: 128, data: second)))
+        XCTAssertNil(processor.consumeTimingLine(frameCRCLine(pts: 264, frames: 128, data: third)))
+        try processor.consumePCM(first + second + third)
+        processor.finishTiming()
+
+        let (final, summary) = try processor.finish()
+        XCTAssertEqual(summary, .init(packetCount: 3, frameCount: 384))
+        XCTAssertEqual(final?.endFrame, 384)
+        XCTAssertEqual(received.values.last?.endFrame, 384)
+    }
+
     func testTimestampedProcessorRejectsMalformedGapAndChecksumMismatch() throws {
         let request = try makeRequest()
         let malformed = try LiveAudioMeterTimestampedStreamProcessor(request: request) { _ in }
@@ -113,8 +139,8 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
         let packet = bytes([Float](repeating: 0, count: 1_024 * 2))
         XCTAssertNil(gap.consumeTimingLine(frameCRCLine(pts: 0, frames: 1_024, data: packet)))
         XCTAssertEqual(
-            gap.consumeTimingLine(frameCRCLine(pts: 1_025, frames: 1_024, data: packet)),
-            .timestampDiscontinuity(expectedFrame: 1_024, actualFrame: 1_025)
+            gap.consumeTimingLine(frameCRCLine(pts: 1_073, frames: 1_024, data: packet)),
+            .timestampDiscontinuity(expectedFrame: 1_024, actualFrame: 1_073)
         )
 
         let checksum = try LiveAudioMeterTimestampedStreamProcessor(request: request) { _ in }

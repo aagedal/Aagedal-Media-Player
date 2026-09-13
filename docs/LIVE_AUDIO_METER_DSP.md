@@ -10,8 +10,10 @@ tested drift/failure policy to them. A window-owned session now subscribes that
 seam and exposes an activating panel in the app. The live Audio QC roadmap and
 release gates remain open because representative-media and production acceptance
 are not complete. The decoder transport now verifies each raw PCM packet
-against FFmpeg's same-process frame timestamps, size and checksum; that closes
-the protocol-design gap without standing in for real-source acceptance.
+against FFmpeg's same-process frame timestamps, size and checksum. It normalizes
+at most one millisecond of container timestamp quantization while rejecting
+material gaps; that closes the protocol-design gap without standing in for
+real-source acceptance.
 
 ## Measurement core
 
@@ -191,7 +193,7 @@ continuity, suspend before and after attachment, resume, and cancellation while
 stopped. These are calculation and process-control tests; synthetic PCM is not evidence of a validated live
 source decoder or all programme/transient families.
 
-The timestamp-verified continuation passes the full 648-test Debug suite with no
+The timestamp-verified continuation passes the full 649-test Debug suite with no
 failures and one expected opt-in real-volume-exhaustion skip. It adds focused
 coverage for current-clock startup/retry, source replacement, late metadata,
 preference persistence, auxiliary-panel command routing, malformed-snapshot
