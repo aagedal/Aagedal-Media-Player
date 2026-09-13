@@ -296,6 +296,11 @@ final class LiveAudioMeterCoordinator: ObservableObject {
                     return
                 }
                 begin(repositioned, cause: restartCause(for: cause))
+                // The discontinuity snapshot is the authoritative transport
+                // state for the new generation. Reapply it immediately so a
+                // paused or buffering seek cannot leave the replacement
+                // decoder running until a later periodic clock event arrives.
+                updatePlaybackClock(playback)
             }
         }
     }

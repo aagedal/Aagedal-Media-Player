@@ -50,8 +50,8 @@ final class LiveAudioMeterSession: ObservableObject {
         }
         comparison.$secondaryURL
             .removeDuplicates()
-            .sink { [weak self] _ in
-                self?.comparisonSourcesChanged()
+            .sink { [weak self] secondaryURL in
+                self?.comparisonSourcesChanged(secondaryURL: secondaryURL)
             }
             .store(in: &comparisonCancellables)
         comparison.$isSecondaryReady
@@ -66,7 +66,7 @@ final class LiveAudioMeterSession: ObservableObject {
     func start() {
         guard !isClosed, !hasStarted else { return }
         hasStarted = true
-        refreshSourceOptions()
+        refreshSourceOptions(secondaryURL: comparison.secondaryURL)
         bindSelectedPlayer()
         reconcileSelectedSource(initial: true)
     }
@@ -170,9 +170,11 @@ final class LiveAudioMeterSession: ObservableObject {
         )
     }
 
-    private func comparisonSourcesChanged() {
+    private func comparisonSourcesChanged(secondaryURL: URL?) {
         guard !isClosed else { return }
-        refreshSourceOptions()
+        // `@Published` emits from `willSet`, so use the value delivered by the
+        // publisher instead of rereading `comparison.secondaryURL` here.
+        refreshSourceOptions(secondaryURL: secondaryURL)
         if selectedSourceID == Self.secondarySourceID,
            !sourceOptions.contains(where: { $0.id == Self.secondarySourceID }) {
             selectedSourceID = Self.primarySourceID
@@ -184,12 +186,12 @@ final class LiveAudioMeterSession: ObservableObject {
         }
     }
 
-    private func refreshSourceOptions() {
+    private func refreshSourceOptions(secondaryURL: URL?) {
         var options: [LiveAudioMeterSourceOption] = []
         if primary.mediaItem != nil {
             options.append(option(id: Self.primarySourceID, label: "Source A", player: primary))
         }
-        if comparison.secondaryURL != nil {
+        if secondaryURL != nil {
             options.append(option(
                 id: Self.secondarySourceID,
                 label: "Source B",
@@ -224,7 +226,7 @@ final class LiveAudioMeterSession: ObservableObject {
             .dropFirst()
             .sink { [weak self, weak player] _ in
                 guard let self, let player, self.selectedPlayer === player else { return }
-                self.refreshSourceOptions()
+                self.refreshSourceOptions(secondaryURL: self.comparison.secondaryURL)
                 self.reconcileSelectedSource()
             }
     }
@@ -236,13 +238,13 @@ final class LiveAudioMeterSession: ObservableObject {
             sourceFailure = nil
             awaitsSourceReadiness = true
             coordinator.handlePlaybackEvent(event)
-            refreshSourceOptions()
+            refreshSourceOptions(secondaryURL: comparison.secondaryURL)
         case .discontinuity(.audioTrackReplacement, let snapshot):
             selectedSource = nil
             sourceFailure = nil
             awaitsSourceReadiness = false
             coordinator.handlePlaybackEvent(event)
-            refreshSourceOptions()
+            refreshSourceOptions(secondaryURL: comparison.secondaryURL)
             reconcileSelectedSource(at: snapshot.time)
         default:
             coordinator.handlePlaybackEvent(event)

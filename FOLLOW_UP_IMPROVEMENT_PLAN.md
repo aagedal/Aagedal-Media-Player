@@ -2020,6 +2020,35 @@ Evidence is retained in `/tmp/aagedal-candidate-5ea936e`, including
 not claim that the six optional input families, real-volume APFS exhaustion,
 representative-media smoke tests or final distribution have been accepted.
 
+## Phase 88 — Live-meter source transitions and production-path integration
+
+Status: Engineering complete on 2026-09-13; representative real-media and
+native acceptance remain open.
+
+- [x] Reapply the authoritative transport snapshot immediately after every
+  seek, frame-step, scrub, loop-wrap or geometry-reload restart so a paused or
+  buffering discontinuity cannot leave its replacement decoder running.
+- [x] Use the secondary URL emitted by Combine when comparison source B changes,
+  avoiding stale `@Published` `willSet` state during dynamic addition/removal.
+- [x] Verify that selecting a distinct B stream restarts measurement exactly
+  once, monitoring A/B selection, volume, mute and channel routing do not alter
+  the measured source, and removing B cancels it and falls back to A.
+- [x] Exercise the shipping metadata, player, window-session, bundled FFmpeg,
+  DSP and presentation path with generated compressed ALAC 5.1, proving all six
+  source channels and decoder provenance remain independent of monitor routing.
+- [x] Expose shown/hidden and selected state for the compact Comparison Controls
+  and Comparison Review toolbar toggles.
+- [ ] Repeat live-meter correctness, drift, cancellation and accessibility
+  acceptance with representative real programme material on the release-floor
+  Mac.
+
+The combined session/coordinator/production-path batch passes 23 focused tests.
+The generated compressed case uses the typed player-completion boundary instead
+of a one-second wall-clock playback race, so concurrent DSP load cannot make the
+test confuse host starvation with a source-integration failure. The full Debug
+suite passes 648 tests with seven explicit optional-input skips (655 total), and
+Xcode static analysis passes.
+
 ## Integrated continuation verification — 2026-09-13
 
 The live-meter decoder now runs at source-rate pace, preserves one controlled
@@ -2032,8 +2061,10 @@ active-player command routing are now integrated. Worker-side PCM admission is
 hard bounded to 250 ms beyond the playback clock. Bounded precise seeking also
 preserves generated AAC, ALAC and AC-3 sample intervals and gain. Phase 85 now
 verifies every PCM packet against its same-process timestamp, size and
-checksum; representative compressed-source validation remains. The new
-production-path metadata profiler observes RSS before the first uncached load,
+checksum. Phase 88 verifies the complete shipping path on generated compressed
+ALAC 5.1, including six-channel peaks, provenance, paused discontinuities and
+A/B monitoring independence; representative real-source validation remains.
+The new production-path metadata profiler observes RSS before the first uncached load,
 checks cache parity and caller release, and validates one fresh XCTest host per
 input; its 61-second ALAC end-to-end run validates the harness, not the long-file
 memory gate.
@@ -2290,3 +2321,5 @@ remain open.
 78. Phase 86 ordered meter clears and packaged-artifact verification.
 
 79. Phase 87 reproducible candidate verification and mixed-backend pause ownership.
+
+80. Phase 88 live-meter source transitions and production-path integration.

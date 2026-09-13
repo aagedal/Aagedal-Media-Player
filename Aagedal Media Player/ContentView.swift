@@ -566,8 +566,10 @@ struct ContentView: View {
                     }
                     .buttonStyle(.plain)
                     .playerToolbarFocus()
-                    .help("Show comparison controls")
+                    .help(showComparisonControls ? "Hide comparison controls" : "Show comparison controls")
                     .accessibilityLabel("Comparison controls")
+                    .accessibilityValue(showComparisonControls ? "Shown" : "Hidden")
+                    .accessibilityAddTraits(showComparisonControls ? .isSelected : [])
                     .popover(isPresented: $showComparisonControls, arrowEdge: .bottom) {
                         ScrollViewReader { scrollView in
                             ScrollView {
@@ -610,7 +612,10 @@ struct ContentView: View {
                 .playerToolbarFocus()
                 .help("Add or edit frame-accurate comparison notes")
                 .accessibilityLabel("Comparison review notes")
-                .accessibilityValue("\(compareSession.reviewNotes.count) notes")
+                .accessibilityValue(
+                    "\(showReviewNotes ? "Shown" : "Hidden"), \(compareSession.reviewNotes.count) notes"
+                )
+                .accessibilityAddTraits(showReviewNotes ? .isSelected : [])
                 .popover(isPresented: $showReviewNotes, arrowEdge: .bottom) {
                     CompareReviewView(
                         primaryController: controller,

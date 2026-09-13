@@ -8,8 +8,9 @@ The same continuation now adds selected-track meter identity, typed player
 events and clock policy, an owning per-window meter session and activating
 panel, timestamp-verified decoder packets, an exact candidate-checkout
 validation mode, explicit optional-test skips, mixed-backend paused-alignment
-hardening, and direct Review commands. No new editor, accessibility or
-release-floor hardware acceptance is implied.
+hardening, direct Review commands, deterministic paused-discontinuity ownership,
+dynamic A/B meter fallback, and compressed 5.1 production-path coverage. No new
+editor, accessibility or release-floor hardware acceptance is implied.
 
 The Review & Report implementation is substantially present: structured point
 and range findings, versioned local sidecars, relinking, deliberate historical
@@ -26,7 +27,7 @@ The project still declares version 1.6.1.
 | Gap | Acceptance evidence required |
 | --- | --- |
 | Production metadata memory spike | Complete the reviewed dependency integration and outstanding fixture/error-semantics review; pin the accepted revision and repeat full-app long-file profiling. The isolated candidate's roughly 20 MiB peak versus the original dependency's roughly 4.3 GiB is promising, but is not a shipping-app result. A fresh-process production-path profiler now measures from before the uncached load through cache parity and caller release, but its one-minute harness check is not the required one/eight-hour before-and-after acceptance. See [metadata investigation](METADATA_MEMORY_PERFORMANCE.md) and [library fixture acceptance](METADATA_LIBRARY_FIXTURE_VALIDATION.md). |
-| Committed live Audio QC | Implement peak/true-peak and momentary/short-term loudness with explicit units, calibration, ballistics, hold/reset behavior, and presets. Validate the actual live path against trusted references, including pause/seek/replacement, channel routing, malformed media and cancellation; demonstrate bounded work during long playback. Existing offline loudness results do not satisfy this promise. See the [live-meter implementation contract](LIVE_AUDIO_METER_DESIGN.md) and [offline audio loudness](AUDIO_LOUDNESS.md). The design, bounded DSP/display, source-rate-paced suspendable decoder, hard 250 ms worker admission bound, timestamp-verified packets, bounded precise seek with generated AAC/ALAC/AC-3 checks, lifecycle ownership, selected A/B track mapping, typed player events, clock/drift policy, owning window session and mounted activating UI are implemented. Representative compressed media and full production-path acceptance remain. See [meter foundation](LIVE_AUDIO_METER_DSP.md). |
+| Committed live Audio QC | Implement peak/true-peak and momentary/short-term loudness with explicit units, calibration, ballistics, hold/reset behavior, and presets. Validate the actual live path against trusted references, including pause/seek/replacement, channel routing, malformed media and cancellation; demonstrate bounded work during long playback. Existing offline loudness results do not satisfy this promise. See the [live-meter implementation contract](LIVE_AUDIO_METER_DESIGN.md) and [offline audio loudness](AUDIO_LOUDNESS.md). The design, bounded DSP/display, source-rate-paced suspendable decoder, hard 250 ms worker admission bound, timestamp-verified packets, bounded precise seek with generated AAC/ALAC/AC-3 checks, lifecycle ownership, selected A/B track mapping and fallback, typed player events, clock/drift policy, owning window session and mounted activating UI are implemented. Generated compressed ALAC 5.1 now passes the shipping metadata/player/session/FFmpeg/DSP/presentation path under independent monitor routing. Representative real media and complete native production acceptance remain. See [meter foundation](LIVE_AUDIO_METER_DSP.md). |
 | Real editor interoperability | Complete Resolve, Final Cut Pro, and Avid acceptance rows with exact editor versions and retained import/re-export results. Check fractional rates, DF minute/ten-minute boundaries, inclusive ranges, duplicate positions, note content, and source identity. Where re-export is unavailable, retain the documented visible frame/count evidence and explicitly state the limitation. App exports and parser tests alone are insufficient. See [interchange run sheet](COMPARE_MODE_INTERCHANGE.md). |
 | Release-floor playback and resource use | Run the named base 2020 M1 MacBook Air/8 GB gate: 120 seconds per comparison scenario, including UHD/HDR, mixed backends, reflected sources, scopes and loupe; retain decoder/drift results plus Instruments CPU/GPU and thermal observations. Complete concurrent-playback long-file thumbnail and multichannel loudness profiles. September 12 programme profiling exposed and corrected silent long-range channel loss; per-input container-index memory still grows with duration, and sleep-interrupted timings are excluded. See [programme profiling](PROGRAMME_LOUDNESS_PERFORMANCE.md). See [comparison performance](COMPARE_MODE_PERFORMANCE.md), [thumbnails](TIMELINE_THUMBNAIL_PERFORMANCE.md), and [loudness performance](AUDIO_LOUDNESS_PERFORMANCE.md). |
 | Complete native workflows and accessibility | Finish keyboard-only structured review creation/edit/filter/navigation/export, relink/migration/recovery, timeline zoom/hover, and audio controls. Complete Full Keyboard Access and spoken VoiceOver, including narrow layouts and both backends. Focused existing native checks cover useful subsets; accessibility-tree labels are not spoken VoiceOver acceptance. See [review native checks](COMPARE_REVIEW_NATIVE_CHECK_2026-09-08.md), [timeline](TIMELINE_NAVIGATION.md), and [loupe manual tests](INSPECTION_LOUPE_MANUAL_TESTS.md). |
@@ -43,6 +44,12 @@ mixed-backend transport/pause coverage. Evidence, including the exact
 `Package.resolved` hash, is retained at `/tmp/aagedal-candidate-5ea936e`.
 Focused subprocess/decoder verification also passes without the earlier
 callback-barrier priority-inversion diagnostics.
+Phase 88 adds a 23-test focused session/coordinator/production-path pass that
+covers paused seek ownership, dynamic distinct-stream A/B selection and fallback,
+monitor-routing invariance, and generated compressed six-channel measurement.
+The resulting full Debug suite passes 648 tests with seven explicit skips (655
+total), and Xcode static analysis passes. This is current regression evidence,
+not a replacement for the final clean-checkout Release verifier.
 The complete 61-check release preflight passes for 1.6.1 (163) when run
 outside the restricted workspace sandbox, where macOS can reach its normal
 code-signing trust services.

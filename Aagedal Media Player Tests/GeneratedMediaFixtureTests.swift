@@ -203,6 +203,86 @@ final class GeneratedMediaFixtureTests: XCTestCase {
     }
 
     @MainActor
+    func testLiveMeterProductionPathMeasuresCompressedSourceIndependentlyOfMonitoring() async throws {
+        guard FFmpegService.ffmpegPath != nil else { throw XCTSkip("Bundled ffmpeg is required") }
+        let controller = PlayerController(proResRAWDetector: { _, _ in true })
+        let comparison = CompareSessionController()
+        let defaultsSuite = "GeneratedMediaFixtureTests.LiveMeter.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: defaultsSuite)!
+        let session = LiveAudioMeterSession(
+            primary: controller,
+            comparison: comparison,
+            defaults: defaults
+        )
+        defer {
+            session.close()
+            comparison.stop()
+            controller.teardown()
+            defaults.removePersistentDomain(forName: defaultsSuite)
+        }
+
+        try await loadMultichannelFixture(into: controller)
+        let ready = await waitUntil {
+            controller.isReady && !controller.useMPV && controller.selectedAudioChannelCount == 6
+        }
+        XCTAssertTrue(ready)
+
+        session.start()
+        let openedPaused = await waitUntil {
+            if case .paused = session.coordinator.status { return true }
+            return false
+        }
+        XCTAssertTrue(openedPaused)
+        let generation = session.coordinator.generation
+
+        controller.volume = 0
+        controller.isMuted = true
+        controller.setSessionAudioChannelRouting(
+            AudioChannelRouting(channelCount: 6, soloedChannels: [0])
+        )
+        XCTAssertEqual(session.coordinator.generation, generation)
+
+        // Advance the coordinator through its typed player-completion boundary
+        // without depending on wall-clock AVPlayer scheduling.
+        // The full suite deliberately saturates the machine with DSP and live
+        // backend tests, which can make a one-second player outrun its decoder
+        // even though the source/decode integration is correct.
+        let playerState = controller.liveAudioMeterPlaybackSnapshot()
+        session.coordinator.handlePlaybackEvent(.ended(.init(
+            time: 1,
+            phase: playerState.phase,
+            isPlaying: false,
+            rate: playerState.rate,
+            preparationID: playerState.preparationID
+        )))
+        let completed = await waitUntil(timeout: .seconds(15)) {
+            if case .ended = session.coordinator.status { return true }
+            return false
+        }
+        XCTAssertTrue(
+            completed,
+            "Meter did not complete: \(session.coordinator.status); " +
+                "diagnostics: \(session.viewState.diagnostics.map(\.detail))"
+        )
+        XCTAssertEqual(session.coordinator.generation, generation)
+        XCTAssertEqual(session.viewState.selectedSourceID, LiveAudioMeterSession.primarySourceID)
+        XCTAssertEqual(session.viewState.channels.map(\.label), [
+            "Left", "Right", "Center", "LFE", "Back Left", "Back Right",
+        ])
+        XCTAssertTrue(
+            session.viewState.channels.allSatisfy {
+                ($0.samplePeak.maximum ?? -.infinity) > -1
+            },
+            "Expected source-level peaks for every channel: \(session.viewState.channels)"
+        )
+        XCTAssertEqual(session.coordinator.provenance?.request.url,
+                       try fixtureDirectory().appending(path: "multichannel-5.1.m4a"))
+        XCTAssertEqual(session.coordinator.provenance?.request.audioStreamOrderIndex, 0)
+        XCTAssertEqual(session.coordinator.provenance?.timestampFrameCount, 48_000)
+        XCTAssertEqual(session.coordinator.provenance?.timestampTimeBase, "1/48000")
+    }
+
+    @MainActor
     func testSubtitlesChaptersAndLongGOPFixture() async throws {
         let url = try fixtureDirectory().appending(path: "chapters-subtitles-long-gop.mkv")
         let metadata = try await MetadataService.shared.metadata(for: url)

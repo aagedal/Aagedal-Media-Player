@@ -145,6 +145,40 @@ final class LiveAudioMeterCoordinatorTests: XCTestCase {
         XCTAssertEqual(reason, "The measured audio source changed.")
     }
 
+    func testPausedSeekImmediatelySuspendsReplacementGenerationAtNewClock() async throws {
+        let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
+        let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
+        coordinator.start(try request(stream: 0, startFrame: 0))
+        await decoder.waitUntilAttached(stream: 0)
+
+        coordinator.handlePlaybackEvent(.discontinuity(
+            .seek, snapshot: playback(time: 3, playing: false)
+        ))
+        await decoder.waitUntilAttached(stream: 0, occurrence: 2)
+
+        XCTAssertEqual(coordinator.status, .paused(frame: 144_000))
+        let gate = try XCTUnwrap(decoder.gate(stream: 0))
+        XCTAssertEqual(gate.permittedEndFrame, 156_000)
+        let capacityReturned = LockedFlag()
+        let capacityTask = Task.detached {
+            let capacity = try gate.waitForByteCapacity(
+                processedEndFrame: 144_000,
+                pendingByteCount: 0,
+                bytesPerFrame: 2 * MemoryLayout<Float>.size
+            )
+            capacityReturned.set()
+            return capacity
+        }
+        try await Task.sleep(for: .milliseconds(30))
+        XCTAssertFalse(capacityReturned.value)
+
+        coordinator.updatePlaybackClock(playback(time: 3, playing: true))
+        let capacity = try await capacityTask.value
+        XCTAssertEqual(capacity, 12_000 * 2 * MemoryLayout<Float>.size)
+        XCTAssertTrue(capacityReturned.value)
+        coordinator.close()
+    }
+
     func testClockDriftFailureInvalidatesCurrentGeneration() async throws {
         let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
         let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
@@ -455,8 +489,17 @@ final class LiveAudioMeterCoordinatorTests: XCTestCase {
 
 private enum TestFailure: Error { case oldGeneration, decode }
 
+private final class LockedFlag: @unchecked Sendable {
+    private let lock = NSLock()
+    private var stored = false
+
+    var value: Bool { lock.withLock { stored } }
+    func set() { lock.withLock { stored = true } }
+}
+
 private final class ControlledLiveMeterDecoder: @unchecked Sendable {
     private struct Entry {
+        let token: UUID
         let onSnapshot: LiveAudioMeterPCMStreamProcessor.SnapshotHandler
         let workerGate: LiveAudioMeterWorkerGate
         let continuation: CheckedContinuation<LiveAudioMeterDecodeCompletion, Error>
@@ -466,6 +509,7 @@ private final class ControlledLiveMeterDecoder: @unchecked Sendable {
     private let honorCancellation: Bool
     private var entries: [Int: [Entry]] = [:]
     private var cancelled: Set<Int> = []
+    private var cancelledTokens: Set<UUID> = []
     private var attachmentCounts: [Int: Int] = [:]
     private var requests: [Int: [LiveAudioMeterDecodeRequest]] = [:]
 
@@ -478,16 +522,18 @@ private final class ControlledLiveMeterDecoder: @unchecked Sendable {
         onSnapshot: @escaping LiveAudioMeterPCMStreamProcessor.SnapshotHandler
     ) async throws -> LiveAudioMeterDecodeCompletion {
         let stream = request.audioStreamOrderIndex
+        let token = UUID()
         return try await withTaskCancellationHandler {
             try await withCheckedThrowingContinuation { continuation in
                 var cancelImmediately = false
                 lock.withLock {
                     attachmentCounts[stream, default: 0] += 1
                     requests[stream, default: []].append(request)
-                    if cancelled.contains(stream), honorCancellation {
+                    if cancelledTokens.contains(token), honorCancellation {
                         cancelImmediately = true
                     } else {
                         entries[stream, default: []].append(Entry(
+                            token: token,
                             onSnapshot: onSnapshot,
                             workerGate: workerGate,
                             continuation: continuation
@@ -499,8 +545,13 @@ private final class ControlledLiveMeterDecoder: @unchecked Sendable {
         } onCancel: {
             let continuations: [Entry] = self.lock.withLock {
                 self.cancelled.insert(stream)
+                self.cancelledTokens.insert(token)
                 guard self.honorCancellation else { return [] }
-                return self.entries.removeValue(forKey: stream) ?? []
+                guard let index = self.entries[stream]?.firstIndex(where: {
+                    $0.token == token
+                }) else { return [] }
+                let entry = self.entries[stream]!.remove(at: index)
+                return [entry]
             }
             continuations.forEach { $0.continuation.resume(throwing: CancellationError()) }
         }
