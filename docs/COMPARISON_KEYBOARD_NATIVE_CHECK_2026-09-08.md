@@ -65,6 +65,13 @@ controller tests continue to cover filtered previous/next behavior. These
 shortcuts reduce toolbar traversal; they do not by themselves constitute a new
 native Full Keyboard Access or spoken VoiceOver acceptance run.
 
+On September 13, `Command-Option-F` opened Comparison Review and placed native
+keyboard focus in **Filter review notes**; `Command-Option-N` then moved focus
+directly to **Note at current frame**. This was checked in a fresh Debug build
+with an MPV/MPV comparison. The check confirms direct field entry and preserves
+the existing toggle/navigation commands, but it is not spoken VoiceOver or
+complete Full Keyboard Access acceptance.
+
 ## Focused loupe check
 
 With Keyboard Navigation off, Tab from the loupe popover reached the timeline;

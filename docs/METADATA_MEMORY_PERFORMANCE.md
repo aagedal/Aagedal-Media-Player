@@ -174,6 +174,12 @@ full app metadata/loudness workload, including app-model conversion and release.
 The app-wide bounded-memory gate and representative hardware/content acceptance
 remain open until those checks pass.
 
+The upstream repository was checked again on 2026-09-13: both its default
+branch and latest `3.0.0` tag still resolve to
+`c2d77c2dcefcb997623e52beca57bc61ce302cb9`. No reviewed upstream revision is
+available to replace the shipping dependency, so the measured candidate fix
+remains validation-only.
+
 ## Production app profiling
 
 The opt-in production-path profile starts observing the XCTest host before its

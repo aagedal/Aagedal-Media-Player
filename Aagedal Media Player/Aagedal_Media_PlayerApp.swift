@@ -267,6 +267,20 @@ struct Aagedal_Media_PlayerApp: App {
 
                 Divider()
 
+                Button("New Review Note") {
+                    NotificationCenter.default.post(.focusCompareReviewField(.newNote))
+                }
+                .keyboardShortcut("n", modifiers: [.command, .option])
+                .disabled(isCompareModeActive != true)
+
+                Button("Filter Review Notes") {
+                    NotificationCenter.default.post(.focusCompareReviewField(.filter))
+                }
+                .keyboardShortcut("f", modifiers: [.command, .option])
+                .disabled(isCompareModeActive != true)
+
+                Divider()
+
                 Button("Previous Review Note") {
                     NotificationCenter.default.post(.seekToCompareReviewNote(.previous))
                 }

@@ -51,10 +51,11 @@ struct CompareReviewView: View {
     @ObservedObject var primaryController: PlayerController
     @ObservedObject var compareSession: CompareSessionController
     let timecodeMode: TimecodeDisplayMode
+    @Binding var requestedFocus: CompareReviewFocusTarget?
 
     @State private var draft = ""
     @State private var noteDrafts: [UUID: String] = [:]
-    @FocusState private var isDraftFocused: Bool
+    @FocusState private var focusedField: CompareReviewFocusTarget?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -72,7 +73,7 @@ struct CompareReviewView: View {
             HStack(spacing: 8) {
                 TextField("Note at current frame", text: $draft)
                     .textFieldStyle(.roundedBorder)
-                    .focused($isDraftFocused)
+                    .focused($focusedField, equals: .newNote)
                     .onSubmit {
                         if canAddNote { addNote() }
                     }
@@ -100,6 +101,7 @@ struct CompareReviewView: View {
             HStack(spacing: 8) {
                 TextField("Filter review notes", text: $compareSession.reviewSearchQuery)
                     .textFieldStyle(.roundedBorder)
+                    .focused($focusedField, equals: .filter)
                     .accessibilityLabel("Filter review notes")
                     .help("Filter note text, severity, category, status, and timeline markers. Exports always include all notes.")
                 if !compareSession.reviewSearchQuery.isEmpty {
@@ -261,7 +263,15 @@ struct CompareReviewView: View {
         .padding(14)
         .frame(width: 420)
         .disabled(compareSession.isReviewActionPending)
-        .onAppear { isDraftFocused = true }
+        .onAppear {
+            focusedField = requestedFocus ?? .newNote
+            requestedFocus = nil
+        }
+        .onChange(of: requestedFocus) { _, target in
+            guard let target else { return }
+            focusedField = target
+            requestedFocus = nil
+        }
         .onChange(of: compareSession.reviewSidecarURL) { _, _ in noteDrafts.removeAll() }
         .onChange(of: primaryController.preparationID) { _, _ in noteDrafts.removeAll() }
     }
@@ -335,7 +345,7 @@ struct CompareReviewView: View {
         if compareSession.addReviewNote(draft, primary: primaryController) {
             draft = ""
         }
-        isDraftFocused = true
+        focusedField = .newNote
     }
 
     private func exportFeedback(icon: String, color: Color, message: String) -> some View {

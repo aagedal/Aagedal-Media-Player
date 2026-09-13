@@ -8,7 +8,7 @@ The same continuation now adds selected-track meter identity, typed player
 events and clock policy, an owning per-window meter session and activating
 panel, timestamp-verified decoder packets, an exact candidate-checkout
 validation mode, explicit optional-test skips, mixed-backend paused-alignment
-hardening, direct Review commands, deterministic paused-discontinuity ownership,
+hardening, direct Review commands and focused review-field entry, deterministic paused-discontinuity ownership,
 dynamic A/B meter fallback, and compressed 5.1 production-path coverage. No new
 editor, accessibility or release-floor hardware acceptance is implied.
 
@@ -34,20 +34,18 @@ The project still declares version 1.6.1.
 | Representative-media visual correctness | Finish the comparison raster/color/backend matrix and live loupe registration across rotation, PAR, different raster sizes and black bars. Record what was actually observed; independently captured display-space loupes cannot be described as frame-locked or exact source pixels. See [comparison verification matrix](../COMPARE_MODE_IMPLEMENTATION_PLAN.md#verification-matrix). |
 | Candidate and distribution evidence | The canonical verifier now records the exact commit and resolved-package hash, runs the self-contained script-validator gate, and requires fresh optimized Release tests, static analysis and source preflight with every optional input identified as a skip. Repeat it against the final candidate, then complete representative-media smoke tests, archive/sign/notarize, stapler/Gatekeeper and update-feed validation. Retain current screenshots, a workflow demo and a short editor/colorist beta with resolved blocking findings. See [release procedure](RELEASE.md) and [demo run sheet](COMPARE_MODE_DEMO.md). |
 
-The latest September 13 clean-checkout candidate verification at commit
-`5ea936e8cc979c113e7084938a5fad1f2c58af13` passes 645 optimized Release tests
-with seven explicit skips (652 total) and passes static analysis. Six skips name
+The September 13 clean-checkout candidate verification at commit
+`3fdba621bb731aab234350df842e63fa0b4f405d` passes 654 optimized Release tests
+with seven explicit skips (661 total) and passes static analysis. Six skips name
 their required external reference/profile inputs; the seventh is the opt-in
 real-volume-exhaustion test. This includes timestamp framing, ordered
 maxima-reset, source-relative gap, live-meter window teardown, and hardened
 mixed-backend transport/pause coverage. Evidence, including the exact
-`Package.resolved` hash, is retained at `/tmp/aagedal-candidate-5ea936e`.
-That retained run predates the verifier's fast script-validator gate. The
-current verifier now syntax-checks the repository helpers and runs every
+`Package.resolved` hash, is retained at `/tmp/aagedal-candidate-3fdba62-20260913`.
+The verifier syntax-checks the repository helpers and runs every
 self-contained validator regression, including the mocked comparison-profiler
-matrix, before starting Xcode; it retains the combined log. This strengthens the
-next candidate run but is not a claim that a new clean-checkout candidate has
-passed.
+matrix, before starting Xcode; that gate passes 99 Python cases and retains the
+combined log.
 Focused subprocess/decoder verification also passes without the earlier
 callback-barrier priority-inversion diagnostics.
 Phase 88 adds a 23-test focused session/coordinator/production-path pass that
@@ -60,6 +58,10 @@ failures (660 total), followed by a focused guarded-selection regression. The
 release-helper gate passes 99 self-contained Python cases plus the mocked
 comparison-profiler matrix. This remains regression evidence, not a replacement
 for the clean-checkout optimized Release verifier.
+The subsequent direct review-field continuation passes its focused six-test
+Debug suite and a native MPV/MPV focus check; it still requires exact-commit
+candidate verification after commit and does not claim spoken VoiceOver
+acceptance.
 The complete 61-check release preflight passes for 1.6.1 (163) when run
 outside the restricted workspace sandbox, where macOS can reach its normal
 code-signing trust services.

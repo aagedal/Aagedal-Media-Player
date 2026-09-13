@@ -40,6 +40,7 @@ enum AppCommand {
     case toggleAudioWaveform
     case toggleLiveAudioMeter
     case toggleCompareReview
+    case focusCompareReviewField(CompareReviewFocusTarget)
     case seekToCompareReviewNote(CompareReviewDirection)
 
     enum PlaybackEdge {
@@ -51,6 +52,11 @@ enum AppCommand {
         let relativeSeconds: Double
         let sourceSeconds: Double?
     }
+}
+
+nonisolated enum CompareReviewFocusTarget: Hashable, Sendable {
+    case newNote
+    case filter
 }
 
 extension Notification.Name {

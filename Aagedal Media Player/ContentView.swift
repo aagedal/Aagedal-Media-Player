@@ -25,6 +25,7 @@ struct ContentView: View {
     @State private var isTimelineFocused = false
     @State private var isPlaybackControlsFocused = false
     @State private var showReviewNotes = false
+    @State private var compareReviewFocusTarget: CompareReviewFocusTarget?
     @State private var showComparisonControls = false
     @State private var deferredComparisonAction = DeferredMainActorTask()
     @State private var showCompareModeCallout = false
@@ -130,6 +131,7 @@ struct ContentView: View {
                 isEditingTimecode: $isEditingTimecode,
                 showInspector: $showInspector,
                 showReviewNotes: $showReviewNotes,
+                compareReviewFocusTarget: $compareReviewFocusTarget,
                 scopeWindowController: $scopeWindowController,
                 showScopeOverlay: $showScopeOverlay,
                 audioWaveformWindowController: $audioWaveformWindowController,
@@ -662,7 +664,8 @@ struct ContentView: View {
                     CompareReviewView(
                         primaryController: controller,
                         compareSession: compareSession,
-                        timecodeMode: timecodeMode
+                        timecodeMode: timecodeMode,
+                        requestedFocus: $compareReviewFocusTarget
                     )
                 }
 

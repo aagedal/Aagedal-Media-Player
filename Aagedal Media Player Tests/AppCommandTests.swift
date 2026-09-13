@@ -69,6 +69,23 @@ final class AppCommandTests: XCTestCase {
     }
 
     @MainActor
+    func testCompareReviewFocusRetainsTypedTarget() {
+        let center = NotificationCenter()
+        var receivedCommand: AppCommand?
+        let cancellable = center.appCommandPublisher.sink { notification in
+            receivedCommand = notification.appCommand
+        }
+
+        center.post(.focusCompareReviewField(.filter))
+
+        guard case let .focusCompareReviewField(target) = receivedCommand else {
+            return XCTFail("Expected a typed comparison-review focus command")
+        }
+        XCTAssertEqual(target, .filter)
+        withExtendedLifetime(cancellable) {}
+    }
+
+    @MainActor
     func testLiveMeterUsesTypedCommandChannel() {
         let center = NotificationCenter()
         var receivedCommand: AppCommand?

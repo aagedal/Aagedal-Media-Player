@@ -2086,6 +2086,30 @@ fast release-helper gate passes 99 Python validator tests plus the mocked
 comparison-profiler matrix. A clean-checkout optimized Release verifier remains
 the candidate gate after these changes are committed.
 
+## Phase 91 — Direct review entry and current candidate evidence
+
+Status: Focused keyboard workflow implemented on 2026-09-13; broader native
+accessibility acceptance remains open.
+
+- [x] Add typed active-window Review commands that reveal Comparison Review and
+  focus either the new-note draft or note filter.
+- [x] Preserve the existing popover toggle and previous/next finding commands.
+- [x] Cover the typed focus payload with a focused six-test Debug suite and a
+  full application compile.
+- [x] Confirm in a native MPV/MPV comparison that `Command-Option-N` and
+  `Command-Option-F` focus their named text fields.
+- [x] Run the canonical optimized verifier on the preceding clean commit
+  `3fdba621bb731aab234350df842e63fa0b4f405d`: 654 tests pass with seven
+  explicit skips (661 total), static analysis and all 61 preflight checks pass,
+  and the fast helper gate passes 99 Python cases plus the mocked comparison
+  profiler matrix.
+
+The retained candidate evidence is in
+`/tmp/aagedal-candidate-3fdba62-20260913`. Because that candidate predates this
+focused keyboard change, Phase 91 still needs an exact-commit verifier run after
+it is committed. The native check establishes direct field focus, not complete
+Full Keyboard Access or spoken VoiceOver acceptance.
+
 ## Integrated continuation verification — 2026-09-13
 
 The live-meter decoder now runs at source-rate pace, preserves one controlled
@@ -2115,8 +2139,9 @@ Review commands now toggle Comparison Review and navigate previous/next matching
 notes without toolbar traversal. They do not replace native Full Keyboard Access
 or spoken VoiceOver acceptance.
 
-The latest canonical clean-checkout run passes 645 Release tests with seven
-explicit skips (652 total): six inputs are opt-in and the bounded real-volume
+The September 13 canonical clean-checkout run at
+`3fdba621bb731aab234350df842e63fa0b4f405d` passes 654 Release tests with seven
+explicit skips (661 total): six inputs are opt-in and the bounded real-volume
 exhaustion check also remains opt-in. Release static analysis passes. New focused
 Phase 85–87 regressions also pass without Thread Performance Checker warnings.
 All 61 release-preflight checks pass outside the restricted workspace sandbox,
@@ -2364,3 +2389,5 @@ remain open.
 81. Phase 89 live-meter replacement recovery ownership.
 
 82. Phase 90 distinct live-meter accessibility identity.
+
+83. Phase 91 direct review entry and current candidate evidence.

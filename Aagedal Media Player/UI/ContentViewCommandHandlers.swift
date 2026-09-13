@@ -16,6 +16,7 @@ struct NotificationHandlers: ViewModifier {
     @Binding var isEditingTimecode: Bool
     @Binding var showInspector: Bool
     @Binding var showReviewNotes: Bool
+    @Binding var compareReviewFocusTarget: CompareReviewFocusTarget?
     @Binding var scopeWindowController: ScopeWindowController?
     @Binding var showScopeOverlay: Bool
     @Binding var audioWaveformWindowController: AudioWaveformWindowController?
@@ -38,6 +39,7 @@ struct NotificationHandlers: ViewModifier {
                 nsWindow: nsWindow,
                 showInspector: $showInspector,
                 showReviewNotes: $showReviewNotes,
+                compareReviewFocusTarget: $compareReviewFocusTarget,
                 scopeWindowController: $scopeWindowController,
                 showScopeOverlay: $showScopeOverlay,
                 audioWaveformWindowController: $audioWaveformWindowController,
@@ -71,6 +73,7 @@ private struct FileAndWindowHandlers: ViewModifier {
     let nsWindow: NSWindow?
     @Binding var showInspector: Bool
     @Binding var showReviewNotes: Bool
+    @Binding var compareReviewFocusTarget: CompareReviewFocusTarget?
     @Binding var scopeWindowController: ScopeWindowController?
     @Binding var showScopeOverlay: Bool
     @Binding var audioWaveformWindowController: AudioWaveformWindowController?
@@ -127,6 +130,13 @@ private struct FileAndWindowHandlers: ViewModifier {
                       case .toggleCompareReview = command else { return }
                 guard WindowManager.shared.isActiveWindow(nsWindow), compareSession.isActive else { return }
                 showReviewNotes.toggle()
+            }
+            .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
+                guard let command = notification.appCommand,
+                      case let .focusCompareReviewField(target) = command else { return }
+                guard WindowManager.shared.isActiveWindow(nsWindow), compareSession.isActive else { return }
+                compareReviewFocusTarget = target
+                showReviewNotes = true
             }
             .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
                 guard let command = notification.appCommand,

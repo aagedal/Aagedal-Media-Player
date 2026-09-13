@@ -5,6 +5,7 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Added
+- Direct Review menu shortcuts that open Comparison Review with either the new-note draft or note filter focused.
 - A per-player Live Audio Meter panel for source A or B, with current-clock start/retry/reset, late-metadata readiness, persisted reference controls, keyboard/menu access, and teardown with its owning playback window.
 - Opt-in production-path metadata memory profiling that starts before the first uncached load, records sampled and lifetime peak RSS, verifies cache parity, and validates one fresh XCTest host per long-file input.
 - Typed live-meter source identity and request construction for selected A/B tracks, with exact FFmpeg audio-stream order, source-sample start positions, explicit supported speaker maps and actionable format errors.

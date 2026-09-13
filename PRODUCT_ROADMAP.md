@@ -410,6 +410,9 @@ Release gates:
 - [ ] A complete review can be created and exported using only the keyboard.
   A native Keyboard Navigation check now passes a point-note creation,
   reopening and CSV export workflow, with saved frame/source identity checks.
+  Direct Review menu shortcuts now open the popover with either the new-note
+  draft or the note filter focused, and a native MPV/MPV check confirms both
+  focus destinations.
   Complete structured-review editing and assistive-technology coverage remain;
   see `docs/COMPARISON_KEYBOARD_NATIVE_CHECK_2026-09-08.md`.
   A focused native check confirms Return-to-add, Tab to the filter, and CSV
