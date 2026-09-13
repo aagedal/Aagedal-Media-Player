@@ -74,6 +74,7 @@ struct CompareReviewView: View {
                 TextField("Note at current frame", text: $draft)
                     .textFieldStyle(.roundedBorder)
                     .focused($focusedField, equals: .newNote)
+                    .accessibilityIdentifier("compare-review-new-note")
                     .onSubmit {
                         if canAddNote { addNote() }
                     }
@@ -83,17 +84,25 @@ struct CompareReviewView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .accessibilityLabel("Add review note")
+                .accessibilityIdentifier("compare-review-add-note")
                 .help("Add note at the current source A frame")
                 .disabled(!canAddNote)
             }
 
             if compareSession.isReviewLoading {
                 HStack(spacing: 6) {
-                    ProgressView().controlSize(.small)
+                    ProgressView()
+                        .controlSize(.small)
+                        .accessibilityHidden(true)
                     Text("Loading notes…")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Review status")
+                .accessibilityValue("Loading notes")
+                .accessibilityAddTraits(.updatesFrequently)
+                .accessibilityIdentifier("compare-review-load-status")
             }
 
             Divider()
@@ -103,6 +112,7 @@ struct CompareReviewView: View {
                     .textFieldStyle(.roundedBorder)
                     .focused($focusedField, equals: .filter)
                     .accessibilityLabel("Filter review notes")
+                    .accessibilityIdentifier("compare-review-filter")
                     .help("Filter note text, severity, category, status, and timeline markers. Exports always include all notes.")
                 if !compareSession.reviewSearchQuery.isEmpty {
                     Button {
@@ -111,6 +121,7 @@ struct CompareReviewView: View {
                         Image(systemName: "xmark.circle.fill")
                     }
                     .accessibilityLabel("Clear review filter")
+                    .accessibilityIdentifier("compare-review-clear-filter")
                 }
                 navigationButton(.previous, label: "Previous matching note", icon: "chevron.left")
                 navigationButton(.next, label: "Next matching note", icon: "chevron.right")
@@ -145,8 +156,13 @@ struct CompareReviewView: View {
                 HStack(alignment: .top, spacing: 6) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundStyle(.orange)
+                        .accessibilityHidden(true)
                     Text(reviewError)
                         .font(.caption)
+                        .accessibilityLabel("Review error")
+                        .accessibilityValue(reviewError)
+                        .accessibilityAddTraits(.updatesFrequently)
+                        .accessibilityIdentifier("compare-review-error-status")
                     Spacer()
                     if compareSession.hasUnsavedReviewChanges {
                         Button("Retry Save") {
@@ -179,6 +195,10 @@ struct CompareReviewView: View {
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                         .help(sidecarURL.path)
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel("Active review sidecar")
+                        .accessibilityValue(sidecarURL.path)
+                        .accessibilityIdentifier("compare-review-active-sidecar")
                 }
 
                 Spacer()
@@ -204,6 +224,7 @@ struct CompareReviewView: View {
                     .help("Relink a sidecar to this A/B pair. Requires an empty review and a new destination.")
                 }
                 .fixedSize()
+                .accessibilityIdentifier("compare-review-notes-menu")
 
                 Menu {
                     Button("CSV Report…") {
@@ -228,6 +249,7 @@ struct CompareReviewView: View {
                 .menuStyle(.borderlessButton)
                 .fixedSize()
                 .help("Export all review notes, including notes hidden by the filter")
+                .accessibilityIdentifier("compare-review-export-menu")
                 .disabled(
                     compareSession.reviewNotes.isEmpty
                         || compareSession.isReviewLoading
@@ -241,21 +263,30 @@ struct CompareReviewView: View {
                 EmptyView()
             case .exporting:
                 HStack(spacing: 6) {
-                    ProgressView().controlSize(.small)
+                    ProgressView()
+                        .controlSize(.small)
+                        .accessibilityHidden(true)
                     Text("Exporting review…")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Review export status")
+                .accessibilityValue("Exporting")
+                .accessibilityAddTraits(.updatesFrequently)
+                .accessibilityIdentifier("compare-review-export-status")
             case .succeeded(let url):
                 exportFeedback(
                     icon: "checkmark.circle.fill",
                     color: .green,
+                    statusLabel: "Review export completed",
                     message: "Saved \(url.lastPathComponent)"
                 )
             case .failed(let message):
                 exportFeedback(
                     icon: "exclamationmark.triangle.fill",
                     color: .orange,
+                    statusLabel: "Review export failed",
                     message: message
                 )
             }
@@ -331,12 +362,17 @@ struct CompareReviewView: View {
     private func navigationButton(
         _ direction: CompareReviewDirection, label: String, icon: String
     ) -> some View {
-        Button {
+        let identifier = switch direction {
+        case .previous: "compare-review-previous-note"
+        case .next: "compare-review-next-note"
+        }
+        return Button {
             compareSession.seekToAdjacentReviewNote(direction, primary: primaryController)
         } label: {
             Image(systemName: icon)
         }
         .accessibilityLabel(label)
+        .accessibilityIdentifier(identifier)
         .help(label)
         .disabled(compareSession.adjacentReviewNote(direction, primary: primaryController) == nil)
     }
@@ -348,13 +384,20 @@ struct CompareReviewView: View {
         focusedField = .newNote
     }
 
-    private func exportFeedback(icon: String, color: Color, message: String) -> some View {
+    private func exportFeedback(
+        icon: String, color: Color, statusLabel: String, message: String
+    ) -> some View {
         HStack(alignment: .top, spacing: 6) {
             Image(systemName: icon)
                 .foregroundStyle(color)
+                .accessibilityHidden(true)
             Text(message)
                 .font(.caption)
                 .lineLimit(2)
+                .accessibilityLabel(statusLabel)
+                .accessibilityValue(message)
+                .accessibilityAddTraits(.updatesFrequently)
+                .accessibilityIdentifier("compare-review-export-status")
             Spacer()
             Button("Dismiss") { compareSession.dismissReviewExportFeedback() }
                 .buttonStyle(.link)
@@ -505,11 +548,13 @@ private struct CompareReviewNoteRow: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Seek to review note at source A frame \(note.primaryFrame)")
+                .accessibilityIdentifier(identifier("seek"))
                 .help("Seek both sources to this review note")
 
                 TextField("Review note", text: $draft, axis: .vertical)
                     .textFieldStyle(.roundedBorder)
                     .accessibilityLabel("Review note at source A frame \(note.primaryFrame)")
+                    .accessibilityIdentifier(identifier("text"))
                     .lineLimit(1...4)
                     .focused($isFocused)
                     .disabled(!canEdit)
@@ -527,6 +572,7 @@ private struct CompareReviewNoteRow: View {
                 .buttonStyle(.plain)
                 .foregroundStyle(.secondary)
                 .accessibilityLabel("Delete review note at source A frame \(note.primaryFrame)")
+                .accessibilityIdentifier(identifier("delete"))
                 .help("Delete review note")
                 .disabled(!canEdit)
             }
@@ -538,25 +584,30 @@ private struct CompareReviewNoteRow: View {
                         ForEach(CompareReviewSeverity.allCases) { Text($0.title).tag($0) }
                     }
                     .accessibilityLabel("Severity for review note at source A frame \(note.primaryFrame)")
+                    .accessibilityIdentifier(identifier("severity"))
                     Picker("Category", selection: Binding(
                         get: { note.category }, set: { onClassification(nil, $0, nil) }
                     )) {
                         ForEach(CompareReviewCategory.allCases) { Text($0.title).tag($0) }
                     }
                     .accessibilityLabel("Category for review note at source A frame \(note.primaryFrame)")
+                    .accessibilityIdentifier(identifier("category"))
                     Picker("Status", selection: Binding(
                         get: { note.status }, set: { onClassification(nil, nil, $0) }
                     )) {
                         ForEach(CompareReviewStatus.allCases) { Text($0.title).tag($0) }
                     }
                     .accessibilityLabel("Status for review note at source A frame \(note.primaryFrame)")
+                    .accessibilityIdentifier(identifier("status"))
                     HStack {
                         TextField("End frame (inclusive)", text: $endFrameDraft)
                             .textFieldStyle(.roundedBorder)
                             .accessibilityLabel("Inclusive range end frame for review note at source A frame \(note.primaryFrame)")
+                            .accessibilityIdentifier(identifier("range-end"))
                             .onSubmit(applyRange)
                         Button("Apply", action: applyRange)
                             .accessibilityLabel("Apply range end for review note at source A frame \(note.primaryFrame)")
+                            .accessibilityIdentifier(identifier("range-apply"))
                     }
                     ViewThatFits(in: .horizontal) {
                         HStack {
@@ -567,7 +618,13 @@ private struct CompareReviewNoteRow: View {
                         }
                     }
                     if let rangeError {
-                        Text(rangeError).font(.caption).foregroundStyle(.red)
+                        Text(rangeError)
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                            .accessibilityLabel("Review range error")
+                            .accessibilityValue(rangeError)
+                            .accessibilityAddTraits(.updatesFrequently)
+                            .accessibilityIdentifier(identifier("range-error"))
                     }
                 }
                 .padding(.top, 6)
@@ -576,6 +633,7 @@ private struct CompareReviewNoteRow: View {
                 Text("\(note.severity.title) · \(note.category.title) · \(note.status.title)")
                     // Labelling the group itself overrides its expanded controls.
                     .accessibilityLabel("Classification and range for review note at source A frame \(note.primaryFrame): \(note.severity.title), \(note.category.title), \(note.status.title)")
+                    .accessibilityIdentifier(identifier("classification-and-range"))
             }
             .font(.caption)
         }
@@ -593,14 +651,21 @@ private struct CompareReviewNoteRow: View {
             rangeError = onCurrentEnd() ? nil : "End must be at or after the note's start."
         }
         .accessibilityLabel("End review note at source A frame \(note.primaryFrame) at the current frame")
+        .accessibilityIdentifier(identifier("range-end-current"))
         if let endFrame = note.primaryEndFrame {
             Button("Seek end", action: onSeekEnd)
                 .accessibilityLabel("Seek to source A frame \(endFrame), the end of review note at frame \(note.primaryFrame)")
+                .accessibilityIdentifier(identifier("range-seek-end"))
             Button("Clear range") {
                 if onRange(nil) { endFrameDraft = ""; rangeError = nil }
             }
             .accessibilityLabel("Clear range for review note at source A frame \(note.primaryFrame)")
+            .accessibilityIdentifier(identifier("range-clear"))
         }
+    }
+
+    private func identifier(_ component: String) -> String {
+        "compare-review-note-\(note.id.uuidString.lowercased())-\(component)"
     }
 
     private func applyRange() {

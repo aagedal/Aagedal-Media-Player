@@ -89,6 +89,12 @@ final class LiveAudioMeterCoordinator: ObservableObject {
     private var isTransportSuspended = false
     private var isClockSuspended = false
     private var isWaitingForSupportedSpeed = false
+    /// Playback EOF is authoritative until a new segment starts. Backends may
+    /// publish trailing pause/buffering observations after their EOF event;
+    /// those must not stop the decoder before it drains valid PCM and its FIR
+    /// tail. Decoder EOF can also precede the container's visual EOF, in which
+    /// case the final reading remains frozen instead of becoming clock drift.
+    private var hasReachedPlaybackEOF = false
 
     init(decodeOperation: @escaping LiveAudioMeterDecodeOperation = { request, control, gate, onSnapshot in
         try await LiveAudioMeterDecoder.decode(
@@ -180,6 +186,16 @@ final class LiveAudioMeterCoordinator: ObservableObject {
     /// advanced readings are never silently shown as synchronized.
     func updatePlaybackClock(_ playback: LiveAudioMeterPlaybackSnapshot) {
         guard !isClosed else { return }
+        if case .ended = status {
+            return
+        }
+        if hasReachedPlaybackEOF {
+            workerGate?.update(playbackTime: playback.time)
+            isTransportSuspended = false
+            isClockSuspended = false
+            applyWorkerSuspension()
+            return
+        }
         guard playback.supportsMeasurement else {
             suspendForUnsupportedSpeed()
             return
@@ -265,6 +281,7 @@ final class LiveAudioMeterCoordinator: ObservableObject {
             // The paced source decoder owns FIR-tail drainage and publishes
             // the authoritative final endpoint. Playback normally reports
             // `isPlaying == false` here, which must not suspend that drainage.
+            hasReachedPlaybackEOF = true
             workerGate?.update(playbackTime: playback.time)
             isTransportSuspended = false
             isClockSuspended = false
@@ -341,6 +358,7 @@ final class LiveAudioMeterCoordinator: ObservableObject {
         isTransportSuspended = false
         isClockSuspended = false
         isWaitingForSupportedSpeed = false
+        hasReachedPlaybackEOF = false
         status = .warmingUp(
             frame: newRequest.startSourceFrame, momentaryReady: false, shortTermReady: false
         )
@@ -516,6 +534,7 @@ final class LiveAudioMeterCoordinator: ObservableObject {
         restartCause = nil
         isTransportSuspended = false
         isClockSuspended = false
+        hasReachedPlaybackEOF = false
         if clearRequest { request = nil }
         status = newStatus
     }
@@ -534,7 +553,8 @@ final class LiveAudioMeterCoordinator: ObservableObject {
     }
 
     private func suspend(buffering: Bool) {
-        guard !isClosed, let frame = status.frame, !isTerminal(status) else { return }
+        guard !isClosed, !hasReachedPlaybackEOF,
+              let frame = status.frame, !isTerminal(status) else { return }
         if !isSuspended(status) {
             isTransportSuspended = true
             applyWorkerSuspension()

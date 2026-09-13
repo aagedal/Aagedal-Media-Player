@@ -66,6 +66,7 @@ All notable changes to Aagedal Media Player.
   recording run sheet.
 
 ### Changed
+- Expose stable comparison-review accessibility identities, full active-sidecar paths, and dynamic loading/export/error status semantics for native keyboard and assistive-technology verification.
 - Expose native-pixel loupe placement only for dimension-verified AVFoundation captures, fall back safely when verification is lost, and keep MPV/mixed sources explicitly in display-space modes.
 - Prevent live-meter Retry/Reset from reviving a stale file or audio stream during replacement, and give every multichannel peak row a distinct channel-aware accessibility label.
 - Candidate verification now runs the self-contained script-validator and syntax checks before Xcode, retaining their combined evidence while leaving external-reference, destructive-filesystem, and production-profile acceptance opt-in; releases refuse dirty checkouts and target the exact printed source commit.
@@ -104,6 +105,7 @@ All notable changes to Aagedal Media Player.
   primary-file loop boundaries across all backend combinations.
 
 ### Fixed
+- Keep live-meter EOF drainage authoritative across trailing pause or buffering events, and preserve a selected audio stream's final readings when its containing video continues.
 - Clearing live-meter maxima now resets worker-side DSP maxima in order, so stale in-flight or exact-EOF snapshots cannot restore readings from before the clear.
 - Complete subprocess pipe draining on a utility queue to avoid priority inversion while retaining timestamp-side-channel ordering at child-process exit.
 - Long-range programme loudness analysis now preserves every assigned channel using independent input contexts, correcting silent channel loss and reducing excessive shared-input buffering.

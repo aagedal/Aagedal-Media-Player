@@ -2154,6 +2154,31 @@ and logs; release archives now use the same resolved-package constraint.
 Candidate archive, signing, notarization, packaging, and distribution acceptance
 remain open.
 
+## Phase 92 — Live-meter EOF ownership and review accessibility hooks
+
+Status: Focused engineering complete on 2026-09-13; full native accessibility
+and representative-media acceptance remain open.
+
+- [x] Latch playback EOF until the active source decoder finishes draining so
+  trailing pause or buffering publications cannot suspend valid PCM or FIR-tail
+  completion.
+- [x] Treat decoder EOF as terminal for live readings when a selected audio
+  stream ends before its containing video, preserving the final snapshot,
+  provenance and clean drift state while the visual clock continues.
+- [x] Reset EOF ownership on a new measurement generation or invalidation and
+  cover both EOF orderings with deterministic coordinator regressions.
+- [x] Add stable accessibility identifiers across comparison-review entry,
+  filtering, navigation, note editing, classifications, range controls and
+  export/copy menus.
+- [x] Expose the complete active-sidecar path and explicit frequently-updated
+  loading, export and error status semantics while hiding decorative status
+  imagery from the accessibility tree.
+
+All 19 focused live-meter coordinator tests pass, including the two new EOF
+regressions. A Debug application build and the 11 focused Review command and
+navigation tests pass. These hooks make repeatable native automation more
+practical; they do not claim Full Keyboard Access or spoken VoiceOver acceptance.
+
 ## Remaining work after this continuation
 
 - Integrate the measured metadata-memory dependency fix after upstream review,

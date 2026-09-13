@@ -276,6 +276,71 @@ final class LiveAudioMeterCoordinatorTests: XCTestCase {
         await eventually { coordinator.status == .ended(frame: 48_000) }
     }
 
+    func testPlaybackEOFKeepsDecoderDrainRunningAcrossTrailingTransportTicks() async throws {
+        let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
+        let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
+        let request = try request(stream: 0, startFrame: 0)
+        coordinator.start(request)
+        await decoder.waitUntilAttached(stream: 0)
+        decoder.emit(snapshot(endFrame: 144_000), stream: 0)
+        await eventually { coordinator.status == .active(frame: 144_000) }
+        let generation = coordinator.generation
+        let gate = try XCTUnwrap(decoder.gate(stream: 0))
+
+        coordinator.handlePlaybackEvent(.ended(playback(time: 3, playing: false)))
+        coordinator.handlePlaybackEvent(.transport(playback(time: 3, playing: false)))
+        coordinator.handlePlaybackEvent(.clock(.init(
+            time: 3, phase: .buffering, isPlaying: false, rate: 1, preparationID: 1
+        )))
+
+        XCTAssertEqual(coordinator.generation, generation)
+        XCTAssertEqual(coordinator.status, .active(frame: 144_000))
+        let capacityReturned = LockedFlag()
+        let capacityTask = Task.detached {
+            do {
+                _ = try gate.waitForByteCapacity(
+                    processedEndFrame: 144_000,
+                    pendingByteCount: 0,
+                    bytesPerFrame: 2 * MemoryLayout<Float>.size
+                )
+                capacityReturned.set()
+            } catch {}
+        }
+        try await Task.sleep(for: .milliseconds(30))
+        XCTAssertTrue(
+            capacityReturned.value,
+            "Pause/buffering publications after playback EOF must not suspend decoder drainage"
+        )
+
+        decoder.finish(completion(for: request, finalFrame: 144_000), stream: 0)
+        await eventually { coordinator.status == .ended(frame: 144_000) }
+        await capacityTask.value
+    }
+
+    func testDecoderEOFFreezesFinalReadingWhileContainerClockContinues() async throws {
+        let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
+        let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
+        let request = try request(stream: 0, startFrame: 0)
+        coordinator.start(request)
+        await decoder.waitUntilAttached(stream: 0)
+        decoder.emit(snapshot(endFrame: 48_000), stream: 0)
+        await eventually { coordinator.snapshot?.endFrame == 48_000 }
+        decoder.finish(completion(for: request, finalFrame: 48_000), stream: 0)
+        await eventually { coordinator.status == .ended(frame: 48_000) }
+        let generation = coordinator.generation
+        let finalSnapshot = coordinator.snapshot
+        let provenance = coordinator.provenance
+
+        coordinator.handlePlaybackEvent(.clock(playback(time: 2, playing: true)))
+        coordinator.handlePlaybackEvent(.transport(playback(time: 3, playing: true)))
+
+        XCTAssertEqual(coordinator.generation, generation)
+        XCTAssertEqual(coordinator.status, .ended(frame: 48_000))
+        XCTAssertEqual(coordinator.snapshot, finalSnapshot)
+        XCTAssertEqual(coordinator.provenance, provenance)
+        XCTAssertNil(coordinator.clockDrift)
+    }
+
     func testRetryStartsNewGenerationAfterActionableFailure() async throws {
         let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
         let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
