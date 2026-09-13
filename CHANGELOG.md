@@ -65,6 +65,7 @@ All notable changes to Aagedal Media Player.
   recording run sheet.
 
 ### Changed
+- Candidate verification now records exact source/package provenance, runs the optimized Release suite with explicit optional-test skips, analyzes the same resolved dependency set, and retains logs/results; release archives refuse package versions outside `Package.resolved`.
 - Verify the exact final distribution ZIP by re-extracting it and repeating app preflight, notarization-ticket, and Gatekeeper checks before signing or publishing update metadata.
 - Apply continuous MPV volume-slider updates asynchronously so playback work cannot stall pointer tracking or make the audible response trail the control.
 - Add explicit Retry Save for failed review-note writes, flush current text drafts before retrying, and prevent reload from discarding unsaved changes.

@@ -119,6 +119,7 @@ xcodebuild archive \
     -scheme "$SCHEME" \
     -configuration Release \
     -archivePath "$ARCHIVE_PATH" \
+    -onlyUsePackageVersionsFromResolvedFile \
     MARKETING_VERSION="$MARKETING_VERSION" \
     CURRENT_PROJECT_VERSION="$CURRENT_PROJECT_VERSION" \
     ARCHS=arm64 \
