@@ -40,12 +40,12 @@ enum ScopeComputer: Sendable {
         guard width > 0, height > 0 else { return nil }
         guard let pixelData = extractPixelData(from: image) else { return nil }
 
-        let outW = Int(outputSize.width)
-        let outH = Int(outputSize.height)
-        guard outW > 0, outH > 0 else { return nil }
+        guard let dimensions = outputDimensions(outputSize) else { return nil }
+        let outW = dimensions.width
+        let outH = dimensions.height
 
         // Flat bins indexed as [col * outH + level]
-        let binCount = outW * outH
+        let binCount = dimensions.pixelCount
         var counts = [UInt32](repeating: 0, count: binCount)
         var sumR = [Float](repeating: 0, count: binCount)
         var sumG = [Float](repeating: 0, count: binCount)
@@ -76,7 +76,7 @@ enum ScopeComputer: Sendable {
             if counts[i] > maxCount { maxCount = counts[i] }
         }
 
-        var outputPixels = [UInt8](repeating: 0, count: outW * outH * 4)
+        var outputPixels = [UInt8](repeating: 0, count: dimensions.byteCount)
         // Logarithmic intensity so sparse bins are still visible
         let logMax = log2f(1 + Float(maxCount))
         let gain: Float = 2.5
@@ -138,9 +138,9 @@ enum ScopeComputer: Sendable {
         guard width > 0, height > 0 else { return nil }
         guard let pixelData = extractPixelData(from: image) else { return nil }
 
-        let outW = Int(outputSize.width)
-        let outH = Int(outputSize.height)
-        guard outW > 0, outH > 0 else { return nil }
+        guard let dimensions = outputDimensions(outputSize) else { return nil }
+        let outW = dimensions.width
+        let outH = dimensions.height
 
         let channelCount = 4
         let gap = 2
@@ -182,7 +182,7 @@ enum ScopeComputer: Sendable {
             maxCount = max(maxCount, rBins[i], gBins[i], bBins[i], yBins[i])
         }
 
-        var outputPixels = [UInt8](repeating: 0, count: outW * outH * 4)
+        var outputPixels = [UInt8](repeating: 0, count: dimensions.byteCount)
         let normFactor: Float = 1.0 / (Float(maxCount) * 0.25)
 
         // Channel tint colors
@@ -233,15 +233,15 @@ enum ScopeComputer: Sendable {
         guard width > 0, height > 0 else { return nil }
         guard let pixelData = extractPixelData(from: image) else { return nil }
 
-        let outW = Int(outputSize.width)
-        let outH = Int(outputSize.height)
-        guard outW > 0, outH > 0 else { return nil }
+        guard let dimensions = outputDimensions(outputSize) else { return nil }
+        let outW = dimensions.width
+        let outH = dimensions.height
 
         let halfW = Float(outW) / 2.0
         let halfH = Float(outH) / 2.0
         let scale = min(halfW, halfH) * 0.9
 
-        let totalBins = outW * outH
+        let totalBins = dimensions.pixelCount
         var counts = [UInt32](repeating: 0, count: totalBins)
         var sumR = [Float](repeating: 0, count: totalBins)
         var sumG = [Float](repeating: 0, count: totalBins)
@@ -275,7 +275,7 @@ enum ScopeComputer: Sendable {
             if counts[i] > maxCount { maxCount = counts[i] }
         }
 
-        var outputPixels = [UInt8](repeating: 0, count: outW * outH * 4)
+        var outputPixels = [UInt8](repeating: 0, count: dimensions.byteCount)
         let logMax = log2f(1 + Float(maxCount))
         let gain: Float = 3.0
 
@@ -392,13 +392,14 @@ enum ScopeComputer: Sendable {
     nonisolated static func computeHDRWaveform(from frame: HDRFrameData, outputSize: CGSize) -> CGImage? {
         let width = frame.width
         let height = frame.height
-        guard width > 0, height > 0 else { return nil }
+        guard width > 0, height > 0,
+              hasValidHDRStorage(frame) else { return nil }
 
-        let outW = Int(outputSize.width)
-        let outH = Int(outputSize.height)
-        guard outW > 0, outH > 0 else { return nil }
+        guard let dimensions = outputDimensions(outputSize) else { return nil }
+        let outW = dimensions.width
+        let outH = dimensions.height
 
-        let binCount = outW * outH
+        let binCount = dimensions.pixelCount
         var counts = [UInt32](repeating: 0, count: binCount)
         var sumR = [Float](repeating: 0, count: binCount)
         var sumG = [Float](repeating: 0, count: binCount)
@@ -415,6 +416,7 @@ enum ScopeComputer: Sendable {
                 let r = frame.pixels[offset]
                 let g = frame.pixels[offset + 1]
                 let b = frame.pixels[offset + 2]
+                guard r.isFinite, g.isFinite, b.isFinite else { return nil }
 
                 let (rNits, gNits, bNits) = toNits(r: r, g: g, b: b, tf: tf, isLinear: isLinear, peakNits: peakNits)
                 // BT.2020 luma
@@ -438,7 +440,7 @@ enum ScopeComputer: Sendable {
             if counts[i] > maxCount { maxCount = counts[i] }
         }
 
-        var outputPixels = [UInt8](repeating: 0, count: outW * outH * 4)
+        var outputPixels = [UInt8](repeating: 0, count: dimensions.byteCount)
         let logMax = log2f(1 + Float(maxCount))
         let gain: Float = 2.5
 
@@ -489,11 +491,12 @@ enum ScopeComputer: Sendable {
     nonisolated static func computeHDRParade(from frame: HDRFrameData, outputSize: CGSize) -> CGImage? {
         let width = frame.width
         let height = frame.height
-        guard width > 0, height > 0 else { return nil }
+        guard width > 0, height > 0,
+              hasValidHDRStorage(frame) else { return nil }
 
-        let outW = Int(outputSize.width)
-        let outH = Int(outputSize.height)
-        guard outW > 0, outH > 0 else { return nil }
+        guard let dimensions = outputDimensions(outputSize) else { return nil }
+        let outW = dimensions.width
+        let outH = dimensions.height
 
         let channelCount = 4
         let gap = 2
@@ -518,6 +521,7 @@ enum ScopeComputer: Sendable {
                 let r = frame.pixels[offset]
                 let g = frame.pixels[offset + 1]
                 let b = frame.pixels[offset + 2]
+                guard r.isFinite, g.isFinite, b.isFinite else { return nil }
 
                 let (rNits, gNits, bNits) = toNits(r: r, g: g, b: b, tf: tf, isLinear: isLinear, peakNits: peakNits)
                 let lumaNits = 0.2627 * rNits + 0.6780 * gNits + 0.0593 * bNits
@@ -541,7 +545,7 @@ enum ScopeComputer: Sendable {
             maxCount = max(maxCount, rBins[i], gBins[i], bBins[i], yBins[i])
         }
 
-        var outputPixels = [UInt8](repeating: 0, count: outW * outH * 4)
+        var outputPixels = [UInt8](repeating: 0, count: dimensions.byteCount)
         let normFactor: Float = 1.0 / (Float(maxCount) * 0.25)
 
         let channelColors: [(r: Float, g: Float, b: Float)] = [
@@ -717,6 +721,45 @@ enum ScopeComputer: Sendable {
     }
 
     // MARK: - Helpers
+
+    private struct OutputDimensions {
+        let width: Int
+        let height: Int
+        let pixelCount: Int
+        let byteCount: Int
+    }
+
+    /// Scope settings currently top out at 1,440 pixels. A modest safety margin
+    /// permits tests and future presets without allowing corrupted dimensions
+    /// to trap during floating-point conversion or allocate unbounded bins.
+    nonisolated private static func outputDimensions(_ size: CGSize) -> OutputDimensions? {
+        let maximumDimension: CGFloat = 2_048
+        guard size.width.isFinite, size.height.isFinite,
+              size.width >= 1, size.height >= 1,
+              size.width <= maximumDimension, size.height <= maximumDimension else { return nil }
+        let width = Int(size.width)
+        let height = Int(size.height)
+        let (pixelCount, pixelOverflow) = width.multipliedReportingOverflow(by: height)
+        guard !pixelOverflow else { return nil }
+        let (byteCount, byteOverflow) = pixelCount.multipliedReportingOverflow(by: 4)
+        guard !byteOverflow else { return nil }
+        return OutputDimensions(
+            width: width, height: height, pixelCount: pixelCount, byteCount: byteCount
+        )
+    }
+
+    /// Capture paths are expected to provide one interleaved RGB triplet per
+    /// pixel. Fail closed if a malformed frame reaches the renderer rather than
+    /// indexing outside its storage or presenting a meaningless nit scale.
+    nonisolated private static func hasValidHDRStorage(_ frame: HDRFrameData) -> Bool {
+        guard frame.contentPeakNits.isFinite,
+              frame.contentPeakNits > hdrMinNits,
+              frame.contentPeakNits <= 10_000 else { return false }
+        let (pixelCount, pixelOverflow) = frame.width.multipliedReportingOverflow(by: frame.height)
+        guard !pixelOverflow else { return false }
+        let (componentCount, componentOverflow) = pixelCount.multipliedReportingOverflow(by: 3)
+        return !componentOverflow && frame.pixels.count == componentCount
+    }
 
     nonisolated private static func extractPixelData(from image: CGImage) -> [UInt8]? {
         let width = image.width

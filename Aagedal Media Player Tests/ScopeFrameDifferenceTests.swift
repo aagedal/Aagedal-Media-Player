@@ -8,6 +8,205 @@ import XCTest
 @testable import Aagedal_Media_Player
 
 final class ScopeFrameDifferenceTests: XCTestCase {
+    func testRGBYParadePlotsEachChannelAndLumaInItsOwnPanel() throws {
+        let source = try makeImage(width: 2, height: 1, red: 255, green: 0, blue: 0)
+
+        let parade = try XCTUnwrap(ScopeComputer.computeParade(
+            from: source,
+            outputSize: CGSize(width: 46, height: 11)
+        ))
+
+        XCTAssertEqual(parade.width, 46)
+        XCTAssertEqual(parade.height, 11)
+        XCTAssertEqual(try storedPixel(in: parade, x: 0, y: 0), Pixel(red: 255, green: 51, blue: 51))
+        XCTAssertEqual(try storedPixel(in: parade, x: 12, y: 10), Pixel(red: 51, green: 255, blue: 51))
+        XCTAssertEqual(try storedPixel(in: parade, x: 24, y: 10), Pixel(red: 76, green: 102, blue: 255))
+        XCTAssertEqual(try storedPixel(in: parade, x: 36, y: 8), Pixel(red: 216, green: 216, blue: 216))
+        XCTAssertEqual(try storedAlpha(in: parade, x: 10, y: 0), 0, "Panel gaps must remain clear")
+        XCTAssertEqual(try storedAlpha(in: parade, x: 11, y: 10), 0, "Panel gaps must remain clear")
+    }
+
+    func testRGBYParadeRejectsOutputTooNarrowForFourPanels() throws {
+        let source = try makeImage(width: 1, height: 1, red: 0, green: 0, blue: 0)
+
+        XCTAssertNil(ScopeComputer.computeParade(
+            from: source,
+            outputSize: CGSize(width: 13, height: 10)
+        ))
+    }
+
+    func testScopeRenderersRejectInvalidOrUnboundedOutputDimensions() throws {
+        let source = try makeImage(width: 1, height: 1, red: 0, green: 0, blue: 0)
+        let hdr = HDRFrameData(
+            pixels: [0, 0, 0], width: 1, height: 1,
+            transferFunction: .pq, isLinearLight: false, contentPeakNits: 1_000
+        )
+        let sizes = [
+            CGSize(width: CGFloat.nan, height: 10),
+            CGSize(width: 10, height: CGFloat.infinity),
+            CGSize(width: -1, height: 10),
+            CGSize(width: 2_049, height: 10),
+        ]
+
+        for size in sizes {
+            XCTAssertNil(ScopeComputer.computeWaveform(from: source, outputSize: size))
+            XCTAssertNil(ScopeComputer.computeParade(from: source, outputSize: size))
+            XCTAssertNil(ScopeComputer.computeVectorscope(from: source, outputSize: size))
+            XCTAssertNil(ScopeComputer.computeHDRWaveform(from: hdr, outputSize: size))
+            XCTAssertNil(ScopeComputer.computeHDRParade(from: hdr, outputSize: size))
+        }
+    }
+
+    func testHDRTransferFunctionsMatchReferenceEndpoints() {
+        XCTAssertEqual(ScopeComputer.pqToNits(0), 0)
+        XCTAssertEqual(ScopeComputer.pqToNits(1), 10_000, accuracy: 0.5)
+        XCTAssertEqual(ScopeComputer.pqToNits(0.508_078_4), 100, accuracy: 0.1)
+
+        XCTAssertEqual(ScopeComputer.hlgToNits(0, peakNits: 1_000), 0)
+        XCTAssertEqual(ScopeComputer.hlgToNits(1, peakNits: 1_000), 1_000, accuracy: 0.1)
+        XCTAssertEqual(ScopeComputer.hlgToNits(0.5, peakNits: 1_000), 50.7, accuracy: 0.2)
+
+        XCTAssertEqual(ScopeComputer.linearToNits(-1), 0)
+        XCTAssertEqual(ScopeComputer.linearToNits(1), 203, accuracy: 0.001)
+    }
+
+    func testHDRWaveformUsesLogarithmicNitPlacementForPQ() throws {
+        let frame = HDRFrameData(
+            pixels: [0.508_078_4, 0.508_078_4, 0.508_078_4],
+            width: 1,
+            height: 1,
+            transferFunction: .pq,
+            isLinearLight: false,
+            contentPeakNits: 10_000
+        )
+
+        let waveform = try XCTUnwrap(ScopeComputer.computeHDRWaveform(
+            from: frame,
+            outputSize: CGSize(width: 1, height: 101)
+        ))
+        let rows = try opaqueRows(in: waveform, x: 0)
+
+        XCTAssertEqual(rows.count, 1)
+        XCTAssertEqual(try XCTUnwrap(rows.first), 40, accuracy: 1)
+    }
+
+    func testHDRWaveformPlacesHLGBlackAndPeakAtScaleEndpoints() throws {
+        let frame = HDRFrameData(
+            pixels: [0, 0, 0, 1, 1, 1],
+            width: 2,
+            height: 1,
+            transferFunction: .hlg,
+            isLinearLight: false,
+            contentPeakNits: 1_000
+        )
+
+        let waveform = try XCTUnwrap(ScopeComputer.computeHDRWaveform(
+            from: frame,
+            outputSize: CGSize(width: 2, height: 101)
+        ))
+
+        XCTAssertEqual(try opaqueRows(in: waveform, x: 0), [100])
+        XCTAssertEqual(try opaqueRows(in: waveform, x: 1), [0])
+    }
+
+    func testHDRParadeUsesIndependentLinearLightChannelLevels() throws {
+        let frame = HDRFrameData(
+            pixels: [1, 0.5, 0.25],
+            width: 1,
+            height: 1,
+            transferFunction: .pq,
+            isLinearLight: true,
+            contentPeakNits: 1_000
+        )
+
+        let parade = try XCTUnwrap(ScopeComputer.computeHDRParade(
+            from: frame,
+            outputSize: CGSize(width: 46, height: 101)
+        ))
+
+        XCTAssertEqual(try opaqueRows(in: parade, x: 0), [18])
+        XCTAssertEqual(try opaqueRows(in: parade, x: 12), [25])
+        XCTAssertEqual(try opaqueRows(in: parade, x: 24), [33])
+        XCTAssertEqual(try opaqueRows(in: parade, x: 36), [23])
+    }
+
+    func testHDRRenderersRejectMalformedStorageNonFinitePixelsAndInvalidPeak() {
+        let malformed = HDRFrameData(
+            pixels: [1, 1],
+            width: 1,
+            height: 1,
+            transferFunction: .pq,
+            isLinearLight: false,
+            contentPeakNits: 1_000
+        )
+        let nonFinite = HDRFrameData(
+            pixels: [Float.nan, 0, 0],
+            width: 1,
+            height: 1,
+            transferFunction: .hlg,
+            isLinearLight: false,
+            contentPeakNits: 1_000
+        )
+        let invalidPeak = HDRFrameData(
+            pixels: [0, 0, 0],
+            width: 1,
+            height: 1,
+            transferFunction: .pq,
+            isLinearLight: false,
+            contentPeakNits: Float.nan
+        )
+        let excessivePeak = HDRFrameData(
+            pixels: [0, 0, 0],
+            width: 1,
+            height: 1,
+            transferFunction: .pq,
+            isLinearLight: false,
+            contentPeakNits: 10_001
+        )
+        let size = CGSize(width: 46, height: 101)
+
+        for frame in [malformed, nonFinite, invalidPeak, excessivePeak] {
+            XCTAssertNil(ScopeComputer.computeHDRWaveform(from: frame, outputSize: size))
+            XCTAssertNil(ScopeComputer.computeHDRParade(from: frame, outputSize: size))
+        }
+    }
+
+    @MainActor
+    func testScopeWorkerDoesNotPublishRejectedHDRPeakScale() async {
+        let worker = ScopeRenderWorker()
+        let invalidFrame = HDRFrameData(
+            pixels: [0, 0, 0],
+            width: 1,
+            height: 1,
+            transferFunction: .pq,
+            isLinearLight: false,
+            contentPeakNits: Float.infinity
+        )
+
+        worker.submit(
+            primary: ScopeFrameInput(
+                sdrFrame: nil,
+                hdrFrame: invalidFrame,
+                transferFunction: .pq,
+                displayAspectRatio: 1
+            ),
+            secondary: nil,
+            source: .primary,
+            differenceGain: 1,
+            mode: .luma,
+            resolution: 64
+        )
+        for _ in 0..<100 where worker.renderSequence == 0 {
+            try? await Task.sleep(for: .milliseconds(5))
+        }
+
+        XCTAssertEqual(worker.renderSequence, 1)
+        XCTAssertNil(worker.waveformImage)
+        XCTAssertTrue(worker.hdrPeakNits.isFinite)
+        XCTAssertEqual(worker.hdrPeakNits, 10_000)
+        worker.cancel(clearImages: true)
+    }
+
     func testRelativeTimelinePairingChoosesNearestSecondaryTimestamp() throws {
         let primary = sample(sequence: 1, time: 2)
         let mapping = CompareTimelineMapping(
@@ -279,5 +478,31 @@ final class ScopeFrameDifferenceTests: XCTestCase {
         context.draw(image, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
         let offset = (y * image.width + x) * 4
         return Pixel(red: bytes[offset + 2], green: bytes[offset + 1], blue: bytes[offset])
+    }
+
+    /// ScopeComputer creates images directly from BGRA storage. Reading that
+    /// provider avoids Core Graphics coordinate transforms in placement tests.
+    private func storedPixel(in image: CGImage, x: Int, y: Int) throws -> Pixel {
+        let bytes = try storedBytes(in: image)
+        let offset = (y * image.width + x) * 4
+        return Pixel(red: bytes[offset + 2], green: bytes[offset + 1], blue: bytes[offset])
+    }
+
+    private func storedAlpha(in image: CGImage, x: Int, y: Int) throws -> UInt8 {
+        let bytes = try storedBytes(in: image)
+        return bytes[(y * image.width + x) * 4 + 3]
+    }
+
+    private func opaqueRows(in image: CGImage, x: Int) throws -> [Int] {
+        let bytes = try storedBytes(in: image)
+        return (0..<image.height).filter { y in
+            bytes[(y * image.width + x) * 4 + 3] > 0
+        }
+    }
+
+    private func storedBytes(in image: CGImage) throws -> [UInt8] {
+        let provider = try XCTUnwrap(image.dataProvider)
+        let data = try XCTUnwrap(provider.data as Data?)
+        return [UInt8](data)
     }
 }

@@ -109,6 +109,8 @@ All notable changes to Aagedal Media Player.
   primary-file loop boundaries across all backend combinations.
 
 ### Fixed
+- Reject malformed HDR scope buffers, non-finite pixels, invalid output sizes and out-of-range peak scales instead of risking a crash or publishing an unusable graticule.
+- Replace same-file waveform work when stream layout, labels, ordering or duration changes, and reject non-finite durations before rendering.
 - Prevent returning from an unsupported playback speed from restarting a retained pre-replacement live-meter source or audio track.
 - Keep live-meter EOF drainage authoritative across trailing pause or buffering events, and preserve a selected audio stream's final readings when its containing video continues.
 - Clearing live-meter maxima now resets worker-side DSP maxima in order, so stale in-flight or exact-EOF snapshots cannot restore readings from before the clear.

@@ -417,12 +417,17 @@ final class ScopeRenderWorker: ObservableObject {
         var waveform: CGImage?
         var peakNits: Float?
         if let frame = selected?.hdrFrame {
-            peakNits = frame.contentPeakNits
             switch request.mode {
             case .luma:
                 waveform = ScopeComputer.computeHDRWaveform(from: frame, outputSize: request.waveformSize)
             case .parade:
                 waveform = ScopeComputer.computeHDRParade(from: frame, outputSize: request.waveformSize)
+            }
+            // Only publish the scale that produced a valid waveform. A
+            // rejected frame must not leave a non-finite or meaningless value
+            // driving the graticule while its image is blank.
+            if waveform != nil {
+                peakNits = frame.contentPeakNits
             }
         }
 

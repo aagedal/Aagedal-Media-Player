@@ -28,12 +28,42 @@ nonisolated struct AudioWaveformGenerationOutput: @unchecked Sendable {
     let width: Int
 }
 
+nonisolated enum AudioWaveformGenerationFailure: Error, LocalizedError {
+    case invalidRequest(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .invalidRequest(let detail): "Cannot generate the audio waveform: \(detail)."
+        }
+    }
+}
+
 typealias AudioWaveformGenerationOperation = @Sendable (
     AudioWaveformGenerationRequest
 ) async throws -> AudioWaveformGenerationOutput
 
 @MainActor
 final class AudioWaveformGenerator: ObservableObject {
+    private struct MonoStreamIdentity: Equatable {
+        let index: Int
+        let label: String
+    }
+
+    private enum SourceIdentity: Equatable {
+        case stream(
+            url: URL,
+            streamIndex: Int,
+            channelCount: Int,
+            channelLayout: String?,
+            duration: Double
+        )
+        case allMonoStreams(
+            url: URL,
+            streams: [MonoStreamIdentity],
+            duration: Double
+        )
+    }
+
     private let logger = Logger(subsystem: "com.aagedal.MediaPlayer", category: "AudioWaveform")
 
     /// One image per audio channel for the current stream.
@@ -44,9 +74,7 @@ final class AudioWaveformGenerator: ObservableObject {
 
     private var currentTask: Task<Void, Never>?
     private var taskGeneration = OperationGeneration()
-    private var currentURL: URL?
-    private var currentStreamIndex: Int?
-    private var currentAllStreams: Bool = false
+    private var currentSourceIdentity: SourceIdentity?
     private var currentColor: AudioWaveformColor?
     private var currentBoost: Double = 0
     private let generationOperation: AudioWaveformGenerationOperation
@@ -71,13 +99,29 @@ final class AudioWaveformGenerator: ObservableObject {
     /// Generate waveform images for every channel in the given audio stream.
     /// Decodes audio once as raw PCM, then renders all channels natively.
     func generate(url: URL, streamIndex: Int, channels: Int, channelLayout: String?, duration: Double) {
+        guard duration.isFinite, duration >= 0 else {
+            rejectInvalidRequest("the media duration is unavailable")
+            return
+        }
+        guard streamIndex >= 0, channels > 0 else {
+            rejectInvalidRequest("the selected audio stream is invalid")
+            return
+        }
         let rawColor = UserDefaults.standard.value(for: AppSettings.audioWaveformColor)
         let color = AudioWaveformColor(rawValue: rawColor) ?? .pink
         let boost = UserDefaults.standard.value(for: AppSettings.audioWaveformBoost)
 
-        // Same stream — keep an in-flight decode, or re-render completed
+        let sourceIdentity = SourceIdentity.stream(
+            url: url,
+            streamIndex: streamIndex,
+            channelCount: channels,
+            channelLayout: channelLayout,
+            duration: duration
+        )
+
+        // Same source description — keep an in-flight decode, or re-render completed
         // amplitude data when only the appearance changed.
-        if url == currentURL, streamIndex == currentStreamIndex, !currentAllStreams {
+        if sourceIdentity == currentSourceIdentity {
             if color == currentColor, boost == currentBoost,
                isGenerating || !channelImages.isEmpty {
                 return
@@ -89,9 +133,7 @@ final class AudioWaveformGenerator: ObservableObject {
         }
 
         cancel()
-        currentURL = url
-        currentStreamIndex = streamIndex
-        currentAllStreams = false
+        currentSourceIdentity = sourceIdentity
         currentColor = color
         currentBoost = boost
         channelImages = []
@@ -152,13 +194,27 @@ final class AudioWaveformGenerator: ObservableObject {
 
     /// Generate waveform images for all mono audio streams, one per stream.
     func generateAllMonoStreams(url: URL, streams: [(index: Int, label: String)], duration: Double) {
+        guard duration.isFinite, duration >= 0 else {
+            rejectInvalidRequest("the media duration is unavailable")
+            return
+        }
+        guard !streams.isEmpty, streams.allSatisfy({ $0.index >= 0 }) else {
+            rejectInvalidRequest("the selected audio streams are invalid")
+            return
+        }
         let rawColor = UserDefaults.standard.value(for: AppSettings.audioWaveformColor)
         let color = AudioWaveformColor(rawValue: rawColor) ?? .pink
         let boost = UserDefaults.standard.value(for: AppSettings.audioWaveformBoost)
 
+        let sourceIdentity = SourceIdentity.allMonoStreams(
+            url: url,
+            streams: streams.map { MonoStreamIdentity(index: $0.index, label: $0.label) },
+            duration: duration
+        )
+
         // Same streams — keep an in-flight decode, or re-render completed
         // amplitude data when only the appearance changed.
-        if url == currentURL, currentAllStreams {
+        if sourceIdentity == currentSourceIdentity {
             if color == currentColor, boost == currentBoost,
                isGenerating || !channelImages.isEmpty {
                 return
@@ -170,9 +226,7 @@ final class AudioWaveformGenerator: ObservableObject {
         }
 
         cancel()
-        currentURL = url
-        currentStreamIndex = nil
-        currentAllStreams = true
+        currentSourceIdentity = sourceIdentity
         currentColor = color
         currentBoost = boost
         channelImages = []
@@ -250,9 +304,7 @@ final class AudioWaveformGenerator: ObservableObject {
 
     func reset() {
         cancel()
-        currentURL = nil
-        currentStreamIndex = nil
-        currentAllStreams = false
+        currentSourceIdentity = nil
         currentColor = nil
         currentBoost = 0
         cachedAmplitudes = []
@@ -261,6 +313,11 @@ final class AudioWaveformGenerator: ObservableObject {
         channelLabels = []
         error = nil
         isGenerating = false
+    }
+
+    private func rejectInvalidRequest(_ detail: String) {
+        reset()
+        error = AudioWaveformGenerationFailure.invalidRequest(detail).localizedDescription
     }
 
     /// Re-renders waveform images from cached amplitude data with current color and boost.
@@ -333,7 +390,16 @@ final class AudioWaveformGenerator: ObservableObject {
     static nonisolated func generateNativeWaveforms(
         request: AudioWaveformGenerationRequest
     ) async throws -> AudioWaveformGenerationOutput {
-        let width = max(400, min(request.maxWidth, Int(request.duration * request.pixelsPerSecond)))
+        guard request.duration.isFinite, request.duration >= 0,
+              request.pixelsPerSecond.isFinite, request.pixelsPerSecond > 0,
+              request.streamIndex >= 0, request.channelCount > 0,
+              request.channelHeight > 0, request.maxWidth > 0 else {
+            throw AudioWaveformGenerationFailure.invalidRequest("its source parameters are invalid")
+        }
+        let requestedWidth = min(
+            Double(request.maxWidth), request.duration * request.pixelsPerSecond
+        )
+        let width = max(400, Int(requestedWidth))
 
         // Downsample to reduce data: aim for ~100 samples per output pixel column.
         // Streaming means even very long recordings retain only the fixed-size

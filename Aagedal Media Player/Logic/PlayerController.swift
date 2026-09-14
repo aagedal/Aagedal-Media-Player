@@ -408,10 +408,14 @@ final class PlayerController: ObservableObject {
     private static let graticuleMarkerNits: [Float] = [100, 203, 400, 600, 1000, 2000, 4000, 10000]
 
     private func snappedPeakNits(_ raw: Float) -> Float {
+        guard raw.isFinite, raw > 0 else { return 1000 }
         for marker in Self.graticuleMarkerNits {
             if marker >= raw { return marker }
         }
-        return raw  // Above 10K: use raw value
+        // PQ is defined up to 10,000 nits, which is also the highest supported
+        // waveform graticule. Malformed or speculative metadata above that
+        // range must not create an effectively unusable logarithmic scale.
+        return 10_000
     }
 
     func updateLoopPlayback(_ loop: Bool) {
