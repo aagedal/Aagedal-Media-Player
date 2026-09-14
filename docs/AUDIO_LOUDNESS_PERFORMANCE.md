@@ -130,7 +130,7 @@ observations while accepting legitimate digital-silence values.
 
 ## Metadata memory follow-up
 
-A source audit of resolved SwiftMediaMetadata 3.0.0 (`c2d77c2`) found that
+A historical source audit of the then-resolved SwiftMediaMetadata 3.0.0 (`c2d77c2`) found that
 `VideoMetadata.read` maps the source using `Data(contentsOf:options: .alwaysMapped)`
 in `loadContainerDataInner` and retains it as internal `originalData` for
 MP4/MOV/M4V. The MP4 top-level parser explicitly skips `mdat` payloads. Whole-file
@@ -148,4 +148,7 @@ The September 7 follow-up now isolates this cost to RTMD detection's generic
 box walker reading `mdat`. A candidate dependency patch reduces isolated
 one/eight-hour read peaks to about 11/20 MiB while preserving checked metadata.
 See [the measured investigation and reproduction harness](METADATA_MEMORY_PERFORMANCE.md).
-The production dependency is unchanged and full-app memory acceptance remains open.
+SwiftMediaMetadata 3.0.1 now contains the reviewed fix. Its targeted production
+profile stays within 2.3 MiB of the fresh-process lifetime peak baseline on the
+equivalent-size one/eight-hour regression containers; see the linked investigation.
+Representative-media and release-floor acceptance remain open.

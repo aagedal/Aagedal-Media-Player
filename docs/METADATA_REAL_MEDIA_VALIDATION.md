@@ -1,10 +1,10 @@
-# Real-media validation of the RTMD memory candidate
+# Real-media validation of the RTMD memory fix
 
-This read-only check compares the unchanged SwiftMediaMetadata 3.0.0 dependency
-with the proposed skip-mdat patch in isolated source copies. It supplements the
+This read-only check originally compared SwiftMediaMetadata 3.0.0 with the
+proposed skip-`mdat` patch in isolated source copies. It supplements the
 [synthetic container checks](METADATA_CONTAINER_VALIDATION.md) and
-[memory investigation](METADATA_MEMORY_PERFORMANCE.md); the production pin and
-resolved checkout remain unchanged.
+[memory investigation](METADATA_MEMORY_PERFORMANCE.md). Production now resolves
+3.0.1; the baseline/patch mode remains reproducible historical evidence.
 
 All paired checks can instead evaluate an exact reviewed source commit by adding
 `--candidate-checkout /path/to/clean/candidate --expected-candidate-sha FULL_SHA`.
@@ -13,6 +13,8 @@ commit matching candidate `HEAD`, and the checkout must be separate and clean.
 Omitting them preserves the recorded-patch candidate. The artifact environment
 records both source archive hashes and unambiguously records whether a patch or
 an exact checkout supplied the candidate; both source checkouts are reverified.
+For current-release validation, select a clean 3.0.1 candidate checkout and pass
+`--expected-candidate-sha 8662054299a3e13c49c65f74c564360559d1bf7f`.
 
 ```bash
 python3 scripts/validate-metadata-real-media.py \
@@ -164,10 +166,10 @@ Fresh artifacts: `/tmp/aagedal-metadata-cli-20260910`, with source/toolchain
 identity in `environment.json` and complete suite coverage in `summary.json`.
 CLI suite log SHA-256:
 `2aabeabd300bd6bf8223f4bc1563cbf60113f3ba5f5b37dffbf19f243e6581dd`.
-This reconfirms the completed CLI gate. The outstanding dependency acceptance
-work remains upstream RTMD review, exact ARW/XMP fixture recovery and JXL
-fixture/assertion reconciliation, broader camera coverage, and full-app
-profiling after integration; this run does not complete those separate gates.
+This reconfirms the completed CLI gate. The upstream RTMD fix and targeted
+production profiling are now integrated through 3.0.1. Exact ARW/XMP fixture
+recovery, JXL fixture/assertion reconciliation and broader camera coverage remain
+separate compatibility gates.
 
 ## Expanded local result — 2026-09-08
 
@@ -230,14 +232,29 @@ now exercises the original 20 library skips: fourteen pass, five still lack
 ARW/sidecar originals, and one reveals an outdated JXL fixture/assertion
 expectation. That failure remains an explicit acceptance blocker.
 
+## SwiftMediaMetadata 3.0.1 exact-release result — 2026-09-15
+
+Two fresh exact-checkout runs compare the unchanged 3.0.0 baseline with release
+commit `8662054299a3e13c49c65f74c564360559d1bf7f`. All twelve producer-authentic
+media exports match exactly across both variants: the two Sony A1 controls,
+BRAW, CRM, R3D, ProRes RAW HQ, ARRIRAW, X-OCN LT, GoPro Hero9/Hero12, DJI
+Action4 and Sony FX6 MXF.
+
+Both Sony RTMD controls also match exactly. The short clip retains 672 frames
+and 26,880 samples in each motion stream; the long clip retains 5,568 frames and
+222,720 samples per stream. Both report a 2,000 Hz IMU rate, with identical
+first/all-frame, gyroscope and accelerometer hashes. All source and sidecar hashes
+were unchanged, both source checkouts stayed clean, and neither run reported an
+error. Artifacts are retained at
+`/private/tmp/aagedal-metadata-real-smm301-short-20260915` and
+`/private/tmp/aagedal-metadata-real-smm301-long-20260915`.
+
 ## Remaining acceptance
 
 Paired exporter coverage is limited to these twelve exact clips and two native Sony A1 examples.
 Broader Sony bodies/modes, more raw formats and unusual container/error cases
-remain relevant acceptance work. A reviewed upstream release is still needed;
-Checking published tags with `git ls-remote --tags` on 2026-09-09 found no release
-newer than the pinned 3.0.0 (`c2d77c2`); `gh pr list --state all` returned no pull
-requests. This does not establish whether review occurred outside GitHub PRs.
-After integration, repeat the isolated memory profile and full-app
-metadata/loudness workload including conversion, concurrent work and release.
-App-wide bounded memory remains unproven by this parity check.
+remain relevant acceptance work. The September 9 upstream check found no release
+newer than 3.0.0; the reviewed 3.0.1 release has since been integrated and the
+targeted production payload-size profile passes. Producer-authentic combined
+metadata/loudness work and release-floor hardware remain unproven by this parity
+check.

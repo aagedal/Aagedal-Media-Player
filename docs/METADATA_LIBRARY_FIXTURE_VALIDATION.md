@@ -15,7 +15,7 @@ python3 scripts/validate-metadata-library-fixtures.py \
 python3 scripts/test-metadata-library-fixture-validation.py
 ```
 
-The source checkout must be clean at the production 3.0.0 revision
+The source checkout must be clean at the historical baseline 3.0.0 revision
 `c2d77c2dcefcb997623e52beca57bc61ce302cb9`. The harness archives its committed
 source into a new output directory and applies only the recorded RTMD skip-mdat
 candidate to the library. A local library/test manifest excludes the CLI and
@@ -106,8 +106,9 @@ production checkout remained clean. Exact local paths and all candidate records:
 
 Temporary artifacts may be removed by the OS. The harness, pinned hashes,
 coverage and recorded failure above are the durable evidence. This run does
-not measure memory, validate more Sony RTMD camera modes, or authorize changing
-the production dependency pin.
+not measure memory or validate more Sony RTMD camera modes. Production now uses
+3.0.1; evaluate it as an exact candidate checkout with release commit
+`8662054299a3e13c49c65f74c564360559d1bf7f`.
 
 ## Real-codestream JXL diagnostic — 2026-09-10
 

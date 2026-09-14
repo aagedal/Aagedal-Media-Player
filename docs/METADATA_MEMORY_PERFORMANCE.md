@@ -1,6 +1,6 @@
 # Metadata memory investigation
 
-The loudness baseline's parent-process spike originates in the resolved
+The loudness baseline's parent-process spike originated in the formerly resolved
 SwiftMediaMetadata 3.0.0 dependency (`c2d77c2dcefcb997623e52beca57bc61ce302cb9`).
 `MP4Parser.parse` always asks `RTMDReader.hasRTMDTrack` whether the clip contains
 Sony timed metadata. That probe calls `topLevelBox`, which uses the generic
@@ -18,7 +18,11 @@ not sampled allocation stacks; they isolate the costly call and its source path.
 RSS includes resident mapped pages as well as allocations, so these numbers do
 not by themselves identify the heap-versus-file-backed breakdown.
 
-## Reproduce and evaluate the candidate dependency patch
+SwiftMediaMetadata 3.0.1 includes the reviewed skip-`mdat` fix and is now the
+app's minimum and resolved version. The sections below preserve the 3.0.0
+diagnosis and candidate comparison as historical reproduction evidence.
+
+## Reproduce the historical candidate dependency patch
 
 ```bash
 python3 scripts/profile-metadata-memory.py \
@@ -42,7 +46,9 @@ replacing the generic top-level read in `RTMDReader.topLevelBox` with the existi
 `parseTopLevelBoxesSkippingMdat`. This leaves the original full buffer available
 for later RTMD sample reads using absolute file offsets. It does not remove the
 normal `VideoMetadata.read(from:)` postprocessing or change source-data retention.
-The patch is for review/upstream integration; it is not applied to production.
+The patch was the pre-release review artifact. Production now consumes the
+equivalent upstream fix through SwiftMediaMetadata 3.0.1 rather than applying
+this local patch.
 
 For acceptance of a reviewed commit, the same harness can use a separate exact
 candidate checkout instead of applying the recorded patch:
@@ -120,7 +126,8 @@ skip-mdat control returned `ftyp`, `free`, empty `mdat`, and `moov`; eight-hour
 retained box payload totaled only 1,430,890 bytes. Remaining growth between 1h
 and 8h is consistent with metadata/sample-table scaling and is not a proof of a
 fixed bound. The full-media payload spike is eliminated in this isolated
-candidate; the shipping app still uses the unpatched dependency.
+candidate. The shipping app subsequently adopted the reviewed upstream
+implementation in 3.0.1.
 
 Raw final artifacts: `/tmp/aagedal-metadata-memory-20260907-c` (earlier paired
 run: `-b`). Temporary artifacts can be removed by the OS; the recipe, patch,
@@ -149,6 +156,35 @@ candidate provenance. The retained September 7 `-c`
 baseline passes the validator's complete 12-workload matrix. No memory workload
 was rerun for this artifact-validation change.
 
+## SwiftMediaMetadata 3.0.1 production result — 2026-09-15
+
+The project now requires 3.0.1 and resolves its release commit
+`8662054299a3e13c49c65f74c564360559d1bf7f`. The production-path profiler passed
+against `MetadataService` in a fresh Release XCTest host for each duration-correct
+48 kHz six-channel ALAC regression container:
+
+| Input | Source size | Initial lifetime peak | Final lifetime peak | Increase | Uncached load |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 1 hour | 289,992,446 bytes | 112.31 MiB | 114.55 MiB | 2.23 MiB | 0.0113 s |
+| 8 hours | 2,319,934,602 bytes | 112.03 MiB | 113.27 MiB | 1.23 MiB | 0.0109 s |
+
+Both cached reads completed in under 0.04 ms with exact app-model parity. The
+inputs use sparse, enlarged final `mdat` declarations around valid silent ALAC
+content, so they exercise the former payload-size failure curve without storing
+hours of encoded payload. They are regression containers, not producer-authentic
+media or general throughput evidence. Artifacts are retained at
+`/tmp/aagedal-smm301-production-profile-20260915`; the copied
+`Package.resolved` records the exact release identity.
+
+This closes the specific production metadata payload-copy memory blocker. It
+does not close the broader representative-media, error-semantics, base-M1, or
+long-running resource acceptance gates.
+
+The 3.0.1 Release package suite also passes 1,668 tests with 48 named skips:
+20 require unavailable external media and 28 require the opt-in CLI test flag.
+The app's focused metadata suite passes all 84 tests with no skips, failures,
+expected failures, or runtime warnings.
+
 ## Acceptance still required
 
 The synthetic ALAC files have no video or RTMD track. They establish the negative
@@ -169,16 +205,11 @@ Broader camera/recording-mode
 coverage, raw formats and intended error semantics still require review; these
 checks do not establish compatibility for every clip or every internal field.
 
-After integrating a reviewed dependency release, repeat the isolated profile and
-full app metadata/loudness workload, including app-model conversion and release.
-The app-wide bounded-memory gate and representative hardware/content acceptance
-remain open until those checks pass.
-
-The upstream repository was checked again on 2026-09-13: both its default
-branch and latest `3.0.0` tag still resolve to
-`c2d77c2dcefcb997623e52beca57bc61ce302cb9`. No reviewed upstream revision is
-available to replace the shipping dependency, so the measured candidate fix
-remains validation-only.
+The reviewed 3.0.1 release and the app-model production profile now close the
+top-level payload-copy regression. Repeat the profile with producer-authentic
+long media and on the release-floor base M1 as part of the broader candidate
+matrix; keep camera/recording-mode and intended-error coverage separate from the
+resolved memory defect.
 
 ## Production app profiling
 
@@ -203,7 +234,7 @@ input. The artifact validator requires complete per-input phase observations,
 monotonic lifetime peaks, cache parity, consistent source/metadata sizes, a
 duration of at least 60 seconds, and at least one audio or video stream. The
 10 ms current-RSS samples may miss a short transient; the lifetime peak remains
-the authoritative backstop. This harness does not make the current dependency
-acceptable by itself. Run it before and after pinning the reviewed release, then
-retain the exact app revision, package resolution, source hashes, result bundles,
-logs, and validated `summary.json`.
+the authoritative backstop. The 3.0.1 run above satisfies the targeted production
+payload-size regression. Future candidate runs should retain the exact app
+revision, package resolution, source hashes, result bundles, logs, and validated
+`summary.json`, especially when using producer-authentic inputs.

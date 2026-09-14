@@ -70,6 +70,10 @@ All notable changes to Aagedal Media Player.
   recording run sheet.
 
 ### Changed
+- Update SwiftMediaMetadata to 3.0.1, whose Sony RTMD discovery skips top-level
+  media payloads instead of copying them into memory. Production-path profiling
+  now stays within 2.3 MiB of the fresh-process lifetime peak baseline for
+  duration-correct one-hour and eight-hour sparse-payload regression containers.
 - Require live-meter decoder timestamps to confirm the decoded channel layout before applying speaker-weighted loudness, keep explicit nonstandard layouts on numbered peak-only meters, and expose stable frequently-updated accessibility identities for native meter acceptance.
 - Reconcile every detailed XCTest result with candidate summary counts, require exactly the two isolated mixed-backend transport checks, verify uploaded release-asset size and GitHub SHA-256, reject prereleases from the stable appcast, and fail closed on dirty or ambiguous Homebrew cask updates.
 - Candidate verification now rejects unexpected or unexplained XCTest skips, runtime warnings, expected failures, missing test coverage, and source/package changes during the run; historically order-sensitive mixed-backend transport cases run in a separate validated host.

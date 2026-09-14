@@ -749,8 +749,9 @@ Acceptance: maintainers can repeat the real analysis workload on representative
 sources and the release-floor Mac. Sampled memory is an observation, not a proof
 of bounds for every codec; reference accuracy, concurrent-job UI acceptance,
 and live meters remain separate. The eight-hour metadata discovery also exposed
-a roughly 2.3 GiB transient parent resident-memory spike; that memory gate remains open.
-See `docs/AUDIO_LOUDNESS_PERFORMANCE.md`.
+a roughly 2.3 GiB transient parent resident-memory spike. That gate remained open
+at this phase and was closed by the 3.0.1 integration in Phase 98. See
+`docs/AUDIO_LOUDNESS_PERFORMANCE.md`.
 
 ## Phase 45 — Native loudness cancellation and numerical references
 
@@ -809,14 +810,15 @@ production integration remains open.
 - [x] Add an opt-in production `MetadataService` profiler that observes memory
   before the uncached load, verifies cached-result parity and caller release,
   and validates fresh-process artifacts for each supplied long input.
-- [ ] Complete upstream review and remaining fixture coverage, integrate a
-  reviewed dependency release, and repeat full-app memory profiling. The latest
-  remote tag and upstream default branch are still at the pinned 3.0.0 revision,
-  as checked directly against upstream refs on 2026-09-13.
+- [x] Integrate the reviewed 3.0.1 dependency release and repeat production-path
+  long-input memory profiling (completed in Phase 98).
+- [ ] Complete remaining fixture recovery, JXL expectation reconciliation, and
+  broader camera/container error-semantics coverage.
 
-Acceptance: the source of the memory spike and a measured candidate fix are now
-established. The app still uses the original pinned dependency; its memory gate
-remains open. See `docs/METADATA_MEMORY_PERFORMANCE.md`.
+Acceptance: the source of the memory spike, the candidate fix and its 3.0.1
+production integration are established. The payload-copy memory gate is closed;
+the distinct metadata compatibility gate remains open. See
+`docs/METADATA_MEMORY_PERFORMANCE.md`.
 
 ## Phase 47 — Loudness range references across sample rates
 
@@ -1186,8 +1188,8 @@ Broader content/rates and live meters remain open. See
 
 ## Phase 65 — Expanded metadata camera and library fixture acceptance
 
-Status: Focused acceptance expansion complete on 2026-09-09; the overall
-dependency integration gate remains open.
+Status: Focused acceptance expansion complete on 2026-09-09; Phase 98 later
+closed dependency integration while the compatibility gate remains open.
 
 - [x] Verify GoPro Hero9/Hero12, DJI Action4 MP4 and Sony FX6 MXF exporter
   parity alongside the Sony A1 control: all twelve isolated executions pass.
@@ -1200,8 +1202,8 @@ dependency integration gate remains open.
 - [x] Recheck upstream release availability; no reviewed newer release found.
 
 Five cases still need the exact ARW/XMP originals. The JXL disagreement requires
-upstream reconciliation, broader native RTMD acceptance is still relevant, and
-the production pin remains unchanged. See
+upstream reconciliation and broader native RTMD acceptance is still relevant.
+The production pin was unchanged during this phase and was updated in Phase 98. See
 `docs/METADATA_LIBRARY_FIXTURE_VALIDATION.md` and
 `docs/METADATA_REAL_MEDIA_VALIDATION.md`.
 
@@ -1380,7 +1382,8 @@ All 13 focused migration-controller tests pass. Both isolated Release JXL
 probes pass all seven checks, and all eleven JXL/fixture-harness regressions pass.
 The JXL throw expectation is obsolete even for the actual bare codestream;
 substituting the correct fixture alone cannot reconcile the upstream test.
-The production dependency pin remains unchanged. See
+The production dependency pin remained unchanged during this diagnostic and was
+updated in Phase 98. See
 `docs/METADATA_LIBRARY_FIXTURE_VALIDATION.md` for the reproducible diagnostic
 and remaining integration gates.
 
@@ -2314,12 +2317,44 @@ that the plumbing runs, but only the
 documented producer-authentic matrix, trusted reference comparison, long-play
 observation, and base 2020 M1 MacBook Air run can close the release gate.
 
+## Phase 98 — SwiftMediaMetadata 3.0.1 production memory integration
+
+Status: Completed on 2026-09-15. Broader authentic-media and release-floor
+acceptance remains part of the candidate matrix, not the resolved payload-copy
+defect.
+
+- [x] Raise the package minimum and exact resolution to SwiftMediaMetadata 3.0.1
+  at release commit `8662054299a3e13c49c65f74c564360559d1bf7f`.
+- [x] Confirm package resolution selects 3.0.1 without a local dependency patch.
+- [x] Run the shipping `MetadataService` path in fresh Release XCTest hosts for
+  duration-correct one-hour and eight-hour six-channel ALAC regression containers.
+- [x] Verify exact cache parity and source duration/size while retaining sampled
+  and process-lifetime peak RSS evidence.
+- [x] Keep lifetime peak growth within 2.3 MiB of the pre-load baseline for both
+  the 290 MB and 2.32 GB sparse-payload inputs.
+- [x] Pass the dependency's Release suite with 1,668 passes, 48 named
+  external-fixture/opt-in skips, and no failures; pass all 84 focused app
+  metadata regressions with no skips, failures, expected failures, or runtime
+  warnings.
+- [x] Pass all 27 synthetic RTMD/container cases in both the 3.0.0 baseline and
+  exact 3.0.1 release: 54 isolated executions with no mismatches or errors and
+  complete source/fixture provenance.
+- [x] Revalidate the exact 3.0.1 release against twelve unchanged
+  producer-authentic Sony/raw/action-camera inputs. All exporter results match
+  3.0.0, including complete parity for both Sony A1 RTMD/IMU controls up to
+  5,568 frames and 222,720 samples per motion stream.
+
+The specific multi-gigabyte top-level `mdat` copy is no longer a production
+release blocker. The inputs deliberately use sparse enlarged payload declarations,
+so producer-authentic formats, base-M1 execution and longer-running combined
+workloads remain separate acceptance items. See
+`docs/METADATA_MEMORY_PERFORMANCE.md`.
+
 ## Remaining work after this continuation
 
-- Integrate the measured metadata-memory dependency fix after upstream review,
-  broader camera/format acceptance, and remaining fixture coverage, then
-  repeat full-app profiling. Synthetic
-  containers, selected real Sony/raw media, and the candidate library suite now
+- Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
+  producer-authentic long media and on the release-floor base M1. Synthetic
+  containers, selected real Sony/raw media, and the pre-release candidate library suite
   pass. The September 9 fixture expansion exercises the original twenty skips:
   fourteen pass, five still lack their exact ARW/XMP originals, and one JXL
   expectation fails identically in baseline/candidate and needs reconciliation.
@@ -2329,11 +2364,12 @@ observation, and base 2020 M1 MacBook Air run can close the release gate.
   All 50 upstream CLI
   tests pass without skips, reconfirmed on September 10; nine validator
   regressions enforce complete pinned-suite evidence. The
-  isolated candidate reduces the eight-hour peak from about 4.3 GiB to 20 MiB;
-  production still uses the original dependency. September 8 adds a longer Sony
-  clip, ProRes RAW HQ, ARRIRAW, and X-OCN LT parity; no newer upstream release
-  is available. September 9 adds GoPro/DJI/Sony FX6 exporter parity. See Phases
-  46 and 65.
+  isolated candidate reduced the eight-hour peak from about 4.3 GiB to 20 MiB;
+  Phase 98 integrates the upstream 3.0.1 release and records a production-path
+  increase of no more than 2.3 MiB on equivalent-size sparse regression inputs.
+  September 8 adds a longer Sony clip, ProRes RAW HQ, ARRIRAW, and X-OCN LT
+  parity; September 9 adds GoPro/DJI/Sony FX6 exporter parity. See Phases 46,
+  65, and 98.
 
 - Prioritize the candidate blockers in `docs/RELEASE_2_READINESS.md` before
   optional additions; its release assessment does not narrow roadmap scope.
@@ -2566,3 +2602,5 @@ observation, and base 2020 M1 MacBook Air run can close the release gate.
 88. Phase 96 HDR scope safety and waveform source integrity.
 
 89. Phase 97 representative live-meter evidence harness.
+
+90. Phase 98 SwiftMediaMetadata 3.0.1 production memory integration.

@@ -1,9 +1,11 @@
 # Synthetic RTMD container validation
 
-This exercises the proposed SwiftMediaMetadata 3.0.0 RTMD skip-mdat patch through
-public RTMD APIs. It complements the [memory profile](METADATA_MEMORY_PERFORMANCE.md)
-with small deterministic fixtures that contain actual synthetic RTMD sample tables
-and payloads. It does not change the app's dependency pin or its resolved checkout.
+This originally exercised the proposed SwiftMediaMetadata 3.0.0 RTMD skip-`mdat`
+patch through public RTMD APIs. It complements the
+[memory profile](METADATA_MEMORY_PERFORMANCE.md) with small deterministic fixtures
+that contain actual synthetic RTMD sample tables and payloads. SwiftMediaMetadata
+3.0.1 is now the production dependency; the baseline/patch mode remains a
+historical comparison workflow.
 
 ```bash
 python3 scripts/validate-metadata-container-edges.py \
@@ -27,6 +29,10 @@ exact lowercase 40-character `HEAD`, and the candidate checkout must be separate
 and clean. With neither option, patch mode is unchanged. Source provenance records
 both archive hashes and whether the patch was applied, and both checkouts are
 reverified unchanged after the run.
+
+For the current release, use a clean 3.0.0 checkout as the first argument and a
+separate clean 3.0.1 checkout with
+`--expected-candidate-sha 8662054299a3e13c49c65f74c564360559d1bf7f`.
 
 The fixtures are deliberately minimal parser inputs, not playable camera clips:
 
@@ -65,10 +71,20 @@ Final artifacts: `/tmp/aagedal-metadata-edges-20260907-final`. Temporary artifac
 may be removed by the OS; the generator, probe, recipe and result above are the
 durable evidence. This run measures parser behavior, not memory usage.
 
+## SwiftMediaMetadata 3.0.1 result — 2026-09-15
+
+The exact-checkout mode passed the same 27 cases for both the 3.0.0 baseline and
+the released 3.0.1 commit: 54 isolated processes, zero mismatches or errors, and
+unchanged clean checkouts. This directly covers RTMD presence, frame values,
+timestamps, 100 Hz IMU rate, complete gyro/accelerometer samples, `stco`/`co64`,
+atom placement/sizing and the documented malformed cases against the production
+dependency. Artifacts with source archives and complete provenance are retained
+at `/private/tmp/aagedal-metadata-edges-smm301-20260915`.
+
 ## Remaining acceptance
 
 Synthetic RTMD decoding alone cannot establish compatibility with real Sony
 camera files. The subsequent [real-media validation](METADATA_REAL_MEDIA_VALIDATION.md)
 checks one native Sony A1 clip, BRAW/CRM/R3D examples and the upstream library suite.
-Broader bodies/recording modes and formats, a reviewed dependency release, and the
-full-app metadata/loudness memory profile remain open before production integration.
+The reviewed dependency release and targeted production memory profile are complete.
+Broader bodies/recording modes, formats and intended error semantics remain open.
