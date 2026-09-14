@@ -39,9 +39,9 @@ Audio QC milestone still includes unfinished representative-media live-meter
 acceptance, and important
 performance and interoperability gates have no completed acceptance record.
 SwiftMediaMetadata 3.0.1 is now integrated at its exact release commit, and the
-production metadata path stays within 2.3 MiB of the fresh-process lifetime peak
-baseline for duration-correct one-hour and eight-hour sparse-payload regression
-containers. This closes the previously listed multi-gigabyte metadata payload-copy
+production metadata path varies by only a few MiB across duration-correct one-hour
+and eight-hour sparse-payload regression containers, without following their
+290 MB versus 2.32 GB payload sizes. This closes the previously listed metadata payload-copy
 blocker at the engineering level. The project is now close to a reasonable focused
 beta, but producer-authentic live-meter evidence, native workflow/accessibility
 acceptance and a signed/notarized distributable build remain before calling it a

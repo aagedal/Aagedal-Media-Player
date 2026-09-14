@@ -2,12 +2,89 @@
 // Copyright © 2026 Truls Aagedal
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+import AppKit
 import Foundation
 import XCTest
 @testable import Aagedal_Media_Player
 
 @MainActor
 final class PlayerWindowCoordinatorTests: XCTestCase {
+    func testWindowConfiguratorDefersAndCoalescesRepeatedAvailability() async {
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 711, height: 400),
+            styleMask: [.titled],
+            backing: .buffered,
+            defer: false
+        )
+        let coordinator = WindowConfigurator.Coordinator()
+        let view = WindowConfigurator.ConfiguratorNSView()
+        view.coordinator = coordinator
+        let delivered = expectation(description: "Window availability delivered")
+        let duplicate = expectation(description: "Window availability not delivered twice")
+        duplicate.isInverted = true
+        var deliveredWindow: NSWindow?
+        var deliveryCount = 0
+        view.onWindowAvailable = { availableWindow in
+            deliveryCount += 1
+            deliveredWindow = availableWindow
+            if deliveryCount == 1 {
+                delivered.fulfill()
+            } else {
+                duplicate.fulfill()
+            }
+        }
+
+        window.contentView = view
+        coordinator.scheduleWindowAvailability(window, from: view)
+        coordinator.scheduleWindowAvailability(window, from: view)
+
+        XCTAssertNil(deliveredWindow, "Representable updates must not publish window state synchronously")
+        await fulfillment(of: [delivered], timeout: 1)
+        XCTAssertTrue(deliveredWindow === window)
+        coordinator.scheduleWindowAvailability(window, from: view)
+        await fulfillment(of: [duplicate], timeout: 0.05)
+        XCTAssertEqual(deliveryCount, 1)
+    }
+
+    func testWindowConfiguratorDeliversAReplacementWindow() async {
+        let firstWindow = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 711, height: 400),
+            styleMask: [.titled],
+            backing: .buffered,
+            defer: false
+        )
+        let replacementWindow = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 711, height: 400),
+            styleMask: [.titled],
+            backing: .buffered,
+            defer: false
+        )
+        let coordinator = WindowConfigurator.Coordinator()
+        let view = WindowConfigurator.ConfiguratorNSView()
+        view.coordinator = coordinator
+        let firstDelivered = expectation(description: "First window delivered")
+        let replacementDelivered = expectation(description: "Replacement window delivered")
+        var deliveredWindows: [NSWindow] = []
+        view.onWindowAvailable = { window in
+            deliveredWindows.append(window)
+            if window === firstWindow {
+                firstDelivered.fulfill()
+            } else if window === replacementWindow {
+                replacementDelivered.fulfill()
+            }
+        }
+
+        firstWindow.contentView = view
+        await fulfillment(of: [firstDelivered], timeout: 1)
+        replacementWindow.contentView = view
+        coordinator.scheduleWindowAvailability(replacementWindow, from: view)
+        await fulfillment(of: [replacementDelivered], timeout: 1)
+
+        XCTAssertEqual(deliveredWindows.count, 2)
+        XCTAssertTrue(deliveredWindows.first.map { $0 === firstWindow } ?? false)
+        XCTAssertTrue(deliveredWindows.last.map { $0 === replacementWindow } ?? false)
+    }
+
     func testMakeMediaItemUsesFilenameAndFileSize() throws {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)

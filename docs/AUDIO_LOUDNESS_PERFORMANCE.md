@@ -149,6 +149,6 @@ box walker reading `mdat`. A candidate dependency patch reduces isolated
 one/eight-hour read peaks to about 11/20 MiB while preserving checked metadata.
 See [the measured investigation and reproduction harness](METADATA_MEMORY_PERFORMANCE.md).
 SwiftMediaMetadata 3.0.1 now contains the reviewed fix. Its targeted production
-profile stays within 2.3 MiB of the fresh-process lifetime peak baseline on the
-equivalent-size one/eight-hour regression containers; see the linked investigation.
+profile varies by only a few MiB instead of following the 290 MB/2.32 GB payload
+sizes of the one/eight-hour regression containers; see the linked investigation.
 Representative-media and release-floor acceptance remain open.

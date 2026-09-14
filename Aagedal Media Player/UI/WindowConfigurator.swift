@@ -22,6 +22,9 @@ struct WindowConfigurator: NSViewRepresentable {
         var savedAspectRatio: CGFloat?
         var lastSourceSize: NSSize?
         weak var observedWindow: NSWindow?
+        private weak var pendingAvailabilityWindow: NSWindow?
+        private weak var deliveredAvailabilityWindow: NSWindow?
+        private var availabilityGeneration: UInt64 = 0
         nonisolated(unsafe) var willEnterFullScreen: NSObjectProtocol?
         nonisolated(unsafe) var didExitFullScreen: NSObjectProtocol?
         var lastTrafficLightAlpha: CGFloat = 0
@@ -90,6 +93,23 @@ struct WindowConfigurator: NSViewRepresentable {
                 }
             }
         }
+
+        func scheduleWindowAvailability(_ window: NSWindow, from view: ConfiguratorNSView) {
+            guard deliveredAvailabilityWindow !== window,
+                  pendingAvailabilityWindow !== window else { return }
+
+            pendingAvailabilityWindow = window
+            availabilityGeneration &+= 1
+            let generation = availabilityGeneration
+            DispatchQueue.main.async { [weak self, weak view, weak window] in
+                guard let self, generation == self.availabilityGeneration,
+                      let window, self.pendingAvailabilityWindow === window else { return }
+                self.pendingAvailabilityWindow = nil
+                guard let view, view.window === window else { return }
+                self.deliveredAvailabilityWindow = window
+                view.onWindowAvailable?(window)
+            }
+        }
     }
 
     final class ConfiguratorNSView: NSView {
@@ -121,7 +141,10 @@ struct WindowConfigurator: NSViewRepresentable {
                                 display: false)
             }
 
-            onWindowAvailable?(window)
+            // The callback publishes the owning window. Defer and coalesce it
+            // so SwiftUI does not receive observable changes while reconciling
+            // this representable.
+            coordinator.scheduleWindowAvailability(window, from: self)
         }
     }
 
@@ -138,10 +161,10 @@ struct WindowConfigurator: NSViewRepresentable {
     func updateNSView(_ nsView: ConfiguratorNSView, context: Context) {
         nsView.onWindowAvailable = onWindowAvailable
         guard let window = nsView.window else { return }
-        onWindowAvailable?(window)
         let coordinator = context.coordinator
 
         coordinator.observeWindow(window)
+        coordinator.scheduleWindowAvailability(window, from: nsView)
 
         let ratio = aspectRatio
         let sourceSize = videoSourceSize

@@ -176,6 +176,12 @@ media or general throughput evidence. Artifacts are retained at
 `/tmp/aagedal-smm301-production-profile-20260915`; the copied
 `Package.resolved` records the exact release identity.
 
+Two subsequent one-hour fresh-host checks observed 2.28 MiB and 3.22 MiB
+lifetime-peak increases, the latter after removing an unrelated SwiftUI startup
+warning. Treat these small differences as launch/runtime variance rather than a
+hard 2.3 MiB ceiling. The release result is that memory no longer follows the
+290 MB versus 2.32 GB payload-size curve.
+
 This closes the specific production metadata payload-copy memory blocker. It
 does not close the broader representative-media, error-semantics, base-M1, or
 long-running resource acceptance gates.

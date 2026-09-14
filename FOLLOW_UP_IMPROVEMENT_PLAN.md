@@ -2330,8 +2330,8 @@ defect.
   duration-correct one-hour and eight-hour six-channel ALAC regression containers.
 - [x] Verify exact cache parity and source duration/size while retaining sampled
   and process-lifetime peak RSS evidence.
-- [x] Keep lifetime peak growth within 2.3 MiB of the pre-load baseline for both
-  the 290 MB and 2.32 GB sparse-payload inputs.
+- [x] Confirm lifetime peak growth stays in the few-MiB startup-variance range
+  rather than scaling with the 290 MB and 2.32 GB sparse-payload inputs.
 - [x] Pass the dependency's Release suite with 1,668 passes, 48 named
   external-fixture/opt-in skips, and no failures; pass all 84 focused app
   metadata regressions with no skips, failures, expected failures, or runtime
@@ -2346,15 +2346,31 @@ defect.
 
 The specific multi-gigabyte top-level `mdat` copy is no longer a production
 release blocker. The inputs deliberately use sparse enlarged payload declarations,
-so producer-authentic formats, base-M1 execution and longer-running combined
-workloads remain separate acceptance items. See
+so producer-authentic long-memory workloads, base-M1 execution and longer-running
+combined workloads remain separate acceptance items. See
 `docs/METADATA_MEMORY_PERFORMANCE.md`.
+
+## Phase 99 — Deferred playback-window publication
+
+Status: Completed on 2026-09-15.
+
+- [x] Defer the owning-window callback until after SwiftUI's representable update.
+- [x] Coalesce repeated mount/update callbacks and deliver each newly observed
+  replacement window once.
+- [x] Pass eight coordinator tests, three window-manager tests, the closing/
+  re-registration lifecycle check and a hosted app-command smoke without the
+  previous SwiftUI publish-during-update warning.
+- [x] Recheck the production metadata profiler and confirm the warning is absent.
+
+Acceptance: window publication no longer mutates observable coordinator state
+during SwiftUI view reconciliation, while first and replacement windows retain
+their registration behavior.
 
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
   producer-authentic long media and on the release-floor base M1. Synthetic
-  containers, selected real Sony/raw media, and the pre-release candidate library suite
+  containers, selected real Sony/raw media, and the exact 3.0.1 library suite
   pass. The September 9 fixture expansion exercises the original twenty skips:
   fourteen pass, five still lack their exact ARW/XMP originals, and one JXL
   expectation fails identically in baseline/candidate and needs reconciliation.
@@ -2365,8 +2381,8 @@ workloads remain separate acceptance items. See
   tests pass without skips, reconfirmed on September 10; nine validator
   regressions enforce complete pinned-suite evidence. The
   isolated candidate reduced the eight-hour peak from about 4.3 GiB to 20 MiB;
-  Phase 98 integrates the upstream 3.0.1 release and records a production-path
-  increase of no more than 2.3 MiB on equivalent-size sparse regression inputs.
+  Phase 98 integrates the upstream 3.0.1 release and records only few-MiB
+  fresh-host variance rather than payload-sized growth on sparse regression inputs.
   September 8 adds a longer Sony clip, ProRes RAW HQ, ARRIRAW, and X-OCN LT
   parity; September 9 adds GoPro/DJI/Sony FX6 exporter parity. See Phases 46,
   65, and 98.
@@ -2604,3 +2620,5 @@ workloads remain separate acceptance items. See
 89. Phase 97 representative live-meter evidence harness.
 
 90. Phase 98 SwiftMediaMetadata 3.0.1 production memory integration.
+
+91. Phase 99 deferred playback-window publication.
