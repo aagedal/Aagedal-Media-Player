@@ -5,6 +5,10 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Added
+- An opt-in representative live-audio-meter profiler that retains exact input
+  identity, production-backend and selected-stream provenance, paced source progress,
+  clock/ahead bounds, routing invariance, app/child memory, cancellation, and
+  authoritative EOF evidence for explicit external media.
 - Direct Review menu shortcuts that open Comparison Review with either the new-note draft or note filter focused.
 - A per-player Live Audio Meter panel for source A or B, with current-clock start/retry/reset, late-metadata readiness, persisted reference controls, keyboard/menu access, and teardown with its owning playback window.
 - Opt-in production-path metadata memory profiling that starts before the first uncached load, records sampled and lifetime peak RSS, verifies cache parity, and validates one fresh XCTest host per long-file input.
@@ -109,6 +113,12 @@ All notable changes to Aagedal Media Player.
   primary-file loop boundaries across all backend combinations.
 
 ### Fixed
+- Let a newly started live-meter decoder catch up from bounded FFmpeg startup
+  latency before enforcing the steady-state 250 ms freshness limit, while
+  retaining fail-closed behavior after synchronization.
+- Preserve a single already-trimmed AAC priming packet as explicit,
+  timestamp-authorized source silence while continuing to reject genuine
+  initial delays and midstream timestamp gaps.
 - Reject malformed HDR scope buffers, non-finite pixels, invalid output sizes and out-of-range peak scales instead of risking a crash or publishing an unusable graticule.
 - Replace same-file waveform work when stream layout, labels, ordering or duration changes, and reject non-finite durations before rendering.
 - Prevent returning from an unsupported playback speed from restarting a retained pre-replacement live-meter source or audio track.

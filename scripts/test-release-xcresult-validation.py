@@ -60,6 +60,12 @@ class ReleaseXCResultValidationTests(unittest.TestCase):
     def test_accepts_allowlisted_descriptive_skip(self) -> None:
         self.assertEqual(self.validate(), (662, 1))
 
+    def test_representative_live_meter_profile_is_an_allowlisted_opt_in(self) -> None:
+        self.skipped_case["nodeIdentifier"] = (
+            "LiveAudioMeterPerformanceTests/testRepresentativeProductionPathWhenRequested()"
+        )
+        self.assertEqual(self.validate(), (662, 1))
+
     def test_accepts_no_skips_when_optional_inputs_are_supplied(self) -> None:
         self.summary["passedTests"] = 662
         self.summary["skippedTests"] = 0

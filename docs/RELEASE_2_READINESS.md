@@ -1,6 +1,6 @@
 # 2.0 release readiness
 
-Assessment updated: 2026-09-13. This is a prioritization of the existing
+Assessment updated: 2026-09-15. This is a prioritization of the existing
 [product roadmap](../PRODUCT_ROADMAP.md), not a change to its committed scope.
 It is based on the repository's plans and retained verification reports,
 including the September 12 meter foundation and programme-loudness follow-up.
@@ -19,6 +19,16 @@ hardening additionally verifies decoded channel-layout identity, prevents
 unsupported-speed recovery from reviving a replaced meter source, exposes
 stable frequently-updated meter accessibility elements, reconciles every
 detailed XCTest outcome, and binds publication to the remote asset size/digest.
+The September 15 continuation hardens HDR scope rendering and auxiliary
+waveform source replacement, and adds an opt-in representative live-meter
+profiler with fail-closed input identity, production-path, boundedness, memory,
+routing, cancellation, and authoritative EOF evidence. The harness makes the
+remaining acceptance repeatable; it does not itself supply authentic media,
+trusted meter comparisons, long-play, or base-M1 evidence.
+A generated 30-second video/AAC engineering smoke passes the final harness
+schema across MPV playback, bundled FFmpeg/DSP measurement, routing mutation,
+cancellation, and exact near-EOF drainage; it is plumbing evidence, not
+representative-media acceptance.
 
 The Review & Report implementation is substantially present: structured point
 and range findings, versioned local sidecars, relinking, deliberate historical
@@ -35,7 +45,7 @@ The project still declares version 1.6.1.
 | Gap | Acceptance evidence required |
 | --- | --- |
 | Production metadata memory spike | Complete the reviewed dependency integration and outstanding fixture/error-semantics review; pin the accepted revision and repeat full-app long-file profiling. The isolated candidate's roughly 20 MiB peak versus the original dependency's roughly 4.3 GiB is promising, but is not a shipping-app result. A fresh-process production-path profiler now measures from before the uncached load through cache parity and caller release, but its one-minute harness check is not the required one/eight-hour before-and-after acceptance. See [metadata investigation](METADATA_MEMORY_PERFORMANCE.md) and [library fixture acceptance](METADATA_LIBRARY_FIXTURE_VALIDATION.md). |
-| Committed live Audio QC | Implement peak/true-peak and momentary/short-term loudness with explicit units, calibration, ballistics, hold/reset behavior, and presets. Validate the actual live path against trusted references, including pause/seek/replacement, channel routing, malformed media and cancellation; demonstrate bounded work during long playback. Existing offline loudness results do not satisfy this promise. See the [live-meter implementation contract](LIVE_AUDIO_METER_DESIGN.md) and [offline audio loudness](AUDIO_LOUDNESS.md). The design, bounded DSP/display, source-rate-paced suspendable decoder, hard 250 ms worker admission bound, timestamp-verified packets, bounded precise seek with generated AAC/ALAC/AC-3 checks, lifecycle ownership, selected A/B track mapping and fallback, typed player events, clock/drift policy, owning window session and mounted activating UI are implemented. Generated compressed ALAC 5.1 now passes the shipping metadata/player/session/FFmpeg/DSP/presentation path under independent monitor routing. Representative real media and complete native production acceptance remain. See [meter foundation](LIVE_AUDIO_METER_DSP.md). |
+| Committed live Audio QC | Implement peak/true-peak and momentary/short-term loudness with explicit units, calibration, ballistics, hold/reset behavior, and presets. Validate the actual live path against trusted references, including pause/seek/replacement, channel routing, malformed media and cancellation; demonstrate bounded work during long playback. Existing offline loudness results do not satisfy this promise. See the [live-meter implementation contract](LIVE_AUDIO_METER_DESIGN.md) and [offline audio loudness](AUDIO_LOUDNESS.md). The design, bounded DSP/display, source-rate-paced suspendable decoder, hard 250 ms worker admission bound, timestamp-verified packets, bounded precise seek with generated AAC/ALAC/AC-3 checks, lifecycle ownership, selected A/B track mapping and fallback, typed player events, clock/drift policy, owning window session and mounted activating UI are implemented. Generated compressed ALAC 5.1 now passes the shipping metadata/player/session/FFmpeg/DSP/presentation path under independent monitor routing. The [representative production harness](LIVE_AUDIO_METER_PERFORMANCE.md) now retains exact source/provenance, pacing, routing, memory, cancellation, and EOF evidence. Producer-authentic inputs, trusted measurement comparison, long-play/base-M1 execution, malformed-media behavior, and complete native production acceptance remain. See [meter foundation](LIVE_AUDIO_METER_DSP.md). |
 | Real editor interoperability | Complete Resolve, Final Cut Pro, and Avid acceptance rows with exact editor versions and retained import/re-export results. Check fractional rates, DF minute/ten-minute boundaries, inclusive ranges, duplicate positions, note content, and source identity. Where re-export is unavailable, retain the documented visible frame/count evidence and explicitly state the limitation. App exports and parser tests alone are insufficient. See [interchange run sheet](COMPARE_MODE_INTERCHANGE.md). |
 | Release-floor playback and resource use | Run the named base 2020 M1 MacBook Air/8 GB gate: 120 seconds per comparison scenario, including UHD/HDR, mixed backends, reflected sources, scopes and loupe; retain decoder/drift results plus Instruments CPU/GPU and thermal observations. Complete concurrent-playback long-file thumbnail and multichannel loudness profiles. September 12 programme profiling exposed and corrected silent long-range channel loss; per-input container-index memory still grows with duration, and sleep-interrupted timings are excluded. See [programme profiling](PROGRAMME_LOUDNESS_PERFORMANCE.md). See [comparison performance](COMPARE_MODE_PERFORMANCE.md), [thumbnails](TIMELINE_THUMBNAIL_PERFORMANCE.md), and [loudness performance](AUDIO_LOUDNESS_PERFORMANCE.md). |
 | Complete native workflows and accessibility | Finish keyboard-only structured review creation/edit/filter/navigation/export, relink/migration/recovery, timeline zoom/hover, and audio controls. Complete Full Keyboard Access and spoken VoiceOver, including narrow layouts and both backends. Focused existing native checks cover useful subsets; accessibility-tree labels are not spoken VoiceOver acceptance. See [review native checks](COMPARE_REVIEW_NATIVE_CHECK_2026-09-08.md), [timeline](TIMELINE_NAVIGATION.md), and [loupe manual tests](INSPECTION_LOUPE_MANUAL_TESTS.md). |
@@ -143,6 +153,13 @@ These should not delay a candidate merely to increase feature count:
   evidence over repeatedly extending already well-covered cases.
 
 ## When to call it close
+
+The implementation is already at a credible **focused/private beta** level:
+the major workflows exist, regression coverage is broad, and the remaining
+risk can be exercised through named acceptance gates. Call it a distributable
+beta only after choosing the version/channel strategy, passing representative
+smoke and native accessibility checks, and producing a signed, notarized,
+Gatekeeper-accepted beta artifact. Those are still real release tasks.
 
 Call it **close to a reasonable 2.0 release** when the production memory defect
 is resolved, committed feature scope is implemented (or explicitly revised),

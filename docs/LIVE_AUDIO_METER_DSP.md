@@ -14,6 +14,10 @@ against FFmpeg's same-process frame timestamps, size and checksum. It normalizes
 at most one millisecond of container timestamp quantization while rejecting
 material gaps; that closes the protocol-design gap without standing in for
 real-source acceptance.
+At source start, one positive offset no larger than the first decoded packet is
+treated as an already-trimmed codec-priming interval. The decoder materializes
+that interval as zero PCM, records the synthetic frame count in provenance, and
+still rejects larger initial delays and every later timestamp gap.
 
 ## Measurement core
 
@@ -104,7 +108,8 @@ either pipe is capped at 250 ms and applies backpressure; termination releases
 waiters so the OS-bounded final pipe tail can be reconciled or rejected. Missing headers, gaps, malformed records,
 checksum differences, truncated PCM and incomplete framing fail the segment.
 Completion records the decoder version, arguments, sample format, timestamp
-protocol, time base and verified frame count as provenance.
+protocol, time base, verified frame count and any timestamp-authorized initial
+silence as provenance.
 
 Seeking uses a bounded hybrid: input seeking stops long files from decoding from
 the beginning, while at most one second of immediately burst decoder preroll is
@@ -150,7 +155,7 @@ and owns decoder lifetime through panel or player-window closure.
 
 `LiveAudioMeterPlaybackSource` provides the typed handoff from a selected A/B
 track to the decoder. It preserves the zero-based audio-only stream order used
-by `0:a:N`, keeps container stream identity separately for diagnostics, rounds
+by `0:a:N`, keeps the metadata library's stream ordinal separately for diagnostics, rounds
 start time once to an exact source-sample position, and clamps it to the source
 duration. Mono, stereo, `5.1(side)` and conventional `7.1` receive explicit DSP
 speaker maps. Other one-to-eight-channel layouts retain numbered peak meters
@@ -250,6 +255,10 @@ seconds of eight-channel 96 kHz PCM in about 0.13 seconds. It excludes decoder,
 UI, scheduling and thermal costs and is not a release-floor performance result.
 
 Remaining work:
+
+Use the opt-in [representative production harness](LIVE_AUDIO_METER_PERFORMANCE.md)
+to retain source identity, timestamp, boundedness, memory, routing, EOF and
+cancellation evidence for explicit external media.
 
 - Validate the timestamp-verified decoder on representative real compressed
   sources. Exercise drift failure, seek/loop/reload, EOF revision, cancellation,

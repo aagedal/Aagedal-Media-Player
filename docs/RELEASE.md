@@ -68,12 +68,12 @@ package hash, or checkout cleanliness changes during the run; write its output
 outside the source checkout. Because the two mixed-backend transport tests have
 shown order-sensitive behavior late in their long-lived hosted test class, the
 verifier excludes them from the aggregate result and runs them together in a
-fresh serial runner. It validates both result bundles, covering all 664 tests
+fresh serial runner. It validates both result bundles, covering all 679 tests
 without treating test-host resource accumulation as a playback acceptance
 signal.
 The destructive disk-image check, external-reference checks, fixture generation,
-and production profilers remain explicit opt-ins rather than ordinary candidate
-verifier work.
+and production profilers—including representative live-audio-meter acceptance—
+remain explicit opt-ins rather than ordinary candidate verifier work.
 Opt-in reference, performance, and destructive-filesystem tests report named
 skips unless their documented harness supplies the required inputs. A passing
 ordinary suite therefore does not claim those acceptance gates ran.

@@ -54,6 +54,7 @@ nonisolated struct LiveAudioMeterDecodeProvenance: Equatable, Sendable {
     let timestampSource: TimestampSource
     let timestampTimeBase: String
     let timestampFrameCount: Int64
+    let syntheticInitialSilenceFrameCount: Int64
 }
 
 nonisolated struct LiveAudioMeterDecodeCompletion: Equatable, Sendable {
@@ -310,6 +311,7 @@ nonisolated final class LiveAudioMeterTimestampedStreamProcessor: @unchecked Sen
     struct Summary: Equatable, Sendable {
         let packetCount: Int64
         let frameCount: Int64
+        let syntheticInitialSilenceFrameCount: Int64
     }
 
     private struct Record: Equatable, Sendable {
@@ -332,6 +334,8 @@ nonisolated final class LiveAudioMeterTimestampedStreamProcessor: @unchecked Sen
     private nonisolated(unsafe) var unmatchedTimingByteCount = 0
     private nonisolated(unsafe) var packetCount: Int64 = 0
     private nonisolated(unsafe) var expectedPTS: Int64 = 0
+    private nonisolated(unsafe) var pendingInitialSilenceByteCount = 0
+    private nonisolated(unsafe) var syntheticInitialSilenceFrameCount: Int64 = 0
     private nonisolated(unsafe) var hasTimeBase = false
     private nonisolated(unsafe) var hasSampleRate = false
     private nonisolated(unsafe) var hasChannelLayout = false
@@ -433,6 +437,21 @@ nonisolated final class LiveAudioMeterTimestampedStreamProcessor: @unchecked Sen
         guard hasChannelLayout else {
             return failLocked(.missingTimestampChannelLayout)
         }
+        guard record.byteCount <= maximumUnmatchedByteCount else {
+            return failLocked(.timestampPacketTooLarge(
+                byteCount: record.byteCount, maximum: maximumUnmatchedByteCount
+            ))
+        }
+        // AAC edit lists can leave one already-trimmed codec frame as the
+        // first decoded PTS even though the source timeline begins at zero.
+        // Materialize only that first-packet-sized interval as silence. Larger
+        // initial delays and every later gap remain discontinuities.
+        if packetCount == 0, expectedPTS == 0,
+           record.pts > 0, record.pts <= record.frameCount {
+            expectedPTS = record.pts
+            syntheticInitialSilenceFrameCount = record.pts
+            pendingInitialSilenceByteCount = Int(record.pts) * bytesPerFrame
+        }
         let minimumPTS = expectedPTS - maximumTimestampJitterFrames
         let (maximumPTS, maximumPTSOverflow) = expectedPTS.addingReportingOverflow(
             maximumTimestampJitterFrames
@@ -448,11 +467,6 @@ nonisolated final class LiveAudioMeterTimestampedStreamProcessor: @unchecked Sen
         )
         guard !nextPTSOverflow else {
             return failLocked(.malformedFrameTimestamp)
-        }
-        guard record.byteCount <= maximumUnmatchedByteCount else {
-            return failLocked(.timestampPacketTooLarge(
-                byteCount: record.byteCount, maximum: maximumUnmatchedByteCount
-            ))
         }
         while failure == nil, !terminationStarted,
               unmatchedTimingByteCount + record.byteCount > maximumUnmatchedByteCount {
@@ -480,6 +494,13 @@ nonisolated final class LiveAudioMeterTimestampedStreamProcessor: @unchecked Sen
             if let failure {
                 condition.unlock()
                 throw failure
+            }
+            if pendingInitialSilenceByteCount > 0 {
+                let byteCount = pendingInitialSilenceByteCount
+                pendingInitialSilenceByteCount = 0
+                condition.unlock()
+                try downstream.consume(Data(count: byteCount))
+                continue
             }
             if let record = records.first {
                 let needed = record.byteCount - pendingPCM.count
@@ -558,12 +579,19 @@ nonisolated final class LiveAudioMeterTimestampedStreamProcessor: @unchecked Sen
             guard hasChannelLayout else {
                 throw LiveAudioMeterDecoder.Failure.missingTimestampChannelLayout
             }
-            guard records.isEmpty, pendingPCM.isEmpty else {
+            guard records.isEmpty,
+                  pendingPCM.isEmpty,
+                  pendingInitialSilenceByteCount == 0 else {
                 throw LiveAudioMeterDecoder.Failure.timestampStreamIncomplete(
-                    pcmBytes: pendingPCM.count, timingBytes: unmatchedTimingByteCount
+                    pcmBytes: pendingPCM.count + pendingInitialSilenceByteCount,
+                    timingBytes: unmatchedTimingByteCount
                 )
             }
-            return Summary(packetCount: packetCount, frameCount: expectedPTS)
+            return Summary(
+                packetCount: packetCount,
+                frameCount: expectedPTS,
+                syntheticInitialSilenceFrameCount: syntheticInitialSilenceFrameCount
+            )
         }
         guard downstream.receivedFrameCount == summary.frameCount else {
             throw LiveAudioMeterDecoder.Failure.timestampFrameCountMismatch(
@@ -848,7 +876,9 @@ nonisolated enum LiveAudioMeterDecoder {
                 codecNormalizationDisabled: true,
                 timestampSource: .ffmpegFrameCRC,
                 timestampTimeBase: "1/\(request.format.sampleRate)",
-                timestampFrameCount: timestampSummary.frameCount
+                timestampFrameCount: timestampSummary.frameCount,
+                syntheticInitialSilenceFrameCount:
+                    timestampSummary.syntheticInitialSilenceFrameCount
             ),
             finalSnapshot: finalSnapshot
         )

@@ -346,7 +346,7 @@ final class LiveAudioMeterSession: ObservableObject {
         let endFrame = coordinator.snapshot?.endFrame ?? provenance.request.startSourceFrame
         return LiveAudioMeterProvenance(
             sourceIdentity: source.url.path,
-            streamIndex: source.containerStreamIndex ?? source.audioStreamOrderIndex,
+            streamIndex: source.metadataStreamIndex ?? source.audioStreamOrderIndex,
             trackLabel: source.trackLabel,
             decoder: "FFmpeg",
             decoderVersion: provenance.decoderVersion,

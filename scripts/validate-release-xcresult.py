@@ -17,6 +17,7 @@ ALLOWED_SKIPPED_TESTS = {
     "CompareReviewDiskFullTests/testRealVolumeExhaustionPreservesSidecarAndAllowsRetry()",
     "ITUProgrammeLoudnessTests/testOfficialProgrammeReferencesWhenRequested()",
     "ITUSevenPointOneLoudnessTests/testOfficialEightChannelReferenceWhenRequested()",
+    "LiveAudioMeterPerformanceTests/testRepresentativeProductionPathWhenRequested()",
     "LoudnessPerformanceTests/testProductionLoudnessProfileWhenRequested()",
     "ProductionMetadataMemoryPerformanceTests/testProductionMetadataMemoryProfileWhenRequested()",
     "ProgrammeLoudnessPerformanceTests/testProductionProgrammeLoudnessProfileWhenRequested()",

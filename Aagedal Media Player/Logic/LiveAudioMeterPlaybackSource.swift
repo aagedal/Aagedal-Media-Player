@@ -41,7 +41,7 @@ nonisolated struct LiveAudioMeterPlaybackSource: Equatable, Sendable {
     let label: String
     let url: URL
     let audioStreamOrderIndex: Int
-    let containerStreamIndex: Int?
+    let metadataStreamIndex: Int?
     let trackLabel: String
     let format: LiveAudioMeterFormat
     let declaredChannelLayout: String?
@@ -68,7 +68,7 @@ nonisolated struct LiveAudioMeterPlaybackSource: Equatable, Sendable {
         self.label = label
         self.url = url
         self.audioStreamOrderIndex = audioStreamOrderIndex
-        containerStreamIndex = stream.index
+        metadataStreamIndex = stream.index
         self.trackLabel = trackLabel
         declaredChannelLayout = stream.channelLayout
         self.duration = duration.isFinite ? max(0, duration) : 0

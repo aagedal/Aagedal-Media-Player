@@ -89,6 +89,8 @@ final class LiveAudioMeterCoordinator: ObservableObject {
     private var isTransportSuspended = false
     private var isClockSuspended = false
     private var isWaitingForSupportedSpeed = false
+    private var hasEstablishedClockSync = false
+    private var isCatchingUpInitialLag = false
     /// Playback EOF is authoritative until a new segment starts. Backends may
     /// publish trailing pause/buffering observations after their EOF event;
     /// those must not stop the decoder before it drains valid PCM and its FIR
@@ -229,18 +231,40 @@ final class LiveAudioMeterCoordinator: ObservableObject {
         switch assessment {
         case .synchronized(let drift):
             clockDrift = drift
+            hasEstablishedClockSync = true
+            isCatchingUpInitialLag = false
+            status = readinessStatus(frame: endFrame)
         case .suspendAhead(let drift):
             clockDrift = drift
+            hasEstablishedClockSync = true
+            isCatchingUpInitialLag = false
+            status = readinessStatus(frame: endFrame)
             if !isClockSuspended {
                 isClockSuspended = true
                 applyWorkerSuspension()
             }
         case .resume(let drift):
             clockDrift = drift
+            hasEstablishedClockSync = true
+            isCatchingUpInitialLag = false
+            status = readinessStatus(frame: endFrame)
             isClockSuspended = false
             applyWorkerSuspension()
         case .failed(let drift):
             clockDrift = drift
+            // Spawning FFmpeg and reducing its first bucket can take longer
+            // than the steady-state 250 ms freshness limit. Let a new segment
+            // catch up without exposing it as active, but retain a finite
+            // upper bound so a bad seek or stalled decoder still fails closed.
+            if !hasEstablishedClockSync,
+               drift < -LiveAudioMeterClockPolicy.maximumDrift,
+               drift >= -2 {
+                isCatchingUpInitialLag = true
+                status = .warmingUp(
+                    frame: endFrame, momentaryReady: false, shortTermReady: false
+                )
+                return
+            }
             invalidateCurrent(
                 status: .unavailable(
                     reason: "Live meters lost synchronization with playback.",
@@ -362,6 +386,8 @@ final class LiveAudioMeterCoordinator: ObservableObject {
         isTransportSuspended = false
         isClockSuspended = false
         isWaitingForSupportedSpeed = false
+        hasEstablishedClockSync = false
+        isCatchingUpInitialLag = false
         hasReachedPlaybackEOF = false
         status = .warmingUp(
             frame: newRequest.startSourceFrame, momentaryReady: false, shortTermReady: false
@@ -508,7 +534,13 @@ final class LiveAudioMeterCoordinator: ObservableObject {
         snapshot = next.measurement
         reducedSnapshot = next
         publishedSnapshotCount += 1
-        status = readinessStatus(frame: next.measurement.endFrame)
+        status = isCatchingUpInitialLag
+            ? .warmingUp(
+                frame: next.measurement.endFrame,
+                momentaryReady: false,
+                shortTermReady: false
+            )
+            : readinessStatus(frame: next.measurement.endFrame)
     }
 
     private func readinessStatus(frame: Int64) -> LiveAudioMeterLifecycleStatus {
@@ -539,6 +571,8 @@ final class LiveAudioMeterCoordinator: ObservableObject {
         isTransportSuspended = false
         isClockSuspended = false
         isWaitingForSupportedSpeed = false
+        hasEstablishedClockSync = false
+        isCatchingUpInitialLag = false
         hasReachedPlaybackEOF = false
         if clearRequest { request = nil }
         status = newStatus

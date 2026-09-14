@@ -179,7 +179,7 @@ final class LiveAudioMeterCoordinatorTests: XCTestCase {
         coordinator.close()
     }
 
-    func testClockDriftFailureInvalidatesCurrentGeneration() async throws {
+    func testInitialClockLagCanCatchUpBeforeSteadyStateDriftFails() async throws {
         let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
         let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
         coordinator.start(try request(stream: 0, startFrame: 0))
@@ -189,8 +189,20 @@ final class LiveAudioMeterCoordinatorTests: XCTestCase {
 
         coordinator.updatePlaybackClock(playback(time: 0.31, playing: true))
 
+        guard case .warmingUp = coordinator.status else {
+            return XCTFail("Expected the cold decoder to catch up without losing its generation")
+        }
+        XCTAssertNotNil(coordinator.snapshot)
+
+        decoder.emit(snapshot(endFrame: 14_400), stream: 0)
+        await eventually { coordinator.snapshot?.endFrame == 14_400 }
+        coordinator.updatePlaybackClock(playback(time: 0.31, playing: true))
+        XCTAssertEqual(try XCTUnwrap(coordinator.clockDrift), -0.01, accuracy: 0.000_001)
+
+        coordinator.updatePlaybackClock(playback(time: 0.56, playing: true))
+
         guard case .unavailable(let reason, let diagnostic) = coordinator.status else {
-            return XCTFail("Expected excessive lag to invalidate the segment")
+            return XCTFail("Expected excessive lag after synchronization to invalidate the segment")
         }
         XCTAssertEqual(reason, "Live meters lost synchronization with playback.")
         XCTAssertTrue(diagnostic?.contains("-260.0 ms") == true)
@@ -553,7 +565,8 @@ final class LiveAudioMeterCoordinatorTests: XCTestCase {
                 codecNormalizationDisabled: true,
                 timestampSource: .ffmpegFrameCRC,
                 timestampTimeBase: "1/\(request.format.sampleRate)",
-                timestampFrameCount: max(0, finalFrame - request.startSourceFrame)
+                timestampFrameCount: max(0, finalFrame - request.startSourceFrame),
+                syntheticInitialSilenceFrameCount: 0
             ),
             finalSnapshot: final
         )

@@ -95,7 +95,9 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
         processor.finishTiming()
 
         let (final, summary) = try processor.finish()
-        XCTAssertEqual(summary, .init(packetCount: 2, frameCount: 1_152))
+        XCTAssertEqual(summary, .init(
+            packetCount: 2, frameCount: 1_152, syntheticInitialSilenceFrameCount: 0
+        ))
         XCTAssertEqual(final?.endFrame, 1_152)
         XCTAssertEqual(received.values.last?.endFrame, 1_152)
     }
@@ -122,7 +124,9 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
         processor.finishTiming()
 
         let (final, summary) = try processor.finish()
-        XCTAssertEqual(summary, .init(packetCount: 3, frameCount: 384))
+        XCTAssertEqual(summary, .init(
+            packetCount: 3, frameCount: 384, syntheticInitialSilenceFrameCount: 0
+        ))
         XCTAssertEqual(final?.endFrame, 384)
         XCTAssertEqual(received.values.last?.endFrame, 384)
     }
@@ -180,7 +184,9 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
         headered.finishTiming()
         let (final, summary) = try headered.finish()
         XCTAssertNil(final)
-        XCTAssertEqual(summary, .init(packetCount: 0, frameCount: 0))
+        XCTAssertEqual(summary, .init(
+            packetCount: 0, frameCount: 0, syntheticInitialSilenceFrameCount: 0
+        ))
     }
 
     func testTimestampedProcessorRequiresChannelLayoutBeforePacketsAndAtEmptyEOF() throws {
@@ -225,7 +231,9 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
         XCTAssertNil(matching.consumeTimingLine("#sample_rate 0: 48000"))
         XCTAssertNil(matching.consumeTimingLine("#channel_layout_name 0: 5.1(side)"))
         matching.finishTiming()
-        XCTAssertEqual(try matching.finish().1, .init(packetCount: 0, frameCount: 0))
+        XCTAssertEqual(try matching.finish().1, .init(
+            packetCount: 0, frameCount: 0, syntheticInitialSilenceFrameCount: 0
+        ))
     }
 
     func testTimestampedProcessorQualifiesUnknownLayoutsByChannelCount() throws {
@@ -237,7 +245,9 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
             XCTAssertNil(processor.consumeTimingLine("#channel_layout_name 0: \(actual)"), actual)
             processor.finishTiming()
             XCTAssertEqual(
-                try processor.finish().1, .init(packetCount: 0, frameCount: 0), actual
+                try processor.finish().1,
+                .init(packetCount: 0, frameCount: 0, syntheticInitialSilenceFrameCount: 0),
+                actual
             )
         }
 
@@ -284,7 +294,9 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
             try processor.consumePCM(packet)
             processor.finishTiming()
             let (_, summary) = try processor.finish()
-            XCTAssertEqual(summary, .init(packetCount: 1, frameCount: 128))
+            XCTAssertEqual(summary, .init(
+                packetCount: 1, frameCount: 128, syntheticInitialSilenceFrameCount: 0
+            ))
         }
     }
 
@@ -689,6 +701,22 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
                 "\(codec) decode must not apply unexpected gain normalization"
             )
             XCTAssertEqual(completion.provenance.timestampFrameCount, 48_000)
+            if codec == "aac" {
+                let sourceStart = try LiveAudioMeterDecodeRequest(
+                    url: compressedURL,
+                    audioStreamOrderIndex: 0,
+                    format: format,
+                    startSourceFrame: 0,
+                    startSourceTime: 0
+                )
+                let startCompletion = try await LiveAudioMeterDecoder.decode(sourceStart) { _ in }
+                XCTAssertEqual(startCompletion.provenance.timestampFrameCount, 96_000)
+                XCTAssertEqual(startCompletion.finalSnapshot?.endFrame, 96_000)
+                XCTAssertEqual(
+                    startCompletion.provenance.syntheticInitialSilenceFrameCount,
+                    1_024
+                )
+            }
         }
     }
 

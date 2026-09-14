@@ -17,7 +17,7 @@ final class LiveAudioMeterPlaybackSourceTests: XCTestCase {
         XCTAssertEqual(request.audioStreamOrderIndex, 2)
         XCTAssertEqual(request.startSourceFrame, 16_000)
         XCTAssertEqual(request.startSourceTime, 1.0 / 3.0, accuracy: 1.0 / 48_000)
-        XCTAssertEqual(source.containerStreamIndex, 7)
+        XCTAssertEqual(source.metadataStreamIndex, 7)
         XCTAssertEqual(source.channelLabels, ["Left", "Right"])
         XCTAssertEqual(source.sourceOption, .init(id: "B", label: "Source B", detail: "Mix"))
     }

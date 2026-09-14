@@ -84,13 +84,13 @@ xcrun xcresulttool get test-results tests \
 python3 scripts/validate-release-xcresult.py \
     "$artifact_dir/test-summary.json" \
     "$artifact_dir/test-details.json" \
-    --minimum-tests 662 \
+    --minimum-tests 677 \
     2>&1 | tee "$artifact_dir/test-evidence-validation.log"
 
 # The full bundle deliberately retains Xcode's process isolation and excludes
 # two historically order-sensitive mixed-backend transport cases. Run those
 # cases together in one fresh serial runner so candidate evidence contains an
-# independent stability check and still covers all 664 tests without forcing
+# independent stability check and still covers all 679 tests without forcing
 # every hosted decoder test into one long-lived process.
 echo "==> Focused mixed-backend transport repeat"
 xcodebuild test \

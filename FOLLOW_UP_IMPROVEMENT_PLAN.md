@@ -1858,8 +1858,13 @@ The final combined Release run passes 578 tests with zero failures and zero skip
 including the official ITU offline references and real APFS recovery, with
 verified image detach. Evidence is retained in
 `/tmp/aagedal-meter-programme-final-apfs-20260912/Tests.xcresult` and `summary.json`.
-That retained candidate passed all 61 preflight checks. The current working tree
-preflight instead stops at strict bundled-FFmpeg code-signature verification.
+That retained candidate passed all 61 preflight checks. A then-current preflight
+inside the restricted workspace sandbox stopped at strict bundled-FFmpeg
+code-signature verification. Phases 85–86 later established that this was a
+sandbox trust-service limitation and verified the unchanged tracked FFmpeg
+outside the sandbox. Those later checks do not establish candidate evidence for
+an unverified newer commit; the canonical post-commit verifier remains the
+authoritative candidate gate.
 
 The decoder/presentation/lifecycle continuation includes paced bundled-FFmpeg
 decode, coordinator ownership, suspend/cancellation and panel-session coverage.
@@ -2256,6 +2261,59 @@ The focused helper suites and shell syntax checks pass. Final candidate
 verification and the signed/notarized distribution gate remain post-commit
 work against the exact source identity.
 
+## Phase 96 — HDR scope safety and waveform source integrity
+
+Status: Focused engineering complete on 2026-09-15; representative visual and
+release-floor acceptance remain open.
+
+- [x] Reject malformed RGB scope storage, non-finite pixels, invalid output
+  dimensions, allocation overflow, and non-finite or implausible HDR peak scales
+  before rendering or publishing a new graticule.
+- [x] Cover RGBY parade placement and PQ, HLG, and linear HDR transfer behavior
+  with deterministic raw-buffer regressions.
+- [x] Give auxiliary waveform work a complete source identity across URL, mode,
+  stream selection, layout, split-mono ordering/labels, and duration so same-file
+  metadata changes replace stale generation instead of being deduplicated.
+- [x] Reject invalid duration and source parameters before floating-point to
+  integer conversion in the UI and native waveform generator.
+
+All 29 focused waveform and scope tests pass, including five waveform-source
+and nine new scope/HDR regressions. This is deterministic correctness and crash
+resistance evidence; it does not replace the representative raster/color/loupe
+matrix or base-M1 performance gate.
+
+## Phase 97 — Representative live-meter evidence harness
+
+Status: Harness engineering complete on 2026-09-15; authentic-media, trusted-
+reference, soak, native accessibility, and base-M1 acceptance remain open.
+
+- [x] Add an explicit opt-in production-path profile for external media with
+  exact path/hash identity and selected codec, layout, stream, sample-rate, and
+  playback-backend evidence.
+- [x] Retain paced source-frame progress, publication cadence, clock drift,
+  decoded-ahead high-water, app/child RSS, monitor-routing invariance, and
+  bounded FFmpeg cancellation evidence.
+- [x] Exercise a second near-EOF segment and require authoritative final DSP
+  state plus exact frame-CRC timestamp interval and disabled decoder processing.
+- [x] Let a cold production decoder catch up from bounded initial process
+  startup latency before enforcing the steady-state 250 ms freshness limit.
+- [x] Preserve the single first-packet AAC priming offset exposed by common
+  edit lists as explicit timestamp-authorized source silence while continuing
+  to reject genuine initial delays and midstream timestamp gaps.
+- [x] Export durable XCTest attachments and fail closed on missing, duplicated,
+  mutated, malformed, incomplete, unsupported, or unbounded evidence.
+- [x] Keep the profiler named and skipped in ordinary candidate runs, document
+  the authentic-media matrix and limitations, and include its self-contained
+  validator regressions in the release-helper gate.
+
+The harness makes the remaining production acceptance repeatable and auditable.
+A 30-second generated video/AAC engineering smoke passes MPV playback, the
+bundled FFmpeg/DSP path, monitor-routing mutation and resume, bounded
+cancellation, and exact near-EOF drainage with the final schema. This proves
+that the plumbing runs, but only the
+documented producer-authentic matrix, trusted reference comparison, long-play
+observation, and base 2020 M1 MacBook Air run can close the release gate.
+
 ## Remaining work after this continuation
 
 - Integrate the measured metadata-memory dependency fix after upstream review,
@@ -2500,3 +2558,11 @@ work against the exact source identity.
 84. Phase 92 live-meter EOF ownership and review accessibility hooks.
 
 85. Phase 93 fail-closed candidate evidence and publication identity.
+
+86. Phase 94 decoded speaker identity and stale speed recovery.
+
+87. Phase 95 candidate-result and publication integrity.
+
+88. Phase 96 HDR scope safety and waveform source integrity.
+
+89. Phase 97 representative live-meter evidence harness.
