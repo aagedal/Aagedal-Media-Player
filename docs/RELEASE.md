@@ -68,7 +68,7 @@ package hash, or checkout cleanliness changes during the run; write its output
 outside the source checkout. Because the two mixed-backend transport tests have
 shown order-sensitive behavior late in their long-lived hosted test class, the
 verifier excludes them from the aggregate result and runs them together in a
-fresh serial runner. It validates both result bundles, covering all 679 tests
+fresh serial runner. It validates both result bundles, covering all 685 tests
 without treating test-host resource accumulation as a playback acceptance
 signal.
 The destructive disk-image check, external-reference checks, fixture generation,
