@@ -154,3 +154,24 @@ originals, reviewed upstream JXL fixture/assertion reconciliation, and a rerun
 of all twenty fixture cases with zero failures and no missing-fixture skips.
 The diagnostic does not complete those requirements, broader camera acceptance,
 upstream review of the RTMD fix, or full-app profiling after integration.
+
+## 3.0.1 release source check — 2026-09-15
+
+The clean local SwiftMediaMetadata checkout resolves to the integrated 3.0.1
+release commit `8662054299a3e13c49c65f74c564360559d1bf7f`. Its committed
+`Tests/SwiftMediaMetadataTests/Integration/RealFileTests.swift` has no diff from
+the pinned 3.0.0 revision, so the five ARW/XMP fixture assertions and the JXL
+`writeToData()` throw expectation are still present in 3.0.1. This source check
+does not claim a new fixture-suite result.
+
+At this check, the prior `TestImages` staging directory and the September 9
+fixture-run artifacts were no longer present locally. The exact Sony originals
+and the original JXL container were not found in the local home directory. The
+CRM and MCA source clips remained at their documented paths. A fresh all-twenty
+run requires recovery or restaging of all eleven named image/sidecar inputs,
+including the two Sony originals; it also requires upstream reconciliation of
+the JXL test's fixture identity and obsolete assertion. Then run the harness
+against a separate clean pinned baseline and this exact 3.0.1 checkout, with
+zero skips and zero failures. The eight fixture-validator, four JXL-diagnostic,
+and ten candidate-provenance focused regressions pass locally; they validate
+the harness and evidence rules, not the absent media inputs.
