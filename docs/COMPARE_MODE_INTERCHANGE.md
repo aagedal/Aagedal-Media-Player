@@ -195,3 +195,24 @@ timed out before an import workflow was available.
 
 Do not mark editor acceptance complete until the relevant rows contain actual
 results. Parser-based XCTest coverage does not establish editor compatibility.
+
+### Native Resolve export repeat — 2026-09-15
+
+The current unsigned Release build at `3c1d39e` opened a fresh generated
+29.97 drop-frame pair in `/private/tmp/aagedal-review-editor-acceptance-20260915`.
+Comparison Review loaded all eight findings from the untouched schema-2
+sidecar. Native Save panels wrote `source-a_vs_source-b_review.edl` and
+`source-a_vs_source-b_review.csv`; the player reported both saves complete.
+`native-export-validation-20260915.json` checks eight ordered CSV/EDL anchors,
+the adjacent and duplicate positions, minute/ten-minute drop-frame labels,
+one-/three-frame inclusive durations, and source-media/sidecar manifest hashes.
+The EDL SHA-256 is
+`93c714a3f6181ff5ad3629feb74f2408308a290446b2d10a24653aa6d62869b6`;
+the CSV SHA-256 is
+`10ff29423713fb37815c5c74c2feba4591c056f50535d56d6185b532bb29bf56`.
+
+Resolve Studio 21 opened to its Project Manager, but New Project did not
+respond to accessibility activation, pointer clicks, or the keyboard shortcut
+in this automation session. No EDL import or editor re-export occurred. The
+Resolve acceptance row above remains pending; resume with a disposable project
+and retain the editor's visible marker/frame evidence and re-exported file.
