@@ -245,6 +245,13 @@ for explicit nonstandard one/two-channel maps; and prevents unsupported-speed
 restoration from reviving a replaced source. All 60 tests pass in Debug. This is
 generated-media engineering evidence, not representative-programme acceptance.
 
+A generated AAC source with a deliberate midstream timestamp gap now also runs
+through shipping metadata selection, the player, the owning meter session and
+bundled FFmpeg. The session reports the decoder's timestamp failure as
+Unavailable, clears provisional readings and provenance, and leaves Retry
+available. This checks the production failure boundary with synthetic media;
+other malformed codecs and producer-authentic failures remain to be exercised.
+
 Each peak row now includes its channel name in the accessibility label (for
 example, “Front left, Sample peak”), avoiding ambiguous repeated peak identities
 in multichannel layouts. Spoken VoiceOver and complete keyboard traversal remain

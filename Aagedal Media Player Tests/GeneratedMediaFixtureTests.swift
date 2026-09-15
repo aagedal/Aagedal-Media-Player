@@ -285,6 +285,80 @@ final class GeneratedMediaFixtureTests: XCTestCase {
     }
 
     @MainActor
+    func testLiveMeterProductionPathRejectsGeneratedCompressedTimestampGap() async throws {
+        guard FFmpegService.ffmpegPath != nil else { throw XCTSkip("Bundled ffmpeg is required") }
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "live-meter-session-gap-\(UUID().uuidString).m4a"
+        )
+        defer { try? FileManager.default.removeItem(at: url) }
+        try await FFmpegService.run(arguments: [
+            "-hide_banner", "-nostdin", "-loglevel", "error", "-y",
+            "-f", "lavfi", "-i", "sine=frequency=1000:sample_rate=48000:duration=1",
+            "-af", "aselect=not(between(t\\,0.4\\,0.5))",
+            "-c:a", "aac", url.path,
+        ])
+
+        let metadata = try await MetadataService.shared.metadata(for: url)
+        XCTAssertEqual(metadata.audioStreams.first?.sampleRate, 48_000)
+        let controller = PlayerController(proResRAWDetector: { _, _ in true })
+        let comparison = CompareSessionController()
+        let defaultsSuite = "GeneratedMediaFixtureTests.LiveMeterGap.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: defaultsSuite))
+        let session = LiveAudioMeterSession(
+            primary: controller, comparison: comparison, defaults: defaults
+        )
+        defer {
+            session.close()
+            comparison.stop()
+            controller.teardown()
+            defaults.removePersistentDomain(forName: defaultsSuite)
+        }
+
+        var item = PlayerWindowCoordinator.makeMediaItem(for: url)
+        item.metadata = metadata
+        item.durationSeconds = metadata.duration ?? 0
+        item.hasVideoStream = false
+        controller.loadMedia(item)
+        controller.updateMetadata(item)
+        let ready = await waitUntil(timeout: .seconds(10)) {
+            controller.isReady
+                && (try? controller.liveAudioMeterSource(id: "A", label: "Source A")) != nil
+        }
+        XCTAssertTrue(ready, "Generated compressed source must be selected before metering")
+        guard ready else { return }
+
+        session.start()
+        let generation = session.coordinator.generation
+        XCTAssertGreaterThan(generation, 0)
+        let playerState = controller.liveAudioMeterPlaybackSnapshot()
+        // Drive the same typed EOF boundary used by playback, granting the
+        // paced decoder enough source time to reach the deliberately missing packets.
+        session.coordinator.handlePlaybackEvent(.ended(.init(
+            time: 1,
+            phase: playerState.phase,
+            isPlaying: false,
+            rate: playerState.rate,
+            preparationID: playerState.preparationID
+        )))
+        let rejected = await waitUntil(timeout: .seconds(15)) {
+            if case .unavailable(_, let diagnostic) = session.viewState.status {
+                return diagnostic?.contains("timestamp expected frame") == true
+            }
+            return false
+        }
+        XCTAssertTrue(
+            rejected,
+            "Expected actionable timestamp failure: \(session.coordinator.status); " +
+                "diagnostics: \(session.viewState.diagnostics.map(\.detail))"
+        )
+        XCTAssertEqual(session.coordinator.generation, generation)
+        XCTAssertNil(session.coordinator.snapshot)
+        XCTAssertNil(session.coordinator.reducedSnapshot)
+        XCTAssertNil(session.coordinator.provenance)
+        XCTAssertTrue(session.viewState.canRetry)
+    }
+
+    @MainActor
     func testSubtitlesChaptersAndLongGOPFixture() async throws {
         let url = try fixtureDirectory().appending(path: "chapters-subtitles-long-gop.mkv")
         let metadata = try await MetadataService.shared.metadata(for: url)
