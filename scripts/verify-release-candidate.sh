@@ -41,6 +41,13 @@ resolved_packages="$project/project.xcworkspace/xcshareddata/swiftpm/Package.res
 derived_data="$artifact_dir/DerivedData"
 source_commit="$(git rev-parse --verify HEAD)"
 package_resolved_sha256="$(shasum -a 256 "$resolved_packages" | awk '{print $1}')"
+package_cache_args=()
+package_cache="${AAGEDAL_CANDIDATE_PACKAGE_CACHE:-}"
+if [[ -n "$package_cache" ]]; then
+    package_cache="$(python3 -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "$package_cache")"
+    python3 scripts/validate-candidate-package-cache.py "$resolved_packages" "$package_cache"
+    package_cache_args=(-clonedSourcePackagesDirPath "$package_cache")
+fi
 
 if [[ ! "$source_commit" =~ ^[0-9a-f]{40}$ ]]; then
     echo "ERROR: could not resolve HEAD to a full lowercase commit SHA." >&2
@@ -52,6 +59,7 @@ mkdir -p "$artifact_dir"
 {
     echo "sourceCommit=$source_commit"
     echo "packageResolvedSHA256=$package_resolved_sha256"
+    echo "packageCache=${package_cache:-none}"
     echo "startedAt=$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
     echo "host=$(sw_vers -productName) $(sw_vers -productVersion) ($(sw_vers -buildVersion))"
     xcodebuild -version
@@ -67,6 +75,7 @@ xcodebuild test \
     -configuration Release \
     -destination "platform=macOS" \
     -derivedDataPath "$derived_data" \
+    "${package_cache_args[@]}" \
     -resultBundlePath "$artifact_dir/Tests.xcresult" \
     -onlyUsePackageVersionsFromResolvedFile \
     -skip-testing:"Aagedal Media Player Tests/CompareLiveBackendTests/testAVFoundationPrimaryAndMPVSecondaryShareTransport" \
@@ -99,6 +108,7 @@ xcodebuild test \
     -configuration Release \
     -destination "platform=macOS" \
     -derivedDataPath "$derived_data" \
+    "${package_cache_args[@]}" \
     -resultBundlePath "$artifact_dir/MixedBackendTransport.xcresult" \
     -onlyUsePackageVersionsFromResolvedFile \
     -parallel-testing-enabled NO \
@@ -128,6 +138,7 @@ xcodebuild analyze \
     -configuration Release \
     -destination "platform=macOS" \
     -derivedDataPath "$derived_data" \
+    "${package_cache_args[@]}" \
     -onlyUsePackageVersionsFromResolvedFile \
     2>&1 | tee "$artifact_dir/analyze.log"
 
@@ -142,6 +153,9 @@ fi
 if [[ "$(shasum -a 256 "$resolved_packages" | awk '{print $1}')" != "$package_resolved_sha256" ]]; then
     echo "ERROR: Package.resolved changed during candidate verification." >&2
     exit 2
+fi
+if [[ -n "$package_cache" ]]; then
+    python3 scripts/validate-candidate-package-cache.py "$resolved_packages" "$package_cache"
 fi
 if ! final_worktree_status="$(git status --porcelain)" || [[ -n "$final_worktree_status" ]]; then
     echo "ERROR: checkout changed during candidate verification." >&2

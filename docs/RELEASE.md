@@ -55,6 +55,22 @@ candidate verification from a clean checkout, choosing a new output directory:
 scripts/verify-release-candidate.sh /tmp/aagedal-candidate-VERSION-BUILD
 ```
 
+On a network-restricted host, point the verifier at a previously resolved
+SwiftPM `SourcePackages` directory (for example, a clean Release build's
+`DerivedData/SourcePackages`):
+
+```bash
+AAGEDAL_CANDIDATE_PACKAGE_CACHE=/path/to/DerivedData/SourcePackages \
+  scripts/verify-release-candidate.sh /tmp/aagedal-candidate-VERSION-BUILD
+```
+
+The optional cache check requires every checkout to be clean and at the exact
+commit in committed `Package.resolved`, before and after verification. Xcode
+still uses only the resolved package versions. The verifier records the cache
+path in candidate evidence; do not use an unreviewed or locally modified
+package checkout. A fresh DerivedData directory without that option may try to
+clone the pins and fail before tests when GitHub DNS/network access is blocked.
+
 The verifier records the exact commit, `Package.resolved` hash, host and Xcode
 version; first runs the self-contained script-validator tests and shell/Python
 syntax checks; runs the test suite and static analysis in Release with

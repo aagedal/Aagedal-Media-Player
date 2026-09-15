@@ -211,8 +211,14 @@ The EDL SHA-256 is
 the CSV SHA-256 is
 `10ff29423713fb37815c5c74c2feba4591c056f50535d56d6185b532bb29bf56`.
 
-Resolve Studio 21 opened to its Project Manager, but New Project did not
-respond to accessibility activation, pointer clicks, or the keyboard shortcut
-in this automation session. No EDL import or editor re-export occurred. The
-Resolve acceptance row above remains pending; resume with a disposable project
-and retain the editor's visible marker/frame evidence and re-exported file.
+Resolve Studio 21 opened to its Project Manager; a project-name popup was not
+visible to the automation, and the user opened an empty disposable project.
+The generated source A then imported, Resolve changed the project rate to
+29.97 fps, and Append placed the complete clip on `Timeline 1`. Its source
+viewer showed `00:00:58;00` on the first frame. The media-pool timeline's
+custom right-click menu still did not appear to the automation; the generic
+**File → Import → Timeline…** command opened a Load EDL dialog, but is a
+different edit-conform path and was cancelled. No timeline-marker EDL import or
+editor re-export occurred. The Resolve acceptance row above remains pending;
+use **Timelines → Import → Timeline Markers from EDL** on the existing timeline,
+then retain visible frame/count evidence and the re-exported marker file.
