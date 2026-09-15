@@ -441,6 +441,8 @@ user evidence shows stronger demand.
   normalized inputs.
 - Caption presence, timing, and safe-area checks.
 - Optional batch preflight for a folder of deliverables.
+- [Player-specific MCP access to live A/B review state](docs/FUTURE_MCP_IDEAS.md),
+  only if an agent workflow proves distinct from Media Converter automation.
 
 ## Roadmap maintenance
 
