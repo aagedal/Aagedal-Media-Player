@@ -29,6 +29,11 @@ A generated 30-second video/AAC engineering smoke passes the final harness
 schema across MPV playback, bundled FFmpeg/DSP measurement, routing mutation,
 cancellation, and exact near-EOF drainage; it is plumbing evidence, not
 representative-media acceptance.
+The current continuation also exercises a generated compressed-AAC timestamp
+gap through the production metadata, player, owning meter session, bundled
+decoder and display path. It produces a cleared, actionable Unavailable state
+with Retry rather than retaining stale measurement provenance. Three focused
+Debug checks pass; producer-authentic malformed-media acceptance remains open.
 
 The Review & Report implementation is substantially present: structured point
 and range findings, versioned local sidecars, relinking, deliberate historical
@@ -124,6 +129,35 @@ bundles, rechecks source identity at completion, and release execution consumes
 only matching evidence. Candidate status therefore follows the retained verifier
 output for the exact clean commit rather than a durable claim in this document.
 
+The September 15 canonical clean-checkout verifier passes at commit
+`d3b703097049c2bb0af209e251c05048fd0bdfee`, with the exact committed
+`Package.resolved` SHA-256
+`6aea6d64326f3040345c3523a0a39c95d53335777e233b3aa311e8ba90ad475d`.
+The new optional offline-cache route first checked the three pinned package
+checkout revisions and clean states, then supplied them to Release tests and
+analysis when a fresh isolated DerivedData could not reach GitHub DNS. The
+script-validator gate, 678 optimized Release passes with eight explicit
+allowlisted skips (686 total), two separate serial mixed-backend transport
+passes, static analysis, and all 61 source-tree preflight checks pass. The
+verifier rechecked HEAD, `Package.resolved`, package checkouts and the clean
+worktree before recording `status=passed`. Full logs and `.xcresult` bundles
+are retained at `/private/tmp/aagedal-improvement-candidate-offline-20260915`.
+This validates that exact checkout; later documentation-only commits need a
+fresh exact-HEAD verification before any release execution.
+
+Resolve Studio 21.1.0.14 now has a real import/re-export attempt with generated
+29.97 drop-frame media. The corrected-start import retains six of eight
+in-range findings, including two three-frame durations, Unicode and both
+source URLs. It loses the first-frame and duplicate-frame findings; the
+adjacent finding's text lands one frame early. An earlier import at the
+timeline's wrong starting timecode also persists as seven negative-frame
+markers in the disposable project. The re-export exposes all thirteen
+observed markers, but this is a partial interoperability result, not editor
+acceptance. Repeat in a fresh correct-start timeline, determine the
+adjacent/duplicate behavior, and either fix the marker representation or state
+an explicit Resolve limitation before an editor-oriented beta. See
+[the retained interchange record](COMPARE_MODE_INTERCHANGE.md).
+
 ## Remaining scope that needs an explicit product decision
 
 These are unfinished roadmap commitments, not silently deferred features:
@@ -166,7 +200,9 @@ the major workflows exist, regression coverage is broad, and the remaining
 risk can be exercised through named acceptance gates. Call it a distributable
 beta only after choosing the version/channel strategy, passing representative
 smoke and native accessibility checks, and producing a signed, notarized,
-Gatekeeper-accepted beta artifact. Those are still real release tasks.
+Gatekeeper-accepted beta artifact. Resolve's observed marker loss also needs a
+fix or clear beta limitation if editor interchange is advertised. Those are
+still real release tasks.
 
 Call it **close to a reasonable 2.0 release** when the production memory defect
 is resolved, committed feature scope is implemented (or explicitly revised),

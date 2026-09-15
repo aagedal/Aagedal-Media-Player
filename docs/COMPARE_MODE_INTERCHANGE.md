@@ -176,7 +176,7 @@ marked passed. The native export result is independent of that outstanding gate.
 
 | Editor/version | Media/rate/start | Marker count | Frame accuracy | Text/duplicates | Re-export comparison | Result/artifacts |
 | --- | --- | --- | --- | --- | --- | --- |
-| Resolve | Pending | | | | | Not run |
+| Resolve Studio 21.1.0.14 | Generated 29.97 DF / `00:00:58;00` | 6/8 in-range after corrected import | Five surviving anchors exact; Fixture 2 moved from frame 1 to frame 0 | Unicode/URLs and range durations retained; Fixtures 1 and 5 absent | 13 events: 7 from the earlier wrong-start import plus 6 in-range | Partial; see September 15 evidence below |
 | Final Cut Pro | Pending | | | | | Not run |
 | Media Composer | Pending | | | | | Not run |
 
@@ -211,14 +211,47 @@ The EDL SHA-256 is
 the CSV SHA-256 is
 `10ff29423713fb37815c5c74c2feba4591c056f50535d56d6185b532bb29bf56`.
 
-Resolve Studio 21 opened to its Project Manager; a project-name popup was not
-visible to the automation, and the user opened an empty disposable project.
-The generated source A then imported, Resolve changed the project rate to
-29.97 fps, and Append placed the complete clip on `Timeline 1`. Its source
-viewer showed `00:00:58;00` on the first frame. The media-pool timeline's
-custom right-click menu still did not appear to the automation; the generic
-**File → Import → Timeline…** command opened a Load EDL dialog, but is a
-different edit-conform path and was cancelled. No timeline-marker EDL import or
-editor re-export occurred. The Resolve acceptance row above remains pending;
-use **Timelines → Import → Timeline Markers from EDL** on the existing timeline,
-then retain visible frame/count evidence and the re-exported marker file.
+Resolve Studio 21.1.0.14 on macOS 27.0 opened to its Project Manager; a
+project-name popup was not visible to automation, so the user opened an empty
+disposable project, `New Project 1`. The generated source A imported, Resolve
+changed the project rate to 29.97 fps, and Append placed the complete clip on
+`Timeline 1`. Its source viewer showed `00:00:58;00` on the first frame. The
+media-pool timeline's custom right-click menu did not appear to automation;
+the user used **Timelines → Import → Timeline Markers from EDL** and the native
+file picker to import the saved EDL.
+
+The first import occurred while `Timeline 1` still started at
+`01:00:00;00`; Resolve placed seven findings at negative timeline frames. The
+user changed its starting timecode to `00:00:58;00` and repeated the proper
+marker import. Resolve's built-in timeline-marker API then reported six
+in-range markers at frames 0, 59, 60, 16241, 16242 and 18280, alongside the
+seven earlier negative-frame markers. The frame-0 marker carries Fixture 2's
+text, whose saved A frame is 1. Fixtures 1 and 5 are absent from the corrected
+import. Fixtures 3 and 6 retain three-frame `|D:` durations; the other four
+survivors retain one-frame durations. Their Unicode text, classifications and
+both source URLs remain present. The exact API dump and assertions are saved
+as `resolve-marker-api-20260915.tsv` (SHA-256
+`84dab192ca051a513f843ca44b3534399eb0358246b72e487c4cc468d3686d27`)
+and `resolve-import-validation-20260915.json` in the disposable fixture
+directory.
+
+The user exported **Timelines → Export → Timeline Markers to EDL** to
+`resolve-roundtrip.edl` (SHA-256
+`86926772d61d5394ffa5dd3363c6c6582919651e14e576fa9a7ba08b10cb1ac0`).
+Its 13 events match the API count: seven negative-frame events from the
+wrong-start import and six corrected in-range events. Resolve writes one-frame
+CMX event spans for range findings while retaining `|D:3`; it also writes
+colon-separated timecode fields under `FCM: DROP FRAME`. The six in-range
+events retain Unicode, classifications and both source URLs. The generated
+movies and original sidecar still match every manifest hash after re-export;
+`resolve-roundtrip-validation-20260915.json` records the checks.
+The small original and round-trip exports, API snapshot, manifest and validation
+records are also [committed as reviewable evidence](evidence/resolve-markers-20260915/README.md);
+the generated movies and disposable Resolve project stay outside the source tree.
+
+This is a **partial interoperability result**, not an accepted eight-finding
+round trip. Repeat in a fresh timeline with the correct start before any import
+to isolate the adjacent-frame collision from prior import state. Determine
+whether same-frame findings require a grouped marker representation or an
+explicit Resolve export limitation; do not silently treat missing findings as
+accepted. Final Cut Pro and Avid import/re-export remain unrun.

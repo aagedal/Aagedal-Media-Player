@@ -2382,6 +2382,56 @@ Acceptance: coordinator tests wait for asynchronous task attachment, publication
 and cancellation by elapsed time rather than assuming a fixed number of scheduler
 turns under parallel suite load.
 
+## Phase 101 — Malformed compressed live-meter gap ownership
+
+Status: Generated-media engineering regression complete on 2026-09-15.
+
+- [x] Pass generated compressed AAC through MetadataService, PlayerController,
+  LiveAudioMeterSession and the bundled FFmpeg/DSP path with a timestamp gap.
+- [x] Clear the last measured snapshot and provenance, surface an actionable
+  Unavailable reason, and retain Retry after the malformed packet sequence.
+- [x] Pass three focused Debug regressions for the full ownership path.
+- [ ] Repeat on producer-authentic malformed media with trusted measurement
+  comparisons and the release-floor long-play profile.
+
+Acceptance: the generated-path regression is closed; authentic malformed-media
+and performance acceptance remain release gates.
+
+## Phase 102 — Offline clean-checkout candidate verification
+
+Status: Completed for exact commit `d3b7030` on 2026-09-15.
+
+- [x] Fail closed on any absent, mismatched or dirty pinned package checkout in
+  the opt-in offline cache before using it in the isolated candidate verifier.
+- [x] Pass the complete script-validator gate, 678 optimized Release tests with
+  eight named skips, two isolated mixed-backend transport tests, static analysis
+  and all 61 source-tree preflight checks.
+- [x] Recheck HEAD, Package.resolved and package checkouts and retain the exact
+  `.xcresult`, log and environment identity evidence outside the source tree.
+
+Acceptance: the verifier records `status=passed` for the exact clean checkout
+at `/private/tmp/aagedal-improvement-candidate-offline-20260915`. A later
+candidate needs its own exact-HEAD run before release execution.
+
+## Phase 103 — Resolve marker round-trip acceptance
+
+Status: Partial editor result recorded on 2026-09-15; acceptance remains open.
+
+- [x] Export the unchanged generated eight-finding 29.97 drop-frame review
+  through native Save panels and verify exact EDL/CSV bytes and input hashes.
+- [x] Import via Resolve Studio 21.1.0.14's timeline-marker EDL workflow and
+  retain built-in marker API and native re-export evidence.
+- [ ] Repeat in a fresh correct-start timeline to isolate the adjacent-frame
+  collision; preserve all findings or document an explicit format limitation.
+- [ ] Complete Final Cut Pro and Avid import/re-export acceptance separately.
+
+The corrected-start Resolve import retained six of eight in-range findings:
+five surviving anchors and both three-frame durations were exact, while an
+adjacent finding moved one frame early and first/duplicate-frame findings were
+lost. Seven negative markers from a first wrong-start import also remained in
+the disposable project. See `docs/COMPARE_MODE_INTERCHANGE.md`; this phase
+cannot count as accepted interoperability or a completed 2.0 gate.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -2428,7 +2478,9 @@ turns under parallel suite load.
   and MPV inspector-toggle framing with playing/paused intent preserved.
   Stacked-action layouts, final-build EOF and broader comparison/native-backend
   inspector transitions remain separate acceptance checks.
-- Actual marker import/re-export in Resolve, Final Cut Pro, and Avid, including
+- Repeat Resolve's now-recorded partial marker import/re-export in a fresh
+  correct-start timeline and resolve its adjacent/duplicate finding loss.
+  Complete Final Cut Pro and Avid import/re-export separately, including
   fractional rates, drop-frame boundaries, inclusive ranges, and source identity.
 - Oldest-supported Apple Silicon UHD/HDR playback, reflected loupe/scopes,
   and long-file thumbnail performance profiling.
@@ -2640,3 +2692,9 @@ turns under parallel suite load.
 91. Phase 99 deferred playback-window publication.
 
 92. Phase 100 live-meter asynchronous test synchronization.
+
+93. Phase 101 malformed compressed live-meter gap ownership.
+
+94. Phase 102 offline clean-checkout candidate verification.
+
+95. Phase 103 Resolve marker round-trip acceptance.

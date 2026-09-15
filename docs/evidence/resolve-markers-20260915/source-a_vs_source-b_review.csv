@@ -1,0 +1,17 @@
+Marker,Source A,Source B,Alignment,A Source TC,A Relative TC,A Frame,B Source TC,B Relative TC,B Frame,Note,Created,Updated,Severity,Category,Status,A End Frame (Inclusive),A Rate Numerator,A Rate Denominator,B Rate Numerator,B Rate Denominator,Source A URL,Source B URL
+1,source-a.mov,source-b.mov,Source timecode,00:00:58;00,00:00:00:00,0,00:00:58;00,00:00:00:00,0,"Fixture 1: æøå 日本語 & <picture> ""quoted""	column
+Second line",2026-09-08T20:40:00.000Z,2026-09-08T20:40:00.000Z,Info,General,Open,0,30000,1001,30000,1001,file:///private/tmp/aagedal-review-editor-acceptance-20260915/source-a.mov,file:///private/tmp/aagedal-review-editor-acceptance-20260915/source-b.mov
+2,source-a.mov,source-b.mov,Source timecode,00:00:58;01,00:00:00:01,1,00:00:58;01,00:00:00:01,1,"Fixture 2: æøå 日本語 & <picture> ""quoted""	column
+Second line",2026-09-08T20:40:01.000Z,2026-09-08T20:40:01.000Z,Minor,Picture,In Progress,,30000,1001,30000,1001,file:///private/tmp/aagedal-review-editor-acceptance-20260915/source-a.mov,file:///private/tmp/aagedal-review-editor-acceptance-20260915/source-b.mov
+3,source-a.mov,source-b.mov,Source timecode,00:00:59;29,00:00:01:29,59,00:00:59;29,00:00:01:29,59,"Fixture 3: æøå 日本語 & <picture> ""quoted""	column
+Second line",2026-09-08T20:40:02.000Z,2026-09-08T20:40:02.000Z,Major,Audio,Resolved,61,30000,1001,30000,1001,file:///private/tmp/aagedal-review-editor-acceptance-20260915/source-a.mov,file:///private/tmp/aagedal-review-editor-acceptance-20260915/source-b.mov
+4,source-a.mov,source-b.mov,Source timecode,00:01:00;02,00:00:02:00,60,00:01:00;02,00:00:02:00,60,"Fixture 4: æøå 日本語 & <picture> ""quoted""	column
+Second line",2026-09-08T20:40:03.000Z,2026-09-08T20:40:03.000Z,Critical,Sync,Open,,30000,1001,30000,1001,file:///private/tmp/aagedal-review-editor-acceptance-20260915/source-a.mov,file:///private/tmp/aagedal-review-editor-acceptance-20260915/source-b.mov
+5,source-a.mov,source-b.mov,Source timecode,00:01:00;02,00:00:02:00,60,00:01:00;02,00:00:02:00,60,"Fixture 5: æøå 日本語 & <picture> ""quoted""	column
+Second line",2026-09-08T20:40:04.000Z,2026-09-08T20:40:04.000Z,Info,Metadata,In Progress,,30000,1001,30000,1001,file:///private/tmp/aagedal-review-editor-acceptance-20260915/source-a.mov,file:///private/tmp/aagedal-review-editor-acceptance-20260915/source-b.mov
+6,source-a.mov,source-b.mov,Source timecode,00:09:59;29,00:09:01:11,16241,00:09:59;29,00:09:01:11,16241,"Fixture 6: æøå 日本語 & <picture> ""quoted""	column
+Second line",2026-09-08T20:40:05.000Z,2026-09-08T20:40:05.000Z,Minor,General,Resolved,16243,30000,1001,30000,1001,file:///private/tmp/aagedal-review-editor-acceptance-20260915/source-a.mov,file:///private/tmp/aagedal-review-editor-acceptance-20260915/source-b.mov
+7,source-a.mov,source-b.mov,Source timecode,00:10:00;00,00:09:01:12,16242,00:10:00;00,00:09:01:12,16242,"Fixture 7: æøå 日本語 & <picture> ""quoted""	column
+Second line",2026-09-08T20:40:06.000Z,2026-09-08T20:40:06.000Z,Major,Picture,Open,,30000,1001,30000,1001,file:///private/tmp/aagedal-review-editor-acceptance-20260915/source-a.mov,file:///private/tmp/aagedal-review-editor-acceptance-20260915/source-b.mov
+8,source-a.mov,source-b.mov,Source timecode,00:11:08;00,00:10:09:10,18280,00:11:08;00,00:10:09:10,18280,"Fixture 8: æøå 日本語 & <picture> ""quoted""	column
+Second line",2026-09-08T20:40:07.000Z,2026-09-08T20:40:07.000Z,Critical,Audio,In Progress,,30000,1001,30000,1001,file:///private/tmp/aagedal-review-editor-acceptance-20260915/source-a.mov,file:///private/tmp/aagedal-review-editor-acceptance-20260915/source-b.mov

@@ -1,0 +1,68 @@
+{
+  "editorVersion": "21.1.0.14",
+  "timelineStart": "00:00:58;00",
+  "markerApiSHA256": "84dab192ca051a513f843ca44b3534399eb0358246b72e487c4cc468d3686d27",
+  "allMarkerCount": 13,
+  "preStartImportMarkerCount": 7,
+  "correctedImportInRangeCount": 6,
+  "inRange": [
+    {
+      "frame": 0,
+      "fixture": "Fixture 2",
+      "duration": 1,
+      "color": "Blue"
+    },
+    {
+      "frame": 59,
+      "fixture": "Fixture 3",
+      "duration": 3,
+      "color": "Blue"
+    },
+    {
+      "frame": 60,
+      "fixture": "Fixture 4",
+      "duration": 1,
+      "color": "Blue"
+    },
+    {
+      "frame": 16241,
+      "fixture": "Fixture 6",
+      "duration": 3,
+      "color": "Blue"
+    },
+    {
+      "frame": 16242,
+      "fixture": "Fixture 7",
+      "duration": 1,
+      "color": "Blue"
+    },
+    {
+      "frame": 18280,
+      "fixture": "Fixture 8",
+      "duration": 1,
+      "color": "Blue"
+    }
+  ],
+  "missingFixtureNames": [
+    "Fixture 1",
+    "Fixture 5"
+  ],
+  "mismatchedFrames": [
+    {
+      "fixture": "Fixture 2",
+      "frame": 0,
+      "expectedFrame": 1
+    }
+  ],
+  "unicodeAndSourceURLsPreserved": true,
+  "threeFrameRangesPreserved": true,
+  "firstImportFrames": [
+    -106152,
+    -106151,
+    -106093,
+    -106092,
+    -89911,
+    -89910,
+    -87872
+  ]
+}

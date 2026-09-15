@@ -1,0 +1,45 @@
+{
+  "sourceCommit": "3c1d39e",
+  "editor": "DaVinci Resolve Studio 21",
+  "status": "native export validated; editor import not run",
+  "sourceFilesUnchanged": {
+    "source-a vs source-b-6d881241176067f7.aagedal-compare.json": true,
+    "source-a.mov": true,
+    "source-b.mov": true
+  },
+  "markerCount": 8,
+  "sourceTimecodes": [
+    "00:00:58;00",
+    "00:00:58;01",
+    "00:00:59;29",
+    "00:01:00;02",
+    "00:01:00;02",
+    "00:09:59;29",
+    "00:10:00;00",
+    "00:11:08;00"
+  ],
+  "sourceFrames": [
+    0,
+    1,
+    59,
+    60,
+    60,
+    16241,
+    16242,
+    18280
+  ],
+  "inclusiveDurations": [
+    1,
+    1,
+    3,
+    1,
+    1,
+    3,
+    1,
+    1
+  ],
+  "outputSHA256": {
+    "source-a_vs_source-b_review.csv": "10ff29423713fb37815c5c74c2feba4591c056f50535d56d6185b532bb29bf56",
+    "source-a_vs_source-b_review.edl": "93c714a3f6181ff5ad3629feb74f2408308a290446b2d10a24653aa6d62869b6"
+  }
+}

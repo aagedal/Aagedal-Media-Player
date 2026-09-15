@@ -1,0 +1,70 @@
+{
+  "sourceEDLSHA256": "93c714a3f6181ff5ad3629feb74f2408308a290446b2d10a24653aa6d62869b6",
+  "resolveRoundTripSHA256": "86926772d61d5394ffa5dd3363c6c6582919651e14e576fa9a7ba08b10cb1ac0",
+  "resolveEDLCount": 13,
+  "preStartEvents": 7,
+  "inRangeEvents": [
+    {
+      "eventNumber": 8,
+      "recordIn": "00:00:58:00",
+      "recordOut": "00:00:58:01",
+      "fixture": 2,
+      "duration": 1,
+      "unicode": true,
+      "sourceAURL": true,
+      "sourceBURL": true
+    },
+    {
+      "eventNumber": 9,
+      "recordIn": "00:00:59:29",
+      "recordOut": "00:01:00:02",
+      "fixture": 3,
+      "duration": 3,
+      "unicode": true,
+      "sourceAURL": true,
+      "sourceBURL": true
+    },
+    {
+      "eventNumber": 10,
+      "recordIn": "00:01:00:02",
+      "recordOut": "00:01:00:03",
+      "fixture": 4,
+      "duration": 1,
+      "unicode": true,
+      "sourceAURL": true,
+      "sourceBURL": true
+    },
+    {
+      "eventNumber": 11,
+      "recordIn": "00:09:59:29",
+      "recordOut": "00:10:00:00",
+      "fixture": 6,
+      "duration": 3,
+      "unicode": true,
+      "sourceAURL": true,
+      "sourceBURL": true
+    },
+    {
+      "eventNumber": 12,
+      "recordIn": "00:10:00:00",
+      "recordOut": "00:10:00:01",
+      "fixture": 7,
+      "duration": 1,
+      "unicode": true,
+      "sourceAURL": true,
+      "sourceBURL": true
+    },
+    {
+      "eventNumber": 13,
+      "recordIn": "00:11:08:00",
+      "recordOut": "00:11:08:01",
+      "fixture": 8,
+      "duration": 1,
+      "unicode": true,
+      "sourceAURL": true,
+      "sourceBURL": true
+    }
+  ],
+  "inRangePreservesUnicodeAndSourceURLs": true,
+  "manifestMediaAndSidecarHashesUnchanged": true
+}
