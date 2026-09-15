@@ -2366,6 +2366,22 @@ Acceptance: window publication no longer mutates observable coordinator state
 during SwiftUI view reconciliation, while first and replacement windows retain
 their registration behavior.
 
+## Phase 100 — Live-meter asynchronous test synchronization
+
+Status: Completed on 2026-09-15.
+
+- [x] Replace scheduler-yield-count polling in the controlled live-meter decoder
+  and coordinator assertions with monotonic two-second deadlines and short
+  suspensions.
+- [x] Reproduce the full-suite-only attachment timeout from the failed canonical
+  run and retain its exact XCTest diagnostics.
+- [x] Pass the formerly failing malformed-snapshot/cancellation Release test in
+  all twenty repeated executions.
+
+Acceptance: coordinator tests wait for asynchronous task attachment, publication
+and cancellation by elapsed time rather than assuming a fixed number of scheduler
+turns under parallel suite load.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -2622,3 +2638,5 @@ their registration behavior.
 90. Phase 98 SwiftMediaMetadata 3.0.1 production memory integration.
 
 91. Phase 99 deferred playback-window publication.
+
+92. Phase 100 live-meter asynchronous test synchronization.

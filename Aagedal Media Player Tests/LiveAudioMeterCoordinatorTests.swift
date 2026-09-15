@@ -594,9 +594,11 @@ final class LiveAudioMeterCoordinatorTests: XCTestCase {
         file: StaticString = #filePath,
         line: UInt = #line
     ) async {
-        for _ in 0..<200 {
+        let clock = ContinuousClock()
+        let deadline = clock.now.advanced(by: .seconds(2))
+        while clock.now < deadline {
             if predicate() { return }
-            await Task.yield()
+            try? await Task.sleep(for: .milliseconds(5))
         }
         XCTFail("Condition did not become true", file: file, line: line)
     }
@@ -710,17 +712,21 @@ private final class ControlledLiveMeterDecoder: @unchecked Sendable {
     }
 
     func waitUntilAttached(stream: Int, occurrence: Int = 1) async {
-        for _ in 0..<200 {
+        let clock = ContinuousClock()
+        let deadline = clock.now.advanced(by: .seconds(2))
+        while clock.now < deadline {
             if lock.withLock({ attachmentCounts[stream, default: 0] >= occurrence }) { return }
-            await Task.yield()
+            try? await Task.sleep(for: .milliseconds(5))
         }
         XCTFail("Decoder stream \(stream) did not attach")
     }
 
     func waitUntilCancelled(stream: Int) async {
-        for _ in 0..<200 {
+        let clock = ContinuousClock()
+        let deadline = clock.now.advanced(by: .seconds(2))
+        while clock.now < deadline {
             if lock.withLock({ cancelled.contains(stream) }) { return }
-            await Task.yield()
+            try? await Task.sleep(for: .milliseconds(5))
         }
         XCTFail("Decoder stream \(stream) was not cancelled")
     }
