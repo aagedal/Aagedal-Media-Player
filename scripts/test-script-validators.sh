@@ -50,6 +50,7 @@ python_tests=(
     scripts/test-production-metadata-memory-profile-validation.py
     scripts/test-programme-loudness-profile-validation.py
     scripts/test-programme-profile-power.py
+    scripts/test-quadrant-render.py
     scripts/test-release-script-validation.py
     scripts/test-release-xcresult-validation.py
     scripts/test-resolve-marker-roundtrip.py

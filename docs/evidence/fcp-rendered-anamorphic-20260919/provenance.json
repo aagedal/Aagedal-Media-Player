@@ -1,0 +1,27 @@
+{
+  "baseCommit": "0bbe7b1071df38a753aec9c695fe36d22e1d48be",
+  "nativeApplication": "Final Cut Pro 12.3",
+  "source": "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Test Fixtures/Generated/loupe/rotate-90-par.mp4",
+  "sourceSHA256": "154f95ac8ed3a6a37cba87fffbc3184fc1d2ec341f6cc3e9e1b658353ab403c4",
+  "nativeMedia": [
+    {
+      "assetName": "rotate-90-par.mp4",
+      "url": "file:///tmp/aagedal-resolve-5994-20260919/Aagedal%20FCP%205994%20DF%20Acceptance%2020260919.fcpbundle/Aagedal%20Compare%20Review/Original%20Media/rotate-90-par.mp4",
+      "sha256": "154f95ac8ed3a6a37cba87fffbc3184fc1d2ec341f6cc3e9e1b658353ab403c4"
+    },
+    {
+      "assetName": "independent-rotate-90-par",
+      "url": "file:///tmp/aagedal-resolve-5994-20260919/Aagedal%20FCP%205994%20DF%20Acceptance%2020260919.fcpbundle/Aagedal%20Geometry%20Diagnostic%20116/Original%20Media/independent-rotate-90-par.mp4",
+      "sha256": "154f95ac8ed3a6a37cba87fffbc3184fc1d2ec341f6cc3e9e1b658353ab403c4"
+    }
+  ],
+  "render": "/private/tmp/aagedal-phase117/phase118-native-timeline.mov",
+  "renderSHA256": "e5c61729b669f26c143c528245a81fe7edb84ad9b1d09435f594110c9f819013",
+  "exportSettings": "Native Export File, Source - Apple ProRes 422, 1080 x 1920, 24 fps, Rec. 709, entire eight-second project",
+  "files": {
+    "docs/evidence/fcp-rendered-anamorphic-20260919/independent-frame.png": "419a79fbd42c9ce03dd17800de69649c1244cf77991abaf53d507374809a5dd3",
+    "docs/evidence/fcp-rendered-anamorphic-20260919/measurements.json": "a1fa0d0a8f6f1c7adcaa2806e5d05290a23c28245ea49f81f0da93759b458603",
+    "docs/evidence/fcp-rendered-anamorphic-20260919/review-frame.png": "419a79fbd42c9ce03dd17800de69649c1244cf77991abaf53d507374809a5dd3",
+    "docs/evidence/fcp-timeline-anamorphic-20260919/returned-event.fcpxml": "0f4b9576709b9a3c7da25e1b014aebf158e04f9cb7593e31a25cfbf76b5cb31a"
+  }
+}

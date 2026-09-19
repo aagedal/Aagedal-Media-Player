@@ -2775,6 +2775,29 @@ The observed matching padding suggests native source handling is involved; it
 does not establish correct geometry or justify waiving `assetPixelAspect`.
 No shipping app implementation changed in this phase.
 
+## Phase 118 — Calibrated native Final Cut rendered geometry
+
+Status: Native rendered-output measurement complete on 2026-09-19; incorrect
+Fit padding confirmed and broader geometry acceptance remains open.
+
+- [x] Export the complete Phase 117 portrait timeline through Final Cut Pro
+  12.3 as 1080 × 1920 / 24 fps ProRes 422 and retain render/source hashes.
+- [x] Measure three diagnostic review instances and the independent source
+  import. All four sampled RGB frames are identical: correctly oriented 9:16
+  content occupies 813 × 1444 pixels with black margins on all four sides.
+- [x] Add a repeatable saturated-quadrant render diagnostic that distinguishes
+  aspect/orientation from default Fit bounds, retaining threshold sensitivity,
+  source render identity and decoder provenance. The native result exits 1.
+- [x] Pass seven focused regressions and the complete script-validator suite;
+  retain full-resolution review/reference PNGs and measurement JSON.
+- [ ] Isolate native anamorphic conform behavior, repeat fresh production player
+  UI export, and complete other geometry/editor cases. Do not waive the separate
+  asset-PAR mismatch or compensate exporter scale without establishing cause.
+
+Evidence: `docs/evidence/fcp-rendered-anamorphic-20260919/README.md`.
+This closes the calibrated measurement task from Phase 117, not the geometry
+acceptance gate. No shipping app implementation changed.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -3066,3 +3089,5 @@ No shipping app implementation changed in this phase.
 108. Phase 116 oriented Final Cut browser-clip geometry.
 
 109. Phase 117 native Final Cut timeline and independent source geometry.
+
+110. Phase 118 calibrated native Final Cut rendered geometry.

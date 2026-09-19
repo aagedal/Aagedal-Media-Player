@@ -78,6 +78,13 @@ Fit/100% and share native asset geometry. The strict asset-PAR mismatch remains;
 calibrated rendered geometry and fresh production UI export are still required.
 See [timeline and independent-source evidence](evidence/fcp-timeline-anamorphic-20260919/README.md).
 
+Phase 118 measures a native ProRes export of that timeline. All four sampled
+review/direct-import frames are identical: correctly oriented 9:16 content
+occupies only 813 × 1444 pixels inside 1080 × 1920. This confirms real rendered
+padding under default Fit, not merely viewer zoom. The calibrated measurement
+task is complete; Fit geometry, asset PAR and fresh production UI export remain
+open. See [rendered geometry evidence](evidence/fcp-rendered-anamorphic-20260919/README.md).
+
 | Gap | Acceptance evidence required |
 | --- | --- |
 | Metadata compatibility and error semantics | The 3.0.1 production payload-copy regression is closed, but recover the five missing ARW/XMP fixture inputs, reconcile the remaining JXL fixture/assertion disagreement, and expand unusual-container and intended-error coverage. Keep this compatibility gate separate from the resolved memory defect. See [library fixture acceptance](METADATA_LIBRARY_FIXTURE_VALIDATION.md), [real-media validation](METADATA_REAL_MEDIA_VALIDATION.md), and [metadata investigation](METADATA_MEMORY_PERFORMANCE.md). |
