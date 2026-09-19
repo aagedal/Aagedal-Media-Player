@@ -145,17 +145,20 @@ nonisolated struct CompareReviewReportSnapshot: Equatable, Sendable {
             for: CompareMediaDescriptor(item: secondaryItem)
         )
         alignmentLabel = alignmentMode.label
-        // Use the coded raster, not the rotated/display-aspect presentation size.
-        // FCP otherwise invents a browser-clip format (observed as 1280×720).
+        // FCP formats describe the oriented raster. A quarter turn also swaps
+        // pixel axes, so invert PAR without baking it into the raster dimensions.
+        // Leaving coded geometry here distorts rotated anamorphic browser clips.
         let primaryVideo = primaryItem.metadata?.primaryVideoStream
         if let width = primaryVideo?.width, let height = primaryVideo?.height,
            width > 0, height > 0 {
-            primaryRasterWidth = width
-            primaryRasterHeight = height
+            let rotation = ((primaryVideo?.rotation ?? 0) % 360 + 360) % 360
+            let swapsAxes = rotation == 90 || rotation == 270
+            primaryRasterWidth = swapsAxes ? height : width
+            primaryRasterHeight = swapsAxes ? width : height
             if let aspect = primaryVideo?.pixelAspectRatio,
                aspect.numerator > 0, aspect.denominator > 0 {
-                primaryPixelAspectHorizontal = aspect.numerator
-                primaryPixelAspectVertical = aspect.denominator
+                primaryPixelAspectHorizontal = swapsAxes ? aspect.denominator : aspect.numerator
+                primaryPixelAspectVertical = swapsAxes ? aspect.numerator : aspect.denominator
             } else {
                 primaryPixelAspectHorizontal = nil
                 primaryPixelAspectVertical = nil

@@ -66,6 +66,12 @@ false positive: Final Cut changes the asset raster while preserving the browser
 clip format. Timing, point findings and media bytes match, but native geometry
 acceptance remains open. See [asset-format divergence evidence](evidence/fcp-rotated-anamorphic-20260919/README.md).
 
+Phase 116 corrects quarter-turn browser formats by swapping raster dimensions
+and inverting pixel aspect ratio together. Native diagnostic display improves
+and browser format, timing, findings and media bytes survive re-export, but
+Final Cut still rewrites asset PAR. This remains a partial result; see the
+[oriented anamorphic evidence](evidence/fcp-oriented-anamorphic-20260919/README.md).
+
 | Gap | Acceptance evidence required |
 | --- | --- |
 | Metadata compatibility and error semantics | The 3.0.1 production payload-copy regression is closed, but recover the five missing ARW/XMP fixture inputs, reconcile the remaining JXL fixture/assertion disagreement, and expand unusual-container and intended-error coverage. Keep this compatibility gate separate from the resolved memory defect. See [library fixture acceptance](METADATA_LIBRARY_FIXTURE_VALIDATION.md), [real-media validation](METADATA_REAL_MEDIA_VALIDATION.md), and [metadata investigation](METADATA_MEMORY_PERFORMANCE.md). |

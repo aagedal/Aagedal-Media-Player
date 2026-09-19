@@ -501,3 +501,13 @@ compares asset raster, PAR and frame duration independently and returns nonzero
 for this case. Native display-aspect correctness and the appropriate treatment
 of the changed asset format remain unresolved; no shipping exporter adjustment
 is inferred solely from this difference. See [retained evidence](evidence/fcp-rotated-anamorphic-20260919/README.md).
+
+### Oriented browser formats — Phase 116
+
+Quarter-turn sources now export oriented raster dimensions and inverted pixel
+aspect ratio, preserving the source's display aspect without adding a second
+rotation. Real generated fixtures and signed/negative rotation cases pass.
+A Final Cut Pro 12.3 diagnostic import/re-export preserves that browser format,
+all three point findings and media bytes, but rewrites asset PAR. Production XML
+matches the diagnostic apart from names; a rebuilt player UI repeat and timeline
+conform check remain open. See [retained evidence](evidence/fcp-oriented-anamorphic-20260919/README.md).

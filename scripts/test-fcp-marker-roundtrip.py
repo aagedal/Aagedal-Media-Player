@@ -15,6 +15,18 @@ EVIDENCE = Path(__file__).resolve().parents[1] / "docs/evidence/fcp-raster-marke
 
 
 class RoundTripTests(unittest.TestCase):
+    def test_oriented_anamorphic_clip_preserves_geometry_but_asset_par_still_differs(self):
+        evidence = EVIDENCE.parent / "fcp-oriented-anamorphic-20260919"
+        result = fcp.compare(evidence / "original.fcpxml", evidence / "returned.fcpxml")
+        self.assertEqual(result["status"], "differences")
+        self.assertEqual({key for key, value in result["checks"].items() if not value},
+                         {"assetPixelAspect"})
+        self.assertEqual(result["returned"]["raster"], [180, 240])
+        self.assertEqual(result["returned"]["pixelAspect"], "3/4")
+        self.assertEqual(result["returned"]["assetPixelAspect"], "4/3")
+        self.assertEqual([m[0] for m in result["returned"]["markers"]], [0, 1, 47])
+        self.assertFalse(result["mediaIdentityVerified"])
+
     def test_native_rotated_anamorphic_asset_change_cannot_pass_as_exact(self):
         evidence = EVIDENCE.parent / "fcp-rotated-anamorphic-20260919"
         result = fcp.compare(evidence / "original.fcpxml", evidence / "returned.fcpxml")

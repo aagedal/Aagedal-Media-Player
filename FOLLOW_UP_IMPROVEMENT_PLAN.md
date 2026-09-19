@@ -2728,6 +2728,28 @@ The native test uses one source for both review sides and three plain point
 findings. It does not close grouped/range/whitespace or broader editor gates.
 No shipping app behavior changes in this phase.
 
+## Phase 116 — Oriented Final Cut browser-clip geometry
+
+Status: Quarter-turn export correction implemented on 2026-09-19; native
+browser proportions improved, with asset-PAR interpretation still open.
+
+- [x] Investigate Phase 115's rotated anamorphic display in Final Cut Pro 12.3.
+  A diagnostic oriented format displays the expected portrait proportions.
+- [x] Swap exported raster dimensions and invert pixel aspect ratio together
+  for 90/270-degree source rotation, including negative/wrapped rotations.
+- [x] Pass 37 focused Debug tests, including ten real geometry fixtures;
+  thirteen Python comparator regressions, script validators, DTD checks and
+  Xcode static analysis also pass.
+- [x] Retain native diagnostic import/re-export and verify identical media
+  bytes, all three point findings, timing and browser format. Production XML
+  is structurally identical to the diagnostic apart from event/clip names.
+- [ ] Resolve the remaining native asset-PAR rewrite (3:4 to 4:3), verify
+  timeline conform/display geometry, and repeat through the rebuilt player UI.
+  Complete the other native geometry cases before closing the broader gate.
+
+Evidence: `docs/evidence/fcp-oriented-anamorphic-20260919/README.md`.
+The strict comparator deliberately still exits 1 for `assetPixelAspect`.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -3015,3 +3037,5 @@ No shipping app behavior changes in this phase.
 
 106. Phase 114 native Final Cut 59.94 drop-frame acceptance.
 107. Phase 115 Final Cut asset-format verification and real geometry fixtures.
+
+108. Phase 116 oriented Final Cut browser-clip geometry.

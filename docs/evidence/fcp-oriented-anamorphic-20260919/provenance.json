@@ -1,0 +1,14 @@
+{
+  "baseCommit": "fb3abfb044a4a21f662264f7d37f4175858344b6",
+  "nativeInput": "original.fcpxml is a diagnostic edit of Phase 115; production.fcpxml differs only in event/clip names, verified structurally.",
+  "sha256": {
+    "Aagedal Media Player/Logic/CompareReviewReportExporter.swift": "37f8871c8e8033408b37372f2574e331f413f11777aa8df9113ddfcaa2a24cc8",
+    "Aagedal Media Player Tests/CompareReviewReportExporterTests.swift": "7a68a6a1099fd2a716789cfbcbe06357f3122ebbcb53c0d674be215c9767f96a",
+    "Aagedal Media Player Tests/GeneratedMediaFixtureTests.swift": "e801d23fb969bec54931a39eea9a8223a995e76d82086569cbbc7be43391d1a0",
+    "Test Fixtures/Generated/loupe/rotate-90-par.mp4": "154f95ac8ed3a6a37cba87fffbc3184fc1d2ec341f6cc3e9e1b658353ab403c4",
+    "Aagedal Media Player.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved": "6aea6d64326f3040345c3523a0a39c95d53335777e233b3aa311e8ba90ad475d",
+    "docs/evidence/fcp-oriented-anamorphic-20260919/original.fcpxml": "b1083e43d115f032ec8a828db4bd2057cc59a70c6c054cb82af0ff607d584e97",
+    "docs/evidence/fcp-oriented-anamorphic-20260919/returned.fcpxml": "f786934f70fdf0f0923dc9f52d2dcbbd3137406620cd2a3db228ccc533c639b2",
+    "docs/evidence/fcp-oriented-anamorphic-20260919/production.fcpxml": "0893cec12cfbc44c58f8844abfdde5ac7d8f45b2cae28c45003c5cd5a13e64c1"
+  }
+}

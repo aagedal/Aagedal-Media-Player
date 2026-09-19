@@ -107,14 +107,14 @@ final class GeneratedMediaFixtureTests: XCTestCase {
     @MainActor
     func testFinalCutProExportsRealPortraitAnamorphicAndTransformedSources() async throws {
         let directory = try fixtureDirectory().appending(path: "loupe")
-        let cases: [(String, Int, Int, Int)] = [
-            ("landscape", 320, 180, 1), ("portrait", 180, 320, 1),
-            ("par", 240, 180, 4), ("rotate-90-par", 240, 180, 4),
-            ("rotate-180", 320, 180, 1), ("rotate-270", 320, 180, 1),
-            ("mirror", 320, 180, 1), ("mirror-90", 320, 180, 1),
-            ("mirror-270", 320, 180, 1), ("mirror-vertical", 320, 180, 1),
+        let cases: [(String, Int, Int, Int, Int)] = [
+            ("landscape", 320, 180, 1, 1), ("portrait", 180, 320, 1, 1),
+            ("par", 240, 180, 4, 3), ("rotate-90-par", 180, 240, 3, 4),
+            ("rotate-180", 320, 180, 1, 1), ("rotate-270", 180, 320, 1, 1),
+            ("mirror", 320, 180, 1, 1), ("mirror-90", 180, 320, 1, 1),
+            ("mirror-270", 180, 320, 1, 1), ("mirror-vertical", 320, 180, 1, 1),
         ]
-        for (name, width, height, aspectNumerator) in cases {
+        for (name, width, height, aspectNumerator, aspectDenominator) in cases {
             let url = directory.appending(path: "\(name).mp4")
             let metadata = try await MetadataService.shared.metadata(for: url)
             var item = PlayerWindowCoordinator.makeMediaItem(for: url)
@@ -138,7 +138,7 @@ final class GeneratedMediaFixtureTests: XCTestCase {
             XCTAssertEqual(format.attribute(forName: "width")?.stringValue, String(width), name)
             XCTAssertEqual(format.attribute(forName: "height")?.stringValue, String(height), name)
             XCTAssertEqual(format.attribute(forName: "paspH")?.stringValue, String(aspectNumerator), name)
-            XCTAssertEqual(format.attribute(forName: "paspV")?.stringValue, aspectNumerator == 4 ? "3" : "1", name)
+            XCTAssertEqual(format.attribute(forName: "paspV")?.stringValue, String(aspectDenominator), name)
             XCTAssertEqual(format.attribute(forName: "frameDuration")?.stringValue, "1/24s", name)
             XCTAssertEqual(snapshot.primaryDurationFrames, 48, name)
             let media = try XCTUnwrap(document.nodes(forXPath: "//media-rep").first as? XMLElement)

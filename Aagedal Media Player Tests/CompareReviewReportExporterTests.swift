@@ -684,6 +684,26 @@ final class CompareReviewReportExporterTests: XCTestCase {
         }
     }
 
+    func testFinalCutProXMLOrientsRasterAndPixelAxesTogether() throws {
+        for rotation in [90, -90, 270, 450, -450, 0, 180, 360] {
+            let swapsAxes = [90, -90, 270, 450, -450].contains(rotation)
+            let snapshot = CompareReviewReportSnapshot(
+                primaryItem: makeItem(path: "/tmp/A.mov", duration: 2,
+                                      frameRate: "24", width: 240, height: 180,
+                                      pixelAspectRatio: .init(numerator: 4, denominator: 3),
+                                      rotation: rotation),
+                secondaryItem: makeItem(path: "/tmp/B.mov", duration: 2),
+                alignmentMode: .relative, notes: []
+            )
+            let document = try XMLDocument(xmlString: CompareReviewReportExporter.finalCutProXML(snapshot: snapshot))
+            let format = try XCTUnwrap(document.nodes(forXPath: "//resources/format").first as? XMLElement)
+            XCTAssertEqual(format.attribute(forName: "width")?.stringValue, swapsAxes ? "180" : "240")
+            XCTAssertEqual(format.attribute(forName: "height")?.stringValue, swapsAxes ? "240" : "180")
+            XCTAssertEqual(format.attribute(forName: "paspH")?.stringValue, swapsAxes ? "3" : "4")
+            XCTAssertEqual(format.attribute(forName: "paspV")?.stringValue, swapsAxes ? "4" : "3")
+        }
+    }
+
     func testFinalCutProXMLOmitsIncompleteOrInvalidRaster() throws {
         for (width, height) in [(nil, Optional(1080)), (Optional(1920), nil), (0, 1080), (1920, -1)] {
             let snapshot = CompareReviewReportSnapshot(
@@ -1073,7 +1093,8 @@ final class CompareReviewReportExporterTests: XCTestCase {
         width: Int? = 1_920,
         height: Int? = 1_080,
         pixelAspectRatio: MediaMetadata.Ratio? = nil,
-        frameCount: Int? = nil
+        frameCount: Int? = nil,
+        rotation: Int? = nil
     ) -> MediaItem {
         let videoStreams = frameRate.map { value in
             [MediaMetadata.VideoStream(
@@ -1098,7 +1119,7 @@ final class CompareReviewReportExporterTests: XCTestCase {
                 chromaLocation: nil,
                 fieldOrder: nil,
                 isInterlaced: nil,
-                rotation: nil,
+                rotation: rotation,
                 maxCLL: nil,
                 maxFALL: nil,
                 masteringMaxLuminance: nil,
