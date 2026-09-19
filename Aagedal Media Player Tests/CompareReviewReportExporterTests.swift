@@ -733,6 +733,63 @@ final class CompareReviewReportExporterTests: XCTestCase {
         XCTAssertTrue(fields[4].contains("Source B: Encode.mp4"))
     }
 
+    func testResolveRejectsSameFrameFindingsWhileReportsPreserveThem() throws {
+        for frame: Int64 in [0, 60, 16_242] {
+            let notes = [
+                CompareReviewNote(
+                    primaryFrame: frame, primaryTime: 0, secondaryFrame: 0, secondaryTime: 0,
+                    primaryRateNumerator: 30_000, primaryRateDenominator: 1_001,
+                    text: "Point finding"
+                ),
+                CompareReviewNote(
+                    primaryFrame: frame, primaryTime: 0, secondaryFrame: 1, secondaryTime: 0,
+                    primaryRateNumerator: 30_000, primaryRateDenominator: 1_001,
+                    text: "Range finding", primaryEndFrame: frame + 2
+                ),
+            ]
+            let snapshot = CompareReviewReportSnapshot(
+                primaryItem: makeItem(path: "/tmp/Master.mov", duration: 610,
+                                      startTimecode: "00:00:58;00", frameRate: "30000/1001"),
+                secondaryItem: makeItem(path: "/tmp/Encode.mp4", duration: 610),
+                alignmentMode: .relative, notes: notes.reversed()
+            )
+            XCTAssertThrowsError(try CompareReviewReportExporter.data(for: .resolveMarkersEDL, snapshot: snapshot)) { error in
+                guard case CompareReviewReportExportError.duplicateResolveMarkerFrame(let rejectedFrame) = error else {
+                    return XCTFail("Expected same-frame export rejection, got \(error)")
+                }
+                XCTAssertEqual(rejectedFrame, frame)
+                XCTAssertTrue(error.localizedDescription.contains("CSV or PDF"))
+            }
+            let csv = CompareReviewReportExporter.csv(snapshot: snapshot)
+            let pdf = try XCTUnwrap(PDFDocument(data: CompareReviewReportExporter.data(for: .pdf, snapshot: snapshot)))
+            for text in ["Point finding", "Range finding"] {
+                XCTAssertTrue(csv.contains(text))
+                XCTAssertTrue(try XCTUnwrap(pdf.string).contains(text))
+            }
+            XCTAssertEqual(snapshot.rows.count, 2)
+            XCTAssertEqual(Set(snapshot.rows.map(\.primaryFrame)), [frame])
+        }
+    }
+
+    func testResolveKeepsAdjacentAndOverlappingRangeAnchorsDistinct() throws {
+        let snapshot = CompareReviewReportSnapshot(
+            primaryItem: makeItem(path: "/tmp/Master.mov", duration: 10),
+            secondaryItem: makeItem(path: "/tmp/Encode.mp4", duration: 10),
+            alignmentMode: .relative,
+            notes: [
+                CompareReviewNote(primaryFrame: 1, primaryTime: 0, secondaryFrame: 0, secondaryTime: 0,
+                                  text: "Adjacent finding"),
+                CompareReviewNote(primaryFrame: 0, primaryTime: 0, secondaryFrame: 0, secondaryTime: 0,
+                                  text: "Range finding", primaryEndFrame: 2),
+            ]
+        )
+        let edl = try CompareReviewReportExporter.resolveMarkersEDL(snapshot: snapshot)
+        XCTAssertTrue(edl.contains("00:00:00:00 00:00:00:03 00:00:00:00 00:00:00:03"))
+        XCTAssertTrue(edl.contains("00:00:00:01 00:00:00:02 00:00:00:01 00:00:00:02"))
+        XCTAssertTrue(edl.contains("|M:Range finding"))
+        XCTAssertTrue(edl.contains("|M:Adjacent finding"))
+    }
+
     func testResolveMarkerEDLRejectsMoreThan999Markers() {
         let notes = (0..<1_000).map { frame in
             CompareReviewNote(

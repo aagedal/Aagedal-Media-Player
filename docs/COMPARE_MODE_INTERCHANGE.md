@@ -33,6 +33,14 @@ fixture behavior unchanged.
 
 Fixture generation and successful app exports do not establish editor acceptance.
 
+As of September 19, Resolve EDL export deliberately rejects this full fixture's
+same-frame findings. Confirm that the error identifies source A frame 60 and
+recommends CSV/PDF, and retain the complete CSV as the lossless reference.
+For the outstanding adjacent-frame editor investigation, prepare a separate
+review copy with unique start frames; record exactly which finding was omitted
+from that diagnostic copy, and keep the original eight-finding sidecar unchanged.
+That reduced diagnostic does not establish complete eight-finding acceptance.
+
 Decimal metadata rates within 0.001 fps of a known broadcast rate use its
 exact rational timebase, matching the existing timecode engine. Explicit
 fractions remain exact. The September 9 correction fixes decoded decimal
@@ -120,6 +128,14 @@ start positions. Resolve's event out is exclusive and its `|D:` field carries
 the inclusive frame count. Avid's five-column marker text retains a point
 anchor and includes `A frames start–end (inclusive)` in its text; no native
 Avid range duration is claimed.
+
+Resolve EDL rejects multiple findings starting at the same source-A frame.
+The retained Resolve import lost a same-frame finding, so the exporter now
+fails with an actionable CSV/PDF alternative rather than producing an EDL that
+can silently lose review content. It does not merge findings, shift their
+coordinates, or alter the sidecar. Point and range findings with the same start
+are both covered; overlapping ranges with distinct starts remain exportable.
+This guard does not resolve the separately observed adjacent-frame import issue.
 
 Resolve EDL deliberately rejects more than 999 markers and rates above 60
 nominal fps. Verify that these failures remain actionable in the app. Keep

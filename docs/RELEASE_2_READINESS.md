@@ -1,6 +1,6 @@
 # 2.0 release readiness
 
-Assessment updated: 2026-09-15. This is a prioritization of the existing
+Assessment updated: 2026-09-19. This is a prioritization of the existing
 [product roadmap](../PRODUCT_ROADMAP.md), not a change to its committed scope.
 It is based on the repository's plans and retained verification reports,
 including the September 12 meter foundation and programme-loudness follow-up.
@@ -157,6 +157,13 @@ acceptance. Repeat in a fresh correct-start timeline, determine the
 adjacent/duplicate behavior, and either fix the marker representation or state
 an explicit Resolve limitation before an editor-oriented beta. See
 [the retained interchange record](COMPARE_MODE_INTERCHANGE.md).
+
+The September 19 continuation adds an explicit Resolve EDL limitation: reviews
+with same-frame findings now fail export with a CSV/PDF alternative, preserving
+the complete review instead of risking another silent dropped finding. Distinct
+adjacent frames remain unchanged. The fresh-timeline investigation of the
+observed one-frame displacement and all outstanding editor acceptance still
+remain; this guard alone does not establish interoperability.
 
 ## Remaining scope that needs an explicit product decision
 

@@ -2432,6 +2432,24 @@ lost. Seven negative markers from a first wrong-start import also remained in
 the disposable project. See `docs/COMPARE_MODE_INTERCHANGE.md`; this phase
 cannot count as accepted interoperability or a completed 2.0 gate.
 
+## Phase 104 — Resolve same-frame export integrity
+
+Status: Completed on 2026-09-19; editor acceptance remains separate.
+
+- [x] Reject Resolve EDL exports with multiple findings at one source-A start
+  frame, including a point/range collision, with a CSV/PDF recovery message.
+- [x] Preserve all finding coordinates and content without merging or shifting
+  notes; keep distinct adjacent and overlapping-range anchors exportable.
+- [x] Document the limitation and the separate-copy workflow for the remaining
+  adjacent-frame editor investigation.
+- [x] Pass all 29 focused exporter regressions, including lossless CSV/PDF fallback.
+  Final Debug evidence: `/tmp/aagedal-resolve-guard-20260919-final.xcresult`
+  and the sibling `.log`; `git diff --check` also passes.
+
+Acceptance: this closes the known silent same-frame export risk at the app
+boundary. A fresh correct-start Resolve round trip and Final Cut Pro/Avid
+acceptance remain open; no editor compatibility gate is marked complete.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -2698,3 +2716,5 @@ cannot count as accepted interoperability or a completed 2.0 gate.
 94. Phase 102 offline clean-checkout candidate verification.
 
 95. Phase 103 Resolve marker round-trip acceptance.
+
+96. Phase 104 Resolve same-frame export integrity.

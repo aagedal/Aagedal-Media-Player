@@ -44,6 +44,7 @@ nonisolated enum CompareReviewExportState: Equatable, Sendable {
 
 nonisolated enum CompareReviewReportExportError: Error, LocalizedError {
     case tooManyResolveMarkers(Int)
+    case duplicateResolveMarkerFrame(Int64)
     case avidMarkerTextTooLong(Int)
     case unsupportedResolveFrameRate(Int64)
     case resolveTimecodeWrap(Int)
@@ -57,6 +58,8 @@ nonisolated enum CompareReviewReportExportError: Error, LocalizedError {
             "Review marker \(marker) exceeds the 32,000-character Avid marker export limit. Shorten the note or use CSV, PDF, or Final Cut Pro XML to preserve the complete finding."
         case .tooManyResolveMarkers(let count):
             "DaVinci Resolve marker EDL supports at most 999 markers; this review has \(count)."
+        case .duplicateResolveMarkerFrame(let frame):
+            "Multiple findings start at source A frame \(frame). Resolve marker import can discard findings at the same frame. Export CSV or PDF to preserve every finding."
         case .unsupportedResolveFrameRate(let nominalFPS):
             "DaVinci Resolve marker EDL export does not support \(nominalFPS) fps media."
         case .resolveTimecodeWrap(let marker):
@@ -439,6 +442,16 @@ nonisolated enum CompareReviewReportExporter {
         guard rate.nominalFPS <= 60 else {
             throw CompareReviewReportExportError.unsupportedResolveFrameRate(rate.nominalFPS)
         }
+        // The retained Resolve round trip lost a same-frame finding. Until a
+        // lossless representation is verified in the editor, reject collisions
+        // instead of silently merging, dropping, or moving review findings.
+        try validateEditorMarkerRates(snapshot)
+        var occupiedFrames = Set<Int64>()
+        for row in snapshot.rows {
+            guard occupiedFrames.insert(row.primaryFrame).inserted else {
+                throw CompareReviewReportExportError.duplicateResolveMarkerFrame(row.primaryFrame)
+            }
+        }
         var lines = [
             "TITLE: \(edlText("\(snapshot.primaryFilename) vs \(snapshot.secondaryFilename) Review"))",
             "FCM: \(snapshot.primaryUsesDropFrame ? "DROP FRAME" : "NON-DROP FRAME")",
@@ -471,7 +484,6 @@ nonisolated enum CompareReviewReportExporter {
             )
             lines.append("")
         }
-        try validateEditorMarkerRates(snapshot)
         return lines.joined(separator: "\r\n")
     }
 
