@@ -2616,6 +2616,30 @@ Acceptance: focused finding-loss fix passes; ranges remain textual and same-fram
 findings share a marker. Exact tab/newline preservation is not claimed. See
 `docs/evidence/fcp-grouped-markers-23976-20260919/README.md`.
 
+## Phase 111 — Explicit Final Cut source raster
+
+Status: Implemented; 33 focused exporter tests and DTD validation pass on 2026-09-19.
+
+- [x] Carry source A's coded raster and valid pixel aspect ratio in the immutable
+  export snapshot and emit FCPXML format width/height and paspH/paspV. The native
+  Phase 109 re-export showed that frame duration alone defaulted the browser
+  clip to 1280×720 despite the actual 160×90 source.
+- [x] Omit incomplete/nonpositive raster pairs and invalid pixel aspect ratios;
+  do not substitute display dimensions or invent source geometry.
+- [x] Correct the optional retained-fixture exporter test's raster metadata to
+  match the original 160×90 media rather than the test helper's 1920×1080 default.
+- [x] Pass all 33 focused exporter regressions and validate the generated fixture
+  against Final Cut's bundled FCPXML 1.9 DTD. Evidence:
+  `/private/tmp/aagedal-phase111-tests-fixed.xcresult`,
+  `/private/tmp/aagedal-phase111-tests-fixed.log`, and
+  `/private/tmp/aagedal-phase111-raster.fcpxml`.
+- [ ] Repeat native player UI export and Final Cut import/re-export to verify
+  browser-clip raster, including portrait/anamorphic/rotated sources. Duration
+  rounding, whitespace fidelity and the remaining rate matrix stay open.
+
+Acceptance: source geometry is explicit in the export. Native raster preservation
+is not established by exporter tests or DTD validation alone.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -2895,3 +2919,5 @@ findings share a marker. Exact tab/newline preservation is not claimed. See
 101. Phase 109 native Final Cut marker loss and overlap export integrity.
 
 102. Phase 110 Final Cut one-frame markers and complete grouped findings.
+
+103. Phase 111 explicit Final Cut source raster.

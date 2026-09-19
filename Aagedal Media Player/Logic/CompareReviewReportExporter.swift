@@ -120,6 +120,10 @@ nonisolated struct CompareReviewReportSnapshot: Equatable, Sendable {
     let primaryRateDenominator: Int64
     let primaryStartFrame: Int64
     let primaryDurationFrames: Int64
+    let primaryRasterWidth: Int?
+    let primaryRasterHeight: Int?
+    let primaryPixelAspectHorizontal: Int?
+    let primaryPixelAspectVertical: Int?
     let primaryUsesDropFrame: Bool
     let rows: [CompareReviewReportRow]
 
@@ -141,6 +145,27 @@ nonisolated struct CompareReviewReportSnapshot: Equatable, Sendable {
             for: CompareMediaDescriptor(item: secondaryItem)
         )
         alignmentLabel = alignmentMode.label
+        // Use the coded raster, not the rotated/display-aspect presentation size.
+        // FCP otherwise invents a browser-clip format (observed as 1280×720).
+        let primaryVideo = primaryItem.metadata?.primaryVideoStream
+        if let width = primaryVideo?.width, let height = primaryVideo?.height,
+           width > 0, height > 0 {
+            primaryRasterWidth = width
+            primaryRasterHeight = height
+            if let aspect = primaryVideo?.pixelAspectRatio,
+               aspect.numerator > 0, aspect.denominator > 0 {
+                primaryPixelAspectHorizontal = aspect.numerator
+                primaryPixelAspectVertical = aspect.denominator
+            } else {
+                primaryPixelAspectHorizontal = nil
+                primaryPixelAspectVertical = nil
+            }
+        } else {
+            primaryRasterWidth = nil
+            primaryRasterHeight = nil
+            primaryPixelAspectHorizontal = nil
+            primaryPixelAspectVertical = nil
+        }
 
         let startTimecode = TimecodeFormatter.effectiveStartTimecode(for: primaryItem)
         primaryUsesDropFrame = startTimecode?.contains(";") ?? false
@@ -528,13 +553,21 @@ nonisolated enum CompareReviewReportExporter {
             rateDenominator: snapshot.primaryRateDenominator
         )
         let reviewName = "\(snapshot.primaryFilename) vs \(snapshot.secondaryFilename) Review"
+        var rasterAttributes = ""
+        if let width = snapshot.primaryRasterWidth, let height = snapshot.primaryRasterHeight {
+            rasterAttributes = " width=\"\(width)\" height=\"\(height)\""
+            if let horizontal = snapshot.primaryPixelAspectHorizontal,
+               let vertical = snapshot.primaryPixelAspectVertical {
+                rasterAttributes += " paspH=\"\(horizontal)\" paspV=\"\(vertical)\""
+            }
+        }
 
         var lines = [
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
             "<!DOCTYPE fcpxml>",
             "<fcpxml version=\"1.9\">",
             "  <resources>",
-            "    <format id=\"r1\" frameDuration=\"\(frameDuration)\"/>",
+            "    <format id=\"r1\" frameDuration=\"\(frameDuration)\"\(rasterAttributes)/>",
             "    <asset id=\"r2\" name=\"\(xmlAttribute(snapshot.primaryFilename))\" start=\"\(sourceStart)\" duration=\"\(duration)\" hasVideo=\"1\" format=\"r1\">",
             "      <media-rep kind=\"original-media\" src=\"\(xmlAttribute(snapshot.primaryURL.absoluteString))\"/>",
             "    </asset>",

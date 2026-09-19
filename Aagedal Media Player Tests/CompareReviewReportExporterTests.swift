@@ -555,9 +555,9 @@ final class CompareReviewReportExporterTests: XCTestCase {
         let notes = try decoder.decode(Review.self, from: Data(contentsOf: fixture)).notes
         let snapshot = CompareReviewReportSnapshot(
             primaryItem: makeItem(path: "/private/tmp/aagedal-resolve-23976-20260919/source-a.mov",
-                                  duration: 610, frameRate: "24000/1001"),
+                                  duration: 610, frameRate: "24000/1001", width: 160, height: 90),
             secondaryItem: makeItem(path: "/private/tmp/aagedal-resolve-23976-20260919/source-b.mov",
-                                    duration: 610, frameRate: "24000/1001"),
+                                    duration: 610, frameRate: "24000/1001", width: 160, height: 90),
             alignmentMode: .relative, notes: notes
         )
         let data = try CompareReviewReportExporter.data(for: .finalCutProXML, snapshot: snapshot)
@@ -633,6 +633,45 @@ final class CompareReviewReportExporterTests: XCTestCase {
         let markers = try document.nodes(forXPath: "//marker").compactMap { $0 as? XMLElement }
         XCTAssertEqual(markers.map { $0.attribute(forName: "start")?.stringValue }, ["0/1s", "1/30s", "2/15s"])
         XCTAssertEqual(markers.map { $0.attribute(forName: "duration")?.stringValue }, ["1/30s", "1/30s", "1/30s"])
+    }
+
+    func testFinalCutProXMLPreservesCodedRasterAndPixelAspect() throws {
+        for (width, height, aspect) in [
+            (160, 90, MediaMetadata.Ratio(numerator: 1, denominator: 1)),
+            (1440, 1080, MediaMetadata.Ratio(numerator: 4, denominator: 3)),
+            (2160, 3840, nil),
+        ] {
+            let snapshot = CompareReviewReportSnapshot(
+                primaryItem: makeItem(path: "/tmp/A.mov", duration: 10,
+                                      frameRate: "24000/1001", width: width,
+                                      height: height, pixelAspectRatio: aspect),
+                secondaryItem: makeItem(path: "/tmp/B.mov", duration: 10),
+                alignmentMode: .relative, notes: []
+            )
+            let document = try XMLDocument(xmlString: CompareReviewReportExporter.finalCutProXML(snapshot: snapshot))
+            let format = try XCTUnwrap(document.nodes(forXPath: "//resources/format").first as? XMLElement)
+            XCTAssertEqual(format.attribute(forName: "width")?.stringValue, String(width))
+            XCTAssertEqual(format.attribute(forName: "height")?.stringValue, String(height))
+            XCTAssertEqual(format.attribute(forName: "paspH")?.stringValue, aspect.map { String($0.numerator) })
+            XCTAssertEqual(format.attribute(forName: "paspV")?.stringValue, aspect.map { String($0.denominator) })
+        }
+    }
+
+    func testFinalCutProXMLOmitsIncompleteOrInvalidRaster() throws {
+        for (width, height) in [(nil, Optional(1080)), (Optional(1920), nil), (0, 1080), (1920, -1)] {
+            let snapshot = CompareReviewReportSnapshot(
+                primaryItem: makeItem(path: "/tmp/A.mov", duration: 10,
+                                      frameRate: "25", width: width, height: height,
+                                      pixelAspectRatio: MediaMetadata.Ratio(numerator: 4, denominator: 3)),
+                secondaryItem: makeItem(path: "/tmp/B.mov", duration: 10),
+                alignmentMode: .relative, notes: []
+            )
+            let document = try XMLDocument(xmlString: CompareReviewReportExporter.finalCutProXML(snapshot: snapshot))
+            let format = try XCTUnwrap(document.nodes(forXPath: "//resources/format").first as? XMLElement)
+            for name in ["width", "height", "paspH", "paspV"] {
+                XCTAssertNil(format.attribute(forName: name))
+            }
+        }
     }
 
     func testFinalCutProXMLUsesExactRateAndEscapesComparisonContext() throws {
@@ -1003,20 +1042,23 @@ final class CompareReviewReportExporterTests: XCTestCase {
         path: String,
         duration: TimeInterval,
         startTimecode: String? = nil,
-        frameRate: String? = nil
+        frameRate: String? = nil,
+        width: Int? = 1_920,
+        height: Int? = 1_080,
+        pixelAspectRatio: MediaMetadata.Ratio? = nil
     ) -> MediaItem {
         let videoStreams = frameRate.map { value in
             [MediaMetadata.VideoStream(
                 codec: nil,
                 codecLongName: nil,
                 profile: nil,
-                width: 1_920,
-                height: 1_080,
+                width: width,
+                height: height,
                 displayWidth: 1_920,
                 displayHeight: 1_080,
                 pixelFormat: nil,
                 hasAlpha: false,
-                pixelAspectRatio: nil,
+                pixelAspectRatio: pixelAspectRatio,
                 displayAspectRatio: nil,
                 frameRate: MediaMetadata.FrameRate(frameRateString: value),
                 bitDepth: nil,

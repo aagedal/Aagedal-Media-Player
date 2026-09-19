@@ -442,3 +442,15 @@ All note content matches after the specifically documented XML tab/CR/LF
 attribute normalization. Exact whitespace, raster/duration and other-rate gates
 remain open. See [the retained verification](evidence/fcp-grouped-markers-23976-20260919/README.md)
 for the production-test generation route and native editor steps.
+
+### Explicit Final Cut raster — Phase 111
+
+FCPXML now supplies source A's coded width/height and, when available and valid,
+pixel aspect ratio (`paspH`/`paspV`). This addresses the missing format metadata
+behind the observed 160×90-to-1280×720 browser-clip default. Incomplete or invalid
+geometry remains omitted; display dimensions are not substituted for coded
+pixels. The retained-fixture test now declares the actual 160×90 source raster.
+
+This is an exporter correction pending a fresh native player export and Final
+Cut import/re-export. Portrait, anamorphic and rotated-source native behavior,
+duration clamping, whitespace and the remaining rate matrix remain open.

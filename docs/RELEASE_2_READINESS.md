@@ -227,6 +227,13 @@ view went blank on load; native player UI export needs a repeat. Raster/duration
 other rates and exact whitespace acceptance remain open. See
 [the grouped-marker evidence](evidence/fcp-grouped-markers-23976-20260919/README.md).
 
+Phase 111 supplies the missing source raster and valid pixel aspect ratio in
+FCPXML format metadata. All 33 focused exporter tests and bundled FCPXML 1.9 DTD
+validation pass; the retained fixture now declares its actual 160×90 raster.
+This does not close the native raster gate: repeat player UI export and Final
+Cut import/re-export, including portrait/anamorphic/rotated sources. Duration
+rounding and whitespace/rate acceptance remain open.
+
 ## Remaining scope that needs an explicit product decision
 
 These are unfinished roadmap commitments, not silently deferred features:
