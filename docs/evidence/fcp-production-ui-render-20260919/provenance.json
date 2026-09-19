@@ -1,0 +1,38 @@
+{
+  "baseCommit": "5e0845ac245c5a814aa1d36320299d654686a40a",
+  "shippingSourceChanges": false,
+  "nativeApplication": "Final Cut Pro 12.3",
+  "nativeBuild": "450152",
+  "nativeMovieExportSettings": "Video and Audio; Source - Apple ProRes 422; 1080x1920; 24 fps; Standard Rec. 709",
+  "nativeXMLExportSettings": "General; Current Version (1.14)",
+  "render": {
+    "path": "/private/tmp/aagedal-phase121/phase121-production-ui.mov",
+    "sha256": "490954e68c710f4df7ed57a7b14f93a834f0202fd86d7003da8c869d5e209a0b"
+  },
+  "media": [
+    {
+      "path": "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Test Fixtures/Generated/loupe/rotate-90-par.mp4",
+      "sha256": "154f95ac8ed3a6a37cba87fffbc3184fc1d2ec341f6cc3e9e1b658353ab403c4"
+    },
+    {
+      "path": "/private/tmp/aagedal-resolve-5994-20260919/Aagedal FCP Production UI Phase 120.fcpbundle/Aagedal Compare Review/Original Media/rotate-90-par.mp4",
+      "sha256": "154f95ac8ed3a6a37cba87fffbc3184fc1d2ec341f6cc3e9e1b658353ab403c4"
+    }
+  ],
+  "inputProductionXML": {
+    "path": "docs/evidence/fcp-production-ui-anamorphic-20260919/original.fcpxml",
+    "sha256": "7f593292d0f21ca60d72676fc2c7bde0187eb2546be520f8d637be1d2252a756"
+  },
+  "files": {
+    "docs/evidence/fcp-production-ui-render-20260919/README.md": "8bc48e7a937f18066bee2fced863ee0fe13fb1f15cb93e8c680665c13245601a",
+    "docs/evidence/fcp-production-ui-render-20260919/comparison.json": "75d0d7fada721617fe694b940774e2ef83c5ce5ebf7c7ea545ac680e9a97cbd3",
+    "docs/evidence/fcp-production-ui-render-20260919/measurements.json": "ee47e1cb5f20e62183b9b5887fd85a208fe809f869e6a16c59d51939b2311a38",
+    "docs/evidence/fcp-production-ui-render-20260919/render-frame.png": "419a79fbd42c9ce03dd17800de69649c1244cf77991abaf53d507374809a5dd3",
+    "docs/evidence/fcp-production-ui-render-20260919/returned-event.fcpxml": "99eb457cb02e1771c325f88a61840bf90db8f025f994759a36821b330a7bbd56"
+  },
+  "verification": {
+    "geometryTests": 10,
+    "FCPXMLTests": 16,
+    "newXcodeVerification": false
+  }
+}

@@ -1,0 +1,88 @@
+{
+  "status": "differences",
+  "scope": "Single browser clip XML comparison; not complete editor acceptance",
+  "returnedClipName": "rotate-90-par.mp4 vs rotate-90-par.mp4 Review",
+  "mediaIdentityVerified": true,
+  "checks": {
+    "raster": true,
+    "pixelAspect": true,
+    "frameDuration": true,
+    "assetRaster": true,
+    "assetPixelAspect": false,
+    "assetFrameDuration": true,
+    "start": true,
+    "assetStart": true,
+    "durations": true,
+    "timecodeFormat": true,
+    "markerTimingAndTitles": true,
+    "exactMarkerContent": true,
+    "sourceMediaBytes": true
+  },
+  "contentMatchesAfterAttributeWhitespaceNormalization": true,
+  "original": {
+    "sha256": "7f593292d0f21ca60d72676fc2c7bde0187eb2546be520f8d637be1d2252a756",
+    "version": "1.9",
+    "raster": [
+      180,
+      240
+    ],
+    "pixelAspect": "3/4",
+    "frameDuration": "1/24",
+    "assetRaster": [
+      180,
+      240
+    ],
+    "assetPixelAspect": "3/4",
+    "assetFrameDuration": "1/24",
+    "start": "0",
+    "assetStart": "0",
+    "durations": [
+      "2",
+      "2"
+    ],
+    "timecodeFormat": "NDF",
+    "sourceURL": "file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4",
+    "markers": [
+      [
+        0,
+        1,
+        "QC 001",
+        "Phase 120 native UI: rotated anamorphic source frame 0 | Source B: rotate-90-par.mp4, REL TC 00:00:00:00, frame 0 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 24/1 | B rate: 24/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4"
+      ]
+    ],
+    "mediaSHA256": "154f95ac8ed3a6a37cba87fffbc3184fc1d2ec341f6cc3e9e1b658353ab403c4"
+  },
+  "returned": {
+    "sha256": "99eb457cb02e1771c325f88a61840bf90db8f025f994759a36821b330a7bbd56",
+    "version": "1.14",
+    "raster": [
+      180,
+      240
+    ],
+    "pixelAspect": "3/4",
+    "frameDuration": "1/24",
+    "assetRaster": [
+      180,
+      240
+    ],
+    "assetPixelAspect": "4/3",
+    "assetFrameDuration": "1/24",
+    "start": "0",
+    "assetStart": "0",
+    "durations": [
+      "2",
+      "2"
+    ],
+    "timecodeFormat": "NDF",
+    "sourceURL": "file:///tmp/aagedal-resolve-5994-20260919/Aagedal%20FCP%20Production%20UI%20Phase%20120.fcpbundle/Aagedal%20Compare%20Review/Original%20Media/rotate-90-par.mp4",
+    "markers": [
+      [
+        0,
+        1,
+        "QC 001",
+        "Phase 120 native UI: rotated anamorphic source frame 0 | Source B: rotate-90-par.mp4, REL TC 00:00:00:00, frame 0 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 24/1 | B rate: 24/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4"
+      ]
+    ],
+    "mediaSHA256": "154f95ac8ed3a6a37cba87fffbc3184fc1d2ec341f6cc3e9e1b658353ab403c4"
+  }
+}

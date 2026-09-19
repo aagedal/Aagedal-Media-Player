@@ -98,6 +98,14 @@ and source bytes survive; the native asset-PAR mismatch is reproduced. A new
 render of this UI export and resolution of the earlier Fit padding remain open.
 See [production UI evidence](evidence/fcp-production-ui-anamorphic-20260919/README.md).
 
+
+Phase 121 completes the native rendered-output repeat using the Phase 120
+production UI export. Four sampled frames across two complete clip instances
+all reproduce 813 × 1444 content inside 1080 × 1920; orientation/aspect pass,
+Fit fails. Browser findings, timing and source bytes remain intact; asset PAR
+still differs. This closes the fresh-UI render-repeat task while leaving the
+conform defect and geometry acceptance open. See [measured production UI render](evidence/fcp-production-ui-render-20260919/README.md).
+
 | Gap | Acceptance evidence required |
 | --- | --- |
 | Metadata compatibility and error semantics | The 3.0.1 production payload-copy regression is closed, but recover the five missing ARW/XMP fixture inputs, reconcile the remaining JXL fixture/assertion disagreement, and expand unusual-container and intended-error coverage. Keep this compatibility gate separate from the resolved memory defect. See [library fixture acceptance](METADATA_LIBRARY_FIXTURE_VALIDATION.md), [real-media validation](METADATA_REAL_MEDIA_VALIDATION.md), and [metadata investigation](METADATA_MEMORY_PERFORMANCE.md). |

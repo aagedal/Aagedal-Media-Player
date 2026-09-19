@@ -527,3 +527,10 @@ from the rebuilt player UI and a separate Final Cut library. Browser geometry,
 asset PAR still changes from 3:4 to 4:3. This completes the fresh UI browser-export
 repeat but does not supply a fresh timeline render or close geometry acceptance.
 See [production UI evidence](evidence/fcp-production-ui-anamorphic-20260919/README.md).
+
+Phase 121 completes the native rendered-output repeat using the Phase 120
+production UI export. Four sampled frames across two complete clip instances
+all reproduce 813 × 1444 content inside 1080 × 1920; orientation/aspect pass,
+Fit fails. Browser findings, timing and source bytes remain intact; asset PAR
+still differs. This closes the fresh-UI render-repeat task while leaving the
+conform defect and geometry acceptance open. See [measured production UI render](evidence/fcp-production-ui-render-20260919/README.md).

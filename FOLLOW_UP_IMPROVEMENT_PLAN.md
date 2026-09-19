@@ -2839,6 +2839,26 @@ Evidence: `docs/evidence/fcp-production-ui-anamorphic-20260919/README.md`.
 This closes the fresh UI browser round-trip repeat from Phases 116–119, not
 rendered geometry acceptance. No shipping Swift implementation changed.
 
+## Phase 121 — Fresh production UI native rendered geometry
+
+Status: Fresh UI rendered-output repeat complete on 2026-09-19; Fit padding
+and native asset-PAR acceptance remain open.
+
+- [x] Place the Phase 120 production UI review in a native 1080 × 1920 / 24 fps
+  project and export ProRes 422, retaining the unmodified native event XML.
+- [x] Measure four frames across two complete timeline instances at three
+  thresholds: all reproduce 813 × 1444 content and fail expected Fit bounds.
+- [x] Verify exact browser finding text/timing, duration and unchanged source
+  bytes; independently retain the asset-PAR mismatch (3:4 → 4:3).
+- [x] Pass ten geometry and sixteen FCPXML diagnostic regressions.
+- [ ] Establish an evidence-backed handling of native rotation/PAR conform,
+  then complete broader native geometry acceptance.
+
+Evidence: `docs/evidence/fcp-production-ui-render-20260919/README.md`.
+This closes Phase 120's fresh-UI render-repeat task, not the geometry gate.
+No shipping Swift implementation changed. Further identical Fit repeats are
+not the next task; the unresolved native conform behavior needs a resolution.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -3136,3 +3156,5 @@ rendered geometry acceptance. No shipping Swift implementation changed.
 111. Phase 119 native Final Cut conform isolation.
 
 112. Phase 120 fresh production UI Final Cut anamorphic export.
+
+113. Phase 121 fresh production UI native rendered geometry.
