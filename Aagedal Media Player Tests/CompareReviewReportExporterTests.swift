@@ -546,7 +546,38 @@ final class CompareReviewReportExporterTests: XCTestCase {
         )
     }
 
-    func testFinalCutProRejectsOverlappingFindingsWithoutLosingReportContent() throws {
+    func testFinalCutProRetainedEightFindingFixturePreservesEveryFinding() throws {
+        struct Review: Decodable { let notes: [CompareReviewNote] }
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
+        let fixture = root.appendingPathComponent("docs/evidence/fcp-markers-23976-20260919/original-review.json")
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .millisecondsSince1970
+        let notes = try decoder.decode(Review.self, from: Data(contentsOf: fixture)).notes
+        let snapshot = CompareReviewReportSnapshot(
+            primaryItem: makeItem(path: "/private/tmp/aagedal-resolve-23976-20260919/source-a.mov",
+                                  duration: 610, frameRate: "24000/1001"),
+            secondaryItem: makeItem(path: "/private/tmp/aagedal-resolve-23976-20260919/source-b.mov",
+                                    duration: 610, frameRate: "24000/1001"),
+            alignmentMode: .relative, notes: notes
+        )
+        let data = try CompareReviewReportExporter.data(for: .finalCutProXML, snapshot: snapshot)
+        let document = try XMLDocument(data: data)
+        let markers = try document.nodes(forXPath: "//marker").compactMap { $0 as? XMLElement }
+        XCTAssertEqual(markers.count, 7)
+        XCTAssertTrue(markers.allSatisfy { $0.attribute(forName: "duration")?.stringValue == "1001/24000s" })
+        let text = markers.compactMap { $0.attribute(forName: "note")?.stringValue }.joined()
+        for note in notes { XCTAssertEqual(text.components(separatedBy: note.text).count - 1, 1) }
+        XCTAssertTrue(text.contains("A frames 1439–1441 (inclusive)"))
+        XCTAssertTrue(text.contains("A frames 14399–14401 (inclusive)"))
+        XCTAssertEqual(markers[3].attribute(forName: "value")?.stringValue, "QC 004 + QC 005 (2 findings)")
+        // Optional production-export artifact for native editor acceptance.
+        // Never overwrite earlier evidence, and do not require live media for regression tests.
+        if let path = ProcessInfo.processInfo.environment["FCP_MARKER_FIXTURE_OUTPUT"] {
+            try data.write(to: URL(fileURLWithPath: path), options: .withoutOverwriting)
+        }
+    }
+
+    func testFinalCutProPreservesOverlappingFindingsInSingleFrameMarkers() throws {
         // Native FCP 12.3 dropped the point inside a three-frame range.
         // Include duplicate anchors, the inclusive endpoint, and nested ranges.
         for (start, end, secondEnd): (Int64, Int64?, Int64?) in [
@@ -563,13 +594,19 @@ final class CompareReviewReportExporterTests: XCTestCase {
                                       text: "First finding", primaryEndFrame: end),
                 ]
             )
-            XCTAssertThrowsError(try CompareReviewReportExporter.data(for: .finalCutProXML, snapshot: snapshot)) { error in
-                guard case CompareReviewReportExportError.overlappingFinalCutProMarkerFrame(let frame) = error else {
-                    return XCTFail("Expected overlap rejection, got \(error)")
-                }
-                XCTAssertEqual(frame, start)
-                XCTAssertTrue(error.localizedDescription.contains("CSV or PDF"))
+            let document = try XMLDocument(xmlString: CompareReviewReportExporter.finalCutProXML(snapshot: snapshot))
+            let markers = try document.nodes(forXPath: "//marker").compactMap { $0 as? XMLElement }
+            XCTAssertEqual(markers.count, start == 0 ? 1 : 2)
+            XCTAssertTrue(markers.allSatisfy { $0.attribute(forName: "duration")?.stringValue == "1/30s" })
+            let exportedNotes = markers.compactMap { $0.attribute(forName: "note")?.stringValue }.joined()
+            for text in ["First finding", "Second finding"] { XCTAssertTrue(exportedNotes.contains(text)) }
+            if start == 0 {
+                XCTAssertEqual(markers[0].attribute(forName: "value")?.stringValue, "QC 001 + QC 002 (2 findings)")
+                XCTAssertTrue(exportedNotes.contains("[QC 001]"))
+                XCTAssertTrue(exportedNotes.contains("[QC 002]"))
             }
+            if let end { XCTAssertTrue(exportedNotes.contains("A frames 0–\(end) (inclusive)")) }
+            if let secondEnd { XCTAssertTrue(exportedNotes.contains("A frames \(start)–\(secondEnd) (inclusive)")) }
             let csv = CompareReviewReportExporter.csv(snapshot: snapshot)
             let pdf = try XCTUnwrap(PDFDocument(data: CompareReviewReportExporter.data(for: .pdf, snapshot: snapshot)))
             for text in ["First finding", "Second finding"] {
@@ -595,7 +632,7 @@ final class CompareReviewReportExporterTests: XCTestCase {
         let document = try XMLDocument(xmlString: CompareReviewReportExporter.finalCutProXML(snapshot: snapshot))
         let markers = try document.nodes(forXPath: "//marker").compactMap { $0 as? XMLElement }
         XCTAssertEqual(markers.map { $0.attribute(forName: "start")?.stringValue }, ["0/1s", "1/30s", "2/15s"])
-        XCTAssertEqual(markers.map { $0.attribute(forName: "duration")?.stringValue }, ["1/30s", "1/10s", "1/30s"])
+        XCTAssertEqual(markers.map { $0.attribute(forName: "duration")?.stringValue }, ["1/30s", "1/30s", "1/30s"])
     }
 
     func testFinalCutProXMLUsesExactRateAndEscapesComparisonContext() throws {
@@ -902,7 +939,8 @@ final class CompareReviewReportExporterTests: XCTestCase {
         let xml = try XMLDocument(xmlString: CompareReviewReportExporter.finalCutProXML(snapshot: snapshot))
         let marker = try XCTUnwrap(try xml.nodes(forXPath: "//marker").first as? XMLElement)
         XCTAssertEqual(marker.attribute(forName: "start")?.stringValue, "1001/500s")
-        XCTAssertEqual(marker.attribute(forName: "duration")?.stringValue, "1001/1000s")
+        XCTAssertEqual(marker.attribute(forName: "duration")?.stringValue, "1001/24000s")
+        XCTAssertTrue(marker.attribute(forName: "note")?.stringValue?.contains("A frames 48–71 (inclusive)") == true)
         XCTAssertTrue(marker.attribute(forName: "note")?.stringValue?.contains(row.classificationLabel) == true)
 
         let avid = try CompareReviewReportExporter.avidMarkersText(snapshot: snapshot)

@@ -148,7 +148,7 @@ identity survive import; inspect the resulting records and re-export where avail
 | Target | Export | Expected marker anchor |
 | --- | --- | --- |
 | DaVinci Resolve | Marker EDL | A's source timecode, or relative zero when unavailable; inclusive range duration, or one frame for a point finding |
-| Final Cut Pro | FCPXML | Browser clip for source A, rational source start plus relative frame, explicit DF/NDF display and rational inclusive range duration |
+| Final Cut Pro | FCPXML | Browser clip for source A, rational source start plus relative frame, explicit DF/NDF display and one-frame duration; inclusive ranges retained in note text; same-frame findings grouped |
 | Avid Media Composer | Marker text | Zero-based source-A relative start frame on V1; inclusive range annotated in marker text |
 
 1. Import source A into a fresh editor project with the matching rate and
@@ -158,8 +158,10 @@ identity survive import; inspect the resulting records and re-export where avail
 2. Check every marker against the CSV's primary frame and source/relative
    timecode, especially adjacent frames and drop-frame boundaries. Confirm
    count, text, classification labels, source identity, and any duplicate-frame
-   behavior. Check that range duration is `end − start + 1` frames in Resolve
-   and Final Cut Pro, and that Avid retains the textual inclusive range. A file
+   behavior. Check that range duration is `end − start + 1` frames in Resolve. Final Cut
+   uses one-frame markers, retaining inclusive range endpoints in the note and
+   grouping same-frame findings with individual labels; verify every finding
+   inside each group. Avid retains the textual inclusive range. A file
    importing without errors is not sufficient evidence of correct timing.
 3. Re-export the markers where supported. Compare frame positions and note
    content with the saved record; retain both exports. If the editor cannot
@@ -424,3 +426,19 @@ cases after resolving or explicitly qualifying those issues.
 Apple documents [native XML interchange](https://support.apple.com/guide/final-cut-pro/use-xml-to-transfer-projects-verdbd66ae/12.3/mac/15.6)
 and [XML attribute/time structure](https://developer.apple.com/documentation/professional-video-applications/document-type-definition).
 DTD validation alone does not establish a lossless native round trip.
+
+### One-frame markers and grouped findings — 2026-09-19
+
+Phase 110 supersedes the overlap guard above. FCPXML now emits one one-frame
+marker per distinct start frame, with inclusive ranges preserved in note text.
+Same-frame findings share a marker whose title lists their QC numbers and count;
+each complete finding is separately labelled in the note. This follows Apple’s
+[one-frame marker contract](https://developer.apple.com/documentation/professional-video-applications/associating-ratings-keywords-markers-and-metadata-with-media).
+No finding is moved or removed from the review, and no keyword ranges are added.
+
+A native Final Cut Pro 12.3 import/re-export of the production-exporter fixture
+retains all eight findings in seven markers with matching coordinates and titles.
+All note content matches after the specifically documented XML tab/CR/LF
+attribute normalization. Exact whitespace, raster/duration and other-rate gates
+remain open. See [the retained verification](evidence/fcp-grouped-markers-23976-20260919/README.md)
+for the production-test generation route and native editor steps.

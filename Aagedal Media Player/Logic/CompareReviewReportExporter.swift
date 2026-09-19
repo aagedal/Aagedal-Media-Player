@@ -45,7 +45,6 @@ nonisolated enum CompareReviewExportState: Equatable, Sendable {
 nonisolated enum CompareReviewReportExportError: Error, LocalizedError {
     case tooManyResolveMarkers(Int)
     case duplicateResolveMarkerFrame(Int64)
-    case overlappingFinalCutProMarkerFrame(Int64)
     case avidMarkerTextTooLong(Int)
     case unsupportedResolveFrameRate(Int64)
     case resolveTimecodeWrap(Int)
@@ -61,8 +60,6 @@ nonisolated enum CompareReviewReportExportError: Error, LocalizedError {
             "DaVinci Resolve marker EDL supports at most 999 markers; this review has \(count)."
         case .duplicateResolveMarkerFrame(let frame):
             "Multiple findings start at source A frame \(frame). Resolve marker import can discard findings at the same frame. Export CSV or PDF to preserve every finding."
-        case .overlappingFinalCutProMarkerFrame(let frame):
-            "Review findings overlap at source A frame \(frame). Final Cut Pro marker import can discard findings inside another marker’s inclusive range or at the same frame. Export CSV or PDF to preserve every finding."
         case .unsupportedResolveFrameRate(let nominalFPS):
             "DaVinci Resolve marker EDL export does not support \(nominalFPS) fps media."
         case .resolveTimecodeWrap(let marker):
@@ -511,17 +508,10 @@ nonisolated enum CompareReviewReportExporter {
     /// FCPXML browser-clip markers stay attached to source A and use rational
     /// time values so fractional rates never pass through floating point.
     static func finalCutProXML(snapshot: CompareReviewReportSnapshot) throws -> String {
-        // Final Cut Pro 12.3 discarded findings inside inclusive range markers
-        // in the retained native round trip. Do not merge, shorten, or move
-        // findings to work around that loss. Snapshot rows are frame-sorted.
-        var previousEnd: Int64?
-        for row in snapshot.rows {
-            _ = try markerDurationFrames(row)
-            if let previousEnd, row.primaryFrame <= previousEnd {
-                throw CompareReviewReportExportError.overlappingFinalCutProMarkerFrame(row.primaryFrame)
-            }
-            previousEnd = row.primaryEndFrame ?? row.primaryFrame
-        }
+        // FCP markers represent single frames. Keep inclusive ranges in the
+        // note and collect all findings at one anchor into one labelled marker.
+        // Validate original ranges even though their marker duration is one frame.
+        for row in snapshot.rows { _ = try markerDurationFrames(row) }
         let frameDuration = try rationalTime(
             frames: 1,
             rateNumerator: snapshot.primaryRateNumerator,
@@ -553,8 +543,10 @@ nonisolated enum CompareReviewReportExporter {
             "    <asset-clip name=\"\(xmlAttribute(reviewName))\" ref=\"r2\" format=\"r1\" start=\"\(sourceStart)\" duration=\"\(duration)\" tcFormat=\"\(snapshot.primaryUsesDropFrame ? "DF" : "NDF")\">",
         ]
 
-        for row in snapshot.rows {
-            let (markerFrame, overflow) = snapshot.primaryStartFrame.addingReportingOverflow(row.primaryFrame)
+        let groups = Dictionary(grouping: snapshot.rows, by: \.primaryFrame)
+        for frame in groups.keys.sorted() {
+            let rows = groups[frame]!
+            let (markerFrame, overflow) = snapshot.primaryStartFrame.addingReportingOverflow(frame)
             guard !overflow else {
                 throw CompareReviewReportExportError.unrepresentableFinalCutProTime
             }
@@ -563,13 +555,15 @@ nonisolated enum CompareReviewReportExporter {
                 rateNumerator: snapshot.primaryRateNumerator,
                 rateDenominator: snapshot.primaryRateDenominator
             )
-            let markerDuration = try rationalTime(
-                frames: markerDurationFrames(row),
-                rateNumerator: snapshot.primaryRateNumerator,
-                rateDenominator: snapshot.primaryRateDenominator
-            )
+            let labels = rows.map { "QC \(String(format: "%03d", $0.markerNumber))" }
+            let title = rows.count == 1 ? labels[0] : "\(labels.joined(separator: " + ")) (\(rows.count) findings)"
+            let note = rows.count == 1
+                ? markerNote(row: rows[0], snapshot: snapshot)
+                : zip(labels, rows).map { label, row in
+                    "[\(label)] \(markerNote(row: row, snapshot: snapshot))"
+                }.joined(separator: "\n\n")
             lines.append(
-                "      <marker start=\"\(markerStart)\" duration=\"\(markerDuration)\" value=\"QC \(String(format: "%03d", row.markerNumber))\" note=\"\(xmlAttribute(markerNote(row: row, snapshot: snapshot)))\"/>"
+                "      <marker start=\"\(markerStart)\" duration=\"\(frameDuration)\" value=\"\(xmlAttribute(title))\" note=\"\(xmlAttribute(note))\"/>"
             )
         }
 

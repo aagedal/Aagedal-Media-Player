@@ -1,0 +1,47 @@
+{
+  "status": "passed-with-whitespace-limitation",
+  "scope": "Finding retention and marker timing at 23.976; not complete FCP interoperability",
+  "editor": "Final Cut Pro 12.3",
+  "originalSHA256": "a16f36ed42a41bdc5b415c05f4f17e9e88d4e785a5d37641d1fe0494860077be",
+  "returnedSHA256": "80a16858689f71d50aa0a015acef95e848e74ab3945a3adb32364c3c722ffd87",
+  "findingCount": 8,
+  "markerCount": 7,
+  "frames": [
+    0,
+    1,
+    1439,
+    1440,
+    14399,
+    14400,
+    14624
+  ],
+  "durations": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+  ],
+  "titles": [
+    "QC 001",
+    "QC 002",
+    "QC 003",
+    "QC 004 + QC 005 (2 findings)",
+    "QC 006",
+    "QC 007",
+    "QC 008"
+  ],
+  "allFindingContentMatchesAfterXMLAttributeWhitespaceNormalization": true,
+  "exactParsedNotesMatch": false,
+  "unchangedInputSHA256": {
+    "resolve-unique.aagedal-compare.json": "d7c5165852cae6c13d99a2b576cb406761cfce4cf5edc2487408f2687c6e09f4",
+    "source-a vs source-b-1f0efdaae76ac31b.aagedal-compare.json": "50ec44de83e4fcc8c2d6ffd05fd43117d07f1b40336389e93b60caf3903b8afa",
+    "source-a.mov": "3d0f9cd5b562a0100e2e746837c1a08cd25ce69aa26203e196ed6376ac7dfca8",
+    "source-b.mov": "3d0f9cd5b562a0100e2e746837c1a08cd25ce69aa26203e196ed6376ac7dfca8"
+  },
+  "importedSourceASHA256": "3d0f9cd5b562a0100e2e746837c1a08cd25ce69aa26203e196ed6376ac7dfca8",
+  "generation": "Production CompareReviewReportExporter invoked by testFinalCutProRetainedEightFindingFixturePreservesEveryFinding; no native player export in this run",
+  "testResult": "/private/tmp/aagedal-phase110-fixture-tests.xcresult"
+}

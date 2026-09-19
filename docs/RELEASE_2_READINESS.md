@@ -217,6 +217,16 @@ also exposes whitespace normalization, a defaulted browser-clip raster, and
 source-duration clamping. These remain open; the guard does not establish Final
 Cut acceptance. See [the retained failure](evidence/fcp-markers-23976-20260919/README.md).
 
+Phase 110 supersedes the FCP overlap guard: one-frame markers preserve range
+endpoints in text, and same-frame findings share individually labelled marker
+notes. Native Final Cut Pro 12.3 re-export now retains all eight findings in
+seven markers at correct positions. Note content matches with XML attribute
+whitespace normalization explicitly qualified. The production exporter was
+invoked by the retained fixture test because the rebuilt player’s native content
+view went blank on load; native player UI export needs a repeat. Raster/duration,
+other rates and exact whitespace acceptance remain open. See
+[the grouped-marker evidence](evidence/fcp-grouped-markers-23976-20260919/README.md).
+
 ## Remaining scope that needs an explicit product decision
 
 These are unfinished roadmap commitments, not silently deferred features:

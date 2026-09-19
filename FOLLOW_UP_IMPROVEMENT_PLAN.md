@@ -2594,6 +2594,28 @@ file as a successful export. This is an integrity safeguard, not successful
 Final Cut interoperability. See
 `docs/evidence/fcp-markers-23976-20260919/README.md`.
 
+## Phase 110 — Final Cut one-frame markers and complete grouped findings
+
+Status: Implemented and focused native round trip verified on 2026-09-19.
+
+- [x] Replace overlap rejection with one-frame marker anchors; retain each
+  inclusive range in note text and validate original range arithmetic.
+- [x] Group same-frame findings deterministically with a count/title and
+  individually labelled complete note/classification/source context.
+- [x] Pass 31 exporter tests, including the retained eight-finding regression;
+  optionally retain production-exporter fixture output without overwriting.
+- [x] Import that unmodified output into a fresh Final Cut Pro 12.3 library and
+  natively re-export. All eight findings survive in seven markers, with correct
+  anchors and complete content subject to XML attribute whitespace normalization.
+- [x] Verify unchanged original media/reviews and the imported source-A copy.
+- [ ] Complete remaining FCP rate/raster/duration/whitespace acceptance and
+  repeat native player UI export; rebuilt player showed a blank content view
+  when loading the fixture, so this run used the production exporter in XCTest.
+
+Acceptance: focused finding-loss fix passes; ranges remain textual and same-frame
+findings share a marker. Exact tab/newline preservation is not claimed. See
+`docs/evidence/fcp-grouped-markers-23976-20260919/README.md`.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -2643,8 +2665,8 @@ Final Cut interoperability. See
 - Resolve has focused passing round trips at 29.97 DF, 59.94 DF and 23.976;
   the latter two retain current-source provenance. Same-frame findings remain
   explicitly rejected. Final Cut’s first native round trip loses overlapping
-  findings; Phase 109 adds a guard and records remaining raster, duration and
-  whitespace issues. Complete Final Cut Pro and Avid acceptance separately,
+  findings; Phase 110 replaces the guard with native-verified one-frame/grouped
+  markers preserving all findings, with remaining raster, duration and whitespace issues. Complete Final Cut Pro and Avid acceptance separately,
   including fractional rates, DF boundaries, inclusive ranges and source identity.
 - Oldest-supported Apple Silicon UHD/HDR playback, reflected loupe/scopes,
   and long-file thumbnail performance profiling.
@@ -2871,3 +2893,5 @@ Final Cut interoperability. See
 100. Phase 108 native Resolve 23.976 relative-time round trip.
 
 101. Phase 109 native Final Cut marker loss and overlap export integrity.
+
+102. Phase 110 Final Cut one-frame markers and complete grouped findings.
