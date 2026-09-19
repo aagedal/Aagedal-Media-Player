@@ -2483,6 +2483,33 @@ coordinate change; complete editor compatibility still requires the remaining
 rate/source-identity matrix. Native export and comparison evidence are retained
 in `docs/evidence/resolve-markers-20260919`; same-frame findings remain rejected.
 
+## Phase 106 — Current-source Resolve evidence and repeatable review copies
+
+Status: Acceptance tooling and 59.94 DF fixture preparation completed on
+2026-09-19; native editor acceptance remains open.
+
+- [x] Add opt-in fixture provenance to the Resolve comparator: verify unchanged
+  media/review hashes, exact fixture rate, selected review count, current sidecar
+  source paths, and the appended A/B URLs in every original/returned marker.
+- [x] Retain manifest and input hashes in successful evidence; reject changed
+  files, stale URLs, moved fixtures, missing provenance and evidence overwrites.
+- [x] Generate an explicit separate seven-finding Resolve review with only
+  Fixture 5 omitted. Preserve the original eight-finding review and record the
+  omitted ID and both review hashes, across all three existing fixture rates.
+- [x] Pass 13 focused helper regressions and the complete script-validator suite
+  (the suite run preceded the final additional CLI regression, which also passes).
+  Suite log: `/private/tmp/aagedal-phase106-script-validators-20260919.log`.
+- [x] Generate real 59.94 DF media and both review variants with bundled FFmpeg
+  at `/private/tmp/aagedal-resolve-5994-20260919`; Foundation canonicalization
+  and manifest publication complete successfully.
+- [ ] Export the selected copy through the app and complete a fresh correct-start
+  59.94 DF native import/re-export with current editor media identity evidence.
+
+Acceptance: the next rate/source-provenance check is reproducible without manual
+sidecar surgery. File verification does not establish that an editor loaded the
+expected media, nor does generated fixture preparation close a round-trip gate.
+See `docs/COMPARE_MODE_INTERCHANGE.md` for the workflow.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -2754,3 +2781,4 @@ in `docs/evidence/resolve-markers-20260919`; same-frame findings remain rejected
 96. Phase 104 Resolve same-frame export integrity.
 
 97. Phase 105 repeatable Resolve round-trip comparison.
+98. Phase 106 current-source Resolve evidence and repeatable review copies.

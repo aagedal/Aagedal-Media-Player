@@ -177,6 +177,14 @@ reduced fixture leave current-source identity and other rates unaccepted.
 The same-frame guard stays in place, and the wider editor
 acceptance gate remains open. See the [retained evidence](evidence/resolve-markers-20260919/README.md).
 
+Phase 106 prepares the next Resolve rate/source-identity check: fixture generation
+can now retain the full review alongside an explicitly documented unique-anchor
+copy, and the EDL comparator can verify unchanged fixture hashes and current A/B
+URLs against its manifest. Thirteen focused regressions pass, and real 59.94 DF
+fixtures are prepared at `/private/tmp/aagedal-resolve-5994-20260919`. Native app
+export and editor import/re-export for that rate remain unperformed; this tooling
+does not close additional interoperability or editor media-identity acceptance.
+
 ## Remaining scope that needs an explicit product decision
 
 These are unfinished roadmap commitments, not silently deferred features:

@@ -36,9 +36,12 @@ Fixture generation and successful app exports do not establish editor acceptance
 As of September 19, Resolve EDL export deliberately rejects this full fixture's
 same-frame findings. Confirm that the error identifies source A frame 60 and
 recommends CSV/PDF, and retain the complete CSV as the lossless reference.
-For the outstanding adjacent-frame editor investigation, prepare a separate
-review copy with unique start frames; record exactly which finding was omitted
-from that diagnostic copy, and keep the original eight-finding sidecar unchanged.
+For further Resolve acceptance, add `--resolve-copy` to generate a separate
+`resolve-unique.aagedal-compare.json` with seven unique start frames. Open it
+through **Notes → Open Notes Copy…** before exporting. Only Fixture 5 (the
+duplicate minute-boundary anchor) is omitted; all other finding fields stay
+unchanged. The manifest records its ID, both review hashes, and the selected
+copy's count. The original eight-finding sidecar remains the default review.
 That reduced diagnostic does not establish complete eight-finding acceptance.
 
 Decimal metadata rates within 0.001 fps of a known broadcast rate use its
@@ -129,6 +132,30 @@ For Resolve, compare the **unmodified** app EDL and native re-export with:
 python3 scripts/validate-resolve-marker-roundtrip.py original.edl returned.edl \
   --rate 30000/1001 --editor-version 21.1.0.14 --output new-roundtrip-result.json
 ```
+
+For newly generated fixtures, also pass
+`--fixture-manifest /path/to/fixture-manifest.json`. This verifies the hashes
+of both media files and both reviews (when a Resolve copy exists), confirms the
+selected review's source paths still identify the current media, and requires
+every original/returned EDL marker's appended A/B URLs to identify those files.
+It also checks the exact manifest rate and selected review count. Changed inputs,
+stale paths after a move, missing provenance, or old manifests without the selected
+review fields fail validation. Regenerate fixtures at their intended location;
+do not rewrite historical evidence to make it pass. The output retains the
+manifest hash and verified input hashes. This is file provenance evidence;
+native editor media loading and correct timeline setup still require observation.
+
+The next 59.94 DF run can be prepared with:
+
+```bash
+python3 scripts/generate-review-interchange-fixtures.py /tmp/new-resolve-5994 \
+  --rate 59.94 --resolve-copy
+```
+
+Export from the app using that notes copy, import into a fresh 59.94 DF editor
+timeline starting at `00:00:58;00`, and compare the unmodified native re-export
+at `--rate 60000/1001` with its fixture manifest. Retain native source-media
+identity evidence as well as the comparison JSON before accepting this row.
 
 Use the exact rational media rate and actual editor version. The checker exits
 nonzero for missing, additional, moved, or changed markers; it retains both

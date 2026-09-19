@@ -17,6 +17,8 @@ def main():
     parser.add_argument("--rate", choices=("29.97", "59.94", "23.976"), default="29.97")
     parser.add_argument("--historical-rounded", action="store_true",
                         help="Store legacy rounded note rates and seconds for migration checks; source media keeps its exact rate")
+    parser.add_argument("--resolve-copy", action="store_true",
+                        help="Also write a separate seven-finding notes copy omitting the duplicate anchor")
     args = parser.parse_args()
     root = args.output.resolve()
     root.mkdir(parents=True, exist_ok=False)
@@ -78,19 +80,33 @@ def main():
         suffix = ((suffix ^ byte) * 1099511628211) & ((1 << 64) - 1)
     sidecar = root / f"source-a vs source-b-{suffix:x}.aagedal-compare.json"
     sidecar.write_text(json.dumps(document, ensure_ascii=False, sort_keys=True, indent=2) + "\n")
+    files = [primary, secondary, sidecar]
+    review = sidecar
+    omitted = []
+    if args.resolve_copy:
+        review = root / "resolve-unique.aagedal-compare.json"
+        omitted = [notes[4]["id"]]
+        copy = dict(document, notes=[note for note in document["notes"] if note["id"] not in omitted])
+        review.write_text(json.dumps(copy, ensure_ascii=False, sort_keys=True, indent=2) + "\n")
+        files.append(review)
     manifest = dict(rateNumerator=numerator, rateDenominator=denominator, durationFrames=frame_count,
                     historicalRounded=args.historical_rounded,
                     storedRateNumerator=stored_numerator, storedRateDenominator=stored_denominator,
                     sourceStartTimecode=None if args.rate == "23.976" else "00:00:58;00",
                     markerCount=len(notes), command=command,
+                    reviewFile=review.name, reviewMarkerCount=len(notes) - len(omitted),
+                    omittedFindingIDs=omitted,
                     sha256={path.name: hashlib.sha256(path.read_bytes()).hexdigest()
-                            for path in (primary, secondary, sidecar)})
+                            for path in files})
     (root / "fixture-manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
     print(f"Created {len(notes)} findings at {args.rate} fps in {root}")
     if args.historical_rounded:
         print(f"Migration fixture: both sources encode {numerator}/{denominator} fps; "
               f"both note snapshots store {stored_numerator}/{stored_denominator} fps with matching portable seconds.")
     print("Open source-a.mov, compare source-b.mov, then export CSV and editor markers in the app.")
+    if args.resolve_copy:
+        print("For Resolve, use Notes → Open Notes Copy… to open resolve-unique.aagedal-compare.json. "
+              "Only Fixture 5 is omitted; the original eight-finding sidecar is unchanged.")
 
 
 if __name__ == "__main__":
