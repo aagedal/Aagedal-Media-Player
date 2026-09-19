@@ -208,6 +208,15 @@ relative-time gate; same-frame findings and other-editor acceptance remain
 separate. See the
 [retained acceptance record](evidence/resolve-markers-23976-20260919/README.md).
 
+Phase 109 completes a first native Final Cut Pro 12.3 round trip at 23.976.
+Only five of eight findings survive: three anchors inside inclusive ranges
+are dropped. FCPXML export now rejects overlapping findings and recommends
+CSV/PDF; adjacent non-overlapping markers remain available. The input and native
+re-export are retained with unchanged source/review hashes. Native re-export
+also exposes whitespace normalization, a defaulted browser-clip raster, and
+source-duration clamping. These remain open; the guard does not establish Final
+Cut acceptance. See [the retained failure](evidence/fcp-markers-23976-20260919/README.md).
+
 ## Remaining scope that needs an explicit product decision
 
 These are unfinished roadmap commitments, not silently deferred features:

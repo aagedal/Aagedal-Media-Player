@@ -403,3 +403,24 @@ duration, duplicate multiplicity and malformed-input rejection. The complete
 script-validator suite passes. Other rates, current-source provenance, and
 Final Cut Pro/Avid acceptance remain open; same-frame Resolve findings remain
 explicitly rejected.
+
+### Final Cut Pro native range-overlap loss — 2026-09-19
+
+Final Cut Pro 12.3 imports the full eight-finding 23.976 review through Finder
+Open into a disposable library, but native event re-export retains only five.
+The three missing findings lie inside inclusive ranges. FCPXML export now
+rejects overlapping intervals, including shared anchors and inclusive endpoints,
+and recommends CSV/PDF. It does not silently shorten ranges or merge findings.
+Adjacent non-overlapping intervals remain exportable.
+
+The [retained native record](evidence/fcp-markers-23976-20260919/README.md)
+includes the unchanged exports, review, fixture manifest and comparison report.
+Original inputs and the library’s imported media copy match their source hashes.
+Native re-export also changes parsed whitespace and assigns a default browser
+clip raster; duration clamping remains to be investigated. Final Cut acceptance
+is **not passed**. Repeat with non-overlapping findings and the other rate/start
+cases after resolving or explicitly qualifying those issues.
+
+Apple documents [native XML interchange](https://support.apple.com/guide/final-cut-pro/use-xml-to-transfer-projects-verdbd66ae/12.3/mac/15.6)
+and [XML attribute/time structure](https://developer.apple.com/documentation/professional-video-applications/document-type-definition).
+DTD validation alone does not establish a lossless native round trip.

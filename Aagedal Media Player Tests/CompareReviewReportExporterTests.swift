@@ -546,6 +546,58 @@ final class CompareReviewReportExporterTests: XCTestCase {
         )
     }
 
+    func testFinalCutProRejectsOverlappingFindingsWithoutLosingReportContent() throws {
+        // Native FCP 12.3 dropped the point inside a three-frame range.
+        // Include duplicate anchors, the inclusive endpoint, and nested ranges.
+        for (start, end, secondEnd): (Int64, Int64?, Int64?) in [
+            (0, nil, nil), (1, 2, nil), (2, 2, nil), (1, 10, 3),
+        ] {
+            let snapshot = CompareReviewReportSnapshot(
+                primaryItem: makeItem(path: "/tmp/Master.mov", duration: 10),
+                secondaryItem: makeItem(path: "/tmp/Encode.mp4", duration: 10),
+                alignmentMode: .relative,
+                notes: [
+                    CompareReviewNote(primaryFrame: start, primaryTime: 0, secondaryFrame: 0, secondaryTime: 0,
+                                      text: "Second finding", primaryEndFrame: secondEnd),
+                    CompareReviewNote(primaryFrame: 0, primaryTime: 0, secondaryFrame: 0, secondaryTime: 0,
+                                      text: "First finding", primaryEndFrame: end),
+                ]
+            )
+            XCTAssertThrowsError(try CompareReviewReportExporter.data(for: .finalCutProXML, snapshot: snapshot)) { error in
+                guard case CompareReviewReportExportError.overlappingFinalCutProMarkerFrame(let frame) = error else {
+                    return XCTFail("Expected overlap rejection, got \(error)")
+                }
+                XCTAssertEqual(frame, start)
+                XCTAssertTrue(error.localizedDescription.contains("CSV or PDF"))
+            }
+            let csv = CompareReviewReportExporter.csv(snapshot: snapshot)
+            let pdf = try XCTUnwrap(PDFDocument(data: CompareReviewReportExporter.data(for: .pdf, snapshot: snapshot)))
+            for text in ["First finding", "Second finding"] {
+                XCTAssertTrue(csv.contains(text))
+                XCTAssertTrue(try XCTUnwrap(pdf.string).contains(text))
+            }
+            XCTAssertEqual(snapshot.rows.count, 2)
+        }
+    }
+
+    func testFinalCutProKeepsAdjacentNonoverlappingMarkers() throws {
+        let snapshot = CompareReviewReportSnapshot(
+            primaryItem: makeItem(path: "/tmp/Master.mov", duration: 10),
+            secondaryItem: makeItem(path: "/tmp/Encode.mp4", duration: 10),
+            alignmentMode: .relative,
+            notes: [
+                CompareReviewNote(primaryFrame: 4, primaryTime: 0, secondaryFrame: 0, secondaryTime: 0, text: "Next point"),
+                CompareReviewNote(primaryFrame: 1, primaryTime: 0, secondaryFrame: 0, secondaryTime: 0,
+                                  text: "Range", primaryEndFrame: 3),
+                CompareReviewNote(primaryFrame: 0, primaryTime: 0, secondaryFrame: 0, secondaryTime: 0, text: "First point"),
+            ]
+        )
+        let document = try XMLDocument(xmlString: CompareReviewReportExporter.finalCutProXML(snapshot: snapshot))
+        let markers = try document.nodes(forXPath: "//marker").compactMap { $0 as? XMLElement }
+        XCTAssertEqual(markers.map { $0.attribute(forName: "start")?.stringValue }, ["0/1s", "1/30s", "2/15s"])
+        XCTAssertEqual(markers.map { $0.attribute(forName: "duration")?.stringValue }, ["1/30s", "1/10s", "1/30s"])
+    }
+
     func testFinalCutProXMLUsesExactRateAndEscapesComparisonContext() throws {
         let snapshot = CompareReviewReportSnapshot(
             primaryItem: makeItem(

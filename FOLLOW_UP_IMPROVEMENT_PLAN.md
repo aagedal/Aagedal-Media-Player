@@ -2570,6 +2570,30 @@ Same-frame findings remain unsupported in Resolve EDL; other-editor acceptance
 and the wider release gates remain separate. The retained README documents the
 exact capture and comparison steps.
 
+## Phase 109 — Native Final Cut marker loss and overlap export integrity
+
+Status: Native failure reproduced and export guard verified on 2026-09-19;
+Final Cut interoperability remains open.
+
+- [x] Export all eight original 23.976 findings through the native app and
+  validate against Final Cut’s bundled FCPXML 1.9 DTD.
+- [x] Import into a disposable Final Cut Pro 12.3 library and re-export the
+  event as FCPXML 1.14. Retain unchanged input/output and media/review hashes.
+- [x] Identify three dropped findings inside inclusive ranges (eight in, five
+  out), plus re-export whitespace normalization and defaulted clip raster.
+- [x] Reject overlapping FCPXML marker intervals with an actionable CSV/PDF
+  alternative. Preserve review content and allow adjacent disjoint intervals.
+- [x] Pass focused exporter tests covering collisions, inclusive endpoints,
+  nested ranges, preserved reports and non-overlapping adjacent markers.
+- [ ] Resolve/qualify browser-clip raster, duration rounding and native
+  re-export whitespace fidelity; repeat non-overlapping native round trips
+  and the remaining Final Cut rate/source-timecode matrix.
+
+Acceptance: the exporter no longer offers a known-lossy overlapping-marker
+file as a successful export. This is an integrity safeguard, not successful
+Final Cut interoperability. See
+`docs/evidence/fcp-markers-23976-20260919/README.md`.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -2616,11 +2640,12 @@ exact capture and comparison steps.
   and MPV inspector-toggle framing with playing/paused intent preserved.
   Stacked-action layouts, final-build EOF and broader comparison/native-backend
   inspector transitions remain separate acceptance checks.
-- Expand Resolve's passing seven-finding correct-start round trip to the
-  remaining rates and current-source provenance. Adjacent-frame loss did not
-  reproduce; same-frame findings remain explicitly rejected by the exporter.
-  Complete Final Cut Pro and Avid import/re-export separately, including
-  fractional rates, drop-frame boundaries, inclusive ranges, and source identity.
+- Resolve has focused passing round trips at 29.97 DF, 59.94 DF and 23.976;
+  the latter two retain current-source provenance. Same-frame findings remain
+  explicitly rejected. Final Cut’s first native round trip loses overlapping
+  findings; Phase 109 adds a guard and records remaining raster, duration and
+  whitespace issues. Complete Final Cut Pro and Avid acceptance separately,
+  including fractional rates, DF boundaries, inclusive ranges and source identity.
 - Oldest-supported Apple Silicon UHD/HDR playback, reflected loupe/scopes,
   and long-file thumbnail performance profiling.
 - Release signing/notarization/update-feed validation, representative-media
@@ -2844,3 +2869,5 @@ exact capture and comparison steps.
 98. Phase 106 current-source Resolve evidence and repeatable review copies.
 99. Phase 107 native Resolve 59.94 DF import and media identity.
 100. Phase 108 native Resolve 23.976 relative-time round trip.
+
+101. Phase 109 native Final Cut marker loss and overlap export integrity.

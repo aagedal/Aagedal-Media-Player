@@ -1,0 +1,63 @@
+{
+  "status": "failed",
+  "editor": "Final Cut Pro 12.3",
+  "rate": "24000/1001",
+  "scope": "Native full eight-finding browser clip import and event XML re-export; not editor acceptance",
+  "originalCount": 8,
+  "returnedCount": 5,
+  "missing": [
+    {
+      "name": "QC 004",
+      "frame": 1440,
+      "duration": 1,
+      "note": "Fixture 4: æøå 日本語 & <picture> \"quoted\"\tcolumn\nSecond line | Source B: source-b.mov, REL TC 00:01:00:00, frame 1440 | Alignment: Relative start | Severity: Critical | Category: Sync | Status: Open | A rate: 24000/1001 | B rate: 24000/1001 | Source A URL: file:///private/tmp/aagedal-resolve-23976-20260919/source-a.mov | Source B URL: file:///private/tmp/aagedal-resolve-23976-20260919/source-b.mov"
+    },
+    {
+      "name": "QC 005",
+      "frame": 1440,
+      "duration": 1,
+      "note": "Fixture 5: æøå 日本語 & <picture> \"quoted\"\tcolumn\nSecond line | Source B: source-b.mov, REL TC 00:01:00:00, frame 1440 | Alignment: Relative start | Severity: Info | Category: Metadata | Status: In Progress | A rate: 24000/1001 | B rate: 24000/1001 | Source A URL: file:///private/tmp/aagedal-resolve-23976-20260919/source-a.mov | Source B URL: file:///private/tmp/aagedal-resolve-23976-20260919/source-b.mov"
+    },
+    {
+      "name": "QC 007",
+      "frame": 14400,
+      "duration": 1,
+      "note": "Fixture 7: æøå 日本語 & <picture> \"quoted\"\tcolumn\nSecond line | Source B: source-b.mov, REL TC 00:10:00:00, frame 14400 | Alignment: Relative start | Severity: Major | Category: Picture | Status: Open | A rate: 24000/1001 | B rate: 24000/1001 | Source A URL: file:///private/tmp/aagedal-resolve-23976-20260919/source-a.mov | Source B URL: file:///private/tmp/aagedal-resolve-23976-20260919/source-b.mov"
+    }
+  ],
+  "unexpected": [],
+  "retainedCoordinatesMatch": true,
+  "xmlParsedNoteChanges": [
+    "QC 001",
+    "QC 002",
+    "QC 003",
+    "QC 006",
+    "QC 008"
+  ],
+  "sourceAReference": "file:///tmp/aagedal-resolve-23976-20260919/Aagedal%20FCP%20Marker%20Acceptance%2020260919.fcpbundle/Aagedal%20Compare%20Review/Original%20Media/source-a.mov",
+  "importedMediaSHA256": "3d0f9cd5b562a0100e2e746837c1a08cd25ce69aa26203e196ed6376ac7dfca8",
+  "unchangedInputSHA256": {
+    "resolve-unique.aagedal-compare.json": "d7c5165852cae6c13d99a2b576cb406761cfce4cf5edc2487408f2687c6e09f4",
+    "source-a vs source-b-1f0efdaae76ac31b.aagedal-compare.json": "50ec44de83e4fcc8c2d6ffd05fd43117d07f1b40336389e93b60caf3903b8afa",
+    "source-a.mov": "3d0f9cd5b562a0100e2e746837c1a08cd25ce69aa26203e196ed6376ac7dfca8",
+    "source-b.mov": "3d0f9cd5b562a0100e2e746837c1a08cd25ce69aa26203e196ed6376ac7dfca8"
+  },
+  "originalSHA256": "22b0b478721af1a05466ba865cf00897dbeada2157d382424b65c099abeca64c",
+  "returnedSHA256": "71dddad1b306f115ad9646cee6acd7b94525c9485d9d02e62587ec84c8837f63",
+  "originalClipFormat": {
+    "id": "r1",
+    "frameDuration": "1001/24000s"
+  },
+  "returnedClipFormat": {
+    "id": "r3",
+    "name": "FFVideoFormat720p2398",
+    "frameDuration": "1001/24000s",
+    "width": "1280",
+    "height": "720"
+  },
+  "limitations": [
+    "Native re-export writes literal tabs/newlines in XML attributes; standard XML parsing normalizes them to spaces.",
+    "Unspecified browser clip raster defaults to 1280x720 instead of the 160x90 source; asset resource retains correct source raster.",
+    "Native importer clamps original declared clip duration to actual source duration."
+  ]
+}
