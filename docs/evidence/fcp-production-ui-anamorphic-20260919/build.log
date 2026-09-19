@@ -1,0 +1,84 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild build -project "Aagedal Media Player.xcodeproj" -scheme "Aagedal Media Player" -destination platform=macOS -disableAutomaticPackageResolution -onlyUsePackageVersionsFromResolvedFile
+
+Resolve Package Graph
+
+
+Resolved source packages:
+  SwiftMediaMetadata: https://github.com/aagedal/SwiftMediaMetadata @ 3.0.1
+  Sparkle: https://github.com/sparkle-project/Sparkle @ 2.9.6
+  MPVKit: https://github.com/aagedal/MPVKit @ main (230c317)
+
+ComputePackagePrebuildTargetDependencyGraph
+
+Prepare packages
+
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+ComputeTargetDependencyGraph
+note: Building targets in dependency order
+note: Target dependency graph (9 targets)
+    Target 'Aagedal Media Player' in project 'Aagedal Media Player'
+        ➜ Explicit dependency on target 'MPVKit-GPL-product' in project 'MPVKit'
+        ➜ Explicit dependency on target 'Sparkle-product' in project 'Sparkle'
+        ➜ Explicit dependency on target 'SwiftMediaMetadata-product' in project 'SwiftMediaMetadata'
+    Target 'SwiftMediaMetadata-product' in project 'SwiftMediaMetadata'
+        ➜ Explicit dependency on target 'SwiftMediaMetadata' in project 'SwiftMediaMetadata'
+        ➜ Explicit dependency on target 'SwiftMediaMetadata_SwiftMediaMetadata' in project 'SwiftMediaMetadata'
+    Target 'SwiftMediaMetadata' in project 'SwiftMediaMetadata'
+        ➜ Explicit dependency on target 'SwiftMediaMetadata_SwiftMediaMetadata' in project 'SwiftMediaMetadata'
+        ➜ Explicit dependency on target 'CZlib' in project 'SwiftMediaMetadata'
+    Target 'CZlib' in project 'SwiftMediaMetadata' (no dependencies)
+    Target 'SwiftMediaMetadata_SwiftMediaMetadata' in project 'SwiftMediaMetadata' (no dependencies)
+    Target 'Sparkle-product' in project 'Sparkle' (no dependencies)
+    Target 'MPVKit-GPL-product' in project 'MPVKit'
+        ➜ Explicit dependency on target '_MPVKit-GPL' in project 'MPVKit'
+        ➜ Explicit dependency on target '_FFmpeg-GPL' in project 'MPVKit'
+    Target '_MPVKit-GPL' in project 'MPVKit'
+        ➜ Explicit dependency on target '_FFmpeg-GPL' in project 'MPVKit'
+    Target '_FFmpeg-GPL' in project 'MPVKit' (no dependencies)
+
+GatherProvisioningInputs
+
+CreateBuildDescription
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/usr/bin/actool --version --output-format xml1
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc --version
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
+
+Build description signature: 965761dcf8f5a52936bf745f31b4f997
+Build description path: /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Intermediates.noindex/XCBuildData/965761dcf8f5a52936bf745f31b4f997.xcbuilddata
+ClangStatCache /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/macosx27.0-26A425-e829b21a6f8c9b70876ba0858053c0447231f6df4def33e022ae2eb8f782df1a.sdkstatcache
+    cd /Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal\ Media\ Player.xcodeproj
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk -o /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/macosx27.0-26A425-e829b21a6f8c9b70876ba0858053c0447231f6df4def33e022ae2eb8f782df1a.sdkstatcache
+
+ProcessInfoPlistFile /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/SwiftMediaMetadata_SwiftMediaMetadata.bundle/Contents/Info.plist /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Intermediates.noindex/SwiftMediaMetadata.build/Debug/SwiftMediaMetadata_SwiftMediaMetadata-b.build/empty-SwiftMediaMetadata_SwiftMediaMetadata.plist (in target 'SwiftMediaMetadata_SwiftMediaMetadata' from project 'SwiftMediaMetadata')
+    cd /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/SourcePackages/checkouts/SwiftMediaMetadata
+    builtin-infoPlistUtility /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Intermediates.noindex/SwiftMediaMetadata.build/Debug/SwiftMediaMetadata_SwiftMediaMetadata-b.build/empty-SwiftMediaMetadata_SwiftMediaMetadata.plist -producttype com.apple.product-type.bundle -expandbuildsettings -platform macosx -o /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/SwiftMediaMetadata_SwiftMediaMetadata.bundle/Contents/Info.plist
+
+ProcessInfoPlistFile /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal\ Media\ Player.app/Contents/Info.plist /Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal\ Media\ Player/Info.plist (in target 'Aagedal Media Player' from project 'Aagedal Media Player')
+    cd /Users/truls.aagedal/Developer/Aagedal-Media-Player
+    builtin-infoPlistUtility /Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal\ Media\ Player/Info.plist -producttype com.apple.product-type.application -genpkginfo /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal\ Media\ Player.app/Contents/PkgInfo -expandbuildsettings -platform macosx -additionalcontentfile /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Intermediates.noindex/Aagedal\ Media\ Player.build/Debug/Aagedal\ Media\ Player.build/assetcatalog_generated_info.plist -scanforprivacyfile /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal\ Media\ Player.app/Contents/Frameworks/Libass.framework -scanforprivacyfile /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal\ Media\ Player.app/Contents/Frameworks/Libavcodec.framework -scanforprivacyfile /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal\ Media\ Player.app/Contents/Frameworks/Libavdevice.framework -scanforprivacyfile /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal\ Media\ Player.app/Contents/Frameworks/Libavfilter.framework -scanforprivacyfile /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal\ Media\ Player.app/Contents/Frameworks/Libavformat.framework -scanforprivacyfile /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal\ Media\ Player.app/Contents/Frameworks/Libavutil.framework -scanforprivacyfile /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal\ Media\ Player.app/Contents/Frameworks/Libbluray.framework -scanforprivacyfile /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal\ Media\ Player.app/Contents/Frameworks/Libcrypto.framework -scanforprivacyfile /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal\ Media\ Player.app/Contents/Frameworks/Libdav1d.framework -scanforprivacyfile /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal\ Media\ Player.app/Contents/Frameworks/Libdovi.framework -scanforprivacyfile /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal\ Media\ Player.app/Contents/Frameworks/Libfreetype.framework -scanforprivacyfile /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal\ Media\ Player.app/Contents/Frameworks/Libfribidi.framework -scanforprivacyfile /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal\ Media\ Player.app/Contents/Frameworks/Libharfbuzz.framework -scanforprivacyfile /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal\ Media\ Player.app/Contents/Frameworks/Libmpv.framework -scanforprivacyfile /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal\ Media\ Player.app/Contents/Frameworks/Libplacebo.framework -scanforprivacyfile /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal\ Media\ Player.app/Contents/Frameworks/Libshaderc_combined.framework -scanforprivacyfile /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal\ Media\ Player.app/Contents/Frameworks/Libsmbclient.framework -scanforprivacyfile /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal\ Media\ Player.app/Contents/Frameworks/Libssl.framework -scanforprivacyfile /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal\ Media\ Player.app/Contents/Frameworks/Libswresample.framework -scanforprivacyfile /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal\ Media\ Player.app/Contents/Frameworks/Libswscale.framework -scanforprivacyfile /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal\ Media\ Player.app/Contents/Frameworks/Libuavs3d.framework -scanforprivacyfile /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal\ Media\ Player.app/Contents/Frameworks/Libuchardet.framework -scanforprivacyfile /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal\ Media\ Player.app/Contents/Frameworks/Libunibreak.framework -scanforprivacyfile /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal\ Media\ Player.app/Contents/Frameworks/Sparkle.framework -scanforprivacyfile /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal\ Media\ Player.app/Contents/Frameworks/gmp.framework -scanforprivacyfile /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal\ Media\ Player.app/Contents/Frameworks/gnutls.framework -scanforprivacyfile /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal\ Media\ Player.app/Contents/Frameworks/hogweed.framework -scanforprivacyfile /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal\ Media\ Player.app/Contents/Frameworks/lcms2.framework -scanforprivacyfile /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal\ Media\ Player.app/Contents/Frameworks/nettle.framework -scanforprivacyfile /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal\ Media\ Player.app/Contents/Resources/SwiftMediaMetadata_SwiftMediaMetadata.bundle -o /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal\ Media\ Player.app/Contents/Info.plist
+
+CopySwiftLibs /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal\ Media\ Player.app (in target 'Aagedal Media Player' from project 'Aagedal Media Player')
+    cd /Users/truls.aagedal/Developer/Aagedal-Media-Player
+    builtin-swiftStdLibTool --copy --verbose --sign DCB9F6103B93E72C9E0E3D74A994AFC263041D79 --scan-executable /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal\ Media\ Player.app/Contents/MacOS/Aagedal\ Media\ Player.debug.dylib --scan-folder /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal\ Media\ Player.app/Contents/Frameworks --scan-folder /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal\ Media\ Player.app/Contents/PlugIns --scan-folder /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal\ Media\ Player.app/Contents/Library/SystemExtensions --scan-folder /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal\ Media\ Player.app/Contents/Extensions --platform macosx --toolchain /var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v27.1.266.1.ITwXcd/Metal.xctoolchain --toolchain /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --destination /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal\ Media\ Player.app/Contents/Frameworks --strip-bitcode --strip-bitcode-tool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/bitcode_strip --emit-dependency-info /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Intermediates.noindex/Aagedal\ Media\ Player.build/Debug/Aagedal\ Media\ Player.build/SwiftStdLibToolInputDependencies.dep --filter-for-swift-os --back-deploy-swift-span
+
+PruneExplicitPrecompiledModules /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Intermediates.noindex/ExplicitPrecompiledModules
+
+PruneExplicitPrecompiledModules /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules
+
+PruneExplicitPrecompiledModules /Users/truls.aagedal/Library/Developer/Xcode/DerivedData/SDKExplicitPrecompiledModules
+
+** BUILD SUCCEEDED **
+

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE fcpxml>
+<fcpxml version="1.9">
+  <resources>
+    <format id="r1" frameDuration="1/24s" width="180" height="240" paspH="3" paspV="4"/>
+    <asset id="r2" name="rotate-90-par.mp4" start="0/1s" duration="2/1s" hasVideo="1" format="r1">
+      <media-rep kind="original-media" src="file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4"/>
+    </asset>
+  </resources>
+  <event name="Aagedal Compare Review">
+    <asset-clip name="rotate-90-par.mp4 vs rotate-90-par.mp4 Review" ref="r2" format="r1" start="0/1s" duration="2/1s" tcFormat="NDF">
+      <marker start="0/1s" duration="1/24s" value="QC 001" note="Phase 120 native UI: rotated anamorphic source frame 0 | Source B: rotate-90-par.mp4, REL TC 00:00:00:00, frame 0 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 24/1 | B rate: 24/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4"/>
+    </asset-clip>
+  </event>
+</fcpxml>

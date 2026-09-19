@@ -2818,6 +2818,27 @@ Evidence: `docs/evidence/fcp-conform-isolation-20260919/README.md`.
 Derived controls are diagnostic transcodes, not source-identity acceptance.
 No shipping app behavior changed.
 
+## Phase 120 — Fresh production UI Final Cut anamorphic export
+
+Status: Rebuilt-player browser export/import/re-export repeat complete on
+2026-09-19; native asset PAR and rendered Fit acceptance remain open.
+
+- [x] Rebuild and relaunch the production Debug player, open the actual rotated
+  anamorphic fixture in comparison, create a native review note and export XML.
+- [x] Import the unmodified UI export into a separate Final Cut Pro 12.3 library
+  and retain the native General/1.14 event re-export and production sidecar.
+- [x] Verify browser raster/PAR, exact 48-frame duration, frame-zero finding
+  text/timing and byte-identical native media. Strict asset-PAR comparison still
+  fails (3:4 → 4:3); no waiver or scale compensation is introduced.
+- [x] Pass sixteen round-trip regressions, the complete script-validator suite
+  and FCPXML 1.9 DTD validation of the fresh UI export.
+- [ ] Resolve native Fit padding and asset PAR; repeat rendered measurement
+  through the fresh UI export and complete the broader native geometry matrix.
+
+Evidence: `docs/evidence/fcp-production-ui-anamorphic-20260919/README.md`.
+This closes the fresh UI browser round-trip repeat from Phases 116–119, not
+rendered geometry acceptance. No shipping Swift implementation changed.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -3113,3 +3134,5 @@ No shipping app behavior changed.
 110. Phase 118 calibrated native Final Cut rendered geometry.
 
 111. Phase 119 native Final Cut conform isolation.
+
+112. Phase 120 fresh production UI Final Cut anamorphic export.

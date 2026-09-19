@@ -1,0 +1,44 @@
+{
+  "baseCommit": "b3dc79b10b49754e8e683d63ad610a9aa44a6915",
+  "shippingSourceChanges": false,
+  "nativeApplication": "Final Cut Pro 12.3",
+  "nativeExportSettings": "General metadata; Current Version (1.14)",
+  "buildConfiguration": "Debug",
+  "packages": {
+    "path": "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved",
+    "sha256": "6aea6d64326f3040345c3523a0a39c95d53335777e233b3aa311e8ba90ad475d"
+  },
+  "executables": [
+    {
+      "path": "/Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal Media Player.app/Contents/MacOS/Aagedal Media Player",
+      "sha256": "f96577f9f2df2ebcabc241c2555bc3653ebba2075cadf4fa1ec9c1d8aa3203c0"
+    },
+    {
+      "path": "/Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal Media Player.app/Contents/MacOS/Aagedal Media Player.debug.dylib",
+      "sha256": "1759ceccf494c1d47eff6ff221cb0aee03fa496770caeb11df7e89303be3268f"
+    },
+    {
+      "path": "/Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal Media Player.app/Contents/MacOS/__preview.dylib",
+      "sha256": "263ba62d3015d84035113f63571210735dd3a24f42d71a2e9d5a1a2271c7d8e7"
+    }
+  ],
+  "media": [
+    {
+      "path": "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Test Fixtures/Generated/loupe/rotate-90-par.mp4",
+      "sha256": "154f95ac8ed3a6a37cba87fffbc3184fc1d2ec341f6cc3e9e1b658353ab403c4"
+    },
+    {
+      "path": "/private/tmp/aagedal-resolve-5994-20260919/Aagedal FCP Production UI Phase 120.fcpbundle/Aagedal Compare Review/Original Media/rotate-90-par.mp4",
+      "sha256": "154f95ac8ed3a6a37cba87fffbc3184fc1d2ec341f6cc3e9e1b658353ab403c4"
+    }
+  ],
+  "files": {
+    "docs/evidence/fcp-production-ui-anamorphic-20260919/README.md": "9b900b45858cdcdc241e57e005b8af2a344af51d73d4a8772811638bb96ce40a",
+    "docs/evidence/fcp-production-ui-anamorphic-20260919/build.log": "ef5661f5290ffc4c1f55524cf727d52c424a85ade4fd4cec98efbdb6a2b5b822",
+    "docs/evidence/fcp-production-ui-anamorphic-20260919/comparison.json": "c558451fb2280ebde336ecd533a2c4224ab43a86f68a9bb8e32d6626a8ee47db",
+    "docs/evidence/fcp-production-ui-anamorphic-20260919/original.fcpxml": "7f593292d0f21ca60d72676fc2c7bde0187eb2546be520f8d637be1d2252a756",
+    "docs/evidence/fcp-production-ui-anamorphic-20260919/returned.fcpxml": "e9a50dd18cafaf70101b45c0e9ec3001ee81fdcfe561239662b66a70b04336e1",
+    "docs/evidence/fcp-production-ui-anamorphic-20260919/review.aagedal-compare.json": "0bca35073bc4d1a2685e376ca2d92376bbab1f37fe270c6064da9eaa4523b05d",
+    "docs/evidence/fcp-production-ui-anamorphic-20260919/script-validators.log": "e7d399d56afd2a6330490fb54b213217a46011e033ac64a164be834888045357"
+  }
+}

@@ -520,3 +520,10 @@ review XML. Calibrated output acceptance remains open. The comparator now accept
 timeline markers remain outside its scope and cannot hide browser finding loss.
 The retained comparison still fails only `assetPixelAspect`.
 See [native timeline evidence](evidence/fcp-timeline-anamorphic-20260919/README.md).
+
+Phase 120 repeats the rotated anamorphic browser round trip using a fresh export
+from the rebuilt player UI and a separate Final Cut library. Browser geometry,
+48-frame duration, exact single-line frame-zero finding and media hashes match;
+asset PAR still changes from 3:4 to 4:3. This completes the fresh UI browser-export
+repeat but does not supply a fresh timeline render or close geometry acceptance.
+See [production UI evidence](evidence/fcp-production-ui-anamorphic-20260919/README.md).

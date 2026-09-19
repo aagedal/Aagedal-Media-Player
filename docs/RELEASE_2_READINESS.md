@@ -92,6 +92,12 @@ aspect tolerance; the original padding still fails the unchanged Fit check.
 This does not resolve native asset PAR or replace fresh production UI acceptance.
 See [conform isolation evidence](evidence/fcp-conform-isolation-20260919/README.md).
 
+Phase 120 completes the fresh rebuilt-player UI browser export/import/re-export
+repeat in a separate native library. Exact marker text, timing, browser geometry
+and source bytes survive; the native asset-PAR mismatch is reproduced. A new
+render of this UI export and resolution of the earlier Fit padding remain open.
+See [production UI evidence](evidence/fcp-production-ui-anamorphic-20260919/README.md).
+
 | Gap | Acceptance evidence required |
 | --- | --- |
 | Metadata compatibility and error semantics | The 3.0.1 production payload-copy regression is closed, but recover the five missing ARW/XMP fixture inputs, reconcile the remaining JXL fixture/assertion disagreement, and expand unusual-container and intended-error coverage. Keep this compatibility gate separate from the resolved memory defect. See [library fixture acceptance](METADATA_LIBRARY_FIXTURE_VALIDATION.md), [real-media validation](METADATA_REAL_MEDIA_VALIDATION.md), and [metadata investigation](METADATA_MEMORY_PERFORMANCE.md). |

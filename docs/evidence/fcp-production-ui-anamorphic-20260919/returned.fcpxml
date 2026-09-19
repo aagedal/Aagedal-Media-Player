@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE fcpxml>
+
+<fcpxml version="1.14">
+    <resources>
+        <asset id="r1" name="rotate-90-par.mp4" uid="C32D5D409F8C79305BAA23E9E8489390" start="0s" duration="2s" hasVideo="1" format="r2" videoSources="1">
+            <media-rep kind="original-media" sig="C32D5D409F8C79305BAA23E9E8489390" src="file:///tmp/aagedal-resolve-5994-20260919/Aagedal%20FCP%20Production%20UI%20Phase%20120.fcpbundle/Aagedal%20Compare%20Review/Original%20Media/rotate-90-par.mp4"/>
+            <metadata>
+                <md key="com.apple.proapps.studio.rawToLogConversion" value="0"/>
+                <md key="com.apple.proapps.studio.cameraISO" value="0"/>
+                <md key="com.apple.proapps.studio.cameraColorTemperature" value="0"/>
+                <md key="com.apple.proapps.spotlight.kMDItemCodecs">
+                    <array>
+                        <string>Lavc63.1.101 libx264</string>
+                    </array>
+                </md>
+                <md key="com.apple.proapps.mio.ingestDate" value="2026-09-19 23:28:32 +0200"/>
+            </metadata>
+        </asset>
+        <format id="r2" frameDuration="512/12288s" width="180" height="240" paspH="4" paspV="3" colorSpace="6-1-6 (Rec. 601 (NTSC))"/>
+        <format id="r3" frameDuration="1/24s" width="180" height="240" paspH="3" paspV="4"/>
+    </resources>
+    <library location="file:///tmp/aagedal-resolve-5994-20260919/Aagedal%20FCP%20Production%20UI%20Phase%20120.fcpbundle/">
+        <event name="Aagedal Compare Review" uid="703D67C3-64A4-49A9-BE50-8ECC2A15FE18">
+            <asset-clip ref="r1" name="rotate-90-par.mp4 vs rotate-90-par.mp4 Review" duration="2s" format="r3" tcFormat="NDF" modDate="2026-09-19 23:28:32 +0200">
+                <adjust-colorConform enabled="1" autoOrManual="manual" conformType="conformNone" peakNitsOfPQSource="1000" peakNitsOfSDRToPQSource="203"/>
+                <marker start="0s" duration="1/24s" value="QC 001" note="Phase 120 native UI: rotated anamorphic source frame 0 | Source B: rotate-90-par.mp4, REL TC 00:00:00:00, frame 0 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 24/1 | B rate: 24/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4"/>
+            </asset-clip>
+        </event>
+    </library>
+</fcpxml>

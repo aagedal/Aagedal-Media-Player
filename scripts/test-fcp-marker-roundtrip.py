@@ -15,6 +15,21 @@ EVIDENCE = Path(__file__).resolve().parents[1] / "docs/evidence/fcp-raster-marke
 
 
 class RoundTripTests(unittest.TestCase):
+    def test_fresh_player_ui_export_retains_native_asset_par_failure(self):
+        evidence = EVIDENCE.parent / "fcp-production-ui-anamorphic-20260919"
+        result = fcp.compare(evidence / "original.fcpxml", evidence / "returned.fcpxml")
+        self.assertEqual(result["status"], "differences")
+        self.assertEqual({key for key, ok in result["checks"].items() if not ok},
+                         {"assetPixelAspect"})
+        self.assertEqual(result["original"]["raster"], [180, 240])
+        self.assertEqual(result["original"]["pixelAspect"], "3/4")
+        self.assertEqual(result["returned"]["assetPixelAspect"], "4/3")
+        self.assertEqual(result["returned"]["durations"], ["2", "2"])
+        self.assertEqual(len(result["returned"]["markers"]), 1)
+        self.assertEqual(result["returned"]["markers"][0][:3], (0, 1, "QC 001"))
+        self.assertTrue(result["checks"]["exactMarkerContent"])
+        self.assertFalse(result["mediaIdentityVerified"])
+
     def test_native_event_requires_explicit_unique_browser_selection(self):
         evidence = EVIDENCE.parent / "fcp-timeline-anamorphic-20260919"
         original = EVIDENCE.parent / "fcp-oriented-anamorphic-20260919/original.fcpxml"

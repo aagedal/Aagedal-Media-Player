@@ -1,0 +1,36 @@
+{
+  "notes" : [
+    {
+      "category" : "general",
+      "createdAt" : 1789853225247.071,
+      "id" : "DDBAE5F3-24EA-4FDC-BCE1-346D56E99FC6",
+      "primaryFrame" : 0,
+      "primaryRateDenominator" : 1,
+      "primaryRateNumerator" : 24,
+      "primaryTime" : 0,
+      "secondaryFrame" : 0,
+      "secondaryRateDenominator" : 1,
+      "secondaryRateNumerator" : 24,
+      "secondaryTime" : 0,
+      "severity" : "info",
+      "status" : "open",
+      "text" : "Phase 120 native UI: rotated anamorphic source frame 0",
+      "updatedAt" : 1789853225247.071
+    }
+  ],
+  "primarySource" : {
+    "canonicalPath" : "\/Users\/truls.aagedal\/Developer\/Aagedal-Media-Player\/Test Fixtures\/Generated\/loupe\/rotate-90-par.mp4",
+    "fileNumber" : 52839319,
+    "fileSize" : 2769,
+    "fileSystemNumber" : 16777231,
+    "modificationDate" : 1788637021771
+  },
+  "schemaVersion" : 2,
+  "secondarySource" : {
+    "canonicalPath" : "\/Users\/truls.aagedal\/Developer\/Aagedal-Media-Player\/Test Fixtures\/Generated\/loupe\/rotate-90-par.mp4",
+    "fileNumber" : 52839319,
+    "fileSize" : 2769,
+    "fileSystemNumber" : 16777231,
+    "modificationDate" : 1788637021771
+  }
+}
