@@ -684,7 +684,7 @@ final class CompareReviewReportExporterTests: XCTestCase {
         }
     }
 
-    func testFinalCutProXMLOrientsRasterAndPixelAxesTogether() throws {
+    func testFinalCutProXMLRejectsQuarterTurnAnamorphicGeometry() throws {
         for rotation in [90, -90, 270, 450, -450, 0, 180, 360] {
             let swapsAxes = [90, -90, 270, 450, -450].contains(rotation)
             let snapshot = CompareReviewReportSnapshot(
@@ -693,14 +693,71 @@ final class CompareReviewReportExporterTests: XCTestCase {
                                       pixelAspectRatio: .init(numerator: 4, denominator: 3),
                                       rotation: rotation),
                 secondaryItem: makeItem(path: "/tmp/B.mov", duration: 2),
-                alignmentMode: .relative, notes: []
+                alignmentMode: .relative, notes: [CompareReviewNote(
+                    primaryFrame: 1, primaryTime: 1.0 / 24,
+                    secondaryFrame: 1, secondaryTime: 1.0 / 24,
+                    primaryRateNumerator: 24, primaryRateDenominator: 1,
+                    secondaryRateNumerator: 24, secondaryRateDenominator: 1,
+                    text: "Inspect rotated source"
+                )]
             )
+            if swapsAxes {
+                XCTAssertThrowsError(try CompareReviewReportExporter.data(for: .finalCutProXML, snapshot: snapshot)) { error in
+                    guard case CompareReviewReportExportError.unsupportedFinalCutProRotatedAnamorphicSource = error else {
+                        return XCTFail("Unexpected error: \(error)")
+                    }
+                    XCTAssertTrue(error.localizedDescription.contains("source A"))
+                    XCTAssertTrue(error.localizedDescription.contains("CSV or PDF"))
+                }
+                let csv = String(decoding: try CompareReviewReportExporter.data(for: .csv, snapshot: snapshot), as: UTF8.self)
+                XCTAssertTrue(csv.contains("Inspect rotated source"))
+                let pdf = try XCTUnwrap(PDFDocument(data: CompareReviewReportExporter.data(for: .pdf, snapshot: snapshot)))
+                XCTAssertTrue(try XCTUnwrap(pdf.string).contains("Inspect rotated source"))
+                continue
+            }
             let document = try XMLDocument(xmlString: CompareReviewReportExporter.finalCutProXML(snapshot: snapshot))
             let format = try XCTUnwrap(document.nodes(forXPath: "//resources/format").first as? XMLElement)
             XCTAssertEqual(format.attribute(forName: "width")?.stringValue, swapsAxes ? "180" : "240")
             XCTAssertEqual(format.attribute(forName: "height")?.stringValue, swapsAxes ? "240" : "180")
             XCTAssertEqual(format.attribute(forName: "paspH")?.stringValue, swapsAxes ? "3" : "4")
             XCTAssertEqual(format.attribute(forName: "paspV")?.stringValue, swapsAxes ? "4" : "3")
+        }
+    }
+
+    func testFinalCutProXMLAllowsQuarterTurnSquarePixelsAndSecondaryAnamorphicGeometry() throws {
+        for rotation in [90, -90, 270, 450, -450] {
+            for aspect: MediaMetadata.Ratio? in [nil, .init(numerator: 1, denominator: 1),
+                                               .init(numerator: 4, denominator: 4)] {
+                let snapshot = CompareReviewReportSnapshot(
+                    primaryItem: makeItem(path: "/tmp/A.mov", duration: 2,
+                                          frameRate: "24", width: 320, height: 180,
+                                          pixelAspectRatio: aspect, rotation: rotation),
+                    secondaryItem: makeItem(path: "/tmp/B.mov", duration: 2,
+                                            frameRate: "24", width: 240, height: 180,
+                                            pixelAspectRatio: .init(numerator: 4, denominator: 3),
+                                            rotation: 90),
+                    alignmentMode: .relative, notes: []
+                )
+                let document = try XMLDocument(data: CompareReviewReportExporter.data(for: .finalCutProXML, snapshot: snapshot))
+                let format = try XCTUnwrap(document.nodes(forXPath: "//resources/format").first as? XMLElement)
+                XCTAssertEqual(format.attribute(forName: "width")?.stringValue, "180")
+                XCTAssertEqual(format.attribute(forName: "height")?.stringValue, "320")
+            }
+        }
+    }
+
+    func testFinalCutProXMLRejectsKnownGeometryEvenWithoutRasterDimensions() throws {
+        let snapshot = CompareReviewReportSnapshot(
+            primaryItem: makeItem(path: "/tmp/A.mov", duration: 2,
+                                  frameRate: "24", width: nil, height: nil,
+                                  pixelAspectRatio: .init(numerator: 3, denominator: 4), rotation: 270),
+            secondaryItem: makeItem(path: "/tmp/B.mov", duration: 2),
+            alignmentMode: .relative, notes: []
+        )
+        XCTAssertThrowsError(try CompareReviewReportExporter.finalCutProXML(snapshot: snapshot)) { error in
+            guard case CompareReviewReportExportError.unsupportedFinalCutProRotatedAnamorphicSource = error else {
+                return XCTFail("Unexpected error: \(error)")
+            }
         }
     }
 

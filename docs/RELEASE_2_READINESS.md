@@ -60,6 +60,14 @@ the broader editor matrix open; see [native duration evidence](evidence/fcp-nati
 
 ## Must close before a defensible 2.0 candidate
 
+Phase 122 now rejects Final Cut XML exports for quarter-turn anamorphic source
+A with an actionable CSV/PDF fallback. This contains the demonstrated native
+Fit defect without changing source media or adding unverified scale compensation.
+The guard covers normalized negative/wrapped rotations and valid non-square PAR,
+even when raster dimensions are missing. Native conform resolution and broader
+geometry acceptance remain open; earlier successful XML-generation checks for
+this combination are historical evidence, not current supported export behavior.
+
 Phase 115 adds ten real geometry fixtures through the production metadata/exporter
 path and a native rotated anamorphic round trip. It exposes and fixes a comparator
 false positive: Final Cut changes the asset raster while preserving the browser

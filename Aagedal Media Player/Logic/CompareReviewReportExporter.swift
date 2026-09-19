@@ -50,6 +50,7 @@ nonisolated enum CompareReviewReportExportError: Error, LocalizedError {
     case resolveTimecodeWrap(Int)
     case unrepresentableMarkerRange
     case unrepresentableFinalCutProTime
+    case unsupportedFinalCutProRotatedAnamorphicSource
     case incompatiblePrimaryFrameRate(Int)
 
     var errorDescription: String? {
@@ -68,6 +69,8 @@ nonisolated enum CompareReviewReportExportError: Error, LocalizedError {
             "A comparison marker range exceeds the supported frame range. Check the review’s frame positions before exporting again."
         case .unrepresentableFinalCutProTime:
             "A comparison marker exceeds the supported Final Cut Pro time range at source A's frame rate. Check the review's frame positions before exporting again."
+        case .unsupportedFinalCutProRotatedAnamorphicSource:
+            "Final Cut Pro XML export is unavailable because source A combines 90° or 270° rotation with non-square pixels. Final Cut Pro can add incorrect padding to this combination. Export CSV or PDF to preserve the review findings."
         case .incompatiblePrimaryFrameRate(let marker):
             "Review marker \(marker) was captured at a different source A frame rate. Load media at the original review frame rate, or use Notes → Migrate Rounded Timebases… for historical rounded broadcast rates. CSV and PDF reports remain available; markers are not automatically retimed."
         }
@@ -124,6 +127,7 @@ nonisolated struct CompareReviewReportSnapshot: Equatable, Sendable {
     let primaryRasterHeight: Int?
     let primaryPixelAspectHorizontal: Int?
     let primaryPixelAspectVertical: Int?
+    let primaryHasQuarterTurnAnamorphicGeometry: Bool
     let primaryUsesDropFrame: Bool
     let rows: [CompareReviewReportRow]
 
@@ -149,10 +153,17 @@ nonisolated struct CompareReviewReportSnapshot: Equatable, Sendable {
         // pixel axes, so invert PAR without baking it into the raster dimensions.
         // Leaving coded geometry here distorts rotated anamorphic browser clips.
         let primaryVideo = primaryItem.metadata?.primaryVideoStream
+        let rotation = ((primaryVideo?.rotation ?? 0) % 360 + 360) % 360
+        let swapsAxes = rotation == 90 || rotation == 270
+        if let aspect = primaryVideo?.pixelAspectRatio {
+            primaryHasQuarterTurnAnamorphicGeometry = swapsAxes
+                && aspect.numerator > 0 && aspect.denominator > 0
+                && aspect.numerator != aspect.denominator
+        } else {
+            primaryHasQuarterTurnAnamorphicGeometry = false
+        }
         if let width = primaryVideo?.width, let height = primaryVideo?.height,
            width > 0, height > 0 {
-            let rotation = ((primaryVideo?.rotation ?? 0) % 360 + 360) % 360
-            let swapsAxes = rotation == 90 || rotation == 270
             primaryRasterWidth = swapsAxes ? height : width
             primaryRasterHeight = swapsAxes ? width : height
             if let aspect = primaryVideo?.pixelAspectRatio,
@@ -546,6 +557,13 @@ nonisolated enum CompareReviewReportExporter {
     /// FCPXML browser-clip markers stay attached to source A and use rational
     /// time values so fractional rates never pass through floating point.
     static func finalCutProXML(snapshot: CompareReviewReportSnapshot) throws -> String {
+        // Native FCP 12.3 renders padding even for an independent source import
+        // with this geometry. Reject it until conform is verified; changing XML
+        // PAR or adding speculative scale compensation does not fix source handling.
+        // See docs/evidence/fcp-production-ui-render-20260919/README.md.
+        guard !snapshot.primaryHasQuarterTurnAnamorphicGeometry else {
+            throw CompareReviewReportExportError.unsupportedFinalCutProRotatedAnamorphicSource
+        }
         // FCP markers represent single frames. Keep inclusive ranges in the
         // note and collect all findings at one anchor into one labelled marker.
         // Validate original ranges even though their marker duration is one frame.

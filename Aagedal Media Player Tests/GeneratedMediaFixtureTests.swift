@@ -132,6 +132,18 @@ final class GeneratedMediaFixtureTests: XCTestCase {
                     )
                 }
             )
+            if name == "rotate-90-par" {
+                XCTAssertThrowsError(try CompareReviewReportExporter.data(for: .finalCutProXML, snapshot: snapshot)) { error in
+                    guard case CompareReviewReportExportError.unsupportedFinalCutProRotatedAnamorphicSource = error else {
+                        return XCTFail("Unexpected error: \(error)")
+                    }
+                }
+                let csv = String(decoding: try CompareReviewReportExporter.data(for: .csv, snapshot: snapshot), as: UTF8.self)
+                for frame in [0, 1, 47] {
+                    XCTAssertTrue(csv.contains("\(name): source frame \(frame)"))
+                }
+                continue
+            }
             let data = try CompareReviewReportExporter.data(for: .finalCutProXML, snapshot: snapshot)
             let document = try XMLDocument(data: data)
             let format = try XCTUnwrap(document.nodes(forXPath: "//resources/format").first as? XMLElement)

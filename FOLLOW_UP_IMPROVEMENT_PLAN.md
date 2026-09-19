@@ -2859,6 +2859,36 @@ This closes Phase 120's fresh-UI render-repeat task, not the geometry gate.
 No shipping Swift implementation changed. Further identical Fit repeats are
 not the next task; the unresolved native conform behavior needs a resolution.
 
+## Phase 122 — Contain Final Cut rotated anamorphic conform failures
+
+Status: Export restriction implemented and 39 focused Debug checks pass with
+zero failures or skips on 2026-09-19.
+
+- [x] Reject Final Cut XML for source A combining quarter-turn rotation and valid
+  non-square PAR, including negative/wrapped angles and missing raster dimensions.
+  Explain the known padding problem and recommend CSV/PDF to retain findings.
+- [x] Keep square-pixel rotations, unrotated/180° anamorphic sources and source-B-only
+  rotated anamorphic geometry outside the restriction. No media conversion,
+  speculative scale adjustment or comparator waiver is introduced.
+- [x] Update the real ten-fixture production-metadata/exporter matrix to expect the
+  demonstrated failure to be rejected and verify that its findings survive CSV.
+- [x] Verify 38 exporter regressions and the production ten-fixture geometry
+  matrix (39 tests total). CSV/PDF text survives rejected exports; square-pixel
+  rotations and source-B-only anamorphic geometry remain exportable.
+- [ ] Resolve native conform behavior before lifting this restriction; complete
+  broader native rotations/reflections and producer-authentic geometry acceptance.
+
+The guard is based on Phases 118–121's retained native rendered evidence,
+including identical padding from an independent source import. This is an
+explicit unsupported export combination, not a fix to the native editor's
+rendering. Historical XML and failing comparator evidence remain unchanged.
+Verification: `/private/tmp/aagedal-phase122-final-tests.xcresult` and
+`/private/tmp/aagedal-phase122-final-tests.log`; xcresult reports 39 passes,
+zero skips/failures and no runtime warnings. The first executable test run
+exposed missing video metadata in a new test helper invocation; correcting that
+fixture setup produced the final passing run. No native UI/editor repeat,
+whole-suite run or release-floor acceptance is claimed for this guard.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -3158,3 +3188,5 @@ not the next task; the unresolved native conform behavior needs a resolution.
 112. Phase 120 fresh production UI Final Cut anamorphic export.
 
 113. Phase 121 fresh production UI native rendered geometry.
+
+114. Phase 122 Final Cut rotated anamorphic export restriction.

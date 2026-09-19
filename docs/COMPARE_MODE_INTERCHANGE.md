@@ -6,6 +6,17 @@ editor remains a separate acceptance gate. Record the exact app revision,
 editor version, macOS version, source pair, and exported files for every run.
 Use disposable editor projects and generated or permission-cleared media.
 
+Final Cut Pro XML export rejects source A when its metadata combines a 90° or
+270° rotation (including equivalent negative/wrapped angles) with valid
+non-square pixels. Native Final Cut Pro 12.3 renders incorrect Fit padding for
+this combination, including when the same source is imported independently.
+The error recommends CSV or PDF, which retain the review findings. Square-pixel
+rotation, unrotated/180° anamorphic sources, and rotated anamorphic source B
+alone do not trigger this restriction: the XML references only source A.
+This Phase 122 restriction contains a demonstrated interoperability defect; it
+does not resolve Final Cut's conform behavior or close geometry acceptance.
+See [the retained rendered evidence](evidence/fcp-production-ui-render-20260919/README.md).
+
 ## Test cases
 
 For a reproducible eight-finding editor acceptance review, run:

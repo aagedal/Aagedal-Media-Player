@@ -122,6 +122,9 @@ All notable changes to Aagedal Media Player.
   primary-file loop boundaries across all backend combinations.
 
 ### Fixed
+- Final Cut Pro marker export now rejects source A combining quarter-turn rotation
+  and non-square pixels, with a CSV/PDF fallback, because native Final Cut rendering
+  adds incorrect padding for this geometry.
 - Let a newly started live-meter decoder catch up from bounded FFmpeg startup
   latency before enforcing the steady-state 250 ms freshness limit, while
   retaining fail-closed behavior after synchronization.
