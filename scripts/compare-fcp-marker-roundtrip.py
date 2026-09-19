@@ -30,6 +30,20 @@ def digest(path):
     return result.hexdigest()
 
 
+def read_format(resources, reference):
+    fmt = resources[reference]
+    if fmt.tag != "format":
+        raise ValueError("Invalid format reference")
+    rate = seconds(fmt.attrib["frameDuration"])
+    if rate <= 0:
+        raise ValueError("Frame duration must be positive")
+    width, height = int(fmt.attrib["width"]), int(fmt.attrib["height"])
+    par = Fraction(int(fmt.get("paspH", "1")), int(fmt.get("paspV", "1")))
+    if min(width, height, par) <= 0:
+        raise ValueError("Raster and pixel aspect ratio must be positive")
+    return dict(raster=[width, height], pixelAspect=str(par), frameDuration=str(rate))
+
+
 def read_export(path):
     data = path.read_bytes()
     # Accept the bare FCPXML doctype, never entity declarations or external DTDs.
@@ -49,16 +63,14 @@ def read_export(path):
             raise ValueError("Duplicate resource ID")
         resources[key] = resource
     asset = resources[clip.attrib["ref"]]
-    fmt = resources[clip.attrib["format"]]
-    if asset.tag != "asset" or fmt.tag != "format":
-        raise ValueError("Invalid asset or format reference")
-    rate = seconds(fmt.attrib["frameDuration"])
-    if rate <= 0:
-        raise ValueError("Frame duration must be positive")
-    width, height = int(fmt.attrib["width"]), int(fmt.attrib["height"])
-    par = Fraction(int(fmt.get("paspH", "1")), int(fmt.get("paspV", "1")))
-    if min(width, height, par) <= 0:
-        raise ValueError("Raster and pixel aspect ratio must be positive")
+    if asset.tag != "asset":
+        raise ValueError("Invalid asset reference")
+    clip_format = read_format(resources, clip.attrib["format"])
+    # Final Cut can split the original shared format into distinct asset and
+    # browser-clip formats (observed with rotated anamorphic media). Checking
+    # only the clip hides changes to the underlying source interpretation.
+    asset_format = read_format(resources, asset.attrib["format"])
+    rate = Fraction(clip_format["frameDuration"])
     start = seconds(clip.get("start", "0s"))
     markers = []
     for marker in clip.findall("marker"):
@@ -76,7 +88,9 @@ def read_export(path):
     if min(durations) <= 0:
         raise ValueError("Clip and asset durations must be positive")
     return dict(sha256=hashlib.sha256(data).hexdigest(), version=root.get("version"),
-                raster=[width, height], pixelAspect=str(par), frameDuration=str(rate),
+                **clip_format, assetRaster=asset_format["raster"],
+                assetPixelAspect=asset_format["pixelAspect"],
+                assetFrameDuration=asset_format["frameDuration"],
                 start=str(start), assetStart=str(seconds(asset.get("start", "0s"))),
                 durations=list(map(str, durations)), timecodeFormat=clip.attrib["tcFormat"],
                 sourceURL=media[0].attrib["src"], markers=markers)
@@ -95,7 +109,8 @@ def media_path(url):
 def compare(original, returned, verify_media=False):
     before, after = read_export(original), read_export(returned)
     checks = {key: before[key] == after[key] for key in
-              ("raster", "pixelAspect", "frameDuration", "start", "assetStart", "durations", "timecodeFormat")}
+              ("raster", "pixelAspect", "frameDuration", "assetRaster", "assetPixelAspect",
+               "assetFrameDuration", "start", "assetStart", "durations", "timecodeFormat")}
     checks["markerTimingAndTitles"] = Counter(m[:3] for m in before["markers"]) == Counter(m[:3] for m in after["markers"])
     checks["exactMarkerContent"] = Counter(before["markers"]) == Counter(after["markers"])
     def normalized(markers):

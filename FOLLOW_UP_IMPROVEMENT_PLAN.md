@@ -2704,6 +2704,30 @@ Evidence: `docs/evidence/fcp-native-markers-5994-20260919/README.md`.
 Only exact whitespace differs; the comparator still exits 1. This phase uses
 the existing Phase 113 build and makes no new app implementation changes.
 
+## Phase 115 — Final Cut asset-format verification and real geometry fixtures
+
+Status: Focused production/exporter checks complete; native rotated anamorphic
+format divergence recorded on 2026-09-19 and geometry acceptance remains open.
+
+- [x] Exercise ten actual portrait, anamorphic, rotated and reflected fixtures
+  through production metadata and FCPXML export, checking coded raster/PAR,
+  exact rate, duration, media URL and first/adjacent/final frame markers.
+- [x] Import the unchanged rotated anamorphic export in Final Cut Pro 12.3 and
+  retain its native 1.14 re-export with verified identical source-media bytes.
+- [x] Fix a comparator false positive: Final Cut keeps the browser-clip format
+  but swaps the asset raster from 240 × 180 to 180 × 240. Independently compare
+  asset raster, PAR and frame duration; the retained case now correctly exits 1.
+- [x] Pass 36 focused Debug tests, twelve Python comparator regressions, the
+  script-validator gate and DTD validation of all ten generated exports.
+- [ ] Establish correct native display aspect and the appropriate treatment of
+  editor-normalized rotated/anamorphic asset formats; complete the other native
+  geometry cases and repeat through the player UI.
+
+Evidence: `docs/evidence/fcp-rotated-anamorphic-20260919/README.md`.
+The native test uses one source for both review sides and three plain point
+findings. It does not close grouped/range/whitespace or broader editor gates.
+No shipping app behavior changes in this phase.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -2990,3 +3014,4 @@ the existing Phase 113 build and makes no new app implementation changes.
 105. Phase 113 native Final Cut duration integrity.
 
 106. Phase 114 native Final Cut 59.94 drop-frame acceptance.
+107. Phase 115 Final Cut asset-format verification and real geometry fixtures.

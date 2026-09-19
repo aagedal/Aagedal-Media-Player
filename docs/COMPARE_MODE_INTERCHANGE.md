@@ -489,3 +489,15 @@ pair, drop-frame boundaries and last source frame. Media bytes and original
 review hashes match. Exact whitespace remains the only comparator failure;
 all ten Python regressions pass. See [retained evidence](evidence/fcp-native-markers-5994-20260919/README.md).
 Other rates, portrait/anamorphic/rotated media and broader editor acceptance stay open.
+
+### Independent Final Cut asset-format verification — Phase 115
+
+Ten actual generated geometry fixtures now pass the production metadata/exporter
+regression. A native 24 fps rotated anamorphic round trip retains all three point
+findings, duration, browser-clip format and original media bytes, but changes the
+asset raster from 240 × 180 to 180 × 240 while retaining 4:3 PAR. The comparator
+previously missed this because it only inspected the browser-clip format. It now
+compares asset raster, PAR and frame duration independently and returns nonzero
+for this case. Native display-aspect correctness and the appropriate treatment
+of the changed asset format remain unresolved; no shipping exporter adjustment
+is inferred solely from this difference. See [retained evidence](evidence/fcp-rotated-anamorphic-20260919/README.md).

@@ -60,6 +60,12 @@ the broader editor matrix open; see [native duration evidence](evidence/fcp-nati
 
 ## Must close before a defensible 2.0 candidate
 
+Phase 115 adds ten real geometry fixtures through the production metadata/exporter
+path and a native rotated anamorphic round trip. It exposes and fixes a comparator
+false positive: Final Cut changes the asset raster while preserving the browser
+clip format. Timing, point findings and media bytes match, but native geometry
+acceptance remains open. See [asset-format divergence evidence](evidence/fcp-rotated-anamorphic-20260919/README.md).
+
 | Gap | Acceptance evidence required |
 | --- | --- |
 | Metadata compatibility and error semantics | The 3.0.1 production payload-copy regression is closed, but recover the five missing ARW/XMP fixture inputs, reconcile the remaining JXL fixture/assertion disagreement, and expand unusual-container and intended-error coverage. Keep this compatibility gate separate from the resolved memory defect. See [library fixture acceptance](METADATA_LIBRARY_FIXTURE_VALIDATION.md), [real-media validation](METADATA_REAL_MEDIA_VALIDATION.md), and [metadata investigation](METADATA_MEMORY_PERFORMANCE.md). |

@@ -15,6 +15,43 @@ EVIDENCE = Path(__file__).resolve().parents[1] / "docs/evidence/fcp-raster-marke
 
 
 class RoundTripTests(unittest.TestCase):
+    def test_native_rotated_anamorphic_asset_change_cannot_pass_as_exact(self):
+        evidence = EVIDENCE.parent / "fcp-rotated-anamorphic-20260919"
+        result = fcp.compare(evidence / "original.fcpxml", evidence / "returned.fcpxml")
+        self.assertEqual(result["status"], "differences")
+        self.assertEqual({key for key, value in result["checks"].items() if not value},
+                         {"assetRaster"})
+        self.assertEqual(result["original"]["assetRaster"], [240, 180])
+        self.assertEqual(result["returned"]["assetRaster"], [180, 240])
+        self.assertEqual(result["returned"]["raster"], [240, 180])
+        self.assertEqual(result["returned"]["assetPixelAspect"], "4/3")
+        self.assertEqual([m[0] for m in result["returned"]["markers"]], [0, 1, 47])
+        self.assertFalse(result["mediaIdentityVerified"])
+
+    def test_asset_format_is_compared_independently_from_clip_format(self):
+        def separate_asset_format(root, attribute, value):
+            resources = root.find("resources")
+            fmt = ET.fromstring(ET.tostring(resources.find("format")))
+            fmt.set("id", "asset-format")
+            fmt.set(attribute, value)
+            resources.append(fmt)
+            root.find(".//asset").set("format", "asset-format")
+        for attribute, value, check in [("width", "180", "assetRaster"),
+                                        ("paspH", "2", "assetPixelAspect"),
+                                        ("frameDuration", "1/25s", "assetFrameDuration")]:
+            with self.subTest(attribute=attribute):
+                result = self.changed(lambda r: separate_asset_format(r, attribute, value))
+                self.assertEqual({key for key, ok in result["checks"].items() if not ok}, {check})
+        # Resource IDs are local aliases, not source identity.
+        self.assertEqual(self.changed(lambda r: separate_asset_format(r, "width", "160"))["status"],
+                         "exact-match")
+        for attribute, value in [("width", "0"), ("paspV", "0"), ("frameDuration", "0s")]:
+            with self.subTest(attribute=attribute), self.assertRaises((ValueError, ZeroDivisionError)):
+                self.changed(lambda r: separate_asset_format(r, attribute, value))
+        for reference in ("missing", "r2"):
+            with self.subTest(reference=reference), self.assertRaises((ValueError, KeyError)):
+                self.changed(lambda r: r.find(".//asset").set("format", reference))
+
     def test_native_5994_drop_frame_preserves_source_start_and_all_findings(self):
         evidence = EVIDENCE.parent / "fcp-native-markers-5994-20260919"
         result = fcp.compare(evidence / "original.fcpxml", evidence / "returned.fcpxml")

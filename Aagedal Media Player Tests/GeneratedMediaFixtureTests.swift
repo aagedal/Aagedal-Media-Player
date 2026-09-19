@@ -105,6 +105,57 @@ final class GeneratedMediaFixtureTests: XCTestCase {
     }
 
     @MainActor
+    func testFinalCutProExportsRealPortraitAnamorphicAndTransformedSources() async throws {
+        let directory = try fixtureDirectory().appending(path: "loupe")
+        let cases: [(String, Int, Int, Int)] = [
+            ("landscape", 320, 180, 1), ("portrait", 180, 320, 1),
+            ("par", 240, 180, 4), ("rotate-90-par", 240, 180, 4),
+            ("rotate-180", 320, 180, 1), ("rotate-270", 320, 180, 1),
+            ("mirror", 320, 180, 1), ("mirror-90", 320, 180, 1),
+            ("mirror-270", 320, 180, 1), ("mirror-vertical", 320, 180, 1),
+        ]
+        for (name, width, height, aspectNumerator) in cases {
+            let url = directory.appending(path: "\(name).mp4")
+            let metadata = try await MetadataService.shared.metadata(for: url)
+            var item = PlayerWindowCoordinator.makeMediaItem(for: url)
+            item.metadata = metadata
+            item.durationSeconds = metadata.duration ?? 0
+            let snapshot = CompareReviewReportSnapshot(
+                primaryItem: item, secondaryItem: item, alignmentMode: .relative,
+                notes: [0, 1, 47].map { frame in
+                    CompareReviewNote(
+                        primaryFrame: frame, primaryTime: Double(frame) / 24,
+                        secondaryFrame: frame, secondaryTime: Double(frame) / 24,
+                        primaryRateNumerator: 24, primaryRateDenominator: 1,
+                        secondaryRateNumerator: 24, secondaryRateDenominator: 1,
+                        text: "\(name): source frame \(frame)"
+                    )
+                }
+            )
+            let data = try CompareReviewReportExporter.data(for: .finalCutProXML, snapshot: snapshot)
+            let document = try XMLDocument(data: data)
+            let format = try XCTUnwrap(document.nodes(forXPath: "//resources/format").first as? XMLElement)
+            XCTAssertEqual(format.attribute(forName: "width")?.stringValue, String(width), name)
+            XCTAssertEqual(format.attribute(forName: "height")?.stringValue, String(height), name)
+            XCTAssertEqual(format.attribute(forName: "paspH")?.stringValue, String(aspectNumerator), name)
+            XCTAssertEqual(format.attribute(forName: "paspV")?.stringValue, aspectNumerator == 4 ? "3" : "1", name)
+            XCTAssertEqual(format.attribute(forName: "frameDuration")?.stringValue, "1/24s", name)
+            XCTAssertEqual(snapshot.primaryDurationFrames, 48, name)
+            let media = try XCTUnwrap(document.nodes(forXPath: "//media-rep").first as? XMLElement)
+            XCTAssertEqual(media.attribute(forName: "src")?.stringValue, url.absoluteString, name)
+            let markers = try document.nodes(forXPath: "//marker").compactMap { $0 as? XMLElement }
+            XCTAssertEqual(markers.compactMap { $0.attribute(forName: "start")?.stringValue },
+                           ["0/1s", "1/24s", "47/24s"], name)
+            // Retain production-metadata/exporter artifacts for native editor checks.
+            // XML geometry alone cannot establish displayed rotation/reflection.
+            if let output = ProcessInfo.processInfo.environment["FCP_GEOMETRY_FIXTURE_OUTPUT"] {
+                let destination = URL(fileURLWithPath: output).appending(path: "\(name).fcpxml")
+                try data.write(to: destination, options: .withoutOverwriting)
+            }
+        }
+    }
+
+    @MainActor
     func testHDR10Metadata() async throws {
         let url = try fixtureDirectory().appending(path: "hdr10.mp4")
         let metadata = try await MetadataService.shared.metadata(for: url)

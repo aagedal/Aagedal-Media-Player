@@ -1,0 +1,35 @@
+{
+  "baseCommit": "e1554360d6b429f6fb72d619b7a3fa42bc441e86",
+  "workingTreeChanges": true,
+  "editorVersion": "12.3",
+  "editorBuild": "450152",
+  "generationRoute": "Production MetadataService and CompareReviewReportExporter called from XCTest; not a native player UI export",
+  "resultBundle": "/private/tmp/aagedal-phase115-tests-fixed.xcresult",
+  "sourceSHA256": {
+    "Aagedal Media Player/Logic/CompareReviewReportExporter.swift": "688c721769a1358b3de5d0f393e25437f9f44c17ebd5111ff54090b30d28200b",
+    "Aagedal Media Player/Logic/MetadataService.swift": "3b7be4df3f79baf975ea1353c4c652a145456ffbee5f9e2770408ce8856a840a",
+    "Aagedal Media Player Tests/GeneratedMediaFixtureTests.swift": "390369779ab6f16a66e060104cecdcad02d975972f6d3d4e5e5ff3ed1f92cd7a",
+    "scripts/generate-test-fixtures.sh": "ef0e92e10f3e164bc8be292d264964a3fd6bf0ca73db64912266c623a424e453",
+    "scripts/compare-fcp-marker-roundtrip.py": "5c22af1343611214bc3b6a73122ba153da3ceb800b0fb5272e16fb0acf81c778",
+    "scripts/test-fcp-marker-roundtrip.py": "22835c4608a2aa0d66213440970286e8efb1ff45832f0001daa0fd7031803410",
+    "Aagedal Media Player.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved": "6aea6d64326f3040345c3523a0a39c95d53335777e233b3aa311e8ba90ad475d",
+    "Test Fixtures/Generated/loupe/rotate-90-par.mp4": "154f95ac8ed3a6a37cba87fffbc3184fc1d2ec341f6cc3e9e1b658353ab403c4"
+  },
+  "exportSHA256": {
+    "mirror-270.fcpxml": "2ea611b334701fdc80f1e16f69d049d6711986b8a4ef42d4926b442e5a27f203",
+    "landscape.fcpxml": "f48084fdcfa4e1fa76a2335726394136afaed92ef9d3fc43d1ed628a66458e24",
+    "mirror-vertical.fcpxml": "a1d5e3093d65e4f0d9b28b84a49959918dfe7727c54f9929839e6cff3e09069e",
+    "rotate-180.fcpxml": "7f2edbe379c12d3f224a04475d93a3b80ad6f268869e0951e21ba4d28859a3df",
+    "rotate-270.fcpxml": "a988312c91aeb5227e852bb52a9d0af5eb44d324fe50b3e74fdd1a2bf5a6ea50",
+    "par.fcpxml": "29ebb714bac0a92aa006729345c03d0c6ae09b533ff27a500912330a6774020f",
+    "mirror.fcpxml": "299589511e1c2f5962ddc02d518489a52d010f68289610c0cb171642e1b4068c",
+    "mirror-90.fcpxml": "3851930a386622456038ccc8eea4273502a5884d6861b9f7a1f57a4a5d49ccf5",
+    "rotate-90-par.fcpxml": "274540559c3c30b10758d19a9f1cff3a2c0665d2ebfc7ed6ac227144b1f2bb26",
+    "portrait.fcpxml": "2c4fcefa41c75fa88d29094badb65f60c9c2183f144c5739319671354bae8c54"
+  },
+  "dtdValidation": "All ten generated XML files pass the installed FCPXML 1.9 DTD",
+  "retainedSHA256": {
+    "original.fcpxml": "274540559c3c30b10758d19a9f1cff3a2c0665d2ebfc7ed6ac227144b1f2bb26",
+    "returned.fcpxml": "2411e8bd343b41ceec4a2ed5ba98e7e06d70caf0fd373a1ad1bab1eb87c97964"
+  }
+}

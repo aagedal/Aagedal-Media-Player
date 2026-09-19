@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE fcpxml>
+<fcpxml version="1.9">
+  <resources>
+    <format id="r1" frameDuration="1/24s" width="240" height="180" paspH="4" paspV="3"/>
+    <asset id="r2" name="rotate-90-par.mp4" start="0/1s" duration="2/1s" hasVideo="1" format="r1">
+      <media-rep kind="original-media" src="file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4"/>
+    </asset>
+  </resources>
+  <event name="Aagedal Compare Review">
+    <asset-clip name="rotate-90-par.mp4 vs rotate-90-par.mp4 Review" ref="r2" format="r1" start="0/1s" duration="2/1s" tcFormat="NDF">
+      <marker start="0/1s" duration="1/24s" value="QC 001" note="rotate-90-par: source frame 0 | Source B: rotate-90-par.mp4, REL TC 00:00:00:00, frame 0 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 24/1 | B rate: 24/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4"/>
+      <marker start="1/24s" duration="1/24s" value="QC 002" note="rotate-90-par: source frame 1 | Source B: rotate-90-par.mp4, REL TC 00:00:00:01, frame 1 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 24/1 | B rate: 24/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4"/>
+      <marker start="47/24s" duration="1/24s" value="QC 003" note="rotate-90-par: source frame 47 | Source B: rotate-90-par.mp4, REL TC 00:00:01:23, frame 47 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 24/1 | B rate: 24/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4"/>
+    </asset-clip>
+  </event>
+</fcpxml>
