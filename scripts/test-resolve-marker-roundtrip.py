@@ -4,6 +4,7 @@
 from fractions import Fraction
 import importlib.util
 import contextlib
+import copy
 import hashlib
 import io
 import json
@@ -28,6 +29,92 @@ def edl(start="00:00:58;00", end="00:00:58;01", note="Unicode æøå 日本語",
 
 
 class RoundTripTests(unittest.TestCase):
+    def native_fixture(self, root):
+        evidence = EVIDENCE.with_name("resolve-markers-5994-20260919")
+        manifest = self.make_fixture(root, "59.94")
+        snapshot = json.loads((evidence / "native-snapshot.json").read_text())
+        old_root = str(Path(snapshot["clips"][0]["path"]).parent)
+        # Adapt captured records only in the temporary test; retained evidence is immutable.
+        snapshot = json.loads(json.dumps(snapshot).replace(old_root, str(root.resolve())))
+        original = (evidence / "source-a_vs_source-b_review.edl").read_text().replace(old_root, str(root.resolve()))
+        return manifest, snapshot, original
+
+    def test_native_snapshot_matches_actual_retained_records(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "fixture"
+            manifest, snapshot, original = self.native_fixture(root)
+            path = root / "snapshot.json"
+            path.write_text(json.dumps(snapshot))
+            result = validator.verify_native_snapshot(path, manifest, original, Fraction(60000, 1001), "21.1.0.14")
+            self.assertEqual(result["status"], "passed")
+            self.assertEqual(result["markerCount"], 7)
+            self.assertEqual(result["snapshotSHA256"], hashlib.sha256(path.read_bytes()).hexdigest())
+
+    def test_native_wrong_media_and_timeline_configuration_fail(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "fixture"
+            manifest, snapshot, original = self.native_fixture(root)
+            mutations = [("metadata", key, value) for key, value in {
+                "schemaVersion": "2", "editorVersion": "old", "rate": "29.97", "dropFrame": "0",
+                "startTimecode": "01:00:00;00", "startFrame": "3481", "endFrame": "40042",
+                "videoTracks": "2", "project": "", "timeline": ""}.items()]
+            mutations.append(("metadata", "rate", None))
+            mutations += [("clip", key, value) for key, value in {
+                "path": str(root / "source-b.mov"), "fps": "60", "sourceStart": "00:00:00:00",
+                "sourceFrames": "36562", "startFrame": "3481", "endFrame": "40042",
+                "leftOffset": "0.5"}.items()]
+            for section, key, value in mutations:
+                changed = copy.deepcopy(snapshot)
+                target = changed["metadata"] if section == "metadata" else changed["clips"][0]
+                target[key] = value
+                path = root / "snapshot.json"
+                path.write_text(json.dumps(changed))
+                with self.subTest(section=section, key=key), self.assertRaises(ValueError):
+                    validator.verify_native_snapshot(path, manifest, original, Fraction(60000, 1001), "21.1.0.14")
+
+    def test_native_marker_loss_extras_and_content_changes_fail(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "fixture"
+            manifest, snapshot, original = self.native_fixture(root)
+            variants = []
+            for key, value in [("frame", "-1"), ("frame", "0.5"), ("duration", "2"),
+                               ("color", "Red"), ("name", "lost Unicode"), ("note", "extra note")]:
+                changed = copy.deepcopy(snapshot)
+                changed["markers"][0][key] = value
+                variants.append(changed)
+            for key in ("markers", "clips"):
+                for replacement in ([], None, snapshot[key] + [snapshot[key][0]]):
+                    changed = copy.deepcopy(snapshot)
+                    changed[key] = replacement
+                    variants.append(changed)
+            variants.extend([{}, {"metadata": []}])
+            for changed in variants:
+                path = root / "snapshot.json"
+                path.write_text(json.dumps(changed))
+                with self.subTest(changed=changed), self.assertRaises(ValueError):
+                    validator.verify_native_snapshot(path, manifest, original, Fraction(60000, 1001), "21.1.0.14")
+
+    def test_native_cli_requires_fixture_and_retains_both_evidence_types(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "fixture"
+            manifest, snapshot, original = self.native_fixture(root)
+            path = root / "snapshot.json"
+            path.write_text(json.dumps(snapshot))
+            source = root / "original.edl"
+            source.write_text(original)
+            output = root / "result.json"
+            args = ["validator", str(source), str(source), "--rate", "60000/1001", "--editor-version",
+                    "21.1.0.14", "--native-snapshot", str(path), "--output", str(output)]
+            with patch("sys.argv", args), contextlib.redirect_stderr(io.StringIO()):
+                self.assertEqual(validator.main(), 1)
+            self.assertFalse(output.exists())
+            args.extend(["--fixture-manifest", str(manifest)])
+            with patch("sys.argv", args), contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(validator.main(), 0)
+            result = json.loads(output.read_text())
+            self.assertEqual(result["nativeTimeline"]["status"], "passed")
+            self.assertEqual(result["fixtureProvenance"]["status"], "passed")
+
     def make_fixture(self, root, rate="29.97", resolve_copy=True):
         def fake_encode(command, **kwargs):
             Path(command[-1]).write_bytes(b"stand-in for generated media")
@@ -150,13 +237,18 @@ class RoundTripTests(unittest.TestCase):
             self.assertFalse((root / "invalid-result.json").exists())
 
     def test_retained_clean_native_roundtrip_passes(self):
-        evidence = EVIDENCE.with_name("resolve-markers-20260919")
-        report = validator.compare((evidence / "unique-markers.edl").read_text(),
-                                   (evidence / "resolve-roundtrip.edl").read_text(), RATE)
-        self.assertEqual(report["status"], "passed")
-        self.assertEqual((report["expectedCount"], report["actualCount"]), (7, 7))
-        self.assertEqual(report["missing"], [])
-        self.assertEqual(report["unexpected"], [])
+        for directory, original, rate in [
+            ("resolve-markers-20260919", "unique-markers.edl", RATE),
+            ("resolve-markers-5994-20260919", "source-a_vs_source-b_review.edl", Fraction(60000, 1001)),
+        ]:
+            with self.subTest(rate=rate):
+                evidence = EVIDENCE.with_name(directory)
+                report = validator.compare((evidence / original).read_text(),
+                                           (evidence / "resolve-roundtrip.edl").read_text(), rate)
+                self.assertEqual(report["status"], "passed")
+                self.assertEqual((report["expectedCount"], report["actualCount"]), (7, 7))
+                self.assertEqual(report["missing"], [])
+                self.assertEqual(report["unexpected"], [])
 
     def test_retained_editor_loss_is_failure(self):
         report = validator.compare((EVIDENCE / "source-a_vs_source-b_review.edl").read_text(),

@@ -182,8 +182,19 @@ can now retain the full review alongside an explicitly documented unique-anchor
 copy, and the EDL comparator can verify unchanged fixture hashes and current A/B
 URLs against its manifest. Thirteen focused regressions pass, and real 59.94 DF
 fixtures are prepared at `/private/tmp/aagedal-resolve-5994-20260919`. Native app
-export and editor import/re-export for that rate remain unperformed; this tooling
-does not close additional interoperability or editor media-identity acceptance.
+export and editor import/re-export were subsequently completed in Phase 107 below;
+fixture preparation alone did not establish editor acceptance.
+
+Phase 107 completes native app export and the user's Resolve 59.94 DF import/re-export
+from the prepared seven-finding copy. All seven actual marker records match,
+including both DF boundaries, ranges and exact text. The read-only editor
+snapshot additionally verifies the current source-A file, source rate/start/frame
+count and full untrimmed timeline placement; both media and both reviews retain
+their original hashes. Seventeen focused helper tests and the full script-validator
+suite pass. Native re-export passes all seven exact records, with no missing or
+extra events and unchanged post-export fixture hashes. 23.976, same-frame
+findings and other editors remain outside this focused result. See the
+[retained 59.94 evidence](evidence/resolve-markers-5994-20260919/README.md).
 
 ## Remaining scope that needs an explicit product decision
 

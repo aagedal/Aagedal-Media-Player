@@ -33,6 +33,26 @@ fixture behavior unchanged.
 
 Fixture generation and successful app exports do not establish editor acceptance.
 
+For a repeatable read-only check of Resolve's loaded media and marker records,
+open **Workspace → Console**, select Lua, and run this helper after native import
+(substitute the checkout and new evidence paths):
+
+```lua
+dofile("/path/to/checkout/scripts/capture-resolve-marker-snapshot.lua")("/path/to/fixtures/native-snapshot.json")
+```
+
+The helper does not create/import markers. It records the editor version,
+project/timeline names, frame-count mode, start/end frames, V1 clip identity and
+placement, and every timeline marker's anchor, duration, color, name and note.
+It refuses an existing output path. The native marker import and re-export
+remain editor actions; do not substitute scripted `AddMarker` calls for them.
+Pass `--native-snapshot /path/to/fixtures/native-snapshot.json` together with
+`--fixture-manifest` to the EDL comparator after native re-export. Validation
+requires one full, untrimmed source-A clip on a single video track, exact fixture
+start/rate/duration, and every expected marker record. Source B remains note
+provenance; it is not claimed to be loaded in Resolve. Keep the original
+snapshot and both EDLs unchanged beside the workflow record.
+
 As of September 19, Resolve EDL export deliberately rejects this full fixture's
 same-frame findings. Confirm that the error identifies source A frame 60 and
 recommends CSV/PDF, and retain the complete CSV as the lossless reference.
@@ -266,6 +286,7 @@ marked passed. The native export result is independent of that outstanding gate.
 | --- | --- | --- | --- | --- | --- | --- |
 | Resolve Studio 21.1.0.14 | Generated 29.97 DF / `00:00:58;00` | 6/8 in-range after corrected import | Five surviving anchors exact; Fixture 2 moved from frame 1 to frame 0 | Unicode/URLs and range durations retained; Fixtures 1 and 5 absent | 13 events: 7 from the earlier wrong-start import plus 6 in-range | Partial; see September 15 evidence below |
 | Resolve Studio 21.1.0.14 | Fresh generated 29.97 DF / `00:00:58;00`; seven-finding diagnostic | 7/7 | All anchors exact, including first/adjacent and DF boundary frames | Exact text, colors and durations retained; duplicate finding deliberately omitted | 7/7 exact records, no missing or extra events | Focused pass; historical URLs and other rates remain outside this result; see September 19 evidence below |
+| Resolve Studio 21.1.0.14 | Fresh generated 59.94 DF / `00:00:58;00`; current-source seven-finding copy | 7/7 | All anchors exact, including first/adjacent/final and DF boundary frames | Exact text, colors, ranges and current URLs retained; actual source-A media/placement verified | 7/7 exact records; unchanged fixture hashes | Focused round-trip pass; [retained evidence](evidence/resolve-markers-5994-20260919/README.md) |
 | Final Cut Pro | Pending | | | | | Not run |
 | Adobe Premiere Pro | Pending | | | | | Installed per user; interchange path not yet validated |
 | Media Composer First | Pending | | | | | Installed per user; EDL import observed unlocked; marker behavior not yet tested |

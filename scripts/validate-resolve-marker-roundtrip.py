@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Compare an app marker EDL with Resolve's native marker re-export.
 
-This verifies the supplied files, not the editor workflow or source-media identity.
-Keep those records alongside the generated report. Never filter unwanted events
+Optional native snapshots also verify captured timeline/source-A placement.
+Keep the editor workflow record alongside the report. Never filter unwanted events
 out of the re-export: extra, negative, and duplicate events must remain visible.
 """
 import argparse
@@ -148,6 +148,76 @@ def verify_fixture(manifest_path, original, returned, rate):
                 scope="Unchanged fixture files and exported source URLs; editor media loading requires native evidence")
 
 
+def verify_native_snapshot(snapshot_path, manifest_path, original, rate, editor_version):
+    """Validate the read-only Resolve capture for one complete, untrimmed fixture clip."""
+    snapshot_bytes = snapshot_path.read_bytes()
+    snapshot = json.loads(snapshot_bytes)
+    manifest = json.loads(manifest_path.read_bytes())
+    if not isinstance(snapshot, dict) or not isinstance(snapshot.get("metadata"), dict):
+        raise ValueError("Invalid native snapshot metadata")
+    metadata = snapshot["metadata"]
+
+    def string(record, key):
+        if not isinstance(record, dict) or not isinstance(record.get(key), str):
+            raise ValueError(f"Native snapshot requires string field: {key}")
+        return record[key]
+
+    def integer(record, key):
+        value = Fraction(string(record, key))
+        if value.denominator != 1:
+            raise ValueError(f"Native snapshot has fractional frame: {key}")
+        return value.numerator
+
+    mode, expected = parse_edl(original, rate)
+    # Resolve reports these exact broadcast rates as rounded decimal strings.
+    display_rate = {Fraction(24000, 1001): "23.976", Fraction(30000, 1001): "29.97",
+                    Fraction(60000, 1001): "59.94"}.get(rate, str(rate))
+    if (string(metadata, "schemaVersion") != "1"
+            or string(metadata, "editorVersion") != editor_version
+            or string(metadata, "rate") != display_rate
+            or string(metadata, "dropFrame") != str(int(mode))):
+        raise ValueError("Native snapshot schema, editor version, rate or DF mode differs")
+    if not string(metadata, "project").strip() or not string(metadata, "timeline").strip():
+        raise ValueError("Native snapshot lacks project/timeline identity")
+    start_label = manifest["sourceStartTimecode"] or "00:00:00:00"
+    start = frame_number(start_label, rate, mode)
+    frames = manifest["durationFrames"]
+    if (string(metadata, "startTimecode") != start_label
+            or integer(metadata, "startFrame") != start
+            or integer(metadata, "endFrame") != start + frames
+            or integer(metadata, "videoTracks") != 1):
+        raise ValueError("Native timeline start, duration or video track count differs")
+    clips = snapshot.get("clips")
+    if not isinstance(clips, list) or len(clips) != 1:
+        raise ValueError("Expected exactly one native V1 fixture clip")
+    clip = clips[0]
+    source = (manifest_path.parent / "source-a.mov").resolve()
+    if (not Path(string(clip, "path")).is_absolute()
+            or Path(clip["path"]).resolve() != source
+            or string(clip, "fps") != display_rate
+            or string(clip, "sourceStart") != start_label
+            or integer(clip, "sourceFrames") != frames
+            or integer(clip, "startFrame") != start
+            or integer(clip, "endFrame") != start + frames
+            or integer(clip, "leftOffset") != 0):
+        raise ValueError("Native media identity, rate or untrimmed placement differs")
+    markers = snapshot.get("markers")
+    if not isinstance(markers, list):
+        raise ValueError("Native snapshot lacks marker records")
+    actual = []
+    for marker in markers:
+        if string(marker, "note") != "":
+            raise ValueError("Unexpected native marker note content")
+        actual.append((start + integer(marker, "frame"), integer(marker, "duration"),
+                       "ResolveColor" + string(marker, "color"), string(marker, "name")))
+    if Counter(expected) != Counter(actual):
+        raise ValueError("Native marker anchors, durations, colors or exact texts differ")
+    return dict(status="passed", snapshotSHA256=hashlib.sha256(snapshot_bytes).hexdigest(),
+                project=metadata["project"], timeline=metadata["timeline"], markerCount=len(actual),
+                sourcePath=str(source), startTimecode=start_label,
+                scope="Captured Resolve timeline records and source A placement; source B is note provenance only")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("original", type=Path)
@@ -156,19 +226,28 @@ def main():
     parser.add_argument("--editor-version", required=True)
     parser.add_argument("--fixture-manifest", type=Path,
                         help="Verify current source URLs and unchanged inputs from the fixture generator")
+    parser.add_argument("--native-snapshot", type=Path,
+                        help="Read-only Resolve JSON capture; requires --fixture-manifest")
     parser.add_argument("--output", type=Path, required=True, help="New JSON evidence file")
     args = parser.parse_args()
     try:
+        if args.native_snapshot and not args.fixture_manifest:
+            raise ValueError("--native-snapshot requires --fixture-manifest")
         rate = Fraction(args.rate)
         original, returned = args.original.read_bytes(), args.returned.read_bytes()
         result = compare(original.decode("utf-8-sig"), returned.decode("utf-8-sig"), rate)
         if args.fixture_manifest:
             result["fixtureProvenance"] = verify_fixture(
                 args.fixture_manifest, original.decode("utf-8-sig"), returned.decode("utf-8-sig"), rate)
+        if args.native_snapshot:
+            result["nativeTimeline"] = verify_native_snapshot(
+                args.native_snapshot, args.fixture_manifest, original.decode("utf-8-sig"), rate, args.editor_version)
         result.update(rate=str(rate), editorVersion=args.editor_version,
                       originalSHA256=hashlib.sha256(original).hexdigest(),
                       returnedSHA256=hashlib.sha256(returned).hexdigest(),
-                      scope="Supplied EDL comparison only; native import and media identity require separate evidence")
+                      scope=("EDL comparison, unchanged fixtures and captured native timeline/source-A identity"
+                             if args.native_snapshot else
+                             "Supplied EDL comparison only; native import and media identity require separate evidence"))
         with args.output.open("x") as output:
             json.dump(result, output, ensure_ascii=False, indent=2)
             output.write("\n")

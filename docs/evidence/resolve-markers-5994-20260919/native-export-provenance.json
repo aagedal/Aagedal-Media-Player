@@ -1,0 +1,17 @@
+{
+  "appSourceCommit": "fc8d097a4d1ed4361f784b9cd47a42ef5d0b17e0",
+  "checkoutAtNativeExport": "8a758b0e67a27f2b4ff9546c4c3ca5bb28b5b32e",
+  "configuration": "Debug; existing September 19 exporter-test build",
+  "binaryPath": "/Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal Media Player.app/Contents/MacOS/Aagedal Media Player.debug.dylib",
+  "binarySHA256": "3ae73757495e3fa7656dfbe30abfb6b17f9feaa600206fefed1025f548da71e2",
+  "macOS": "27.0 (26A428)",
+  "nativeWorkflow": "App Notes > Open Notes Copy, Export > DaVinci Resolve Markers; user imported via Resolve Timeline Markers from EDL",
+  "originalSHA256": "0d6a529571e53104eb17d0e0a070f227d0c7bd93662be698a7c53779c8a4540e",
+  "postImportInputsUnchanged": true,
+  "inputSHA256": {
+    "resolve-unique.aagedal-compare.json": "e61bc92cf67cd04b17b2216725ef279c96908b060a57d1dd879d5534e07ded7a",
+    "source-a vs source-b-8571712df122a08d.aagedal-compare.json": "c67528345c2075e41a3a02b5d338277035330dc12e4d846bc66d088bb9b41c6f",
+    "source-a.mov": "d423f9ed8615ba3a03096cbbc52ac5ffeb1aa2f9608aff3f651ff22d68e29829",
+    "source-b.mov": "d423f9ed8615ba3a03096cbbc52ac5ffeb1aa2f9608aff3f651ff22d68e29829"
+  }
+}

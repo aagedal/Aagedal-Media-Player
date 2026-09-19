@@ -1,0 +1,45 @@
+{
+  "command": [
+    "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player/Binaries/ffmpeg",
+    "-hide_banner",
+    "-loglevel",
+    "error",
+    "-f",
+    "lavfi",
+    "-i",
+    "testsrc2=size=160x90:rate=60000/1001",
+    "-frames:v",
+    "36563",
+    "-c:v",
+    "libx264",
+    "-preset",
+    "ultrafast",
+    "-crf",
+    "35",
+    "-pix_fmt",
+    "yuv420p",
+    "-timecode",
+    "00:00:58;00",
+    "-n",
+    "/private/tmp/aagedal-resolve-5994-20260919/source-a.mov"
+  ],
+  "durationFrames": 36563,
+  "historicalRounded": false,
+  "markerCount": 8,
+  "omittedFindingIDs": [
+    "dad4c590-1cd6-53c4-ac70-6229180687c2"
+  ],
+  "rateDenominator": 1001,
+  "rateNumerator": 60000,
+  "reviewFile": "resolve-unique.aagedal-compare.json",
+  "reviewMarkerCount": 7,
+  "sha256": {
+    "resolve-unique.aagedal-compare.json": "e61bc92cf67cd04b17b2216725ef279c96908b060a57d1dd879d5534e07ded7a",
+    "source-a vs source-b-8571712df122a08d.aagedal-compare.json": "c67528345c2075e41a3a02b5d338277035330dc12e4d846bc66d088bb9b41c6f",
+    "source-a.mov": "d423f9ed8615ba3a03096cbbc52ac5ffeb1aa2f9608aff3f651ff22d68e29829",
+    "source-b.mov": "d423f9ed8615ba3a03096cbbc52ac5ffeb1aa2f9608aff3f651ff22d68e29829"
+  },
+  "sourceStartTimecode": "00:00:58;00",
+  "storedRateDenominator": 1001,
+  "storedRateNumerator": 60000
+}

@@ -2502,13 +2502,41 @@ Status: Acceptance tooling and 59.94 DF fixture preparation completed on
 - [x] Generate real 59.94 DF media and both review variants with bundled FFmpeg
   at `/private/tmp/aagedal-resolve-5994-20260919`; Foundation canonicalization
   and manifest publication complete successfully.
-- [ ] Export the selected copy through the app and complete a fresh correct-start
-  59.94 DF native import/re-export with current editor media identity evidence.
+- [x] Export the selected copy through the app and complete a fresh correct-start
+  59.94 DF native import/re-export with current editor media identity evidence
+  (completed in Phase 107).
 
 Acceptance: the next rate/source-provenance check is reproducible without manual
 sidecar surgery. File verification does not establish that an editor loaded the
 expected media, nor does generated fixture preparation close a round-trip gate.
 See `docs/COMPARE_MODE_INTERCHANGE.md` for the workflow.
+
+## Phase 107 — Native Resolve 59.94 DF import and media identity
+
+Status: Native app export, editor import/re-export, and repeatable native-record
+validation completed on 2026-09-19.
+
+- [x] Open the prepared 59.94 DF pair through the app, preserve the eight-finding
+  original, activate the seven-finding copy and export its EDL through native UI.
+- [x] Create a fresh Resolve Studio 21.1.0.14 project/timeline with the correct
+  59.94 DF rate and `00:00:58;00` start before the user's native marker import.
+- [x] Verify all seven actual API marker anchors, one-/three-frame durations,
+  colors and exact Unicode/classification/current-URL text, including first,
+  adjacent, final, minute and ten-minute boundary frames.
+- [x] Capture the actual V1 source path, source rate/start/frame count and full
+  untrimmed timeline placement. Confirm unchanged media and both review hashes.
+- [x] Add a read-only Lua snapshot helper and optional `--native-snapshot`
+  validation requiring fixture provenance. Reject wrong media, timeline settings,
+  clip trimming/shifts, marker loss/extras and altered text/duration/color.
+- [x] Pass 17 focused helper tests and the complete script-validator suite;
+  log: `/private/tmp/aagedal-phase107-script-validators-20260919.log`.
+- [x] Compare the user's native marker re-export with the original EDL: all seven
+  exact records pass with no missing/extra events. Retain both exports and the
+  combined native/file-provenance report; post-export fixture hashes match.
+
+Acceptance: current-source 59.94 DF native import/re-export passes. Evidence is
+retained in `docs/evidence/resolve-markers-5994-20260919`; 23.976, same-frame
+limitations and other editors are not silently treated as accepted.
 
 ## Remaining work after this continuation
 
@@ -2782,3 +2810,4 @@ See `docs/COMPARE_MODE_INTERCHANGE.md` for the workflow.
 
 97. Phase 105 repeatable Resolve round-trip comparison.
 98. Phase 106 current-source Resolve evidence and repeatable review copies.
+99. Phase 107 native Resolve 59.94 DF import and media identity.
