@@ -511,3 +511,12 @@ A Final Cut Pro 12.3 diagnostic import/re-export preserves that browser format,
 all three point findings and media bytes, but rewrites asset PAR. Production XML
 matches the diagnostic apart from names; a rebuilt player UI repeat and timeline
 conform check remain open. See [retained evidence](evidence/fcp-oriented-anamorphic-20260919/README.md).
+
+Phase 117 places that review and an independently imported byte-identical source
+in a native 1080 × 1920 / 24 fps timeline. Both show the same surrounding margins
+at Fit/100% and share native asset geometry, so padding is not unique to the
+review XML. Calibrated output acceptance remains open. The comparator now accepts
+`--returned-clip-name` for an exact unique browser selection in a multi-clip event;
+timeline markers remain outside its scope and cannot hide browser finding loss.
+The retained comparison still fails only `assetPixelAspect`.
+See [native timeline evidence](evidence/fcp-timeline-anamorphic-20260919/README.md).

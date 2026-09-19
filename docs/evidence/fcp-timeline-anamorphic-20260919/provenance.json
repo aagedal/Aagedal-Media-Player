@@ -1,0 +1,27 @@
+{
+  "baseCommit": "e7753771a9f5ac0dbac10786504034955bbc400c",
+  "nativeApplication": "Final Cut Pro 12.3",
+  "nativeXMLVersion": "1.14",
+  "source": "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Test Fixtures/Generated/loupe/rotate-90-par.mp4",
+  "sourceSHA256": "154f95ac8ed3a6a37cba87fffbc3184fc1d2ec341f6cc3e9e1b658353ab403c4",
+  "nativeMedia": [
+    {
+      "assetName": "rotate-90-par.mp4",
+      "url": "file:///tmp/aagedal-resolve-5994-20260919/Aagedal%20FCP%205994%20DF%20Acceptance%2020260919.fcpbundle/Aagedal%20Compare%20Review/Original%20Media/rotate-90-par.mp4",
+      "sha256": "154f95ac8ed3a6a37cba87fffbc3184fc1d2ec341f6cc3e9e1b658353ab403c4"
+    },
+    {
+      "assetName": "independent-rotate-90-par",
+      "url": "file:///tmp/aagedal-resolve-5994-20260919/Aagedal%20FCP%205994%20DF%20Acceptance%2020260919.fcpbundle/Aagedal%20Geometry%20Diagnostic%20116/Original%20Media/independent-rotate-90-par.mp4",
+      "sha256": "154f95ac8ed3a6a37cba87fffbc3184fc1d2ec341f6cc3e9e1b658353ab403c4"
+    }
+  ],
+  "allMediaBytesMatch": true,
+  "xmlExport": "Unmodified native event export; three review timeline instances and one independent media instance.",
+  "files": {
+    "docs/evidence/fcp-timeline-anamorphic-20260919/returned-event.fcpxml": "0f4b9576709b9a3c7da25e1b014aebf158e04f9cb7593e31a25cfbf76b5cb31a",
+    "docs/evidence/fcp-timeline-anamorphic-20260919/comparison.json": "151bb4aa853fddf3dce9cfe8d34335370ca427a129df70d919060752c8c1991a",
+    "scripts/compare-fcp-marker-roundtrip.py": "7a546ee70c6bff7e2b329c18a159b50545136ecfa3c6aa8845e55b723876c5ec",
+    "scripts/test-fcp-marker-roundtrip.py": "8414b6589f2bdb1b04931f1abc0f67a9c91040dc849e72477a96e6f0a8545801"
+  }
+}

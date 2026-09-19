@@ -15,6 +15,61 @@ EVIDENCE = Path(__file__).resolve().parents[1] / "docs/evidence/fcp-raster-marke
 
 
 class RoundTripTests(unittest.TestCase):
+    def test_native_event_requires_explicit_unique_browser_selection(self):
+        evidence = EVIDENCE.parent / "fcp-timeline-anamorphic-20260919"
+        original = EVIDENCE.parent / "fcp-oriented-anamorphic-20260919/original.fcpxml"
+        returned = evidence / "returned-event.fcpxml"
+        name = "rotate-90-par.mp4 vs rotate-90-par.mp4 Oriented Diagnostic"
+        with self.assertRaises(ValueError):
+            fcp.compare(original, returned)
+        result = fcp.compare(original, returned, returned_clip_name=name)
+        self.assertEqual(result["returnedClipName"], name)
+        self.assertEqual({key for key, ok in result["checks"].items() if not ok},
+                         {"assetPixelAspect"})
+        self.assertEqual([m[0] for m in result["returned"]["markers"]], [0, 1, 47])
+        for missing in ("missing", "Aagedal Geometry Timeline 117", "independent-rotate-90-par"):
+            with self.subTest(name=missing), self.assertRaises(ValueError):
+                fcp.compare(original, returned, returned_clip_name=missing)
+        for mutation in ("duplicate", "missing-browser-markers", "changed-browser-marker"):
+            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as directory:
+                tree = ET.parse(returned)
+                event = tree.find(".//event")
+                clip = next(c for c in event.findall("asset-clip") if c.get("name") == name)
+                if mutation == "duplicate":
+                    event.append(ET.fromstring(ET.tostring(clip)))
+                elif mutation == "missing-browser-markers":
+                    for marker in clip.findall("marker"):
+                        clip.remove(marker)
+                else:
+                    clip.find("marker").set("note", "Lost browser finding")
+                path = Path(directory) / "changed.fcpxml"
+                tree.write(path)
+                if mutation == "changed-browser-marker":
+                    changed = fcp.compare(original, path, returned_clip_name=name)
+                    self.assertFalse(changed["checks"]["exactMarkerContent"])
+                else:
+                    with self.assertRaises(ValueError):
+                        fcp.compare(original, path, returned_clip_name=name)
+
+    def test_native_direct_import_and_review_share_asset_geometry_in_timeline(self):
+        root = ET.parse(EVIDENCE.parent / "fcp-timeline-anamorphic-20260919/returned-event.fcpxml")
+        resources = {r.attrib["id"]: r for r in root.findall("./resources/*")}
+        sequence = root.find(".//project/sequence")
+        self.assertEqual(fcp.read_format(resources, sequence.get("format")),
+                         dict(raster=[1080, 1920], pixelAspect="1", frameDuration="1/24"))
+        clips = sequence.findall("spine/asset-clip")
+        self.assertEqual(len(clips), 4)  # Three review appends, then the direct import.
+        self.assertEqual([fcp.seconds(c.get("offset")) for c in clips], [0, 2, 4, 6])
+        self.assertNotEqual(clips[0].get("ref"), clips[-1].get("ref"))
+        formats = [fcp.read_format(resources, resources[c.get("ref")].get("format")) for c in clips]
+        self.assertTrue(all(f == formats[0] for f in formats))
+        self.assertEqual(formats[0], dict(raster=[180, 240], pixelAspect="4/3", frameDuration="1/24"))
+        for clip in clips:
+            self.assertIsNone(clip.find("adjust-transform"))
+            self.assertIsNone(clip.find("adjust-conform"))
+        self.assertEqual(fcp.read_format(resources, clips[0].get("format"))["pixelAspect"], "3/4")
+        self.assertEqual(fcp.read_format(resources, clips[-1].get("format"))["pixelAspect"], "4/3")
+
     def test_oriented_anamorphic_clip_preserves_geometry_but_asset_par_still_differs(self):
         evidence = EVIDENCE.parent / "fcp-oriented-anamorphic-20260919"
         result = fcp.compare(evidence / "original.fcpxml", evidence / "returned.fcpxml")

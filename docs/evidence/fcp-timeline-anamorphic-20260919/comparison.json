@@ -1,0 +1,112 @@
+{
+  "status": "differences",
+  "scope": "Single browser clip XML comparison; not complete editor acceptance",
+  "returnedClipName": "rotate-90-par.mp4 vs rotate-90-par.mp4 Oriented Diagnostic",
+  "mediaIdentityVerified": true,
+  "checks": {
+    "raster": true,
+    "pixelAspect": true,
+    "frameDuration": true,
+    "assetRaster": true,
+    "assetPixelAspect": false,
+    "assetFrameDuration": true,
+    "start": true,
+    "assetStart": true,
+    "durations": true,
+    "timecodeFormat": true,
+    "markerTimingAndTitles": true,
+    "exactMarkerContent": true,
+    "sourceMediaBytes": true
+  },
+  "contentMatchesAfterAttributeWhitespaceNormalization": true,
+  "original": {
+    "sha256": "b1083e43d115f032ec8a828db4bd2057cc59a70c6c054cb82af0ff607d584e97",
+    "version": "1.9",
+    "raster": [
+      180,
+      240
+    ],
+    "pixelAspect": "3/4",
+    "frameDuration": "1/24",
+    "assetRaster": [
+      180,
+      240
+    ],
+    "assetPixelAspect": "3/4",
+    "assetFrameDuration": "1/24",
+    "start": "0",
+    "assetStart": "0",
+    "durations": [
+      "2",
+      "2"
+    ],
+    "timecodeFormat": "NDF",
+    "sourceURL": "file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4",
+    "markers": [
+      [
+        0,
+        1,
+        "QC 001",
+        "rotate-90-par: source frame 0 | Source B: rotate-90-par.mp4, REL TC 00:00:00:00, frame 0 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 24/1 | B rate: 24/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4"
+      ],
+      [
+        1,
+        1,
+        "QC 002",
+        "rotate-90-par: source frame 1 | Source B: rotate-90-par.mp4, REL TC 00:00:00:01, frame 1 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 24/1 | B rate: 24/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4"
+      ],
+      [
+        47,
+        1,
+        "QC 003",
+        "rotate-90-par: source frame 47 | Source B: rotate-90-par.mp4, REL TC 00:00:01:23, frame 47 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 24/1 | B rate: 24/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4"
+      ]
+    ],
+    "mediaSHA256": "154f95ac8ed3a6a37cba87fffbc3184fc1d2ec341f6cc3e9e1b658353ab403c4"
+  },
+  "returned": {
+    "sha256": "0f4b9576709b9a3c7da25e1b014aebf158e04f9cb7593e31a25cfbf76b5cb31a",
+    "version": "1.14",
+    "raster": [
+      180,
+      240
+    ],
+    "pixelAspect": "3/4",
+    "frameDuration": "1/24",
+    "assetRaster": [
+      180,
+      240
+    ],
+    "assetPixelAspect": "4/3",
+    "assetFrameDuration": "1/24",
+    "start": "0",
+    "assetStart": "0",
+    "durations": [
+      "2",
+      "2"
+    ],
+    "timecodeFormat": "NDF",
+    "sourceURL": "file:///tmp/aagedal-resolve-5994-20260919/Aagedal%20FCP%205994%20DF%20Acceptance%2020260919.fcpbundle/Aagedal%20Compare%20Review/Original%20Media/rotate-90-par.mp4",
+    "markers": [
+      [
+        0,
+        1,
+        "QC 001",
+        "rotate-90-par: source frame 0 | Source B: rotate-90-par.mp4, REL TC 00:00:00:00, frame 0 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 24/1 | B rate: 24/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4"
+      ],
+      [
+        1,
+        1,
+        "QC 002",
+        "rotate-90-par: source frame 1 | Source B: rotate-90-par.mp4, REL TC 00:00:00:01, frame 1 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 24/1 | B rate: 24/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4"
+      ],
+      [
+        47,
+        1,
+        "QC 003",
+        "rotate-90-par: source frame 47 | Source B: rotate-90-par.mp4, REL TC 00:00:01:23, frame 47 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 24/1 | B rate: 24/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4"
+      ]
+    ],
+    "mediaSHA256": "154f95ac8ed3a6a37cba87fffbc3184fc1d2ec341f6cc3e9e1b658353ab403c4"
+  }
+}

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE fcpxml>
+
+<fcpxml version="1.14">
+    <resources>
+        <format id="r1" frameDuration="100/2400s" width="1080" height="1920" colorSpace="1-1-1 (Rec. 709)"/>
+        <asset id="r2" name="rotate-90-par.mp4" uid="C32D5D409F8C79305BAA23E9E8489390" start="0s" duration="2s" hasVideo="1" format="r3" videoSources="1">
+            <media-rep kind="original-media" sig="C32D5D409F8C79305BAA23E9E8489390" src="file:///tmp/aagedal-resolve-5994-20260919/Aagedal%20FCP%205994%20DF%20Acceptance%2020260919.fcpbundle/Aagedal%20Compare%20Review/Original%20Media/rotate-90-par.mp4"/>
+            <metadata>
+                <md key="com.apple.proapps.studio.rawToLogConversion" value="0"/>
+                <md key="com.apple.proapps.studio.cameraISO" value="0"/>
+                <md key="com.apple.proapps.studio.cameraColorTemperature" value="0"/>
+                <md key="com.apple.proapps.spotlight.kMDItemCodecs">
+                    <array>
+                        <string>Lavc63.1.101 libx264</string>
+                    </array>
+                </md>
+                <md key="com.apple.proapps.mio.ingestDate" value="2026-09-19 22:45:08 +0200"/>
+            </metadata>
+        </asset>
+        <format id="r3" frameDuration="512/12288s" width="180" height="240" paspH="4" paspV="3" colorSpace="6-1-6 (Rec. 601 (NTSC))"/>
+        <format id="r4" frameDuration="1/24s" width="180" height="240" paspH="3" paspV="4"/>
+        <asset id="r5" name="independent-rotate-90-par" uid="1E3825A3C89648D0D08D2D00310E7643" start="0s" duration="2s" hasVideo="1" format="r3" videoSources="1">
+            <media-rep kind="original-media" sig="1E3825A3C89648D0D08D2D00310E7643" src="file:///tmp/aagedal-resolve-5994-20260919/Aagedal%20FCP%205994%20DF%20Acceptance%2020260919.fcpbundle/Aagedal%20Geometry%20Diagnostic%20116/Original%20Media/independent-rotate-90-par.mp4"/>
+            <metadata>
+                <md key="com.apple.proapps.studio.rawToLogConversion" value="0"/>
+                <md key="com.apple.proapps.studio.cameraISO" value="0"/>
+                <md key="com.apple.proapps.studio.cameraColorTemperature" value="0"/>
+                <md key="com.apple.proapps.spotlight.kMDItemCodecs">
+                    <array>
+                        <string>Lavc63.1.101 libx264</string>
+                    </array>
+                </md>
+                <md key="com.apple.proapps.mio.ingestDate" value="2026-09-19 23:02:21 +0200"/>
+            </metadata>
+        </asset>
+    </resources>
+    <library location="file:///private/tmp/aagedal-resolve-5994-20260919/Aagedal%20FCP%205994%20DF%20Acceptance%2020260919.fcpbundle/">
+        <event name="Aagedal Geometry Diagnostic 116" uid="255B78F1-5503-469B-83D8-C1B7F0681B0A">
+            <project name="Aagedal Geometry Timeline 117" uid="DBFF1CD8-2CC1-4F9E-9B88-3299A66D6503" modDate="2026-09-19 23:02:46 +0200">
+                <sequence format="r1" duration="8s" tcStart="0s" tcFormat="NDF" audioLayout="stereo" audioRate="48k">
+                    <spine>
+                        <asset-clip ref="r2" offset="0s" name="rotate-90-par.mp4 vs rotate-90-par.mp4 Oriented Diagnostic" duration="2s" format="r4" tcFormat="NDF">
+                            <adjust-colorConform enabled="1" autoOrManual="manual" conformType="conformNone" peakNitsOfPQSource="1000" peakNitsOfSDRToPQSource="203"/>
+                            <marker start="0s" duration="1/24s" value="QC 001" note="rotate-90-par: source frame 0 | Source B: rotate-90-par.mp4, REL TC 00:00:00:00, frame 0 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 24/1 | B rate: 24/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4"/>
+                            <marker start="1/24s" duration="1/24s" value="QC 002" note="rotate-90-par: source frame 1 | Source B: rotate-90-par.mp4, REL TC 00:00:00:01, frame 1 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 24/1 | B rate: 24/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4"/>
+                            <marker start="47/24s" duration="1/24s" value="QC 003" note="rotate-90-par: source frame 47 | Source B: rotate-90-par.mp4, REL TC 00:00:01:23, frame 47 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 24/1 | B rate: 24/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4"/>
+                        </asset-clip>
+                        <asset-clip ref="r2" offset="2s" name="rotate-90-par.mp4 vs rotate-90-par.mp4 Oriented Diagnostic" duration="2s" format="r4" tcFormat="NDF">
+                            <adjust-colorConform enabled="1" autoOrManual="manual" conformType="conformNone" peakNitsOfPQSource="1000" peakNitsOfSDRToPQSource="203"/>
+                            <marker start="0s" duration="1/24s" value="QC 001" note="rotate-90-par: source frame 0 | Source B: rotate-90-par.mp4, REL TC 00:00:00:00, frame 0 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 24/1 | B rate: 24/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4"/>
+                            <marker start="1/24s" duration="1/24s" value="QC 002" note="rotate-90-par: source frame 1 | Source B: rotate-90-par.mp4, REL TC 00:00:00:01, frame 1 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 24/1 | B rate: 24/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4"/>
+                            <marker start="47/24s" duration="1/24s" value="QC 003" note="rotate-90-par: source frame 47 | Source B: rotate-90-par.mp4, REL TC 00:00:01:23, frame 47 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 24/1 | B rate: 24/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4"/>
+                        </asset-clip>
+                        <asset-clip ref="r2" offset="4s" name="rotate-90-par.mp4 vs rotate-90-par.mp4 Oriented Diagnostic" duration="2s" format="r4" tcFormat="NDF">
+                            <adjust-colorConform enabled="1" autoOrManual="manual" conformType="conformNone" peakNitsOfPQSource="1000" peakNitsOfSDRToPQSource="203"/>
+                            <marker start="0s" duration="1/24s" value="QC 001" note="rotate-90-par: source frame 0 | Source B: rotate-90-par.mp4, REL TC 00:00:00:00, frame 0 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 24/1 | B rate: 24/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4"/>
+                            <marker start="1/24s" duration="1/24s" value="QC 002" note="rotate-90-par: source frame 1 | Source B: rotate-90-par.mp4, REL TC 00:00:00:01, frame 1 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 24/1 | B rate: 24/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4"/>
+                            <marker start="47/24s" duration="1/24s" value="QC 003" note="rotate-90-par: source frame 47 | Source B: rotate-90-par.mp4, REL TC 00:00:01:23, frame 47 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 24/1 | B rate: 24/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4"/>
+                        </asset-clip>
+                        <asset-clip ref="r5" offset="6s" name="independent-rotate-90-par" duration="2s" format="r3" tcFormat="NDF"/>
+                    </spine>
+                </sequence>
+            </project>
+            <asset-clip ref="r5" name="independent-rotate-90-par" duration="2s" format="r3" tcFormat="NDF" modDate="2026-09-19 23:02:21 +0200"/>
+            <asset-clip ref="r2" name="rotate-90-par.mp4 vs rotate-90-par.mp4 Oriented Diagnostic" duration="2s" format="r4" tcFormat="NDF" modDate="2026-09-19 22:53:46 +0200">
+                <adjust-colorConform enabled="1" autoOrManual="manual" conformType="conformNone" peakNitsOfPQSource="1000" peakNitsOfSDRToPQSource="203"/>
+                <marker start="0s" duration="1/24s" value="QC 001" note="rotate-90-par: source frame 0 | Source B: rotate-90-par.mp4, REL TC 00:00:00:00, frame 0 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 24/1 | B rate: 24/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4"/>
+                <marker start="1/24s" duration="1/24s" value="QC 002" note="rotate-90-par: source frame 1 | Source B: rotate-90-par.mp4, REL TC 00:00:00:01, frame 1 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 24/1 | B rate: 24/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4"/>
+                <marker start="47/24s" duration="1/24s" value="QC 003" note="rotate-90-par: source frame 47 | Source B: rotate-90-par.mp4, REL TC 00:00:01:23, frame 47 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 24/1 | B rate: 24/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4"/>
+            </asset-clip>
+        </event>
+    </library>
+</fcpxml>

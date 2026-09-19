@@ -2750,6 +2750,31 @@ browser proportions improved, with asset-PAR interpretation still open.
 Evidence: `docs/evidence/fcp-oriented-anamorphic-20260919/README.md`.
 The strict comparator deliberately still exits 1 for `assetPixelAspect`.
 
+## Phase 117 — Native Final Cut timeline and independent source geometry
+
+Status: Focused native comparison and reusable event selection complete on
+2026-09-19; calibrated geometry acceptance remains open.
+
+- [x] Place the Phase 116 oriented diagnostic and an independently imported,
+  byte-identical media copy in a new 1080 × 1920 / 24 fps native timeline.
+- [x] Inspect default Fit/100% transform behaviour: both paths show the same
+  portrait content with surrounding margins. Retain the unmodified event XML
+  and verify both native asset media hashes against the original fixture.
+- [x] Establish that both native assets share 180 × 240 / 4:3-pixel geometry;
+  browser formats differ. Keep the strict asset-PAR mismatch visible.
+- [x] Extend the comparator with explicit unique returned browser-clip selection
+  for multi-clip events, preserving strict default behaviour and rejecting
+  missing/ambiguous selections. Timeline markers cannot mask browser losses.
+- [x] Pass 15 Python regressions including retained native timeline structure,
+  and the complete script-validator suite.
+- [ ] Measure rendered/timeline geometry, repeat through the rebuilt player UI,
+  and complete remaining native geometry/editor cases before closing the gate.
+
+Evidence: `docs/evidence/fcp-timeline-anamorphic-20260919/README.md`.
+The observed matching padding suggests native source handling is involved; it
+does not establish correct geometry or justify waiving `assetPixelAspect`.
+No shipping app implementation changed in this phase.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -3039,3 +3064,5 @@ The strict comparator deliberately still exits 1 for `assetPixelAspect`.
 107. Phase 115 Final Cut asset-format verification and real geometry fixtures.
 
 108. Phase 116 oriented Final Cut browser-clip geometry.
+
+109. Phase 117 native Final Cut timeline and independent source geometry.

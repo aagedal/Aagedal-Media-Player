@@ -44,7 +44,7 @@ def read_format(resources, reference):
     return dict(raster=[width, height], pixelAspect=str(par), frameDuration=str(rate))
 
 
-def read_export(path):
+def read_export(path, clip_name=None):
     data = path.read_bytes()
     # Accept the bare FCPXML doctype, never entity declarations or external DTDs.
     if re.search(br"<!ENTITY|<!DOCTYPE\s+[^>]*(?:SYSTEM|PUBLIC|\[)", data, re.I):
@@ -53,7 +53,10 @@ def read_export(path):
     if root.tag != "fcpxml":
         raise ValueError("Expected FCPXML")
     clips = root.findall(".//asset-clip")
-    if len(clips) != 1 or not any(clips[0] in list(event) for event in root.findall(".//event")):
+    browser_clips = root.findall(".//event/asset-clip")
+    if clip_name is not None:
+        clips = [clip for clip in browser_clips if clip.get("name") == clip_name]
+    if len(clips) != 1 or clips[0] not in browser_clips:
         raise ValueError("Expected exactly one event browser asset-clip")
     clip = clips[0]
     resources = {}
@@ -79,7 +82,8 @@ def read_export(path):
         if frame.denominator != 1 or duration.denominator != 1 or frame < 0 or duration <= 0:
             raise ValueError("Markers must have integral nonnegative positions and positive frame durations")
         markers.append((int(frame), int(duration), marker.attrib["value"], marker.get("note", "")))
-    if not markers or len(markers) != len(root.findall(".//marker")):
+    marker_scope = root if clip_name is None else clip
+    if not markers or len(markers) != len(marker_scope.findall(".//marker")):
         raise ValueError("Expected nonempty markers belonging only to the browser clip")
     media = asset.findall("media-rep[@kind='original-media']")
     if len(media) != 1:
@@ -106,8 +110,8 @@ def media_path(url):
     return path
 
 
-def compare(original, returned, verify_media=False):
-    before, after = read_export(original), read_export(returned)
+def compare(original, returned, verify_media=False, returned_clip_name=None):
+    before, after = read_export(original), read_export(returned, returned_clip_name)
     checks = {key: before[key] == after[key] for key in
               ("raster", "pixelAspect", "frameDuration", "assetRaster", "assetPixelAspect",
                "assetFrameDuration", "start", "assetStart", "durations", "timecodeFormat")}
@@ -122,6 +126,7 @@ def compare(original, returned, verify_media=False):
         checks["sourceMediaBytes"] = before["mediaSHA256"] == after["mediaSHA256"]
     return dict(status="exact-match" if all(checks.values()) else "differences",
                 scope="Single browser clip XML comparison; not complete editor acceptance",
+                returnedClipName=returned_clip_name,
                 mediaIdentityVerified=verify_media and checks["sourceMediaBytes"],
                 checks=checks, contentMatchesAfterAttributeWhitespaceNormalization=normalized_match,
                 original=before, returned=after)
@@ -132,9 +137,12 @@ def main():
     parser.add_argument("original", type=Path)
     parser.add_argument("returned", type=Path)
     parser.add_argument("--verify-media", action="store_true")
+    parser.add_argument("--returned-clip-name",
+                        help="Select one exact, unique event browser clip in the returned XML; "
+                             "other browser clips and project timelines are outside comparison scope")
     args = parser.parse_args()
     try:
-        report = compare(args.original, args.returned, args.verify_media)
+        report = compare(args.original, args.returned, args.verify_media, args.returned_clip_name)
     except (ValueError, KeyError, OSError, ET.ParseError, ZeroDivisionError) as error:
         print(json.dumps({"status": "invalid", "error": str(error)}))
         return 2
