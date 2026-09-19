@@ -1,4 +1,4 @@
-# Fresh Resolve marker import — 2026-09-19
+# Fresh Resolve marker round trip — 2026-09-19
 
 Resolve Studio 21.1.0.14, project **Aagedal Adjacent Marker Acceptance
 20260919**, timeline **Unique markers semicolon**, 29.97 DF with start
@@ -21,12 +21,32 @@ First/adjacent frames and minute/ten-minute DF boundaries are correct.
 - `fixture-manifest.json`: fresh generated media/sidecar identities. The movies
   and original eight-finding sidecar remain outside the repository at
   `/private/tmp/aagedal-resolve-adjacent-20260919`.
+- `resolve-roundtrip.edl`: the user's native **Timeline Markers to EDL**
+  re-export from this timeline, retained byte-for-byte (3,956 bytes).
+- `native-roundtrip-comparison.json`: passing strict comparison of all seven
+  anchors, durations, colors and exact texts; no missing or unexpected events.
+- `post-export-source-validation.json`: fresh post-export hashes confirming
+  that both generated movies and the original eight-finding sidecar are unchanged.
 
 The prior adjacent-frame displacement does not reproduce in this fresh import.
 Its earlier cause is not established; no coordinate fix is justified by this
 result. Same-frame findings remain deliberately rejected by the app exporter.
 
-Native re-export remains pending. This reduced diagnostic does not establish
+Native re-export passes at `30000/1001`: all seven findings survive, including
+first/adjacent frames, minute/ten-minute DF boundaries and three-frame ranges.
+The returned EDL SHA-256 is
+`7939e17ae765f1efb723adc2aaf3c2093eff11f41e1f783cbaecfd92e184d256`.
+Reproduce the comparison from the repository root:
+
+```sh
+python3 scripts/validate-resolve-marker-roundtrip.py \
+  docs/evidence/resolve-markers-20260919/unique-markers.edl \
+  docs/evidence/resolve-markers-20260919/resolve-roundtrip.edl \
+  --rate 30000/1001 --editor-version 21.1.0.14 \
+  --output /tmp/aagedal-resolve-roundtrip-recheck.json
+```
+
+The output path must not already exist. This reduced diagnostic does not establish
 complete editor acceptance: it retains historical source URLs from September
 15 rather than the fresh generated media paths, omits one finding, and covers
 only 29.97 DF. Other rates, current-source identity and other editors remain

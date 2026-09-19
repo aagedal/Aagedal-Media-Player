@@ -153,17 +153,15 @@ adjacent finding's text lands one frame early. An earlier import at the
 timeline's wrong starting timecode also persists as seven negative-frame
 markers in the disposable project. The re-export exposes all thirteen
 observed markers, but this is a partial interoperability result, not editor
-acceptance. Repeat in a fresh correct-start timeline, determine the
-adjacent/duplicate behavior, and either fix the marker representation or state
-an explicit Resolve limitation before an editor-oriented beta. See
+acceptance. The subsequent fresh correct-start investigation passes as recorded
+below; the app now explicitly rejects same-frame findings. See
 [the retained interchange record](COMPARE_MODE_INTERCHANGE.md).
 
 The September 19 continuation adds an explicit Resolve EDL limitation: reviews
 with same-frame findings now fail export with a CSV/PDF alternative, preserving
 the complete review instead of risking another silent dropped finding. Distinct
-adjacent frames remain unchanged. The fresh-timeline investigation of the
-observed one-frame displacement and all outstanding editor acceptance still
-remain; this guard alone does not establish interoperability.
+adjacent frames remain unchanged. The fresh-timeline investigation below closes
+the focused timing check; this guard alone does not establish interoperability.
 
 The same continuation adds a strict, repeatable original/re-export EDL
 comparison. It rejects the retained partial round trip and reports exact
@@ -172,7 +170,11 @@ the complete script-validator suite pass. The user imported the seven-finding di
 Resolve timeline. All seven API-reported anchors, durations and exact marker
 texts match, including first/adjacent frames and DF boundaries. The earlier
 adjacent-frame displacement does not reproduce in this clean import. Native
-re-export is pending; the same-frame guard stays in place, and the wider editor
+re-export now passes the exact seven-finding comparison, with no missing or
+unexpected events; post-export media and sidecar hashes are unchanged. This
+closes the focused 29.97 DF timing investigation. Historical note URLs and the
+reduced fixture leave current-source identity and other rates unaccepted.
+The same-frame guard stays in place, and the wider editor
 acceptance gate remains open. See the [retained evidence](evidence/resolve-markers-20260919/README.md).
 
 ## Remaining scope that needs an explicit product decision

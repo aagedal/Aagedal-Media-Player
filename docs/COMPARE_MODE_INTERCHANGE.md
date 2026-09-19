@@ -217,6 +217,7 @@ marked passed. The native export result is independent of that outstanding gate.
 | Editor/version | Media/rate/start | Marker count | Frame accuracy | Text/duplicates | Re-export comparison | Result/artifacts |
 | --- | --- | --- | --- | --- | --- | --- |
 | Resolve Studio 21.1.0.14 | Generated 29.97 DF / `00:00:58;00` | 6/8 in-range after corrected import | Five surviving anchors exact; Fixture 2 moved from frame 1 to frame 0 | Unicode/URLs and range durations retained; Fixtures 1 and 5 absent | 13 events: 7 from the earlier wrong-start import plus 6 in-range | Partial; see September 15 evidence below |
+| Resolve Studio 21.1.0.14 | Fresh generated 29.97 DF / `00:00:58;00`; seven-finding diagnostic | 7/7 | All anchors exact, including first/adjacent and DF boundary frames | Exact text, colors and durations retained; duplicate finding deliberately omitted | 7/7 exact records, no missing or extra events | Focused pass; historical URLs and other rates remain outside this result; see September 19 evidence below |
 | Final Cut Pro | Pending | | | | | Not run |
 | Media Composer | Pending | | | | | Not run |
 
@@ -318,9 +319,15 @@ eight-finding sidecar still match their manifest hashes. The adjacent-frame
 displacement does not reproduce in this clean, correct-start import; no
 coordinate change to the app exporter is warranted by this result. The earlier
 failed import remains historical evidence, with its cause not established.
-Native re-export remains pending. The [retained import evidence](evidence/resolve-markers-20260919/README.md)
-qualifies this seven-finding result separately from complete editor acceptance. The new comparator's
-six regressions pass, including rejection of the actual retained partial round
+The user completed native **Timeline Markers to EDL** re-export. Its 3,956 bytes
+have SHA-256 `7939e17ae765f1efb723adc2aaf3c2093eff11f41e1f783cbaecfd92e184d256`.
+Strict comparison passes all seven exact marker records with no missing or
+unexpected events, and post-export hashes confirm unchanged movies and original
+sidecar. The [retained round-trip evidence](evidence/resolve-markers-20260919/README.md)
+qualifies this focused pass separately from complete editor acceptance. The comparator's
+regressions cover rejection of the actual retained partial round
 trip, DF minute/ten-minute boundaries at both supported DF rates, exact content,
 duration, duplicate multiplicity and malformed-input rejection. The complete
-script-validator suite passes; no new editor acceptance is claimed.
+script-validator suite passes. Other rates, current-source provenance, and
+Final Cut Pro/Avid acceptance remain open; same-frame Resolve findings remain
+explicitly rejected.

@@ -2447,13 +2447,13 @@ Status: Completed on 2026-09-19; editor acceptance remains separate.
   and the sibling `.log`; `git diff --check` also passes.
 
 Acceptance: this closes the known silent same-frame export risk at the app
-boundary. A fresh correct-start Resolve round trip and Final Cut Pro/Avid
-acceptance remain open; no editor compatibility gate is marked complete.
+boundary. Phase 105 subsequently completes the focused correct-start Resolve
+round trip. The wider Resolve matrix and Final Cut Pro/Avid acceptance remain open.
 
 ## Phase 105 — Repeatable Resolve round-trip comparison
 
-Status: Validation tooling and fresh native import completed on 2026-09-19;
-native re-export pending.
+Status: Validation tooling and focused seven-finding native round trip completed
+on 2026-09-19; the wider editor acceptance matrix remains open.
 
 - [x] Add a strict original/re-export EDL comparator with exact rational DF
   conversion, duration/content/color checks and duplicate multiplicity.
@@ -2469,13 +2469,19 @@ native re-export pending.
 - [x] Verify the user’s native import through the actual Resolve marker API:
   all seven positions, durations and exact texts match. Adjacent-frame
   displacement does not reproduce in the fresh correct-start timeline.
-- [ ] Complete native marker re-export and compare the returned EDL.
+- [x] Complete native marker re-export and compare the returned EDL: all seven
+  anchors, durations, colors and exact texts match, with no missing or extra
+  events. Post-export media and original sidecar hashes remain unchanged.
+- [x] Add the retained successful native round trip as a regression alongside
+  the historical failure: all seven focused tests and the complete
+  script-validator suite pass. Latest log:
+  `/private/tmp/aagedal-roundtrip-validators-20260919.log`.
 
 Acceptance: file comparison is now repeatable and checks the real retained
-failure. The clean seven-finding native import passes without an exporter
+failure. The clean seven-finding native round trip passes without an exporter
 coordinate change; complete editor compatibility still requires the remaining
-round-trip/rate/source-identity matrix. Native re-export needs the custom menu; see `docs/COMPARE_MODE_INTERCHANGE.md` for the exact
-project, diagnostic input and remaining workflow.
+rate/source-identity matrix. Native export and comparison evidence are retained
+in `docs/evidence/resolve-markers-20260919`; same-frame findings remain rejected.
 
 ## Remaining work after this continuation
 
@@ -2523,8 +2529,9 @@ project, diagnostic input and remaining workflow.
   and MPV inspector-toggle framing with playing/paused intent preserved.
   Stacked-action layouts, final-build EOF and broader comparison/native-backend
   inspector transitions remain separate acceptance checks.
-- Repeat Resolve's now-recorded partial marker import/re-export in a fresh
-  correct-start timeline and resolve its adjacent/duplicate finding loss.
+- Expand Resolve's passing seven-finding correct-start round trip to the
+  remaining rates and current-source provenance. Adjacent-frame loss did not
+  reproduce; same-frame findings remain explicitly rejected by the exporter.
   Complete Final Cut Pro and Avid import/re-export separately, including
   fractional rates, drop-frame boundaries, inclusive ranges, and source identity.
 - Oldest-supported Apple Silicon UHD/HDR playback, reflected loupe/scopes,

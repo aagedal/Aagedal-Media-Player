@@ -19,6 +19,15 @@ def edl(start="00:00:58;00", end="00:00:58;01", note="Unicode æøå 日本語",
 
 
 class RoundTripTests(unittest.TestCase):
+    def test_retained_clean_native_roundtrip_passes(self):
+        evidence = EVIDENCE.with_name("resolve-markers-20260919")
+        report = validator.compare((evidence / "unique-markers.edl").read_text(),
+                                   (evidence / "resolve-roundtrip.edl").read_text(), RATE)
+        self.assertEqual(report["status"], "passed")
+        self.assertEqual((report["expectedCount"], report["actualCount"]), (7, 7))
+        self.assertEqual(report["missing"], [])
+        self.assertEqual(report["unexpected"], [])
+
     def test_retained_editor_loss_is_failure(self):
         report = validator.compare((EVIDENCE / "source-a_vs_source-b_review.edl").read_text(),
                                    (EVIDENCE / "resolve-roundtrip.edl").read_text(), RATE)

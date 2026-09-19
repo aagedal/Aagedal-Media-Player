@@ -1,0 +1,9 @@
+{
+  "status": "passed",
+  "scope": "Post-native-export media and original eight-finding sidecar preservation; historical note URLs are not current-source identity acceptance",
+  "sha256": {
+    "source-a vs source-b-ece0f10b559a00cc.aagedal-compare.json": "72977f94f92666e9eadac24915a86a0857dc807f4d9ad0a0bb90ca55f57b7722",
+    "source-a.mov": "708dc3a783be25812e74e9da55ed2eae7730cc0e507d94a956a9834cec738830",
+    "source-b.mov": "708dc3a783be25812e74e9da55ed2eae7730cc0e507d94a956a9834cec738830"
+  }
+}
