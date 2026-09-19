@@ -104,6 +104,27 @@ before exporting the target marker format.
 
 ## Import and round trip
 
+### Installed editors available for acceptance — 2026-09-19
+
+The user confirms that Final Cut Pro, Adobe Premiere Pro, and Avid Media
+Composer First are installed alongside Resolve. Record exact versions when
+running each check; installation alone does not establish format compatibility.
+
+- Final Cut Pro: continue the existing FCPXML import/re-export gate. Earlier
+  launch-automation timeouts do not mean the editor is unavailable.
+- Premiere Pro: investigate a supported marker interchange path and retain
+  native results before claiming support. The app currently has no dedicated
+  Premiere exporter; Resolve marker EDL extensions must not be assumed compatible.
+- Media Composer First: the user observed that EDL import was unlocked. Exercise
+  that available path in a disposable project and check whether it imports review
+  markers or only edit events. Separately check availability of the app's existing
+  Avid marker-text import workflow. Record First-specific limitations and do not
+  generalize its results to full Media Composer.
+
+These installed applications provide additional native acceptance routes. An
+enabled EDL import command does not yet prove marker text, ranges, or source
+identity survive import; inspect the resulting records and re-export where available.
+
 | Target | Export | Expected marker anchor |
 | --- | --- | --- |
 | DaVinci Resolve | Marker EDL | A's source timecode, or relative zero when unavailable; inclusive range duration, or one frame for a point finding |
@@ -246,6 +267,8 @@ marked passed. The native export result is independent of that outstanding gate.
 | Resolve Studio 21.1.0.14 | Generated 29.97 DF / `00:00:58;00` | 6/8 in-range after corrected import | Five surviving anchors exact; Fixture 2 moved from frame 1 to frame 0 | Unicode/URLs and range durations retained; Fixtures 1 and 5 absent | 13 events: 7 from the earlier wrong-start import plus 6 in-range | Partial; see September 15 evidence below |
 | Resolve Studio 21.1.0.14 | Fresh generated 29.97 DF / `00:00:58;00`; seven-finding diagnostic | 7/7 | All anchors exact, including first/adjacent and DF boundary frames | Exact text, colors and durations retained; duplicate finding deliberately omitted | 7/7 exact records, no missing or extra events | Focused pass; historical URLs and other rates remain outside this result; see September 19 evidence below |
 | Final Cut Pro | Pending | | | | | Not run |
+| Adobe Premiere Pro | Pending | | | | | Installed per user; interchange path not yet validated |
+| Media Composer First | Pending | | | | | Installed per user; EDL import observed unlocked; marker behavior not yet tested |
 | Media Composer | Pending | | | | | Not run |
 
 ### Resolve preparation — 2026-09-09 continuation
