@@ -237,9 +237,19 @@ nonisolated struct CompareReviewReportSnapshot: Equatable, Sendable {
             )
         }
 
-        let durationFrames = Int64(
-            (max(0, primaryItem.durationSeconds) * rate.value).rounded(.up)
-        )
+        let estimatedFrames = max(0, primaryItem.durationSeconds) * rate.value
+        // Container/playback durations can round past the final video frame
+        // (e.g. 609.985 seconds for 14,625 frames at 24000/1001). Prefer the
+        // metadata count only when it agrees within one frame; a substantially
+        // different count may describe VFR samples rather than this timebase.
+        let durationFrames: Int64
+        if primaryVideo?.frameRate != nil,
+           let count = primaryItem.metadata?.frameCount, count > 0,
+           abs(Double(count) - estimatedFrames) < 1 {
+            durationFrames = Int64(count)
+        } else {
+            durationFrames = Int64(estimatedFrames.rounded(.up))
+        }
         let finalMarkerFrame = rows.map { $0.primaryEndFrame ?? $0.primaryFrame }.max().map {
             $0 == Int64.max ? Int64.max : $0 + 1
         } ?? 0

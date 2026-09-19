@@ -14,6 +14,18 @@ EVIDENCE = Path(__file__).resolve().parents[1] / "docs/evidence/fcp-raster-marke
 
 
 class RoundTripTests(unittest.TestCase):
+    def test_native_player_duration_fix_leaves_only_whitespace_difference(self):
+        evidence = EVIDENCE.parent / "fcp-native-duration-23976-20260919"
+        result = fcp.compare(evidence / "original.fcpxml", evidence / "returned.fcpxml")
+        self.assertEqual({key for key, value in result["checks"].items() if not value},
+                         {"exactMarkerContent"})
+        self.assertTrue(result["contentMatchesAfterAttributeWhitespaceNormalization"])
+        self.assertEqual(len(result["returned"]["markers"]), 7)
+        self.assertEqual(fcp.Fraction(result["original"]["durations"][0]) /
+                         fcp.Fraction(result["original"]["frameDuration"]), 14625)
+        before = fcp.compare(evidence / "before-fix.fcpxml", evidence / "original.fcpxml")
+        self.assertEqual({key for key, value in before["checks"].items() if not value}, {"durations"})
+
     def test_native_raster_and_findings_pass_but_exact_acceptance_does_not(self):
         result = fcp.compare(EVIDENCE / "original.fcpxml", EVIDENCE / "returned.fcpxml")
         self.assertEqual(result["status"], "differences")

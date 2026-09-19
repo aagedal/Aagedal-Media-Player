@@ -2662,6 +2662,28 @@ on 2026-09-19; full Final Cut acceptance remains open.
 Evidence: `docs/evidence/fcp-raster-markers-23976-20260919/README.md`.
 The raster result does not close duration, native player or wider editor gates.
 
+## Phase 113 — Native Final Cut duration integrity
+
+Status: Implemented and focused native round trip verified on 2026-09-19.
+
+- [x] Repeat the eight-finding export through the native player UI with actual
+  media metadata; reproduce 14,626 exported frames for the 14,625-frame source.
+- [x] Prefer a positive metadata frame count that agrees within one frame of
+  the playback-duration estimate, with a known video rate. Preserve the existing
+  fallback for unavailable/invalid/disagreeing counts and the finding extent.
+- [x] Rebuild and export through the player UI, then import into a new Final Cut
+  Pro 12.3 library and retain the unmodified native re-export. Both durations now
+  equal 14,625 frames; raster, rate, start, seven anchors and eight findings match.
+- [x] Verify unchanged media/sidecar hashes and retain pre-fix/fixed/returned XML,
+  source/build provenance, 35 passing exporter tests and nine Python regressions.
+- [ ] Close exact note whitespace, other rates, portrait/anamorphic/rotated
+  sources and the broader editor matrix. This single-source result does not
+  establish VFR, keyboard-only or spoken accessibility acceptance.
+
+Evidence: `docs/evidence/fcp-native-duration-23976-20260919/README.md`.
+Final Cut's literal attribute whitespace remains the only comparator difference
+for this case; its nonzero result is retained rather than waived.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -2944,3 +2966,5 @@ The raster result does not close duration, native player or wider editor gates.
 
 103. Phase 111 explicit Final Cut source raster.
 104. Phase 112 native Final Cut raster and repeatable comparison.
+
+105. Phase 113 native Final Cut duration integrity.

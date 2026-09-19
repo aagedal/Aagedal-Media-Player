@@ -635,6 +635,33 @@ final class CompareReviewReportExporterTests: XCTestCase {
         XCTAssertEqual(markers.map { $0.attribute(forName: "duration")?.stringValue }, ["1/30s", "1/30s", "1/30s"])
     }
 
+    func testFinalCutProDurationUsesConsistentMetadataFrameCount() throws {
+        for (duration, count, expected): (Double, Int?, Int64) in [
+            (609.985, 14_625, 14_625),
+            (609.984, 14_625, 14_625),
+            (609.985, nil, 14_626),
+            (609.985, 0, 14_626),
+            (609.985, -1, 14_626),
+            (609.985, 100, 14_626),
+            (609.985, 20_000, 14_626),
+        ] {
+            let snapshot = CompareReviewReportSnapshot(
+                primaryItem: makeItem(path: "/tmp/A.mov", duration: duration,
+                                      frameRate: "24000/1001", frameCount: count),
+                secondaryItem: makeItem(path: "/tmp/B.mov", duration: duration),
+                alignmentMode: .relative, notes: []
+            )
+            XCTAssertEqual(snapshot.primaryDurationFrames, expected)
+            let document = try XMLDocument(xmlString: CompareReviewReportExporter.finalCutProXML(snapshot: snapshot))
+            for node in try document.nodes(forXPath: "//asset | //asset-clip") {
+                let element = try XCTUnwrap(node as? XMLElement)
+                if expected == 14_625 {
+                    XCTAssertEqual(element.attribute(forName: "duration")?.stringValue, "39039/64s")
+                }
+            }
+        }
+    }
+
     func testFinalCutProXMLPreservesCodedRasterAndPixelAspect() throws {
         for (width, height, aspect) in [
             (160, 90, MediaMetadata.Ratio(numerator: 1, denominator: 1)),
@@ -1045,7 +1072,8 @@ final class CompareReviewReportExporterTests: XCTestCase {
         frameRate: String? = nil,
         width: Int? = 1_920,
         height: Int? = 1_080,
-        pixelAspectRatio: MediaMetadata.Ratio? = nil
+        pixelAspectRatio: MediaMetadata.Ratio? = nil,
+        frameCount: Int? = nil
     ) -> MediaItem {
         let videoStreams = frameRate.map { value in
             [MediaMetadata.VideoStream(
@@ -1086,7 +1114,7 @@ final class CompareReviewReportExporterTests: XCTestCase {
             timecode: startTimecode,
             comment: nil,
             encoder: nil,
-            frameCount: nil,
+            frameCount: frameCount,
             videoStreams: videoStreams,
             audioStreams: [],
             subtitleStreams: [],

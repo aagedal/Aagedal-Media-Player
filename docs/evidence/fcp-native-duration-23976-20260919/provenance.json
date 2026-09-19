@@ -1,0 +1,23 @@
+{
+  "editor": "Final Cut Pro 12.3",
+  "macOS": "27.0",
+  "sourceBaseCommit": "ba613898485b2232569c63d0d83423e8c08b251a",
+  "sourceState": "Base commit plus Phase 113 exporter/test changes; native UI exports before and after rebuilding",
+  "exporterSHA256": "688c721769a1358b3de5d0f393e25437f9f44c17ebd5111ff54090b30d28200b",
+  "playerExecutableSHA256": "5396b293f05c82aec6c5dc965926811356e85fbdab58dcb5f2c1fd61ba9b9ad1",
+  "packageResolvedSHA256": "6aea6d64326f3040345c3523a0a39c95d53335777e233b3aa311e8ba90ad475d",
+  "testResult": "/private/tmp/aagedal-phase113-tests-retry.xcresult",
+  "focusedTestsPassed": 35,
+  "library": "/private/tmp/aagedal-resolve-23976-20260919/Aagedal FCP Native Duration Acceptance 20260919.fcpbundle",
+  "inputHashesMatchRetainedManifest": true,
+  "inputSHA256": {
+    "resolve-unique.aagedal-compare.json": "d7c5165852cae6c13d99a2b576cb406761cfce4cf5edc2487408f2687c6e09f4",
+    "source-a vs source-b-1f0efdaae76ac31b.aagedal-compare.json": "50ec44de83e4fcc8c2d6ffd05fd43117d07f1b40336389e93b60caf3903b8afa",
+    "source-a.mov": "3d0f9cd5b562a0100e2e746837c1a08cd25ce69aa26203e196ed6376ac7dfca8",
+    "source-b.mov": "3d0f9cd5b562a0100e2e746837c1a08cd25ce69aa26203e196ed6376ac7dfca8"
+  },
+  "beforeFixDurationFrames": 14626,
+  "fixedDurationFrames": 14625,
+  "returnedDurationFrames": 14625,
+  "scope": "Native player export and Final Cut import/re-export of one generated 23.976 NDF landscape source; exact note whitespace remains different"
+}

@@ -466,3 +466,16 @@ The 14,626 → 14,625 duration difference reflects the XCTest snapshot's 610-sec
 duration versus the generated media's 14,625 frames; production metadata and
 native player export still need verification. Portrait/anamorphic/rotated and
 other-rate acceptance remain open. See the [retained native evidence](evidence/fcp-raster-markers-23976-20260919/README.md).
+
+### Native player duration correction — Phase 113
+
+A native player UI export reproduced the extra duration frame with actual media
+metadata. The exporter now uses a positive metadata frame count when a video
+rate exists and the count agrees within one frame of the duration estimate.
+After rebuilding, the player UI and Final Cut Pro 12.3 native re-export both
+retain 14,625 frames, 160 × 90, exact 24000/1001 timing, seven marker anchors and
+all eight findings. Original media and sidecars remain unchanged. Exact parsed
+note whitespace remains different and the comparator still returns nonzero.
+This closes the focused duration/native-player gap for this source, not the
+remaining rate, transformed-media or full editor gates. See the
+[retained evidence](evidence/fcp-native-duration-23976-20260919/README.md).

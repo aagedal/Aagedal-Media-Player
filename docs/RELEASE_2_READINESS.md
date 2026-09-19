@@ -52,6 +52,12 @@ beta, but producer-authentic live-meter evidence, native workflow/accessibility
 acceptance and a signed/notarized distributable build remain before calling it a
 beta release. The project still declares version 1.6.1.
 
+The September 19 Phase 113 native player/Final Cut continuation fixes a
+one-frame duration overstatement and verifies a fresh native import/re-export:
+14,625 frames, 160 × 90, exact 23.976 timing and all eight findings survive.
+Final Cut's parsed note whitespace still differs. This focused result leaves
+the broader editor matrix open; see [native duration evidence](evidence/fcp-native-duration-23976-20260919/README.md).
+
 ## Must close before a defensible 2.0 candidate
 
 | Gap | Acceptance evidence required |
