@@ -479,3 +479,13 @@ note whitespace remains different and the comparator still returns nonzero.
 This closes the focused duration/native-player gap for this source, not the
 remaining rate, transformed-media or full editor gates. See the
 [retained evidence](evidence/fcp-native-duration-23976-20260919/README.md).
+
+### Native Final Cut 59.94 DF — Phase 114
+
+Native player export and Final Cut Pro 12.3 import/re-export preserve source
+start 00:00:58;00, 60000/1001 rate, DF display, 160 × 90 raster and 36,563-frame
+duration. All eight findings survive at seven anchors, including the grouped
+pair, drop-frame boundaries and last source frame. Media bytes and original
+review hashes match. Exact whitespace remains the only comparator failure;
+all ten Python regressions pass. See [retained evidence](evidence/fcp-native-markers-5994-20260919/README.md).
+Other rates, portrait/anamorphic/rotated media and broader editor acceptance stay open.

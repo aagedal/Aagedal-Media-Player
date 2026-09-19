@@ -1,0 +1,144 @@
+{
+  "status": "differences",
+  "scope": "Single browser clip XML comparison; not complete editor acceptance",
+  "mediaIdentityVerified": true,
+  "checks": {
+    "raster": true,
+    "pixelAspect": true,
+    "frameDuration": true,
+    "start": true,
+    "assetStart": true,
+    "durations": true,
+    "timecodeFormat": true,
+    "markerTimingAndTitles": true,
+    "exactMarkerContent": false,
+    "sourceMediaBytes": true
+  },
+  "contentMatchesAfterAttributeWhitespaceNormalization": true,
+  "original": {
+    "sha256": "41860d9d706682c0dae2e9290e0fd4f743130433cbc73cbdf7ec229fbe40a712",
+    "version": "1.9",
+    "raster": [
+      160,
+      90
+    ],
+    "pixelAspect": "1",
+    "frameDuration": "1001/60000",
+    "start": "29029/500",
+    "assetStart": "29029/500",
+    "durations": [
+      "36599563/60000",
+      "36599563/60000"
+    ],
+    "timecodeFormat": "DF",
+    "sourceURL": "file:///private/tmp/aagedal-resolve-5994-20260919/source-a.mov",
+    "markers": [
+      [
+        0,
+        1,
+        "QC 001",
+        "Fixture 1: æøå 日本語 & <picture> \"quoted\"\tcolumn\nSecond line | Source B: source-b.mov, SRC TC 00:00:58;00, frame 0 | Alignment: Source timecode | Severity: Info | Category: General | Status: Open | A frames 0–0 (inclusive) | A rate: 60000/1001 | B rate: 60000/1001 | Source A URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-a.mov | Source B URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-b.mov"
+      ],
+      [
+        1,
+        1,
+        "QC 002",
+        "Fixture 2: æøå 日本語 & <picture> \"quoted\"\tcolumn\nSecond line | Source B: source-b.mov, SRC TC 00:00:58;01, frame 1 | Alignment: Source timecode | Severity: Minor | Category: Picture | Status: In Progress | A rate: 60000/1001 | B rate: 60000/1001 | Source A URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-a.mov | Source B URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-b.mov"
+      ],
+      [
+        119,
+        1,
+        "QC 003",
+        "Fixture 3: æøå 日本語 & <picture> \"quoted\"\tcolumn\nSecond line | Source B: source-b.mov, SRC TC 00:00:59;59, frame 119 | Alignment: Source timecode | Severity: Major | Category: Audio | Status: Resolved | A frames 119–121 (inclusive) | A rate: 60000/1001 | B rate: 60000/1001 | Source A URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-a.mov | Source B URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-b.mov"
+      ],
+      [
+        120,
+        1,
+        "QC 004 + QC 005 (2 findings)",
+        "[QC 004] Fixture 4: æøå 日本語 & <picture> \"quoted\"\tcolumn\nSecond line | Source B: source-b.mov, SRC TC 00:01:00;04, frame 120 | Alignment: Source timecode | Severity: Critical | Category: Sync | Status: Open | A rate: 60000/1001 | B rate: 60000/1001 | Source A URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-a.mov | Source B URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-b.mov\n\n[QC 005] Fixture 5: æøå 日本語 & <picture> \"quoted\"\tcolumn\nSecond line | Source B: source-b.mov, SRC TC 00:01:00;04, frame 120 | Alignment: Source timecode | Severity: Info | Category: Metadata | Status: In Progress | A rate: 60000/1001 | B rate: 60000/1001 | Source A URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-a.mov | Source B URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-b.mov"
+      ],
+      [
+        32483,
+        1,
+        "QC 006",
+        "Fixture 6: æøå 日本語 & <picture> \"quoted\"\tcolumn\nSecond line | Source B: source-b.mov, SRC TC 00:09:59;59, frame 32483 | Alignment: Source timecode | Severity: Minor | Category: General | Status: Resolved | A frames 32483–32485 (inclusive) | A rate: 60000/1001 | B rate: 60000/1001 | Source A URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-a.mov | Source B URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-b.mov"
+      ],
+      [
+        32484,
+        1,
+        "QC 007",
+        "Fixture 7: æøå 日本語 & <picture> \"quoted\"\tcolumn\nSecond line | Source B: source-b.mov, SRC TC 00:10:00;00, frame 32484 | Alignment: Source timecode | Severity: Major | Category: Picture | Status: Open | A rate: 60000/1001 | B rate: 60000/1001 | Source A URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-a.mov | Source B URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-b.mov"
+      ],
+      [
+        36562,
+        1,
+        "QC 008",
+        "Fixture 8: æøå 日本語 & <picture> \"quoted\"\tcolumn\nSecond line | Source B: source-b.mov, SRC TC 00:11:08;02, frame 36562 | Alignment: Source timecode | Severity: Critical | Category: Audio | Status: In Progress | A rate: 60000/1001 | B rate: 60000/1001 | Source A URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-a.mov | Source B URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-b.mov"
+      ]
+    ],
+    "mediaSHA256": "d423f9ed8615ba3a03096cbbc52ac5ffeb1aa2f9608aff3f651ff22d68e29829"
+  },
+  "returned": {
+    "sha256": "62744247aaf861b7e634d9195a1403ada60582f7b4de1c1bed44492f82d524d8",
+    "version": "1.14",
+    "raster": [
+      160,
+      90
+    ],
+    "pixelAspect": "1",
+    "frameDuration": "1001/60000",
+    "start": "29029/500",
+    "assetStart": "29029/500",
+    "durations": [
+      "36599563/60000",
+      "36599563/60000"
+    ],
+    "timecodeFormat": "DF",
+    "sourceURL": "file:///tmp/aagedal-resolve-5994-20260919/Aagedal%20FCP%205994%20DF%20Acceptance%2020260919.fcpbundle/Aagedal%20Compare%20Review/Original%20Media/source-a.mov",
+    "markers": [
+      [
+        0,
+        1,
+        "QC 001",
+        "Fixture 1: æøå 日本語 & <picture> \"quoted\" column Second line | Source B: source-b.mov, SRC TC 00:00:58;00, frame 0 | Alignment: Source timecode | Severity: Info | Category: General | Status: Open | A frames 0–0 (inclusive) | A rate: 60000/1001 | B rate: 60000/1001 | Source A URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-a.mov | Source B URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-b.mov"
+      ],
+      [
+        1,
+        1,
+        "QC 002",
+        "Fixture 2: æøå 日本語 & <picture> \"quoted\" column Second line | Source B: source-b.mov, SRC TC 00:00:58;01, frame 1 | Alignment: Source timecode | Severity: Minor | Category: Picture | Status: In Progress | A rate: 60000/1001 | B rate: 60000/1001 | Source A URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-a.mov | Source B URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-b.mov"
+      ],
+      [
+        119,
+        1,
+        "QC 003",
+        "Fixture 3: æøå 日本語 & <picture> \"quoted\" column Second line | Source B: source-b.mov, SRC TC 00:00:59;59, frame 119 | Alignment: Source timecode | Severity: Major | Category: Audio | Status: Resolved | A frames 119–121 (inclusive) | A rate: 60000/1001 | B rate: 60000/1001 | Source A URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-a.mov | Source B URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-b.mov"
+      ],
+      [
+        120,
+        1,
+        "QC 004 + QC 005 (2 findings)",
+        "[QC 004] Fixture 4: æøå 日本語 & <picture> \"quoted\" column Second line | Source B: source-b.mov, SRC TC 00:01:00;04, frame 120 | Alignment: Source timecode | Severity: Critical | Category: Sync | Status: Open | A rate: 60000/1001 | B rate: 60000/1001 | Source A URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-a.mov | Source B URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-b.mov  [QC 005] Fixture 5: æøå 日本語 & <picture> \"quoted\" column Second line | Source B: source-b.mov, SRC TC 00:01:00;04, frame 120 | Alignment: Source timecode | Severity: Info | Category: Metadata | Status: In Progress | A rate: 60000/1001 | B rate: 60000/1001 | Source A URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-a.mov | Source B URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-b.mov"
+      ],
+      [
+        32483,
+        1,
+        "QC 006",
+        "Fixture 6: æøå 日本語 & <picture> \"quoted\" column Second line | Source B: source-b.mov, SRC TC 00:09:59;59, frame 32483 | Alignment: Source timecode | Severity: Minor | Category: General | Status: Resolved | A frames 32483–32485 (inclusive) | A rate: 60000/1001 | B rate: 60000/1001 | Source A URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-a.mov | Source B URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-b.mov"
+      ],
+      [
+        32484,
+        1,
+        "QC 007",
+        "Fixture 7: æøå 日本語 & <picture> \"quoted\" column Second line | Source B: source-b.mov, SRC TC 00:10:00;00, frame 32484 | Alignment: Source timecode | Severity: Major | Category: Picture | Status: Open | A rate: 60000/1001 | B rate: 60000/1001 | Source A URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-a.mov | Source B URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-b.mov"
+      ],
+      [
+        36562,
+        1,
+        "QC 008",
+        "Fixture 8: æøå 日本語 & <picture> \"quoted\" column Second line | Source B: source-b.mov, SRC TC 00:11:08;02, frame 36562 | Alignment: Source timecode | Severity: Critical | Category: Audio | Status: In Progress | A rate: 60000/1001 | B rate: 60000/1001 | Source A URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-a.mov | Source B URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-b.mov"
+      ]
+    ],
+    "mediaSHA256": "d423f9ed8615ba3a03096cbbc52ac5ffeb1aa2f9608aff3f651ff22d68e29829"
+  }
+}

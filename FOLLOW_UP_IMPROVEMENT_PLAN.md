@@ -2684,6 +2684,26 @@ Evidence: `docs/evidence/fcp-native-duration-23976-20260919/README.md`.
 Final Cut's literal attribute whitespace remains the only comparator difference
 for this case; its nonzero result is retained rather than waived.
 
+## Phase 114 — Native Final Cut 59.94 drop-frame acceptance
+
+Status: Focused native timing, geometry and finding preservation verified on 2026-09-19.
+
+- [x] Export the original eight-note 59.94 DF review through the native player UI,
+  import into a fresh Final Cut Pro 12.3 library, and retain its native re-export.
+- [x] Verify 60000/1001 rate, 160 × 90 raster, square pixels, DF display, source
+  start at 00:00:58;00, and exact 36,563-frame asset/browser duration.
+- [x] Preserve seven anchors and all eight findings, including same-frame grouping,
+  dropped-label/ten-minute boundaries and the final source frame.
+- [x] Verify imported media bytes and unchanged original media/sidecar hashes;
+  add retained-evidence regression checks against the original review texts.
+  All ten Python comparator regressions pass.
+- [ ] Close exact note whitespace, remaining rates, portrait/anamorphic/rotated
+  sources and the broader editor/accessibility matrix.
+
+Evidence: `docs/evidence/fcp-native-markers-5994-20260919/README.md`.
+Only exact whitespace differs; the comparator still exits 1. This phase uses
+the existing Phase 113 build and makes no new app implementation changes.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -2968,3 +2988,5 @@ for this case; its nonzero result is retained rather than waived.
 104. Phase 112 native Final Cut raster and repeatable comparison.
 
 105. Phase 113 native Final Cut duration integrity.
+
+106. Phase 114 native Final Cut 59.94 drop-frame acceptance.

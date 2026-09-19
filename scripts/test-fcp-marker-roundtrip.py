@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Retained native evidence and failure regressions for FCPXML comparison."""
 import importlib.util
+import json
 from pathlib import Path
 import tempfile
 import unittest
@@ -14,6 +15,34 @@ EVIDENCE = Path(__file__).resolve().parents[1] / "docs/evidence/fcp-raster-marke
 
 
 class RoundTripTests(unittest.TestCase):
+    def test_native_5994_drop_frame_preserves_source_start_and_all_findings(self):
+        evidence = EVIDENCE.parent / "fcp-native-markers-5994-20260919"
+        result = fcp.compare(evidence / "original.fcpxml", evidence / "returned.fcpxml")
+        self.assertEqual(result["status"], "differences")
+        self.assertEqual({key for key, value in result["checks"].items() if not value},
+                         {"exactMarkerContent"})
+        self.assertTrue(result["contentMatchesAfterAttributeWhitespaceNormalization"])
+        self.assertFalse(result["mediaIdentityVerified"])
+        returned = result["returned"]
+        rate = fcp.Fraction(1001, 60000)
+        self.assertEqual(fcp.Fraction(returned["frameDuration"]), rate)
+        self.assertEqual(fcp.Fraction(returned["start"]) / rate, 3480)
+        self.assertEqual(returned["timecodeFormat"], "DF")
+        self.assertEqual([fcp.Fraction(d) / rate for d in returned["durations"]],
+                         [36563, 36563])
+        review = json.loads((evidence / "original-review.json").read_text())
+        self.assertEqual([m[0] for m in returned["markers"]],
+                         sorted({n["primaryFrame"] for n in review["notes"]}))
+        self.assertEqual(len(review["notes"]), 8)
+        self.assertTrue(all(m[1] == 1 for m in returned["markers"]))
+        # Check against the active review as well as the export: a finding lost
+        # before import must not be accepted merely because both XMLs omit it.
+        for note in review["notes"]:
+            marker = next(m for m in returned["markers"] if m[0] == note["primaryFrame"])
+            self.assertIn(note["text"].translate(str.maketrans("\t\r\n", "   ")), marker[3])
+        grouped = next(m for m in returned["markers"] if m[0] == 120)
+        self.assertEqual(grouped[2], "QC 004 + QC 005 (2 findings)")
+
     def test_native_player_duration_fix_leaves_only_whitespace_difference(self):
         evidence = EVIDENCE.parent / "fcp-native-duration-23976-20260919"
         result = fcp.compare(evidence / "original.fcpxml", evidence / "returned.fcpxml")

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE fcpxml>
+
+<fcpxml version="1.14">
+    <resources>
+        <asset id="r1" name="source-a.mov" uid="0F019BE9E1E9D588D80B4E62E390B9E6" start="3483480/60000s" duration="36599563/60000s" hasVideo="1" format="r2" videoSources="1">
+            <media-rep kind="original-media" sig="0F019BE9E1E9D588D80B4E62E390B9E6" src="file:///tmp/aagedal-resolve-5994-20260919/Aagedal%20FCP%205994%20DF%20Acceptance%2020260919.fcpbundle/Aagedal%20Compare%20Review/Original%20Media/source-a.mov"/>
+            <metadata>
+                <md key="com.apple.proapps.studio.rawToLogConversion" value="0"/>
+                <md key="com.apple.proapps.studio.cameraISO" value="0"/>
+                <md key="com.apple.proapps.studio.cameraColorTemperature" value="0"/>
+                <md key="com.apple.proapps.spotlight.kMDItemCodecs">
+                    <array>
+                        <string>Lavc63.1.101 libx264</string>
+                    </array>
+                </md>
+                <md key="com.apple.proapps.mio.ingestDate" value="2026-09-19 22:36:49 +0200"/>
+            </metadata>
+        </asset>
+        <format id="r2" frameDuration="1001/60000s" width="160" height="90" colorSpace="6-1-6 (Rec. 601 (NTSC))"/>
+        <format id="r3" frameDuration="1001/60000s" width="160" height="90"/>
+    </resources>
+    <library location="file:///private/tmp/aagedal-resolve-5994-20260919/Aagedal%20FCP%205994%20DF%20Acceptance%2020260919.fcpbundle/">
+        <event name="Aagedal Compare Review" uid="E6C9AC12-B0F1-4CB9-A292-9D8FC451BF84">
+            <asset-clip ref="r1" name="source-a.mov vs source-b.mov Review" start="3483480/60000s" duration="36599563/60000s" format="r3" tcFormat="DF" modDate="2026-09-19 22:36:49 +0200">
+                <adjust-colorConform enabled="1" autoOrManual="manual" conformType="conformNone" peakNitsOfPQSource="1000" peakNitsOfSDRToPQSource="203"/>
+                <marker start="29029/500s" duration="1001/60000s" value="QC 001" note="Fixture 1: æøå 日本語 &amp; &lt;picture&gt; &quot;quoted&quot;	column
+Second line | Source B: source-b.mov, SRC TC 00:00:58;00, frame 0 | Alignment: Source timecode | Severity: Info | Category: General | Status: Open | A frames 0–0 (inclusive) | A rate: 60000/1001 | B rate: 60000/1001 | Source A URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-a.mov | Source B URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-b.mov"/>
+                <marker start="3484481/60000s" duration="1001/60000s" value="QC 002" note="Fixture 2: æøå 日本語 &amp; &lt;picture&gt; &quot;quoted&quot;	column
+Second line | Source B: source-b.mov, SRC TC 00:00:58;01, frame 1 | Alignment: Source timecode | Severity: Minor | Category: Picture | Status: In Progress | A rate: 60000/1001 | B rate: 60000/1001 | Source A URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-a.mov | Source B URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-b.mov"/>
+                <marker start="3602599/60000s" duration="1001/60000s" value="QC 003" note="Fixture 3: æøå 日本語 &amp; &lt;picture&gt; &quot;quoted&quot;	column
+Second line | Source B: source-b.mov, SRC TC 00:00:59;59, frame 119 | Alignment: Source timecode | Severity: Major | Category: Audio | Status: Resolved | A frames 119–121 (inclusive) | A rate: 60000/1001 | B rate: 60000/1001 | Source A URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-a.mov | Source B URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-b.mov"/>
+                <marker start="3003/50s" duration="1001/60000s" value="QC 004 + QC 005 (2 findings)" note="[QC 004] Fixture 4: æøå 日本語 &amp; &lt;picture&gt; &quot;quoted&quot;	column
+Second line | Source B: source-b.mov, SRC TC 00:01:00;04, frame 120 | Alignment: Source timecode | Severity: Critical | Category: Sync | Status: Open | A rate: 60000/1001 | B rate: 60000/1001 | Source A URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-a.mov | Source B URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-b.mov
+
+[QC 005] Fixture 5: æøå 日本語 &amp; &lt;picture&gt; &quot;quoted&quot;	column
+Second line | Source B: source-b.mov, SRC TC 00:01:00;04, frame 120 | Alignment: Source timecode | Severity: Info | Category: Metadata | Status: In Progress | A rate: 60000/1001 | B rate: 60000/1001 | Source A URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-a.mov | Source B URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-b.mov"/>
+                <marker start="35998963/60000s" duration="1001/60000s" value="QC 006" note="Fixture 6: æøå 日本語 &amp; &lt;picture&gt; &quot;quoted&quot;	column
+Second line | Source B: source-b.mov, SRC TC 00:09:59;59, frame 32483 | Alignment: Source timecode | Severity: Minor | Category: General | Status: Resolved | A frames 32483–32485 (inclusive) | A rate: 60000/1001 | B rate: 60000/1001 | Source A URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-a.mov | Source B URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-b.mov"/>
+                <marker start="2999997/5000s" duration="1001/60000s" value="QC 007" note="Fixture 7: æøå 日本語 &amp; &lt;picture&gt; &quot;quoted&quot;	column
+Second line | Source B: source-b.mov, SRC TC 00:10:00;00, frame 32484 | Alignment: Source timecode | Severity: Major | Category: Picture | Status: Open | A rate: 60000/1001 | B rate: 60000/1001 | Source A URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-a.mov | Source B URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-b.mov"/>
+                <marker start="20041021/30000s" duration="1001/60000s" value="QC 008" note="Fixture 8: æøå 日本語 &amp; &lt;picture&gt; &quot;quoted&quot;	column
+Second line | Source B: source-b.mov, SRC TC 00:11:08;02, frame 36562 | Alignment: Source timecode | Severity: Critical | Category: Audio | Status: In Progress | A rate: 60000/1001 | B rate: 60000/1001 | Source A URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-a.mov | Source B URL: file:///private/tmp/aagedal-resolve-5994-20260919/source-b.mov"/>
+            </asset-clip>
+        </event>
+    </library>
+</fcpxml>

@@ -240,6 +240,13 @@ This does not close the native raster gate: repeat player UI export and Final
 Cut import/re-export, including portrait/anamorphic/rotated sources. Duration
 rounding and whitespace/rate acceptance remain open.
 
+Phase 114 extends native Final Cut evidence to 59.94 DF with a nonzero source
+start: exact 36,563-frame duration, raster, rate, DF display and all eight
+findings at seven anchors survive. Imported source bytes and original fixture
+hashes match. Exact note whitespace remains the only comparator failure; ten
+Python regressions pass. This does not close the remaining rate/raster/editor
+or accessibility gates. See [the retained 59.94 DF evidence](evidence/fcp-native-markers-5994-20260919/README.md).
+
 ## Remaining scope that needs an explicit product decision
 
 These are unfinished roadmap commitments, not silently deferred features:

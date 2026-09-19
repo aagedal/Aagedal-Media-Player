@@ -1,0 +1,20 @@
+{
+  "sourceCommit": "207350d63a9dac4530b472c8555a6dc851880298",
+  "configuration": "Existing Phase 113 Debug build, relaunched for native export",
+  "exporterSHA256": "688c721769a1358b3de5d0f393e25437f9f44c17ebd5111ff54090b30d28200b",
+  "binaries": {
+    "Aagedal Media Player": "5396b293f05c82aec6c5dc965926811356e85fbdab58dcb5f2c1fd61ba9b9ad1",
+    "Aagedal Media Player.debug.dylib": "06843a210a7d586672a31b66b777660832ad5ee749df277be87d1cff53e1de32",
+    "__preview.dylib": "5ba39a60d06e0a066decf28bbd87ee67c4b5287cac0ab2ab8a8d7a363f641c14"
+  },
+  "editor": "Final Cut Pro 12.3",
+  "inputSHA256": {
+    "resolve-unique.aagedal-compare.json": "e61bc92cf67cd04b17b2216725ef279c96908b060a57d1dd879d5534e07ded7a",
+    "source-a vs source-b-8571712df122a08d.aagedal-compare.json": "c67528345c2075e41a3a02b5d338277035330dc12e4d846bc66d088bb9b41c6f",
+    "source-a.mov": "d423f9ed8615ba3a03096cbbc52ac5ffeb1aa2f9608aff3f651ff22d68e29829",
+    "source-b.mov": "d423f9ed8615ba3a03096cbbc52ac5ffeb1aa2f9608aff3f651ff22d68e29829"
+  },
+  "inputHashesMatchRetainedManifest": true,
+  "activeReview": "source-a vs source-b-8571712df122a08d.aagedal-compare.json",
+  "scope": "Native player export of all eight findings; fresh Final Cut library import and native 1.14 re-export; exact whitespace remains different"
+}
