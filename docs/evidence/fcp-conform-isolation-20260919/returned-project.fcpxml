@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE fcpxml>
+
+<fcpxml version="1.14">
+    <resources>
+        <format id="r1" frameDuration="1/24s" width="1080" height="1920" colorSpace="1-1-1 (Rec. 709)"/>
+        <asset id="r2" name="rotate-90-par.mp4" uid="C32D5D409F8C79305BAA23E9E8489390" start="0s" duration="2s" hasVideo="1" format="r3" videoSources="1">
+            <media-rep kind="original-media" sig="C32D5D409F8C79305BAA23E9E8489390" src="file:///tmp/aagedal-resolve-5994-20260919/Aagedal%20FCP%205994%20DF%20Acceptance%2020260919.fcpbundle/Aagedal%20Compare%20Review/Original%20Media/rotate-90-par.mp4"/>
+            <metadata>
+                <md key="com.apple.proapps.studio.rawToLogConversion" value="0"/>
+                <md key="com.apple.proapps.studio.cameraISO" value="0"/>
+                <md key="com.apple.proapps.studio.cameraColorTemperature" value="0"/>
+                <md key="com.apple.proapps.spotlight.kMDItemCodecs">
+                    <array>
+                        <string>Lavc63.1.101 libx264</string>
+                    </array>
+                </md>
+                <md key="com.apple.proapps.mio.ingestDate" value="2026-09-19 22:45:08 +0200"/>
+            </metadata>
+        </asset>
+        <format id="r3" frameDuration="512/12288s" width="180" height="240" paspH="4" paspV="3" colorSpace="6-1-6 (Rec. 601 (NTSC))"/>
+        <format id="r4" frameDuration="1/24s" width="180" height="240" paspH="3" paspV="4"/>
+        <asset id="r5" name="unrotated-anamorphic" uid="16E8BFA26B82E45638DB2E7730C75107" start="0s" duration="2s" hasVideo="1" format="r6" videoSources="1">
+            <media-rep kind="original-media" sig="16E8BFA26B82E45638DB2E7730C75107" src="file:///tmp/aagedal-resolve-5994-20260919/Aagedal%20FCP%205994%20DF%20Acceptance%2020260919.fcpbundle/Aagedal%20Conform%20Isolation%20119/Original%20Media/par.mp4"/>
+            <metadata>
+                <md key="com.apple.proapps.studio.rawToLogConversion" value="0"/>
+                <md key="com.apple.proapps.studio.cameraISO" value="0"/>
+                <md key="com.apple.proapps.studio.cameraColorTemperature" value="0"/>
+                <md key="com.apple.proapps.spotlight.kMDItemCodecs">
+                    <array>
+                        <string>Lavc63.1.101 libx264</string>
+                    </array>
+                </md>
+                <md key="com.apple.proapps.mio.ingestDate" value="2026-09-19 23:17:55 +0200"/>
+            </metadata>
+        </asset>
+        <format id="r6" frameDuration="512/12288s" width="240" height="180" paspH="4" paspV="3" colorSpace="6-1-6 (Rec. 601 (NTSC))"/>
+        <format id="r7" frameDuration="1/24s" width="240" height="180" paspH="4" paspV="3"/>
+        <asset id="r8" name="rotated-square" uid="AB693DCFD41C5D5111D8DB6C8A254A12" start="0s" duration="2s" hasVideo="1" format="r9" videoSources="1">
+            <media-rep kind="original-media" sig="AB693DCFD41C5D5111D8DB6C8A254A12" src="file:///tmp/aagedal-resolve-5994-20260919/Aagedal%20FCP%205994%20DF%20Acceptance%2020260919.fcpbundle/Aagedal%20Conform%20Isolation%20119/Original%20Media/rotated-square.mp4"/>
+            <metadata>
+                <md key="com.apple.proapps.studio.rawToLogConversion" value="0"/>
+                <md key="com.apple.proapps.studio.cameraISO" value="0"/>
+                <md key="com.apple.proapps.studio.cameraColorTemperature" value="0"/>
+                <md key="com.apple.proapps.spotlight.kMDItemCodecs">
+                    <array>
+                        <string>Lavc63.1.101 libx264</string>
+                    </array>
+                </md>
+                <md key="com.apple.proapps.mio.ingestDate" value="2026-09-19 23:17:55 +0200"/>
+            </metadata>
+        </asset>
+        <format id="r9" frameDuration="512/12288s" width="180" height="240" colorSpace="6-1-6 (Rec. 601 (NTSC))"/>
+        <format id="r10" frameDuration="1/24s" width="180" height="240"/>
+        <asset id="r11" name="baked-square" uid="0B1901F1F68D1EABF73883FC79BEF94C" start="0s" duration="2s" hasVideo="1" format="r12" videoSources="1">
+            <media-rep kind="original-media" sig="0B1901F1F68D1EABF73883FC79BEF94C" src="file:///tmp/aagedal-resolve-5994-20260919/Aagedal%20FCP%205994%20DF%20Acceptance%2020260919.fcpbundle/Aagedal%20Conform%20Isolation%20119/Original%20Media/baked-square.mov"/>
+            <metadata>
+                <md key="com.apple.proapps.studio.rawToLogConversion" value="0"/>
+                <md key="com.apple.proapps.studio.cameraISO" value="0"/>
+                <md key="com.apple.proapps.studio.cameraColorTemperature" value="0"/>
+                <md key="com.apple.proapps.spotlight.kMDItemCodecs">
+                    <array>
+                        <string>Apple ProRes 422</string>
+                    </array>
+                </md>
+                <md key="com.apple.proapps.mio.ingestDate" value="2026-09-19 23:17:55 +0200"/>
+            </metadata>
+        </asset>
+        <format id="r12" frameDuration="512/12288s" width="180" height="320" colorSpace="6-1-6 (Rec. 601 (NTSC))"/>
+        <format id="r13" frameDuration="1/24s" width="180" height="320"/>
+    </resources>
+    <library location="file:///private/tmp/aagedal-resolve-5994-20260919/Aagedal%20FCP%205994%20DF%20Acceptance%2020260919.fcpbundle/">
+        <event name="Aagedal Conform Isolation 119 Validated" uid="681FF95B-F302-4DBD-B5BE-F957B1E9485F">
+            <project name="Aagedal Conform Isolation 119 Validated" uid="49CE1B84-BD07-4F5C-9632-F6FA181E0853" modDate="2026-09-19 23:18:35 +0200">
+                <sequence format="r1" duration="8s" tcStart="0s" tcFormat="NDF" audioLayout="stereo" audioRate="48k">
+                    <spine>
+                        <asset-clip ref="r2" offset="0s" name="rotated-anamorphic" duration="2s" format="r4" tcFormat="NDF">
+                            <adjust-colorConform enabled="1" autoOrManual="manual" conformType="conformNone" peakNitsOfPQSource="1000" peakNitsOfSDRToPQSource="203"/>
+                        </asset-clip>
+                        <asset-clip ref="r5" offset="2s" name="unrotated-anamorphic" duration="2s" format="r7" tcFormat="NDF">
+                            <adjust-colorConform enabled="1" autoOrManual="manual" conformType="conformNone" peakNitsOfPQSource="1000" peakNitsOfSDRToPQSource="203"/>
+                        </asset-clip>
+                        <asset-clip ref="r8" offset="4s" name="rotated-square" duration="2s" format="r10" tcFormat="NDF">
+                            <adjust-colorConform enabled="1" autoOrManual="manual" conformType="conformNone" peakNitsOfPQSource="1000" peakNitsOfSDRToPQSource="203"/>
+                        </asset-clip>
+                        <asset-clip ref="r11" offset="6s" name="baked-square" duration="2s" format="r13" tcFormat="NDF">
+                            <adjust-colorConform enabled="1" autoOrManual="manual" conformType="conformNone" peakNitsOfPQSource="1000" peakNitsOfSDRToPQSource="203"/>
+                        </asset-clip>
+                    </spine>
+                </sequence>
+            </project>
+        </event>
+        <smart-collection name="Projects" match="all">
+            <match-clip rule="is" type="project"/>
+        </smart-collection>
+        <smart-collection name="All Video" match="any">
+            <match-media rule="is" type="videoOnly"/>
+            <match-media rule="is" type="videoWithAudio"/>
+        </smart-collection>
+        <smart-collection name="Audio Only" match="all">
+            <match-media rule="is" type="audioOnly"/>
+        </smart-collection>
+        <smart-collection name="Stills" match="all">
+            <match-media rule="is" type="stills"/>
+        </smart-collection>
+        <smart-collection name="Favorites" match="all">
+            <match-ratings value="favorites"/>
+        </smart-collection>
+        <smart-collection name="Missing Analysis" match="all">
+            <match-analysis-type rule="isMissing" value="any"/>
+        </smart-collection>
+    </library>
+</fcpxml>

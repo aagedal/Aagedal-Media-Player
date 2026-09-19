@@ -49,14 +49,20 @@ def measure(rgb, width, height, aspect, colors, threshold=60):
     expected = [(width - fit_w) / 2, (height - fit_h) / 2,
                 (width + fit_w) / 2, (height + fit_h) / 2]
     bounds = [left, top, right, bottom]
+    # Distance from (w, h) to the expected-aspect line, in pixels. Measuring
+    # only w - h * aspect amplifies vertical codec-edge ringing for wide
+    # pictures and gives different acceptance after transposing the image.
+    norm = math.hypot(1, aspect)
+    aspect_error = abs(w / norm - h * (aspect / norm))
     checks = {
         "solidQuadrants": count / (w * h) >= .98,
         "orientation": samples == colors,
-        "displayAspect": abs(w - h * aspect) <= 3,
+        "displayAspect": aspect_error <= 3,
         "fitBounds": all(abs(a - b) <= 3 for a, b in zip(bounds, expected)),
     }
     return dict(bounds=bounds, contentRaster=[w, h], margins=[left, top, width-right, height-bottom],
-                expectedFitBounds=expected, quadrantColors=samples, checks=checks,
+                expectedFitBounds=expected, aspectErrorPixels=aspect_error,
+                quadrantColors=samples, checks=checks,
                 rgbSHA256=hashlib.sha256(rgb).hexdigest())
 
 

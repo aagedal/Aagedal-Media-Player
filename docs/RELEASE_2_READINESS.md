@@ -85,6 +85,13 @@ padding under default Fit, not merely viewer zoom. The calibrated measurement
 task is complete; Fit geometry, asset PAR and fresh production UI export remain
 open. See [rendered geometry evidence](evidence/fcp-rendered-anamorphic-20260919/README.md).
 
+Phase 119 narrows the generated-fixture Fit failure to combined rotation and
+anamorphic pixels: unrotated anamorphic, rotated square-pixel and baked controls
+pass a four-clip native render. The diagnostic now uses an axis-independent
+aspect tolerance; the original padding still fails the unchanged Fit check.
+This does not resolve native asset PAR or replace fresh production UI acceptance.
+See [conform isolation evidence](evidence/fcp-conform-isolation-20260919/README.md).
+
 | Gap | Acceptance evidence required |
 | --- | --- |
 | Metadata compatibility and error semantics | The 3.0.1 production payload-copy regression is closed, but recover the five missing ARW/XMP fixture inputs, reconcile the remaining JXL fixture/assertion disagreement, and expand unusual-container and intended-error coverage. Keep this compatibility gate separate from the resolved memory defect. See [library fixture acceptance](METADATA_LIBRARY_FIXTURE_VALIDATION.md), [real-media validation](METADATA_REAL_MEDIA_VALIDATION.md), and [metadata investigation](METADATA_MEMORY_PERFORMANCE.md). |

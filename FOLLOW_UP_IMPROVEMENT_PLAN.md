@@ -2798,6 +2798,26 @@ Evidence: `docs/evidence/fcp-rendered-anamorphic-20260919/README.md`.
 This closes the calibrated measurement task from Phase 117, not the geometry
 acceptance gate. No shipping app implementation changed.
 
+## Phase 119 — Native Final Cut conform isolation
+
+Status: Four-control native render and diagnostic correction complete on
+2026-09-19; rotated anamorphic Fit and asset-PAR acceptance remain open.
+
+- [x] Render original rotated anamorphic, unrotated anamorphic, rotated
+  square-pixel and baked square-pixel controls in one native portrait timeline.
+  Preserve input/native XML, source hashes, measurements and decoded PNGs.
+- [x] Confirm only the rotated anamorphic combination fails Fit in this matrix;
+  the original still measures 813 × 1444 inside 1080 × 1920.
+- [x] Correct axis-dependent aspect tolerance exposed by the wide control;
+  record perpendicular pixel residuals and retain the independent Fit check.
+- [x] Pass ten geometry regressions and the complete script-validator suite.
+- [ ] Repeat fresh production UI export and broader native geometry cases;
+  resolve Fit padding and asset PAR without speculative scale compensation.
+
+Evidence: `docs/evidence/fcp-conform-isolation-20260919/README.md`.
+Derived controls are diagnostic transcodes, not source-identity acceptance.
+No shipping app behavior changed.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -3091,3 +3111,5 @@ acceptance gate. No shipping app implementation changed.
 109. Phase 117 native Final Cut timeline and independent source geometry.
 
 110. Phase 118 calibrated native Final Cut rendered geometry.
+
+111. Phase 119 native Final Cut conform isolation.

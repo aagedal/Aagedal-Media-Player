@@ -1,0 +1,66 @@
+{
+  "baseCommit": "0b83ff783476ee40ce7dd2a0477ce9bce61c65d6",
+  "nativeApplication": "Final Cut Pro 12.3",
+  "exportSettings": "Source - Apple ProRes 422, 1080 x 1920, 24 fps, Standard Rec.709, entire eight-second project",
+  "render": {
+    "path": "/private/tmp/aagedal-phase119/phase119-native-conform.mov",
+    "sha256": "5b04fb71d591c4cf8f7f97f360b3dd869a9af877a856c832b7042e2d6c754a81"
+  },
+  "sources": [
+    {
+      "path": "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Test Fixtures/Generated/loupe/rotate-90-par.mp4",
+      "sha256": "154f95ac8ed3a6a37cba87fffbc3184fc1d2ec341f6cc3e9e1b658353ab403c4"
+    },
+    {
+      "path": "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Test Fixtures/Generated/loupe/par.mp4",
+      "sha256": "4f45c561e9dd90eacb5a5e8aa35b3e9f6b3f9d5ff2e20569da9483bfa44499e2"
+    },
+    {
+      "path": "/private/tmp/aagedal-phase119/rotated-square.mp4",
+      "sha256": "7bc550ea6a44928d8d547edfa697337980b210d8f3595a098fcafe88cee86e05"
+    },
+    {
+      "path": "/private/tmp/aagedal-phase119/baked-square.mov",
+      "sha256": "28a72f87fb6f703c5e6cc41c2a5b513238bafcd20898f2f5290c8042c8ce33e8"
+    }
+  ],
+  "nativeMedia": [
+    {
+      "path": "/tmp/aagedal-resolve-5994-20260919/Aagedal FCP 5994 DF Acceptance 20260919.fcpbundle/Aagedal Compare Review/Original Media/rotate-90-par.mp4",
+      "sha256": "154f95ac8ed3a6a37cba87fffbc3184fc1d2ec341f6cc3e9e1b658353ab403c4"
+    },
+    {
+      "path": "/tmp/aagedal-resolve-5994-20260919/Aagedal FCP 5994 DF Acceptance 20260919.fcpbundle/Aagedal Conform Isolation 119/Original Media/par.mp4",
+      "sha256": "4f45c561e9dd90eacb5a5e8aa35b3e9f6b3f9d5ff2e20569da9483bfa44499e2"
+    },
+    {
+      "path": "/tmp/aagedal-resolve-5994-20260919/Aagedal FCP 5994 DF Acceptance 20260919.fcpbundle/Aagedal Conform Isolation 119/Original Media/rotated-square.mp4",
+      "sha256": "7bc550ea6a44928d8d547edfa697337980b210d8f3595a098fcafe88cee86e05"
+    },
+    {
+      "path": "/tmp/aagedal-resolve-5994-20260919/Aagedal FCP 5994 DF Acceptance 20260919.fcpbundle/Aagedal Conform Isolation 119/Original Media/baked-square.mov",
+      "sha256": "28a72f87fb6f703c5e6cc41c2a5b513238bafcd20898f2f5290c8042c8ce33e8"
+    }
+  ],
+  "files": {
+    "docs/evidence/fcp-conform-isolation-20260919/baked-square-measurements.json": "07390d61771755cf28fdcf85cd8631059e404b37d5a8879ce7e2706f001fa866",
+    "docs/evidence/fcp-conform-isolation-20260919/baked-square.png": "7826d26e4885ad80ddecad958bf0cd428648b3e0a5fa4bebc15dfcec9dad1e25",
+    "docs/evidence/fcp-conform-isolation-20260919/input.fcpxml": "88d49806430fe499daa708fe1e9b82b8f0be5f62e9c7bd290f3be62a80691327",
+    "docs/evidence/fcp-conform-isolation-20260919/returned-project.fcpxml": "adadcb3a6b801bd8aab95ccaeb41e5f33b98595cff0e380142d0d222ad1ecb26",
+    "docs/evidence/fcp-conform-isolation-20260919/rotated-anamorphic-measurements.json": "3f7ffda98a46bbe64ee249fc36545d03f909273135bd2def7690552ff6b8aef3",
+    "docs/evidence/fcp-conform-isolation-20260919/rotated-anamorphic.png": "419a79fbd42c9ce03dd17800de69649c1244cf77991abaf53d507374809a5dd3",
+    "docs/evidence/fcp-conform-isolation-20260919/rotated-square-measurements.json": "e068f599ce83d06c2f69bfa6feed1d3d66ce4fea8d560728f247303cd829efa3",
+    "docs/evidence/fcp-conform-isolation-20260919/rotated-square.png": "bcb83fdb959827eb5a88707b1707470409f4ea6ba270e7d38e0aeffb05bc722c",
+    "docs/evidence/fcp-conform-isolation-20260919/unrotated-anamorphic-measurements.json": "b3a124706fb79bf999385fc5c5a6696f178fcfe38783a935670a36fac6a52f2b",
+    "docs/evidence/fcp-conform-isolation-20260919/unrotated-anamorphic.png": "8fb28ea8c5efde7e15f5aabcc1a7f00deb2c748520bcbcd8e49383eaa5bb91ff",
+    "docs/evidence/fcp-conform-isolation-20260919/README.md": "a17150de67aa905395805ddc4ca7c6c814aac5adcb04a24dd7b203d9bf1375af"
+  },
+  "measurementCode": {
+    "scripts/measure-quadrant-render.py": "0be9f52586fabbc9aa46899b536fc2f80520b5953d88d6eed3465707919ff0f5",
+    "scripts/test-quadrant-render.py": "caf3c91cd95c4d7b102e4772215590f626576e77493a47376724d4002c5bb098"
+  },
+  "validationLog": {
+    "path": "/private/tmp/aagedal-phase119-script-validators.log",
+    "sha256": "95d0462898fe3d0b7498e494b71e0ede4794cbf11cdb8a24076c949b0bf57cd8"
+  }
+}

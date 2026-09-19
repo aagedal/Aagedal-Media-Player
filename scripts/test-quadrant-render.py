@@ -40,6 +40,26 @@ class GeometryTests(unittest.TestCase):
     def test_wrong_aspect_fails(self):
         self.assertFalse(geometry.measure(frame(), 90, 160, 1, COLORS)["checks"]["displayAspect"])
 
+    def test_wide_codec_edges_and_transpose_use_same_pixel_tolerance(self):
+        # Native ProRes control: expected height 607.5, saturated edges at 610.
+        wide = geometry.measure(frame(1080, 610), 1080, 610, 16/9, COLORS)
+        tall = geometry.measure(frame(610, 1080), 610, 1080, 9/16, COLORS)
+        self.assertTrue(wide["checks"]["displayAspect"])
+        self.assertTrue(tall["checks"]["displayAspect"])
+        self.assertAlmostEqual(wide["aspectErrorPixels"], tall["aspectErrorPixels"])
+
+    def test_real_aspect_distortion_still_fails_on_both_axes(self):
+        for w, h, aspect in ((108, 70, 16/9), (70, 108, 9/16)):
+            with self.subTest(aspect=aspect):
+                result = geometry.measure(frame(w, h), w, h, aspect, COLORS)
+                self.assertFalse(result["checks"]["displayAspect"])
+
+    def test_native_rotated_anamorphic_padding_remains_failure(self):
+        result = geometry.measure(frame(1080, 1920, (134, 238, 947, 1682)),
+                                  1080, 1920, 9/16, COLORS)
+        self.assertTrue(result["checks"]["displayAspect"])
+        self.assertFalse(result["checks"]["fitBounds"])
+
     def test_wrong_rotation_fails(self):
         self.assertFalse(geometry.measure(frame(), 90, 160, 9/16, COLORS[::-1])["checks"]["orientation"])
 

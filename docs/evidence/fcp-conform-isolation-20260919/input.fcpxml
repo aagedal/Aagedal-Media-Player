@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE fcpxml>
+<fcpxml version="1.9">
+  <resources>
+    <format id="r1" colorSpace="1-1-1 (Rec. 709)" frameDuration="1/24s" width="1080" height="1920" />
+    <format id="f0" frameDuration="1/24s" width="180" height="240" paspH="3" paspV="4" />
+    <asset id="a0" name="rotated-anamorphic" start="0s" duration="2s" hasVideo="1" format="f0">
+      <media-rep kind="original-media" src="file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/rotate-90-par.mp4" />
+    </asset>
+    <format id="f1" frameDuration="1/24s" width="240" height="180" paspH="4" paspV="3" />
+    <asset id="a1" name="unrotated-anamorphic" start="0s" duration="2s" hasVideo="1" format="f1">
+      <media-rep kind="original-media" src="file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/loupe/par.mp4" />
+    </asset>
+    <format id="f2" frameDuration="1/24s" width="180" height="240" paspH="1" paspV="1" />
+    <asset id="a2" name="rotated-square" start="0s" duration="2s" hasVideo="1" format="f2">
+      <media-rep kind="original-media" src="file:///private/tmp/aagedal-phase119/rotated-square.mp4" />
+    </asset>
+    <format id="f3" frameDuration="1/24s" width="180" height="320" paspH="1" paspV="1" />
+    <asset id="a3" name="baked-square" start="0s" duration="2s" hasVideo="1" format="f3">
+      <media-rep kind="original-media" src="file:///private/tmp/aagedal-phase119/baked-square.mov" />
+    </asset>
+  </resources>
+  <event name="Aagedal Conform Isolation 119 Validated">
+    <project name="Aagedal Conform Isolation 119 Validated">
+      <sequence format="r1" duration="8s" tcStart="0s" tcFormat="NDF" audioLayout="stereo" audioRate="48k">
+        <spine>
+          <asset-clip ref="a0" name="rotated-anamorphic" offset="0s" start="0s" duration="2s" format="f0" tcFormat="NDF" />
+          <asset-clip ref="a1" name="unrotated-anamorphic" offset="2s" start="0s" duration="2s" format="f1" tcFormat="NDF" />
+          <asset-clip ref="a2" name="rotated-square" offset="4s" start="0s" duration="2s" format="f2" tcFormat="NDF" />
+          <asset-clip ref="a3" name="baked-square" offset="6s" start="0s" duration="2s" format="f3" tcFormat="NDF" />
+        </spine>
+      </sequence>
+    </project>
+  </event>
+</fcpxml>

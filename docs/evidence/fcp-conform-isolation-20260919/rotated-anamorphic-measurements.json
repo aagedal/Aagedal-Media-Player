@@ -1,0 +1,191 @@
+{
+  "status": "differences",
+  "render": "/private/tmp/aagedal-phase119/phase119-native-conform.mov",
+  "renderSHA256": "5b04fb71d591c4cf8f7f97f360b3dd869a9af877a856c832b7042e2d6c754a81",
+  "stream": {
+    "index": 0,
+    "codec_name": "prores",
+    "codec_long_name": "Apple ProRes (iCodec Pro)",
+    "profile": "Standard",
+    "codec_type": "video",
+    "codec_tag_string": "apcn",
+    "codec_tag": "0x6e637061",
+    "width": 1080,
+    "height": 1920,
+    "coded_width": 1080,
+    "coded_height": 1920,
+    "has_b_frames": 0,
+    "sample_aspect_ratio": "1:1",
+    "display_aspect_ratio": "9:16",
+    "pix_fmt": "yuv422p10le",
+    "level": -99,
+    "color_range": "tv",
+    "color_space": "bt709",
+    "color_transfer": "bt709",
+    "color_primaries": "bt709",
+    "field_order": "progressive",
+    "id": "0x1",
+    "r_frame_rate": "24/1",
+    "avg_frame_rate": "24/1",
+    "time_base": "1/2400",
+    "start_pts": 0,
+    "start_time": "0.000000",
+    "duration_ts": 19200,
+    "duration": "8.000000",
+    "bit_rate": "13174896",
+    "bits_per_raw_sample": "10",
+    "nb_frames": "192",
+    "disposition": {
+      "default": 1,
+      "dub": 0,
+      "original": 0,
+      "comment": 0,
+      "lyrics": 0,
+      "karaoke": 0,
+      "forced": 0,
+      "hearing_impaired": 0,
+      "visual_impaired": 0,
+      "clean_effects": 0,
+      "attached_pic": 0,
+      "timed_thumbnails": 0,
+      "non_diegetic": 0,
+      "captions": 0,
+      "descriptions": 0,
+      "metadata": 0,
+      "dependent": 0,
+      "still_image": 0,
+      "multilayer": 0
+    },
+    "tags": {
+      "creation_time": "2026-09-19T21:19:16.000000Z",
+      "language": "und",
+      "handler_name": "Core Media Video",
+      "vendor_id": "[0][0][0][0]",
+      "encoder": "Apple ProRes 422",
+      "timecode": "00:00:00:00"
+    }
+  },
+  "expectedAspect": "9/16",
+  "frames": [
+    {
+      "seconds": 1.0,
+      "thresholds": {
+        "40": {
+          "bounds": [
+            134,
+            238,
+            947,
+            1682
+          ],
+          "contentRaster": [
+            813,
+            1444
+          ],
+          "margins": [
+            134,
+            238,
+            133,
+            238
+          ],
+          "expectedFitBounds": [
+            0.0,
+            0.0,
+            1080.0,
+            1920.0
+          ],
+          "aspectErrorPixels": 0.6536816528434883,
+          "quadrantColors": [
+            "green",
+            "yellow",
+            "red",
+            "blue"
+          ],
+          "checks": {
+            "solidQuadrants": true,
+            "orientation": true,
+            "displayAspect": true,
+            "fitBounds": false
+          },
+          "rgbSHA256": "7ebb8a96d3e0950899805863806fa925e45a43dbf02ca04007b3b4a2d65f46be"
+        },
+        "60": {
+          "bounds": [
+            134,
+            238,
+            947,
+            1682
+          ],
+          "contentRaster": [
+            813,
+            1444
+          ],
+          "margins": [
+            134,
+            238,
+            133,
+            238
+          ],
+          "expectedFitBounds": [
+            0.0,
+            0.0,
+            1080.0,
+            1920.0
+          ],
+          "aspectErrorPixels": 0.6536816528434883,
+          "quadrantColors": [
+            "green",
+            "yellow",
+            "red",
+            "blue"
+          ],
+          "checks": {
+            "solidQuadrants": true,
+            "orientation": true,
+            "displayAspect": true,
+            "fitBounds": false
+          },
+          "rgbSHA256": "7ebb8a96d3e0950899805863806fa925e45a43dbf02ca04007b3b4a2d65f46be"
+        },
+        "80": {
+          "bounds": [
+            134,
+            238,
+            947,
+            1682
+          ],
+          "contentRaster": [
+            813,
+            1444
+          ],
+          "margins": [
+            134,
+            238,
+            133,
+            238
+          ],
+          "expectedFitBounds": [
+            0.0,
+            0.0,
+            1080.0,
+            1920.0
+          ],
+          "aspectErrorPixels": 0.6536816528434883,
+          "quadrantColors": [
+            "green",
+            "yellow",
+            "red",
+            "blue"
+          ],
+          "checks": {
+            "solidQuadrants": true,
+            "orientation": true,
+            "displayAspect": true,
+            "fitBounds": false
+          },
+          "rgbSHA256": "7ebb8a96d3e0950899805863806fa925e45a43dbf02ca04007b3b4a2d65f46be"
+        }
+      }
+    }
+  ],
+  "decoder": "ffmpeg version 9.0.1 Copyright (c) 2000-2026 the FFmpeg developers"
+}
