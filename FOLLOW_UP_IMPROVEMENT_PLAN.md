@@ -2538,6 +2538,38 @@ Acceptance: current-source 59.94 DF native import/re-export passes. Evidence is
 retained in `docs/evidence/resolve-markers-5994-20260919`; 23.976, same-frame
 limitations and other editors are not silently treated as accepted.
 
+## Phase 108 — Native Resolve 23.976 relative-time round trip
+
+Status: Native app export, editor import/re-export and source identity verified
+on 2026-09-19.
+
+- [x] Generate exact `24000/1001` movies without embedded timecode, preserving
+  the full eight-finding review and separate seven-finding unique-anchor copy.
+- [x] Load the pair and selected copy through native app UI, export Resolve EDL,
+  and verify all seven relative anchors/durations against the review, non-drop
+  frame mode, exact rate provenance, current URLs and unchanged input hashes.
+- [x] Create a separate Resolve Studio 21.1.0.14 project and zero-start 23.976
+  timeline; capture actual source-A identity, 14,625-frame untrimmed placement
+  and empty marker state before import.
+- [x] Retain the native export, app binary identity, reviews, manifest and
+  pre-import snapshot in `docs/evidence/resolve-markers-23976-20260919`.
+- [x] Pass 18 focused Resolve helper regressions, including actual retained
+  23.976 relative-time records and rejection of wrong start, rate and DF mode.
+  The complete script-validator suite also passes; log:
+  `/private/tmp/aagedal-phase108-roundtrip-script-validators-20260919.log`.
+- [x] Verify the user's native marker import through a read-only snapshot: all
+  seven anchors, durations, colors and exact texts match; current source-A
+  identity and untrimmed placement pass, with unchanged input hashes.
+- [x] Verify the user's native re-export: all seven exact EDL records pass,
+  with no missing or extra events, matching native source identity and fresh
+  unchanged fixture hashes. Retain the re-export and combined validation report;
+  include the actual 23.976 round trip in the focused helper regressions.
+
+Acceptance: current-source 23.976 relative-time native import/re-export passes.
+Same-frame findings remain unsupported in Resolve EDL; other-editor acceptance
+and the wider release gates remain separate. The retained README documents the
+exact capture and comparison steps.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -2811,3 +2843,4 @@ limitations and other editors are not silently treated as accepted.
 97. Phase 105 repeatable Resolve round-trip comparison.
 98. Phase 106 current-source Resolve evidence and repeatable review copies.
 99. Phase 107 native Resolve 59.94 DF import and media identity.
+100. Phase 108 native Resolve 23.976 relative-time round trip.

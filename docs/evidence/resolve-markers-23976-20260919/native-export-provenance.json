@@ -1,0 +1,58 @@
+{
+  "status": "native-app-export-verified-editor-import-pending",
+  "appSourceCommit": "fc8d097a4d1ed4361f784b9cd47a42ef5d0b17e0",
+  "checkoutAtNativeExport": "0c56c2cfbb5b7ab2f29174d66d446f474604d59d",
+  "binaryPath": "/Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-congypqmkasimqhktadfyvwkycwr/Build/Products/Debug/Aagedal Media Player.app/Contents/MacOS/Aagedal Media Player.debug.dylib",
+  "binarySHA256": "3ae73757495e3fa7656dfbe30abfb6b17f9feaa600206fefed1025f548da71e2",
+  "configuration": "Existing September 19 Debug build; hash matches Phase 107",
+  "originalSHA256": "745cfeb3dcc34b7ac6e89f09d39087a6b49d1c5abd34490684c79ba6378ecd68",
+  "frameCountMode": "NON-DROP FRAME",
+  "anchorsAndDurations": [
+    [
+      0,
+      1
+    ],
+    [
+      1,
+      1
+    ],
+    [
+      1439,
+      3
+    ],
+    [
+      1440,
+      1
+    ],
+    [
+      14399,
+      3
+    ],
+    [
+      14400,
+      1
+    ],
+    [
+      14624,
+      1
+    ]
+  ],
+  "fixtureProvenance": {
+    "status": "passed",
+    "manifestSHA256": "64b98061bdb5cac444a28ec9e7edf4c6ff05fff42dbb5d9d10b1e7f46b5c22bb",
+    "inputSHA256": {
+      "resolve-unique.aagedal-compare.json": "d7c5165852cae6c13d99a2b576cb406761cfce4cf5edc2487408f2687c6e09f4",
+      "source-a vs source-b-1f0efdaae76ac31b.aagedal-compare.json": "50ec44de83e4fcc8c2d6ffd05fd43117d07f1b40336389e93b60caf3903b8afa",
+      "source-a.mov": "3d0f9cd5b562a0100e2e746837c1a08cd25ce69aa26203e196ed6376ac7dfca8",
+      "source-b.mov": "3d0f9cd5b562a0100e2e746837c1a08cd25ce69aa26203e196ed6376ac7dfca8"
+    },
+    "reviewFile": "resolve-unique.aagedal-compare.json",
+    "markerCount": 7,
+    "sourcePaths": [
+      "/private/tmp/aagedal-resolve-23976-20260919/source-a.mov",
+      "/private/tmp/aagedal-resolve-23976-20260919/source-b.mov"
+    ],
+    "scope": "Unchanged fixture files and exported source URLs; editor media loading requires native evidence"
+  },
+  "scope": "Native app export and prepared editor timeline only; no marker import or re-export acceptance"
+}

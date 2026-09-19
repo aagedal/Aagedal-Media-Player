@@ -196,6 +196,18 @@ extra events and unchanged post-export fixture hashes. 23.976, same-frame
 findings and other editors remain outside this focused result. See the
 [retained 59.94 evidence](evidence/resolve-markers-5994-20260919/README.md).
 
+Phase 108 verifies native app export at 23.976 with no embedded source timecode:
+all seven relative anchors/durations match the selected review and fixture hashes
+are unchanged. A separate zero-start Resolve timeline contains the verified
+14,625-frame source-A clip. The user's native marker import now passes all seven
+actual marker records, including exact text and inclusive durations. The native
+re-export also passes all seven exact records, with no missing or extra events
+and unchanged post-export media/review hashes. Eighteen focused helper regressions
+include the retained 23.976 round trip. This closes the focused 23.976
+relative-time gate; same-frame findings and other-editor acceptance remain
+separate. See the
+[retained acceptance record](evidence/resolve-markers-23976-20260919/README.md).
+
 ## Remaining scope that needs an explicit product decision
 
 These are unfinished roadmap commitments, not silently deferred features:

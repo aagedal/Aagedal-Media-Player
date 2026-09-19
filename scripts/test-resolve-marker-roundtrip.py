@@ -29,9 +29,10 @@ def edl(start="00:00:58;00", end="00:00:58;01", note="Unicode æøå 日本語",
 
 
 class RoundTripTests(unittest.TestCase):
-    def native_fixture(self, root):
-        evidence = EVIDENCE.with_name("resolve-markers-5994-20260919")
-        manifest = self.make_fixture(root, "59.94")
+    def native_fixture(self, root, rate="59.94"):
+        suffix = {"59.94": "5994", "23.976": "23976"}[rate]
+        evidence = EVIDENCE.with_name(f"resolve-markers-{suffix}-20260919")
+        manifest = self.make_fixture(root, rate)
         snapshot = json.loads((evidence / "native-snapshot.json").read_text())
         old_root = str(Path(snapshot["clips"][0]["path"]).parent)
         # Adapt captured records only in the temporary test; retained evidence is immutable.
@@ -49,6 +50,24 @@ class RoundTripTests(unittest.TestCase):
             self.assertEqual(result["status"], "passed")
             self.assertEqual(result["markerCount"], 7)
             self.assertEqual(result["snapshotSHA256"], hashlib.sha256(path.read_bytes()).hexdigest())
+
+    def test_native_relative_time_snapshot_requires_zero_start_and_exact_rate(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "fixture"
+            manifest, snapshot, original = self.native_fixture(root, "23.976")
+            self.assertIsNone(json.loads(manifest.read_text())["sourceStartTimecode"])
+            path = root / "snapshot.json"
+            path.write_text(json.dumps(snapshot))
+            result = validator.verify_native_snapshot(path, manifest, original, Fraction(24000, 1001), "21.1.0.14")
+            self.assertEqual((result["status"], result["markerCount"], result["startTimecode"]),
+                             ("passed", 7, "00:00:00:00"))
+            for key, value in [("startTimecode", "01:00:00:00"), ("rate", "24"),
+                               ("dropFrame", "1"), ("startFrame", "1")]:
+                changed = copy.deepcopy(snapshot)
+                changed["metadata"][key] = value
+                path.write_text(json.dumps(changed))
+                with self.subTest(key=key), self.assertRaises(ValueError):
+                    validator.verify_native_snapshot(path, manifest, original, Fraction(24000, 1001), "21.1.0.14")
 
     def test_native_wrong_media_and_timeline_configuration_fail(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -240,6 +259,7 @@ class RoundTripTests(unittest.TestCase):
         for directory, original, rate in [
             ("resolve-markers-20260919", "unique-markers.edl", RATE),
             ("resolve-markers-5994-20260919", "source-a_vs_source-b_review.edl", Fraction(60000, 1001)),
+            ("resolve-markers-23976-20260919", "source-a_vs_source-b_review.edl", Fraction(24000, 1001)),
         ]:
             with self.subTest(rate=rate):
                 evidence = EVIDENCE.with_name(directory)

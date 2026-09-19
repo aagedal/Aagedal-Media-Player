@@ -1,0 +1,27 @@
+{
+  "status": "passed",
+  "snapshotSHA256": "b1c6584f0d7f72ff2db91941141d8780b194a8d5081efeef643577d005992023",
+  "project": "Aagedal 23976 Marker Acceptance 20260919",
+  "timeline": "23976 relative current sources",
+  "markerCount": 7,
+  "sourcePath": "/private/tmp/aagedal-resolve-23976-20260919/source-a.mov",
+  "startTimecode": "00:00:00:00",
+  "scope": "Native imported marker records and current source identity; re-export pending",
+  "fixtureProvenance": {
+    "status": "passed",
+    "manifestSHA256": "64b98061bdb5cac444a28ec9e7edf4c6ff05fff42dbb5d9d10b1e7f46b5c22bb",
+    "inputSHA256": {
+      "resolve-unique.aagedal-compare.json": "d7c5165852cae6c13d99a2b576cb406761cfce4cf5edc2487408f2687c6e09f4",
+      "source-a vs source-b-1f0efdaae76ac31b.aagedal-compare.json": "50ec44de83e4fcc8c2d6ffd05fd43117d07f1b40336389e93b60caf3903b8afa",
+      "source-a.mov": "3d0f9cd5b562a0100e2e746837c1a08cd25ce69aa26203e196ed6376ac7dfca8",
+      "source-b.mov": "3d0f9cd5b562a0100e2e746837c1a08cd25ce69aa26203e196ed6376ac7dfca8"
+    },
+    "reviewFile": "resolve-unique.aagedal-compare.json",
+    "markerCount": 7,
+    "sourcePaths": [
+      "/private/tmp/aagedal-resolve-23976-20260919/source-a.mov",
+      "/private/tmp/aagedal-resolve-23976-20260919/source-b.mov"
+    ],
+    "scope": "Unchanged fixture files and exported source URLs; editor media loading requires native evidence"
+  }
+}
