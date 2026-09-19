@@ -454,3 +454,15 @@ pixels. The retained-fixture test now declares the actual 160×90 source raster.
 This is an exporter correction pending a fresh native player export and Final
 Cut import/re-export. Portrait, anamorphic and rotated-source native behavior,
 duration clamping, whitespace and the remaining rate matrix remain open.
+
+### Native raster and repeatable comparison — Phase 112
+
+Final Cut Pro 12.3 now natively preserves the Phase 111 fixture's 160 × 90 browser
+clip, exact 23.976 rate/start/NDF display and all eight findings in seven markers.
+The imported source media and original fixture hashes match. The new
+`scripts/compare-fcp-marker-roundtrip.py` records exact rational comparisons and
+returns nonzero for remaining duration and parsed-whitespace differences.
+The 14,626 → 14,625 duration difference reflects the XCTest snapshot's 610-second
+duration versus the generated media's 14,625 frames; production metadata and
+native player export still need verification. Portrait/anamorphic/rotated and
+other-rate acceptance remain open. See the [retained native evidence](evidence/fcp-raster-markers-23976-20260919/README.md).

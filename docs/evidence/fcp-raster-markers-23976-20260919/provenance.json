@@ -1,0 +1,17 @@
+{
+  "editor": "Final Cut Pro 12.3",
+  "sourceCommit": "0a905b6",
+  "generation": "Phase 111 production exporter invoked in XCTest; not native player UI export",
+  "testResult": "/private/tmp/aagedal-phase111-tests-fixed.xcresult",
+  "library": "/private/tmp/aagedal-resolve-23976-20260919/Aagedal FCP Raster Acceptance 20260919.fcpbundle",
+  "inputHashesMatchRetainedManifest": true,
+  "inputSHA256": {
+    "resolve-unique.aagedal-compare.json": "d7c5165852cae6c13d99a2b576cb406761cfce4cf5edc2487408f2687c6e09f4",
+    "source-a vs source-b-1f0efdaae76ac31b.aagedal-compare.json": "50ec44de83e4fcc8c2d6ffd05fd43117d07f1b40336389e93b60caf3903b8afa",
+    "source-a.mov": "3d0f9cd5b562a0100e2e746837c1a08cd25ce69aa26203e196ed6376ac7dfca8",
+    "source-b.mov": "3d0f9cd5b562a0100e2e746837c1a08cd25ce69aa26203e196ed6376ac7dfca8"
+  },
+  "originalDurationFrames": "14626",
+  "returnedDurationFrames": "14625",
+  "scope": "Native browser raster, grouped finding content and timing; duration and exact whitespace remain different"
+}

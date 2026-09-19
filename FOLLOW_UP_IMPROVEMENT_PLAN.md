@@ -2640,6 +2640,28 @@ Status: Implemented; 33 focused exporter tests and DTD validation pass on 2026-0
 Acceptance: source geometry is explicit in the export. Native raster preservation
 is not established by exporter tests or DTD validation alone.
 
+## Phase 112 — Native Final Cut raster and repeatable comparison
+
+Status: Focused native raster acceptance and eight comparator regressions pass
+on 2026-09-19; full Final Cut acceptance remains open.
+
+- [x] Import the unchanged Phase 111 production-exporter fixture into a fresh
+  Final Cut Pro 12.3 library and retain its native 1.14 re-export.
+- [x] Verify 160 × 90 browser raster, exact rate/source start/NDF display, all
+  seven anchors and eight findings, allowing only the documented XML attribute
+  whitespace normalization for the separate content comparison.
+- [x] Verify imported source-media bytes and unchanged original media/sidecars.
+- [x] Add a repeatable rational-time/content/raster comparator to the script
+  regression gate. Exact whitespace and duration differences return nonzero;
+  absent media verification never implies source identity acceptance.
+- [x] Diagnose the retained duration difference: the test snapshot's 610 seconds
+  exports 14,626 frames, while the generated source and native result have 14,625.
+- [ ] Repeat with accurate metadata through the native player UI and complete
+  portrait/anamorphic/rotated sources, remaining rates and whitespace acceptance.
+
+Evidence: `docs/evidence/fcp-raster-markers-23976-20260919/README.md`.
+The raster result does not close duration, native player or wider editor gates.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -2921,3 +2943,4 @@ is not established by exporter tests or DTD validation alone.
 102. Phase 110 Final Cut one-frame markers and complete grouped findings.
 
 103. Phase 111 explicit Final Cut source raster.
+104. Phase 112 native Final Cut raster and repeatable comparison.
