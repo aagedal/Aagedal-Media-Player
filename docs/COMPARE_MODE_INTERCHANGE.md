@@ -123,6 +123,30 @@ before exporting the target marker format.
    evidence instead of claiming a completed round trip.
 4. Confirm the source media and original review sidecar were not changed.
 
+For Resolve, compare the **unmodified** app EDL and native re-export with:
+
+```bash
+python3 scripts/validate-resolve-marker-roundtrip.py original.edl returned.edl \
+  --rate 30000/1001 --editor-version 21.1.0.14 --output new-roundtrip-result.json
+```
+
+Use the exact rational media rate and actual editor version. The checker exits
+nonzero for missing, additional, moved, or changed markers; it retains both
+file hashes and complete mismatched records in a new JSON report. It compares
+record anchors, `|D:` inclusive duration, color and exact note content (including
+classifications and source URLs), preserving duplicate multiplicity. It accepts
+Resolve's colon-separated DF labels under `FCM: DROP FRAME` and its one-frame
+event spans for range markers. Unrecognized or incomplete EDL records fail
+validation rather than being skipped. Event numbers and titles are not marker
+identity. Do not remove negative or unwanted events before running the check.
+
+A passing file comparison does not prove the native workflow, original CSV
+correctness, media identity, or editor version. Retain those separately using
+the steps above. A deliberately reduced diagnostic EDL only establishes results
+for its included findings. The checker rejects the retained September 15
+eight-finding round trip with three missing exact records and eight unexpected
+records (including the displaced finding and seven negative-frame leftovers).
+
 FCPXML range durations use source A's rational metadata rate, just like marker
 start positions. Resolve's event out is exclusive and its `|D:` field carries
 the inclusive frame count. Avid's five-column marker text retains a point
@@ -271,3 +295,32 @@ to isolate the adjacent-frame collision from prior import state. Determine
 whether same-frame findings require a grouped marker representation or an
 explicit Resolve export limitation; do not silently treat missing findings as
 accepted. Final Cut Pro and Avid import/re-export remain unrun.
+
+### Fresh-timeline preparation and repeatable comparison — 2026-09-19
+
+A new disposable Resolve project, **Aagedal Adjacent Marker Acceptance
+20260919**, contains generated source A in **Unique markers semicolon**, set
+to 29.97 DF and `00:00:58;00` before any marker import. Generated media and its
+intact eight-finding sidecar are under
+`/private/tmp/aagedal-resolve-adjacent-20260919`.
+`unique-markers.edl` is the retained September 15 app export with only event
+005 (Fixture 5, the duplicate at relative frame 60) omitted. Its SHA-256 is
+`0536d12ccd301f0dab0dc2f28d72bd80029cb989f656432ec88ec15a0a902929`.
+The diagnostic deliberately retains the historical note URLs; it is a timing
+investigation, not a new app export or current-source provenance acceptance.
+
+The user completed the native marker import through Resolve’s custom timeline
+menu. Resolve’s API reports exactly seven markers at relative frames 0, 1, 59,
+60, 16241, 16242 and 18280. All anchors, exact marker text (including Unicode,
+tabs, classifications and historical URLs), colors and one-/three-frame
+durations match the diagnostic EDL. The original generated movies and
+eight-finding sidecar still match their manifest hashes. The adjacent-frame
+displacement does not reproduce in this clean, correct-start import; no
+coordinate change to the app exporter is warranted by this result. The earlier
+failed import remains historical evidence, with its cause not established.
+Native re-export remains pending. The [retained import evidence](evidence/resolve-markers-20260919/README.md)
+qualifies this seven-finding result separately from complete editor acceptance. The new comparator's
+six regressions pass, including rejection of the actual retained partial round
+trip, DF minute/ten-minute boundaries at both supported DF rates, exact content,
+duration, duplicate multiplicity and malformed-input rejection. The complete
+script-validator suite passes; no new editor acceptance is claimed.

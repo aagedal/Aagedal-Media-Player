@@ -165,6 +165,16 @@ adjacent frames remain unchanged. The fresh-timeline investigation of the
 observed one-frame displacement and all outstanding editor acceptance still
 remain; this guard alone does not establish interoperability.
 
+The same continuation adds a strict, repeatable original/re-export EDL
+comparison. It rejects the retained partial round trip and reports exact
+missing and unexpected records with input hashes; six focused regressions and
+the complete script-validator suite pass. The user imported the seven-finding diagnostic into a fresh correctly started
+Resolve timeline. All seven API-reported anchors, durations and exact marker
+texts match, including first/adjacent frames and DF boundaries. The earlier
+adjacent-frame displacement does not reproduce in this clean import. Native
+re-export is pending; the same-frame guard stays in place, and the wider editor
+acceptance gate remains open. See the [retained evidence](evidence/resolve-markers-20260919/README.md).
+
 ## Remaining scope that needs an explicit product decision
 
 These are unfinished roadmap commitments, not silently deferred features:

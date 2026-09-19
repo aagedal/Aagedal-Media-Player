@@ -1,0 +1,39 @@
+{
+  "command": [
+    "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player/Binaries/ffmpeg",
+    "-hide_banner",
+    "-loglevel",
+    "error",
+    "-f",
+    "lavfi",
+    "-i",
+    "testsrc2=size=160x90:rate=30000/1001",
+    "-frames:v",
+    "18281",
+    "-c:v",
+    "libx264",
+    "-preset",
+    "ultrafast",
+    "-crf",
+    "35",
+    "-pix_fmt",
+    "yuv420p",
+    "-timecode",
+    "00:00:58;00",
+    "-n",
+    "/private/tmp/aagedal-resolve-adjacent-20260919/source-a.mov"
+  ],
+  "durationFrames": 18281,
+  "historicalRounded": false,
+  "markerCount": 8,
+  "rateDenominator": 1001,
+  "rateNumerator": 30000,
+  "sha256": {
+    "source-a vs source-b-ece0f10b559a00cc.aagedal-compare.json": "72977f94f92666e9eadac24915a86a0857dc807f4d9ad0a0bb90ca55f57b7722",
+    "source-a.mov": "708dc3a783be25812e74e9da55ed2eae7730cc0e507d94a956a9834cec738830",
+    "source-b.mov": "708dc3a783be25812e74e9da55ed2eae7730cc0e507d94a956a9834cec738830"
+  },
+  "sourceStartTimecode": "00:00:58;00",
+  "storedRateDenominator": 1001,
+  "storedRateNumerator": 30000
+}

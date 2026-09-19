@@ -2450,6 +2450,33 @@ Acceptance: this closes the known silent same-frame export risk at the app
 boundary. A fresh correct-start Resolve round trip and Final Cut Pro/Avid
 acceptance remain open; no editor compatibility gate is marked complete.
 
+## Phase 105 — Repeatable Resolve round-trip comparison
+
+Status: Validation tooling and fresh native import completed on 2026-09-19;
+native re-export pending.
+
+- [x] Add a strict original/re-export EDL comparator with exact rational DF
+  conversion, duration/content/color checks and duplicate multiplicity.
+- [x] Retain input hashes and missing/unexpected records in a new JSON report;
+  reject malformed records and never filter negative or extra editor events.
+- [x] Reproduce the retained actual editor failure: eight expected findings,
+  thirteen returned events, three missing exact records and eight unexpected.
+- [x] Pass six focused regressions and the complete script-validator suite;
+  evidence: `/tmp/aagedal-marker-validator-suite-20260919.log` and
+  `/tmp/aagedal-resolve-retained-roundtrip-20260919.json`.
+- [x] Prepare a fresh 29.97 DF Resolve timeline with the correct source start
+  and a separate seven-finding diagnostic EDL omitting only Fixture 5.
+- [x] Verify the user’s native import through the actual Resolve marker API:
+  all seven positions, durations and exact texts match. Adjacent-frame
+  displacement does not reproduce in the fresh correct-start timeline.
+- [ ] Complete native marker re-export and compare the returned EDL.
+
+Acceptance: file comparison is now repeatable and checks the real retained
+failure. The clean seven-finding native import passes without an exporter
+coordinate change; complete editor compatibility still requires the remaining
+round-trip/rate/source-identity matrix. Native re-export needs the custom menu; see `docs/COMPARE_MODE_INTERCHANGE.md` for the exact
+project, diagnostic input and remaining workflow.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -2718,3 +2745,5 @@ acceptance remain open; no editor compatibility gate is marked complete.
 95. Phase 103 Resolve marker round-trip acceptance.
 
 96. Phase 104 Resolve same-frame export integrity.
+
+97. Phase 105 repeatable Resolve round-trip comparison.
