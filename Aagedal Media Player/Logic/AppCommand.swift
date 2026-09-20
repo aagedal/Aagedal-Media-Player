@@ -12,6 +12,7 @@ import Foundation
 /// synchronization across multiple windows.
 enum AppCommand {
     case openFilePicker
+    case addComparisonFile
     case openFile(URL, targetWindow: NSWindow? = nil)
     case openPreviousFile
     case openNextFile

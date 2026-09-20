@@ -100,6 +100,12 @@ struct Aagedal_Media_PlayerApp: App {
                 }
                 .keyboardShortcut("o")
 
+                Button("Add Comparison File…") {
+                    NotificationCenter.default.post(.addComparisonFile)
+                }
+                .keyboardShortcut("o", modifiers: [.command, .option])
+                .disabled(!mediaLoaded || isCompareModeActive == true)
+
                 Button("Close Window") {
                     NSApp.keyWindow?.close()
                 }

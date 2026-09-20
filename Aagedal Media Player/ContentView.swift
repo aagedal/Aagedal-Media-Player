@@ -143,6 +143,7 @@ struct ContentView: View {
                 overlayController: overlayController,
                 isMediaLoaded: isMediaLoaded,
                 openFilePanel: openFilePanel,
+                openCompareFilePanel: openCompareFilePanel,
                 openFile: openFile,
                 openPreviousFile: openPreviousFile,
                 openNextFile: openNextFile,

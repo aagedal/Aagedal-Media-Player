@@ -1,6 +1,6 @@
 # 2.0 release readiness
 
-Assessment updated: 2026-09-20. This is a prioritization of the existing
+Assessment updated: 2026-09-21. This is a prioritization of the existing
 [product roadmap](../PRODUCT_ROADMAP.md), not a change to its committed scope.
 It is based on the repository's plans and retained verification reports,
 including the September 12 meter foundation and programme-loudness follow-up.
@@ -79,6 +79,13 @@ filtered and closed-review exports, and cancel/reopen behavior; all three CSVs
 retain both findings. Full structured-control traversal, keyboard-only comparison
 setup, Full Keyboard Access, spoken VoiceOver and AVFoundation acceptance remain
 open. See [keyboard export evidence](evidence/review-keyboard-export-20260920/README.md).
+
+Phase 126 adds File → Add Comparison File (Cmd–Option–O) and fixes the local
+trim handler consuming that shortcut as clear-Out. Native picker opening,
+cancellation and Out-point preservation pass, as do 31 focused optimized Release
+tests and static analysis. Native Go to Folder interaction prevented completion
+of source-B selection; complete keyboard setup and review navigation remain open.
+See [keyboard setup evidence](evidence/comparison-keyboard-setup-20260921/README.md).
 
 ## Must close before a defensible 2.0 candidate
 

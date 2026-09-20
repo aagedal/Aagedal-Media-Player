@@ -27,6 +27,7 @@ struct NotificationHandlers: ViewModifier {
     @ObservedObject var overlayController: PlayerOverlayController
     let isMediaLoaded: Bool
     let openFilePanel: () -> Void
+    let openCompareFilePanel: () -> Void
     let openFile: (URL) -> Void
     let openPreviousFile: () -> Void
     let openNextFile: () -> Void
@@ -48,6 +49,7 @@ struct NotificationHandlers: ViewModifier {
                 showAudioWaveformOverlay: $showAudioWaveformOverlay,
                 audioWaveformGenerator: audioWaveformGenerator,
                 openFilePanel: openFilePanel, openFile: openFile,
+                openCompareFilePanel: openCompareFilePanel,
                 openPreviousFile: openPreviousFile, openNextFile: openNextFile,
                 toggleLiveAudioMeter: toggleLiveAudioMeter
             ))
@@ -84,6 +86,7 @@ private struct FileAndWindowHandlers: ViewModifier {
     @ObservedObject var audioWaveformGenerator: AudioWaveformGenerator
     let openFilePanel: () -> Void
     let openFile: (URL) -> Void
+    let openCompareFilePanel: () -> Void
     let openPreviousFile: () -> Void
     let openNextFile: () -> Void
     let toggleLiveAudioMeter: () -> Void
@@ -99,6 +102,13 @@ private struct FileAndWindowHandlers: ViewModifier {
                       case .openFilePicker = command else { return }
                 guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
                 openFilePanel()
+            }
+            .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
+                guard let command = notification.appCommand,
+                      case .addComparisonFile = command else { return }
+                guard WindowManager.shared.isActiveWindow(nsWindow),
+                      controller.mediaItem != nil, !compareSession.isActive else { return }
+                openCompareFilePanel()
             }
             .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
                 guard let command = notification.appCommand,

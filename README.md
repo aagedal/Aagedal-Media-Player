@@ -289,6 +289,7 @@ For stereo or 5.1 stored as separate mono tracks, **Programme Loudness** measure
 | Cmd + Down Arrow | Seek to end |
 | Cmd + [ | Open previous media file in folder |
 | Cmd + ] | Open next media file in folder |
+| Cmd + Option + O | Add a comparison file to the active single-source player |
 
 ### Trim
 

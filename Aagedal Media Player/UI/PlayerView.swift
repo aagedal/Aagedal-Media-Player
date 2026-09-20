@@ -267,8 +267,11 @@ struct PlayerView: View {
             }
         }
 
-        // I/O trim points (must be checked before timecode activation)
-        if lower == "i" {
+        // I/O trim points (must be checked before timecode activation).
+        // Command/Control combinations belong to menus, including
+        // Command-Option-O for adding a comparison file.
+        let isTrimShortcut = modifiers.intersection([.command, .control]).isEmpty
+        if lower == "i", isTrimShortcut {
             if modifiers.contains(.option) {
                 controller.clearTrimIn()
             } else if modifiers.contains(.shift) {
@@ -281,7 +284,7 @@ struct PlayerView: View {
             return true
         }
 
-        if lower == "o" {
+        if lower == "o", isTrimShortcut {
             if modifiers.contains(.option) {
                 controller.clearTrimOut()
             } else if modifiers.contains(.shift) {
@@ -295,7 +298,7 @@ struct PlayerView: View {
         }
 
         // Option+X — Clear all trim points
-        if lower == "x" && modifiers.contains(.option) {
+        if lower == "x", isTrimShortcut, modifiers.contains(.option) {
             controller.clearTrimPoints()
             return true
         }

@@ -2954,6 +2954,27 @@ See [retained native evidence](docs/evidence/review-keyboard-export-20260920/REA
 This focused result does not complete structured-control traversal, keyboard-only
 comparison setup, Full Keyboard Access, spoken VoiceOver or both-backend acceptance.
 
+## Phase 126 — Keyboard comparison setup and trim shortcut ownership
+
+Status: Implemented; native picker/cancellation and trim preservation verified
+on 2026-09-20/21. Complete keyboard setup remains open.
+
+- [x] Add File → Add Comparison File and Cmd–Option–O, routed to the active
+  single-source player using the existing native picker.
+- [x] Fix the native-observed collision where the playback key monitor consumes
+  Cmd–Option–O as clear-Out. I/O/X trim shortcuts defer Command/Control chords.
+- [x] Verify native shortcut opening, Escape cancellation, retained frame-10
+  Out point and unchanged ordinary Option–O clearing behavior.
+- [x] Pass 31 focused optimized Release tests without skips/failures/runtime
+  warnings, plus Release static analysis; retain source and executable identity.
+- [ ] Finish keyboard-only A/B selection and distinct-frame review navigation.
+  Native Go to Folder input became unreliable before source B was selected;
+  this run does not close that acceptance gate.
+
+See [retained native evidence](docs/evidence/comparison-keyboard-setup-20260921/README.md).
+Structured controls, Full Keyboard Access, spoken VoiceOver and both-backend
+acceptance remain open. No system keyboard preferences were changed.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -3261,3 +3282,5 @@ comparison setup, Full Keyboard Access, spoken VoiceOver or both-backend accepta
 116. Phase 124 current optimized candidate verification.
 
 117. Phase 125 keyboard review export and pending-draft preservation.
+
+118. Phase 126 keyboard comparison setup and trim shortcut ownership.

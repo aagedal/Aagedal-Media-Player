@@ -5,6 +5,7 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Added
+- File → Add Comparison File and Cmd–Option–O for keyboard comparison setup without changing macOS keyboard-navigation preferences.
 - Review → Export Review menu access to every report/marker format, plus Cmd–Option–E for CSV, with pending note edits saved before export.
 - Final Cut marker export guidance explaining native round-trip tab/line-break loss, textual ranges and grouped findings, backed by a second native import/export check.
 - An opt-in representative live-audio-meter profiler that retains exact input
@@ -124,6 +125,7 @@ All notable changes to Aagedal Media Player.
   primary-file loop boundaries across all backend combinations.
 
 ### Fixed
+- Trim I/O/X shortcuts now leave Command/Control combinations to menu handling, preventing Cmd–Option–O from clearing the Out point instead of opening comparison setup.
 - Final Cut Pro marker export now rejects source A combining quarter-turn rotation
   and non-square pixels, with a CSV/PDF fallback, because native Final Cut rendering
   adds incorrect padding for this geometry.

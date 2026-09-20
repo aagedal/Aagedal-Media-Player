@@ -1,0 +1,38 @@
+{
+  "baseCommit": "2f4aaedb02c79b75a8692dede1a807bff57249cc",
+  "sourceSHA256": {
+    "Aagedal Media Player/Aagedal_Media_PlayerApp.swift": "c8c62a44ce8dbd62dc173c305ce81a5c8f025e73fea9be1c1c2c026d1cd592e9",
+    "Aagedal Media Player/ContentView.swift": "6613e86500af80da59abab6267be60b40fe46f19c4956d89901c8c174a06be44",
+    "Aagedal Media Player/Logic/AppCommand.swift": "19d9355113d857b7fa39184ec8f0693f543641f759901b7225b822e01f09e454",
+    "Aagedal Media Player/UI/ContentViewCommandHandlers.swift": "b22f879177c06aa85d5d06bd91676ba27b81fa661d1f63e13c165548c99500ea",
+    "Aagedal Media Player/UI/PlayerView.swift": "ede8d15e3b05d001346903d1630973d55662c2d3395ead809ff2b104560cd3d7"
+  },
+  "nativeAppPath": "/private/tmp/aagedal-phase125-build/Build/Products/Release/Aagedal Media Player.app",
+  "nativeAppExecutableSHA256": "c93bf4ee543aae418df4711952ee02d1ad9cad30a21b6dbd3d3942bd2190b8c1",
+  "checks": {
+    "comparisonShortcutOpenedNativePicker": true,
+    "escapeCancelledPicker": true,
+    "outFrame10SurvivedShortcutAndCancellation": true,
+    "optionOStillClearedOutPoint": true,
+    "mediaHashesUnchanged": true,
+    "completeKeyboardComparisonSetup": "not completed; native Go to Folder interaction became unreliable",
+    "distinctFrameNativeReviewNavigation": "not exercised",
+    "structuredReviewKeyboardTraversal": "not exercised",
+    "fullKeyboardAccess": "not exercised",
+    "spokenVoiceOver": "not exercised"
+  },
+  "validation": {
+    "passedTests": 31,
+    "failedTests": 0,
+    "skippedTests": 0,
+    "runtimeWarnings": 0,
+    "testResultBundle": "/tmp/aagedal-phase126-final.xcresult",
+    "testLogSHA256": "f402f21f8bb4ada0730439b487011de1fab8c3876ad1a538bc46e5e0e161f45d",
+    "releaseStaticAnalysis": "passed",
+    "analysisLogSHA256": "45f37b572397132fd330000931a41eb80f04282a60e0aa8011a3e3a065fc46b6"
+  },
+  "artifacts": {
+    "test-summary.json": "30beb0d049b09a6d6d6d03b73423f722562f0f946ebd18f1b638d0bcbcaf4140",
+    "fixture-manifest.json": "3d885472c7de23638a80c4848ee56b814b4f5852d40062fd8539278cbcd2118c"
+  }
+}

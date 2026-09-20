@@ -1,0 +1,16 @@
+{
+  "baseCommit": "2f4aaedb02c79b75a8692dede1a807bff57249cc",
+  "fixtureDescription": "Byte-identical copies of Phase 125 generated H.264 640x360 24 fps ten-second sources; no review sidecar copied.",
+  "sources": {
+    "source-b.mp4": {
+      "path": "/private/tmp/aagedal-phase126-keyboard/source-b.mp4",
+      "sha256": "a28e13152fafc046692acf65585924fca50d90b9d527b7447c014394128710c8",
+      "bytes": 928128
+    },
+    "source-a.mp4": {
+      "path": "/private/tmp/aagedal-phase126-keyboard/source-a.mp4",
+      "sha256": "a28e13152fafc046692acf65585924fca50d90b9d527b7447c014394128710c8",
+      "bytes": 928128
+    }
+  }
+}
