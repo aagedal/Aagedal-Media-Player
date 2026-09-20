@@ -1,0 +1,48 @@
+{
+  "baseCommit": "eee635e56fcd681800e4fff8c5c05e9870849bee",
+  "sourceSHA256": {
+    "Aagedal Media Player Tests/CompareReviewTimebaseMigrationControllerTests.swift": "b96b376e2f6e72f202afb24278dbb82e7865bfe023cc1e8492a4b65cf4c84f85",
+    "Aagedal Media Player/Aagedal_Media_PlayerApp.swift": "576be729f0d0a76465b92cb1b827a5894d191be81fbf5a844848d55c542444e9",
+    "Aagedal Media Player/ContentView.swift": "6c987742636164233c9b4792817c120cc9403de848f08a5a20779f9ec3277d16",
+    "Aagedal Media Player/Logic/AppCommand.swift": "ed5cf0df8030550b370573f8deb529fab0a28ab13cee077b16feca9815a78402",
+    "Aagedal Media Player/Logic/CompareSessionController.swift": "87774fad7f966d7bf62efb28e1f30c2d25d9403747a9d745f9c24f8197b4c096",
+    "Aagedal Media Player/UI/CompareReviewView.swift": "9e4fa96c0bd7519aafdf375796e5b7ee1cd6263ff339230276d840534324abf4",
+    "Aagedal Media Player/UI/ContentViewCommandHandlers.swift": "d7a1ac13690786b863d2620e119f4e25ffd8f7e9e7f68cd4b7dc6bfd754a7705"
+  },
+  "nativeAppPath": "/tmp/aagedal-phase125-build/Build/Products/Release/Aagedal Media Player.app",
+  "nativeAppExecutableSHA256": "4337a20f201237bf96379c1e730e0dfe583b1bb07a6e2ad103f515e37b0e4977",
+  "checks": {
+    "unsubmittedDraftSavedBeforeExport": true,
+    "filteredExportIncludesBothNotes": true,
+    "closedReviewExportIncludesBothNotes": true,
+    "allThreeCSVsByteIdentical": true,
+    "mediaHashesUnchanged": true,
+    "cancelDidNotCreateDefaultOutput": true,
+    "finalRebuildDraftSavedBeforeExport": true,
+    "finalRebuildClosedReviewSavePanelAndCancelReopen": true
+  },
+  "artifacts": {
+    "final-saved-review.json": "0e5a5b6d63dc9da076f6e3d659d6ff554524c0615de0bbbf110989333a186c1e",
+    "final-rebuild.csv": "e2dbfe5fa894ad4285a42bee4fb48bf26f2f647cb4da5f917903667622f02848",
+    "closed-review.csv": "f7e1461fa52c2263a3ab92d59dfd042cfd48c6c5b924171c6c2f7ab145d090a6",
+    "filtered-review.csv": "f7e1461fa52c2263a3ab92d59dfd042cfd48c6c5b924171c6c2f7ab145d090a6",
+    "final-before-shortcut.json": "e185f2c8bc81a1638c7bfbc23846e5c5ed9a2177178035c23b08bbf8628c153d",
+    "test-summary.json": "0ea8c02417cf4ebff48634a1a395f0f5e12d716b9fe3c9595f59e03fe33d89b3",
+    "unsubmitted-edit.csv": "f7e1461fa52c2263a3ab92d59dfd042cfd48c6c5b924171c6c2f7ab145d090a6",
+    "saved-review.json": "e185f2c8bc81a1638c7bfbc23846e5c5ed9a2177178035c23b08bbf8628c153d",
+    "before-shortcut.json": "caa345bcaea050ea41de5078fa91b32c2b8eea6ffc92a763f057363d1cec1110",
+    "fixture-manifest.json": "dd89c906ab133cfbd7afc32d71c7fba5fac7266a5ec2e467ce54c3f541b2881b"
+  },
+  "validation": {
+    "passedTests": 61,
+    "failedTests": 0,
+    "skippedTests": 0,
+    "runtimeWarnings": 0,
+    "testResultBundle": "/tmp/aagedal-phase125-verified.xcresult",
+    "testLogSHA256": "3bea12660745f22d6b0c085bf4143a1a498bc6ecefe2840886ae8ecc2f4dc7c6",
+    "testSummarySHA256": "0ea8c02417cf4ebff48634a1a395f0f5e12d716b9fe3c9595f59e03fe33d89b3",
+    "releaseStaticAnalysis": "passed",
+    "analysisLogSHA256": "b8856084e99c15e7cab62c57a914962bd8f8ce42243a4be0fc73d64375dc82c6"
+  },
+  "finalTestAppExecutableSHA256": "06f86179d49e319db8511ab0182b9ba9909abf8d9d39349611dacec9db056bff"
+}

@@ -64,6 +64,8 @@ final class CompareReviewTimebaseMigrationControllerTests: XCTestCase {
             let (session, primary) = await makeSession(f, store: store)
             defer { session.stop(); primary.teardown() }
             session.updateReviewNote(id: f.document.notes[0].id, text: "Pending field draft")
+            XCTAssertTrue(session.canRequestReviewExport,
+                          "The export command must remain available to flush a pending save")
             var actionStarted = false
             let action = session.performReviewActionAfterSaving(primary: primary) { session, _ in
                 actionStarted = true
@@ -73,6 +75,8 @@ final class CompareReviewTimebaseMigrationControllerTests: XCTestCase {
             await assertEventuallyAsync { await store.noteSaveStarted }
             XCTAssertFalse(actionStarted)
             XCTAssertTrue(session.isReviewActionPending)
+            XCTAssertFalse(session.canRequestReviewExport,
+                           "A second export must not enter while the first action waits for persistence")
             XCTAssertFalse(session.canEditReviewNotes)
             session.updateReviewNote(id: f.document.notes[0].id, text: "Must not replace the flushed draft")
             XCTAssertEqual(session.reviewNotes[0].text, "Pending field draft")

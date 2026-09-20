@@ -323,6 +323,9 @@ For stereo or 5.1 stored as separate mono tracks, **Programme Loudness** measure
 | Cmd + I | Toggle inspector |
 | Cmd + Shift + W | Toggle video scopes |
 | Cmd + Option + R | Toggle Comparison Review |
+| Cmd + Option + N | Focus new review note |
+| Cmd + Option + F | Focus review filter |
+| Cmd + Option + E | Export all review notes as CSV |
 | Cmd + Option + [ | Go to previous matching review note |
 | Cmd + Option + ] | Go to next matching review note |
 | Cmd + Shift + S | Sync timecode across windows |

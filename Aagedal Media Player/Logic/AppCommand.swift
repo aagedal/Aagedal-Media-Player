@@ -40,6 +40,7 @@ enum AppCommand {
     case toggleAudioWaveform
     case toggleLiveAudioMeter
     case toggleCompareReview
+    case exportCompareReviewReport(CompareReviewReportFormat)
     case focusCompareReviewField(CompareReviewFocusTarget)
     case seekToCompareReviewNote(CompareReviewDirection)
 

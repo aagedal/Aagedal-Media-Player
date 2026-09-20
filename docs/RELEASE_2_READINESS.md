@@ -73,6 +73,13 @@ This refreshes regression evidence through Phase 123; external-input, native,
 editor, release-floor performance and distribution acceptance remain open.
 See [retained candidate evidence](evidence/release-candidate-20260920/README.md).
 
+Phase 125 adds app-menu access to every review export format and Cmd–Option–E
+for CSV. A focused native MPV/MPV keyboard check verifies unsubmitted note edits,
+filtered and closed-review exports, and cancel/reopen behavior; all three CSVs
+retain both findings. Full structured-control traversal, keyboard-only comparison
+setup, Full Keyboard Access, spoken VoiceOver and AVFoundation acceptance remain
+open. See [keyboard export evidence](evidence/review-keyboard-export-20260920/README.md).
+
 ## Must close before a defensible 2.0 candidate
 
 Phase 122 now rejects Final Cut XML exports for quarter-turn anamorphic source

@@ -26,6 +26,7 @@ struct ContentView: View {
     @State private var isPlaybackControlsFocused = false
     @State private var showReviewNotes = false
     @State private var compareReviewFocusTarget: CompareReviewFocusTarget?
+    @State private var compareReviewExportRequest: CompareReviewReportFormat?
     @State private var showComparisonControls = false
     @State private var deferredComparisonAction = DeferredMainActorTask()
     @State private var showCompareModeCallout = false
@@ -132,6 +133,7 @@ struct ContentView: View {
                 showInspector: $showInspector,
                 showReviewNotes: $showReviewNotes,
                 compareReviewFocusTarget: $compareReviewFocusTarget,
+                compareReviewExportRequest: $compareReviewExportRequest,
                 scopeWindowController: $scopeWindowController,
                 showScopeOverlay: $showScopeOverlay,
                 audioWaveformWindowController: $audioWaveformWindowController,
@@ -342,6 +344,7 @@ struct ContentView: View {
         .ignoresSafeArea(.container, edges: .vertical)
         .focusedSceneValue(\.isMediaLoaded, isMediaLoaded)
         .focusedSceneValue(\.isCompareModeActive, compareSession.isActive)
+        .focusedSceneValue(\.canExportCompareReview, compareSession.canRequestReviewExport)
         .focusedSceneValue(\.canOpenPreviousFile, windowCoordinator.canOpenPreviousFile)
         .focusedSceneValue(\.canOpenNextFile, windowCoordinator.canOpenNextFile)
         .frame(minWidth: 270, minHeight: 200)
@@ -665,7 +668,8 @@ struct ContentView: View {
                         primaryController: controller,
                         compareSession: compareSession,
                         timecodeMode: timecodeMode,
-                        requestedFocus: $compareReviewFocusTarget
+                        requestedFocus: $compareReviewFocusTarget,
+                        requestedExport: $compareReviewExportRequest
                     )
                 }
 

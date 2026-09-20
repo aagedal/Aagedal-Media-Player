@@ -1258,6 +1258,11 @@ final class CompareSessionController: ObservableObject {
         reviewExportState = .idle
     }
 
+    var canRequestReviewExport: Bool {
+        isActive && !reviewNotes.isEmpty && !isReviewLoading
+            && !isReviewRelinking && !isReviewActionPending && !reviewExportState.isInFlight
+    }
+
     func exportReviewReport(
         _ format: CompareReviewReportFormat,
         primary: PlayerController

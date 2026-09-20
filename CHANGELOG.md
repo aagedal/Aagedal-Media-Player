@@ -5,6 +5,7 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Added
+- Review → Export Review menu access to every report/marker format, plus Cmd–Option–E for CSV, with pending note edits saved before export.
 - Final Cut marker export guidance explaining native round-trip tab/line-break loss, textual ranges and grouped findings, backed by a second native import/export check.
 - An opt-in representative live-audio-meter profiler that retains exact input
   identity, production-backend and selected-stream provenance, paced source progress,

@@ -17,6 +17,7 @@ struct NotificationHandlers: ViewModifier {
     @Binding var showInspector: Bool
     @Binding var showReviewNotes: Bool
     @Binding var compareReviewFocusTarget: CompareReviewFocusTarget?
+    @Binding var compareReviewExportRequest: CompareReviewReportFormat?
     @Binding var scopeWindowController: ScopeWindowController?
     @Binding var showScopeOverlay: Bool
     @Binding var audioWaveformWindowController: AudioWaveformWindowController?
@@ -40,6 +41,7 @@ struct NotificationHandlers: ViewModifier {
                 showInspector: $showInspector,
                 showReviewNotes: $showReviewNotes,
                 compareReviewFocusTarget: $compareReviewFocusTarget,
+                compareReviewExportRequest: $compareReviewExportRequest,
                 scopeWindowController: $scopeWindowController,
                 showScopeOverlay: $showScopeOverlay,
                 audioWaveformWindowController: $audioWaveformWindowController,
@@ -74,6 +76,7 @@ private struct FileAndWindowHandlers: ViewModifier {
     @Binding var showInspector: Bool
     @Binding var showReviewNotes: Bool
     @Binding var compareReviewFocusTarget: CompareReviewFocusTarget?
+    @Binding var compareReviewExportRequest: CompareReviewReportFormat?
     @Binding var scopeWindowController: ScopeWindowController?
     @Binding var showScopeOverlay: Bool
     @Binding var audioWaveformWindowController: AudioWaveformWindowController?
@@ -137,6 +140,21 @@ private struct FileAndWindowHandlers: ViewModifier {
                 guard WindowManager.shared.isActiveWindow(nsWindow), compareSession.isActive else { return }
                 compareReviewFocusTarget = target
                 showReviewNotes = true
+            }
+            .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
+                guard let command = notification.appCommand,
+                      case let .exportCompareReviewReport(format) = command else { return }
+                guard WindowManager.shared.isActiveWindow(nsWindow),
+                      compareSession.canRequestReviewExport else { return }
+                if showReviewNotes {
+                    // The mounted review owns pending text drafts. Let it flush
+                    // those drafts through the same path as its Export menu.
+                    compareReviewExportRequest = format
+                } else {
+                    compareSession.performReviewActionAfterSaving(primary: controller) { session, primary in
+                        session.exportReviewReport(format, primary: primary)
+                    }
+                }
             }
             .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
                 guard let command = notification.appCommand,

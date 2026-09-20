@@ -1,0 +1,18 @@
+{
+  "baseCommit": "eee635e56fcd681800e4fff8c5c05e9870849bee",
+  "baselineAppSourceCommit": "f8d8d0ec870ccc84e8ce8c58c951f9c076f89e86",
+  "sourceKind": "generated engineering fixture; not representative-media acceptance",
+  "frameRate": "24/1",
+  "frameCount": 240,
+  "raster": "640x360",
+  "media": {
+    "source-b.mp4": {
+      "bytes": 928128,
+      "sha256": "a28e13152fafc046692acf65585924fca50d90b9d527b7447c014394128710c8"
+    },
+    "source-a.mp4": {
+      "bytes": 928128,
+      "sha256": "a28e13152fafc046692acf65585924fca50d90b9d527b7447c014394128710c8"
+    }
+  }
+}

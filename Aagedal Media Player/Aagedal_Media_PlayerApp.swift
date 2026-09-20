@@ -21,7 +21,16 @@ struct IsCompareModeActiveKey: FocusedValueKey {
     typealias Value = Bool
 }
 
+struct CanExportCompareReviewKey: FocusedValueKey {
+    typealias Value = Bool
+}
+
 extension FocusedValues {
+    var canExportCompareReview: Bool? {
+        get { self[CanExportCompareReviewKey.self] }
+        set { self[CanExportCompareReviewKey.self] = newValue }
+    }
+
     var isMediaLoaded: Bool? {
         get { self[IsMediaLoadedKey.self] }
         set { self[IsMediaLoadedKey.self] = newValue }
@@ -50,6 +59,7 @@ struct Aagedal_Media_PlayerApp: App {
     @FocusedValue(\.canOpenPreviousFile) private var canOpenPreviousFile
     @FocusedValue(\.canOpenNextFile) private var canOpenNextFile
     @FocusedValue(\.isCompareModeActive) private var isCompareModeActive
+    @FocusedValue(\.canExportCompareReview) private var canExportCompareReview
     @AppStorage(AppSettings.allowMultipleWindows.key)
     private var allowMultipleWindows = AppSettings.allowMultipleWindows.defaultValue
     @AppStorage(AppSettings.syncPlaybackControls.key)
@@ -278,6 +288,25 @@ struct Aagedal_Media_PlayerApp: App {
                 }
                 .keyboardShortcut("f", modifiers: [.command, .option])
                 .disabled(isCompareModeActive != true)
+
+                Divider()
+
+                Menu("Export Review") {
+                    Button("CSV Report…") {
+                        NotificationCenter.default.post(.exportCompareReviewReport(.csv))
+                    }
+                    .keyboardShortcut("e", modifiers: [.command, .option])
+                    Button("PDF Report…") {
+                        NotificationCenter.default.post(.exportCompareReviewReport(.pdf))
+                    }
+                    Divider()
+                    ForEach([CompareReviewReportFormat.resolveMarkersEDL, .finalCutProXML, .avidMarkersText], id: \.self) { format in
+                        Button("\(format.label)…") {
+                            NotificationCenter.default.post(.exportCompareReviewReport(format))
+                        }
+                    }
+                }
+                .disabled(canExportCompareReview != true)
 
                 Divider()
 

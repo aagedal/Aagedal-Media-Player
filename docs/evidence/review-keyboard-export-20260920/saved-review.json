@@ -1,0 +1,53 @@
+{
+  "notes" : [
+    {
+      "category" : "general",
+      "createdAt" : 1789938501523.1362,
+      "id" : "FE2AF198-5BEB-45AF-8DA9-CE2BD9797FF4",
+      "primaryFrame" : 0,
+      "primaryRateDenominator" : 1,
+      "primaryRateNumerator" : 24,
+      "primaryTime" : 0,
+      "secondaryFrame" : 0,
+      "secondaryRateDenominator" : 1,
+      "secondaryRateNumerator" : 24,
+      "secondaryTime" : 0,
+      "severity" : "info",
+      "status" : "open",
+      "text" : "Unsubmitted edit exported by keyboard",
+      "updatedAt" : 1789939124196.5862
+    },
+    {
+      "category" : "general",
+      "createdAt" : 1789939100523.9219,
+      "id" : "985A774C-E2F3-494F-89B8-CFB5A4E20398",
+      "primaryFrame" : 0,
+      "primaryRateDenominator" : 1,
+      "primaryRateNumerator" : 24,
+      "primaryTime" : 0,
+      "secondaryFrame" : 0,
+      "secondaryRateDenominator" : 1,
+      "secondaryRateNumerator" : 24,
+      "secondaryTime" : 0,
+      "severity" : "info",
+      "status" : "open",
+      "text" : "Second keyboard finding",
+      "updatedAt" : 1789939100523.9219
+    }
+  ],
+  "primarySource" : {
+    "canonicalPath" : "\/tmp\/aagedal-phase125-keyboard\/source-a.mp4",
+    "fileNumber" : 75976237,
+    "fileSize" : 928128,
+    "fileSystemNumber" : 16777231,
+    "modificationDate" : 1789938219202
+  },
+  "schemaVersion" : 2,
+  "secondarySource" : {
+    "canonicalPath" : "\/tmp\/aagedal-phase125-keyboard\/source-b.mp4",
+    "fileNumber" : 75976238,
+    "fileSize" : 928128,
+    "fileSystemNumber" : 16777231,
+    "modificationDate" : 1789938219208
+  }
+}

@@ -263,6 +263,13 @@ guarantee that an edit still awaiting its write has reached disk. Atomic
 replacement protects file integrity, not cross-process conflict resolution or
 unsaved edits.
 
+**Review → Export Review** exposes CSV, PDF and all three editor formats in
+the app menu. **Cmd–Option–E** opens the CSV save panel, including when the
+review popover is closed. Export always includes notes hidden by the filter.
+The command is disabled without findings or while loading, relinking, saving
+for another action, or exporting. Existing note-text drafts are committed
+before export; text in the new-note field must first be added with Return.
+
 Notes/Export actions first commit pending note-text fields and wait for their
 saves. Editing is disabled during this transition, including if the popover is
 closed and reopened. Failed edits and deletions remain tracked in the current

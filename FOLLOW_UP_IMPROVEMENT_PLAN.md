@@ -2933,6 +2933,27 @@ This closes the current optimized regression repeat through Phase 123, not
 the skipped external-input gates or native/editor/distribution acceptance.
 Release execution still requires verification of its final exact clean commit.
 
+## Phase 125 — Keyboard review export and pending-draft preservation
+
+Status: Implemented; focused native MPV/MPV CSV acceptance passed on 2026-09-20.
+
+- [x] Expose all existing report formats through Review → Export Review and
+  add Cmd–Option–E for CSV under ordinary keyboard settings.
+- [x] Share export availability between menus and route only to the active
+  player; save open-review text drafts before taking the export snapshot.
+- [x] Consume requests once, clear them on dismissal/source changes, and retain
+  the existing failed-save and source-replacement action barriers.
+- [x] Verify native unsubmitted-edit, filtered and closed-review exports;
+  all three CSVs contain both findings and are byte-identical. Cancel/reopen
+  does not replay export; source media hashes are unchanged.
+- [x] Pass 61 focused optimized Release tests without skips/failures/runtime
+  warnings and Release static analysis; repeat unsubmitted-draft export and
+  closed-review cancellation in the final tested native rebuild.
+
+See [retained native evidence](docs/evidence/review-keyboard-export-20260920/README.md).
+This focused result does not complete structured-control traversal, keyboard-only
+comparison setup, Full Keyboard Access, spoken VoiceOver or both-backend acceptance.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -3238,3 +3259,5 @@ Release execution still requires verification of its final exact clean commit.
 115. Phase 123 native Final Cut whitespace re-import diagnosis and export disclosure.
 
 116. Phase 124 current optimized candidate verification.
+
+117. Phase 125 keyboard review export and pending-draft preservation.

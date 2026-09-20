@@ -52,6 +52,7 @@ struct CompareReviewView: View {
     @ObservedObject var compareSession: CompareSessionController
     let timecodeMode: TimecodeDisplayMode
     @Binding var requestedFocus: CompareReviewFocusTarget?
+    @Binding var requestedExport: CompareReviewReportFormat?
 
     @State private var draft = ""
     @State private var noteDrafts: [UUID: String] = [:]
@@ -250,12 +251,7 @@ struct CompareReviewView: View {
                 .fixedSize()
                 .help("Export all review notes, including notes hidden by the filter")
                 .accessibilityIdentifier("compare-review-export-menu")
-                .disabled(
-                    compareSession.reviewNotes.isEmpty
-                        || compareSession.isReviewLoading
-                        || compareSession.isReviewRelinking
-                        || compareSession.reviewExportState.isInFlight
-                )
+                .disabled(!compareSession.canRequestReviewExport)
             }
 
             switch compareSession.reviewExportState {
@@ -297,14 +293,23 @@ struct CompareReviewView: View {
         .onAppear {
             focusedField = requestedFocus ?? .newNote
             requestedFocus = nil
+            consumeExportRequest()
         }
+        .onChange(of: requestedExport) { _, _ in consumeExportRequest() }
         .onChange(of: requestedFocus) { _, target in
             guard let target else { return }
             focusedField = target
             requestedFocus = nil
         }
-        .onChange(of: compareSession.reviewSidecarURL) { _, _ in noteDrafts.removeAll() }
-        .onChange(of: primaryController.preparationID) { _, _ in noteDrafts.removeAll() }
+        .onDisappear { requestedExport = nil }
+        .onChange(of: compareSession.reviewSidecarURL) { _, _ in
+            noteDrafts.removeAll()
+            requestedExport = nil
+        }
+        .onChange(of: primaryController.preparationID) { _, _ in
+            noteDrafts.removeAll()
+            requestedExport = nil
+        }
     }
 
     private func noteRow(_ note: CompareReviewNote) -> some View {
@@ -340,6 +345,13 @@ struct CompareReviewView: View {
                 compareSession.seekToReviewRangeEnd(note, primary: primaryController)
             }
         )
+    }
+
+    private func consumeExportRequest() {
+        guard let format = requestedExport else { return }
+        requestedExport = nil
+        guard compareSession.canRequestReviewExport else { return }
+        performReviewAction { $0.exportReviewReport(format, primary: $1) }
     }
 
     private func performReviewAction(
