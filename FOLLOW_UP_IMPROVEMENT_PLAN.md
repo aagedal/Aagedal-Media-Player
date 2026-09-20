@@ -2914,6 +2914,25 @@ Status: Native second-generation round trip confirms formatting loss on
 
 See [native whitespace evidence](docs/evidence/fcp-whitespace-reimport-20260920/README.md).
 
+## Phase 124 — Current optimized candidate verification
+
+Status: Canonical clean-checkout verifier passed on 2026-09-20 at
+`f8d8d0ec870ccc84e8ce8c58c951f9c076f89e86`.
+
+- [x] Run self-contained script validators and fresh optimized Release tests
+  against the exact source and pinned, validated package cache.
+- [x] Validate all 698 aggregate outcomes: 690 passed and eight explicit
+  allowlisted skips, with zero failures or runtime warnings.
+- [x] Pass both mixed-backend transport directions in the separate serial run.
+- [x] Pass Release static analysis and all 61 source-tree release-preflight checks.
+- [x] Revalidate unchanged HEAD, package hash, package checkouts and clean source
+  state before recording success; retain compact evidence in the repository.
+
+See [candidate evidence](docs/evidence/release-candidate-20260920/README.md).
+This closes the current optimized regression repeat through Phase 123, not
+the skipped external-input gates or native/editor/distribution acceptance.
+Release execution still requires verification of its final exact clean commit.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -3217,3 +3236,5 @@ See [native whitespace evidence](docs/evidence/fcp-whitespace-reimport-20260920/
 114. Phase 122 Final Cut rotated anamorphic export restriction.
 
 115. Phase 123 native Final Cut whitespace re-import diagnosis and export disclosure.
+
+116. Phase 124 current optimized candidate verification.

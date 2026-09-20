@@ -64,6 +64,15 @@ browser Notes column and subsequent XML. All eight findings, timing and media
 bytes survive. The export save panel now discloses this limitation; exact
 whitespace acceptance remains open. See [second-generation native evidence](evidence/fcp-whitespace-reimport-20260920/README.md).
 
+Phase 124 passes the canonical clean-checkout verifier at
+`f8d8d0ec870ccc84e8ce8c58c951f9c076f89e86`: 690 optimized Release tests pass
+with eight explicit allowlisted skips (698 total), both isolated mixed-backend
+transport tests pass, Release static analysis succeeds, and all 61 source-tree
+preflight checks pass. Final source and pinned-package identities are unchanged.
+This refreshes regression evidence through Phase 123; external-input, native,
+editor, release-floor performance and distribution acceptance remain open.
+See [retained candidate evidence](evidence/release-candidate-20260920/README.md).
+
 ## Must close before a defensible 2.0 candidate
 
 Phase 122 now rejects Final Cut XML exports for quarter-turn anamorphic source

@@ -1,0 +1,139 @@
+==> Script syntax
+==> scripts/test-audio-loudness-profile-validation.py
+.....
+----------------------------------------------------------------------
+Ran 5 tests in 0.000s
+
+OK
+==> scripts/test-candidate-package-cache-validation.py
+....
+----------------------------------------------------------------------
+Ran 4 tests in 0.500s
+
+OK
+==> scripts/test-fcp-marker-roundtrip.py
+.................
+----------------------------------------------------------------------
+Ran 17 tests in 0.385s
+
+OK
+==> scripts/test-github-release-asset-validation.py
+.....
+----------------------------------------------------------------------
+Ran 5 tests in 0.000s
+
+OK
+==> scripts/test-homebrew-cask-update.py
+....
+----------------------------------------------------------------------
+Ran 4 tests in 0.000s
+
+OK
+==> scripts/test-itu-programme-lra-reference.py
+.........
+----------------------------------------------------------------------
+Ran 9 tests in 3.378s
+
+OK
+==> scripts/test-itu-programme-true-peak-reference.py
+...........
+----------------------------------------------------------------------
+Ran 11 tests in 0.402s
+
+OK
+==> scripts/test-live-audio-meter-profile-validation.py
+.......
+----------------------------------------------------------------------
+Ran 7 tests in 0.022s
+
+OK
+==> scripts/test-metadata-candidate-validation.py
+.usage: test-metadata-candidate-validation.py [-h]
+test-metadata-candidate-validation.py: error: --expected-candidate-sha must be a full lowercase 40-character commit SHA
+..usage: test-metadata-candidate-validation.py [-h]
+test-metadata-candidate-validation.py: error: candidate mismatch
+......usage: test-metadata-candidate-validation.py [-h]
+test-metadata-candidate-validation.py: error: --candidate-checkout and --expected-candidate-sha must be supplied together
+usage: test-metadata-candidate-validation.py [-h]
+test-metadata-candidate-validation.py: error: --candidate-checkout and --expected-candidate-sha must be supplied together
+.
+----------------------------------------------------------------------
+Ran 10 tests in 0.004s
+
+OK
+==> scripts/test-metadata-cli-validation.py
+..........
+----------------------------------------------------------------------
+Ran 10 tests in 0.000s
+
+OK
+==> scripts/test-metadata-jxl-diagnostic.py
+....
+----------------------------------------------------------------------
+Ran 4 tests in 0.000s
+
+OK
+==> scripts/test-metadata-library-fixture-validation.py
+........
+----------------------------------------------------------------------
+Ran 8 tests in 0.001s
+
+OK
+==> scripts/test-metadata-memory-profile-validation.py
+........
+----------------------------------------------------------------------
+Ran 8 tests in 0.205s
+
+OK
+==> scripts/test-production-metadata-memory-profile-validation.py
+.....
+----------------------------------------------------------------------
+Ran 5 tests in 0.000s
+
+OK
+==> scripts/test-programme-loudness-profile-validation.py
+.....
+----------------------------------------------------------------------
+Ran 5 tests in 0.000s
+
+OK
+==> scripts/test-programme-profile-power.py
+..
+----------------------------------------------------------------------
+Ran 2 tests in 0.007s
+
+OK
+==> scripts/test-quadrant-render.py
+..........
+----------------------------------------------------------------------
+Ran 10 tests in 1.212s
+
+OK
+==> scripts/test-release-script-validation.py
+..........
+----------------------------------------------------------------------
+Ran 10 tests in 0.178s
+
+OK
+==> scripts/test-release-xcresult-validation.py
+..............
+----------------------------------------------------------------------
+Ran 14 tests in 0.005s
+
+OK
+==> scripts/test-resolve-marker-roundtrip.py
+..................
+----------------------------------------------------------------------
+Ran 18 tests in 0.484s
+
+OK
+==> scripts/test_native_review_disk_full.py
+.................
+----------------------------------------------------------------------
+Ran 17 tests in 0.004s
+
+OK
+==> scripts/test-compare-profile-validation.sh
+PASS: profile metric validation (complete, missing, duplicate, unexpected, malformed, skipped, empty)
+PASS: reflection option and fixture reuse validation (matching, mismatched, legacy, invalid)
+==> Script-validator self-tests passed
