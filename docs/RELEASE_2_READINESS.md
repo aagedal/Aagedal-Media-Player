@@ -1,6 +1,6 @@
 # 2.0 release readiness
 
-Assessment updated: 2026-09-19. This is a prioritization of the existing
+Assessment updated: 2026-09-20. This is a prioritization of the existing
 [product roadmap](../PRODUCT_ROADMAP.md), not a change to its committed scope.
 It is based on the repository's plans and retained verification reports,
 including the September 12 meter foundation and programme-loudness follow-up.
@@ -57,6 +57,12 @@ one-frame duration overstatement and verifies a fresh native import/re-export:
 14,625 frames, 160 × 90, exact 23.976 timing and all eight findings survive.
 Final Cut's parsed note whitespace still differs. This focused result leaves
 the broader editor matrix open; see [native duration evidence](evidence/fcp-native-duration-23976-20260919/README.md).
+
+Phase 123 confirms that the remaining Final Cut whitespace difference causes
+actual formatting loss on native re-import: tabs/newlines become spaces in the
+browser Notes column and subsequent XML. All eight findings, timing and media
+bytes survive. The export save panel now discloses this limitation; exact
+whitespace acceptance remains open. See [second-generation native evidence](evidence/fcp-whitespace-reimport-20260920/README.md).
 
 ## Must close before a defensible 2.0 candidate
 

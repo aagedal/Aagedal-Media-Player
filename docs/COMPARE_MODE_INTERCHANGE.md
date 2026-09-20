@@ -545,3 +545,15 @@ all reproduce 813 × 1444 content inside 1080 × 1920; orientation/aspect pass,
 Fit fails. Browser findings, timing and source bytes remain intact; asset PAR
 still differs. This closes the fresh-UI render-repeat task while leaving the
 conform defect and geometry acceptance open. See [measured production UI render](evidence/fcp-production-ui-render-20260919/README.md).
+
+### Native Final Cut whitespace re-import — Phase 123
+
+Final Cut Pro 12.3 retains original tabs/newlines on first import, but re-import
+of its own XML converts them into spaces in native Notes, including the blank
+line between grouped findings. A second native export retains those spaces;
+this is real round-trip formatting loss, not merely a parser display issue.
+All eight findings, seven anchors, exact timing/raster/duration and source bytes
+survive. The app now explains the limitation in its save panel and recommends
+CSV/PDF for retaining note formatting. Strict exact-content comparison still
+fails; no lossless round-trip claim is made. See the
+[retained native evidence](evidence/fcp-whitespace-reimport-20260920/README.md).

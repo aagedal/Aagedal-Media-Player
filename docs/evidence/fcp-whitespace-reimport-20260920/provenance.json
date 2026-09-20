@@ -1,0 +1,32 @@
+{
+  "date": "2026-09-20",
+  "sourceCommit": "08e098e4b0dd53f13adbd8ace725d1448c5204f6",
+  "editorVersion": "Final Cut Pro 12.3",
+  "exportVersion": "1.14",
+  "library": "/private/tmp/aagedal-resolve-5994-20260919/Aagedal FCP Whitespace Phase 123.fcpbundle",
+  "nativeExport": "/private/tmp/aagedal-phase123-second-generation.fcpxmld/Info.fcpxml",
+  "inputManifest": "docs/evidence/fcp-markers-23976-20260919/fixture-manifest.json",
+  "fixtureInputs": {
+    "resolve-unique.aagedal-compare.json": {
+      "sha256": "d7c5165852cae6c13d99a2b576cb406761cfce4cf5edc2487408f2687c6e09f4",
+      "matchesOriginalManifest": true
+    },
+    "source-a vs source-b-1f0efdaae76ac31b.aagedal-compare.json": {
+      "sha256": "50ec44de83e4fcc8c2d6ffd05fd43117d07f1b40336389e93b60caf3903b8afa",
+      "matchesOriginalManifest": true
+    },
+    "source-a.mov": {
+      "sha256": "3d0f9cd5b562a0100e2e746837c1a08cd25ce69aa26203e196ed6376ac7dfca8",
+      "matchesOriginalManifest": true
+    },
+    "source-b.mov": {
+      "sha256": "3d0f9cd5b562a0100e2e746837c1a08cd25ce69aa26203e196ed6376ac7dfca8",
+      "matchesOriginalManifest": true
+    }
+  },
+  "evidenceSHA256": {
+    "docs/evidence/fcp-native-duration-23976-20260919/original.fcpxml": "a5022945fdd7c875fd5ac26ce3f21c4d8f1176581fe637faf5cf994d68810ce0",
+    "docs/evidence/fcp-native-duration-23976-20260919/returned.fcpxml": "7a4b9859b13fa7f5ffd0cf1e870c4e8bcff882242db42f0952d15eb00f9af025",
+    "docs/evidence/fcp-whitespace-reimport-20260920/second-generation.fcpxml": "b1e333c3078087b59b352655def0cb99e9cfbd952b0e1bbd0590f91721c9294c"
+  }
+}

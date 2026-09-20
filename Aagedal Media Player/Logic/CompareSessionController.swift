@@ -1300,6 +1300,9 @@ final class CompareSessionController: ObservableObject {
         )
         panel.canCreateDirectories = true
         panel.directoryURL = primaryItem.url.deletingLastPathComponent()
+        if format == .finalCutProXML {
+            panel.message = "Final Cut Pro can replace tabs and line breaks with spaces when markers are exported and re-imported. Keep a CSV or PDF report if note formatting matters. Ranges are included in marker text; findings at the same frame share a labelled marker."
+        }
 
         panel.begin { [weak self] response in
             Task { @MainActor [weak self] in

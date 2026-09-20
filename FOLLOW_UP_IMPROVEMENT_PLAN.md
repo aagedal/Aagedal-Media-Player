@@ -2889,6 +2889,31 @@ exposed missing video metadata in a new test helper invocation; correcting that
 fixture setup produced the final passing run. No native UI/editor repeat,
 whole-suite run or release-floor acceptance is claimed for this guard.
 
+## Phase 123 — Native Final Cut whitespace re-import diagnosis
+
+Status: Native second-generation round trip confirms formatting loss on
+2026-09-20; export disclosure and retained-evidence regression implemented.
+
+- [x] Inspect the original native import: tabs, newlines and grouped finding
+  separation remain intact in Final Cut Pro 12.3's browser Notes column.
+- [x] Re-import its unmodified XML into a new isolated library. Verify that
+  native notes now replace those characters with spaces; retain another native
+  XML export proving the spaces persist in the serialized marker attributes.
+- [x] Compare both generations: original-to-second fails only exact note
+  whitespace; first-to-second matches parsed content. Verify source media bytes
+  and all four original fixture hashes remain unchanged.
+- [x] Explain the limitation in the Final Cut export save panel with CSV/PDF
+  guidance, textual ranges and same-frame grouping. Preserve correct XML
+  escaping and strict comparator failure for formatting loss.
+- [x] Add a regression against the retained native second-generation export;
+  all 17 focused Python comparator tests and the full script-validator suite
+  pass. The Debug app build succeeds. The save-panel copy is compile-verified;
+  native player-panel and spoken accessibility checks remain separate.
+- [ ] Resolve exact native whitespace round trips before claiming lossless
+  editor interchange; broader editor and geometry acceptance remains open.
+
+See [native whitespace evidence](docs/evidence/fcp-whitespace-reimport-20260920/README.md).
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -3190,3 +3215,5 @@ whole-suite run or release-floor acceptance is claimed for this guard.
 113. Phase 121 fresh production UI native rendered geometry.
 
 114. Phase 122 Final Cut rotated anamorphic export restriction.
+
+115. Phase 123 native Final Cut whitespace re-import diagnosis and export disclosure.

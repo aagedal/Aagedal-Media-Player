@@ -15,6 +15,26 @@ EVIDENCE = Path(__file__).resolve().parents[1] / "docs/evidence/fcp-raster-marke
 
 
 class RoundTripTests(unittest.TestCase):
+    def test_native_second_import_permanently_flattens_note_whitespace(self):
+        evidence = EVIDENCE.parent / "fcp-whitespace-reimport-20260920"
+        first = EVIDENCE.parent / "fcp-native-duration-23976-20260919"
+        second = evidence / "second-generation.fcpxml"
+        original = fcp.compare(first / "original.fcpxml", second)
+        self.assertEqual({key for key, ok in original["checks"].items() if not ok},
+                         {"exactMarkerContent"})
+        self.assertTrue(original["contentMatchesAfterAttributeWhitespaceNormalization"])
+        self.assertEqual(len(original["returned"]["markers"]), 7)
+        self.assertEqual(fcp.compare(first / "returned.fcpxml", second)["status"],
+                         "exact-match")
+        # The second native export contains spaces, not merely literal XML
+        # attribute whitespace that a standards-compliant parser normalizes.
+        raw = second.read_text()
+        self.assertNotIn('quoted&quot;\tcolumn', raw)
+        self.assertIn('quoted&quot; column Second line', raw)
+        for marker in original["returned"]["markers"]:
+            self.assertNotIn("\t", marker[3])
+            self.assertNotIn("\n", marker[3])
+
     def test_fresh_player_ui_export_retains_native_asset_par_failure(self):
         evidence = EVIDENCE.parent / "fcp-production-ui-anamorphic-20260919"
         result = fcp.compare(evidence / "original.fcpxml", evidence / "returned.fcpxml")
