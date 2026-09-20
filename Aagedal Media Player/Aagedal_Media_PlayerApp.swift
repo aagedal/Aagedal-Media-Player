@@ -319,13 +319,13 @@ struct Aagedal_Media_PlayerApp: App {
                 Button("Previous Review Note") {
                     NotificationCenter.default.post(.seekToCompareReviewNote(.previous))
                 }
-                .keyboardShortcut("[", modifiers: [.command, .option])
+                .keyboardShortcut(.leftArrow, modifiers: [.command, .control])
                 .disabled(isCompareModeActive != true)
 
                 Button("Next Review Note") {
                     NotificationCenter.default.post(.seekToCompareReviewNote(.next))
                 }
-                .keyboardShortcut("]", modifiers: [.command, .option])
+                .keyboardShortcut(.rightArrow, modifiers: [.command, .control])
                 .disabled(isCompareModeActive != true)
             }
         }

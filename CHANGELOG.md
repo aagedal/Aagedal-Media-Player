@@ -125,6 +125,7 @@ All notable changes to Aagedal Media Player.
   primary-file loop boundaries across all backend combinations.
 
 ### Fixed
+- Review-note navigation now uses layout-independent Cmd–Control–Left/Right, with the local playback key monitor allowing these menu shortcuts through instead of stepping a frame.
 - Trim I/O/X shortcuts now leave Command/Control combinations to menu handling, preventing Cmd–Option–O from clearing the Out point instead of opening comparison setup.
 - Final Cut Pro marker export now rejects source A combining quarter-turn rotation
   and non-square pixels, with a CSV/PDF fallback, because native Final Cut rendering

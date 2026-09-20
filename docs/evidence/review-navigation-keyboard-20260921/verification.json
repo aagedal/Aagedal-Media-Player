@@ -1,0 +1,55 @@
+{
+  "baseCommit": "8993bd4d2723702c68cc978eea3767ac1673c9e5",
+  "sources": {
+    "source-b.mp4": {
+      "path": "/private/tmp/aagedal-phase127-keyboard/source-b.mp4",
+      "sha256": "a28e13152fafc046692acf65585924fca50d90b9d527b7447c014394128710c8",
+      "bytes": 928128
+    },
+    "source-a.mp4": {
+      "path": "/private/tmp/aagedal-phase127-keyboard/source-a.mp4",
+      "sha256": "a28e13152fafc046692acf65585924fca50d90b9d527b7447c014394128710c8",
+      "bytes": 928128
+    }
+  },
+  "date": "2026-09-21",
+  "evidenceScope": "Working-tree optimized Release build; not a clean-candidate verification",
+  "nativeAppPath": "/private/tmp/aagedal-phase125-build/Build/Products/Release/Aagedal Media Player.app",
+  "nativeAppExecutableSHA256": "5bcb5c1e55fe27252c171152f5b0346bb08ea98d5e9bafd5e653c434cbeca774",
+  "sourceSHA256": {
+    "Aagedal Media Player/Aagedal_Media_PlayerApp.swift": "02d95b2641b74578c9c3a1528e915acda5c094403af0a1ad027762beec6478c5",
+    "Aagedal Media Player/UI/PlayerView.swift": "286ccf65c344fa14551a17ef78a199fe8f3c27d49a10c7c45d0aea10a2cdd564"
+  },
+  "checks": {
+    "nextFrom0To10": true,
+    "nextAtLastNoteDoesNotWrapOrStep": true,
+    "previousFrom10To0": true,
+    "previousAtFirstNoteDoesNotWrap": true,
+    "duplicateFrameNotesSkipped": true,
+    "filteredNavigationFromFocusedFilterField": true,
+    "ordinaryArrowFrameSteps10To11To10": true,
+    "sidecarAndCSVWitnessesMatch": true,
+    "allOriginalNotesUnchanged": true,
+    "sourceMediaUnchanged": true,
+    "fullKeyboardAccess": "not exercised",
+    "spokenVoiceOver": "not exercised",
+    "AVFoundation": "not exercised"
+  },
+  "validation": {
+    "passedTests": 31,
+    "skippedTests": 0,
+    "failedTests": 0,
+    "runtimeWarnings": 0,
+    "testResultBundle": "/tmp/aagedal-phase128.xcresult",
+    "testLogSHA256": "e9d9f6cc3d4871c314b7bb15c06449fd3ed5f89a8a3a2f92781912e21ca045a7",
+    "releaseStaticAnalysis": "passed",
+    "analysisLogSHA256": "9a1a617940e4ca4acdf35100815d8ce1567a235d77c273f525a89e03111e6fd6"
+  },
+  "artifacts": {
+    "before.json": "c7b2c25d6c7cd634699d1cd94198b82b0ce4877fc5aa21df044d1d4815c18a73",
+    "review-after.json": "d1505cccecae3b3eef8f392df3a71e45121a90ea34d1404172e847a5104e1ce8",
+    "review-before.json": "afc8ae7e7d2114e9d735b9d8cede769eab3377ae1ea355267827b915d9ae7c71",
+    "test-summary.json": "420d508d28d79864d4988f18f13269f3275d3c1b2d99a079174a853581a9b23e",
+    "review.csv": "60ef073df3817ac9a2a998d58aeaa6946a8d39a084473e696092f374c3e837c5"
+  }
+}

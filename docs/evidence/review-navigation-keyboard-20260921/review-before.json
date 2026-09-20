@@ -1,0 +1,70 @@
+{
+  "notes" : [
+    {
+      "category" : "general",
+      "createdAt" : 1789941999811.2131,
+      "id" : "0A589B0E-6B61-4409-A0A8-8E9963FD65C1",
+      "primaryFrame" : 0,
+      "primaryRateDenominator" : 1,
+      "primaryRateNumerator" : 24,
+      "primaryTime" : 0,
+      "secondaryFrame" : 0,
+      "secondaryRateDenominator" : 1,
+      "secondaryRateNumerator" : 24,
+      "secondaryTime" : 0,
+      "severity" : "info",
+      "status" : "open",
+      "text" : "Phase 127 frame zero",
+      "updatedAt" : 1789941999811.2131
+    },
+    {
+      "category" : "general",
+      "createdAt" : 1789942011352.7178,
+      "id" : "E7FC2C2D-BC2A-4AFA-B0E0-F9CB59793787",
+      "primaryFrame" : 10,
+      "primaryRateDenominator" : 1,
+      "primaryRateNumerator" : 24,
+      "primaryTime" : 0.4166666666666667,
+      "secondaryFrame" : 10,
+      "secondaryRateDenominator" : 1,
+      "secondaryRateNumerator" : 24,
+      "secondaryTime" : 0.4166666666666667,
+      "severity" : "info",
+      "status" : "open",
+      "text" : "Phase 127 frame ten",
+      "updatedAt" : 1789942011352.7178
+    },
+    {
+      "category" : "general",
+      "createdAt" : 1789942021469.389,
+      "id" : "3A295A9B-702D-4E6C-BB43-4D6B55A02CC0",
+      "primaryFrame" : 10,
+      "primaryRateDenominator" : 1,
+      "primaryRateNumerator" : 24,
+      "primaryTime" : 0.4166666666666667,
+      "secondaryFrame" : 10,
+      "secondaryRateDenominator" : 1,
+      "secondaryRateNumerator" : 24,
+      "secondaryTime" : 0.4166666666666667,
+      "severity" : "info",
+      "status" : "open",
+      "text" : "Previous shortcut destination",
+      "updatedAt" : 1789942021469.389
+    }
+  ],
+  "primarySource" : {
+    "canonicalPath" : "\/tmp\/aagedal-phase127-keyboard\/source-a.mp4",
+    "fileNumber" : 76084453,
+    "fileSize" : 928128,
+    "fileSystemNumber" : 16777231,
+    "modificationDate" : 1789941940789
+  },
+  "schemaVersion" : 2,
+  "secondarySource" : {
+    "canonicalPath" : "\/tmp\/aagedal-phase127-keyboard\/source-b.mp4",
+    "fileNumber" : 76084454,
+    "fileSize" : 928128,
+    "fileSystemNumber" : 16777231,
+    "modificationDate" : 1789941940793
+  }
+}

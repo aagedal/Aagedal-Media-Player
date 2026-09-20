@@ -2995,6 +2995,26 @@ This closes the A/B-selection portion of Phase 126, not structured-control,
 Full Keyboard Access, spoken VoiceOver or AVFoundation acceptance. No app source
 changed and no new build/test-suite result is claimed.
 
+## Phase 128 — Layout-independent review navigation
+
+Status: Implemented and focused native acceptance passed on 2026-09-21.
+
+- [x] Diagnose the Phase 127 input-layout dependency: the automation's bracket
+  key produces `å`; the layout's bracket chord also fails to navigate.
+- [x] Replace Previous/Next Review Note shortcuts with Cmd–Control–Left/Right
+  and let these menu equivalents pass through the local playback monitor.
+- [x] Verify native keyboard navigation at frames 0 and 10, same-frame
+  duplicates, both boundaries, filter-field focus and ordinary arrow stepping.
+- [x] Retain exact A/B frame witnesses in native sidecar/CSV exports and verify
+  unchanged original findings and source media.
+- [x] Pass 31 focused optimized Release tests, strict XCTest result validation
+  and Release static analysis.
+
+See [native navigation evidence](docs/evidence/review-navigation-keyboard-20260921/README.md).
+This closes Phase 127's focused shortcut gap with new layout-independent
+bindings. Complete structured-control traversal, Full Keyboard Access, spoken
+VoiceOver, AVFoundation and multi-window native acceptance remain open.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -3305,3 +3325,4 @@ changed and no new build/test-suite result is claimed.
 
 118. Phase 126 keyboard comparison setup and trim shortcut ownership.
 119. Phase 127 native keyboard comparison setup and distinct-frame review.
+120. Phase 128 layout-independent review navigation.

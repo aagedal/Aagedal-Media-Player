@@ -228,6 +228,14 @@ struct PlayerView: View {
             return false
         }
 
+        // Review navigation uses layout-independent menu shortcuts. Local
+        // monitors run before menu key equivalents, so do not turn these
+        // Command-Control arrows into ordinary frame steps.
+        if modifiers.intersection([.command, .control, .option, .shift]) == [.command, .control],
+           specialKey == .leftArrow || specialKey == .rightArrow {
+            return false
+        }
+
         // A local AppKit monitor sees key events before SwiftUI does. Let
         // arrow keys continue to the focused timeline so its keyboard and
         // Full Keyboard Access behavior is not shadowed by player shortcuts.

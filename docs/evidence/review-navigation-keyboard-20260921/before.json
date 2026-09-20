@@ -1,0 +1,15 @@
+{
+  "baseCommit": "8993bd4d2723702c68cc978eea3767ac1673c9e5",
+  "sources": {
+    "source-b.mp4": {
+      "path": "/private/tmp/aagedal-phase127-keyboard/source-b.mp4",
+      "sha256": "a28e13152fafc046692acf65585924fca50d90b9d527b7447c014394128710c8",
+      "bytes": 928128
+    },
+    "source-a.mp4": {
+      "path": "/private/tmp/aagedal-phase127-keyboard/source-a.mp4",
+      "sha256": "a28e13152fafc046692acf65585924fca50d90b9d527b7447c014394128710c8",
+      "bytes": 928128
+    }
+  }
+}
