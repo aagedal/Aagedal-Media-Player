@@ -1,0 +1,45 @@
+{
+  "date": "2026-09-21",
+  "sourceCommit": "5dfaae580544fa2cc046e642d561fb188511143a",
+  "nativeAppPath": "/private/tmp/aagedal-phase125-build/Build/Products/Release/Aagedal Media Player.app",
+  "nativeAppExecutableSHA256": "c93bf4ee543aae418df4711952ee02d1ad9cad30a21b6dbd3d3942bd2190b8c1",
+  "sourceSHA256": {
+    "Aagedal Media Player/Aagedal_Media_PlayerApp.swift": "c8c62a44ce8dbd62dc173c305ce81a5c8f025e73fea9be1c1c2c026d1cd592e9",
+    "Aagedal Media Player/ContentView.swift": "6613e86500af80da59abab6267be60b40fe46f19c4956d89901c8c174a06be44",
+    "Aagedal Media Player/Logic/AppCommand.swift": "19d9355113d857b7fa39184ec8f0693f543641f759901b7225b822e01f09e454",
+    "Aagedal Media Player/UI/ContentViewCommandHandlers.swift": "b22f879177c06aa85d5d06bd91676ba27b81fa661d1f63e13c165548c99500ea",
+    "Aagedal Media Player/UI/PlayerView.swift": "ede8d15e3b05d001346903d1630973d55662c2d3395ead809ff2b104560cd3d7"
+  },
+  "buildProvenance": "Unchanged Phase 126 tested executable; no rebuild or new XCTest run in Phase 127. Five Phase 126 changed-source hashes match current HEAD.",
+  "checks": {
+    "keyboardSourceAOpen": true,
+    "keyboardSourceBSelection": true,
+    "keyboardNoteCreationAtFrames": [
+      0,
+      10
+    ],
+    "keyboardCSVExport": true,
+    "sidecarAndCSVFramesMatch": true,
+    "sourceMediaUnchanged": true,
+    "previousShortcut": "Attempted through cua super+alt+bracketleft; subsequent witness remained at frame 10. Cause unclassified.",
+    "nextShortcut": "not exercised",
+    "fullKeyboardAccess": "not exercised",
+    "spokenVoiceOver": "not exercised"
+  },
+  "sources": {
+    "source-a.mp4": {
+      "path": "/private/tmp/aagedal-phase127-keyboard/source-a.mp4",
+      "sha256": "a28e13152fafc046692acf65585924fca50d90b9d527b7447c014394128710c8",
+      "bytes": 928128
+    },
+    "source-b.mp4": {
+      "path": "/private/tmp/aagedal-phase127-keyboard/source-b.mp4",
+      "sha256": "a28e13152fafc046692acf65585924fca50d90b9d527b7447c014394128710c8",
+      "bytes": 928128
+    }
+  },
+  "artifacts": {
+    "review.aagedal-compare.json": "afc8ae7e7d2114e9d735b9d8cede769eab3377ae1ea355267827b915d9ae7c71",
+    "review.csv": "cc5b419f9ba8e9c6b43ccd63afdb5daca05e4385a7e895d4d5fc1723d5917dc9"
+  }
+}

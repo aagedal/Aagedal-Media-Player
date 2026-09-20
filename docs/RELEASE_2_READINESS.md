@@ -89,6 +89,15 @@ See [keyboard setup evidence](evidence/comparison-keyboard-setup-20260921/README
 
 ## Must close before a defensible 2.0 candidate
 
+Phase 127 completes fresh keyboard-only A/B loading, note creation at distinct
+frames and CSV export using the unchanged Phase 126 Release app. Retained
+sidecar/CSV records agree on A/B frames, rates, text and source URLs; media
+hashes are unchanged. The automated Previous Note shortcut leaves a witness
+at frame 10, so Previous/Next keyboard navigation remains open pending input
+delivery/layout versus command-routing diagnosis. This does not establish
+structured-control, Full Keyboard Access, spoken VoiceOver or AVFoundation
+acceptance. See [native keyboard evidence](evidence/review-keyboard-setup-20260921/README.md).
+
 Phase 122 now rejects Final Cut XML exports for quarter-turn anamorphic source
 A with an actionable CSV/PDF fallback. This contains the demonstrated native
 Fit defect without changing source media or adding unverified scale compensation.

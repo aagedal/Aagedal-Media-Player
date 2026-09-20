@@ -2975,6 +2975,26 @@ See [retained native evidence](docs/evidence/comparison-keyboard-setup-20260921/
 Structured controls, Full Keyboard Access, spoken VoiceOver and both-backend
 acceptance remain open. No system keyboard preferences were changed.
 
+## Phase 127 — Native keyboard comparison setup and distinct-frame review
+
+Status: Focused native setup, note creation and CSV export passed on 2026-09-21.
+Previous/Next keyboard navigation remains open.
+
+- [x] Complete fresh keyboard-only A/B selection with disposable MPV sources,
+  using native path entry for A and keyboard list selection for B.
+- [x] Create findings at source frames 0 and 10 using keyboard commands and
+  verify persisted A/B coordinates, 24/1 rates, text and source URLs in CSV.
+- [x] Retain native sidecar/CSV evidence and verify unchanged source media,
+  Phase 126 executable identity and its five changed-source hashes.
+- [ ] Complete Previous/Next shortcut acceptance. The automated Previous
+  shortcut left the playhead at frame 10; a saved witness records that outcome.
+  Input-delivery/layout versus application routing remains unclassified.
+
+See [native keyboard evidence](docs/evidence/review-keyboard-setup-20260921/README.md).
+This closes the A/B-selection portion of Phase 126, not structured-control,
+Full Keyboard Access, spoken VoiceOver or AVFoundation acceptance. No app source
+changed and no new build/test-suite result is claimed.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -3284,3 +3304,4 @@ acceptance remain open. No system keyboard preferences were changed.
 117. Phase 125 keyboard review export and pending-draft preservation.
 
 118. Phase 126 keyboard comparison setup and trim shortcut ownership.
+119. Phase 127 native keyboard comparison setup and distinct-frame review.
