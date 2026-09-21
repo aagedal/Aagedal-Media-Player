@@ -647,27 +647,8 @@ struct ControlsView: View {
                     timelineThumbnail.hide()
                 }
             }
-            .overlay(alignment: .topLeading) {
-                if let x = thumbnailHoverX, let preview = timelineThumbnail.image,
-                   let time = timelineThumbnail.imageTime, let item {
-                    VStack(spacing: 4) {
-                        Image(decorative: preview, scale: 1)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 160, height: 90)
-                        Text("≈ " + TimecodeFormatter.formatTimeForDisplayWithMode(
-                            seconds: time, item: item, mode: timecodeMode
-                        ))
-                        .font(.caption.monospacedDigit())
-                    }
-                    .padding(6)
-                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 6))
-                    .offset(x: max(0, min(max(0, width - 172), x - 86)), y: -126)
-                    .allowsHitTesting(false)
-                    .accessibilityHidden(true)
-                }
-            }
             .focusable()
+            .focusEffectDisabled()
             .focused($focusedControl, equals: .timeline)
             .onKeyPress(.leftArrow) {
                 adjustTimeline(byFrames: -1)
@@ -718,10 +699,25 @@ struct ControlsView: View {
                     break
                 }
             }
-            .overlay {
-                if focusedControl == .timeline {
-                    RoundedRectangle(cornerRadius: 4)
-                        .stroke(Color.accentColor, lineWidth: 2)
+            // Keep the preview outside the timeline’s focus and accessibility bounds.
+            .overlay(alignment: .topLeading) {
+                if let x = thumbnailHoverX, let preview = timelineThumbnail.image,
+                   let time = timelineThumbnail.imageTime, let item {
+                    VStack(spacing: 4) {
+                        Image(decorative: preview, scale: 1)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 160, height: 90)
+                        Text("≈ " + TimecodeFormatter.formatTimeForDisplayWithMode(
+                            seconds: time, item: item, mode: timecodeMode
+                        ))
+                        .font(.caption.monospacedDigit())
+                    }
+                    .padding(6)
+                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 6))
+                    .offset(x: max(0, min(max(0, width - 172), x - 86)), y: -126)
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
                 }
             }
         }
