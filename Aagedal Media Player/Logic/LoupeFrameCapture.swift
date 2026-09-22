@@ -45,12 +45,24 @@ final class LoupeFrameCapture: ObservableObject {
     private var gate = LoupeCaptureGate()
     private var lastCaptureStartedAt: TimeInterval = -.infinity
     private var source: SourceIdentity?
+    private var verifiedAVRasterSource: SourceIdentity?
     private var attachedItem: AVPlayerItem?
     private var output: AVPlayerItemVideoOutput?
 
     private struct SourceIdentity: Equatable {
         let preparationID: Int
         let backend: ObjectIdentifier
+    }
+
+    /// Dimensions alone do not identify a decoded raster: an old MPV preview
+    /// can have the same dimensions as a newly selected AV source. Require the
+    /// image to have come from the still-current AV player item.
+    func hasVerifiedAVRaster(for controller: PlayerController) -> Bool {
+        guard self.controller === controller, image != nil,
+              !controller.useMPV, let item = controller.player?.currentItem else { return false }
+        let current = SourceIdentity(preparationID: controller.preparationID,
+                                     backend: ObjectIdentifier(item))
+        return source == current && verifiedAVRasterSource == current
     }
 
     func start(controller: PlayerController) {
@@ -86,6 +98,7 @@ final class LoupeFrameCapture: ObservableObject {
         gate.stop()
         detachOutput()
         source = nil
+        verifiedAVRasterSource = nil
         controller = nil
         image = nil
     }
@@ -107,6 +120,7 @@ final class LoupeFrameCapture: ObservableObject {
         guard latest != source else { return }
         detachOutput()
         image = nil
+        verifiedAVRasterSource = nil
         source = latest
         if latest != nil, let controller, !controller.useMPV,
            let item = controller.player?.currentItem {
@@ -132,8 +146,10 @@ final class LoupeFrameCapture: ObservableObject {
               let controller, let source, let token = gate.begin() else { return }
         lastCaptureStartedAt = now
         let request: Request
+        let isAVRaster: Bool
         if controller.useMPV, let mpv = controller.mpvPlayer {
             request = .mpv(mpv)
+            isAVRaster = false
         } else if let item = attachedItem, let output, let player = controller.player {
             // Acquire the frame while its playback timestamp is current. At
             // production resolutions, a worker hop and metadata awaits can let
@@ -145,6 +161,7 @@ final class LoupeFrameCapture: ObservableObject {
                 return
             }
             request = .av(item.asset, buffer)
+            isAVRaster = true
         } else {
             _ = gate.complete(token)
             return
@@ -156,7 +173,10 @@ final class LoupeFrameCapture: ObservableObject {
             guard let self else { return }
             let canPublish = self.gate.complete(token)
             guard canPublish, self.source == source, self.currentSource() == source else { return }
-            if let result { self.image = result }
+            if let result {
+                self.verifiedAVRasterSource = isAVRaster ? source : nil
+                self.image = result
+            }
         }
     }
 

@@ -92,13 +92,13 @@ struct ContentView: View {
             primary: nativePixelSource(
                 name: compareSession.isActive ? "source A" : "source",
                 controller: controller,
-                image: loupePrimaryCapture.image
+                capture: loupePrimaryCapture
             ),
             secondary: compareSession.isActive
                 ? nativePixelSource(
                     name: "source B",
                     controller: compareSession.secondaryController,
-                    image: loupeSecondaryCapture.image
+                    capture: loupeSecondaryCapture
                 )
                 : nil
         )
@@ -107,9 +107,10 @@ struct ContentView: View {
     private func nativePixelSource(
         name: String,
         controller: PlayerController,
-        image: CGImage?
+        capture: LoupeFrameCapture
     ) -> LoupeNativePixelSource {
         let stream = controller.mediaItem?.metadata?.primaryVideoStream
+        let image = capture.hasVerifiedAVRaster(for: controller) ? capture.image : nil
         return LoupeNativePixelSource(
             name: name,
             backend: controller.playbackBackend,

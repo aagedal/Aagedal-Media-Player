@@ -591,6 +591,9 @@ final class CompareLiveBackendTests: XCTestCase {
                 continue
             }
             let image = try XCTUnwrap(capture.image)
+            XCTAssertEqual(capture.hasVerifiedAVRaster(for: controller), backend == .avFoundation,
+                           "\(backend.rawValue)/\(name): only the active AV decoded raster is verifiable")
+            let verifiedImage = capture.hasVerifiedAVRaster(for: controller) ? image : nil
             let availability = LoupeNativePixelAvailability.evaluate(
                 primary: LoupeNativePixelSource(
                     name: name,
@@ -598,8 +601,8 @@ final class CompareLiveBackendTests: XCTestCase {
                     codedWidth: stream.width,
                     codedHeight: stream.height,
                     rotation: stream.rotation,
-                    capturedWidth: image.width,
-                    capturedHeight: image.height
+                    capturedWidth: verifiedImage?.width,
+                    capturedHeight: verifiedImage?.height
                 )
             )
             if backend == .avFoundation {
