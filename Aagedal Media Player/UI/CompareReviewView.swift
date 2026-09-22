@@ -145,8 +145,9 @@ struct CompareReviewView: View {
             } else {
                 ScrollView {
                     LazyVStack(spacing: 8) {
-                        ForEach(compareSession.filteredReviewNotes) { note in
-                            noteRow(note)
+                        ForEach(Array(compareSession.filteredReviewNotes.enumerated()), id: \.element.id) { entry in
+                            noteRow(entry.element, position: entry.offset + 1,
+                                    count: compareSession.filteredReviewNotes.count)
                         }
                     }
                 }
@@ -312,9 +313,11 @@ struct CompareReviewView: View {
         }
     }
 
-    private func noteRow(_ note: CompareReviewNote) -> some View {
+    private func noteRow(_ note: CompareReviewNote, position: Int, count: Int) -> some View {
         CompareReviewNoteRow(
             note: note,
+            position: position,
+            count: count,
             draft: Binding(
                 get: { noteDrafts[note.id] ?? note.text },
                 set: { if !compareSession.isReviewActionPending { noteDrafts[note.id] = $0 } }
@@ -498,6 +501,8 @@ struct CompareReviewRelinkConfirmationView: View {
 
 private struct CompareReviewNoteRow: View {
     let note: CompareReviewNote
+    let position: Int
+    let count: Int
     let timecodeLabel: String
     let canEdit: Bool
     let onSeek: () -> Void
@@ -518,6 +523,8 @@ private struct CompareReviewNoteRow: View {
 
     init(
         note: CompareReviewNote,
+        position: Int,
+        count: Int,
         draft: Binding<String>,
         timecodeLabel: String,
         canEdit: Bool,
@@ -531,6 +538,8 @@ private struct CompareReviewNoteRow: View {
         onSeekEnd: @escaping () -> Void
     ) {
         self.note = note
+        self.position = position
+        self.count = count
         self.timecodeLabel = timecodeLabel
         self.canEdit = canEdit
         self.onSeek = onSeek
@@ -559,13 +568,13 @@ private struct CompareReviewNoteRow: View {
                     .frame(width: 94, alignment: .leading)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Seek to review note at source A frame \(note.primaryFrame)")
+                .accessibilityLabel("Seek to \(noteIdentity)")
                 .accessibilityIdentifier(identifier("seek"))
                 .help("Seek both sources to this review note")
 
                 TextField("Review note", text: $draft, axis: .vertical)
                     .textFieldStyle(.roundedBorder)
-                    .accessibilityLabel("Review note at source A frame \(note.primaryFrame)")
+                    .accessibilityLabel("Text for \(noteIdentity)")
                     .accessibilityIdentifier(identifier("text"))
                     .lineLimit(1...4)
                     .focused($isFocused)
@@ -583,7 +592,7 @@ private struct CompareReviewNoteRow: View {
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(.secondary)
-                .accessibilityLabel("Delete review note at source A frame \(note.primaryFrame)")
+                .accessibilityLabel("Delete \(noteIdentity)")
                 .accessibilityIdentifier(identifier("delete"))
                 .help("Delete review note")
                 .disabled(!canEdit)
@@ -595,30 +604,30 @@ private struct CompareReviewNoteRow: View {
                     )) {
                         ForEach(CompareReviewSeverity.allCases) { Text($0.title).tag($0) }
                     }
-                    .accessibilityLabel("Severity for review note at source A frame \(note.primaryFrame)")
+                    .accessibilityLabel("Severity for \(noteIdentity)")
                     .accessibilityIdentifier(identifier("severity"))
                     Picker("Category", selection: Binding(
                         get: { note.category }, set: { onClassification(nil, $0, nil) }
                     )) {
                         ForEach(CompareReviewCategory.allCases) { Text($0.title).tag($0) }
                     }
-                    .accessibilityLabel("Category for review note at source A frame \(note.primaryFrame)")
+                    .accessibilityLabel("Category for \(noteIdentity)")
                     .accessibilityIdentifier(identifier("category"))
                     Picker("Status", selection: Binding(
                         get: { note.status }, set: { onClassification(nil, nil, $0) }
                     )) {
                         ForEach(CompareReviewStatus.allCases) { Text($0.title).tag($0) }
                     }
-                    .accessibilityLabel("Status for review note at source A frame \(note.primaryFrame)")
+                    .accessibilityLabel("Status for \(noteIdentity)")
                     .accessibilityIdentifier(identifier("status"))
                     HStack {
                         TextField("End frame (inclusive)", text: $endFrameDraft)
                             .textFieldStyle(.roundedBorder)
-                            .accessibilityLabel("Inclusive range end frame for review note at source A frame \(note.primaryFrame)")
+                            .accessibilityLabel("Inclusive range end frame for \(noteIdentity)")
                             .accessibilityIdentifier(identifier("range-end"))
                             .onSubmit(applyRange)
                         Button("Apply", action: applyRange)
-                            .accessibilityLabel("Apply range end for review note at source A frame \(note.primaryFrame)")
+                            .accessibilityLabel("Apply range end for \(noteIdentity)")
                             .accessibilityIdentifier(identifier("range-apply"))
                     }
                     ViewThatFits(in: .horizontal) {
@@ -644,7 +653,7 @@ private struct CompareReviewNoteRow: View {
             } label: {
                 Text("\(note.severity.title) · \(note.category.title) · \(note.status.title)")
                     // Labelling the group itself overrides its expanded controls.
-                    .accessibilityLabel("Classification and range for review note at source A frame \(note.primaryFrame): \(note.severity.title), \(note.category.title), \(note.status.title)")
+                    .accessibilityLabel("Classification and range for \(noteIdentity): \(note.severity.title), \(note.category.title), \(note.status.title)")
                     .accessibilityIdentifier(identifier("classification-and-range"))
             }
             .font(.caption)
@@ -662,22 +671,26 @@ private struct CompareReviewNoteRow: View {
         Button("End at current frame") {
             rangeError = onCurrentEnd() ? nil : "End must be at or after the note's start."
         }
-        .accessibilityLabel("End review note at source A frame \(note.primaryFrame) at the current frame")
+        .accessibilityLabel("End \(noteIdentity) at the current frame")
         .accessibilityIdentifier(identifier("range-end-current"))
         if let endFrame = note.primaryEndFrame {
             Button("Seek end", action: onSeekEnd)
-                .accessibilityLabel("Seek to source A frame \(endFrame), the end of review note at frame \(note.primaryFrame)")
+                .accessibilityLabel("Seek to source A frame \(endFrame), the end of \(noteIdentity)")
                 .accessibilityIdentifier(identifier("range-seek-end"))
             Button("Clear range") {
                 if onRange(nil) { endFrameDraft = ""; rangeError = nil }
             }
-            .accessibilityLabel("Clear range for review note at source A frame \(note.primaryFrame)")
+            .accessibilityLabel("Clear range for \(noteIdentity)")
             .accessibilityIdentifier(identifier("range-clear"))
         }
     }
 
     private func identifier(_ component: String) -> String {
         "compare-review-note-\(note.id.uuidString.lowercased())-\(component)"
+    }
+
+    private var noteIdentity: String {
+        "review note \(position) of \(count) at source A frame \(note.primaryFrame)"
     }
 
     private func applyRange() {
