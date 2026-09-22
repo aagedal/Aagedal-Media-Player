@@ -4,6 +4,11 @@ All notable changes to Aagedal Media Player.
 
 ## [1.6.1] — Unreleased
 
+### Changed
+- Review-note controls announce each note's position in the filtered list and source-A frame, so controls for multiple findings at one frame have distinct spoken labels.
+- Native-pixel loupe availability now requires the captured AVFoundation raster to belong to the currently active player item and preparation.
+- Metadata container-edge validation checks the independent error behavior of frame, gyroscope, and accelerometer RTMD readers against both the 3.0.0 baseline and integrated 3.0.1 dependency.
+
 ### Added
 - File → Add Comparison File and Cmd–Option–O for keyboard comparison setup without changing macOS keyboard-navigation preferences.
 - Review → Export Review menu access to every report/marker format, plus Cmd–Option–E for CSV, with pending note edits saved before export.

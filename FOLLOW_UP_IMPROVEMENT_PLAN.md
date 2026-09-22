@@ -3015,6 +3015,26 @@ This closes Phase 127's focused shortcut gap with new layout-independent
 bindings. Complete structured-control traversal, Full Keyboard Access, spoken
 VoiceOver, AVFoundation and multi-window native acceptance remain open.
 
+## Phase 129 — Review identity, loupe provenance and RTMD error semantics
+
+Status: Focused implementation and verification completed on 2026-09-22.
+
+- [x] Give each filtered review finding a distinct spoken ordinal and source-A
+  frame across its seek, text, delete, classification and range controls, even
+  when multiple findings share a frame. The cached-package Debug build passes;
+  spoken VoiceOver and Full Keyboard Access acceptance remain open.
+- [x] Gate AVFoundation 1:1 loupe availability on a raster captured from the
+  currently active player item and preparation. Focused loupe tests pass. MPV
+  display-processed screenshots remain ineligible for verified source pixels.
+- [x] Require independent frame, gyroscope and accelerometer RTMD reader error
+  results in the synthetic container-edge gate. Exact 3.0.0 and 3.0.1 Release
+  probes pass all 27 cases each; evidence is retained at
+  `/private/tmp/aagedal-metadata-edges-error-semantics-20260922-elevated`.
+
+These checks narrow specific identity and compatibility risks. Native spoken
+accessibility, MPV source-raster capture, exact ARW/XMP fixtures, upstream JXL
+reconciliation and producer-authentic metadata coverage remain release work.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -3326,3 +3346,4 @@ VoiceOver, AVFoundation and multi-window native acceptance remain open.
 118. Phase 126 keyboard comparison setup and trim shortcut ownership.
 119. Phase 127 native keyboard comparison setup and distinct-frame review.
 120. Phase 128 layout-independent review navigation.
+121. Phase 129 review identity, loupe provenance and RTMD error semantics.

@@ -1,6 +1,6 @@
 # 2.0 release readiness
 
-Assessment updated: 2026-09-21. This is a prioritization of the existing
+Assessment updated: 2026-09-22. This is a prioritization of the existing
 [product roadmap](../PRODUCT_ROADMAP.md), not a change to its committed scope.
 It is based on the repository's plans and retained verification reports,
 including the September 12 meter foundation and programme-loudness follow-up.
@@ -106,6 +106,15 @@ Native sidecar/CSV witnesses agree on A/B frames, original findings and media
 are unchanged, and 31 focused optimized Release tests plus static analysis pass.
 Broader structured-control, Full Keyboard Access, spoken VoiceOver and
 AVFoundation acceptance remain open. See [navigation evidence](evidence/review-navigation-keyboard-20260921/README.md).
+
+Phase 129 distinguishes same-frame review controls by spoken list position and
+source-A frame, rejects stale AVFoundation loupe rasters when evaluating 1:1
+availability, and checks all three public RTMD read APIs against exact 3.0.0
+and 3.0.1 Release container-edge probes (27 cases per revision). Focused loupe
+tests and a cached-package Debug build pass. This narrows identity and error-
+semantics risks; spoken VoiceOver, Full Keyboard Access, MPV verified source
+pixels, exact missing upstream metadata fixtures and producer-authentic media
+acceptance remain open.
 
 Phase 122 now rejects Final Cut XML exports for quarter-turn anamorphic source
 A with an actionable CSV/PDF fallback. This contains the demonstrated native
