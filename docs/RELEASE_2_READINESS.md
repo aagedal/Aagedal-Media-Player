@@ -120,6 +120,18 @@ opt-in skips, no failures or runtime warnings. Release static analysis,
 script-validator self-tests and all 61 source-tree preflight checks pass. A
 fresh clean-checkout candidate run remains required for distribution.
 
+Phase 130 tightens AVFoundation Native pixels eligibility to exact whole-pixel
+track transforms, restores filter-field focus when Clear Filter removes its
+button, and makes exported-app preflight compare bundle ID and Sparkle update
+metadata with reviewed source values. Focused loupe tests, a Debug build and
+script-validator tests pass. The integrated Debug suite passes 702 tests with
+eight documented opt-in skips and no failures; Release static analysis passes.
+The running app has not been
+rebuilt for a native filter-focus check. All 61 source-tree preflight checks pass
+with normal code-signing service access; an initial sandboxed invocation
+reported a false ffmpeg signature failure. This run supplies no new editor,
+representative-media, VoiceOver or release-floor evidence.
+
 Phase 122 now rejects Final Cut XML exports for quarter-turn anamorphic source
 A with an actionable CSV/PDF fallback. This contains the demonstrated native
 Fit defect without changing source media or adding unverified scale compensation.

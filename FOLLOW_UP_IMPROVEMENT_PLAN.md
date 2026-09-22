@@ -3040,6 +3040,31 @@ analysis, script-validator self-tests and all 61 source-tree preflight checks
 also pass. This integrated run is not the clean-checkout candidate verifier or
 the remaining native, representative-media and release-floor acceptance.
 
+## Phase 130 — Native-pixel provenance, Review focus and exported-app identity
+
+Status: Engineering verification completed on 2026-09-23; native and release
+acceptance remain open.
+
+- [x] Require AVFoundation's actual track transform to be a whole-pixel
+  rotation/reflection with integral translation before a matching captured
+  raster enables Native pixels. Equal bounds after scaling or shearing are
+  insufficient. MPV screenshots remain display-space previews.
+- [x] Return keyboard focus to the Review filter field before Clear Filter
+  removes its own button from the view hierarchy.
+- [x] Require an exported app's bundle identifier, Sparkle feed URL and EdDSA
+  public key to match reviewed source metadata in release preflight. Mocked
+  exported-app mutations fail the script regression gate.
+
+Eight focused loupe tests, the Debug app build, the script-validator suite and
+all 61 source-tree preflight checks pass. The integrated Debug suite passes 702
+tests with eight documented opt-in skips and no failures. Release static
+analysis passes. The first sandboxed
+preflight invocation could not validate the bundled ffmpeg signature; the same
+committed binary passed strict verification with normal code-signing service
+access. A fresh
+signed artifact, native filter-focus check, clean-checkout candidate run and
+all broader release gates are still required.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -3352,3 +3377,4 @@ the remaining native, representative-media and release-floor acceptance.
 119. Phase 127 native keyboard comparison setup and distinct-frame review.
 120. Phase 128 layout-independent review navigation.
 121. Phase 129 review identity, loupe provenance and RTMD error semantics.
+122. Phase 130 native-pixel provenance, Review focus and exported-app identity.

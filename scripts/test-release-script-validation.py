@@ -5,16 +5,20 @@
 
 from __future__ import annotations
 
+import importlib.util
 import os
 from pathlib import Path
+import plistlib
 import stat
 import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 
 
 SCRIPT = Path(__file__).with_name("release.sh")
 VERIFY_SCRIPT = Path(__file__).with_name("verify-release-candidate.sh")
+PREFLIGHT_SCRIPT = Path(__file__).with_name("release-preflight.py")
 
 
 class ReleaseScriptValidationTests(unittest.TestCase):
@@ -216,6 +220,53 @@ exit 91
         self.assertLess(result_validation, archive)
         self.assertIn('--minimum-tests 683', self.source)
         self.assertEqual(self.source.count('--require-test'), 2)
+
+    def test_exported_app_rejects_changed_update_metadata(self) -> None:
+        spec = importlib.util.spec_from_file_location("release_preflight", PREFLIGHT_SCRIPT)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        import sys
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = module
+        spec.loader.exec_module(module)
+
+        public_key = "test-public-key"
+        expected_info = {
+            "CFBundleShortVersionString": "2.0",
+            "CFBundleVersion": "200",
+            "CFBundleIdentifier": module.EXPECTED_BUNDLE_ID,
+            "CFBundleExecutable": "Aagedal Media Player",
+            "SUFeedURL": module.EXPECTED_FEED_URL,
+            "SUPublicEDKey": public_key,
+        }
+
+        def fake_command(*arguments: str) -> subprocess.CompletedProcess[str]:
+            output = "arm64" if arguments[0] == "/usr/bin/lipo" else ""
+            if "-dvvv" in arguments:
+                output = (
+                    f"TeamIdentifier={module.EXPECTED_TEAM_ID}\n"
+                    "Authority=Developer ID Application: Example\n"
+                    "flags=0x10000(runtime)\n"
+                )
+            return subprocess.CompletedProcess(arguments, 0, output, "")
+
+        with tempfile.TemporaryDirectory() as directory, patch.object(module, "command", fake_command):
+            app = Path(directory) / "Aagedal Media Player.app"
+            info_path = app / "Contents" / "Info.plist"
+            info_path.parent.mkdir(parents=True)
+            for changed_key in (None, "CFBundleIdentifier", "SUFeedURL", "SUPublicEDKey"):
+                with self.subTest(changed_key=changed_key):
+                    info = expected_info.copy()
+                    if changed_key:
+                        info[changed_key] = "changed"
+                    info_path.write_bytes(plistlib.dumps(info))
+                    validation = module.Validation()
+                    module.validate_exported_app(app, "2.0", 200, public_key, validation)
+                    if changed_key is None:
+                        self.assertEqual(validation.errors, [])
+                    else:
+                        self.assertEqual(len(validation.errors), 1)
+                        self.assertIn("exported app", validation.errors[0])
 
     @staticmethod
     def make_executable(path: Path, contents: str) -> None:

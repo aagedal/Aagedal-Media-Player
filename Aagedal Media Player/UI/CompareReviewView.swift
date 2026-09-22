@@ -117,6 +117,9 @@ struct CompareReviewView: View {
                     .help("Filter note text, severity, category, status, and timeline markers. Exports always include all notes.")
                 if !compareSession.reviewSearchQuery.isEmpty {
                     Button {
+                        // Clearing removes this button from the view hierarchy.
+                        // Keep keyboard traversal in Review at the filter field.
+                        focusedField = .filter
                         compareSession.reviewSearchQuery = ""
                     } label: {
                         Image(systemName: "xmark.circle.fill")

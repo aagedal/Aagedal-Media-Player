@@ -174,8 +174,8 @@ final class LoupeFrameCapture: ObservableObject {
             let canPublish = self.gate.complete(token)
             guard canPublish, self.source == source, self.currentSource() == source else { return }
             if let result {
-                self.verifiedAVRasterSource = isAVRaster ? source : nil
-                self.image = result
+                self.verifiedAVRasterSource = isAVRaster && result.preservesSourcePixels ? source : nil
+                self.image = result.image
             }
         }
     }
@@ -188,21 +188,43 @@ final class LoupeFrameCapture: ObservableObject {
         case av(AVAsset, CVPixelBuffer)
     }
 
+    private nonisolated struct CapturedImage {
+        let image: CGImage
+        let preservesSourcePixels: Bool
+    }
+
     private nonisolated static let context = CIContext(options: [.cacheIntermediates: false])
 
-    private nonisolated static func makeImage(_ request: Request) async -> CGImage? {
+    private nonisolated static func makeImage(_ request: Request) async -> CapturedImage? {
         switch request {
         case .mpv(let mpv):
             guard let raw = mpv.screenshotRaw() else { return nil }
-            return image(from: raw)
+            guard let image = image(from: raw) else { return nil }
+            return CapturedImage(image: image, preservesSourcePixels: false)
         case .av(let asset, let buffer):
             guard let track = try? await asset.loadTracks(withMediaType: .video).first,
                   let transform = try? await track.load(.preferredTransform) else { return nil }
             // Preferred transform supplies container rotation/mirroring. Keep
             // the full oriented raster; the UI applies display aspect (PAR).
             let oriented = CIImage(cvPixelBuffer: buffer).transformed(by: coreImageTransform(transform))
-            return context.createCGImage(oriented, from: oriented.extent)
+            guard let image = context.createCGImage(oriented, from: oriented.extent) else { return nil }
+            return CapturedImage(image: image, preservesSourcePixels: isPixelPreserving(transform))
         }
+    }
+
+    /// Dimensions can still match after a scale or shear that resamples every
+    /// pixel. Native-pixel mode requires a whole-pixel rotation/reflection and
+    /// whole-pixel translation in the AV track's display matrix.
+    nonisolated static func isPixelPreserving(_ transform: CGAffineTransform) -> Bool {
+        let coefficients = [transform.a, transform.b, transform.c, transform.d]
+        guard coefficients.allSatisfy(\.isFinite),
+              transform.tx.isFinite, transform.ty.isFinite else { return false }
+        let rows = (abs(transform.a) == 1 && transform.b == 0
+                    && transform.c == 0 && abs(transform.d) == 1)
+            || (transform.a == 0 && abs(transform.b) == 1
+                && abs(transform.c) == 1 && transform.d == 0)
+        return rows && transform.tx == transform.tx.rounded()
+            && transform.ty == transform.ty.rounded()
     }
 
     /// AV track transforms use a top-left origin; Core Image uses bottom-left.

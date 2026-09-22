@@ -46,6 +46,7 @@ SPARKLE_NS = "http://www.andymatuschak.org/xml-namespaces/sparkle"
 SPARKLE = f"{{{SPARKLE_NS}}}"
 EXPECTED_TEAM_ID = "3R5QGG9DW6"
 EXPECTED_REPOSITORY = "aagedal/Aagedal-Media-Player"
+EXPECTED_BUNDLE_ID = "com.aagedal.MediaPlayer"
 EXPECTED_FEED_URL = (
     "https://raw.githubusercontent.com/"
     f"{EXPECTED_REPOSITORY}/main/appcast.xml"
@@ -290,7 +291,7 @@ def validate_scheme(validation: Validation) -> None:
 
 
 def validate_exported_app(
-    app: Path, version: str, build: int, validation: Validation
+    app: Path, version: str, build: int, public_key: str, validation: Validation
 ) -> None:
     validation.require(app.is_dir(), f"exported app does not exist: {app}")
     if not app.is_dir():
@@ -305,6 +306,9 @@ def validate_exported_app(
         return
     validation.equal(app_info.get("CFBundleShortVersionString"), version, "exported app version")
     validation.equal(str(app_info.get("CFBundleVersion", "")), str(build), "exported app build")
+    validation.equal(app_info.get("CFBundleIdentifier"), EXPECTED_BUNDLE_ID, "exported app bundle ID")
+    validation.equal(app_info.get("SUFeedURL"), EXPECTED_FEED_URL, "exported app Sparkle feed URL")
+    validation.equal(app_info.get("SUPublicEDKey"), public_key, "exported app Sparkle public key")
 
     executable_name = app_info.get("CFBundleExecutable", "Aagedal Media Player")
     executable = app / "Contents" / "MacOS" / executable_name
@@ -435,7 +439,7 @@ def main() -> int:
     validate_scheme(validation)
     validate_ffmpeg(validation)
     if arguments.app:
-        validate_exported_app(arguments.app.resolve(), version, build, validation)
+        validate_exported_app(arguments.app.resolve(), version, build, public_key, validation)
 
     if validation.errors:
         print(f"Release preflight FAILED ({len(validation.errors)} error(s)):", file=sys.stderr)

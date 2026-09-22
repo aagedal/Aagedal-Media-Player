@@ -22,6 +22,33 @@ final class LoupeCaptureGateTests: XCTestCase {
         XCTAssertEqual(LoupeFrameCapture.coreImageTransform(.identity), .identity)
     }
 
+    func testNativePixelVerificationAcceptsWholePixelRotationsAndReflections() {
+        let transforms = [
+            CGAffineTransform.identity,
+            CGAffineTransform(a: 0, b: -1, c: 1, d: 0, tx: 0, ty: 1920),
+            CGAffineTransform(a: -1, b: 0, c: 0, d: 1, tx: 1920, ty: 0),
+            CGAffineTransform(a: 0, b: -1, c: -1, d: 0, tx: 1080, ty: 1920)
+        ]
+        for transform in transforms {
+            XCTAssertTrue(LoupeFrameCapture.isPixelPreserving(transform), "\(transform)")
+        }
+    }
+
+    func testNativePixelVerificationRejectsResamplingEvenWhenBoundsCouldMatch() {
+        // A 100×100 raster with this shear and scale retains 100×100 bounds,
+        // yet its pixels are interpolated rather than copied one for one.
+        let sameBoundsShear = CGAffineTransform(a: 0.5, b: 0, c: 0.5, d: 1, tx: 0, ty: 0)
+        for transform in [
+            sameBoundsShear,
+            CGAffineTransform(a: 0.5, b: 0, c: 0, d: 1, tx: 0, ty: 0),
+            CGAffineTransform(a: 0.9999999, b: 0, c: 0, d: 1, tx: 0, ty: 0),
+            CGAffineTransform(a: 1, b: 0, c: 0, d: 1, tx: 0.5, ty: 0),
+            CGAffineTransform(a: .nan, b: 0, c: 0, d: 1, tx: 0, ty: 0)
+        ] {
+            XCTAssertFalse(LoupeFrameCapture.isPixelPreserving(transform), "\(transform)")
+        }
+    }
+
     func testOnlyOneWorkerCanStart() throws {
         var gate = LoupeCaptureGate()
         XCTAssertNil(gate.begin())
