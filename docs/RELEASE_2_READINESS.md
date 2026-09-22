@@ -115,6 +115,10 @@ tests and a cached-package Debug build pass. This narrows identity and error-
 semantics risks; spoken VoiceOver, Full Keyboard Access, MPV verified source
 pixels, exact missing upstream metadata fixtures and producer-authentic media
 acceptance remain open.
+The combined optimized Release run then passes 700 tests with eight expected
+opt-in skips, no failures or runtime warnings. Release static analysis,
+script-validator self-tests and all 61 source-tree preflight checks pass. A
+fresh clean-checkout candidate run remains required for distribution.
 
 Phase 122 now rejects Final Cut XML exports for quarter-turn anamorphic source
 A with an actionable CSV/PDF fallback. This contains the demonstrated native

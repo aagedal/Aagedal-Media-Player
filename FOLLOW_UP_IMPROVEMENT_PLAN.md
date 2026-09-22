@@ -3034,6 +3034,11 @@ Status: Focused implementation and verification completed on 2026-09-22.
 These checks narrow specific identity and compatibility risks. Native spoken
 accessibility, MPV source-raster capture, exact ARW/XMP fixtures, upstream JXL
 reconciliation and producer-authentic metadata coverage remain release work.
+The combined optimized Release suite passes 700 tests with eight explicit
+allowlisted opt-in skips, no failures or runtime warnings. Release static
+analysis, script-validator self-tests and all 61 source-tree preflight checks
+also pass. This integrated run is not the clean-checkout candidate verifier or
+the remaining native, representative-media and release-floor acceptance.
 
 ## Remaining work after this continuation
 
