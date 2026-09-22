@@ -16,10 +16,18 @@ var result: [String: Any] = ["hasRTMD": RTMDReader.hasRTMDTrack(in: data),
                             "firstFrame": RTMDReader.firstFrameSnapshot(from: data).map(frame) as Any? ?? NSNull()]
 do {
     result["frames"] = try RTMDReader.readAttributes(from: data).map(frame)
+} catch {
+    result["attributeError"] = String(describing: error)
+}
+do {
     result["gyroscope"] = try RTMDReader.readMotionSamples(from: data, stream: .gyroscope).map(motion)
+} catch {
+    result["gyroscopeError"] = String(describing: error)
+}
+do {
     result["accelerometer"] = try RTMDReader.readMotionSamples(from: data, stream: .accelerometer).map(motion)
 } catch {
-    result["error"] = String(describing: error)
+    result["accelerometerError"] = String(describing: error)
 }
 let json = try JSONSerialization.data(withJSONObject: result, options: [.sortedKeys])
 print(String(decoding: json, as: UTF8.self))

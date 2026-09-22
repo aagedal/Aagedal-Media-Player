@@ -148,6 +148,8 @@ let package = Package(name: "ContainerEdgeProbe", platforms: [.macOS(.v13)], tar
                 subprocess.run([str(package / ".build/release/Probe"), str(fixture_dir / f"{name}.mov")], stdout=output, stderr=subprocess.STDOUT, check=True, timeout=30)
             results[variant][name] = json.loads((package / f"{name}.json").read_text())
     errors = []
+    missing_track_error = "Invalid video file: No Sony RTMD track found"
+    read_errors = ("attributeError", "gyroscopeError", "accelerometerError")
     for name, (_, presence, decoded) in cases.items():
         baseline, fixed = results["baseline"][name], results["fixed"][name]
         if baseline != fixed:
@@ -156,6 +158,10 @@ let package = Package(name: "ContainerEdgeProbe", platforms: [.macOS(.v13)], tar
             value = results[variant][name]
             if value["hasRTMD"] != presence:
                 errors.append(f"{variant}/{name}: unexpected track presence")
+            expected_error = None if presence else missing_track_error
+            for key in read_errors:
+                if value.get(key) != expected_error:
+                    errors.append(f"{variant}/{name}: unexpected {key}: {value.get(key)!r}")
             if decoded:
                 if ([frame["iso"] for frame in value.get("frames", [])] != [800, 1600]
                         or [frame["timestamp"] for frame in value.get("frames", [])] != [0, 0.02]

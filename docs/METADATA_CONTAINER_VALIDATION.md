@@ -54,7 +54,12 @@ Malformed-case expectations describe the current dependency's public RTMD API
 behavior, not a normative file-format policy. Most malformed suffixes preserve
 already discovered `moov`; an incomplete extended-size header throws inside the
 walker and is swallowed by public RTMD discovery, causing no track to be reported.
-The harness checks that the candidate preserves these outcomes. It does not
+The probe calls the frame, gyroscope, and accelerometer readers independently.
+When discovery reports no RTMD track, the harness requires each reader to throw
+`Invalid video file: No Sony RTMD track found`. When a track exists, all three
+must return without throwing, including when a truncated sample or invalid
+offset yields empty arrays. The harness checks that the candidate preserves these
+outcomes. It does not
 exercise every private walker error path or every possible malformed input.
 
 ## Local result — 2026-09-07
@@ -80,6 +85,15 @@ timestamps, 100 Hz IMU rate, complete gyro/accelerometer samples, `stco`/`co64`,
 atom placement/sizing and the documented malformed cases against the production
 dependency. Artifacts with source archives and complete provenance are retained
 at `/private/tmp/aagedal-metadata-edges-smm301-20260915`.
+
+## Public error-semantics result — 2026-09-22
+
+The expanded probe passed all 27 cases in both the pinned 3.0.0 baseline and
+the exact 3.0.1 release: 54 isolated processes, zero parity or expectation
+errors. All no-track cases produced the expected error from each of the three
+throwing APIs; malformed sample offsets with an RTMD track returned empty
+arrays without an error. Artifacts and per-case results are retained at
+`/private/tmp/aagedal-metadata-edges-error-semantics-20260922-elevated`.
 
 ## Remaining acceptance
 
