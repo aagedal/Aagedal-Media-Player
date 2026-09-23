@@ -3394,3 +3394,5 @@ hands-on verification in the rebuilt app before release acceptance.
 121. Phase 129 review identity, loupe provenance and RTMD error semantics.
 122. Phase 130 native-pixel provenance, Review focus and exported-app identity.
 123. Phase 131 draggable loupe placement.
+124. Phase 132 temporal missing-counterpart markers, Review range focus,
+     MPV pixel provenance, and metadata container-edge compatibility.

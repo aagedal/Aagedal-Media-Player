@@ -1,6 +1,6 @@
 # 2.0 release readiness
 
-Assessment updated: 2026-09-22. This is a prioritization of the existing
+Assessment updated: 2026-09-23. This is a prioritization of the existing
 [product roadmap](../PRODUCT_ROADMAP.md), not a change to its committed scope.
 It is based on the repository's plans and retained verification reports,
 including the September 12 meter foundation and programme-loudness follow-up.
@@ -131,6 +131,20 @@ rebuilt for a native filter-focus check. All 61 source-tree preflight checks pas
 with normal code-signing service access; an initial sandboxed invocation
 reported a false ffmpeg signature failure. This run supplies no new editor,
 representative-media, VoiceOver or release-floor evidence.
+
+The September 23 continuation marks known source-A intervals without a
+corresponding B frame in amber on the comparison timeline. Alignment and
+duration determine these time-localized gaps; image/audio content-difference
+markers still need a detector and timestamp model. Invalid Review range ends
+now return keyboard focus to the field with specific correction feedback;
+native keyboard traversal and spoken VoiceOver remain unverified. An MPV
+anamorphic screenshot resampled the coded raster, so MPV Native pixels remains
+disabled with clearer provenance guidance until a source-pixel capture path can
+be validated. The metadata container-edge harness adds seven positive/error
+cases and passes 34 fixtures against each of 3.0.0 and 3.0.1. The missing
+ARW/XMP originals and upstream JXL fixture/assertion disagreement remain open.
+Focused timeline, loupe, Review, and metadata checks pass; source-tree release
+preflight passes all 61 checks. This is not a fresh clean-checkout candidate run.
 
 Phase 122 now rejects Final Cut XML exports for quarter-turn anamorphic source
 A with an actionable CSV/PDF fallback. This contains the demonstrated native
