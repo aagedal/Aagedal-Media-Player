@@ -523,6 +523,7 @@ private struct CompareReviewNoteRow: View {
     @Binding private var draft: String
     @State private var isDeleting = false
     @FocusState private var isFocused: Bool
+    @FocusState private var isEndFrameFocused: Bool
 
     init(
         note: CompareReviewNote,
@@ -627,8 +628,11 @@ private struct CompareReviewNoteRow: View {
                         TextField("End frame (inclusive)", text: $endFrameDraft)
                             .textFieldStyle(.roundedBorder)
                             .accessibilityLabel("Inclusive range end frame for \(noteIdentity)")
+                            .accessibilityHint(rangeError ?? "Enter a whole source A frame number from the note's start through the last media frame.")
                             .accessibilityIdentifier(identifier("range-end"))
+                            .focused($isEndFrameFocused)
                             .onSubmit(applyRange)
+                            .onChange(of: endFrameDraft) { _, _ in rangeError = nil }
                         Button("Apply", action: applyRange)
                             .accessibilityLabel("Apply range end for \(noteIdentity)")
                             .accessibilityIdentifier(identifier("range-apply"))
@@ -672,7 +676,12 @@ private struct CompareReviewNoteRow: View {
     @ViewBuilder
     private var rangeActions: some View {
         Button("End at current frame") {
-            rangeError = onCurrentEnd() ? nil : "End must be at or after the note's start."
+            if onCurrentEnd() {
+                rangeError = nil
+            } else {
+                rangeError = "Current frame is before the note's start. Enter an end frame or seek forward."
+                isEndFrameFocused = true
+            }
         }
         .accessibilityLabel("End \(noteIdentity) at the current frame")
         .accessibilityIdentifier(identifier("range-end-current"))
@@ -697,9 +706,14 @@ private struct CompareReviewNoteRow: View {
     }
 
     private func applyRange() {
-        guard let end = Int64(endFrameDraft.trimmingCharacters(in: .whitespacesAndNewlines)),
-              onRange(end) else {
-            rangeError = "Enter an end frame from the note's start through the last media frame."
+        guard let end = Int64(endFrameDraft.trimmingCharacters(in: .whitespacesAndNewlines)) else {
+            rangeError = "Enter a whole-number end frame."
+            isEndFrameFocused = true
+            return
+        }
+        guard onRange(end) else {
+            rangeError = "End frame must be from the note's start through the last media frame."
+            isEndFrameFocused = true
             return
         }
         rangeError = nil
