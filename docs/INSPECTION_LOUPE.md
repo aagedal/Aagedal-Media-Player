@@ -24,6 +24,12 @@ Pin picture position holds the inspected coordinate while using transport.
 The horizontal and vertical sliders also pin the position. Center and pin
 returns to the picture center. Closing/replacing A resets the loupe. Replacing
 B retains the chosen picture coordinate and clears the obsolete B image.
+With the picture position pinned, drag the loupe itself to move its floating
+frame without changing the inspected coordinate. The frame stays within the
+canvas, including after a resize; an oversized frame is centered on that axis.
+The focused loupe also moves in 12-point steps with the arrow keys. Reset loupe
+placement restores automatic placement beside the pointer, and Center and pin
+resets both the inspected coordinate and frame placement.
 
 ## Capture and interpretation
 

@@ -3065,6 +3065,21 @@ access. A fresh
 signed artifact, native filter-focus check, clean-checkout candidate run and
 all broader release gates are still required.
 
+## Phase 131 — Draggable loupe placement
+
+Status: Focused implementation completed on 2026-09-23; native interaction
+acceptance remains open.
+
+- [x] Let a pinned loupe be dragged independently of the picture coordinate it
+  samples, clamping its frame when it fits the canvas and centering oversized axes.
+- [x] Add arrow-key placement in 12-point steps and a reset action that restores
+  placement beside the pointer without changing the selected picture coordinate.
+- [x] Keep Center and pin and window teardown responsible for clearing manual
+  placement. All 27 focused state/geometry tests pass in the Debug app build.
+
+The native drag gesture, focus traversal and spoken instruction still require
+hands-on verification in the rebuilt app before release acceptance.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -3378,3 +3393,4 @@ all broader release gates are still required.
 120. Phase 128 layout-independent review navigation.
 121. Phase 129 review identity, loupe provenance and RTMD error semantics.
 122. Phase 130 native-pixel provenance, Review focus and exported-app identity.
+123. Phase 131 draggable loupe placement.

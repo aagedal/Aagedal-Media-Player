@@ -122,6 +122,11 @@ final class InspectionLoupeStateTests: XCTestCase {
         state.isEnabled = true
         state.selectMagnification(.eightTimes, nativePixelAvailability: .available)
         state.follow(CGPoint(x: 300, y: 360), pictureRect: picture)
+        state.moveOverlay(
+            to: CGPoint(x: 200, y: 200),
+            canvasSize: CGSize(width: 500, height: 400),
+            overlaySize: CGSize(width: 180, height: 166)
+        )
 
         state.reset()
         state.follow(CGPoint(x: 700, y: 160), pictureRect: picture)
@@ -131,13 +136,40 @@ final class InspectionLoupeStateTests: XCTestCase {
         XCTAssertEqual(state.magnification, .eightTimes)
         XCTAssertEqual(state.normalizedPoint, CGPoint(x: 0.5, y: 0.5))
         XCTAssertNil(state.pointer)
+        XCTAssertNil(state.overlayPosition)
+    }
+
+    func testDraggingLoupePinsInspectedPointAndKeepsOverlayInsideCanvas() {
+        let state = InspectionLoupeState()
+        state.isEnabled = true
+        state.follow(CGPoint(x: 300, y: 360), pictureRect: picture)
+
+        let canvas = CGSize(width: 500, height: 400)
+        let overlay = CGSize(width: 180, height: 166)
+        state.moveOverlay(
+            to: CGPoint(x: 900, y: -100), canvasSize: canvas, overlaySize: overlay
+        )
+        state.follow(CGPoint(x: 700, y: 160), pictureRect: picture)
+
+        XCTAssertTrue(state.isPinned)
+        XCTAssertEqual(state.normalizedPoint, CGPoint(x: 0.25, y: 0.75))
+        XCTAssertEqual(state.overlayPosition, CGPoint(x: 402, y: 91))
+
+        state.resetOverlayPosition()
+        XCTAssertNil(state.overlayPosition)
+        XCTAssertTrue(state.isPinned)
+        XCTAssertEqual(state.normalizedPoint, CGPoint(x: 0.25, y: 0.75))
     }
 
     func testClosingClearsPositionAndPinSoReopenedLoupeCanFollow() {
         let state = InspectionLoupeState()
         state.isEnabled = true
         state.follow(CGPoint(x: 300, y: 360), pictureRect: picture)
-        state.isPinned = true
+        state.moveOverlay(
+            to: CGPoint(x: 200, y: 200),
+            canvasSize: CGSize(width: 500, height: 400),
+            overlaySize: CGSize(width: 180, height: 166)
+        )
 
         state.close()
 
@@ -145,6 +177,7 @@ final class InspectionLoupeStateTests: XCTestCase {
         XCTAssertFalse(state.isPinned)
         XCTAssertEqual(state.normalizedPoint, CGPoint(x: 0.5, y: 0.5))
         XCTAssertNil(state.pointer)
+        XCTAssertNil(state.overlayPosition)
 
         state.isEnabled = true
         state.follow(CGPoint(x: 700, y: 160), pictureRect: picture)

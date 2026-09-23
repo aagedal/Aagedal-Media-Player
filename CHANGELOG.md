@@ -5,6 +5,7 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Changed
+- The inspection loupe can be dragged to a new canvas position while its inspected picture coordinate stays pinned; keyboard arrows and a reset control also move or restore its placement.
 - Review-note controls announce each note's position in the filtered list and source-A frame, so controls for multiple findings at one frame have distinct spoken labels.
 - Native-pixel loupe availability now requires the captured AVFoundation raster to belong to the currently active player item and preparation.
 - Metadata container-edge validation checks the independent error behavior of frame, gyroscope, and accelerometer RTMD readers against both the 3.0.0 baseline and integrated 3.0.1 dependency.

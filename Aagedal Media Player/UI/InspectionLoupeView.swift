@@ -12,6 +12,7 @@ final class InspectionLoupeState: ObservableObject {
     @Published private(set) var magnification: LoupeMagnification = .twoTimes
     @Published var normalizedPoint = CGPoint(x: 0.5, y: 0.5)
     @Published var pointer: CGPoint?
+    @Published private(set) var overlayPosition: CGPoint?
 
     func follow(_ location: CGPoint, pictureRect: CGRect) {
         guard isEnabled, !isPinned,
@@ -48,7 +49,20 @@ final class InspectionLoupeState: ObservableObject {
     func reset() {
         normalizedPoint = CGPoint(x: 0.5, y: 0.5)
         pointer = nil
+        overlayPosition = nil
         isPinned = true
+    }
+
+    func moveOverlay(to position: CGPoint, canvasSize: CGSize, overlaySize: CGSize) {
+        guard isEnabled else { return }
+        isPinned = true
+        overlayPosition = LoupeGeometry.clampedOverlayCenter(
+            position, canvasSize: canvasSize, overlaySize: overlaySize
+        )
+    }
+
+    func resetOverlayPosition() {
+        overlayPosition = nil
     }
 
     func close() {
@@ -56,6 +70,7 @@ final class InspectionLoupeState: ObservableObject {
         isPinned = false
         normalizedPoint = CGPoint(x: 0.5, y: 0.5)
         pointer = nil
+        overlayPosition = nil
     }
 
     func validateNativePixels(_ availability: LoupeNativePixelAvailability) {
@@ -120,7 +135,10 @@ struct InspectionLoupeControl: View {
                 }
                 .accessibilityValue("\(Int(state.normalizedPoint.y * 100)) percent")
                 Button("Center and pin") { state.reset() }
-                Text("Move over the picture to inspect it. Pin the position to use playback controls. Compare Mode shows the same picture coordinate in A and B.")
+                if state.overlayPosition != nil {
+                    Button("Reset loupe placement") { state.resetOverlayPosition() }
+                }
+                Text("Move over the picture to inspect it. Pin the picture position, then drag the loupe to place it elsewhere. Compare Mode shows the same picture coordinate in A and B.")
                     .font(.caption)
                 Text("Display-space preview • up to 10 fps. Captures may differ from the live HDR display and are not pixel-value measurements or frame-locked A/B samples.")
                     .font(.caption).foregroundStyle(.secondary)
@@ -154,15 +172,20 @@ struct InspectionLoupeOverlay: View {
     let isComparing: Bool
     let geometry: CompareDisplayGeometry
     let mode: CompareViewMode
+    @State private var dragOrigin: CGPoint?
     var body: some View {
         let count: CGFloat = isComparing ? 2 : 1
         let width = min(180, max(64, (geometry.canvasSize.width - 24) / count))
         let lensSize = CGSize(width: width, height: min(140, max(60, geometry.canvasSize.height / 3)))
         let totalWidth = width * count + (isComparing ? 6 : 0)
         let totalHeight = lensSize.height + 26
-        let center = LoupeGeometry.overlayCenter(
-            canvasSize: geometry.canvasSize,
-            overlaySize: CGSize(width: totalWidth, height: totalHeight),
+        let overlaySize = CGSize(width: totalWidth, height: totalHeight)
+        let center = state.overlayPosition.map {
+            LoupeGeometry.clampedOverlayCenter(
+                $0, canvasSize: geometry.canvasSize, overlaySize: overlaySize
+            )
+        } ?? LoupeGeometry.overlayCenter(
+            canvasSize: geometry.canvasSize, overlaySize: overlaySize,
             pointer: state.pointer
         )
 
@@ -172,15 +195,48 @@ struct InspectionLoupeOverlay: View {
                 lens(image: secondaryCapture.image, source: "B", size: lensSize, pictureRect: pictureRect(for: .secondary))
             }
         }
-        .position(center)
-        .allowsHitTesting(false)
+        .contentShape(Rectangle())
+        .gesture(
+            DragGesture(minimumDistance: 3)
+                .onChanged { value in
+                    let origin = dragOrigin ?? center
+                    if dragOrigin == nil { dragOrigin = origin }
+                    state.moveOverlay(
+                        to: CGPoint(
+                            x: origin.x + value.translation.width,
+                            y: origin.y + value.translation.height
+                        ),
+                        canvasSize: geometry.canvasSize, overlaySize: overlaySize
+                    )
+                }
+                .onEnded { _ in dragOrigin = nil }
+        )
+        .focusable()
+        .onMoveCommand { direction in
+            let step: CGFloat = 12
+            let delta: CGSize
+            switch direction {
+            case .left: delta = CGSize(width: -step, height: 0)
+            case .right: delta = CGSize(width: step, height: 0)
+            case .up: delta = CGSize(width: 0, height: -step)
+            case .down: delta = CGSize(width: 0, height: step)
+            @unknown default: return
+            }
+            state.moveOverlay(
+                to: CGPoint(x: center.x + delta.width, y: center.y + delta.height),
+                canvasSize: geometry.canvasSize, overlaySize: overlaySize
+            )
+        }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(isComparing ? "A and B" : "Picture") loupe, \(state.magnification.label), \(state.isPinned ? "pinned" : "following pointer")")
+        .accessibilityHint("Drag to move. Focus and use arrow keys to move by small steps.")
+        .position(center)
         .onAppear { refreshCaptures() }
         .onChange(of: primary.preparationID) { _, _ in refreshCaptures() }
         .onChange(of: secondary.preparationID) { _, _ in refreshCaptures() }
         .onChange(of: isComparing) { _, _ in refreshCaptures() }
         .onDisappear {
+            dragOrigin = nil
             primaryCapture.stop()
             secondaryCapture.stop()
         }

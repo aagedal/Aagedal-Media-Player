@@ -119,15 +119,27 @@ nonisolated enum LoupeGeometry {
         let preferredY = below + overlaySize.height / 2 <= canvasSize.height - 8
             ? below : pointerY - overlaySize.height / 2 - 24
 
-        func boundedCenter(_ preferred: CGFloat, extent: CGFloat, canvas: CGFloat) -> CGFloat {
+        return clampedOverlayCenter(
+            CGPoint(x: pointerX, y: preferredY),
+            canvasSize: canvasSize, overlaySize: overlaySize
+        )
+    }
+
+    static func clampedOverlayCenter(
+        _ preferred: CGPoint, canvasSize: CGSize, overlaySize: CGSize
+    ) -> CGPoint {
+        guard validSize(canvasSize), validSize(overlaySize) else { return .zero }
+
+        func boundedCenter(_ value: CGFloat, extent: CGFloat, canvas: CGFloat) -> CGFloat {
             guard extent <= canvas else { return canvas / 2 }
             let margin = min(8, (canvas - extent) / 2)
-            return min(max(preferred, extent / 2 + margin), canvas - extent / 2 - margin)
+            let finiteValue = value.isFinite ? value : canvas / 2
+            return min(max(finiteValue, extent / 2 + margin), canvas - extent / 2 - margin)
         }
 
         return CGPoint(
-            x: boundedCenter(pointerX, extent: overlaySize.width, canvas: canvasSize.width),
-            y: boundedCenter(preferredY, extent: overlaySize.height, canvas: canvasSize.height)
+            x: boundedCenter(preferred.x, extent: overlaySize.width, canvas: canvasSize.width),
+            y: boundedCenter(preferred.y, extent: overlaySize.height, canvas: canvasSize.height)
         )
     }
 
