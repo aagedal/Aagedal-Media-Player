@@ -314,7 +314,10 @@ confidence as the picture.
   `docs/TIMELINE_NAVIGATION.md`.
 - [x] Add visible chapter, trim, and comparison-overlap markers.
 - [ ] Add mismatch markers to the timeline. The comparison mismatch summary
-  already exists; it does not establish time-localized mismatch findings.
+  already exists. Known durations and the active alignment now mark source-A
+  intervals without a playable B frame in amber. This is a time-localized
+  missing-counterpart finding; content differences still need a defined
+  detector, timestamp model, and acceptance evidence.
 - [x] Add an overview/zoom model for long-form media without sacrificing precise
   frame stepping. Per-window 2×–64× zoom, a full-duration pan overview, and
   one-action Fit use source-relative geometry; frame-step commands remain

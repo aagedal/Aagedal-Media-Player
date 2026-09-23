@@ -241,6 +241,30 @@ nonisolated struct CompareTimelineMapping: Equatable, Sendable {
         return lowerBound...upperBound
     }
 
+    /// Source-A intervals for which the alignment has no playable B frame.
+    /// A missing duration is unknown, not evidence of a temporal mismatch.
+    func primaryUnmatchedRanges(
+        primaryDuration: TimeInterval,
+        secondaryDuration overrideDuration: TimeInterval? = nil
+    ) -> [Range<TimeInterval>]? {
+        let secondaryDuration = resolvedSecondaryDuration(overrideDuration)
+        guard primaryDuration.isFinite, primaryDuration > 0,
+              secondaryDuration > 0 else { return nil }
+        guard let overlap = primaryOverlapRange(
+            primaryDuration: primaryDuration,
+            secondaryDuration: secondaryDuration
+        ) else { return [0..<primaryDuration] }
+
+        var ranges: [Range<TimeInterval>] = []
+        if overlap.lowerBound > 0 {
+            ranges.append(0..<overlap.lowerBound)
+        }
+        if overlap.upperBound < primaryDuration {
+            ranges.append(overlap.upperBound..<primaryDuration)
+        }
+        return ranges
+    }
+
     func overlapStatus(
         primaryDuration: TimeInterval,
         secondaryDuration overrideDuration: TimeInterval? = nil
@@ -1924,6 +1948,15 @@ final class CompareSessionController: ObservableObject {
         primaryDuration: TimeInterval
     ) -> ClosedRange<TimeInterval>? {
         mapping?.primaryOverlapRange(
+            primaryDuration: primaryDuration,
+            secondaryDuration: secondaryController.mediaItem?.durationSeconds
+        )
+    }
+
+    func primaryUnmatchedRanges(
+        primaryDuration: TimeInterval
+    ) -> [Range<TimeInterval>]? {
+        mapping?.primaryUnmatchedRanges(
             primaryDuration: primaryDuration,
             secondaryDuration: secondaryController.mediaItem?.durationSeconds
         )

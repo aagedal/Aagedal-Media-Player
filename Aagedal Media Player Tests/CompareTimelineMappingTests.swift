@@ -458,5 +458,31 @@ final class CompareTimelineMappingTests: XCTestCase {
         )
 
         XCTAssertNil(mapping.primaryOverlapRange(primaryDuration: 50))
+        XCTAssertEqual(mapping.primaryUnmatchedRanges(primaryDuration: 50), [0..<50])
+    }
+
+    func testTemporalGapsTrackBothAlignmentBoundaries() {
+        let mapping = CompareTimelineMapping(
+            primaryStartSeconds: 90,
+            secondaryStartSeconds: 100,
+            secondaryDuration: 30
+        )
+        XCTAssertEqual(mapping.primaryUnmatchedRanges(primaryDuration: 50), [0..<10, 40..<50])
+        XCTAssertEqual(
+            mapping.primaryUnmatchedRanges(primaryDuration: 50, secondaryDuration: 45),
+            [0..<10]
+        )
+        XCTAssertEqual(mapping.primaryUnmatchedRanges(primaryDuration: 40, secondaryDuration: 50), [0..<10])
+    }
+
+    func testTemporalGapsDoNotClaimUnknownOrFullOverlap() {
+        let unknown = CompareTimelineMapping(
+            primaryStartSeconds: nil,
+            secondaryStartSeconds: nil,
+            secondaryDuration: 0
+        )
+        XCTAssertNil(unknown.primaryUnmatchedRanges(primaryDuration: 50))
+        XCTAssertNil(unknown.primaryUnmatchedRanges(primaryDuration: .nan, secondaryDuration: 30))
+        XCTAssertEqual(unknown.primaryUnmatchedRanges(primaryDuration: 50, secondaryDuration: 50), [])
     }
 }

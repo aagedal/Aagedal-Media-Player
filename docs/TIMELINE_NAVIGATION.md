@@ -20,7 +20,12 @@ The main scrubber seeks within the visible interval. Option-drag retains
 precision scrubbing, and its Left/Right Arrow and VoiceOver adjustments still
 seek exactly one source frame through the existing transport commands. In
 Compare Mode, A remains the authoritative timeline and B follows its mapping.
-Chapter, trim, review, and overlap marks use the same viewport. Offscreen
+Chapter, trim, review, and overlap marks use the same viewport. In Compare Mode,
+amber bands mark source-A intervals where the current alignment and known
+durations leave no playable B frame. These are time-localized missing-counterpart
+findings, including intervals on both sides of a partial overlap. They update
+when alignment changes and do not claim an image or audio content difference.
+Unknown source durations produce no amber finding. Offscreen
 points are hidden; ranges crossing an edge are clipped. **Show Timeline
 Details** continues to control optional marks independently of zoom.
 
@@ -73,7 +78,7 @@ keyboard, or VoiceOver acceptance.
   without Option, and confirm adjacent-frame keyboard steps.
 - Pan the overview while paused and playing; confirm panning itself never
   seeks, and playback follows only after an active overview drag ends.
-- Check clipped chapter, trim, review range, and overlap marks near both edges.
+- Check clipped chapter, trim, review range, overlap, and amber missing-B bands near both edges, including after changing the alignment offset.
 - Use Full Keyboard Access and VoiceOver to choose zoom, pan, seek, and return
   to Fit. Confirm overview arrows pan without moving playback and all focused
   controls remain visible.

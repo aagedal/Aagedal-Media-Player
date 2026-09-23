@@ -430,13 +430,16 @@ struct ControlsView: View {
         switch status {
         case .none:
             statusColor = .yellow
-            statusHelp = "The sources have no playable overlap. Source B stays parked on its nearest boundary."
+            statusHelp = "The amber timeline interval has no matching B frame. Source B stays parked on its nearest boundary."
         case .unknown:
             statusColor = .secondary
             statusHelp = "The shared interval is unavailable until both source durations are known."
-        case .full, .partial:
+        case .full:
             statusColor = .cyan
             statusHelp = "The cyan interval is playable in both sources. The equation shows how A's relative time maps to B."
+        case .partial:
+            statusColor = .cyan
+            statusHelp = "The cyan interval is playable in both sources. Amber intervals have no matching B frame. The equation shows how A's relative time maps to B."
         }
 
         return HStack(spacing: 6) {
@@ -458,6 +461,7 @@ struct ControlsView: View {
         .help(statusHelp)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(status.label). \(offsetLabel)")
+        .accessibilityHint(statusHelp)
     }
 
     private var timelineSlider: some View {
@@ -472,6 +476,29 @@ struct ControlsView: View {
                 RoundedRectangle(cornerRadius: 2)
                     .fill(Color.white.opacity(0.3))
                     .frame(height: 4)
+
+                // Alignment and known durations identify genuine temporal
+                // gaps: A has frames here, but no corresponding B frame.
+                if showTimelineDetails,
+                   compareSession.isActive,
+                   let unmatchedRanges = compareSession.primaryUnmatchedRanges(
+                       primaryDuration: duration
+                   ) {
+                    ForEach(unmatchedRanges.indices, id: \.self) { index in
+                        let range = unmatchedRanges[index]
+                        if let visibleRange = viewport.clipped(
+                            range.lowerBound...range.upperBound
+                        ) {
+                            let start = CGFloat(viewport.fraction(for: visibleRange.lowerBound))
+                            let end = CGFloat(viewport.fraction(for: visibleRange.upperBound))
+                            Rectangle()
+                                .fill(Color.yellow.opacity(0.75))
+                                .frame(width: max(0, (end - start) * width), height: 8)
+                                .offset(x: start * width)
+                                .allowsHitTesting(false)
+                        }
+                    }
+                }
 
                 // Compare overlap is expressed on A's authoritative timeline.
                 // Outside this interval B is held on its nearest boundary, so
