@@ -39,12 +39,19 @@ The fixtures are deliberately minimal parser inputs, not playable camera clips:
 - Eight positive cases combine leading/trailing `moov`, `stco`/`co64` offsets,
   and ordinary/extended-size `moov` and `mdat` atoms.
 - Two positive cases use a final zero-size `mdat` or `moov`.
+- Four positive cases place ordinary or extended-size `free` atoms before or
+  between media atoms, put an empty `mdat` ahead of the sample-bearing one, or
+  append `free` after a valid container. These check that sample-table offsets
+  still identify the actual RTMD bytes across otherwise ignorable atoms.
 - The sample bytes sit at an unaligned absolute offset after 37 padding bytes.
   Two frames carry distinct ISO values (800, 1600), 20 ms spacing, and known signed
   gyroscope/accelerometer triples. Assertions check both ISO values, timestamps,
   first-frame identity, 100 Hz IMU rate, and every motion triple/timestamp. All
   public frame attribute fields are also represented in the parity snapshot.
 - One negative case contains no RTMD track.
+- Empty input, an `ftyp` alone, and an `mdat` without a `moov` are additional
+  no-track cases; all three throwing public readers must report the established
+  missing-track error.
 - Fourteen cases put short headers, incomplete extended headers, undersized
   atoms, oversized 64-bit lengths (including `Int.max`), or truncated payloads
   before/after a valid container.
@@ -94,6 +101,17 @@ errors. All no-track cases produced the expected error from each of the three
 throwing APIs; malformed sample offsets with an RTMD track returned empty
 arrays without an error. Artifacts and per-case results are retained at
 `/private/tmp/aagedal-metadata-edges-error-semantics-20260922-elevated`.
+
+## Expanded container and no-track result — 2026-09-23
+
+Seven new cases bring the harness to **34 fixtures**. All passed against both
+the pinned 3.0.0 baseline and exact 3.0.1 release: 68 isolated processes with
+zero parity or expected-value errors. The four new positive cases decoded both
+RTMD frames and all motion samples through the correct absolute offsets. The
+empty-file, `ftyp`-only, and `mdat`-only cases reported no track and the expected
+missing-track error from each throwing reader. Both source checkouts remained
+clean. Complete fixtures, source provenance, logs and per-case results are at
+`/private/tmp/aagedal-metadata-edges-expanded-20260923-elevated`.
 
 ## Remaining acceptance
 

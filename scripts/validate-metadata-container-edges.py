@@ -70,7 +70,22 @@ def fixtures():
     cases["zero-size-mdat"] = (prefix + movie(offset, sizes) + atom("mdat", payload, "zero"), True, True)
     offset = len(prefix) + 8 + len(padding)
     cases["zero-size-moov"] = (prefix + atom("mdat", payload) + movie(offset, sizes, style="zero"), True, True)
+    # Ordinary non-media atoms and an empty first mdat must not alter the
+    # absolute offsets into the later mdat containing the RTMD samples.
+    leading_free = atom("free", b"before-moov")
+    offset = len(prefix) + len(leading_free) + len(moov) + 8 + len(padding)
+    cases["leading-free"] = (prefix + leading_free + movie(offset, sizes) + atom("mdat", payload), True, True)
+    between_free = atom("free", b"between-moov-and-mdat", "extended")
+    offset = len(prefix) + len(moov) + len(between_free) + 8 + len(padding)
+    cases["extended-free-between"] = (prefix + movie(offset, sizes) + between_free + atom("mdat", payload), True, True)
+    empty_mdat = atom("mdat")
+    offset = len(prefix) + len(empty_mdat) + len(moov) + 8 + len(padding)
+    cases["empty-first-mdat"] = (prefix + empty_mdat + movie(offset, sizes) + atom("mdat", payload), True, True)
+    cases["trailing-free"] = (valid + atom("free", b"after-mdat"), True, True)
     cases["no-rtmd"] = (prefix + atom("mdat", payload) + atom("moov"), False, False)
+    cases["empty-file"] = (b"", False, False)
+    cases["ftyp-only"] = (prefix, False, False)
+    cases["mdat-only"] = (prefix + atom("mdat", payload), False, False)
     malformed = {
         "short-header": b"abc",
         "short-extended-header": u32(1) + b"free" + bytes(3),
