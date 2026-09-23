@@ -11,6 +11,7 @@ from pathlib import Path
 import plistlib
 import stat
 import subprocess
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -19,6 +20,7 @@ from unittest.mock import patch
 SCRIPT = Path(__file__).with_name("release.sh")
 VERIFY_SCRIPT = Path(__file__).with_name("verify-release-candidate.sh")
 PREFLIGHT_SCRIPT = Path(__file__).with_name("release-preflight.py")
+TAP_PATH_SCRIPT = Path(__file__).with_name("validate-tap-cask-path.py")
 
 
 class ReleaseScriptValidationTests(unittest.TestCase):
@@ -149,10 +151,12 @@ exit 91
 
     def test_automated_tap_update_requires_clean_checkout_and_exact_rewrite(self) -> None:
         tap_guard = self.source.index('verify_tap_checkout()')
+        self.assertIn('python3 scripts/validate-tap-cask-path.py "$TAP_LOCAL_PATH" "$TAP_CASK_FILE"', self.source)
         early_guard = self.source.index('    verify_tap_checkout', tap_guard)
         upload = self.source.index('gh release upload')
         late_guard = self.source.index('    verify_tap_checkout', early_guard + 1)
         pull = self.source.index('git pull --rebase --quiet')
+        post_pull_guard = self.source.index('CASK_PATH=$(python3 scripts/validate-tap-cask-path.py', pull)
         rewrite = self.source.index('python3 scripts/update-homebrew-cask.py')
         commit = self.source.index('git commit -m "$TAP_CASK_NAME $MARKETING_VERSION"')
         self.assertLess(tap_guard, early_guard)
@@ -160,7 +164,49 @@ exit 91
         self.assertLess(upload, late_guard)
         self.assertLess(late_guard, pull)
         self.assertLess(pull, rewrite)
+        self.assertLess(pull, post_pull_guard)
+        self.assertLess(post_pull_guard, rewrite)
         self.assertLess(rewrite, commit)
+
+    def test_tap_cask_path_requires_contained_tracked_regular_file(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            tap = root / "tap"
+            casks = tap / "Casks"
+            casks.mkdir(parents=True)
+            subprocess.run(["git", "init", "-q", str(tap)], check=True)
+            cask = casks / "aagedal-media-player.rb"
+            cask.write_text('cask "aagedal-media-player"\n')
+            subprocess.run(["git", "-C", str(tap), "add", "Casks/aagedal-media-player.rb"], check=True)
+            outside = root / "outside.rb"
+            outside.write_text("outside\n")
+            (casks / "escape.rb").symlink_to(outside)
+            (casks / "alias.rb").symlink_to(cask)
+            (casks / "untracked.rb").write_text("untracked\n")
+            nested = tap / "nested"
+            nested.mkdir()
+
+            cases = [
+                (tap, "Casks/aagedal-media-player.rb", True),
+                (tap, "./Casks/aagedal-media-player.rb", True),
+                (tap, "../outside.rb", False),
+                (tap, str(outside), False),
+                (tap, "Casks/escape.rb", False),
+                (tap, "Casks/alias.rb", False),
+                (tap, "Casks/untracked.rb", False),
+                (nested, "../Casks/aagedal-media-player.rb", False),
+            ]
+            for checkout, name, accepted in cases:
+                with self.subTest(checkout=checkout, name=name):
+                    result = subprocess.run(
+                        [sys.executable, str(TAP_PATH_SCRIPT), str(checkout), name],
+                        capture_output=True, text=True, check=False,
+                    )
+                    self.assertEqual(result.returncode == 0, accepted, result.stderr)
+                    if accepted:
+                        self.assertEqual(result.stdout.strip(), str(cask.resolve()))
+                    else:
+                        self.assertIn("invalid Homebrew tap cask path", result.stderr)
 
     def test_candidate_verifier_fail_closes_on_test_evidence(self) -> None:
         source = VERIFY_SCRIPT.read_text()

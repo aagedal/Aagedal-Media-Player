@@ -87,12 +87,7 @@ verify_tap_checkout() {
         echo "ERROR: TAP_LOCAL_PATH is not a directory: $TAP_LOCAL_PATH" >&2
         return 1
     }
-    CASK_PATH="$TAP_LOCAL_PATH/$TAP_CASK_FILE"
-    [[ -f "$CASK_PATH" ]] || {
-        echo "ERROR: cask file not found at $CASK_PATH" >&2
-        echo "       Set TAP_CASK_FILE to override the path inside the tap repo." >&2
-        return 1
-    }
+    CASK_PATH=$(python3 scripts/validate-tap-cask-path.py "$TAP_LOCAL_PATH" "$TAP_CASK_FILE") || return 1
     if ! tap_status=$(git -C "$TAP_LOCAL_PATH" status --porcelain); then
         echo "ERROR: could not inspect the Homebrew tap checkout at $TAP_LOCAL_PATH." >&2
         return 1
@@ -472,6 +467,10 @@ if [[ -n "$TAP_LOCAL_PATH" ]]; then
         cd "$TAP_LOCAL_PATH"
         git pull --rebase --quiet
     )
+
+    # Pull may replace the tracked path with a symlink. Resolve it again at
+    # the exact point where the cask updater will write.
+    CASK_PATH=$(python3 scripts/validate-tap-cask-path.py "$TAP_LOCAL_PATH" "$TAP_CASK_FILE")
 
     python3 scripts/update-homebrew-cask.py \
         "$CASK_PATH" "$MARKETING_VERSION" "$ZIP_SHA256"

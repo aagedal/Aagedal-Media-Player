@@ -32,6 +32,21 @@ IMAGE_TESTS = {
 }
 EXPECTED_CASES = {f"RealFileTests/{name}" for names in IMAGE_TESTS.values() for name in names} | {
     "CRMReaderTests/testRealC70CRMSampleIfPresent", "MXFMCALabelsTests/testRealBmxToolsFixture"}
+# Identities from the 2026-09-09 run in METADATA_LIBRARY_FIXTURE_VALIDATION.md.
+# The two unavailable Sony originals have no reviewed hashes yet.
+KNOWN_FIXTURE_SHA256 = {
+    "Nepobaby sesong 2 01.jpg": "79177d554a27f15183c8bd0861a0c4fc3c92be7c8cbaba1829bfeca88818b757",
+    "TRA03167_edit.jpg": "e425f11497a948acd14158941b8f7c12b28d96d308dce7877f346126f6150be9",
+    "S01E13 The Parting of Ways-0003.jpg": "67a6631a76e6ab226da4f9367d63c6373c6a160b5dcc670016e9dbbd0db6b3fb",
+    "S01E13 The Parting of Ways-0006.jpg": "ea07a8985925092731d91ffa100c61e87eff820e7ce9b64430ba7f2b49dc51d7",
+    "Vixen 2026 05.jpg": "eb0d79c52deb04b0e67ca7f8c091d9ec0aa4b585e95134638622154c23544f7b",
+    "ShortPlantHDR_seq_000001.jxl": "92ae631a48e89f3ef73a355d79df1f4be2c5f7c2fa54572dce3c053dc1963e57",
+    "TRA03168_edit_002.jxl": "75c772fac47508798e3ef96618dc405676a53f2a0e74186eb965b61379923a89",
+    "Nepobaby sesong 2 06.xmp": "64802bc1bc6735e6d6b34138120c71f68cce190da0dfbe4f4031045db145d6c7",
+    "DEI_8158_edit.jpg": "4f97e1d1239d804fadaadd84f466f0b415a6eb02db5842dc250a07bf956dd039",
+    "CRM.CRM": "b869a48d567d39a01d525cc532d88b5c720fbc5ac5c7c84f43b3734fa2bbdaf6",
+    "MCA.mxf": "e6b67949b33cad33126b675dbf8bf74eb0e1a6b119ccd392eb00a393fccf3abf",
+}
 
 
 def digest(path):
@@ -40,6 +55,12 @@ def digest(path):
         for block in iter(lambda: source.read(1024 * 1024), b""):
             value.update(block)
     return value.hexdigest()
+
+
+def validate_known_fixture_identity(name, actual_sha256):
+    expected = KNOWN_FIXTURE_SHA256.get(name)
+    if expected is not None and actual_sha256 != expected:
+        raise ValueError(f"Fixture SHA-256 mismatch for {name}: expected {expected}, got {actual_sha256}")
 
 
 def validate_result(output, code, missing_cases, timed_out=False, candidate_provenance=None):
@@ -117,6 +138,10 @@ def main():
     media = {"CRM.CRM": args.crm.resolve(strict=True), "MCA.mxf": args.mca.resolve(strict=True)}
     if any(not path.is_file() for path in media.values()):
         parser.error("CRM and MCA inputs must be regular files")
+    sources = {name: images / name for name in IMAGE_TESTS if name not in missing} | media
+    source_hashes = {name: digest(path) for name, path in sources.items()}
+    for name, source_hash in source_hashes.items():
+        validate_known_fixture_identity(name, source_hash)
     artifacts = args.artifacts.resolve()
     if any(artifacts == source or source in artifacts.parents
            for source in [candidate_source.baseline, candidate_source.candidate, images, *media.values()]):
@@ -131,12 +156,12 @@ def main():
     subprocess.run(["tar", "-xf", "-", "-C", str(package)], input=archive, check=True)
     if not args.baseline_control:
         candidate_source.apply_patch(package, artifacts / "patch.log")
-    staged = [(images / name, package / "TestImages" / name) for name in IMAGE_TESTS if name not in missing]
-    staged += [(source, package / "VideoFixtures" / name) for name, source in media.items()]
+    staged = [(name, images / name, package / "TestImages" / name) for name in IMAGE_TESTS if name not in missing]
+    staged += [(name, source, package / "VideoFixtures" / name) for name, source in media.items()]
     inputs = []
-    for source, destination in staged:
+    for name, source, destination in staged:
         destination.parent.mkdir(exist_ok=True)
-        source_hash = digest(source)
+        source_hash = source_hashes[name]
         shutil.copyfile(source, destination)
         if digest(destination) != source_hash:
             raise ValueError("Fixture copy differs from original")

@@ -41,6 +41,13 @@ absence are rechecked. The environment records the committed archive hash,
 script/patch hashes, both relocated test hashes, toolchain, fixture sizes/hashes,
 and exact case selection. Build and test output remains local. Current fixtures
 need about 2.5 GB of temporary space, plus the package/build artifacts.
+The harness also checks the nine available image/sidecar files and both video
+clips against the SHA-256 identities in the table below before creating an
+output directory. A different file with the expected name fails at preflight.
+The unavailable `TRA03164.ARW` and `TRA03164.xmp` have no reviewed hashes;
+recovering them still requires independent source verification. Updating a
+fixture identity, especially the disputed JXL file, requires review of the
+upstream test expectation and its new hash before changing this pin.
 
 By default missing image fixtures fail before building. With the explicit
 `--allow-missing-images` option, only the exact tests requiring absent named

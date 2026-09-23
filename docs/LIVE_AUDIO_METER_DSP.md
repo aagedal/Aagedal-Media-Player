@@ -107,6 +107,8 @@ callback order as timestamp order. During active streaming, unmatched data on
 either pipe is capped at 250 ms and applies backpressure; termination releases
 waiters so the OS-bounded final pipe tail can be reconciled or rejected. Missing headers, gaps, malformed records,
 checksum differences, truncated PCM and incomplete framing fail the segment.
+Malformed numeric channel-layout counts, including counts whose sum overflows
+the host integer, also fail qualification without terminating the app.
 Completion records the decoder version, arguments, sample format, timestamp
 protocol, time base, verified frame count and any timestamp-authorized initial
 silence as provenance.

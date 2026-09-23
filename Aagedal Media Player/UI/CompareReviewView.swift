@@ -632,6 +632,15 @@ private struct CompareReviewNoteRow: View {
                             .accessibilityIdentifier(identifier("range-end"))
                             .focused($isEndFrameFocused)
                             .onSubmit(applyRange)
+                            .onChange(of: isEndFrameFocused) { wasFocused, focused in
+                                guard wasFocused && !focused else { return }
+                                let entered = endFrameDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+                                let saved = note.primaryEndFrame.map(String.init) ?? ""
+                                // Tab and pointer navigation should commit the same
+                                // range that Return or Apply would commit. Keep an
+                                // empty draft for the explicit Clear range action.
+                                if !entered.isEmpty && entered != saved { applyRange() }
+                            }
                             .onChange(of: endFrameDraft) { _, _ in rangeError = nil }
                         Button("Apply", action: applyRange)
                             .accessibilityLabel("Apply range end for \(noteIdentity)")
@@ -716,6 +725,7 @@ private struct CompareReviewNoteRow: View {
             isEndFrameFocused = true
             return
         }
+        endFrameDraft = String(end)
         rangeError = nil
     }
 

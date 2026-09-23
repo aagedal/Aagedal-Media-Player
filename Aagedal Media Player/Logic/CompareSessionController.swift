@@ -1501,6 +1501,7 @@ final class CompareSessionController: ObservableObject {
             )
             guard endFrame >= note.primaryFrame, endFrame <= lastFrame else { return false }
         }
+        guard note.primaryEndFrame != endFrame else { return true }
         mutateReviewNote(id: id) { $0.primaryEndFrame = endFrame }
         return true
     }

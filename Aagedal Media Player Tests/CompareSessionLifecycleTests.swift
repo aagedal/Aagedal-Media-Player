@@ -440,6 +440,8 @@ final class CompareSessionLifecycleTests: XCTestCase {
         XCTAssertEqual(ranged.category, .picture)
         XCTAssertEqual(ranged.status, .inProgress)
         XCTAssertEqual(ranged.primaryEndFrame, 90)
+        XCTAssertTrue(session.updateReviewRange(id: original.id, endFrame: 90))
+        XCTAssertEqual(session.reviewNotes.first?.updatedAt, ranged.updatedAt)
         XCTAssertFalse(session.updateReviewRange(id: original.id, endFrame: 29))
         XCTAssertFalse(session.updateReviewRange(id: original.id, endFrame: 300))
         XCTAssertEqual(session.reviewNotes.first, ranged)

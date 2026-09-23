@@ -659,7 +659,14 @@ nonisolated final class LiveAudioMeterTimestampedStreamProcessor: @unchecked Sen
         if components.count >= 2 {
             let counts = components.compactMap { Int($0) }
             if counts.count == components.count {
-                let total = counts.reduce(0, +)
+                // Timestamp headers come from the decoder and may be malformed.
+                // An overflowing count must fail qualification, not trap the app.
+                var total = 0
+                for count in counts {
+                    let (sum, overflow) = total.addingReportingOverflow(count)
+                    guard !overflow else { return nil }
+                    total = sum
+                }
                 return total > 0 ? total : nil
             }
         }

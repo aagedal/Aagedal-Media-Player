@@ -3,6 +3,7 @@
 """Regression checks for complete, honest upstream fixture acceptance."""
 import importlib.util
 from pathlib import Path
+import re
 import unittest
 
 spec = importlib.util.spec_from_file_location("fixture_validation", Path(__file__).with_name("validate-metadata-library-fixtures.py"))
@@ -69,6 +70,26 @@ class FixtureAcceptanceTests(unittest.TestCase):
 
     def test_incomplete_candidate_provenance_is_rejected(self):
         self.assertFalse(validation.validate_result(fixture_log(), 0, set(), candidate_provenance={})["passed"])
+
+    def test_documented_fixture_hashes_are_enforced(self):
+        self.assertEqual(set(validation.KNOWN_FIXTURE_SHA256),
+                         set(validation.IMAGE_TESTS) - {"TRA03164.ARW", "TRA03164.xmp"} | {"CRM.CRM", "MCA.mxf"})
+        document = (Path(__file__).resolve().parent.parent / "docs/METADATA_LIBRARY_FIXTURE_VALIDATION.md").read_text()
+        table = dict(re.findall(r"^\| ([^|]+) \| [0-9,]+ \| `([0-9a-f]{64})` \|$", document, re.MULTILINE))
+        self.assertEqual(table, {**{name: sha for name, sha in validation.KNOWN_FIXTURE_SHA256.items()
+                                    if name not in {"CRM.CRM", "MCA.mxf"}},
+                                 "A001C004_22032472_CANON.CRM": validation.KNOWN_FIXTURE_SHA256["CRM.CRM"],
+                                 "n-intervju_with-MCA-labels.mxf": validation.KNOWN_FIXTURE_SHA256["MCA.mxf"]})
+        for name, expected in validation.KNOWN_FIXTURE_SHA256.items():
+            with self.subTest(name=name):
+                validation.validate_known_fixture_identity(name, expected)
+                with self.assertRaisesRegex(ValueError, "Fixture SHA-256 mismatch"):
+                    validation.validate_known_fixture_identity(name, "0" * 64)
+
+    def test_unreviewed_sony_originals_have_no_pinned_hash_yet(self):
+        for name in ("TRA03164.ARW", "TRA03164.xmp"):
+            self.assertNotIn(name, validation.KNOWN_FIXTURE_SHA256)
+            validation.validate_known_fixture_identity(name, "0" * 64)
 
 
 if __name__ == "__main__":

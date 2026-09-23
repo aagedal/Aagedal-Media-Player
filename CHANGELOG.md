@@ -5,6 +5,9 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Changed
+- Review range ends commit when the end-frame field loses focus, so keyboard and pointer navigation retain valid edits without requiring Apply.
+- Metadata fixture validation checks supplied files against documented SHA-256 identities before running compatibility tests.
+- Automated Homebrew publication requires a tracked cask inside the tap checkout and rechecks that path after pulling.
 - The inspection loupe can be dragged to a new canvas position while its inspected picture coordinate stays pinned; keyboard arrows and a reset control also move or restore its placement.
 - Review-note controls announce each note's position in the filtered list and source-A frame, so controls for multiple findings at one frame have distinct spoken labels.
 - Native-pixel loupe availability now requires the captured AVFoundation raster to belong to the currently active player item and preparation.
@@ -131,6 +134,7 @@ All notable changes to Aagedal Media Player.
   primary-file loop boundaries across all backend combinations.
 
 ### Fixed
+- Malformed live-meter channel-layout counts whose sum exceeds the host integer now fail decoder qualification instead of crashing.
 - Review-note navigation now uses layout-independent Cmd–Control–Left/Right, with the local playback key monitor allowing these menu shortcuts through instead of stepping a frame.
 - Trim I/O/X shortcuts now leave Command/Control combinations to menu handling, preventing Cmd–Option–O from clearing the Out point instead of opening comparison setup.
 - Final Cut Pro marker export now rejects source A combining quarter-turn rotation

@@ -137,7 +137,8 @@ corresponding B frame in amber on the comparison timeline. Alignment and
 duration determine these time-localized gaps; image/audio content-difference
 markers still need a detector and timestamp model. Invalid Review range ends
 now return keyboard focus to the field with specific correction feedback;
-native keyboard traversal and spoken VoiceOver remain unverified. An MPV
+leaving that field now commits a valid changed range before keyboard or pointer
+navigation. Native keyboard traversal and spoken VoiceOver remain unverified. An MPV
 anamorphic screenshot resampled the coded raster, so MPV Native pixels remains
 disabled with clearer provenance guidance until a source-pixel capture path can
 be validated. The metadata container-edge harness adds seven positive/error
@@ -217,6 +218,10 @@ matching aggregate and isolated-transport result evidence for the exact HEAD and
 `Package.resolved` hash. The release script also refuses version/build overrides
 that differ from committed project metadata and withholds appcast changes until
 the GitHub tag commit, non-draft state and exact ZIP asset are verified.
+Automated Homebrew publication now requires a tracked cask file within the tap
+repository root and rechecks its resolved path after pulling the tap, before
+writing. This closes an external-path and post-pull symlink escape in the
+publication script; it does not provide distribution acceptance evidence.
 
 The September 13 clean-checkout candidate verification at commit
 `3fdba621bb731aab234350df842e63fa0b4f405d` passes 654 optimized Release tests

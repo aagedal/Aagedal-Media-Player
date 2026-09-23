@@ -266,6 +266,15 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
             unrecognized.consumeTimingLine("#channel_layout_name 0: mystery"),
             .unrecognizedTimestampChannelLayout(actual: "mystery")
         )
+
+        let overflowing = try LiveAudioMeterTimestampedStreamProcessor(request: request) { _ in }
+        XCTAssertNil(overflowing.consumeTimingLine("#tb 0: 1/48000"))
+        XCTAssertNil(overflowing.consumeTimingLine("#sample_rate 0: 48000"))
+        let invalidLayout = "\(Int.max).1"
+        XCTAssertEqual(
+            overflowing.consumeTimingLine("#channel_layout_name 0: \(invalidLayout)"),
+            .unrecognizedTimestampChannelLayout(actual: invalidLayout)
+        )
     }
 
     func testTimestampedProcessorSupportsAllRatesAndMultichannelPacketSizes() throws {
