@@ -29,6 +29,21 @@ replace these checks on the shipping app and release-floor hardware.
   HDR previews are not color/code-value measurements, and A/B captures are
   independent rather than frame-locked.
 
+## MPV source-pixel limitation
+
+MPV's [`screenshot-raw video`](https://mpv.io/manual/stable/#command-screenshot-raw)
+produces an image without overlays, but the image can pass through display
+processing. The generated `par.mp4` fixture has a
+240 × 180 coded raster with 4:3 pixel aspect ratio; the MPV loupe capture is
+320 × 180. The square-pixel `landscape.mp4` capture matches its 320 × 180 coded
+raster, but equal dimensions alone do not prove that the pixels were not
+resampled or changed by filters. Automated integration assertions cover both
+observations. Native pixels therefore remains unavailable for MPV, including
+square-pixel files and mixed-backend comparisons. An MPV implementation needs
+a capture with decoded-raster provenance, orientation and pixel-preserving
+transform evidence, plus live tests across PAR, rotation, reflection, and
+filter settings before this gate can change.
+
 ## Picture registration and presentation
 
 - [ ] In single-source playback, move the real pointer through each colored

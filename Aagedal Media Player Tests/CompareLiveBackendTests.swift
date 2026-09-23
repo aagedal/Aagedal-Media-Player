@@ -608,7 +608,15 @@ final class CompareLiveBackendTests: XCTestCase {
             if backend == .avFoundation {
                 XCTAssertEqual(availability, .available, "\(name): \(availability.explanation)")
             } else {
-                XCTAssertFalse(availability.isAvailable, "MPV captures must remain display-space only")
+                XCTAssertFalse(availability.isAvailable, "MPV display-processed captures cannot verify source pixels")
+                if name == "landscape" {
+                    XCTAssertEqual(image.width, stream.width, "Equal widths do not verify MPV pixel provenance")
+                    XCTAssertEqual(image.height, stream.height, "Equal heights do not verify MPV pixel provenance")
+                } else if name == "par" {
+                    XCTAssertEqual(image.width, 320, "MPV corrects the 240 × 180 anamorphic fixture for display")
+                    XCTAssertEqual(image.height, 180)
+                    XCTAssertNotEqual(image.width, stream.width, "PAR correction resamples the coded raster")
+                }
             }
             // MPV screenshots include PAR correction, while AV retains the
             // oriented coded raster and lets the loupe view apply display aspect.

@@ -32,8 +32,9 @@ nonisolated enum LoupeMagnification: String, CaseIterable, Identifiable, Sendabl
 }
 
 /// Runtime evidence used before presenting a capture as one source pixel per
-/// physical display pixel. MPV screenshots have already passed through display
-/// geometry, so only an AVFoundation decoded raster can currently qualify.
+/// physical display pixel. MPV screenshots pass through display processing;
+/// even a matching raster size cannot establish pixel provenance. Only an
+/// AVFoundation decoded raster can currently qualify.
 nonisolated struct LoupeNativePixelSource: Equatable, Sendable {
     let name: String
     let backend: PlaybackBackend?
@@ -70,7 +71,7 @@ nonisolated enum LoupeNativePixelAvailability: Equatable, Sendable {
                 return .unavailable("1:1 source pixels are waiting for the \(source.name) playback backend.")
             }
             guard backend == .avFoundation else {
-                return .unavailable("1:1 source pixels require AVFoundation capture; \(source.name) uses mpv display-space capture.")
+                return .unavailable("1:1 source pixels require a verified decoded raster; \(source.name) uses mpv display-processed capture.")
             }
             guard let codedWidth = source.codedWidth,
                   let codedHeight = source.codedHeight,

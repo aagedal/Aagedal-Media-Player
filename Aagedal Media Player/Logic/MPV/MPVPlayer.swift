@@ -782,7 +782,9 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         let playbackTimeUncertainty: TimeInterval?
     }
 
-    /// Capture the current decoded video frame as raw BGRA pixels.
+    /// Capture MPV's display-processed video image as raw pixels. The `video`
+    /// flag excludes overlays, but does not establish source-pixel provenance:
+    /// PAR correction and video filters can resample the decoded raster.
     /// Uses `screenshot-raw` via `mpv_command_node` — no libavcodec encoder needed.
     ///
     /// Runs on `queue` so it is serialized against `destroy()`'s

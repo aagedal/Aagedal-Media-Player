@@ -45,7 +45,13 @@ final class LoupeGeometryTests: XCTestCase {
             primary: nativePixelSource(backend: .mpv)
         )
         XCTAssertFalse(mpv.isAvailable)
-        XCTAssertTrue(mpv.explanation.contains("mpv display-space"))
+        XCTAssertTrue(mpv.explanation.contains("mpv display-processed"))
+        XCTAssertFalse(
+            LoupeNativePixelAvailability.evaluate(
+                primary: nativePixelSource(backend: .mpv, capturedWidth: 1_920, capturedHeight: 1_080)
+            ).isAvailable,
+            "A screenshot matching coded dimensions does not prove that MPV preserved source pixels."
+        )
 
         let waiting = LoupeNativePixelAvailability.evaluate(
             primary: nativePixelSource(capturedWidth: nil, capturedHeight: nil)
