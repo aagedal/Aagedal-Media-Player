@@ -163,6 +163,13 @@ original missing fixtures and upstream correction remain open. Avid Media
 Composer First accepted a retained Resolve EDL as an offline sequence, but
 marker import and the app's Avid marker-text path remain unverified.
 
+The Phase 144 clean-checkout candidate run at `2730a4b6d122e19a4ae3aadc4df73ae61d6c71e6`
+passes 699 optimized Release tests with eight explicit optional skips, both
+isolated mixed-backend tests, Release static analysis and all 61 preflight
+checks. Source and resolved-package identities remain stable. This is current
+regression evidence, not completion of the external native, media, performance
+or distribution gates. See [retained candidate evidence](evidence/release-candidate-20260929/README.md).
+
 Phase 122 now rejects Final Cut XML exports for quarter-turn anamorphic source
 A with an actionable CSV/PDF fallback. This contains the demonstrated native
 Fit defect without changing source media or adding unverified scale compensation.

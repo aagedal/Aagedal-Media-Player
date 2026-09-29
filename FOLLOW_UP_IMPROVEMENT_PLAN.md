@@ -3250,6 +3250,24 @@ remains open.
 
 See the [Avid import record](docs/evidence/avid-first-edl-import-20260929/README.md).
 
+## Phase 144 — Current clean-checkout candidate verification
+
+Status: Canonical optimized candidate gate passed on 2026-09-29 at clean
+commit `2730a4b6d122e19a4ae3aadc4df73ae61d6c71e6`.
+
+- [x] Validate pinned package-cache revisions and run the script-validator
+  suite before the Release app build.
+- [x] Pass 699 optimized Release tests with eight allowlisted explicit skips,
+  no failures or runtime warnings, plus both isolated mixed-backend tests.
+- [x] Pass Release static analysis and all 61 source-tree preflight checks,
+  then revalidate source, package and checkout identity.
+
+See the [retained result](docs/evidence/release-candidate-20260929/README.md).
+This refreshes current-source regression evidence, while external-input,
+native workflow, performance and distribution acceptance remain open. The
+evidence-report commit follows the verified commit and cannot inherit its
+exact-source result.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -3577,3 +3595,4 @@ See the [Avid import record](docs/evidence/avid-first-edl-import-20260929/README
 133. Phase 141 bound live-meter worker admission at extreme frame positions.
 134. Phase 142 fail-closed metadata fixture identity and JXL diagnosis.
 135. Phase 143 native Avid First EDL import diagnosis.
+136. Phase 144 current clean-checkout candidate verification.
