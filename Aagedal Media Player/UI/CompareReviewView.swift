@@ -409,7 +409,9 @@ struct CompareReviewView: View {
     ) {
         guard !compareSession.isReviewActionPending else { return }
         // Menus and app commands can act while a range field still owns focus.
-        // Commit its draft before the action snapshots notes for export.
+        // Validate every draft before changing any note. A later invalid field
+        // must not leave earlier range edits saved when the action is blocked.
+        var rangeUpdates: [(id: UUID, endFrame: Int64)] = []
         for note in compareSession.reviewNotes {
             guard let draft = rangeDrafts[note.id] else { continue }
             let entered = draft.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -430,14 +432,18 @@ struct CompareReviewView: View {
                 rangeActionNoticeNoteID = note.id
                 return
             }
-            guard compareSession.updateReviewRange(id: note.id, endFrame: endFrame) else {
+            guard compareSession.canSetReviewRangeEnd(id: note.id, endFrame: endFrame) else {
                 rangeActionErrors[note.id] = "End frame must be from the note's start through the last media frame."
                 rangeActionNotice = "Review note at source A frame \(note.primaryFrame) needs an end frame from its start through the last media frame before this action."
                 rangeActionNoticeNoteID = note.id
                 return
             }
-            rangeDrafts[note.id] = String(endFrame)
-            rangeActionErrors[note.id] = nil
+            rangeUpdates.append((note.id, endFrame))
+        }
+        for update in rangeUpdates {
+            guard compareSession.updateReviewRange(id: update.id, endFrame: update.endFrame) else { return }
+            rangeDrafts[update.id] = String(update.endFrame)
+            rangeActionErrors[update.id] = nil
         }
         rangeActionNotice = nil
         rangeActionNoticeNoteID = nil

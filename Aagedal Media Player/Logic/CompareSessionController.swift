@@ -1488,19 +1488,25 @@ final class CompareSessionController: ObservableObject {
         }
     }
 
+    /// Check an inclusive range end without mutating the note, so a Review
+    /// action can validate every visible draft before committing any of them.
+    func canSetReviewRangeEnd(id: UUID, endFrame: Int64) -> Bool {
+        guard canEditReviewNotes,
+              let note = reviewNotes.first(where: { $0.id == id }),
+              let item = primaryAudioController?.mediaItem else { return false }
+        let rate = Double(note.primaryRateNumerator) / Double(note.primaryRateDenominator)
+        let lastFrame = CompareReviewTimeline.frameIndex(
+            for: item.durationSeconds, duration: item.durationSeconds, frameRate: rate
+        )
+        return endFrame >= note.primaryFrame && endFrame <= lastFrame
+    }
+
     /// Range ends are inclusive and use the rate captured with the note.
     @discardableResult
     func updateReviewRange(id: UUID, endFrame: Int64?) -> Bool {
         guard canEditReviewNotes,
-              let note = reviewNotes.first(where: { $0.id == id }),
-              let item = primaryAudioController?.mediaItem else { return false }
-        if let endFrame {
-            let rate = Double(note.primaryRateNumerator) / Double(note.primaryRateDenominator)
-            let lastFrame = CompareReviewTimeline.frameIndex(
-                for: item.durationSeconds, duration: item.durationSeconds, frameRate: rate
-            )
-            guard endFrame >= note.primaryFrame, endFrame <= lastFrame else { return false }
-        }
+              let note = reviewNotes.first(where: { $0.id == id }) else { return false }
+        if let endFrame, !canSetReviewRangeEnd(id: id, endFrame: endFrame) { return false }
         guard note.primaryEndFrame != endFrame else { return true }
         mutateReviewNote(id: id) { $0.primaryEndFrame = endFrame }
         return true

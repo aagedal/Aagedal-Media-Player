@@ -3097,6 +3097,21 @@ This closes the silent stale-range snapshot path for actions taken while the
 Review popover is open. A native keyboard-only export check, Full Keyboard
 Access and spoken VoiceOver are still required for release acceptance.
 
+## Phase 134 — Atomic Review range preflight for actions
+
+Status: Engineering implementation and focused Debug lifecycle tests pass on
+2026-09-29; native multi-field keyboard acceptance remains open.
+
+- [x] Validate every pending inclusive end-frame draft before changing any
+  finding for an Export or Notes action.
+- [x] Leave all other still-pending range drafts unapplied when one draft is
+  empty while a range exists, malformed, or outside its source-A frame bounds.
+- [x] Reuse the controller's range-bound calculation for preflight and mutation.
+  All ten focused `CompareSessionLifecycleTests` pass in the rebuilt Debug app.
+
+This closes a partial-save path in Phase 133's action handling. Full Keyboard
+Access and spoken VoiceOver acceptance remain open.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -3414,3 +3429,4 @@ Access and spoken VoiceOver are still required for release acceptance.
 124. Phase 132 temporal missing-counterpart markers, Review range focus,
      MPV pixel provenance, and metadata container-edge compatibility.
 125. Phase 133 Review range-draft ownership for report actions.
+126. Phase 134 atomic Review range preflight for actions.
