@@ -3080,6 +3080,23 @@ acceptance remains open.
 The native drag gesture, focus traversal and spoken instruction still require
 hands-on verification in the rebuilt app before release acceptance.
 
+## Phase 133 — Review range drafts before report actions
+
+Status: Engineering implementation and Debug build/static analysis pass on
+2026-09-29; native keyboard and spoken accessibility acceptance remain open.
+
+- [x] Keep each visible finding's inclusive end-frame draft in the Review
+  popover so an Export or Notes action can commit it before taking a snapshot.
+- [x] Stop that action when a changed end frame is empty while a saved range
+  exists, malformed or out of bounds; expand its controls, restore field focus
+  and show a finding-specific error plus a visible action-level message.
+- [x] Clear draft and action-error state when a finding is deleted, the sidecar
+  changes or the primary source is replaced.
+
+This closes the silent stale-range snapshot path for actions taken while the
+Review popover is open. A native keyboard-only export check, Full Keyboard
+Access and spoken VoiceOver are still required for release acceptance.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -3396,3 +3413,4 @@ hands-on verification in the rebuilt app before release acceptance.
 123. Phase 131 draggable loupe placement.
 124. Phase 132 temporal missing-counterpart markers, Review range focus,
      MPV pixel provenance, and metadata container-edge compatibility.
+125. Phase 133 Review range-draft ownership for report actions.

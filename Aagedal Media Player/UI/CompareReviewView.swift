@@ -56,6 +56,10 @@ struct CompareReviewView: View {
 
     @State private var draft = ""
     @State private var noteDrafts: [UUID: String] = [:]
+    @State private var rangeDrafts: [UUID: String] = [:]
+    @State private var rangeActionErrors: [UUID: String] = [:]
+    @State private var rangeActionNotice: String?
+    @State private var rangeActionNoticeNoteID: UUID?
     @FocusState private var focusedField: CompareReviewFocusTarget?
 
     var body: some View {
@@ -155,6 +159,16 @@ struct CompareReviewView: View {
                     }
                 }
                 .frame(maxHeight: 300)
+            }
+
+            if let rangeActionNotice {
+                Text(rangeActionNotice)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                    .accessibilityLabel("Review action needs a valid range")
+                    .accessibilityValue(rangeActionNotice)
+                    .accessibilityAddTraits(.updatesFrequently)
+                    .accessibilityIdentifier("compare-review-range-action-error")
             }
 
             if let reviewError = compareSession.reviewError {
@@ -308,10 +322,18 @@ struct CompareReviewView: View {
         .onDisappear { requestedExport = nil }
         .onChange(of: compareSession.reviewSidecarURL) { _, _ in
             noteDrafts.removeAll()
+            rangeDrafts.removeAll()
+            rangeActionErrors.removeAll()
+            rangeActionNotice = nil
+            rangeActionNoticeNoteID = nil
             requestedExport = nil
         }
         .onChange(of: primaryController.preparationID) { _, _ in
             noteDrafts.removeAll()
+            rangeDrafts.removeAll()
+            rangeActionErrors.removeAll()
+            rangeActionNotice = nil
+            rangeActionNoticeNoteID = nil
             requestedExport = nil
         }
     }
@@ -325,6 +347,22 @@ struct CompareReviewView: View {
                 get: { noteDrafts[note.id] ?? note.text },
                 set: { if !compareSession.isReviewActionPending { noteDrafts[note.id] = $0 } }
             ),
+            endFrameDraft: Binding(
+                get: { rangeDrafts[note.id] ?? note.primaryEndFrame.map(String.init) ?? "" },
+                set: {
+                    if !compareSession.isReviewActionPending {
+                        rangeDrafts[note.id] = $0
+                        if rangeActionNoticeNoteID == note.id {
+                            rangeActionNotice = nil
+                            rangeActionNoticeNoteID = nil
+                        }
+                    }
+                }
+            ),
+            rangeActionError: Binding(
+                get: { rangeActionErrors[note.id] },
+                set: { rangeActionErrors[note.id] = $0 }
+            ),
             timecodeLabel: timecodeLabel(for: note),
             canEdit: compareSession.canEditReviewNotes,
             onSeek: {
@@ -336,6 +374,12 @@ struct CompareReviewView: View {
             onCommitFinished: { noteDrafts[note.id] = nil },
             onDelete: {
                 noteDrafts[note.id] = nil
+                rangeDrafts[note.id] = nil
+                rangeActionErrors[note.id] = nil
+                if rangeActionNoticeNoteID == note.id {
+                    rangeActionNotice = nil
+                    rangeActionNoticeNoteID = nil
+                }
                 compareSession.deleteReviewNote(id: note.id)
             },
             onClassification: { severity, category, status in
@@ -364,6 +408,39 @@ struct CompareReviewView: View {
         _ action: @escaping @MainActor (CompareSessionController, PlayerController) -> Void
     ) {
         guard !compareSession.isReviewActionPending else { return }
+        // Menus and app commands can act while a range field still owns focus.
+        // Commit its draft before the action snapshots notes for export.
+        for note in compareSession.reviewNotes {
+            guard let draft = rangeDrafts[note.id] else { continue }
+            let entered = draft.trimmingCharacters(in: .whitespacesAndNewlines)
+            let saved = note.primaryEndFrame.map(String.init) ?? ""
+            if entered.isEmpty {
+                if note.primaryEndFrame != nil {
+                    rangeActionErrors[note.id] = "Use Clear range to remove the saved end frame."
+                    rangeActionNotice = "Review note at source A frame \(note.primaryFrame) still has a saved end frame. Use Clear range before this action."
+                    rangeActionNoticeNoteID = note.id
+                    return
+                }
+                continue
+            }
+            guard entered != saved else { continue }
+            guard let endFrame = Int64(entered) else {
+                rangeActionErrors[note.id] = "Enter a whole-number end frame before continuing."
+                rangeActionNotice = "Review note at source A frame \(note.primaryFrame) needs a whole-number end frame before this action."
+                rangeActionNoticeNoteID = note.id
+                return
+            }
+            guard compareSession.updateReviewRange(id: note.id, endFrame: endFrame) else {
+                rangeActionErrors[note.id] = "End frame must be from the note's start through the last media frame."
+                rangeActionNotice = "Review note at source A frame \(note.primaryFrame) needs an end frame from its start through the last media frame before this action."
+                rangeActionNoticeNoteID = note.id
+                return
+            }
+            rangeDrafts[note.id] = String(endFrame)
+            rangeActionErrors[note.id] = nil
+        }
+        rangeActionNotice = nil
+        rangeActionNoticeNoteID = nil
         // TextField bindings record drafts immediately, before focus-loss or
         // onDisappear callbacks. Flush them before an action disables editing
         // or captures the notes for an export.
@@ -517,8 +594,10 @@ private struct CompareReviewNoteRow: View {
     let onCurrentEnd: () -> Bool
     let onSeekEnd: () -> Void
 
-    @State private var endFrameDraft = ""
+    @Binding private var endFrameDraft: String
+    @Binding private var rangeActionError: String?
     @State private var rangeError: String?
+    @State private var isRangeExpanded = false
 
     @Binding private var draft: String
     @State private var isDeleting = false
@@ -530,6 +609,8 @@ private struct CompareReviewNoteRow: View {
         position: Int,
         count: Int,
         draft: Binding<String>,
+        endFrameDraft: Binding<String>,
+        rangeActionError: Binding<String?>,
         timecodeLabel: String,
         canEdit: Bool,
         onSeek: @escaping () -> Void,
@@ -554,8 +635,9 @@ private struct CompareReviewNoteRow: View {
         self.onRange = onRange
         self.onCurrentEnd = onCurrentEnd
         self.onSeekEnd = onSeekEnd
-        _endFrameDraft = State(initialValue: note.primaryEndFrame.map(String.init) ?? "")
         _draft = draft
+        _endFrameDraft = endFrameDraft
+        _rangeActionError = rangeActionError
     }
 
     var body: some View {
@@ -601,7 +683,7 @@ private struct CompareReviewNoteRow: View {
                 .help("Delete review note")
                 .disabled(!canEdit)
             }
-            DisclosureGroup {
+            DisclosureGroup(isExpanded: $isRangeExpanded) {
                 VStack(alignment: .leading, spacing: 8) {
                     Picker("Severity", selection: Binding(
                         get: { note.severity }, set: { onClassification($0, nil, nil) }
@@ -624,28 +706,7 @@ private struct CompareReviewNoteRow: View {
                     }
                     .accessibilityLabel("Status for \(noteIdentity)")
                     .accessibilityIdentifier(identifier("status"))
-                    HStack {
-                        TextField("End frame (inclusive)", text: $endFrameDraft)
-                            .textFieldStyle(.roundedBorder)
-                            .accessibilityLabel("Inclusive range end frame for \(noteIdentity)")
-                            .accessibilityHint(rangeError ?? "Enter a whole source A frame number from the note's start through the last media frame.")
-                            .accessibilityIdentifier(identifier("range-end"))
-                            .focused($isEndFrameFocused)
-                            .onSubmit(applyRange)
-                            .onChange(of: isEndFrameFocused) { wasFocused, focused in
-                                guard wasFocused && !focused else { return }
-                                let entered = endFrameDraft.trimmingCharacters(in: .whitespacesAndNewlines)
-                                let saved = note.primaryEndFrame.map(String.init) ?? ""
-                                // Tab and pointer navigation should commit the same
-                                // range that Return or Apply would commit. Keep an
-                                // empty draft for the explicit Clear range action.
-                                if !entered.isEmpty && entered != saved { applyRange() }
-                            }
-                            .onChange(of: endFrameDraft) { _, _ in rangeError = nil }
-                        Button("Apply", action: applyRange)
-                            .accessibilityLabel("Apply range end for \(noteIdentity)")
-                            .accessibilityIdentifier(identifier("range-apply"))
-                    }
+                    rangeEditor
                     ViewThatFits(in: .horizontal) {
                         HStack {
                             rangeActions
@@ -654,12 +715,12 @@ private struct CompareReviewNoteRow: View {
                             rangeActions
                         }
                     }
-                    if let rangeError {
-                        Text(rangeError)
+                    if let error = rangeError ?? rangeActionError {
+                        Text(error)
                             .font(.caption)
                             .foregroundStyle(.red)
-                            .accessibilityLabel("Review range error")
-                            .accessibilityValue(rangeError)
+                            .accessibilityLabel("Range error for \(noteIdentity)")
+                            .accessibilityValue(error)
                             .accessibilityAddTraits(.updatesFrequently)
                             .accessibilityIdentifier(identifier("range-error"))
                     }
@@ -676,6 +737,15 @@ private struct CompareReviewNoteRow: View {
         }
         .onChange(of: note.primaryEndFrame) { _, end in
             endFrameDraft = end.map(String.init) ?? ""
+        }
+        .onChange(of: rangeActionError) { _, error in
+            if error != nil {
+                if isRangeExpanded { isEndFrameFocused = true }
+                else { isRangeExpanded = true }
+            }
+        }
+        .onChange(of: isRangeExpanded) { _, expanded in
+            if expanded && rangeActionError != nil { isEndFrameFocused = true }
         }
         .padding(8)
         .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8))
@@ -703,6 +773,33 @@ private struct CompareReviewNoteRow: View {
             }
             .accessibilityLabel("Clear range for \(noteIdentity)")
             .accessibilityIdentifier(identifier("range-clear"))
+        }
+    }
+
+    private var rangeEditor: some View {
+        HStack {
+            TextField("End frame (inclusive)", text: $endFrameDraft)
+                .textFieldStyle(.roundedBorder)
+                .accessibilityLabel("Inclusive range end frame for \(noteIdentity)")
+                .accessibilityHint(rangeError ?? rangeActionError ?? "Enter a whole source A frame number from the note's start through the last media frame.")
+                .accessibilityIdentifier(identifier("range-end"))
+                .focused($isEndFrameFocused)
+                .onSubmit(applyRange)
+                .onChange(of: isEndFrameFocused) { wasFocused, focused in
+                    guard wasFocused && !focused else { return }
+                    let entered = endFrameDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+                    let saved = note.primaryEndFrame.map(String.init) ?? ""
+                    // Tab and pointer navigation commit like Return or Apply.
+                    // Keep an empty draft for the explicit Clear range action.
+                    if !entered.isEmpty && entered != saved { applyRange() }
+                }
+                .onChange(of: endFrameDraft) { _, _ in
+                    rangeError = nil
+                    rangeActionError = nil
+                }
+            Button("Apply", action: applyRange)
+                .accessibilityLabel("Apply range end for \(noteIdentity)")
+                .accessibilityIdentifier(identifier("range-apply"))
         }
     }
 
