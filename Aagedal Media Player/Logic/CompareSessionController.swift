@@ -1469,10 +1469,11 @@ final class CompareSessionController: ObservableObject {
         return true
     }
 
-    func updateReviewNote(id: UUID, text: String) {
+    @discardableResult
+    func updateReviewNote(id: UUID, text: String) -> Bool {
         let text = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !text.isEmpty else { return }
-        mutateReviewNote(id: id) { $0.text = text }
+        guard !text.isEmpty else { return false }
+        return mutateReviewNote(id: id) { $0.text = text }
     }
 
     func updateReviewClassification(
@@ -1532,11 +1533,12 @@ final class CompareSessionController: ObservableObject {
         ))
     }
 
-    private func mutateReviewNote(id: UUID, mutation: (inout CompareReviewNote) -> Void) {
+    @discardableResult
+    private func mutateReviewNote(id: UUID, mutation: (inout CompareReviewNote) -> Void) -> Bool {
         guard let index = reviewNotes.firstIndex(where: { $0.id == id }),
               canEditReviewNotes,
               let primaryURL = primaryAudioController?.mediaItem?.url,
-              let secondaryURL else { return }
+              let secondaryURL else { return false }
         mutation(&reviewNotes[index])
         reviewNotes[index].updatedAt = Date()
         persistReviewMutation(
@@ -1544,6 +1546,7 @@ final class CompareSessionController: ObservableObject {
             primaryURL: primaryURL,
             secondaryURL: secondaryURL
         )
+        return true
     }
 
     func deleteReviewNote(id: UUID) {

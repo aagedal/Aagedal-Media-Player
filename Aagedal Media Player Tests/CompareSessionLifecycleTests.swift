@@ -462,12 +462,19 @@ final class CompareSessionLifecycleTests: XCTestCase {
         let savedRange = try await waitForSavedNote(endFrame: 90, text: original.text)
         XCTAssertNotNil(savedRange)
         XCTAssertTrue(session.updateReviewRange(id: original.id, endFrame: nil))
-        session.updateReviewNote(id: original.id, text: "Updated text")
+        XCTAssertTrue(session.updateReviewNote(id: original.id, text: "Updated text"))
         let savedSingle = try await waitForSavedNote(endFrame: nil, text: "Updated text")
         XCTAssertNotNil(savedSingle)
         XCTAssertEqual(savedSingle?.primaryFrame, original.primaryFrame)
         XCTAssertEqual(savedSingle?.secondaryFrame, original.secondaryFrame)
         XCTAssertNil(session.reviewError)
+
+        session.stop()
+        XCTAssertFalse(session.updateReviewNote(id: original.id, text: "Discarded edit"))
+        let afterStop = try await store.load(
+            from: sidecar, primaryURL: primaryURL, secondaryURL: secondaryURL
+        )?.notes.first
+        XCTAssertEqual(afterStop?.text, "Updated text")
     }
 
     private func makeSession(

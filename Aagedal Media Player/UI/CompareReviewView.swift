@@ -217,7 +217,7 @@ struct CompareReviewView: View {
                 Text(rangeActionNotice)
                     .font(.caption)
                     .foregroundStyle(.red)
-                    .accessibilityLabel("Review action needs a valid finding")
+                    .accessibilityLabel("Review action needs attention")
                     .accessibilityValue(rangeActionNotice)
                     .accessibilityAddTraits(.updatesFrequently)
                     .accessibilityIdentifier("compare-review-range-action-error")
@@ -426,9 +426,7 @@ struct CompareReviewView: View {
             onSeek: {
                 compareSession.seekToReviewNote(note, primary: primaryController)
             },
-            onUpdate: { text in
-                compareSession.updateReviewNote(id: note.id, text: text)
-            },
+            onUpdate: { text in compareSession.updateReviewNote(id: note.id, text: text) },
             onCommitFinished: { drafts.noteDrafts[note.id] = nil },
             onDelete: {
                 drafts.noteDrafts[note.id] = nil
@@ -470,6 +468,11 @@ struct CompareReviewView: View {
         if !drafts.newNoteDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             drafts.newNoteActionError = "Add or clear the new note before continuing."
             focusedField = .newNote
+            return
+        }
+        if drafts.hasPendingEdits(in: compareSession.reviewNotes), !compareSession.canEditReviewNotes {
+            drafts.rangeActionNotice = "Review notes cannot be edited right now. Retry loading the review before continuing."
+            drafts.rangeActionNoticeNoteID = nil
             return
         }
         // Reject an empty changed note before applying any pending range or
@@ -519,7 +522,12 @@ struct CompareReviewView: View {
             rangeUpdates.append((note.id, endFrame))
         }
         for update in rangeUpdates {
-            guard compareSession.updateReviewRange(id: update.id, endFrame: update.endFrame) else { return }
+            guard compareSession.updateReviewRange(id: update.id, endFrame: update.endFrame) else {
+                drafts.rangeActionNotice = "A Review range could not be updated. Correct the finding and retry."
+                drafts.rangeActionNoticeNoteID = update.id
+                revealInvalidNote(update.id)
+                return
+            }
             drafts.rangeDrafts[update.id] = String(update.endFrame)
             drafts.rangeActionErrors[update.id] = nil
         }
@@ -531,7 +539,13 @@ struct CompareReviewView: View {
         for note in compareSession.reviewNotes {
             if let text = drafts.noteDrafts[note.id]?.trimmingCharacters(in: .whitespacesAndNewlines),
                !text.isEmpty, text != note.text {
-                compareSession.updateReviewNote(id: note.id, text: text)
+                guard compareSession.updateReviewNote(id: note.id, text: text) else {
+                    drafts.noteActionErrors[note.id] = "This note could not be updated. Retry the edit."
+                    drafts.rangeActionNotice = "Review note at source A frame \(note.primaryFrame) could not be updated."
+                    drafts.rangeActionNoticeNoteID = note.id
+                    revealInvalidNote(note.id)
+                    return
+                }
             }
         }
         drafts.noteDrafts.removeAll()
@@ -677,7 +691,7 @@ private struct CompareReviewNoteRow: View {
     let timecodeLabel: String
     let canEdit: Bool
     let onSeek: () -> Void
-    let onUpdate: (String) -> Void
+    let onUpdate: (String) -> Bool
     let onCommitFinished: () -> Void
     let onDelete: () -> Void
     let onClassification: (CompareReviewSeverity?, CompareReviewCategory?, CompareReviewStatus?) -> Void
@@ -706,7 +720,7 @@ private struct CompareReviewNoteRow: View {
         timecodeLabel: String,
         canEdit: Bool,
         onSeek: @escaping () -> Void,
-        onUpdate: @escaping (String) -> Void,
+        onUpdate: @escaping (String) -> Bool,
         onCommitFinished: @escaping () -> Void,
         onDelete: @escaping () -> Void,
         onClassification: @escaping (CompareReviewSeverity?, CompareReviewCategory?, CompareReviewStatus?) -> Void,
@@ -941,7 +955,7 @@ private struct CompareReviewNoteRow: View {
             isFocused = true
             return
         }
-        if text != note.text { onUpdate(text) }
+        if text != note.text && !onUpdate(text) { return }
         onCommitFinished()
     }
 }

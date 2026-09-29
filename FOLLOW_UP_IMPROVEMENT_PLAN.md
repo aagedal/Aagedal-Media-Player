@@ -3176,6 +3176,21 @@ Native same-source reload with an unfinished Review edit and a subsequent
 keyboard report action still needs hands-on verification. This does not close
 the broader Full Keyboard Access or spoken VoiceOver release gates.
 
+## Phase 139 — Retain rejected Review edits
+
+Status: Engineering implementation and focused Debug lifecycle checks pass on
+2026-09-29; native keyboard acceptance remains open.
+
+- [x] Report whether a note-text mutation was accepted so a field does not
+  discard its draft when the review becomes unavailable during commitment.
+- [x] Stop report and Notes actions with visible feedback while pending drafts
+  cannot be applied, leaving those drafts available for a later retry.
+- [x] Verify accepted note edits persist and edits after a stopped comparison
+  are rejected without changing the saved sidecar.
+
+The latest app still needs a native retry/export check, Full Keyboard Access,
+and spoken VoiceOver acceptance before this closes the 2.0 workflow gate.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -3498,3 +3513,4 @@ the broader Full Keyboard Access or spoken VoiceOver release gates.
 128. Phase 136 reveal findings that block Review actions.
 129. Phase 137 preserve Review drafts across popover dismissal.
 130. Phase 138 keep Review drafts through same-source reloads.
+131. Phase 139 retain rejected Review edits.

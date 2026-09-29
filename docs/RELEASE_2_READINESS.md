@@ -147,6 +147,12 @@ ARW/XMP originals and upstream JXL fixture/assertion disagreement remain open.
 Focused timeline, loupe, Review, and metadata checks pass; source-tree release
 preflight passes all 61 checks. This is not a fresh clean-checkout candidate run.
 
+The September 29 Review continuation retains pending note and range drafts
+across popover dismissal and same-source reloads, checks drafts before Notes or
+report actions, reveals blocking findings, and keeps a note draft when its
+mutation is rejected. Focused Debug lifecycle checks pass. Native retry/export,
+Full Keyboard Access and spoken VoiceOver acceptance remain open.
+
 Phase 122 now rejects Final Cut XML exports for quarter-turn anamorphic source
 A with an actionable CSV/PDF fallback. This contains the demonstrated native
 Fit defect without changing source media or adding unverified scale compensation.

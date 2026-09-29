@@ -5,6 +5,7 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Changed
+- Review keeps an edited note draft when its update is rejected, and report actions stop with visible feedback if pending edits cannot be applied.
 - Review drafts now survive a playback or comparison geometry reload of the same sources; replacing a source or changing the active notes copy still clears them.
 - Review keeps new-note, edited-text, and range drafts when its popover closes; a later keyboard export reopens Review to validate unfinished edits and asks for an unsubmitted new note to be added or cleared.
 - Review actions now bring the finding that needs correction into view, including when clearing a filter reveals it in a long note list.
