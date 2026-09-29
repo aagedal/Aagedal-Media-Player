@@ -3191,6 +3191,65 @@ Status: Engineering implementation and focused Debug lifecycle checks pass on
 The latest app still needs a native retry/export check, Full Keyboard Access,
 and spoken VoiceOver acceptance before this closes the 2.0 workflow gate.
 
+## Phase 140 — Explain rejected Review text edits at the field
+
+Status: Engineering implementation and focused Debug tests pass on
+2026-09-29; native keyboard acceptance remains open.
+
+- [x] Show a finding-specific error immediately when a changed note text is
+  rejected while its field loses focus, instead of waiting for a later report
+  action to reveal the problem.
+- [x] Keep the rejected text draft and restore field focus when editing remains
+  available; explain when the review became unavailable before commitment.
+- [x] Pass three focused commit-policy tests in the rebuilt Debug app, covering
+  accepted, rejected, unavailable, empty and unchanged text.
+- [ ] Verify the field behavior in the rebuilt app with Tab navigation and
+  spoken VoiceOver.
+
+The release keyboard workflow gate remains open until the native checks pass.
+
+## Phase 141 — Bound live-meter worker admission at extreme frame positions
+
+Status: Focused implementation and Debug regression pass on 2026-09-29;
+representative-media acceptance remains open.
+
+- [x] Reject a finite playback time whose 96 kHz frame position can round past
+  the safe `Int64` addition range for the worker's 250 ms ahead allowance.
+- [x] Convert to `Int64` before checking the exact integer addition bound, and
+  leave the gate usable for a subsequent ordinary playback time.
+- [x] Pass the focused 96 kHz regression in the integrated Debug build.
+
+This closes an overflow trap in the worker gate; it does not establish native
+long-play or trusted live-meter accuracy.
+
+## Phase 142 — Fail-closed metadata fixture identity and JXL diagnosis
+
+Status: Validator and diagnostic hardening completed on 2026-09-29; upstream
+fixture/assertion reconciliation remains open.
+
+- [x] Reject any recovered ARW/XMP input without a reviewed, pinned SHA-256
+  before staging, while allowing absent originals as explicit opt-in skips.
+- [x] Require the reviewed JXL container hash and signature before probing,
+  and record the unchanged upstream write assertion beside the container and
+  bare-codestream write observations.
+- [x] Pass ten fixture-validator and seven JXL-diagnostic regressions.
+- [ ] Recover and verify the original Sony files and reconcile the upstream
+  JXL test name and write assertion before closing the full compatibility gate.
+
+## Phase 143 — Native Avid First EDL import diagnosis
+
+Status: Focused native import observed on 2026-09-29; Avid marker acceptance
+remains open.
+
+- [x] Import the unchanged seven-finding 29.97 DF Resolve EDL into a disposable
+  Media Composer First 26.8 project and record its source hash and outcome.
+- [x] Qualify the result: Avid created an offline sequence, but no marker count,
+  note content or source-media identity was verified.
+- [ ] Import the app's Avid marker-text export with current-source fixtures and
+  verify marker positions, content and any supported re-export.
+
+See the [Avid import record](docs/evidence/avid-first-edl-import-20260929/README.md).
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -3514,3 +3573,7 @@ and spoken VoiceOver acceptance before this closes the 2.0 workflow gate.
 129. Phase 137 preserve Review drafts across popover dismissal.
 130. Phase 138 keep Review drafts through same-source reloads.
 131. Phase 139 retain rejected Review edits.
+132. Phase 140 explain rejected Review text edits at the field.
+133. Phase 141 bound live-meter worker admission at extreme frame positions.
+134. Phase 142 fail-closed metadata fixture identity and JXL diagnosis.
+135. Phase 143 native Avid First EDL import diagnosis.

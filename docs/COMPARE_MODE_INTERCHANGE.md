@@ -152,6 +152,17 @@ running each check; installation alone does not establish format compatibility.
   Avid marker-text import workflow. Record First-specific limitations and do not
   generalize its results to full Media Composer.
 
+On 2026-09-29, Media Composer First 26.8.0.58987 on macOS 27.0.1 accepted the
+retained 29.97 DF `unique-markers.edl` through **File → Input → Import EDL…**
+in a new disposable 30i NTSC project. It reported that sequence creation
+succeeded and showed one offline `SOURCE-A.MOV VS SOURCE-B.MOV REVIEW` sequence
+starting at `00;00;58;00`. The EDL's source paths were no longer present, and
+the imported media was offline. This confirms only that the EDL importer can
+create a sequence from the file. Marker count, note content, source identity,
+range handling, re-export and the separate Avid marker-text path were not
+verified. Keep both Avid acceptance rows open; see the
+[focused import record](evidence/avid-first-edl-import-20260929/README.md).
+
 These installed applications provide additional native acceptance routes. An
 enabled EDL import command does not yet prove marker text, ranges, or source
 identity survive import; inspect the resulting records and re-export where available.

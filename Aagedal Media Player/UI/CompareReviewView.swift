@@ -684,6 +684,25 @@ struct CompareReviewRelinkConfirmationView: View {
 
 }
 
+/// Keep a rejected edit in its field so leaving the field with Tab or a
+/// pointer cannot make an unsaved change appear committed.
+nonisolated enum CompareReviewTextCommitResult: Equatable {
+    case accepted
+    case empty
+    case unavailable
+    case rejected
+
+    static func attempt(
+        draft: String, savedText: String, canEdit: Bool, update: (String) -> Bool
+    ) -> Self {
+        let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return .empty }
+        guard text != savedText else { return .accepted }
+        guard canEdit else { return .unavailable }
+        return update(text) ? .accepted : .rejected
+    }
+}
+
 private struct CompareReviewNoteRow: View {
     let note: CompareReviewNote
     let position: Int
@@ -948,14 +967,21 @@ private struct CompareReviewNoteRow: View {
     }
 
     private func commit() {
-        guard !isDeleting, canEdit else { return }
-        let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !text.isEmpty else {
+        guard !isDeleting else { return }
+        switch CompareReviewTextCommitResult.attempt(
+            draft: draft, savedText: note.text, canEdit: canEdit, update: onUpdate
+        ) {
+        case .accepted:
+            noteActionError = nil
+            onCommitFinished()
+        case .empty:
             noteActionError = "Enter note text before continuing."
+            if canEdit { isFocused = true }
+        case .unavailable:
+            noteActionError = "Review notes cannot be edited right now. Retry loading the review before continuing."
+        case .rejected:
+            noteActionError = "This note could not be updated. Retry the edit."
             isFocused = true
-            return
         }
-        if text != note.text && !onUpdate(text) { return }
-        onCommitFinished()
     }
 }

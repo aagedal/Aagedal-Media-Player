@@ -454,6 +454,20 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
         XCTAssertEqual(received.values, expected)
     }
 
+    func testWorkerGateRejectsPlaybackFrameWhoseAheadAllowanceWouldOverflow() throws {
+        let request = try makeRequest(sampleRate: 96_000)
+        let gate = LiveAudioMeterWorkerGate(request: request)
+        let nearLimit = Double(Int64.max - 24_000) / 96_000
+
+        // Rounding this time back to frames passes a Double-converted bound,
+        // but adding the 250-ms allowance would exceed Int64.max.
+        gate.update(playbackTime: nearLimit)
+        XCTAssertEqual(gate.permittedEndFrame, 0)
+
+        gate.update(playbackTime: 0.1)
+        XCTAssertEqual(gate.permittedEndFrame, 33_600)
+    }
+
     func testWorkerGateCancellationReleasesBlockedConsumer() async throws {
         let request = try makeRequest()
         let gate = LiveAudioMeterWorkerGate(request: request)
@@ -808,9 +822,10 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
 
     private func makeRequest(
         startFrame: Int64 = 0,
-        layout: LiveAudioMeterFormat.Layout = .stereo
+        layout: LiveAudioMeterFormat.Layout = .stereo,
+        sampleRate: Int = 48_000
     ) throws -> LiveAudioMeterDecodeRequest {
-        let format = try LiveAudioMeterFormat(sampleRate: 48_000, layout: layout)
+        let format = try LiveAudioMeterFormat(sampleRate: sampleRate, layout: layout)
         return try LiveAudioMeterDecodeRequest(
             url: URL(fileURLWithPath: "/tmp/live-meter-source.wav"),
             audioStreamOrderIndex: 2, format: format, startSourceFrame: startFrame,

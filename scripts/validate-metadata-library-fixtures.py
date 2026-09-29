@@ -57,9 +57,16 @@ def digest(path):
     return value.hexdigest()
 
 
+def require_reviewed_fixture_identities(names):
+    unreviewed = sorted(set(names) - set(KNOWN_FIXTURE_SHA256))
+    if unreviewed:
+        raise ValueError("No reviewed fixture SHA-256 for: " + ", ".join(unreviewed))
+
+
 def validate_known_fixture_identity(name, actual_sha256):
-    expected = KNOWN_FIXTURE_SHA256.get(name)
-    if expected is not None and actual_sha256 != expected:
+    require_reviewed_fixture_identities([name])
+    expected = KNOWN_FIXTURE_SHA256[name]
+    if actual_sha256 != expected:
         raise ValueError(f"Fixture SHA-256 mismatch for {name}: expected {expected}, got {actual_sha256}")
 
 
@@ -139,6 +146,10 @@ def main():
     if any(not path.is_file() for path in media.values()):
         parser.error("CRM and MCA inputs must be regular files")
     sources = {name: images / name for name in IMAGE_TESTS if name not in missing} | media
+    try:
+        require_reviewed_fixture_identities(sources)
+    except ValueError as error:
+        parser.error(str(error))
     source_hashes = {name: digest(path) for name, path in sources.items()}
     for name, source_hash in source_hashes.items():
         validate_known_fixture_identity(name, source_hash)

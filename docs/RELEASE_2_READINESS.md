@@ -153,6 +153,16 @@ report actions, reveals blocking findings, and keeps a note draft when its
 mutation is rejected. Focused Debug lifecycle checks pass. Native retry/export,
 Full Keyboard Access and spoken VoiceOver acceptance remain open.
 
+The same continuation shows an immediate finding-level correction when a Review
+text edit is rejected on field exit and blocks an extreme 96 kHz live-meter
+worker frame position before its ahead allowance can overflow. Four focused
+tests pass together in a rebuilt Debug app. Metadata fixture validation now
+refuses unreviewed recovered ARW/XMP files, and the JXL diagnostic pins its
+input identity and reports the upstream write-assertion disagreement. The
+original missing fixtures and upstream correction remain open. Avid Media
+Composer First accepted a retained Resolve EDL as an offline sequence, but
+marker import and the app's Avid marker-text path remain unverified.
+
 Phase 122 now rejects Final Cut XML exports for quarter-turn anamorphic source
 A with an actionable CSV/PDF fallback. This contains the demonstrated native
 Fit defect without changing source media or adding unverified scale compensation.

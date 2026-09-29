@@ -86,10 +86,14 @@ class FixtureAcceptanceTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "Fixture SHA-256 mismatch"):
                     validation.validate_known_fixture_identity(name, "0" * 64)
 
-    def test_unreviewed_sony_originals_have_no_pinned_hash_yet(self):
+    def test_unreviewed_sony_originals_cannot_be_staged_by_name_alone(self):
         for name in ("TRA03164.ARW", "TRA03164.xmp"):
             self.assertNotIn(name, validation.KNOWN_FIXTURE_SHA256)
-            validation.validate_known_fixture_identity(name, "0" * 64)
+            with self.assertRaisesRegex(ValueError, "No reviewed fixture SHA-256"):
+                validation.validate_known_fixture_identity(name, "0" * 64)
+        with self.assertRaisesRegex(ValueError, "TRA03164.ARW, TRA03164.xmp"):
+            validation.require_reviewed_fixture_identities(validation.IMAGE_TESTS)
+        validation.require_reviewed_fixture_identities(validation.KNOWN_FIXTURE_SHA256)
 
 
 if __name__ == "__main__":

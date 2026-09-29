@@ -13,6 +13,8 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parent.parent
 REVISION = "c2d77c2dcefcb997623e52beca57bc61ce302cb9"
+PINNED_FIXTURE_SHA256 = "92ae631a48e89f3ef73a355d79df1f4be2c5f7c2fa54572dce3c053dc1963e57"
+CONTAINER_SIGNATURE = bytes.fromhex("0000000c4a584c200d0a870a")
 CHECKS = {"containerWriteSucceeds", "containerPreservesCodestream", "bareWriteSucceeds",
           "bareWritePreservesBytes", "editedBareWrapsOnce", "editedBarePreservesCodestream",
           "editedBareOrientationRoundTrips"}
@@ -22,12 +24,52 @@ def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def validate_fixture_hash(actual_hash):
+    if actual_hash != PINNED_FIXTURE_SHA256:
+        raise ValueError(f"JXL fixture SHA-256 mismatch: expected {PINNED_FIXTURE_SHA256}, got {actual_hash}")
+
+
 def validate_results(results, original_hash, unchanged):
     return (unchanged and set(results) == {"baseline", "candidate"}
             and results["baseline"] == results["candidate"]
             and all(result.get("fixtureSHA256") == original_hash
                     and all(result.get(check) is True for check in CHECKS)
                     for result in results.values()))
+
+
+def fixture_kind(prefix):
+    if prefix.startswith(CONTAINER_SIGNATURE):
+        return "container"
+    if prefix.startswith(bytes.fromhex("ff0a")):
+        return "bareCodestream"
+    return "unknown"
+
+
+def upstream_write_expectation(source):
+    """Read only the named real-file case, leaving the upstream assertion intact."""
+    start = source.find("func testReadJXLBareCodestream()")
+    end = source.find("func testReadJXLContainer()", start) if start >= 0 else -1
+    if start < 0 or end < 0:
+        return "unrecognized"
+    case = source[start:end]
+    if ("XCTAssertThrowsError(try metadata.writeToData())" in case
+            and "case .writeNotSupported = metaError" in case):
+        return "writeNotSupported"
+    if "try metadata.writeToData()" in case and "XCTAssertThrowsError" not in case:
+        return "writeSucceeds"
+    return "unrecognized"
+
+
+def contract_report(kind, expectation, results):
+    observed = (set(results) == {"baseline", "candidate"}
+                and all(result.get("containerWriteSucceeds") is True
+                        and result.get("bareWriteSucceeds") is True
+                        for result in results.values()))
+    return {"fixtureKind": kind, "upstreamWriteExpectation": expectation,
+            "containerAndBareWritesSucceeded": observed,
+            "fixtureNameDisagreesWithBytes": kind == "container",
+            "assertionDisagreesWithObservedWrites": expectation == "writeNotSupported" and observed,
+            "requiresUpstreamReview": kind != "bareCodestream" or expectation != "writeSucceeds" or not observed}
 
 
 def main():
@@ -47,6 +89,18 @@ def main():
     if artifacts == fixture or checkout == artifacts or checkout in artifacts.parents:
         parser.error("Artifacts must be outside dependency source and fixture paths")
     original_hash = digest(fixture)
+    try:
+        validate_fixture_hash(original_hash)
+    except ValueError as error:
+        parser.error(str(error))
+    with fixture.open("rb") as source:
+        kind = fixture_kind(source.read(12))
+    if kind != "container":
+        parser.error(f"Pinned JXL fixture should be a container, found {kind}")
+    test_source = (checkout / "Tests/SwiftMediaMetadataTests/Integration/RealFileTests.swift")
+    expectation = upstream_write_expectation(test_source.read_text())
+    if expectation == "unrecognized":
+        parser.error("Cannot classify the upstream JXL write assertion; review RealFileTests.swift")
     artifacts.mkdir(parents=True, exist_ok=False)
     archive = git("archive", "HEAD")
     patch = ROOT / "docs/dependency-patches/swift-media-metadata-3.0.0-rtmd-skip-mdat.patch"
@@ -57,6 +111,7 @@ def main():
         raise ValueError("Fixture changed while staging")
     environment = {"dependencyRevision": REVISION, "sourceArchiveSHA256": hashlib.sha256(archive).hexdigest(),
                    "fixture": str(fixture), "fixtureSHA256": original_hash,
+                   "upstreamTestSHA256": digest(test_source),
                    "hashes": {str(p): digest(p) for p in [Path(__file__), patch, probe]},
                    "toolchain": subprocess.check_output(["swift", "--version"], text=True)}
     (artifacts / "environment.json").write_text(json.dumps(environment, indent=2) + "\n")
@@ -87,7 +142,8 @@ let package = Package(name: "JXLFixtureProbe", platforms: [.macOS(.v13)], target
     unchanged = clean() and digest(fixture) == original_hash and digest(staged) == original_hash
     passed = validate_results(results, original_hash, unchanged)
     summary = {"diagnosticPassed": passed, "fixtureGateComplete": False,
-               "inputsAndCheckoutUnchanged": unchanged, "results": results}
+               "inputsAndCheckoutUnchanged": unchanged, "results": results,
+               "fixtureAssertionContract": contract_report(kind, expectation, results)}
     (artifacts / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
     if not passed:
         raise SystemExit("JXL diagnostic failed; inspect summary.json")

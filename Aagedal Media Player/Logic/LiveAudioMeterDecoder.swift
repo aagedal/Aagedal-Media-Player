@@ -85,9 +85,14 @@ nonisolated final class LiveAudioMeterWorkerGate: @unchecked Sendable {
     func update(playbackTime: TimeInterval) {
         guard playbackTime.isFinite, playbackTime >= 0 else { return }
         let frameValue = (playbackTime * Double(sampleRate)).rounded(.down)
-        guard frameValue.isFinite, frameValue <= Double(Int64.max - maximumAheadFrames) else { return }
+        // Double rounds large Int64 values to a 1,024-frame grid. Comparing
+        // with a Double-converted upper bound can admit a value whose integer
+        // sum with the ahead allowance overflows (at 96 kHz, for example).
+        guard frameValue.isFinite, frameValue < Double(Int64.max) else { return }
+        let playbackFrame = Int64(frameValue)
+        guard playbackFrame <= Int64.max - maximumAheadFrames else { return }
         condition.withLock {
-            maximumEndFrame = Int64(frameValue) + maximumAheadFrames
+            maximumEndFrame = playbackFrame + maximumAheadFrames
             condition.broadcast()
         }
     }

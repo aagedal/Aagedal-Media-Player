@@ -45,9 +45,12 @@ The harness also checks the nine available image/sidecar files and both video
 clips against the SHA-256 identities in the table below before creating an
 output directory. A different file with the expected name fails at preflight.
 The unavailable `TRA03164.ARW` and `TRA03164.xmp` have no reviewed hashes;
-recovering them still requires independent source verification. Updating a
-fixture identity, especially the disputed JXL file, requires review of the
-upstream test expectation and its new hash before changing this pin.
+the harness now refuses to stage even same-named files until their originals
+are independently verified and their hashes pinned in the validator and this
+document. With `--allow-missing-images`, absent files remain explicit skips.
+This prevents an unreviewed substitute from appearing as full coverage.
+Updating a fixture identity, especially the disputed JXL file, requires review
+of the upstream test expectation and its new hash before changing this pin.
 
 By default missing image fixtures fail before building. With the explicit
 `--allow-missing-images` option, only the exact tests requiring absent named
@@ -134,11 +137,25 @@ The harness archives the clean pinned source separately for baseline and RTMD
 candidate, stages an unchanged original, and builds a local probe without remote
 dependencies. The probe requires a container with exactly one complete `jxlc`
 box and no partial `jxlp` boxes, then extracts that real codestream in memory.
+The diagnostic first requires the reviewed original SHA-256 from the fixture
+table; an unrelated JXL file cannot be used to draw this conclusion. It also
+reads the named upstream test's write assertion without editing it and records
+the test source hash. A new run's `summary.json` includes
+`fixtureAssertionContract`: fixture kind, upstream write expectation, observed
+container and bare write results, and whether the filename/assertion still need
+upstream review. With the pinned container and current upstream test, the
+contract reports `fixtureNameDisagreesWithBytes: true` and
+`assertionDisagreesWithObservedWrites: true`. The upstream change should reconcile
+the real-file test's name and input with its write assertion, while retaining a
+separate bare-codestream write check. This is a source and fixture diagnostic;
+the historical probe artifacts predate the new contract field.
 It never substitutes a derived file into the upstream fixture suite or edits
 the suite's assertions. Seven checks require successful container and bare
 writes, byte-preserved codestreams, exactly one codestream after orientation
 wrapping, and orientation read-back. Four Python regressions reject missing,
-inconsistent, false or non-Boolean evidence and changed/wrong input identity.
+inconsistent, false or non-Boolean evidence and changed/wrong input identity;
+three additional regressions cover the pinned hash, JXL signature, and scoped
+upstream assertion report.
 
 Both Release probes passed all seven checks with identical results, and the
 original fixture, staged copy and clean production checkout remained unchanged.
