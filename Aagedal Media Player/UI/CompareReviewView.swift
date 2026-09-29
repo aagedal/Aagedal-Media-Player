@@ -381,15 +381,6 @@ struct CompareReviewView: View {
             drafts.rangeActionNoticeNoteID = nil
             requestedExport = nil
         }
-        .onChange(of: primaryController.preparationID) { _, _ in
-            drafts.noteDrafts.removeAll()
-            drafts.noteActionErrors.removeAll()
-            drafts.rangeDrafts.removeAll()
-            drafts.rangeActionErrors.removeAll()
-            drafts.rangeActionNotice = nil
-            drafts.rangeActionNoticeNoteID = nil
-            requestedExport = nil
-        }
     }
 
     private func noteRow(_ note: CompareReviewNote, position: Int, count: Int) -> some View {

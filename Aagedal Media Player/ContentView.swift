@@ -214,21 +214,21 @@ struct ContentView: View {
             }
         }
         .onChange(of: controller.mediaItem?.url) { _, _ in
+            compareReviewDrafts.clear()
             loupe.close()
             loupe.validateNativePixels(.unavailable("The source changed."))
             cancelInspectorSurfaceReload()
         }
         .onChange(of: compareSession.secondaryController.mediaItem?.url) { _, _ in
+            compareReviewDrafts.clear()
             loupe.validateNativePixels(.unavailable("Source B changed."))
             cancelInspectorSurfaceReload()
         }
         .onChange(of: controller.preparationID) { _, _ in
-            compareReviewDrafts.clear()
             loupe.validateNativePixels(.unavailable("Source A playback was reloaded."))
             cancelInspectorSurfaceReload()
         }
         .onChange(of: compareSession.secondaryController.preparationID) { _, _ in
-            compareReviewDrafts.clear()
             loupe.validateNativePixels(.unavailable("Source B playback was reloaded."))
             cancelInspectorSurfaceReload()
         }

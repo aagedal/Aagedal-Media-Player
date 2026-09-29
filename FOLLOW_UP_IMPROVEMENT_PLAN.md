@@ -3160,6 +3160,22 @@ and spoken accessibility acceptance remain open.
 The cached-package Debug build passes. Native close/reopen and keyboard export
 checks are still needed before this counts as workflow acceptance.
 
+## Phase 138 — Keep Review drafts through same-source reloads
+
+Status: Engineering implementation completed on 2026-09-29; native keyboard
+acceptance remains open.
+
+- [x] Retain window-owned new-note, text, range, and correction drafts when a
+  playback or comparison geometry reload changes a controller's preparation ID
+  without changing the source pair.
+- [x] Clear drafts when either source URL, the active sidecar, or the comparison
+  session changes, including while the Review popover is closed.
+- [x] Pass a Debug build and all ten focused comparison lifecycle tests.
+
+Native same-source reload with an unfinished Review edit and a subsequent
+keyboard report action still needs hands-on verification. This does not close
+the broader Full Keyboard Access or spoken VoiceOver release gates.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -3481,3 +3497,4 @@ checks are still needed before this counts as workflow acceptance.
 127. Phase 135 Review note-text preflight for actions.
 128. Phase 136 reveal findings that block Review actions.
 129. Phase 137 preserve Review drafts across popover dismissal.
+130. Phase 138 keep Review drafts through same-source reloads.
