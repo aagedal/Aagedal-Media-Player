@@ -3143,6 +3143,23 @@ This extends the Phase 135 correction path to long and filtered reviews. The
 rebuilt app still needs a native keyboard check with an offscreen finding and
 spoken VoiceOver verification before this counts as release acceptance.
 
+## Phase 137 — Preserve Review drafts across popover dismissal
+
+Status: Engineering implementation completed on 2026-09-29; native keyboard
+and spoken accessibility acceptance remain open.
+
+- [x] Keep new-note text, edited finding text, range end drafts and correction
+  errors in the owning player window when the Review popover closes.
+- [x] Reopen Review for a keyboard report command when a closed popover still
+  has an unfinished finding edit, so the existing action preflight can commit
+  it or show the correction field.
+- [x] Keep an unsubmitted new note out of a report until the user adds or
+  clears it, with focus and a visible correction when an action is requested.
+- [x] Clear the retained state when the source pair or active sidecar changes.
+
+The cached-package Debug build passes. Native close/reopen and keyboard export
+checks are still needed before this counts as workflow acceptance.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -3463,3 +3480,4 @@ spoken VoiceOver verification before this counts as release acceptance.
 126. Phase 134 atomic Review range preflight for actions.
 127. Phase 135 Review note-text preflight for actions.
 128. Phase 136 reveal findings that block Review actions.
+129. Phase 137 preserve Review drafts across popover dismissal.

@@ -27,6 +27,7 @@ struct ContentView: View {
     @State private var showReviewNotes = false
     @State private var compareReviewFocusTarget: CompareReviewFocusTarget?
     @State private var compareReviewExportRequest: CompareReviewReportFormat?
+    @State private var compareReviewDrafts = CompareReviewDraftState()
     @State private var showComparisonControls = false
     @State private var deferredComparisonAction = DeferredMainActorTask()
     @State private var showCompareModeCallout = false
@@ -135,6 +136,7 @@ struct ContentView: View {
                 showReviewNotes: $showReviewNotes,
                 compareReviewFocusTarget: $compareReviewFocusTarget,
                 compareReviewExportRequest: $compareReviewExportRequest,
+                compareReviewDrafts: $compareReviewDrafts,
                 scopeWindowController: $scopeWindowController,
                 showScopeOverlay: $showScopeOverlay,
                 audioWaveformWindowController: $audioWaveformWindowController,
@@ -221,20 +223,26 @@ struct ContentView: View {
             cancelInspectorSurfaceReload()
         }
         .onChange(of: controller.preparationID) { _, _ in
+            compareReviewDrafts.clear()
             loupe.validateNativePixels(.unavailable("Source A playback was reloaded."))
             cancelInspectorSurfaceReload()
         }
         .onChange(of: compareSession.secondaryController.preparationID) { _, _ in
+            compareReviewDrafts.clear()
             loupe.validateNativePixels(.unavailable("Source B playback was reloaded."))
             cancelInspectorSurfaceReload()
         }
         .onChange(of: compareSession.isActive) { _, _ in
+            compareReviewDrafts.clear()
             loupe.validateNativePixels(.unavailable("The comparison sources changed."))
             cancelInspectorSurfaceReload()
         }
         .onChange(of: showInspector) { _, _ in
             isInspectorSurfaceReloadPending = true
             scheduleInspectorSurfaceReload()
+        }
+        .onChange(of: compareSession.reviewSidecarURL) { _, _ in
+            compareReviewDrafts.clear()
         }
         .onChange(of: loupe.isEnabled) { _, enabled in
             if !enabled {
@@ -671,7 +679,8 @@ struct ContentView: View {
                         compareSession: compareSession,
                         timecodeMode: timecodeMode,
                         requestedFocus: $compareReviewFocusTarget,
-                        requestedExport: $compareReviewExportRequest
+                        requestedExport: $compareReviewExportRequest,
+                        drafts: $compareReviewDrafts
                     )
                 }
 

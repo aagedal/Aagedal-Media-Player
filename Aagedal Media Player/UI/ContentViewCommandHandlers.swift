@@ -18,6 +18,7 @@ struct NotificationHandlers: ViewModifier {
     @Binding var showReviewNotes: Bool
     @Binding var compareReviewFocusTarget: CompareReviewFocusTarget?
     @Binding var compareReviewExportRequest: CompareReviewReportFormat?
+    @Binding var compareReviewDrafts: CompareReviewDraftState
     @Binding var scopeWindowController: ScopeWindowController?
     @Binding var showScopeOverlay: Bool
     @Binding var audioWaveformWindowController: AudioWaveformWindowController?
@@ -43,6 +44,7 @@ struct NotificationHandlers: ViewModifier {
                 showReviewNotes: $showReviewNotes,
                 compareReviewFocusTarget: $compareReviewFocusTarget,
                 compareReviewExportRequest: $compareReviewExportRequest,
+                compareReviewDrafts: $compareReviewDrafts,
                 scopeWindowController: $scopeWindowController,
                 showScopeOverlay: $showScopeOverlay,
                 audioWaveformWindowController: $audioWaveformWindowController,
@@ -79,6 +81,7 @@ private struct FileAndWindowHandlers: ViewModifier {
     @Binding var showReviewNotes: Bool
     @Binding var compareReviewFocusTarget: CompareReviewFocusTarget?
     @Binding var compareReviewExportRequest: CompareReviewReportFormat?
+    @Binding var compareReviewDrafts: CompareReviewDraftState
     @Binding var scopeWindowController: ScopeWindowController?
     @Binding var showScopeOverlay: Bool
     @Binding var audioWaveformWindowController: AudioWaveformWindowController?
@@ -156,10 +159,11 @@ private struct FileAndWindowHandlers: ViewModifier {
                       case let .exportCompareReviewReport(format) = command else { return }
                 guard WindowManager.shared.isActiveWindow(nsWindow),
                       compareSession.canRequestReviewExport else { return }
-                if showReviewNotes {
-                    // The mounted review owns pending text drafts. Let it flush
-                    // those drafts through the same path as its Export menu.
+                if showReviewNotes || compareReviewDrafts.hasPendingEdits(in: compareSession.reviewNotes) {
+                    // A closed popover can still own an invalid draft. Reopen it
+                    // so the same preflight can either commit or reveal the edit.
                     compareReviewExportRequest = format
+                    showReviewNotes = true
                 } else {
                     compareSession.performReviewActionAfterSaving(primary: controller) { session, primary in
                         session.exportReviewReport(format, primary: primary)
