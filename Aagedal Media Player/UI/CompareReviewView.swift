@@ -56,6 +56,7 @@ struct CompareReviewView: View {
 
     @State private var draft = ""
     @State private var noteDrafts: [UUID: String] = [:]
+    @State private var noteActionErrors: [UUID: String] = [:]
     @State private var rangeDrafts: [UUID: String] = [:]
     @State private var rangeActionErrors: [UUID: String] = [:]
     @State private var rangeActionNotice: String?
@@ -165,7 +166,7 @@ struct CompareReviewView: View {
                 Text(rangeActionNotice)
                     .font(.caption)
                     .foregroundStyle(.red)
-                    .accessibilityLabel("Review action needs a valid range")
+                    .accessibilityLabel("Review action needs a valid finding")
                     .accessibilityValue(rangeActionNotice)
                     .accessibilityAddTraits(.updatesFrequently)
                     .accessibilityIdentifier("compare-review-range-action-error")
@@ -322,6 +323,7 @@ struct CompareReviewView: View {
         .onDisappear { requestedExport = nil }
         .onChange(of: compareSession.reviewSidecarURL) { _, _ in
             noteDrafts.removeAll()
+            noteActionErrors.removeAll()
             rangeDrafts.removeAll()
             rangeActionErrors.removeAll()
             rangeActionNotice = nil
@@ -330,6 +332,7 @@ struct CompareReviewView: View {
         }
         .onChange(of: primaryController.preparationID) { _, _ in
             noteDrafts.removeAll()
+            noteActionErrors.removeAll()
             rangeDrafts.removeAll()
             rangeActionErrors.removeAll()
             rangeActionNotice = nil
@@ -345,7 +348,20 @@ struct CompareReviewView: View {
             count: count,
             draft: Binding(
                 get: { noteDrafts[note.id] ?? note.text },
-                set: { if !compareSession.isReviewActionPending { noteDrafts[note.id] = $0 } }
+                set: {
+                    if !compareSession.isReviewActionPending {
+                        noteDrafts[note.id] = $0
+                        noteActionErrors[note.id] = nil
+                        if rangeActionNoticeNoteID == note.id {
+                            rangeActionNotice = nil
+                            rangeActionNoticeNoteID = nil
+                        }
+                    }
+                }
+            ),
+            noteActionError: Binding(
+                get: { noteActionErrors[note.id] },
+                set: { noteActionErrors[note.id] = $0 }
             ),
             endFrameDraft: Binding(
                 get: { rangeDrafts[note.id] ?? note.primaryEndFrame.map(String.init) ?? "" },
@@ -374,6 +390,7 @@ struct CompareReviewView: View {
             onCommitFinished: { noteDrafts[note.id] = nil },
             onDelete: {
                 noteDrafts[note.id] = nil
+                noteActionErrors[note.id] = nil
                 rangeDrafts[note.id] = nil
                 rangeActionErrors[note.id] = nil
                 if rangeActionNoticeNoteID == note.id {
@@ -408,6 +425,17 @@ struct CompareReviewView: View {
         _ action: @escaping @MainActor (CompareSessionController, PlayerController) -> Void
     ) {
         guard !compareSession.isReviewActionPending else { return }
+        // Reject an empty changed note before applying any pending range or
+        // text edit. Exporting its previous text would silently discard input.
+        for note in compareSession.reviewNotes {
+            guard let draft = noteDrafts[note.id],
+                  draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { continue }
+            noteActionErrors[note.id] = "Enter note text before continuing."
+            rangeActionNotice = "Review note at source A frame \(note.primaryFrame) needs text before this action."
+            rangeActionNoticeNoteID = note.id
+            revealInvalidNote(note.id)
+            return
+        }
         // Menus and app commands can act while a range field still owns focus.
         // Validate every draft before changing any note. A later invalid field
         // must not leave earlier range edits saved when the action is blocked.
@@ -421,6 +449,7 @@ struct CompareReviewView: View {
                     rangeActionErrors[note.id] = "Use Clear range to remove the saved end frame."
                     rangeActionNotice = "Review note at source A frame \(note.primaryFrame) still has a saved end frame. Use Clear range before this action."
                     rangeActionNoticeNoteID = note.id
+                    revealInvalidNote(note.id)
                     return
                 }
                 continue
@@ -430,12 +459,14 @@ struct CompareReviewView: View {
                 rangeActionErrors[note.id] = "Enter a whole-number end frame before continuing."
                 rangeActionNotice = "Review note at source A frame \(note.primaryFrame) needs a whole-number end frame before this action."
                 rangeActionNoticeNoteID = note.id
+                revealInvalidNote(note.id)
                 return
             }
             guard compareSession.canSetReviewRangeEnd(id: note.id, endFrame: endFrame) else {
                 rangeActionErrors[note.id] = "End frame must be from the note's start through the last media frame."
                 rangeActionNotice = "Review note at source A frame \(note.primaryFrame) needs an end frame from its start through the last media frame before this action."
                 rangeActionNoticeNoteID = note.id
+                revealInvalidNote(note.id)
                 return
             }
             rangeUpdates.append((note.id, endFrame))
@@ -457,7 +488,14 @@ struct CompareReviewView: View {
             }
         }
         noteDrafts.removeAll()
+        noteActionErrors.removeAll()
         compareSession.performReviewActionAfterSaving(primary: primaryController, action: action)
+    }
+
+    private func revealInvalidNote(_ id: UUID) {
+        if !compareSession.filteredReviewNotes.contains(where: { $0.id == id }) {
+            compareSession.reviewSearchQuery = ""
+        }
     }
 
     private func navigationButton(
@@ -606,6 +644,7 @@ private struct CompareReviewNoteRow: View {
     @State private var isRangeExpanded = false
 
     @Binding private var draft: String
+    @Binding private var noteActionError: String?
     @State private var isDeleting = false
     @FocusState private var isFocused: Bool
     @FocusState private var isEndFrameFocused: Bool
@@ -615,6 +654,7 @@ private struct CompareReviewNoteRow: View {
         position: Int,
         count: Int,
         draft: Binding<String>,
+        noteActionError: Binding<String?>,
         endFrameDraft: Binding<String>,
         rangeActionError: Binding<String?>,
         timecodeLabel: String,
@@ -642,6 +682,7 @@ private struct CompareReviewNoteRow: View {
         self.onCurrentEnd = onCurrentEnd
         self.onSeekEnd = onSeekEnd
         _draft = draft
+        _noteActionError = noteActionError
         _endFrameDraft = endFrameDraft
         _rangeActionError = rangeActionError
     }
@@ -675,7 +716,6 @@ private struct CompareReviewNoteRow: View {
                     .onChange(of: isFocused) { wasFocused, focused in
                         if wasFocused && !focused { commit() }
                     }
-
                 Button(role: .destructive) {
                     isDeleting = true
                     onDelete()
@@ -688,6 +728,15 @@ private struct CompareReviewNoteRow: View {
                 .accessibilityIdentifier(identifier("delete"))
                 .help("Delete review note")
                 .disabled(!canEdit)
+            }
+            if let noteActionError {
+                Text(noteActionError)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                    .accessibilityLabel("Note text error for \(noteIdentity)")
+                    .accessibilityValue(noteActionError)
+                    .accessibilityAddTraits(.updatesFrequently)
+                    .accessibilityIdentifier(identifier("text-error"))
             }
             DisclosureGroup(isExpanded: $isRangeExpanded) {
                 VStack(alignment: .leading, spacing: 8) {
@@ -749,6 +798,13 @@ private struct CompareReviewNoteRow: View {
                 if isRangeExpanded { isEndFrameFocused = true }
                 else { isRangeExpanded = true }
             }
+        }
+        .onChange(of: noteActionError) { _, error in
+            if error != nil { isFocused = true }
+        }
+        .onAppear {
+            if noteActionError != nil { isFocused = true }
+            else if rangeActionError != nil { isRangeExpanded = true }
         }
         .onChange(of: isRangeExpanded) { _, expanded in
             if expanded && rangeActionError != nil { isEndFrameFocused = true }
@@ -834,13 +890,13 @@ private struct CompareReviewNoteRow: View {
 
     private func commit() {
         guard !isDeleting, canEdit else { return }
-        defer { onCommitFinished() }
         let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else {
-            draft = note.text
+            noteActionError = "Enter note text before continuing."
+            isFocused = true
             return
         }
-        guard text != note.text else { return }
-        onUpdate(text)
+        if text != note.text { onUpdate(text) }
+        onCommitFinished()
     }
 }

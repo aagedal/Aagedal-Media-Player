@@ -5,6 +5,7 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Changed
+- Review actions now stop on an empty edited note, show a finding-specific error, and return focus to its text field instead of exporting the previous saved text.
 - Review actions validate all pending range ends before saving any of them, avoiding partial range edits when a later field is invalid.
 - Review range ends commit when the end-frame field loses focus, so keyboard and pointer navigation retain valid edits without requiring Apply.
 - Metadata fixture validation checks supplied files against documented SHA-256 identities before running compatibility tests.

@@ -3112,6 +3112,23 @@ Status: Engineering implementation and focused Debug lifecycle tests pass on
 This closes a partial-save path in Phase 133's action handling. Full Keyboard
 Access and spoken VoiceOver acceptance remain open.
 
+## Phase 135 — Review note-text preflight for actions
+
+Status: Engineering implementation and Debug build pass on 2026-09-29;
+native keyboard and spoken accessibility acceptance remain open.
+
+- [x] Keep an empty edited note draft in place when its field loses focus,
+  with a finding-specific correction instead of silently restoring saved text.
+- [x] Block Export and Notes actions on an empty edited note before committing
+  pending range or text drafts, and return focus to that note's text field.
+- [x] Clear action errors on correction, deletion, sidecar change or primary
+  source replacement.
+- [x] Clear an active filter when it hides the invalid finding, then expose
+  that row and its correction field.
+
+This prevents a report or review switch from silently using the old note text.
+The existing native keyboard and VoiceOver acceptance gates still apply.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -3430,3 +3447,4 @@ Access and spoken VoiceOver acceptance remain open.
      MPV pixel provenance, and metadata container-edge compatibility.
 125. Phase 133 Review range-draft ownership for report actions.
 126. Phase 134 atomic Review range preflight for actions.
+127. Phase 135 Review note-text preflight for actions.
