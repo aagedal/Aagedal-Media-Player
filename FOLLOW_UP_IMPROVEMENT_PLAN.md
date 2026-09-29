@@ -3129,6 +3129,20 @@ native keyboard and spoken accessibility acceptance remain open.
 This prevents a report or review switch from silently using the old note text.
 The existing native keyboard and VoiceOver acceptance gates still apply.
 
+## Phase 136 — Reveal findings that block Review actions
+
+Status: Engineering implementation and Debug build pass on 2026-09-29; native keyboard and spoken
+accessibility acceptance remain open.
+
+- [x] Scroll the Review list to a finding whose text or range draft blocks a
+  Notes or Export action, including findings outside the visible list area.
+- [x] Retry the scroll when clearing the filter inserts the invalid finding
+  back into the list, so its correction field can receive focus.
+
+This extends the Phase 135 correction path to long and filtered reviews. The
+rebuilt app still needs a native keyboard check with an offscreen finding and
+spoken VoiceOver verification before this counts as release acceptance.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -3448,3 +3462,4 @@ The existing native keyboard and VoiceOver acceptance gates still apply.
 125. Phase 133 Review range-draft ownership for report actions.
 126. Phase 134 atomic Review range preflight for actions.
 127. Phase 135 Review note-text preflight for actions.
+128. Phase 136 reveal findings that block Review actions.

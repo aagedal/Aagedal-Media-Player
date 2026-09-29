@@ -151,15 +151,34 @@ struct CompareReviewView: View {
                 )
                 .frame(maxWidth: .infinity, minHeight: 120)
             } else {
-                ScrollView {
-                    LazyVStack(spacing: 8) {
-                        ForEach(Array(compareSession.filteredReviewNotes.enumerated()), id: \.element.id) { entry in
-                            noteRow(entry.element, position: entry.offset + 1,
-                                    count: compareSession.filteredReviewNotes.count)
+                ScrollViewReader { scrollProxy in
+                    ScrollView {
+                        LazyVStack(spacing: 8) {
+                            ForEach(Array(compareSession.filteredReviewNotes.enumerated()), id: \.element.id) { entry in
+                                noteRow(entry.element, position: entry.offset + 1,
+                                        count: compareSession.filteredReviewNotes.count)
+                                    .id(entry.element.id)
+                            }
                         }
                     }
+                    .frame(maxHeight: 300)
+                    .onAppear {
+                        // A filter with no matches replaces the whole list. When
+                        // clearing it creates this scroll view, onChange has no
+                        // previous value to observe.
+                        if let id = rangeActionNoticeNoteID {
+                            scrollProxy.scrollTo(id, anchor: .center)
+                        }
+                    }
+                    .onChange(of: rangeActionNoticeNoteID) { _, id in
+                        guard let id else { return }
+                        scrollProxy.scrollTo(id, anchor: .center)
+                    }
+                    .onChange(of: compareSession.filteredReviewNotes.map(\.id)) { _, ids in
+                        guard let id = rangeActionNoticeNoteID, ids.contains(id) else { return }
+                        scrollProxy.scrollTo(id, anchor: .center)
+                    }
                 }
-                .frame(maxHeight: 300)
             }
 
             if let rangeActionNotice {
