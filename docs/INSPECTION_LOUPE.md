@@ -6,9 +6,11 @@ magnification relative to the fitted picture. In side-by-side comparison each
 magnification is relative to that source's fitted pane.
 
 For AVFoundation-backed sources, the control also enables **Native pixels**
-after the live captured dimensions match the expected rotation-aware coded
-raster. This maps one captured source pixel to one physical display pixel,
-including on Retina displays. Both sources must independently pass that check
+after the acquired buffer matches the active track's coded format dimensions,
+its display matrix preserves whole pixels, and the live captured dimensions
+match the expected rotation-aware coded raster. This maps one captured source
+pixel to one physical display pixel, including on Retina displays. Both sources
+must independently pass that check
 in Compare Mode. Source replacement, a verified dimension mismatch, or an MPV-
 backed source returns the loupe to 2× and explains why 1:1 is unavailable.
 
@@ -53,6 +55,21 @@ previews are not timestamp-paired and are not evidence of continuous frame lock.
 Exact source-pixel 1:1 remains unavailable for MPV-backed media because its
 screenshot path may already be resampled for display geometry. Whole-viewport
 pan/zoom also remains deferred.
+
+AVFoundation verification checks the pre-transform buffer against the track's
+video format description, even if cached metadata happens to match the final
+image. Unknown coded format dimensions, a scaled or already-oriented output
+buffer, a cropped Core Image extent, or a resampling track matrix leave the
+capture available as a display preview but prevent Native pixels. Pixel aspect
+ratio does not change this coded-raster check.
+
+The MPV 0.41.0 capture audit confirms that [`cmd_screenshot_raw`](https://github.com/mpv-player/mpv/blob/v0.41.0/player/screenshot.c#L524)
+passes through `screenshot_get_rgb` and `convert_image`. The latter uses display
+dimensions, forces square pixel aspect, and can scale the image during conversion.
+Selecting software screenshots still uses this conversion; changing RGB format
+does not bypass it. The bundled public render API provides rendered surfaces,
+without a decoder-raster capture interface. MPV therefore remains ineligible
+even when a particular screenshot happens to match coded dimensions.
 
 The bundled MPV loses the reflection component of QuickTime display matrices.
 Playback preparation now detects a reflected first-track transform and applies

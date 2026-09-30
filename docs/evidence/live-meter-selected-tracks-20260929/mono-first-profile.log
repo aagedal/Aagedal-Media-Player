@@ -1,0 +1,61 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild test-without-building -xctestrun /tmp/aagedal-phase139-derived/Build/Products/LiveAudioMeterProfile.8A4340DE-B2AA-4507-B3A3-97030F2A2B8A.xctestrun -destination platform=macOS -parallel-testing-enabled NO -test-timeouts-enabled YES -default-test-execution-time-allowance 300 -maximum-test-execution-time-allowance 300 -resultBundlePath /private/tmp/live-meter-track-smoke-20260929/LiveAudioMeterProfile.xcresult "-only-testing:Aagedal Media Player Tests/LiveAudioMeterPerformanceTests/testRepresentativeProductionPathWhenRequested"
+
+Writing result bundle at path:
+	/private/tmp/live-meter-track-smoke-20260929/LiveAudioMeterProfile.xcresult
+
+--- xcodebuild: WARNING: Using the first of multiple matching destinations:
+{ platform:macOS, arch:arm64e, id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:arm64, id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:x86_64, id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:arm64e, variant:Mac Catalyst, id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:arm64, variant:Mac Catalyst, id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:x86_64, variant:Mac Catalyst, id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:arm64e, variant:DriverKit, id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:arm64, variant:DriverKit, id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:arm64e, variant:Designed for [iPad,iPhone], id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:arm64, variant:Designed for [iPad,iPhone], id:00006050-001C293C22F9401C, name:My Mac }
+2026-09-29 21:18:42.272406+0200 Aagedal Media Player[36727:517031] ApplePersistenceIgnoreState: Existing state will not be touched. New state will be written to /var/folders/pv/f8g9jgrd7px_0xvh3kxgmyg40000gp/T/com.aagedal.MediaPlayer.savedState
+Test Suite 'Selected tests' started at 2026-09-29 21:18:42.524.
+Test Suite 'Aagedal Media Player Tests.xctest' started at 2026-09-29 21:18:42.525.
+Test Suite 'LiveAudioMeterPerformanceTests' started at 2026-09-29 21:18:42.525.
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterPerformanceTests testRepresentativeProductionPathWhenRequested]' started.
+2026-09-29 21:18:42.530228+0200 Aagedal Media Player[36727:517182] [ClientDonation] (+[PPSClientDonation isRegisteredSubsystem:category:]) Permission denied: CoreMedia / CM-ASSETCREATION
+2026-09-29 21:18:42.613956+0200 Aagedal Media Player[36727:517031] [PlayerController] Using MPV player for live-meter-engineering-multitrack-20260929.mp4
+2026-09-29 21:18:42.614287+0200 Aagedal Media Player[36727:517031] [MPVPlayer] MPV not initialized yet, storing pending load for: live-meter-engineering-multitrack-20260929.mp4
+2026-09-29 21:18:42.645584+0200 Aagedal Media Player[36727:517031] [MPVPlayer] MPV initialized successfully
+2026-09-29 21:18:42.645604+0200 Aagedal Media Player[36727:517080] [scaling] mpv video-params: dw=0 dh=0 rotate=0
+2026-09-29 21:18:42.645619+0200 Aagedal Media Player[36727:517080] [scaling] mpv video-params: dw=0 dh=0 rotate=0
+2026-09-29 21:18:42.645626+0200 Aagedal Media Player[36727:517080] [scaling] mpv video-params: dw=0 dh=0 rotate=0
+2026-09-29 21:18:42.645719+0200 Aagedal Media Player[36727:517031] [MPVPlayer] Loading file: live-meter-engineering-multitrack-20260929.mp4, startTime: 0.000000, autostart: false
+2026-09-29 21:18:42.645792+0200 Aagedal Media Player[36727:517181] [MPVPlayer] MPV start file event
+[ffmpeg/demuxer] warn: mov,mp4,m4a,3gp,3g2,mj2: UDTA parsing failed retrying raw
+[ffmpeg/demuxer] warn: mov,mp4,m4a,3gp,3g2,mj2: UDTA parsing failed retrying raw
+2026-09-29 21:18:42.659016+0200 Aagedal Media Player[36727:517031] [MPVPlayer] MPV file loaded
+2026-09-29 21:18:42.686956+0200 Aagedal Media Player[36727:517228] [plugin] AddInstanceForFactory: No factory registered for id <CFUUID 0x77d1e04c80> F8BB1C28-BAE8-11D6-9C31-00039315CD46
+2026-09-29 21:18:42.723130+0200 Aagedal Media Player[36727:517181] [AudioConverter] channel mapping input channel '1' for output channel '2' is out of range [-1..'1')
+2026-09-29 21:18:42.727251+0200 Aagedal Media Player[36727:517228] [carc] Reporter disconnected or already stopped. { func=stop, reporterID=157741263880195 }
+[ao/coreaudio] error: unable to set the input channel layout on the audio unit ([206][255][255][255]/-50)
+2026-09-29 21:18:43.133901+0200 Aagedal Media Player[36727:517031] [scaling] play: backend=mpv wasPlaying=false videoSourceSize=nil ratio=nil
+2026-09-29 21:18:43.203963+0200 Aagedal Media Player[36727:517181] [] <<< FigCFUtilities >>> signalled err=-12990 at <>:1859
+/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterPerformanceTests.swift:105: error: -[Aagedal_Media_Player_Tests.LiveAudioMeterPerformanceTests testRepresentativeProductionPathWhenRequested] : failed - Live meter lost its measured snapshot before the routing check: unavailable(reason: "Live meters lost synchronization with playback.", diagnostic: Optional("Decoded source drift was -294.6 ms; retry to start at the current player position."))
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterPerformanceTests testRepresentativeProductionPathWhenRequested]' failed (6.312 seconds).
+Test Suite 'LiveAudioMeterPerformanceTests' failed at 2026-09-29 21:18:48.838.
+	 Executed 1 test, with 1 failure (0 unexpected) in 6.312 (6.313) seconds
+Test Suite 'Aagedal Media Player Tests.xctest' failed at 2026-09-29 21:18:48.838.
+	 Executed 1 test, with 1 failure (0 unexpected) in 6.312 (6.313) seconds
+Test Suite 'Selected tests' failed at 2026-09-29 21:18:48.838.
+	 Executed 1 test, with 1 failure (0 unexpected) in 6.312 (6.314) seconds
+2026-09-29 21:18:58.643 xcodebuild[36718:516912] [MT] IDETestOperationsObserverDebug: 17.425 elapsed -- Testing started completed.
+2026-09-29 21:18:58.643 xcodebuild[36718:516912] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-09-29 21:18:58.643 xcodebuild[36718:516912] [MT] IDETestOperationsObserverDebug: 17.425 sec, +17.425 sec -- end
+
+Test session results, code coverage, and logs:
+	/tmp/live-meter-track-smoke-20260929/LiveAudioMeterProfile.xcresult
+
+Failing tests:
+	LiveAudioMeterPerformanceTests.testRepresentativeProductionPathWhenRequested()
+
+** TEST EXECUTE FAILED **
+
+Testing started

@@ -87,6 +87,22 @@ tests and static analysis. Native Go to Folder interaction prevented completion
 of source-B selection; complete keyboard setup and review navigation remain open.
 See [keyboard setup evidence](evidence/comparison-keyboard-setup-20260921/README.md).
 
+The next September 29 continuation makes each repeated blocked Review action
+request scrolling and correction-field focus again, even if the error text is
+unchanged. Four focused Debug tests pass; native disclosure/focus and spoken
+VoiceOver acceptance remain open. AVFoundation Native pixels now also checks
+the acquired buffer against the active track's coded format before transforming
+it; 43 focused loupe checks pass without skips, including both decoder geometry
+matrices. MPV's audited screenshot conversion still resamples display geometry
+and remains ineligible. The live-meter profiler now accepts deliberate per-input
+audio ordinals and validates request identity across both measured segments;
+13 input/validator regressions and its Debug build pass. The actual runner
+passes a generated video with two explicitly selected stereo AAC tracks; an
+audio-only mono input fails with CoreAudio errors and remains under diagnosis.
+See [selected-track engineering evidence](evidence/live-meter-selected-tracks-20260929/README.md). These changes advance
+correctness and repeatable acceptance, without closing producer-authentic media,
+MPV 1:1, native accessibility or release-floor gates.
+
 ## Must close before a defensible 2.0 candidate
 
 Phase 127 completes fresh keyboard-only A/B loading, note creation at distinct

@@ -1,0 +1,14 @@
+[
+  {
+    "path": "/private/tmp/live-meter-engineering-multitrack-video-20260929.mp4",
+    "sha256": "dfa0cc691d2b3455226b4521c973e06397a3a8220f99ae3dbd5fe541d708950e",
+    "audioStreamOrderIndex": 0,
+    "audioTrackSelectionExplicit": true
+  },
+  {
+    "path": "/private/tmp/live-meter-engineering-multitrack-video-20260929.mp4",
+    "sha256": "dfa0cc691d2b3455226b4521c973e06397a3a8220f99ae3dbd5fe541d708950e",
+    "audioStreamOrderIndex": 1,
+    "audioTrackSelectionExplicit": true
+  }
+]

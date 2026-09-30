@@ -20,6 +20,8 @@ final class LiveAudioMeterPerformanceTests: XCTestCase {
     private struct ProfileInput: Decodable {
         let path: String
         let sha256: String
+        let audioStreamOrderIndex: Int
+        let audioTrackSelectionExplicit: Bool
     }
 
     private struct SampledRun {
@@ -74,8 +76,10 @@ final class LiveAudioMeterPerformanceTests: XCTestCase {
                 player.teardown()
             }
 
-            try await load(item, in: player, startTime: 0)
+            try await load(item, in: player, startTime: 0, audioStreamOrderIndex: input.audioStreamOrderIndex)
             let source = try player.liveAudioMeterSource(id: "A", label: "Source A")
+            XCTAssertEqual(source.audioStreamOrderIndex, input.audioStreamOrderIndex)
+            let selectedTrackCount = player.audioTrackOptions.count
             let selectedBackend = try XCTUnwrap(player.playbackBackend)
             let baselineChildren = try childResidentBytes()
             XCTAssertEqual(baselineChildren, 0, "The profile test host must not own unrelated child processes")
@@ -162,9 +166,12 @@ final class LiveAudioMeterPerformanceTests: XCTestCase {
             player.teardown()
             let eofWindow = min(6.0, max(4.0, duration / 2))
             let eofStartTime = max(0, duration - eofWindow)
-            try await load(item, in: player, startTime: eofStartTime)
+            try await load(item, in: player, startTime: eofStartTime,
+                           audioStreamOrderIndex: input.audioStreamOrderIndex)
             let eofSource = try player.liveAudioMeterSource(id: "A", label: "Source A")
             XCTAssertEqual(eofSource.audioStreamOrderIndex, source.audioStreamOrderIndex)
+            XCTAssertEqual(eofSource.metadataStreamIndex, source.metadataStreamIndex)
+            XCTAssertEqual(player.audioTrackOptions.count, selectedTrackCount)
             XCTAssertEqual(player.playbackBackend, selectedBackend)
             let eofSession = LiveAudioMeterSession(
                 primary: player,
@@ -187,16 +194,15 @@ final class LiveAudioMeterPerformanceTests: XCTestCase {
                 return
             }
             let provenance = try XCTUnwrap(eofSession.coordinator.provenance)
+            XCTAssertEqual(provenance.request.audioStreamOrderIndex, input.audioStreamOrderIndex)
             let finalSnapshot = try XCTUnwrap(eofSession.coordinator.snapshot)
             XCTAssertTrue(finalSnapshot.isFinal)
             XCTAssertGreaterThan(eofRun.peakChildResident, 0)
 
             observation.peakAppResident = max(observation.peakAppResident, initialResident)
-            let stream = try XCTUnwrap(player.mediaItem?.metadata?.audioStreams.first {
-                $0.index == eofSource.metadataStreamIndex
-            })
+            let stream = try XCTUnwrap(player.selectedAudioStream)
             let report: [String: Any] = [
-                "schemaVersion": 1,
+                "schemaVersion": 2,
                 "inputIndex": inputIndex,
                 "file": url.lastPathComponent,
                 "inputSHA256": input.sha256,
@@ -208,8 +214,15 @@ final class LiveAudioMeterPerformanceTests: XCTestCase {
                 "metadataStreamIndex": eofSource.metadataStreamIndex
                     ?? eofSource.audioStreamOrderIndex,
                 "audioStreamOrderIndex": eofSource.audioStreamOrderIndex,
+                "requestedAudioStreamOrderIndex": input.audioStreamOrderIndex,
+                "audioTrackSelectionExplicit": input.audioTrackSelectionExplicit,
+                "availableAudioTrackCount": selectedTrackCount,
+                "audioTrackLabel": eofSource.trackLabel,
                 "backend": selectedBackend.rawValue,
                 "observation": [
+                    "audioStreamOrderIndex": source.audioStreamOrderIndex,
+                    "metadataStreamIndex": source.metadataStreamIndex
+                        ?? source.audioStreamOrderIndex,
                     "startSourceFrame": observation.startFrame,
                     "endSourceFrame": observation.endFrame,
                     "publishedSnapshotCount": observation.publishedSnapshots,
@@ -229,6 +242,9 @@ final class LiveAudioMeterPerformanceTests: XCTestCase {
                     "childResidentBytesAfterCancellation": childrenAfterCancellation,
                 ],
                 "eof": [
+                    "audioStreamOrderIndex": provenance.request.audioStreamOrderIndex,
+                    "metadataStreamIndex": eofSource.metadataStreamIndex
+                        ?? eofSource.audioStreamOrderIndex,
                     "observed": true,
                     "finalSnapshot": finalSnapshot.isFinal,
                     "startSourceFrame": provenance.request.startSourceFrame,
@@ -260,7 +276,10 @@ final class LiveAudioMeterPerformanceTests: XCTestCase {
         }
     }
 
-    private func load(_ item: MediaItem, in player: PlayerController, startTime: TimeInterval) async throws {
+    private func load(
+        _ item: MediaItem, in player: PlayerController, startTime: TimeInterval,
+        audioStreamOrderIndex: Int
+    ) async throws {
         player.loadMedia(item, startTime: startTime)
         try await waitUntil(timeout: 15, description: "production playback backend construction") {
             player.playbackBackend != nil
@@ -277,9 +296,27 @@ final class LiveAudioMeterPerformanceTests: XCTestCase {
         try await waitUntil(timeout: 30, description: "production playback readiness") {
             player.isReady && player.playbackBackend != nil
         }
-        try await waitUntil(timeout: 15, description: "selected audio-track readiness") {
-            (try? player.liveAudioMeterSource(id: "A", label: "Source A")) != nil
+        try await waitUntil(timeout: 15, description: "audio-track options readiness") {
+            !player.audioTrackOptions.isEmpty
         }
+        // The toolbar position may differ from FFmpeg's audio-only ordinal.
+        // Select before resolving meterability so an unsupported default track
+        // does not prevent measuring a deliberately requested supported track.
+        guard let position = player.audioTrackOptions.firstIndex(where: {
+            $0.audioStreamOrderIndex == audioStreamOrderIndex
+        }) else {
+            throw NSError(
+                domain: "LiveAudioMeterPerformanceTrackSelection", code: 1,
+                userInfo: [NSLocalizedDescriptionKey:
+                    "Requested FFmpeg audio stream \(audioStreamOrderIndex) is unavailable in \(item.name)."]
+            )
+        }
+        if position != player.selectedAudioTrackOrderIndex {
+            let changed = await player.selectAudioTrackAndWait(at: position)
+            XCTAssertTrue(changed, "Production player did not select requested audio stream")
+        }
+        let selected = try player.liveAudioMeterSource(id: "A", label: "Source A")
+        XCTAssertEqual(selected.audioStreamOrderIndex, audioStreamOrderIndex)
     }
 
     private func sample(

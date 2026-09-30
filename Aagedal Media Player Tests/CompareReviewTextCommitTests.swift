@@ -6,6 +6,43 @@ import XCTest
 @testable import Aagedal_Media_Player
 
 final class CompareReviewTextCommitTests: XCTestCase {
+    @MainActor
+    func testRepeatedBlockedActionRevealsSameCorrectionWithoutDiscardingDrafts() throws {
+        let noteID = UUID()
+        var drafts = CompareReviewDraftState()
+        drafts.noteDrafts[noteID] = "  "
+        drafts.rangeDrafts[noteID] = "not a frame"
+
+        for field in [CompareReviewCorrectionRequest.Field.text, .rangeEnd] {
+            drafts.blockAction(noteID: noteID, field: field,
+                error: "Correct this field", notice: "Review action needs attention")
+            let firstRequest = try XCTUnwrap(drafts.correctionRequest)
+
+            // The user can move focus, collapse the range or scroll away
+            // without changing the draft or its already-visible error.
+            drafts.blockAction(noteID: noteID, field: field,
+                error: "Correct this field", notice: "Review action needs attention")
+            let repeatedRequest = try XCTUnwrap(drafts.correctionRequest)
+
+            XCTAssertNotEqual(firstRequest, repeatedRequest,
+                "An unchanged invalid finding must still emit a fresh focus and scroll request")
+            XCTAssertEqual(repeatedRequest.noteID, noteID)
+            XCTAssertEqual(repeatedRequest.field, field)
+            XCTAssertEqual(drafts.rangeActionNoticeNoteID, noteID)
+            XCTAssertEqual(drafts.noteDrafts[noteID], "  ")
+            XCTAssertEqual(drafts.rangeDrafts[noteID], "not a frame")
+        }
+
+        drafts.clearActionNotice()
+        XCTAssertNil(drafts.correctionRequest)
+        XCTAssertNil(drafts.rangeActionNoticeNoteID)
+        XCTAssertNil(drafts.rangeActionNotice)
+        XCTAssertEqual(drafts.noteActionErrors[noteID], "Correct this field")
+        XCTAssertEqual(drafts.rangeActionErrors[noteID], "Correct this field")
+        XCTAssertEqual(drafts.noteDrafts[noteID], "  ")
+        XCTAssertEqual(drafts.rangeDrafts[noteID], "not a frame")
+    }
+
     func testAcceptedEditUsesTrimmedText() {
         var updatedText: String?
         let result = CompareReviewTextCommitResult.attempt(

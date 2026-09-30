@@ -115,14 +115,25 @@ def validate(rows, manifest):
         raise ValueError("profile rows and a non-empty input manifest are required")
     if len(rows) != len(manifest):
         raise ValueError(f"expected {len(manifest)} records, found {len(rows)}")
-    indices = [row.get("inputIndex") for row in rows]
+    indices = [integer(row.get("inputIndex"), "profile input index", minimum=0) for row in rows]
     if sorted(indices) != list(range(len(manifest))) or len(set(indices)) != len(indices):
         raise ValueError("profile input indexes are missing or duplicated")
     ordered = sorted(rows, key=lambda row: row["inputIndex"])
+    identities = set()
     for row, expected in zip(ordered, manifest):
-        if row.get("schemaVersion") != 1:
+        if integer(row.get("schemaVersion"), "evidence schema version") != 2:
             raise ValueError("unknown evidence schema version")
         expected_path = Path(text(expected["path"], "manifest input path"))
+        expected_order = integer(
+            expected["audioStreamOrderIndex"], "manifest audio stream order", minimum=0
+        )
+        explicit = expected["audioTrackSelectionExplicit"]
+        if not isinstance(explicit, bool):
+            raise ValueError("manifest audio selection must be a boolean")
+        identity = (expected_path.resolve(), expected_order)
+        if identity in identities:
+            raise ValueError("duplicate profile file/audio-stream request")
+        identities.add(identity)
         expected_hash = expected["sha256"]
         if not isinstance(expected_hash, str) or not SHA256.fullmatch(expected_hash):
             raise ValueError("manifest SHA-256 is invalid")
@@ -147,8 +158,24 @@ def validate(rows, manifest):
         rate = integer(row["sampleRate"], "sample rate", minimum=1)
         if rate not in (44_100, 48_000, 96_000):
             raise ValueError("unsupported sample rate")
-        integer(row["metadataStreamIndex"], "metadata stream index", minimum=0)
-        integer(row["audioStreamOrderIndex"], "audio stream order", minimum=0)
+        stream_index = integer(row["metadataStreamIndex"], "metadata stream index", minimum=0)
+        order = integer(row["audioStreamOrderIndex"], "audio stream order", minimum=0)
+        requested = integer(row["requestedAudioStreamOrderIndex"], "requested audio stream order", minimum=0)
+        if requested != expected_order or order != requested:
+            raise ValueError("selected audio stream does not match the retained request")
+        if not isinstance(row["audioTrackSelectionExplicit"], bool) or row["audioTrackSelectionExplicit"] != explicit:
+            raise ValueError("explicit audio selection does not match the retained request")
+        if not explicit and requested != 0:
+            raise ValueError("non-default audio stream requires deliberate selection")
+        track_count = integer(row["availableAudioTrackCount"], "available audio track count", minimum=1)
+        if order >= track_count:
+            raise ValueError("selected audio stream exceeds available audio tracks")
+        text(row["audioTrackLabel"], "selected audio track label")
+        for section in ("observation", "eof"):
+            section_order = integer(row[section]["audioStreamOrderIndex"], f"{section} audio stream order", minimum=0)
+            section_stream = integer(row[section]["metadataStreamIndex"], f"{section} metadata stream index", minimum=0)
+            if section_order != order or section_stream != stream_index:
+                raise ValueError(f"{section} selected-track identity changed")
         if row.get("backend") not in BACKENDS:
             raise ValueError("unknown playback backend")
         validate_observation(row["observation"], rate)

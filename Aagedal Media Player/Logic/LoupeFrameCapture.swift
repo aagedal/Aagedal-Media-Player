@@ -204,12 +204,38 @@ final class LoupeFrameCapture: ObservableObject {
         case .av(let asset, let buffer):
             guard let track = try? await asset.loadTracks(withMediaType: .video).first,
                   let transform = try? await track.load(.preferredTransform) else { return nil }
+            let format = try? await track.load(.formatDescriptions).first
             // Preferred transform supplies container rotation/mirroring. Keep
             // the full oriented raster; the UI applies display aspect (PAR).
-            let oriented = CIImage(cvPixelBuffer: buffer).transformed(by: coreImageTransform(transform))
+            let decoded = CIImage(cvPixelBuffer: buffer)
+            let oriented = decoded.transformed(by: coreImageTransform(transform))
             guard let image = context.createCGImage(oriented, from: oriented.extent) else { return nil }
-            return CapturedImage(image: image, preservesSourcePixels: isPixelPreserving(transform))
+            // The negotiated output can differ from the track's coded raster.
+            // Check the buffer before any display transform, independently of
+            // cached UI metadata and the final image's oriented dimensions.
+            let fullBufferExtent = CGRect(x: 0, y: 0,
+                                          width: CVPixelBufferGetWidth(buffer),
+                                          height: CVPixelBufferGetHeight(buffer))
+            let preservesSourcePixels = decoded.extent == fullBufferExtent
+                && isSourceRaster(buffer, format: format, transform: transform)
+            return CapturedImage(image: image, preservesSourcePixels: preservesSourcePixels)
         }
+    }
+
+    /// AV output negotiation and metadata can disagree. The active track's
+    /// video format description, rather than a matching final image size,
+    /// establishes whether the acquired buffer retains its coded raster.
+    nonisolated static func isSourceRaster(
+        _ buffer: CVPixelBuffer,
+        format: CMFormatDescription?,
+        transform: CGAffineTransform
+    ) -> Bool {
+        guard let format, CMFormatDescriptionGetMediaType(format) == kCMMediaType_Video,
+              isPixelPreserving(transform) else { return false }
+        let coded = CMVideoFormatDescriptionGetDimensions(format)
+        return coded.width > 0 && coded.height > 0
+            && CVPixelBufferGetWidth(buffer) == Int(coded.width)
+            && CVPixelBufferGetHeight(buffer) == Int(coded.height)
     }
 
     /// Dimensions can still match after a scale or shear that resamples every

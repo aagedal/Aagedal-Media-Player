@@ -3268,6 +3268,55 @@ native workflow, performance and distribution acceptance remain open. The
 evidence-report commit follows the verified commit and cannot inherit its
 exact-source result.
 
+## Phase 145 — Repeatable Review correction focus
+
+Status: Implemented and focused Debug regressions passed on 2026-09-29;
+native focus acceptance remains open.
+
+- [x] Issue a new correction request for every blocked Notes/report action,
+  even when the finding and error text are unchanged.
+- [x] Restore scrolling and text/range focus on repeated attempts, including
+  reopening a collapsed range, while retaining pending drafts.
+- [x] Show field feedback when a range mutation is rejected; pass all four
+  focused text-commit tests, including repeated-request draft preservation.
+- [ ] Verify repeated blocked export focus, scrolling and disclosure expansion
+  with native keyboard navigation and spoken VoiceOver.
+
+## Phase 146 — AVFoundation coded-buffer loupe provenance
+
+Status: Implemented and 43 focused Debug tests passed without skips on
+2026-09-29; MPV source-pixel capability and native acceptance remain open.
+
+- [x] Require the acquired AV buffer to match the active track's coded video
+  format before applying its whole-pixel display transform.
+- [x] Reject unknown/scaled coded buffers and cropped Core Image extents for
+  Native pixels while preserving display previews.
+- [x] Pass PAR, rotated/reflected buffer checks and both backend oriented
+  asymmetric decoder matrices.
+- [x] Audit MPV 0.41.0 screenshot conversion and document why changing screenshot
+  mode or RGB format cannot establish decoder-raster provenance.
+- [ ] Complete verified MPV capture and native pixel/assistive-technology
+  acceptance; matching screenshot dimensions alone remain insufficient.
+
+## Phase 147 — Deliberate live-meter selected-track profiling
+
+Status: Harness implemented on 2026-09-29; representative-media acceptance
+remains open.
+
+- [x] Accept an explicit FFmpeg audio-only ordinal per profile input, allowing
+  the same media file with different selected tracks.
+- [x] Select through the production player before observation and near-EOF
+  measurement, retaining request, track label/count and both segment identities.
+- [x] Require schema-2 request/observed identities to agree and reject duplicate
+  file/track requests, malformed selectors and implicit non-default selection.
+- [x] Pass 13 input/validator regressions and compile the production profiling
+  XCTest path in Debug.
+- [x] Pass the actual schema-2 runner with two explicitly selected generated
+  stereo AAC tracks; retain the failing audio-only mono runs separately. See
+  [engineering smoke evidence](docs/evidence/live-meter-selected-tracks-20260929/README.md).
+- [ ] Retain producer-authentic multi-track runs, trusted reference comparisons,
+  long-play and release-floor performance evidence.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -3596,3 +3645,7 @@ exact-source result.
 134. Phase 142 fail-closed metadata fixture identity and JXL diagnosis.
 135. Phase 143 native Avid First EDL import diagnosis.
 136. Phase 144 current clean-checkout candidate verification.
+
+137. Phase 145 repeatable Review correction focus.
+138. Phase 146 AVFoundation coded-buffer loupe provenance.
+139. Phase 147 deliberate live-meter selected-track profiling.

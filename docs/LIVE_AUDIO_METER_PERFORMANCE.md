@@ -9,6 +9,24 @@ scripts/profile-live-audio-meter.sh /tmp/new-live-meter-profile \
   /path/to/representative-multichannel.mxf
 ```
 
+For deliberate selected-track coverage, prefix a file with
+`--audio-stream-order N`, where `N` is FFmpeg's zero-based audio-only stream
+ordinal (`0:a:N`), not the toolbar row or the container-wide stream index:
+
+```bash
+scripts/profile-live-audio-meter.sh /tmp/new-live-meter-track-profile \
+  --audio-stream-order 0 /path/to/representative-multitrack.mov \
+  --audio-stream-order 1 /path/to/representative-multitrack.mov
+```
+
+The selector applies only to the immediately following file; omitted selectors
+request audio ordinal zero. The same file may appear for different audio
+ordinals, but duplicate file/ordinal requests fail. The production player
+selects the requested track before opening the meter in both the observation
+and near-EOF segments. An unavailable ordinal or unsupported selected format
+fails the run. These controls enable the multi-track acceptance case; passing
+representative artifacts still need to be collected and reviewed.
+
 The artifact directory must not exist. Each input must have at least 20 seconds
 of audio, and at least ten seconds more than the selected observation interval,
 in a format currently supported by the live meter: one through eight channels
@@ -24,6 +42,11 @@ cache. Keep other tests and native app automation idle while profiling because
 the isolated XCTest host assumes its direct child process is the meter's bundled
 FFmpeg instance.
 
+The runner uses Release by default. `LIVE_AUDIO_METER_PROFILE_CONFIGURATION=Debug`
+can reuse a Debug cache for engineering harness checks; the configuration is
+retained in `environment.txt`. Collect release performance acceptance with the
+default Release configuration.
+
 ## Production path and retained evidence
 
 For each file, the test reads uncached-or-cached production metadata through
@@ -36,7 +59,8 @@ coordinator. It does not replace those components with test doubles.
 The first segment starts at source zero and records:
 
 - selected codec, declared layout, channel count, sample rate, metadata-library
-  stream ordinal, FFmpeg audio ordinal and playback backend;
+  stream ordinal, requested and resolved FFmpeg audio ordinals, explicit
+  selection flag, available track count, track label and playback backend;
 - source-frame advance, first-snapshot latency, maximum observed snapshot
   interval, publication count, absolute clock drift and decoded-ahead high-water;
 - initial/peak XCTest-host RSS and sampled direct-child RSS;
@@ -62,7 +86,8 @@ during the measured interval. The source JSON attachment carries basenames and
 hashes; `inputs.json` retains the explicit absolute input mapping.
 
 The JSON validator recomputes every external input SHA-256 and fails closed on
-missing, replaced or duplicate inputs, manifest/hash mismatches, unsupported or malformed source metadata, unknown backends,
+missing or replaced inputs, duplicate file/track requests, manifest/hash
+mismatches, unsupported or malformed source metadata, unknown backends,
 non-finite timing, absent snapshots or child-memory sampling, decoded work beyond
 the 250 ms admission bound, routing retargeting, incomplete cancellation, and
 missing/inconsistent EOF timestamp provenance. Run its fast regression tests
@@ -71,6 +96,12 @@ directly with:
 ```bash
 python3 scripts/test-live-audio-meter-profile-validation.py
 ```
+
+Schema 2 also requires the retained input request and both segment identities
+to agree on the selected audio stream. A repeated file with a different selected
+track is a distinct coverage row; repeating the same file/track is rejected.
+The JSON evidence carries the selection intent so an implicit default-track
+run cannot be relabelled as deliberate multi-track coverage.
 
 The test is deliberately skipped with a named reason during ordinary XCTest and
 canonical candidate verification unless the runner supplies its environment.

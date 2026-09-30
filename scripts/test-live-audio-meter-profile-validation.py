@@ -14,6 +14,11 @@ spec = importlib.util.spec_from_file_location(
 )
 validator = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(validator)
+input_spec = importlib.util.spec_from_file_location(
+    "inputs", Path(__file__).with_name("live-audio-meter-profile-inputs.py")
+)
+inputs = importlib.util.module_from_spec(input_spec)
+input_spec.loader.exec_module(inputs)
 
 
 class ValidationTests(unittest.TestCase):
@@ -27,11 +32,12 @@ class ValidationTests(unittest.TestCase):
         self.temporary.cleanup()
 
     def manifest(self):
-        return [{"path": str(self.input), "sha256": self.digest}]
+        return [{"path": str(self.input), "sha256": self.digest,
+                 "audioStreamOrderIndex": 0, "audioTrackSelectionExplicit": False}]
 
     def record(self):
         return {
-            "schemaVersion": 1,
+            "schemaVersion": 2,
             "inputIndex": 0,
             "file": "representative.mxf",
             "inputSHA256": self.digest,
@@ -42,8 +48,14 @@ class ValidationTests(unittest.TestCase):
             "sampleRate": 48_000,
             "metadataStreamIndex": 3,
             "audioStreamOrderIndex": 0,
+            "requestedAudioStreamOrderIndex": 0,
+            "audioTrackSelectionExplicit": False,
+            "availableAudioTrackCount": 2,
+            "audioTrackLabel": "First stereo track",
             "backend": "mpv",
             "observation": {
+                "audioStreamOrderIndex": 0,
+                "metadataStreamIndex": 3,
                 "startSourceFrame": 0,
                 "endSourceFrame": 240_000,
                 "publishedSnapshotCount": 30,
@@ -63,6 +75,8 @@ class ValidationTests(unittest.TestCase):
                 "childResidentBytesAfterCancellation": 0,
             },
             "eof": {
+                "audioStreamOrderIndex": 0,
+                "metadataStreamIndex": 3,
                 "observed": True,
                 "finalSnapshot": True,
                 "startSourceFrame": 2_640_000,
@@ -86,6 +100,68 @@ class ValidationTests(unittest.TestCase):
 
     def test_accepts_complete_record(self):
         self.assertEqual(validator.validate([self.record()], self.manifest())[0]["backend"], "mpv")
+
+    def test_accepts_deliberate_different_tracks_in_same_file(self):
+        manifest = inputs.capture([str(self.input), "--audio-stream-order", "1", str(self.input)])
+        first = self.record()
+        second = copy.deepcopy(first)
+        second.update({"inputIndex": 1, "audioStreamOrderIndex": 1,
+                       "requestedAudioStreamOrderIndex": 1,
+                       "audioTrackSelectionExplicit": True, "metadataStreamIndex": 4})
+        for section in ("observation", "eof"):
+            second[section].update({"audioStreamOrderIndex": 1, "metadataStreamIndex": 4})
+        self.assertEqual(len(validator.validate([second, first], manifest)), 2)
+
+    def test_rejects_requested_track_mismatch_and_retargeted_segments(self):
+        for section, key, value in [
+            (None, "requestedAudioStreamOrderIndex", 1),
+            (None, "audioStreamOrderIndex", 1),
+            (None, "audioTrackSelectionExplicit", True),
+            (None, "availableAudioTrackCount", 0),
+            (None, "audioTrackLabel", ""),
+            (None, "audioTrackSelectionExplicit", 0),
+            (None, "requestedAudioStreamOrderIndex", False),
+            (None, "inputIndex", False),
+            (None, "schemaVersion", 2.0),
+            ("observation", "audioStreamOrderIndex", 1),
+            ("eof", "audioStreamOrderIndex", 1),
+            ("eof", "metadataStreamIndex", 4),
+        ]:
+            row = self.record()
+            (row if section is None else row[section])[key] = value
+            with self.subTest(section=section, key=key), self.assertRaises(ValueError):
+                validator.validate([row], self.manifest())
+
+    def test_rejects_non_default_track_without_explicit_request(self):
+        manifest = self.manifest()
+        manifest[0]["audioStreamOrderIndex"] = 1
+        row = self.record()
+        row.update({"requestedAudioStreamOrderIndex": 1, "audioStreamOrderIndex": 1})
+        with self.assertRaisesRegex(ValueError, "requires deliberate selection"):
+            validator.validate([row], manifest)
+
+    def test_rejects_duplicate_file_and_track_request_with_distinct_record_indexes(self):
+        second = self.record()
+        second["inputIndex"] = 1
+        with self.assertRaisesRegex(ValueError, "duplicate profile file/audio-stream"):
+            validator.validate([self.record(), second], self.manifest() * 2)
+
+    def test_input_selector_applies_only_to_next_file(self):
+        manifest = inputs.capture(["--audio-stream-order", "1", str(self.input), str(self.input)])
+        self.assertEqual([row["audioStreamOrderIndex"] for row in manifest], [1, 0])
+        self.assertEqual([row["audioTrackSelectionExplicit"] for row in manifest], [True, False])
+        self.assertEqual(manifest[0]["sha256"], self.digest)
+
+    def test_input_capture_rejects_malformed_selectors_duplicates_and_missing_files(self):
+        for arguments in [
+            [], ["--audio-stream-order"], ["--audio-stream-order", "1"],
+            ["--audio-stream-order", "-1", str(self.input)],
+            ["--audio-stream-order", "1.0", str(self.input)],
+            [str(self.input), "--audio-stream-order", "0", str(self.input)],
+            [str(self.input.parent / "missing.mov")],
+        ]:
+            with self.subTest(arguments=arguments), self.assertRaises(ValueError):
+                inputs.capture(arguments)
 
     def test_rejects_missing_duplicate_and_wrong_input_identity(self):
         with self.assertRaises(ValueError):

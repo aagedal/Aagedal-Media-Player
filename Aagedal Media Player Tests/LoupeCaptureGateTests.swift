@@ -5,6 +5,8 @@
 @testable import Aagedal_Media_Player
 import XCTest
 import CoreGraphics
+import CoreMedia
+import CoreVideo
 
 final class LoupeCaptureGateTests: XCTestCase {
     func testTrackRotationUsesCoreImageCoordinateHandedness() {
@@ -47,6 +49,38 @@ final class LoupeCaptureGateTests: XCTestCase {
         ] {
             XCTAssertFalse(LoupeFrameCapture.isPixelPreserving(transform), "\(transform)")
         }
+    }
+
+    func testNativeRasterChecksDecodedBufferBeforeRotationAndPARCorrection() throws {
+        let format = try videoFormat(width: 8, height: 6, anamorphic: true)
+        let codedBuffer = try pixelBuffer(width: 8, height: 6)
+        // The track's 4:3 PAR belongs to display geometry. It must not make a
+        // 10-pixel-wide negotiated buffer qualify as the eight-pixel raster.
+        XCTAssertTrue(LoupeFrameCapture.isSourceRaster(codedBuffer, format: format, transform: .identity))
+        XCTAssertFalse(LoupeFrameCapture.isSourceRaster(
+            try pixelBuffer(width: 10, height: 6), format: format, transform: .identity
+        ))
+
+        let rotation = CGAffineTransform(a: 0, b: -1, c: 1, d: 0, tx: 0, ty: 8)
+        XCTAssertTrue(LoupeFrameCapture.isSourceRaster(codedBuffer, format: format, transform: rotation))
+        XCTAssertFalse(LoupeFrameCapture.isSourceRaster(
+            try pixelBuffer(width: 6, height: 8), format: format, transform: rotation
+        ), "An already-oriented buffer must not qualify as the original coded raster")
+
+        let reflection = CGAffineTransform(a: -1, b: 0, c: 0, d: 1, tx: 8, ty: 0)
+        XCTAssertTrue(LoupeFrameCapture.isSourceRaster(codedBuffer, format: format, transform: reflection))
+    }
+
+    func testNativeRasterRejectsUnknownFormatAndScaledDecoderOutput() throws {
+        let buffer = try pixelBuffer(width: 8, height: 6)
+        XCTAssertFalse(LoupeFrameCapture.isSourceRaster(buffer, format: nil, transform: .identity))
+        XCTAssertFalse(LoupeFrameCapture.isSourceRaster(
+            buffer, format: try videoFormat(width: 16, height: 12), transform: .identity
+        ), "Cached UI metadata could match this buffer, but the active track's coded raster does not")
+        XCTAssertFalse(LoupeFrameCapture.isSourceRaster(
+            buffer, format: try videoFormat(width: 8, height: 6),
+            transform: CGAffineTransform(a: 0.5, b: 0, c: 0.5, d: 1, tx: 0, ty: 0)
+        ), "Coded buffer dimensions must not override evidence of resampling")
     }
 
     func testOnlyOneWorkerCanStart() throws {
@@ -112,5 +146,27 @@ final class LoupeCaptureGateTests: XCTestCase {
     private func screenshot(data: Data, width: Int, height: Int, stride: Int, format: String = "bgr0") -> MPVPlayer.RawScreenshot {
         MPVPlayer.RawScreenshot(data: data, width: width, height: height, stride: stride,
                                 format: format, playbackTime: 0, playbackTimeUncertainty: 0)
+    }
+
+    private func pixelBuffer(width: Int, height: Int) throws -> CVPixelBuffer {
+        var buffer: CVPixelBuffer?
+        XCTAssertEqual(CVPixelBufferCreate(kCFAllocatorDefault, width, height,
+                                         kCVPixelFormatType_32BGRA, nil, &buffer), kCVReturnSuccess)
+        return try XCTUnwrap(buffer)
+    }
+
+    private func videoFormat(width: Int32, height: Int32, anamorphic: Bool = false) throws -> CMFormatDescription {
+        let extensions: CFDictionary? = anamorphic ? [
+            kCMFormatDescriptionExtension_PixelAspectRatio as String: [
+                kCMFormatDescriptionKey_PixelAspectRatioHorizontalSpacing as String: 4,
+                kCMFormatDescriptionKey_PixelAspectRatioVerticalSpacing as String: 3
+            ]
+        ] as CFDictionary : nil
+        var format: CMFormatDescription?
+        XCTAssertEqual(CMVideoFormatDescriptionCreate(
+            allocator: kCFAllocatorDefault, codecType: kCVPixelFormatType_32BGRA,
+            width: width, height: height, extensions: extensions, formatDescriptionOut: &format
+        ), noErr)
+        return try XCTUnwrap(format)
     }
 }

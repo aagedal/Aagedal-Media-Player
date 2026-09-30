@@ -4,7 +4,7 @@ set -euo pipefail
 
 repository_dir="${0:A:h:h}"
 if (( $# < 2 )); then
-  print -u2 'Usage: profile-live-audio-meter.sh NEW_ARTIFACT_DIRECTORY MEDIA_FILE [MEDIA_FILE ...]'
+  print -u2 'Usage: profile-live-audio-meter.sh NEW_ARTIFACT_DIRECTORY [--audio-stream-order N] MEDIA_FILE [[--audio-stream-order N] MEDIA_FILE ...]'
   print -u2 'Use explicit representative media with at least 20 seconds of supported 44.1/48/96 kHz, 1-8 channel audio.'
   exit 1
 fi
@@ -14,33 +14,22 @@ if [[ -e "$artifact_dir" ]]; then
   print -u2 "Artifact directory already exists: $artifact_dir"
   exit 1
 fi
-inputs=()
-for input in "$@"; do
-  if [[ ! -f "$input" ]]; then
-    print -u2 "Media file does not exist: $input"
-    exit 1
-  fi
-  inputs+=("${input:A}")
-done
+# Each selector applies only to the next file. Repeating a file is allowed
+# when deliberately selecting a different FFmpeg audio-only ordinal.
+input_manifest="$(/usr/bin/python3 "$repository_dir/scripts/live-audio-meter-profile-inputs.py" "$@")"
+input_count="$(print -r -- "$input_manifest" | /usr/bin/python3 -c 'import json, sys; print(len(json.load(sys.stdin)))')"
 mkdir -p "$artifact_dir"
 derived_data="${LIVE_AUDIO_METER_PROFILE_DERIVED_DATA:-${TMPDIR:-/tmp/}aagedal-live-audio-meter-profile-derived}"
+build_configuration="${LIVE_AUDIO_METER_PROFILE_CONFIGURATION:-Release}"
+if [[ "$build_configuration" != Release && "$build_configuration" != Debug ]]; then
+  print -u2 'LIVE_AUDIO_METER_PROFILE_CONFIGURATION must be Release or Debug.'
+  exit 1
+fi
 observation_seconds="${LIVE_AUDIO_METER_PROFILE_SECONDS:-5}"
-test_allowance=$((120 + 90 * ${#inputs}))
+test_allowance=$((120 + 90 * input_count))
 cd "$repository_dir"
 
-/usr/bin/python3 - "$artifact_dir/inputs.json" "${inputs[@]}" <<'PY'
-import hashlib, json, pathlib, sys
-destination = pathlib.Path(sys.argv[1])
-manifest = []
-for value in sys.argv[2:]:
-    path = pathlib.Path(value)
-    digest = hashlib.sha256()
-    with path.open('rb') as source:
-        for block in iter(lambda: source.read(1024 * 1024), b''):
-            digest.update(block)
-    manifest.append({'path': str(path), 'sha256': digest.hexdigest()})
-destination.write_text(json.dumps(manifest, indent=2) + '\n')
-PY
+print -r -- "$input_manifest" > "$artifact_dir/inputs.json"
 
 {
   git rev-parse HEAD
@@ -50,12 +39,13 @@ PY
   xcodebuild -version
   pmset -g batt
   print -r -- "Observation seconds: $observation_seconds"
-  shasum -a 256 "${inputs[@]}"
+  print -r -- "Build configuration: $build_configuration"
+  print -r -- "$input_manifest"
 } > "$artifact_dir/environment.txt"
 
 print -u2 'Building production live-audio-meter profiling test…'
 if ! xcodebuild build-for-testing -project 'Aagedal Media Player.xcodeproj' \
-  -scheme 'Aagedal Media Player' -configuration Release -destination 'platform=macOS' \
+  -scheme 'Aagedal Media Player' -configuration "$build_configuration" -destination 'platform=macOS' \
   -derivedDataPath "$derived_data" ENABLE_TESTABILITY=YES \
   > "$artifact_dir/build.log" 2>&1; then
   tail -n 100 "$artifact_dir/build.log" >&2
