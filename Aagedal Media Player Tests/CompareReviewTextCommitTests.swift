@@ -92,7 +92,7 @@ final class CompareReviewTextCommitTests: XCTestCase {
         XCTAssertEqual(drafts.correctionRequest, correction)
         XCTAssertFalse(CompareReviewRangeFocusLossPolicy.shouldCommit(
             draft: drafts.rangeDrafts[anotherNoteID]!, savedEndFrame: 10,
-            correctionField: drafts.correctionRequest?.field))
+            noteID: anotherNoteID, correctionRequest: drafts.correctionRequest))
 
         // The real range binding also receives saved-endpoint changes from
         // Clear range. Neither input path corrects the empty note text.
@@ -104,7 +104,7 @@ final class CompareReviewTextCommitTests: XCTestCase {
             XCTAssertEqual(drafts.noteActionErrors[noteID], "Enter note text")
             XCTAssertFalse(CompareReviewRangeFocusLossPolicy.shouldCommit(
                 draft: range, savedEndFrame: 10,
-                correctionField: drafts.correctionRequest?.field))
+                noteID: noteID, correctionRequest: drafts.correctionRequest))
         }
 
         drafts.updateNoteTextDraft("Corrected finding", noteID: noteID)
@@ -153,7 +153,7 @@ final class CompareReviewTextCommitTests: XCTestCase {
         // field must leave its draft pending rather than refocus it by validation.
         XCTAssertFalse(CompareReviewRangeFocusLossPolicy.shouldCommit(
             draft: drafts.rangeDrafts[noteID]!, savedEndFrame: 20,
-            correctionField: drafts.correctionRequest?.field))
+            noteID: noteID, correctionRequest: drafts.correctionRequest))
         XCTAssertEqual(drafts.rangeDrafts[noteID], "not a frame")
         XCTAssertEqual(drafts.rangeActionErrors[noteID], "Enter a whole-number end frame.")
         XCTAssertEqual(drafts.correctionRequest?.field, .text)
@@ -165,25 +165,63 @@ final class CompareReviewTextCommitTests: XCTestCase {
         XCTAssertNil(drafts.correctionRequest)
         XCTAssertTrue(CompareReviewRangeFocusLossPolicy.shouldCommit(
             draft: drafts.rangeDrafts[noteID]!, savedEndFrame: 20,
-            correctionField: drafts.correctionRequest?.field))
+            noteID: noteID, correctionRequest: drafts.correctionRequest))
     }
 
     @MainActor
     func testRangeFocusLossKeepsNormalChangedDraftValidation() {
-        let correctionFields: [CompareReviewCorrectionRequest.Field?] = [nil, .rangeEnd]
-        for field in correctionFields {
+        let noteID = UUID()
+        let corrections: [CompareReviewCorrectionRequest?] = [nil,
+            CompareReviewCorrectionRequest(noteID: noteID, field: .rangeEnd)]
+        for correction in corrections {
             for draft in ["21", "not a frame", "19"] {
                 XCTAssertTrue(CompareReviewRangeFocusLossPolicy.shouldCommit(
-                    draft: draft, savedEndFrame: 20, correctionField: field))
+                    draft: draft, savedEndFrame: 20, noteID: noteID, correctionRequest: correction))
             }
             for draft in ["", " \n ", " 20 "] {
                 XCTAssertFalse(CompareReviewRangeFocusLossPolicy.shouldCommit(
-                    draft: draft, savedEndFrame: 20, correctionField: field))
+                    draft: draft, savedEndFrame: 20, noteID: noteID, correctionRequest: correction))
             }
         }
         XCTAssertFalse(CompareReviewRangeFocusLossPolicy.shouldCommit(
-            draft: "21", savedEndFrame: 20, correctionField: .text),
+            draft: "21", savedEndFrame: 20, noteID: noteID,
+            correctionRequest: CompareReviewCorrectionRequest(noteID: noteID, field: .text)),
             "Preflight must not partially commit a valid range while text needs correction")
+    }
+
+    @MainActor
+    func testRangeCorrectionDefersOtherFindingRangeBlurAndPassiveFocus() {
+        let selectedID = UUID()
+        let otherID = UUID()
+        var drafts = CompareReviewDraftState()
+        drafts.rangeDrafts[selectedID] = "invalid selected end"
+        drafts.blockAction(noteID: selectedID, field: .rangeEnd,
+            error: "Enter a whole-number end frame", notice: "Correct selected range")
+        let selectedRequest = drafts.correctionRequest
+
+        // While range A receives preflight focus, range B may resign focus or
+        // reappear with an earlier error. Neither callback may save or refocus B.
+        for otherDraft in ["invalid other end", "30"] {
+            drafts.updateRangeEndDraft(otherDraft, noteID: otherID)
+            drafts.rangeActionErrors[otherID] = "Earlier range error"
+            XCTAssertFalse(CompareReviewRangeFocusLossPolicy.shouldCommit(
+                draft: otherDraft, savedEndFrame: 20, noteID: otherID,
+                correctionRequest: drafts.correctionRequest))
+            XCTAssertFalse(CompareReviewRangeFocusLossPolicy.canHandlePassively(
+                noteID: otherID, correctionRequest: drafts.correctionRequest))
+            XCTAssertEqual(drafts.correctionRequest, selectedRequest)
+            XCTAssertEqual(drafts.rangeDrafts[otherID], otherDraft)
+            XCTAssertEqual(drafts.rangeActionErrors[otherID], "Earlier range error")
+        }
+        XCTAssertTrue(CompareReviewRangeFocusLossPolicy.canHandlePassively(
+            noteID: selectedID, correctionRequest: drafts.correctionRequest))
+
+        drafts.updateRangeEndDraft("25", noteID: selectedID)
+        XCTAssertTrue(CompareReviewRangeFocusLossPolicy.shouldCommit(
+            draft: drafts.rangeDrafts[otherID]!, savedEndFrame: 20, noteID: otherID,
+            correctionRequest: drafts.correctionRequest))
+        XCTAssertTrue(CompareReviewRangeFocusLossPolicy.canHandlePassively(
+            noteID: otherID, correctionRequest: drafts.correctionRequest))
     }
 
     @MainActor

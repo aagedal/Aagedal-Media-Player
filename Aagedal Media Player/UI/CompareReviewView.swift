@@ -14,14 +14,21 @@ struct CompareReviewCorrectionRequest: Equatable {
     let field: Field
 }
 
-/// Moving focus to the text correction selected by action preflight must not
-/// validate an unrelated range draft and immediately steal that focus back.
+/// Moving focus to the correction selected by action preflight must not
+/// validate another field and immediately steal that focus back.
 enum CompareReviewRangeFocusLossPolicy {
-    static func shouldCommit(
-        draft: String, savedEndFrame: Int64?,
-        correctionField: CompareReviewCorrectionRequest.Field?
+    static func canHandlePassively(
+        noteID: UUID, correctionRequest: CompareReviewCorrectionRequest?
     ) -> Bool {
-        guard correctionField != .text else { return false }
+        guard let correctionRequest else { return true }
+        return correctionRequest.noteID == noteID && correctionRequest.field == .rangeEnd
+    }
+
+    static func shouldCommit(
+        draft: String, savedEndFrame: Int64?, noteID: UUID,
+        correctionRequest: CompareReviewCorrectionRequest?
+    ) -> Bool {
+        guard canHandlePassively(noteID: noteID, correctionRequest: correctionRequest) else { return false }
         let entered = draft.trimmingCharacters(in: .whitespacesAndNewlines)
         return !entered.isEmpty && entered != (savedEndFrame.map(String.init) ?? "")
     }
@@ -809,11 +816,13 @@ private struct CompareReviewNoteRow: View {
     let position: Int
     let count: Int
     let correctionRequest: CompareReviewCorrectionRequest?
-    // Focus goes to one finding, but every range field must respect a text
-    // correction while its own focus-loss callback runs.
+    // Every field respects the selected correction during passive callbacks,
+    // including a range correction in another finding.
     let activeCorrectionRequest: CompareReviewCorrectionRequest?
-    private var activeCorrectionField: CompareReviewCorrectionRequest.Field? {
-        activeCorrectionRequest?.field
+    private var canPassivelyHandleRange: Bool {
+        CompareReviewRangeFocusLossPolicy.canHandlePassively(
+            noteID: note.id, correctionRequest: activeCorrectionRequest
+        )
     }
     let timecodeLabel: String
     let canEdit: Bool
@@ -985,7 +994,7 @@ private struct CompareReviewNoteRow: View {
             endFrameDraft = end.map(String.init) ?? ""
         }
         .onChange(of: rangeActionError) { _, error in
-            if error != nil && activeCorrectionField != .text {
+            if error != nil && canPassivelyHandleRange {
                 if isRangeExpanded { isEndFrameFocused = true }
                 else { isRangeExpanded = true }
             }
@@ -999,10 +1008,10 @@ private struct CompareReviewNoteRow: View {
         .onAppear {
             if let correctionRequest { focusCorrection(correctionRequest.field) }
             else if noteActionError != nil && canPassivelyCommitText { isFocused = true }
-            else if rangeActionError != nil { isRangeExpanded = true }
+            else if rangeActionError != nil && canPassivelyHandleRange { isRangeExpanded = true }
         }
         .onChange(of: isRangeExpanded) { _, expanded in
-            if expanded && rangeActionError != nil && activeCorrectionField != .text {
+            if expanded && rangeActionError != nil && canPassivelyHandleRange {
                 isEndFrameFocused = true
             }
         }
@@ -1050,7 +1059,7 @@ private struct CompareReviewNoteRow: View {
                     // Keep an empty draft for the explicit Clear range action.
                     if CompareReviewRangeFocusLossPolicy.shouldCommit(
                         draft: endFrameDraft, savedEndFrame: note.primaryEndFrame,
-                        correctionField: activeCorrectionField
+                        noteID: note.id, correctionRequest: activeCorrectionRequest
                     ) { applyRange() }
                 }
                 .onChange(of: endFrameDraft) { _, _ in

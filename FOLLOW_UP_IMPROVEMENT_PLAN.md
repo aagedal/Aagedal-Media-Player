@@ -4106,6 +4106,24 @@ release. Repeated deterministic source archives are not byte-identical rebuilt
 libraries. Local package validation does not download or link its targets.
 See [prepared package and provenance](docs/evidence/coreaudio-publication-preparation-20260930/README.md).
 
+## Phase 184 — Preserve Review range correction ownership
+
+Status: Source correction and targeted regression implemented on 2026-09-30;
+canonical optimized Release verification follows separately.
+
+- [x] Bind passive range blur/error/appearance/disclosure callbacks to the
+  complete selected correction request, including finding identity and field.
+- [x] Preserve unrelated valid/invalid range drafts during correction handoff;
+  retain deliberate Return/Apply/current-frame actions and normal blur behavior.
+- [x] Add one regression for unrelated range saving/focus and restoration after
+  editing the selected correction; update candidate consumption to 740 tests.
+- [ ] Complete native keyboard, Full Keyboard Access and spoken VoiceOver checks.
+
+Native inventory succeeds, but Release app binding returns no initial UI state
+and is cancelled after 639.7 seconds. No keyboard input or settings change occurs;
+this is a binding limitation rather than native acceptance. See
+[range source correction and native attempt](docs/evidence/review-range-correction-ownership-20260930/README.md).
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with

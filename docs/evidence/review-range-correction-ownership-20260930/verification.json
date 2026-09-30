@@ -1,0 +1,24 @@
+{
+  "nativeAttempt": {
+    "inventory": "Succeeded; Aagedal Media Player not running; no browser tabs",
+    "requestedAppPath": "/tmp/aagedal-sustained-2-candidate-20260930/DerivedData/Build/Products/Release/Aagedal Media Player.app",
+    "requestedTimeoutMS": 20000,
+    "observedResult": "aborted by user after 639.7s",
+    "initialAccessibilityStateReceived": false,
+    "keyboardInputSent": false,
+    "systemSettingsChanged": false,
+    "nativeAcceptanceClaimed": false,
+    "cancellationInitiator": "root agent; collaboration interrupt after stalled app binding"
+  },
+  "sourceChecks": {
+    "swiftFrontendParse": "passed",
+    "gitDiffCheck": "passed",
+    "additionalXCTestCount": 1,
+    "requiredRegression": "CompareReviewTextCommitTests/testRangeCorrectionDefersOtherFindingRangeBlurAndPassiveFocus",
+    "xctestExecution": "pending canonical root Release verification"
+  },
+  "sourceSHA256": {
+    "Aagedal Media Player/UI/CompareReviewView.swift": "ea65c746b742f4e3b82252c24175e5e4a8cc51925801f3f68e58e0a8ea2799ce",
+    "Aagedal Media Player Tests/CompareReviewTextCommitTests.swift": "31ac5eaa7ced4964e4ddbe70b50d0405e1b37a3226a64c87d1cde4c81680bd6d"
+  }
+}

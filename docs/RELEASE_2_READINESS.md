@@ -83,6 +83,14 @@ SwiftPM manifest/dependency checks pass. Public reconstruction/environment,
 remote provenance, publication, fresh resolution and shipping repin remain
 open. See [local publication preparation](evidence/coreaudio-publication-preparation-20260930/README.md).
 
+Review now extends correction ownership to passive range callbacks: an
+unrelated finding cannot save its changed range or displace the range selected
+by action preflight. One new regression raises the candidate floor to 740 total
+tests with nine named optional skips. The native app-binding attempt returns no
+UI state and is cancelled after 639.7 seconds; keyboard/Full Keyboard Access/
+spoken VoiceOver acceptance remains open. See
+[range correction evidence](evidence/review-range-correction-ownership-20260930/README.md).
+
 The Review & Report implementation is substantially present: structured point
 and range findings, versioned local sidecars, relinking, deliberate historical
 timebase migration, save recovery, and CSV/PDF/editor-format export. That makes
