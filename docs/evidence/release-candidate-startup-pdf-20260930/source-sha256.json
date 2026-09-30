@@ -1,0 +1,15 @@
+{
+  "Aagedal Media Player Tests/CompareMediaComparisonTests.swift": "38451cda75386f88347b2d7f8240b0fc9222c50ced5b01471fa78eb5067ac5bf",
+  "Aagedal Media Player Tests/CompareReviewReportExporterTests.swift": "6310224c35e26f8c4df4eb4d2175644db55db67d2037526c97888ce7b613ab5a",
+  "Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift": "be6d0d9dccf5ca35cd23d53859abec1f9a7f395098656f45a26f3ce24dbbd79f",
+  "Aagedal Media Player/Logic/CompareMediaComparison.swift": "9b16822b6a062cbdc88c444a538218f15f11ea70ef221d9560a0aa5dfe4bb44a",
+  "Aagedal Media Player/Logic/CompareReviewPDFRenderer.swift": "1caf753ae5c20d1e999c93807578d477bde61900f8449f45f2c9674b8b7af745",
+  "Aagedal Media Player/Logic/LiveAudioMeterCoordinator.swift": "f49f45550e08341bb53b643b146979f6a18c9156119ca89195d9b62230639131",
+  "scripts/release.sh": "e2974cd44947649587c78ec781c14670042aa2cfb8bf7d8a04711868e84ef164",
+  "scripts/test-mpv-coreaudio-reconstruction.py": "df4a2b5bf565758b6b3444975f2d1ecc372875c61834f6a7dc0ff49c4cb4ff87",
+  "scripts/test-release-script-validation.py": "a0fe93567a6ca93f686ae3bcde5858edef0fc4eec159ece0cf5ec67c7794c3a0",
+  "scripts/verify-mpv-coreaudio-reconstruction.py": "ae6f864b3cecf8d7a2c98607959204ff5bb787779d99f9159973eccc22fb9a57",
+  "scripts/verify-release-candidate.sh": "0f0feb007f73ab2c800da87a3513b3724ad5fe1e10f5ca25fa41c0f7f7178c6c",
+  "Aagedal Media Player.xcodeproj/project.pbxproj": "4a2d89659d13b6d06263829db8dfabb384e74b553a5118c7e0aa0e26d0c1c194",
+  "Aagedal Media Player.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved": "6aea6d64326f3040345c3523a0a39c95d53335777e233b3aa311e8ba90ad475d"
+}

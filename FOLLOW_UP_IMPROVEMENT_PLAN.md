@@ -4376,7 +4376,14 @@ without crashing on malformed finite metadata.
 
 ## Phase 201 — Integrated startup, PDF and payload verification
 
-Status: Awaiting canonical clean-checkout verification.
+Status: Canonical optimized Release verification passes on 2026-09-30 at
+`f2370dcfdee472e8c3aca24b8885d7aa0e489818`: 747 passes, nine named skips,
+both isolated transport directions, static analysis, all 61 preflight checks,
+script validators and final source/package/cache/no-sleep evidence. Detailed
+validation requires all six new app regressions. See
+[retained receipts](docs/evidence/release-candidate-startup-pdf-20260930/README.md).
+The deliberately canceled initial build and focused notation assertion failure
+remain explicit; only the final committed-source run is accepted.
 
 The candidate and release floor is now 756 aggregate tests, with nine named
 opt-in skips and both mixed-backend transport directions verified separately.

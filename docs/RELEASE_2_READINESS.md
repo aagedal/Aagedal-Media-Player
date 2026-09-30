@@ -150,6 +150,22 @@ original rejected timestamps; stereo native output does not establish audible
 surround/hardware acceptance. See
 [DTS preparation](evidence/live-meter-dts-lossless-preparation-20260930/README.md).
 
+The latest startup/PDF/payload continuation passes canonical optimized Release
+verification at clean implementation commit `f2370dcfdee472e8c3aca24b8885d7aa0e489818`:
+747 passes, nine named opt-in skips (756 total), both isolated mixed-backend
+transport directions, static analysis, all 61 preflight checks and final
+source/package/cache/no-sleep identity. All six new app regressions pass exact
+detailed validation. Live meters now bound stalled startup before first PCM;
+PDFs distinguish and preserve source/relative timecodes; comparison labels
+retain extreme finite metadata safely and distinctly. The offline audit now
+rejects undeclared build inputs and verifies exactly 11,109 payload files.
+The canceled initial build and focused scientific-notation assertion failure
+are retained beside the accepted run. Four PDF fixture pages are visually
+checked. See [integrated receipts](evidence/release-candidate-startup-pdf-20260930/README.md).
+Native accessibility/editor, public dependencies, audible/device/surround,
+hardware/soak/base-M1 and distribution gates remain open. Documentation
+retention does not replace matching-HEAD release consumption.
+
 The Review & Report implementation is substantially present: structured point
 and range findings, versioned local sidecars, relinking, deliberate historical
 timebase migration, save recovery, and CSV/PDF/editor-format export. That makes

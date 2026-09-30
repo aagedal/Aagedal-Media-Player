@@ -1,5 +1,11 @@
 # Repeatable CoreAudio reconstruction audit — 2026-09-30
 
+The later [exact payload inventory continuation](../release-candidate-startup-pdf-20260930/README.md)
+extends this original audit to reject undeclared files, stale caches/builds,
+directory redirects and nonregular inputs. The original receipts below retain
+the narrower historical checks; current verification covers exactly 11,109
+payload files without claiming compilation or hermetic environment acceptance.
+
 The new `scripts/verify-mpv-coreaudio-reconstruction.py` audits an existing
 offline workspace against an externally pinned publication stage. It verifies
 the entire stage first, then checks all three source Git HEAD/tree identities,

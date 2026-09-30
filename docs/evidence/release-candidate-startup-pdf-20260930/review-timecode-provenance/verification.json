@@ -1,0 +1,32 @@
+{
+  "configuration": "Release",
+  "commit": "b50bf5ea1440b30c5bd037b2a1b2028500a65cff",
+  "sourceSHA256": {
+    "Aagedal Media Player/Logic/CompareReviewPDFRenderer.swift": "1caf753ae5c20d1e999c93807578d477bde61900f8449f45f2c9674b8b7af745",
+    "Aagedal Media Player Tests/CompareReviewReportExporterTests.swift": "6310224c35e26f8c4df4eb4d2175644db55db67d2037526c97888ce7b613ab5a"
+  },
+  "focusedTests": {
+    "total": 41,
+    "passed": 41,
+    "failed": 0,
+    "skipped": 0,
+    "runtimeWarnings": 0,
+    "exactEvidenceValidation": "passed",
+    "requiredNewTest": "CompareReviewReportExporterTests/testPDFDistinguishesSourceAndRelativeTimecodesAfterDifferentRateRelink()"
+  },
+  "visualQA": {
+    "renderer": "Poppler pdftoppm",
+    "fixtures": [
+      "timecode-provenance.pdf",
+      "provenance.pdf",
+      "long-sources.pdf"
+    ],
+    "inspectedPages": 4,
+    "result": "passed; no overlap or clipping"
+  },
+  "swiftFrontendParse": "passed",
+  "gitDiffCheck": "passed",
+  "scope": "Focused tests run in a shared checkout with independent changes under development; not a clean exact-HEAD canonical release verification.",
+  "nativeKeyboardAcceptance": false,
+  "spokenVoiceOverAcceptance": false
+}
