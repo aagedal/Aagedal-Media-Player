@@ -4037,6 +4037,29 @@ directory and retained both attempts. Later evidence/documentation commits are
 distinct from the tested implementation commit. See
 [canonical receipts and fixture identities](docs/evidence/release-candidate-bounded-continuation-20260930/README.md).
 
+## Phase 181 — Awake live-meter profiles and extended GPL/Metal observations
+
+Status: Runner lifecycle hardening and three extended native observations pass
+on 2026-09-30; a separate DTS source remains rejected.
+
+- [x] Own a temporary awake assertion through production meter build/run and
+  release it on every exit; retain interval power evidence on failed XCTest.
+- [x] Pass unchanged validation for 120-second authentic FX6 mono ordinal seven,
+  90-second authentic GoPro AAC stereo and 30-second local six-channel AC-3.
+- [x] Preserve app/test/framework/media identities, native output receipts,
+  routing invariance, cancellation, exact EOF and no-sleep evidence.
+- [x] Retain the separate DTS rejection and reproduce its packet timestamp
+  deviation with the bundled decoder without widening continuity tolerance.
+- [ ] Qualify irregular DTS timestamps and complete 30-minute, audible/device,
+  surround hardware, supported-macOS/base-M1 and published-dependency acceptance.
+
+CoreAudio initializes in all seven segment starts without output-init/channel-map
+errors. The short Matroska preparation is not a producer-original or numerical
+reference. Earlier independently linked source/binary identities remain explicit;
+these are local dependency observations, not shipping repins. Concurrent builds
+qualify timing/memory observations. See
+[extended profiles and retained DTS rejection](docs/evidence/live-meter-gpl-metal-extended-20260930/README.md).
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with

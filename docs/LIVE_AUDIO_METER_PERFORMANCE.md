@@ -70,6 +70,11 @@ cache. Keep other tests and native app automation idle while profiling because
 the isolated XCTest host assumes its direct child process is the meter's bundled
 FFmpeg instance.
 
+The runner owns a temporary awake assertion during the build and observation
+and releases it on every exit. Initial/final power state and interval sleep
+events are retained even when XCTest fails. Sleep still rejects the evidence;
+the assertion does not change system power preferences or waive that check.
+
 The runner uses Release by default. `LIVE_AUDIO_METER_PROFILE_CONFIGURATION=Debug`
 can reuse a Debug cache for engineering harness checks; the configuration is
 retained in `environment.txt`. Collect release performance acceptance with the

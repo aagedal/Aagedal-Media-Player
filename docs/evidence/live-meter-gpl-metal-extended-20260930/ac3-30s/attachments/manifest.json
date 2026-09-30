@@ -1,0 +1,35 @@
+[
+  {
+    "attachments" : [
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006050-001C293C22F9401C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "B63B716F-FDDD-4192-B7FF-69229B1B287A.txt",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Live audio meter profile — 0 — Interstellar_2014_copy_0_1FA201A3-A6B8-4F6D-8E01-7D8B135BE36F.mkv",
+        "timestamp" : 1790797509.91
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006050-001C293C22F9401C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "BDD003B2-6596-4236-B3C2-40402BAEDB0E.txt",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Live audio meter playback diagnostic — eof-start_0_0264F303-7F4D-46EB-A5DF-90FCEA2690ED.txt",
+        "timestamp" : 1790797504.063
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006050-001C293C22F9401C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "B93CECA6-4C7E-4174-AAA5-E7B5312E23C3.txt",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Live audio meter playback diagnostic — observation-start_0_62CC95D5-9365-4C50-810E-6AA5D3DBC4EB.txt",
+        "timestamp" : 1790797472.816
+      }
+    ],
+    "testIdentifier" : "LiveAudioMeterPerformanceTests/testRepresentativeProductionPathWhenRequested()",
+    "testIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterPerformanceTests/testRepresentativeProductionPathWhenRequested"
+  }
+]

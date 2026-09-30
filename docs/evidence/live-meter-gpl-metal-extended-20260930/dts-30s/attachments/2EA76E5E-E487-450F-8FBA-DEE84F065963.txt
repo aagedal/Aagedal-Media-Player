@@ -1,0 +1,1 @@
+failed: caught error: "Error Domain=LiveAudioMeterPerformanceUnavailable Code=1 "Live source audio is unavailable. The decoder audio timestamp expected frame 3728 but received 3672." UserInfo={NSLocalizedDescription=Live source audio is unavailable. The decoder audio timestamp expected frame 3728 but received 3672.}"

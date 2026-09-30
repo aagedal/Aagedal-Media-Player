@@ -1,0 +1,46 @@
+{
+  "devicesAndConfigurations": [
+    {
+      "device": {
+        "architecture": "arm64e",
+        "deviceId": "00006050-001C293C22F9401C",
+        "deviceName": "My Mac",
+        "modelName": "MacBook Pro",
+        "osBuildNumber": "26A434",
+        "osVersion": "27.0.1",
+        "platform": "macOS"
+      },
+      "expectedFailures": 0,
+      "failedTests": 1,
+      "passedTests": 0,
+      "skippedTests": 0,
+      "testPlanConfiguration": {
+        "configurationId": "1",
+        "configurationName": "Test Scheme Action"
+      }
+    }
+  ],
+  "environmentDescription": "Aagedal Media Player \u00b7 Built with macOS 27.0.1",
+  "expectedFailures": 0,
+  "failedTests": 1,
+  "finishTime": 1790797465.446,
+  "passedTests": 0,
+  "result": "Failed",
+  "runtimeWarnings": [],
+  "skippedTests": 0,
+  "startTime": 1790797452.91,
+  "statistics": [],
+  "testFailures": [
+    {
+      "failureText": "failed: caught error: \"Error Domain=LiveAudioMeterPerformanceUnavailable Code=1 \"Live source audio is unavailable. The decoder audio timestamp expected frame 3728 but received 3672.\" UserInfo={NSLocalizedDescription=Live source audio is unavailable. The decoder audio timestamp expected frame 3728 but received 3672.}\"",
+      "targetName": "Aagedal Media Player Tests",
+      "testIdentifier": 1,
+      "testIdentifierString": "LiveAudioMeterPerformanceTests/testRepresentativeProductionPathWhenRequested()",
+      "testIdentifierURL": "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterPerformanceTests/testRepresentativeProductionPathWhenRequested",
+      "testName": "testRepresentativeProductionPathWhenRequested()"
+    }
+  ],
+  "title": "Test - Aagedal Media Player",
+  "topInsights": [],
+  "totalTestCount": 1
+}

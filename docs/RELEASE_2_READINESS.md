@@ -57,6 +57,16 @@ static analysis and 61 preflight checks. The first missing-fixture rejection is
 retained; existing explicit fixture generation resolved it without skip changes.
 Later documentation retention does not replace matching-HEAD release checks.
 
+The latest extended GPL/Metal observations pass 120 seconds on authentic FX6
+mono, 90 seconds on authentic GoPro AAC stereo and 30 seconds on a local
+six-channel AC-3 preparation. A DTS track fails with a reproduced 56-frame
+timestamp deviation, beyond the unchanged one-millisecond limit. The failure
+and all source/binary/output/power identities are retained. The production
+runner now owns an awake assertion and retains power evidence on failure.
+These observations do not close 30-minute, audible/device/surround hardware,
+base-M1 or dependency publication gates. See
+[extended native evidence](evidence/live-meter-gpl-metal-extended-20260930/README.md).
+
 The Review & Report implementation is substantially present: structured point
 and range findings, versioned local sidecars, relinking, deliberate historical
 timebase migration, save recovery, and CSV/PDF/editor-format export. That makes

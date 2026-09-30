@@ -1,0 +1,7 @@
+ff98066ef8e5525d6ac51a6a380b0d8c2e36cea8
+ProductName:		macOS
+ProductVersion:		27.0.1
+BuildVersion:		26A434
+Build configuration: Release
+Observation seconds: 90
+Existing independently linked GPL/Metal candidate; prior source and original app/test identities retained.

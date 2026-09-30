@@ -33,6 +33,17 @@ if [[ "$build_configuration" != Release && "$build_configuration" != Debug ]]; t
 fi
 cd "$repository_dir"
 
+# Long observations need an awake host for playback and clock evidence. Own
+# the assertion through build/run and release it on success or any failure.
+profile_run=''
+/usr/bin/caffeinate -disu -w "$$" &
+power_assertion_pid=$!
+cleanup() {
+  if [[ -n "$profile_run" ]]; then rm -f -- "$profile_run"; fi
+  kill "$power_assertion_pid" 2>/dev/null || true
+}
+trap cleanup EXIT
+
 print -r -- "$input_manifest" > "$artifact_dir/inputs.json"
 
 {
@@ -61,7 +72,6 @@ if (( ${#xctestrun_files} != 1 )); then
   exit 1
 fi
 profile_run="$derived_data/Build/Products/LiveAudioMeterProfile.$(uuidgen).xctestrun"
-trap 'rm -f -- "$profile_run"' EXIT
 cp "$xctestrun_files[1]" "$profile_run"
 /usr/bin/python3 - "$profile_run" "$artifact_dir/inputs.json" "$observation_seconds" <<'PY'
 import json, plistlib, sys
@@ -79,6 +89,7 @@ with open(path, 'wb') as destination:
 PY
 
 profile_start="$(date '+%Y-%m-%d %H:%M:%S')"
+pmset -g batt > "$artifact_dir/power-start.txt"
 print -u2 'Exercising production playback, live-meter cancellation, routing invariance and near-EOF drainage…'
 profile_status=0
 if ! xcodebuild test-without-building -xctestrun "$profile_run" \
@@ -96,12 +107,12 @@ profile_end="$(date '+%Y-%m-%d %H:%M:%S')"
 # Preserve them even when XCTest fails before producing a complete profile row.
 xcrun xcresulttool export attachments --path "$artifact_dir/LiveAudioMeterProfile.xcresult" \
   --output-path "$artifact_dir/attachments" >/dev/null
+pmset -g batt > "$artifact_dir/power-end.txt"
+/usr/bin/python3 "$repository_dir/scripts/check-programme-profile-power.py" \
+  "$profile_start" "$profile_end" "$artifact_dir"
 if (( profile_status != 0 )); then
   print -u2 "Production profile failed; retained diagnostics: $artifact_dir"
   exit "$profile_status"
 fi
 /usr/bin/python3 "$repository_dir/scripts/validate-live-audio-meter-profile.py" "$artifact_dir"
-pmset -g batt > "$artifact_dir/power-end.txt"
-/usr/bin/python3 "$repository_dir/scripts/check-programme-profile-power.py" \
-  "$profile_start" "$profile_end" "$artifact_dir"
 print -r -- "Artifacts: $artifact_dir"

@@ -1,0 +1,365 @@
+[
+  {
+    "name": "fx6-120s",
+    "accepted": true,
+    "testSummary": {
+      "devicesAndConfigurations": [
+        {
+          "device": {
+            "architecture": "arm64e",
+            "deviceId": "00006050-001C293C22F9401C",
+            "deviceName": "My Mac",
+            "modelName": "MacBook Pro",
+            "osBuildNumber": "26A434",
+            "osVersion": "27.0.1",
+            "platform": "macOS"
+          },
+          "expectedFailures": 0,
+          "failedTests": 0,
+          "passedTests": 1,
+          "skippedTests": 0,
+          "testPlanConfiguration": {
+            "configurationId": "1",
+            "configurationName": "Test Scheme Action"
+          }
+        }
+      ],
+      "environmentDescription": "Aagedal Media Player \u00b7 Built with macOS 27.0.1",
+      "expectedFailures": 0,
+      "failedTests": 0,
+      "finishTime": 1790797344.28,
+      "passedTests": 1,
+      "result": "Passed",
+      "runtimeWarnings": [],
+      "skippedTests": 0,
+      "startTime": 1790797214.685,
+      "statistics": [],
+      "testFailures": [],
+      "title": "Test - Aagedal Media Player",
+      "topInsights": [],
+      "totalTestCount": 1
+    },
+    "rows": [
+      {
+        "audioStreamOrderIndex": 7,
+        "audioTrackLabel": "#7 \u2022 PCM_S24LE \u2022 Mono \u2022 48 kHz",
+        "audioTrackSelectionExplicit": true,
+        "availableAudioTrackCount": 8,
+        "backend": "mpv",
+        "channels": 1,
+        "codec": "pcm_s24le",
+        "declaredChannelLayout": "mono",
+        "durationSeconds": 139.84,
+        "eof": {
+          "audioStreamOrderIndex": 7,
+          "clockDriftSampleCount": 272,
+          "codecNormalizationDisabled": true,
+          "decoderVersion": "ffmpeg version 9.0.1 Copyright (c) 2000-2026 the FFmpeg developers",
+          "dynamicRangeCompressionDisabled": true,
+          "endSourceFrame": 6712320,
+          "finalSnapshot": true,
+          "maximumAbsoluteClockDriftSeconds": 0.1800000000000194,
+          "maximumDecodedAheadSeconds": 0,
+          "metadataStreamIndex": 7,
+          "observed": true,
+          "peakAppResidentBytes": 621428736,
+          "peakChildResidentBytes": 108068864,
+          "publishedSnapshotCount": 121,
+          "startSourceFrame": 6424320,
+          "syntheticInitialSilenceFrameCount": 0,
+          "timestampFrameCount": 288000,
+          "timestampSource": "ffmpeg-framecrc-v1",
+          "timestampTimeBase": "1/48000",
+          "wallSeconds": 6.201584959
+        },
+        "file": "OJ_FX6A0021.MXF",
+        "inputIndex": 0,
+        "inputSHA256": "5d1c636920c80e7ce83af6486a8de9184c5cacee8a316e799dbb52e8f02174a8",
+        "metadataStreamIndex": 7,
+        "observation": {
+          "audioStreamOrderIndex": 7,
+          "cancellationLatencySeconds": 0.001179208,
+          "cancellationObserved": true,
+          "childResidentBytesAfterCancellation": 0,
+          "clockDriftSampleCount": 5442,
+          "endSourceFrame": 5772000,
+          "firstSnapshotLatencySeconds": 0.235655458,
+          "initialAppResidentBytes": 372523008,
+          "maximumAbsoluteClockDriftSeconds": 0.23000000000000484,
+          "maximumDecodedAheadSeconds": 0.25,
+          "maximumSnapshotIntervalSeconds": 0.191053,
+          "metadataStreamIndex": 7,
+          "monitorRoutingInvariant": true,
+          "observationSeconds": 120,
+          "peakAppResidentBytes": 497811456,
+          "peakChildResidentBytes": 108265472,
+          "publishedSnapshotCount": 2395,
+          "startSourceFrame": 0,
+          "wallSeconds": 120.006471375
+        },
+        "requestedAudioStreamOrderIndex": 7,
+        "sampleRate": 48000,
+        "schemaVersion": 2
+      }
+    ]
+  },
+  {
+    "name": "aac-90s",
+    "accepted": true,
+    "testSummary": {
+      "devicesAndConfigurations": [
+        {
+          "device": {
+            "architecture": "arm64e",
+            "deviceId": "00006050-001C293C22F9401C",
+            "deviceName": "My Mac",
+            "modelName": "MacBook Pro",
+            "osBuildNumber": "26A434",
+            "osVersion": "27.0.1",
+            "platform": "macOS"
+          },
+          "expectedFailures": 0,
+          "failedTests": 0,
+          "passedTests": 1,
+          "skippedTests": 0,
+          "testPlanConfiguration": {
+            "configurationId": "1",
+            "configurationName": "Test Scheme Action"
+          }
+        }
+      ],
+      "environmentDescription": "Aagedal Media Player \u00b7 Built with macOS 27.0.1",
+      "expectedFailures": 0,
+      "failedTests": 0,
+      "finishTime": 1790797449.326,
+      "passedTests": 1,
+      "result": "Passed",
+      "runtimeWarnings": [],
+      "skippedTests": 0,
+      "startTime": 1790797350.498,
+      "statistics": [],
+      "testFailures": [],
+      "title": "Test - Aagedal Media Player",
+      "topInsights": [],
+      "totalTestCount": 1
+    },
+    "rows": [
+      {
+        "audioStreamOrderIndex": 0,
+        "audioTrackLabel": "#0 \u2022 ENG \u2022 AAC \u2022 Stereo \u2022 48 kHz",
+        "audioTrackSelectionExplicit": true,
+        "availableAudioTrackCount": 1,
+        "backend": "mpv",
+        "channels": 2,
+        "codec": "mp4a",
+        "declaredChannelLayout": "stereo",
+        "durationSeconds": 109.7096,
+        "eof": {
+          "audioStreamOrderIndex": 0,
+          "clockDriftSampleCount": 272,
+          "codecNormalizationDisabled": true,
+          "decoderVersion": "ffmpeg version 9.0.1 Copyright (c) 2000-2026 the FFmpeg developers",
+          "dynamicRangeCompressionDisabled": true,
+          "endSourceFrame": 5263360,
+          "finalSnapshot": true,
+          "maximumAbsoluteClockDriftSeconds": 0.12094166666667054,
+          "maximumDecodedAheadSeconds": 0.010466666666658853,
+          "metadataStreamIndex": 0,
+          "observed": true,
+          "peakAppResidentBytes": 463077376,
+          "peakChildResidentBytes": 20922368,
+          "publishedSnapshotCount": 118,
+          "startSourceFrame": 4979374,
+          "syntheticInitialSilenceFrameCount": 0,
+          "timestampFrameCount": 283986,
+          "timestampSource": "ffmpeg-framecrc-v1",
+          "timestampTimeBase": "1/48000",
+          "wallSeconds": 5.958226083
+        },
+        "file": "DolomitesSet1-Hero9-GX019609.MP4",
+        "inputIndex": 0,
+        "inputSHA256": "e8e87cd4fdc21085fb1df8c540ed4ed8a2687f615a8d1c77c69da41cb8f6b20d",
+        "metadataStreamIndex": 0,
+        "observation": {
+          "audioStreamOrderIndex": 0,
+          "cancellationLatencySeconds": 0.0010595,
+          "cancellationObserved": true,
+          "childResidentBytesAfterCancellation": 0,
+          "clockDriftSampleCount": 4196,
+          "endSourceFrame": 4324800,
+          "firstSnapshotLatencySeconds": 0.064068,
+          "initialAppResidentBytes": 307167232,
+          "maximumAbsoluteClockDriftSeconds": 0.21660000000000096,
+          "maximumDecodedAheadSeconds": 0.24996666666666556,
+          "maximumSnapshotIntervalSeconds": 0.196911958,
+          "metadataStreamIndex": 0,
+          "monitorRoutingInvariant": true,
+          "observationSeconds": 90,
+          "peakAppResidentBytes": 415498240,
+          "peakChildResidentBytes": 21135360,
+          "publishedSnapshotCount": 1796,
+          "startSourceFrame": 0,
+          "wallSeconds": 90.007255
+        },
+        "requestedAudioStreamOrderIndex": 0,
+        "sampleRate": 48000,
+        "schemaVersion": 2
+      }
+    ]
+  },
+  {
+    "name": "dts-30s",
+    "accepted": false,
+    "testSummary": {
+      "devicesAndConfigurations": [
+        {
+          "device": {
+            "architecture": "arm64e",
+            "deviceId": "00006050-001C293C22F9401C",
+            "deviceName": "My Mac",
+            "modelName": "MacBook Pro",
+            "osBuildNumber": "26A434",
+            "osVersion": "27.0.1",
+            "platform": "macOS"
+          },
+          "expectedFailures": 0,
+          "failedTests": 1,
+          "passedTests": 0,
+          "skippedTests": 0,
+          "testPlanConfiguration": {
+            "configurationId": "1",
+            "configurationName": "Test Scheme Action"
+          }
+        }
+      ],
+      "environmentDescription": "Aagedal Media Player \u00b7 Built with macOS 27.0.1",
+      "expectedFailures": 0,
+      "failedTests": 1,
+      "finishTime": 1790797465.446,
+      "passedTests": 0,
+      "result": "Failed",
+      "runtimeWarnings": [],
+      "skippedTests": 0,
+      "startTime": 1790797452.91,
+      "statistics": [],
+      "testFailures": [
+        {
+          "failureText": "failed: caught error: \"Error Domain=LiveAudioMeterPerformanceUnavailable Code=1 \"Live source audio is unavailable. The decoder audio timestamp expected frame 3728 but received 3672.\" UserInfo={NSLocalizedDescription=Live source audio is unavailable. The decoder audio timestamp expected frame 3728 but received 3672.}\"",
+          "targetName": "Aagedal Media Player Tests",
+          "testIdentifier": 1,
+          "testIdentifierString": "LiveAudioMeterPerformanceTests/testRepresentativeProductionPathWhenRequested()",
+          "testIdentifierURL": "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterPerformanceTests/testRepresentativeProductionPathWhenRequested",
+          "testName": "testRepresentativeProductionPathWhenRequested()"
+        }
+      ],
+      "title": "Test - Aagedal Media Player",
+      "topInsights": [],
+      "totalTestCount": 1
+    },
+    "rows": []
+  },
+  {
+    "name": "ac3-30s",
+    "accepted": true,
+    "testSummary": {
+      "devicesAndConfigurations": [
+        {
+          "device": {
+            "architecture": "arm64e",
+            "deviceId": "00006050-001C293C22F9401C",
+            "deviceName": "My Mac",
+            "modelName": "MacBook Pro",
+            "osBuildNumber": "26A434",
+            "osVersion": "27.0.1",
+            "platform": "macOS"
+          },
+          "expectedFailures": 0,
+          "failedTests": 0,
+          "passedTests": 1,
+          "skippedTests": 0,
+          "testPlanConfiguration": {
+            "configurationId": "1",
+            "configurationName": "Test Scheme Action"
+          }
+        }
+      ],
+      "environmentDescription": "Aagedal Media Player \u00b7 Built with macOS 27.0.1",
+      "expectedFailures": 0,
+      "failedTests": 0,
+      "finishTime": 1790797510.243,
+      "passedTests": 1,
+      "result": "Passed",
+      "runtimeWarnings": [],
+      "skippedTests": 0,
+      "startTime": 1790797471.607,
+      "statistics": [],
+      "testFailures": [],
+      "title": "Test - Aagedal Media Player",
+      "topInsights": [],
+      "totalTestCount": 1
+    },
+    "rows": [
+      {
+        "audioStreamOrderIndex": 2,
+        "audioTrackLabel": "#2 \u2022 ENG \u2022 AC3 \u2022 5.1 \u2022 48 kHz",
+        "audioTrackSelectionExplicit": true,
+        "availableAudioTrackCount": 14,
+        "backend": "mpv",
+        "channels": 6,
+        "codec": "A_AC3",
+        "declaredChannelLayout": "5.1",
+        "durationSeconds": 124.206,
+        "eof": {
+          "audioStreamOrderIndex": 2,
+          "clockDriftSampleCount": 264,
+          "codecNormalizationDisabled": true,
+          "decoderVersion": "ffmpeg version 9.0.1 Copyright (c) 2000-2026 the FFmpeg developers",
+          "dynamicRangeCompressionDisabled": true,
+          "endSourceFrame": 5954688,
+          "finalSnapshot": true,
+          "maximumAbsoluteClockDriftSeconds": 0.117,
+          "maximumDecodedAheadSeconds": 0.016000000000005343,
+          "metadataStreamIndex": 2,
+          "observed": true,
+          "peakAppResidentBytes": 551239680,
+          "peakChildResidentBytes": 28999680,
+          "publishedSnapshotCount": 107,
+          "startSourceFrame": 5675664,
+          "syntheticInitialSilenceFrameCount": 0,
+          "timestampFrameCount": 279024,
+          "timestampSource": "ffmpeg-framecrc-v1",
+          "timestampTimeBase": "1/48000",
+          "wallSeconds": 5.845994458
+        },
+        "file": "Interstellar_2014_copy.mkv",
+        "inputIndex": 0,
+        "inputSHA256": "d52b99beb349bbcbecd2c44bdd02cda4fbf1b2604503c73d4d03665d31d09003",
+        "metadataStreamIndex": 2,
+        "observation": {
+          "audioStreamOrderIndex": 2,
+          "cancellationLatencySeconds": 0.000782333,
+          "cancellationObserved": true,
+          "childResidentBytesAfterCancellation": 0,
+          "clockDriftSampleCount": 1377,
+          "endSourceFrame": 1447200,
+          "firstSnapshotLatencySeconds": 0.042111083,
+          "initialAppResidentBytes": 950042624,
+          "maximumAbsoluteClockDriftSeconds": 0.2080000000000012,
+          "maximumDecodedAheadSeconds": 0.24900000000000233,
+          "maximumSnapshotIntervalSeconds": 0.197906958,
+          "metadataStreamIndex": 2,
+          "monitorRoutingInvariant": true,
+          "observationSeconds": 30,
+          "peakAppResidentBytes": 950042624,
+          "peakChildResidentBytes": 30900224,
+          "publishedSnapshotCount": 603,
+          "startSourceFrame": 0,
+          "wallSeconds": 30.012219416
+        },
+        "requestedAudioStreamOrderIndex": 2,
+        "sampleRate": 48000,
+        "schemaVersion": 2
+      }
+    ]
+  }
+]
