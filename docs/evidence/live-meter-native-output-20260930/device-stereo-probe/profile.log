@@ -1,0 +1,92 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild test-without-building -xctestrun /tmp/aagedal-mono-20260930-derived/Build/Products/LiveAudioMeterProfile.0EAF592D-C34F-4B8F-A851-A3B9A2BA2C26.xctestrun -destination platform=macOS -parallel-testing-enabled NO -test-timeouts-enabled YES -default-test-execution-time-allowance 390 -maximum-test-execution-time-allowance 390 -resultBundlePath /private/tmp/live-meter-device-stereo-output-20260930/LiveAudioMeterProfile.xcresult "-only-testing:Aagedal Media Player Tests/LiveAudioMeterPerformanceTests/testRepresentativeProductionPathWhenRequested"
+
+Writing result bundle at path:
+	/private/tmp/live-meter-device-stereo-output-20260930/LiveAudioMeterProfile.xcresult
+
+--- xcodebuild: WARNING: Using the first of multiple matching destinations:
+{ platform:macOS, arch:arm64e, id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:arm64, id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:x86_64, id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:arm64e, variant:Mac Catalyst, id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:arm64, variant:Mac Catalyst, id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:x86_64, variant:Mac Catalyst, id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:arm64e, variant:DriverKit, id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:arm64, variant:DriverKit, id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:arm64e, variant:Designed for [iPad,iPhone], id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:arm64, variant:Designed for [iPad,iPhone], id:00006050-001C293C22F9401C, name:My Mac }
+2026-09-30 12:16:43.861026+0200 Aagedal Media Player[50784:738674] ApplePersistenceIgnoreState: Existing state will not be touched. New state will be written to /var/folders/pv/f8g9jgrd7px_0xvh3kxgmyg40000gp/T/com.aagedal.MediaPlayer.savedState
+Test Suite 'Selected tests' started at 2026-09-30 12:16:44.080.
+Test Suite 'Aagedal Media Player Tests.xctest' started at 2026-09-30 12:16:44.080.
+Test Suite 'LiveAudioMeterPerformanceTests' started at 2026-09-30 12:16:44.080.
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterPerformanceTests testRepresentativeProductionPathWhenRequested]' started.
+2026-09-30 12:16:44.084093+0200 Aagedal Media Player[50784:738719] [ClientDonation] (+[PPSClientDonation isRegisteredSubsystem:category:]) Permission denied: CoreMedia / CM-ASSETCREATION
+2026-09-30 12:16:44.199122+0200 Aagedal Media Player[50784:738674] [PlayerController] Using MPV player for live-meter-engineering-multitrack-20260929.mp4
+2026-09-30 12:16:44.199459+0200 Aagedal Media Player[50784:738674] [MPVPlayer] MPV not initialized yet, storing pending load for: live-meter-engineering-multitrack-20260929.mp4
+2026-09-30 12:16:44.260615+0200 Aagedal Media Player[50784:738674] [plugin] AddInstanceForFactory: No factory registered for id <CFUUID 0x7707e09d60> F8BB1C28-BAE8-11D6-9C31-00039315CD46
+2026-09-30 12:16:44.276265+0200 Aagedal Media Player[50784:738724] [scaling] mpv video-params: dw=0 dh=0 rotate=0
+2026-09-30 12:16:44.276262+0200 Aagedal Media Player[50784:738674] [MPVPlayer] MPV initialized successfully
+2026-09-30 12:16:44.276287+0200 Aagedal Media Player[50784:738724] [scaling] mpv video-params: dw=0 dh=0 rotate=0
+2026-09-30 12:16:44.276296+0200 Aagedal Media Player[50784:738724] [scaling] mpv video-params: dw=0 dh=0 rotate=0
+2026-09-30 12:16:44.276405+0200 Aagedal Media Player[50784:738674] [MPVPlayer] Loading file: live-meter-engineering-multitrack-20260929.mp4, startTime: 0.000000, autostart: false
+2026-09-30 12:16:44.276459+0200 Aagedal Media Player[50784:738691] [MPVPlayer] MPV start file event
+[ffmpeg/demuxer] warn: mov,mp4,m4a,3gp,3g2,mj2: UDTA parsing failed retrying raw
+[ffmpeg/demuxer] warn: mov,mp4,m4a,3gp,3g2,mj2: UDTA parsing failed retrying raw
+2026-09-30 12:16:44.295489+0200 Aagedal Media Player[50784:738674] [MPVPlayer] MPV file loaded
+2026-09-30 12:16:44.335859+0200 Aagedal Media Player[50784:738736]       AUConverterBase.cpp:547   SetConverterChannelMap failed: err 561211770
+2026-09-30 12:16:44.708966+0200 Aagedal Media Player[50784:738674] [scaling] play: backend=mpv wasPlaying=false videoSourceSize=nil ratio=nil
+2026-09-30 12:16:49.720569+0200 Aagedal Media Player[50784:738674] [scaling] pause: backend=mpv wasPlaying=true videoSourceSize=nil ratio=nil
+2026-09-30 12:16:50.369673+0200 Aagedal Media Player[50784:738674] [scaling] play: backend=mpv wasPlaying=false videoSourceSize=nil ratio=nil
+2026-09-30 12:16:50.549924+0200 Aagedal Media Player[50784:738674] [PlayerController] Using MPV player for live-meter-engineering-multitrack-20260929.mp4
+2026-09-30 12:16:50.550090+0200 Aagedal Media Player[50784:738674] [MPVPlayer] MPV not initialized yet, storing pending load for: live-meter-engineering-multitrack-20260929.mp4
+2026-09-30 12:16:50.571091+0200 Aagedal Media Player[50784:738674] [MPVPlayer] MPV initialized successfully
+2026-09-30 12:16:50.571090+0200 Aagedal Media Player[50784:738724] [scaling] mpv video-params: dw=0 dh=0 rotate=0
+2026-09-30 12:16:50.571145+0200 Aagedal Media Player[50784:738724] [scaling] mpv video-params: dw=0 dh=0 rotate=0
+2026-09-30 12:16:50.571163+0200 Aagedal Media Player[50784:738724] [scaling] mpv video-params: dw=0 dh=0 rotate=0
+2026-09-30 12:16:50.571303+0200 Aagedal Media Player[50784:738674] [MPVPlayer] Loading file: live-meter-engineering-multitrack-20260929.mp4, startTime: 18.000000, autostart: false
+2026-09-30 12:16:50.571405+0200 Aagedal Media Player[50784:738724] [MPVPlayer] MPV start file event
+[ffmpeg/demuxer] warn: mov,mp4,m4a,3gp,3g2,mj2: UDTA parsing failed retrying raw
+[ffmpeg/demuxer] warn: mov,mp4,m4a,3gp,3g2,mj2: UDTA parsing failed retrying raw
+2026-09-30 12:16:50.573505+0200 Aagedal Media Player[50784:738674] [MPVPlayer] MPV file loaded
+2026-09-30 12:16:50.575316+0200 Aagedal Media Player[50784:738941]       AUConverterBase.cpp:547   SetConverterChannelMap failed: err 561211770
+2026-09-30 12:16:51.064452+0200 Aagedal Media Player[50784:738674] [scaling] play: backend=mpv wasPlaying=false videoSourceSize=nil ratio=nil
+2026-09-30 12:16:56.890565+0200 Aagedal Media Player[50784:738674] [MPVPlayer] EOF reached, pausing at last frame
+LIVE_AUDIO_METER_PROFILE {"audioStreamOrderIndex":0,"audioTrackLabel":"#0 • AAC • Mono • 44 kHz","audioTrackSelectionExplicit":true,"availableAudioTrackCount":2,"backend":"mpv","channels":1,"codec":"mp4a","declaredChannelLayout":"mono","durationSeconds":24,"eof":{"audioStreamOrderIndex":0,"clockDriftSampleCount":275,"codecNormalizationDisabled":true,"decoderVersion":"ffmpeg version 9.0.1 Copyright (c) 2000-2026 the FFmpeg developers","dynamicRangeCompressionDisabled":true,"endSourceFrame":1058400,"finalSnapshot":true,"maximumAbsoluteClockDriftSeconds":0.080193413294661189,"maximumDecodedAheadSeconds":0.034501620519538534,"metadataStreamIndex":0,"observed":true,"peakAppResidentBytes":155418624,"peakChildResidentBytes":18710528,"publishedSnapshotCount":120,"startSourceFrame":793799,"syntheticInitialSilenceFrameCount":0,"timestampFrameCount":264601,"timestampSource":"ffmpeg-framecrc-v1","timestampTimeBase":"1\/44100","wallSeconds":6.059011334},"file":"live-meter-engineering-multitrack-20260929.mp4","inputIndex":0,"inputSHA256":"af567c0e9eeedce1c08a5cd3f01759014389e4fe54ac336e3337ad822c5fdaf7","metadataStreamIndex":0,"observation":{"audioStreamOrderIndex":0,"cancellationLatencySeconds":0.000957416,"cancellationObserved":true,"childResidentBytesAfterCancellation":0,"clockDriftSampleCount":229,"endSourceFrame":227115,"firstSnapshotLatencySeconds":0.10810083400000001,"initialAppResidentBytes":152764416,"maximumAbsoluteClockDriftSeconds":0.1964205453718785,"maximumDecodedAheadSeconds":0.24642054537187841,"maximumSnapshotIntervalSeconds":0.087043375000000006,"metadataStreamIndex":0,"monitorRoutingInvariant":true,"observationSeconds":5,"peakAppResidentBytes":154746880,"peakChildResidentBytes":18743296,"publishedSnapshotCount":103,"startSourceFrame":0,"wallSeconds":5.0026091250000002},"requestedAudioStreamOrderIndex":0,"sampleRate":44100,"schemaVersion":2}
+2026-09-30 12:16:57.142086+0200 Aagedal Media Player[50784:738674] [PlayerController] Using MPV player for live-meter-engineering-multitrack-20260929.mp4
+2026-09-30 12:16:57.142214+0200 Aagedal Media Player[50784:738674] [MPVPlayer] MPV not initialized yet, storing pending load for: live-meter-engineering-multitrack-20260929.mp4
+2026-09-30 12:16:57.164219+0200 Aagedal Media Player[50784:738721] [scaling] mpv video-params: dw=0 dh=0 rotate=0
+2026-09-30 12:16:57.164217+0200 Aagedal Media Player[50784:738674] [MPVPlayer] MPV initialized successfully
+2026-09-30 12:16:57.164258+0200 Aagedal Media Player[50784:738721] [scaling] mpv video-params: dw=0 dh=0 rotate=0
+2026-09-30 12:16:57.164276+0200 Aagedal Media Player[50784:738721] [scaling] mpv video-params: dw=0 dh=0 rotate=0
+2026-09-30 12:16:57.164427+0200 Aagedal Media Player[50784:738674] [MPVPlayer] Loading file: live-meter-engineering-multitrack-20260929.mp4, startTime: 0.000000, autostart: false
+2026-09-30 12:16:57.164498+0200 Aagedal Media Player[50784:738721] [MPVPlayer] MPV start file event
+[ffmpeg/demuxer] warn: mov,mp4,m4a,3gp,3g2,mj2: UDTA parsing failed retrying raw
+[ffmpeg/demuxer] warn: mov,mp4,m4a,3gp,3g2,mj2: UDTA parsing failed retrying raw
+2026-09-30 12:16:57.166430+0200 Aagedal Media Player[50784:738674] [MPVPlayer] MPV file loaded
+2026-09-30 12:16:57.168565+0200 Aagedal Media Player[50784:739157]       AUConverterBase.cpp:547   SetConverterChannelMap failed: err 561211770
+2026-09-30 12:16:57.659375+0200 Aagedal Media Player[50784:738721] [AudioConverter] channel mapping input channel '6619138' for output channel '0' is out of range [-1..'2')
+[ao/coreaudio] error: unable to set the input channel layout on the audio unit ([206][255][255][255]/-50)
+2026-09-30 12:16:57.664427+0200 Aagedal Media Player[50784:739157] [carc] Reporter disconnected or already stopped. { func=stop, reporterID=218115619160070 }
+2026-09-30 12:16:57.668504+0200 Aagedal Media Player[50784:738674] [scaling] play: backend=mpv wasPlaying=false videoSourceSize=nil ratio=nil
+2026-09-30 12:16:57.736702+0200 Aagedal Media Player[50784:738719] [] <<< FigCFUtilities >>> signalled err=-12990 at <>:1859
+/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterPerformanceTests.swift:106: error: -[Aagedal_Media_Player_Tests.LiveAudioMeterPerformanceTests testRepresentativeProductionPathWhenRequested] : failed - Live meter lost its measured snapshot before the routing check: unavailable(reason: "Live meters lost synchronization with playback.", diagnostic: Optional("Decoded source drift was -290.3 ms; retry to start at the current player position."))
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterPerformanceTests testRepresentativeProductionPathWhenRequested]' failed (18.860 seconds).
+Test Suite 'LiveAudioMeterPerformanceTests' failed at 2026-09-30 12:17:02.940.
+	 Executed 1 test, with 1 failure (0 unexpected) in 18.860 (18.860) seconds
+Test Suite 'Aagedal Media Player Tests.xctest' failed at 2026-09-30 12:17:02.941.
+	 Executed 1 test, with 1 failure (0 unexpected) in 18.860 (18.861) seconds
+Test Suite 'Selected tests' failed at 2026-09-30 12:17:02.941.
+	 Executed 1 test, with 1 failure (0 unexpected) in 18.860 (18.861) seconds
+2026-09-30 12:17:07.250 xcodebuild[50776:738547] [MT] IDETestOperationsObserverDebug: 24.417 elapsed -- Testing started completed.
+2026-09-30 12:17:07.250 xcodebuild[50776:738547] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-09-30 12:17:07.250 xcodebuild[50776:738547] [MT] IDETestOperationsObserverDebug: 24.417 sec, +24.417 sec -- end
+
+Test session results, code coverage, and logs:
+	/tmp/live-meter-device-stereo-output-20260930/LiveAudioMeterProfile.xcresult
+
+Failing tests:
+	LiveAudioMeterPerformanceTests.testRepresentativeProductionPathWhenRequested()
+
+** TEST EXECUTE FAILED **
+
+Testing started

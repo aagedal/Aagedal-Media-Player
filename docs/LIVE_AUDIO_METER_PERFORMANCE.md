@@ -31,6 +31,10 @@ The [selected-track engineering check](LIVE_AUDIO_METER_SELECTED_TRACK_ENGINEERI
 records a generated two-track plumbing pass and retained mono native-output
 failures. Those generated Debug observations do not close representative or
 release-performance acceptance.
+The [native-output investigation](LIVE_AUDIO_METER_NATIVE_OUTPUT_DIAGNOSIS_2026-09-30.md)
+also records stereo output rejection and explains why a progressing video clock
+does not establish audible playback. The harness retains separate native-output
+diagnostics at starts and failures and stops promptly on unavailable meter state.
 
 The artifact directory must not exist. Each input must have at least 20 seconds
 of audio, and at least ten seconds more than the selected observation interval,

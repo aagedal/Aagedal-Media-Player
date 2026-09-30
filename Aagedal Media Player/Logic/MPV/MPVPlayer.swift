@@ -491,6 +491,12 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         }
     }
 
+    /// Diagnostic boundaries: decoder PCM precedes the monitoring filter;
+    /// output PCM follows the filter and device-specific remix.
+    var decodedAudioChannelCount: Int { getInt("audio-params/channel-count") }
+    var outputAudioChannelCount: Int { getInt("audio-out-params/channel-count") }
+    var audioOutputDriver: String? { getString("current-ao") }
+
     func disableAudioTrack() {
         // mpv represents the disabled audio selection as track id -2.
         isAudioTrackDisabled = true

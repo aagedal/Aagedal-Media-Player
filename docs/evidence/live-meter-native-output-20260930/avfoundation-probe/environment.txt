@@ -1,0 +1,52 @@
+704dda91dd2da25787797058e8a319176e013e93
+ M "Aagedal Media Player Tests/LiveAudioMeterPerformanceTests.swift"
+ M "Aagedal Media Player/Logic/LoupeFrameCapture.swift"
+ M "Aagedal Media Player/Logic/MPV/MPVPlayer.swift"
+ M FOLLOW_UP_IMPROVEMENT_PLAN.md
+ M scripts/generate-test-fixtures.sh
+?? "Aagedal Media Player Tests/LoupeTrackDecoderTests.swift"
+?? "Aagedal Media Player Tests/MPVAudioOutputNegotiationTests.swift"
+?? "Aagedal Media Player/Logic/MPV/MPVAudioOutputNegotiation.swift"
+ProductName:		macOS
+ProductVersion:		27.0.1
+BuildVersion:		26A434
+Hardware:
+
+    Hardware Overview:
+
+      Model Name: MacBook Pro
+      Model Identifier: Mac17,8
+      Model Number: Z1MW000K9H/A
+      Chip: Apple M5 Pro
+      Total Number of Cores: 18 (6 Super and 12 Performance)
+      Memory: 64 GB
+      System Firmware Version: 20457.1.29
+      OS Loader Version: 20457.1.29
+      Activation Lock Status: Disabled
+
+Xcode 27.0
+Build version 27A266a
+Now drawing from 'AC Power'
+ -InternalBattery-0 (id=36700259)	83%; charging; 1:03 remaining present: true
+Observation seconds: 5
+Build configuration: Debug
+[
+  {
+    "path": "/private/tmp/live-meter-engineering-multitrack-20260929.mp4",
+    "sha256": "af567c0e9eeedce1c08a5cd3f01759014389e4fe54ac336e3337ad822c5fdaf7",
+    "audioStreamOrderIndex": 0,
+    "audioTrackSelectionExplicit": true
+  },
+  {
+    "path": "/private/tmp/live-meter-engineering-multitrack-20260929.mp4",
+    "sha256": "af567c0e9eeedce1c08a5cd3f01759014389e4fe54ac336e3337ad822c5fdaf7",
+    "audioStreamOrderIndex": 1,
+    "audioTrackSelectionExplicit": true
+  },
+  {
+    "path": "/private/tmp/live-meter-engineering-surround-output-20260930.wav",
+    "sha256": "0e4556cfaa3cc0ff08291539efdc119fe85ee7a6c9347008831f8dcda49f4454",
+    "audioStreamOrderIndex": 0,
+    "audioTrackSelectionExplicit": false
+  }
+]

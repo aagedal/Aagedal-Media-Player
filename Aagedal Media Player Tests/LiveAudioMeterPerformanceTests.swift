@@ -92,6 +92,7 @@ final class LiveAudioMeterPerformanceTests: XCTestCase {
             defer { session.close() }
             session.start()
             player.play()
+            attachPlaybackDiagnostic(player: player, session: session, stage: "observation-start")
 
             var observation = try await sample(
                 player: player,
@@ -103,12 +104,19 @@ final class LiveAudioMeterPerformanceTests: XCTestCase {
             XCTAssertGreaterThan(observation.endFrame, observation.startFrame)
             XCTAssertGreaterThan(observation.peakChildResident, 0)
             guard session.coordinator.reducedSnapshot != nil else {
+                attachPlaybackDiagnostic(player: player, session: session, stage: "observation-unavailable")
                 XCTFail("Live meter lost its measured snapshot before the routing check: \(session.coordinator.status)")
                 return
             }
 
+            if let mpv = player.mpvPlayer {
+                XCTAssertEqual(mpv.decodedAudioChannelCount, source.format.channelCount,
+                               "Decoded PCM must retain the selected source channels before monitoring filters")
+            }
+
             player.pause()
             try await waitUntil(timeout: 5, description: "paused meter state") {
+                try self.throwIfMeterUnavailable(player: player, session: session, stage: "pause-unavailable")
                 if case .paused = session.coordinator.status { return true }
                 return false
             }
@@ -119,11 +127,16 @@ final class LiveAudioMeterPerformanceTests: XCTestCase {
             let oldMute = player.isMuted
             player.volume = oldVolume == 37 ? 63 : 37
             player.toggleMute()
-            player.setAudioSuppressed(true)
             if player.selectedAudioChannelCount > 0 {
                 player.toggleAudioChannelMute(0)
+                if let mpv = player.mpvPlayer {
+                    XCTAssertTrue(mpv.isAudioChannelFilterActive)
+                    XCTAssertEqual(mpv.decodedAudioChannelCount, source.format.channelCount,
+                                   "The monitoring matrix must continue to receive source channels")
+                }
                 player.toggleAudioChannelMute(0)
             }
+            player.setAudioSuppressed(true)
             player.setAudioSuppressed(false)
             try await Task.sleep(for: .milliseconds(100))
             let routingInvariant = session.coordinator.generation == generationBeforeRouting
@@ -144,6 +157,7 @@ final class LiveAudioMeterPerformanceTests: XCTestCase {
                     return true
                 }
                 if case .unavailable(let reason, let diagnostic) = session.coordinator.status {
+                    self.attachPlaybackDiagnostic(player: player, session: session, stage: "resume-unavailable")
                     throw NSError(
                         domain: "LiveAudioMeterPerformanceResume",
                         code: 1,
@@ -182,6 +196,7 @@ final class LiveAudioMeterPerformanceTests: XCTestCase {
             defer { eofSession.close() }
             eofSession.start()
             player.play()
+            attachPlaybackDiagnostic(player: player, session: eofSession, stage: "eof-start")
             let eofWallStart = ContinuousClock.now
             var eofRun = SampledRun(
                 startFrame: try eofSource.request(at: eofStartTime).startSourceFrame,
@@ -191,6 +206,7 @@ final class LiveAudioMeterPerformanceTests: XCTestCase {
             try await sampleUntilEnded(player: player, session: eofSession, run: &eofRun, timeout: eofWindow + 30)
             let eofWallSeconds = seconds(eofWallStart.duration(to: .now))
             guard case .ended = eofSession.coordinator.status else {
+                attachPlaybackDiagnostic(player: player, session: eofSession, stage: "eof-unavailable")
                 XCTFail("Production live meter did not reach EOF")
                 return
             }
@@ -354,13 +370,66 @@ final class LiveAudioMeterPerformanceTests: XCTestCase {
             try updateSamples(player: player, session: session, start: start,
                               previousCount: &previousCount, previousSnapshotTime: &previousSnapshotTime, run: &run)
             if case .ended = session.coordinator.status { return }
-            if case .unavailable(let reason, let diagnostic) = session.coordinator.status {
-                XCTFail("Live meter failed before EOF: \(reason) \(diagnostic ?? "")")
-                return
-            }
             try await Task.sleep(for: .milliseconds(20))
         }
+        attachPlaybackDiagnostic(player: player, session: session, stage: "eof-deadline")
         XCTFail("Live meter did not reach EOF before the \(timeout)-second deadline")
+    }
+
+    /// Retain native audio-output state beside meter state even on failed runs.
+    /// Video can advance time-pos while audible output fails, so a successful
+    /// source-meter clock alone cannot establish audio-output acceptance.
+    private func attachPlaybackDiagnostic(
+        player: PlayerController, session: LiveAudioMeterSession, stage: String
+    ) {
+        let mpv = player.mpvPlayer
+        let measurement = session.coordinator.snapshot
+        let trackPosition = player.selectedAudioTrackOrderIndex
+        let selectedOrdinal = player.audioTrackOptions.indices.contains(trackPosition)
+            ? player.audioTrackOptions[trackPosition].audioStreamOrderIndex : nil
+        func jsonValue<T>(_ value: T?) -> Any {
+            guard let value else { return NSNull() }
+            if let number = value as? Double, !number.isFinite { return String(describing: number) }
+            return value
+        }
+        let report: [String: Any] = [
+            "stage": stage,
+            "file": player.mediaItem?.name ?? "unknown",
+            "selectedAudioStreamOrderIndex": jsonValue(selectedOrdinal),
+            "selectedSourceID": session.selectedSourceID,
+            "meterGeneration": session.coordinator.generation,
+            "meterStatus": String(describing: session.coordinator.status),
+            "meterPublishedSnapshotCount": session.coordinator.publishedSnapshotCount,
+            "meterClockDriftSeconds": jsonValue(session.coordinator.clockDrift),
+            "meterStartSourceFrame": jsonValue(measurement?.segmentStartFrame),
+            "meterEndSourceFrame": jsonValue(measurement?.endFrame),
+            "meterRequestStartSourceFrame": jsonValue(session.coordinator.provenance?.request.startSourceFrame),
+            "playerClockSeconds": jsonValue(player.currentPlaybackTime),
+            "playerIsPlaying": player.isPlaying,
+            "mpvClockSeconds": jsonValue(mpv?.timePos),
+            "mpvReachedEOF": jsonValue(mpv?.hasReachedEOF),
+            "mpvAudioOutputDriver": jsonValue(mpv?.audioOutputDriver),
+            "mpvDecodedAudioChannels": jsonValue(mpv?.decodedAudioChannelCount),
+            "mpvOutputAudioChannels": jsonValue(mpv?.outputAudioChannelCount),
+            "mpvMonitoringFilterActive": jsonValue(mpv?.isAudioChannelFilterActive),
+        ]
+        guard let data = try? JSONSerialization.data(withJSONObject: report, options: [.sortedKeys]),
+              let json = String(data: data, encoding: .utf8) else { return }
+        let line = "LIVE_AUDIO_METER_PLAYBACK_DIAGNOSTIC " + json
+        print(line)
+        let attachment = XCTAttachment(string: line)
+        attachment.name = "Live audio meter playback diagnostic — \(stage)"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+    }
+
+    private func throwIfMeterUnavailable(
+        player: PlayerController, session: LiveAudioMeterSession, stage: String
+    ) throws {
+        guard case .unavailable(let reason, let diagnostic) = session.coordinator.status else { return }
+        attachPlaybackDiagnostic(player: player, session: session, stage: stage)
+        throw NSError(domain: "LiveAudioMeterPerformanceUnavailable", code: 1,
+                      userInfo: [NSLocalizedDescriptionKey: "\(reason) \(diagnostic ?? "")"])
     }
 
     private func updateSamples(
@@ -371,6 +440,7 @@ final class LiveAudioMeterPerformanceTests: XCTestCase {
         previousSnapshotTime: inout ContinuousClock.Instant?,
         run: inout SampledRun
     ) throws {
+        try throwIfMeterUnavailable(player: player, session: session, stage: "sampling-unavailable")
         run.peakAppResident = max(run.peakAppResident, try residentBytes())
         run.peakChildResident = max(run.peakChildResident, try childResidentBytes())
         let count = session.coordinator.publishedSnapshotCount

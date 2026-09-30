@@ -1,0 +1,975 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild test-without-building -xctestrun /tmp/aagedal-mono-20260930-derived/Build/Products/LiveAudioMeterProfile.2F42BC9D-6E3F-449C-9133-5082F7F0406E.xctestrun -destination platform=macOS -parallel-testing-enabled NO -test-timeouts-enabled YES -default-test-execution-time-allowance 300 -maximum-test-execution-time-allowance 300 -resultBundlePath /private/tmp/live-meter-output-diagnostic-baseline-20260930/LiveAudioMeterProfile.xcresult "-only-testing:Aagedal Media Player Tests/LiveAudioMeterPerformanceTests/testRepresentativeProductionPathWhenRequested"
+
+Writing result bundle at path:
+	/private/tmp/live-meter-output-diagnostic-baseline-20260930/LiveAudioMeterProfile.xcresult
+
+--- xcodebuild: WARNING: Using the first of multiple matching destinations:
+{ platform:macOS, arch:arm64e, id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:arm64, id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:x86_64, id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:arm64e, variant:Mac Catalyst, id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:arm64, variant:Mac Catalyst, id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:x86_64, variant:Mac Catalyst, id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:arm64e, variant:DriverKit, id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:arm64, variant:DriverKit, id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:arm64e, variant:Designed for [iPad,iPhone], id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:arm64, variant:Designed for [iPad,iPhone], id:00006050-001C293C22F9401C, name:My Mac }
+2026-09-30 12:25:43.161082+0200 Aagedal Media Player[52558:760243] ApplePersistenceIgnoreState: Existing state will not be touched. New state will be written to /var/folders/pv/f8g9jgrd7px_0xvh3kxgmyg40000gp/T/com.aagedal.MediaPlayer.savedState
+Test Suite 'Selected tests' started at 2026-09-30 12:25:43.359.
+Test Suite 'Aagedal Media Player Tests.xctest' started at 2026-09-30 12:25:43.360.
+Test Suite 'LiveAudioMeterPerformanceTests' started at 2026-09-30 12:25:43.360.
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterPerformanceTests testRepresentativeProductionPathWhenRequested]' started.
+2026-09-30 12:25:43.363786+0200 Aagedal Media Player[52558:760296] [ClientDonation] (+[PPSClientDonation isRegisteredSubsystem:category:]) Permission denied: CoreMedia / CM-ASSETCREATION
+2026-09-30 12:25:43.375521+0200 Aagedal Media Player[52558:760243] [PlayerController] Using MPV player for live-meter-engineering-multitrack-video-20260929.mp4
+2026-09-30 12:25:43.375762+0200 Aagedal Media Player[52558:760243] [MPVPlayer] MPV not initialized yet, storing pending load for: live-meter-engineering-multitrack-video-20260929.mp4
+2026-09-30 12:25:43.406984+0200 Aagedal Media Player[52558:760243] [MPVPlayer] MPV initialized successfully
+2026-09-30 12:25:43.407006+0200 Aagedal Media Player[52558:760296] [scaling] mpv video-params: dw=0 dh=0 rotate=0
+2026-09-30 12:25:43.407021+0200 Aagedal Media Player[52558:760296] [scaling] mpv video-params: dw=0 dh=0 rotate=0
+2026-09-30 12:25:43.407033+0200 Aagedal Media Player[52558:760296] [scaling] mpv video-params: dw=0 dh=0 rotate=0
+2026-09-30 12:25:43.407109+0200 Aagedal Media Player[52558:760243] [MPVPlayer] Loading file: live-meter-engineering-multitrack-video-20260929.mp4, startTime: 0.000000, autostart: false
+2026-09-30 12:25:43.407249+0200 Aagedal Media Player[52558:760361] [MPVPlayer] MPV start file event
+[ffmpeg/demuxer] warn: mov,mp4,m4a,3gp,3g2,mj2: UDTA parsing failed retrying raw
+[ffmpeg/demuxer] warn: mov,mp4,m4a,3gp,3g2,mj2: UDTA parsing failed retrying raw
+[mvk-info] MoltenVK version 1.4.2, supporting Vulkan version 1.4.357.
+	The following 154 Vulkan extensions are supported:
+	VK_KHR_16bit_storage v1
+	VK_KHR_8bit_storage v1
+	VK_KHR_bind_memory2 v1
+	VK_KHR_buffer_device_address v1
+	VK_KHR_calibrated_timestamps v1
+	VK_KHR_copy_commands2 v1
+	VK_KHR_create_renderpass2 v1
+	VK_KHR_dedicated_allocation v3
+	VK_KHR_deferred_host_operations v4
+	VK_KHR_depth_stencil_resolve v1
+	VK_KHR_descriptor_update_template v1
+	VK_KHR_device_group v4
+	VK_KHR_device_group_creation v1
+	VK_KHR_driver_properties v1
+	VK_KHR_dynamic_rendering v1
+	VK_KHR_dynamic_rendering_local_read v1
+	VK_KHR_external_fence v1
+	VK_KHR_external_fence_capabilities v1
+	VK_KHR_external_memory v1
+	VK_KHR_external_memory_capabilities v1
+	VK_KHR_external_semaphore v1
+	VK_KHR_external_semaphore_capabilities v1
+	VK_KHR_format_feature_flags2 v2
+	VK_KHR_fragment_shader_barycentric v1
+	VK_KHR_get_memory_requirements2 v1
+	VK_KHR_get_physical_device_properties2 v2
+	VK_KHR_get_surface_capabilities2 v1
+	VK_KHR_global_priority v1
+	VK_KHR_image_format_list v1
+	VK_KHR_imageless_framebuffer v1
+	VK_KHR_incremental_present v2
+	VK_KHR_index_type_uint8 v1
+	VK_KHR_line_rasterization v1
+	VK_KHR_load_store_op_none v1
+	VK_KHR_maintenance1 v2
+	VK_KHR_maintenance2 v1
+	VK_KHR_maintenance3 v1
+	VK_KHR_maintenance4 v2
+	VK_KHR_maintenance5 v1
+	VK_KHR_maintenance6 v1
+	VK_KHR_maintenance7 v1
+	VK_KHR_maintenance8 v1
+	VK_KHR_maintenance9 v1
+	VK_KHR_map_memory2 v1
+	VK_KHR_multiview v1
+	VK_KHR_portability_subset v1
+	VK_KHR_present_id v1
+	VK_KHR_present_id2 v1
+	VK_KHR_present_wait v1
+	VK_KHR_present_wait2 v1
+	VK_KHR_push_descriptor v2
+	VK_KHR_relaxed_block_layout v1
+	VK_KHR_robustness2 v1
+	VK_KHR_sampler_mirror_clamp_to_edge v3
+	VK_KHR_sampler_ycbcr_conversion v14
+	VK_KHR_separate_depth_stencil_layouts v1
+	VK_KHR_shader_draw_parameters v1
+	VK_KHR_shader_expect_assume v1
+	VK_KHR_shader_float_controls v4
+	VK_KHR_shader_float_controls2 v1
+	VK_KHR_shader_float16_int8 v1
+	VK_KHR_shader_fma v1
+	VK_KHR_shader_integer_dot_product v1
+	VK_KHR_shader_maximal_reconvergence v1
+	VK_KHR_shader_non_semantic_info v1
+	VK_KHR_shader_quad_control v1
+	VK_KHR_shader_relaxed_extended_instruction v1
+	VK_KHR_shader_subgroup_extended_types v1
+	VK_KHR_shader_subgroup_rotate v2
+	VK_KHR_shader_subgroup_uniform_control_flow v1
+	VK_KHR_shader_terminate_invocation v1
+	VK_KHR_spirv_1_4 v1
+	VK_KHR_storage_buffer_storage_class v1
+	VK_KHR_surface v25
+	VK_KHR_surface_maintenance1 v1
+	VK_KHR_surface_protected_capabilities v1
+	VK_KHR_swapchain v70
+	VK_KHR_swapchain_maintenance1 v1
+	VK_KHR_swapchain_mutable_format v1
+	VK_KHR_synchronization2 v1
+	VK_KHR_timeline_semaphore v2
+	VK_KHR_uniform_buffer_standard_layout v1
+	VK_KHR_variable_pointers v1
+	VK_KHR_vertex_attribute_divisor v1
+	VK_KHR_vulkan_memory_model v3
+	VK_KHR_zero_initialize_workgroup_memory v1
+	VK_EXT_4444_formats v1
+	VK_EXT_buffer_device_address v2
+	VK_EXT_calibrated_timestamps v2
+	VK_EXT_debug_marker v4
+	VK_EXT_debug_report v10
+	VK_EXT_debug_utils v2
+	VK_EXT_depth_clip_control v1
+	VK_EXT_descriptor_indexing v2
+	VK_EXT_extended_dynamic_state v1
+	VK_EXT_extended_dynamic_state2 v1
+	VK_EXT_extended_dynamic_state3 v2
+	VK_EXT_external_memory_host v1
+	VK_EXT_external_memory_metal v1
+	VK_EXT_fragment_shader_interlock v1
+	VK_EXT_global_priority v2
+	VK_EXT_global_priority_query v1
+	VK_EXT_hdr_metadata v3
+	VK_EXT_headless_surface v1
+	VK_EXT_host_image_copy v1
+	VK_EXT_host_query_reset v1
+	VK_EXT_image_2d_view_of_3d v1
+	VK_EXT_image_robustness v1
+	VK_EXT_index_type_uint8 v1
+	VK_EXT_inline_uniform_block v1
+	VK_EXT_layer_settings v2
+	VK_EXT_legacy_dithering v2
+	VK_EXT_line_rasterization v1
+	VK_EXT_load_store_op_none v1
+	VK_EXT_memory_budget v1
+	VK_EXT_metal_objects v2
+	VK_EXT_metal_surface v1
+	VK_EXT_non_seamless_cube_map v1
+	VK_EXT_pipeline_creation_cache_control v3
+	VK_EXT_pipeline_creation_feedback v1
+	VK_EXT_pipeline_robustness v1
+	VK_EXT_post_depth_coverage v1
+	VK_EXT_primitive_topology_list_restart v1
+	VK_EXT_private_data v1
+	VK_EXT_provoking_vertex v1
+	VK_EXT_robustness2 v1
+	VK_EXT_sample_locations v1
+	VK_EXT_sampler_filter_minmax v2
+	VK_EXT_scalar_block_layout v1
+	VK_EXT_separate_stencil_usage v1
+	VK_EXT_shader_atomic_float v1
+	VK_EXT_shader_demote_to_helper_invocation v1
+	VK_EXT_shader_stencil_export v1
+	VK_EXT_shader_subgroup_ballot v1
+	VK_EXT_shader_subgroup_vote v1
+	VK_EXT_shader_viewport_index_layer v1
+	VK_EXT_subgroup_size_control v2
+	VK_EXT_surface_maintenance1 v1
+	VK_EXT_swapchain_colorspace v5
+	VK_EXT_swapchain_maintenance1 v1
+	VK_EXT_texel_buffer_alignment v1
+	VK_EXT_texture_compression_astc_hdr v1
+	VK_EXT_tooling_info v1
+	VK_EXT_vertex_attribute_divisor v3
+	VK_AMD_gpu_shader_half_float v2
+	VK_AMD_negative_viewport_height v1
+	VK_AMD_shader_image_load_store_lod v1
+	VK_AMD_shader_trinary_minmax v1
+	VK_GOOGLE_display_timing v1
+	VK_IMG_format_pvrtc v1
+	VK_INTEL_shader_integer_functions2 v1
+	VK_MVK_macos_surface v3
+	VK_MVK_moltenvk v37
+	VK_NV_fragment_shader_barycentric v1
+[mvk-info] GPU device:
+	model: Apple M5 Pro
+	type: Integrated
+	vendorID: 0x106b
+	deviceID: 0x1b000208
+	pipelineCacheUUID: DB660224-1B00-0208-0000-000100000000
+	GPU memory available: 53084 MB
+	GPU memory used: 1 MB
+	Metal Shading Language 3.1
+	supports the following GPU Features:
+		GPU Family Metal 3
+		GPU Family Apple 8
+		GPU Family Mac 1
+		GPU Family Mac 2
+		Read-Write Texture Tier 2
+[mvk-info] Created VkInstance for Vulkan version 1.4.357, as requested by app, with the following 6 Vulkan extensions enabled:
+	VK_KHR_get_surface_capabilities2 v1
+	VK_KHR_surface v25
+	VK_KHR_surface_maintenance1 v1
+	VK_EXT_metal_surface v1
+	VK_EXT_surface_maintenance1 v1
+	VK_EXT_swapchain_colorspace v5
+[mvk-info] Vulkan semaphores using MTLEvent.
+[mvk-info] Descriptor sets binding resources using Metal3 argument buffers.
+2026-09-30 12:25:43.592257+0200 Aagedal Media Player[52558:760409] [Metal Compiler Warning] Warning: Compilation succeeded with: 
+
+program_source:50:1788: warning: unused function 'decompressDXTnBlock' [-Wunused-function]
+static bool isBC1Format(VkFormat format) { return format == VK_FORMAT_BC1_RGB_UNORM_BLOCK || format == VK_FORMAT_BC1_RGB_SRGB_BLOCK || format == VK_FORMAT_BC1_RGBA_UNORM_BLOCK || format == VK_FORMAT_BC1_RGBA_SRGB_BLOCK; } static bool isBC2Format(VkFormat format) { return format == VK_FORMAT_BC2_UNORM_BLOCK || format == VK_FORMAT_BC2_SRGB_BLOCK; } static bool isBC3Format(VkFormat format) { return format == VK_FORMAT_BC3_UNORM_BLOCK || format == VK_FORMAT_BC3_SRGB_BLOCK; } static bool isSRGBFormat(VkFormat format) { return format == VK_FORMAT_BC1_RGB_SRGB_BLOCK || format == VK_FORMAT_BC1_RGBA_SRGB_BLOCK || format == VK_FORMAT_BC2_SRGB_BLOCK || format == VK_FORMAT_BC3_SRGB_BLOCK; } static void buildDXTnColourTable(uint16_t colour0, uint16_t colour1, thread float3* pColourTable, VkFormat format) { pColourTable[0] = unpack_unorm565_to_float(colour0); pColourTable[1] = unpack_unorm565_to_float(colour1); if (isBC1Format(format) && colour0 <= colour1) { pColourTable[2] = (pColourTable[0] + pColourTable[1]) / 2; pColourTable[3] = float3(0); } else { for (uint32_t i = 0; i < 2; ++i) { pColourTable[i + 2] = (2 * pColourTable[i] + pColourTable[1 - i]) / 3; } } } static void buildDXT5AlphaTable(uint8_t alpha0, uint8_t alpha1, thread float* pAlphaTable) { pAlphaTable[0] = alpha0 / 255.0f; pAlphaTable[1] = alpha1 / 255.0f; if (alpha0 > alpha1) { for (uint32_t i = 0; i < 6; ++i) { pAlphaTable[2 + i] = ((6 - i) * pAlphaTable[0] + (i + 1) * pAlphaTable[1]) / 7; } } else { for (uint32_t i = 0; i < 4; ++i) { pAlphaTable[2 + i] = ((4 - i) * pAlphaTable[0] + (i + 1) * pAlphaTable[1]) / 5; } pAlphaTable[6] = 0; pAlphaTable[7] = 1; } } static float3 sRGBCorrect(float3 colour) { return select(pow((colour + 0.055)/1.055, float3(2.4)), colour/12.92, colour <= 0.04045); } static void decompressDXTnBlock(const device void* pSrc, thread void* pDest, VkExtent2D extent, VkDeviceSize destRowPitch, VkFormat format) { const device uint32_t* pSrcBlock = (const device uint32_t *)pSrc; bool isBC1Alpha = false; float3 colourTable[4]; float alphaTable[8]; size_t alphaBits; uint32_t colourBits; if (isBC1Format(format)) { alphaBits = 0; uint16_t colour0 = pSrcBlock[0] & 0xffff; uint16_t colour1 = pSrcBlock[0] >> 16; colourBits = pSrcBlock[1]; buildDXTnColourTable(colour0, colour1, colourTable, format); if (colour0 <= colour1) { isBC1Alpha = true; } } else { alphaBits = pSrcBlock[0] | ((size_t)pSrcBlock[1] << 32); if (isBC3Format(format)) { buildDXT5AlphaTable(alphaBits & 0xff, (alphaBits >> 8) & 0xff, alphaTable); alphaBits >>= 16; } colourBits = pSrcBlock[3]; buildDXTnColourTable(pSrcBlock[2] & 0xffff, pSrcBlock[2] >> 16, colourTable, format); } for (uint32_t y = 0; y < extent.height; ++y) { thread uint32_t* pDestRow = (thread uint32_t *)((thread uint8_t *)pDest + y * destRowPitch); for (uint32_t x = 0; x < extent.width; ++x) { uint8_t colourIndex = (colourBits >> (y * 8 + x * 2)) & 0x3; float alpha; if (isBC1Format(format)) { alpha = (!isBC1Alpha || colourIndex != 3) ? 1.0f : 0.0f; } else if (isBC2Format(format)) { alpha = ((alphaBits >> (y * 16 + x * 4)) & 0xf) / 15.0f; } else { alpha = alphaTable[(alphaBits >> (y * 12 + x * 3)) & 0x7]; } float4 colour; colour.rgb = colourTable[colourIndex]; if (isSRGBFormat(format)) { colour.rgb = sRGBCorrect(colour.rgb); } colour.a = alpha; pDestRow[x] = pack_float_to_unorm4x8(colour); } } }
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           ^
+[mvk-info] Created VkDevice to run on GPU Apple M5 Pro with the following 13 Vulkan extensions enabled:
+	VK_KHR_dynamic_rendering v1
+	VK_KHR_portability_subset v1
+	VK_KHR_shader_expect_assume v1
+	VK_KHR_shader_relaxed_extended_instruction v1
+	VK_KHR_shader_subgroup_rotate v2
+	VK_KHR_swapchain v70
+	VK_KHR_swapchain_maintenance1 v1
+	VK_KHR_zero_initialize_workgroup_memory v1
+	VK_EXT_external_memory_host v1
+	VK_EXT_hdr_metadata v3
+	VK_EXT_metal_objects v2
+	VK_EXT_shader_atomic_float v1
+	VK_EXT_swapchain_maintenance1 v1
+2026-09-30 12:25:43.594423+0200 Aagedal Media Player[52558:760243] [MPVPlayer] MPV file loaded
+2026-09-30 12:25:43.618221+0200 Aagedal Media Player[52558:760382] [plugin] AddInstanceForFactory: No factory registered for id <CFUUID 0x75cbc047a0> F8BB1C28-BAE8-11D6-9C31-00039315CD46
+2026-09-30 12:25:43.638490+0200 Aagedal Media Player[52558:760382]       AUConverterBase.cpp:547   SetConverterChannelMap failed: err 561211770
+[mvk-info] Created 3 swapchain images with size (320, 180) and contents scale 1.0 in layer (null) (0x75c990cb40) on screen Main Screen.
+[mvk-info] Created 3 swapchain images with size (320, 180) and contents scale 1.0 in layer (null) (0x75c990cb40) on screen Main Screen.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+2026-09-30 12:25:43.790654+0200 Aagedal Media Player[52558:760364] [Metal Compiler Warning] Warning: Compilation succeeded with: 
+
+program_source:60:17: warning: unused variable '_524' [-Wunused-const-variable]
+constant float4 _524 = {};
+                ^
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+2026-09-30 12:25:43.867922+0200 Aagedal Media Player[52558:760361] [scaling] mpv video-params: dw=64 dh=64 rotate=0
+2026-09-30 12:25:43.867953+0200 Aagedal Media Player[52558:760361] [scaling] mpv video-params: dw=64 dh=64 rotate=0
+2026-09-30 12:25:43.867967+0200 Aagedal Media Player[52558:760361] [scaling] mpv video-params: dw=64 dh=64 rotate=0
+2026-09-30 12:25:43.868385+0200 Aagedal Media Player[52558:760243] [scaling] mpv emitted videoSourceSize=64x64 (ratio=1.000000)
+2026-09-30 12:25:43.868403+0200 Aagedal Media Player[52558:760243] [scaling] mpv emitted videoSourceSize=64x64 (ratio=1.000000)
+2026-09-30 12:25:43.868411+0200 Aagedal Media Player[52558:760243] [scaling] mpv emitted videoSourceSize=64x64 (ratio=1.000000)
+2026-09-30 12:25:43.891272+0200 Aagedal Media Player[52558:760243] [scaling] play: backend=mpv wasPlaying=false videoSourceSize=64x64 ratio=1.0000
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+LIVE_AUDIO_METER_PLAYBACK_DIAGNOSTIC {"file":"live-meter-engineering-multitrack-video-20260929.mp4","meterClockDriftSeconds":null,"meterEndSourceFrame":null,"meterGeneration":1,"meterPublishedSnapshotCount":0,"meterRequestStartSourceFrame":null,"meterStartSourceFrame":null,"meterStatus":"paused(frame: 0)","mpvAudioOutputDriver":"coreaudio","mpvClockSeconds":0,"mpvDecodedAudioChannels":2,"mpvMonitoringFilterActive":false,"mpvOutputAudioChannels":2,"mpvReachedEOF":false,"playerClockSeconds":0,"playerIsPlaying":false,"selectedAudioStreamOrderIndex":0,"selectedSourceID":"A","stage":"observation-start"}
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+2026-09-30 12:25:48.934348+0200 Aagedal Media Player[52558:760243] [scaling] pause: backend=mpv wasPlaying=true videoSourceSize=64x64 ratio=1.0000
+2026-09-30 12:25:49.576524+0200 Aagedal Media Player[52558:760243] [scaling] play: backend=mpv wasPlaying=false videoSourceSize=64x64 ratio=1.0000
+[mvk-info] Destroyed VkDevice on GPU Apple M5 Pro with 13 Vulkan extensions enabled.
+[mvk-info] Destroyed VkPhysicalDevice for GPU Apple M5 Pro with 1 MB of GPU memory still allocated.
+[mvk-info] Destroying VkInstance for Vulkan version 1.4.357 with 6 Vulkan extensions enabled.
+2026-09-30 12:25:49.795639+0200 Aagedal Media Player[52558:760409] [API] warning, deleted thread with uncommitted CATransaction; set CA_DEBUG_TRANSACTIONS=1 in environment to log backtraces, or set CA_ASSERT_MAIN_THREAD_TRANSACTIONS=1 to abort when an implicit transaction isn't created on a main thread.
+2026-09-30 12:25:49.797273+0200 Aagedal Media Player[52558:760243] [PlayerController] Using MPV player for live-meter-engineering-multitrack-video-20260929.mp4
+2026-09-30 12:25:49.797361+0200 Aagedal Media Player[52558:760243] [MPVPlayer] MPV not initialized yet, storing pending load for: live-meter-engineering-multitrack-video-20260929.mp4
+2026-09-30 12:25:49.818742+0200 Aagedal Media Player[52558:760243] [MPVPlayer] MPV initialized successfully
+2026-09-30 12:25:49.818775+0200 Aagedal Media Player[52558:760297] [scaling] mpv video-params: dw=0 dh=0 rotate=0
+2026-09-30 12:25:49.818794+0200 Aagedal Media Player[52558:760297] [scaling] mpv video-params: dw=0 dh=0 rotate=0
+2026-09-30 12:25:49.818803+0200 Aagedal Media Player[52558:760297] [scaling] mpv video-params: dw=0 dh=0 rotate=0
+2026-09-30 12:25:49.818913+0200 Aagedal Media Player[52558:760243] [MPVPlayer] Loading file: live-meter-engineering-multitrack-video-20260929.mp4, startTime: 18.000000, autostart: false
+2026-09-30 12:25:49.818980+0200 Aagedal Media Player[52558:760297] [MPVPlayer] MPV start file event
+[ffmpeg/demuxer] warn: mov,mp4,m4a,3gp,3g2,mj2: UDTA parsing failed retrying raw
+[ffmpeg/demuxer] warn: mov,mp4,m4a,3gp,3g2,mj2: UDTA parsing failed retrying raw
+[mvk-info] MoltenVK version 1.4.2, supporting Vulkan version 1.4.357.
+	The following 154 Vulkan extensions are supported:
+	VK_KHR_16bit_storage v1
+	VK_KHR_8bit_storage v1
+	VK_KHR_bind_memory2 v1
+	VK_KHR_buffer_device_address v1
+	VK_KHR_calibrated_timestamps v1
+	VK_KHR_copy_commands2 v1
+	VK_KHR_create_renderpass2 v1
+	VK_KHR_dedicated_allocation v3
+	VK_KHR_deferred_host_operations v4
+	VK_KHR_depth_stencil_resolve v1
+	VK_KHR_descriptor_update_template v1
+	VK_KHR_device_group v4
+	VK_KHR_device_group_creation v1
+	VK_KHR_driver_properties v1
+	VK_KHR_dynamic_rendering v1
+	VK_KHR_dynamic_rendering_local_read v1
+	VK_KHR_external_fence v1
+	VK_KHR_external_fence_capabilities v1
+	VK_KHR_external_memory v1
+	VK_KHR_external_memory_capabilities v1
+	VK_KHR_external_semaphore v1
+	VK_KHR_external_semaphore_capabilities v1
+	VK_KHR_format_feature_flags2 v2
+	VK_KHR_fragment_shader_barycentric v1
+	VK_KHR_get_memory_requirements2 v1
+	VK_KHR_get_physical_device_properties2 v2
+	VK_KHR_get_surface_capabilities2 v1
+	VK_KHR_global_priority v1
+	VK_KHR_image_format_list v1
+	VK_KHR_imageless_framebuffer v1
+	VK_KHR_incremental_present v2
+	VK_KHR_index_type_uint8 v1
+	VK_KHR_line_rasterization v1
+	VK_KHR_load_store_op_none v1
+	VK_KHR_maintenance1 v2
+	VK_KHR_maintenance2 v1
+	VK_KHR_maintenance3 v1
+	VK_KHR_maintenance4 v2
+	VK_KHR_maintenance5 v1
+	VK_KHR_maintenance6 v1
+	VK_KHR_maintenance7 v1
+	VK_KHR_maintenance8 v1
+	VK_KHR_maintenance9 v1
+	VK_KHR_map_memory2 v1
+	VK_KHR_multiview v1
+	VK_KHR_portability_subset v1
+	VK_KHR_present_id v1
+	VK_KHR_present_id2 v1
+	VK_KHR_present_wait v1
+	VK_KHR_present_wait2 v1
+	VK_KHR_push_descriptor v2
+	VK_KHR_relaxed_block_layout v1
+	VK_KHR_robustness2 v1
+	VK_KHR_sampler_mirror_clamp_to_edge v3
+	VK_KHR_sampler_ycbcr_conversion v14
+	VK_KHR_separate_depth_stencil_layouts v1
+	VK_KHR_shader_draw_parameters v1
+	VK_KHR_shader_expect_assume v1
+	VK_KHR_shader_float_controls v4
+	VK_KHR_shader_float_controls2 v1
+	VK_KHR_shader_float16_int8 v1
+	VK_KHR_shader_fma v1
+	VK_KHR_shader_integer_dot_product v1
+	VK_KHR_shader_maximal_reconvergence v1
+	VK_KHR_shader_non_semantic_info v1
+	VK_KHR_shader_quad_control v1
+	VK_KHR_shader_relaxed_extended_instruction v1
+	VK_KHR_shader_subgroup_extended_types v1
+	VK_KHR_shader_subgroup_rotate v2
+	VK_KHR_shader_subgroup_uniform_control_flow v1
+	VK_KHR_shader_terminate_invocation v1
+	VK_KHR_spirv_1_4 v1
+	VK_KHR_storage_buffer_storage_class v1
+	VK_KHR_surface v25
+	VK_KHR_surface_maintenance1 v1
+	VK_KHR_surface_protected_capabilities v1
+	VK_KHR_swapchain v70
+	VK_KHR_swapchain_maintenance1 v1
+	VK_KHR_swapchain_mutable_format v1
+	VK_KHR_synchronization2 v1
+	VK_KHR_timeline_semaphore v2
+	VK_KHR_uniform_buffer_standard_layout v1
+	VK_KHR_variable_pointers v1
+	VK_KHR_vertex_attribute_divisor v1
+	VK_KHR_vulkan_memory_model v3
+	VK_KHR_zero_initialize_workgroup_memory v1
+	VK_EXT_4444_formats v1
+	VK_EXT_buffer_device_address v2
+	VK_EXT_calibrated_timestamps v2
+	VK_EXT_debug_marker v4
+	VK_EXT_debug_report v10
+	VK_EXT_debug_utils v2
+	VK_EXT_depth_clip_control v1
+	VK_EXT_descriptor_indexing v2
+	VK_EXT_extended_dynamic_state v1
+	VK_EXT_extended_dynamic_state2 v1
+	VK_EXT_extended_dynamic_state3 v2
+	VK_EXT_external_memory_host v1
+	VK_EXT_external_memory_metal v1
+	VK_EXT_fragment_shader_interlock v1
+	VK_EXT_global_priority v2
+	VK_EXT_global_priority_query v1
+	VK_EXT_hdr_metadata v3
+	VK_EXT_headless_surface v1
+	VK_EXT_host_image_copy v1
+	VK_EXT_host_query_reset v1
+	VK_EXT_image_2d_view_of_3d v1
+	VK_EXT_image_robustness v1
+	VK_EXT_index_type_uint8 v1
+	VK_EXT_inline_uniform_block v1
+	VK_EXT_layer_settings v2
+	VK_EXT_legacy_dithering v2
+	VK_EXT_line_rasterization v1
+	VK_EXT_load_store_op_none v1
+	VK_EXT_memory_budget v1
+	VK_EXT_metal_objects v2
+	VK_EXT_metal_surface v1
+	VK_EXT_non_seamless_cube_map v1
+	VK_EXT_pipeline_creation_cache_control v3
+	VK_EXT_pipeline_creation_feedback v1
+	VK_EXT_pipeline_robustness v1
+	VK_EXT_post_depth_coverage v1
+	VK_EXT_primitive_topology_list_restart v1
+	VK_EXT_private_data v1
+	VK_EXT_provoking_vertex v1
+	VK_EXT_robustness2 v1
+	VK_EXT_sample_locations v1
+	VK_EXT_sampler_filter_minmax v2
+	VK_EXT_scalar_block_layout v1
+	VK_EXT_separate_stencil_usage v1
+	VK_EXT_shader_atomic_float v1
+	VK_EXT_shader_demote_to_helper_invocation v1
+	VK_EXT_shader_stencil_export v1
+	VK_EXT_shader_subgroup_ballot v1
+	VK_EXT_shader_subgroup_vote v1
+	VK_EXT_shader_viewport_index_layer v1
+	VK_EXT_subgroup_size_control v2
+	VK_EXT_surface_maintenance1 v1
+	VK_EXT_swapchain_colorspace v5
+	VK_EXT_swapchain_maintenance1 v1
+	VK_EXT_texel_buffer_alignment v1
+	VK_EXT_texture_compression_astc_hdr v1
+	VK_EXT_tooling_info v1
+	VK_EXT_vertex_attribute_divisor v3
+	VK_AMD_gpu_shader_half_float v2
+	VK_AMD_negative_viewport_height v1
+	VK_AMD_shader_image_load_store_lod v1
+	VK_AMD_shader_trinary_minmax v1
+	VK_GOOGLE_display_timing v1
+	VK_IMG_format_pvrtc v1
+	VK_INTEL_shader_integer_functions2 v1
+	VK_MVK_macos_surface v3
+	VK_MVK_moltenvk v37
+	VK_NV_fragment_shader_barycentric v1
+[mvk-info] GPU device:
+	model: Apple M5 Pro
+	type: Integrated
+	vendorID: 0x106b
+	deviceID: 0x1b000208
+	pipelineCacheUUID: DB660224-1B00-0208-0000-000100000000
+	GPU memory available: 53084 MB
+	GPU memory used: 1 MB
+	Metal Shading Language 3.1
+	supports the following GPU Features:
+		GPU Family Metal 3
+		GPU Family Apple 8
+		GPU Family Mac 1
+		GPU Family Mac 2
+		Read-Write Texture Tier 2
+[mvk-info] Created VkInstance for Vulkan version 1.4.357, as requested by app, with the following 6 Vulkan extensions enabled:
+	VK_KHR_get_surface_capabilities2 v1
+	VK_KHR_surface v25
+	VK_KHR_surface_maintenance1 v1
+	VK_EXT_metal_surface v1
+	VK_EXT_surface_maintenance1 v1
+	VK_EXT_swapchain_colorspace v5
+[mvk-info] Vulkan semaphores using MTLEvent.
+[mvk-info] Descriptor sets binding resources using Metal3 argument buffers.
+[mvk-info] Created VkDevice to run on GPU Apple M5 Pro with the following 13 Vulkan extensions enabled:
+	VK_KHR_dynamic_rendering v1
+	VK_KHR_portability_subset v1
+	VK_KHR_shader_expect_assume v1
+	VK_KHR_shader_relaxed_extended_instruction v1
+	VK_KHR_shader_subgroup_rotate v2
+	VK_KHR_swapchain v70
+	VK_KHR_swapchain_maintenance1 v1
+	VK_KHR_zero_initialize_workgroup_memory v1
+	VK_EXT_external_memory_host v1
+	VK_EXT_hdr_metadata v3
+	VK_EXT_metal_objects v2
+	VK_EXT_shader_atomic_float v1
+	VK_EXT_swapchain_maintenance1 v1
+2026-09-30 12:25:49.822642+0200 Aagedal Media Player[52558:760243] [MPVPlayer] MPV file loaded
+2026-09-30 12:25:49.824327+0200 Aagedal Media Player[52558:760742]       AUConverterBase.cpp:547   SetConverterChannelMap failed: err 561211770
+[mvk-info] Created 3 swapchain images with size (320, 180) and contents scale 1.0 in layer (null) (0x75c999c780) on screen Main Screen.
+[mvk-info] Created 3 swapchain images with size (320, 180) and contents scale 1.0 in layer (null) (0x75c999c780) on screen Main Screen.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+2026-09-30 12:25:49.889000+0200 Aagedal Media Player[52558:760361] [scaling] mpv video-params: dw=64 dh=64 rotate=0
+2026-09-30 12:25:49.889026+0200 Aagedal Media Player[52558:760361] [scaling] mpv video-params: dw=64 dh=64 rotate=0
+2026-09-30 12:25:49.889263+0200 Aagedal Media Player[52558:760361] [scaling] mpv video-params: dw=64 dh=64 rotate=0
+2026-09-30 12:25:49.889392+0200 Aagedal Media Player[52558:760243] [scaling] mpv emitted videoSourceSize=64x64 (ratio=1.000000)
+2026-09-30 12:25:49.889405+0200 Aagedal Media Player[52558:760243] [scaling] mpv emitted videoSourceSize=64x64 (ratio=1.000000)
+2026-09-30 12:25:49.889412+0200 Aagedal Media Player[52558:760243] [scaling] mpv emitted videoSourceSize=64x64 (ratio=1.000000)
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+2026-09-30 12:25:50.316006+0200 Aagedal Media Player[52558:760243] [scaling] play: backend=mpv wasPlaying=false videoSourceSize=64x64 ratio=1.0000
+LIVE_AUDIO_METER_PLAYBACK_DIAGNOSTIC {"file":"live-meter-engineering-multitrack-video-20260929.mp4","meterClockDriftSeconds":null,"meterEndSourceFrame":null,"meterGeneration":1,"meterPublishedSnapshotCount":0,"meterRequestStartSourceFrame":null,"meterStartSourceFrame":null,"meterStatus":"paused(frame: 793800)","mpvAudioOutputDriver":"coreaudio","mpvClockSeconds":18,"mpvDecodedAudioChannels":2,"mpvMonitoringFilterActive":false,"mpvOutputAudioChannels":2,"mpvReachedEOF":false,"playerClockSeconds":18,"playerIsPlaying":false,"selectedAudioStreamOrderIndex":0,"selectedSourceID":"A","stage":"eof-start"}
+2026-09-30 12:25:56.279498+0200 Aagedal Media Player[52558:760243] [MPVPlayer] EOF reached, pausing at last frame
+LIVE_AUDIO_METER_PROFILE {"audioStreamOrderIndex":0,"audioTrackLabel":"#0 • AAC • Stereo • 44 kHz","audioTrackSelectionExplicit":true,"availableAudioTrackCount":2,"backend":"mpv","channels":2,"codec":"mp4a","declaredChannelLayout":"stereo","durationSeconds":24,"eof":{"audioStreamOrderIndex":0,"clockDriftSampleCount":277,"codecNormalizationDisabled":true,"decoderVersion":"ffmpeg version 9.0.1 Copyright (c) 2000-2026 the FFmpeg developers","dynamicRangeCompressionDisabled":true,"endSourceFrame":1058400,"finalSnapshot":true,"maximumAbsoluteClockDriftSeconds":0.15833333333333333,"maximumDecodedAheadSeconds":0.004863133424372279,"metadataStreamIndex":0,"observed":true,"peakAppResidentBytes":208240640,"peakChildResidentBytes":19529728,"publishedSnapshotCount":121,"startSourceFrame":793800,"syntheticInitialSilenceFrameCount":0,"timestampFrameCount":264600,"timestampSource":"ffmpeg-framecrc-v1","timestampTimeBase":"1\/44100","wallSeconds":6.0534958750000003},"file":"live-meter-engineering-multitrack-video-20260929.mp4","inputIndex":0,"inputSHA256":"dfa0cc691d2b3455226b4521c973e06397a3a8220f99ae3dbd5fe541d708950e","metadataStreamIndex":0,"observation":{"audioStreamOrderIndex":0,"cancellationLatencySeconds":0.00056787500000000002,"cancellationObserved":true,"childResidentBytesAfterCancellation":0,"clockDriftSampleCount":232,"endSourceFrame":229320,"firstSnapshotLatencySeconds":0.043074583,"initialAppResidentBytes":201506816,"maximumAbsoluteClockDriftSeconds":0.20000000000000001,"maximumDecodedAheadSeconds":0.24166666666666714,"maximumSnapshotIntervalSeconds":0.19091745800000001,"metadataStreamIndex":0,"monitorRoutingInvariant":true,"observationSeconds":5,"peakAppResidentBytes":205750272,"peakChildResidentBytes":19693568,"publishedSnapshotCount":104,"startSourceFrame":0,"wallSeconds":5.0100039159999996},"requestedAudioStreamOrderIndex":0,"sampleRate":44100,"schemaVersion":2}
+[mvk-info] Destroyed VkDevice on GPU Apple M5 Pro with 13 Vulkan extensions enabled.
+[mvk-info] Destroyed VkPhysicalDevice for GPU Apple M5 Pro with 2 MB of GPU memory still allocated.
+[mvk-info] Destroying VkInstance for Vulkan version 1.4.357 with 6 Vulkan extensions enabled.
+2026-09-30 12:25:56.420247+0200 Aagedal Media Player[52558:760746] [API] warning, deleted thread with uncommitted CATransaction; set CA_DEBUG_TRANSACTIONS=1 in environment to log backtraces, or set CA_ASSERT_MAIN_THREAD_TRANSACTIONS=1 to abort when an implicit transaction isn't created on a main thread.
+2026-09-30 12:25:56.423073+0200 Aagedal Media Player[52558:760243] [PlayerController] Using MPV player for live-meter-engineering-multitrack-video-20260929.mp4
+2026-09-30 12:25:56.423169+0200 Aagedal Media Player[52558:760243] [MPVPlayer] MPV not initialized yet, storing pending load for: live-meter-engineering-multitrack-video-20260929.mp4
+2026-09-30 12:25:56.446252+0200 Aagedal Media Player[52558:760243] [MPVPlayer] MPV initialized successfully
+2026-09-30 12:25:56.446287+0200 Aagedal Media Player[52558:760364] [scaling] mpv video-params: dw=0 dh=0 rotate=0
+2026-09-30 12:25:56.446316+0200 Aagedal Media Player[52558:760364] [scaling] mpv video-params: dw=0 dh=0 rotate=0
+2026-09-30 12:25:56.446334+0200 Aagedal Media Player[52558:760364] [scaling] mpv video-params: dw=0 dh=0 rotate=0
+2026-09-30 12:25:56.446454+0200 Aagedal Media Player[52558:760243] [MPVPlayer] Loading file: live-meter-engineering-multitrack-video-20260929.mp4, startTime: 0.000000, autostart: false
+2026-09-30 12:25:56.446571+0200 Aagedal Media Player[52558:760364] [MPVPlayer] MPV start file event
+[ffmpeg/demuxer] warn: mov,mp4,m4a,3gp,3g2,mj2: UDTA parsing failed retrying raw
+[ffmpeg/demuxer] warn: mov,mp4,m4a,3gp,3g2,mj2: UDTA parsing failed retrying raw
+[mvk-info] MoltenVK version 1.4.2, supporting Vulkan version 1.4.357.
+	The following 154 Vulkan extensions are supported:
+	VK_KHR_16bit_storage v1
+	VK_KHR_8bit_storage v1
+	VK_KHR_bind_memory2 v1
+	VK_KHR_buffer_device_address v1
+	VK_KHR_calibrated_timestamps v1
+	VK_KHR_copy_commands2 v1
+	VK_KHR_create_renderpass2 v1
+	VK_KHR_dedicated_allocation v3
+	VK_KHR_deferred_host_operations v4
+	VK_KHR_depth_stencil_resolve v1
+	VK_KHR_descriptor_update_template v1
+	VK_KHR_device_group v4
+	VK_KHR_device_group_creation v1
+	VK_KHR_driver_properties v1
+	VK_KHR_dynamic_rendering v1
+	VK_KHR_dynamic_rendering_local_read v1
+	VK_KHR_external_fence v1
+	VK_KHR_external_fence_capabilities v1
+	VK_KHR_external_memory v1
+	VK_KHR_external_memory_capabilities v1
+	VK_KHR_external_semaphore v1
+	VK_KHR_external_semaphore_capabilities v1
+	VK_KHR_format_feature_flags2 v2
+	VK_KHR_fragment_shader_barycentric v1
+	VK_KHR_get_memory_requirements2 v1
+	VK_KHR_get_physical_device_properties2 v2
+	VK_KHR_get_surface_capabilities2 v1
+	VK_KHR_global_priority v1
+	VK_KHR_image_format_list v1
+	VK_KHR_imageless_framebuffer v1
+	VK_KHR_incremental_present v2
+	VK_KHR_index_type_uint8 v1
+	VK_KHR_line_rasterization v1
+	VK_KHR_load_store_op_none v1
+	VK_KHR_maintenance1 v2
+	VK_KHR_maintenance2 v1
+	VK_KHR_maintenance3 v1
+	VK_KHR_maintenance4 v2
+	VK_KHR_maintenance5 v1
+	VK_KHR_maintenance6 v1
+	VK_KHR_maintenance7 v1
+	VK_KHR_maintenance8 v1
+	VK_KHR_maintenance9 v1
+	VK_KHR_map_memory2 v1
+	VK_KHR_multiview v1
+	VK_KHR_portability_subset v1
+	VK_KHR_present_id v1
+	VK_KHR_present_id2 v1
+	VK_KHR_present_wait v1
+	VK_KHR_present_wait2 v1
+	VK_KHR_push_descriptor v2
+	VK_KHR_relaxed_block_layout v1
+	VK_KHR_robustness2 v1
+	VK_KHR_sampler_mirror_clamp_to_edge v3
+	VK_KHR_sampler_ycbcr_conversion v14
+	VK_KHR_separate_depth_stencil_layouts v1
+	VK_KHR_shader_draw_parameters v1
+	VK_KHR_shader_expect_assume v1
+	VK_KHR_shader_float_controls v4
+	VK_KHR_shader_float_controls2 v1
+	VK_KHR_shader_float16_int8 v1
+	VK_KHR_shader_fma v1
+	VK_KHR_shader_integer_dot_product v1
+	VK_KHR_shader_maximal_reconvergence v1
+	VK_KHR_shader_non_semantic_info v1
+	VK_KHR_shader_quad_control v1
+	VK_KHR_shader_relaxed_extended_instruction v1
+	VK_KHR_shader_subgroup_extended_types v1
+	VK_KHR_shader_subgroup_rotate v2
+	VK_KHR_shader_subgroup_uniform_control_flow v1
+	VK_KHR_shader_terminate_invocation v1
+	VK_KHR_spirv_1_4 v1
+	VK_KHR_storage_buffer_storage_class v1
+	VK_KHR_surface v25
+	VK_KHR_surface_maintenance1 v1
+	VK_KHR_surface_protected_capabilities v1
+	VK_KHR_swapchain v70
+	VK_KHR_swapchain_maintenance1 v1
+	VK_KHR_swapchain_mutable_format v1
+	VK_KHR_synchronization2 v1
+	VK_KHR_timeline_semaphore v2
+	VK_KHR_uniform_buffer_standard_layout v1
+	VK_KHR_variable_pointers v1
+	VK_KHR_vertex_attribute_divisor v1
+	VK_KHR_vulkan_memory_model v3
+	VK_KHR_zero_initialize_workgroup_memory v1
+	VK_EXT_4444_formats v1
+	VK_EXT_buffer_device_address v2
+	VK_EXT_calibrated_timestamps v2
+	VK_EXT_debug_marker v4
+	VK_EXT_debug_report v10
+	VK_EXT_debug_utils v2
+	VK_EXT_depth_clip_control v1
+	VK_EXT_descriptor_indexing v2
+	VK_EXT_extended_dynamic_state v1
+	VK_EXT_extended_dynamic_state2 v1
+	VK_EXT_extended_dynamic_state3 v2
+	VK_EXT_external_memory_host v1
+	VK_EXT_external_memory_metal v1
+	VK_EXT_fragment_shader_interlock v1
+	VK_EXT_global_priority v2
+	VK_EXT_global_priority_query v1
+	VK_EXT_hdr_metadata v3
+	VK_EXT_headless_surface v1
+	VK_EXT_host_image_copy v1
+	VK_EXT_host_query_reset v1
+	VK_EXT_image_2d_view_of_3d v1
+	VK_EXT_image_robustness v1
+	VK_EXT_index_type_uint8 v1
+	VK_EXT_inline_uniform_block v1
+	VK_EXT_layer_settings v2
+	VK_EXT_legacy_dithering v2
+	VK_EXT_line_rasterization v1
+	VK_EXT_load_store_op_none v1
+	VK_EXT_memory_budget v1
+	VK_EXT_metal_objects v2
+	VK_EXT_metal_surface v1
+	VK_EXT_non_seamless_cube_map v1
+	VK_EXT_pipeline_creation_cache_control v3
+	VK_EXT_pipeline_creation_feedback v1
+	VK_EXT_pipeline_robustness v1
+	VK_EXT_post_depth_coverage v1
+	VK_EXT_primitive_topology_list_restart v1
+	VK_EXT_private_data v1
+	VK_EXT_provoking_vertex v1
+	VK_EXT_robustness2 v1
+	VK_EXT_sample_locations v1
+	VK_EXT_sampler_filter_minmax v2
+	VK_EXT_scalar_block_layout v1
+	VK_EXT_separate_stencil_usage v1
+	VK_EXT_shader_atomic_float v1
+	VK_EXT_shader_demote_to_helper_invocation v1
+	VK_EXT_shader_stencil_export v1
+	VK_EXT_shader_subgroup_ballot v1
+	VK_EXT_shader_subgroup_vote v1
+	VK_EXT_shader_viewport_index_layer v1
+	VK_EXT_subgroup_size_control v2
+	VK_EXT_surface_maintenance1 v1
+	VK_EXT_swapchain_colorspace v5
+	VK_EXT_swapchain_maintenance1 v1
+	VK_EXT_texel_buffer_alignment v1
+	VK_EXT_texture_compression_astc_hdr v1
+	VK_EXT_tooling_info v1
+	VK_EXT_vertex_attribute_divisor v3
+	VK_AMD_gpu_shader_half_float v2
+	VK_AMD_negative_viewport_height v1
+	VK_AMD_shader_image_load_store_lod v1
+	VK_AMD_shader_trinary_minmax v1
+	VK_GOOGLE_display_timing v1
+	VK_IMG_format_pvrtc v1
+	VK_INTEL_shader_integer_functions2 v1
+	VK_MVK_macos_surface v3
+	VK_MVK_moltenvk v37
+	VK_NV_fragment_shader_barycentric v1
+[mvk-info] GPU device:
+	model: Apple M5 Pro
+	type: Integrated
+	vendorID: 0x106b
+	deviceID: 0x1b000208
+	pipelineCacheUUID: DB660224-1B00-0208-0000-000100000000
+	GPU memory available: 53084 MB
+	GPU memory used: 2 MB
+	Metal Shading Language 3.1
+	supports the following GPU Features:
+		GPU Family Metal 3
+		GPU Family Apple 8
+		GPU Family Mac 1
+		GPU Family Mac 2
+		Read-Write Texture Tier 2
+[mvk-info] Created VkInstance for Vulkan version 1.4.357, as requested by app, with the following 6 Vulkan extensions enabled:
+	VK_KHR_get_surface_capabilities2 v1
+	VK_KHR_surface v25
+	VK_KHR_surface_maintenance1 v1
+	VK_EXT_metal_surface v1
+	VK_EXT_surface_maintenance1 v1
+	VK_EXT_swapchain_colorspace v5
+[mvk-info] Vulkan semaphores using MTLEvent.
+[mvk-info] Descriptor sets binding resources using Metal3 argument buffers.
+[mvk-info] Created VkDevice to run on GPU Apple M5 Pro with the following 13 Vulkan extensions enabled:
+	VK_KHR_dynamic_rendering v1
+	VK_KHR_portability_subset v1
+	VK_KHR_shader_expect_assume v1
+	VK_KHR_shader_relaxed_extended_instruction v1
+	VK_KHR_shader_subgroup_rotate v2
+	VK_KHR_swapchain v70
+	VK_KHR_swapchain_maintenance1 v1
+	VK_KHR_zero_initialize_workgroup_memory v1
+	VK_EXT_external_memory_host v1
+	VK_EXT_hdr_metadata v3
+	VK_EXT_metal_objects v2
+	VK_EXT_shader_atomic_float v1
+	VK_EXT_swapchain_maintenance1 v1
+2026-09-30 12:25:56.452779+0200 Aagedal Media Player[52558:760243] [MPVPlayer] MPV file loaded
+2026-09-30 12:25:56.454840+0200 Aagedal Media Player[52558:761132]       AUConverterBase.cpp:547   SetConverterChannelMap failed: err 561211770
+[mvk-info] Created 3 swapchain images with size (320, 180) and contents scale 1.0 in layer (null) (0x75ca856d90) on screen Main Screen.
+[mvk-info] Created 3 swapchain images with size (320, 180) and contents scale 1.0 in layer (null) (0x75ca856d90) on screen Main Screen.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+2026-09-30 12:25:56.520129+0200 Aagedal Media Player[52558:760364] [scaling] mpv video-params: dw=64 dh=64 rotate=0
+2026-09-30 12:25:56.520163+0200 Aagedal Media Player[52558:760364] [scaling] mpv video-params: dw=64 dh=64 rotate=0
+2026-09-30 12:25:56.520178+0200 Aagedal Media Player[52558:760364] [scaling] mpv video-params: dw=64 dh=64 rotate=0
+2026-09-30 12:25:56.520297+0200 Aagedal Media Player[52558:760243] [scaling] mpv emitted videoSourceSize=64x64 (ratio=1.000000)
+2026-09-30 12:25:56.520312+0200 Aagedal Media Player[52558:760243] [scaling] mpv emitted videoSourceSize=64x64 (ratio=1.000000)
+2026-09-30 12:25:56.520320+0200 Aagedal Media Player[52558:760243] [scaling] mpv emitted videoSourceSize=64x64 (ratio=1.000000)
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+2026-09-30 12:25:56.950665+0200 Aagedal Media Player[52558:760297] [AudioConverter] channel mapping input channel '6619138' for output channel '0' is out of range [-1..'2')
+2026-09-30 12:25:56.956178+0200 Aagedal Media Player[52558:761132] [carc] Reporter disconnected or already stopped. { func=stop, reporterID=225734891143174 }
+[ao/coreaudio] error: unable to set the input channel layout on the audio unit ([206][255][255][255]/-50)
+2026-09-30 12:25:56.960320+0200 Aagedal Media Player[52558:760243] [scaling] play: backend=mpv wasPlaying=false videoSourceSize=64x64 ratio=1.0000
+LIVE_AUDIO_METER_PLAYBACK_DIAGNOSTIC {"file":"live-meter-engineering-multitrack-video-20260929.mp4","meterClockDriftSeconds":null,"meterEndSourceFrame":null,"meterGeneration":1,"meterPublishedSnapshotCount":0,"meterRequestStartSourceFrame":null,"meterStartSourceFrame":null,"meterStatus":"paused(frame: 0)","mpvAudioOutputDriver":"avfoundation","mpvClockSeconds":0,"mpvDecodedAudioChannels":2,"mpvMonitoringFilterActive":false,"mpvOutputAudioChannels":2,"mpvReachedEOF":false,"playerClockSeconds":0,"playerIsPlaying":false,"selectedAudioStreamOrderIndex":1,"selectedSourceID":"A","stage":"observation-start"}
+2026-09-30 12:25:56.979917+0200 Aagedal Media Player[52558:760362] [] <<< FigCFUtilities >>> signalled err=-12990 at <>:1859
+2026-09-30 12:26:01.974768+0200 Aagedal Media Player[52558:760243] [scaling] pause: backend=mpv wasPlaying=true videoSourceSize=64x64 ratio=1.0000
+2026-09-30 12:26:02.636211+0200 Aagedal Media Player[52558:760243] [scaling] play: backend=mpv wasPlaying=false videoSourceSize=64x64 ratio=1.0000
+2026-09-30 12:26:02.639162+0200 Aagedal Media Player[52558:760362] [] <<< FigCFUtilities >>> signalled err=-12990 at <>:1859
+[mvk-info] Destroyed VkDevice on GPU Apple M5 Pro with 13 Vulkan extensions enabled.
+[mvk-info] Destroyed VkPhysicalDevice for GPU Apple M5 Pro with 2 MB of GPU memory still allocated.
+[mvk-info] Destroying VkInstance for Vulkan version 1.4.357 with 6 Vulkan extensions enabled.
+2026-09-30 12:26:02.794545+0200 Aagedal Media Player[52558:761136] [API] warning, deleted thread with uncommitted CATransaction; set CA_DEBUG_TRANSACTIONS=1 in environment to log backtraces, or set CA_ASSERT_MAIN_THREAD_TRANSACTIONS=1 to abort when an implicit transaction isn't created on a main thread.
+2026-09-30 12:26:02.796369+0200 Aagedal Media Player[52558:760243] [PlayerController] Using MPV player for live-meter-engineering-multitrack-video-20260929.mp4
+2026-09-30 12:26:02.796469+0200 Aagedal Media Player[52558:760243] [MPVPlayer] MPV not initialized yet, storing pending load for: live-meter-engineering-multitrack-video-20260929.mp4
+2026-09-30 12:26:02.818716+0200 Aagedal Media Player[52558:760243] [MPVPlayer] MPV initialized successfully
+2026-09-30 12:26:02.818752+0200 Aagedal Media Player[52558:760366] [scaling] mpv video-params: dw=0 dh=0 rotate=0
+2026-09-30 12:26:02.818777+0200 Aagedal Media Player[52558:760366] [scaling] mpv video-params: dw=0 dh=0 rotate=0
+2026-09-30 12:26:02.818791+0200 Aagedal Media Player[52558:760366] [scaling] mpv video-params: dw=0 dh=0 rotate=0
+2026-09-30 12:26:02.818847+0200 Aagedal Media Player[52558:760243] [MPVPlayer] Loading file: live-meter-engineering-multitrack-video-20260929.mp4, startTime: 18.000000, autostart: false
+2026-09-30 12:26:02.818905+0200 Aagedal Media Player[52558:760366] [MPVPlayer] MPV start file event
+[ffmpeg/demuxer] warn: mov,mp4,m4a,3gp,3g2,mj2: UDTA parsing failed retrying raw
+[ffmpeg/demuxer] warn: mov,mp4,m4a,3gp,3g2,mj2: UDTA parsing failed retrying raw
+[mvk-info] MoltenVK version 1.4.2, supporting Vulkan version 1.4.357.
+	The following 154 Vulkan extensions are supported:
+	VK_KHR_16bit_storage v1
+	VK_KHR_8bit_storage v1
+	VK_KHR_bind_memory2 v1
+	VK_KHR_buffer_device_address v1
+	VK_KHR_calibrated_timestamps v1
+	VK_KHR_copy_commands2 v1
+	VK_KHR_create_renderpass2 v1
+	VK_KHR_dedicated_allocation v3
+	VK_KHR_deferred_host_operations v4
+	VK_KHR_depth_stencil_resolve v1
+	VK_KHR_descriptor_update_template v1
+	VK_KHR_device_group v4
+	VK_KHR_device_group_creation v1
+	VK_KHR_driver_properties v1
+	VK_KHR_dynamic_rendering v1
+	VK_KHR_dynamic_rendering_local_read v1
+	VK_KHR_external_fence v1
+	VK_KHR_external_fence_capabilities v1
+	VK_KHR_external_memory v1
+	VK_KHR_external_memory_capabilities v1
+	VK_KHR_external_semaphore v1
+	VK_KHR_external_semaphore_capabilities v1
+	VK_KHR_format_feature_flags2 v2
+	VK_KHR_fragment_shader_barycentric v1
+	VK_KHR_get_memory_requirements2 v1
+	VK_KHR_get_physical_device_properties2 v2
+	VK_KHR_get_surface_capabilities2 v1
+	VK_KHR_global_priority v1
+	VK_KHR_image_format_list v1
+	VK_KHR_imageless_framebuffer v1
+	VK_KHR_incremental_present v2
+	VK_KHR_index_type_uint8 v1
+	VK_KHR_line_rasterization v1
+	VK_KHR_load_store_op_none v1
+	VK_KHR_maintenance1 v2
+	VK_KHR_maintenance2 v1
+	VK_KHR_maintenance3 v1
+	VK_KHR_maintenance4 v2
+	VK_KHR_maintenance5 v1
+	VK_KHR_maintenance6 v1
+	VK_KHR_maintenance7 v1
+	VK_KHR_maintenance8 v1
+	VK_KHR_maintenance9 v1
+	VK_KHR_map_memory2 v1
+	VK_KHR_multiview v1
+	VK_KHR_portability_subset v1
+	VK_KHR_present_id v1
+	VK_KHR_present_id2 v1
+	VK_KHR_present_wait v1
+	VK_KHR_present_wait2 v1
+	VK_KHR_push_descriptor v2
+	VK_KHR_relaxed_block_layout v1
+	VK_KHR_robustness2 v1
+	VK_KHR_sampler_mirror_clamp_to_edge v3
+	VK_KHR_sampler_ycbcr_conversion v14
+	VK_KHR_separate_depth_stencil_layouts v1
+	VK_KHR_shader_draw_parameters v1
+	VK_KHR_shader_expect_assume v1
+	VK_KHR_shader_float_controls v4
+	VK_KHR_shader_float_controls2 v1
+	VK_KHR_shader_float16_int8 v1
+	VK_KHR_shader_fma v1
+	VK_KHR_shader_integer_dot_product v1
+	VK_KHR_shader_maximal_reconvergence v1
+	VK_KHR_shader_non_semantic_info v1
+	VK_KHR_shader_quad_control v1
+	VK_KHR_shader_relaxed_extended_instruction v1
+	VK_KHR_shader_subgroup_extended_types v1
+	VK_KHR_shader_subgroup_rotate v2
+	VK_KHR_shader_subgroup_uniform_control_flow v1
+	VK_KHR_shader_terminate_invocation v1
+	VK_KHR_spirv_1_4 v1
+	VK_KHR_storage_buffer_storage_class v1
+	VK_KHR_surface v25
+	VK_KHR_surface_maintenance1 v1
+	VK_KHR_surface_protected_capabilities v1
+	VK_KHR_swapchain v70
+	VK_KHR_swapchain_maintenance1 v1
+	VK_KHR_swapchain_mutable_format v1
+	VK_KHR_synchronization2 v1
+	VK_KHR_timeline_semaphore v2
+	VK_KHR_uniform_buffer_standard_layout v1
+	VK_KHR_variable_pointers v1
+	VK_KHR_vertex_attribute_divisor v1
+	VK_KHR_vulkan_memory_model v3
+	VK_KHR_zero_initialize_workgroup_memory v1
+	VK_EXT_4444_formats v1
+	VK_EXT_buffer_device_address v2
+	VK_EXT_calibrated_timestamps v2
+	VK_EXT_debug_marker v4
+	VK_EXT_debug_report v10
+	VK_EXT_debug_utils v2
+	VK_EXT_depth_clip_control v1
+	VK_EXT_descriptor_indexing v2
+	VK_EXT_extended_dynamic_state v1
+	VK_EXT_extended_dynamic_state2 v1
+	VK_EXT_extended_dynamic_state3 v2
+	VK_EXT_external_memory_host v1
+	VK_EXT_external_memory_metal v1
+	VK_EXT_fragment_shader_interlock v1
+	VK_EXT_global_priority v2
+	VK_EXT_global_priority_query v1
+	VK_EXT_hdr_metadata v3
+	VK_EXT_headless_surface v1
+	VK_EXT_host_image_copy v1
+	VK_EXT_host_query_reset v1
+	VK_EXT_image_2d_view_of_3d v1
+	VK_EXT_image_robustness v1
+	VK_EXT_index_type_uint8 v1
+	VK_EXT_inline_uniform_block v1
+	VK_EXT_layer_settings v2
+	VK_EXT_legacy_dithering v2
+	VK_EXT_line_rasterization v1
+	VK_EXT_load_store_op_none v1
+	VK_EXT_memory_budget v1
+	VK_EXT_metal_objects v2
+	VK_EXT_metal_surface v1
+	VK_EXT_non_seamless_cube_map v1
+	VK_EXT_pipeline_creation_cache_control v3
+	VK_EXT_pipeline_creation_feedback v1
+	VK_EXT_pipeline_robustness v1
+	VK_EXT_post_depth_coverage v1
+	VK_EXT_primitive_topology_list_restart v1
+	VK_EXT_private_data v1
+	VK_EXT_provoking_vertex v1
+	VK_EXT_robustness2 v1
+	VK_EXT_sample_locations v1
+	VK_EXT_sampler_filter_minmax v2
+	VK_EXT_scalar_block_layout v1
+	VK_EXT_separate_stencil_usage v1
+	VK_EXT_shader_atomic_float v1
+	VK_EXT_shader_demote_to_helper_invocation v1
+	VK_EXT_shader_stencil_export v1
+	VK_EXT_shader_subgroup_ballot v1
+	VK_EXT_shader_subgroup_vote v1
+	VK_EXT_shader_viewport_index_layer v1
+	VK_EXT_subgroup_size_control v2
+	VK_EXT_surface_maintenance1 v1
+	VK_EXT_swapchain_colorspace v5
+	VK_EXT_swapchain_maintenance1 v1
+	VK_EXT_texel_buffer_alignment v1
+	VK_EXT_texture_compression_astc_hdr v1
+	VK_EXT_tooling_info v1
+	VK_EXT_vertex_attribute_divisor v3
+	VK_AMD_gpu_shader_half_float v2
+	VK_AMD_negative_viewport_height v1
+	VK_AMD_shader_image_load_store_lod v1
+	VK_AMD_shader_trinary_minmax v1
+	VK_GOOGLE_display_timing v1
+	VK_IMG_format_pvrtc v1
+	VK_INTEL_shader_integer_functions2 v1
+	VK_MVK_macos_surface v3
+	VK_MVK_moltenvk v37
+	VK_NV_fragment_shader_barycentric v1
+[mvk-info] GPU device:
+	model: Apple M5 Pro
+	type: Integrated
+	vendorID: 0x106b
+	deviceID: 0x1b000208
+	pipelineCacheUUID: DB660224-1B00-0208-0000-000100000000
+	GPU memory available: 53084 MB
+	GPU memory used: 2 MB
+	Metal Shading Language 3.1
+	supports the following GPU Features:
+		GPU Family Metal 3
+		GPU Family Apple 8
+		GPU Family Mac 1
+		GPU Family Mac 2
+		Read-Write Texture Tier 2
+[mvk-info] Created VkInstance for Vulkan version 1.4.357, as requested by app, with the following 6 Vulkan extensions enabled:
+	VK_KHR_get_surface_capabilities2 v1
+	VK_KHR_surface v25
+	VK_KHR_surface_maintenance1 v1
+	VK_EXT_metal_surface v1
+	VK_EXT_surface_maintenance1 v1
+	VK_EXT_swapchain_colorspace v5
+[mvk-info] Vulkan semaphores using MTLEvent.
+[mvk-info] Descriptor sets binding resources using Metal3 argument buffers.
+[mvk-info] Created VkDevice to run on GPU Apple M5 Pro with the following 13 Vulkan extensions enabled:
+	VK_KHR_dynamic_rendering v1
+	VK_KHR_portability_subset v1
+	VK_KHR_shader_expect_assume v1
+	VK_KHR_shader_relaxed_extended_instruction v1
+	VK_KHR_shader_subgroup_rotate v2
+	VK_KHR_swapchain v70
+	VK_KHR_swapchain_maintenance1 v1
+	VK_KHR_zero_initialize_workgroup_memory v1
+	VK_EXT_external_memory_host v1
+	VK_EXT_hdr_metadata v3
+	VK_EXT_metal_objects v2
+	VK_EXT_shader_atomic_float v1
+	VK_EXT_swapchain_maintenance1 v1
+2026-09-30 12:26:02.824105+0200 Aagedal Media Player[52558:760243] [MPVPlayer] MPV file loaded
+2026-09-30 12:26:02.826533+0200 Aagedal Media Player[52558:761479]       AUConverterBase.cpp:547   SetConverterChannelMap failed: err 561211770
+[mvk-info] Created 3 swapchain images with size (320, 180) and contents scale 1.0 in layer (null) (0x75c990fe10) on screen Main Screen.
+[mvk-info] Created 3 swapchain images with size (320, 180) and contents scale 1.0 in layer (null) (0x75c990fe10) on screen Main Screen.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+2026-09-30 12:26:02.895210+0200 Aagedal Media Player[52558:760366] [scaling] mpv video-params: dw=64 dh=64 rotate=0
+2026-09-30 12:26:02.895421+0200 Aagedal Media Player[52558:760366] [scaling] mpv video-params: dw=64 dh=64 rotate=0
+2026-09-30 12:26:02.895460+0200 Aagedal Media Player[52558:760366] [scaling] mpv video-params: dw=64 dh=64 rotate=0
+2026-09-30 12:26:02.895583+0200 Aagedal Media Player[52558:760243] [scaling] mpv emitted videoSourceSize=64x64 (ratio=1.000000)
+2026-09-30 12:26:02.895597+0200 Aagedal Media Player[52558:760243] [scaling] mpv emitted videoSourceSize=64x64 (ratio=1.000000)
+2026-09-30 12:26:02.895604+0200 Aagedal Media Player[52558:760243] [scaling] mpv emitted videoSourceSize=64x64 (ratio=1.000000)
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+2026-09-30 12:26:03.307935+0200 Aagedal Media Player[52558:760364] [AudioConverter] channel mapping input channel '6619138' for output channel '0' is out of range [-1..'2')
+[ao/coreaudio] error: unable to set the input channel layout on the audio unit ([206][255][255][255]/-50)
+2026-09-30 12:26:03.315583+0200 Aagedal Media Player[52558:760243] [scaling] play: backend=mpv wasPlaying=false videoSourceSize=64x64 ratio=1.0000
+LIVE_AUDIO_METER_PLAYBACK_DIAGNOSTIC {"file":"live-meter-engineering-multitrack-video-20260929.mp4","meterClockDriftSeconds":null,"meterEndSourceFrame":null,"meterGeneration":1,"meterPublishedSnapshotCount":0,"meterRequestStartSourceFrame":null,"meterStartSourceFrame":null,"meterStatus":"paused(frame: 864000)","mpvAudioOutputDriver":"avfoundation","mpvClockSeconds":18,"mpvDecodedAudioChannels":2,"mpvMonitoringFilterActive":false,"mpvOutputAudioChannels":2,"mpvReachedEOF":false,"playerClockSeconds":18,"playerIsPlaying":false,"selectedAudioStreamOrderIndex":1,"selectedSourceID":"A","stage":"eof-start"}
+2026-09-30 12:26:03.318611+0200 Aagedal Media Player[52558:760366] [] <<< FigCFUtilities >>> signalled err=-12990 at <>:1859
+2026-09-30 12:26:09.236307+0200 Aagedal Media Player[52558:760243] [MPVPlayer] EOF reached, pausing at last frame
+LIVE_AUDIO_METER_PROFILE {"audioStreamOrderIndex":1,"audioTrackLabel":"#1 • AAC • Stereo • 48 kHz","audioTrackSelectionExplicit":true,"availableAudioTrackCount":2,"backend":"mpv","channels":2,"codec":"mp4a","declaredChannelLayout":"stereo","durationSeconds":24,"eof":{"audioStreamOrderIndex":1,"clockDriftSampleCount":276,"codecNormalizationDisabled":true,"decoderVersion":"ffmpeg version 9.0.1 Copyright (c) 2000-2026 the FFmpeg developers","dynamicRangeCompressionDisabled":true,"endSourceFrame":1152000,"finalSnapshot":true,"maximumAbsoluteClockDriftSeconds":0.20000000000000001,"maximumDecodedAheadSeconds":0.041666666666667851,"metadataStreamIndex":1,"observed":true,"peakAppResidentBytes":216399872,"peakChildResidentBytes":19431424,"publishedSnapshotCount":120,"startSourceFrame":864000,"syntheticInitialSilenceFrameCount":0,"timestampFrameCount":288000,"timestampSource":"ffmpeg-framecrc-v1","timestampTimeBase":"1\/48000","wallSeconds":6.0615929580000003},"file":"live-meter-engineering-multitrack-video-20260929.mp4","inputIndex":1,"inputSHA256":"dfa0cc691d2b3455226b4521c973e06397a3a8220f99ae3dbd5fe541d708950e","metadataStreamIndex":1,"observation":{"audioStreamOrderIndex":1,"cancellationLatencySeconds":0.00047358300000000002,"cancellationObserved":true,"childResidentBytesAfterCancellation":0,"clockDriftSampleCount":230,"endSourceFrame":249600,"firstSnapshotLatencySeconds":0.063575792000000006,"initialAppResidentBytes":208207872,"maximumAbsoluteClockDriftSeconds":0.20000000000000001,"maximumDecodedAheadSeconds":0.24166666666666714,"maximumSnapshotIntervalSeconds":0.1940045,"metadataStreamIndex":1,"monitorRoutingInvariant":true,"observationSeconds":5,"peakAppResidentBytes":212746240,"peakChildResidentBytes":19628032,"publishedSnapshotCount":104,"startSourceFrame":0,"wallSeconds":5.0124545840000003},"requestedAudioStreamOrderIndex":1,"sampleRate":48000,"schemaVersion":2}
+[mvk-info] Destroyed VkDevice on GPU Apple M5 Pro with 13 Vulkan extensions enabled.
+[mvk-info] Destroyed VkPhysicalDevice for GPU Apple M5 Pro with 3 MB of GPU memory still allocated.
+[mvk-info] Destroying VkInstance for Vulkan version 1.4.357 with 6 Vulkan extensions enabled.
+2026-09-30 12:26:09.428978+0200 Aagedal Media Player[52558:761483] [API] warning, deleted thread with uncommitted CATransaction; set CA_DEBUG_TRANSACTIONS=1 in environment to log backtraces, or set CA_ASSERT_MAIN_THREAD_TRANSACTIONS=1 to abort when an implicit transaction isn't created on a main thread.
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterPerformanceTests testRepresentativeProductionPathWhenRequested]' passed (26.171 seconds).
+Test Suite 'LiveAudioMeterPerformanceTests' passed at 2026-09-30 12:26:09.531.
+	 Executed 1 test, with 0 failures (0 unexpected) in 26.171 (26.172) seconds
+Test Suite 'Aagedal Media Player Tests.xctest' passed at 2026-09-30 12:26:09.531.
+	 Executed 1 test, with 0 failures (0 unexpected) in 26.171 (26.172) seconds
+Test Suite 'Selected tests' passed at 2026-09-30 12:26:09.532.
+	 Executed 1 test, with 0 failures (0 unexpected) in 26.171 (26.172) seconds
+2026-09-30 12:26:09.806 xcodebuild[52548:760122] [MT] IDETestOperationsObserverDebug: 27.529 elapsed -- Testing started completed.
+2026-09-30 12:26:09.806 xcodebuild[52548:760122] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-09-30 12:26:09.806 xcodebuild[52548:760122] [MT] IDETestOperationsObserverDebug: 27.529 sec, +27.529 sec -- end
+
+Test session results, code coverage, and logs:
+	/tmp/live-meter-output-diagnostic-baseline-20260930/LiveAudioMeterProfile.xcresult
+
+** TEST EXECUTE SUCCEEDED **
+
+Testing started

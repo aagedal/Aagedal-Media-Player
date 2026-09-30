@@ -1,0 +1,18 @@
+{
+  "avfoundation-probe/environment.txt": "5fe5eccfb40742b69e14146c9b6c0e7c66780af1ddac55c2c6e108971f62715a",
+  "avfoundation-probe/inputs.json": "b5006d651db51b5a7f2621eeff157cb5b550d230f21343c1508da661267e9e84",
+  "avfoundation-probe/profile.log": "00821c8f2d81ab73f6f9dcfbfcdf2a5dfb314b391be88c0e4773e18a92e63cc1",
+  "device-stereo-probe/environment.txt": "83288bbc9c58c8ee47a05540c0ac9cbc9e263200824e854e4724328530e9e2df",
+  "device-stereo-probe/inputs.json": "b5006d651db51b5a7f2621eeff157cb5b550d230f21343c1508da661267e9e84",
+  "device-stereo-probe/profile.log": "a85331942f736aed0cec88a936bd15e2551724db02c5232c146528b0da75bb8c",
+  "hook-probe/environment.txt": "79bd0e23880fcb90f138daec696b3881c8d5dc1548890330505a618f26176528",
+  "hook-probe/inputs.json": "a465e71d4b403a71421cbe8359b671ef6ef469aab86028594709e7beae71a313",
+  "hook-probe/profile.log": "b03d4bafe0542b06b893759570d973d8bdc39b92af5c94ece0f45564354a0085",
+  "safe-baseline/environment.txt": "6d70aaa5de230e392c3ed31d6b0f4d3c92d996ce9fbd57ec1e65ad87743e04ac",
+  "safe-baseline/inputs.json": "d3e8c7710c2bd757587462476038133eccb0fd150fbfa7fb63cde37d45180c09",
+  "safe-baseline/playback-diagnostics.jsonl": "bcb62032b14f6280f184b6f27b1c27edfdbf5cba3425a95cbe9955f6e4cb51e5",
+  "safe-baseline/power-end.txt": "66d6092307fe64d2cba3649d274a7014f8339c649107e8b3acc3e45b55bc9d98",
+  "safe-baseline/power-events.json": "568aa804aee867469915cdc54f3f22a9ba67335babfbbf6affc7afd49813020f",
+  "safe-baseline/profile.log": "5cc28ebd7e89c32542b0617dd011184eacaf14c8b7d3ac50d83d3ba127e3e7ba",
+  "safe-baseline/summary.json": "984ceb5b0ff363459508002dbb4e6a935ae49ec108df808f7979aebebb98d1cb"
+}
