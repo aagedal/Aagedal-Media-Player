@@ -1,0 +1,159 @@
+{
+  "sourceInputs": {
+    "libmpv-v0.41.0": {
+      "revision": "2fdb5b54ec99fa3861b5e2bc9181724e659b5882",
+      "tree": "54755f0392d635a53a3f644668ba76b303be4512",
+      "status": ""
+    },
+    "FFmpeg-n8.1.2": {
+      "revision": "f315416f7075aed202db27d4b4a4d24e99617379",
+      "tree": "9b3a672a066ef0655b6cf42bf967e57f1d832c88",
+      "status": ""
+    }
+  },
+  "copiedAuxiliaryZIPsMatch": true,
+  "xcframeworks": {
+    "Libmpv": {
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "binarySHA256": "5ebd682bfa0618694570f2f958d68ea143c4b4a1b1b98859a9374870ba4b2fc3",
+      "zipSHA256": "8d34927c77f90bd8a88ffdaafa6ff8c13405ab2be1e495c183007a4b452a88aa",
+      "libraryIdentifier": "macos-arm64_x86_64"
+    },
+    "Libavcodec": {
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "binarySHA256": "f1e4d912c789dc6ca544e45c23b80f4e7cf26a49070d8fa32917de4de3fd9e1c",
+      "zipSHA256": "a5112b0b74f1a9f40a7972808392b003c76a41195e1ed9f26939d1d0669b8e09",
+      "libraryIdentifier": "macos-arm64_x86_64"
+    },
+    "Libavdevice": {
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "binarySHA256": "86f09d4e176c81d559d901c5e3f9fba6a1c07fdc7c36dcbb023ebe0fffd0d9ba",
+      "zipSHA256": "7acbf230288c03c20ef08bc6016f36877b2abc30af1421e118b271f82b5f979f",
+      "libraryIdentifier": "macos-arm64_x86_64"
+    },
+    "Libavfilter": {
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "binarySHA256": "7a90e5ff0311ecb4d86ff071f8639746bb39075868d31ac7b75af2f5942f6b32",
+      "zipSHA256": "ad8e76f6645ff2bebc735205434e6c632bf883e119ba2531d7287fbec2e42e13",
+      "libraryIdentifier": "macos-arm64_x86_64"
+    },
+    "Libavformat": {
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "binarySHA256": "9e255a4d88aa0bc2ed4df8b8601e24158a921fcaadc9cad6f529ba82ab42a075",
+      "zipSHA256": "b5b62e450657c02f16d49112ca242c07bff6b98ae3ee08b9f478a9d7a4bf42e6",
+      "libraryIdentifier": "macos-arm64_x86_64"
+    },
+    "Libavutil": {
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "binarySHA256": "cfadbe95e5b203ec30bacce06a8912ef09c5a4780ff5426e43d89ef11e7e40f9",
+      "zipSHA256": "94d8794727d9c9bbb2995873cfd080b5ec7b8694294b7ab24006f15740afea6a",
+      "libraryIdentifier": "macos-arm64_x86_64"
+    },
+    "Libswresample": {
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "binarySHA256": "d0f147d210b93b51eb5b3d87fb0bb1ff4ad276298c8b9cbfb71fe41c8a2da775",
+      "zipSHA256": "6647a76a8a8d878f7fb1a7077286c0427998b080c7a246be4bd42d550e2f3cd6",
+      "libraryIdentifier": "macos-arm64_x86_64"
+    },
+    "Libswscale": {
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "binarySHA256": "b4bf90ced172ca93bbd6dc8599a6d3b4c4855ce47e247aaa4e129fc9ba86e908",
+      "zipSHA256": "bf93de661f0e8c648797c669e0c2d52d44626f54b77fbcbbe5c7b0ed3628a7ba",
+      "libraryIdentifier": "macos-arm64_x86_64"
+    }
+  },
+  "freshObjects": {
+    "libmpv": {
+      "arm64": {
+        "objectCount": 221,
+        "objectManifestSHA256": "08d30428209c297b1e65a1e9cfe417b916bc8e5a5600e3989d130f80dc09441b",
+        "staticArchives": {
+          "dist/libmpv/macos/thin/arm64/lib/libmpv.a": "9df8a21f184fe075e35eb539eb031e09bb7b181a86750966cbb6598475df714a"
+        },
+        "compileDatabaseSHA256": "27c57d9d90418faa232bff74fcc8ec7c5a2699f8a07d3aead4949d7f5b96e3e5",
+        "coreaudioObjects": {
+          "ao_coreaudio.c": {
+            "objectSHA256": "723ab3daf11d070fc6e0e5c92561eeebc87504d66f16d3eb599372e951f187ba",
+            "sourceSHA256": "2ab5a2553d60b8a75d2e9bd3b3090cadee4e350cb870c7c114fa3a6701d0088a"
+          },
+          "ao_coreaudio_chmap.c": {
+            "objectSHA256": "924070e402339b07092abc9811d5c62acab7608fa36f8c4d4badc003e1b5fd16",
+            "sourceSHA256": "b552e1d4207f8d4e1dbc1a39a437595e36402285115c41fec7e7b5afe84b5117"
+          }
+        }
+      },
+      "x86_64": {
+        "objectCount": 220,
+        "objectManifestSHA256": "b41e5be2bba5f517a032377043f12d40644c0e520e30355fcb9190a0b7252e3b",
+        "staticArchives": {
+          "dist/libmpv/macos/thin/x86_64/lib/libmpv.a": "e450168525cc476ab122f18278a13bdd83238d37ee21da340fd5fc56b581fa83"
+        },
+        "compileDatabaseSHA256": "2c92c2d09b4c5688bc786bfb90e1f133352943cbd1e53533829c4cae444756ac",
+        "coreaudioObjects": {
+          "ao_coreaudio.c": {
+            "objectSHA256": "1b91572cb320b720088a2c033072d41cc1f1db63214d7a5d21c4c7481aacce8f",
+            "sourceSHA256": "2ab5a2553d60b8a75d2e9bd3b3090cadee4e350cb870c7c114fa3a6701d0088a"
+          },
+          "ao_coreaudio_chmap.c": {
+            "objectSHA256": "3f7f6611bef71f6accdc9bc4ce27e50d12ecdccb3d6c774002d2088382b9efc9",
+            "sourceSHA256": "b552e1d4207f8d4e1dbc1a39a437595e36402285115c41fec7e7b5afe84b5117"
+          }
+        }
+      }
+    },
+    "FFmpeg": {
+      "arm64": {
+        "objectCount": 1118,
+        "objectManifestSHA256": "35e1df7e6d32e30ac263c8f834f0e910c87f30eb2461eaec4cf1cd6d141008cb",
+        "staticArchives": {
+          "dist/FFmpeg/macos/thin/arm64/lib/libavcodec.a": "94f033ff13084fd9a05714834f433a18589167fa830614e5a32278a651c37385",
+          "dist/FFmpeg/macos/thin/arm64/lib/libavdevice.a": "b0b8881c8af3b6be49e727051f87ae7ba49459cb74228412b04f7c659341b8cf",
+          "dist/FFmpeg/macos/thin/arm64/lib/libavfilter.a": "ef9f281e2ad7d3ce85fbaccbc7649ffdd684f5dad234f602dbf76164ad0790f3",
+          "dist/FFmpeg/macos/thin/arm64/lib/libavformat.a": "2637199dd3af2edc2b0914e693a99012198e4229dfbf6e6fa250b4f1f11fb3b4",
+          "dist/FFmpeg/macos/thin/arm64/lib/libavutil.a": "a49b606d0083f055ec3f65fa637c79bbf9de3c8123e186848172ee7c71fe33bc",
+          "dist/FFmpeg/macos/thin/arm64/lib/libswresample.a": "67675bee9730fde730c7862c8ac8ddecbcc1c2820fca0fece8d4ff27666aff1b",
+          "dist/FFmpeg/macos/thin/arm64/lib/libswscale.a": "64ffcc8efb29b5b34595affda1d3ed60e119aa1294d23102f110d8dff46cdf94"
+        }
+      },
+      "x86_64": {
+        "objectCount": 984,
+        "objectManifestSHA256": "f8db9e2832226c6bee6dd5ba349181e0a19b893377b47f285811b66364a72f0e",
+        "staticArchives": {
+          "dist/FFmpeg/macos/thin/x86_64/lib/libavcodec.a": "cf62eff1fc32831186ea483493cb8d5060182698c9c38ebef6b515d5c53acfcf",
+          "dist/FFmpeg/macos/thin/x86_64/lib/libavdevice.a": "cbfbb57f294b64a40e983662362cde05c529a128f29460b6f6005e894602a320",
+          "dist/FFmpeg/macos/thin/x86_64/lib/libavfilter.a": "764faa726434df2f13d7667f0bb32e6443988a974cb45fcc14e22e972efe3be7",
+          "dist/FFmpeg/macos/thin/x86_64/lib/libavformat.a": "5dbc3a3666fc72785d02e5b4f7d751d9c55b6195f226839524cf769c6ff6ca73",
+          "dist/FFmpeg/macos/thin/x86_64/lib/libavutil.a": "0611fe66810eebbf5881edbb20d669afa9e779211bd39cc22bbd7fc2d3bbf038",
+          "dist/FFmpeg/macos/thin/x86_64/lib/libswresample.a": "1c10e9b3d12fd5bcb1e71617895d40f772e2b598bcf033ccbaf000014b24e170",
+          "dist/FFmpeg/macos/thin/x86_64/lib/libswscale.a": "d2875c95e96624488a005f82c3b93f693b5c70f2fcc51c7dffa3a58662d93695"
+        }
+      }
+    }
+  },
+  "verifierSHA256": "213ff861c4b2e96e56b0a562448def2259533b989366463651e4d131cc99c1f7",
+  "actualBuilderSnapshotSHA256": "6e56695df1bd44bb2d83e6447ee6d9ecb11ef003caa5eebe7349efcde3368df1"
+}

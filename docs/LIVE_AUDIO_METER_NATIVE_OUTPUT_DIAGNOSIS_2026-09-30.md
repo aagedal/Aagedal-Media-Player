@@ -205,3 +205,16 @@ This corrects the reproduced initialization defect in a local incremental
 candidate. The app's shipping package pin remains unchanged. A full immutable
 MPVKit build/repin, actual audible output, device switching, supported macOS,
 surround hardware and release-floor acceptance remain open.
+
+## Complete local macOS dependency build
+
+A subsequent clean isolated build now recompiles every mpv and FFmpeg object
+for arm64 and x86_64. The upstream MPVKit recipe still uses separately
+hash-recorded prebuilt auxiliary dependencies. All eight produced XCFramework
+ZIPs have verified actual universal binaries and matching SwiftPM checksums;
+the immutable local MPVKit/mpv/FFmpeg candidate revisions retain clean source
+trees after build. See [complete build provenance and exact limitations](evidence/live-meter-native-output-20260930/clean-rebuild/README.md).
+
+This closes the local full-object build step, not remote artifact publication,
+shipping repin or playback/output acceptance for the new artifact. Existing
+incremental candidate playback evidence remains tied to its original hashes.

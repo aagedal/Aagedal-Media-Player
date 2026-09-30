@@ -43,6 +43,7 @@ python_tests=(
     scripts/test-itu-programme-true-peak-reference.py
     scripts/test-live-audio-meter-profile-validation.py
     scripts/test-mpv-coreaudio-candidate.py
+    scripts/test-mpv-coreaudio-clean-candidate.py
     scripts/test-metadata-candidate-validation.py
     scripts/test-metadata-cli-validation.py
     scripts/test-metadata-jxl-diagnostic.py

@@ -1,0 +1,34 @@
+{
+  "sourceSnapshots": {
+    "MPVKit": {
+      "path": "/private/tmp/aagedal-coreaudio-clean-build-v4-20260930/immutable-source-snapshots/MPVKit.tar.gz",
+      "sha256": "b4a5ecf871a6a85552fd6a2925ace8a5eb4917df8e13883687bb8df546703d92",
+      "sizeBytes": 85977,
+      "revision": "15393a78ace3a30b3f0fec17c787893f5e44bbb9",
+      "tree": "06fc1a0d88cddb13d1b8c8d3af7b54061c4edc91"
+    },
+    "mpv": {
+      "path": "/private/tmp/aagedal-coreaudio-clean-build-v4-20260930/immutable-source-snapshots/mpv.tar.gz",
+      "sha256": "2ef5fd546a894d5b2ec586702c3475479654f66dee7825f1dc8a4358b0f34422",
+      "sizeBytes": 7242375,
+      "revision": "2fdb5b54ec99fa3861b5e2bc9181724e659b5882",
+      "tree": "54755f0392d635a53a3f644668ba76b303be4512"
+    },
+    "FFmpeg": {
+      "path": "/private/tmp/aagedal-coreaudio-clean-build-v4-20260930/immutable-source-snapshots/FFmpeg.tar.gz",
+      "sha256": "bbbdba56bead44277b53e61236ddd5ae40ae67d2a0a667aa1e893348af4b9281",
+      "sizeBytes": 16563788,
+      "revision": "f315416f7075aed202db27d4b4a4d24e99617379",
+      "tree": "9b3a672a066ef0655b6cf42bf967e57f1d832c88"
+    }
+  },
+  "logs": {
+    "/private/tmp/aagedal-coreaudio-clean-build-v4-20260930/build.log": "4d82ef3747150312b3b149b2b286fdffa87ffd830707136f555520ea5ced5236",
+    "/tmp/aagedal-coreaudio-clean-build-v4-20260930-driver.log": "583d05ac8f69d6c102cb4746cc87a417d286550e66cbd4651ce8728d22ef70a6"
+  },
+  "currentBuilderSHA256": "213ff861c4b2e96e56b0a562448def2259533b989366463651e4d131cc99c1f7",
+  "safetyTests": {
+    "count": 7,
+    "status": "passed"
+  }
+}

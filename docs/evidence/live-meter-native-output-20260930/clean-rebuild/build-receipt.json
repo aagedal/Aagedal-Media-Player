@@ -1,0 +1,311 @@
+{
+  "scope": "clean macOS mpv/FFmpeg build with upstream prebuilt auxiliary dependencies; local unpublished candidate",
+  "upstreamMPVKitRevision": "230c3174f1515898f24599147ad61c2a277d0dc2",
+  "patchSHA256": "176cdef4eb860cfbffcaf821b186b1e6e7f5f1c1a1c246d728b5c28ef960a2d5",
+  "patchURL": "https://github.com/iina/deps-buildscripts/blob/f86d54276547df6d14104583ea604af67433f1e1/patches/mpv/18384-audio-channel.patch",
+  "prebuiltAuxiliaryInputs": [
+    {
+      "path": "/Users/truls.aagedal/Developer/MPVKit/dist/gmp-3.8.11/gmp.zip",
+      "relativePath": "dist/gmp-3.8.11/gmp.zip",
+      "sha256": "cef5c3ff12260528a5971d2bd7bb3bc31ae85fac1235c06eff3de96c28c38aa2",
+      "sizeBytes": 4588994
+    },
+    {
+      "path": "/Users/truls.aagedal/Developer/MPVKit/dist/gnutls-3.8.11/gnutls.zip",
+      "relativePath": "dist/gnutls-3.8.11/gnutls.zip",
+      "sha256": "6e125d9d7be4e09e112950703b0563324f5a05e546782e542b353db360f59b59",
+      "sizeBytes": 18982019
+    },
+    {
+      "path": "/Users/truls.aagedal/Developer/MPVKit/dist/lcms2-2.17.0/lcms2.zip",
+      "relativePath": "dist/lcms2-2.17.0/lcms2.zip",
+      "sha256": "8c118b2c04e2440ecf25ffebfa7952ebb09aba83a71378e3b9ed45dae3a6115a",
+      "sizeBytes": 3007879
+    },
+    {
+      "path": "/Users/truls.aagedal/Developer/MPVKit/dist/libass-0.17.4/libass.zip",
+      "relativePath": "dist/libass-0.17.4/libass.zip",
+      "sha256": "fdd0b89998f253ad07fb73a5044766911404f4f92f4037812ae960589595638e",
+      "sizeBytes": 1761673
+    },
+    {
+      "path": "/Users/truls.aagedal/Developer/MPVKit/dist/libass-0.17.5/libass.zip",
+      "relativePath": "dist/libass-0.17.5/libass.zip",
+      "sha256": "d5e4b6046d0a4198fb97083816348b2229071749de8c429747a9558c325a1d3a",
+      "sizeBytes": 1775040
+    },
+    {
+      "path": "/Users/truls.aagedal/Developer/MPVKit/dist/libbluray-1.4.0/libbluray.zip",
+      "relativePath": "dist/libbluray-1.4.0/libbluray.zip",
+      "sha256": "c0302f43258ba41d9661dea0be4a7c9c1dd59d30d284ecfbf7319157c8e8a8de",
+      "sizeBytes": 2625844
+    },
+    {
+      "path": "/Users/truls.aagedal/Developer/MPVKit/dist/libdav1d-1.5.2-xcode/libdav1d.zip",
+      "relativePath": "dist/libdav1d-1.5.2-xcode/libdav1d.zip",
+      "sha256": "52ad3643dc9f9756b7b40c8375c54c8d8a4b200c4c73e94735e35005cc74aecc",
+      "sizeBytes": 5192030
+    },
+    {
+      "path": "/Users/truls.aagedal/Developer/MPVKit/dist/libdav1d-1.5.3/libdav1d.zip",
+      "relativePath": "dist/libdav1d-1.5.3/libdav1d.zip",
+      "sha256": "5d9ca131372bc9513100dbc43a59582ad1cf7acf6136ad4e6fecd63dc0075d82",
+      "sizeBytes": 5200983
+    },
+    {
+      "path": "/Users/truls.aagedal/Developer/MPVKit/dist/libdovi-3.3.2/libdovi.zip",
+      "relativePath": "dist/libdovi-3.3.2/libdovi.zip",
+      "sha256": "81b85386016a012391c473674ef96e4e494fa76aef2f7b6c102a335e844644f8",
+      "sizeBytes": 11413568
+    },
+    {
+      "path": "/Users/truls.aagedal/Developer/MPVKit/dist/libfreetype-0.17.4/libfreetype.zip",
+      "relativePath": "dist/libfreetype-0.17.4/libfreetype.zip",
+      "sha256": "f0eec59e51f4137ba57afa849393ba4815c25418870b9511990bd4ebeacdbfaf",
+      "sizeBytes": 5789325
+    },
+    {
+      "path": "/Users/truls.aagedal/Developer/MPVKit/dist/libfreetype-0.17.5/libfreetype.zip",
+      "relativePath": "dist/libfreetype-0.17.5/libfreetype.zip",
+      "sha256": "d5fb41dd3d66c6e433b389a398571b51b8d65f3f9e81f10ee61d5434a647749e",
+      "sizeBytes": 5891891
+    },
+    {
+      "path": "/Users/truls.aagedal/Developer/MPVKit/dist/libfribidi-0.17.4/libfribidi.zip",
+      "relativePath": "dist/libfribidi-0.17.4/libfribidi.zip",
+      "sha256": "e20ccc160ea2995f2ef2c5ee0ec50f307cbc10c371fb299b5df62546de07d59d",
+      "sizeBytes": 391452
+    },
+    {
+      "path": "/Users/truls.aagedal/Developer/MPVKit/dist/libfribidi-0.17.5/libfribidi.zip",
+      "relativePath": "dist/libfribidi-0.17.5/libfribidi.zip",
+      "sha256": "7ae8cf8c8b16a8b4ebc004f3368044d9baf8454398d18d9e8bc37964b04a2fe6",
+      "sizeBytes": 393673
+    },
+    {
+      "path": "/Users/truls.aagedal/Developer/MPVKit/dist/libharfbuzz-0.17.4/libharfbuzz.zip",
+      "relativePath": "dist/libharfbuzz-0.17.4/libharfbuzz.zip",
+      "sha256": "c1f56b4f47b64b15e0be16a93703a6db484079878de16b6d598d22055d86f24c",
+      "sizeBytes": 19617295
+    },
+    {
+      "path": "/Users/truls.aagedal/Developer/MPVKit/dist/libharfbuzz-0.17.5/libharfbuzz.zip",
+      "relativePath": "dist/libharfbuzz-0.17.5/libharfbuzz.zip",
+      "sha256": "ff67179fb84a9a0f34b2ba276c4028823fecd90315cf18496be400cdfc768a3e",
+      "sizeBytes": 34473455
+    },
+    {
+      "path": "/Users/truls.aagedal/Developer/MPVKit/dist/libluajit-2.1.0-fix/libluajit.zip",
+      "relativePath": "dist/libluajit-2.1.0-fix/libluajit.zip",
+      "sha256": "15a2b0d2b013074cefcfacfcb9df4ea7e5624e76decdb7c3b0556c3068a2816b",
+      "sizeBytes": 2605652
+    },
+    {
+      "path": "/Users/truls.aagedal/Developer/MPVKit/dist/libluajit-2.1.0-xcode/libluajit.zip",
+      "relativePath": "dist/libluajit-2.1.0-xcode/libluajit.zip",
+      "sha256": "e4dc3a930e699dbfa76cce4b6e583589d8093bd7e6e4b7fc5778c890d7d93430",
+      "sizeBytes": 2554505
+    },
+    {
+      "path": "/Users/truls.aagedal/Developer/MPVKit/dist/libplacebo-7.360.1/libplacebo.zip",
+      "relativePath": "dist/libplacebo-7.360.1/libplacebo.zip",
+      "sha256": "cdb8a07563bca119ca909ab4a3503825c27678736cdab294338b0a7dbe2cf35c",
+      "sizeBytes": 8692592
+    },
+    {
+      "path": "/Users/truls.aagedal/Developer/MPVKit/dist/libshaderc-2025.5.0/libshaderc.zip",
+      "relativePath": "dist/libshaderc-2025.5.0/libshaderc.zip",
+      "sha256": "1079da73a292e5b2cea6a02fa2208c4935ead79a98043f81708424510e0ab53f",
+      "sizeBytes": 122917658
+    },
+    {
+      "path": "/Users/truls.aagedal/Developer/MPVKit/dist/libsmbclient-4.15.13-2512/libsmbclient.zip",
+      "relativePath": "dist/libsmbclient-4.15.13-2512/libsmbclient.zip",
+      "sha256": "6861f0b0e45abd3248a8160d1c0b4ede66eef5163f04598830883a951607cef9",
+      "sizeBytes": 97090982
+    },
+    {
+      "path": "/Users/truls.aagedal/Developer/MPVKit/dist/libuavs3d-1.2.1-fix/libuavs3d.zip",
+      "relativePath": "dist/libuavs3d-1.2.1-fix/libuavs3d.zip",
+      "sha256": "8644c7a8182679dbe762b522356606220bb6d2196a5ec65511eda42ef48b3e7a",
+      "sizeBytes": 4580333
+    },
+    {
+      "path": "/Users/truls.aagedal/Developer/MPVKit/dist/libuavs3d-1.2.1-xcode/libuavs3d.zip",
+      "relativePath": "dist/libuavs3d-1.2.1-xcode/libuavs3d.zip",
+      "sha256": "f6fe88444d56d7332cd215fb2a04c14c16e8e565aa00d0c2798eb04c47e5bbe7",
+      "sizeBytes": 3833266
+    },
+    {
+      "path": "/Users/truls.aagedal/Developer/MPVKit/dist/libuchardet-0.0.8/libuchardet.zip",
+      "relativePath": "dist/libuchardet-0.0.8/libuchardet.zip",
+      "sha256": "21407ffd33ce5550f7adf0759c268ac3c8022a90f80b2a9a25e8273fd27814bb",
+      "sizeBytes": 1240404
+    },
+    {
+      "path": "/Users/truls.aagedal/Developer/MPVKit/dist/libuchardet-0.0.8-xcode/libuchardet.zip",
+      "relativePath": "dist/libuchardet-0.0.8-xcode/libuchardet.zip",
+      "sha256": "2e530b2d5448a1ca9d1f0a6b3ddf80729a870a6ec6c0f8555bc89c58143f01d1",
+      "sizeBytes": 1240388
+    },
+    {
+      "path": "/Users/truls.aagedal/Developer/MPVKit/dist/libunibreak-0.17.4/libunibreak.zip",
+      "relativePath": "dist/libunibreak-0.17.4/libunibreak.zip",
+      "sha256": "06f7e68102bb9f9f963b2517455dc543f438f7beccd002edcd63dcd1cbccd9a5",
+      "sizeBytes": 754574
+    },
+    {
+      "path": "/Users/truls.aagedal/Developer/MPVKit/dist/libunibreak-0.17.5/libunibreak.zip",
+      "relativePath": "dist/libunibreak-0.17.5/libunibreak.zip",
+      "sha256": "a7a9c0afa36e2301eec583e5575c30c1609357045d718565d06faf93abc56617",
+      "sizeBytes": 754560
+    },
+    {
+      "path": "/Users/truls.aagedal/Developer/MPVKit/dist/nettle-3.8.11/nettle.zip",
+      "relativePath": "dist/nettle-3.8.11/nettle.zip",
+      "sha256": "7c1606e5acdc0be563f5a6bb19cd2fe3e1e93b30154ac22fc2f80bffcf3151c2",
+      "sizeBytes": 8504154
+    },
+    {
+      "path": "/Users/truls.aagedal/Developer/MPVKit/dist/openssl-3.3.5/openssl.zip",
+      "relativePath": "dist/openssl-3.3.5/openssl.zip",
+      "sha256": "8bc37424aa98fdeac17fd00fbeea7b784a39f1f800cc7f9e0c948d3b169c6f2f",
+      "sizeBytes": 44619276
+    },
+    {
+      "path": "/Users/truls.aagedal/Developer/MPVKit/dist/vulkan-1.4.1/vulkan.zip",
+      "relativePath": "dist/vulkan-1.4.1/vulkan.zip",
+      "sha256": "9f65e1025f49c55394da475e40fbe1da8dbd10382d730ce81ebc4c5ac40104d1",
+      "sizeBytes": 27976317
+    },
+    {
+      "path": "/Users/truls.aagedal/Developer/MPVKit/dist/vulkan-1.4.2/vulkan.zip",
+      "relativePath": "dist/vulkan-1.4.2/vulkan.zip",
+      "sha256": "551bf9ee4e6fe1f9a148a6aef8eff5e5e6e0c0be9dedda2405812023d4a38c60",
+      "sizeBytes": 28826665
+    }
+  ],
+  "sourceInputs": {
+    "libmpv-v0.41.0": {
+      "upstreamRevision": "41f6a645068483470267271e1d09966ca3b9f413",
+      "upstreamTree": "d0cc1c088a9c72f52d6c232438215c50ceeb11a3",
+      "candidateRevision": "2fdb5b54ec99fa3861b5e2bc9181724e659b5882",
+      "candidateTree": "54755f0392d635a53a3f644668ba76b303be4512",
+      "patches": [
+        {
+          "path": "Sources/BuildScripts/patch/libmpv/0001-player-add-moltenvk-context.patch",
+          "sha256": "fc13e7c599c29df346643502c990ff8037a0adebdc09282c44e32cdb1ad935e4"
+        },
+        {
+          "path": "Sources/BuildScripts/patch/libmpv/0002-revert-build-static.patch",
+          "sha256": "39b5b1b2b201209ca68f7c01f4770dd4561a42c2b3072cc3f9b3c044f3391c40"
+        },
+        {
+          "path": "Sources/BuildScripts/patch/libmpv/0003-enable-avfoundation-ao-tvos.patch",
+          "sha256": "693e8ace8057ac46c42195949777159c5aa37f9b7ce81f488758481973da9312"
+        },
+        {
+          "path": "/Users/truls.aagedal/Developer/Aagedal-Media-Player/docs/evidence/live-meter-native-output-20260930/isolated-coreaudio-probe/iina-18384-audio-channel.patch",
+          "sha256": "176cdef4eb860cfbffcaf821b186b1e6e7f5f1c1a1c246d728b5c28ef960a2d5",
+          "headerAdaptation": "Preserve pinned tvOS TargetConditionals guards around device HAL declarations.",
+          "appliedPatchSHA256": "af6edfe3af30f21e1281c6ddfc8bdf708bade1870b496ebf17c38a89caf03799"
+        }
+      ]
+    },
+    "FFmpeg-n8.1.2": {
+      "upstreamRevision": "38b88335f99e76ed89ff3c93f877fdefce736c13",
+      "upstreamTree": "1a0883de7a83dc0b87d0fd89c145a7b4553f1563",
+      "candidateRevision": "f315416f7075aed202db27d4b4a4d24e99617379",
+      "candidateTree": "9b3a672a066ef0655b6cf42bf967e57f1d832c88",
+      "patches": []
+    }
+  },
+  "architectures": [
+    "arm64",
+    "x86_64"
+  ],
+  "limitations": [
+    "Auxiliary third-party dependencies use the upstream prebuilt ZIP recipe.",
+    "Local checksum identities do not authenticate auxiliary ZIPs against remote release provenance.",
+    "No remote artifact publication or shipping app package repin.",
+    "No audible-output, device-switch, surround, supported-macOS or release-floor acceptance."
+  ],
+  "recipeAdaptations": [
+    "Skip network-only Swift package manifest entries for auxiliary ZIPs; their local payload identities are retained in this receipt.",
+    "Pass isolated Clang/Swift module cache and temporary directory locations into spawned build processes.",
+    "Apply upstream FFmpeg Metal pixel-buffer source change once before committing candidate source."
+  ],
+  "candidateMPVKitRevision": "15393a78ace3a30b3f0fec17c787893f5e44bbb9",
+  "compilerVersion": "Apple clang version 21.0.0 (clang-2100.3.34.2)\nTarget: arm64-apple-darwin27.0.0\nThread model: posix\nInstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin",
+  "xcodeVersion": "Xcode 27.0\nBuild version 27A266a",
+  "sdkPath": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk",
+  "mesonVersion": "1.12.1",
+  "ninjaVersion": "1.13.2",
+  "builderSHA256": "6e56695df1bd44bb2d83e6447ee6d9ecb11ef003caa5eebe7349efcde3368df1",
+  "buildCommand": [
+    "swift",
+    "run",
+    "--disable-sandbox",
+    "--build-path",
+    "/private/tmp/aagedal-coreaudio-clean-build-v4-20260930/swift-build",
+    "--cache-path",
+    "/private/tmp/aagedal-coreaudio-clean-build-v4-20260930/swift-package-cache",
+    "--config-path",
+    "/private/tmp/aagedal-coreaudio-clean-build-v4-20260930/swift-package-config",
+    "--security-path",
+    "/private/tmp/aagedal-coreaudio-clean-build-v4-20260930/swift-package-security",
+    "--package-path",
+    "/private/tmp/aagedal-coreaudio-clean-build-v4-20260930/MPVKit/Sources/BuildScripts",
+    "-Xswiftc",
+    "-module-cache-path",
+    "-Xswiftc",
+    "/private/tmp/aagedal-coreaudio-clean-build-v4-20260930/swift-cache",
+    "build",
+    "platform=macos",
+    "version=local-coreaudio-candidate"
+  ],
+  "artifacts": {
+    "dist/release/FFmpeg-all.zip": {
+      "sha256": "ccccbc83676938f47d85b258f5b321c56f2902386ee8a358bdae487d24ac2e8e",
+      "sizeBytes": 15328051
+    },
+    "dist/release/Libavcodec.xcframework.zip": {
+      "sha256": "a5112b0b74f1a9f40a7972808392b003c76a41195e1ed9f26939d1d0669b8e09",
+      "sizeBytes": 9851302
+    },
+    "dist/release/Libavdevice.xcframework.zip": {
+      "sha256": "7acbf230288c03c20ef08bc6016f36877b2abc30af1421e118b271f82b5f979f",
+      "sizeBytes": 17317
+    },
+    "dist/release/Libavfilter.xcframework.zip": {
+      "sha256": "ad8e76f6645ff2bebc735205434e6c632bf883e119ba2531d7287fbec2e42e13",
+      "sizeBytes": 924845
+    },
+    "dist/release/Libavformat.xcframework.zip": {
+      "sha256": "b5b62e450657c02f16d49112ca242c07bff6b98ae3ee08b9f478a9d7a4bf42e6",
+      "sizeBytes": 2152342
+    },
+    "dist/release/Libavutil.xcframework.zip": {
+      "sha256": "94d8794727d9c9bbb2995873cfd080b5ec7b8694294b7ab24006f15740afea6a",
+      "sizeBytes": 1172932
+    },
+    "dist/release/Libmpv.xcframework.zip": {
+      "sha256": "8d34927c77f90bd8a88ffdaafa6ff8c13405ab2be1e495c183007a4b452a88aa",
+      "sizeBytes": 5813371
+    },
+    "dist/release/Libswresample.xcframework.zip": {
+      "sha256": "6647a76a8a8d878f7fb1a7077286c0427998b080c7a246be4bd42d550e2f3cd6",
+      "sizeBytes": 125085
+    },
+    "dist/release/Libswscale.xcframework.zip": {
+      "sha256": "bf93de661f0e8c648797c669e0c2d52d44626f54b77fbcbbe5c7b0ed3628a7ba",
+      "sizeBytes": 1120934
+    },
+    "dist/release/libmpv-all.zip": {
+      "sha256": "d08c62c69765ae4f68029d63cb99f279a30d04b317499767955e2bf3b8dea51f",
+      "sizeBytes": 5811444
+    }
+  },
+  "originalCheckoutUnchanged": true,
+  "buildSucceeded": true
+}
