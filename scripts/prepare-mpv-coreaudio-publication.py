@@ -3,13 +3,16 @@
 """Stage an unpublished, macOS-only MPVKit-GPL release without changing app pins.
 
 Requires a shipping-qualified retained build and an explicit proposed immutable
-GitHub release URL. All bytes remain local; no URL is claimed to exist.
+GitHub release URL. All bytes remain local; no URL is claimed to exist. The
+offline reconstruction mode restores exact source/input identities without
+compiling, downloading dependencies, or relocating the retained recipe.
 """
 import argparse
 import gzip
 import hashlib
 import importlib.util
 import json
+import os
 from pathlib import Path
 import re
 import shutil
@@ -354,25 +357,161 @@ def verify(output):
             'publicationSHA256': sha(output / 'publication.json'), 'blockers': metadata['blockers']}
 
 
+def reconstruction_environment(receipt):
+    """Declare only facts retained by the build, with missing identities explicit."""
+    return {
+        'schemaVersion': 1,
+        'scope': 'Offline source/input reconstruction; dependency compilation has not run.',
+        'recordedBuild': {key: receipt.get(key) for key in
+                          ('compilerVersion', 'xcodeVersion', 'sdkPath', 'mesonVersion', 'ninjaVersion')},
+        'recordedMetalToolchain': receipt.get('shippingPrerequisites', {}).get('metalToolchain'),
+        'knownRecipeTools': ['git', 'python3', 'swift', 'clang', 'clang++', 'xcodebuild', 'xcrun',
+                          'meson', 'ninja', 'pkg-config', 'nasm', 'sdl2-config', 'wget',
+                          'make', 'libtool', 'lipo', 'otool', 'zip', 'unzip'],
+        'unrecordedOriginalIdentities': [
+            'Swift/Python/Git/pkg-config/nasm/SDL2 versions and executable hashes',
+            'SDK content and external header identities',
+            'Complete inherited environment and configure autodetection inputs',
+        ],
+        'requiredBeforeCompilation': [
+            'Select Xcode/SDK and all required tools explicitly; compare the recorded versions.',
+            'Probe and bind installed Metal compiler/linker identities, then record any recipe path relocation.',
+            'Review recipe tool installation/network fallbacks and control optional feature autodetection.',
+            'Capture environment, tool/header identities, fresh configuration and object receipts.',
+            'Verify GPL/Metal/Samba parity and both actual binary architectures after compilation.',
+        ],
+        'byteIdenticalRebuildDemonstrated': False,
+    }
+
+
+def restore_source(archive_path, commit_path, destination, expected):
+    """Restore a snapshot and its exact Git HEAD without fetching missing history."""
+    with tarfile.open(archive_path, 'r:gz') as archive:
+        members = archive.getmembers()
+        # The retained snapshots have no symlinks. Refuse them instead of
+        # letting a source path redirect a later extraction or Git operation.
+        for member in members:
+            path = Path(member.name)
+            if (path.is_absolute() or '..' in path.parts or '.git' in path.parts
+                    or '\\' in member.name or not (member.isdir() or member.isfile())):
+                raise ValueError('unsafe reconstruction source archive entry')
+        destination.mkdir(parents=True)
+        for member in members:
+            target = destination / member.name
+            if member.isdir():
+                target.mkdir(parents=True, exist_ok=True)
+            else:
+                target.parent.mkdir(parents=True, exist_ok=True)
+                with target.open('xb') as file:
+                    shutil.copyfileobj(archive.extractfile(member), file)
+                target.chmod(0o755 if member.mode & 0o111 else 0o644)
+    # Ignore host Git config, templates, filters and hooks while materializing
+    # exact retained tree bytes. There is no fetched parent history.
+    env = {key: value for key, value in os.environ.items() if not key.startswith('GIT_')}
+    env.update(GIT_CONFIG_NOSYSTEM='1', GIT_CONFIG_GLOBAL=os.devnull)
+    def git(*args, **kwargs):
+        return subprocess.check_output(['git', '-C', str(destination), *args], env=env, **kwargs).decode().strip()
+    git('init', '--quiet', '--template=')
+    git('config', 'core.autocrlf', 'false')
+    git('config', 'core.filemode', 'true')
+    git('add', '--force', '--all')
+    if git('write-tree') != expected['tree']:
+        raise ValueError('reconstructed source Git tree mismatch')
+    revision = git('hash-object', '-w', '-t', 'commit', '--stdin', input=commit_path.read_bytes())
+    if revision != expected['revision']:
+        raise ValueError('reconstructed source Git commit mismatch')
+    git('update-ref', 'HEAD', revision)
+    # Mark a genuine shallow boundary so commands do not traverse absent
+    # upstream parents; no replacement commit or invented history is created.
+    if any(line.startswith(b'parent ') for line in commit_path.read_bytes().splitlines()):
+        (destination / '.git/shallow').write_text(revision + '\n')
+    if git('status', '--porcelain'):
+        raise ValueError('reconstructed source unexpectedly modified')
+
+
+def reconstruct(stage, output, expected_publication_sha256):
+    """Materialize exact retained sources and inputs; never invoke the recipe."""
+    if not re.fullmatch(r'[a-f0-9]{64}', expected_publication_sha256):
+        raise ValueError('expected publication SHA-256 must be an externally retained lowercase digest')
+    if sha(stage / 'publication.json') != expected_publication_sha256:
+        raise ValueError('publication does not match externally retained SHA-256')
+    if output.exists():
+        raise ValueError('reconstruction output must be new; retained workspaces are never overwritten')
+    if stage == output or stage in output.parents or output in stage.parents:
+        raise ValueError('reconstruction output must be separate from publication stage')
+    driver_bytes = Path(__file__).read_bytes()
+    verified = verify(stage)
+    metadata = json.loads((stage / 'publication.json').read_text())
+    receipt = json.loads((stage / 'provenance/build-receipt.json').read_text())
+    output.mkdir(parents=True)
+    (output / 'reconstruction-driver.py').write_bytes(driver_bytes)
+    for directory in ('clang-cache', 'swift-cache', 'temporary'):
+        (output / directory).mkdir()
+    checkout = output / 'MPVKit'
+    for snapshot in metadata['sourceSnapshots']:
+        destination = checkout if snapshot['name'] == 'MPVKit-recipe' else checkout / 'dist' / snapshot['name']
+        restore_source(stage / snapshot['archivePath'], stage / snapshot['commitPath'], destination, snapshot)
+    input_receipts = []
+    for entry in metadata['auxiliaryBuildInputs']:
+        destination = checkout / entry['relativePath']
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(stage / entry['publicationPath'], destination)
+        if identity(destination) != {key: entry[key] for key in ('sha256', 'sizeBytes')}:
+            raise ValueError('reconstructed auxiliary input identity mismatch')
+        # Retain ZIPs exactly as the original recipe expects. Its ZipBaseBuild
+        # extracts them; source reconstruction does not execute that recipe.
+        input_receipts.append({'relativePath': entry['relativePath'], **identity(destination)})
+    command = ['swift', 'run', '--disable-sandbox']
+    for option, directory in [('build-path', 'swift-build'), ('cache-path', 'swift-package-cache'),
+                              ('config-path', 'swift-package-config'), ('security-path', 'swift-package-security')]:
+        command += ['--' + option, str(output / directory)]
+    command += ['--package-path', str(checkout / 'Sources/BuildScripts'), '-Xswiftc', '-module-cache-path',
+                '-Xswiftc', str(output / 'swift-cache'), 'build', 'enable-gpl', 'platform=macos',
+                'version=local-coreaudio-gpl-candidate']
+    result = {'schemaVersion': 1, 'status': 'reconstructed-inputs-not-built',
+              'publicationSHA256': verified['publicationSHA256'],
+              'reconstructionDriverSHA256': sha(output / 'reconstruction-driver.py'),
+              'sourceSnapshots': metadata['sourceSnapshots'], 'auxiliaryBuildInputs': input_receipts,
+              'candidateBuildCommand': command, 'buildWorkingDirectory': str(checkout),
+              'isolatedEnvironmentPaths': {key: str(output / directory) for key, directory in
+                                          [('CLANG_MODULE_CACHE_PATH', 'clang-cache'),
+                                           ('SWIFT_MODULECACHE_PATH', 'swift-cache'), ('TMPDIR', 'temporary')]},
+              'environmentDeclaration': reconstruction_environment(receipt),
+              'sourceHistory': 'Exact retained commits/trees, with shallow boundaries; upstream parent history is not included.',
+              'recipePathRelocations': [], 'buildExecuted': False, 'blockers': metadata['blockers']}
+    (output / 'reconstruction.json').write_text(json.dumps(result, indent=2, sort_keys=True) + '\n')
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('build', type=Path, nargs='?')
     parser.add_argument('output', type=Path, nargs='?')
     parser.add_argument('--release-base-url')
-    parser.add_argument('--verify', type=Path)
+    modes = parser.add_mutually_exclusive_group()
+    modes.add_argument('--verify', type=Path)
+    modes.add_argument('--reconstruct', type=Path, help='verified stage to restore offline into a new workspace; does not compile')
+    parser.add_argument('--reconstruction-output', type=Path)
+    parser.add_argument('--expected-publication-sha256', help='publication manifest digest retained outside the stage')
     args = parser.parse_args()
     try:
-        if args.verify:
-            if args.build or args.output or args.release_base_url:
+        if args.reconstruct:
+            if args.build or args.output or args.release_base_url or not args.reconstruction_output or not args.expected_publication_sha256:
+                parser.error('--reconstruct requires --reconstruction-output and --expected-publication-sha256 only')
+            result = reconstruct(args.reconstruct.resolve(), args.reconstruction_output.resolve(), args.expected_publication_sha256)
+        elif args.verify:
+            if args.build or args.output or args.release_base_url or args.reconstruction_output or args.expected_publication_sha256:
                 parser.error('--verify cannot be combined with preparation inputs')
             result = verify(args.verify.resolve())
         else:
+            if args.reconstruction_output or args.expected_publication_sha256:
+                parser.error('reconstruction options require --reconstruct')
             if not args.build or not args.output or not args.release_base_url:
                 parser.error('build, output and --release-base-url are required')
             prepare(args.build.resolve(), args.output.resolve(), args.release_base_url)
             result = verify(args.output.resolve())
         print(json.dumps(result, indent=2, sort_keys=True))
-    except (ValueError, OSError, KeyError, subprocess.CalledProcessError) as error:
+    except (ValueError, OSError, KeyError, tarfile.TarError, subprocess.CalledProcessError) as error:
         print(f'Publication preparation failed: {error}', file=sys.stderr)
         return 1
     return 0

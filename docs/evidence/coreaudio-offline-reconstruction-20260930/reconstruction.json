@@ -1,0 +1,249 @@
+{
+  "auxiliaryBuildInputs": [
+    {
+      "relativePath": "dist/openssl-3.3.5/openssl.zip",
+      "sha256": "8bc37424aa98fdeac17fd00fbeea7b784a39f1f800cc7f9e0c948d3b169c6f2f",
+      "sizeBytes": 44619276
+    },
+    {
+      "relativePath": "dist/gnutls-3.8.11/gnutls.zip",
+      "sha256": "6e125d9d7be4e09e112950703b0563324f5a05e546782e542b353db360f59b59",
+      "sizeBytes": 18982019
+    },
+    {
+      "relativePath": "dist/nettle-3.8.11/nettle.zip",
+      "sha256": "7c1606e5acdc0be563f5a6bb19cd2fe3e1e93b30154ac22fc2f80bffcf3151c2",
+      "sizeBytes": 8504154
+    },
+    {
+      "relativePath": "dist/gmp-3.8.11/gmp.zip",
+      "sha256": "cef5c3ff12260528a5971d2bd7bb3bc31ae85fac1235c06eff3de96c28c38aa2",
+      "sizeBytes": 4588994
+    },
+    {
+      "relativePath": "dist/libass-0.17.5/libass.zip",
+      "sha256": "d5e4b6046d0a4198fb97083816348b2229071749de8c429747a9558c325a1d3a",
+      "sizeBytes": 1775040
+    },
+    {
+      "relativePath": "dist/libunibreak-0.17.5/libunibreak.zip",
+      "sha256": "a7a9c0afa36e2301eec583e5575c30c1609357045d718565d06faf93abc56617",
+      "sizeBytes": 754560
+    },
+    {
+      "relativePath": "dist/libfreetype-0.17.5/libfreetype.zip",
+      "sha256": "d5fb41dd3d66c6e433b389a398571b51b8d65f3f9e81f10ee61d5434a647749e",
+      "sizeBytes": 5891891
+    },
+    {
+      "relativePath": "dist/libfribidi-0.17.5/libfribidi.zip",
+      "sha256": "7ae8cf8c8b16a8b4ebc004f3368044d9baf8454398d18d9e8bc37964b04a2fe6",
+      "sizeBytes": 393673
+    },
+    {
+      "relativePath": "dist/libharfbuzz-0.17.5/libharfbuzz.zip",
+      "sha256": "ff67179fb84a9a0f34b2ba276c4028823fecd90315cf18496be400cdfc768a3e",
+      "sizeBytes": 34473455
+    },
+    {
+      "relativePath": "dist/libsmbclient-4.15.13-2512/libsmbclient.zip",
+      "sha256": "6861f0b0e45abd3248a8160d1c0b4ede66eef5163f04598830883a951607cef9",
+      "sizeBytes": 97090982
+    },
+    {
+      "relativePath": "dist/libdav1d-1.5.3/libdav1d.zip",
+      "sha256": "5d9ca131372bc9513100dbc43a59582ad1cf7acf6136ad4e6fecd63dc0075d82",
+      "sizeBytes": 5200983
+    },
+    {
+      "relativePath": "dist/lcms2-2.17.0/lcms2.zip",
+      "sha256": "8c118b2c04e2440ecf25ffebfa7952ebb09aba83a71378e3b9ed45dae3a6115a",
+      "sizeBytes": 3007879
+    },
+    {
+      "relativePath": "dist/libplacebo-7.360.1/libplacebo.zip",
+      "sha256": "cdb8a07563bca119ca909ab4a3503825c27678736cdab294338b0a7dbe2cf35c",
+      "sizeBytes": 8692592
+    },
+    {
+      "relativePath": "dist/libdovi-3.3.2/libdovi.zip",
+      "sha256": "81b85386016a012391c473674ef96e4e494fa76aef2f7b6c102a335e844644f8",
+      "sizeBytes": 11413568
+    },
+    {
+      "relativePath": "dist/vulkan-1.4.2/vulkan.zip",
+      "sha256": "551bf9ee4e6fe1f9a148a6aef8eff5e5e6e0c0be9dedda2405812023d4a38c60",
+      "sizeBytes": 28826665
+    },
+    {
+      "relativePath": "dist/libshaderc-2025.5.0/libshaderc.zip",
+      "sha256": "1079da73a292e5b2cea6a02fa2208c4935ead79a98043f81708424510e0ab53f",
+      "sizeBytes": 122917658
+    },
+    {
+      "relativePath": "dist/libuchardet-0.0.8/libuchardet.zip",
+      "sha256": "21407ffd33ce5550f7adf0759c268ac3c8022a90f80b2a9a25e8273fd27814bb",
+      "sizeBytes": 1240404
+    },
+    {
+      "relativePath": "dist/libbluray-1.4.0/libbluray.zip",
+      "sha256": "c0302f43258ba41d9661dea0be4a7c9c1dd59d30d284ecfbf7319157c8e8a8de",
+      "sizeBytes": 2625844
+    },
+    {
+      "relativePath": "dist/libluajit-2.1.0-fix/libluajit.zip",
+      "sha256": "15a2b0d2b013074cefcfacfcb9df4ea7e5624e76decdb7c3b0556c3068a2816b",
+      "sizeBytes": 2605652
+    },
+    {
+      "relativePath": "dist/libuavs3d-1.2.1-fix/libuavs3d.zip",
+      "sha256": "8644c7a8182679dbe762b522356606220bb6d2196a5ec65511eda42ef48b3e7a",
+      "sizeBytes": 4580333
+    }
+  ],
+  "blockers": [
+    "Proposed release URLs have not been published or downloaded.",
+    "Auxiliary binary target and build-input URLs/checksums are upstream recipe declarations, not remote authentication.",
+    "Fresh ordinary SwiftPM resolution and the shipping app build against the published package remain required.",
+    "Source/configuration reproducibility is retained; byte-identical rebuilds have not been demonstrated.",
+    "Recipe contains host paths and autodetection; environment isolation and supported-macOS/hardware acceptance remain open."
+  ],
+  "buildExecuted": false,
+  "buildWorkingDirectory": "/private/tmp/aagedal-coreaudio-reconstructed-v2-20260930/MPVKit",
+  "candidateBuildCommand": [
+    "swift",
+    "run",
+    "--disable-sandbox",
+    "--build-path",
+    "/private/tmp/aagedal-coreaudio-reconstructed-v2-20260930/swift-build",
+    "--cache-path",
+    "/private/tmp/aagedal-coreaudio-reconstructed-v2-20260930/swift-package-cache",
+    "--config-path",
+    "/private/tmp/aagedal-coreaudio-reconstructed-v2-20260930/swift-package-config",
+    "--security-path",
+    "/private/tmp/aagedal-coreaudio-reconstructed-v2-20260930/swift-package-security",
+    "--package-path",
+    "/private/tmp/aagedal-coreaudio-reconstructed-v2-20260930/MPVKit/Sources/BuildScripts",
+    "-Xswiftc",
+    "-module-cache-path",
+    "-Xswiftc",
+    "/private/tmp/aagedal-coreaudio-reconstructed-v2-20260930/swift-cache",
+    "build",
+    "enable-gpl",
+    "platform=macos",
+    "version=local-coreaudio-gpl-candidate"
+  ],
+  "environmentDeclaration": {
+    "byteIdenticalRebuildDemonstrated": false,
+    "knownRecipeTools": [
+      "git",
+      "python3",
+      "swift",
+      "clang",
+      "clang++",
+      "xcodebuild",
+      "xcrun",
+      "meson",
+      "ninja",
+      "pkg-config",
+      "nasm",
+      "sdl2-config",
+      "wget",
+      "make",
+      "libtool",
+      "lipo",
+      "otool",
+      "zip",
+      "unzip"
+    ],
+    "recordedBuild": {
+      "compilerVersion": "Apple clang version 21.0.0 (clang-2100.3.34.2)\nTarget: arm64-apple-darwin27.0.0\nThread model: posix\nInstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin",
+      "mesonVersion": "1.12.1",
+      "ninjaVersion": "1.13.2",
+      "sdkPath": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk",
+      "xcodeVersion": "Xcode 27.0\nBuild version 27A266a"
+    },
+    "recordedMetalToolchain": {
+      "kernelProbe": {
+        "airSHA256": "9def5bd76161469d7269d636875fb9ca211a7a793c31c83b7d5e8a60f217bd5d",
+        "metallibSHA256": "4274ffc6131dc8f309ed3f4e374b89101d4b17ec90151f2f0bfb30411a38b806"
+      },
+      "root": "/private/var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v27.1.266.1.jWL5ac/Metal.xctoolchain",
+      "tools": {
+        "metal": {
+          "implementation": {
+            "entryPath": "/private/var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v27.1.266.1.jWL5ac/Metal.xctoolchain/usr/metal/current/bin/metal",
+            "path": "/private/var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v27.1.266.1.jWL5ac/Metal.xctoolchain/usr/metal/32023/bin/metal",
+            "sha256": "ca689c7ff76b21271ab8dabfd7fa4c1b1cad9008643f80275cc9f2fdad722941"
+          },
+          "path": "/private/var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v27.1.266.1.jWL5ac/Metal.xctoolchain/usr/bin/metal",
+          "sha256": "ac3dcce4f331e301def076a2280c973c978f72e6622f8576eb3f7c34d1486dd6"
+        },
+        "metallib": {
+          "implementation": {
+            "entryPath": "/private/var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v27.1.266.1.jWL5ac/Metal.xctoolchain/usr/metal/current/bin/metallib",
+            "path": "/private/var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v27.1.266.1.jWL5ac/Metal.xctoolchain/usr/metal/32023/bin/air-lld",
+            "sha256": "97eb7f0cb637d7dc886b79429f7683b0fa2730ddf2ef44a9ac4b129e8a26c7dd"
+          },
+          "path": "/private/var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v27.1.266.1.jWL5ac/Metal.xctoolchain/usr/bin/metallib",
+          "sha256": "08555936a88a025585ae6415ebe8b27e6092670868d92f9677cdcfa9730c340d"
+        }
+      },
+      "version": "Apple metal version 32023.921 (metalfe-32023.921.6)\nTarget: air64-apple-darwin27.0.0\nThread model: posix\nInstalledDir: /private/var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v27.1.266.1.jWL5ac/Metal.xctoolchain/usr/metal/current/bin"
+    },
+    "requiredBeforeCompilation": [
+      "Select Xcode/SDK and all required tools explicitly; compare the recorded versions.",
+      "Probe and bind installed Metal compiler/linker identities, then record any recipe path relocation.",
+      "Review recipe tool installation/network fallbacks and control optional feature autodetection.",
+      "Capture environment, tool/header identities, fresh configuration and object receipts.",
+      "Verify GPL/Metal/Samba parity and both actual binary architectures after compilation."
+    ],
+    "schemaVersion": 1,
+    "scope": "Offline source/input reconstruction; dependency compilation has not run.",
+    "unrecordedOriginalIdentities": [
+      "Swift/Python/Git/pkg-config/nasm/SDL2 versions and executable hashes",
+      "SDK content and external header identities",
+      "Complete inherited environment and configure autodetection inputs"
+    ]
+  },
+  "isolatedEnvironmentPaths": {
+    "CLANG_MODULE_CACHE_PATH": "/private/tmp/aagedal-coreaudio-reconstructed-v2-20260930/clang-cache",
+    "SWIFT_MODULECACHE_PATH": "/private/tmp/aagedal-coreaudio-reconstructed-v2-20260930/swift-cache",
+    "TMPDIR": "/private/tmp/aagedal-coreaudio-reconstructed-v2-20260930/temporary"
+  },
+  "publicationSHA256": "3eb8f8dd20ce2de6802b7d080e6df30a69ca00b6706dc408823291576b96616c",
+  "recipePathRelocations": [],
+  "reconstructionDriverSHA256": "09d96ca66426aab2b9ef035e2bc14fa3abfd2221f8f0b743f34b4748358fc9ac",
+  "schemaVersion": 1,
+  "sourceHistory": "Exact retained commits/trees, with shallow boundaries; upstream parent history is not included.",
+  "sourceSnapshots": [
+    {
+      "archivePath": "sources/MPVKit-recipe.tar.gz",
+      "commitPath": "sources/MPVKit-recipe.commit",
+      "name": "MPVKit-recipe",
+      "revision": "42cf977668f4b20f7423993d3eea9232077481d5",
+      "tree": "e3fb4877be9ca1a3a2aa56e42fe2b1698cc4ca5f",
+      "upstreamRevision": "230c3174f1515898f24599147ad61c2a277d0dc2",
+      "upstreamURL": "https://github.com/aagedal/MPVKit"
+    },
+    {
+      "archivePath": "sources/libmpv-v0.41.0.tar.gz",
+      "commitPath": "sources/libmpv-v0.41.0.commit",
+      "name": "libmpv-v0.41.0",
+      "revision": "50fd4f2fb9e4bed909cef5c9648a1bd33aaef72f",
+      "tree": "54755f0392d635a53a3f644668ba76b303be4512",
+      "upstreamRevision": "41f6a645068483470267271e1d09966ca3b9f413",
+      "upstreamURL": "https://github.com/mpv-player/mpv"
+    },
+    {
+      "archivePath": "sources/FFmpeg-n8.1.2.tar.gz",
+      "commitPath": "sources/FFmpeg-n8.1.2.commit",
+      "name": "FFmpeg-n8.1.2",
+      "revision": "c7aba78212570ed0bd693a441d917d86f2744ad6",
+      "tree": "9b3a672a066ef0655b6cf42bf967e57f1d832c88",
+      "upstreamRevision": "38b88335f99e76ed89ff3c93f877fdefce736c13",
+      "upstreamURL": "https://github.com/FFmpeg/FFmpeg"
+    }
+  ],
+  "status": "reconstructed-inputs-not-built"
+}

@@ -6,6 +6,8 @@ import json
 import io
 from pathlib import Path
 import tempfile
+import subprocess
+from unittest.mock import patch
 import tarfile
 import unittest
 
@@ -74,7 +76,9 @@ class PublicationTests(unittest.TestCase):
                     member.size, member.mode = len(data), 0o644
                     archive.addfile(member, io.BytesIO(data))
             tree = publication.archive_tree(archive_path)
-            commit = ('tree ' + tree + '\n\ntest snapshot\n').encode()
+            commit = ('tree ' + tree + '\nparent ' + 'a' * 40 + '\n'
+                      'author Test <test@example.invalid> 1 +0000\n'
+                      'committer Test <test@example.invalid> 1 +0000\n\ntest snapshot\n').encode()
             commit_path = 'sources/' + name + '.commit'
             write(commit_path, commit)
             revision = publication.git_object('commit', commit).hex()
@@ -212,6 +216,80 @@ class PublicationTests(unittest.TestCase):
                       BASE + '/extra', BASE + '"'):
             with self.subTest(value=value), self.assertRaises(ValueError):
                 publication.release_base(value)
+
+    def test_offline_reconstruction_restores_exact_commits_trees_and_zip_inputs(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            stage, workspace = root / 'stage', root / 'workspace'
+            stage.mkdir()
+            metadata = self.fixture(stage)
+            with patch.dict(publication.os.environ, {'GIT_DIR': str(root / 'wrong-git-directory')}):
+                result = publication.reconstruct(stage, workspace, publication.sha(stage / 'publication.json'))
+            self.assertFalse(result['buildExecuted'])
+            self.assertEqual(result['status'], 'reconstructed-inputs-not-built')
+            self.assertFalse(result['environmentDeclaration']['byteIdenticalRebuildDemonstrated'])
+            self.assertIsNone(result['environmentDeclaration']['recordedBuild']['xcodeVersion'])
+            for snapshot in metadata['sourceSnapshots']:
+                path = workspace / 'MPVKit'
+                if snapshot['name'] != 'MPVKit-recipe':
+                    path = path / 'dist' / snapshot['name']
+                for expression, expected in [('HEAD', snapshot['revision']), ('HEAD^{tree}', snapshot['tree'])]:
+                    actual = subprocess.check_output(['git', '-C', str(path), 'rev-parse', expression]).decode().strip()
+                    self.assertEqual(actual, expected)
+                self.assertEqual((path / '.git/shallow').read_text(), snapshot['revision'] + '\n')
+            for entry in metadata['auxiliaryBuildInputs']:
+                self.assertEqual(publication.identity(workspace / 'MPVKit' / entry['relativePath']),
+                                 {key: entry[key] for key in ('sha256', 'sizeBytes')})
+            self.assertEqual(json.loads((workspace / 'reconstruction.json').read_text()), result)
+            self.assertIn(str(workspace / 'MPVKit/Sources/BuildScripts'), result['candidateBuildCommand'])
+            self.assertFalse((workspace / 'build.log').exists())
+            self.assertEqual(result['reconstructionDriverSHA256'], publication.sha(workspace / 'reconstruction-driver.py'))
+            self.assertTrue((workspace / 'temporary').is_dir())
+
+    def test_reconstruction_requires_external_digest_and_verified_stage_before_creating_output(self):
+        for mutation in ('digest', 'asset', 'invalid-digest'):
+            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                stage, workspace = root / 'stage', root / 'workspace'
+                stage.mkdir()
+                metadata = self.fixture(stage)
+                digest = publication.sha(stage / 'publication.json')
+                if mutation == 'digest':
+                    digest = '0' * 64
+                elif mutation == 'invalid-digest':
+                    digest = 'invalid'
+                else:
+                    (stage / metadata['binaryTargets'][0]['assetPath']).write_bytes(b'mutated')
+                with self.assertRaises(ValueError):
+                    publication.reconstruct(stage, workspace, digest)
+                self.assertFalse(workspace.exists())
+
+    def test_reconstruction_cannot_overwrite_workspace_or_write_inside_stage(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            stage = Path(temporary)
+            self.fixture(stage)
+            digest = publication.sha(stage / 'publication.json')
+            with self.assertRaisesRegex(ValueError, 'never overwritten'):
+                publication.reconstruct(stage, stage, digest)
+            with self.assertRaisesRegex(ValueError, 'separate from publication'):
+                publication.reconstruct(stage, stage / 'new-output', digest)
+            self.assertFalse((stage / 'new-output').exists())
+
+    def test_reconstruction_rejects_archive_symlinks_before_extraction(self):
+        for name, link in [('link', '../outside'), ('link', '/tmp/outside')]:
+            with self.subTest(link=link), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                archive_path = root / 'archive.tar.gz'
+                with tarfile.open(archive_path, 'w:gz') as archive:
+                    good = tarfile.TarInfo('source.txt')
+                    good.size = 4
+                    archive.addfile(good, io.BytesIO(b'good'))
+                    bad = tarfile.TarInfo(name)
+                    bad.type, bad.linkname = tarfile.SYMTYPE, link
+                    archive.addfile(bad)
+                with self.assertRaisesRegex(ValueError, 'unsafe reconstruction source'):
+                    publication.restore_source(archive_path, root / 'missing.commit', root / 'output', {})
+                self.assertFalse((root / 'output').exists())
 
     def test_manifest_has_only_gpl_product_and_macos_and_no_lua(self):
         text = publication.package_manifest([])
