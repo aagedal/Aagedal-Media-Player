@@ -1,0 +1,8 @@
+{
+  "logPath": "/private/tmp/aagedal-2-continuation-focused-20260930-corrected.log",
+  "logSHA256": "065e7f325ecf9dd75488a2680748cadfc3066d7f7959acb5c38cea6a38e9da04",
+  "xcresultPath": "/private/tmp/aagedal-2-continuation-focused-20260930/Corrected.xcresult",
+  "executedTests": 34,
+  "failures": 0,
+  "includesClockFailureContextRegression": true
+}

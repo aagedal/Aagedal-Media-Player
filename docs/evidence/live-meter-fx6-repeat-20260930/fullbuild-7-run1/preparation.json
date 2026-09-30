@@ -1,0 +1,9 @@
+{
+  "candidate": "fullbuild",
+  "historicalTemplate": "/private/tmp/aagedal-live-authentic-20260930/fullbuild-fx6-120s",
+  "historicalBinary": true,
+  "includesClockFailureContextChange": false,
+  "requestedAudioOrdinal": 7,
+  "observationSeconds": 5,
+  "shippingPinChanged": false
+}

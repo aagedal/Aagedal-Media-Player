@@ -1,0 +1,15 @@
+{
+  "candidate": "incremental",
+  "historicalTemplate": "/private/tmp/aagedal-live-authentic-20260930/fx6-selected-120s",
+  "historicalBinary": true,
+  "includesClockFailureContextChange": false,
+  "requestedAudioOrdinal": 0,
+  "observationSeconds": 5,
+  "shippingPinChanged": false,
+  "unlinkedOriginalCacheChanges": {
+    "/private/tmp/aagedal-live-authentic-current-dd-20260930/Build/Products/Release/Aagedal Media Player.app/Contents/MacOS/Aagedal Media Player": {
+      "historical": "b6857df558cd09c8c2448979bf9108f5d3c9e2981f0ec89981e1fbd9253b05d4",
+      "current": "3b36cb9ef66dd8deb0299eaa2293c133a41702fd12b6f615ffd2d8a4e7a87151"
+    }
+  }
+}

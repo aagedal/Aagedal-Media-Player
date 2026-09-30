@@ -390,6 +390,7 @@ final class LiveAudioMeterPerformanceTests: XCTestCase {
     ) {
         let mpv = player.mpvPlayer
         let measurement = session.coordinator.snapshot
+        let clockFailure = session.coordinator.clockFailureContext
         let trackPosition = player.selectedAudioTrackOrderIndex
         let selectedOrdinal = player.audioTrackOptions.indices.contains(trackPosition)
             ? player.audioTrackOptions[trackPosition].audioStreamOrderIndex : nil
@@ -410,6 +411,15 @@ final class LiveAudioMeterPerformanceTests: XCTestCase {
             "meterStartSourceFrame": jsonValue(measurement?.segmentStartFrame),
             "meterEndSourceFrame": jsonValue(measurement?.endFrame),
             "meterRequestStartSourceFrame": jsonValue(session.coordinator.provenance?.request.startSourceFrame),
+            "meterClockFailureGeneration": jsonValue(clockFailure?.generation),
+            "meterClockFailureRequestStartFrame": jsonValue(clockFailure?.requestStartFrame),
+            "meterClockFailureDecodedEndFrame": jsonValue(clockFailure?.decodedEndFrame),
+            "meterClockFailurePlaybackSeconds": jsonValue(clockFailure?.playbackTime),
+            "meterClockFailureDriftSeconds": jsonValue(clockFailure?.drift),
+            "meterClockFailurePublishedSnapshotCount": jsonValue(clockFailure?.publishedSnapshotCount),
+            "meterClockFailureHadEstablishedSynchronization": jsonValue(clockFailure?.hadEstablishedSynchronization),
+            "meterClockFailureWasSuspendedAhead": jsonValue(clockFailure?.wasSuspendedAhead),
+            "meterClockFailurePermittedEndFrame": jsonValue(clockFailure?.permittedEndFrame),
             "playerClockSeconds": jsonValue(player.currentPlaybackTime),
             "playerIsPlaying": player.isPlaying,
             "mpvClockSeconds": jsonValue(mpv?.timePos),

@@ -3893,6 +3893,46 @@ can still grow, same-size concurrent changes remain undetected, and syscall
 cost needs upstream review. This is library-only candidate evidence, not a
 shipping correction. See [candidate patch and checks](docs/evidence/bounded-mxf-candidate-20260930/README.md).
 
+## Phase 175 — Passive Review text correction ownership
+
+Status: Implemented and focused optimized Release checks pass on 2026-09-30.
+
+- [x] Prevent another finding's passive text blur/disappearance or fallback
+  error focus from displacing the correction selected by action preflight.
+- [x] Keep valid unrelated text drafts pending during a selected range correction;
+  retain explicit Return and ordinary blur after the correction is edited.
+- [x] Add two regressions; all 13 Review text checks pass within the validated
+  34-test Review/meter focused run without skips, failures or runtime warnings.
+- [ ] Complete native keyboard, Full Keyboard Access and spoken VoiceOver checks.
+
+A native app binding returned no initial state and was interrupted by the root
+after 351.6 seconds; no interaction acceptance is claimed. See
+[focus ownership and native limitation](docs/evidence/review-text-focus-ownership-20260930/README.md).
+
+## Phase 176 — Retained meter synchronization context and FX6 repeats
+
+Status: Diagnostic context implemented and authentic historical-candidate
+repeats completed on 2026-09-30; intermittent synchronization qualification remains open.
+
+- [x] Retain bounded rejected segment/decoder/playback context separately after
+  clearing visible readings and cancelling the worker; export it in failed profiles.
+- [x] Cover rejection, stale callback isolation and retry cleanup with a new
+  coordinator regression; all 21 focused coordinator checks pass.
+- [x] Retain the initial regression's one-frame expectation failure and corrected
+  strict-floor expectation; no admission/freshness threshold changed.
+- [x] Pass incremental FX6 ordinal zero and historical full-built ordinals zero/seven
+  five-second observations plus exact 288,000-frame EOF drains; retain concurrent
+  dependency-build load and native artifact identities as diagnostic qualifications.
+- [x] Raise candidate/release consumption to 736 aggregate tests for these three
+  new app regressions; all fifteen release-script regressions pass.
+- [ ] Explain/qualify the earlier FX6 failure, then complete shipping-repair,
+  30-minute, audible/device/hardware acceptance.
+
+All three repeats pass the unchanged validator; EOF maximum drifts are
+220/230/240 ms. They do not establish a causal repair or reliable intermittent
+behavior. The 76-file source inventory contains no source long enough for a
+30-minute observation. See [retained repeats and test correction](docs/evidence/live-meter-fx6-repeat-20260930/README.md).
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with

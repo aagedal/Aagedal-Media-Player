@@ -1,0 +1,36 @@
+{
+  "date": "2026-09-30",
+  "native": {
+    "method": "single cua.getState inventory, then single cua.getApp candidate binding attempt",
+    "inventoryRequestedTimeoutMilliseconds": 20000,
+    "inventoryObservedWallSeconds": 0.7876,
+    "nativeAppsPresent": true,
+    "playerIsRunning": false,
+    "lockErrorReported": false,
+    "bindingRequestedTimeoutMilliseconds": 20000,
+    "bindingObservedSecondsUntilAbort": 351.6,
+    "bindingOutcome": "root interrupted blocked call; tool generic label reported aborted by user",
+    "bindingPath": "/private/tmp/aagedal-authentic-continuation-fixed-candidate-20260930/DerivedData/Build/Products/Release/Aagedal Media Player.app",
+    "initialAppStateReturned": false,
+    "nativeActionsCompleted": 0,
+    "accessibilityPreferencesChanged": false,
+    "keyboardAcceptance": false,
+    "fullKeyboardAccessAcceptance": false,
+    "spokenVoiceOverAcceptance": false
+  },
+  "sourceChecks": {
+    "swiftFrontendParse": "passed",
+    "gitDiffCheck": "passed",
+    "xctest": "34 focused optimized Release tests passed; no skips, failures or runtime warnings; all three new Review/meter regressions required",
+    "resultBundle": "/private/tmp/aagedal-2-continuation-focused-20260930/Corrected.xcresult"
+  },
+  "addedTestCount": 2,
+  "newRegressions": [
+    "CompareReviewTextCommitTests.testTextCorrectionDefersOtherFindingTextBlurWithoutDroppingDrafts",
+    "CompareReviewTextCommitTests.testRangeCorrectionDefersSameAndOtherFindingTextBlurUntilCorrected"
+  ],
+  "sourceSHA256": {
+    "Aagedal Media Player/UI/CompareReviewView.swift": "5cece253107d2ab2cc37411dd4a638d00e573518268593bc9ed7e522b08e811c",
+    "Aagedal Media Player Tests/CompareReviewTextCommitTests.swift": "c3b625bc6b029a8b03148b7b1828d2d2fdc0be6c223c7d4720a617ef34fe6578"
+  }
+}

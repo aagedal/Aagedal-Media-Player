@@ -1,0 +1,50 @@
+[
+  {
+    "run": "incremental-0-run1",
+    "xcresultPath": "/private/tmp/aagedal-fx6-repeat-20260930/incremental-0-run1/LiveAudioMeterProfile.xcresult",
+    "testSucceeded": true,
+    "testWallSeconds": 13.314,
+    "validatedRows": 1,
+    "diagnosticCount": 2,
+    "observationSnapshots": 104,
+    "eofSnapshots": 121,
+    "maximumEOFDiffSeconds": 0.2200000000000194,
+    "eofStartFrame": 6424320,
+    "eofEndFrame": 6712320,
+    "timestampFrameCount": 288000,
+    "identitiesUnchanged": true,
+    "historicalBinaryIncludesNewClockFailureContext": false
+  },
+  {
+    "run": "fullbuild-0-run1",
+    "xcresultPath": "/private/tmp/aagedal-fx6-repeat-20260930/fullbuild-0-run1/LiveAudioMeterProfile.xcresult",
+    "testSucceeded": true,
+    "testWallSeconds": 13.484,
+    "validatedRows": 1,
+    "diagnosticCount": 2,
+    "observationSnapshots": 105,
+    "eofSnapshots": 120,
+    "maximumEOFDiffSeconds": 0.23,
+    "eofStartFrame": 6424320,
+    "eofEndFrame": 6712320,
+    "timestampFrameCount": 288000,
+    "identitiesUnchanged": true,
+    "historicalBinaryIncludesNewClockFailureContext": false
+  },
+  {
+    "run": "fullbuild-7-run1",
+    "xcresultPath": "/private/tmp/aagedal-fx6-repeat-20260930/fullbuild-7-run1/LiveAudioMeterProfile.xcresult",
+    "testSucceeded": true,
+    "testWallSeconds": 13.472,
+    "validatedRows": 1,
+    "diagnosticCount": 2,
+    "observationSnapshots": 98,
+    "eofSnapshots": 120,
+    "maximumEOFDiffSeconds": 0.2400000000000194,
+    "eofStartFrame": 6424320,
+    "eofEndFrame": 6712320,
+    "timestampFrameCount": 288000,
+    "identitiesUnchanged": true,
+    "historicalBinaryIncludesNewClockFailureContext": false
+  }
+]

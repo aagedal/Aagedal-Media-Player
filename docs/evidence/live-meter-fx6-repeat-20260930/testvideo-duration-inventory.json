@@ -1,0 +1,2293 @@
+[
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/TimeCode_APV.mov",
+    "programs": [],
+    "stream_groups": [
+      {
+        "streams": []
+      }
+    ],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "channel_layout": "mono",
+        "duration": "51.600000"
+      },
+      {
+        "index": 2,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "channel_layout": "mono",
+        "duration": "51.600000"
+      }
+    ],
+    "format": {
+      "duration": "51.600000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/n-intervju_249165_multitrack.mxf",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s16le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "79.760000"
+      },
+      {
+        "index": 2,
+        "codec_name": "pcm_s16le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "79.760000"
+      },
+      {
+        "index": 3,
+        "codec_name": "pcm_s16le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "79.760000"
+      },
+      {
+        "index": 4,
+        "codec_name": "pcm_s16le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "79.760000"
+      }
+    ],
+    "format": {
+      "duration": "79.760000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/ChapterMarkerSubtitle2x_Test.mov",
+    "programs": [],
+    "stream_groups": [
+      {
+        "streams": []
+      }
+    ],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "aac",
+        "sample_rate": "48000",
+        "channels": 2,
+        "channel_layout": "stereo",
+        "duration": "71.189333"
+      }
+    ],
+    "format": {
+      "duration": "71.189333"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/Plant_TV_ProRes_Alpha.mov",
+    "programs": [],
+    "stream_groups": [
+      {
+        "streams": []
+      }
+    ],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 2,
+        "channel_layout": "stereo",
+        "duration": "20.875000"
+      }
+    ],
+    "format": {
+      "duration": "20.875000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/HDR_MultiAudioTrack.mov",
+    "programs": [],
+    "stream_groups": [
+      {
+        "streams": []
+      }
+    ],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 2,
+        "channel_layout": "stereo",
+        "duration": "237.416667"
+      },
+      {
+        "index": 2,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 2,
+        "channel_layout": "stereo",
+        "duration": "237.416667"
+      },
+      {
+        "index": 3,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 2,
+        "channel_layout": "stereo",
+        "duration": "237.416667"
+      },
+      {
+        "index": 4,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 2,
+        "channel_layout": "stereo",
+        "duration": "237.416667"
+      }
+    ],
+    "format": {
+      "duration": "237.416667"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/C2PA_20251212_TRA_MOV_0224.MP4",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s16be",
+        "sample_rate": "48000",
+        "channels": 2,
+        "duration": "4.800000"
+      }
+    ],
+    "format": {
+      "duration": "4.800000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/TimeCode_MXF.mxf",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "51.600000"
+      },
+      {
+        "index": 2,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "51.600000"
+      }
+    ],
+    "format": {
+      "duration": "51.600000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/MusicTestWaveform.m4a",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 0,
+        "codec_name": "aac",
+        "sample_rate": "44100",
+        "channels": 2,
+        "channel_layout": "stereo",
+        "duration": "73.537596"
+      }
+    ],
+    "format": {
+      "duration": "73.537596"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/TimeCode_HEVC.mov",
+    "programs": [],
+    "stream_groups": [
+      {
+        "streams": []
+      }
+    ],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "channel_layout": "mono",
+        "duration": "51.600000"
+      },
+      {
+        "index": 2,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "channel_layout": "mono",
+        "duration": "51.600000"
+      }
+    ],
+    "format": {
+      "duration": "51.600000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/n-nykolikelonn-181125-mnh-nk-ua.mxf",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s16le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "12.480000"
+      }
+    ],
+    "format": {
+      "duration": "12.480000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/IMG_0151.MOV",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "aac",
+        "sample_rate": "48000",
+        "channels": 2,
+        "channel_layout": "stereo",
+        "duration": "2.316667"
+      },
+      {
+        "index": 2,
+        "codec_name": "apple_apac",
+        "sample_rate": "48000",
+        "channels": 4,
+        "duration": "2.316667"
+      }
+    ],
+    "format": {
+      "duration": "2.316700"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/ChapterMarkerTest.mov",
+    "programs": [],
+    "stream_groups": [
+      {
+        "streams": []
+      }
+    ],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 2,
+        "channel_layout": "stereo",
+        "duration": "287.000000"
+      }
+    ],
+    "format": {
+      "duration": "287.000000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/a7s III ProRes RAW HQ.mov",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 0,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 4,
+        "duration": "14.398583"
+      }
+    ],
+    "format": {
+      "duration": "14.398625"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/ShortPlantHDR_av1.mp4",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "aac",
+        "sample_rate": "48000",
+        "channels": 2,
+        "channel_layout": "stereo",
+        "duration": "20.881000"
+      }
+    ],
+    "format": {
+      "duration": "20.881000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/ChapterMarkerSubtitleTest.mov",
+    "programs": [],
+    "stream_groups": [
+      {
+        "streams": []
+      }
+    ],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "aac",
+        "sample_rate": "48000",
+        "channels": 2,
+        "channel_layout": "stereo",
+        "duration": "71.189333"
+      }
+    ],
+    "format": {
+      "duration": "71.189333"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/O\u0308gonKra\u030al\u00e6rep\u00f8_HapoelBersheva.mov",
+    "programs": [],
+    "stream_groups": [
+      {
+        "streams": []
+      }
+    ],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 2,
+        "channel_layout": "stereo",
+        "duration": "6.880000"
+      }
+    ],
+    "format": {
+      "duration": "6.880000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/Arknights - Reimei Zensou.mp4",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "aac",
+        "sample_rate": "44100",
+        "channels": 2,
+        "channel_layout": "stereo",
+        "duration": "1420.109206"
+      }
+    ],
+    "format": {
+      "duration": "1420.109206"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/ChapterMarkerTest.mp4",
+    "programs": [],
+    "stream_groups": [
+      {
+        "streams": []
+      }
+    ],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "aac",
+        "sample_rate": "48000",
+        "channels": 2,
+        "channel_layout": "stereo",
+        "duration": "287.082667"
+      }
+    ],
+    "format": {
+      "duration": "287.082667"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/Interstellar_2014_copy.mkv",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "dts",
+        "sample_rate": "48000",
+        "channels": 6,
+        "channel_layout": "5.1(side)"
+      },
+      {
+        "index": 2,
+        "codec_name": "dts",
+        "sample_rate": "48000",
+        "channels": 6,
+        "channel_layout": "5.1(side)"
+      },
+      {
+        "index": 3,
+        "codec_name": "ac3",
+        "sample_rate": "48000",
+        "channels": 6,
+        "channel_layout": "5.1(side)"
+      },
+      {
+        "index": 4,
+        "codec_name": "dts",
+        "sample_rate": "48000",
+        "channels": 6,
+        "channel_layout": "5.1(side)"
+      },
+      {
+        "index": 5,
+        "codec_name": "dts",
+        "sample_rate": "48000",
+        "channels": 6,
+        "channel_layout": "5.1(side)"
+      },
+      {
+        "index": 6,
+        "codec_name": "dts",
+        "sample_rate": "48000",
+        "channels": 6,
+        "channel_layout": "5.1(side)"
+      },
+      {
+        "index": 7,
+        "codec_name": "dts",
+        "sample_rate": "48000",
+        "channels": 6,
+        "channel_layout": "5.1(side)"
+      },
+      {
+        "index": 8,
+        "codec_name": "ac3",
+        "sample_rate": "48000",
+        "channels": 6,
+        "channel_layout": "5.1(side)"
+      },
+      {
+        "index": 9,
+        "codec_name": "ac3",
+        "sample_rate": "48000",
+        "channels": 6,
+        "channel_layout": "5.1(side)"
+      },
+      {
+        "index": 10,
+        "codec_name": "ac3",
+        "sample_rate": "48000",
+        "channels": 6,
+        "channel_layout": "5.1(side)"
+      },
+      {
+        "index": 11,
+        "codec_name": "ac3",
+        "sample_rate": "48000",
+        "channels": 6,
+        "channel_layout": "5.1(side)"
+      },
+      {
+        "index": 12,
+        "codec_name": "ac3",
+        "sample_rate": "48000",
+        "channels": 6,
+        "channel_layout": "5.1(side)"
+      },
+      {
+        "index": 13,
+        "codec_name": "ac3",
+        "sample_rate": "48000",
+        "channels": 6,
+        "channel_layout": "5.1(side)"
+      },
+      {
+        "index": 14,
+        "codec_name": "ac3",
+        "sample_rate": "48000",
+        "channels": 6,
+        "channel_layout": "5.1(side)"
+      }
+    ],
+    "format": {
+      "duration": "124.206000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/ChapterMarkerSubttileTest.mp4",
+    "programs": [],
+    "stream_groups": [
+      {
+        "streams": []
+      }
+    ],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "aac",
+        "sample_rate": "48000",
+        "channels": 2,
+        "channel_layout": "stereo",
+        "duration": "235.456000"
+      }
+    ],
+    "format": {
+      "duration": "235.456000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/ChapterMarkerDualSubtitle.mp4",
+    "programs": [],
+    "stream_groups": [
+      {
+        "streams": []
+      }
+    ],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "aac",
+        "sample_rate": "48000",
+        "channels": 2,
+        "channel_layout": "stereo",
+        "duration": "71.146000"
+      }
+    ],
+    "format": {
+      "duration": "71.146000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/HGT_test_fra_DVR_CR.mov",
+    "programs": [],
+    "stream_groups": [
+      {
+        "streams": []
+      }
+    ],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "aac",
+        "sample_rate": "48000",
+        "channels": 2,
+        "channel_layout": "stereo",
+        "duration": "156.437333"
+      }
+    ],
+    "format": {
+      "duration": "156.437333"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/ShortPlantHDR.mp4",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "aac",
+        "sample_rate": "48000",
+        "channels": 2,
+        "channel_layout": "stereo",
+        "duration": "20.878917"
+      }
+    ],
+    "format": {
+      "duration": "20.878917"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/ChapterMarkerSubtitleTest.mp4",
+    "programs": [],
+    "stream_groups": [
+      {
+        "streams": []
+      }
+    ],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "aac",
+        "sample_rate": "48000",
+        "channels": 2,
+        "channel_layout": "stereo",
+        "duration": "71.189333"
+      }
+    ],
+    "format": {
+      "duration": "71.189333"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/Sony A1 Card/M4ROOT/CLIP/20260502_TRA_MOV_0240.MP4",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s16be",
+        "sample_rate": "48000",
+        "channels": 2,
+        "duration": "111.360000"
+      }
+    ],
+    "format": {
+      "duration": "111.360000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/XQD/SUb_Subfoler/732_1186.MXF",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "51.600000"
+      },
+      {
+        "index": 2,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "51.600000"
+      },
+      {
+        "index": 3,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "51.600000"
+      },
+      {
+        "index": 4,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "51.600000"
+      },
+      {
+        "index": 5,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "51.600000"
+      },
+      {
+        "index": 6,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "51.600000"
+      },
+      {
+        "index": 7,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "51.600000"
+      },
+      {
+        "index": 8,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "51.600000"
+      }
+    ],
+    "format": {
+      "duration": "51.600000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/XQD/SUb_Subfoler/732_1187.MXF",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "8.040000"
+      },
+      {
+        "index": 2,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "8.040000"
+      },
+      {
+        "index": 3,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "8.040000"
+      },
+      {
+        "index": 4,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "8.040000"
+      },
+      {
+        "index": 5,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "8.040000"
+      },
+      {
+        "index": 6,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "8.040000"
+      },
+      {
+        "index": 7,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "8.040000"
+      },
+      {
+        "index": 8,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "8.040000"
+      }
+    ],
+    "format": {
+      "duration": "8.040000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/Sony RAW/Scene9/A002C012_220622VN/A002C012_220622VN.mxf",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.000000"
+      },
+      {
+        "index": 2,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.000000"
+      },
+      {
+        "index": 3,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.000000"
+      },
+      {
+        "index": 4,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.000000"
+      }
+    ],
+    "format": {
+      "duration": "10.000000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/Sony RAW/Scene9/A002C013_220622SK/A002C013_220622SK.mxf",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.000000"
+      },
+      {
+        "index": 2,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.000000"
+      },
+      {
+        "index": 3,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.000000"
+      },
+      {
+        "index": 4,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.000000"
+      }
+    ],
+    "format": {
+      "duration": "10.000000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/Sony RAW/Scene9/A002C015_2206222J/A002C015_2206222J.mxf",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.000000"
+      },
+      {
+        "index": 2,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.000000"
+      },
+      {
+        "index": 3,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.000000"
+      },
+      {
+        "index": 4,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.000000"
+      }
+    ],
+    "format": {
+      "duration": "10.000000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/Sony RAW/Scene 1/FFc 6K X-OCN LT 48p 17.9 (SCENE 4).mxf",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.958333"
+      },
+      {
+        "index": 2,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.958333"
+      },
+      {
+        "index": 3,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.958333"
+      },
+      {
+        "index": 4,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.958333"
+      }
+    ],
+    "format": {
+      "duration": "10.958333"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/Sony RAW/Scene 1/S35 5.8 XAVC 25p 17.9 (SCENE 4).mxf",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.708333"
+      },
+      {
+        "index": 2,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.708333"
+      },
+      {
+        "index": 3,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.708333"
+      },
+      {
+        "index": 4,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.708333"
+      },
+      {
+        "index": 5,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.708333"
+      },
+      {
+        "index": 6,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.708333"
+      },
+      {
+        "index": 7,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.708333"
+      },
+      {
+        "index": 8,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.708333"
+      }
+    ],
+    "format": {
+      "duration": "10.708333"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/Sony RAW/Scene 1/FF 8.6 X.OCN LT 24p 17.9 (SCENE 4).mxf",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "11.416667"
+      },
+      {
+        "index": 2,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "11.416667"
+      },
+      {
+        "index": 3,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "11.416667"
+      },
+      {
+        "index": 4,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "11.416667"
+      }
+    ],
+    "format": {
+      "duration": "11.416667"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/Sony RAW/Scene 1/S35 5.8K XAVC 25p 16.9 (SCENE 4).mxf",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.520000"
+      },
+      {
+        "index": 2,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.520000"
+      },
+      {
+        "index": 3,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.520000"
+      },
+      {
+        "index": 4,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.520000"
+      },
+      {
+        "index": 5,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.520000"
+      },
+      {
+        "index": 6,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.520000"
+      },
+      {
+        "index": 7,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.520000"
+      },
+      {
+        "index": 8,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.520000"
+      }
+    ],
+    "format": {
+      "duration": "10.520000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/Sony RAW/Scene 1/FFc 6K XAVC 25p 16.9 (SCENE 4).mxf",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "11.240000"
+      },
+      {
+        "index": 2,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "11.240000"
+      },
+      {
+        "index": 3,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "11.240000"
+      },
+      {
+        "index": 4,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "11.240000"
+      },
+      {
+        "index": 5,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "11.240000"
+      },
+      {
+        "index": 6,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "11.240000"
+      },
+      {
+        "index": 7,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "11.240000"
+      },
+      {
+        "index": 8,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "11.240000"
+      }
+    ],
+    "format": {
+      "duration": "11.240000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/Sony RAW/Scene 1/S35 5.8 X-OCN LT 24p 17.9 (SCENE 4).mxf",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.416667"
+      },
+      {
+        "index": 2,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.416667"
+      },
+      {
+        "index": 3,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.416667"
+      },
+      {
+        "index": 4,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.416667"
+      }
+    ],
+    "format": {
+      "duration": "10.416667"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/Sony RAW/Scene 1/8.6K XAVC H-I HQ SCENE 4.MXF",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "34.333333"
+      },
+      {
+        "index": 2,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "34.333333"
+      },
+      {
+        "index": 3,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "34.333333"
+      },
+      {
+        "index": 4,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "34.333333"
+      },
+      {
+        "index": 5,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "34.333333"
+      },
+      {
+        "index": 6,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "34.333333"
+      },
+      {
+        "index": 7,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "34.333333"
+      },
+      {
+        "index": 8,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "34.333333"
+      }
+    ],
+    "format": {
+      "duration": "34.333333"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/Sony RAW/Scene 1/FFc 6K X-OCN LT 24p 17.9 (SCENE 4).mxf",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.666667"
+      },
+      {
+        "index": 2,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.666667"
+      },
+      {
+        "index": 3,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.666667"
+      },
+      {
+        "index": 4,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.666667"
+      }
+    ],
+    "format": {
+      "duration": "10.666667"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/Sony RAW/Scene 1/S35c 4K X-OCN LT 120p 17.9 (SCENE 4).mxf",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "11.500000"
+      },
+      {
+        "index": 2,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "11.500000"
+      },
+      {
+        "index": 3,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "11.500000"
+      },
+      {
+        "index": 4,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "11.500000"
+      }
+    ],
+    "format": {
+      "duration": "11.500000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/Sony RAW/Scene 1/FFc 6K XAVC 24p 17.9 (SCENE 4).mxf",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.916667"
+      },
+      {
+        "index": 2,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.916667"
+      },
+      {
+        "index": 3,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.916667"
+      },
+      {
+        "index": 4,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.916667"
+      },
+      {
+        "index": 5,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.916667"
+      },
+      {
+        "index": 6,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.916667"
+      },
+      {
+        "index": 7,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.916667"
+      },
+      {
+        "index": 8,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "10.916667"
+      }
+    ],
+    "format": {
+      "duration": "10.916667"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/TestCard2/n-intervju_249165_multitrack.mxf",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s16le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "79.760000"
+      },
+      {
+        "index": 2,
+        "codec_name": "pcm_s16le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "79.760000"
+      },
+      {
+        "index": 3,
+        "codec_name": "pcm_s16le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "79.760000"
+      },
+      {
+        "index": 4,
+        "codec_name": "pcm_s16le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "79.760000"
+      }
+    ],
+    "format": {
+      "duration": "79.760000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/testmappe_agedal_media_stitch/M4ROOT/CLIP/rre_8077.MP4",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s16be",
+        "sample_rate": "48000",
+        "channels": 2,
+        "duration": "57.600000"
+      }
+    ],
+    "format": {
+      "duration": "57.600000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/testmappe_agedal_media_stitch/M4ROOT/CLIP/rre_8076.MP4",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s16be",
+        "sample_rate": "48000",
+        "channels": 2,
+        "duration": "32.160000"
+      }
+    ],
+    "format": {
+      "duration": "32.160000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/testmappe_agedal_media_stitch/M4ROOT/CLIP/rre_8072.MP4",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s16be",
+        "sample_rate": "48000",
+        "channels": 2,
+        "duration": "16.800000"
+      }
+    ],
+    "format": {
+      "duration": "16.800000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/testmappe_agedal_media_stitch/M4ROOT/CLIP/rre_8073.MP4",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s16be",
+        "sample_rate": "48000",
+        "channels": 2,
+        "duration": "258.720000"
+      }
+    ],
+    "format": {
+      "duration": "258.720000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/testmappe_agedal_media_stitch/M4ROOT/CLIP/rre_8078.MP4",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s16be",
+        "sample_rate": "48000",
+        "channels": 2,
+        "duration": "63.360000"
+      }
+    ],
+    "format": {
+      "duration": "63.360000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/MCA_Test/n-intervju_with-MCA-labels.mxf",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s16le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "channel_layout": "1 channels (FL)",
+        "duration": "79.720000"
+      },
+      {
+        "index": 2,
+        "codec_name": "pcm_s16le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "channel_layout": "1 channels (FR)",
+        "duration": "79.720000"
+      },
+      {
+        "index": 3,
+        "codec_name": "pcm_s16le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "79.720000"
+      },
+      {
+        "index": 4,
+        "codec_name": "pcm_s16le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "79.720000"
+      }
+    ],
+    "format": {
+      "duration": "79.720000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/A1_v_FX6/FX6/OJ_FX6A0021.MXF",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "139.840000"
+      },
+      {
+        "index": 2,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "139.840000"
+      },
+      {
+        "index": 3,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "139.840000"
+      },
+      {
+        "index": 4,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "139.840000"
+      },
+      {
+        "index": 5,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "139.840000"
+      },
+      {
+        "index": 6,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "139.840000"
+      },
+      {
+        "index": 7,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "139.840000"
+      },
+      {
+        "index": 8,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "139.840000"
+      }
+    ],
+    "format": {
+      "duration": "139.840000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/A1_v_FX6/FX6/OJ_FX6A0020.MXF",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "15.720000"
+      },
+      {
+        "index": 2,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "15.720000"
+      },
+      {
+        "index": 3,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "15.720000"
+      },
+      {
+        "index": 4,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "15.720000"
+      },
+      {
+        "index": 5,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "15.720000"
+      },
+      {
+        "index": 6,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "15.720000"
+      },
+      {
+        "index": 7,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "15.720000"
+      },
+      {
+        "index": 8,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "15.720000"
+      }
+    ],
+    "format": {
+      "duration": "15.720000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/A1_v_FX6/FX6/OJ_FX6A0022.MXF",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "44.920000"
+      },
+      {
+        "index": 2,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "44.920000"
+      },
+      {
+        "index": 3,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "44.920000"
+      },
+      {
+        "index": 4,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "44.920000"
+      },
+      {
+        "index": 5,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "44.920000"
+      },
+      {
+        "index": 6,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "44.920000"
+      },
+      {
+        "index": 7,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "44.920000"
+      },
+      {
+        "index": 8,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "44.920000"
+      }
+    ],
+    "format": {
+      "duration": "44.920000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/A1_v_FX6/Atomos Ninja/LISTEN_S001_S001_T014.MOV",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 0,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 4,
+        "duration": "44.920000"
+      }
+    ],
+    "format": {
+      "duration": "44.920000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/A1_v_FX6/Atomos Ninja/LISTEN_S001_S001_T001.MOV",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 0,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 4,
+        "duration": "0.437208"
+      }
+    ],
+    "format": {
+      "duration": "0.437208"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/A1_v_FX6/Atomos Ninja/LISTEN_S001_S001_T015.MOV",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 0,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 4,
+        "duration": "12.320000"
+      }
+    ],
+    "format": {
+      "duration": "12.320000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/A1_v_FX6/Atomos Ninja/LISTEN_S001_S001_T003.MOV",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 0,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 4,
+        "duration": "0.240000"
+      }
+    ],
+    "format": {
+      "duration": "0.240000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/A1_v_FX6/Atomos Ninja/LISTEN_S001_S001_T002.MOV",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 0,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 4,
+        "duration": "1.980000"
+      }
+    ],
+    "format": {
+      "duration": "1.980000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/A1_v_FX6/Atomos Ninja/LISTEN_S001_S001_T006.MOV",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 0,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 4,
+        "duration": "2.650000"
+      }
+    ],
+    "format": {
+      "duration": "2.650000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/A1_v_FX6/Atomos Ninja/LISTEN_S001_S001_T012.MOV",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 0,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 4,
+        "duration": "0.700000"
+      }
+    ],
+    "format": {
+      "duration": "0.700000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/A1_v_FX6/Atomos Ninja/LISTEN_S001_S001_T013.MOV",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 0,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 4,
+        "duration": "19.040000"
+      }
+    ],
+    "format": {
+      "duration": "19.040000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/A1_v_FX6/Atomos Ninja/LISTEN_S001_S001_T007.MOV",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 0,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 4,
+        "duration": "2.260000"
+      }
+    ],
+    "format": {
+      "duration": "2.260000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/A1_v_FX6/Atomos Ninja/LISTEN_S001_S001_T011.MOV",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 0,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 4,
+        "duration": "32.680000"
+      }
+    ],
+    "format": {
+      "duration": "32.680000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/A1_v_FX6/Atomos Ninja/LISTEN_S001_S001_T005.MOV",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 0,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 4,
+        "duration": "0.559396"
+      }
+    ],
+    "format": {
+      "duration": "0.559400"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/A1_v_FX6/Atomos Ninja/LISTEN_S001_S001_T004.MOV",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 0,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 4,
+        "duration": "0.740000"
+      }
+    ],
+    "format": {
+      "duration": "0.740000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/A1_v_FX6/Atomos Ninja/LISTEN_S001_S001_T010.MOV",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 0,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 4,
+        "duration": "25.560000"
+      }
+    ],
+    "format": {
+      "duration": "25.560000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/A1_v_FX6/Atomos Ninja/LISTEN_S001_S001_T009.MOV",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 0,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 4,
+        "duration": "6.000000"
+      }
+    ],
+    "format": {
+      "duration": "6.000000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/A1_v_FX6/A1/20260118_TRA_MOV_0234.MP4",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s16be",
+        "sample_rate": "48000",
+        "channels": 2,
+        "duration": "22.560000"
+      }
+    ],
+    "format": {
+      "duration": "22.560000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/A1_v_FX6/A1/20260118_TRA_MOV_0233.MP4",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s16be",
+        "sample_rate": "48000",
+        "channels": 2,
+        "duration": "42.720000"
+      }
+    ],
+    "format": {
+      "duration": "42.720000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/A1_v_FX6/A1/20260118_TRA_MOV_0232.MP4",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s16be",
+        "sample_rate": "48000",
+        "channels": 2,
+        "duration": "68.640000"
+      }
+    ],
+    "format": {
+      "duration": "68.640000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/A1_v_FX6/A1/20260118_TRA_MOV_0230.MP4",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s16be",
+        "sample_rate": "48000",
+        "channels": 2,
+        "duration": "37.920000"
+      }
+    ],
+    "format": {
+      "duration": "37.920000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/A1_v_FX6/A1/20260118_TRA_MOV_0231.MP4",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s16be",
+        "sample_rate": "48000",
+        "channels": 2,
+        "duration": "82.080000"
+      }
+    ],
+    "format": {
+      "duration": "82.080000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/A1_v_FX6/A1/20260118_TRA_MOV_0229.MP4",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s16be",
+        "sample_rate": "48000",
+        "channels": 2,
+        "duration": "13.440000"
+      }
+    ],
+    "format": {
+      "duration": "13.440000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/GoPro/DolomitesSet1-Hero9-GX019609.MP4",
+    "programs": [],
+    "stream_groups": [
+      {
+        "streams": [
+          {
+            "index": 1,
+            "codec_name": "aac",
+            "sample_rate": "48000",
+            "channels": 2,
+            "channel_layout": "stereo",
+            "duration": "109.653333"
+          }
+        ]
+      }
+    ],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "aac",
+        "sample_rate": "48000",
+        "channels": 2,
+        "channel_layout": "stereo",
+        "duration": "109.653333"
+      }
+    ],
+    "format": {
+      "duration": "109.709600"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/GoPro/Sunset Comparison/NightSEt1-Hero12-LOGEnabled-GX010055.MP4",
+    "programs": [],
+    "stream_groups": [
+      {
+        "streams": [
+          {
+            "index": 1,
+            "codec_name": "aac",
+            "sample_rate": "48000",
+            "channels": 2,
+            "channel_layout": "stereo",
+            "duration": "110.378667"
+          }
+        ]
+      }
+    ],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "aac",
+        "sample_rate": "48000",
+        "channels": 2,
+        "channel_layout": "stereo",
+        "duration": "110.378667"
+      }
+    ],
+    "format": {
+      "duration": "110.443667"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/GoPro/Sunset Comparison/NightSet1-Hero12-GX010014.MP4",
+    "programs": [],
+    "stream_groups": [
+      {
+        "streams": [
+          {
+            "index": 1,
+            "codec_name": "aac",
+            "sample_rate": "48000",
+            "channels": 2,
+            "channel_layout": "stereo",
+            "duration": "111.488000"
+          }
+        ]
+      }
+    ],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "aac",
+        "sample_rate": "48000",
+        "channels": 2,
+        "channel_layout": "stereo",
+        "duration": "111.488000"
+      }
+    ],
+    "format": {
+      "duration": "111.544767"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/GoPro/Sunset Comparison/NightSet1-Action4-DJI_20230905195641_0033_D.MP4",
+    "programs": [],
+    "stream_groups": [
+      {
+        "streams": []
+      }
+    ],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "aac",
+        "sample_rate": "48000",
+        "channels": 2,
+        "channel_layout": "stereo",
+        "duration": "109.653333"
+      }
+    ],
+    "format": {
+      "duration": "109.653333"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/ARRIRAW/DW0001C021_251020_132307_a1I7H.mxf",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "6.875000"
+      },
+      {
+        "index": 2,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "6.875000"
+      }
+    ],
+    "format": {
+      "duration": "6.875000"
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/ARRIRAW/DW0001C005_251020_113322_a1I7H.mxf",
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "5.250000"
+      },
+      {
+        "index": 2,
+        "codec_name": "pcm_s24le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "5.250000"
+      }
+    ],
+    "format": {
+      "duration": "5.250000"
+    }
+  }
+]

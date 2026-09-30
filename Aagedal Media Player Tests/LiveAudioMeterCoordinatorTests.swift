@@ -210,6 +210,47 @@ final class LiveAudioMeterCoordinatorTests: XCTestCase {
         await decoder.waitUntilCancelled(stream: 0)
     }
 
+    func testClockFailureRetainsRejectedSegmentContextWithoutKeepingReadingOrWorker() async throws {
+        let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
+        let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
+        coordinator.start(try request(stream: 0, startFrame: 6_424_320))
+        await decoder.waitUntilAttached(stream: 0)
+        let generation = coordinator.generation
+        decoder.emit(snapshot(endFrame: 6_429_120, segmentStart: 6_424_320), stream: 0)
+        await eventually { coordinator.snapshot != nil }
+        coordinator.updatePlaybackClock(playback(time: 133.95, playing: true))
+        let publicationCount = coordinator.publishedSnapshotCount
+
+        coordinator.updatePlaybackClock(playback(time: 134.20, playing: true))
+
+        let failure = try XCTUnwrap(coordinator.clockFailureContext)
+        XCTAssertEqual(failure.generation, generation)
+        XCTAssertEqual(failure.requestStartFrame, 6_424_320)
+        XCTAssertEqual(failure.decodedEndFrame, 6_429_120)
+        XCTAssertEqual(failure.playbackTime, 134.20)
+        XCTAssertEqual(failure.drift, -0.26, accuracy: 0.000_001)
+        XCTAssertEqual(failure.publishedSnapshotCount, publicationCount)
+        XCTAssertTrue(failure.hadEstablishedSynchronization)
+        XCTAssertFalse(failure.wasSuspendedAhead)
+        // 134.20's binary representation lies just below the exact source
+        // frame. The existing gate floors it before adding the 12,000-frame
+        // allowance, so diagnostic retention must preserve that strict bound.
+        XCTAssertEqual(failure.permittedEndFrame, 6_453_599)
+        XCTAssertNil(coordinator.snapshot)
+        XCTAssertNil(coordinator.reducedSnapshot)
+        XCTAssertNil(coordinator.clockDrift)
+        await decoder.waitUntilCancelled(stream: 0)
+
+        // A queued callback from the invalidated worker cannot overwrite the
+        // rejected endpoint, and the next segment must not inherit it.
+        decoder.emit(snapshot(endFrame: 6_436_320, segmentStart: 6_424_320), stream: 0)
+        await Task.yield()
+        XCTAssertEqual(coordinator.clockFailureContext, failure)
+        XCTAssertTrue(coordinator.retry(at: 134.20))
+        XCTAssertNil(coordinator.clockFailureContext)
+        coordinator.close()
+    }
+
     func testWorkerGateTracksPlaybackClockAndCancelsWithGeneration() async throws {
         let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
         let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)

@@ -220,7 +220,7 @@ exit 91
         self.assertLess(summary, details)
         self.assertLess(details, validation)
         self.assertLess(validation, analysis)
-        self.assertIn('--minimum-tests 733', source)
+        self.assertIn('--minimum-tests 736', source)
         self.assertIn('-parallel-testing-enabled NO', source)
         self.assertEqual(source.count('-skip-testing:'), 2)
         focused = source.index('echo "==> Focused mixed-backend transport repeat"')
@@ -280,7 +280,7 @@ exit 91
         self.assertLess(package_match, result_validation)
         self.assertLess(result_validation, preflight)
         self.assertLess(result_validation, archive)
-        self.assertIn('--minimum-tests 733', self.source)
+        self.assertIn('--minimum-tests 736', self.source)
         self.assertEqual(self.source.count('--require-test'), 2)
 
     def test_release_rechecks_source_before_build_and_publication(self) -> None:

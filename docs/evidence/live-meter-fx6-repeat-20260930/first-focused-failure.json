@@ -1,0 +1,10 @@
+{
+  "logPath": "/private/tmp/aagedal-2-continuation-focused-20260930.log",
+  "logSHA256": "c52970a7d04294f607a61dd8bd1dba9361820332a906ec0dca77694a46fcfb08",
+  "xcresultPath": "/private/tmp/aagedal-2-continuation-focused-20260930/Tests.xcresult",
+  "executedTests": 21,
+  "failures": 1,
+  "failedTest": "LiveAudioMeterCoordinatorTests.testClockFailureRetainsRejectedSegmentContextWithoutKeepingReadingOrWorker",
+  "reason": "Test expected exact decimal source frame6453600; existing strict gate floors binary134.20 to permitted frame6453599.",
+  "fix": "Assertion corrected to6453599; production code and thresholds unchanged."
+}

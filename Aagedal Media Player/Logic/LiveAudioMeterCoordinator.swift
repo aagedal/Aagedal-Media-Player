@@ -29,6 +29,21 @@ nonisolated enum LiveAudioMeterLifecycleStatus: Equatable, Sendable {
     }
 }
 
+/// A synchronization rejection clears visible readings and cancels the worker.
+/// Keep its bounded source/clock context separately so native qualification can
+/// distinguish decoder lag from an incorrectly positioned segment afterwards.
+nonisolated struct LiveAudioMeterClockFailureContext: Equatable, Sendable {
+    let generation: UInt64
+    let requestStartFrame: Int64
+    let decodedEndFrame: Int64
+    let playbackTime: TimeInterval
+    let drift: TimeInterval
+    let publishedSnapshotCount: Int
+    let hadEstablishedSynchronization: Bool
+    let wasSuspendedAhead: Bool
+    let permittedEndFrame: Int64?
+}
+
 /// Every peak bucket is reduced before the one-slot UI handoff. This preserves
 /// immediate attacks and held transients even when the main actor coalesces
 /// several raw DSP snapshots into one rendered update.
@@ -78,6 +93,7 @@ final class LiveAudioMeterCoordinator: ObservableObject {
     @Published private(set) var provenance: LiveAudioMeterDecodeProvenance?
     @Published private(set) var publishedSnapshotCount = 0
     @Published private(set) var clockDrift: TimeInterval?
+    private(set) var clockFailureContext: LiveAudioMeterClockFailureContext?
 
     private let decodeOperation: LiveAudioMeterDecodeOperation
     private var request: LiveAudioMeterDecodeRequest?
@@ -265,6 +281,17 @@ final class LiveAudioMeterCoordinator: ObservableObject {
                 )
                 return
             }
+            let failureContext = LiveAudioMeterClockFailureContext(
+                generation: generation,
+                requestStartFrame: request.startSourceFrame,
+                decodedEndFrame: endFrame,
+                playbackTime: playback.time,
+                drift: drift,
+                publishedSnapshotCount: publishedSnapshotCount,
+                hadEstablishedSynchronization: hasEstablishedClockSync,
+                wasSuspendedAhead: isClockSuspended,
+                permittedEndFrame: workerGate?.permittedEndFrame
+            )
             invalidateCurrent(
                 status: .unavailable(
                     reason: "Live meters lost synchronization with playback.",
@@ -275,6 +302,7 @@ final class LiveAudioMeterCoordinator: ObservableObject {
                 ),
                 clearRequest: false
             )
+            clockFailureContext = failureContext
         case .invalidClock:
             invalidateCurrent(
                 status: .unavailable(
@@ -383,6 +411,7 @@ final class LiveAudioMeterCoordinator: ObservableObject {
         provenance = nil
         publishedSnapshotCount = 0
         clockDrift = nil
+        clockFailureContext = nil
         isTransportSuspended = false
         isClockSuspended = false
         isWaitingForSupportedSpeed = false
@@ -567,6 +596,7 @@ final class LiveAudioMeterCoordinator: ObservableObject {
         provenance = nil
         publishedSnapshotCount = 0
         clockDrift = nil
+        clockFailureContext = nil
         restartCause = nil
         isTransportSuspended = false
         isClockSuspended = false

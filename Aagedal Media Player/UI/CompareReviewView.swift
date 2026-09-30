@@ -27,6 +27,17 @@ enum CompareReviewRangeFocusLossPolicy {
     }
 }
 
+/// A passive text callback must not save another finding or steal focus from
+/// the correction selected by action preflight. Explicit Return still commits.
+enum CompareReviewTextFocusLossPolicy {
+    static func shouldCommit(
+        noteID: UUID, correctionRequest: CompareReviewCorrectionRequest?
+    ) -> Bool {
+        guard let correctionRequest else { return true }
+        return correctionRequest.noteID == noteID && correctionRequest.field == .text
+    }
+}
+
 /// Drafts belong to the player window so dismissing Review cannot discard an
 /// invalid edit before the user returns to correct it.
 struct CompareReviewDraftState {
@@ -469,7 +480,7 @@ struct CompareReviewView: View {
             position: position,
             count: count,
             correctionRequest: drafts.correctionRequest.flatMap { $0.noteID == note.id ? $0 : nil },
-            activeCorrectionField: drafts.correctionRequest?.field,
+            activeCorrectionRequest: drafts.correctionRequest,
             draft: Binding(
                 get: { drafts.noteDrafts[note.id] ?? note.text },
                 set: {
@@ -800,7 +811,10 @@ private struct CompareReviewNoteRow: View {
     let correctionRequest: CompareReviewCorrectionRequest?
     // Focus goes to one finding, but every range field must respect a text
     // correction while its own focus-loss callback runs.
-    let activeCorrectionField: CompareReviewCorrectionRequest.Field?
+    let activeCorrectionRequest: CompareReviewCorrectionRequest?
+    private var activeCorrectionField: CompareReviewCorrectionRequest.Field? {
+        activeCorrectionRequest?.field
+    }
     let timecodeLabel: String
     let canEdit: Bool
     let onSeek: () -> Void
@@ -827,7 +841,7 @@ private struct CompareReviewNoteRow: View {
         position: Int,
         count: Int,
         correctionRequest: CompareReviewCorrectionRequest?,
-        activeCorrectionField: CompareReviewCorrectionRequest.Field?,
+        activeCorrectionRequest: CompareReviewCorrectionRequest?,
         draft: Binding<String>,
         noteActionError: Binding<String?>,
         endFrameDraft: Binding<String>,
@@ -847,7 +861,7 @@ private struct CompareReviewNoteRow: View {
         self.position = position
         self.count = count
         self.correctionRequest = correctionRequest
-        self.activeCorrectionField = activeCorrectionField
+        self.activeCorrectionRequest = activeCorrectionRequest
         self.timecodeLabel = timecodeLabel
         self.canEdit = canEdit
         self.onSeek = onSeek
@@ -891,7 +905,7 @@ private struct CompareReviewNoteRow: View {
                     .disabled(!canEdit)
                     .onSubmit(commit)
                     .onChange(of: isFocused) { wasFocused, focused in
-                        if wasFocused && !focused { commit() }
+                        if wasFocused && !focused { commitOnFocusLoss() }
                     }
                 Button(role: .destructive) {
                     isDeleting = true
@@ -977,14 +991,14 @@ private struct CompareReviewNoteRow: View {
             }
         }
         .onChange(of: noteActionError) { _, error in
-            if error != nil { isFocused = true }
+            if error != nil && canPassivelyCommitText { isFocused = true }
         }
         .onChange(of: correctionRequest) { _, request in
             if let request { focusCorrection(request.field) }
         }
         .onAppear {
             if let correctionRequest { focusCorrection(correctionRequest.field) }
-            else if noteActionError != nil { isFocused = true }
+            else if noteActionError != nil && canPassivelyCommitText { isFocused = true }
             else if rangeActionError != nil { isRangeExpanded = true }
         }
         .onChange(of: isRangeExpanded) { _, expanded in
@@ -994,7 +1008,7 @@ private struct CompareReviewNoteRow: View {
         }
         .padding(8)
         .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8))
-        .onDisappear { commit() }
+        .onDisappear { commitOnFocusLoss() }
     }
 
     @ViewBuilder
@@ -1081,6 +1095,17 @@ private struct CompareReviewNoteRow: View {
         }
         endFrameDraft = String(end)
         rangeActionError = nil
+    }
+
+    private var canPassivelyCommitText: Bool {
+        CompareReviewTextFocusLossPolicy.shouldCommit(
+            noteID: note.id, correctionRequest: activeCorrectionRequest
+        )
+    }
+
+    private func commitOnFocusLoss() {
+        guard canPassivelyCommitText else { return }
+        commit()
     }
 
     private func commit() {

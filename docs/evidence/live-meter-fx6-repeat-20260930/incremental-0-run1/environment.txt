@@ -1,0 +1,16 @@
+2cb108ce6808023e3234e19875794080badbcfd5
+ M "Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift"
+ M "Aagedal Media Player Tests/LiveAudioMeterPerformanceTests.swift"
+ M "Aagedal Media Player/Logic/LiveAudioMeterCoordinator.swift"
+ M scripts/build-mpv-coreaudio-clean-candidate.py
+ M scripts/test-mpv-coreaudio-clean-candidate.py
+?? docs/evidence/coreaudio-gpl-metal-20260930/
+?? docs/evidence/live-meter-fx6-repeat-20260930/
+ProductName:		macOS
+ProductVersion:		27.0.1
+BuildVersion:		26A434
+Xcode 27.0
+Build version 27A266a
+Build configuration: Release
+Historical candidate binary; no rebuild.
+Observation seconds: 5

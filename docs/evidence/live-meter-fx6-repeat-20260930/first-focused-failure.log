@@ -1,0 +1,65 @@
+Test Suite 'Selected tests' started at 2026-09-30 20:59:13.241.
+Test Suite 'Aagedal Media Player Tests.xctest' started at 2026-09-30 20:59:13.241.
+Test Suite 'LiveAudioMeterCoordinatorTests' started at 2026-09-30 20:59:13.241.
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testAllDiscontinuityCausesStartCleanGenerations]' started.
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testAllDiscontinuityCausesStartCleanGenerations]' passed (0.001 seconds).
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testCancellationBeforeAndAfterDecoderAttachmentCleansWorkers]' started.
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testCancellationBeforeAndAfterDecoderAttachmentCleansWorkers]' passed (0.013 seconds).
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testClearMaximaPreservesBarsAndRebasesSubsequentMaxima]' started.
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testClearMaximaPreservesBarsAndRebasesSubsequentMaxima]' passed (0.030 seconds).
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testClockFailureRetainsRejectedSegmentContextWithoutKeepingReadingOrWorker]' started.
+/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift:235: error: -[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testClockFailureRetainsRejectedSegmentContextWithoutKeepingReadingOrWorker] : XCTAssertEqual failed: ("Optional(6453599)") is not equal to ("Optional(6453600)")
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testClockFailureRetainsRejectedSegmentContextWithoutKeepingReadingOrWorker]' failed (0.176 seconds).
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testCoalescedSnapshotsRetainIntermediateTransientBallistics]' started.
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testCoalescedSnapshotsRetainIntermediateTransientBallistics]' passed (0.013 seconds).
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testDecoderEOFFreezesFinalReadingWhileContainerClockContinues]' started.
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testDecoderEOFFreezesFinalReadingWhileContainerClockContinues]' passed (0.018 seconds).
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testDeinitCancelsOwnedWorkerAndLeavesNoOrphan]' started.
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testDeinitCancelsOwnedWorkerAndLeavesNoOrphan]' passed (0.022 seconds).
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testInitialClockLagCanCatchUpBeforeSteadyStateDriftFails]' started.
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testInitialClockLagCanCatchUpBeforeSteadyStateDriftFails]' passed (0.053 seconds).
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testMalformedSnapshotFailsGenerationAndCancelsWorker]' started.
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testMalformedSnapshotFailsGenerationAndCancelsWorker]' passed (0.050 seconds).
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testMalformedSnapshotWinsRaceWithDecoderFailureDiagnostic]' started.
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testMalformedSnapshotWinsRaceWithDecoderFailureDiagnostic]' passed (0.019 seconds).
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testPauseAndBufferingFreezeThenResumeContinuousGeneration]' started.
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testPauseAndBufferingFreezeThenResumeContinuousGeneration]' passed (0.019 seconds).
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testPausedSeekImmediatelySuspendsReplacementGenerationAtNewClock]' started.
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testPausedSeekImmediatelySuspendsReplacementGenerationAtNewClock]' passed (0.045 seconds).
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testPlaybackEOFKeepsDecoderDrainRunningAcrossTrailingTransportTicks]' started.
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testPlaybackEOFKeepsDecoderDrainRunningAcrossTrailingTransportTicks]' passed (0.050 seconds).
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testReplacementAtUnsupportedSpeedCannotReviveRetainedSourceAtOneTimes]' started.
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testReplacementAtUnsupportedSpeedCannotReviveRetainedSourceAtOneTimes]' passed (0.045 seconds).
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testRestartRejectsStaleSnapshotsCompletionsAndErrors]' started.
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testRestartRejectsStaleSnapshotsCompletionsAndErrors]' passed (0.027 seconds).
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testRetryAndManualResetUseCurrentPlaybackClock]' started.
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testRetryAndManualResetUseCurrentPlaybackClock]' passed (0.019 seconds).
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testRetryStartsNewGenerationAfterActionableFailure]' started.
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testRetryStartsNewGenerationAfterActionableFailure]' passed (0.024 seconds).
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testSnapshotHandoffCoalescesAfterDSPWithoutGrowingPresentationQueue]' started.
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testSnapshotHandoffCoalescesAfterDSPWithoutGrowingPresentationQueue]' passed (0.020 seconds).
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testTypedSeekRestartsWhileTrackReplacementRequiresNewIdentity]' started.
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testTypedSeekRestartsWhileTrackReplacementRequiresNewIdentity]' passed (0.013 seconds).
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testUnsupportedSpeedInvalidatesOnceAndRestartsAtRestoredClock]' started.
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testUnsupportedSpeedInvalidatesOnceAndRestartsAtRestoredClock]' passed (0.013 seconds).
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testWorkerGateTracksPlaybackClockAndCancelsWithGeneration]' started.
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testWorkerGateTracksPlaybackClockAndCancelsWithGeneration]' passed (0.008 seconds).
+Test Suite 'LiveAudioMeterCoordinatorTests' failed at 2026-09-30 20:59:13.927.
+	 Executed 21 tests, with 1 failure (0 unexpected) in 0.680 (0.686) seconds
+Test Suite 'Aagedal Media Player Tests.xctest' failed at 2026-09-30 20:59:13.928.
+	 Executed 21 tests, with 1 failure (0 unexpected) in 0.680 (0.686) seconds
+Test Suite 'Selected tests' failed at 2026-09-30 20:59:13.928.
+	 Executed 21 tests, with 1 failure (0 unexpected) in 0.680 (0.687) seconds
+2026-09-30 20:59:19.839 xcodebuild[76387:1775954] [MT] IDETestOperationsObserverDebug: 8.360 elapsed -- Testing started completed.
+2026-09-30 20:59:19.839 xcodebuild[76387:1775954] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-09-30 20:59:19.839 xcodebuild[76387:1775954] [MT] IDETestOperationsObserverDebug: 8.360 sec, +8.360 sec -- end
+
+Test session results, code coverage, and logs:
+	/tmp/aagedal-2-continuation-focused-20260930/Tests.xcresult
+
+Failing tests:
+	LiveAudioMeterCoordinatorTests.testClockFailureRetainsRejectedSegmentContextWithoutKeepingReadingOrWorker()
+
+** TEST FAILED **
+
+Testing started
