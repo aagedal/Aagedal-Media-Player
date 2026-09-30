@@ -442,6 +442,24 @@ final class CompareSessionLifecycleTests: XCTestCase {
         XCTAssertEqual(ranged.primaryEndFrame, 90)
         XCTAssertTrue(session.updateReviewRange(id: original.id, endFrame: 90))
         XCTAssertEqual(session.reviewNotes.first?.updatedAt, ranged.updatedAt)
+
+        var drafts = CompareReviewDraftState()
+        drafts.rangeDrafts[original.id] = "invalid end"
+        drafts.blockAction(noteID: original.id, field: .rangeEnd,
+            error: "Enter a whole-number end frame", notice: "Correct this range")
+        XCTAssertTrue(drafts.hasPendingEdits(in: session.reviewNotes))
+        // End at current frame reaches this same successful no-value-change
+        // controller path when the current frame equals the saved endpoint.
+        XCTAssertTrue(drafts.applyCurrentRangeEnd(noteID: original.id) {
+            guard session.updateReviewRange(id: original.id, endFrame: 90) else { return nil }
+            return session.reviewNotes.first { $0.id == original.id }?.primaryEndFrame
+        })
+        XCTAssertEqual(session.reviewNotes.first, ranged)
+        XCTAssertEqual(drafts.rangeDrafts[original.id], "90")
+        XCTAssertFalse(drafts.hasPendingEdits(in: session.reviewNotes))
+        XCTAssertNil(drafts.rangeActionErrors[original.id])
+        XCTAssertNil(drafts.correctionRequest)
+
         XCTAssertFalse(session.updateReviewRange(id: original.id, endFrame: 29))
         XCTAssertFalse(session.updateReviewRange(id: original.id, endFrame: 300))
         XCTAssertEqual(session.reviewNotes.first, ranged)

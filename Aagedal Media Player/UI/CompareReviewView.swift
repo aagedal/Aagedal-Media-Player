@@ -46,6 +46,19 @@ struct CompareReviewDraftState {
         correctionRequest = nil
     }
 
+    /// The explicit current-frame action replaces typed input even when it
+    /// chooses the existing endpoint, which emits no note-value change.
+    @discardableResult
+    mutating func applyCurrentRangeEnd(noteID: UUID, action: () -> Int64?) -> Bool {
+        guard let endFrame = action() else { return false }
+        rangeDrafts[noteID] = String(endFrame)
+        rangeActionErrors[noteID] = nil
+        if correctionRequest?.noteID == noteID, correctionRequest?.field == .rangeEnd {
+            clearActionNotice()
+        }
+        return true
+    }
+
     func hasPendingEdits(in notes: [CompareReviewNote]) -> Bool {
         !newNoteDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || notes.contains { note in
             let textChanged = noteDrafts[note.id].map {
@@ -473,7 +486,12 @@ struct CompareReviewView: View {
             },
             onRange: { compareSession.updateReviewRange(id: note.id, endFrame: $0) },
             onCurrentEnd: {
-                compareSession.endReviewRangeAtCurrentFrame(id: note.id, primary: primaryController)
+                drafts.applyCurrentRangeEnd(noteID: note.id) {
+                    guard compareSession.endReviewRangeAtCurrentFrame(id: note.id, primary: primaryController) else {
+                        return nil
+                    }
+                    return compareSession.reviewNotes.first { $0.id == note.id }?.primaryEndFrame
+                }
             },
             onSeekEnd: {
                 compareSession.seekToReviewRangeEnd(note, primary: primaryController)

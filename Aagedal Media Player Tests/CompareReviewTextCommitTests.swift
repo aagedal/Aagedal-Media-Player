@@ -7,6 +7,50 @@ import XCTest
 
 final class CompareReviewTextCommitTests: XCTestCase {
     @MainActor
+    func testCurrentRangeActionReplacesInvalidDraftEvenWhenSavedEndpointIsUnchanged() {
+        let note = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
+            secondaryFrame: 10, secondaryTime: 1, text: "Finding", primaryEndFrame: 20)
+        var drafts = CompareReviewDraftState()
+        drafts.rangeDrafts[note.id] = "not a frame"
+        drafts.blockAction(noteID: note.id, field: .rangeEnd,
+            error: "Enter a whole-number end frame", notice: "Correct this range")
+        XCTAssertTrue(drafts.hasPendingEdits(in: [note]))
+
+        // The controller succeeds without changing primaryEndFrame when the
+        // current frame already equals the saved end. No onChange will fire.
+        XCTAssertTrue(drafts.applyCurrentRangeEnd(noteID: note.id) { note.primaryEndFrame })
+
+        XCTAssertEqual(drafts.rangeDrafts[note.id], "20")
+        XCTAssertFalse(drafts.hasPendingEdits(in: [note]))
+        XCTAssertNil(drafts.rangeActionErrors[note.id])
+        XCTAssertNil(drafts.rangeActionNotice)
+        XCTAssertNil(drafts.correctionRequest)
+    }
+
+    @MainActor
+    func testCurrentRangeActionRetainsFailedInputAndUnrelatedTextCorrection() {
+        let noteID = UUID()
+        var drafts = CompareReviewDraftState()
+        drafts.rangeDrafts[noteID] = "invalid end"
+        drafts.blockAction(noteID: noteID, field: .text,
+            error: "Enter note text", notice: "Correct this note")
+        let correction = drafts.correctionRequest
+        drafts.rangeActionErrors[noteID] = "Invalid range"
+
+        XCTAssertFalse(drafts.applyCurrentRangeEnd(noteID: noteID) { nil })
+        XCTAssertEqual(drafts.rangeDrafts[noteID], "invalid end")
+        XCTAssertEqual(drafts.rangeActionErrors[noteID], "Invalid range")
+        XCTAssertEqual(drafts.correctionRequest, correction)
+
+        XCTAssertTrue(drafts.applyCurrentRangeEnd(noteID: noteID) { 20 })
+        XCTAssertEqual(drafts.rangeDrafts[noteID], "20")
+        XCTAssertNil(drafts.rangeActionErrors[noteID])
+        XCTAssertEqual(drafts.noteActionErrors[noteID], "Enter note text")
+        XCTAssertEqual(drafts.rangeActionNotice, "Correct this note")
+        XCTAssertEqual(drafts.correctionRequest, correction)
+    }
+
+    @MainActor
     func testRepeatedBlockedActionRevealsSameCorrectionWithoutDiscardingDrafts() throws {
         let noteID = UUID()
         var drafts = CompareReviewDraftState()
