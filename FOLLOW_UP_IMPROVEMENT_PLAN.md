@@ -3334,6 +3334,82 @@ Native workflow, mono-output diagnosis, representative-media/reference accuracy,
 MPV source pixels, release-floor and distribution acceptance remain open.
 The documentation/evidence commit follows the verified implementation commit.
 
+## Phase 149 — Live-meter profile evidence consistency
+
+Status: Completed on 2026-09-30.
+
+- [x] Require EOF timestamp time base to match the selected source sample rate,
+  rather than accepting arbitrary non-empty provenance text.
+- [x] Require the requested 5–30 second observation interval and snapshot timing
+  to agree with the runner and retained wall time.
+- [x] Pass all 16 focused input/validator checks and the complete script-validator
+  suite; revalidate both retained selected-stereo engineering rows unchanged.
+
+These checks reject inconsistent acceptance evidence without changing decoder
+bounds or claiming cadence, numerical accuracy or producer-authentic acceptance.
+See [production profile contract](docs/LIVE_AUDIO_METER_PERFORMANCE.md).
+
+## Phase 150 — Restore the verified candidate test floor
+
+Status: Completed on 2026-09-30.
+
+- [x] Raise the aggregate Release test floor from 683 to the 710 tests retained
+  by the latest passing canonical candidate.
+- [x] Keep candidate verification and release consumption on the same floor;
+  both isolated mixed-backend transport checks remain separately required.
+- [x] Pass all 12 release-script validation checks.
+
+This prevents a candidate with up to 27 missing baseline tests from satisfying
+an obsolete count floor. It does not replace detailed outcome reconciliation
+or prove external acceptance gates.
+
+## Phase 151 — Enabled-track AVFoundation loupe provenance
+
+Status: Completed on 2026-09-30; broader native visual acceptance remains open.
+
+- [x] Use the ready player's enabled video track for capture geometry and coded
+  raster proof rather than the asset's first video track.
+- [x] Invalidate old images and proof on track selection or video-composition
+  changes within the same player item.
+- [x] Withhold proof for ambiguous enabled tracks, multiple coded descriptions
+  and composition output while retaining display previews.
+- [x] Generate a genuine two-video-track fixture and pass three live regressions
+  covering second-track selection/switch-back, same-size resampling video
+  composition and composition tracks without an explicit video composition.
+- [x] Pass all 15 focused Debug gate/decoder tests without skips, then pass the
+  strengthened composition test requiring a fresh preview image separately.
+
+This corrects track and transform provenance without claiming source code-value
+or color accuracy. MPV's screenshot conversion still resamples display geometry;
+its bundled public API provides no verified decoder-raster capture path. See
+[inspection loupe contract](docs/INSPECTION_LOUPE.md).
+
+## Phase 152 — Native-audio-output diagnosis and profile failure evidence
+
+Status: Harness completed on 2026-09-30; native audible output remains unresolved.
+
+- [x] Retain native mono/stereo channel-map failures and unsuccessful hook,
+  device-scoped stereo and AVFoundation-output probes; remove all temporary
+  production output policies after no repeatable correction is established.
+- [x] Add read-only native decoder/output/AO diagnostics and separate profile
+  attachments carrying clock, EOF, source, generation and meter state.
+- [x] Stop profile sampling/pause waits immediately when the meter becomes
+  unavailable, retaining diagnostic values even when clocks are non-finite.
+- [x] Assert source decoder channel identity before and during the active
+  monitoring matrix, before audible-track suppression.
+- [x] Pass both original explicitly selected stereo-video engineering rows,
+  with schema-2 validation, routing/resume/cancellation/EOF and no-sleep checks.
+- [ ] Establish repeated audio-only mono/stereo and actual audible-output
+  acceptance, including supported hardware and default-device changes.
+
+A video clock can sustain source-meter plumbing while native audio initialization
+fails. The generated-video pass is therefore not audible-output acceptance.
+Six-channel requested probe inputs were never reached and supply no acceptance.
+See [retained diagnosis](docs/LIVE_AUDIO_METER_NATIVE_OUTPUT_DIAGNOSIS_2026-09-30.md).
+Native Review verification was also attempted but the computer-use app connection
+hung for 853 seconds before cancellation; its source audit and successful Debug
+build do not close keyboard or spoken VoiceOver acceptance.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -3667,3 +3743,8 @@ The documentation/evidence commit follows the verified implementation commit.
 138. Phase 146 AVFoundation coded-buffer loupe provenance.
 139. Phase 147 deliberate live-meter selected-track profiling.
 140. Phase 148 final integrated clean-checkout verification.
+
+141. Phase 149 live-meter profile evidence consistency.
+142. Phase 150 restore the verified candidate test floor.
+143. Phase 151 enabled-track AVFoundation loupe provenance.
+144. Phase 152 native-audio-output diagnosis and profile failure evidence.

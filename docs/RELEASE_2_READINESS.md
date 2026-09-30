@@ -114,6 +114,27 @@ workflow/media/performance gates remain open. See [current candidate evidence](e
 
 ## Must close before a defensible 2.0 candidate
 
+The September 30 continuation strengthens live-meter evidence consistency,
+restores the 710-test aggregate release floor, and binds AVFoundation loupe
+geometry and native-raster proof to the ready item's single enabled video
+track. All 16 focused profile validator checks, 12 release-script checks and
+15 focused loupe gate/decoder checks pass; the strengthened composition preview
+check also passes separately. Composed or ambiguous video remains preview-only,
+and MPV still lacks a verified decoder-raster capture path. A source audit found
+no new Review draft/focus defect, but native Review interaction could not start
+because the computer-use app connection hung and was cancelled. No native
+keyboard or spoken VoiceOver acceptance is inferred from that audit or its
+successful Debug build.
+
+The same continuation retains unsuccessful native audio-output probes and
+removes their temporary production policies. The profiler now retains separate
+native-output/meter diagnostics, stops promptly on unavailable state, and checks
+source decoder channel identity during the active monitoring matrix. Its two
+original stereo-video rows pass the revised harness, but native CoreAudio
+channel-map rejection can coexist with a progressing video clock. Audible
+mono/stereo output remains unresolved; generated-video meter plumbing cannot
+close that gate. See [native-output diagnosis](LIVE_AUDIO_METER_NATIVE_OUTPUT_DIAGNOSIS_2026-09-30.md).
+
 Phase 127 completes fresh keyboard-only A/B loading, note creation at distinct
 frames and CSV export using the unchanged Phase 126 Release app. Retained
 sidecar/CSV records agree on A/B frames, rates, text and source URLs; media
