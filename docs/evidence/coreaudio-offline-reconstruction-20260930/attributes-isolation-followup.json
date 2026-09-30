@@ -1,0 +1,26 @@
+{
+  "baseRepositoryRevision": "f5411b154dd6065a4901132a487b27ccf6d51058",
+  "buildExecuted": false,
+  "byteIdenticalRebuildDemonstrated": false,
+  "driverSHA256": "2d7ce33a8cdf71ef57375738d2daef2405bb25ad584c3035b1c256bd1d8f72d9",
+  "followupReconstructionSHA256": "65df1b93a94007cb10735b1bb47ca380445e521990b7bc148048a6e5a0fb4d24",
+  "followupRegressionLogSHA256": "107e798a826098f6ea031e174ad4827efd662258b91635981c02b01e68491bcf",
+  "followupVerificationSHA256": "5e8662bc7797d76df20583572442602938479a8581aa04b95bdc2366badc6c7c",
+  "hostAttributes": {
+    "content": "* working-tree-encoding=UTF-16\n",
+    "ordinaryRepositoryProbe": "LICENSE: working-tree-encoding: UTF-16",
+    "path": "/private/tmp/aagedal-coreaudio-host-attributes-20260930/git/attributes",
+    "reconstructedRepositoryProbe": "LICENSE: working-tree-encoding: unspecified",
+    "sha256": "1931d4c426b5d137069261776ec87c2606bc4b1a8b33804a1d5d54b6cdc62cc4"
+  },
+  "originalEvidencePreserved": true,
+  "originalReconstructionSHA256": "e8e0801dc7e655c9cf5f5c2f880fd32f93245ecddbbcf0cd27d34ca6b0353a17",
+  "originalVerificationSHA256": "19b21c401c1856e7f90291de242b0e6a0749a76292fbaedaa4d5aaeb7e4b69e7",
+  "publicationSHA256": "3eb8f8dd20ce2de6802b7d080e6df30a69ca00b6706dc408823291576b96616c",
+  "publicationTestsPassed": 16,
+  "reconstructedWorkspace": "/private/tmp/aagedal-coreaudio-reconstructed-attributes-isolated-20260930",
+  "regressionTestsSHA256": "534961ea7ad61aa6aa3347ecfc82992848397bab07f5add03a0709c6108a1a6c",
+  "schemaVersion": 1,
+  "scope": "Publication reconstruction driver and script regressions; no app/dependency compilation or runtime measurement.",
+  "systemAttributesDisabledDuringReconstruction": true
+}

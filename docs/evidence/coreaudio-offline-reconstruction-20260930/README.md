@@ -58,3 +58,27 @@ compilation. Original build environment facts that were not retained cannot be
 invented retrospectively. Public source/input/artifact availability, remote
 checksum authentication, ordinary fresh-cache SwiftPM resolution and shipping
 app/runtime acceptance remain separate gates.
+
+## Follow-up: isolate host Git attributes
+
+The initial driver disabled host Git configuration but still inherited Git's
+default XDG/user attributes and system attributes. An adversarial host attributes
+file containing `* working-tree-encoding=UTF-16` caused source reconstruction to
+fail with a missing-BOM error when indexing the unchanged `LICENSE` bytes. The
+new regression first verifies that Git activates the supplied host attributes,
+then reconstructs the fixture and checks its unchanged file bytes and tree.
+It failed on the initial driver and passes with the fix.
+
+The driver now sets `GIT_ATTR_NOSYSTEM=1` during its Git operations and persists
+`core.attributesFile=/dev/null` in each restored repository. This isolates the
+host attributes independently of host configuration. The original
+[reconstruction receipt](reconstruction.json), [verification](verification.json)
+and [fifteen-test log](regression-tests.log) remain unchanged. The
+[follow-up record](attributes-isolation-followup.json),
+[new actual-stage reconstruction receipt](attributes-isolation-reconstruction.json),
+[independent verification](attributes-isolation-verification.json) and
+[sixteen-test log](attributes-isolation-regression-tests.log) bind the updated
+script and new workspace, reconstructed while the hostile XDG attributes were
+active. This follow-up runs source/input reconstruction and script regressions;
+it does not run an application build, dependency compilation or runtime profile.
+The environment and shipping gates above remain open.

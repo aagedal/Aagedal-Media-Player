@@ -1,0 +1,32 @@
+{
+  "auxiliaryInputCount": 20,
+  "buildExecuted": false,
+  "byteIdenticalRebuildDemonstrated": false,
+  "driverSHA256": "2d7ce33a8cdf71ef57375738d2daef2405bb25ad584c3035b1c256bd1d8f72d9",
+  "passed": true,
+  "publicationSHA256": "3eb8f8dd20ce2de6802b7d080e6df30a69ca00b6706dc408823291576b96616c",
+  "reconstructionSHA256": "65df1b93a94007cb10735b1bb47ca380445e521990b7bc148048a6e5a0fb4d24",
+  "sourceSnapshots": [
+    {
+      "clean": true,
+      "name": "MPVKit-recipe",
+      "revision": "42cf977668f4b20f7423993d3eea9232077481d5",
+      "shallow": true,
+      "tree": "e3fb4877be9ca1a3a2aa56e42fe2b1698cc4ca5f"
+    },
+    {
+      "clean": true,
+      "name": "libmpv-v0.41.0",
+      "revision": "50fd4f2fb9e4bed909cef5c9648a1bd33aaef72f",
+      "shallow": true,
+      "tree": "54755f0392d635a53a3f644668ba76b303be4512"
+    },
+    {
+      "clean": true,
+      "name": "FFmpeg-n8.1.2",
+      "revision": "c7aba78212570ed0bd693a441d917d86f2744ad6",
+      "shallow": true,
+      "tree": "9b3a672a066ef0655b6cf42bf967e57f1d832c88"
+    }
+  ]
+}

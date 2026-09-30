@@ -246,6 +246,33 @@ class PublicationTests(unittest.TestCase):
             self.assertEqual(result['reconstructionDriverSHA256'], publication.sha(workspace / 'reconstruction-driver.py'))
             self.assertTrue((workspace / 'temporary').is_dir())
 
+    def test_external_utf16_git_attributes_cannot_transform_reconstructed_source_bytes(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            stage, workspace = root / 'stage', root / 'workspace'
+            stage.mkdir()
+            metadata = self.fixture(stage)
+            xdg = root / 'host-xdg'
+            attributes = xdg / 'git/attributes'
+            attributes.parent.mkdir(parents=True)
+            attributes.write_text('* working-tree-encoding=UTF-16\n')
+            environment = {key: value for key, value in publication.os.environ.items() if not key.startswith('GIT_')}
+            environment.update(XDG_CONFIG_HOME=str(xdg), GIT_CONFIG_NOSYSTEM='1', GIT_CONFIG_GLOBAL=publication.os.devnull)
+            # Prove this host-default attributes file is active for an ordinary
+            # fresh repository, rather than merely setting an inert env var.
+            baseline = root / 'host-default-repository'
+            subprocess.run(['git', 'init', '--quiet', '--template=', str(baseline)], env=environment, check=True)
+            actual = subprocess.check_output(['git', '-C', str(baseline), 'check-attr',
+                                              'working-tree-encoding', '--', 'LICENSE'], env=environment).decode().strip()
+            self.assertEqual(actual, 'LICENSE: working-tree-encoding: UTF-16')
+            with patch.dict(publication.os.environ, environment):
+                result = publication.reconstruct(stage, workspace, publication.sha(stage / 'publication.json'))
+            self.assertFalse(result['buildExecuted'])
+            checkout = workspace / 'MPVKit'
+            self.assertEqual((checkout / 'LICENSE').read_bytes(), b'package source')
+            self.assertEqual(subprocess.check_output(['git', '-C', str(checkout), 'rev-parse', 'HEAD^{tree}'],
+                                                    env=environment).decode().strip(), metadata['sourceSnapshots'][0]['tree'])
+
     def test_reconstruction_requires_external_digest_and_verified_stage_before_creating_output(self):
         for mutation in ('digest', 'asset', 'invalid-digest'):
             with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as temporary:

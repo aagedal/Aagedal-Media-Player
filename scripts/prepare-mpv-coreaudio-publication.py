@@ -405,15 +405,18 @@ def restore_source(archive_path, commit_path, destination, expected):
                 with target.open('xb') as file:
                     shutil.copyfileobj(archive.extractfile(member), file)
                 target.chmod(0o755 if member.mode & 0o111 else 0o644)
-    # Ignore host Git config, templates, filters and hooks while materializing
+    # Ignore host Git config, attributes, templates, filters and hooks while materializing
     # exact retained tree bytes. There is no fetched parent history.
     env = {key: value for key, value in os.environ.items() if not key.startswith('GIT_')}
-    env.update(GIT_CONFIG_NOSYSTEM='1', GIT_CONFIG_GLOBAL=os.devnull)
+    env.update(GIT_CONFIG_NOSYSTEM='1', GIT_CONFIG_GLOBAL=os.devnull, GIT_ATTR_NOSYSTEM='1')
     def git(*args, **kwargs):
         return subprocess.check_output(['git', '-C', str(destination), *args], env=env, **kwargs).decode().strip()
     git('init', '--quiet', '--template=')
     git('config', 'core.autocrlf', 'false')
     git('config', 'core.filemode', 'true')
+    # Global/XDG attributes are loaded independently of Git config files.
+    # Keep this override in the reconstructed repository for later inspection.
+    git('config', 'core.attributesFile', os.devnull)
     git('add', '--force', '--all')
     if git('write-tree') != expected['tree']:
         raise ValueError('reconstructed source Git tree mismatch')
