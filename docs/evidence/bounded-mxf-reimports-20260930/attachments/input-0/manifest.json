@@ -1,0 +1,17 @@
+[
+  {
+    "attachments" : [
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006050-001C293C22F9401C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "9DBDEE81-568B-4437-85AC-1D03DB1D07F0.txt",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Production metadata reimports — 0 — rre_8073_0_E73FB4D0-7521-4DC3-B81C-A1B829A19958.MP4",
+        "timestamp" : 1790797690.011
+      }
+    ],
+    "testIdentifier" : "ProductionMetadataMemoryPerformanceTests/testProductionMetadataRepeatedImportProfileWhenRequested()",
+    "testIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/ProductionMetadataMemoryPerformanceTests/testProductionMetadataRepeatedImportProfileWhenRequested"
+  }
+]

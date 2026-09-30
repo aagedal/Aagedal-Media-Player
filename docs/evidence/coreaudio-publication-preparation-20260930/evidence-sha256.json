@@ -1,0 +1,46 @@
+{
+  "Package.swift": {
+    "sha256": "bb884d548099dae7d0de5c86c7c6c13242c98bfe20bec5dcb6b8faeeb85aace5",
+    "sizeBytes": 9392
+  },
+  "README.md": {
+    "sha256": "044967ffcb48c2a127bc88071111641d727447aa8a66f957492a6211805ecb86",
+    "sizeBytes": 5884
+  },
+  "actual-preparer.py": {
+    "sha256": "df0f7b89b45b72e22376b4656ba674bb0c66064935886b35bfcc4ada23764347",
+    "sizeBytes": 22312
+  },
+  "ffmpeg-metal-source.patch": {
+    "sha256": "15ce6bad7b8adf43d5942261069a847bf3a8d3eb3d97741fdb9fbdc024a5c1e3",
+    "sizeBytes": 552
+  },
+  "preparation.log": {
+    "sha256": "3eac989a9f20188a7dd208b3ee110fa3fbac017c5d897cf55858184def2aa4da",
+    "sizeBytes": 820
+  },
+  "publication.json": {
+    "sha256": "3eb8f8dd20ce2de6802b7d080e6df30a69ca00b6706dc408823291576b96616c",
+    "sizeBytes": 40120
+  },
+  "regression-tests.log": {
+    "sha256": "edcc081b1c84ecc52dba58e1fd31222a990ad79f5e9b0d9e5829587a1b8071b5",
+    "sizeBytes": 110
+  },
+  "repeat-staging-comparison.json": {
+    "sha256": "5f703e35eb631eb91bffd4a97f2d6d495ee0ac19421802aa47ce089904657891",
+    "sizeBytes": 228
+  },
+  "swift-dump-package.json": {
+    "sha256": "840f8e34ce5ae3f5578c84301dc1077c0c61b74fe2b6fdfde41ea0111c8915e0",
+    "sizeBytes": 19100
+  },
+  "swift-package-validation.json": {
+    "sha256": "6071fa9bf9571cc194d037a46761715fe57da537a93591b2f6e2a3ed165bd27d",
+    "sizeBytes": 511
+  },
+  "verification.json": {
+    "sha256": "3eac989a9f20188a7dd208b3ee110fa3fbac017c5d897cf55858184def2aa4da",
+    "sizeBytes": 820
+  }
+}

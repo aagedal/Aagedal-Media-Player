@@ -1,0 +1,53 @@
+[
+  {
+    "file": "rre_8073.MP4",
+    "priorDirectURLProfileSnapshotParity": true,
+    "importCount": 30,
+    "maximumResidentGrowthBytesAfterFirstRelease": 2703360,
+    "initialOpenDescriptors": 9,
+    "observedOpenDescriptorRange": [
+      9,
+      9
+    ],
+    "lifetimePeakIncreaseBytes": 7503872,
+    "medianNewURLLoadSeconds": 0.021972688,
+    "medianImmediateCachedReadSeconds": 7.15205e-05,
+    "earliestURLRevisitSeconds": 2.6917e-05,
+    "allCompleteModelBaselineAndCacheParity": true,
+    "earliestURLRevisitCompleteModelParity": true
+  },
+  {
+    "file": "20260502_TRA_MOV_0240.MP4",
+    "priorDirectURLProfileSnapshotParity": true,
+    "importCount": 30,
+    "maximumResidentGrowthBytesAfterFirstRelease": 2015232,
+    "initialOpenDescriptors": 9,
+    "observedOpenDescriptorRange": [
+      9,
+      9
+    ],
+    "lifetimePeakIncreaseBytes": 64651264,
+    "medianNewURLLoadSeconds": 0.0221762085,
+    "medianImmediateCachedReadSeconds": 6.04375e-05,
+    "earliestURLRevisitSeconds": 3.3166e-05,
+    "allCompleteModelBaselineAndCacheParity": true,
+    "earliestURLRevisitCompleteModelParity": true
+  },
+  {
+    "file": "OJ_FX6A0021.MXF",
+    "priorDirectURLProfileSnapshotParity": true,
+    "importCount": 30,
+    "maximumResidentGrowthBytesAfterFirstRelease": 4620288,
+    "initialOpenDescriptors": 9,
+    "observedOpenDescriptorRange": [
+      9,
+      9
+    ],
+    "lifetimePeakIncreaseBytes": 26361856,
+    "medianNewURLLoadSeconds": 0.3822043335,
+    "medianImmediateCachedReadSeconds": 2.8188000000000002e-05,
+    "earliestURLRevisitSeconds": 2.3208e-05,
+    "allCompleteModelBaselineAndCacheParity": true,
+    "earliestURLRevisitCompleteModelParity": true
+  }
+]

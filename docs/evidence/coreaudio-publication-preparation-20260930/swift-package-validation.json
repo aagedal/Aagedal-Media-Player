@@ -1,0 +1,18 @@
+{
+  "artifactResolutionPerformed": false,
+  "auxiliaryBinaryTargetCount": 21,
+  "command": "swift package dump-package (isolated module/package caches)",
+  "dependencyReferenceCount": 30,
+  "gplBinaryTargetCount": 8,
+  "passed": true,
+  "platforms": [
+    {
+      "options": [],
+      "platformName": "macos",
+      "version": "12.0"
+    }
+  ],
+  "product": "MPVKit-GPL",
+  "scope": "Native manifest compilation and declared graph validation; no downloads, linking or runtime acceptance",
+  "targetCount": 31
+}

@@ -1,0 +1,841 @@
+{
+  "startedUTC": "2026-09-30T19:48:00.566330+00:00",
+  "temporaryAppHEAD": "ff98066ef8e5525d6ac51a6a380b0d8c2e36cea8",
+  "temporaryAppStatus": " M \"Aagedal Media Player Tests/ProductionMetadataMemoryPerformanceTests.swift\"\n M \"Aagedal Media Player.xcodeproj/project.pbxproj\"\n M scripts/profile-production-metadata-memory.sh\n?? scripts/test-production-metadata-reimport-profile-validation.py\n?? scripts/validate-production-metadata-reimport-profile.py\n",
+  "compiledPackageRoot": "/private/tmp/aagedal-bounded-mxf-candidate-20260930",
+  "compiledSourceFileList": "/private/tmp/aagedal-metadata-reimport-dd-20260930/Build/Intermediates.noindex/SwiftMediaMetadata.build/Release/SwiftMediaMetadata-t.build/Objects-normal/arm64/SwiftMediaMetadata.SwiftFileList",
+  "intentionallyLocalPackage": "Temporary XCLocalSwiftPackageReference to the bounded MXF candidate; package manifest omits ArgumentParser/CLI targets.",
+  "qualification": "Production app MetadataService path on this host; concurrent root app/dependency/native work possible. No decoder/transport requested. 30 distinct directory-symlink imports and 30 immediate cached reads per authentic input plus earliest URL revisit; adjacent sidecars preserved. Explicit 32 MiB post-first-release RSS growth / four-descriptor growth diagnostic budgets. No external-volume/base-M1/multi-hour acceptance or cache-hit/eviction guarantee.",
+  "identitiesBefore": {
+    "/private/tmp/aagedal-metadata-reimport-dd-20260930/Build/Products/Release/Aagedal Media Player.app/Contents/MacOS/Aagedal Media Player": {
+      "bytes": 79505520,
+      "sha256": "223d4d72da95acd79ff33e4c1caafd1f874d50ba54bd0c8eca0b5cfbad8fb2c6"
+    },
+    "/private/tmp/aagedal-metadata-reimport-dd-20260930/Build/Products/Release/Aagedal Media Player.app/Contents/PlugIns/Aagedal Media Player Tests.xctest/Contents/MacOS/Aagedal Media Player Tests": {
+      "bytes": 16471024,
+      "sha256": "752f445eb6ac44b666103878a53621be8a1060dde55272ede9c61921cf3868f7"
+    },
+    "/private/tmp/aagedal-metadata-reimport-dd-20260930/Build/Products/Release/SwiftMediaMetadata.o": {
+      "bytes": 11333424,
+      "sha256": "f9d5696aba843ec869c3cf6613983e654d11e2c722a077593b63a5af08d7ecf8"
+    },
+    "/private/tmp/aagedal-metadata-reimport-app-20260930/Aagedal Media Player.xcodeproj/project.pbxproj": {
+      "bytes": 19531,
+      "sha256": "33e09579a350251c583c6f156271c13f0a1e2a68f02b583943e3e8cdc43877e6"
+    },
+    "/private/tmp/aagedal-metadata-reimport-app-20260930/Aagedal Media Player.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved": {
+      "bytes": 919,
+      "sha256": "6aea6d64326f3040345c3523a0a39c95d53335777e233b3aa311e8ba90ad475d"
+    },
+    "/private/tmp/aagedal-metadata-reimport-app-20260930/Aagedal Media Player/Logic/MetadataService.swift": {
+      "bytes": 15277,
+      "sha256": "3b7be4df3f79baf975ea1353c4c652a145456ffbee5f9e2770408ce8856a840a"
+    },
+    "/private/tmp/aagedal-metadata-reimport-app-20260930/Aagedal Media Player/Models/MediaMetadata.swift": {
+      "bytes": 9218,
+      "sha256": "cecd3acdd827030f2b2787c4cb738c1d0d9a43da543b898b63efe533c2ba7d47"
+    },
+    "/private/tmp/aagedal-metadata-reimport-app-20260930/Aagedal Media Player Tests/ProductionMetadataMemoryPerformanceTests.swift": {
+      "bytes": 16488,
+      "sha256": "171ae1cf4b6219fa9202e4989c36168608eda5e8e1c2525a2aed73d82b5bcd3f"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Package.swift": {
+      "bytes": 1694,
+      "sha256": "f152a3b7e13ad38fc59343da85cd569b3812993feed4ce5434ae899262d81744"
+    },
+    "/private/tmp/aagedal-metadata-reimport-dd-20260930/Build/Products/Aagedal Media Player_Aagedal Media Player_macosx27.0-arm64.xctestrun": {
+      "bytes": 26124,
+      "sha256": "549b6789c341d1da74ee8ca971794fd310e247156737663249c7c09cbc6ebb3e"
+    },
+    "/private/tmp/aagedal-metadata-reimport-dd-20260930/Build/Intermediates.noindex/SwiftMediaMetadata.build/Release/SwiftMediaMetadata-t.build/Objects-normal/arm64/SwiftMediaMetadata.SwiftFileList": {
+      "bytes": 19575,
+      "sha256": "149bfbdff7b7e8a75f96b8cd14dbc3bc9b5070f7786a7eb31bf671b93b9ff0e5"
+    },
+    "/Users/truls.aagedal/Developer/Aagedal-Media-Player/docs/evidence/bounded-mxf-reimports-20260930/run-production-reimports.py": {
+      "bytes": 6705,
+      "sha256": "e3f1f34f998a969f53490834ce2356ed33a7dd3d8bc16443f70d4bf276b3e151"
+    },
+    "/Users/truls.aagedal/Developer/Aagedal-Media-Player/scripts/validate-production-metadata-reimport-profile.py": {
+      "bytes": 8219,
+      "sha256": "c2aa5f52896039ac1b1efb793edf602602a3f0941e6fe12baa84e5935d69a5bc"
+    },
+    "/Users/truls.aagedal/Developer/Aagedal-Media-Player/scripts/validate-production-metadata-memory-profile.py": {
+      "bytes": 5288,
+      "sha256": "7b3cf041732f31f680e5af9ca4e2becc005605ba4451b12684cc61e6db3c14e5"
+    },
+    "/tmp/aagedal-metadata-reimport-dd-20260930/Build/Intermediates.noindex/SwiftMediaMetadata.build/Release/SwiftMediaMetadata-t.build/DerivedSources/resource_bundle_accessor.swift": {
+      "bytes": 1750,
+      "sha256": "c6749ad10f6477314858e6c5104152a48961e366821d299b3bda8915997cd377"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/API/AudioFormat.swift": {
+      "bytes": 556,
+      "sha256": "b5f6157ac1eac907194fcfc228fc463f9bfd77cd5f98273c951050c921bebf6f"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/API/AudioMetadata.swift": {
+      "bytes": 13792,
+      "sha256": "78dd29ab17e650cf8c063be2fc4ba6212b826530b972a5d989f3bb14a5597e92"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/API/AudioMetadataExporter.swift": {
+      "bytes": 1551,
+      "sha256": "6140c691dad8b2278faa0f552e73676b1623f873657cb34c973a667812fd665e"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/API/BatchProcessor.swift": {
+      "bytes": 12821,
+      "sha256": "a66ec1dcabb79b2cadf08d0c8d4a5d16f5fa631f8bd3d04e2ec7106870fd8c23"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/API/CSVExporter.swift": {
+      "bytes": 3171,
+      "sha256": "fb91cf6f6453ab9de7b1549480aa0a4d6e773977930b25662784c8b8e61a86e0"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/API/CameraMetadata.swift": {
+      "bytes": 14584,
+      "sha256": "8b02040a696a0dce71fe70e70e99ef3e5b18163001c21d1389d0f90d64b82c18"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/API/CompositeTagCalculator.swift": {
+      "bytes": 11852,
+      "sha256": "e622052056cc53c4e9835e873dc5fa2ced8dd3ca24b8a4bfa94e71a5a8db4537"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/API/FileCommitter.swift": {
+      "bytes": 5885,
+      "sha256": "73155c0859ed6a485e058c7b0f93d56f7b685e5975c90468a855426a863c72f7"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/API/FormatDetector.swift": {
+      "bytes": 16485,
+      "sha256": "9cca866dc7ed0e8dabd05c66d933962493fc12b917cd583da690a123acf22b94"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/API/IPTCXMPSynchronization.swift": {
+      "bytes": 12778,
+      "sha256": "1fd0eda9a0351d89df57981bbb6e4fcd69a51b30cec7ff030eb969f1a2c7bc09"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/API/ImageContainer.swift": {
+      "bytes": 413,
+      "sha256": "e99cf70982aeee0e4ba300d84285e9f1b355e4ea9b7cc1c3c4b9cc54b9369b42"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/API/ImageFormat.swift": {
+      "bytes": 1181,
+      "sha256": "aedc9755c85d9bcf956528fe57d969137681d38230aaca2d0fd28a27240b2aaf"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/API/ImageMetadata+Editing.swift": {
+      "bytes": 16720,
+      "sha256": "69a975819b327cdce0cbca3439e8a933373a64f364b4f5296fcd890261c0defa"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/API/ImageMetadata+Extraction.swift": {
+      "bytes": 6582,
+      "sha256": "e99fa3b204c5ba2500e85f708c0338aeb335bdab4dac610b8f9f2d91fa4f558a"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/API/ImageMetadata+Formats.swift": {
+      "bytes": 20891,
+      "sha256": "2d1da109b1723c6018849f2dde9836915f5ed0fe4bc7bbaf8089660d597b3dce"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/API/ImageMetadata+Location.swift": {
+      "bytes": 7613,
+      "sha256": "84ded764aac28da463411c668652236b5cb2ae74783a749143ff31a7398aac6b"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/API/ImageMetadata+Reading.swift": {
+      "bytes": 3827,
+      "sha256": "5bbadfc7ed82a2f948206240fe5eae1b004eb7defee65531fb0eb69cb1d44800"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/API/ImageMetadata+Sidecar.swift": {
+      "bytes": 8130,
+      "sha256": "36c20fa73b387e9a6ce00a57e0ab1e74a04d88870ed0ad1beaa2125348afed6d"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/API/ImageMetadata+Writing.swift": {
+      "bytes": 10446,
+      "sha256": "58f9717a0891cfca623e27045196281c860305d459722fdf99c4ec406a7bf960"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/API/ImageMetadata.swift": {
+      "bytes": 1897,
+      "sha256": "7f4f21c428162f4fe2395a2052e42d390ad8e1970afcde5e3ec23ecfe105a9c8"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/API/MCAAudioLabeling.swift": {
+      "bytes": 4278,
+      "sha256": "99b27f61e81286fbed2a0a47c11f82ef194d5b6124c4e08beac589e0fc099ead"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/API/MCALabelsRenderer.swift": {
+      "bytes": 4653,
+      "sha256": "1056e8523584ed685c12e15b1e947aec2d6f9ac58e3dee51f234cf82f32ba8eb"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/API/MetadataCarrierCapabilities.swift": {
+      "bytes": 7450,
+      "sha256": "57c4f46d132bab9db35f1c5330462806fb02542e05cc4bd39672d69f11094aad"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/API/MetadataCondition.swift": {
+      "bytes": 7819,
+      "sha256": "c974f5f756369dfc7fcff8092869613df3c55a0fc65f18ff34f3c19042791e1e"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/API/MetadataError.swift": {
+      "bytes": 6110,
+      "sha256": "25eb1b25b6f913b0d9b023c231377478314e02945177ece767ab2915465a42d7"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/API/MetadataExporter.swift": {
+      "bytes": 38090,
+      "sha256": "1dbfd350af27ad9bfdbc0028599ea0b3dd52b6af4ab045405777dcffab5be07c"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/API/MetadataImporter.swift": {
+      "bytes": 10268,
+      "sha256": "49a87bdca226937eae527c2e22598afcbb46804712b831c293d5df63f6ff8d64"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/API/MetadataRenamer.swift": {
+      "bytes": 8121,
+      "sha256": "c6acc9eb58724fafeed42800f616ced19cc1f2dd68baa1faf5f7ca90fa832d9c"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/API/MetadataSemanticComparison.swift": {
+      "bytes": 21061,
+      "sha256": "229a890431ad0ead9f90ed971b6d5d1a633544c3f598d59b48bd81d51e2e3fb0"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/API/MetadataTemplate.swift": {
+      "bytes": 4149,
+      "sha256": "ccd30ac739fd3a826a6c471aab513e892a08a76e068308a17e3190adade06d95"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/API/MetadataValidator.swift": {
+      "bytes": 11844,
+      "sha256": "9f326cbe0bb7923bf8a50aede2760946e1dbeb5bef0558e2359ede01a7531db4"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/API/MetadataWriteResult.swift": {
+      "bytes": 653,
+      "sha256": "cbd3818082be345efed64c4bdcb1d2f06706106124ed4ab5fb62e33400398c3d"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/API/OrientationTransform.swift": {
+      "bytes": 2046,
+      "sha256": "3341a258ec04bb78f76ba74f1406d7ef1c752ef16b1f8ea7af050c488d25d07e"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/API/PhotoMetadata.swift": {
+      "bytes": 20190,
+      "sha256": "3f3c5ea5da67ae619616c73f722a247e9e86062487b2412df82d3993f485b7b7"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/API/PrintConverter.swift": {
+      "bytes": 21454,
+      "sha256": "e46336466197f683b7ee50d14e95232e8e44ed20ee90afca20ce92bc6f64a397"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/API/TagFilter.swift": {
+      "bytes": 3165,
+      "sha256": "ea78799b87c1ac33c54d90fcb5e187adc015bdd58d2f6f0a8d14c29fb31f1fb0"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/API/VideoFormat.swift": {
+      "bytes": 482,
+      "sha256": "38d8c5b291fe738b80b517a4f3f3746d36cde0078a4c109cbb117f03deb213c6"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/API/VideoMetadata.swift": {
+      "bytes": 27575,
+      "sha256": "e0105ea99605a11a6b7a25dce9ae967f32a34639daf64b311e7db1405414b99e"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/API/VideoMetadataExporter.swift": {
+      "bytes": 23199,
+      "sha256": "588f07bba6f980b1c9f28b05183b5d4eb239a65291cab10acb7227ba8fbf9458"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/API/VideoStream.swift": {
+      "bytes": 24330,
+      "sha256": "797f9688ae91f0a70fe348464c22622ba8e4923c14b946266deacbb7f2ab3a03"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/AVIF/AVIFFile.swift": {
+      "bytes": 524,
+      "sha256": "63f951f6e853086a3e47bfbd92f1405a9da3e6a840b61bb8c64c32fd65b34f8c"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/AVIF/AVIFParser.swift": {
+      "bytes": 1604,
+      "sha256": "a2aa889d863fdcb34ac250d3bad26daa70ccc11069edff636d8f7f0608486e69"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/AVIF/AVIFWriter.swift": {
+      "bytes": 472,
+      "sha256": "14fd79431b82a298fd6838b7f402246ac820280a8efc93396dee3c8499234d8c"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Apple/AAESidecar.swift": {
+      "bytes": 3023,
+      "sha256": "ad51e736f700a1dd813d8dcfa7bdd2ddc16d1f5b7b888f804839de82cf59b970"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Audio/AIFFParser.swift": {
+      "bytes": 9437,
+      "sha256": "f9aefa3c9b1e52fa22e0e2de8884c196c4ed139dd125b871aa065620f7e2a6ac"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Audio/AIFFWriter.swift": {
+      "bytes": 4956,
+      "sha256": "24619f38f4e308f5c18d273a10e724c1d435d2ff4668648d71ba5554c8eac807"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Audio/BWFData.swift": {
+      "bytes": 4386,
+      "sha256": "60453527c9d2fa6841b345bf35d71874385909c11fe24cd619896b4201e8917b"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Audio/FLACParser.swift": {
+      "bytes": 9936,
+      "sha256": "9e4578aca559006f16f22c494ac350068a062bac36a15ef46c75d9de96731eab"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Audio/FLACWriter.swift": {
+      "bytes": 3446,
+      "sha256": "d8bd87c68de1322c8ffe0c24ae13c46e0e1fd5b5a20aff0c4fcacaa2068a472e"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Audio/ID3Parser.swift": {
+      "bytes": 27609,
+      "sha256": "179aa1ab0bd142c90c8049dec5c469b659f193ae7834bcae05c30240cef91cb1"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Audio/ID3Writer.swift": {
+      "bytes": 4688,
+      "sha256": "e74a1b5d2328386eb4b5cf5b5571733b7fbe57e715dd48c3c8615afbc80fe32f"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Audio/OggReader.swift": {
+      "bytes": 16302,
+      "sha256": "6361b63eccfec1718669044958f4bb5fde986126f18f0787cbfcf8ee5cacca33"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Audio/VorbisComment.swift": {
+      "bytes": 4621,
+      "sha256": "647c10ce82fab9412640b25410bf3103dc3be574c0cf972c48ceb03838e66456"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Audio/WAVParser.swift": {
+      "bytes": 10030,
+      "sha256": "0263c1fcb08b5dde2fc7add98f4c7c53a9705a9c6131a590614149127fdc9e51"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Audio/WAVWriter.swift": {
+      "bytes": 8388,
+      "sha256": "191cfb397fc7e7a4596b3437d00f812f59bf680dafb7206a5e0f61fcf0abf102"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/BMP/BMPFile.swift": {
+      "bytes": 3491,
+      "sha256": "b248923635f29b538b4498df46fcd85715fbcedfbe6aed5c4ddd95de2058d03c"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/BMP/BMPParser.swift": {
+      "bytes": 3359,
+      "sha256": "480b5ee28a263f15e6bcc7300d7a668bc2b59ac7415e3ccdc9e6c6dbd2d17458"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Binary/BinaryReader.swift": {
+      "bytes": 8274,
+      "sha256": "03b63580e9096a3563c9ca72e85ec91b95c12574a99fc32c9d3eb45b8bedb9dd"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Binary/BinaryWriter.swift": {
+      "bytes": 5246,
+      "sha256": "86076a73cd9ef69df1432b408ba2defbdfa653e69716350ff8ce36cac5622078"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Binary/CRC32.swift": {
+      "bytes": 1091,
+      "sha256": "cc9f7858e7157aa56d334db77dc8195a19cf7466e87b024cdac1bc49eff3cf07"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Binary/FileHasher.swift": {
+      "bytes": 3598,
+      "sha256": "2c822d5da08fce9b595aefb432a2b32fc7f9a4fc9eeb4021f25cc93da698cbee"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Binary/ISOBMFFBox.swift": {
+      "bytes": 8138,
+      "sha256": "7f44caaf50136e4ee19ffcb4af259b6bb83dbb52d98abc5d09a99ced962c7b75"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Binary/ISOBMFFMetadata.swift": {
+      "bytes": 44523,
+      "sha256": "7707707db587574cd7b6197e4557ea3c915bcb22044c0d92e12e44125f805b79"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Binary/PureCrypto.swift": {
+      "bytes": 12476,
+      "sha256": "d64244826f11b2c4336934bbbc237ab61ea1f28c18af0d2d7575251d5db33e23"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Binary/ZlibInflate.swift": {
+      "bytes": 5555,
+      "sha256": "74ebc805857a6509925da49ba55f1ca45ce4f9897e36c8630c0b3dac6d644c68"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/C2PA/C2PAData.swift": {
+      "bytes": 22572,
+      "sha256": "c38a8ac3d433afe7b31e6e792015bc3e7a7e94e4ac026f4255db3bb3b128cf71"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/C2PA/C2PAHashVerifier.swift": {
+      "bytes": 7045,
+      "sha256": "bf2338a723d4056fe8e2f63221580cd03a9242272a8355b5fc4e984b70a3e5ff"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/C2PA/C2PAReader.swift": {
+      "bytes": 30101,
+      "sha256": "261d053d17577a2bebe8ad1d88ec2ac1c6b211dc2746c26c3b248fcb4750d9c6"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/C2PA/C2PASignatureVerifier.swift": {
+      "bytes": 9406,
+      "sha256": "a837b422e47d26c75ac95c5f0028d9418d2d4fc21f6f619b9b21445edee0faa5"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/C2PA/JUMBFParser.swift": {
+      "bytes": 10502,
+      "sha256": "c115e0abd46e88840e2090cfbf45378f84c7b709fb07a205bc1b15f8cdfcc407"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/C2PA/X509Parser.swift": {
+      "bytes": 11026,
+      "sha256": "96ad2557f1e1968513606a99a1ad4a6a2e42e4f323f21a23788d44b08b7713e7"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/CBOR/CBORDecoder.swift": {
+      "bytes": 9471,
+      "sha256": "c9939666d6326b33c4d7f70fea70510f740af6e6e3952edfc30fb16c750ee549"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/CBOR/CBORValue.swift": {
+      "bytes": 2905,
+      "sha256": "2f5ad2c25b5a7bfeef9859bd37d3c76dec77fb479bb66b5a0b49c6bdb68e6040"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/CR3/CR3File.swift": {
+      "bytes": 870,
+      "sha256": "bd7703cdb85fd7e5631f22e6273d2027613769b562b401170ad1f06ba3858f87"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/CR3/CR3Parser.swift": {
+      "bytes": 2342,
+      "sha256": "25e17a79478719991d0cc779fff94576e98ff719f6194e06b49c90068250c6c0"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/CR3/CR3Writer.swift": {
+      "bytes": 16148,
+      "sha256": "15380590de783dfe5f7b593cdf65cde7eb503301065b1c79e9ed5df52cd41e47"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Canon/CanonUUIDBoxes.swift": {
+      "bytes": 7706,
+      "sha256": "6fbee2e678d0d179c00bbc5bba3a0d9354a8cacc7f62af489abe56853d1962d2"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Exif/ExifData.swift": {
+      "bytes": 8998,
+      "sha256": "ce4152d18e770704e74f5e982b72aef5e3a611e86bd517a77817d52417872195"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Exif/ExifReader.swift": {
+      "bytes": 3376,
+      "sha256": "702f760040654e01c3097fa81675933879c661bd7dc0d04006cfaec7c4dcb7eb"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Exif/ExifTag.swift": {
+      "bytes": 12467,
+      "sha256": "ba040367ef08a11178c06bf4c6ff1f7f0f3b9fb4434e1a3162dc7fecccc5fdc3"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Exif/ExifWriter.swift": {
+      "bytes": 14967,
+      "sha256": "2b82675c2d7a8350107cfbed0e690db24286115517cb8b8946b161a235b05f2a"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Exif/IFDEntry.swift": {
+      "bytes": 5542,
+      "sha256": "98d080733e591d7b46d88e3df2c59a904d31fcbf2d6e1c5ecaddc2d80a73c13a"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Exif/IFDParser.swift": {
+      "bytes": 2453,
+      "sha256": "8236c0d31a5a90b64b5ad08fb162d2d923285f6c9d437d422ae4a6ff9c549377"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Exif/TIFFHeader.swift": {
+      "bytes": 1507,
+      "sha256": "98fc8fd1e2ba2b45b135a6ea39beb8013730f03c92d03b51eda0d1c321508a3c"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/GIF/GIFFile.swift": {
+      "bytes": 1899,
+      "sha256": "cc65d602ddc9f4f92cf69b3b804c8f5fa9fc58c397ede7ac9c83d9c88e1474cf"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/GIF/GIFParser.swift": {
+      "bytes": 8664,
+      "sha256": "5a8d6dd5b7993ab3f40afa99f69898ae62065643bdf56ee58f50dd2a78f9150a"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/GIF/GIFWriter.swift": {
+      "bytes": 4928,
+      "sha256": "9e6ea0c6cad294c455a4a4ad159ba7fa46c681cf1e309484bb7ac15416fd15b8"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/GPX/GPXGeotagger.swift": {
+      "bytes": 8736,
+      "sha256": "15889309946a7dd149e66e3a55fef856018a036c25041e7cb4c60411b4a12d98"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/GPX/GPXParser.swift": {
+      "bytes": 4145,
+      "sha256": "c9ed748c25fe936e0b70dfbb3595ff32395e6a4d2f38ac03b80cdeae383d0e16"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/GPX/GPXTrack.swift": {
+      "bytes": 1140,
+      "sha256": "89b3fdc9724ae8be77692fb60bec4d48617d766e0205915b51645d486e238693"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/GPX/GPXTrackGenerator.swift": {
+      "bytes": 4870,
+      "sha256": "58c99eb22339f40c72dcc411a7687c408b0f928154e1dc976366d3c7fe5b27f7"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Geolocation/GeoLocationDatabase.swift": {
+      "bytes": 8253,
+      "sha256": "a10da56872ed2cb4c19eb3e09743a2bf7351df00914b85b6b8ce7579700d082a"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Geolocation/KDTree.swift": {
+      "bytes": 8306,
+      "sha256": "735b65cb14dbe1b293ce9785ee690064ebd68ab3b6b36da8aecb5168d96a6cc2"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Geolocation/ReverseGeocoder.swift": {
+      "bytes": 6230,
+      "sha256": "66a14e4a59bc38dc18884f37ad80e3bbc73f0c888d8c27fb9eb6c02fd71bea41"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/HEIF/HEIFAuxiliaryImages.swift": {
+      "bytes": 12738,
+      "sha256": "c517064ba84334ccabc2539629f7fdf9fae64005b79916f1e20db61dd87df978"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/HEIF/HEIFFile.swift": {
+      "bytes": 558,
+      "sha256": "91f658252e6c158b357a9baeaf10581f5e9e9c4e6cdb81f16235a4e5d012ae4a"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/HEIF/HEIFParser.swift": {
+      "bytes": 1363,
+      "sha256": "5942a15edc5a678da32aa67ddcb157a366a961713e4439ceabb0feefe1033e94"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/HEIF/HEIFWriter.swift": {
+      "bytes": 475,
+      "sha256": "84c633dbb6c946b2e2e1ef8fa858153e50af7a5330662f0a291e55658492f1c9"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/ICC/ICCProfile.swift": {
+      "bytes": 22733,
+      "sha256": "86506220e8820eaf35ba88b90f21b0479d708b0106aaca82e9314c643b80f305"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/IPTC/IPTCData.swift": {
+      "bytes": 15312,
+      "sha256": "742115766107ee5d736a25519cca89d35dc6fca87b527150696b386632e10e08"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/IPTC/IPTCDataSet.swift": {
+      "bytes": 2200,
+      "sha256": "0d6f0e609265768d1aca15052e9e1fe57ea0adf92284a01a28d07eec99d5f590"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/IPTC/IPTCReader.swift": {
+      "bytes": 4916,
+      "sha256": "31c491d452ee03108bd8e8fbb7d126d8f641c76d69e52d9f85cec1a044402477"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/IPTC/IPTCTag.swift": {
+      "bytes": 20644,
+      "sha256": "c504c29de4644aaf5925a6643703e8d050c137e7c430ecc04dcb824e662f1eae"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/IPTC/IPTCWriter.swift": {
+      "bytes": 6225,
+      "sha256": "a6be4f1864e6ed007b2959ce1fbfa9c8849efe8c655eec9f8f5f2c38c57b78ee"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/IPTC/PhotoshopIRB.swift": {
+      "bytes": 7095,
+      "sha256": "3e6a54d982c381ef4a53ed2e342607336ec87030a1c568205b08c08a4c8bd054"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/JPEG/JPEGFile.swift": {
+      "bytes": 6782,
+      "sha256": "2708c2707ffa98d927bb2db15d92641ed155a80690e8256768b3b5c96780c061"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/JPEG/JPEGMarker.swift": {
+      "bytes": 2169,
+      "sha256": "f10724f7277c04a9ce567e866e35574af35a79408e0a3a805d4550f292fab1bf"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/JPEG/JPEGParser.swift": {
+      "bytes": 3289,
+      "sha256": "d1004afa9bc3d2da0b8593e32415e8edf9846966e2a06bd84c71b85388f8fb31"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/JPEG/JPEGSegment.swift": {
+      "bytes": 2758,
+      "sha256": "bc15f32f9064e11233648a4078d9c2fd8f44091daaf297841fc6e3408c5451c5"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/JPEG/JPEGWriter.swift": {
+      "bytes": 1790,
+      "sha256": "0a2017e3b4fda27f74eb642ecd85b55b04311aeafc4626b4ed98fedde1600f03"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/JPEG/MPFData.swift": {
+      "bytes": 6257,
+      "sha256": "caaf4f5e9e5a36b890a21f09f605a17ce2c966b27fd4ae186cf8680b1d30da2c"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/JPEGXL/JXLFile.swift": {
+      "bytes": 1904,
+      "sha256": "e7b3ff1d33b9c08ecf76f06ea0d8ca5f4d71f564f16df012a948943aedfa1bfc"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/JPEGXL/JXLParser.swift": {
+      "bytes": 6768,
+      "sha256": "07a6bc7633f15d526d31659c678d9cd2a032500483cd627533270ff402a76072"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/JPEGXL/JXLWriter.swift": {
+      "bytes": 2796,
+      "sha256": "59a108a6849adeaa159d294e9fa234a3682352812943bef1dfe698d2fceac514"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/MakerNote/AppleMakerNote.swift": {
+      "bytes": 5770,
+      "sha256": "f0a181fae1770f68f97bba00755225a60b0b3f340e2434978623146e0f043399"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/MakerNote/CanonMakerNote.swift": {
+      "bytes": 18442,
+      "sha256": "c90881660d6e6780d2170a965cb89aa322abeba3699f73a48e91e1215c5b6b72"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/MakerNote/DJIMakerNote.swift": {
+      "bytes": 3306,
+      "sha256": "9b52cc39228baf9028a9b051a3e18d47eeaa0e0a1beba0233aae3df51bb355c2"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/MakerNote/FujifilmMakerNote.swift": {
+      "bytes": 2403,
+      "sha256": "b0ef3b57b12c63ec0cd3bfbfc6356adb0448b6b7c886bb89dc33c27c860e9a8b"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/MakerNote/LeicaMakerNote.swift": {
+      "bytes": 2495,
+      "sha256": "5c5374aba51acfb8aeb9a4723903f8718800f6a5aed893164c55dd6eb7944a58"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/MakerNote/MakerNoteData.swift": {
+      "bytes": 1959,
+      "sha256": "4f0464fdd37c6a9a6d67c41338d872d6b0f8ac0604092e576f9ca9463ad89d93"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/MakerNote/MakerNoteReader.swift": {
+      "bytes": 3615,
+      "sha256": "aa4c7056a3ddd987c4b43d9e9af86c31b2e3c58de6497f070ecdf82315a2af50"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/MakerNote/MakerNoteRelocator.swift": {
+      "bytes": 10473,
+      "sha256": "19e056ef5453817b2b15a088ab45ff147437e6b403d008a5ec979e3fd0f38797"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/MakerNote/MakerNoteWriter.swift": {
+      "bytes": 21163,
+      "sha256": "609e3df7352d9e542c9c78c8869ef15a37ce9fdde7b9cec86fc807f62abf4595"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/MakerNote/NikonMakerNote.swift": {
+      "bytes": 3993,
+      "sha256": "bd61227c6ab11b0b893cb0261c77428fbc5a40ef864cb20eb75b6f3b7dde22cf"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/MakerNote/OlympusMakerNote.swift": {
+      "bytes": 2707,
+      "sha256": "cbfc9b9e2b2f92c2df2a972e6fdc7824c4564bcb28f69994a6a0565f98f05620"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/MakerNote/PanasonicMakerNote.swift": {
+      "bytes": 1954,
+      "sha256": "a0a70f566e5554ae993cba2455d0ce250a22d925877738029818fab2b214092c"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/MakerNote/PentaxMakerNote.swift": {
+      "bytes": 3580,
+      "sha256": "825264415081f237b99814649b84bb52a4e13a1b16c921bad157060ce65d16a0"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/MakerNote/SamsungMakerNote.swift": {
+      "bytes": 3848,
+      "sha256": "4df739c8bb17153e1c9e72680fa501ce878678c1e8afa3b2861da003f21555b7"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/MakerNote/SigmaMakerNote.swift": {
+      "bytes": 2136,
+      "sha256": "16011521653e11448bf79a6e4b4dbef34830c196d02a36d42cb166ca391fc0b2"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/MakerNote/SonyMakerNote.swift": {
+      "bytes": 21868,
+      "sha256": "2ba46500822939d8df5b38557ed5baafa62cfba3713dbfc05b2e1d5741307d04"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/PDF/PDFFile.swift": {
+      "bytes": 1623,
+      "sha256": "1a7f1fefbf809cd040679a6783b4278440b1998a1eda1f2e55885c20176ccb14"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/PDF/PDFParser.swift": {
+      "bytes": 22652,
+      "sha256": "c6c78a816cb36f474900bbe8a3176c88ec03c2a939a5c32933be12e0743d4618"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/PDF/PDFWriter.swift": {
+      "bytes": 5048,
+      "sha256": "6cae9470841b479e4e14674a7e156a1e3a4c6a6346a0658975f1d549b0ddafca"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/PNG/PNGChunk.swift": {
+      "bytes": 474,
+      "sha256": "8e43f7fb3b4d2aafa97f8a0863d3c634a5a7be6cef607b94b61335375dfd5627"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/PNG/PNGFile.swift": {
+      "bytes": 3363,
+      "sha256": "1c65d3b1eb60fb78297523fc7f0cbb28338ce866c3f93f67283d07a308401fbf"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/PNG/PNGParser.swift": {
+      "bytes": 4195,
+      "sha256": "4d08eef01b0297b4a4b3c21a0b68a06c40c2858b33d6a1e8ee2cff1e3df5044a"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/PNG/PNGWriter.swift": {
+      "bytes": 1033,
+      "sha256": "2e5449db240d6f50d4da724164eb4f5a91b519e94f6edb2b3b0f02b02e6b241c"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/PSD/PSDFile.swift": {
+      "bytes": 1422,
+      "sha256": "6a0da0a5fcf52a85c7cb316368d9a3e5ea2e77aece3b670448ab403648f7be98"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/PSD/PSDParser.swift": {
+      "bytes": 4857,
+      "sha256": "07c0a1523c7d2738217e307ccd8c726219d70f0b09d6e4fc4a6d476f4d8697fe"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/PSD/PSDWriter.swift": {
+      "bytes": 3309,
+      "sha256": "317377ccd0585bd56ade8945d92bcbb31838fde4638f629fa577ea9e9aea98ba"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/RAW/DNGMetadata.swift": {
+      "bytes": 23128,
+      "sha256": "fb4bdfd007b1e9b927aa049eea763e43df1497c5a3b87e01b8c5f4223f61197e"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/RAW/RAWFileParser.swift": {
+      "bytes": 15075,
+      "sha256": "9a999675eebc08b7acf192bdca14c59673503437db75cbbc232452eb5093fa1d"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/SVG/SVGFile.swift": {
+      "bytes": 700,
+      "sha256": "063bb9b4e91e810ae64bc8ab17643f76468b36526d0331a9e7ef367a6725b404"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/SVG/SVGParser.swift": {
+      "bytes": 4053,
+      "sha256": "0323ef5af3ed63c286598fdf10d60a1c926b4cca99bd4af2eed245b043bcce0b"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/SVG/SVGWriter.swift": {
+      "bytes": 1763,
+      "sha256": "c981d2ec5c4f1244971d34f2ffc0b3cd9ff20ba2899007f7b138991db8c0f0a5"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/SwiftMediaMetadata.swift": {
+      "bytes": 2580,
+      "sha256": "7ef9ae182b88ba69d904aedc231bdd878bcebb6e1ac0e3a5ddc169a262419123"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/TIFF/TIFFFile.swift": {
+      "bytes": 672,
+      "sha256": "e3a6e09224c7e78c4995513f857c4d2c8b7137302ef165fab9bc282b2f7b1796"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/TIFF/TIFFFileParser.swift": {
+      "bytes": 4094,
+      "sha256": "3569e1fc026e91d7011d99b04f3c523b69adaed911795118be77649ef57e9f0c"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/TIFF/TIFFWriter.swift": {
+      "bytes": 22492,
+      "sha256": "080a42a933dd297a2a79019bedf002c220dc286e358409f4d1f08547a41852df"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Video/ARRIJSONParser.swift": {
+      "bytes": 19003,
+      "sha256": "7c461d3040021ddaed97a42890a27c630e9095f81140e21d2fd302482f011708"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Video/AVIReader.swift": {
+      "bytes": 19269,
+      "sha256": "bb458985cd8cce1efd1b149052184129fbe95026792787196393d6666ea69cd5"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Video/BRAWFrameReader.swift": {
+      "bytes": 17062,
+      "sha256": "f7ef3dffbfb96b1f45949fc416540a5e7f927c4c072b9e3817dd93d6c9aba845"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Video/CRMReader.swift": {
+      "bytes": 25871,
+      "sha256": "9d89c452beaa5d30812e36d0ec3ee293fe840e417a9b11f08d6ad3a431ca2cdc"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Video/GPMFReader.swift": {
+      "bytes": 16763,
+      "sha256": "82db34ef8085165a4935f0f70406024a6d4e2dc054fa2062bd60eb177e8b6948"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Video/IVFReader.swift": {
+      "bytes": 9138,
+      "sha256": "45b525fa0c3eb6c8e0789946577c699156f97fcb1669fd1e4978a78c3865cc77"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Video/MP4AudioSampleEntry.swift": {
+      "bytes": 13847,
+      "sha256": "816285ab61a8a63f557aa57fad6cb6df0b4aad36716bfd7e218da09036d0cdd7"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Video/MP4Chapters.swift": {
+      "bytes": 16519,
+      "sha256": "463b154584884cd325bf154d08a325eb1cd001fd0331910003c03cd531029b49"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Video/MP4Parser.swift": {
+      "bytes": 23859,
+      "sha256": "7913095768c1b78b6a75037f442dce9edaace7cbee54d17e93cc18f91d81bb7f"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Video/MP4TrackParser.swift": {
+      "bytes": 42894,
+      "sha256": "504f7cda94700ba441a81aff4ebd99f60b02a854284df707e8d189983588c81e"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Video/MP4UserData.swift": {
+      "bytes": 38661,
+      "sha256": "841cab2fa9efb8ac0d581f0c73b73e624c08eabbcbc452f461dab9d39faa883e"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Video/MP4VisualSampleEntry.swift": {
+      "bytes": 28599,
+      "sha256": "2c86953c3285c5d7f60982fa131bd50d4b84fd56b42fcbbc9668b70e6f763fc2"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Video/MP4Writer.swift": {
+      "bytes": 18037,
+      "sha256": "c855b6409f4198d34df2c9446e165c54b5cd2d465ccc77f287f2734a8f513311"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Video/MPEGBitstream.swift": {
+      "bytes": 59361,
+      "sha256": "a5d67dc644f173e4ef854a56d9a262b90e09647516dc7961839887c098992fca"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Video/MPEGReader.swift": {
+      "bytes": 60861,
+      "sha256": "ef97c34775ac7fc42b5d1d0017da29c28d5685e37a2be1e99bb40b36a3a318df"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Video/MXFFileCursor.swift": {
+      "bytes": 3841,
+      "sha256": "8a4715a45a33da0bf32a1f878eb47bf1c2040d21b77b5118019d7aa40310bd37"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Video/MXFMCAReader.swift": {
+      "bytes": 17657,
+      "sha256": "9be99e46d5ec9286121f6ebeb312d08b8d828b87fdaaa490f7bb6700722d0645"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Video/MXFReader.swift": {
+      "bytes": 52755,
+      "sha256": "4382a3e502994508fdb88536f962411498e19d91a7a655ec56401e5a2771ff0d"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Video/MatroskaReader.swift": {
+      "bytes": 87273,
+      "sha256": "00a88e5ad3255bf3be0822d18b5211cd26449cd82a888506f5eed4d4706cdbe7"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Video/NRTXMLParser.swift": {
+      "bytes": 27763,
+      "sha256": "834cd314310f47099e12b408f65a79412a96ab5c616ee81bfb5c98d44b3cf535"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Video/PixelFormatDerivation.swift": {
+      "bytes": 2814,
+      "sha256": "dbc54ffef620b1e4edaf5fa7ec61d88b3e9847cf918c8fbaef238da8f839b74f"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Video/R3DReader.swift": {
+      "bytes": 14409,
+      "sha256": "8c672b4e96dc685352badafa48df7b29c2248dedc0eba020cd9bb2e78ddbd05f"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/Video/RTMDReader.swift": {
+      "bytes": 24485,
+      "sha256": "7eb309f750a1790af540fc99bacfa2e553b51bc8337ae71d13a363a161ee9e44"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/WebP/WebPFile.swift": {
+      "bytes": 993,
+      "sha256": "6715cbe77cda52bb61ccb1b821b8b9a931f01b20d535d61762a479ccb7e1902f"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/WebP/WebPParser.swift": {
+      "bytes": 3272,
+      "sha256": "e5bd88e8a8063b14b1a0302a62391d7c2180e4456fd4e9b6bd34ab7d68e3ee9b"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/WebP/WebPWriter.swift": {
+      "bytes": 8157,
+      "sha256": "79610ac68eff993117fb40973f0557c597e0a89b2ba83117dae0182979528a03"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/XMP/PureXMLTokenizer.swift": {
+      "bytes": 13107,
+      "sha256": "a18042c114c6d11049cd86a997ee035c8d09449aec069cc1255c5aee89e86d76"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/XMP/XMPData.swift": {
+      "bytes": 67043,
+      "sha256": "4ef6273898f44f911eff38ba3a714ac568b4a6237e5026b310209ca5767cccbf"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/XMP/XMPGPS.swift": {
+      "bytes": 14022,
+      "sha256": "910ed1a3640745ece474b8a4427ca93b736700223264c0170a26dd6ee92777ef"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/XMP/XMPIPTCStructures.swift": {
+      "bytes": 14474,
+      "sha256": "610dafa9baacb9d861265bd414dbd20ad5de96b5cacf8bc192f9363b19a21cca"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/XMP/XMPNamespace.swift": {
+      "bytes": 6312,
+      "sha256": "c803aebce86e853e84e615de17ca92b518480092f69d2af4209becf4ee3d9c19"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/XMP/XMPReader.swift": {
+      "bytes": 35410,
+      "sha256": "6b82844253a8043027ded8865a7e3feda302732080aa47765283e6d10bc625ff"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/XMP/XMPRegion.swift": {
+      "bytes": 2468,
+      "sha256": "c2933739e497c00220d98154dcc1cdf3d9233cba66d3db2101e920b984f408bd"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/XMP/XMPSidecar+Transactional.swift": {
+      "bytes": 9756,
+      "sha256": "29580626c8c5a55a05ec5eff3dd508eed88b3dd5c775c7abac280fb6e59ef5c2"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/XMP/XMPSidecar.swift": {
+      "bytes": 2301,
+      "sha256": "37aa32a6957ab458ec3c60397d4352befafedd2ed07c786d368527fb2a8966e5"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/XMP/XMPSidecarSync.swift": {
+      "bytes": 2750,
+      "sha256": "3f070e9398784ee785dcdabf9c05354671bd7416e931d7830a771fec376ba36d"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/XMP/XMPSidecarTransactionLock.swift": {
+      "bytes": 1786,
+      "sha256": "11c00d7c2f08d3527343601d7f3deee6687f89bf83cbf3522019accc7f96c673"
+    },
+    "/private/tmp/aagedal-bounded-mxf-candidate-20260930/Sources/SwiftMediaMetadata/XMP/XMPWriter.swift": {
+      "bytes": 19128,
+      "sha256": "8d8d8907eeb53e57d7ea05faca0f6cd0bbdddf2bf74d852d063b1b9521c44942"
+    },
+    "/Users/truls.aagedal/Movies/TestVideo/testmappe_agedal_media_stitch/M4ROOT/CLIP/rre_8073.MP4": {
+      "bytes": 1879319902,
+      "sha256": "d44dcfd089c2712a1fa1e40f08a293cc78dc33a472071c6edbe4224bda06d87a"
+    },
+    "/Users/truls.aagedal/Movies/TestVideo/Sony A1 Card/M4ROOT/CLIP/20260502_TRA_MOV_0240.MP4": {
+      "bytes": 1569013272,
+      "sha256": "d8f32f9e827dba821a8101c7dd713580e37b03e9723c4ffbf136919829d6fbe1"
+    },
+    "/Users/truls.aagedal/Movies/TestVideo/A1_v_FX6/FX6/OJ_FX6A0021.MXF": {
+      "bytes": 8643449904,
+      "sha256": "5d1c636920c80e7ce83af6486a8de9184c5cacee8a316e799dbb52e8f02174a8"
+    },
+    "/Users/truls.aagedal/Movies/TestVideo/Sony A1 Card/M4ROOT/CLIP/20260502_TRA_MOV_0240M01.XML": {
+      "bytes": 2285,
+      "sha256": "a6b232115555e2253c7a1acc36398429b94d373e17196f325993dd897368bb10"
+    },
+    "/Users/truls.aagedal/Movies/TestVideo/A1_v_FX6/FX6/OJ_FX6A0021M01.XML": {
+      "bytes": 3379,
+      "sha256": "15b267b83754ca061afb475c3f3fdd632f1915b5a9bcf20aeaa5b33744f1a7c3"
+    }
+  },
+  "identitiesUnchangedAfter": true,
+  "endedUTC": "2026-09-30T19:48:39.316204+00:00"
+}

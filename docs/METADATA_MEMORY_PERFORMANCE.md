@@ -259,3 +259,49 @@ the authoritative backstop. The 3.0.1 run above satisfies the targeted productio
 payload-size regression. Future candidate runs should retain the exact app
 revision, package resolution, source hashes, result bundles, logs, and validated
 `summary.json`, especially when using producer-authentic inputs.
+
+### Repeated imports and shared cache resources
+
+The separate opt-in repeated-import method keeps one fresh Release XCTest host
+per input, then imports the same original through distinct directory symlink
+URLs. Each URL uses the original filename and exposes its original parent
+directory, preserving adjacent camera sidecars. The real `MetadataService.shared`
+cache receives a new key on each import without duplicating large media files.
+Every import compares the complete returned model with the first import and an
+immediate cached read. The profile also revisits the first URL after all imports;
+that observes the returned model and resource use without assuming `NSCache`
+never evicts.
+
+```bash
+METADATA_MEMORY_PROFILE_REIMPORT_COUNT=30 \
+METADATA_MEMORY_PROFILE_MAX_RESIDENT_GROWTH_MIB=32 \
+METADATA_MEMORY_PROFILE_MAX_DESCRIPTOR_GROWTH=4 \
+METADATA_MEMORY_PROFILE_DERIVED_DATA=/tmp/new-production-metadata-reimport-derived \
+scripts/profile-production-metadata-memory.sh \
+  /tmp/new-production-metadata-reimport-profile \
+  /path/to/original-camera.MXF
+python3 scripts/test-production-metadata-reimport-profile-validation.py
+```
+
+The report records sampled RSS during each new-key read, process lifetime peaks,
+current RSS and open descriptor counts after caller values are released, and
+the same resource observations after the earliest-URL revisit. One baseline
+model remains retained for complete parity comparisons; shared-cache entries
+remain subject to `NSCache` policy. A directory symlink is a cache-key workload,
+not a filesystem cold-cache or external-volume benchmark.
+
+The validator always requires complete parity, observations, fresh host identity,
+and monotonic lifetime peaks. Its descriptor-growth budget defaults to four above
+the initial host count. Resident growth is bounded only when explicitly supplied;
+it measures every release and revisit against the first released import, which
+serves as warmup. The example uses a diagnostic 32 MiB budget. That is an
+acceptance choice for this run, not a universal app limit or a promise of RSS
+recovery. `validation.json` records the actual budgets alongside `summary.json`.
+Both receipts are removed before revalidation so a failure cannot leave an old
+passing result.
+
+When evaluating a local dependency candidate, use an isolated source checkout
+and retain the actual compiled source/file list and linked binary identities.
+Use fresh DerivedData; do not copy Xcode build databases with absolute output
+paths. The ordinary runner uses the checkout's dependency references and does
+not replace a shipping pin with a local candidate.

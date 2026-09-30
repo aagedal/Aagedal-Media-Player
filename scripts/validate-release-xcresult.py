@@ -20,6 +20,7 @@ ALLOWED_SKIPPED_TESTS = {
     "LiveAudioMeterPerformanceTests/testRepresentativeProductionPathWhenRequested()",
     "LoudnessPerformanceTests/testProductionLoudnessProfileWhenRequested()",
     "ProductionMetadataMemoryPerformanceTests/testProductionMetadataMemoryProfileWhenRequested()",
+    "ProductionMetadataMemoryPerformanceTests/testProductionMetadataRepeatedImportProfileWhenRequested()",
     "ProgrammeLoudnessPerformanceTests/testProductionProgrammeLoudnessProfileWhenRequested()",
     "TimelineThumbnailLoaderTests/testProductionThumbnailProfileWhenRequested()",
 }

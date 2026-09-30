@@ -1,0 +1,41 @@
+diff --git a/Aagedal Media Player.xcodeproj/project.pbxproj b/Aagedal Media Player.xcodeproj/project.pbxproj
+index 6b74f3c..adeecb2 100644
+--- a/Aagedal Media Player.xcodeproj/project.pbxproj	
++++ b/Aagedal Media Player.xcodeproj/project.pbxproj	
+@@ -174,7 +174,7 @@
+ 			packageReferences = (
+ 				8EA00003AAAA000000000001 /* XCRemoteSwiftPackageReference "MPVKit" */,
+ 				8EA00006AAAA000000000001 /* XCRemoteSwiftPackageReference "Sparkle" */,
+-				8EA00009AAAA000000000001 /* XCRemoteSwiftPackageReference "SwiftMediaMetadata" */,
++				8EA00009AAAA000000000001 /* XCLocalSwiftPackageReference "SwiftMediaMetadata" */,
+ 			);
+ 			preferredProjectObjectVersion = 77;
+ 			productRefGroup = 8EB2F2842F49166000B196AD /* Products */;
+@@ -506,14 +506,10 @@
+ 				minimumVersion = 2.9.1;
+ 			};
+ 		};
+-		8EA00009AAAA000000000001 /* XCRemoteSwiftPackageReference "SwiftMediaMetadata" */ = {
+-			isa = XCRemoteSwiftPackageReference;
+-			repositoryURL = "https://github.com/aagedal/SwiftMediaMetadata";
+-			requirement = {
+-				kind = upToNextMajorVersion;
+-				minimumVersion = 3.0.1;
+-			};
+-		};
++		8EA00009AAAA000000000001 /* XCLocalSwiftPackageReference "SwiftMediaMetadata" */ = {
++            isa = XCLocalSwiftPackageReference;
++            relativePath = "/private/tmp/aagedal-bounded-mxf-candidate-20260930";
++        };
+ /* End XCRemoteSwiftPackageReference section */
+ 
+ /* Begin XCSwiftPackageProductDependency section */
+@@ -529,7 +525,7 @@
+ 		};
+ 		8EA00008AAAA000000000001 /* SwiftMediaMetadata */ = {
+ 			isa = XCSwiftPackageProductDependency;
+-			package = 8EA00009AAAA000000000001 /* XCRemoteSwiftPackageReference "SwiftMediaMetadata" */;
++			package = 8EA00009AAAA000000000001 /* XCLocalSwiftPackageReference "SwiftMediaMetadata" */;
+ 			productName = SwiftMediaMetadata;
+ 		};
+ /* End XCSwiftPackageProductDependency section */

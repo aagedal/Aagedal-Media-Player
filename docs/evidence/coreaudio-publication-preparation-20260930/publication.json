@@ -1,0 +1,907 @@
+{
+  "architectures": [
+    "arm64",
+    "x86_64"
+  ],
+  "auxiliaryBuildInputs": [
+    {
+      "buildOnly": false,
+      "publicationPath": "inputs/openssl-3.3.5/openssl.zip",
+      "recipeURL": "https://github.com/mpvkit/openssl-build/releases/download/3.3.5/openssl-all.zip",
+      "relativePath": "dist/openssl-3.3.5/openssl.zip",
+      "remoteAuthenticated": false,
+      "sha256": "8bc37424aa98fdeac17fd00fbeea7b784a39f1f800cc7f9e0c948d3b169c6f2f",
+      "sizeBytes": 44619276
+    },
+    {
+      "buildOnly": false,
+      "publicationPath": "inputs/gnutls-3.8.11/gnutls.zip",
+      "recipeURL": "https://github.com/mpvkit/gnutls-build/releases/download/3.8.11/gnutls-all.zip",
+      "relativePath": "dist/gnutls-3.8.11/gnutls.zip",
+      "remoteAuthenticated": false,
+      "sha256": "6e125d9d7be4e09e112950703b0563324f5a05e546782e542b353db360f59b59",
+      "sizeBytes": 18982019
+    },
+    {
+      "buildOnly": false,
+      "publicationPath": "inputs/nettle-3.8.11/nettle.zip",
+      "recipeURL": "https://github.com/mpvkit/gnutls-build/releases/download/3.8.11/nettle-all.zip",
+      "relativePath": "dist/nettle-3.8.11/nettle.zip",
+      "remoteAuthenticated": false,
+      "sha256": "7c1606e5acdc0be563f5a6bb19cd2fe3e1e93b30154ac22fc2f80bffcf3151c2",
+      "sizeBytes": 8504154
+    },
+    {
+      "buildOnly": false,
+      "publicationPath": "inputs/gmp-3.8.11/gmp.zip",
+      "recipeURL": "https://github.com/mpvkit/gnutls-build/releases/download/3.8.11/gmp-all.zip",
+      "relativePath": "dist/gmp-3.8.11/gmp.zip",
+      "remoteAuthenticated": false,
+      "sha256": "cef5c3ff12260528a5971d2bd7bb3bc31ae85fac1235c06eff3de96c28c38aa2",
+      "sizeBytes": 4588994
+    },
+    {
+      "buildOnly": false,
+      "publicationPath": "inputs/libass-0.17.5/libass.zip",
+      "recipeURL": "https://github.com/mpvkit/libass-build/releases/download/0.17.5/libass-all.zip",
+      "relativePath": "dist/libass-0.17.5/libass.zip",
+      "remoteAuthenticated": false,
+      "sha256": "d5e4b6046d0a4198fb97083816348b2229071749de8c429747a9558c325a1d3a",
+      "sizeBytes": 1775040
+    },
+    {
+      "buildOnly": false,
+      "publicationPath": "inputs/libunibreak-0.17.5/libunibreak.zip",
+      "recipeURL": "https://github.com/mpvkit/libass-build/releases/download/0.17.5/libunibreak-all.zip",
+      "relativePath": "dist/libunibreak-0.17.5/libunibreak.zip",
+      "remoteAuthenticated": false,
+      "sha256": "a7a9c0afa36e2301eec583e5575c30c1609357045d718565d06faf93abc56617",
+      "sizeBytes": 754560
+    },
+    {
+      "buildOnly": false,
+      "publicationPath": "inputs/libfreetype-0.17.5/libfreetype.zip",
+      "recipeURL": "https://github.com/mpvkit/libass-build/releases/download/0.17.5/libfreetype-all.zip",
+      "relativePath": "dist/libfreetype-0.17.5/libfreetype.zip",
+      "remoteAuthenticated": false,
+      "sha256": "d5fb41dd3d66c6e433b389a398571b51b8d65f3f9e81f10ee61d5434a647749e",
+      "sizeBytes": 5891891
+    },
+    {
+      "buildOnly": false,
+      "publicationPath": "inputs/libfribidi-0.17.5/libfribidi.zip",
+      "recipeURL": "https://github.com/mpvkit/libass-build/releases/download/0.17.5/libfribidi-all.zip",
+      "relativePath": "dist/libfribidi-0.17.5/libfribidi.zip",
+      "remoteAuthenticated": false,
+      "sha256": "7ae8cf8c8b16a8b4ebc004f3368044d9baf8454398d18d9e8bc37964b04a2fe6",
+      "sizeBytes": 393673
+    },
+    {
+      "buildOnly": false,
+      "publicationPath": "inputs/libharfbuzz-0.17.5/libharfbuzz.zip",
+      "recipeURL": "https://github.com/mpvkit/libass-build/releases/download/0.17.5/libharfbuzz-all.zip",
+      "relativePath": "dist/libharfbuzz-0.17.5/libharfbuzz.zip",
+      "remoteAuthenticated": false,
+      "sha256": "ff67179fb84a9a0f34b2ba276c4028823fecd90315cf18496be400cdfc768a3e",
+      "sizeBytes": 34473455
+    },
+    {
+      "buildOnly": false,
+      "publicationPath": "inputs/libsmbclient-4.15.13-2512/libsmbclient.zip",
+      "recipeURL": "https://github.com/mpvkit/libsmbclient-build/releases/download/4.15.13-2512/libsmbclient-all.zip",
+      "relativePath": "dist/libsmbclient-4.15.13-2512/libsmbclient.zip",
+      "remoteAuthenticated": false,
+      "sha256": "6861f0b0e45abd3248a8160d1c0b4ede66eef5163f04598830883a951607cef9",
+      "sizeBytes": 97090982
+    },
+    {
+      "buildOnly": false,
+      "publicationPath": "inputs/libdav1d-1.5.3/libdav1d.zip",
+      "recipeURL": "https://github.com/mpvkit/libdav1d-build/releases/download/1.5.3/libdav1d-all.zip",
+      "relativePath": "dist/libdav1d-1.5.3/libdav1d.zip",
+      "remoteAuthenticated": false,
+      "sha256": "5d9ca131372bc9513100dbc43a59582ad1cf7acf6136ad4e6fecd63dc0075d82",
+      "sizeBytes": 5200983
+    },
+    {
+      "buildOnly": false,
+      "publicationPath": "inputs/lcms2-2.17.0/lcms2.zip",
+      "recipeURL": "https://github.com/mpvkit/lcms2-build/releases/download/2.17.0/lcms2-all.zip",
+      "relativePath": "dist/lcms2-2.17.0/lcms2.zip",
+      "remoteAuthenticated": false,
+      "sha256": "8c118b2c04e2440ecf25ffebfa7952ebb09aba83a71378e3b9ed45dae3a6115a",
+      "sizeBytes": 3007879
+    },
+    {
+      "buildOnly": false,
+      "publicationPath": "inputs/libplacebo-7.360.1/libplacebo.zip",
+      "recipeURL": "https://github.com/mpvkit/libplacebo-build/releases/download/7.360.1/libplacebo-all.zip",
+      "relativePath": "dist/libplacebo-7.360.1/libplacebo.zip",
+      "remoteAuthenticated": false,
+      "sha256": "cdb8a07563bca119ca909ab4a3503825c27678736cdab294338b0a7dbe2cf35c",
+      "sizeBytes": 8692592
+    },
+    {
+      "buildOnly": false,
+      "publicationPath": "inputs/libdovi-3.3.2/libdovi.zip",
+      "recipeURL": "https://github.com/mpvkit/libdovi-build/releases/download/3.3.2/libdovi-all.zip",
+      "relativePath": "dist/libdovi-3.3.2/libdovi.zip",
+      "remoteAuthenticated": false,
+      "sha256": "81b85386016a012391c473674ef96e4e494fa76aef2f7b6c102a335e844644f8",
+      "sizeBytes": 11413568
+    },
+    {
+      "buildOnly": false,
+      "publicationPath": "inputs/vulkan-1.4.2/vulkan.zip",
+      "recipeURL": "https://github.com/mpvkit/moltenvk-build/releases/download/1.4.2/MoltenVK-all.zip",
+      "relativePath": "dist/vulkan-1.4.2/vulkan.zip",
+      "remoteAuthenticated": false,
+      "sha256": "551bf9ee4e6fe1f9a148a6aef8eff5e5e6e0c0be9dedda2405812023d4a38c60",
+      "sizeBytes": 28826665
+    },
+    {
+      "buildOnly": false,
+      "publicationPath": "inputs/libshaderc-2025.5.0/libshaderc.zip",
+      "recipeURL": "https://github.com/mpvkit/libshaderc-build/releases/download/2025.5.0/libshaderc-all.zip",
+      "relativePath": "dist/libshaderc-2025.5.0/libshaderc.zip",
+      "remoteAuthenticated": false,
+      "sha256": "1079da73a292e5b2cea6a02fa2208c4935ead79a98043f81708424510e0ab53f",
+      "sizeBytes": 122917658
+    },
+    {
+      "buildOnly": false,
+      "publicationPath": "inputs/libuchardet-0.0.8/libuchardet.zip",
+      "recipeURL": "https://github.com/mpvkit/libuchardet-build/releases/download/0.0.8/libuchardet-all.zip",
+      "relativePath": "dist/libuchardet-0.0.8/libuchardet.zip",
+      "remoteAuthenticated": false,
+      "sha256": "21407ffd33ce5550f7adf0759c268ac3c8022a90f80b2a9a25e8273fd27814bb",
+      "sizeBytes": 1240404
+    },
+    {
+      "buildOnly": false,
+      "publicationPath": "inputs/libbluray-1.4.0/libbluray.zip",
+      "recipeURL": "https://github.com/mpvkit/libbluray-build/releases/download/1.4.0/libbluray-all.zip",
+      "relativePath": "dist/libbluray-1.4.0/libbluray.zip",
+      "remoteAuthenticated": false,
+      "sha256": "c0302f43258ba41d9661dea0be4a7c9c1dd59d30d284ecfbf7319157c8e8a8de",
+      "sizeBytes": 2625844
+    },
+    {
+      "buildOnly": true,
+      "publicationPath": "inputs/libluajit-2.1.0-fix/libluajit.zip",
+      "recipeURL": "https://github.com/mpvkit/libluajit-build/releases/download/2.1.0-fix/libluajit-all.zip",
+      "relativePath": "dist/libluajit-2.1.0-fix/libluajit.zip",
+      "remoteAuthenticated": false,
+      "sha256": "15a2b0d2b013074cefcfacfcb9df4ea7e5624e76decdb7c3b0556c3068a2816b",
+      "sizeBytes": 2605652
+    },
+    {
+      "buildOnly": false,
+      "publicationPath": "inputs/libuavs3d-1.2.1-fix/libuavs3d.zip",
+      "recipeURL": "https://github.com/mpvkit/libuavs3d-build/releases/download/1.2.1-fix/libuavs3d-all.zip",
+      "relativePath": "dist/libuavs3d-1.2.1-fix/libuavs3d.zip",
+      "remoteAuthenticated": false,
+      "sha256": "8644c7a8182679dbe762b522356606220bb6d2196a5ec65511eda42ef48b3e7a",
+      "sizeBytes": 4580333
+    }
+  ],
+  "binaryTargets": [
+    {
+      "assetPath": "assets/Libmpv-GPL.xcframework.zip",
+      "checksum": "8f2b280d22d70b621e360fe28b53da217585fecf3dc8d79a9cec44e406d45218",
+      "name": "Libmpv-GPL",
+      "originalBuildPath": "dist/release/Libmpv.xcframework.zip",
+      "remoteAuthenticated": false,
+      "url": "https://github.com/aagedal/MPVKit/releases/download/aagedal-2.0.0-coreaudio-20260930/Libmpv-GPL.xcframework.zip"
+    },
+    {
+      "assetPath": "assets/Libavcodec-GPL.xcframework.zip",
+      "checksum": "0d4795767f7129cae3f18d83a837668eaa416e9bf484ba9dc177eab5cd9b07a4",
+      "name": "Libavcodec-GPL",
+      "originalBuildPath": "dist/release/Libavcodec.xcframework.zip",
+      "remoteAuthenticated": false,
+      "url": "https://github.com/aagedal/MPVKit/releases/download/aagedal-2.0.0-coreaudio-20260930/Libavcodec-GPL.xcframework.zip"
+    },
+    {
+      "assetPath": "assets/Libavdevice-GPL.xcframework.zip",
+      "checksum": "70959344d77383440ad4d748a7584035c182dc96b17c5873f4cc219c25e823e9",
+      "name": "Libavdevice-GPL",
+      "originalBuildPath": "dist/release/Libavdevice.xcframework.zip",
+      "remoteAuthenticated": false,
+      "url": "https://github.com/aagedal/MPVKit/releases/download/aagedal-2.0.0-coreaudio-20260930/Libavdevice-GPL.xcframework.zip"
+    },
+    {
+      "assetPath": "assets/Libavfilter-GPL.xcframework.zip",
+      "checksum": "6f5a33b0fc1822f355c7b6297e1a42780664fce52d20af0ed90aff4897143be6",
+      "name": "Libavfilter-GPL",
+      "originalBuildPath": "dist/release/Libavfilter.xcframework.zip",
+      "remoteAuthenticated": false,
+      "url": "https://github.com/aagedal/MPVKit/releases/download/aagedal-2.0.0-coreaudio-20260930/Libavfilter-GPL.xcframework.zip"
+    },
+    {
+      "assetPath": "assets/Libavformat-GPL.xcframework.zip",
+      "checksum": "b9b831c6d4b7c476a49d6300126a23ce5e24d379bf2391af1162cc97e75b2991",
+      "name": "Libavformat-GPL",
+      "originalBuildPath": "dist/release/Libavformat.xcframework.zip",
+      "remoteAuthenticated": false,
+      "url": "https://github.com/aagedal/MPVKit/releases/download/aagedal-2.0.0-coreaudio-20260930/Libavformat-GPL.xcframework.zip"
+    },
+    {
+      "assetPath": "assets/Libavutil-GPL.xcframework.zip",
+      "checksum": "2738af49700989f6d95a039898db8f198a53a8aa6bef20dea898fa0046e879e6",
+      "name": "Libavutil-GPL",
+      "originalBuildPath": "dist/release/Libavutil.xcframework.zip",
+      "remoteAuthenticated": false,
+      "url": "https://github.com/aagedal/MPVKit/releases/download/aagedal-2.0.0-coreaudio-20260930/Libavutil-GPL.xcframework.zip"
+    },
+    {
+      "assetPath": "assets/Libswresample-GPL.xcframework.zip",
+      "checksum": "49048a0056832d3c0cc3ee5ba4532ca1fdb4c6a420d6704ad58df2d0d4bd76c3",
+      "name": "Libswresample-GPL",
+      "originalBuildPath": "dist/release/Libswresample.xcframework.zip",
+      "remoteAuthenticated": false,
+      "url": "https://github.com/aagedal/MPVKit/releases/download/aagedal-2.0.0-coreaudio-20260930/Libswresample-GPL.xcframework.zip"
+    },
+    {
+      "assetPath": "assets/Libswscale-GPL.xcframework.zip",
+      "checksum": "5703530e7271baa7f1a1662ebf113bb15ac5173dd7f822e285fe0d8a63e21bae",
+      "name": "Libswscale-GPL",
+      "originalBuildPath": "dist/release/Libswscale.xcframework.zip",
+      "remoteAuthenticated": false,
+      "url": "https://github.com/aagedal/MPVKit/releases/download/aagedal-2.0.0-coreaudio-20260930/Libswscale-GPL.xcframework.zip"
+    },
+    {
+      "checksum": "ff5ffd43d015d7285fd37e4a3145b25cbd8d2842740bd629a711c299a20e226a",
+      "name": "Libssl",
+      "remoteAuthenticated": false,
+      "url": "https://github.com/mpvkit/openssl-build/releases/download/3.3.5/Libssl.xcframework.zip"
+    },
+    {
+      "checksum": "593283be2a90f7fd66f6e6ed331b2f099cf403e0926fe3b4ac09a7062b793965",
+      "name": "Libcrypto",
+      "remoteAuthenticated": false,
+      "url": "https://github.com/mpvkit/openssl-build/releases/download/3.3.5/Libcrypto.xcframework.zip"
+    },
+    {
+      "checksum": "3f4c576d2818ceb4544aa2a20e1f55846511c5e706fd19adc3ea9fd842270498",
+      "name": "Libass",
+      "remoteAuthenticated": false,
+      "url": "https://github.com/mpvkit/libass-build/releases/download/0.17.5/Libass.xcframework.zip"
+    },
+    {
+      "checksum": "496ca62488530e14b1e4624d20ee2b237c0bd675cd70c19da578a5768302d02d",
+      "name": "Libfreetype",
+      "remoteAuthenticated": false,
+      "url": "https://github.com/mpvkit/libass-build/releases/download/0.17.5/Libfreetype.xcframework.zip"
+    },
+    {
+      "checksum": "bc15e097b892f2f90424e4a27ba287070cc2f98a74a4da10e6d2481d15cf5ff9",
+      "name": "Libfribidi",
+      "remoteAuthenticated": false,
+      "url": "https://github.com/mpvkit/libass-build/releases/download/0.17.5/Libfribidi.xcframework.zip"
+    },
+    {
+      "checksum": "aa8e0b9ca0387dac74e3e93c86e34d11982bb013b28022d0e6966a8427a35b2e",
+      "name": "Libharfbuzz",
+      "remoteAuthenticated": false,
+      "url": "https://github.com/mpvkit/libass-build/releases/download/0.17.5/Libharfbuzz.xcframework.zip"
+    },
+    {
+      "checksum": "aee189c54ad7c62bf734a3dc51eb4cfad5685d1d63b0ec519ecd1b437c332418",
+      "name": "MoltenVK",
+      "remoteAuthenticated": false,
+      "url": "https://github.com/mpvkit/moltenvk-build/releases/download/1.4.2/MoltenVK.xcframework.zip"
+    },
+    {
+      "checksum": "758047b615708575b580eb960a2d083f760a29dc462d6eaa360416c946ce433b",
+      "name": "Libshaderc_combined",
+      "remoteAuthenticated": false,
+      "url": "https://github.com/mpvkit/libshaderc-build/releases/download/2025.5.0/Libshaderc_combined.xcframework.zip"
+    },
+    {
+      "checksum": "dc0dce0606f6ab6841a8ec5a6bd4448e2f3ef00661a050460f806c9393dc6982",
+      "name": "lcms2",
+      "remoteAuthenticated": false,
+      "url": "https://github.com/mpvkit/lcms2-build/releases/download/2.17.0/lcms2.xcframework.zip"
+    },
+    {
+      "checksum": "2fa3d54cb81f302d6f11c7b2f509af30944381c3b11ee9d35096eb4637a6e2dd",
+      "name": "Libplacebo",
+      "remoteAuthenticated": false,
+      "url": "https://github.com/mpvkit/libplacebo-build/releases/download/7.360.1/Libplacebo.xcframework.zip"
+    },
+    {
+      "checksum": "e693e239808350868e79c5448ef9f02e2716bc822dd8632a41a368a1eae5ca7d",
+      "name": "Libdovi",
+      "remoteAuthenticated": false,
+      "url": "https://github.com/mpvkit/libdovi-build/releases/download/3.3.2/Libdovi.xcframework.zip"
+    },
+    {
+      "checksum": "940d9833cf4477d0a260d9f2b4066125bc0ff7bbc111ac3c90e774765b77a559",
+      "name": "Libunibreak",
+      "remoteAuthenticated": false,
+      "url": "https://github.com/mpvkit/libass-build/releases/download/0.17.5/Libunibreak.xcframework.zip"
+    },
+    {
+      "checksum": "3a53375fab11bc888cc553664ea5dd902208d04f0cc21ec746302bf356246b6f",
+      "name": "Libsmbclient",
+      "remoteAuthenticated": false,
+      "url": "https://github.com/mpvkit/libsmbclient-build/releases/download/4.15.13-2512/Libsmbclient.xcframework.zip"
+    },
+    {
+      "checksum": "ad33c7a08f4cdcb9924c8f0e6d9a054dad33d7794b97667bf8b6fb2b236ae585",
+      "name": "gmp",
+      "remoteAuthenticated": false,
+      "url": "https://github.com/mpvkit/gnutls-build/releases/download/3.8.11/gmp.xcframework.zip"
+    },
+    {
+      "checksum": "0fdf3ebf8bd7b8bc8eee837cf27261cb4c52ae520b6576a2f468656aa1691e02",
+      "name": "nettle",
+      "remoteAuthenticated": false,
+      "url": "https://github.com/mpvkit/gnutls-build/releases/download/3.8.11/nettle.xcframework.zip"
+    },
+    {
+      "checksum": "25727c9fa67287fa0a4f4722f88bb8be669b23cd7e837e2d00870eb8a25d3f27",
+      "name": "hogweed",
+      "remoteAuthenticated": false,
+      "url": "https://github.com/mpvkit/gnutls-build/releases/download/3.8.11/hogweed.xcframework.zip"
+    },
+    {
+      "checksum": "3dbec5809339189bf9679e218c6cff387ebf8fb72745927835afc2678f5c9f4d",
+      "name": "gnutls",
+      "remoteAuthenticated": false,
+      "url": "https://github.com/mpvkit/gnutls-build/releases/download/3.8.11/gnutls.xcframework.zip"
+    },
+    {
+      "checksum": "d1a32ae6a1f0193e9f05c44c9176844af7f6d2a58cb33843f6f1b8dfd9224083",
+      "name": "Libdav1d",
+      "remoteAuthenticated": false,
+      "url": "https://github.com/mpvkit/libdav1d-build/releases/download/1.5.3/Libdav1d.xcframework.zip"
+    },
+    {
+      "checksum": "bd5256081486d16c51c868d755bf70266c424b54c895269580de44ec6707f789",
+      "name": "Libuavs3d",
+      "remoteAuthenticated": false,
+      "url": "https://github.com/mpvkit/libuavs3d-build/releases/download/1.2.1-fix/Libuavs3d.xcframework.zip"
+    },
+    {
+      "checksum": "ea4f548a230a755e059144657cc9e2ff563c1cdeae03974c38f8b6e1a40303fb",
+      "name": "Libuchardet",
+      "remoteAuthenticated": false,
+      "url": "https://github.com/mpvkit/libuchardet-build/releases/download/0.0.8/Libuchardet.xcframework.zip"
+    },
+    {
+      "checksum": "bc037d34e2b0b5ab7f202fb371f5fb298136cc66fdf406c2172185d06f53f18d",
+      "name": "Libbluray",
+      "remoteAuthenticated": false,
+      "url": "https://github.com/mpvkit/libbluray-build/releases/download/1.4.0/Libbluray.xcframework.zip"
+    }
+  ],
+  "blockers": [
+    "Proposed release URLs have not been published or downloaded.",
+    "Auxiliary binary target and build-input URLs/checksums are upstream recipe declarations, not remote authentication.",
+    "Fresh ordinary SwiftPM resolution and the shipping app build against the published package remain required.",
+    "Source/configuration reproducibility is retained; byte-identical rebuilds have not been demonstrated.",
+    "Recipe contains host paths and autodetection; environment isolation and supported-macOS/hardware acceptance remain open."
+  ],
+  "buildReceiptSHA256": "ca02e472cf08c650bb662e295665d82abf222d19342b4139f7a8c46f90c89e38",
+  "files": {
+    "assets/Libavcodec-GPL.xcframework.zip": {
+      "sha256": "0d4795767f7129cae3f18d83a837668eaa416e9bf484ba9dc177eab5cd9b07a4",
+      "sizeBytes": 9866913
+    },
+    "assets/Libavdevice-GPL.xcframework.zip": {
+      "sha256": "70959344d77383440ad4d748a7584035c182dc96b17c5873f4cc219c25e823e9",
+      "sizeBytes": 17434
+    },
+    "assets/Libavfilter-GPL.xcframework.zip": {
+      "sha256": "6f5a33b0fc1822f355c7b6297e1a42780664fce52d20af0ed90aff4897143be6",
+      "sizeBytes": 934506
+    },
+    "assets/Libavformat-GPL.xcframework.zip": {
+      "sha256": "b9b831c6d4b7c476a49d6300126a23ce5e24d379bf2391af1162cc97e75b2991",
+      "sizeBytes": 2158399
+    },
+    "assets/Libavutil-GPL.xcframework.zip": {
+      "sha256": "2738af49700989f6d95a039898db8f198a53a8aa6bef20dea898fa0046e879e6",
+      "sizeBytes": 1173717
+    },
+    "assets/Libmpv-GPL.xcframework.zip": {
+      "sha256": "8f2b280d22d70b621e360fe28b53da217585fecf3dc8d79a9cec44e406d45218",
+      "sizeBytes": 5813428
+    },
+    "assets/Libswresample-GPL.xcframework.zip": {
+      "sha256": "49048a0056832d3c0cc3ee5ba4532ca1fdb4c6a420d6704ad58df2d0d4bd76c3",
+      "sizeBytes": 125347
+    },
+    "assets/Libswscale-GPL.xcframework.zip": {
+      "sha256": "5703530e7271baa7f1a1662ebf113bb15ac5173dd7f822e285fe0d8a63e21bae",
+      "sizeBytes": 1121673
+    },
+    "inputs/gmp-3.8.11/gmp.zip": {
+      "sha256": "cef5c3ff12260528a5971d2bd7bb3bc31ae85fac1235c06eff3de96c28c38aa2",
+      "sizeBytes": 4588994
+    },
+    "inputs/gnutls-3.8.11/gnutls.zip": {
+      "sha256": "6e125d9d7be4e09e112950703b0563324f5a05e546782e542b353db360f59b59",
+      "sizeBytes": 18982019
+    },
+    "inputs/lcms2-2.17.0/lcms2.zip": {
+      "sha256": "8c118b2c04e2440ecf25ffebfa7952ebb09aba83a71378e3b9ed45dae3a6115a",
+      "sizeBytes": 3007879
+    },
+    "inputs/libass-0.17.5/libass.zip": {
+      "sha256": "d5e4b6046d0a4198fb97083816348b2229071749de8c429747a9558c325a1d3a",
+      "sizeBytes": 1775040
+    },
+    "inputs/libbluray-1.4.0/libbluray.zip": {
+      "sha256": "c0302f43258ba41d9661dea0be4a7c9c1dd59d30d284ecfbf7319157c8e8a8de",
+      "sizeBytes": 2625844
+    },
+    "inputs/libdav1d-1.5.3/libdav1d.zip": {
+      "sha256": "5d9ca131372bc9513100dbc43a59582ad1cf7acf6136ad4e6fecd63dc0075d82",
+      "sizeBytes": 5200983
+    },
+    "inputs/libdovi-3.3.2/libdovi.zip": {
+      "sha256": "81b85386016a012391c473674ef96e4e494fa76aef2f7b6c102a335e844644f8",
+      "sizeBytes": 11413568
+    },
+    "inputs/libfreetype-0.17.5/libfreetype.zip": {
+      "sha256": "d5fb41dd3d66c6e433b389a398571b51b8d65f3f9e81f10ee61d5434a647749e",
+      "sizeBytes": 5891891
+    },
+    "inputs/libfribidi-0.17.5/libfribidi.zip": {
+      "sha256": "7ae8cf8c8b16a8b4ebc004f3368044d9baf8454398d18d9e8bc37964b04a2fe6",
+      "sizeBytes": 393673
+    },
+    "inputs/libharfbuzz-0.17.5/libharfbuzz.zip": {
+      "sha256": "ff67179fb84a9a0f34b2ba276c4028823fecd90315cf18496be400cdfc768a3e",
+      "sizeBytes": 34473455
+    },
+    "inputs/libluajit-2.1.0-fix/libluajit.zip": {
+      "sha256": "15a2b0d2b013074cefcfacfcb9df4ea7e5624e76decdb7c3b0556c3068a2816b",
+      "sizeBytes": 2605652
+    },
+    "inputs/libplacebo-7.360.1/libplacebo.zip": {
+      "sha256": "cdb8a07563bca119ca909ab4a3503825c27678736cdab294338b0a7dbe2cf35c",
+      "sizeBytes": 8692592
+    },
+    "inputs/libshaderc-2025.5.0/libshaderc.zip": {
+      "sha256": "1079da73a292e5b2cea6a02fa2208c4935ead79a98043f81708424510e0ab53f",
+      "sizeBytes": 122917658
+    },
+    "inputs/libsmbclient-4.15.13-2512/libsmbclient.zip": {
+      "sha256": "6861f0b0e45abd3248a8160d1c0b4ede66eef5163f04598830883a951607cef9",
+      "sizeBytes": 97090982
+    },
+    "inputs/libuavs3d-1.2.1-fix/libuavs3d.zip": {
+      "sha256": "8644c7a8182679dbe762b522356606220bb6d2196a5ec65511eda42ef48b3e7a",
+      "sizeBytes": 4580333
+    },
+    "inputs/libuchardet-0.0.8/libuchardet.zip": {
+      "sha256": "21407ffd33ce5550f7adf0759c268ac3c8022a90f80b2a9a25e8273fd27814bb",
+      "sizeBytes": 1240404
+    },
+    "inputs/libunibreak-0.17.5/libunibreak.zip": {
+      "sha256": "a7a9c0afa36e2301eec583e5575c30c1609357045d718565d06faf93abc56617",
+      "sizeBytes": 754560
+    },
+    "inputs/nettle-3.8.11/nettle.zip": {
+      "sha256": "7c1606e5acdc0be563f5a6bb19cd2fe3e1e93b30154ac22fc2f80bffcf3151c2",
+      "sizeBytes": 8504154
+    },
+    "inputs/openssl-3.3.5/openssl.zip": {
+      "sha256": "8bc37424aa98fdeac17fd00fbeea7b784a39f1f800cc7f9e0c948d3b169c6f2f",
+      "sizeBytes": 44619276
+    },
+    "inputs/vulkan-1.4.2/vulkan.zip": {
+      "sha256": "551bf9ee4e6fe1f9a148a6aef8eff5e5e6e0c0be9dedda2405812023d4a38c60",
+      "sizeBytes": 28826665
+    },
+    "package/LICENSE": {
+      "sha256": "ea8af5e789cb2d4e9b10bce3874982ade163b749b6bfbdb32e2df21c4d106de1",
+      "sizeBytes": 7650
+    },
+    "package/Package.swift": {
+      "sha256": "bb884d548099dae7d0de5c86c7c6c13242c98bfe20bec5dcb6b8faeeb85aace5",
+      "sizeBytes": 9392
+    },
+    "package/Sources/_FFmpeg-GPL/dummy.c": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sizeBytes": 0
+    },
+    "package/Sources/_FFmpeg-GPL/include/dummy.h": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sizeBytes": 0
+    },
+    "package/Sources/_MPVKit-GPL/dummy.c": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sizeBytes": 0
+    },
+    "package/Sources/_MPVKit-GPL/include/dummy.h": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sizeBytes": 0
+    },
+    "provenance/build-receipt.json": {
+      "sha256": "ca02e472cf08c650bb662e295665d82abf222d19342b4139f7a8c46f90c89e38",
+      "sizeBytes": 30076
+    },
+    "provenance/builder.py": {
+      "sha256": "6ff54c5d91d62ce9c67058af1cabb315329ba822881f559e036b0d0f810d5f9b",
+      "sizeBytes": 31592
+    },
+    "provenance/ffmpeg-metal-source.patch": {
+      "sha256": "15ce6bad7b8adf43d5942261069a847bf3a8d3eb3d97741fdb9fbdc024a5c1e3",
+      "sizeBytes": 552
+    },
+    "provenance/iina-18384-audio-channel.patch": {
+      "sha256": "176cdef4eb860cfbffcaf821b186b1e6e7f5f1c1a1c246d728b5c28ef960a2d5",
+      "sizeBytes": 10062
+    },
+    "provenance/preparer.py": {
+      "sha256": "df0f7b89b45b72e22376b4656ba674bb0c66064935886b35bfcc4ada23764347",
+      "sizeBytes": 22312
+    },
+    "provenance/retained-package.swift": {
+      "sha256": "63580b8e40f60ef3d2984c0ea9e72840cdd2a2e0d09899bde7e8ca81633f12f5",
+      "sizeBytes": 13979
+    },
+    "sources/FFmpeg-n8.1.2.commit": {
+      "sha256": "5a6f431ba935e9c423024e2ef7dbc4ca25c53be7715ca1706bcea00acbcc16d0",
+      "sizeBytes": 332
+    },
+    "sources/FFmpeg-n8.1.2.tar.gz": {
+      "sha256": "fbb2f907ed0bdce26347cadf8e132c96a30feb490f8b7f57eb69c1e79dc8f7a5",
+      "sizeBytes": 16564223
+    },
+    "sources/MPVKit-recipe.commit": {
+      "sha256": "c5a547371c7d366e09969a8b9634716b34869255bdc4d9c9bad0b79c1d114c37",
+      "sizeBytes": 342
+    },
+    "sources/MPVKit-recipe.tar.gz": {
+      "sha256": "6f3794c6aefaaf90e4b6547b05775eace2059ff49993f3dbfa40368c0567e27a",
+      "sizeBytes": 86781
+    },
+    "sources/libmpv-v0.41.0.commit": {
+      "sha256": "562d71e76d188130762d1182c48222636a47aa20978ca43b92b01d8618f4405c",
+      "sizeBytes": 332
+    },
+    "sources/libmpv-v0.41.0.tar.gz": {
+      "sha256": "d412efae700ddb10eefbdeca0b1fc948cd6a419530fd5ca5908518c438f87346",
+      "sizeBytes": 7242427
+    }
+  },
+  "luaEnabled": false,
+  "minimumMacOS": "12.0",
+  "platforms": [
+    "macos"
+  ],
+  "preparerSHA256": "df0f7b89b45b72e22376b4656ba674bb0c66064935886b35bfcc4ada23764347",
+  "releaseBaseURL": "https://github.com/aagedal/MPVKit/releases/download/aagedal-2.0.0-coreaudio-20260930",
+  "schemaVersion": 1,
+  "shippingProduct": "MPVKit-GPL",
+  "sourceSnapshots": [
+    {
+      "archivePath": "sources/MPVKit-recipe.tar.gz",
+      "commitPath": "sources/MPVKit-recipe.commit",
+      "name": "MPVKit-recipe",
+      "revision": "42cf977668f4b20f7423993d3eea9232077481d5",
+      "tree": "e3fb4877be9ca1a3a2aa56e42fe2b1698cc4ca5f",
+      "upstreamRevision": "230c3174f1515898f24599147ad61c2a277d0dc2",
+      "upstreamURL": "https://github.com/aagedal/MPVKit"
+    },
+    {
+      "archivePath": "sources/libmpv-v0.41.0.tar.gz",
+      "commitPath": "sources/libmpv-v0.41.0.commit",
+      "name": "libmpv-v0.41.0",
+      "revision": "50fd4f2fb9e4bed909cef5c9648a1bd33aaef72f",
+      "tree": "54755f0392d635a53a3f644668ba76b303be4512",
+      "upstreamRevision": "41f6a645068483470267271e1d09966ca3b9f413",
+      "upstreamURL": "https://github.com/mpv-player/mpv"
+    },
+    {
+      "archivePath": "sources/FFmpeg-n8.1.2.tar.gz",
+      "commitPath": "sources/FFmpeg-n8.1.2.commit",
+      "name": "FFmpeg-n8.1.2",
+      "revision": "c7aba78212570ed0bd693a441d917d86f2744ad6",
+      "tree": "9b3a672a066ef0655b6cf42bf967e57f1d832c88",
+      "upstreamRevision": "38b88335f99e76ed89ff3c93f877fdefce736c13",
+      "upstreamURL": "https://github.com/FFmpeg/FFmpeg"
+    }
+  ],
+  "status": "prepared-local-unpublished",
+  "verification": {
+    "copiedAuxiliaryZIPsMatch": true,
+    "freshObjects": {
+      "FFmpeg": {
+        "arm64": {
+          "objectCount": 1122,
+          "objectManifestSHA256": "e555d8349accea5580fa5ad3ebfeb1eda845184fd2ecb84a929e79f36da93771",
+          "staticArchives": {
+            "dist/FFmpeg/macos/thin/arm64/lib/libavcodec.a": "6c4584aaa5129c72f42221c0b090563392df62878031a735deecfbb9f1c8580f",
+            "dist/FFmpeg/macos/thin/arm64/lib/libavdevice.a": "db2922fa7a5b123a14618dd84f8eeb17a1c8f0a1ca373369f45e0fce4421ef40",
+            "dist/FFmpeg/macos/thin/arm64/lib/libavfilter.a": "290bf46cf8930a6f3fd387af9e4686ef15da472570a5b06579afb6cc618532d0",
+            "dist/FFmpeg/macos/thin/arm64/lib/libavformat.a": "6a20ec3828fa44f10532849a534814f5c7a63fc7ac594a3342f7960cb4fd4f7f",
+            "dist/FFmpeg/macos/thin/arm64/lib/libavutil.a": "62bb4836fcc3c550f43dc6e7184c1bffe7b8ccff148e54fa4c4096fdd685162f",
+            "dist/FFmpeg/macos/thin/arm64/lib/libswresample.a": "36af977c20802dec0bc7656ff60ef1e439de8c7a34a467174a9541623f72295f",
+            "dist/FFmpeg/macos/thin/arm64/lib/libswscale.a": "e1b09ab3e93ac61aa808adfe88c31d3fdb2be6b6773cd68bdbdfc5c17b11f55d"
+          }
+        },
+        "x86_64": {
+          "objectCount": 988,
+          "objectManifestSHA256": "07486bca104f3eba658c50b1ef1f1b9fd5ec9a54dfc64be8f58c8261a2305c5a",
+          "staticArchives": {
+            "dist/FFmpeg/macos/thin/x86_64/lib/libavcodec.a": "24a78df6e91b11f182b7cdfcfcf8c28c0b64d9fbdf64eb310fe45b1504552fed",
+            "dist/FFmpeg/macos/thin/x86_64/lib/libavdevice.a": "4c1f42c1198951a7f20a1752265df6150d909985be52bfb6d911019ad9987f87",
+            "dist/FFmpeg/macos/thin/x86_64/lib/libavfilter.a": "fcdf1a5bc376506356f2731e2b636f65967615ab07ceddcd14ba6d7b58c6b847",
+            "dist/FFmpeg/macos/thin/x86_64/lib/libavformat.a": "c13c1b55b96ace72c8f6c4d9b560b52f3839ff0a80bf3eb16f17ec2c4c2df5e2",
+            "dist/FFmpeg/macos/thin/x86_64/lib/libavutil.a": "00a780f771ac520dac1ed8934d70cf21d9c5bbdb48277d2a1b32af349c417043",
+            "dist/FFmpeg/macos/thin/x86_64/lib/libswresample.a": "6a942aaffb372f74710e5d94d40e565815ce7d40f1ea276aa0650ab511799d06",
+            "dist/FFmpeg/macos/thin/x86_64/lib/libswscale.a": "b25b00ddd52f679e2dea2f1dbe1b91a221080c8d849abe9e31d06e418e22db3e"
+          }
+        }
+      },
+      "libmpv": {
+        "arm64": {
+          "compileDatabaseSHA256": "0a95c2dba8f4b95ceba18593ad871cb4a0ad47f8f0c8787885a18a0d04e12c25",
+          "coreaudioObjects": {
+            "ao_coreaudio.c": {
+              "objectSHA256": "723ab3daf11d070fc6e0e5c92561eeebc87504d66f16d3eb599372e951f187ba",
+              "sourceSHA256": "2ab5a2553d60b8a75d2e9bd3b3090cadee4e350cb870c7c114fa3a6701d0088a"
+            },
+            "ao_coreaudio_chmap.c": {
+              "objectSHA256": "924070e402339b07092abc9811d5c62acab7608fa36f8c4d4badc003e1b5fd16",
+              "sourceSHA256": "b552e1d4207f8d4e1dbc1a39a437595e36402285115c41fec7e7b5afe84b5117"
+            }
+          },
+          "objectCount": 221,
+          "objectManifestSHA256": "e6d7b23b2d30af77359fa7954c19c3ae19cd1280080aa9d21d691685e3aa8f06",
+          "staticArchives": {
+            "dist/libmpv/macos/thin/arm64/lib/libmpv.a": "12f7b68a2d2cc8522fd757356af5b1ea4fb775a3513e89904601705915a76651"
+          }
+        },
+        "x86_64": {
+          "compileDatabaseSHA256": "66865879d482a58b527b3f46bafdc975088a4215dd4b1fde3b5b903167e9c74c",
+          "coreaudioObjects": {
+            "ao_coreaudio.c": {
+              "objectSHA256": "1b91572cb320b720088a2c033072d41cc1f1db63214d7a5d21c4c7481aacce8f",
+              "sourceSHA256": "2ab5a2553d60b8a75d2e9bd3b3090cadee4e350cb870c7c114fa3a6701d0088a"
+            },
+            "ao_coreaudio_chmap.c": {
+              "objectSHA256": "3f7f6611bef71f6accdc9bc4ce27e50d12ecdccb3d6c774002d2088382b9efc9",
+              "sourceSHA256": "b552e1d4207f8d4e1dbc1a39a437595e36402285115c41fec7e7b5afe84b5117"
+            }
+          },
+          "objectCount": 220,
+          "objectManifestSHA256": "b6d612d152e79424d7587e0a9281bf96487f139ef3bc5c7172c96d1ce1348d49",
+          "staticArchives": {
+            "dist/libmpv/macos/thin/x86_64/lib/libmpv.a": "fb08be26be0bdba5f14b71c0f4868b0655144b793a661fc20446613ae73520a8"
+          }
+        }
+      }
+    },
+    "shippingFeatureParity": {
+      "architectures": {
+        "arm64": {
+          "FFmpeg/config.h": {
+            "booleanConfigurationSHA256": "c0ddf814b82637f130cea41dd662654e20f16cb3c153cd06d7fc25dbf9c51e80",
+            "headerSHA256": "8d928ba0e86a2de790b3f926ab64d4a03a8b1ea9a5ddf00cc38d7dbbcd93e5ca",
+            "requiredFeatures": {
+              "CONFIG_GPL": 1,
+              "CONFIG_GPLV3": 1,
+              "CONFIG_LGPLV3": 0,
+              "CONFIG_LIBASS": 1,
+              "CONFIG_LIBDAV1D": 1,
+              "CONFIG_LIBPLACEBO": 1,
+              "CONFIG_LIBSMBCLIENT": 1,
+              "CONFIG_LIBUAVS3D": 1,
+              "CONFIG_METAL": 1,
+              "CONFIG_VIDEOTOOLBOX": 1,
+              "CONFIG_VULKAN": 1
+            }
+          },
+          "FFmpeg/config_components.h": {
+            "booleanConfigurationSHA256": "4517449b578c76890504263546579ca56b9764bfa1c689dc438fe876e918204d",
+            "headerSHA256": "0b501a48f37e4e5c4b641e0fc661aa9c5fae256ed4e7b729d9cccc0a18f47d98",
+            "requiredFeatures": {
+              "CONFIG_ADPCM_CIRCUS_DECODER": 1,
+              "CONFIG_ADPCM_IMA_ESCAPE_DECODER": 1,
+              "CONFIG_ADPCM_IMA_HVQM2_DECODER": 1,
+              "CONFIG_ADPCM_IMA_HVQM4_DECODER": 1,
+              "CONFIG_ADPCM_IMA_MAGIX_DECODER": 1,
+              "CONFIG_ADPCM_IMA_PDA_DECODER": 1,
+              "CONFIG_ADPCM_N64_DECODER": 1,
+              "CONFIG_ADPCM_PSXC_DECODER": 1,
+              "CONFIG_AHX_PARSER": 1,
+              "CONFIG_AHX_TO_MP2_BSF": 1,
+              "CONFIG_ARESAMPLE_FILTER": 1,
+              "CONFIG_ASS_FILTER": 1,
+              "CONFIG_DELOGO_FILTER": 1,
+              "CONFIG_LIBDAV1D_DECODER": 1,
+              "CONFIG_LIBPLACEBO_FILTER": 1,
+              "CONFIG_LIBSMBCLIENT_PROTOCOL": 1,
+              "CONFIG_LIBUAVS3D_DECODER": 1,
+              "CONFIG_PAN_FILTER": 1,
+              "CONFIG_SUBTITLES_FILTER": 1
+            }
+          },
+          "libmpv/config.h": {
+            "booleanConfigurationSHA256": "e5ee614230a8b5931860a2498d43ddbfc693b3e8ba8a063aaf6403367767315b",
+            "headerSHA256": "a8baead23eb0c5315f487203174338355351c41b04655140a71feb1522ed09d2",
+            "requiredFeatures": {
+              "HAVE_AVFOUNDATION": 1,
+              "HAVE_COCOA": 1,
+              "HAVE_COREAUDIO": 1,
+              "HAVE_FFMPEG": 1,
+              "HAVE_GL": 1,
+              "HAVE_GL_COCOA": 1,
+              "HAVE_GPL": 1,
+              "HAVE_LIBASS": 1,
+              "HAVE_LIBBLURAY": 1,
+              "HAVE_LUA": 0,
+              "HAVE_MOLTENVK": 1,
+              "HAVE_SWIFT": 1,
+              "HAVE_VIDEOTOOLBOX_GL": 1,
+              "HAVE_VIDEOTOOLBOX_PL": 1,
+              "HAVE_VULKAN": 1
+            }
+          }
+        },
+        "x86_64": {
+          "FFmpeg/config.h": {
+            "booleanConfigurationSHA256": "b8eede9a0dc245c876b7c80468149144d1311a2e23502176bebd755070c4fa32",
+            "headerSHA256": "66daeb09a9aa0d4f1c022fae605b07e4500364ee86a74d64f90fed3b8f2ce906",
+            "requiredFeatures": {
+              "CONFIG_GPL": 1,
+              "CONFIG_GPLV3": 1,
+              "CONFIG_LGPLV3": 0,
+              "CONFIG_LIBASS": 1,
+              "CONFIG_LIBDAV1D": 1,
+              "CONFIG_LIBPLACEBO": 1,
+              "CONFIG_LIBSMBCLIENT": 1,
+              "CONFIG_LIBUAVS3D": 1,
+              "CONFIG_METAL": 1,
+              "CONFIG_VIDEOTOOLBOX": 1,
+              "CONFIG_VULKAN": 1
+            }
+          },
+          "FFmpeg/config_components.h": {
+            "booleanConfigurationSHA256": "e40284005700b6a599314b0a4ae64f20b4db078f25a37c61b6e8a37b4ed2ff33",
+            "headerSHA256": "a3bdbf4c5b41f522871ce5b7e49f22a9cb49f51ee15c9896f0c1447f1b2fdee8",
+            "requiredFeatures": {
+              "CONFIG_ADPCM_CIRCUS_DECODER": 1,
+              "CONFIG_ADPCM_IMA_ESCAPE_DECODER": 1,
+              "CONFIG_ADPCM_IMA_HVQM2_DECODER": 1,
+              "CONFIG_ADPCM_IMA_HVQM4_DECODER": 1,
+              "CONFIG_ADPCM_IMA_MAGIX_DECODER": 1,
+              "CONFIG_ADPCM_IMA_PDA_DECODER": 1,
+              "CONFIG_ADPCM_N64_DECODER": 1,
+              "CONFIG_ADPCM_PSXC_DECODER": 1,
+              "CONFIG_AHX_PARSER": 1,
+              "CONFIG_AHX_TO_MP2_BSF": 1,
+              "CONFIG_ARESAMPLE_FILTER": 1,
+              "CONFIG_ASS_FILTER": 1,
+              "CONFIG_DELOGO_FILTER": 1,
+              "CONFIG_LIBDAV1D_DECODER": 1,
+              "CONFIG_LIBPLACEBO_FILTER": 1,
+              "CONFIG_LIBSMBCLIENT_PROTOCOL": 1,
+              "CONFIG_LIBUAVS3D_DECODER": 1,
+              "CONFIG_PAN_FILTER": 1,
+              "CONFIG_SUBTITLES_FILTER": 1
+            }
+          },
+          "libmpv/config.h": {
+            "booleanConfigurationSHA256": "e5ee614230a8b5931860a2498d43ddbfc693b3e8ba8a063aaf6403367767315b",
+            "headerSHA256": "fbb380dd76d0f76adb57a544cb928b5a42d08144350afc9491202a0bc68bd7dc",
+            "requiredFeatures": {
+              "HAVE_AVFOUNDATION": 1,
+              "HAVE_COCOA": 1,
+              "HAVE_COREAUDIO": 1,
+              "HAVE_FFMPEG": 1,
+              "HAVE_GL": 1,
+              "HAVE_GL_COCOA": 1,
+              "HAVE_GPL": 1,
+              "HAVE_LIBASS": 1,
+              "HAVE_LIBBLURAY": 1,
+              "HAVE_LUA": 0,
+              "HAVE_MOLTENVK": 1,
+              "HAVE_SWIFT": 1,
+              "HAVE_VIDEOTOOLBOX_GL": 1,
+              "HAVE_VIDEOTOOLBOX_PL": 1,
+              "HAVE_VULKAN": 1
+            }
+          }
+        }
+      },
+      "mismatches": [],
+      "passed": true,
+      "product": "MPVKit-GPL"
+    },
+    "sourceInputs": {
+      "FFmpeg-n8.1.2": {
+        "revision": "c7aba78212570ed0bd693a441d917d86f2744ad6",
+        "status": "",
+        "tree": "9b3a672a066ef0655b6cf42bf967e57f1d832c88"
+      },
+      "libmpv-v0.41.0": {
+        "revision": "50fd4f2fb9e4bed909cef5c9648a1bd33aaef72f",
+        "status": "",
+        "tree": "54755f0392d635a53a3f644668ba76b303be4512"
+      }
+    },
+    "xcframeworks": {
+      "Libavcodec": {
+        "architectures": [
+          "x86_64",
+          "arm64"
+        ],
+        "binarySHA256": "36a5dca544195300054b034609067f4d99289b316049a352a921637c712ae962",
+        "libraryIdentifier": "macos-arm64_x86_64",
+        "zipSHA256": "0d4795767f7129cae3f18d83a837668eaa416e9bf484ba9dc177eab5cd9b07a4"
+      },
+      "Libavdevice": {
+        "architectures": [
+          "x86_64",
+          "arm64"
+        ],
+        "binarySHA256": "05eaea6f889d63862cb213a1cc936954816a2bd6f4b5baca6cee8c1cac0a1e2b",
+        "libraryIdentifier": "macos-arm64_x86_64",
+        "zipSHA256": "70959344d77383440ad4d748a7584035c182dc96b17c5873f4cc219c25e823e9"
+      },
+      "Libavfilter": {
+        "architectures": [
+          "x86_64",
+          "arm64"
+        ],
+        "binarySHA256": "385516a89cfc0ad19ffe877a864c125f3e23fcfe8f9dfb1cb8be85556593b10c",
+        "libraryIdentifier": "macos-arm64_x86_64",
+        "zipSHA256": "6f5a33b0fc1822f355c7b6297e1a42780664fce52d20af0ed90aff4897143be6"
+      },
+      "Libavformat": {
+        "architectures": [
+          "x86_64",
+          "arm64"
+        ],
+        "binarySHA256": "13bc9ca8e1ee5c65a1d548e2a648f91010fac3ce2544f861b0003651f2b6678a",
+        "libraryIdentifier": "macos-arm64_x86_64",
+        "zipSHA256": "b9b831c6d4b7c476a49d6300126a23ce5e24d379bf2391af1162cc97e75b2991"
+      },
+      "Libavutil": {
+        "architectures": [
+          "x86_64",
+          "arm64"
+        ],
+        "binarySHA256": "0107e727f9b1c69985b4e19f8ce35891c9a29a74723eb0a194b5229dca63490e",
+        "libraryIdentifier": "macos-arm64_x86_64",
+        "zipSHA256": "2738af49700989f6d95a039898db8f198a53a8aa6bef20dea898fa0046e879e6"
+      },
+      "Libmpv": {
+        "architectures": [
+          "x86_64",
+          "arm64"
+        ],
+        "binarySHA256": "cd1b06c7bfb965e1259ffb24fb3d4f99890fed759d08a713a0b1fea5df2e3a06",
+        "libraryIdentifier": "macos-arm64_x86_64",
+        "zipSHA256": "8f2b280d22d70b621e360fe28b53da217585fecf3dc8d79a9cec44e406d45218"
+      },
+      "Libswresample": {
+        "architectures": [
+          "x86_64",
+          "arm64"
+        ],
+        "binarySHA256": "6c999490ea8b8bb920f7108fbc2877bde79a6637a149579c577825ca7dac319c",
+        "libraryIdentifier": "macos-arm64_x86_64",
+        "zipSHA256": "49048a0056832d3c0cc3ee5ba4532ca1fdb4c6a420d6704ad58df2d0d4bd76c3"
+      },
+      "Libswscale": {
+        "architectures": [
+          "x86_64",
+          "arm64"
+        ],
+        "binarySHA256": "2070210940c9d9f29c8823d4a2b502dbfcbbe1a5c94cea7b6318b957590fa980",
+        "libraryIdentifier": "macos-arm64_x86_64",
+        "zipSHA256": "5703530e7271baa7f1a1662ebf113bb15ac5173dd7f822e285fe0d8a63e21bae"
+      }
+    }
+  }
+}

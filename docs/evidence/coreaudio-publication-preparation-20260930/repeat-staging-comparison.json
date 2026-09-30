@@ -1,0 +1,8 @@
+{
+  "auxiliaryInputCount": 20,
+  "comparedUnchangedPayloadCount": 31,
+  "gplArtifactCount": 8,
+  "passed": true,
+  "scope": "Repeat deterministic staging of retained bytes, not a second compilation",
+  "sourceArchiveCount": 3
+}

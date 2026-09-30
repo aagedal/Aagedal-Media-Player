@@ -1,0 +1,933 @@
+{
+  "cLanguageStandard" : null,
+  "cxxLanguageStandard" : null,
+  "defaultLocalization" : null,
+  "dependencies" : [
+
+  ],
+  "name" : "MPVKit",
+  "packageKind" : {
+    "root" : [
+      "/private/tmp/aagedal-coreaudio-publication-prepared-20260930/package"
+    ]
+  },
+  "pkgConfig" : null,
+  "platforms" : [
+    {
+      "options" : [
+
+      ],
+      "platformName" : "macos",
+      "version" : "12.0"
+    }
+  ],
+  "products" : [
+    {
+      "name" : "MPVKit-GPL",
+      "settings" : [
+
+      ],
+      "targets" : [
+        "_MPVKit-GPL"
+      ],
+      "type" : {
+        "library" : [
+          "automatic"
+        ]
+      }
+    }
+  ],
+  "providers" : null,
+  "swiftLanguageVersions" : null,
+  "targets" : [
+    {
+      "dependencies" : [
+        {
+          "byName" : [
+            "Libmpv-GPL",
+            null
+          ]
+        },
+        {
+          "byName" : [
+            "_FFmpeg-GPL",
+            null
+          ]
+        },
+        {
+          "byName" : [
+            "Libuchardet",
+            null
+          ]
+        },
+        {
+          "byName" : [
+            "Libbluray",
+            null
+          ]
+        }
+      ],
+      "exclude" : [
+
+      ],
+      "name" : "_MPVKit-GPL",
+      "packageAccess" : true,
+      "path" : "Sources/_MPVKit-GPL",
+      "resources" : [
+
+      ],
+      "settings" : [
+        {
+          "kind" : {
+            "linkedFramework" : {
+              "_0" : "AVFoundation"
+            }
+          },
+          "tool" : "linker"
+        },
+        {
+          "kind" : {
+            "linkedFramework" : {
+              "_0" : "CoreAudio"
+            }
+          },
+          "tool" : "linker"
+        }
+      ],
+      "type" : "regular"
+    },
+    {
+      "dependencies" : [
+        {
+          "byName" : [
+            "Libavcodec-GPL",
+            null
+          ]
+        },
+        {
+          "byName" : [
+            "Libavdevice-GPL",
+            null
+          ]
+        },
+        {
+          "byName" : [
+            "Libavfilter-GPL",
+            null
+          ]
+        },
+        {
+          "byName" : [
+            "Libavformat-GPL",
+            null
+          ]
+        },
+        {
+          "byName" : [
+            "Libavutil-GPL",
+            null
+          ]
+        },
+        {
+          "byName" : [
+            "Libswresample-GPL",
+            null
+          ]
+        },
+        {
+          "byName" : [
+            "Libswscale-GPL",
+            null
+          ]
+        },
+        {
+          "byName" : [
+            "Libssl",
+            null
+          ]
+        },
+        {
+          "byName" : [
+            "Libcrypto",
+            null
+          ]
+        },
+        {
+          "byName" : [
+            "Libass",
+            null
+          ]
+        },
+        {
+          "byName" : [
+            "Libfreetype",
+            null
+          ]
+        },
+        {
+          "byName" : [
+            "Libfribidi",
+            null
+          ]
+        },
+        {
+          "byName" : [
+            "Libharfbuzz",
+            null
+          ]
+        },
+        {
+          "byName" : [
+            "MoltenVK",
+            null
+          ]
+        },
+        {
+          "byName" : [
+            "Libshaderc_combined",
+            null
+          ]
+        },
+        {
+          "byName" : [
+            "lcms2",
+            null
+          ]
+        },
+        {
+          "byName" : [
+            "Libplacebo",
+            null
+          ]
+        },
+        {
+          "byName" : [
+            "Libdovi",
+            null
+          ]
+        },
+        {
+          "byName" : [
+            "Libunibreak",
+            null
+          ]
+        },
+        {
+          "byName" : [
+            "Libsmbclient",
+            null
+          ]
+        },
+        {
+          "byName" : [
+            "gmp",
+            null
+          ]
+        },
+        {
+          "byName" : [
+            "nettle",
+            null
+          ]
+        },
+        {
+          "byName" : [
+            "hogweed",
+            null
+          ]
+        },
+        {
+          "byName" : [
+            "gnutls",
+            null
+          ]
+        },
+        {
+          "byName" : [
+            "Libdav1d",
+            null
+          ]
+        },
+        {
+          "byName" : [
+            "Libuavs3d",
+            null
+          ]
+        }
+      ],
+      "exclude" : [
+
+      ],
+      "name" : "_FFmpeg-GPL",
+      "packageAccess" : true,
+      "path" : "Sources/_FFmpeg-GPL",
+      "resources" : [
+
+      ],
+      "settings" : [
+        {
+          "kind" : {
+            "linkedFramework" : {
+              "_0" : "AudioToolbox"
+            }
+          },
+          "tool" : "linker"
+        },
+        {
+          "kind" : {
+            "linkedFramework" : {
+              "_0" : "CoreVideo"
+            }
+          },
+          "tool" : "linker"
+        },
+        {
+          "kind" : {
+            "linkedFramework" : {
+              "_0" : "CoreFoundation"
+            }
+          },
+          "tool" : "linker"
+        },
+        {
+          "kind" : {
+            "linkedFramework" : {
+              "_0" : "CoreMedia"
+            }
+          },
+          "tool" : "linker"
+        },
+        {
+          "kind" : {
+            "linkedFramework" : {
+              "_0" : "Metal"
+            }
+          },
+          "tool" : "linker"
+        },
+        {
+          "kind" : {
+            "linkedFramework" : {
+              "_0" : "VideoToolbox"
+            }
+          },
+          "tool" : "linker"
+        },
+        {
+          "kind" : {
+            "linkedLibrary" : {
+              "_0" : "bz2"
+            }
+          },
+          "tool" : "linker"
+        },
+        {
+          "kind" : {
+            "linkedLibrary" : {
+              "_0" : "iconv"
+            }
+          },
+          "tool" : "linker"
+        },
+        {
+          "kind" : {
+            "linkedLibrary" : {
+              "_0" : "expat"
+            }
+          },
+          "tool" : "linker"
+        },
+        {
+          "kind" : {
+            "linkedLibrary" : {
+              "_0" : "resolv"
+            }
+          },
+          "tool" : "linker"
+        },
+        {
+          "kind" : {
+            "linkedLibrary" : {
+              "_0" : "xml2"
+            }
+          },
+          "tool" : "linker"
+        },
+        {
+          "kind" : {
+            "linkedLibrary" : {
+              "_0" : "z"
+            }
+          },
+          "tool" : "linker"
+        },
+        {
+          "kind" : {
+            "linkedLibrary" : {
+              "_0" : "c++"
+            }
+          },
+          "tool" : "linker"
+        }
+      ],
+      "type" : "regular"
+    },
+    {
+      "checksum" : "8f2b280d22d70b621e360fe28b53da217585fecf3dc8d79a9cec44e406d45218",
+      "dependencies" : [
+
+      ],
+      "exclude" : [
+
+      ],
+      "name" : "Libmpv-GPL",
+      "packageAccess" : false,
+      "resources" : [
+
+      ],
+      "settings" : [
+
+      ],
+      "type" : "binary",
+      "url" : "https://github.com/aagedal/MPVKit/releases/download/aagedal-2.0.0-coreaudio-20260930/Libmpv-GPL.xcframework.zip"
+    },
+    {
+      "checksum" : "0d4795767f7129cae3f18d83a837668eaa416e9bf484ba9dc177eab5cd9b07a4",
+      "dependencies" : [
+
+      ],
+      "exclude" : [
+
+      ],
+      "name" : "Libavcodec-GPL",
+      "packageAccess" : false,
+      "resources" : [
+
+      ],
+      "settings" : [
+
+      ],
+      "type" : "binary",
+      "url" : "https://github.com/aagedal/MPVKit/releases/download/aagedal-2.0.0-coreaudio-20260930/Libavcodec-GPL.xcframework.zip"
+    },
+    {
+      "checksum" : "70959344d77383440ad4d748a7584035c182dc96b17c5873f4cc219c25e823e9",
+      "dependencies" : [
+
+      ],
+      "exclude" : [
+
+      ],
+      "name" : "Libavdevice-GPL",
+      "packageAccess" : false,
+      "resources" : [
+
+      ],
+      "settings" : [
+
+      ],
+      "type" : "binary",
+      "url" : "https://github.com/aagedal/MPVKit/releases/download/aagedal-2.0.0-coreaudio-20260930/Libavdevice-GPL.xcframework.zip"
+    },
+    {
+      "checksum" : "6f5a33b0fc1822f355c7b6297e1a42780664fce52d20af0ed90aff4897143be6",
+      "dependencies" : [
+
+      ],
+      "exclude" : [
+
+      ],
+      "name" : "Libavfilter-GPL",
+      "packageAccess" : false,
+      "resources" : [
+
+      ],
+      "settings" : [
+
+      ],
+      "type" : "binary",
+      "url" : "https://github.com/aagedal/MPVKit/releases/download/aagedal-2.0.0-coreaudio-20260930/Libavfilter-GPL.xcframework.zip"
+    },
+    {
+      "checksum" : "b9b831c6d4b7c476a49d6300126a23ce5e24d379bf2391af1162cc97e75b2991",
+      "dependencies" : [
+
+      ],
+      "exclude" : [
+
+      ],
+      "name" : "Libavformat-GPL",
+      "packageAccess" : false,
+      "resources" : [
+
+      ],
+      "settings" : [
+
+      ],
+      "type" : "binary",
+      "url" : "https://github.com/aagedal/MPVKit/releases/download/aagedal-2.0.0-coreaudio-20260930/Libavformat-GPL.xcframework.zip"
+    },
+    {
+      "checksum" : "2738af49700989f6d95a039898db8f198a53a8aa6bef20dea898fa0046e879e6",
+      "dependencies" : [
+
+      ],
+      "exclude" : [
+
+      ],
+      "name" : "Libavutil-GPL",
+      "packageAccess" : false,
+      "resources" : [
+
+      ],
+      "settings" : [
+
+      ],
+      "type" : "binary",
+      "url" : "https://github.com/aagedal/MPVKit/releases/download/aagedal-2.0.0-coreaudio-20260930/Libavutil-GPL.xcframework.zip"
+    },
+    {
+      "checksum" : "49048a0056832d3c0cc3ee5ba4532ca1fdb4c6a420d6704ad58df2d0d4bd76c3",
+      "dependencies" : [
+
+      ],
+      "exclude" : [
+
+      ],
+      "name" : "Libswresample-GPL",
+      "packageAccess" : false,
+      "resources" : [
+
+      ],
+      "settings" : [
+
+      ],
+      "type" : "binary",
+      "url" : "https://github.com/aagedal/MPVKit/releases/download/aagedal-2.0.0-coreaudio-20260930/Libswresample-GPL.xcframework.zip"
+    },
+    {
+      "checksum" : "5703530e7271baa7f1a1662ebf113bb15ac5173dd7f822e285fe0d8a63e21bae",
+      "dependencies" : [
+
+      ],
+      "exclude" : [
+
+      ],
+      "name" : "Libswscale-GPL",
+      "packageAccess" : false,
+      "resources" : [
+
+      ],
+      "settings" : [
+
+      ],
+      "type" : "binary",
+      "url" : "https://github.com/aagedal/MPVKit/releases/download/aagedal-2.0.0-coreaudio-20260930/Libswscale-GPL.xcframework.zip"
+    },
+    {
+      "checksum" : "ff5ffd43d015d7285fd37e4a3145b25cbd8d2842740bd629a711c299a20e226a",
+      "dependencies" : [
+
+      ],
+      "exclude" : [
+
+      ],
+      "name" : "Libssl",
+      "packageAccess" : false,
+      "resources" : [
+
+      ],
+      "settings" : [
+
+      ],
+      "type" : "binary",
+      "url" : "https://github.com/mpvkit/openssl-build/releases/download/3.3.5/Libssl.xcframework.zip"
+    },
+    {
+      "checksum" : "593283be2a90f7fd66f6e6ed331b2f099cf403e0926fe3b4ac09a7062b793965",
+      "dependencies" : [
+
+      ],
+      "exclude" : [
+
+      ],
+      "name" : "Libcrypto",
+      "packageAccess" : false,
+      "resources" : [
+
+      ],
+      "settings" : [
+
+      ],
+      "type" : "binary",
+      "url" : "https://github.com/mpvkit/openssl-build/releases/download/3.3.5/Libcrypto.xcframework.zip"
+    },
+    {
+      "checksum" : "3f4c576d2818ceb4544aa2a20e1f55846511c5e706fd19adc3ea9fd842270498",
+      "dependencies" : [
+
+      ],
+      "exclude" : [
+
+      ],
+      "name" : "Libass",
+      "packageAccess" : false,
+      "resources" : [
+
+      ],
+      "settings" : [
+
+      ],
+      "type" : "binary",
+      "url" : "https://github.com/mpvkit/libass-build/releases/download/0.17.5/Libass.xcframework.zip"
+    },
+    {
+      "checksum" : "496ca62488530e14b1e4624d20ee2b237c0bd675cd70c19da578a5768302d02d",
+      "dependencies" : [
+
+      ],
+      "exclude" : [
+
+      ],
+      "name" : "Libfreetype",
+      "packageAccess" : false,
+      "resources" : [
+
+      ],
+      "settings" : [
+
+      ],
+      "type" : "binary",
+      "url" : "https://github.com/mpvkit/libass-build/releases/download/0.17.5/Libfreetype.xcframework.zip"
+    },
+    {
+      "checksum" : "bc15e097b892f2f90424e4a27ba287070cc2f98a74a4da10e6d2481d15cf5ff9",
+      "dependencies" : [
+
+      ],
+      "exclude" : [
+
+      ],
+      "name" : "Libfribidi",
+      "packageAccess" : false,
+      "resources" : [
+
+      ],
+      "settings" : [
+
+      ],
+      "type" : "binary",
+      "url" : "https://github.com/mpvkit/libass-build/releases/download/0.17.5/Libfribidi.xcframework.zip"
+    },
+    {
+      "checksum" : "aa8e0b9ca0387dac74e3e93c86e34d11982bb013b28022d0e6966a8427a35b2e",
+      "dependencies" : [
+
+      ],
+      "exclude" : [
+
+      ],
+      "name" : "Libharfbuzz",
+      "packageAccess" : false,
+      "resources" : [
+
+      ],
+      "settings" : [
+
+      ],
+      "type" : "binary",
+      "url" : "https://github.com/mpvkit/libass-build/releases/download/0.17.5/Libharfbuzz.xcframework.zip"
+    },
+    {
+      "checksum" : "aee189c54ad7c62bf734a3dc51eb4cfad5685d1d63b0ec519ecd1b437c332418",
+      "dependencies" : [
+
+      ],
+      "exclude" : [
+
+      ],
+      "name" : "MoltenVK",
+      "packageAccess" : false,
+      "resources" : [
+
+      ],
+      "settings" : [
+
+      ],
+      "type" : "binary",
+      "url" : "https://github.com/mpvkit/moltenvk-build/releases/download/1.4.2/MoltenVK.xcframework.zip"
+    },
+    {
+      "checksum" : "758047b615708575b580eb960a2d083f760a29dc462d6eaa360416c946ce433b",
+      "dependencies" : [
+
+      ],
+      "exclude" : [
+
+      ],
+      "name" : "Libshaderc_combined",
+      "packageAccess" : false,
+      "resources" : [
+
+      ],
+      "settings" : [
+
+      ],
+      "type" : "binary",
+      "url" : "https://github.com/mpvkit/libshaderc-build/releases/download/2025.5.0/Libshaderc_combined.xcframework.zip"
+    },
+    {
+      "checksum" : "dc0dce0606f6ab6841a8ec5a6bd4448e2f3ef00661a050460f806c9393dc6982",
+      "dependencies" : [
+
+      ],
+      "exclude" : [
+
+      ],
+      "name" : "lcms2",
+      "packageAccess" : false,
+      "resources" : [
+
+      ],
+      "settings" : [
+
+      ],
+      "type" : "binary",
+      "url" : "https://github.com/mpvkit/lcms2-build/releases/download/2.17.0/lcms2.xcframework.zip"
+    },
+    {
+      "checksum" : "2fa3d54cb81f302d6f11c7b2f509af30944381c3b11ee9d35096eb4637a6e2dd",
+      "dependencies" : [
+
+      ],
+      "exclude" : [
+
+      ],
+      "name" : "Libplacebo",
+      "packageAccess" : false,
+      "resources" : [
+
+      ],
+      "settings" : [
+
+      ],
+      "type" : "binary",
+      "url" : "https://github.com/mpvkit/libplacebo-build/releases/download/7.360.1/Libplacebo.xcframework.zip"
+    },
+    {
+      "checksum" : "e693e239808350868e79c5448ef9f02e2716bc822dd8632a41a368a1eae5ca7d",
+      "dependencies" : [
+
+      ],
+      "exclude" : [
+
+      ],
+      "name" : "Libdovi",
+      "packageAccess" : false,
+      "resources" : [
+
+      ],
+      "settings" : [
+
+      ],
+      "type" : "binary",
+      "url" : "https://github.com/mpvkit/libdovi-build/releases/download/3.3.2/Libdovi.xcframework.zip"
+    },
+    {
+      "checksum" : "940d9833cf4477d0a260d9f2b4066125bc0ff7bbc111ac3c90e774765b77a559",
+      "dependencies" : [
+
+      ],
+      "exclude" : [
+
+      ],
+      "name" : "Libunibreak",
+      "packageAccess" : false,
+      "resources" : [
+
+      ],
+      "settings" : [
+
+      ],
+      "type" : "binary",
+      "url" : "https://github.com/mpvkit/libass-build/releases/download/0.17.5/Libunibreak.xcframework.zip"
+    },
+    {
+      "checksum" : "3a53375fab11bc888cc553664ea5dd902208d04f0cc21ec746302bf356246b6f",
+      "dependencies" : [
+
+      ],
+      "exclude" : [
+
+      ],
+      "name" : "Libsmbclient",
+      "packageAccess" : false,
+      "resources" : [
+
+      ],
+      "settings" : [
+
+      ],
+      "type" : "binary",
+      "url" : "https://github.com/mpvkit/libsmbclient-build/releases/download/4.15.13-2512/Libsmbclient.xcframework.zip"
+    },
+    {
+      "checksum" : "ad33c7a08f4cdcb9924c8f0e6d9a054dad33d7794b97667bf8b6fb2b236ae585",
+      "dependencies" : [
+
+      ],
+      "exclude" : [
+
+      ],
+      "name" : "gmp",
+      "packageAccess" : false,
+      "resources" : [
+
+      ],
+      "settings" : [
+
+      ],
+      "type" : "binary",
+      "url" : "https://github.com/mpvkit/gnutls-build/releases/download/3.8.11/gmp.xcframework.zip"
+    },
+    {
+      "checksum" : "0fdf3ebf8bd7b8bc8eee837cf27261cb4c52ae520b6576a2f468656aa1691e02",
+      "dependencies" : [
+
+      ],
+      "exclude" : [
+
+      ],
+      "name" : "nettle",
+      "packageAccess" : false,
+      "resources" : [
+
+      ],
+      "settings" : [
+
+      ],
+      "type" : "binary",
+      "url" : "https://github.com/mpvkit/gnutls-build/releases/download/3.8.11/nettle.xcframework.zip"
+    },
+    {
+      "checksum" : "25727c9fa67287fa0a4f4722f88bb8be669b23cd7e837e2d00870eb8a25d3f27",
+      "dependencies" : [
+
+      ],
+      "exclude" : [
+
+      ],
+      "name" : "hogweed",
+      "packageAccess" : false,
+      "resources" : [
+
+      ],
+      "settings" : [
+
+      ],
+      "type" : "binary",
+      "url" : "https://github.com/mpvkit/gnutls-build/releases/download/3.8.11/hogweed.xcframework.zip"
+    },
+    {
+      "checksum" : "3dbec5809339189bf9679e218c6cff387ebf8fb72745927835afc2678f5c9f4d",
+      "dependencies" : [
+
+      ],
+      "exclude" : [
+
+      ],
+      "name" : "gnutls",
+      "packageAccess" : false,
+      "resources" : [
+
+      ],
+      "settings" : [
+
+      ],
+      "type" : "binary",
+      "url" : "https://github.com/mpvkit/gnutls-build/releases/download/3.8.11/gnutls.xcframework.zip"
+    },
+    {
+      "checksum" : "d1a32ae6a1f0193e9f05c44c9176844af7f6d2a58cb33843f6f1b8dfd9224083",
+      "dependencies" : [
+
+      ],
+      "exclude" : [
+
+      ],
+      "name" : "Libdav1d",
+      "packageAccess" : false,
+      "resources" : [
+
+      ],
+      "settings" : [
+
+      ],
+      "type" : "binary",
+      "url" : "https://github.com/mpvkit/libdav1d-build/releases/download/1.5.3/Libdav1d.xcframework.zip"
+    },
+    {
+      "checksum" : "bd5256081486d16c51c868d755bf70266c424b54c895269580de44ec6707f789",
+      "dependencies" : [
+
+      ],
+      "exclude" : [
+
+      ],
+      "name" : "Libuavs3d",
+      "packageAccess" : false,
+      "resources" : [
+
+      ],
+      "settings" : [
+
+      ],
+      "type" : "binary",
+      "url" : "https://github.com/mpvkit/libuavs3d-build/releases/download/1.2.1-fix/Libuavs3d.xcframework.zip"
+    },
+    {
+      "checksum" : "ea4f548a230a755e059144657cc9e2ff563c1cdeae03974c38f8b6e1a40303fb",
+      "dependencies" : [
+
+      ],
+      "exclude" : [
+
+      ],
+      "name" : "Libuchardet",
+      "packageAccess" : false,
+      "resources" : [
+
+      ],
+      "settings" : [
+
+      ],
+      "type" : "binary",
+      "url" : "https://github.com/mpvkit/libuchardet-build/releases/download/0.0.8/Libuchardet.xcframework.zip"
+    },
+    {
+      "checksum" : "bc037d34e2b0b5ab7f202fb371f5fb298136cc66fdf406c2172185d06f53f18d",
+      "dependencies" : [
+
+      ],
+      "exclude" : [
+
+      ],
+      "name" : "Libbluray",
+      "packageAccess" : false,
+      "resources" : [
+
+      ],
+      "settings" : [
+
+      ],
+      "type" : "binary",
+      "url" : "https://github.com/mpvkit/libbluray-build/releases/download/1.4.0/Libbluray.xcframework.zip"
+    }
+  ],
+  "toolsVersion" : {
+    "_version" : "5.9.0"
+  },
+  "traits" : [
+
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "inputCount": 3,
+  "importCountPerInput": 30,
+  "maximumResidentGrowthBytesAfterFirstRelease": 33554432,
+  "maximumOpenDescriptorGrowth": 4,
+  "passed": true
+}

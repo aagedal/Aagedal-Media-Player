@@ -44,12 +44,14 @@ python_tests=(
     scripts/test-live-audio-meter-profile-validation.py
     scripts/test-mpv-coreaudio-candidate.py
     scripts/test-mpv-coreaudio-clean-candidate.py
+    scripts/test-mpv-coreaudio-publication.py
     scripts/test-metadata-candidate-validation.py
     scripts/test-metadata-cli-validation.py
     scripts/test-metadata-jxl-diagnostic.py
     scripts/test-metadata-library-fixture-validation.py
     scripts/test-metadata-memory-profile-validation.py
     scripts/test-production-metadata-memory-profile-validation.py
+    scripts/test-production-metadata-reimport-profile-validation.py
     scripts/test-programme-loudness-profile-validation.py
     scripts/test-programme-profile-power.py
     scripts/test-quadrant-render.py

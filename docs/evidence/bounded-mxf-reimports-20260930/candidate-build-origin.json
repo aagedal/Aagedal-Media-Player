@@ -1,0 +1,16 @@
+{
+  "appCloneHEAD": "ff98066ef8e5525d6ac51a6a380b0d8c2e36cea8",
+  "candidateRoot": "/private/tmp/aagedal-bounded-mxf-candidate-20260930",
+  "candidateGitHEAD": "8662054299a3e13c49c65f74c564360559d1bf7f",
+  "candidateGitStatus": " D Package.resolved\n M Package.swift\n M Sources/Benchmark/main.swift\nM  Sources/SwiftMediaMetadata/API/VideoMetadata.swift\nA  Sources/SwiftMediaMetadata/Video/MXFFileCursor.swift\nM  Sources/SwiftMediaMetadata/Video/MXFReader.swift\nA  Tests/SwiftMediaMetadataTests/Video/MXFFileCursorTests.swift\nM  Tests/SwiftMediaMetadataTests/Video/MXFMCALabelsTests.swift\nM  Tests/SwiftMediaMetadataTests/Video/VideoContainerTests.swift\n",
+  "derivedDataRoot": "/private/tmp/aagedal-metadata-reimport-dd-20260930",
+  "derivedDataProvenance": "Absent before source-only preparation; created by this build. No Xcode build databases or output products were copied.",
+  "packageCacheRoot": "/private/tmp/aagedal-metadata-reimport-packages-20260930",
+  "packageCacheProvenance": "APFS-cloned only the validated package cache; remapped artifact paths into the independent cache.",
+  "releaseBuildSucceeded": true,
+  "compiledBoundedCursorSymbolsPresent": true,
+  "reimportProfilesRun": 3,
+  "distinctImportsPerProfile": 30,
+  "completedSourceIdentitiesUnchanged": true,
+  "qualification": "Concurrent native profiles and root builds may influence RSS/cache/latency; no external-volume, multi-hour, Linux/base-M1 or immutable release/repin acceptance."
+}

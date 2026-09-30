@@ -67,6 +67,22 @@ These observations do not close 30-minute, audible/device/surround hardware,
 base-M1 or dependency publication gates. See
 [extended native evidence](evidence/live-meter-gpl-metal-extended-20260930/README.md).
 
+Repeated-import acceptance now passes thirty distinct production URLs per
+original Sony input on a freshly built bounded-reader app. All ninety immediate
+cache comparisons and three earliest-URL revisits preserve the complete model;
+maximum post-first-release growth is 2.578/1.922/4.406 MiB and open descriptors
+stay at nine. The explicit 32 MiB/four-descriptor budgets pass. The new opt-in
+profile raises candidate consumption to 739 aggregate tests with nine named
+optional skips; fresh integrated verification follows separately. See
+[resource evidence](evidence/bounded-mxf-reimports-20260930/README.md).
+
+The GPL repair has a verified unpublished package/source/input payload: eight
+rebuilt assets, twenty-one auxiliary binary targets, twenty exact build inputs
+and three committed source archives. Eleven mutation regressions and native
+SwiftPM manifest/dependency checks pass. Public reconstruction/environment,
+remote provenance, publication, fresh resolution and shipping repin remain
+open. See [local publication preparation](evidence/coreaudio-publication-preparation-20260930/README.md).
+
 The Review & Report implementation is substantially present: structured point
 and range findings, versioned local sidecars, relinking, deliberate historical
 timebase migration, save recovery, and CSV/PDF/editor-format export. That makes

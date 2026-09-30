@@ -4060,6 +4060,52 @@ these are local dependency observations, not shipping repins. Concurrent builds
 qualify timing/memory observations. See
 [extended profiles and retained DTS rejection](docs/evidence/live-meter-gpl-metal-extended-20260930/README.md).
 
+## Phase 182 — Repeated authentic imports through the bounded MXF app candidate
+
+Status: Opt-in production harness and three 30-import resource observations
+pass on 2026-09-30, with shipping dependencies unchanged.
+
+- [x] Exercise thirty distinct URL imports per original Sony file, immediate
+  shared-cache reads, and earliest-URL revisit with complete app-model equality.
+- [x] Preserve adjacent sidecars with directory aliases rather than duplicating
+  large media; observe native RSS/lifetime peak and open descriptors per import.
+- [x] Enforce explicit resident/descriptor budgets, reject malformed input and
+  remove stale passing receipts before failed revalidation.
+- [x] Build the local bounded-reader app using a source-only clone and entirely
+  fresh DerivedData; retain compilation, source/binary/media and result identities.
+- [ ] Complete external-volume, multi-hour, Linux/base-M1 and public upstream
+  release/repin acceptance; allocator baseline recovery and cache eviction remain unproven.
+
+All three inputs pass a diagnostic 32 MiB post-first-release resident-growth
+budget and four-descriptor growth budget. Observed maximum import growth is
+2.578, 1.922 and 4.406 MiB; descriptors stay at nine. Full model equality covers
+all ninety imports/cache reads and three revisits. Timings remain diagnostic
+with possible concurrent work. See
+[retained app resource evidence](docs/evidence/bounded-mxf-reimports-20260930/README.md).
+
+## Phase 183 — Verifiable local GPL dependency publication payload
+
+Status: Local package/source/input payload and native manifest validation pass
+on 2026-09-30; proposed release assets are unpublished.
+
+- [x] Stage eight unchanged rebuilt GPL assets, all twenty exact auxiliary build
+  inputs, three deterministic committed source archives and raw commit objects.
+- [x] Declare the macOS-only GPL product with eight rebuilt and twenty-one
+  auxiliary binary targets and unchanged recipe linker settings.
+- [x] Bind source archive trees/commit objects, wrapper sources, input URLs,
+  auxiliary checksums and GPL artifact bytes to retained build identities.
+- [x] Reject inventory/source/URL/checksum/policy/authentication mutations and
+  pass eleven regressions plus native SwiftPM manifest/dependency validation.
+- [ ] Publish durable recipe/input/source/artifact/package metadata; supply a
+  portable public reconstruction driver/environment and authenticate remote inputs.
+- [ ] Complete fresh published-package resolution, app repin, x86_64 runtime,
+  audible/device/surround, sustained supported-macOS/base-M1 acceptance.
+
+The prepared namespace is explicitly proposed rather than a claimed public
+release. Repeated deterministic source archives are not byte-identical rebuilt
+libraries. Local package validation does not download or link its targets.
+See [prepared package and provenance](docs/evidence/coreaudio-publication-preparation-20260930/README.md).
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
