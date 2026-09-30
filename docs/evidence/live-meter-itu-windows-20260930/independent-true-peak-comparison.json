@@ -1,0 +1,135 @@
+{
+  "algorithm": "bs1770-5-annex2-48k-pcm16-fir4-v1",
+  "calculatorSHA256": "04b68b9d9e7c2b69ee39ca13accb5eea7bc25a474e987c7939b407ada595e588",
+  "channelPolicy": "maximum absolute reconstructed peak across all channels, including LFE",
+  "coefficientsSHA256": "0a5ee02b8eb28be1708ab735da1746896195913a30e1416b6525b9f623d52ac2",
+  "measurements": [
+    {
+      "channels": 1,
+      "differenceDB": -0.02453761581824576,
+      "file": "1770-2 Conf Mono Voice+Music-23LKFS.wav",
+      "independentCalculation": {
+        "frameCount": 3998849,
+        "perChannel": [
+          {
+            "boundedSkippedBlocks": 525,
+            "filteredBlocks": 453,
+            "reconstructedPeakAmplitude": 0.5770678520202637,
+            "samplePeakAmplitude": 0.57672119140625,
+            "samplePeakDBFS": -4.780681806125388,
+            "truePeakDBTP": -4.775462384181754
+          }
+        ],
+        "trailingSilenceFrames": 11,
+        "truePeakDBTP": -4.775462384181754
+      },
+      "passed": true,
+      "productionTruePeakDBTP": -4.8,
+      "regressionToleranceDB": 0.4,
+      "sha256": "f8b318474b158c9f2ee842f0cfadf58ffcf504ffe8daa172220190d12dd0785b"
+    },
+    {
+      "channels": 2,
+      "differenceDB": 0.02648416882350979,
+      "file": "1770-2 Conf Stereo VinL+R-23LKFS.wav",
+      "independentCalculation": {
+        "frameCount": 3991527,
+        "perChannel": [
+          {
+            "boundedSkippedBlocks": 549,
+            "filteredBlocks": 427,
+            "reconstructedPeakAmplitude": 0.4014909788966179,
+            "samplePeakAmplitude": 0.4010009765625,
+            "samplePeakDBFS": -7.937091394719119,
+            "truePeakDBTP": -7.92648416882351
+          },
+          {
+            "boundedSkippedBlocks": 599,
+            "filteredBlocks": 377,
+            "reconstructedPeakAmplitude": 0.3882835693657398,
+            "samplePeakAmplitude": 0.38787841796875,
+            "samplePeakDBFS": -8.226087688114195,
+            "truePeakDBTP": -8.217019734006648
+          }
+        ],
+        "trailingSilenceFrames": 11,
+        "truePeakDBTP": -7.92648416882351
+      },
+      "passed": true,
+      "productionTruePeakDBTP": -7.9,
+      "regressionToleranceDB": 0.4,
+      "sha256": "3ff26c997d838aff36b4319f9e0a673c0b51fe26722ecb0153887b66f38c296f"
+    },
+    {
+      "channels": 6,
+      "differenceDB": -0.16073891850460065,
+      "file": "1770-2 Conf 6ch VinCntr-23LKFS.wav",
+      "independentCalculation": {
+        "frameCount": 3994582,
+        "perChannel": [
+          {
+            "boundedSkippedBlocks": 597,
+            "filteredBlocks": 380,
+            "reconstructedPeakAmplitude": 0.3334159292280674,
+            "samplePeakAmplitude": 0.332916259765625,
+            "samplePeakDBFS": -9.553299864121609,
+            "truePeakDBTP": -9.54027310452188
+          },
+          {
+            "boundedSkippedBlocks": 635,
+            "filteredBlocks": 342,
+            "reconstructedPeakAmplitude": 0.4078671596944332,
+            "samplePeakAmplitude": 0.407257080078125,
+            "samplePeakDBFS": -7.802627136723829,
+            "truePeakDBTP": -7.789625228674474
+          },
+          {
+            "boundedSkippedBlocks": 847,
+            "filteredBlocks": 130,
+            "reconstructedPeakAmplitude": 0.4550267681479454,
+            "samplePeakAmplitude": 0.44476318359375,
+            "samplePeakDBFS": -7.037423395418875,
+            "truePeakDBTP": -6.839261081495399
+          },
+          {
+            "boundedSkippedBlocks": 0,
+            "filteredBlocks": 977,
+            "reconstructedPeakAmplitude": 0.0003979206085205078,
+            "samplePeakAmplitude": 0.0003662109375,
+            "samplePeakDBFS": -68.72537377824186,
+            "truePeakDBTP": -68.00407135856679
+          },
+          {
+            "boundedSkippedBlocks": 632,
+            "filteredBlocks": 345,
+            "reconstructedPeakAmplitude": 0.18324600160121918,
+            "samplePeakAmplitude": 0.18182373046875,
+            "samplePeakDBFS": -14.806988721613862,
+            "truePeakDBTP": -14.739309856407543
+          },
+          {
+            "boundedSkippedBlocks": 556,
+            "filteredBlocks": 421,
+            "reconstructedPeakAmplitude": 0.1906677596271038,
+            "samplePeakAmplitude": 0.19036865234375,
+            "samplePeakDBFS": -14.408091290771859,
+            "truePeakDBTP": -14.39445472846357
+          }
+        ],
+        "trailingSilenceFrames": 11,
+        "truePeakDBTP": -6.839261081495399
+      },
+      "passed": true,
+      "productionTruePeakDBTP": -7.0,
+      "regressionToleranceDB": 0.4,
+      "sha256": "ef2a0baef7f50db39eddfb1ba6f2a5445646050d113f81c6365cddca7f0448a0"
+    }
+  ],
+  "oversamplingFactor": 4,
+  "pythonVersion": "3.9.6 (default, Aug 25 2026, 21:26:21) \n[Clang 21.0.0 (clang-2100.3.34.2)]",
+  "sampleRate": 48000,
+  "source": "https://www.itu.int/dms_pubrec/itu-r/rec/bs/R-REC-BS.1770-5-202311-I!!PDF-E.pdf",
+  "sourceValidationSHA256": "a297d1f1dad4a98eeac7e3d44dcb17d686f66e2a7cbd1eb35ac08eb7b84304eb",
+  "tapsPerPhase": 12,
+  "targetProvenance": "independent calculation, not published programme true-peak targets"
+}

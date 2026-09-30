@@ -1,0 +1,44 @@
+[
+  {
+    "channelLayout": "stereo",
+    "channels": 2,
+    "expectedIntegratedLUFS": -23,
+    "file": "1770-2 Conf Stereo VinL+R-23LKFS.wav",
+    "integratedLUFS": "-23.0",
+    "sampleRate": 48000,
+    "sha256": "3ff26c997d838aff36b4319f9e0a673c0b51fe26722ecb0153887b66f38c296f",
+    "toleranceLU": 0.1,
+    "unreferencedObservations": {
+      "loudnessRangeLU": "14.6",
+      "truePeakDBTP": "-7.9"
+    }
+  },
+  {
+    "channelLayout": "unspecified",
+    "channels": 6,
+    "expectedIntegratedLUFS": -23,
+    "file": "1770-2 Conf 6ch VinCntr-23LKFS.wav",
+    "integratedLUFS": "-23.0",
+    "sampleRate": 48000,
+    "sha256": "ef2a0baef7f50db39eddfb1ba6f2a5445646050d113f81c6365cddca7f0448a0",
+    "toleranceLU": 0.1,
+    "unreferencedObservations": {
+      "loudnessRangeLU": "10.8",
+      "truePeakDBTP": "-7.0"
+    }
+  },
+  {
+    "channelLayout": "mono",
+    "channels": 1,
+    "expectedIntegratedLUFS": -23,
+    "file": "1770-2 Conf Mono Voice+Music-23LKFS.wav",
+    "integratedLUFS": "-23.0",
+    "sampleRate": 48000,
+    "sha256": "f8b318474b158c9f2ee842f0cfadf58ffcf504ffe8daa172220190d12dd0785b",
+    "toleranceLU": 0.1,
+    "unreferencedObservations": {
+      "loudnessRangeLU": "15.9",
+      "truePeakDBTP": "-4.8"
+    }
+  }
+]

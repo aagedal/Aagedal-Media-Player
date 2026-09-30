@@ -1,0 +1,17 @@
+5399ec51b9a25b732fa24fca36bffbad3ee54bbb
+ M "Aagedal Media Player Tests/ITUProgrammeLoudnessTests.swift"
+ M "Aagedal Media Player/Logic/MPV/MPVPlayer.swift"
+ M scripts/check-itu-programme-loudness.sh
+ M scripts/diagnose-metadata-jxl-fixture.py
+ M scripts/profile-live-audio-meter.sh
+ M scripts/test-live-audio-meter-profile-validation.py
+ M scripts/test-metadata-jxl-diagnostic.py
+ M scripts/validate-live-audio-meter-profile.py
+ProductName:		macOS
+ProductVersion:		27.0.1
+BuildVersion:		26A434
+Xcode 27.0
+Build version 27A266a
+f8b318474b158c9f2ee842f0cfadf58ffcf504ffe8daa172220190d12dd0785b  /private/tmp/aagedal-itu-live-references-20260930/1770-2 Conf Mono Voice+Music-23LKFS.wav
+3ff26c997d838aff36b4319f9e0a673c0b51fe26722ecb0153887b66f38c296f  /private/tmp/aagedal-itu-live-references-20260930/1770-2 Conf Stereo VinL+R-23LKFS.wav
+ef2a0baef7f50db39eddfb1ba6f2a5445646050d113f81c6365cddca7f0448a0  /private/tmp/aagedal-itu-live-references-20260930/1770-2 Conf 6ch VinCntr-23LKFS.wav

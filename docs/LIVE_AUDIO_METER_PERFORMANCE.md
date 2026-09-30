@@ -35,6 +35,12 @@ The [native-output investigation](LIVE_AUDIO_METER_NATIVE_OUTPUT_DIAGNOSIS_2026-
 also records stereo output rejection and explains why a progressing video clock
 does not establish audible playback. The harness retains separate native-output
 diagnostics at starts and failures and stops promptly on unavailable meter state.
+The current runner also requests MPV warning/error logs in Release, requires a
+successful logging receipt and rejects native AO initialization failures before
+writing a passing summary. Failed XCTest runs retain diagnostic attachments;
+rejected evidence removes any stale summary. Earlier passing source-meter rows
+with logged output failures remain historical plumbing evidence and fail this
+stronger output regression requirement. A clean log still does not prove sound.
 
 The artifact directory must not exist. Each input must have at least 20 seconds
 of audio, and at least ten seconds more than the selected observation interval,
@@ -134,6 +140,14 @@ unsupported media with actionable app behavior. Compare readings with trusted
 reference tools and record expected programme/transient values separately; this
 harness validates provenance, lifecycle and bounded operation, not independent
 meter calibration.
+
+The separate [ITU programme reference runner](AUDIO_PROGRAMME_REFERENCES.md)
+compares every complete momentary/short-term source-frame endpoint from the
+shipping decoder/DSP with independent FFmpeg `ebur128` readings. It covers
+hash-pinned authentic mono/stereo programmes and a sample-preserving,
+explicitly labelled 5.1 preparation. It supplies decoder/DSP numerical evidence;
+the owning playback/session/UI path, monitoring changes, native output and
+release-floor acceptance still require this production harness and native checks.
 
 Run the final matrix on the base 2020 M1 MacBook Air with 8 GB RAM, include a
 long-play observation appropriate to the release decision, and perform the

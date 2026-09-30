@@ -5,6 +5,31 @@ This optional check feeds three original ITU programme WAVs through the app's
 independently synthesized references in `AUDIO_LOUDNESS.md` with authentic
 voice/music content. It does not establish complete standards certification.
 
+The same opt-in test now compares the shipping timestamp-verified live decoder
+and Swift DSP against FFmpeg's independently implemented `ebur128` momentary
+and short-term readings. Every complete 100-ms endpoint is matched by source
+sample position, with a 0.1 LU tolerance and retained raw oracle output and
+window-by-window comparisons. These are calculated reference-tool targets,
+separate from ITU's published whole-programme integrated target.
+
+The six-channel original has no speaker mask. For this live check only, its
+hash-pinned PCM words and channel order are preserved in a temporary extensible
+WAVE with the ITU-declared L/R/C/LFE/Ls/Rs roles (`5.1(side)`, mask `0x60f`).
+The original remains unchanged; its PCM SHA-256 is
+`5e1020672b02d963f98aab2d827961656f941da79ab4b14733f62b574737848f`.
+This preparation does not establish automatic speaker-role inference for
+unlabelled six-channel media.
+
+The runner requires all three live comparison summaries alongside the offline
+measurements and writes `live-loudness-comparison.json`. It retains decoder
+version, time base, original hashes, exact oracle arguments, maximum errors,
+and comparison counts. FFmpeg's exact-silence floor is qualified separately
+from the app's negative-infinity silence reading. The live decoder runs at its
+normal source rate; this check does not involve the playback coordinator,
+native audio output, meter window, transport changes, or release-floor hardware.
+See [FFmpeg's ebur128 documentation](https://ffmpeg.org/ffmpeg-filters.html#ebur128)
+for its 400-ms/3-second windows and 100-ms metadata frames.
+
 ## Sources and targets
 
 [ITU-R BS.2217-2](https://www.itu.int/dms_pub/itu-r/opb/rep/R-REP-BS.2217-2-2016-PDF-E.pdf)

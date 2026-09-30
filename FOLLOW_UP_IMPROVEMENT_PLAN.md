@@ -3449,14 +3449,93 @@ Audible-output diagnosis, MPV source pixels, producer-authentic/reference,
 editor/accessibility, release-floor and distribution gates remain open.
 The evidence-report commit follows the verified source commit.
 
+## Phase 155 — Authentic programme live M/S reference comparisons
+
+Status: Opt-in Release decoder/DSP reference check passed on 2026-09-30.
+
+- [x] Compare every complete 100-ms momentary/short-term endpoint from the
+  shipping timestamp decoder and Swift DSP with independent C ebur128 readings.
+- [x] Pin original ITU mono/stereo/centre-voice programme hashes; preserve the
+  six-channel PCM words/order in an explicitly labelled 5.1(side) preparation.
+- [x] Pass all 4,896 comparisons within 0.0005 LU (0.1 LU tolerance), retaining
+  raw oracle output, exact source-frame coverage, EOF and decoder provenance.
+- [x] Reconfirm the original integrated targets and existing independent
+  programme LRA/true-peak checks in the same Release runner.
+
+See [retained comparisons](docs/evidence/live-meter-itu-windows-20260930/README.md).
+These are reference-tool numerical targets, separate from published integrated
+values. Owning playback/session/UI, native output, compressed authentic media,
+long-play, release-floor hardware and spoken accessibility remain open.
+
+## Phase 156 — Isolated CoreAudio contract proof and fail-closed output profiles
+
+Status: Diagnosis and harness completed on 2026-09-30; dependency repair pending.
+
+- [x] Tie the linked arm64 CoreAudio object to pinned MPVKit's source/build and
+  reproduce its AudioChannelLayout-as-ChannelMap API mismatch without playback.
+- [x] Pass twelve correctly typed map initializations; reproduce nine malformed
+  mono/planar-stereo failures. Do not treat malformed interleaved-stereo success
+  as a valid channel map.
+- [x] Retain an attributed upstream repair candidate, verify application to the
+  pinned source, and compile both touched C files for arm64 and x86_64.
+- [x] Enable opt-in Release native-output logs, reject AO initialization failures,
+  retain failed-test attachments and remove stale passing summaries.
+- [x] Pass twenty focused profile-validator tests, including rejection of the
+  retained historical false-passing output baseline.
+- [ ] Rebuild and repin MPVKit, then repeat native mono/stereo, monitoring,
+  supported-device/default-device-switch and actual audible-output acceptance.
+
+See [the dependency diagnosis](docs/LIVE_AUDIO_METER_NATIVE_OUTPUT_DIAGNOSIS_2026-09-30.md).
+No output policy, dependency binary or package pin changed in this continuation.
+
+## Phase 157 — Recover authentic Sony raw and verify exact metadata release
+
+Status: Recovered-input and exact-3.0.1 checks completed on 2026-09-30.
+
+- [x] Recover all nine previously reviewed image/sidecar hashes and independently
+  identify the authentic SONY/ILCE-1 TRA03164.ARW using ExifTool.
+- [x] Pass all three unchanged raw read/write/sidecar cases and pin its hash.
+- [x] Run all twenty original cases against exact 3.0.1: seventeen pass, two
+  historical XMP cases skip, and the pre-existing JXL throw assertion fails.
+- [x] Verify both exact-release and baseline JXL probes with pinned codestream
+  bytes/hash, unchanged sources and the unreconciled upstream assertion recorded.
+- [x] Support exact-candidate JXL provenance and the observed Swift 6.4 suite
+  alias; pass twelve fixture, nine JXL and ten source-provenance regressions.
+- [ ] Recover the original historical XMP and reconcile the upstream JXL
+  assertion. The adjacent incompatible XMP was never staged or pinned.
+
+See [recovery evidence](docs/METADATA_FIXTURE_RECOVERY_20260930.md).
+The recovered ARW closes three former missing-input skips; the fixture gate
+remains false until both remaining skips and the assertion failure are resolved.
+
+## Phase 158 — Correct unchanged current-frame Review range drafts
+
+Status: Implemented and sixteen focused optimized Release checks passed on
+2026-09-30; complete canonical verification follows.
+
+- [x] Synchronize a successful End at current frame action's typed draft even
+  when the controller accepts the already-saved endpoint without emitting a change.
+- [x] Clear the corrected range's error/request, retain failed input and preserve
+  separate note-text correction state.
+- [x] Add two focused draft regressions and extend real-controller persistence
+  coverage for the successful unchanged-endpoint path; pass all sixteen
+  optimized Release draft/lifecycle tests without skips or failures.
+- [ ] Complete native keyboard/Full Keyboard Access/spoken VoiceOver acceptance.
+
+See [source defect and coverage](docs/evidence/review-current-range-correction-20260930/README.md).
+The computer-use app connection hung until cancelled; no native interaction or
+spoken acceptance is inferred from this source fix.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
   producer-authentic long media and on the release-floor base M1. Synthetic
   containers, selected real Sony/raw media, and the exact 3.0.1 library suite
   pass. The September 9 fixture expansion exercises the original twenty skips:
-  fourteen pass, five still lack their exact ARW/XMP originals, and one JXL
-  expectation fails identically in baseline/candidate and needs reconciliation.
+  fourteen initially passed. The September 30 recovery now passes seventeen:
+  all three authentic ARW cases pass, two historical XMP cases remain skipped,
+  and one JXL expectation fails identically in baseline/candidate and needs
+  reconciliation.
   Phase 70 proves successful byte-preserving writes with its genuine bare
   codestream too; both the mislabeled fixture and obsolete throw assertion
   need upstream reconciliation.
@@ -3789,3 +3868,7 @@ The evidence-report commit follows the verified source commit.
 144. Phase 152 native-audio-output diagnosis and profile failure evidence.
 145. Phase 153 awake candidate verification ownership.
 146. Phase 154 integrated awake optimized Release verification.
+147. Phase 155 authentic programme live M/S reference comparisons.
+148. Phase 156 isolated CoreAudio contract proof and fail-closed output profiles.
+149. Phase 157 recover authentic Sony raw and verify exact metadata release.
+150. Phase 158 correct unchanged current-frame Review range drafts.

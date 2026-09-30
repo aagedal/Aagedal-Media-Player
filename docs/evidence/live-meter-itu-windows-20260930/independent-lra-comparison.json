@@ -1,0 +1,75 @@
+{
+  "algorithm": "ebu3342-2023-48k-pcm16-v1",
+  "calculatorSHA256": "a297d1f1dad4a98eeac7e3d44dcb17d686f66e2a7cbd1eb35ac08eb7b84304eb",
+  "hopSeconds": 0.1,
+  "measurements": [
+    {
+      "channelEnergyWeights": [
+        1.0
+      ],
+      "differenceLU": 0.03024806340306263,
+      "file": "1770-2 Conf Mono Voice+Music-23LKFS.wav",
+      "independentCalculation": {
+        "absoluteGatedBlocks": 819,
+        "highPercentileLUFS": -19.505362052214938,
+        "loudnessRangeLU": 15.869751936596938,
+        "lowPercentileLUFS": -35.375113988811876,
+        "relativeGatedBlocks": 809,
+        "shortTermBlocks": 819
+      },
+      "passed": true,
+      "productionLoudnessRangeLU": 15.9,
+      "regressionToleranceLU": 1.0,
+      "sha256": "f8b318474b158c9f2ee842f0cfadf58ffcf504ffe8daa172220190d12dd0785b"
+    },
+    {
+      "channelEnergyWeights": [
+        1.0,
+        1.0
+      ],
+      "differenceLU": 0.07048623962437439,
+      "file": "1770-2 Conf Stereo VinL+R-23LKFS.wav",
+      "independentCalculation": {
+        "absoluteGatedBlocks": 817,
+        "highPercentileLUFS": -19.364797920147407,
+        "loudnessRangeLU": 14.529513760375625,
+        "lowPercentileLUFS": -33.89431168052303,
+        "relativeGatedBlocks": 816,
+        "shortTermBlocks": 817
+      },
+      "passed": true,
+      "productionLoudnessRangeLU": 14.6,
+      "regressionToleranceLU": 1.0,
+      "sha256": "3ff26c997d838aff36b4319f9e0a673c0b51fe26722ecb0153887b66f38c296f"
+    },
+    {
+      "channelEnergyWeights": [
+        1.0,
+        1.0,
+        1.0,
+        0.0,
+        1.41,
+        1.41
+      ],
+      "differenceLU": -0.14164541114161366,
+      "file": "1770-2 Conf 6ch VinCntr-23LKFS.wav",
+      "independentCalculation": {
+        "absoluteGatedBlocks": 818,
+        "highPercentileLUFS": -18.834892753655268,
+        "loudnessRangeLU": 10.941645411141614,
+        "lowPercentileLUFS": -29.776538164796882,
+        "relativeGatedBlocks": 818,
+        "shortTermBlocks": 818
+      },
+      "passed": true,
+      "productionLoudnessRangeLU": 10.8,
+      "regressionToleranceLU": 1.0,
+      "sha256": "ef2a0baef7f50db39eddfb1ba6f2a5445646050d113f81c6365cddca7f0448a0"
+    }
+  ],
+  "pythonVersion": "3.9.6 (default, Aug 25 2026, 21:26:21) \n[Clang 21.0.0 (clang-2100.3.34.2)]",
+  "sampleRate": 48000,
+  "targetProvenance": "independent calculation, not published programme LRA targets",
+  "trailingSilenceSeconds": 1.5,
+  "windowSeconds": 3.0
+}

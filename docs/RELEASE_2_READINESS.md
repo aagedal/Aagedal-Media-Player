@@ -114,6 +114,34 @@ workflow/media/performance gates remain open. See [current candidate evidence](e
 
 ## Must close before a defensible 2.0 candidate
 
+The next September 30 continuation fixes Review's current-range action leaving
+invalid typed input behind when its accepted endpoint is unchanged. It also
+passes 4,896 momentary/short-term comparisons from the production live decoder
+and DSP against independent `ebur128` readings on original ITU mono/stereo
+programmes and a sample-preserving, explicitly labelled 5.1 preparation. Every
+reading agrees within 0.0005 LU; this is numerical decoder/DSP evidence, separate
+from the owning playback/session/UI, native output and release-floor gates.
+See [retained programme comparisons](evidence/live-meter-itu-windows-20260930/README.md).
+
+The authentic Sony ARW is recovered, independently reviewed and pinned; three
+former skips now pass. The exact 3.0.1 fixture run has 17 passes, two historical
+XMP skips and one unchanged upstream JXL assertion failure. The JXL diagnostic
+now verifies the exact integrated release and pinned codestream identity.
+See [fixture recovery](METADATA_FIXTURE_RECOVERY_20260930.md).
+
+The linked MPV CoreAudio object is now tied to a reproduced ChannelMap
+type-contract defect: typed integer maps initialize in all twelve isolated
+mono/stereo checks, while malformed mono/planar-stereo maps fail in all nine
+checks. A retained upstream repair candidate applies and compiles for both
+architectures; MPVKit has not been rebuilt or repinned. The profile now retains
+Release error logs and rejects native-output initialization failures even when
+video clocks and source meters progress. This invalidates the earlier output
+false-pass without claiming a production playback correction. See
+[dependency diagnosis](LIVE_AUDIO_METER_NATIVE_OUTPUT_DIAGNOSIS_2026-09-30.md).
+Native Review interaction remains unverified because the app connection hung
+until cancellation; source regression coverage does not establish spoken
+VoiceOver or Full Keyboard Access acceptance.
+
 The fresh awake canonical verifier subsequently passes at clean commit
 `61b2d0e9a4001a320cd1bb9e4cb44e245570cbf1`: 705 optimized Release passes with
 eight documented optional skips, both isolated transport directions, Release
@@ -292,7 +320,7 @@ conform defect and geometry acceptance open. See [measured production UI render]
 
 | Gap | Acceptance evidence required |
 | --- | --- |
-| Metadata compatibility and error semantics | The 3.0.1 production payload-copy regression is closed, but recover the five missing ARW/XMP fixture inputs, reconcile the remaining JXL fixture/assertion disagreement, and expand unusual-container and intended-error coverage. Keep this compatibility gate separate from the resolved memory defect. See [library fixture acceptance](METADATA_LIBRARY_FIXTURE_VALIDATION.md), [real-media validation](METADATA_REAL_MEDIA_VALIDATION.md), and [metadata investigation](METADATA_MEMORY_PERFORMANCE.md). |
+| Metadata compatibility and error semantics | The 3.0.1 production payload-copy regression is closed and the authentic ARW now passes all three original cases. Recover the historical XMP sidecar needed by the two remaining skips, reconcile the JXL fixture/assertion disagreement, and complete intended-error coverage. Keep this compatibility gate separate from the resolved memory defect. See [fixture recovery](METADATA_FIXTURE_RECOVERY_20260930.md), [library fixture acceptance](METADATA_LIBRARY_FIXTURE_VALIDATION.md), and [real-media validation](METADATA_REAL_MEDIA_VALIDATION.md). |
 | Committed live Audio QC | Implement peak/true-peak and momentary/short-term loudness with explicit units, calibration, ballistics, hold/reset behavior, and presets. Validate the actual live path against trusted references, including pause/seek/replacement, channel routing, malformed media and cancellation; demonstrate bounded work during long playback. Existing offline loudness results do not satisfy this promise. See the [live-meter implementation contract](LIVE_AUDIO_METER_DESIGN.md) and [offline audio loudness](AUDIO_LOUDNESS.md). The design, bounded DSP/display, source-rate-paced suspendable decoder, hard 250 ms worker admission bound, timestamp-verified packets, bounded precise seek with generated AAC/ALAC/AC-3 checks, lifecycle ownership, selected A/B track mapping and fallback, typed player events, clock/drift policy, owning window session and mounted activating UI are implemented. Generated compressed ALAC 5.1 now passes the shipping metadata/player/session/FFmpeg/DSP/presentation path under independent monitor routing. The [representative production harness](LIVE_AUDIO_METER_PERFORMANCE.md) now retains exact source/provenance, pacing, routing, memory, cancellation, and EOF evidence. Producer-authentic inputs, trusted measurement comparison, long-play/base-M1 execution, malformed-media behavior, and complete native production acceptance remain. See [meter foundation](LIVE_AUDIO_METER_DSP.md). |
 | Real editor interoperability | Complete Resolve, Final Cut Pro, and Avid acceptance rows with exact editor versions and retained import/re-export results. Check fractional rates, DF minute/ten-minute boundaries, inclusive ranges, duplicate positions, note content, and source identity. Where re-export is unavailable, retain the documented visible frame/count evidence and explicitly state the limitation. App exports and parser tests alone are insufficient. See [interchange run sheet](COMPARE_MODE_INTERCHANGE.md). |
 | Release-floor playback and resource use | Run the named base 2020 M1 MacBook Air/8 GB gate: 120 seconds per comparison scenario, including UHD/HDR, mixed backends, reflected sources, scopes and loupe; retain decoder/drift results plus Instruments CPU/GPU and thermal observations. Complete concurrent-playback long-file thumbnail and multichannel loudness profiles. September 12 programme profiling exposed and corrected silent long-range channel loss; per-input container-index memory still grows with duration, and sleep-interrupted timings are excluded. See [programme profiling](PROGRAMME_LOUDNESS_PERFORMANCE.md). See [comparison performance](COMPARE_MODE_PERFORMANCE.md), [thumbnails](TIMELINE_THUMBNAIL_PERFORMANCE.md), and [loudness performance](AUDIO_LOUDNESS_PERFORMANCE.md). |

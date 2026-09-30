@@ -5,6 +5,9 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Changed
+- Review's End at current frame action clears an invalid range draft even when the chosen endpoint is already saved, allowing reports to proceed after correction.
+- Live-meter profiles retain Release native-output logs and failed-test diagnostics, reject audio-output initialization errors, and remove stale passing summaries.
+- Metadata fixture validation now pins a recovered authentic Sony ARW, supports current SwiftPM suite naming, and diagnoses JXL behavior against an exact dependency release.
 - Candidate verification temporarily keeps the Mac awake, rejects sleep-interrupted evidence, and bounds each isolated transport test to 120 seconds.
 - AVFoundation loupe capture follows the enabled video track and clears stale raster proof after track or composition changes; composed and ambiguous output remains a display preview.
 - Live-meter profile validation rejects mismatched sample-rate timestamp provenance and impossible snapshot timing.
@@ -24,6 +27,7 @@ All notable changes to Aagedal Media Player.
 - Metadata container-edge validation checks the independent error behavior of frame, gyroscope, and accelerometer RTMD readers against both the 3.0.0 baseline and integrated 3.0.1 dependency.
 
 ### Added
+- Independent momentary/short-term loudness comparisons for the live decoder/DSP against original ITU programmes, with exact source-frame endpoints and retained reference readings.
 - File → Add Comparison File and Cmd–Option–O for keyboard comparison setup without changing macOS keyboard-navigation preferences.
 - Review → Export Review menu access to every report/marker format, plus Cmd–Option–E for CSV, with pending note edits saved before export.
 - Final Cut marker export guidance explaining native round-trip tab/line-break loss, textual ranges and grouped findings, backed by a second native import/export check.
