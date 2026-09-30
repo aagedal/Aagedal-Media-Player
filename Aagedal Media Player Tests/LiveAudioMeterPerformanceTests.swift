@@ -89,6 +89,7 @@ final class LiveAudioMeterPerformanceTests: XCTestCase {
                 comparison: comparison,
                 defaults: isolatedDefaults()
             )
+            defer { session.close() }
             session.start()
             player.play()
 

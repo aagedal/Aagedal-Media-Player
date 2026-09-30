@@ -27,6 +27,11 @@ and near-EOF segments. An unavailable ordinal or unsupported selected format
 fails the run. These controls enable the multi-track acceptance case; passing
 representative artifacts still need to be collected and reviewed.
 
+The [selected-track engineering check](LIVE_AUDIO_METER_SELECTED_TRACK_ENGINEERING_CHECK_2026-09-30.md)
+records a generated two-track plumbing pass and retained mono native-output
+failures. Those generated Debug observations do not close representative or
+release-performance acceptance.
+
 The artifact directory must not exist. Each input must have at least 20 seconds
 of audio, and at least ten seconds more than the selected observation interval,
 in a format currently supported by the live meter: one through eight channels
