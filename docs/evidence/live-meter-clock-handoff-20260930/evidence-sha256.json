@@ -1,0 +1,14 @@
+{
+  "README.md": "106cffe04cb19c37a4c662cf50a9940a1a58c70734dca998f27aebbb7e268a05",
+  "clock-details.json": "016f25d514e23a4975462c2a47ed246711ee81278c74e7d99ad5c44da562bc8a",
+  "clock-summary.json": "9805c39bb2cd2c38bd0f6d634f3d65d01afc87f8ddf9ca90a08ae4a4a5e9d8e2",
+  "clock-validation.log": "fc83cbbcfc1d29ade48910511aa52a289551bbc37a69d06a8a18c38e419c35b7",
+  "corrected-focused.json": "2bfba95b380572bac6a3de708b13abce0ed3a355988a0fd33e344372c5a6ec00",
+  "corrected-focused.log": "f8aff94792b389c719ac843c10b7e5fa33fa42a199a4657bf4bea9d139934980",
+  "fresh-snapshot-before.json": "23291cfcccf348744c480a48ad74a18859a209819139d6a551d02d9b5a93b711",
+  "fresh-snapshot-before.log": "663877a5cb43006d8f864ddd99436a26f23dd588964bb5d6f3bcc859a8d8b56c",
+  "malformed-clock-before.json": "3960d1383ca24880df4d2fdcece57de595f58117a8063a6064341715a49bbff6",
+  "malformed-clock-before.log": "da776f5ac60634eaccce12b08cd270a2eb038f170cded08a9a8b01fb09a0e12d",
+  "source-change.diff": "fb36bc8e067d3bc37e87a238887160dab1defa619037c1cfad6e5af3297f7a92",
+  "source-sha256.json": "64a43a23460bd43002e861f0b778e175dda4b6b46a0f858ace94736a28638aef"
+}

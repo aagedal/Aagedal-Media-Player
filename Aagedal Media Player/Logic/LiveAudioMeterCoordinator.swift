@@ -236,6 +236,18 @@ final class LiveAudioMeterCoordinator: ObservableObject {
         if isTransportSuspended, let request {
             resume(request)
         }
+        // A worker callback has already reduced every DSP bucket even when
+        // its scheduled main-actor presentation drain has not run. Assess the
+        // newest reduced endpoint, rather than rejecting an older UI reading
+        // solely because clock delivery preceded that drain. Pending producer
+        // rejection takes priority over a generic drift error for that reading.
+        if let handoff {
+            if let rejection = handoff.rejection {
+                fail(rejection, handoff: handoff, generation: generation)
+                return
+            }
+            drain(handoff, generation: generation)
+        }
         guard let request, let endFrame = reducedSnapshot?.measurement.endFrame else { return }
         let assessment = LiveAudioMeterClockPolicy(
             sampleRate: request.format.sampleRate

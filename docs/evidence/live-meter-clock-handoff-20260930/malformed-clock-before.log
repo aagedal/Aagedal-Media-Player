@@ -1,0 +1,29 @@
+Test Suite 'Selected tests' started at 2026-09-30 21:10:47.799.
+Test Suite 'Aagedal Media Player Tests.xctest' started at 2026-09-30 21:10:47.800.
+Test Suite 'LiveAudioMeterCoordinatorTests' started at 2026-09-30 21:10:47.800.
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testPendingMalformedSnapshotWinsRaceWithPlaybackClockFailure]' started.
+/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift:260: error: -[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testPendingMalformedSnapshotWinsRaceWithPlaybackClockFailure] : XCTAssertEqual failed: ("Live meters lost synchronization with playback.") is not equal to ("Live source audio is unavailable.")
+/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift:261: error: -[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testPendingMalformedSnapshotWinsRaceWithPlaybackClockFailure] : XCTAssertTrue failed
+/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift:262: error: -[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testPendingMalformedSnapshotWinsRaceWithPlaybackClockFailure] : XCTAssertNil failed: "LiveAudioMeterClockFailureContext(generation: 1, requestStartFrame: 0, decodedEndFrame: 4800, playbackTime: 0.4, drift: -0.3, publishedSnapshotCount: 1, hadEstablishedSynchronization: true, wasSuspendedAhead: false, permittedEndFrame: Optional(31200))"
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testPendingMalformedSnapshotWinsRaceWithPlaybackClockFailure]' failed (0.211 seconds).
+Test Suite 'LiveAudioMeterCoordinatorTests' failed at 2026-09-30 21:10:48.011.
+	 Executed 1 test, with 3 failures (0 unexpected) in 0.211 (0.212) seconds
+Test Suite 'Aagedal Media Player Tests.xctest' failed at 2026-09-30 21:10:48.011.
+	 Executed 1 test, with 3 failures (0 unexpected) in 0.211 (0.212) seconds
+Test Suite 'Selected tests' failed at 2026-09-30 21:10:48.012.
+	 Executed 1 test, with 3 failures (0 unexpected) in 0.211 (0.212) seconds
+2026-09-30 21:10:55.864 xcodebuild[9631:1872726] [MT] IDETestOperationsObserverDebug: 9.217 elapsed -- Testing started completed.
+2026-09-30 21:10:55.864 xcodebuild[9631:1872726] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-09-30 21:10:55.864 xcodebuild[9631:1872726] [MT] IDETestOperationsObserverDebug: 9.217 sec, +9.217 sec -- end
+
+Test session results, code coverage, and logs:
+	/tmp/aagedal-2-continuation-focused-20260930/MalformedClockBefore.xcresult
+
+Failing tests:
+	LiveAudioMeterCoordinatorTests.testPendingMalformedSnapshotWinsRaceWithPlaybackClockFailure()
+	LiveAudioMeterCoordinatorTests.testPendingMalformedSnapshotWinsRaceWithPlaybackClockFailure()
+	LiveAudioMeterCoordinatorTests.testPendingMalformedSnapshotWinsRaceWithPlaybackClockFailure()
+
+** TEST FAILED **
+
+Testing started

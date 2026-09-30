@@ -1,0 +1,89 @@
+diff --git a/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift b/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift
+index 0e0977e..c16b5b0 100644
+--- a/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift	
++++ b/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift	
+@@ -210,6 +210,61 @@ final class LiveAudioMeterCoordinatorTests: XCTestCase {
+         await decoder.waitUntilCancelled(stream: 0)
+     }
+ 
++    func testPlaybackClockAssessesNewestReducedSnapshotBeforeScheduledPresentationDrain() async throws {
++        let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
++        let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
++        coordinator.start(try request(stream: 0, startFrame: 0))
++        await decoder.waitUntilAttached(stream: 0)
++        decoder.emit(snapshot(endFrame: 4_800), stream: 0)
++        await eventually { coordinator.snapshot?.endFrame == 4_800 }
++        coordinator.updatePlaybackClock(playback(time: 0.1, playing: true))
++        let generation = coordinator.generation
++
++        // Submit a fresh DSP bucket, then deliver the clock synchronously on
++        // this main-actor turn before its scheduled presentation task can run.
++        // The published endpoint is 300 ms behind; the reduced endpoint is
++        // only 100 ms behind and remains inside the unchanged freshness bound.
++        decoder.emit(snapshot(endFrame: 14_400), stream: 0)
++        XCTAssertEqual(coordinator.snapshot?.endFrame, 4_800)
++        coordinator.updatePlaybackClock(playback(time: 0.4, playing: true))
++
++        XCTAssertEqual(coordinator.generation, generation)
++        XCTAssertEqual(coordinator.snapshot?.endFrame, 14_400)
++        XCTAssertEqual(try XCTUnwrap(coordinator.clockDrift), -0.1, accuracy: 0.000_001)
++        XCTAssertNil(coordinator.clockFailureContext)
++        XCTAssertTrue(decoder.isActive(stream: 0))
++        let publicationCount = coordinator.publishedSnapshotCount
++        await Task.yield()
++        XCTAssertEqual(coordinator.publishedSnapshotCount, publicationCount)
++        coordinator.close()
++    }
++
++    func testPendingMalformedSnapshotWinsRaceWithPlaybackClockFailure() async throws {
++        let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
++        let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
++        coordinator.start(try request(stream: 0, startFrame: 0))
++        await decoder.waitUntilAttached(stream: 0)
++        decoder.emit(snapshot(endFrame: 4_800), stream: 0)
++        await eventually { coordinator.snapshot?.endFrame == 4_800 }
++        coordinator.updatePlaybackClock(playback(time: 0.1, playing: true))
++
++        // The duplicate source endpoint rejects the handoff synchronously.
++        // Deliver a late clock before its queued failure task can present it;
++        // that clock must not replace the specific producer error with drift.
++        decoder.emit(snapshot(endFrame: 4_800), stream: 0)
++        coordinator.updatePlaybackClock(playback(time: 0.4, playing: true))
++
++        guard case .unavailable(let reason, let diagnostic) = coordinator.status else {
++            return XCTFail("Expected the pending source-endpoint rejection")
++        }
++        XCTAssertEqual(reason, "Live source audio is unavailable.")
++        XCTAssertTrue(diagnostic?.contains("gap, duplicate, or out-of-order") == true)
++        XCTAssertNil(coordinator.clockFailureContext)
++        XCTAssertNil(coordinator.snapshot)
++        await decoder.waitUntilCancelled(stream: 0)
++        coordinator.close()
++    }
++
+     func testClockFailureRetainsRejectedSegmentContextWithoutKeepingReadingOrWorker() async throws {
+         let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
+         let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
+diff --git a/Aagedal Media Player/Logic/LiveAudioMeterCoordinator.swift b/Aagedal Media Player/Logic/LiveAudioMeterCoordinator.swift
+index bbc5ac1..90389a4 100644
+--- a/Aagedal Media Player/Logic/LiveAudioMeterCoordinator.swift	
++++ b/Aagedal Media Player/Logic/LiveAudioMeterCoordinator.swift	
+@@ -236,6 +236,18 @@ final class LiveAudioMeterCoordinator: ObservableObject {
+         if isTransportSuspended, let request {
+             resume(request)
+         }
++        // A worker callback has already reduced every DSP bucket even when
++        // its scheduled main-actor presentation drain has not run. Assess the
++        // newest reduced endpoint, rather than rejecting an older UI reading
++        // solely because clock delivery preceded that drain. Pending producer
++        // rejection takes priority over a generic drift error for that reading.
++        if let handoff {
++            if let rejection = handoff.rejection {
++                fail(rejection, handoff: handoff, generation: generation)
++                return
++            }
++            drain(handoff, generation: generation)
++        }
+         guard let request, let endFrame = reducedSnapshot?.measurement.endFrame else { return }
+         let assessment = LiveAudioMeterClockPolicy(
+             sampleRate: request.format.sampleRate

@@ -1,0 +1,13 @@
+{
+  "logPath": "/private/tmp/aagedal-2-continuation-clock-race-before-20260930.log",
+  "logSHA256": "71408e1a5faa408c902b15109004d05339cc29fd999e4cae57580be5de708198",
+  "xcresultPath": "/tmp/aagedal-2-continuation-focused-20260930/ClockRaceBefore.xcresult",
+  "test": "LiveAudioMeterCoordinatorTests.testPlaybackClockAssessesNewestReducedSnapshotBeforeScheduledPresentationDrain",
+  "reproducedFalseClockFailure": true,
+  "publishedEndFrame": 4800,
+  "pendingReducedEndFrame": 14400,
+  "playerSeconds": 0.4,
+  "publishedDriftSeconds": -0.3,
+  "pendingReducedDriftSeconds": -0.1,
+  "freshnessBoundSeconds": 0.25
+}

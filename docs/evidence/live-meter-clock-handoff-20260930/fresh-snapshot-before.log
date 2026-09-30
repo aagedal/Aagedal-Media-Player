@@ -1,0 +1,35 @@
+Test Suite 'Selected tests' started at 2026-09-30 21:07:32.921.
+Test Suite 'Aagedal Media Player Tests.xctest' started at 2026-09-30 21:07:32.922.
+Test Suite 'LiveAudioMeterCoordinatorTests' started at 2026-09-30 21:07:32.922.
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testPlaybackClockAssessesNewestReducedSnapshotBeforeScheduledPresentationDrain]' started.
+/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift:231: error: -[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testPlaybackClockAssessesNewestReducedSnapshotBeforeScheduledPresentationDrain] : XCTAssertEqual failed: ("2") is not equal to ("1")
+/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift:232: error: -[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testPlaybackClockAssessesNewestReducedSnapshotBeforeScheduledPresentationDrain] : XCTAssertEqual failed: ("nil") is not equal to ("Optional(14400)")
+/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift:233: error: -[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testPlaybackClockAssessesNewestReducedSnapshotBeforeScheduledPresentationDrain] : XCTUnwrap failed: expected non-nil value of type "Double"
+/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift:233: error: -[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testPlaybackClockAssessesNewestReducedSnapshotBeforeScheduledPresentationDrain] : XCTAssertEqual failed: threw error "UnwrappingOptional(errorCode: 105, errorUserInfo: ["XCTestErrorUserInfoKeyShouldIgnore": true])"
+/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift:234: error: -[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testPlaybackClockAssessesNewestReducedSnapshotBeforeScheduledPresentationDrain] : XCTAssertNil failed: "LiveAudioMeterClockFailureContext(generation: 1, requestStartFrame: 0, decodedEndFrame: 4800, playbackTime: 0.4, drift: -0.3, publishedSnapshotCount: 1, hadEstablishedSynchronization: true, wasSuspendedAhead: false, permittedEndFrame: Optional(31200))"
+/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift:235: error: -[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testPlaybackClockAssessesNewestReducedSnapshotBeforeScheduledPresentationDrain] : XCTAssertTrue failed
+Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterCoordinatorTests testPlaybackClockAssessesNewestReducedSnapshotBeforeScheduledPresentationDrain]' failed (0.269 seconds).
+Test Suite 'LiveAudioMeterCoordinatorTests' failed at 2026-09-30 21:07:33.192.
+	 Executed 1 test, with 6 failures (1 unexpected) in 0.269 (0.270) seconds
+Test Suite 'Aagedal Media Player Tests.xctest' failed at 2026-09-30 21:07:33.192.
+	 Executed 1 test, with 6 failures (1 unexpected) in 0.269 (0.270) seconds
+Test Suite 'Selected tests' failed at 2026-09-30 21:07:33.192.
+	 Executed 1 test, with 6 failures (1 unexpected) in 0.269 (0.271) seconds
+2026-09-30 21:07:48.279 xcodebuild[3233:1850885] [MT] IDETestOperationsObserverDebug: 17.740 elapsed -- Testing started completed.
+2026-09-30 21:07:48.279 xcodebuild[3233:1850885] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-09-30 21:07:48.279 xcodebuild[3233:1850885] [MT] IDETestOperationsObserverDebug: 17.740 sec, +17.740 sec -- end
+
+Test session results, code coverage, and logs:
+	/tmp/aagedal-2-continuation-focused-20260930/ClockRaceBefore.xcresult
+
+Failing tests:
+	LiveAudioMeterCoordinatorTests.testPlaybackClockAssessesNewestReducedSnapshotBeforeScheduledPresentationDrain()
+	LiveAudioMeterCoordinatorTests.testPlaybackClockAssessesNewestReducedSnapshotBeforeScheduledPresentationDrain()
+	LiveAudioMeterCoordinatorTests.testPlaybackClockAssessesNewestReducedSnapshotBeforeScheduledPresentationDrain()
+	LiveAudioMeterCoordinatorTests.testPlaybackClockAssessesNewestReducedSnapshotBeforeScheduledPresentationDrain()
+	LiveAudioMeterCoordinatorTests.testPlaybackClockAssessesNewestReducedSnapshotBeforeScheduledPresentationDrain()
+	LiveAudioMeterCoordinatorTests.testPlaybackClockAssessesNewestReducedSnapshotBeforeScheduledPresentationDrain()
+
+** TEST FAILED **
+
+Testing started

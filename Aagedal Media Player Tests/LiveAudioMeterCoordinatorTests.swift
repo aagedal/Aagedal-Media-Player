@@ -210,6 +210,61 @@ final class LiveAudioMeterCoordinatorTests: XCTestCase {
         await decoder.waitUntilCancelled(stream: 0)
     }
 
+    func testPlaybackClockAssessesNewestReducedSnapshotBeforeScheduledPresentationDrain() async throws {
+        let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
+        let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
+        coordinator.start(try request(stream: 0, startFrame: 0))
+        await decoder.waitUntilAttached(stream: 0)
+        decoder.emit(snapshot(endFrame: 4_800), stream: 0)
+        await eventually { coordinator.snapshot?.endFrame == 4_800 }
+        coordinator.updatePlaybackClock(playback(time: 0.1, playing: true))
+        let generation = coordinator.generation
+
+        // Submit a fresh DSP bucket, then deliver the clock synchronously on
+        // this main-actor turn before its scheduled presentation task can run.
+        // The published endpoint is 300 ms behind; the reduced endpoint is
+        // only 100 ms behind and remains inside the unchanged freshness bound.
+        decoder.emit(snapshot(endFrame: 14_400), stream: 0)
+        XCTAssertEqual(coordinator.snapshot?.endFrame, 4_800)
+        coordinator.updatePlaybackClock(playback(time: 0.4, playing: true))
+
+        XCTAssertEqual(coordinator.generation, generation)
+        XCTAssertEqual(coordinator.snapshot?.endFrame, 14_400)
+        XCTAssertEqual(try XCTUnwrap(coordinator.clockDrift), -0.1, accuracy: 0.000_001)
+        XCTAssertNil(coordinator.clockFailureContext)
+        XCTAssertTrue(decoder.isActive(stream: 0))
+        let publicationCount = coordinator.publishedSnapshotCount
+        await Task.yield()
+        XCTAssertEqual(coordinator.publishedSnapshotCount, publicationCount)
+        coordinator.close()
+    }
+
+    func testPendingMalformedSnapshotWinsRaceWithPlaybackClockFailure() async throws {
+        let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
+        let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
+        coordinator.start(try request(stream: 0, startFrame: 0))
+        await decoder.waitUntilAttached(stream: 0)
+        decoder.emit(snapshot(endFrame: 4_800), stream: 0)
+        await eventually { coordinator.snapshot?.endFrame == 4_800 }
+        coordinator.updatePlaybackClock(playback(time: 0.1, playing: true))
+
+        // The duplicate source endpoint rejects the handoff synchronously.
+        // Deliver a late clock before its queued failure task can present it;
+        // that clock must not replace the specific producer error with drift.
+        decoder.emit(snapshot(endFrame: 4_800), stream: 0)
+        coordinator.updatePlaybackClock(playback(time: 0.4, playing: true))
+
+        guard case .unavailable(let reason, let diagnostic) = coordinator.status else {
+            return XCTFail("Expected the pending source-endpoint rejection")
+        }
+        XCTAssertEqual(reason, "Live source audio is unavailable.")
+        XCTAssertTrue(diagnostic?.contains("gap, duplicate, or out-of-order") == true)
+        XCTAssertNil(coordinator.clockFailureContext)
+        XCTAssertNil(coordinator.snapshot)
+        await decoder.waitUntilCancelled(stream: 0)
+        coordinator.close()
+    }
+
     func testClockFailureRetainsRejectedSegmentContextWithoutKeepingReadingOrWorker() async throws {
         let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
         let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)

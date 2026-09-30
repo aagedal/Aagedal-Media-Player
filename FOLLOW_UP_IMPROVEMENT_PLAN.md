@@ -3933,6 +3933,30 @@ All three repeats pass the unchanged validator; EOF maximum drifts are
 behavior. The 76-file source inventory contains no source long enough for a
 30-minute observation. See [retained repeats and test correction](docs/evidence/live-meter-fx6-repeat-20260930/README.md).
 
+## Phase 177 — Current DSP handoff before playback clock assessment
+
+Status: Two deterministic source races reproduced and corrected on 2026-09-30.
+
+- [x] Reproduce a false synchronization failure when current DSP data is queued
+  but the main-actor presentation drain has not run; retain the rejected run.
+- [x] Reproduce a queued malformed-snapshot rejection being replaced by a
+  generic synchronization diagnostic; retain this independent rejected run.
+- [x] Drain the current generation's one-slot handoff on the playing-clock path
+  before freshness assessment and preserve pending producer rejection priority.
+- [x] Keep paused, buffering, unsupported-speed and EOF ownership unchanged;
+  no timing/admission tolerance or decoder pacing changed.
+- [x] Pass all 36 focused optimized Release Review/meter checks, explicitly
+  requiring all five new regressions, without skips/failures/runtime warnings.
+- [x] Raise candidate/release aggregate consumption to 738 tests.
+- [ ] Repeat authentic shipping-repair/native acceptance and qualify intermittent
+  FX6 behavior; deterministic source proof alone does not explain historical runs.
+
+The first rejection compared a displayed 4,800-frame endpoint with playback at
+0.4 seconds despite a pending 14,400-frame endpoint (300 ms versus 100 ms lag).
+The second replaced a duplicate-endpoint diagnostic before its queued callback.
+Both fail before the correction and pass afterward. See
+[retained source race evidence](docs/evidence/live-meter-clock-handoff-20260930/README.md).
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with

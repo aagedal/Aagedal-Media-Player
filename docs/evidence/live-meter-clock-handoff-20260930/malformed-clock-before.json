@@ -1,0 +1,13 @@
+{
+  "logPath": "/private/tmp/aagedal-2-continuation-malformed-clock-before-20260930.log",
+  "logSHA256": "887748c6476a07356ca667d5bc3787ef0d9e64816918b104a48dbb38c47cf41f",
+  "xcresultPath": "/tmp/aagedal-2-continuation-focused-20260930/MalformedClockBefore.xcresult",
+  "test": "LiveAudioMeterCoordinatorTests.testPendingMalformedSnapshotWinsRaceWithPlaybackClockFailure",
+  "reproducedWrongDiagnostic": true,
+  "publishedEndFrame": 4800,
+  "rejectedDuplicateEndFrame": 4800,
+  "playerSeconds": 0.4,
+  "wrongDiagnostic": "Live meters lost synchronization with playback.",
+  "expectedDiagnostic": "Live source audio is unavailable; gap, duplicate, or out-of-order source block",
+  "freshnessBoundSeconds": 0.25
+}

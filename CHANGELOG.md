@@ -5,6 +5,7 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Changed
+- Live meters assess the newest queued DSP endpoint before playback synchronization checks and preserve specific malformed-source failures.
 - Passive Review text blur and error focus preserve the finding and field selected by correction preflight.
 - Live-meter diagnostics retain rejected source/clock endpoints after clearing readings and cancelling the worker.
 - Comparison Pause remains authoritative through delayed decoder observations, alignment, seek, reload and readiness; explicit Play or shuttle resumes both sources.
@@ -22,7 +23,7 @@ All notable changes to Aagedal Media Player.
 - Candidate verification temporarily keeps the Mac awake, rejects sleep-interrupted evidence, and bounds each isolated transport test to 120 seconds.
 - AVFoundation loupe capture follows the enabled video track and clears stale raster proof after track or composition changes; composed and ambiguous output remains a display preview.
 - Live-meter profile validation rejects mismatched sample-rate timestamp provenance and impossible snapshot timing.
-- Candidate verification and release consumption now require at least 736 aggregate tests, alongside both isolated mixed-backend transport checks.
+- Candidate verification and release consumption now require at least 738 aggregate tests, alongside both isolated mixed-backend transport checks.
 - Review keeps an edited note draft when its update is rejected, and report actions stop with visible feedback if pending edits cannot be applied.
 - Review drafts now survive a playback or comparison geometry reload of the same sources; replacing a source or changing the active notes copy still clears them.
 - Review keeps new-note, edited-text, and range drafts when its popover closes; a later keyboard export reopens Review to validate unfinished edits and asks for an unsubmitted new note to be added or cleared.
