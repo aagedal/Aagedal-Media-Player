@@ -1,0 +1,87 @@
+{
+  "start": "2026-09-30 12:37:01",
+  "end": "2026-09-30 13:10:07",
+  "events": [
+    {
+      "time": "2026-09-30 12:37:03",
+      "kind": "Sleep",
+      "detail": "Entering Sleep state due to 'Idle Sleep':TCPKeepAlive=active Using AC (Charge:95%) 2 secs"
+    },
+    {
+      "time": "2026-09-30 12:37:05",
+      "kind": "DarkWake",
+      "detail": "DarkWake from Deep Idle [CDNP] : due to smc.sysState.Wake(0x70070000) wifibt SMC.OutboxNotEmpty centauri-beta/ Using AC (Charge:95%) 11 secs"
+    },
+    {
+      "time": "2026-09-30 12:37:16",
+      "kind": "Sleep",
+      "detail": "Entering Sleep state due to 'Maintenance Sleep':TCPKeepAlive=active Using AC (Charge:95%) 534 secs"
+    },
+    {
+      "time": "2026-09-30 12:46:10",
+      "kind": "DarkWake",
+      "detail": "DarkWake from Deep Idle [CDNP] : due to NUB.SPMI0Sw3IRQ nub-spmi0.0x02 rtc/Maintenance Using AC (Charge:95%) 10 secs"
+    },
+    {
+      "time": "2026-09-30 12:46:20",
+      "kind": "Sleep",
+      "detail": "Entering Sleep state due to 'Maintenance Sleep':TCPKeepAlive=active Using AC (Charge:99%) 62 secs"
+    },
+    {
+      "time": "2026-09-30 12:47:22",
+      "kind": "DarkWake",
+      "detail": "DarkWake from Deep Idle [CDNP] : due to smc.sysState.Wake(0x70070000) wifibt SMC.OutboxNotEmpty centauri-alpha E_TKO_TCP_DATA ARPT/ Using AC (Charge:99%)"
+    },
+    {
+      "time": "2026-09-30 12:47:32",
+      "kind": "Sleep",
+      "detail": "Entering Sleep state due to 'Maintenance Sleep':TCPKeepAlive=active Using AC (Charge:99%) 23 secs"
+    },
+    {
+      "time": "2026-09-30 12:47:55",
+      "kind": "DarkWake",
+      "detail": "DarkWake from Deep Idle [CDNP] : due to smc.sysState.Wake(0x70070000) wifibt SMC.OutboxNotEmpty centauri-alpha E_TKO_TCP_DATA ARPT/ Using AC (Charge:99%) 10 secs"
+    },
+    {
+      "time": "2026-09-30 12:48:05",
+      "kind": "Sleep",
+      "detail": "Entering Sleep state due to 'Maintenance Sleep':TCPKeepAlive=active Using AC (Charge:99%) 81 secs"
+    },
+    {
+      "time": "2026-09-30 12:49:26",
+      "kind": "DarkWake",
+      "detail": "DarkWake from Deep Idle [CDNP] : due to smc.sysState.Wake(0x70070000) wifibt SMC.OutboxNotEmpty centauri-alpha E_TKO_TCP_DATA ARPT/ Using AC (Charge:99%) 10 secs"
+    },
+    {
+      "time": "2026-09-30 12:49:36",
+      "kind": "Sleep",
+      "detail": "Entering Sleep state due to 'Maintenance Sleep':TCPKeepAlive=active Using AC (Charge:99%) 54 secs"
+    },
+    {
+      "time": "2026-09-30 12:50:30",
+      "kind": "DarkWake",
+      "detail": "DarkWake from Deep Idle [CDNP] : due to smc.sysState.Wake(0x70070000) wifibt SMC.OutboxNotEmpty centauri-alpha E_TKO_TCP_DATA ARPT/ Using AC (Charge:99%) 10 secs"
+    },
+    {
+      "time": "2026-09-30 12:50:40",
+      "kind": "Sleep",
+      "detail": "Entering Sleep state due to 'Maintenance Sleep':TCPKeepAlive=active Using AC (Charge:99%) 67 secs"
+    },
+    {
+      "time": "2026-09-30 12:51:47",
+      "kind": "DarkWake",
+      "detail": "DarkWake from Deep Idle [CDNP] : due to smc.sysState.Wake(0x70070000) wifibt SMC.OutboxNotEmpty centauri-alpha E_TKO_TCP_DATA ARPT/ Using AC (Charge:99%) 15 secs"
+    },
+    {
+      "time": "2026-09-30 12:52:02",
+      "kind": "Sleep",
+      "detail": "Entering Sleep state due to 'Maintenance Sleep':TCPKeepAlive=active Using AC (Charge:99%) 900 secs"
+    },
+    {
+      "time": "2026-09-30 13:07:02",
+      "kind": "DarkWake",
+      "detail": "DarkWake from Deep Idle [CDNPB] : due to NUB.SPMI0Sw3IRQ nub-spmi-a0.0x3F nub-spmi0.0x02 rtc/Maintenance Using AC (Charge:99%)"
+    }
+  ],
+  "sleepObserved": true
+}

@@ -87,6 +87,13 @@ verifier excludes them from the aggregate result and runs them together in a
 fresh serial runner. It validates both result bundles, covering the full current suite
 without treating test-host resource accumulation as a playback acceptance
 signal.
+The verifier holds temporary macOS sleep/display assertions for its process
+lifetime and releases them on every exit. It retains `power-events.json` and
+rejects an interval interrupted by system sleep before recording a passing
+candidate. Forced sleep still invalidates the run. Each isolated transport
+test has a 120-second execution allowance; synchronization tolerances are
+unchanged. A sleep-interrupted attempt must be retained as diagnosis and
+replaced by a fresh awake verification.
 The destructive disk-image check, external-reference checks, fixture generation,
 and production profilers—including representative live-audio-meter acceptance—
 remain explicit opt-ins rather than ordinary candidate verifier work.

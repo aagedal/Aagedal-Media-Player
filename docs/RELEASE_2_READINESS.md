@@ -135,6 +135,15 @@ channel-map rejection can coexist with a progressing video clock. Audible
 mono/stereo output remains unresolved; generated-video meter plumbing cannot
 close that gate. See [native-output diagnosis](LIVE_AUDIO_METER_NATIVE_OUTPUT_DIAGNOSIS_2026-09-30.md).
 
+The first integrated attempt at `c4a7557` passes 705 optimized Release tests
+with eight documented optional skips, but both isolated transport checks are
+interrupted by repeated system sleep. Power records correlate 534- and
+900-second sleeps with the failed observations. That attempt never reaches
+analysis/preflight/final identity and supplies no passing candidate. The runner
+now holds scoped sleep assertions, requires retained no-sleep evidence and
+bounds each isolated test to 120 seconds; fresh verification remains required.
+See [interrupted-attempt evidence](evidence/release-candidate-sleep-interrupted-20260930/README.md).
+
 Phase 127 completes fresh keyboard-only A/B loading, note creation at distinct
 frames and CSV export using the unchanged Phase 126 Release app. Retained
 sidecar/CSV records agree on A/B frames, rates, text and source URLs; media

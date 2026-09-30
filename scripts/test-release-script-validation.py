@@ -250,6 +250,21 @@ exit 91
         self.assertLess(mismatch_guard, archive)
         self.assertIn('if [[ $# -gt 2 ]]', self.source)
 
+    def test_candidate_requires_awake_power_evidence_before_passing(self) -> None:
+        source = VERIFY_SCRIPT.read_text()
+        self.assertIn('/usr/bin/caffeinate -disu -w "$$" &', source)
+        self.assertIn('trap \'kill "$power_assertion_pid" 2>/dev/null || true\' EXIT', source)
+        power = source.index('python3 scripts/check-programme-profile-power.py')
+        identity = source.index('echo "==> Final source identity"')
+        passed = source.index('echo "status=passed"')
+        self.assertLess(power, identity)
+        self.assertLess(identity, passed)
+        focused = source.index('echo "==> Focused mixed-backend transport repeat"')
+        analysis = source.index('echo "==> Release static analysis"')
+        focused_command = source[focused:analysis]
+        self.assertIn('-test-timeouts-enabled YES', focused_command)
+        self.assertIn('-maximum-test-execution-time-allowance 120', focused_command)
+
     def test_release_requires_matching_canonical_candidate_evidence(self) -> None:
         evidence = self.source.index('CANDIDATE_EVIDENCE_DIR="${CANDIDATE_EVIDENCE_DIR:-}"')
         status = self.source.index('EVIDENCE_STATUS=')

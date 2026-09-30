@@ -1,0 +1,738 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild test -project "Aagedal Media Player.xcodeproj" -scheme "Aagedal Media Player" -configuration Release -destination platform=macOS -derivedDataPath /private/tmp/aagedal-candidate-c4a7557-20260930/DerivedData -clonedSourcePackagesDirPath /private/tmp/aagedal-2-review-drafts/SourcePackages -resultBundlePath /private/tmp/aagedal-candidate-c4a7557-20260930/MixedBackendTransport.xcresult -onlyUsePackageVersionsFromResolvedFile -parallel-testing-enabled NO "-only-testing:Aagedal Media Player Tests/CompareLiveBackendTests/testAVFoundationPrimaryAndMPVSecondaryShareTransport" "-only-testing:Aagedal Media Player Tests/CompareLiveBackendTests/testMPVPrimaryAndAVFoundationSecondaryShareTransport" ENABLE_TESTABILITY=YES
+
+Build settings from command line:
+    ENABLE_TESTABILITY = YES
+
+Resolve Package Graph
+
+
+Resolved source packages:
+  SwiftMediaMetadata: https://github.com/aagedal/SwiftMediaMetadata @ 3.0.1
+  Sparkle: https://github.com/sparkle-project/Sparkle @ 2.9.6
+  MPVKit: https://github.com/aagedal/MPVKit @ main (230c317)
+
+Writing result bundle at path:
+	/private/tmp/aagedal-candidate-c4a7557-20260930/MixedBackendTransport.xcresult
+
+ComputePackagePrebuildTargetDependencyGraph
+
+Prepare packages
+
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+ComputeTargetDependencyGraph
+note: Building targets in dependency order
+note: Target dependency graph (10 targets)
+    Target 'Aagedal Media Player Tests' in project 'Aagedal Media Player'
+        ➜ Explicit dependency on target 'Aagedal Media Player' in project 'Aagedal Media Player'
+    Target 'Aagedal Media Player' in project 'Aagedal Media Player'
+        ➜ Explicit dependency on target 'MPVKit-GPL-product' in project 'MPVKit'
+        ➜ Explicit dependency on target 'Sparkle-product' in project 'Sparkle'
+        ➜ Explicit dependency on target 'SwiftMediaMetadata-product' in project 'SwiftMediaMetadata'
+    Target 'SwiftMediaMetadata-product' in project 'SwiftMediaMetadata'
+        ➜ Explicit dependency on target 'SwiftMediaMetadata' in project 'SwiftMediaMetadata'
+        ➜ Explicit dependency on target 'SwiftMediaMetadata_SwiftMediaMetadata' in project 'SwiftMediaMetadata'
+    Target 'SwiftMediaMetadata' in project 'SwiftMediaMetadata'
+        ➜ Explicit dependency on target 'SwiftMediaMetadata_SwiftMediaMetadata' in project 'SwiftMediaMetadata'
+        ➜ Explicit dependency on target 'CZlib' in project 'SwiftMediaMetadata'
+    Target 'CZlib' in project 'SwiftMediaMetadata' (no dependencies)
+    Target 'SwiftMediaMetadata_SwiftMediaMetadata' in project 'SwiftMediaMetadata' (no dependencies)
+    Target 'Sparkle-product' in project 'Sparkle' (no dependencies)
+    Target 'MPVKit-GPL-product' in project 'MPVKit'
+        ➜ Explicit dependency on target '_MPVKit-GPL' in project 'MPVKit'
+        ➜ Explicit dependency on target '_FFmpeg-GPL' in project 'MPVKit'
+    Target '_MPVKit-GPL' in project 'MPVKit'
+        ➜ Explicit dependency on target '_FFmpeg-GPL' in project 'MPVKit'
+    Target '_FFmpeg-GPL' in project 'MPVKit' (no dependencies)
+
+GatherProvisioningInputs
+
+CreateBuildDescription
+
+ClangStatCache /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/SDKStatCaches.noindex/macosx27.0-26A425-e829b21a6f8c9b70876ba0858053c0447231f6df4def33e022ae2eb8f782df1a.sdkstatcache
+    cd /Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal\ Media\ Player.xcodeproj
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk -o /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/SDKStatCaches.noindex/macosx27.0-26A425-e829b21a6f8c9b70876ba0858053c0447231f6df4def33e022ae2eb8f782df1a.sdkstatcache
+
+Copy /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app/Contents/Resources/SwiftMediaMetadata_SwiftMediaMetadata.bundle /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/SwiftMediaMetadata_SwiftMediaMetadata.bundle (in target 'Aagedal Media Player' from project 'Aagedal Media Player')
+    cd /Users/truls.aagedal/Developer/Aagedal-Media-Player
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/SwiftMediaMetadata_SwiftMediaMetadata.bundle /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app/Contents/Resources
+
+ProcessInfoPlistFile /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app/Contents/Info.plist /Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal\ Media\ Player/Info.plist (in target 'Aagedal Media Player' from project 'Aagedal Media Player')
+    cd /Users/truls.aagedal/Developer/Aagedal-Media-Player
+    builtin-infoPlistUtility /Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal\ Media\ Player/Info.plist -producttype com.apple.product-type.application -genpkginfo /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app/Contents/PkgInfo -expandbuildsettings -platform macosx -additionalcontentfile /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Intermediates.noindex/Aagedal\ Media\ Player.build/Release/Aagedal\ Media\ Player.build/assetcatalog_generated_info.plist -scanforprivacyfile /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app/Contents/Frameworks/Libass.framework -scanforprivacyfile /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app/Contents/Frameworks/Libavcodec.framework -scanforprivacyfile /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app/Contents/Frameworks/Libavdevice.framework -scanforprivacyfile /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app/Contents/Frameworks/Libavfilter.framework -scanforprivacyfile /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app/Contents/Frameworks/Libavformat.framework -scanforprivacyfile /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app/Contents/Frameworks/Libavutil.framework -scanforprivacyfile /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app/Contents/Frameworks/Libbluray.framework -scanforprivacyfile /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app/Contents/Frameworks/Libcrypto.framework -scanforprivacyfile /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app/Contents/Frameworks/Libdav1d.framework -scanforprivacyfile /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app/Contents/Frameworks/Libdovi.framework -scanforprivacyfile /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app/Contents/Frameworks/Libfreetype.framework -scanforprivacyfile /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app/Contents/Frameworks/Libfribidi.framework -scanforprivacyfile /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app/Contents/Frameworks/Libharfbuzz.framework -scanforprivacyfile /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app/Contents/Frameworks/Libmpv.framework -scanforprivacyfile /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app/Contents/Frameworks/Libplacebo.framework -scanforprivacyfile /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app/Contents/Frameworks/Libshaderc_combined.framework -scanforprivacyfile /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app/Contents/Frameworks/Libsmbclient.framework -scanforprivacyfile /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app/Contents/Frameworks/Libssl.framework -scanforprivacyfile /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app/Contents/Frameworks/Libswresample.framework -scanforprivacyfile /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app/Contents/Frameworks/Libswscale.framework -scanforprivacyfile /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app/Contents/Frameworks/Libuavs3d.framework -scanforprivacyfile /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app/Contents/Frameworks/Libuchardet.framework -scanforprivacyfile /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app/Contents/Frameworks/Libunibreak.framework -scanforprivacyfile /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app/Contents/Frameworks/Sparkle.framework -scanforprivacyfile /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app/Contents/Frameworks/gmp.framework -scanforprivacyfile /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app/Contents/Frameworks/gnutls.framework -scanforprivacyfile /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app/Contents/Frameworks/hogweed.framework -scanforprivacyfile /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app/Contents/Frameworks/lcms2.framework -scanforprivacyfile /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app/Contents/Frameworks/nettle.framework -scanforprivacyfile /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app/Contents/Resources/SwiftMediaMetadata_SwiftMediaMetadata.bundle -o /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app/Contents/Info.plist
+
+Copy /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app/Contents/PlugIns/Aagedal\ Media\ Player\ Tests.xctest/Contents/Resources/SwiftMediaMetadata_SwiftMediaMetadata.bundle /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/SwiftMediaMetadata_SwiftMediaMetadata.bundle (in target 'Aagedal Media Player Tests' from project 'Aagedal Media Player')
+    cd /Users/truls.aagedal/Developer/Aagedal-Media-Player
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/SwiftMediaMetadata_SwiftMediaMetadata.bundle /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app/Contents/PlugIns/Aagedal\ Media\ Player\ Tests.xctest/Contents/Resources
+
+ProcessInfoPlistFile /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app/Contents/PlugIns/Aagedal\ Media\ Player\ Tests.xctest/Contents/Info.plist /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Intermediates.noindex/Aagedal\ Media\ Player.build/Release/Aagedal\ Media\ Player\ Tests.build/empty-Aagedal\ Media\ Player\ Tests.plist (in target 'Aagedal Media Player Tests' from project 'Aagedal Media Player')
+    cd /Users/truls.aagedal/Developer/Aagedal-Media-Player
+    builtin-infoPlistUtility /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Intermediates.noindex/Aagedal\ Media\ Player.build/Release/Aagedal\ Media\ Player\ Tests.build/empty-Aagedal\ Media\ Player\ Tests.plist -producttype com.apple.product-type.bundle.unit-test -expandbuildsettings -platform macosx -scanforprivacyfile /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app/Contents/PlugIns/Aagedal\ Media\ Player\ Tests.xctest/Contents/Resources/SwiftMediaMetadata_SwiftMediaMetadata.bundle -o /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app/Contents/PlugIns/Aagedal\ Media\ Player\ Tests.xctest/Contents/Info.plist
+
+CodeSign /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app (in target 'Aagedal Media Player' from project 'Aagedal Media Player')
+    cd /Users/truls.aagedal/Developer/Aagedal-Media-Player
+    
+    Signing Identity:     "Apple Development: Truls Aagedal (J7YN55G9MP)"
+    
+    /usr/bin/codesign --force --sign DCB9F6103B93E72C9E0E3D74A994AFC263041D79 -o runtime --entitlements /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Intermediates.noindex/Aagedal\ Media\ Player.build/Release/Aagedal\ Media\ Player.build/Aagedal\ Media\ Player.app.xcent --timestamp\=none --generate-entitlement-der /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app
+/tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal Media Player.app: replacing existing signature
+
+Validate /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app (in target 'Aagedal Media Player' from project 'Aagedal Media Player')
+    cd /Users/truls.aagedal/Developer/Aagedal-Media-Player
+    builtin-validationUtility /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app -no-validate-extension -infoplist-subpath Contents/Info.plist
+
+RegisterWithLaunchServices /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app (in target 'Aagedal Media Player' from project 'Aagedal Media Player')
+    cd /Users/truls.aagedal/Developer/Aagedal-Media-Player
+    builtin-lsregisterurl --record-path /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Intermediates.noindex/XCBuildData/registered-launchservices.txt -- /System/Library/Frameworks/CoreServices.framework/Versions/Current/Frameworks/LaunchServices.framework/Versions/Current/Support/lsregister -f -R -trusted /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Products/Release/Aagedal\ Media\ Player.app
+
+PruneExplicitPrecompiledModules /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Intermediates.noindex/ExplicitPrecompiledModules
+
+PruneExplicitPrecompiledModules /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/SDKExplicitPrecompiledModules
+
+PruneExplicitPrecompiledModules /tmp/aagedal-candidate-c4a7557-20260930/DerivedData/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules
+
+2026-09-30 12:37:01.495133+0200 Aagedal Media Player[54944:794950] ApplePersistenceIgnoreState: Existing state will not be touched. New state will be written to /var/folders/pv/f8g9jgrd7px_0xvh3kxgmyg40000gp/T/com.aagedal.MediaPlayer.savedState
+Test Suite 'Selected tests' started at 2026-09-30 12:37:01.676.
+Test Suite 'Aagedal Media Player Tests.xctest' started at 2026-09-30 12:37:01.676.
+Test Suite 'CompareLiveBackendTests' started at 2026-09-30 12:37:01.677.
+Test Case '-[Aagedal_Media_Player_Tests.CompareLiveBackendTests testAVFoundationPrimaryAndMPVSecondaryShareTransport]' started.
+2026-09-30 12:37:01.681144+0200 Aagedal Media Player[54944:795072] [ClientDonation] (+[PPSClientDonation isRegisteredSubsystem:category:]) Permission denied: CoreMedia / CM-ASSETCREATION
+2026-09-30 12:37:01.692189+0200 Aagedal Media Player[54944:794950] [PlayerController] ProRes RAW detected, using AVPlayer for source-a.mov
+2026-09-30 12:37:01.719525+0200 Aagedal Media Player[54944:795077] [plugin] AddInstanceForFactory: No factory registered for id <CFUUID 0x7a882b8b60> F8BB1C28-BAE8-11D6-9C31-00039315CD46
+2026-09-30 12:37:01.730671+0200 Aagedal Media Player[54944:795008] [player] <<<< FigFilePlayer >>>> signalled err=-12864 at <>:10687
+2026-09-30 12:37:01.826229+0200 Aagedal Media Player[54944:795120] [logging-persist] cannot open file at line 53009 of [8fa8248e30]
+2026-09-30 12:37:01.826244+0200 Aagedal Media Player[54944:795120] [logging-persist] os_unix.c:53009: (2) open(/private/var/db/DetachedSignatures) - No such file or directory
+2026-09-30 12:37:01.849682+0200 Aagedal Media Player[54944:794950] [PlayerController] Using MPV player for source-b.mov
+2026-09-30 12:37:01.849844+0200 Aagedal Media Player[54944:794950] [MPVPlayer] MPV not initialized yet, storing pending load for: source-b.mov
+2026-09-30 12:37:01.884473+0200 Aagedal Media Player[54944:794950] [MPVPlayer] MPV initialized successfully
+2026-09-30 12:37:01.884501+0200 Aagedal Media Player[54944:795076] [scaling] mpv video-params: dw=0 dh=0 rotate=0
+2026-09-30 12:37:01.884514+0200 Aagedal Media Player[54944:795076] [scaling] mpv video-params: dw=0 dh=0 rotate=0
+2026-09-30 12:37:01.884523+0200 Aagedal Media Player[54944:795076] [scaling] mpv video-params: dw=0 dh=0 rotate=0
+2026-09-30 12:37:01.884599+0200 Aagedal Media Player[54944:794950] [MPVPlayer] Loading file: source-b.mov, startTime: 1.000000, autostart: false
+2026-09-30 12:37:01.884665+0200 Aagedal Media Player[54944:795076] [MPVPlayer] MPV start file event
+[mvk-info] MoltenVK version 1.4.2, supporting Vulkan version 1.4.357.
+	The following 154 Vulkan extensions are supported:
+	VK_KHR_16bit_storage v1
+	VK_KHR_8bit_storage v1
+	VK_KHR_bind_memory2 v1
+	VK_KHR_buffer_device_address v1
+	VK_KHR_calibrated_timestamps v1
+	VK_KHR_copy_commands2 v1
+	VK_KHR_create_renderpass2 v1
+	VK_KHR_dedicated_allocation v3
+	VK_KHR_deferred_host_operations v4
+	VK_KHR_depth_stencil_resolve v1
+	VK_KHR_descriptor_update_template v1
+	VK_KHR_device_group v4
+	VK_KHR_device_group_creation v1
+	VK_KHR_driver_properties v1
+	VK_KHR_dynamic_rendering v1
+	VK_KHR_dynamic_rendering_local_read v1
+	VK_KHR_external_fence v1
+	VK_KHR_external_fence_capabilities v1
+	VK_KHR_external_memory v1
+	VK_KHR_external_memory_capabilities v1
+	VK_KHR_external_semaphore v1
+	VK_KHR_external_semaphore_capabilities v1
+	VK_KHR_format_feature_flags2 v2
+	VK_KHR_fragment_shader_barycentric v1
+	VK_KHR_get_memory_requirements2 v1
+	VK_KHR_get_physical_device_properties2 v2
+	VK_KHR_get_surface_capabilities2 v1
+	VK_KHR_global_priority v1
+	VK_KHR_image_format_list v1
+	VK_KHR_imageless_framebuffer v1
+	VK_KHR_incremental_present v2
+	VK_KHR_index_type_uint8 v1
+	VK_KHR_line_rasterization v1
+	VK_KHR_load_store_op_none v1
+	VK_KHR_maintenance1 v2
+	VK_KHR_maintenance2 v1
+	VK_KHR_maintenance3 v1
+	VK_KHR_maintenance4 v2
+	VK_KHR_maintenance5 v1
+	VK_KHR_maintenance6 v1
+	VK_KHR_maintenance7 v1
+	VK_KHR_maintenance8 v1
+	VK_KHR_maintenance9 v1
+	VK_KHR_map_memory2 v1
+	VK_KHR_multiview v1
+	VK_KHR_portability_subset v1
+	VK_KHR_present_id v1
+	VK_KHR_present_id2 v1
+	VK_KHR_present_wait v1
+	VK_KHR_present_wait2 v1
+	VK_KHR_push_descriptor v2
+	VK_KHR_relaxed_block_layout v1
+	VK_KHR_robustness2 v1
+	VK_KHR_sampler_mirror_clamp_to_edge v3
+	VK_KHR_sampler_ycbcr_conversion v14
+	VK_KHR_separate_depth_stencil_layouts v1
+	VK_KHR_shader_draw_parameters v1
+	VK_KHR_shader_expect_assume v1
+	VK_KHR_shader_float_controls v4
+	VK_KHR_shader_float_controls2 v1
+	VK_KHR_shader_float16_int8 v1
+	VK_KHR_shader_fma v1
+	VK_KHR_shader_integer_dot_product v1
+	VK_KHR_shader_maximal_reconvergence v1
+	VK_KHR_shader_non_semantic_info v1
+	VK_KHR_shader_quad_control v1
+	VK_KHR_shader_relaxed_extended_instruction v1
+	VK_KHR_shader_subgroup_extended_types v1
+	VK_KHR_shader_subgroup_rotate v2
+	VK_KHR_shader_subgroup_uniform_control_flow v1
+	VK_KHR_shader_terminate_invocation v1
+	VK_KHR_spirv_1_4 v1
+	VK_KHR_storage_buffer_storage_class v1
+	VK_KHR_surface v25
+	VK_KHR_surface_maintenance1 v1
+	VK_KHR_surface_protected_capabilities v1
+	VK_KHR_swapchain v70
+	VK_KHR_swapchain_maintenance1 v1
+	VK_KHR_swapchain_mutable_format v1
+	VK_KHR_synchronization2 v1
+	VK_KHR_timeline_semaphore v2
+	VK_KHR_uniform_buffer_standard_layout v1
+	VK_KHR_variable_pointers v1
+	VK_KHR_vertex_attribute_divisor v1
+	VK_KHR_vulkan_memory_model v3
+	VK_KHR_zero_initialize_workgroup_memory v1
+	VK_EXT_4444_formats v1
+	VK_EXT_buffer_device_address v2
+	VK_EXT_calibrated_timestamps v2
+	VK_EXT_debug_marker v4
+	VK_EXT_debug_report v10
+	VK_EXT_debug_utils v2
+	VK_EXT_depth_clip_control v1
+	VK_EXT_descriptor_indexing v2
+	VK_EXT_extended_dynamic_state v1
+	VK_EXT_extended_dynamic_state2 v1
+	VK_EXT_extended_dynamic_state3 v2
+	VK_EXT_external_memory_host v1
+	VK_EXT_external_memory_metal v1
+	VK_EXT_fragment_shader_interlock v1
+	VK_EXT_global_priority v2
+	VK_EXT_global_priority_query v1
+	VK_EXT_hdr_metadata v3
+	VK_EXT_headless_surface v1
+	VK_EXT_host_image_copy v1
+	VK_EXT_host_query_reset v1
+	VK_EXT_image_2d_view_of_3d v1
+	VK_EXT_image_robustness v1
+	VK_EXT_index_type_uint8 v1
+	VK_EXT_inline_uniform_block v1
+	VK_EXT_layer_settings v2
+	VK_EXT_legacy_dithering v2
+	VK_EXT_line_rasterization v1
+	VK_EXT_load_store_op_none v1
+	VK_EXT_memory_budget v1
+	VK_EXT_metal_objects v2
+	VK_EXT_metal_surface v1
+	VK_EXT_non_seamless_cube_map v1
+	VK_EXT_pipeline_creation_cache_control v3
+	VK_EXT_pipeline_creation_feedback v1
+	VK_EXT_pipeline_robustness v1
+	VK_EXT_post_depth_coverage v1
+	VK_EXT_primitive_topology_list_restart v1
+	VK_EXT_private_data v1
+	VK_EXT_provoking_vertex v1
+	VK_EXT_robustness2 v1
+	VK_EXT_sample_locations v1
+	VK_EXT_sampler_filter_minmax v2
+	VK_EXT_scalar_block_layout v1
+	VK_EXT_separate_stencil_usage v1
+	VK_EXT_shader_atomic_float v1
+	VK_EXT_shader_demote_to_helper_invocation v1
+	VK_EXT_shader_stencil_export v1
+	VK_EXT_shader_subgroup_ballot v1
+	VK_EXT_shader_subgroup_vote v1
+	VK_EXT_shader_viewport_index_layer v1
+	VK_EXT_subgroup_size_control v2
+	VK_EXT_surface_maintenance1 v1
+	VK_EXT_swapchain_colorspace v5
+	VK_EXT_swapchain_maintenance1 v1
+	VK_EXT_texel_buffer_alignment v1
+	VK_EXT_texture_compression_astc_hdr v1
+	VK_EXT_tooling_info v1
+	VK_EXT_vertex_attribute_divisor v3
+	VK_AMD_gpu_shader_half_float v2
+	VK_AMD_negative_viewport_height v1
+	VK_AMD_shader_image_load_store_lod v1
+	VK_AMD_shader_trinary_minmax v1
+	VK_GOOGLE_display_timing v1
+	VK_IMG_format_pvrtc v1
+	VK_INTEL_shader_integer_functions2 v1
+	VK_MVK_macos_surface v3
+	VK_MVK_moltenvk v37
+	VK_NV_fragment_shader_barycentric v1
+[mvk-info] GPU device:
+	model: Apple M5 Pro
+	type: Integrated
+	vendorID: 0x106b
+	deviceID: 0x1b000208
+	pipelineCacheUUID: DB660224-1B00-0208-0000-000100000000
+	GPU memory available: 53084 MB
+	GPU memory used: 1 MB
+	Metal Shading Language 3.1
+	supports the following GPU Features:
+		GPU Family Metal 3
+		GPU Family Apple 8
+		GPU Family Mac 1
+		GPU Family Mac 2
+		Read-Write Texture Tier 2
+[mvk-info] Created VkInstance for Vulkan version 1.4.357, as requested by app, with the following 6 Vulkan extensions enabled:
+	VK_KHR_get_surface_capabilities2 v1
+	VK_KHR_surface v25
+	VK_KHR_surface_maintenance1 v1
+	VK_EXT_metal_surface v1
+	VK_EXT_surface_maintenance1 v1
+	VK_EXT_swapchain_colorspace v5
+[mvk-info] Vulkan semaphores using MTLEvent.
+[mvk-info] Descriptor sets binding resources using Metal3 argument buffers.
+[mvk-info] Created VkDevice to run on GPU Apple M5 Pro with the following 13 Vulkan extensions enabled:
+	VK_KHR_dynamic_rendering v1
+	VK_KHR_portability_subset v1
+	VK_KHR_shader_expect_assume v1
+	VK_KHR_shader_relaxed_extended_instruction v1
+	VK_KHR_shader_subgroup_rotate v2
+	VK_KHR_swapchain v70
+	VK_KHR_swapchain_maintenance1 v1
+	VK_KHR_zero_initialize_workgroup_memory v1
+	VK_EXT_external_memory_host v1
+	VK_EXT_hdr_metadata v3
+	VK_EXT_metal_objects v2
+	VK_EXT_shader_atomic_float v1
+	VK_EXT_swapchain_maintenance1 v1
+2026-09-30 12:37:01.902543+0200 Aagedal Media Player[54944:794950] [MPVPlayer] MPV file loaded
+[mvk-info] Created 3 swapchain images with size (320, 180) and contents scale 1.0 in layer (null) (0x7a89dc15f0) on screen Main Screen.
+[mvk-info] Created 3 swapchain images with size (320, 180) and contents scale 1.0 in layer (null) (0x7a89dc15f0) on screen Main Screen.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+2026-09-30 12:37:01.971820+0200 Aagedal Media Player[54944:795023] [scaling] mpv video-params: dw=320 dh=180 rotate=0
+2026-09-30 12:37:01.973779+0200 Aagedal Media Player[54944:795023] [scaling] mpv video-params: dw=320 dh=180 rotate=0
+2026-09-30 12:37:01.974487+0200 Aagedal Media Player[54944:795023] [scaling] mpv video-params: dw=320 dh=180 rotate=0
+2026-09-30 12:37:01.978042+0200 Aagedal Media Player[54944:794950] [scaling] mpv emitted videoSourceSize=320x180 (ratio=1.777778)
+2026-09-30 12:37:01.978091+0200 Aagedal Media Player[54944:794950] [scaling] mpv emitted videoSourceSize=320x180 (ratio=1.777778)
+2026-09-30 12:37:01.978099+0200 Aagedal Media Player[54944:794950] [scaling] mpv emitted videoSourceSize=320x180 (ratio=1.777778)
+2026-09-30 12:37:01.999214+0200 Aagedal Media Player[54944:794950] [scaling] play: backend=av wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:37:02.044514+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:37:02.435544+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=true videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:37:17.434920+0200 Aagedal Media Player[54944:795120] [aqme]                AQMEIO.cpp:201   timed out after 15.000s (0 0); suspension count=0 (IOSuspensions: , , , , , , , , , , , , ) (maybe stale)
+2026-09-30 12:37:17.437927+0200 Aagedal Media Player[54944:795120] [aqme]  MEDeviceStreamClient.cpp:453   AQME Default-Output: client stopping after failed start: <AudioQueueObject@0x7a89dbc000; Unknown FigPlayer; [54944]; play>; running count now 0
+/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift:1117: error: -[Aagedal_Media_Player_Tests.CompareLiveBackendTests testAVFoundationPrimaryAndMPVSecondaryShareTransport] : XCTAssertTrue failed - Active scrub did not restore one-frame paired synchronization.
+2026-09-30 12:37:17.647363+0200 Aagedal Media Player[54944:794950] [MPVPlayer] EOF reached, pausing at last frame
+2026-09-30 12:37:17.691735+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift:1190: error: -[Aagedal_Media_Player_Tests.CompareLiveBackendTests testAVFoundationPrimaryAndMPVSecondaryShareTransport] : XCTAssertGreaterThanOrEqual failed: ("0.0") is less than ("7.0") - The primary clock stalled or reached EOF. pair=avFoundation/mpv, samples=3, withinFrame=0.0%, worstDrift=0.750s, longestExcursion=531.801s, signedDrift=0.750s→0.750s, finalDrift=0.750s, secondaryRate=0.50–0.50, primaryAdvance=0.000s, secondaryAdvance=0.167s
+/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift:1195: error: -[Aagedal_Media_Player_Tests.CompareLiveBackendTests testAVFoundationPrimaryAndMPVSecondaryShareTransport] : XCTAssertGreaterThanOrEqual failed: ("0.16666666666666652") is less than ("7.0") - The secondary clock stalled or reached EOF. pair=avFoundation/mpv, samples=3, withinFrame=0.0%, worstDrift=0.750s, longestExcursion=531.801s, signedDrift=0.750s→0.750s, finalDrift=0.750s, secondaryRate=0.50–0.50, primaryAdvance=0.000s, secondaryAdvance=0.167s
+/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift:1200: error: -[Aagedal_Media_Player_Tests.CompareLiveBackendTests testAVFoundationPrimaryAndMPVSecondaryShareTransport] : XCTAssertLessThanOrEqual failed: ("531.800762709") is greater than ("1.025") - Drift correction did not recover within one second plus one sampling interval. pair=avFoundation/mpv, samples=3, withinFrame=0.0%, worstDrift=0.750s, longestExcursion=531.801s, signedDrift=0.750s→0.750s, finalDrift=0.750s, secondaryRate=0.50–0.50, primaryAdvance=0.000s, secondaryAdvance=0.167s
+/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift:1206: error: -[Aagedal_Media_Player_Tests.CompareLiveBackendTests testAVFoundationPrimaryAndMPVSecondaryShareTransport] : XCTAssertLessThanOrEqual failed: ("531.800791084") is greater than ("1.025") - Drift did not reconverge during the final second plus one sampling interval. pair=avFoundation/mpv, samples=3, withinFrame=0.0%, worstDrift=0.750s, longestExcursion=531.801s, signedDrift=0.750s→0.750s, finalDrift=0.750s, secondaryRate=0.50–0.50, primaryAdvance=0.000s, secondaryAdvance=0.167s
+/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift:1212: error: -[Aagedal_Media_Player_Tests.CompareLiveBackendTests testAVFoundationPrimaryAndMPVSecondaryShareTransport] : XCTAssertLessThanOrEqual failed: ("0.75") is greater than ("0.042666666666666665") - Drift finished outside one-frame tolerance. pair=avFoundation/mpv, samples=3, withinFrame=0.0%, worstDrift=0.750s, longestExcursion=531.801s, signedDrift=0.750s→0.750s, finalDrift=0.750s, secondaryRate=0.50–0.50, primaryAdvance=0.000s, secondaryAdvance=0.167s
+2026-09-30 12:46:10.455447+0200 Aagedal Media Player[54944:794950] [scaling] pause: backend=av wasPlaying=true videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:46:10.455679+0200 Aagedal Media Player[54944:794950] [scaling] pause: backend=mpv wasPlaying=true videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:46:11.150741+0200 Aagedal Media Player[54944:795097]         HALB_IOThread.cpp:342    HALB_IOThread::_Start: there already is a thread
+2026-09-30 12:47:26.389930+0200 Aagedal Media Player[54944:795097] [aqme]                AQMEIO.cpp:201   timed out after 15.000s (0 0); suspension count=0 (IOSuspensions: , , , , , , , , , , , , ) (maybe stale)
+2026-09-30 12:47:26.429198+0200 Aagedal Media Player[54944:795097] [aqme]  MEDeviceStreamClient.cpp:453   AQME Default-Output: client stopping after failed start: <AudioQueueObject@0x7a89dbc000; Unknown FigPlayer; [54944]; play>; running count now 0
+2026-09-30 12:47:26.554512+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:48:02.168282+0200 Aagedal Media Player[54944:798037] [aqme]                AQMEIO.cpp:201   timed out after 15.000s (0 0); suspension count=0 (IOSuspensions: , , , , , , , , , , , , ) (maybe stale)
+2026-09-30 12:48:02.208573+0200 Aagedal Media Player[54944:798037] [aqme]  MEDeviceStreamClient.cpp:453   AQME Default-Output: client stopping after failed start: <AudioQueueObject@0x7a89dbc000; Unknown FigPlayer; [54944]; play>; running count now 0
+2026-09-30 12:49:35.558142+0200 Aagedal Media Player[54944:798037] [aqme]                AQMEIO.cpp:201   timed out after 15.000s (0 0); suspension count=0 (IOSuspensions: , , , , , , , , , , , , ) (maybe stale)
+2026-09-30 12:49:35.599029+0200 Aagedal Media Player[54944:798037] [aqme]  MEDeviceStreamClient.cpp:453   AQME Default-Output: client stopping after failed start: <AudioQueueObject@0x7a89dbc000; Unknown FigPlayer; [54944]; play>; running count now 0
+2026-09-30 12:49:35.600638+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=true videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:49:35.600977+0200 Aagedal Media Player[54944:794950] [scaling] pause: backend=av wasPlaying=true videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:50:41.506440+0200 Aagedal Media Player[54944:799268] [aqme]                AQMEIO.cpp:201   timed out after 15.000s (0 0); suspension count=0 (IOSuspensions: , , , , , , , , , , , , ) (maybe stale)
+2026-09-30 12:50:41.509298+0200 Aagedal Media Player[54944:799268] [aqme]  MEDeviceStreamClient.cpp:453   AQME Default-Output: client stopping after failed start: <AudioQueueObject@0x7a89dbc000; Unknown FigPlayer; [54944]; play>; running count now 0
+2026-09-30 12:50:41.511782+0200 Aagedal Media Player[54944:794950] [scaling] pause: backend=mpv wasPlaying=true videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:50:41.513741+0200 Aagedal Media Player[54944:794950] [MPVPlayer] EOF reached, pausing at last frame
+2026-09-30 12:50:41.538256+0200 Aagedal Media Player[54944:794950] [scaling] play: backend=av wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:50:41.583853+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift:1295: error: -[Aagedal_Media_Player_Tests.CompareLiveBackendTests testAVFoundationPrimaryAndMPVSecondaryShareTransport] : XCTAssertTrue failed - Primary did not loop back to its first frame.
+2026-09-30 12:51:46.993424+0200 Aagedal Media Player[54944:794950] [MPVPlayer] EOF reached, pausing at last frame
+2026-09-30 12:51:47.029451+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:51:47.072957+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:51:47.116861+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:51:47.160305+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:51:47.204396+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:51:47.246561+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:51:47.289524+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:51:47.332555+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:51:47.375288+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:51:47.418842+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:51:47.461198+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:51:47.503761+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:51:47.545693+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:51:47.588360+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:51:47.631048+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:51:47.673134+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:51:47.715476+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:51:47.757813+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:51:47.800873+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:51:47.840055+0200 Aagedal Media Player[54944:799268]         HALB_IOThread.cpp:342    HALB_IOThread::_Start: there already is a thread
+2026-09-30 12:51:47.843647+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:51:47.887777+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:51:47.931296+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:51:47.973639+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:51:48.016225+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:51:48.058482+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:51:48.102027+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:51:48.146157+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:51:48.188514+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:51:48.231549+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:51:48.274640+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:51:48.318693+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:51:48.363555+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:51:48.405795+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:51:48.448772+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:51:48.493434+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:51:48.536103+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:51:48.579752+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:51:48.623250+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:51:48.665774+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:51:48.710106+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:51:48.754352+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:51:48.799236+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:51:48.842382+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift:1306: error: -[Aagedal_Media_Player_Tests.CompareLiveBackendTests testAVFoundationPrimaryAndMPVSecondaryShareTransport] : XCTAssertTrue failed - Secondary did not resume at the mapped frame after A looped. A=11.75, B=12.958333333333332, B playing=false, tolerance=0.042666666666666665
+2026-09-30 12:51:48.866329+0200 Aagedal Media Player[54944:794950] [scaling] pause: backend=av wasPlaying=true videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:52:02.843532+0200 Aagedal Media Player[54944:799268] [aqme]                AQMEIO.cpp:201   timed out after 15.000s (0 0); suspension count=0 (IOSuspensions: , , , , , , , , , , , , ) (maybe stale)
+2026-09-30 12:52:02.861560+0200 Aagedal Media Player[54944:799268] [aqme]  MEDeviceStreamClient.cpp:453   AQME Default-Output: client stopping after failed start: <AudioQueueObject@0x7a89dbc000; Unknown FigPlayer; [54944]; play>; running count now 0
+2026-09-30 12:52:02.862398+0200 Aagedal Media Player[54944:794950] [scaling] pause: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+[mvk-info] Destroyed VkDevice on GPU Apple M5 Pro with 13 Vulkan extensions enabled.
+[mvk-info] Destroyed VkPhysicalDevice for GPU Apple M5 Pro with 1 MB of GPU memory still allocated.
+[mvk-info] Destroying VkInstance for Vulkan version 1.4.357 with 6 Vulkan extensions enabled.
+2026-09-30 12:52:02.875157+0200 Aagedal Media Player[54944:795173] [API] warning, deleted thread with uncommitted CATransaction; set CA_DEBUG_TRANSACTIONS=1 in environment to log backtraces, or set CA_ASSERT_MAIN_THREAD_TRANSACTIONS=1 to abort when an implicit transaction isn't created on a main thread.
+Test Case '-[Aagedal_Media_Player_Tests.CompareLiveBackendTests testAVFoundationPrimaryAndMPVSecondaryShareTransport]' failed (901.203 seconds).
+Test Case '-[Aagedal_Media_Player_Tests.CompareLiveBackendTests testMPVPrimaryAndAVFoundationSecondaryShareTransport]' started.
+2026-09-30 12:52:02.882716+0200 Aagedal Media Player[54944:799977] [] <<< FigReportingAgentRef >>> signalled err=-12005 at <>:1602
+2026-09-30 12:52:02.882752+0200 Aagedal Media Player[54944:799977] [] <<< FigReportingAgentRef >>> signalled err=-12005 at <>:1602
+2026-09-30 12:52:02.882783+0200 Aagedal Media Player[54944:799977] [] <<< FigPlayerModerator >>> signalled err=-17511 at <>:2110
+2026-09-30 12:52:02.883941+0200 Aagedal Media Player[54944:799977] [player] <<<< FigAirPlay_Route >>>> signalled err=-12860 at <>:696
+2026-09-30 12:52:02.887361+0200 Aagedal Media Player[54944:794950] [PlayerController] Using MPV player for source-a.mov
+2026-09-30 12:52:02.887573+0200 Aagedal Media Player[54944:794950] [MPVPlayer] MPV not initialized yet, storing pending load for: source-a.mov
+2026-09-30 12:52:02.897108+0200 Aagedal Media Player[54944:799977] [ClientDonation] (+[PPSClientDonation isRegisteredSubsystem:category:]) Permission denied: CoreMedia / CM-IMAGEQUEUE
+2026-09-30 12:52:02.911431+0200 Aagedal Media Player[54944:794950] [MPVPlayer] MPV initialized successfully
+2026-09-30 12:52:02.911470+0200 Aagedal Media Player[54944:799976] [scaling] mpv video-params: dw=0 dh=0 rotate=0
+2026-09-30 12:52:02.911508+0200 Aagedal Media Player[54944:799976] [scaling] mpv video-params: dw=0 dh=0 rotate=0
+2026-09-30 12:52:02.911530+0200 Aagedal Media Player[54944:799976] [scaling] mpv video-params: dw=0 dh=0 rotate=0
+2026-09-30 12:52:02.911899+0200 Aagedal Media Player[54944:794950] [MPVPlayer] Loading file: source-a.mov, startTime: 0.000000, autostart: false
+2026-09-30 12:52:02.912012+0200 Aagedal Media Player[54944:799976] [MPVPlayer] MPV start file event
+[mvk-info] MoltenVK version 1.4.2, supporting Vulkan version 1.4.357.
+	The following 154 Vulkan extensions are supported:
+	VK_KHR_16bit_storage v1
+	VK_KHR_8bit_storage v1
+	VK_KHR_bind_memory2 v1
+	VK_KHR_buffer_device_address v1
+	VK_KHR_calibrated_timestamps v1
+	VK_KHR_copy_commands2 v1
+	VK_KHR_create_renderpass2 v1
+	VK_KHR_dedicated_allocation v3
+	VK_KHR_deferred_host_operations v4
+	VK_KHR_depth_stencil_resolve v1
+	VK_KHR_descriptor_update_template v1
+	VK_KHR_device_group v4
+	VK_KHR_device_group_creation v1
+	VK_KHR_driver_properties v1
+	VK_KHR_dynamic_rendering v1
+	VK_KHR_dynamic_rendering_local_read v1
+	VK_KHR_external_fence v1
+	VK_KHR_external_fence_capabilities v1
+	VK_KHR_external_memory v1
+	VK_KHR_external_memory_capabilities v1
+	VK_KHR_external_semaphore v1
+	VK_KHR_external_semaphore_capabilities v1
+	VK_KHR_format_feature_flags2 v2
+	VK_KHR_fragment_shader_barycentric v1
+	VK_KHR_get_memory_requirements2 v1
+	VK_KHR_get_physical_device_properties2 v2
+	VK_KHR_get_surface_capabilities2 v1
+	VK_KHR_global_priority v1
+	VK_KHR_image_format_list v1
+	VK_KHR_imageless_framebuffer v1
+	VK_KHR_incremental_present v2
+	VK_KHR_index_type_uint8 v1
+	VK_KHR_line_rasterization v1
+	VK_KHR_load_store_op_none v1
+	VK_KHR_maintenance1 v2
+	VK_KHR_maintenance2 v1
+	VK_KHR_maintenance3 v1
+	VK_KHR_maintenance4 v2
+	VK_KHR_maintenance5 v1
+	VK_KHR_maintenance6 v1
+	VK_KHR_maintenance7 v1
+	VK_KHR_maintenance8 v1
+	VK_KHR_maintenance9 v1
+	VK_KHR_map_memory2 v1
+	VK_KHR_multiview v1
+	VK_KHR_portability_subset v1
+	VK_KHR_present_id v1
+	VK_KHR_present_id2 v1
+	VK_KHR_present_wait v1
+	VK_KHR_present_wait2 v1
+	VK_KHR_push_descriptor v2
+	VK_KHR_relaxed_block_layout v1
+	VK_KHR_robustness2 v1
+	VK_KHR_sampler_mirror_clamp_to_edge v3
+	VK_KHR_sampler_ycbcr_conversion v14
+	VK_KHR_separate_depth_stencil_layouts v1
+	VK_KHR_shader_draw_parameters v1
+	VK_KHR_shader_expect_assume v1
+	VK_KHR_shader_float_controls v4
+	VK_KHR_shader_float_controls2 v1
+	VK_KHR_shader_float16_int8 v1
+	VK_KHR_shader_fma v1
+	VK_KHR_shader_integer_dot_product v1
+	VK_KHR_shader_maximal_reconvergence v1
+	VK_KHR_shader_non_semantic_info v1
+	VK_KHR_shader_quad_control v1
+	VK_KHR_shader_relaxed_extended_instruction v1
+	VK_KHR_shader_subgroup_extended_types v1
+	VK_KHR_shader_subgroup_rotate v2
+	VK_KHR_shader_subgroup_uniform_control_flow v1
+	VK_KHR_shader_terminate_invocation v1
+	VK_KHR_spirv_1_4 v1
+	VK_KHR_storage_buffer_storage_class v1
+	VK_KHR_surface v25
+	VK_KHR_surface_maintenance1 v1
+	VK_KHR_surface_protected_capabilities v1
+	VK_KHR_swapchain v70
+	VK_KHR_swapchain_maintenance1 v1
+	VK_KHR_swapchain_mutable_format v1
+	VK_KHR_synchronization2 v1
+	VK_KHR_timeline_semaphore v2
+	VK_KHR_uniform_buffer_standard_layout v1
+	VK_KHR_variable_pointers v1
+	VK_KHR_vertex_attribute_divisor v1
+	VK_KHR_vulkan_memory_model v3
+	VK_KHR_zero_initialize_workgroup_memory v1
+	VK_EXT_4444_formats v1
+	VK_EXT_buffer_device_address v2
+	VK_EXT_calibrated_timestamps v2
+	VK_EXT_debug_marker v4
+	VK_EXT_debug_report v10
+	VK_EXT_debug_utils v2
+	VK_EXT_depth_clip_control v1
+	VK_EXT_descriptor_indexing v2
+	VK_EXT_extended_dynamic_state v1
+	VK_EXT_extended_dynamic_state2 v1
+	VK_EXT_extended_dynamic_state3 v2
+	VK_EXT_external_memory_host v1
+	VK_EXT_external_memory_metal v1
+	VK_EXT_fragment_shader_interlock v1
+	VK_EXT_global_priority v2
+	VK_EXT_global_priority_query v1
+	VK_EXT_hdr_metadata v3
+	VK_EXT_headless_surface v1
+	VK_EXT_host_image_copy v1
+	VK_EXT_host_query_reset v1
+	VK_EXT_image_2d_view_of_3d v1
+	VK_EXT_image_robustness v1
+	VK_EXT_index_type_uint8 v1
+	VK_EXT_inline_uniform_block v1
+	VK_EXT_layer_settings v2
+	VK_EXT_legacy_dithering v2
+	VK_EXT_line_rasterization v1
+	VK_EXT_load_store_op_none v1
+	VK_EXT_memory_budget v1
+	VK_EXT_metal_objects v2
+	VK_EXT_metal_surface v1
+	VK_EXT_non_seamless_cube_map v1
+	VK_EXT_pipeline_creation_cache_control v3
+	VK_EXT_pipeline_creation_feedback v1
+	VK_EXT_pipeline_robustness v1
+	VK_EXT_post_depth_coverage v1
+	VK_EXT_primitive_topology_list_restart v1
+	VK_EXT_private_data v1
+	VK_EXT_provoking_vertex v1
+	VK_EXT_robustness2 v1
+	VK_EXT_sample_locations v1
+	VK_EXT_sampler_filter_minmax v2
+	VK_EXT_scalar_block_layout v1
+	VK_EXT_separate_stencil_usage v1
+	VK_EXT_shader_atomic_float v1
+	VK_EXT_shader_demote_to_helper_invocation v1
+	VK_EXT_shader_stencil_export v1
+	VK_EXT_shader_subgroup_ballot v1
+	VK_EXT_shader_subgroup_vote v1
+	VK_EXT_shader_viewport_index_layer v1
+	VK_EXT_subgroup_size_control v2
+	VK_EXT_surface_maintenance1 v1
+	VK_EXT_swapchain_colorspace v5
+	VK_EXT_swapchain_maintenance1 v1
+	VK_EXT_texel_buffer_alignment v1
+	VK_EXT_texture_compression_astc_hdr v1
+	VK_EXT_tooling_info v1
+	VK_EXT_vertex_attribute_divisor v3
+	VK_AMD_gpu_shader_half_float v2
+	VK_AMD_negative_viewport_height v1
+	VK_AMD_shader_image_load_store_lod v1
+	VK_AMD_shader_trinary_minmax v1
+	VK_GOOGLE_display_timing v1
+	VK_IMG_format_pvrtc v1
+	VK_INTEL_shader_integer_functions2 v1
+	VK_MVK_macos_surface v3
+	VK_MVK_moltenvk v37
+	VK_NV_fragment_shader_barycentric v1
+[mvk-info] GPU device:
+	model: Apple M5 Pro
+	type: Integrated
+	vendorID: 0x106b
+	deviceID: 0x1b000208
+	pipelineCacheUUID: DB660224-1B00-0208-0000-000100000000
+	GPU memory available: 53084 MB
+	GPU memory used: 0 MB
+	Metal Shading Language 3.1
+	supports the following GPU Features:
+		GPU Family Metal 3
+		GPU Family Apple 8
+		GPU Family Mac 1
+		GPU Family Mac 2
+		Read-Write Texture Tier 2
+[mvk-info] Created VkInstance for Vulkan version 1.4.357, as requested by app, with the following 6 Vulkan extensions enabled:
+	VK_KHR_get_surface_capabilities2 v1
+	VK_KHR_surface v25
+	VK_KHR_surface_maintenance1 v1
+	VK_EXT_metal_surface v1
+	VK_EXT_surface_maintenance1 v1
+	VK_EXT_swapchain_colorspace v5
+[mvk-info] Vulkan semaphores using MTLEvent.
+[mvk-info] Descriptor sets binding resources using Metal3 argument buffers.
+[mvk-info] Created VkDevice to run on GPU Apple M5 Pro with the following 13 Vulkan extensions enabled:
+	VK_KHR_dynamic_rendering v1
+	VK_KHR_portability_subset v1
+	VK_KHR_shader_expect_assume v1
+	VK_KHR_shader_relaxed_extended_instruction v1
+	VK_KHR_shader_subgroup_rotate v2
+	VK_KHR_swapchain v70
+	VK_KHR_swapchain_maintenance1 v1
+	VK_KHR_zero_initialize_workgroup_memory v1
+	VK_EXT_external_memory_host v1
+	VK_EXT_hdr_metadata v3
+	VK_EXT_metal_objects v2
+	VK_EXT_shader_atomic_float v1
+	VK_EXT_swapchain_maintenance1 v1
+2026-09-30 12:52:02.919974+0200 Aagedal Media Player[54944:794950] [MPVPlayer] MPV file loaded
+2026-09-30 12:52:02.939483+0200 Aagedal Media Player[54944:799977] [AudioConverter] channel mapping input channel '1' for output channel '2' is out of range [-1..'1')
+2026-09-30 12:52:02.941667+0200 Aagedal Media Player[54944:800766] [carc] Reporter disconnected or already stopped. { func=stop, reporterID=235982683111427 }
+[mvk-info] Created 3 swapchain images with size (320, 180) and contents scale 1.0 in layer (null) (0x7a89a6c060) on screen Main Screen.
+[mvk-info] Created 3 swapchain images with size (320, 180) and contents scale 1.0 in layer (null) (0x7a89a6c060) on screen Main Screen.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+2026-09-30 12:52:03.021234+0200 Aagedal Media Player[54944:795078] [scaling] mpv video-params: dw=320 dh=180 rotate=0
+2026-09-30 12:52:03.021272+0200 Aagedal Media Player[54944:795078] [scaling] mpv video-params: dw=320 dh=180 rotate=0
+2026-09-30 12:52:03.021291+0200 Aagedal Media Player[54944:795078] [scaling] mpv video-params: dw=320 dh=180 rotate=0
+2026-09-30 12:52:03.021497+0200 Aagedal Media Player[54944:794950] [scaling] mpv emitted videoSourceSize=320x180 (ratio=1.777778)
+2026-09-30 12:52:03.021694+0200 Aagedal Media Player[54944:794950] [scaling] mpv emitted videoSourceSize=320x180 (ratio=1.777778)
+2026-09-30 12:52:03.021711+0200 Aagedal Media Player[54944:794950] [scaling] mpv emitted videoSourceSize=320x180 (ratio=1.777778)
+2026-09-30 12:52:03.021897+0200 Aagedal Media Player[54944:794950] [PlayerController] ProRes RAW detected, using AVPlayer for source-b.mov
+2026-09-30 12:52:03.023433+0200 Aagedal Media Player[54944:799977] [player] <<<< FigFilePlayer >>>> signalled err=-12864 at <>:10687
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+2026-09-30 12:52:03.047170+0200 Aagedal Media Player[54944:794950] [scaling] play: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:52:03.094530+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=av wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 12:52:03.404130+0200 Aagedal Media Player[54944:795078] [AudioConverter] channel mapping input channel '1' for output channel '2' is out of range [-1..'1')
+2026-09-30 13:07:03.187435+0200 Aagedal Media Player[54944:800756]         HALB_IOThread.cpp:342    HALB_IOThread::_Start: there already is a thread
+2026-09-30 13:07:18.188994+0200 Aagedal Media Player[54944:800756] [aqme]                AQMEIO.cpp:201   timed out after 15.000s (0 0); suspension count=0 (IOSuspensions: , , , , , , , , , , , , ) (maybe stale)
+2026-09-30 13:07:18.228446+0200 Aagedal Media Player[54944:800756] [aqme]  MEDeviceStreamClient.cpp:453   AQME Default-Output: client stopping after failed start: <AudioQueueObject@0x7a8de7b200; Unknown FigPlayer; [54944]; play>; running count now 0
+2026-09-30 13:07:18.231058+0200 Aagedal Media Player[54944:800782] [] <<< FigCFUtilities >>> signalled err=-12990 at <>:1859
+2026-09-30 13:07:33.240473+0200 Aagedal Media Player[54944:800814] [aqme]                AQMEIO.cpp:201   timed out after 15.000s (0 0); suspension count=0 (IOSuspensions: , , , , , , , , , , , , ) (maybe stale)
+2026-09-30 13:07:33.278979+0200 Aagedal Media Player[54944:800814] [aqme]  MEDeviceStreamClient.cpp:453   AQME Default-Output: client stopping after failed start: <AudioQueueObject@0x7a89e2e800; ; [54944]; play>; running count now 0
+2026-09-30 13:07:33.298744+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=av wasPlaying=true videoSourceSize=320x180 ratio=1.7778
+2026-09-30 13:07:48.297475+0200 Aagedal Media Player[54944:800814] [aqme]                AQMEIO.cpp:201   timed out after 15.000s (0 0); suspension count=0 (IOSuspensions: , , , , , , , , , , , , ) (maybe stale)
+2026-09-30 13:07:48.336476+0200 Aagedal Media Player[54944:800814] [aqme]  MEDeviceStreamClient.cpp:453   AQME Default-Output: client stopping after failed start: <AudioQueueObject@0x7a8de7b200; Unknown FigPlayer; [54944]; play>; running count now 0
+2026-09-30 13:07:48.338776+0200 Aagedal Media Player[54944:795078] [] <<< FigCFUtilities >>> signalled err=-12990 at <>:1859
+/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift:1133: error: -[Aagedal_Media_Player_Tests.CompareLiveBackendTests testMPVPrimaryAndAVFoundationSecondaryShareTransport] : XCTAssertTrue failed - Primary did not reach the sustained-playback start position.
+2026-09-30 13:07:48.381600+0200 Aagedal Media Player[54944:794950] [scaling] playForSynchronization: backend=av wasPlaying=true videoSourceSize=320x180 ratio=1.7778
+2026-09-30 13:08:03.348215+0200 Aagedal Media Player[54944:800814] [aqme]                AQMEIO.cpp:201   timed out after 15.000s (0 0); suspension count=0 (IOSuspensions: , , , , , , , , , , , , ) (maybe stale)
+2026-09-30 13:08:03.389354+0200 Aagedal Media Player[54944:800814] [aqme]  MEDeviceStreamClient.cpp:453   AQME Default-Output: client stopping after failed start: <AudioQueueObject@0x7a89e2ca00; ; [54944]; play>; running count now 0
+/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift:1143: error: -[Aagedal_Media_Player_Tests.CompareLiveBackendTests testMPVPrimaryAndAVFoundationSecondaryShareTransport] : XCTAssertTrue failed - Secondary did not reach the sustained-playback start position.
+2026-09-30 13:08:18.423531+0200 Aagedal Media Player[54944:805048] [aqme]                AQMEIO.cpp:201   timed out after 15.000s (0 0); suspension count=0 (IOSuspensions: , , , , , , , , , , , , ) (maybe stale)
+2026-09-30 13:08:18.464610+0200 Aagedal Media Player[54944:805048] [aqme]  MEDeviceStreamClient.cpp:453   AQME Default-Output: client stopping after failed start: <AudioQueueObject@0x7a8de7b200; Unknown FigPlayer; [54944]; play>; running count now 0
+2026-09-30 13:08:33.505174+0200 Aagedal Media Player[54944:805048] [aqme]                AQMEIO.cpp:201   timed out after 15.000s (0 0); suspension count=0 (IOSuspensions: , , , , , , , , , , , , ) (maybe stale)
+2026-09-30 13:08:33.544709+0200 Aagedal Media Player[54944:805048] [aqme]  MEDeviceStreamClient.cpp:453   AQME Default-Output: client stopping after failed start: <AudioQueueObject@0x7a8de7b200; Unknown FigPlayer; [54944]; play>; running count now 0
+/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift:1190: error: -[Aagedal_Media_Player_Tests.CompareLiveBackendTests testMPVPrimaryAndAVFoundationSecondaryShareTransport] : XCTAssertGreaterThanOrEqual failed: ("0.0") is less than ("7.0") - The primary clock stalled or reached EOF. pair=mpv/avFoundation, samples=13, withinFrame=0.0%, worstDrift=0.242s, longestExcursion=15.107s, signedDrift=-0.242s→0.200s, finalDrift=0.200s, secondaryRate=1.00–1.00, primaryAdvance=0.000s, secondaryAdvance=0.442s
+/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift:1195: error: -[Aagedal_Media_Player_Tests.CompareLiveBackendTests testMPVPrimaryAndAVFoundationSecondaryShareTransport] : XCTAssertGreaterThanOrEqual failed: ("0.44166666666666643") is less than ("7.0") - The secondary clock stalled or reached EOF. pair=mpv/avFoundation, samples=13, withinFrame=0.0%, worstDrift=0.242s, longestExcursion=15.107s, signedDrift=-0.242s→0.200s, finalDrift=0.200s, secondaryRate=1.00–1.00, primaryAdvance=0.000s, secondaryAdvance=0.442s
+/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift:1200: error: -[Aagedal_Media_Player_Tests.CompareLiveBackendTests testMPVPrimaryAndAVFoundationSecondaryShareTransport] : XCTAssertLessThanOrEqual failed: ("15.106578666") is greater than ("1.025") - Drift correction did not recover within one second plus one sampling interval. pair=mpv/avFoundation, samples=13, withinFrame=0.0%, worstDrift=0.242s, longestExcursion=15.107s, signedDrift=-0.242s→0.200s, finalDrift=0.200s, secondaryRate=1.00–1.00, primaryAdvance=0.000s, secondaryAdvance=0.442s
+/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift:1206: error: -[Aagedal_Media_Player_Tests.CompareLiveBackendTests testMPVPrimaryAndAVFoundationSecondaryShareTransport] : XCTAssertLessThanOrEqual failed: ("15.106624") is greater than ("1.025") - Drift did not reconverge during the final second plus one sampling interval. pair=mpv/avFoundation, samples=13, withinFrame=0.0%, worstDrift=0.242s, longestExcursion=15.107s, signedDrift=-0.242s→0.200s, finalDrift=0.200s, secondaryRate=1.00–1.00, primaryAdvance=0.000s, secondaryAdvance=0.442s
+/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift:1212: error: -[Aagedal_Media_Player_Tests.CompareLiveBackendTests testMPVPrimaryAndAVFoundationSecondaryShareTransport] : XCTAssertLessThanOrEqual failed: ("0.20000000000000018") is greater than ("0.042666666666666665") - Drift finished outside one-frame tolerance. pair=mpv/avFoundation, samples=13, withinFrame=0.0%, worstDrift=0.242s, longestExcursion=15.107s, signedDrift=-0.242s→0.200s, finalDrift=0.200s, secondaryRate=1.00–1.00, primaryAdvance=0.000s, secondaryAdvance=0.442s
+2026-09-30 13:08:33.576697+0200 Aagedal Media Player[54944:794950] [scaling] pause: backend=mpv wasPlaying=true videoSourceSize=320x180 ratio=1.7778
+2026-09-30 13:08:48.580109+0200 Aagedal Media Player[54944:805048] [aqme]                AQMEIO.cpp:201   timed out after 15.000s (0 0); suspension count=0 (IOSuspensions: , , , , , , , , , , , , ) (maybe stale)
+2026-09-30 13:08:48.619660+0200 Aagedal Media Player[54944:805048] [aqme]  MEDeviceStreamClient.cpp:453   AQME Default-Output: client stopping after failed start: <AudioQueueObject@0x7a8de7b200; Unknown FigPlayer; [54944]; play>; running count now 0
+2026-09-30 13:08:48.620098+0200 Aagedal Media Player[54944:794950] [scaling] pause: backend=av wasPlaying=true videoSourceSize=320x180 ratio=1.7778
+2026-09-30 13:09:03.636033+0200 Aagedal Media Player[54944:805048] [aqme]                AQMEIO.cpp:201   timed out after 15.000s (0 0); suspension count=0 (IOSuspensions: , , , , , , , , , , , , ) (maybe stale)
+2026-09-30 13:09:03.678125+0200 Aagedal Media Player[54944:805048] [aqme]  MEDeviceStreamClient.cpp:453   AQME Default-Output: client stopping after failed start: <AudioQueueObject@0x7a8de7b200; Unknown FigPlayer; [54944]; play>; running count now 0
+2026-09-30 13:09:03.682535+0200 Aagedal Media Player[54944:794950] [PlayerController] Backend: Apple AVFoundation
+Stage: Playback
+Error: The operation could not be completed
+File: /Users/truls.aagedal/Developer/Aagedal-Media-Player/Test Fixtures/Generated/compare/source-b.mov
+/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift:1243: error: -[Aagedal_Media_Player_Tests.CompareLiveBackendTests testMPVPrimaryAndAVFoundationSecondaryShareTransport] : XCTAssertTrue failed - Secondary frame-step setup seek failed.
+/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift:1255: error: -[Aagedal_Media_Player_Tests.CompareLiveBackendTests testMPVPrimaryAndAVFoundationSecondaryShareTransport] : XCTAssertTrue failed - Secondary frame step did not complete.
+/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift:1266: error: -[Aagedal_Media_Player_Tests.CompareLiveBackendTests testMPVPrimaryAndAVFoundationSecondaryShareTransport] : XCTAssertTrue failed - Secondary scrub did not complete.
+2026-09-30 13:09:12.756169+0200 Aagedal Media Player[54944:806144] [] <<< FigCFUtilities >>> signalled err=-12990 at <>:1859
+/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift:1272: error: -[Aagedal_Media_Player_Tests.CompareLiveBackendTests testMPVPrimaryAndAVFoundationSecondaryShareTransport] : XCTAssertTrue failed - Paired forward shuttle did not start.
+2026-09-30 13:09:27.792870+0200 Aagedal Media Player[54944:805048] [aqme]                AQMEIO.cpp:201   timed out after 15.000s (0 0); suspension count=0 (IOSuspensions: , , , , , , , , , , , , ) (maybe stale)
+2026-09-30 13:09:27.834445+0200 Aagedal Media Player[54944:805048] [aqme]  MEDeviceStreamClient.cpp:453   AQME Default-Output: client stopping after failed start: <AudioQueueObject@0x7a8de78a00; ; [54944]; play>; running count now 0
+/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift:1277: error: -[Aagedal_Media_Player_Tests.CompareLiveBackendTests testMPVPrimaryAndAVFoundationSecondaryShareTransport] : XCTAssertTrue failed - Paired forward shuttle did not accelerate.
+2026-09-30 13:09:28.764961+0200 Aagedal Media Player[54944:794950] [scaling] pause: backend=mpv wasPlaying=true videoSourceSize=320x180 ratio=1.7778
+2026-09-30 13:09:28.765520+0200 Aagedal Media Player[54944:794950] [scaling] pause: backend=av wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 13:09:28.794630+0200 Aagedal Media Player[54944:794950] [scaling] play: backend=mpv wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 13:09:28.836580+0200 Aagedal Media Player[54944:806519] [] <<< FigCFUtilities >>> signalled err=-12990 at <>:1859
+/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift:1306: error: -[Aagedal_Media_Player_Tests.CompareLiveBackendTests testMPVPrimaryAndAVFoundationSecondaryShareTransport] : XCTAssertTrue failed - Secondary did not resume at the mapped frame after A looped. A=0.8333333333333333, B=4.083333333333333, B playing=false, tolerance=0.042666666666666665
+2026-09-30 13:09:31.062513+0200 Aagedal Media Player[54944:794950] [scaling] pause: backend=mpv wasPlaying=true videoSourceSize=320x180 ratio=1.7778
+2026-09-30 13:09:43.869392+0200 Aagedal Media Player[54944:805048] [aqme]                AQMEIO.cpp:201   timed out after 15.000s (0 0); suspension count=0 (IOSuspensions: , , , , , , , , , , , , ) (maybe stale)
+2026-09-30 13:09:43.912237+0200 Aagedal Media Player[54944:805048] [aqme]  MEDeviceStreamClient.cpp:453   AQME Default-Output: client stopping after failed start: <AudioQueueObject@0x7a8dea1e00; ; [54944]; play>; running count now 0
+2026-09-30 13:09:43.912880+0200 Aagedal Media Player[54944:794950] [scaling] pause: backend=av wasPlaying=false videoSourceSize=320x180 ratio=1.7778
+2026-09-30 13:09:58.931229+0200 Aagedal Media Player[54944:805048] [aqme]                AQMEIO.cpp:201   timed out after 15.000s (0 0); suspension count=0 (IOSuspensions: , , , , , , , , , , , , ) (maybe stale)
+2026-09-30 13:09:58.972477+0200 Aagedal Media Player[54944:805048] [aqme]  MEDeviceStreamClient.cpp:453   AQME Default-Output: client stopping after failed start: <AudioQueueObject@0x7a8de7b200; Unknown FigPlayer; [54944]; play>; running count now 0
+[mvk-info] Destroyed VkDevice on GPU Apple M5 Pro with 13 Vulkan extensions enabled.
+[mvk-info] Destroyed VkPhysicalDevice for GPU Apple M5 Pro with 1 MB of GPU memory still allocated.
+[mvk-info] Destroying VkInstance for Vulkan version 1.4.357 with 6 Vulkan extensions enabled.
+2026-09-30 13:09:58.979747+0200 Aagedal Media Player[54944:800770] [API] warning, deleted thread with uncommitted CATransaction; set CA_DEBUG_TRANSACTIONS=1 in environment to log backtraces, or set CA_ASSERT_MAIN_THREAD_TRANSACTIONS=1 to abort when an implicit transaction isn't created on a main thread.
+2026-09-30 13:09:58.980833+0200 Aagedal Media Player[54944:805054] [] <<< FigReportingAgentRef >>> signalled err=-12005 at <>:1602
+2026-09-30 13:09:58.980846+0200 Aagedal Media Player[54944:805054] [] <<< FigReportingAgentRef >>> signalled err=-12005 at <>:1602
+2026-09-30 13:09:58.980855+0200 Aagedal Media Player[54944:805054] [] <<< FigPlayerModerator >>> signalled err=-17511 at <>:2110
+Test Case '-[Aagedal_Media_Player_Tests.CompareLiveBackendTests testMPVPrimaryAndAVFoundationSecondaryShareTransport]' failed (1076.100 seconds).
+2026-09-30 13:09:58.981243+0200 Aagedal Media Player[54944:805054] [player] <<<< FigAirPlay_Route >>>> signalled err=-12860 at <>:696
+Test Suite 'CompareLiveBackendTests' failed at 2026-09-30 13:09:58.981.
+	 Executed 2 tests, with 21 failures (0 unexpected) in 1977.303 (1977.305) seconds
+Test Suite 'Aagedal Media Player Tests.xctest' failed at 2026-09-30 13:09:58.981.
+	 Executed 2 tests, with 21 failures (0 unexpected) in 1977.303 (1977.305) seconds
+Test Suite 'Selected tests' failed at 2026-09-30 13:09:58.982.
+	 Executed 2 tests, with 21 failures (0 unexpected) in 1977.303 (1977.305) seconds
+2026-09-30 13:10:07.964 xcodebuild[54935:794369] [MT] IDETestOperationsObserverDebug: 1987.198 elapsed -- Testing started completed.
+2026-09-30 13:10:07.964 xcodebuild[54935:794369] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-09-30 13:10:07.964 xcodebuild[54935:794369] [MT] IDETestOperationsObserverDebug: 1987.198 sec, +1987.198 sec -- end
+
+Test session results, code coverage, and logs:
+	/tmp/aagedal-candidate-c4a7557-20260930/MixedBackendTransport.xcresult
+
+Failing tests:
+	CompareLiveBackendTests.testAVFoundationPrimaryAndMPVSecondaryShareTransport()
+	CompareLiveBackendTests.testAVFoundationPrimaryAndMPVSecondaryShareTransport()
+	CompareLiveBackendTests.testAVFoundationPrimaryAndMPVSecondaryShareTransport()
+	CompareLiveBackendTests.testAVFoundationPrimaryAndMPVSecondaryShareTransport()
+	CompareLiveBackendTests.testAVFoundationPrimaryAndMPVSecondaryShareTransport()
+	CompareLiveBackendTests.testAVFoundationPrimaryAndMPVSecondaryShareTransport()
+	CompareLiveBackendTests.testAVFoundationPrimaryAndMPVSecondaryShareTransport()
+	CompareLiveBackendTests.testAVFoundationPrimaryAndMPVSecondaryShareTransport()
+	CompareLiveBackendTests.testMPVPrimaryAndAVFoundationSecondaryShareTransport()
+	CompareLiveBackendTests.testMPVPrimaryAndAVFoundationSecondaryShareTransport()
+	CompareLiveBackendTests.testMPVPrimaryAndAVFoundationSecondaryShareTransport()
+	CompareLiveBackendTests.testMPVPrimaryAndAVFoundationSecondaryShareTransport()
+	CompareLiveBackendTests.testMPVPrimaryAndAVFoundationSecondaryShareTransport()
+	CompareLiveBackendTests.testMPVPrimaryAndAVFoundationSecondaryShareTransport()
+	CompareLiveBackendTests.testMPVPrimaryAndAVFoundationSecondaryShareTransport()
+	CompareLiveBackendTests.testMPVPrimaryAndAVFoundationSecondaryShareTransport()
+	CompareLiveBackendTests.testMPVPrimaryAndAVFoundationSecondaryShareTransport()
+	CompareLiveBackendTests.testMPVPrimaryAndAVFoundationSecondaryShareTransport()
+	CompareLiveBackendTests.testMPVPrimaryAndAVFoundationSecondaryShareTransport()
+	CompareLiveBackendTests.testMPVPrimaryAndAVFoundationSecondaryShareTransport()
+	CompareLiveBackendTests.testMPVPrimaryAndAVFoundationSecondaryShareTransport()
+
+** TEST FAILED **
+
+Testing started

@@ -3410,6 +3410,25 @@ Native Review verification was also attempted but the computer-use app connectio
 hung for 853 seconds before cancellation; its source audit and successful Debug
 build do not close keyboard or spoken VoiceOver acceptance.
 
+## Phase 153 — Awake candidate verification ownership
+
+Status: Runner hardening completed on 2026-09-30; fresh verification pending.
+
+- [x] Retain the clean `c4a7557` aggregate pass (705 passed, eight optional skips)
+  and both failed isolated transport checks as a sleep-interrupted attempt.
+- [x] Correlate 534- and 900-second system sleeps with the failed sampling and
+  playback intervals; leave transport tolerances unchanged.
+- [x] Hold scoped `caffeinate` assertions during canonical verification, with
+  cleanup on every exit and no permanent power-preference changes.
+- [x] Require retained power evidence without sleep before final source identity
+  checks and `status=passed`; bound each isolated transport test to 120 seconds.
+- [x] Pass 13 release-script and two power-event validator checks.
+- [ ] Complete a fresh canonical optimized Release verification while awake.
+
+See [interrupted-attempt evidence](docs/evidence/release-candidate-sleep-interrupted-20260930/README.md).
+The interrupted run does not establish a new transport regression or a passing
+candidate, and it did not reach analysis or preflight.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -3748,3 +3767,4 @@ build do not close keyboard or spoken VoiceOver acceptance.
 142. Phase 150 restore the verified candidate test floor.
 143. Phase 151 enabled-track AVFoundation loupe provenance.
 144. Phase 152 native-audio-output diagnosis and profile failure evidence.
+145. Phase 153 awake candidate verification ownership.

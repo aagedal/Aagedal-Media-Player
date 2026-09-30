@@ -56,11 +56,20 @@ fi
 
 mkdir -p "$artifact_dir"
 
+# Hosted playback cannot establish timing or audio-output behavior while macOS
+# is asleep or executing only maintenance dark wakes. Keep this verification
+# awake without changing system preferences, and release assertions on every exit.
+verification_start="$(date '+%Y-%m-%d %H:%M:%S')"
+/usr/bin/caffeinate -disu -w "$$" &
+power_assertion_pid=$!
+trap 'kill "$power_assertion_pid" 2>/dev/null || true' EXIT
+
 {
     echo "sourceCommit=$source_commit"
     echo "packageResolvedSHA256=$package_resolved_sha256"
     echo "packageCache=${package_cache:-none}"
     echo "startedAt=$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+    echo "powerStartedAtLocal=$verification_start"
     echo "host=$(sw_vers -productName) $(sw_vers -productVersion) ($(sw_vers -buildVersion))"
     xcodebuild -version
 } > "$artifact_dir/environment.txt"
@@ -112,6 +121,9 @@ xcodebuild test \
     -resultBundlePath "$artifact_dir/MixedBackendTransport.xcresult" \
     -onlyUsePackageVersionsFromResolvedFile \
     -parallel-testing-enabled NO \
+    -test-timeouts-enabled YES \
+    -default-test-execution-time-allowance 120 \
+    -maximum-test-execution-time-allowance 120 \
     -only-testing:"Aagedal Media Player Tests/CompareLiveBackendTests/testAVFoundationPrimaryAndMPVSecondaryShareTransport" \
     -only-testing:"Aagedal Media Player Tests/CompareLiveBackendTests/testMPVPrimaryAndAVFoundationSecondaryShareTransport" \
     ENABLE_TESTABILITY=YES \
@@ -144,6 +156,12 @@ xcodebuild analyze \
 
 echo "==> Source-tree release preflight"
 python3 scripts/release-preflight.py 2>&1 | tee "$artifact_dir/preflight.log"
+
+echo "==> Verification power evidence"
+verification_end="$(date '+%Y-%m-%d %H:%M:%S')"
+python3 scripts/check-programme-profile-power.py \
+    "$verification_start" "$verification_end" "$artifact_dir" \
+    2>&1 | tee "$artifact_dir/power-evidence-validation.log"
 
 echo "==> Final source identity"
 if [[ "$(git rev-parse --verify HEAD)" != "$source_commit" ]]; then

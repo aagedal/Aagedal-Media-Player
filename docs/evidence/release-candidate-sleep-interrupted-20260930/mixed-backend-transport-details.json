@@ -1,0 +1,234 @@
+{
+  "devices" : [
+    {
+      "architecture" : "arm64",
+      "deviceId" : "00006050-001C293C22F9401C",
+      "deviceName" : "My Mac",
+      "modelName" : "MacBook Pro",
+      "osBuildNumber" : "26A434",
+      "osVersion" : "27.0.1",
+      "platform" : "macOS"
+    }
+  ],
+  "testNodes" : [
+    {
+      "children" : [
+        {
+          "children" : [
+            {
+              "children" : [
+                {
+                  "children" : [
+                    {
+                      "name" : "XCTAssertTrue failed - Active scrub did not restore one-frame paired synchronization.",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift",
+                        "lineNumber" : 1117
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertGreaterThanOrEqual failed: (\"0.0\") is less than (\"7.0\") - The primary clock stalled or reached EOF. pair=avFoundation/mpv, samples=3, withinFrame=0.0%, worstDrift=0.750s, longestExcursion=531.801s, signedDrift=0.750s→0.750s, finalDrift=0.750s, secondaryRate=0.50–0.50, primaryAdvance=0.000s, secondaryAdvance=0.167s",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift",
+                        "lineNumber" : 1190
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertGreaterThanOrEqual failed: (\"0.16666666666666652\") is less than (\"7.0\") - The secondary clock stalled or reached EOF. pair=avFoundation/mpv, samples=3, withinFrame=0.0%, worstDrift=0.750s, longestExcursion=531.801s, signedDrift=0.750s→0.750s, finalDrift=0.750s, secondaryRate=0.50–0.50, primaryAdvance=0.000s, secondaryAdvance=0.167s",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift",
+                        "lineNumber" : 1195
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertLessThanOrEqual failed: (\"531.800762709\") is greater than (\"1.025\") - Drift correction did not recover within one second plus one sampling interval. pair=avFoundation/mpv, samples=3, withinFrame=0.0%, worstDrift=0.750s, longestExcursion=531.801s, signedDrift=0.750s→0.750s, finalDrift=0.750s, secondaryRate=0.50–0.50, primaryAdvance=0.000s, secondaryAdvance=0.167s",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift",
+                        "lineNumber" : 1200
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertLessThanOrEqual failed: (\"531.800791084\") is greater than (\"1.025\") - Drift did not reconverge during the final second plus one sampling interval. pair=avFoundation/mpv, samples=3, withinFrame=0.0%, worstDrift=0.750s, longestExcursion=531.801s, signedDrift=0.750s→0.750s, finalDrift=0.750s, secondaryRate=0.50–0.50, primaryAdvance=0.000s, secondaryAdvance=0.167s",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift",
+                        "lineNumber" : 1206
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertLessThanOrEqual failed: (\"0.75\") is greater than (\"0.042666666666666665\") - Drift finished outside one-frame tolerance. pair=avFoundation/mpv, samples=3, withinFrame=0.0%, worstDrift=0.750s, longestExcursion=531.801s, signedDrift=0.750s→0.750s, finalDrift=0.750s, secondaryRate=0.50–0.50, primaryAdvance=0.000s, secondaryAdvance=0.167s",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift",
+                        "lineNumber" : 1212
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertTrue failed - Primary did not loop back to its first frame.",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift",
+                        "lineNumber" : 1295
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertTrue failed - Secondary did not resume at the mapped frame after A looped. A=11.75, B=12.958333333333332, B playing=false, tolerance=0.042666666666666665",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift",
+                        "lineNumber" : 1306
+                      }
+                    }
+                  ],
+                  "duration" : "15m",
+                  "durationInSeconds" : 901.2033179998398,
+                  "name" : "testAVFoundationPrimaryAndMPVSecondaryShareTransport()",
+                  "nodeIdentifier" : "CompareLiveBackendTests/testAVFoundationPrimaryAndMPVSecondaryShareTransport()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareLiveBackendTests/testAVFoundationPrimaryAndMPVSecondaryShareTransport",
+                  "nodeType" : "Test Case",
+                  "result" : "Failed"
+                },
+                {
+                  "children" : [
+                    {
+                      "name" : "XCTAssertTrue failed - Primary did not reach the sustained-playback start position.",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift",
+                        "lineNumber" : 1133
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertTrue failed - Secondary did not reach the sustained-playback start position.",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift",
+                        "lineNumber" : 1143
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertGreaterThanOrEqual failed: (\"0.0\") is less than (\"7.0\") - The primary clock stalled or reached EOF. pair=mpv/avFoundation, samples=13, withinFrame=0.0%, worstDrift=0.242s, longestExcursion=15.107s, signedDrift=-0.242s→0.200s, finalDrift=0.200s, secondaryRate=1.00–1.00, primaryAdvance=0.000s, secondaryAdvance=0.442s",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift",
+                        "lineNumber" : 1190
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertGreaterThanOrEqual failed: (\"0.44166666666666643\") is less than (\"7.0\") - The secondary clock stalled or reached EOF. pair=mpv/avFoundation, samples=13, withinFrame=0.0%, worstDrift=0.242s, longestExcursion=15.107s, signedDrift=-0.242s→0.200s, finalDrift=0.200s, secondaryRate=1.00–1.00, primaryAdvance=0.000s, secondaryAdvance=0.442s",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift",
+                        "lineNumber" : 1195
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertLessThanOrEqual failed: (\"15.106578666\") is greater than (\"1.025\") - Drift correction did not recover within one second plus one sampling interval. pair=mpv/avFoundation, samples=13, withinFrame=0.0%, worstDrift=0.242s, longestExcursion=15.107s, signedDrift=-0.242s→0.200s, finalDrift=0.200s, secondaryRate=1.00–1.00, primaryAdvance=0.000s, secondaryAdvance=0.442s",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift",
+                        "lineNumber" : 1200
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertLessThanOrEqual failed: (\"15.106624\") is greater than (\"1.025\") - Drift did not reconverge during the final second plus one sampling interval. pair=mpv/avFoundation, samples=13, withinFrame=0.0%, worstDrift=0.242s, longestExcursion=15.107s, signedDrift=-0.242s→0.200s, finalDrift=0.200s, secondaryRate=1.00–1.00, primaryAdvance=0.000s, secondaryAdvance=0.442s",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift",
+                        "lineNumber" : 1206
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertLessThanOrEqual failed: (\"0.20000000000000018\") is greater than (\"0.042666666666666665\") - Drift finished outside one-frame tolerance. pair=mpv/avFoundation, samples=13, withinFrame=0.0%, worstDrift=0.242s, longestExcursion=15.107s, signedDrift=-0.242s→0.200s, finalDrift=0.200s, secondaryRate=1.00–1.00, primaryAdvance=0.000s, secondaryAdvance=0.442s",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift",
+                        "lineNumber" : 1212
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertTrue failed - Secondary frame-step setup seek failed.",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift",
+                        "lineNumber" : 1243
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertTrue failed - Secondary frame step did not complete.",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift",
+                        "lineNumber" : 1255
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertTrue failed - Secondary scrub did not complete.",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift",
+                        "lineNumber" : 1266
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertTrue failed - Paired forward shuttle did not start.",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift",
+                        "lineNumber" : 1272
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertTrue failed - Paired forward shuttle did not accelerate.",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift",
+                        "lineNumber" : 1277
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertTrue failed - Secondary did not resume at the mapped frame after A looped. A=0.8333333333333333, B=4.083333333333333, B playing=false, tolerance=0.042666666666666665",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift",
+                        "lineNumber" : 1306
+                      }
+                    }
+                  ],
+                  "duration" : "17m",
+                  "durationInSeconds" : 1076.1001579761505,
+                  "name" : "testMPVPrimaryAndAVFoundationSecondaryShareTransport()",
+                  "nodeIdentifier" : "CompareLiveBackendTests/testMPVPrimaryAndAVFoundationSecondaryShareTransport()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareLiveBackendTests/testMPVPrimaryAndAVFoundationSecondaryShareTransport",
+                  "nodeType" : "Test Case",
+                  "result" : "Failed"
+                }
+              ],
+              "name" : "CompareLiveBackendTests",
+              "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareLiveBackendTests",
+              "nodeType" : "Test Suite",
+              "result" : "Failed"
+            }
+          ],
+          "name" : "Aagedal Media Player Tests",
+          "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests",
+          "nodeType" : "Unit test bundle",
+          "result" : "Failed"
+        }
+      ],
+      "name" : "Aagedal Media Player",
+      "nodeType" : "Test Plan",
+      "result" : "Failed"
+    }
+  ],
+  "testPlanConfigurations" : [
+    {
+      "configurationId" : "1",
+      "configurationName" : "Test Scheme Action"
+    }
+  ]
+}
