@@ -1,0 +1,39 @@
+{
+  "mpvkitRevision": "230c3174f1515898f24599147ad61c2a277d0dc2",
+  "mpvSourceRevision": "41f6a645068483470267271e1d09966ca3b9f413",
+  "mpvSourceVersion": "v0.41.0",
+  "sourceSHA256": {
+    "ao_coreaudio.c": "ea11a0cf81cd479479faf4534e63f01d4d49c89b9f8b388e5732f4417d2a4b27",
+    "ao_coreaudio_chmap.c": "ac25a40ae0b96f4356876b36a3c41a6d98ce4ec584b65572ce53b25998e50417",
+    "ao_coreaudio_chmap.h": "53f88f38f320ed3290a46d3885f2d4a6eda6390333d3c82844c7e12ea1a54f03"
+  },
+  "linkedFrameworkPath": "/tmp/aagedal-mono-20260930-derived/Build/Products/Debug/Libmpv.framework/Versions/A/Libmpv",
+  "linkedCoreAudioObjectSHA256": "28ae6366e8b616cf1096dedbfc076325922bc24e473263324e0cb7f0cabf58bb",
+  "localMPVKitCoreAudioObjectSHA256": "28ae6366e8b616cf1096dedbfc076325922bc24e473263324e0cb7f0cabf58bb",
+  "iinaPatchRevision": "f86d54276547df6d14104583ea604af67433f1e1",
+  "iinaPatchURL": "https://github.com/iina/deps-buildscripts/blob/f86d54276547df6d14104583ea604af67433f1e1/patches/mpv/18384-audio-channel.patch",
+  "iinaPatchSHA256": "176cdef4eb860cfbffcaf821b186b1e6e7f5f1c1a1c246d728b5c28ef960a2d5",
+  "patchApplyCheck": "passed against local source",
+  "patchCompileCheck": {
+    "architectures": [
+      "arm64",
+      "x86_64"
+    ],
+    "files": [
+      "ao_coreaudio.c",
+      "ao_coreaudio_chmap.c"
+    ],
+    "status": "passed; compile only, not linked or shipped",
+    "sdkPath": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk"
+  },
+  "sdkAudioUnitPropertiesHeaderSHA256": "985fd288a180868db0f8ffccaad4c9151d20a28f0c685c63e846031ce6b0de43",
+  "sdkChannelMapContract": {
+    "documentationLine": 2438,
+    "valueType": "Array of SInt32",
+    "scope": "Input/Output",
+    "propertyID": 2002
+  },
+  "operatingSystem": "ProductName:\t\tmacOS\nProductVersion:\t\t27.0.1\nBuildVersion:\t\t26A434",
+  "probeScope": "Creates/disposes Audio Units; never registers a render callback or starts output; does not change hardware device settings.",
+  "binaryAuditExcerpt": "mov w1, #0x7d2 (=2002); mov w2, #0 (=global); layout pointer and layout allocation length passed as property value."
+}

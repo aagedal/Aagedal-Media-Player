@@ -1,10 +1,11 @@
 # Native audio-output investigation — 2026-09-30
 
-The retained mono failure remains unresolved. No output negotiation, driver,
-channel policy, decoder option, or meter freshness bound was changed in
-production. Temporary output probes were removed after their native harness
-runs failed. The retained implementation adds read-only MPV decoder/output/AO
-diagnostics and better failure evidence to the opt-in profiling test.
+The retained mono failure remains unresolved in the shipped dependency. An
+isolated native probe now establishes the CoreAudio property-type mismatch in
+the exact linked MPVKit object and identifies a dependency repair candidate.
+No output negotiation, driver, channel policy, decoder option, or meter freshness
+bound was changed in production. The profiling runner now rejects retained
+native-output errors even when source-meter rows pass.
 
 This check used the generated sources and native host described in
 [the selected-track engineering check](LIVE_AUDIO_METER_SELECTED_TRACK_ENGINEERING_CHECK_2026-09-30.md).
@@ -95,3 +96,84 @@ in the `/tmp` directories above. Future output corrections need repeated
 audio-only mono and stereo passes, source-channel monitoring verification,
 supported hardware/default-device-switch checks, and actual audible-output
 acceptance without weakening meter freshness.
+
+## Isolated SDK-contract reproduction and dependency repair candidate
+
+The project's pinned MPVKit revision is
+`230c3174f1515898f24599147ad61c2a277d0dc2`. Its local build source is mpv
+v0.41.0 (`41f6a645068483470267271e1d09966ca3b9f413`). The arm64
+`audio_out_ao_coreaudio.c.o` extracted from the profile's actual linked framework
+has the same SHA-256 as the local MPVKit build object:
+`28ae6366e8b616cf1096dedbfc076325922bc24e473263324e0cb7f0cabf58bb`.
+Disassembly confirms property ID 2002 with global scope, layout pointer and
+layout allocation size at the failing call.
+
+The current Xcode SDK's `AudioUnitProperties.h` documents property 2002
+(`kAudioOutputUnitProperty_ChannelMap`) as an array of `SInt32` values on
+input/output scopes. The linked source instead passes an `AudioChannelLayout`
+structure on global scope. The stereo layout tag is 6619138, matching the
+rejected "input channel" in the retained profile. This is a type-contract
+defect, rather than evidence that source channel counts need changing.
+
+The initialization-only [probe](../scripts/probe-coreaudio-channel-map.c)
+repeats the malformed call and a correctly typed channel map without rendering
+audio or changing system device settings. Three native repetitions per case on
+the current default two-channel output produced:
+
+| Input PCM | Malformed layout-as-map status | Typed output map status |
+| --- | --- | --- |
+| Mono interleaved float | −50 | 0 |
+| Mono planar float | −50 | 0 |
+| Stereo interleaved float | 0 | 0 |
+| Stereo planar float | −50 | 0 |
+
+Status 0 for malformed interleaved stereo does not make that value a valid map.
+The probe zeroes layout padding; the production allocation contains other
+layout data. It isolates the API misuse and its mono/planar failure; it does
+not test the full production playback path, monitoring matrix, EOF, surround,
+device switching or audible sound. A sandbox run returned −3000 before Audio
+Unit construction; the retained results come from the native host run.
+
+```bash
+clang -Wall -Wextra -Werror -framework AudioToolbox -framework CoreAudio \
+  scripts/probe-coreaudio-channel-map.c -o /tmp/probe-coreaudio-channel-map
+/tmp/probe-coreaudio-channel-map
+```
+
+IINA independently diagnosed the same mismatch in
+[issue 6378](https://github.com/iina/iina/issues/6378#issuecomment-5743963782)
+and links an actual repair that builds a device-aware integer map. The
+[retained candidate](evidence/live-meter-native-output-20260930/isolated-coreaudio-probe/iina-18384-audio-channel.patch)
+comes from [dependency patch revision
+f86d542](https://github.com/iina/deps-buildscripts/blob/f86d54276547df6d14104583ea604af67433f1e1/patches/mpv/18384-audio-channel.patch).
+It passes `git apply --check` against the pinned local source; both touched C
+sources also compile for arm64 and x86_64 with the current SDK and pinned build
+headers. This is a checked repair candidate, not a rebuilt or shipped library.
+IINA identifies remaining device-switch map-refresh work in that candidate.
+
+The next production correction belongs in MPVKit's dependency build: retain the
+patch attribution, rebuild both architectures, publish an artifact with a new
+checksum and immutable revision, update this app's package pin, then rerun
+audio-only mono/stereo and source-monitoring profiles repeatedly. Device-switch,
+surround hardware and actual audible-output checks remain required. Do not
+substitute AVFoundation or force stereo as acceptance: the prior option probes
+failed. Probe results, candidate hash and source/binary/SDK identities are in
+[isolated-coreaudio-probe](evidence/live-meter-native-output-20260930/isolated-coreaudio-probe).
+
+## Stronger profiling-runner failure gate
+
+The opt-in profile now enables MPV warning/error logs in Release and emits a
+logging receipt only after the request succeeds. Its validator requires that
+receipt for MPV rows and rejects AO `error`/`fatal` lines, audio-output
+initialization failures, and the retained AudioConverter channel-map rejection.
+Fallback-driver identity, advancing video clock and source-meter reports do not
+waive those failures. The runner retains XCTest diagnostic attachments on failed
+tests as well. Rejected validation removes any previous passing summary.
+
+This is a stricter engineering-output regression requirement added to the runner,
+not a claim that the source meter measures audible output. Lack of logged errors
+still cannot establish audible sound or release acceptance. Existing schema-2
+records remain historical source-meter evidence; the prior safe baseline is
+explicitly rejected by the new native-output gate. Twenty Python validator
+tests pass, including the retained false-passing baseline rejection; shell syntax
+and the native probe compile checks pass.

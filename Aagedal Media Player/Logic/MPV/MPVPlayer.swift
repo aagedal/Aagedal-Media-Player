@@ -168,11 +168,19 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
             return
         }
 
+        let profilesNativeAudio = ProcessInfo.processInfo.environment["LIVE_AUDIO_METER_PROFILE_INPUTS"] != nil
         #if DEBUG
-        checkError(mpv_request_log_messages(mpv, "warn"))
+        let logLevel = "warn"
         #else
-        checkError(mpv_request_log_messages(mpv, "no"))
+        // The opt-in native profile must retain AO initialization failures in
+        // Release too. A progressing video clock can hide failed audio output.
+        let logLevel = profilesNativeAudio ? "warn" : "no"
         #endif
+        let logRequestStatus = mpv_request_log_messages(mpv, logLevel)
+        checkError(logRequestStatus)
+        if profilesNativeAudio, logRequestStatus >= 0 {
+            print("LIVE_AUDIO_METER_NATIVE_OUTPUT_LOGGING enabled")
+        }
 
         var wid = unsafeBitCast(metalLayer, to: Int64.self)
         checkError(mpv_set_option(mpv, "wid", MPV_FORMAT_INT64, &wid), context: "wid")

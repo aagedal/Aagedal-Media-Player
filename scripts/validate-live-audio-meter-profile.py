@@ -13,6 +13,8 @@ import sys
 SHA256 = re.compile(r"[0-9a-f]{64}")
 BACKENDS = {"mpv", "avFoundation"}
 TIMESTAMP_SOURCE = "ffmpeg-framecrc-v1"
+NATIVE_LOGGING_MARKER = "LIVE_AUDIO_METER_NATIVE_OUTPUT_LOGGING enabled"
+NATIVE_OUTPUT_ERROR = re.compile(r"\[ao(?:/[^\]]+)?\]\s+(?:error|fatal):", re.IGNORECASE)
 
 
 def number(value, label, *, minimum=None, maximum=None):
@@ -202,10 +204,30 @@ def attachment_rows(root):
     return rows
 
 
+def validate_native_output_log(log, rows):
+    """Reject native AO failures even when source PCM and video clocks pass.
+
+    Driver fallback does not waive a failed initialization: this profile is an
+    output regression gate, and it does not establish audible-output acceptance.
+    """
+    if any(row.get("backend") == "mpv" for row in rows) and NATIVE_LOGGING_MARKER not in log:
+        raise ValueError("native MPV audio-output logging was not enabled; rerun with the current app")
+    failures = [line.strip() for line in log.splitlines() if
+                NATIVE_OUTPUT_ERROR.search(line)
+                or "Audio output initialization failed" in line
+                or ("[AudioConverter]" in line and "channel mapping input channel" in line
+                    and "is out of range" in line)]
+    if failures:
+        raise ValueError("native audio output reported a failure: " + failures[0])
+
+
 def main():
     root = Path(sys.argv[1])
+    # Never leave a previous passing summary beside rejected evidence.
+    (root / "summary.json").unlink(missing_ok=True)
     manifest = json.loads((root / "inputs.json").read_text())
     rows = validate(attachment_rows(root), manifest)
+    validate_native_output_log((root / "profile.log").read_text(errors="replace"), rows)
     (root / "summary.json").write_text(json.dumps(rows, indent=2, allow_nan=False) + "\n")
     for row in rows:
         print(json.dumps(row, sort_keys=True, allow_nan=False))

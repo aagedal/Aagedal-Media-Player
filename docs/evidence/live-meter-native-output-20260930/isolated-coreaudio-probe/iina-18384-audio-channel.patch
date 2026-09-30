@@ -1,0 +1,241 @@
+diff --git forkSrcPrefix/audio/out/ao_coreaudio_chmap.c forkDstPrefix/audio/out/ao_coreaudio_chmap.c
+index 2c6131f13c6d29bd916f218fdb1e7e0998e63ead..39028f53c3b8de9945f93be14e4c6791521b6dbb 100644
+--- forkSrcPrefix/audio/out/ao_coreaudio_chmap.c
++++ forkDstPrefix/audio/out/ao_coreaudio_chmap.c
+@@ -431,6 +431,117 @@ coreaudio_error:
+     return r;
+ }
+ 
++static bool ca_get_preferred_stereo_chmap(struct ao *ao, AudioDeviceID device,
++                                          int channel_count,
++                                          struct mp_chmap *out_map)
++{
++    UInt32 stereo[2];
++    UInt32 size = sizeof(stereo);
++    AudioObjectPropertyAddress address = {
++        kAudioDevicePropertyPreferredChannelsForStereo,
++        kAudioObjectPropertyScopeOutput,
++        kAudioObjectPropertyElementMain,
++    };
++    OSStatus err = AudioObjectGetPropertyData(device, &address, 0, NULL,
++                                              &size, stereo);
++    if (err != noErr || size != sizeof(stereo) ||
++        !stereo[0] || !stereo[1] ||
++        stereo[0] > channel_count || stereo[1] > channel_count ||
++        stereo[0] == stereo[1])
++    {
++        MP_VERBOSE(ao, "could not get preferred stereo channels: %u, %u\n",
++                   stereo[0], stereo[1]);
++        return false;
++    }
++
++    *out_map = (struct mp_chmap){.num = channel_count};
++    for (int n = 0; n < out_map->num; n++)
++        out_map->speaker[n] = MP_SPEAKER_ID_NA;
++    out_map->speaker[stereo[0] - 1] = MP_SPEAKER_ID_FL;
++    out_map->speaker[stereo[1] - 1] = MP_SPEAKER_ID_FR;
++    MP_VERBOSE(ao, "preferred stereo channels: %u, %u\n",
++               stereo[0], stereo[1]);
++    return true;
++}
++
++bool ca_get_output_chmap(struct ao *ao, AudioUnit unit, AudioDeviceID device,
++                        struct mp_chmap *out_map)
++{
++    AudioStreamBasicDescription asbd;
++    UInt32 size = sizeof(asbd);
++    OSStatus err = AudioUnitGetProperty(unit, kAudioUnitProperty_StreamFormat,
++                                        kAudioUnitScope_Output, 0, &asbd, &size);
++    CHECK_CA_ERROR("could not get output unit stream format");
++    if (!asbd.mChannelsPerFrame || asbd.mChannelsPerFrame > MP_NUM_CHANNELS) {
++        MP_ERR(ao, "unsupported output channel count: %u\n", asbd.mChannelsPerFrame);
++        return false;
++    }
++
++    // query preferred stereo channel if only has two channels
++    if (asbd.mChannelsPerFrame == 2 &&
++        ca_get_preferred_stereo_chmap(ao, device, 2, out_map))
++    {
++        return true;
++    }
++
++    Boolean writable;
++    err = AudioUnitGetPropertyInfo(unit, kAudioUnitProperty_AudioChannelLayout,
++                                   kAudioUnitScope_Output, 0, &size, &writable);
++    if (err == noErr) {
++        AudioChannelLayout *layout = talloc_zero_size(NULL, size);
++        err = AudioUnitGetProperty(unit, kAudioUnitProperty_AudioChannelLayout,
++                                   kAudioUnitScope_Output, 0, layout, &size);
++        bool valid = err == noErr &&
++                     ca_layout_to_mp_chmap(ao, layout, out_map) &&
++                     out_map->num == asbd.mChannelsPerFrame;
++        talloc_free(layout);
++        if (valid)
++            return true;
++    }
++
++    *out_map = (struct mp_chmap){.num = asbd.mChannelsPerFrame};
++    for (int n = 0; n < out_map->num; n++)
++        out_map->speaker[n] = MP_SPEAKER_ID_NA;
++    if (out_map->num == 1) {
++        *out_map = (struct mp_chmap)MP_CHMAP_INIT_MONO;
++        return true;
++    }
++
++    if (!ca_get_preferred_stereo_chmap(ao, device, out_map->num, out_map)) {
++        MP_ERR(ao, "invalid output device stereo channels\n");
++        return false;
++    }
++    return true;
++
++coreaudio_error:
++    return false;
++}
++
++bool ca_select_channel_map(struct mp_chmap *input, const struct mp_chmap *output,
++                           SInt32 *map)
++{
++    if (!mp_chmap_is_valid(output) || mp_chmap_is_unknown(output))
++        return false;
++
++    struct mp_chmap_sel sel = {0};
++    struct mp_chmap fallback = *output;
++    mp_chmap_remove_na(&fallback);
++    mp_chmap_sel_add_map(&sel, &fallback);
++    for (int n = 0; n < fallback.num; n++)
++        mp_chmap_sel_add_speaker(&sel, fallback.speaker[n]);
++
++    if (sel.speakers[MP_SPEAKER_ID_FL] && sel.speakers[MP_SPEAKER_ID_FR])
++        mp_chmap_sel_add_map(&sel, &(struct mp_chmap)MP_CHMAP_INIT_STEREO);
++    if (!mp_chmap_sel_adjust(&sel, input))
++        return false;
++
++    int reorder[MP_NUM_CHANNELS];
++    mp_chmap_get_reorder(reorder, input, output);
++    for (int n = 0; n < output->num; n++)
++        map[n] = reorder[n];
++    return true;
++}
++
+ static AudioChannelLayout* ca_query_stereo_layout(struct ao *ao,
+                                                   AudioDeviceID device,
+                                                   void *talloc_ctx)
+diff --git forkSrcPrefix/audio/out/ao_coreaudio_chmap.h forkDstPrefix/audio/out/ao_coreaudio_chmap.h
+index d8bdc5974965c9cde2cdef6f5b8e6d81e1540a94..a2d0f3a396b023d5825b9abd0e21887cff46a365 100644
+--- forkSrcPrefix/audio/out/ao_coreaudio_chmap.h
++++ forkDstPrefix/audio/out/ao_coreaudio_chmap.h
+@@ -21,6 +21,7 @@
+ #include "config.h"
+ #include <AudioToolbox/AudioToolbox.h>
+ 
++struct ao;
+ struct mp_chmap;
+ 
+ int ca_label_to_mp_speaker_id(AudioChannelLabel label);
+@@ -33,6 +34,10 @@ void ca_log_layout(struct ao *ao, int l, AudioChannelLayout *layout);
+ bool ca_init_chmap(struct ao *ao, AudioDeviceID device);
+ void ca_get_active_chmap(struct ao *ao, AudioDeviceID device, int channel_count,
+                          struct mp_chmap *out_map);
++bool ca_get_output_chmap(struct ao *ao, AudioUnit unit, AudioDeviceID device,
++                        struct mp_chmap *out_map);
++bool ca_select_channel_map(struct mp_chmap *input, const struct mp_chmap *output,
++                           SInt32 *map);
+ #endif
+ 
+ #endif
+diff --git forkSrcPrefix/audio/out/ao_coreaudio.c forkDstPrefix/audio/out/ao_coreaudio.c
+index 4b4bf1d48c0d634e112eb6fca5b8860d587d432a..6bbc09e82a5623043f4c4ac9f5612edfd70cf18d 100644
+--- forkSrcPrefix/audio/out/ao_coreaudio.c
++++ forkDstPrefix/audio/out/ao_coreaudio.c
+@@ -136,7 +136,7 @@ static int control(struct ao *ao, enum aocontrol cmd, void *arg)
+     return CONTROL_UNKNOWN;
+ }
+ 
+-static bool init_audiounit(struct ao *ao, AudioStreamBasicDescription asbd, AudioChannelLayout *layout, size_t layout_size);
++static bool init_audiounit(struct ao *ao);
+ static void init_physical_format(struct ao *ao);
+ static void reinit_latency(struct ao *ao);
+ static bool register_hotplug_cb(struct ao *ao);
+@@ -173,18 +173,7 @@ static int init(struct ao *ao)
+     if (p->change_physical_format)
+         init_physical_format(ao);
+ 
+-    if (!ca_init_chmap(ao, p->device))
+-        goto coreaudio_error;
+-
+-    AudioStreamBasicDescription asbd;
+-    ca_fill_asbd(ao, &asbd);
+-    size_t layout_size;
+-    AudioChannelLayout *layout = ca_get_acl(ao, &layout_size);
+-
+-    bool r = init_audiounit(ao, asbd, layout, layout_size);
+-    talloc_free(layout);
+-
+-    if (!r)
++    if (!init_audiounit(ao))
+         goto coreaudio_error;
+ 
+     reinit_latency(ao);
+@@ -277,7 +266,7 @@ coreaudio_error:
+     talloc_free(tmp);
+ }
+ 
+-static bool init_audiounit(struct ao *ao, AudioStreamBasicDescription asbd, AudioChannelLayout *layout, size_t layout_size)
++static bool init_audiounit(struct ao *ao)
+ {
+     OSStatus err;
+     uint32_t size;
+@@ -306,14 +295,6 @@ static bool init_audiounit(struct ao *ao, AudioStreamBasicDescription asbd, Audi
+     CHECK_CA_ERROR_L(coreaudio_error_component,
+                      "unable to initialize audio unit");
+ 
+-    size = sizeof(AudioStreamBasicDescription);
+-    err = AudioUnitSetProperty(p->audio_unit,
+-                               kAudioUnitProperty_StreamFormat,
+-                               kAudioUnitScope_Input, 0, &asbd, size);
+-
+-    CHECK_CA_ERROR_L(coreaudio_error_audiounit,
+-                     "unable to set the input format on the audio unit");
+-
+     err = AudioUnitSetProperty(p->audio_unit,
+                                kAudioOutputUnitProperty_CurrentDevice,
+                                kAudioUnitScope_Global, 0, &p->device,
+@@ -321,12 +302,36 @@ static bool init_audiounit(struct ao *ao, AudioStreamBasicDescription asbd, Audi
+     CHECK_CA_ERROR_L(coreaudio_error_audiounit,
+                      "can't link audio unit to selected device");
+ 
++    struct mp_chmap output;
++    SInt32 channel_map[MP_NUM_CHANNELS];
++    if (!ca_get_output_chmap(ao, p->audio_unit, p->device, &output) ||
++        !ca_select_channel_map(&ao->channels, &output, channel_map))
++    {
++        MP_ERR(ao, "unable to map audio to the output unit's channels\n");
++        goto coreaudio_error_audiounit;
++    }
++
++    MP_VERBOSE(ao, "input channel order: %s\n", mp_chmap_to_str(&ao->channels));
++    MP_VERBOSE(ao, "output channel order: %s\n", mp_chmap_to_str(&output));
++    for (int n = 0; n < output.num; n++)
++        MP_VERBOSE(ao, "output channel %d <- input channel %d\n", n, channel_map[n]);
++
++    AudioStreamBasicDescription asbd;
++    ca_fill_asbd(ao, &asbd);
++    size = sizeof(asbd);
++    err = AudioUnitSetProperty(p->audio_unit,
++                               kAudioUnitProperty_StreamFormat,
++                               kAudioUnitScope_Input, 0, &asbd, size);
++    CHECK_CA_ERROR_L(coreaudio_error_audiounit,
++                     "unable to set the input format on the audio unit");
++
+     err = AudioUnitSetProperty(p->audio_unit,
+                                kAudioOutputUnitProperty_ChannelMap,
+-                               kAudioUnitScope_Global, 0, layout, layout_size);
++                               kAudioUnitScope_Output, 0, channel_map,
++                               output.num * sizeof(channel_map[0]));
+ 
+     CHECK_CA_ERROR_L(coreaudio_error_audiounit,
+-                     "unable to set the input channel layout on the audio unit");
++                     "unable to set the output channel map on the audio unit");
+ 
+     AURenderCallbackStruct render_cb = (AURenderCallbackStruct) {
+         .inputProc       = render_cb_lpcm,

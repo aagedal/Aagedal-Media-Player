@@ -4,9 +4,11 @@
 import copy
 import hashlib
 import importlib.util
+import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 
 spec = importlib.util.spec_from_file_location(
@@ -100,6 +102,54 @@ class ValidationTests(unittest.TestCase):
 
     def test_accepts_complete_record(self):
         self.assertEqual(validator.validate([self.record()], self.manifest())[0]["backend"], "mpv")
+
+    def test_native_output_gate_rejects_failed_driver_despite_passing_meter_record(self):
+        rows = validator.validate([self.record()], self.manifest())
+        for failure in (
+            "[ao/coreaudio] error: unable to set the input channel layout on the audio unit (-50)",
+            "[ao/avfoundation] fatal: unable to create player",
+            "[ao] error: Failed to initialize audio driver 'coreaudio'",
+            "[cplayer] error: Audio output initialization failed.",
+            "[AudioConverter] channel mapping input channel '6619138' for output channel '0' is out of range [-1..'2')",
+        ):
+            # A later fallback driver, successful video clock, and meter row
+            # cannot turn a failed native output initialization into acceptance.
+            log = validator.NATIVE_LOGGING_MARKER + "\n" + failure + "\nAO: [avfoundation] 48000Hz stereo\n"
+            with self.subTest(failure=failure), self.assertRaisesRegex(ValueError, "native audio output reported"):
+                validator.validate_native_output_log(log, rows)
+
+    def test_native_output_gate_requires_release_logging_and_accepts_non_output_warnings(self):
+        rows = [self.record()]
+        with self.assertRaisesRegex(ValueError, "logging was not enabled"):
+            validator.validate_native_output_log("", rows)
+        validator.validate_native_output_log(validator.NATIVE_LOGGING_MARKER + "\n"
+            "[ao/coreaudio] warn: sample rate differs\n[vd] error: decoder fallback\n", rows)
+        rows[0]["backend"] = "avFoundation"
+        validator.validate_native_output_log("", rows)
+
+    def test_native_output_gate_rejects_retained_false_passing_coreaudio_baseline(self):
+        retained = Path(__file__).resolve().parents[1] / "docs/evidence/live-meter-native-output-20260930/safe-baseline/profile.log"
+        # These schema-2 source-meter runs historically passed despite this AO
+        # failure. Add the new logging receipt to exercise the failure itself.
+        with self.assertRaisesRegex(ValueError, "native audio output reported"):
+            validator.validate_native_output_log(
+                validator.NATIVE_LOGGING_MARKER + "\n" + retained.read_text(), [self.record()])
+
+    def test_rejected_native_output_removes_previous_passing_summary(self):
+        root = Path(self.temporary.name) / "profile"
+        (root / "attachments").mkdir(parents=True)
+        (root / "inputs.json").write_text(json.dumps(self.manifest()))
+        (root / "attachments/record.txt").write_text(
+            "LIVE_AUDIO_METER_PROFILE " + json.dumps(self.record()) + "\n")
+        (root / "profile.log").write_text(validator.NATIVE_LOGGING_MARKER + "\n")
+        with patch.object(validator.sys, "argv", ["validator", str(root)]), patch("builtins.print"):
+            validator.main()
+            self.assertTrue((root / "summary.json").is_file())
+            (root / "profile.log").write_text(validator.NATIVE_LOGGING_MARKER + "\n"
+                "[ao/coreaudio] error: unable to set the input channel layout on the audio unit (-50)\n")
+            with self.assertRaisesRegex(ValueError, "native audio output reported"):
+                validator.main()
+            self.assertFalse((root / "summary.json").exists())
 
     def test_accepts_deliberate_different_tracks_in_same_file(self):
         manifest = inputs.capture([str(self.input), "--audio-stream-order", "1", str(self.input)])

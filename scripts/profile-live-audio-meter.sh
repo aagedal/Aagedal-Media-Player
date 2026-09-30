@@ -76,6 +76,7 @@ PY
 
 profile_start="$(date '+%Y-%m-%d %H:%M:%S')"
 print -u2 'Exercising production playback, live-meter cancellation, routing invariance and near-EOF drainage…'
+profile_status=0
 if ! xcodebuild test-without-building -xctestrun "$profile_run" \
   -destination 'platform=macOS' -parallel-testing-enabled NO -test-timeouts-enabled YES \
   -default-test-execution-time-allowance "$test_allowance" \
@@ -84,11 +85,17 @@ if ! xcodebuild test-without-building -xctestrun "$profile_run" \
   -only-testing:'Aagedal Media Player Tests/LiveAudioMeterPerformanceTests/testRepresentativeProductionPathWhenRequested' \
   > "$artifact_dir/profile.log" 2>&1; then
   tail -n 120 "$artifact_dir/profile.log" >&2
-  exit 1
+  profile_status=1
 fi
 profile_end="$(date '+%Y-%m-%d %H:%M:%S')"
+# Failure diagnostics are essential to distinguish meter and native AO faults.
+# Preserve them even when XCTest fails before producing a complete profile row.
 xcrun xcresulttool export attachments --path "$artifact_dir/LiveAudioMeterProfile.xcresult" \
   --output-path "$artifact_dir/attachments" >/dev/null
+if (( profile_status != 0 )); then
+  print -u2 "Production profile failed; retained diagnostics: $artifact_dir"
+  exit "$profile_status"
+fi
 /usr/bin/python3 "$repository_dir/scripts/validate-live-audio-meter-profile.py" "$artifact_dir"
 pmset -g batt > "$artifact_dir/power-end.txt"
 /usr/bin/python3 "$repository_dir/scripts/check-programme-profile-power.py" \
