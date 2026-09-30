@@ -63,6 +63,14 @@ buffer, a cropped Core Image extent, or a resampling track matrix leave the
 capture available as a display preview but prevent Native pixels. Pixel aspect
 ratio does not change this coded-raster check.
 
+Geometry and raster proof come from the single enabled video track in the
+ready player item. Changing that track or the item's video composition
+invalidates the old image and proof even when the item itself is unchanged.
+Multiple enabled video tracks, multiple coded format descriptions, and
+composition tracks cannot establish one direct source raster and remain
+preview-only. Explicit video-composition output already carries its display
+geometry, so capture does not apply a source-track transform again.
+
 The MPV 0.41.0 capture audit confirms that [`cmd_screenshot_raw`](https://github.com/mpv-player/mpv/blob/v0.41.0/player/screenshot.c#L524)
 passes through `screenshot_get_rgb` and `convert_image`. The latter uses display
 dimensions, forces square pixel aspect, and can scale the image during conversion.
@@ -94,6 +102,10 @@ landscape and portrait rasters, 4:3 pixel aspect ratio, 90° rotation with PAR,
 horizontal mirroring combined with 90°/270° rotation. The live tests
 read the images published by `LoupeFrameCapture` from each backend while paused.
 They require all fixture files and report a skip if the set is missing.
+The generated two-track fixture combines landscape and rotated anamorphic
+tracks. Live decoder checks select the second track, switch back within the
+same item, and reject source-pixel proof for same-size resampling compositions
+while retaining a fresh display preview.
 
 The rendered-lens matrix separately checks the normalized picture positions
 across four coded-raster/fitted-picture combinations, every visible

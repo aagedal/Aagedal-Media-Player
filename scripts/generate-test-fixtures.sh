@@ -162,6 +162,12 @@ generate_loupe_fixture mirror-90 320 180 1 90 1
 generate_loupe_fixture mirror-270 320 180 1 270 1
 generate_loupe_fixture mirror-vertical 320 180 1 0 0 1
 
+# Track selection must use the enabled item track, not the first asset track.
+# Preserve the second track's 90-degree matrix and anamorphic coded raster.
+ffmpeg -i "$output_dir/loupe/landscape.mp4" -i "$output_dir/loupe/rotate-90-par.mp4" \
+    -map 0:v:0 -map 1:v:0 -c copy -disposition:v:0 default -disposition:v:1 0 \
+    -movflags +faststart "$output_dir/loupe/multi-track.mp4"
+
 # A small HDR10 clip carrying BT.2020/PQ, mastering-display, and MaxCLL/MaxFALL
 # metadata. repeat-headers keeps the metadata available to prefix-only readers.
 ffmpeg \

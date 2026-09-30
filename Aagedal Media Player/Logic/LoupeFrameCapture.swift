@@ -52,6 +52,10 @@ final class LoupeFrameCapture: ObservableObject {
     private struct SourceIdentity: Equatable {
         let preparationID: Int
         let backend: ObjectIdentifier
+        // An item can keep its identity while changing the track feeding its
+        // video output. Such a change invalidates both the image and its proof.
+        let enabledVideoTracks: [CMPersistentTrackID]
+        let videoComposition: ObjectIdentifier?
     }
 
     /// Dimensions alone do not identify a decoded raster: an old MPV preview
@@ -59,9 +63,9 @@ final class LoupeFrameCapture: ObservableObject {
     /// image to have come from the still-current AV player item.
     func hasVerifiedAVRaster(for controller: PlayerController) -> Bool {
         guard self.controller === controller, image != nil,
-              !controller.useMPV, let item = controller.player?.currentItem else { return false }
-        let current = SourceIdentity(preparationID: controller.preparationID,
-                                     backend: ObjectIdentifier(item))
+              controller.isReady, !controller.useMPV,
+              let item = controller.player?.currentItem, item.status == .readyToPlay else { return false }
+        let current = avSourceIdentity(controller: controller, item: item)
         return source == current && verifiedAVRasterSource == current
     }
 
@@ -106,12 +110,39 @@ final class LoupeFrameCapture: ObservableObject {
     private func currentSource() -> SourceIdentity? {
         guard let controller, controller.isReady else { return nil }
         if controller.useMPV, let mpv = controller.mpvPlayer {
-            return SourceIdentity(preparationID: controller.preparationID, backend: ObjectIdentifier(mpv))
+            return SourceIdentity(preparationID: controller.preparationID, backend: ObjectIdentifier(mpv),
+                                  enabledVideoTracks: [], videoComposition: nil)
         }
-        if let item = controller.player?.currentItem {
-            return SourceIdentity(preparationID: controller.preparationID, backend: ObjectIdentifier(item))
+        if let item = controller.player?.currentItem, item.status == .readyToPlay {
+            return avSourceIdentity(controller: controller, item: item)
         }
         return nil
+    }
+
+    private func avSourceIdentity(controller: PlayerController, item: AVPlayerItem) -> SourceIdentity {
+        SourceIdentity(
+            preparationID: controller.preparationID, backend: ObjectIdentifier(item),
+            enabledVideoTracks: Self.enabledVideoTracks(in: item).map(\.trackID),
+            videoComposition: item.videoComposition.map(ObjectIdentifier.init)
+        )
+    }
+
+    private static func enabledVideoTracks(in item: AVPlayerItem) -> [AVAssetTrack] {
+        item.tracks.compactMap { itemTrack in
+            guard itemTrack.isEnabled, let track = itemTrack.assetTrack,
+                  track.mediaType == .video else { return nil }
+            return track
+        }
+    }
+
+    /// The asset's first video track need not be the one supplying the output.
+    /// A video composition applies its own display geometry. Multiple enabled
+    /// tracks cannot supply an unambiguous source transform. AVCompositionTrack
+    /// still supplies preview geometry here, but the worker rejects its proof.
+    static func sourceVideoTrack(in item: AVPlayerItem) -> AVAssetTrack? {
+        guard item.videoComposition == nil else { return nil }
+        let tracks = enabledVideoTracks(in: item)
+        return tracks.count == 1 ? tracks[0] : nil
     }
 
     private func refreshSource() {
@@ -160,7 +191,12 @@ final class LoupeFrameCapture: ObservableObject {
                 _ = gate.complete(token)
                 return
             }
-            request = .av(item.asset, buffer)
+            let track = Self.sourceVideoTrack(in: item)
+            // Composition tracks can concatenate different coded formats and
+            // display matrices. Their nominal format is insufficient evidence
+            // about the segment that produced this buffer.
+            let canVerify = !(item.asset is AVComposition) && !(track is AVCompositionTrack)
+            request = .av(track, buffer, canVerify: canVerify)
             isAVRaster = true
         } else {
             _ = gate.complete(token)
@@ -181,11 +217,11 @@ final class LoupeFrameCapture: ObservableObject {
     }
 
     // The main actor acquires the AV buffer at the current playback timestamp.
-    // The worker retains that immutable snapshot and its asset until conversion
+    // The worker retains that immutable snapshot and its selected track until conversion
     // completes; all output attachment and removal remain on MainActor.
     private nonisolated enum Request: @unchecked Sendable {
         case mpv(MPVPlayer)
-        case av(AVAsset, CVPixelBuffer)
+        case av(AVAssetTrack?, CVPixelBuffer, canVerify: Bool)
     }
 
     private nonisolated struct CapturedImage {
@@ -201,10 +237,23 @@ final class LoupeFrameCapture: ObservableObject {
             guard let raw = mpv.screenshotRaw() else { return nil }
             guard let image = image(from: raw) else { return nil }
             return CapturedImage(image: image, preservesSourcePixels: false)
-        case .av(let asset, let buffer):
-            guard let track = try? await asset.loadTracks(withMediaType: .video).first,
-                  let transform = try? await track.load(.preferredTransform) else { return nil }
-            let format = try? await track.load(.formatDescriptions).first
+        case .av(let track, let buffer, let canVerify):
+            // A composition has already applied its own geometry to the output;
+            // do not apply an unrelated first-track matrix a second time.
+            let transform: CGAffineTransform
+            let format: CMFormatDescription?
+            if let track {
+                guard let preferred = try? await track.load(.preferredTransform) else { return nil }
+                transform = preferred
+                let formats = try? await track.load(.formatDescriptions)
+                // Several coded descriptions can represent changing raster
+                // formats. Output does not identify which description supplied
+                // this frame, so keep native-pixel verification conservative.
+                format = formats?.count == 1 ? formats?.first : nil
+            } else {
+                transform = .identity
+                format = nil
+            }
             // Preferred transform supplies container rotation/mirroring. Keep
             // the full oriented raster; the UI applies display aspect (PAR).
             let decoded = CIImage(cvPixelBuffer: buffer)
@@ -216,7 +265,7 @@ final class LoupeFrameCapture: ObservableObject {
             let fullBufferExtent = CGRect(x: 0, y: 0,
                                           width: CVPixelBufferGetWidth(buffer),
                                           height: CVPixelBufferGetHeight(buffer))
-            let preservesSourcePixels = decoded.extent == fullBufferExtent
+            let preservesSourcePixels = canVerify && decoded.extent == fullBufferExtent
                 && isSourceRaster(buffer, format: format, transform: transform)
             return CapturedImage(image: image, preservesSourcePixels: preservesSourcePixels)
         }
