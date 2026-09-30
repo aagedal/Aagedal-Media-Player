@@ -199,7 +199,14 @@ a transient 368.516 MiB lifetime-peak increase while reading an 8.64 GB FX6
 MXF, with resident memory returning near baseline after conversion. A full KLV
 header/peek scan of the mapped source is consistent with this cost; bounded
 file-backed reading and long-duration scaling need investigation. These
-observations do not establish multi-hour or base-M1 acceptance.
+observations do not establish multi-hour or base-M1 acceptance. The subsequent
+[bounded-reader investigation](evidence/authentic-camera-metadata-memory-20260930/bounded-reader-investigation.md)
+locates the whole-file mapping and every-KLV 512-byte peek, independently
+confirms the structural page inventory, and adds a 367.188 MiB page-union
+estimate including the ARRI prefix scan. That estimate is an inference rather
+than measured RSS. The investigation scopes a file-backed reader that
+preserves footer, NRT/C2PA, MCA, duration and timecode behavior; implementation
+and candidate parity/memory validation remain open.
 
 The synthetic ALAC files have no video or RTMD track. They establish the negative
 probe regression and audio metadata parity only. The subsequent

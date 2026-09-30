@@ -1,0 +1,19 @@
+{
+  "dependencyRevision": "8662054299a3e13c49c65f74c564360559d1bf7f",
+  "dependencyVersion": "3.0.1",
+  "dependencyRoot": "/tmp/aagedal-itu-live-dd-20260930/SourcePackages/checkouts/SwiftMediaMetadata",
+  "sourceSHA256": {
+    "Sources/SwiftMediaMetadata/API/VideoMetadata.swift": "47e0c3212ada08874c1203a4c2456bb0dbffabddc6cb6319e9057dca228cbb97",
+    "Sources/SwiftMediaMetadata/Video/MXFReader.swift": "da2cbe18fc2482bd6d3d91b6022878a235c8e309e4e6eb16955c30613c07af33",
+    "Sources/SwiftMediaMetadata/Video/ARRIJSONParser.swift": "7c461d3040021ddaed97a42890a27c630e9095f81140e21d2fd302482f011708",
+    "Sources/SwiftMediaMetadata/Binary/BinaryReader.swift": "03b63580e9096a3563c9ca72e85ec91b95c12574a99fc32c9d3eb45b8bedb9dd",
+    "Sources/SwiftMediaMetadata/SwiftMediaMetadata.swift": "7ef9ae182b88ba69d904aedc231bdd878bcebb6e1ac0e3a5ddc169a262419123"
+  },
+  "mediaIdentity": {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/A1_v_FX6/FX6/OJ_FX6A0021.MXF",
+    "bytes": 8643449904,
+    "sha256": "5d1c636920c80e7ce83af6486a8de9184c5cacee8a316e799dbb52e8f02174a8",
+    "hashProvenance": "Existing validated production profile; bounded structural inventory does not rehash the full 8.64 GB payload."
+  },
+  "historicEvidenceManifestSHA256": "d68d3c494fc519e023d33036a5fe2709fac9adca4343e8d6d19ab42a00fef561"
+}
