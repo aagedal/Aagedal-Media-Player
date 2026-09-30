@@ -179,6 +179,87 @@ final class LiveAudioMeterCoordinatorTests: XCTestCase {
         coordinator.close()
     }
 
+    func testStartupWithoutPCMUsesBoundedCatchUpAndCancelsStalledWorker() async throws {
+        let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
+        let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
+        let startFrame: Int64 = 480_000
+        coordinator.start(try request(stream: 0, startFrame: startFrame))
+        await decoder.waitUntilAttached(stream: 0)
+        let generation = coordinator.generation
+
+        // A clock observation at the requested position is not proof that the
+        // decoder has produced PCM. Keep the full existing startup allowance.
+        coordinator.updatePlaybackClock(playback(time: 10, playing: true))
+        coordinator.updatePlaybackClock(playback(time: 12, playing: true))
+        XCTAssertEqual(coordinator.generation, generation)
+        XCTAssertEqual(coordinator.status, .warmingUp(
+            frame: startFrame, momentaryReady: false, shortTermReady: false
+        ))
+        XCTAssertNil(coordinator.snapshot)
+        XCTAssertTrue(decoder.isActive(stream: 0))
+
+        coordinator.updatePlaybackClock(playback(time: 12.01, playing: true))
+
+        guard case .unavailable(let reason, _) = coordinator.status else {
+            return XCTFail("Expected a decoder with no PCM to exhaust the startup allowance")
+        }
+        XCTAssertEqual(reason, "Live meters lost synchronization with playback.")
+        let failure = try XCTUnwrap(coordinator.clockFailureContext)
+        XCTAssertEqual(failure.requestStartFrame, startFrame)
+        XCTAssertEqual(failure.decodedEndFrame, startFrame)
+        XCTAssertEqual(failure.publishedSnapshotCount, 0)
+        XCTAssertFalse(failure.hadEstablishedSynchronization)
+        await decoder.waitUntilCancelled(stream: 0)
+
+        let failedGeneration = coordinator.generation
+        coordinator.updatePlaybackClock(playback(time: 12.1, playing: true))
+        XCTAssertEqual(coordinator.generation, failedGeneration)
+        XCTAssertEqual(coordinator.clockFailureContext, failure)
+        coordinator.close()
+    }
+
+    func testStartupCanPublishFirstPCMThenEstablishSynchronization() async throws {
+        let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
+        let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
+        coordinator.start(try request(stream: 0, startFrame: 0))
+        await decoder.waitUntilAttached(stream: 0)
+        let generation = coordinator.generation
+
+        coordinator.updatePlaybackClock(playback(time: 0, playing: true))
+        coordinator.updatePlaybackClock(playback(time: 0.5, playing: true))
+        decoder.emit(snapshot(endFrame: 24_000), stream: 0)
+        coordinator.updatePlaybackClock(playback(time: 0.5, playing: true))
+
+        XCTAssertEqual(coordinator.generation, generation)
+        XCTAssertEqual(coordinator.snapshot?.endFrame, 24_000)
+        XCTAssertEqual(coordinator.status, .warmingUp(
+            frame: 24_000, momentaryReady: true, shortTermReady: false
+        ))
+        XCTAssertEqual(coordinator.clockDrift, 0)
+
+        coordinator.updatePlaybackClock(playback(time: 0.76, playing: true))
+        XCTAssertTrue(try XCTUnwrap(coordinator.clockFailureContext).hadEstablishedSynchronization)
+        await decoder.waitUntilCancelled(stream: 0)
+        coordinator.close()
+    }
+
+    func testStartupRejectsInvalidPlayingClockBeforeFirstPCM() async throws {
+        let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
+        let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
+        coordinator.start(try request(stream: 0, startFrame: 0))
+        await decoder.waitUntilAttached(stream: 0)
+
+        coordinator.updatePlaybackClock(playback(time: .nan, playing: true))
+
+        guard case .unavailable(let reason, _) = coordinator.status else {
+            return XCTFail("Expected an invalid startup clock to invalidate the worker")
+        }
+        XCTAssertEqual(reason, "The playback clock is unavailable.")
+        XCTAssertNil(coordinator.snapshot)
+        await decoder.waitUntilCancelled(stream: 0)
+        coordinator.close()
+    }
+
     func testInitialClockLagCanCatchUpBeforeSteadyStateDriftFails() async throws {
         let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
         let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)

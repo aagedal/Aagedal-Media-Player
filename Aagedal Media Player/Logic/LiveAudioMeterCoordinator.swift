@@ -248,7 +248,12 @@ final class LiveAudioMeterCoordinator: ObservableObject {
             }
             drain(handoff, generation: generation)
         }
-        guard let request, let endFrame = reducedSnapshot?.measurement.endFrame else { return }
+        guard let request, handoff != nil else { return }
+        // Before the first PCM bucket arrives the request position is the only
+        // known decoder endpoint. Apply the same bounded startup catch-up rule
+        // to it so a worker stalled during startup cannot warm up indefinitely.
+        // A request position alone never establishes actual decoder clock sync.
+        let endFrame = reducedSnapshot?.measurement.endFrame ?? request.startSourceFrame
         let assessment = LiveAudioMeterClockPolicy(
             sampleRate: request.format.sampleRate
         ).assess(
@@ -259,12 +264,12 @@ final class LiveAudioMeterCoordinator: ObservableObject {
         switch assessment {
         case .synchronized(let drift):
             clockDrift = drift
-            hasEstablishedClockSync = true
+            hasEstablishedClockSync = reducedSnapshot != nil
             isCatchingUpInitialLag = false
             status = readinessStatus(frame: endFrame)
         case .suspendAhead(let drift):
             clockDrift = drift
-            hasEstablishedClockSync = true
+            hasEstablishedClockSync = reducedSnapshot != nil
             isCatchingUpInitialLag = false
             status = readinessStatus(frame: endFrame)
             if !isClockSuspended {
@@ -273,7 +278,7 @@ final class LiveAudioMeterCoordinator: ObservableObject {
             }
         case .resume(let drift):
             clockDrift = drift
-            hasEstablishedClockSync = true
+            hasEstablishedClockSync = reducedSnapshot != nil
             isCatchingUpInitialLag = false
             status = readinessStatus(frame: endFrame)
             isClockSuspended = false
