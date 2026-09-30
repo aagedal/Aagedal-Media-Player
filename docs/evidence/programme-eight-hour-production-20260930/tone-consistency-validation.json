@@ -1,0 +1,60 @@
+{
+  "measurements": [
+    {
+      "actualIntegratedLUFS": -18.1,
+      "expectedIntegratedLUFS": -18.1,
+      "layout": "stereo",
+      "loudnessRangeLU": 0.0,
+      "passed": true,
+      "scope": "whole",
+      "truePeakDBTP": -18.1
+    },
+    {
+      "actualIntegratedLUFS": -18.1,
+      "expectedIntegratedLUFS": -18.1,
+      "layout": "stereo",
+      "loudnessRangeLU": 0.0,
+      "passed": true,
+      "scope": "early",
+      "truePeakDBTP": -18.1
+    },
+    {
+      "actualIntegratedLUFS": -18.1,
+      "expectedIntegratedLUFS": -18.1,
+      "layout": "stereo",
+      "loudnessRangeLU": 0.0,
+      "passed": true,
+      "scope": "late",
+      "truePeakDBTP": -18.1
+    },
+    {
+      "actualIntegratedLUFS": -13.4,
+      "expectedIntegratedLUFS": -13.4,
+      "layout": "surround5Point1",
+      "loudnessRangeLU": 0.0,
+      "passed": true,
+      "scope": "whole",
+      "truePeakDBTP": -18.1
+    },
+    {
+      "actualIntegratedLUFS": -13.4,
+      "expectedIntegratedLUFS": -13.4,
+      "layout": "surround5Point1",
+      "loudnessRangeLU": 0.0,
+      "passed": true,
+      "scope": "early",
+      "truePeakDBTP": -18.1
+    },
+    {
+      "actualIntegratedLUFS": -13.4,
+      "expectedIntegratedLUFS": -13.4,
+      "layout": "surround5Point1",
+      "loudnessRangeLU": 0.0,
+      "passed": true,
+      "scope": "late",
+      "truePeakDBTP": -18.1
+    }
+  ],
+  "passed": true,
+  "scope": "Repeated-tone consistency across scopes, distinct from published numerical calibration or per-role contribution validation."
+}

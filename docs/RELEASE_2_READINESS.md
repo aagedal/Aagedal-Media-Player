@@ -114,8 +114,16 @@ inputs and declares missing compilation/environment prerequisites. Actual
 reconstruction passes independent identity checks; see
 [offline reconstruction](evidence/coreaudio-offline-reconstruction-20260930/README.md).
 It does not publish or compile a dependency. Programme profiling now stays awake and retains
-failed-test and sleep diagnostics; the clean eight-hour production matrix and
-integrated Release verification follow separately. The candidate floor is 745
+failed-test and sleep diagnostics. The clean eight-hour production matrix now
+passes all six workloads, with consistent Stereo/5.1 whole/early/late tone
+results and no sleep. Container-index memory scaling remains explicit;
+representative content, hardware and elapsed-time soak gates remain open. See
+[eight-hour evidence](evidence/programme-eight-hour-production-20260930/README.md). Canonical optimized Release verification passes at
+`f5411b154dd6065a4901132a487b27ccf6d51058`: 736 passes, nine named opt-in skips,
+both isolated transport directions, analysis and all 61 preflight checks. All
+five new regressions pass exact detailed validation. The independent host-attributes
+script correction has a final passing script gate and byte-identical app/test/pin
+identity; see [integrated receipts](evidence/release-candidate-completion-20260930/README.md). The candidate floor is 745
 aggregate tests plus both isolated mixed-backend checks. Native keyboard/spoken
 accessibility, public dependencies, hardware/soak/editor and distribution gates
 remain open.

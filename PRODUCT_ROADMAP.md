@@ -300,8 +300,8 @@ confidence as the picture.
   input, missing streams, and cancellation/retry. A production long-file loudness profiler now records whole/early/late-range
   timings and separately sampled app/FFmpeg memory. The September 12 split-mono
   profiler exposed and fixed silent long-range channel loss and excessive
-  shared-input buffering; a corrected one-hour production matrix passes, while
-  a clean eight-hour production rerun and broader content remain. See
+  shared-input buffering; a corrected one-hour production matrix and clean
+  eight-hour production rerun pass, while broader content remains. See
   `docs/PROGRAMME_LOUDNESS_PERFORMANCE.md`. Representative multitrack
   and release-floor profiling and calibrated reference accuracy remain; see `docs/AUDIO_LOUDNESS.md`.
 

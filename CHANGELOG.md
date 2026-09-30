@@ -45,6 +45,7 @@ All notable changes to Aagedal Media Player.
 - Metadata container-edge validation checks the independent error behavior of frame, gyroscope, and accelerometer RTMD readers against both the 3.0.0 baseline and integrated 3.0.1 dependency.
 
 ### Added
+- Clean eight-hour production split-mono programme profiling, with consistent whole-file and early/late Stereo and 5.1 measurements and retained memory/power evidence.
 - Offline reconstruction of verified GPL dependency source commits and exact cached inputs, with explicit environment and compilation prerequisites.
 - DTS timestamp qualification with retained source/decoder evidence and contiguous six-channel DTS regression coverage.
 - Opt-in repeated production metadata imports with complete shared-cache/revisit parity, resident-memory and descriptor budgets, and fresh-host evidence.

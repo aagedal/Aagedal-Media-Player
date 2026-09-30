@@ -1,0 +1,215 @@
+[
+  {
+    "audioStreams": [
+      {
+        "channels": 1,
+        "codec": "alac",
+        "index": 0,
+        "sampleRate": 48000
+      },
+      {
+        "channels": 1,
+        "codec": "alac",
+        "index": 1,
+        "sampleRate": 48000
+      },
+      {
+        "channels": 1,
+        "codec": "alac",
+        "index": 2,
+        "sampleRate": 48000
+      },
+      {
+        "channels": 1,
+        "codec": "alac",
+        "index": 3,
+        "sampleRate": 48000
+      },
+      {
+        "channels": 1,
+        "codec": "alac",
+        "index": 4,
+        "sampleRate": 48000
+      },
+      {
+        "channels": 1,
+        "codec": "alac",
+        "index": 5,
+        "sampleRate": 48000
+      },
+      {
+        "channels": 1,
+        "codec": "alac",
+        "index": 6,
+        "sampleRate": 48000
+      },
+      {
+        "channels": 1,
+        "codec": "alac",
+        "index": 7,
+        "sampleRate": 48000
+      }
+    ],
+    "durationSeconds": 28800,
+    "file": "eight-hour-eight-mono.m4a",
+    "inputIndex": 0,
+    "measurements": [
+      {
+        "audioStreamIndices": [
+          0,
+          1
+        ],
+        "channelRoles": [
+          "FL",
+          "FR"
+        ],
+        "initialResidentBytes": 235372544,
+        "integratedLUFS": "-18.1",
+        "layout": "stereo",
+        "loudnessRangeLU": "0.0",
+        "rangeEndSeconds": 28800,
+        "rangeStartSeconds": 0,
+        "sampledPeakChildResidentBytes": 237535232,
+        "sampledPeakResidentBytes": 265650176,
+        "scope": "whole",
+        "selectedAudioSecondsPerWallSecond": 299.0750667409896,
+        "truePeakDBTP": "-18.1",
+        "wallSeconds": 96.296894
+      },
+      {
+        "audioStreamIndices": [
+          0,
+          1
+        ],
+        "channelRoles": [
+          "FL",
+          "FR"
+        ],
+        "initialResidentBytes": 162856960,
+        "integratedLUFS": "-18.1",
+        "layout": "stereo",
+        "loudnessRangeLU": "0.0",
+        "rangeEndSeconds": 30,
+        "rangeStartSeconds": 0,
+        "sampledPeakChildResidentBytes": 82116608,
+        "sampledPeakResidentBytes": 162856960,
+        "scope": "early",
+        "selectedAudioSecondsPerWallSecond": 117.7927407278708,
+        "truePeakDBTP": "-18.1",
+        "wallSeconds": 0.254684625
+      },
+      {
+        "audioStreamIndices": [
+          0,
+          1
+        ],
+        "channelRoles": [
+          "FL",
+          "FR"
+        ],
+        "initialResidentBytes": 162873344,
+        "integratedLUFS": "-18.1",
+        "layout": "stereo",
+        "loudnessRangeLU": "0.0",
+        "rangeEndSeconds": 28800,
+        "rangeStartSeconds": 28770,
+        "sampledPeakChildResidentBytes": 237010944,
+        "sampledPeakResidentBytes": 162873344,
+        "scope": "late",
+        "selectedAudioSecondsPerWallSecond": 3.461723247926006,
+        "truePeakDBTP": "-18.1",
+        "wallSeconds": 8.666204041
+      },
+      {
+        "audioStreamIndices": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "channelRoles": [
+          "FL",
+          "FR",
+          "FC",
+          "LFE",
+          "SL",
+          "SR"
+        ],
+        "initialResidentBytes": 162889728,
+        "integratedLUFS": "-13.4",
+        "layout": "surround5Point1",
+        "loudnessRangeLU": "0.0",
+        "rangeEndSeconds": 28800,
+        "rangeStartSeconds": 0,
+        "sampledPeakChildResidentBytes": 642695168,
+        "sampledPeakResidentBytes": 180731904,
+        "scope": "whole",
+        "selectedAudioSecondsPerWallSecond": 96.97086059292448,
+        "truePeakDBTP": "-18.1",
+        "wallSeconds": 296.996436083
+      },
+      {
+        "audioStreamIndices": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "channelRoles": [
+          "FL",
+          "FR",
+          "FC",
+          "LFE",
+          "SL",
+          "SR"
+        ],
+        "initialResidentBytes": 181059584,
+        "integratedLUFS": "-13.4",
+        "layout": "surround5Point1",
+        "loudnessRangeLU": "0.0",
+        "rangeEndSeconds": 30,
+        "rangeStartSeconds": 0,
+        "sampledPeakChildResidentBytes": 177438720,
+        "sampledPeakResidentBytes": 181059584,
+        "scope": "early",
+        "selectedAudioSecondsPerWallSecond": 41.46832424773868,
+        "truePeakDBTP": "-18.1",
+        "wallSeconds": 0.72344375
+      },
+      {
+        "audioStreamIndices": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "channelRoles": [
+          "FL",
+          "FR",
+          "FC",
+          "LFE",
+          "SL",
+          "SR"
+        ],
+        "initialResidentBytes": 181092352,
+        "integratedLUFS": "-13.4",
+        "layout": "surround5Point1",
+        "loudnessRangeLU": "0.0",
+        "rangeEndSeconds": 28800,
+        "rangeStartSeconds": 28770,
+        "sampledPeakChildResidentBytes": 640073728,
+        "sampledPeakResidentBytes": 181092352,
+        "scope": "late",
+        "selectedAudioSecondsPerWallSecond": 1.2899301922028235,
+        "truePeakDBTP": "-18.1",
+        "wallSeconds": 23.2570725
+      }
+    ]
+  }
+]

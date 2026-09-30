@@ -1,0 +1,150 @@
+{
+  "aggregate": {
+    "devicesAndConfigurations": [
+      {
+        "device": {
+          "architecture": "arm64",
+          "deviceId": "00006050-001C293C22F9401C",
+          "deviceName": "My Mac",
+          "modelName": "MacBook Pro",
+          "osBuildNumber": "26A434",
+          "osVersion": "27.0.1",
+          "platform": "macOS"
+        },
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "passedTests": 736,
+        "skippedTests": 9,
+        "testPlanConfiguration": {
+          "configurationId": "1",
+          "configurationName": "Test Scheme Action"
+        }
+      }
+    ],
+    "environmentDescription": "Aagedal Media Player \u00b7 Built with macOS 27.0.1",
+    "expectedFailures": 0,
+    "failedTests": 0,
+    "finishTime": 1790800910.679,
+    "passedTests": 736,
+    "result": "Passed",
+    "runtimeWarnings": [],
+    "skippedTests": 9,
+    "startTime": 1790800672.955,
+    "statistics": [],
+    "testFailures": [],
+    "title": "Test - Aagedal Media Player",
+    "topInsights": [
+      {
+        "category": "Longest Test Runs",
+        "impact": "64% of duration",
+        "text": "11 longest test runs with outlier durations exceeding 3.27s (three standard deviations)"
+      }
+    ],
+    "totalTestCount": 745
+  },
+  "analysisSucceeded": true,
+  "focused": {
+    "devicesAndConfigurations": [
+      {
+        "device": {
+          "architecture": "arm64",
+          "deviceId": "00006050-001C293C22F9401C",
+          "deviceName": "My Mac",
+          "modelName": "MacBook Pro",
+          "osBuildNumber": "26A434",
+          "osVersion": "27.0.1",
+          "platform": "macOS"
+        },
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "passedTests": 47,
+        "skippedTests": 0,
+        "testPlanConfiguration": {
+          "configurationId": "1",
+          "configurationName": "Test Scheme Action"
+        }
+      }
+    ],
+    "environmentDescription": "Aagedal Media Player \u00b7 Built with macOS 27.0.1",
+    "expectedFailures": 0,
+    "failedTests": 0,
+    "finishTime": 1790800565.571,
+    "passedTests": 47,
+    "result": "Passed",
+    "runtimeWarnings": [],
+    "skippedTests": 0,
+    "startTime": 1790800409.353,
+    "statistics": [],
+    "testFailures": [],
+    "title": "Test - Aagedal Media Player",
+    "topInsights": [
+      {
+        "category": "Longest Test Runs",
+        "impact": "79% of duration",
+        "text": "1 longest test run with outlier durations exceeding 2.14s (three standard deviations)"
+      }
+    ],
+    "totalTestCount": 47
+  },
+  "isolatedTransport": {
+    "devicesAndConfigurations": [
+      {
+        "device": {
+          "architecture": "arm64",
+          "deviceId": "00006050-001C293C22F9401C",
+          "deviceName": "My Mac",
+          "modelName": "MacBook Pro",
+          "osBuildNumber": "26A434",
+          "osVersion": "27.0.1",
+          "platform": "macOS"
+        },
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "passedTests": 2,
+        "skippedTests": 0,
+        "testPlanConfiguration": {
+          "configurationId": "1",
+          "configurationName": "Test Scheme Action"
+        }
+      }
+    ],
+    "environmentDescription": "Aagedal Media Player \u00b7 Built with macOS 27.0.1",
+    "expectedFailures": 0,
+    "failedTests": 0,
+    "finishTime": 1790800941.058,
+    "passedTests": 2,
+    "result": "Passed",
+    "runtimeWarnings": [],
+    "skippedTests": 0,
+    "startTime": 1790800915.727,
+    "statistics": [],
+    "testFailures": [],
+    "title": "Test - Aagedal Media Player",
+    "topInsights": [],
+    "totalTestCount": 2
+  },
+  "launcherCorrection": "First verifier launched with the clean clone script but original working directory. Stopped before Xcode build and restarted with explicit clone working directory into a new output directory; no app verification is claimed for the aborted launcher.",
+  "power": {
+    "end": "2026-09-30 22:43:53",
+    "events": [],
+    "sleepObserved": false,
+    "start": "2026-09-30 22:37:31"
+  },
+  "preflight": "Release preflight passed 61 checks for 1.6.1 (163) [candidate].",
+  "qualification": "Fresh canonical DerivedData, source-only detached clone and hashed ignored fixtures; unchanged shipping pins. Native workflow/audible/hardware/editor/distribution gates remain open.",
+  "requiredContinuationValidation": "PASS: release XCTest evidence contains 745 tests, 9 allowlisted explicit skip(s), and no runtime warnings",
+  "scriptFollowup": {
+    "appAndTestSwiftSourcesMatchCanonical": true,
+    "canonicalCommit": "f5411b154dd6065a4901132a487b27ccf6d51058",
+    "changedScripts": {
+      "scripts/prepare-mpv-coreaudio-publication.py": "2d7ce33a8cdf71ef57375738d2daef2405bb25ad584c3035b1c256bd1d8f72d9",
+      "scripts/test-mpv-coreaudio-publication.py": "534961ea7ad61aa6aa3347ecfc82992848397bab07f5add03a0709c6108a1a6c"
+    },
+    "followupCommit": "9c32a44df39847fa7319eb7a94beee9a57d2a8d4",
+    "packageResolvedMatchesCanonical": true,
+    "qualification": "Script-only attributes isolation follows canonical source verification. All app/test Swift sources and pins are byte-identical.",
+    "scriptValidatorGate": "passed"
+  },
+  "sourceCommit": "f5411b154dd6065a4901132a487b27ccf6d51058",
+  "sourceStatusAfterCanonical": ""
+}

@@ -210,7 +210,33 @@ Whole-file child sampled peaks fall from 165.44 to 52.50 MiB for Stereo and from
 565.20 to 125.89 MiB for 5.1 in these observations. The 5.1 late selection falls
 from 522.88 to 121.83 MiB. Parent metadata-related memory remains high until
 retained pages/caches are released, so this does not close full-app memory
-acceptance. A clean eight-hour **production service** rerun, representative
+acceptance. The clean eight-hour production-service rerun now passes below. Representative
 production codecs/content, base-M1 measurement and actual elapsed-time soaks
 remain separate acceptance work. The independent eight-hour graph result above
 confirms the specific long-file channel-loss correction, not all those gates.
+
+### Clean eight-hour production-service rerun — 2026-09-30
+
+The actual corrected production service passes all six whole/early/late
+workloads on a newly generated eight-hour fixture with eight mono 48 kHz ALAC
+tracks. It uses clean source `f5411b154dd6065a4901132a487b27ccf6d51058`, normal
+Release build-for-testing, the unchanged pinned package cache, and the M5 Pro
+host now running macOS 27.0.1/Xcode 27.0. No app build/test or native automation
+runs concurrently with measurement, and the awake/power gate observes no sleep.
+The same-duration fixture is 4,652,793,673 bytes; its independently checked
+before/after SHA-256 is
+`da22385a1c31bfa3cba2d7fdc73c7fd61ad2c1ef2eecedc5c18348ac6ad2ac5c`.
+
+All Stereo scopes return −18.1 LUFS and all 5.1 scopes return −13.4 LUFS, with
+0.0 LU range and −18.1 dBTP throughout. The historical late-range −21.1 LUFS
+failure does not recur. Whole-file wall times are 96.297 seconds Stereo and
+296.996 seconds 5.1; sampled child peaks are 226.53 and 612.92 MiB. Late-range
+wall times are 8.666 and 23.257 seconds with 226.03/610.42 MiB child peaks.
+
+This closes the specific pending clean eight-hour production rerun. The
+container-index memory increase with duration remains explicit; no constant
+memory, full-app/metadata peak, controlled historical performance comparison,
+producer-authentic content, base-M1 or elapsed-time soak acceptance is implied.
+Complete six-row measurements, source/input/product identities, actual XCTest,
+structural validation and power evidence are retained in the
+[eight-hour receipt](evidence/programme-eight-hour-production-20260930/README.md).

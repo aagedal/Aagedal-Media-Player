@@ -1,0 +1,32 @@
+{
+  "generationToolObservedAfter": {
+    "path": "/opt/homebrew/bin/ffmpeg",
+    "sha256": "c8173e9755795978bce8e104f8d7044fabe7d6d84044aba37d3648c6f4e4e1a8",
+    "version": "ffmpeg version 9.0.2 Copyright (c) 2000-2026 the FFmpeg developers"
+  },
+  "input": {
+    "durationSeconds": 28800,
+    "path": "/private/tmp/aagedal-programme-eight-hour-20260930/eight-hour-eight-mono.m4a",
+    "sha256BeforeAndAfter": "da22385a1c31bfa3cba2d7fdc73c7fd61ad2c1ef2eecedc5c18348ac6ad2ac5c",
+    "sizeBytes": 4652793673
+  },
+  "nativeAutomation": "No computer-use interaction or concurrent app build/test runs during the measured interval.",
+  "packageCacheReuse": "The already verified external package cache is symlinked at the canonical DerivedData/SourcePackages path for the profiler build. No build database or product is copied; build-for-testing runs normally against the same clean source clone.",
+  "packageResolvedSHA256": "6aea6d64326f3040345c3523a0a39c95d53335777e233b3aa311e8ba90ad475d",
+  "productsObservedAfterCompletedProfile": {
+    "/private/tmp/aagedal-2-plan-completion-verification-v2-20260930/DerivedData/Build/Products/Release/Aagedal Media Player.app/Contents/MacOS/Aagedal Media Player": "d5fe11d4d13cd419816c28f0e96c10cf532f3b568b6600eaa054fd7508e9176b",
+    "/private/tmp/aagedal-2-plan-completion-verification-v2-20260930/DerivedData/Build/Products/Release/Aagedal Media Player.app/Contents/PlugIns/Aagedal Media Player Tests.xctest/Contents/MacOS/Aagedal Media Player Tests": "aa665092318fbb5e7de8c5869b91aa653f67dca03b1b3c71d648259f594b6305",
+    "/private/tmp/aagedal-2-plan-completion-verification-v2-20260930/DerivedData/Build/Products/Release/Aagedal Media Player.app/Contents/Resources/ffmpeg": "dc3770d91735cfe8b0ef8f4eb7c6f8431d722cca0d79c0959d62be216868d604"
+  },
+  "profileSources": {
+    "Aagedal Media Player Tests/ProgrammeLoudnessPerformanceTests.swift": "89c51b0d4083da0f185fa5dd1eb12589f3865f749b9c199f6d190ac2529b5589",
+    "Aagedal Media Player/Logic/FFmpegService.swift": "d7d370f249afd556fcb01b9db4f51b8462803fa26998e0f7cc3637210b72095b",
+    "Aagedal Media Player/Logic/ProgrammeLoudness.swift": "7cb2b3e652ae81392b11e83b7df920482c268bd23750b44c7a247c0d4e39a125",
+    "scripts/check-programme-profile-power.py": "f6b4ff5ec7791fdcd863f51a598c541ae04622dc75fb6cd57b66b376daa1a62f",
+    "scripts/profile-programme-loudness.sh": "fb88ea63faa554299c7de26d946b3d33224107d2901a536d3fac3c5b8859dd61",
+    "scripts/validate-programme-loudness-profile.py": "0c6501f3c63fffbde2bb6b75a708eb9ecd4a715c2ffcfb64319cd8c7d78ffc99"
+  },
+  "qualification": "Single synthetic eight-hour ALAC observation, after metadata load; no constant-memory, elapsed-time soak, release-floor hardware or producer-authentic acceptance claim.",
+  "sourceCommit": "f5411b154dd6065a4901132a487b27ccf6d51058",
+  "sourceStatusAfterProfile": ""
+}

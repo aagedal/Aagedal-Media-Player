@@ -4165,24 +4165,26 @@ retention does not replace matching-HEAD release consumption. See
 
 ## Phase 187 — Ordinary Review validation correction ownership
 
-Status: Implementation complete on 2026-09-30; integrated Release verification follows.
+Status: Completed on 2026-09-30 with focused and canonical optimized Release verification.
 
 - [x] Give Return, Apply, blur and current-frame row failures the same selected
   finding/field ownership as report-action preflight.
 - [x] Defer competing passive callbacks and preserve unrelated correction errors
   when a field succeeds; retain unavailable-field drafts without disabled focus.
-- [x] Add three focused regressions and pass Swift frontend parsing.
+- [x] Add three focused regressions and pass Swift frontend parsing, the 47-test
+  focused Release suite and exact required-case canonical validation.
 - [ ] Complete native keyboard, Full Keyboard Access and spoken VoiceOver checks.
 
 ## Phase 188 — Qualify retained DTS cumulative timestamp overlap
 
-Status: Source/decoder qualification complete on 2026-09-30; integrated Release verification follows.
+Status: Source/decoder qualification and optimized Release regressions complete on 2026-09-30.
 
 - [x] Reproduce the exact 3,728/3,672 rejection through paced production arguments.
 - [x] Verify five-second checksummed replays are identical with and without
   input seeking; retain independent source timestamps and the bounded sawtooth.
 - [x] Add cumulative-overlap rejection and contiguous six-channel DTS/Matroska
-  regressions while preserving the existing one-millisecond tolerance.
+  regressions while preserving the existing one-millisecond tolerance; both
+  pass focused and exact required-case canonical Release validation.
 - [ ] Establish independent DTS-HD MA source-time qualification before changing
   policy or claiming native acceptance of the rejected local preparation.
 
@@ -4201,6 +4203,9 @@ Status: Offline reconstruction implemented on 2026-09-30; publication remains op
 - [x] Pass fifteen publication and eighteen clean-candidate regressions, then
   independently verify all three source Git identities and twenty inputs restored
   from the actual retained 46-file publication stage.
+- [x] Reproduce inherited Git attributes changing source reconstruction; isolate
+  them, pass sixteen publication regressions and independently reconstruct the
+  actual retained stage under an active hostile UTF-16 attributes file.
 - [ ] Complete a portable fresh-host compilation, public publication/provenance,
   ordinary fresh package resolution and a shipping repin with native acceptance.
 
@@ -4208,7 +4213,7 @@ See [offline reconstruction evidence](docs/evidence/coreaudio-offline-reconstruc
 
 ## Phase 190 — Awake programme analysis and failed-run evidence
 
-Status: Runner hardening complete on 2026-09-30; clean eight-hour production rerun follows.
+Status: Completed on 2026-09-30 with six runner/power regressions and a clean eight-hour production matrix.
 
 - [x] Own a temporary awake assertion through build and analysis, cleaning it
   and the copied test manifest on every exit.
@@ -4216,12 +4221,38 @@ Status: Runner hardening complete on 2026-09-30; clean eight-hour production rer
   XCTest or sleep failure; never publish a passing summary for rejected runs.
 - [x] Pass six power/runner regressions including real shell exit paths with
   stubbed native tools.
-- [ ] Run the corrected analyzer's full eight-hour production matrix without
-  sleep; keep synthetic-duration evidence distinct from elapsed-time/hardware soak.
+- [x] Run all six Stereo/5.1 whole/early/late workloads without sleep; every
+  scope returns consistent expected tone LUFS, LRA and true peak.
+- [x] Retain actual XCTest, structural/tone validation, input/source/product
+  identities and RSS observations; the historical late-range failure does not recur.
+- [ ] Complete producer-authentic content, role-specific long-file references,
+  base-M1/8-GB, concurrent playback/cancellation and elapsed-time soak acceptance.
+
+See [eight-hour production evidence](docs/evidence/programme-eight-hour-production-20260930/README.md).
 
 Candidate and release consumption now require 745 aggregate tests plus both
 isolated mixed-backend transport directions. Shipping dependencies and version
 remain unchanged; current-source verification is still required.
+
+## Phase 191 — Integrated Review, DTS and reconstruction continuation
+
+Status: Canonical optimized Release verification passes on 2026-09-30 at
+`f5411b154dd6065a4901132a487b27ccf6d51058`, with a separately verified script-only follow-up.
+
+- [x] Verify a clean detached source clone, fresh DerivedData, validated unchanged
+  package cache and 38 hashed existing generated fixtures.
+- [x] Pass 745 aggregate tests: 736 passes and nine explicit allowlisted skips;
+  require exactly 745 tests and every one of the five new Review/DTS cases.
+- [x] Pass both isolated transport directions, Release static analysis, all 61
+  preflight checks and no-sleep/source/package/cache verification.
+- [x] Pass final script validators and bind the independent attributes-isolation
+  correction to byte-identical app/test Swift sources and package pins.
+- [ ] Complete matching-HEAD distribution, public dependencies, native/editor,
+  supported-macOS/base-M1 and sustained audible/device acceptance.
+
+The initial wrong-working-directory launcher is stopped before building the app;
+only the explicit-clone rerun establishes app verification. See
+[integrated receipts](docs/evidence/release-candidate-completion-20260930/README.md).
 
 ## Remaining work after this continuation
 

@@ -88,3 +88,11 @@ overlaps, seeks and cumulative drift; increasing the tolerance for this one
 prepared file would not provide that evidence. The broader sustained native,
 hardware, supported-machine and compressed numerical release gates remain as
 recorded in the existing 2.0 readiness plan.
+
+## Integrated Release follow-up
+
+Both new decoder cases pass the 47-test focused Release run and canonical
+clean-source verification at `f5411b154dd6065a4901132a487b27ccf6d51058`.
+Exact detailed validation requires these cases within the full 745-test result;
+see [integrated verification](../release-candidate-completion-20260930/README.md).
+The original replay evidence and tolerance remain unchanged.
