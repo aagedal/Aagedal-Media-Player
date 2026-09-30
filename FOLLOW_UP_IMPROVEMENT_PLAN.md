@@ -3412,7 +3412,7 @@ build do not close keyboard or spoken VoiceOver acceptance.
 
 ## Phase 153 — Awake candidate verification ownership
 
-Status: Runner hardening completed on 2026-09-30; fresh verification pending.
+Status: Runner hardening completed on 2026-09-30; fresh awake verification passes in Phase 154.
 
 - [x] Retain the clean `c4a7557` aggregate pass (705 passed, eight optional skips)
   and both failed isolated transport checks as a sleep-interrupted attempt.
@@ -3423,11 +3423,31 @@ Status: Runner hardening completed on 2026-09-30; fresh verification pending.
 - [x] Require retained power evidence without sleep before final source identity
   checks and `status=passed`; bound each isolated transport test to 120 seconds.
 - [x] Pass 13 release-script and two power-event validator checks.
-- [ ] Complete a fresh canonical optimized Release verification while awake.
+- [x] Complete a fresh canonical optimized Release verification while awake; see Phase 154.
 
 See [interrupted-attempt evidence](docs/evidence/release-candidate-sleep-interrupted-20260930/README.md).
 The interrupted run does not establish a new transport regression or a passing
 candidate, and it did not reach analysis or preflight.
+
+## Phase 154 — Integrated awake optimized Release verification
+
+Status: Canonical gate passed on 2026-09-30 at clean commit `61b2d0e9a4001a320cd1bb9e4cb44e245570cbf1`.
+
+- [x] Pass 705 optimized Release tests with eight named optional skips, zero
+  failures/runtime warnings and all three new loupe track/composition cases.
+- [x] Pass both required isolated mixed-backend transport checks in a fresh
+  serial runner, without changing synchronization tolerances.
+- [x] Pass Release static analysis and all 61 source-tree preflight checks.
+- [x] Retain a verified no-sleep interval and revalidate exact source, clean
+  checkout, resolved-package and package-cache identities before passing.
+
+See [retained awake candidate evidence](docs/evidence/release-candidate-continuation-20260930/README.md).
+The initial sleep-interrupted attempt remains separate failed evidence.
+Native Review's bounded inventory now reports a locked Mac, rather than a
+usable app surface; manual unlock is required before native acceptance.
+Audible-output diagnosis, MPV source pixels, producer-authentic/reference,
+editor/accessibility, release-floor and distribution gates remain open.
+The evidence-report commit follows the verified source commit.
 
 ## Remaining work after this continuation
 
@@ -3768,3 +3788,4 @@ candidate, and it did not reach analysis or preflight.
 143. Phase 151 enabled-track AVFoundation loupe provenance.
 144. Phase 152 native-audio-output diagnosis and profile failure evidence.
 145. Phase 153 awake candidate verification ownership.
+146. Phase 154 integrated awake optimized Release verification.

@@ -114,6 +114,16 @@ workflow/media/performance gates remain open. See [current candidate evidence](e
 
 ## Must close before a defensible 2.0 candidate
 
+The fresh awake canonical verifier subsequently passes at clean commit
+`61b2d0e9a4001a320cd1bb9e4cb44e245570cbf1`: 705 optimized Release passes with
+eight documented optional skips, both isolated transport directions, Release
+analysis and all 61 preflight checks. Its retained power interval contains no
+sleep, and source/package/cache identities are revalidated. All three new loupe
+track/composition cases pass. This supersedes the interrupted attempt without
+changing transport tolerances. The bounded native Review inventory reports a
+locked Mac; no native interaction or spoken accessibility is accepted.
+See [awake candidate evidence](evidence/release-candidate-continuation-20260930/README.md).
+
 The September 30 continuation strengthens live-meter evidence consistency,
 restores the 710-test aggregate release floor, and binds AVFoundation loupe
 geometry and native-raster proof to the ready item's single enabled video
@@ -141,7 +151,8 @@ interrupted by repeated system sleep. Power records correlate 534- and
 900-second sleeps with the failed observations. That attempt never reaches
 analysis/preflight/final identity and supplies no passing candidate. The runner
 now holds scoped sleep assertions, requires retained no-sleep evidence and
-bounds each isolated test to 120 seconds; fresh verification remains required.
+bounds each isolated test to 120 seconds. The passing awake replacement is
+recorded above.
 See [interrupted-attempt evidence](evidence/release-candidate-sleep-interrupted-20260930/README.md).
 
 Phase 127 completes fresh keyboard-only A/B loading, note creation at distinct
