@@ -1,0 +1,43 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild test-without-building -xctestrun /private/tmp/aagedal-bounded-mxf-app-artifacts-20260930/input-1.xctestrun -destination platform=macOS -derivedDataPath /private/tmp/aagedal-bounded-mxf-app-dd-20260930 -parallel-testing-enabled NO -test-timeouts-enabled NO -resultBundlePath /private/tmp/aagedal-bounded-mxf-app-artifacts-20260930/runs/input-1/Profile.xcresult "-only-testing:Aagedal Media Player Tests/ProductionMetadataMemoryPerformanceTests/testProductionMetadataMemoryProfileWhenRequested"
+
+Writing result bundle at path:
+	/private/tmp/aagedal-bounded-mxf-app-artifacts-20260930/runs/input-1/Profile.xcresult
+
+--- xcodebuild: WARNING: Using the first of multiple matching destinations:
+{ platform:macOS, arch:arm64e, id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:arm64, id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:x86_64, id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:arm64e, variant:Mac Catalyst, id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:arm64, variant:Mac Catalyst, id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:x86_64, variant:Mac Catalyst, id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:arm64e, variant:DriverKit, id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:arm64, variant:DriverKit, id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:arm64e, variant:Designed for [iPad,iPhone], id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:arm64, variant:Designed for [iPad,iPhone], id:00006050-001C293C22F9401C, name:My Mac }
+2026-09-30 21:17:35.162027+0200 Aagedal Media Player[10952:1887095] ApplePersistenceIgnoreState: Existing state will not be touched. New state will be written to /var/folders/pv/f8g9jgrd7px_0xvh3kxgmyg40000gp/T/com.aagedal.MediaPlayer.savedState
+Test Suite 'Selected tests' started at 2026-09-30 21:17:35.356.
+Test Suite 'Aagedal Media Player Tests.xctest' started at 2026-09-30 21:17:35.357.
+Test Suite 'ProductionMetadataMemoryPerformanceTests' started at 2026-09-30 21:17:35.357.
+Test Case '-[Aagedal_Media_Player_Tests.ProductionMetadataMemoryPerformanceTests testProductionMetadataMemoryProfileWhenRequested]' started.
+2026-09-30 21:17:35.401399+0200 Aagedal Media Player[10952:1887118] [ClientDonation] (+[PPSClientDonation isRegisteredSubsystem:category:]) Permission denied: CoreMedia / CM-ASSETCREATION
+2026-09-30 21:17:35.405690+0200 Aagedal Media Player[10952:1887127] [carc] Reporter disconnected or already stopped. { func=stop, reporterID=47038481825793 }
+2026-09-30 21:17:35.405781+0200 Aagedal Media Player[10952:1887127] [] <<< MetadataDescBridge >>> signalled err=-12717 at <>:1401
+PRODUCTION_METADATA_MEMORY_PROFILE {"afterCachedReadLifetimePeakResidentBytes":180224000,"afterCachedReadResidentBytes":151093248,"afterLoadLifetimePeakResidentBytes":180224000,"afterLoadResidentBytes":151093248,"afterLocalReleaseLifetimePeakResidentBytes":180224000,"afterLocalReleaseResidentBytes":152420352,"cachedReadWallSeconds":4.4499999999999997e-05,"cacheParity":true,"file":"20260502_TRA_MOV_0240.MP4","initialLifetimePeakResidentBytes":117784576,"initialResidentBytes":117784576,"inputFileBytes":1569013272,"inputIndex":1,"loadWallSeconds":0.054087292000000002,"metadata":{"audioStreamCount":1,"audioStreams":[{"bitDepth":16,"channelLayout":null,"channels":2,"codec":"twos","sampleRate":48000}],"bitRate":112716470,"chapterCount":0,"durationSeconds":111.36,"formatName":"mp4","sizeBytes":1569013272,"subtitleStreamCount":0,"videoStreamCount":1,"videoStreams":[{"codec":"hvc1","frameRateDenominator":1,"frameRateNumerator":50,"height":2160,"width":3840}]},"processIdentifier":10952,"sampleCount":6,"sampledPeakResidentBytes":178634752,"sampleIntervalMilliseconds":10}
+Test Case '-[Aagedal_Media_Player_Tests.ProductionMetadataMemoryPerformanceTests testProductionMetadataMemoryProfileWhenRequested]' passed (0.162 seconds).
+Test Suite 'ProductionMetadataMemoryPerformanceTests' passed at 2026-09-30 21:17:35.519.
+	 Executed 1 test, with 0 failures (0 unexpected) in 0.162 (0.162) seconds
+Test Suite 'Aagedal Media Player Tests.xctest' passed at 2026-09-30 21:17:35.519.
+	 Executed 1 test, with 0 failures (0 unexpected) in 0.162 (0.162) seconds
+Test Suite 'Selected tests' passed at 2026-09-30 21:17:35.519.
+	 Executed 1 test, with 0 failures (0 unexpected) in 0.162 (0.163) seconds
+2026-09-30 21:17:35.806 xcodebuild[10948:1887050] [MT] IDETestOperationsObserverDebug: 1.028 elapsed -- Testing started completed.
+2026-09-30 21:17:35.806 xcodebuild[10948:1887050] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-09-30 21:17:35.806 xcodebuild[10948:1887050] [MT] IDETestOperationsObserverDebug: 1.028 sec, +1.028 sec -- end
+
+Test session results, code coverage, and logs:
+	/tmp/aagedal-bounded-mxf-app-artifacts-20260930/runs/input-1/Profile.xcresult
+
+** TEST EXECUTE SUCCEEDED **
+
+Testing started

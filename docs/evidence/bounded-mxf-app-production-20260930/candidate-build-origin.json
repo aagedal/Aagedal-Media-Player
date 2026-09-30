@@ -1,0 +1,21 @@
+{
+  "appCloneHEAD": "060f611f7ba1d669a1af7b7846cdf1812f53b531",
+  "candidateRoot": "/private/tmp/aagedal-bounded-mxf-candidate-20260930",
+  "fileListSHA256": "45f006ff6353cb002e8118728abda88dc7d7fa9c9e346c285a6007a0c8bdb798",
+  "patchedSourceSHA256": {
+    "Sources/SwiftMediaMetadata/API/VideoMetadata.swift": "e0105ea99605a11a6b7a25dce9ae967f32a34639daf64b311e7db1405414b99e",
+    "Sources/SwiftMediaMetadata/Video/MXFReader.swift": "4382a3e502994508fdb88536f962411498e19d91a7a655ec56401e5a2771ff0d",
+    "Sources/SwiftMediaMetadata/Video/MXFFileCursor.swift": "8a4715a45a33da0bf32a1f878eb47bf1c2040d21b77b5118019d7aa40310bd37"
+  },
+  "temporaryProjectSHA256": "33e09579a350251c583c6f156271c13f0a1e2a68f02b583943e3e8cdc43877e6",
+  "metadataServiceSHA256": "3b7be4df3f79baf975ea1353c4c652a145456ffbee5f9e2770408ce8856a840a",
+  "profilerSourceSHA256": "cf10f5d4c12a043fb5de1623b8eb1356dc138cc3275211a01db6d3b164426a71",
+  "candidateLibraryObjectSHA256": "985470b2d17632c99a830f8ab20378ad423b48c644441ed9c6b0e3b09f1da992",
+  "buildSucceeded": true,
+  "productionProfilesRun": 3,
+  "buildLogSHA256": "0a5b45c14cd15c80822f5725333dd3469787e4cd031dc88ccc5ae87784529c8b",
+  "productionValidatorPassed": true,
+  "compiledCandidateCursorSymbolsPresent": true,
+  "originalBaselineCursorSymbolsAbsent": true,
+  "appExecutableSHA256": "ffe5d5473480b00b4a5b10330d122d40060eade89819b1b9d12fdf95b9a79b08"
+}

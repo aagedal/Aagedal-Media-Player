@@ -5,6 +5,7 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Changed
+- CoreAudio candidate builds can select a verified installed Metal compiler directly and bind provenance to the retained builder snapshot.
 - Live meters assess the newest queued DSP endpoint before playback synchronization checks and preserve specific malformed-source failures.
 - Passive Review text blur and error focus preserve the finding and field selected by correction preflight.
 - Live-meter diagnostics retain rejected source/clock endpoints after clearing readings and cancelling the worker.

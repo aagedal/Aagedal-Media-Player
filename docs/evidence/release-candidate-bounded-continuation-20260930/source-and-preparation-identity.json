@@ -1,0 +1,20 @@
+{
+  "fullFFmpeg": {
+    "path": "/opt/homebrew/bin/ffmpeg",
+    "resolvedPath": "/opt/homebrew/Cellar/ffmpeg/9.0.2/bin/ffmpeg",
+    "sha256": "c8173e9755795978bce8e104f8d7044fabe7d6d84044aba37d3648c6f4e4e1a8"
+  },
+  "generatorCommand": "scripts/generate-test-fixtures.sh",
+  "gitStatusAfterVerification": "",
+  "sourceCommit": "82597597ba3e4f854799b03857a916d864873cab",
+  "sourceSHA256": {
+    "Aagedal Media Player.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved": "6aea6d64326f3040345c3523a0a39c95d53335777e233b3aa311e8ba90ad475d",
+    "scripts/build-mpv-coreaudio-clean-candidate.py": "6ff54c5d91d62ce9c67058af1cabb315329ba822881f559e036b0d0f810d5f9b",
+    "scripts/generate-test-fixtures.sh": "f8da906aa3bdca462ac7cdd6549c74096ae203db32f4c6765b29879e10d62c6f",
+    "scripts/release-preflight.py": "5ace8aab74e984d48f88165896bff5ff3bf2811a73d0ccfc7567760587967048",
+    "scripts/validate-release-xcresult.py": "59b8d0905de69b628111077acfc8d4d5ab083d56174b8bf61df5659ff2db3657",
+    "scripts/verify-release-candidate.sh": "0080d718b7fb751e074cbe6d7a9bc1a3feafb3e0b4ce5bcfff88de8b3ebe00a1"
+  },
+  "verificationCommand": "AAGEDAL_CANDIDATE_PACKAGE_CACHE=/private/tmp/aagedal-itu-live-dd-20260930/SourcePackages scripts/verify-release-candidate.sh /private/tmp/aagedal-2-plan-integrated-with-fixtures-20260930",
+  "workdir": "/private/tmp/aagedal-2-plan-verified-source-20260930"
+}

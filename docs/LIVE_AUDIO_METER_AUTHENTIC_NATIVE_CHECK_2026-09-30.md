@@ -20,6 +20,15 @@ but do not establish shipping feature parity. The corrected builder requires
 the GPL product and the missing Xcode Metal compiler before a replacement build.
 See [configuration parity audit](evidence/live-meter-native-output-20260930/clean-rebuild/README.md).
 
+A later feature-qualified fresh GPL/Metal build now passes independent receipt,
+source/object/artifact and required-feature checks on both architecture slices.
+A separately linked corrected current Release app passes GoPro AAC and FX6 mono
+ordinals zero/seven five-second observation/EOF profiles without native output
+errors. Two pending DSP/clock races are deterministically fixed, while historical
+FX6 causality remains unproven. These later results supplement the historical
+configuration-limited runs below. See [new artifact profiles](evidence/live-meter-gpl-metal-native-20260930/README.md)
+and [fresh GPL/Metal build](evidence/coreaudio-gpl-metal-20260930/README.md).
+
 ## Inputs and completed runs
 
 The GoPro and DJI originals retain the exact SHA-256 identities from

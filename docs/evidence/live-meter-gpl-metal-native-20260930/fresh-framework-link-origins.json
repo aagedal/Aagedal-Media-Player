@@ -1,0 +1,10 @@
+{
+  "Libmpv": "/private/tmp/aagedal-coreaudio-gpl-metal-build-v2-20260930/MPVKit/dist/libmpv/macos/Libmpv.framework/Libmpv",
+  "Libswresample": "/private/tmp/aagedal-coreaudio-gpl-metal-build-v2-20260930/MPVKit/dist/FFmpeg/macos/Libswresample.framework/Libswresample",
+  "Libavfilter": "/private/tmp/aagedal-coreaudio-gpl-metal-build-v2-20260930/MPVKit/dist/FFmpeg/macos/Libavfilter.framework/Libavfilter",
+  "Libavformat": "/private/tmp/aagedal-coreaudio-gpl-metal-build-v2-20260930/MPVKit/dist/FFmpeg/macos/Libavformat.framework/Libavformat",
+  "Libavutil": "/private/tmp/aagedal-coreaudio-gpl-metal-build-v2-20260930/MPVKit/dist/FFmpeg/macos/Libavutil.framework/Libavutil",
+  "Libswscale": "/private/tmp/aagedal-coreaudio-gpl-metal-build-v2-20260930/MPVKit/dist/FFmpeg/macos/Libswscale.framework/Libswscale",
+  "Libavdevice": "/private/tmp/aagedal-coreaudio-gpl-metal-build-v2-20260930/MPVKit/dist/FFmpeg/macos/Libavdevice.framework/Libavdevice",
+  "Libavcodec": "/private/tmp/aagedal-coreaudio-gpl-metal-build-v2-20260930/MPVKit/dist/FFmpeg/macos/Libavcodec.framework/Libavcodec"
+}

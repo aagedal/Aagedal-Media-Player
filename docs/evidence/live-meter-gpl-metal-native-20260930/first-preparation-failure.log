@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/Users/truls.aagedal/Developer/Aagedal-Media-Player/docs/evidence/live-meter-gpl-metal-native-20260930/prepare-candidate.py", line 63, in <module>
+    link_map = (candidate_directory / 'link.map').read_text()
+  File "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/pathlib.py", line 1257, in read_text
+    return f.read()
+  File "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/codecs.py", line 322, in decode
+    (result, consumed) = self._buffer_decode(data, self.errors, final)
+UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 14422179: invalid start byte

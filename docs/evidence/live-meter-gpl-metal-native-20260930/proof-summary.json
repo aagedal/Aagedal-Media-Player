@@ -1,0 +1,15 @@
+{
+  "testSucceeded": true,
+  "testWallSeconds": 39.557,
+  "xcresultPath": "/private/tmp/aagedal-live-meter-gpl-metal-native-ready-20260930/authentic-5s/LiveAudioMeterProfile.xcresult",
+  "validatedRows": 3,
+  "nativeStartDiagnostics": 6,
+  "allFreshFrameworkCount": 8,
+  "arm64PlaybackOnly": true,
+  "newClockHandoffFixIncluded": true,
+  "newClockFailureContextIncluded": true,
+  "sourceIdentityFile": "source-sha256.json",
+  "originalAndCandidateIdentitiesUnchanged": true,
+  "shippingPinChanged": false,
+  "firstPreparationFailure": "Non-UTF-8 linker symbols prevented strict UTF-8 link-map inspection after successful linking/signing; fresh preparation used replacement decoding solely for path verification. No native test ran on first preparation."
+}

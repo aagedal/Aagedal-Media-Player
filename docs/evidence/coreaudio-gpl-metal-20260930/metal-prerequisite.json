@@ -1,0 +1,28 @@
+{
+  "root": "/private/var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v27.1.266.1.jWL5ac/Metal.xctoolchain",
+  "tools": {
+    "metal": {
+      "path": "/private/var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v27.1.266.1.jWL5ac/Metal.xctoolchain/usr/bin/metal",
+      "sha256": "ac3dcce4f331e301def076a2280c973c978f72e6622f8576eb3f7c34d1486dd6",
+      "implementation": {
+        "entryPath": "/private/var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v27.1.266.1.jWL5ac/Metal.xctoolchain/usr/metal/current/bin/metal",
+        "path": "/private/var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v27.1.266.1.jWL5ac/Metal.xctoolchain/usr/metal/32023/bin/metal",
+        "sha256": "ca689c7ff76b21271ab8dabfd7fa4c1b1cad9008643f80275cc9f2fdad722941"
+      }
+    },
+    "metallib": {
+      "path": "/private/var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v27.1.266.1.jWL5ac/Metal.xctoolchain/usr/bin/metallib",
+      "sha256": "08555936a88a025585ae6415ebe8b27e6092670868d92f9677cdcfa9730c340d",
+      "implementation": {
+        "entryPath": "/private/var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v27.1.266.1.jWL5ac/Metal.xctoolchain/usr/metal/current/bin/metallib",
+        "path": "/private/var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v27.1.266.1.jWL5ac/Metal.xctoolchain/usr/metal/32023/bin/air-lld",
+        "sha256": "97eb7f0cb637d7dc886b79429f7683b0fa2730ddf2ef44a9ac4b129e8a26c7dd"
+      }
+    }
+  },
+  "version": "Apple metal version 32023.921 (metalfe-32023.921.6)\nTarget: air64-apple-darwin27.0.0\nThread model: posix\nInstalledDir: /private/var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v27.1.266.1.jWL5ac/Metal.xctoolchain/usr/metal/current/bin",
+  "kernelProbe": {
+    "airSHA256": "3fb5414e81d2cb6027001d22d4426f00fcaafc8e3519f5551fef8f5fec7a2b03",
+    "metallibSHA256": "4274ffc6131dc8f309ed3f4e374b89101d4b17ec90151f2f0bfb30411a38b806"
+  }
+}

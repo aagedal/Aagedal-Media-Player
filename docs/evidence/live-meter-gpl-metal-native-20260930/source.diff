@@ -1,0 +1,193 @@
+diff --git a/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift b/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift
+index 0e0977e..c16b5b0 100644
+--- a/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift	
++++ b/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift	
+@@ -210,6 +210,61 @@ final class LiveAudioMeterCoordinatorTests: XCTestCase {
+         await decoder.waitUntilCancelled(stream: 0)
+     }
+ 
++    func testPlaybackClockAssessesNewestReducedSnapshotBeforeScheduledPresentationDrain() async throws {
++        let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
++        let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
++        coordinator.start(try request(stream: 0, startFrame: 0))
++        await decoder.waitUntilAttached(stream: 0)
++        decoder.emit(snapshot(endFrame: 4_800), stream: 0)
++        await eventually { coordinator.snapshot?.endFrame == 4_800 }
++        coordinator.updatePlaybackClock(playback(time: 0.1, playing: true))
++        let generation = coordinator.generation
++
++        // Submit a fresh DSP bucket, then deliver the clock synchronously on
++        // this main-actor turn before its scheduled presentation task can run.
++        // The published endpoint is 300 ms behind; the reduced endpoint is
++        // only 100 ms behind and remains inside the unchanged freshness bound.
++        decoder.emit(snapshot(endFrame: 14_400), stream: 0)
++        XCTAssertEqual(coordinator.snapshot?.endFrame, 4_800)
++        coordinator.updatePlaybackClock(playback(time: 0.4, playing: true))
++
++        XCTAssertEqual(coordinator.generation, generation)
++        XCTAssertEqual(coordinator.snapshot?.endFrame, 14_400)
++        XCTAssertEqual(try XCTUnwrap(coordinator.clockDrift), -0.1, accuracy: 0.000_001)
++        XCTAssertNil(coordinator.clockFailureContext)
++        XCTAssertTrue(decoder.isActive(stream: 0))
++        let publicationCount = coordinator.publishedSnapshotCount
++        await Task.yield()
++        XCTAssertEqual(coordinator.publishedSnapshotCount, publicationCount)
++        coordinator.close()
++    }
++
++    func testPendingMalformedSnapshotWinsRaceWithPlaybackClockFailure() async throws {
++        let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
++        let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
++        coordinator.start(try request(stream: 0, startFrame: 0))
++        await decoder.waitUntilAttached(stream: 0)
++        decoder.emit(snapshot(endFrame: 4_800), stream: 0)
++        await eventually { coordinator.snapshot?.endFrame == 4_800 }
++        coordinator.updatePlaybackClock(playback(time: 0.1, playing: true))
++
++        // The duplicate source endpoint rejects the handoff synchronously.
++        // Deliver a late clock before its queued failure task can present it;
++        // that clock must not replace the specific producer error with drift.
++        decoder.emit(snapshot(endFrame: 4_800), stream: 0)
++        coordinator.updatePlaybackClock(playback(time: 0.4, playing: true))
++
++        guard case .unavailable(let reason, let diagnostic) = coordinator.status else {
++            return XCTFail("Expected the pending source-endpoint rejection")
++        }
++        XCTAssertEqual(reason, "Live source audio is unavailable.")
++        XCTAssertTrue(diagnostic?.contains("gap, duplicate, or out-of-order") == true)
++        XCTAssertNil(coordinator.clockFailureContext)
++        XCTAssertNil(coordinator.snapshot)
++        await decoder.waitUntilCancelled(stream: 0)
++        coordinator.close()
++    }
++
+     func testClockFailureRetainsRejectedSegmentContextWithoutKeepingReadingOrWorker() async throws {
+         let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
+         let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
+diff --git a/Aagedal Media Player/Logic/LiveAudioMeterCoordinator.swift b/Aagedal Media Player/Logic/LiveAudioMeterCoordinator.swift
+index bbc5ac1..90389a4 100644
+--- a/Aagedal Media Player/Logic/LiveAudioMeterCoordinator.swift	
++++ b/Aagedal Media Player/Logic/LiveAudioMeterCoordinator.swift	
+@@ -236,6 +236,18 @@ final class LiveAudioMeterCoordinator: ObservableObject {
+         if isTransportSuspended, let request {
+             resume(request)
+         }
++        // A worker callback has already reduced every DSP bucket even when
++        // its scheduled main-actor presentation drain has not run. Assess the
++        // newest reduced endpoint, rather than rejecting an older UI reading
++        // solely because clock delivery preceded that drain. Pending producer
++        // rejection takes priority over a generic drift error for that reading.
++        if let handoff {
++            if let rejection = handoff.rejection {
++                fail(rejection, handoff: handoff, generation: generation)
++                return
++            }
++            drain(handoff, generation: generation)
++        }
+         guard let request, let endFrame = reducedSnapshot?.measurement.endFrame else { return }
+         let assessment = LiveAudioMeterClockPolicy(
+             sampleRate: request.format.sampleRate
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index c521519..ff21158 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -5,6 +5,7 @@ All notable changes to Aagedal Media Player.
+ ## [1.6.1] — Unreleased
+ 
+ ### Changed
++- Live meters assess the newest queued DSP endpoint before playback synchronization checks and preserve specific malformed-source failures.
+ - Passive Review text blur and error focus preserve the finding and field selected by correction preflight.
+ - Live-meter diagnostics retain rejected source/clock endpoints after clearing readings and cancelling the worker.
+ - Comparison Pause remains authoritative through delayed decoder observations, alignment, seek, reload and readiness; explicit Play or shuttle resumes both sources.
+@@ -22,7 +23,7 @@ All notable changes to Aagedal Media Player.
+ - Candidate verification temporarily keeps the Mac awake, rejects sleep-interrupted evidence, and bounds each isolated transport test to 120 seconds.
+ - AVFoundation loupe capture follows the enabled video track and clears stale raster proof after track or composition changes; composed and ambiguous output remains a display preview.
+ - Live-meter profile validation rejects mismatched sample-rate timestamp provenance and impossible snapshot timing.
+-- Candidate verification and release consumption now require at least 736 aggregate tests, alongside both isolated mixed-backend transport checks.
++- Candidate verification and release consumption now require at least 738 aggregate tests, alongside both isolated mixed-backend transport checks.
+ - Review keeps an edited note draft when its update is rejected, and report actions stop with visible feedback if pending edits cannot be applied.
+ - Review drafts now survive a playback or comparison geometry reload of the same sources; replacing a source or changing the active notes copy still clears them.
+ - Review keeps new-note, edited-text, and range drafts when its popover closes; a later keyboard export reopens Review to validate unfinished edits and asks for an unsubmitted new note to be added or cleared.
+diff --git a/FOLLOW_UP_IMPROVEMENT_PLAN.md b/FOLLOW_UP_IMPROVEMENT_PLAN.md
+index 4e88369..a046982 100644
+--- a/FOLLOW_UP_IMPROVEMENT_PLAN.md
++++ b/FOLLOW_UP_IMPROVEMENT_PLAN.md
+@@ -3933,6 +3933,30 @@ All three repeats pass the unchanged validator; EOF maximum drifts are
+ behavior. The 76-file source inventory contains no source long enough for a
+ 30-minute observation. See [retained repeats and test correction](docs/evidence/live-meter-fx6-repeat-20260930/README.md).
+ 
++## Phase 177 — Current DSP handoff before playback clock assessment
++
++Status: Two deterministic source races reproduced and corrected on 2026-09-30.
++
++- [x] Reproduce a false synchronization failure when current DSP data is queued
++  but the main-actor presentation drain has not run; retain the rejected run.
++- [x] Reproduce a queued malformed-snapshot rejection being replaced by a
++  generic synchronization diagnostic; retain this independent rejected run.
++- [x] Drain the current generation's one-slot handoff on the playing-clock path
++  before freshness assessment and preserve pending producer rejection priority.
++- [x] Keep paused, buffering, unsupported-speed and EOF ownership unchanged;
++  no timing/admission tolerance or decoder pacing changed.
++- [x] Pass all 36 focused optimized Release Review/meter checks, explicitly
++  requiring all five new regressions, without skips/failures/runtime warnings.
++- [x] Raise candidate/release aggregate consumption to 738 tests.
++- [ ] Repeat authentic shipping-repair/native acceptance and qualify intermittent
++  FX6 behavior; deterministic source proof alone does not explain historical runs.
++
++The first rejection compared a displayed 4,800-frame endpoint with playback at
++0.4 seconds despite a pending 14,400-frame endpoint (300 ms versus 100 ms lag).
++The second replaced a duplicate-endpoint diagnostic before its queued callback.
++Both fail before the correction and pass afterward. See
++[retained source race evidence](docs/evidence/live-meter-clock-handoff-20260930/README.md).
++
+ ## Remaining work after this continuation
+ 
+ - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
+diff --git a/scripts/release.sh b/scripts/release.sh
+index 0a077cd..86e7750 100755
+--- a/scripts/release.sh
++++ b/scripts/release.sh
+@@ -182,7 +182,7 @@ if [[ "$EVIDENCE_STATUS" != "passed" \
+     exit 2
+ fi
+ python3 scripts/validate-release-xcresult.py \
+-    "$CANDIDATE_SUMMARY" "$CANDIDATE_DETAILS" --minimum-tests 736
++    "$CANDIDATE_SUMMARY" "$CANDIDATE_DETAILS" --minimum-tests 738
+ python3 scripts/validate-release-xcresult.py \
+     "$CANDIDATE_MIXED_SUMMARY" "$CANDIDATE_MIXED_DETAILS" --minimum-tests 2 \
+     --exact-tests 2 \
+diff --git a/scripts/test-release-script-validation.py b/scripts/test-release-script-validation.py
+index fea02b5..d1d50a7 100644
+--- a/scripts/test-release-script-validation.py
++++ b/scripts/test-release-script-validation.py
+@@ -220,7 +220,7 @@ exit 91
+         self.assertLess(summary, details)
+         self.assertLess(details, validation)
+         self.assertLess(validation, analysis)
+-        self.assertIn('--minimum-tests 736', source)
++        self.assertIn('--minimum-tests 738', source)
+         self.assertIn('-parallel-testing-enabled NO', source)
+         self.assertEqual(source.count('-skip-testing:'), 2)
+         focused = source.index('echo "==> Focused mixed-backend transport repeat"')
+@@ -280,7 +280,7 @@ exit 91
+         self.assertLess(package_match, result_validation)
+         self.assertLess(result_validation, preflight)
+         self.assertLess(result_validation, archive)
+-        self.assertIn('--minimum-tests 736', self.source)
++        self.assertIn('--minimum-tests 738', self.source)
+         self.assertEqual(self.source.count('--require-test'), 2)
+ 
+     def test_release_rechecks_source_before_build_and_publication(self) -> None:
+diff --git a/scripts/verify-release-candidate.sh b/scripts/verify-release-candidate.sh
+index 92fe6d8..af13e09 100755
+--- a/scripts/verify-release-candidate.sh
++++ b/scripts/verify-release-candidate.sh
+@@ -102,7 +102,7 @@ xcrun xcresulttool get test-results tests \
+ python3 scripts/validate-release-xcresult.py \
+     "$artifact_dir/test-summary.json" \
+     "$artifact_dir/test-details.json" \
+-    --minimum-tests 736 \
++    --minimum-tests 738 \
+     2>&1 | tee "$artifact_dir/test-evidence-validation.log"
+ 
+ # The full bundle deliberately retains Xcode's process isolation and excludes

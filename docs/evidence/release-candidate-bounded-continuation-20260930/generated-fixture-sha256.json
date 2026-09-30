@@ -1,0 +1,146 @@
+{
+  "MANIFEST.txt": {
+    "bytes": 129,
+    "sha256": "8686c89ee6699c024fdf31e365e107e569e7c13637f889128567eb977b83f804"
+  },
+  "chapters-subtitles-long-gop.mkv": {
+    "bytes": 287169,
+    "sha256": "d31c95c6172f851163b18286a1d679842f6b013ca316dbaea27454db1b0ca500"
+  },
+  "compare/disjoint-b.mov": {
+    "bytes": 223971,
+    "sha256": "566f5be7c915d9530a4631b92164d357b8a0f28593cffe04cc9c27669cce057e"
+  },
+  "compare/relative-a.mov": {
+    "bytes": 325558,
+    "sha256": "ebbd4b2c565224af7dd176a1099b3f2328a41bc16bce8a26876c90a39c78761a"
+  },
+  "compare/relative-b.mov": {
+    "bytes": 246305,
+    "sha256": "472ab3f1513a140c1f8992913c2be1a47f9a9cb61ad731d645f827ef9e4632f0"
+  },
+  "compare/source-a.mov": {
+    "bytes": 781507,
+    "sha256": "b0cf5ec4a935aa9676faa108cf86a0377ee62b5cea0cee674ca73b9730512748"
+  },
+  "compare/source-b.mov": {
+    "bytes": 842838,
+    "sha256": "ad40acd8c2b8cd8c02e684d385bcc6b22583a6a844535ac086cef69d3846b9dd"
+  },
+  "drop-frame-boundaries/29.97-day-wrap.mov": {
+    "bytes": 17824,
+    "sha256": "5f75e07a59f1be4256762fda2978e88451281317ed279d4afe6d58739668c998"
+  },
+  "drop-frame-boundaries/29.97-hour.mov": {
+    "bytes": 17824,
+    "sha256": "97d66d728a285310cae251261049c75bb124cf6644b34d155cc88981f0f63070"
+  },
+  "drop-frame-boundaries/29.97-minute.mov": {
+    "bytes": 17824,
+    "sha256": "df718d3c13f77776abdce209fabde24109891020ba2aaf23389a6b7c3c0d191a"
+  },
+  "drop-frame-boundaries/29.97-ten-minute.mov": {
+    "bytes": 17824,
+    "sha256": "40c7ccf193c8fd431aab84a910c92821b5ecab8f3248211c67b7ec2d79bda441"
+  },
+  "drop-frame-boundaries/59.94-minute.mov": {
+    "bytes": 24110,
+    "sha256": "5afb881b2f90a075c2c98659ea6e5f652f6b0ee04151265caf7327e93962162d"
+  },
+  "hdr10.mp4": {
+    "bytes": 38772,
+    "sha256": "48c33f2a3d72d0843c8fbacf5565e5cf08c089f41deff8991511f810e6b7df35"
+  },
+  "loupe/landscape.mp4": {
+    "bytes": 2956,
+    "sha256": "ed33af8e5f6be09236964096c77eb686281acccc5a047be3317737ded6ae78dc"
+  },
+  "loupe/mirror-270.mp4": {
+    "bytes": 2956,
+    "sha256": "f5f9fe81c3b6d433a4ec4aeb0b05c583b9e2f75f05410f94f726f876e8ad3666"
+  },
+  "loupe/mirror-90.mp4": {
+    "bytes": 2956,
+    "sha256": "94b7c0a00e3f995d1099242260e732bf80dcf2f2e0c895f92c6d3a30994f5038"
+  },
+  "loupe/mirror-vertical.mp4": {
+    "bytes": 2956,
+    "sha256": "4eb667e3871341bfe9892c341d9b74c0bb74365714b15ad7e63ee0863d7a1329"
+  },
+  "loupe/mirror.mp4": {
+    "bytes": 2956,
+    "sha256": "1e2924d7c3342855c1c8c8141539e6c872e250d235cd3bf37efda0b60222437e"
+  },
+  "loupe/multi-track.mp4": {
+    "bytes": 5840,
+    "sha256": "626e290dee96b98074764175e6e91c432b639d54ef5df5cce5dcfd4dacc4001d"
+  },
+  "loupe/par.mp4": {
+    "bytes": 2769,
+    "sha256": "65bbb4e8049cf7df0ce99db9364114d01141e5b0f848245e069190df7531b87c"
+  },
+  "loupe/portrait.mp4": {
+    "bytes": 2728,
+    "sha256": "8fb861e87f6fde1c88b04fbad2ad3e4e222bfe669f4ec2c2ef1a872d331ca96d"
+  },
+  "loupe/rotate-180.mp4": {
+    "bytes": 2956,
+    "sha256": "e6fc5702ea57403d9ad54e38cbacbea0e867f21fb57c5d21c6cf6d2dd3a09018"
+  },
+  "loupe/rotate-270.mp4": {
+    "bytes": 2956,
+    "sha256": "60d0402b713d40b3b18d9c4bf602d294460a17c8b4f499eb45c69fb7a72a0d93"
+  },
+  "loupe/rotate-90-par.mp4": {
+    "bytes": 2769,
+    "sha256": "e9eadfccf02a4d6dcf249967d852f96b95274f8f2b24c86a1e0e0f66272fd637"
+  },
+  "multichannel-5.1.m4a": {
+    "bytes": 495009,
+    "sha256": "4ba1ee2345d050efe562de04bf0eeaa775bd390a4327c5b841fc6a2b18a6c732"
+  },
+  "portrait.mp4": {
+    "bytes": 308632,
+    "sha256": "b931805dbf9e4910c66a3919c64deb0804344582db355e79cec21cb139cfe38f"
+  },
+  "rates/23.976.mp4": {
+    "bytes": 14965,
+    "sha256": "6fa84e9644b71ded8e6eeb7a058ddcfbccae86575e8370a55190b3368612d4d8"
+  },
+  "rates/24.mp4": {
+    "bytes": 14886,
+    "sha256": "91c1cdd13b221c80e116da101d49c25a8038ddfb69381991895c429536744587"
+  },
+  "rates/25.mp4": {
+    "bytes": 15108,
+    "sha256": "9b089f25d1dbf8afbebea97410b9c781ca24ee5601d7603d784a4b548cf91fa6"
+  },
+  "rates/29.97.mp4": {
+    "bytes": 17259,
+    "sha256": "27846da36651e805c884a5fa4ccddee28c349e306c01c938927b49a9d951ec6e"
+  },
+  "rates/30.mp4": {
+    "bytes": 17177,
+    "sha256": "665f2f7c8c3f4b7bd3b08e1278e005bf4c7baca5fff4b0605d14f0d270759778"
+  },
+  "rates/50.mp4": {
+    "bytes": 20139,
+    "sha256": "5d38c6379a380eb6c66b6acb5ab67d29f1dc6e97902fbd3bbceb171944377aed"
+  },
+  "rates/59.94.mp4": {
+    "bytes": 23545,
+    "sha256": "c750a059be02b1f82d6ab93d9d17c511c30334107d256e5c658bf501794b5e09"
+  },
+  "rates/60.mp4": {
+    "bytes": 23333,
+    "sha256": "c00a8c991e815cfe0aec0dd72ffa51f956ba7060f996883b635f91d9221e445c"
+  },
+  "rotation-par.mp4": {
+    "bytes": 587768,
+    "sha256": "4b2c819f81251a6bf889c186af8179ec008cda09e4337124a0b2e90b92c6d666"
+  },
+  "sdr-bt709.mp4": {
+    "bytes": 50691,
+    "sha256": "b1daa69e14d30ead89f085d9c0c634a00f24c7e3c9e02e1426cb015441b99f1f"
+  }
+}

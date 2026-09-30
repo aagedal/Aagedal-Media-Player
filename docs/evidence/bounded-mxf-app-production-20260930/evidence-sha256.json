@@ -1,0 +1,22 @@
+{
+  "README.md": "5427c261bb8117119de3e4aea010d793148771437a38daacd2aea09c15d5fe50",
+  "attempted-build.log.gz": "1865f567bba37cb1d349dc290d8c1eb586bd5446907bf8aae44801a968b2beb4",
+  "candidate-build-origin.json": "ffe13aaaed5a92c040bcd611d3dea80cadd3a0d7190a2f751094e9a6a996debe",
+  "candidate-mxf-symbols.txt": "7cebd824f4139edcc8976478a919f501c56c6bb165ff78c644bed37fbd47b7c6",
+  "compiled-library-SwiftFileList.txt": "45f006ff6353cb002e8118728abda88dc7d7fa9c9e346c285a6007a0c8bdb798",
+  "environment.json": "f04bccbfa62ec1d4e8ce0a5a6772dba259cf4c9c0c59a66bdfa88184f5e905fb",
+  "input-0-attachment-0.txt": "18897dfb160891b987fed0a194e355d8f58d4eb1a86370bbb718be2b977233fa",
+  "input-0-profile.log": "38ee5f6f19114c5a0a80c471db6f0ea92c47aaaab0968a0dcc51238ce823b13b",
+  "input-1-attachment-0.txt": "609d16e3ce0781e4abc46c60bd51f46e57c4a8780974ea027349b8baddf01011",
+  "input-1-profile.log": "1cef011eb7eee6adf77597e5356e076f68e967f0361f6aca4bf8efa73ea1f264",
+  "input-2-attachment-0.txt": "7283f7c69b33a4550d3a35291f8c6f8bec425d3d1c3b912b1b4cee3a3ddb97d6",
+  "input-2-profile.log": "ed305e7dd7734093119564c0485e7d9223b48e69ae078df7b3686c845ad30f63",
+  "profile-runner.log": "56ebca6ff44fb24ef5712eabc4f3671e482d59eb7c6a52a5a9a8a68b92b02d88",
+  "run-production-profile.py": "38c349a1785f95393b3a99ecc29be77eb9fef8c8075a86b671725dbf04a3067f",
+  "shipping-comparison.json": "d0418e6983b9b854f501117eaad431d2d6e02d4ec4f32bc751508320123d8458",
+  "stale-output-restoration.json": "15720be3172c32f6ce393c3fa0cffb9baa1eaf0f0c9120f98beb1fd7b3e283dc",
+  "summary.json": "c8bfbc85f3753fe4bd7ea8168b96647a5a54c87eeda9a76d15229c04ca3635c3",
+  "temporary-library-Package.swift": "f152a3b7e13ad38fc59343da85cd569b3812993feed4ce5434ae899262d81744",
+  "temporary-project.patch": "7cd271c9b0a3fafcd7da98a76dd93b9c9b186537f016aca8d9240c8359815fcf",
+  "validation.log": "6fee0aa6b166966e952a4c8bb90993689f58436e70026dcf93203b8dc72b5387"
+}

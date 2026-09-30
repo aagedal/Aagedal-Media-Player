@@ -1,0 +1,14 @@
+{
+  "README.md": "9b2e4bd4d94f829021e65caee9260d8bd83dcb6115d3d1df5be79c386ba5bc06",
+  "actual-builder.py": "6ff54c5d91d62ce9c67058af1cabb315329ba822881f559e036b0d0f810d5f9b",
+  "build-receipt.json": "ca02e472cf08c650bb662e295665d82abf222d19342b4139f7a8c46f90c89e38",
+  "builder-tests.log": "1ea50fbc6c455f92904b80ed2c9e71916eb81b5c0fad9bbfb1b3beb62e779b2c",
+  "independent-verification.json": "14ad480ff160ed860efc16c59c98ad8bc246d3ac54857188d01c8337eddc7b2c",
+  "independent-verification.log": "ff9767f9c532eede5b91bec8f006ef51b4cfe5c5a02d26e902ba98be645e77fc",
+  "input-receipt.json": "824909ca72a76ac1a4696cf2ebd6557aa9d84d245a1981b6c3873940617e36ab",
+  "metal-prerequisite.json": "a3369fe873b39ad9bdb113af5e41da6dbc0f55a943f02dbd1b5ea72f2b49bd9c",
+  "rejected-first-build-receipt.json": "57d274fc081e07f7523b25c45266d2b7db21ebe39936ebdb61002c08e717c374",
+  "rejected-first-builder-identity.json": "0f6a53b34eafa63e34982ca7a8593aecd18485d0c7c263e3b07875db7d7b6f47",
+  "rejected-first-builder.py": "296227d6598729649460292a6fa626379dde24657f4b999a54bc83dbd7782bfd",
+  "rejected-first-verification.log": "e658b3f376b22ac90d1452019a2ffd1eb4cf13cb1e5b5b129dbaa02228e4a63b"
+}

@@ -1,0 +1,7 @@
+..............Clean candidate build failed: MPVKit-GPL feature parity failed: arm64/CONFIG_GPL=0, expected 1
+....
+----------------------------------------------------------------------
+Ran 18 tests in 0.307s
+
+OK
+Verified local artifact identities: /private/var/folders/pv/f8g9jgrd7px_0xvh3kxgmyg40000gp/T/tmpc12l41gc; MPVKit-GPL feature parity: FAILED (historical artifact is not shipping-feature-equivalent)

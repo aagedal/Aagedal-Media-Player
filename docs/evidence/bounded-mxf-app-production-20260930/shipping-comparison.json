@@ -1,0 +1,32 @@
+[
+  {
+    "file": "rre_8073.MP4",
+    "appProfileSnapshotParity": true,
+    "completeCachedAppModelParity": true,
+    "shippingBaselinePeakIncreaseBytes": 4653056,
+    "candidatePeakIncreaseBytes": 4718592,
+    "shippingBaselineLoadWallSeconds": 0.05329625,
+    "candidateLoadWallSeconds": 0.054255042,
+    "candidateAfterReleaseResidentIncreaseBytes": 5767168
+  },
+  {
+    "file": "20260502_TRA_MOV_0240.MP4",
+    "appProfileSnapshotParity": true,
+    "completeCachedAppModelParity": true,
+    "shippingBaselinePeakIncreaseBytes": 62423040,
+    "candidatePeakIncreaseBytes": 62439424,
+    "shippingBaselineLoadWallSeconds": 0.054668834,
+    "candidateLoadWallSeconds": 0.054087292,
+    "candidateAfterReleaseResidentIncreaseBytes": 34635776
+  },
+  {
+    "file": "OJ_FX6A0021.MXF",
+    "appProfileSnapshotParity": true,
+    "completeCachedAppModelParity": true,
+    "shippingBaselinePeakIncreaseBytes": 386416640,
+    "candidatePeakIncreaseBytes": 19464192,
+    "shippingBaselineLoadWallSeconds": 0.1836055,
+    "candidateLoadWallSeconds": 0.402738125,
+    "candidateAfterReleaseResidentIncreaseBytes": 19546112
+  }
+]

@@ -1,0 +1,8 @@
+{
+  "scope": "first build failed independent builder snapshot provenance despite passing local artifact/feature checks; original receipt preserved",
+  "recordedBuilderSHA256": "12844226b56001f717a1ee36463ec8ac22bd57754025aea8880ee079bb6f8fbc",
+  "retainedBuilderSnapshotSHA256": "296227d6598729649460292a6fa626379dde24657f4b999a54bc83dbd7782bfd",
+  "match": false,
+  "cause": "builder hashed live source at later receipt creation after root edited it during the running build",
+  "shippingEligible": false
+}

@@ -1,0 +1,296 @@
+{
+  "sourceInputs": {
+    "libmpv-v0.41.0": {
+      "revision": "50fd4f2fb9e4bed909cef5c9648a1bd33aaef72f",
+      "tree": "54755f0392d635a53a3f644668ba76b303be4512",
+      "status": ""
+    },
+    "FFmpeg-n8.1.2": {
+      "revision": "c7aba78212570ed0bd693a441d917d86f2744ad6",
+      "tree": "9b3a672a066ef0655b6cf42bf967e57f1d832c88",
+      "status": ""
+    }
+  },
+  "copiedAuxiliaryZIPsMatch": true,
+  "xcframeworks": {
+    "Libmpv": {
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "binarySHA256": "cd1b06c7bfb965e1259ffb24fb3d4f99890fed759d08a713a0b1fea5df2e3a06",
+      "zipSHA256": "8f2b280d22d70b621e360fe28b53da217585fecf3dc8d79a9cec44e406d45218",
+      "libraryIdentifier": "macos-arm64_x86_64"
+    },
+    "Libavcodec": {
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "binarySHA256": "36a5dca544195300054b034609067f4d99289b316049a352a921637c712ae962",
+      "zipSHA256": "0d4795767f7129cae3f18d83a837668eaa416e9bf484ba9dc177eab5cd9b07a4",
+      "libraryIdentifier": "macos-arm64_x86_64"
+    },
+    "Libavdevice": {
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "binarySHA256": "05eaea6f889d63862cb213a1cc936954816a2bd6f4b5baca6cee8c1cac0a1e2b",
+      "zipSHA256": "70959344d77383440ad4d748a7584035c182dc96b17c5873f4cc219c25e823e9",
+      "libraryIdentifier": "macos-arm64_x86_64"
+    },
+    "Libavfilter": {
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "binarySHA256": "385516a89cfc0ad19ffe877a864c125f3e23fcfe8f9dfb1cb8be85556593b10c",
+      "zipSHA256": "6f5a33b0fc1822f355c7b6297e1a42780664fce52d20af0ed90aff4897143be6",
+      "libraryIdentifier": "macos-arm64_x86_64"
+    },
+    "Libavformat": {
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "binarySHA256": "13bc9ca8e1ee5c65a1d548e2a648f91010fac3ce2544f861b0003651f2b6678a",
+      "zipSHA256": "b9b831c6d4b7c476a49d6300126a23ce5e24d379bf2391af1162cc97e75b2991",
+      "libraryIdentifier": "macos-arm64_x86_64"
+    },
+    "Libavutil": {
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "binarySHA256": "0107e727f9b1c69985b4e19f8ce35891c9a29a74723eb0a194b5229dca63490e",
+      "zipSHA256": "2738af49700989f6d95a039898db8f198a53a8aa6bef20dea898fa0046e879e6",
+      "libraryIdentifier": "macos-arm64_x86_64"
+    },
+    "Libswresample": {
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "binarySHA256": "6c999490ea8b8bb920f7108fbc2877bde79a6637a149579c577825ca7dac319c",
+      "zipSHA256": "49048a0056832d3c0cc3ee5ba4532ca1fdb4c6a420d6704ad58df2d0d4bd76c3",
+      "libraryIdentifier": "macos-arm64_x86_64"
+    },
+    "Libswscale": {
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "binarySHA256": "2070210940c9d9f29c8823d4a2b502dbfcbbe1a5c94cea7b6318b957590fa980",
+      "zipSHA256": "5703530e7271baa7f1a1662ebf113bb15ac5173dd7f822e285fe0d8a63e21bae",
+      "libraryIdentifier": "macos-arm64_x86_64"
+    }
+  },
+  "freshObjects": {
+    "libmpv": {
+      "arm64": {
+        "objectCount": 221,
+        "objectManifestSHA256": "e6d7b23b2d30af77359fa7954c19c3ae19cd1280080aa9d21d691685e3aa8f06",
+        "staticArchives": {
+          "dist/libmpv/macos/thin/arm64/lib/libmpv.a": "12f7b68a2d2cc8522fd757356af5b1ea4fb775a3513e89904601705915a76651"
+        },
+        "compileDatabaseSHA256": "0a95c2dba8f4b95ceba18593ad871cb4a0ad47f8f0c8787885a18a0d04e12c25",
+        "coreaudioObjects": {
+          "ao_coreaudio.c": {
+            "objectSHA256": "723ab3daf11d070fc6e0e5c92561eeebc87504d66f16d3eb599372e951f187ba",
+            "sourceSHA256": "2ab5a2553d60b8a75d2e9bd3b3090cadee4e350cb870c7c114fa3a6701d0088a"
+          },
+          "ao_coreaudio_chmap.c": {
+            "objectSHA256": "924070e402339b07092abc9811d5c62acab7608fa36f8c4d4badc003e1b5fd16",
+            "sourceSHA256": "b552e1d4207f8d4e1dbc1a39a437595e36402285115c41fec7e7b5afe84b5117"
+          }
+        }
+      },
+      "x86_64": {
+        "objectCount": 220,
+        "objectManifestSHA256": "b6d612d152e79424d7587e0a9281bf96487f139ef3bc5c7172c96d1ce1348d49",
+        "staticArchives": {
+          "dist/libmpv/macos/thin/x86_64/lib/libmpv.a": "fb08be26be0bdba5f14b71c0f4868b0655144b793a661fc20446613ae73520a8"
+        },
+        "compileDatabaseSHA256": "66865879d482a58b527b3f46bafdc975088a4215dd4b1fde3b5b903167e9c74c",
+        "coreaudioObjects": {
+          "ao_coreaudio.c": {
+            "objectSHA256": "1b91572cb320b720088a2c033072d41cc1f1db63214d7a5d21c4c7481aacce8f",
+            "sourceSHA256": "2ab5a2553d60b8a75d2e9bd3b3090cadee4e350cb870c7c114fa3a6701d0088a"
+          },
+          "ao_coreaudio_chmap.c": {
+            "objectSHA256": "3f7f6611bef71f6accdc9bc4ce27e50d12ecdccb3d6c774002d2088382b9efc9",
+            "sourceSHA256": "b552e1d4207f8d4e1dbc1a39a437595e36402285115c41fec7e7b5afe84b5117"
+          }
+        }
+      }
+    },
+    "FFmpeg": {
+      "arm64": {
+        "objectCount": 1122,
+        "objectManifestSHA256": "e555d8349accea5580fa5ad3ebfeb1eda845184fd2ecb84a929e79f36da93771",
+        "staticArchives": {
+          "dist/FFmpeg/macos/thin/arm64/lib/libavcodec.a": "6c4584aaa5129c72f42221c0b090563392df62878031a735deecfbb9f1c8580f",
+          "dist/FFmpeg/macos/thin/arm64/lib/libavdevice.a": "db2922fa7a5b123a14618dd84f8eeb17a1c8f0a1ca373369f45e0fce4421ef40",
+          "dist/FFmpeg/macos/thin/arm64/lib/libavfilter.a": "290bf46cf8930a6f3fd387af9e4686ef15da472570a5b06579afb6cc618532d0",
+          "dist/FFmpeg/macos/thin/arm64/lib/libavformat.a": "6a20ec3828fa44f10532849a534814f5c7a63fc7ac594a3342f7960cb4fd4f7f",
+          "dist/FFmpeg/macos/thin/arm64/lib/libavutil.a": "62bb4836fcc3c550f43dc6e7184c1bffe7b8ccff148e54fa4c4096fdd685162f",
+          "dist/FFmpeg/macos/thin/arm64/lib/libswresample.a": "36af977c20802dec0bc7656ff60ef1e439de8c7a34a467174a9541623f72295f",
+          "dist/FFmpeg/macos/thin/arm64/lib/libswscale.a": "e1b09ab3e93ac61aa808adfe88c31d3fdb2be6b6773cd68bdbdfc5c17b11f55d"
+        }
+      },
+      "x86_64": {
+        "objectCount": 988,
+        "objectManifestSHA256": "07486bca104f3eba658c50b1ef1f1b9fd5ec9a54dfc64be8f58c8261a2305c5a",
+        "staticArchives": {
+          "dist/FFmpeg/macos/thin/x86_64/lib/libavcodec.a": "24a78df6e91b11f182b7cdfcfcf8c28c0b64d9fbdf64eb310fe45b1504552fed",
+          "dist/FFmpeg/macos/thin/x86_64/lib/libavdevice.a": "4c1f42c1198951a7f20a1752265df6150d909985be52bfb6d911019ad9987f87",
+          "dist/FFmpeg/macos/thin/x86_64/lib/libavfilter.a": "fcdf1a5bc376506356f2731e2b636f65967615ab07ceddcd14ba6d7b58c6b847",
+          "dist/FFmpeg/macos/thin/x86_64/lib/libavformat.a": "c13c1b55b96ace72c8f6c4d9b560b52f3839ff0a80bf3eb16f17ec2c4c2df5e2",
+          "dist/FFmpeg/macos/thin/x86_64/lib/libavutil.a": "00a780f771ac520dac1ed8934d70cf21d9c5bbdb48277d2a1b32af349c417043",
+          "dist/FFmpeg/macos/thin/x86_64/lib/libswresample.a": "6a942aaffb372f74710e5d94d40e565815ce7d40f1ea276aa0650ab511799d06",
+          "dist/FFmpeg/macos/thin/x86_64/lib/libswscale.a": "b25b00ddd52f679e2dea2f1dbe1b91a221080c8d849abe9e31d06e418e22db3e"
+        }
+      }
+    }
+  },
+  "shippingFeatureParity": {
+    "product": "MPVKit-GPL",
+    "architectures": {
+      "arm64": {
+        "libmpv/config.h": {
+          "headerSHA256": "a8baead23eb0c5315f487203174338355351c41b04655140a71feb1522ed09d2",
+          "requiredFeatures": {
+            "HAVE_GPL": 1,
+            "HAVE_COREAUDIO": 1,
+            "HAVE_AVFOUNDATION": 1,
+            "HAVE_COCOA": 1,
+            "HAVE_FFMPEG": 1,
+            "HAVE_GL": 1,
+            "HAVE_GL_COCOA": 1,
+            "HAVE_LIBASS": 1,
+            "HAVE_LIBBLURAY": 1,
+            "HAVE_MOLTENVK": 1,
+            "HAVE_SWIFT": 1,
+            "HAVE_VIDEOTOOLBOX_GL": 1,
+            "HAVE_VIDEOTOOLBOX_PL": 1,
+            "HAVE_VULKAN": 1,
+            "HAVE_LUA": 0
+          },
+          "booleanConfigurationSHA256": "e5ee614230a8b5931860a2498d43ddbfc693b3e8ba8a063aaf6403367767315b"
+        },
+        "FFmpeg/config.h": {
+          "headerSHA256": "8d928ba0e86a2de790b3f926ab64d4a03a8b1ea9a5ddf00cc38d7dbbcd93e5ca",
+          "requiredFeatures": {
+            "CONFIG_GPL": 1,
+            "CONFIG_GPLV3": 1,
+            "CONFIG_LIBSMBCLIENT": 1,
+            "CONFIG_METAL": 1,
+            "CONFIG_LIBASS": 1,
+            "CONFIG_LIBDAV1D": 1,
+            "CONFIG_LIBPLACEBO": 1,
+            "CONFIG_LIBUAVS3D": 1,
+            "CONFIG_VIDEOTOOLBOX": 1,
+            "CONFIG_VULKAN": 1,
+            "CONFIG_LGPLV3": 0
+          },
+          "booleanConfigurationSHA256": "c0ddf814b82637f130cea41dd662654e20f16cb3c153cd06d7fc25dbf9c51e80"
+        },
+        "FFmpeg/config_components.h": {
+          "headerSHA256": "0b501a48f37e4e5c4b641e0fc661aa9c5fae256ed4e7b729d9cccc0a18f47d98",
+          "requiredFeatures": {
+            "CONFIG_LIBSMBCLIENT_PROTOCOL": 1,
+            "CONFIG_DELOGO_FILTER": 1,
+            "CONFIG_PAN_FILTER": 1,
+            "CONFIG_ARESAMPLE_FILTER": 1,
+            "CONFIG_ASS_FILTER": 1,
+            "CONFIG_SUBTITLES_FILTER": 1,
+            "CONFIG_LIBPLACEBO_FILTER": 1,
+            "CONFIG_LIBDAV1D_DECODER": 1,
+            "CONFIG_LIBUAVS3D_DECODER": 1,
+            "CONFIG_ADPCM_CIRCUS_DECODER": 1,
+            "CONFIG_ADPCM_IMA_ESCAPE_DECODER": 1,
+            "CONFIG_ADPCM_IMA_HVQM2_DECODER": 1,
+            "CONFIG_ADPCM_IMA_HVQM4_DECODER": 1,
+            "CONFIG_ADPCM_IMA_MAGIX_DECODER": 1,
+            "CONFIG_ADPCM_IMA_PDA_DECODER": 1,
+            "CONFIG_ADPCM_N64_DECODER": 1,
+            "CONFIG_ADPCM_PSXC_DECODER": 1,
+            "CONFIG_AHX_PARSER": 1,
+            "CONFIG_AHX_TO_MP2_BSF": 1
+          },
+          "booleanConfigurationSHA256": "4517449b578c76890504263546579ca56b9764bfa1c689dc438fe876e918204d"
+        }
+      },
+      "x86_64": {
+        "libmpv/config.h": {
+          "headerSHA256": "fbb380dd76d0f76adb57a544cb928b5a42d08144350afc9491202a0bc68bd7dc",
+          "requiredFeatures": {
+            "HAVE_GPL": 1,
+            "HAVE_COREAUDIO": 1,
+            "HAVE_AVFOUNDATION": 1,
+            "HAVE_COCOA": 1,
+            "HAVE_FFMPEG": 1,
+            "HAVE_GL": 1,
+            "HAVE_GL_COCOA": 1,
+            "HAVE_LIBASS": 1,
+            "HAVE_LIBBLURAY": 1,
+            "HAVE_MOLTENVK": 1,
+            "HAVE_SWIFT": 1,
+            "HAVE_VIDEOTOOLBOX_GL": 1,
+            "HAVE_VIDEOTOOLBOX_PL": 1,
+            "HAVE_VULKAN": 1,
+            "HAVE_LUA": 0
+          },
+          "booleanConfigurationSHA256": "e5ee614230a8b5931860a2498d43ddbfc693b3e8ba8a063aaf6403367767315b"
+        },
+        "FFmpeg/config.h": {
+          "headerSHA256": "66daeb09a9aa0d4f1c022fae605b07e4500364ee86a74d64f90fed3b8f2ce906",
+          "requiredFeatures": {
+            "CONFIG_GPL": 1,
+            "CONFIG_GPLV3": 1,
+            "CONFIG_LIBSMBCLIENT": 1,
+            "CONFIG_METAL": 1,
+            "CONFIG_LIBASS": 1,
+            "CONFIG_LIBDAV1D": 1,
+            "CONFIG_LIBPLACEBO": 1,
+            "CONFIG_LIBUAVS3D": 1,
+            "CONFIG_VIDEOTOOLBOX": 1,
+            "CONFIG_VULKAN": 1,
+            "CONFIG_LGPLV3": 0
+          },
+          "booleanConfigurationSHA256": "b8eede9a0dc245c876b7c80468149144d1311a2e23502176bebd755070c4fa32"
+        },
+        "FFmpeg/config_components.h": {
+          "headerSHA256": "a3bdbf4c5b41f522871ce5b7e49f22a9cb49f51ee15c9896f0c1447f1b2fdee8",
+          "requiredFeatures": {
+            "CONFIG_LIBSMBCLIENT_PROTOCOL": 1,
+            "CONFIG_DELOGO_FILTER": 1,
+            "CONFIG_PAN_FILTER": 1,
+            "CONFIG_ARESAMPLE_FILTER": 1,
+            "CONFIG_ASS_FILTER": 1,
+            "CONFIG_SUBTITLES_FILTER": 1,
+            "CONFIG_LIBPLACEBO_FILTER": 1,
+            "CONFIG_LIBDAV1D_DECODER": 1,
+            "CONFIG_LIBUAVS3D_DECODER": 1,
+            "CONFIG_ADPCM_CIRCUS_DECODER": 1,
+            "CONFIG_ADPCM_IMA_ESCAPE_DECODER": 1,
+            "CONFIG_ADPCM_IMA_HVQM2_DECODER": 1,
+            "CONFIG_ADPCM_IMA_HVQM4_DECODER": 1,
+            "CONFIG_ADPCM_IMA_MAGIX_DECODER": 1,
+            "CONFIG_ADPCM_IMA_PDA_DECODER": 1,
+            "CONFIG_ADPCM_N64_DECODER": 1,
+            "CONFIG_ADPCM_PSXC_DECODER": 1,
+            "CONFIG_AHX_PARSER": 1,
+            "CONFIG_AHX_TO_MP2_BSF": 1
+          },
+          "booleanConfigurationSHA256": "e40284005700b6a599314b0a4ae64f20b4db078f25a37c61b6e8a37b4ed2ff33"
+        }
+      }
+    },
+    "mismatches": [],
+    "passed": true
+  },
+  "verifierSHA256": "6ff54c5d91d62ce9c67058af1cabb315329ba822881f559e036b0d0f810d5f9b",
+  "actualBuilderSnapshotSHA256": "6ff54c5d91d62ce9c67058af1cabb315329ba822881f559e036b0d0f810d5f9b"
+}

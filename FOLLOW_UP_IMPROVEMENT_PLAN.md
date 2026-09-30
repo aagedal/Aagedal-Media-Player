@@ -3957,6 +3957,86 @@ The second replaced a duplicate-endpoint diagnostic before its queued callback.
 Both fail before the correction and pass afterward. See
 [retained source race evidence](docs/evidence/live-meter-clock-handoff-20260930/README.md).
 
+## Phase 178 — Feature-qualified fresh GPL/Metal CoreAudio candidate
+
+Status: Fresh universal local build, independent provenance and native profile
+checks pass on 2026-09-30; shipping package pin is unchanged.
+
+- [x] Select the installed working Metal compiler explicitly, require a real
+  kernel compile/link and bind launcher/implementation/symlink identities.
+- [x] Preserve GPL/Samba/Metal and required codec/filter/video/backend features
+  on both slices; verify all eight actual universal ZIP/binary identities.
+- [x] Compile 221/220 mpv and 1,122/988 FFmpeg objects from fresh committed
+  source directories; retain unchanged original dependency checkout.
+- [x] Reject and preserve the first build's live-script/snapshot hash mismatch,
+  fix snapshot identity capture and pass a new build's independent verification.
+- [x] Pass eighteen builder regressions and three authentic native profiles
+  using all eight new artifacts with the corrected current app.
+- [ ] Publish immutable recipe/input/artifact/package metadata and repin; complete
+  audible/device/surround, sustained supported-macOS and base-M1 acceptance.
+
+Normal Xcode Metal launch still reports missing toolchain despite installed
+inventory; direct installed compiler invocation works and final Metal/GPL
+configuration is gated on both slices. Five-second AAC and FX6 mono zero/seven
+profiles pass selected-track, monitor-routing, cancellation and exact EOF
+checks without output-init/channel-map errors. No hardware/soak or historical
+FX6 causality claim is made. See [build and retained rejection](docs/evidence/coreaudio-gpl-metal-20260930/README.md)
+and [native artifact profiles](docs/evidence/live-meter-gpl-metal-native-20260930/README.md).
+
+## Phase 179 — Bounded MXF production app integration evidence
+
+Status: Isolated local-library app candidate passes three authentic Sony
+production metadata profiles on 2026-09-30; shipping pin is unchanged.
+
+- [x] Compile/link the app against the bounded cursor with explicit local
+  source/file-list/symbol provenance, preserving original app source and pins.
+- [x] Pass the unchanged production validator on three fresh XCTest hosts with
+  complete in-process cached-model equality and shipping profile snapshot parity.
+- [x] Retain unchanged candidate app/test/library/source/media/sidecar identities
+  during profiling, plus actual compiled source and temporary manifest/project diffs.
+- [x] Observe FX6 uncached lifetime-peak increase fall from 368.516 to 18.5625 MiB;
+  retain 0.184/0.403-second timings with cache/concurrent-work qualifications.
+- [x] Document and restore all 36 original flat outputs incidentally removed by
+  copied DerivedData stale-path cleanup; retain restoration identity limitations.
+- [ ] Complete repeated-import/cache resource, external-volume, multi-hour,
+  Linux/base-M1 acceptance and upstream immutable release/repin.
+
+The copied build database retained absolute historical output paths; no further
+build ran after detection. Profiling used only the already-built candidate and
+fresh test-without-building hosts. Logged paths were restored and matched their
+restoration sources, but independent pre-incident flat-product hashes were not
+recorded. Historical receipts remain unchanged. Complete app cache equality
+compares candidate uncached/cached values; historical app parity covers retained
+profile snapshots, while complete dependency exporter parity covers six original
+inputs. Current FX6 RSS remains about 18.6 MiB above initial after caller release;
+immediate baseline recovery is unproven. See
+[production profiles and restoration](docs/evidence/bounded-mxf-app-production-20260930/README.md).
+
+## Phase 180 — Integrated bounded-reader continuation verification
+
+Status: Canonical optimized Release verification passes on 2026-09-30 for
+implementation commit `82597597ba3e4f854799b03857a916d864873cab`.
+
+- [x] Use a clean detached clone, fresh DerivedData and validated unchanged
+  pinned dependency cache; retain exact source and package identity.
+- [x] Pass 738 aggregate tests: 730 passes and eight allowlisted opt-in skips,
+  with no failures, expected failures or runtime warnings.
+- [x] Explicitly require all five new app regressions and exactly 738 tests.
+- [x] Pass both isolated mixed-backend transport checks, static analysis,
+  all 61 source release preflight checks and script validator self-tests.
+- [x] Retain no-sleep verification evidence and final clean source identity.
+- [x] Preserve the rejected missing-generated-fixture attempt; explicitly
+  generate existing schema-5 media and repeat without relaxing skip rules.
+- [ ] Consume matching final HEAD and complete native/hardware/editor,
+  dependency publication/repin and distribution acceptance before release.
+
+The initial clone correctly failed consumption on 44 unexpected fixture skips
+(686 passes, 52 skips). Existing explicit fixture generation with full FFmpeg
+9.0.2 restored all required decoder tests. The accepted run used a new output
+directory and retained both attempts. Later evidence/documentation commits are
+distinct from the tested implementation commit. See
+[canonical receipts and fixture identities](docs/evidence/release-candidate-bounded-continuation-20260930/README.md).
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -4318,3 +4398,10 @@ Both fail before the correction and pass afterward. See
 163. Phase 171 authoritative paused comparison transport.
 164. Phase 172 shipping dependency feature parity and bounded MXF scope.
 165. Phase 173 integrated authentic continuation verification.
+166. Phase 174 isolated bounded MXF reader candidate.
+167. Phase 175 passive Review text correction ownership.
+168. Phase 176 retained meter synchronization context and FX6 repeats.
+169. Phase 177 current DSP handoff before playback clock assessment.
+170. Phase 178 feature-qualified fresh GPL/Metal CoreAudio candidate.
+171. Phase 179 bounded MXF production app integration evidence.
+172. Phase 180 integrated bounded-reader continuation verification.

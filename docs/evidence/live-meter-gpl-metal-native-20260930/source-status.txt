@@ -1,0 +1,12 @@
+060f611f7ba1d669a1af7b7846cdf1812f53b531
+ M "Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift"
+ M "Aagedal Media Player/Logic/LiveAudioMeterCoordinator.swift"
+ M CHANGELOG.md
+ M FOLLOW_UP_IMPROVEMENT_PLAN.md
+ M scripts/release.sh
+ M scripts/test-release-script-validation.py
+ M scripts/verify-release-candidate.sh
+?? docs/evidence/bounded-mxf-app-production-20260930/
+?? docs/evidence/coreaudio-gpl-metal-20260930/
+?? docs/evidence/live-meter-clock-handoff-20260930/
+?? docs/evidence/live-meter-gpl-metal-native-20260930/

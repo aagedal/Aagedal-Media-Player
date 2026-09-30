@@ -35,6 +35,28 @@ decoder and display path. It produces a cleared, actionable Unavailable state
 with Retry rather than retaining stale measurement provenance. Three focused
 Debug checks pass; producer-authentic malformed-media acceptance remains open.
 
+The latest September 30 continuation proves and fixes two live-meter handoff/clock
+races, preserves Review text correction ownership and retained failure context,
+and raises candidate consumption to 738 aggregate tests. A fresh local universal
+GPL/Metal CoreAudio build now passes independent identity/feature checks and
+three authentic native profiles. The bounded MXF upstream candidate passes full
+library tests, six complete exporter comparisons and three production app/cache
+profiles; FX6 lifetime-peak increase falls from 368.516 to 18.5625 MiB. These
+local candidates still require immutable dependency releases and shipping repins.
+The first dependency receipt rejection and temporary metadata build's restored
+stale-output incident remain explicit in the evidence. See the
+[GPL/Metal build](evidence/coreaudio-gpl-metal-20260930/README.md),
+[meter source races](evidence/live-meter-clock-handoff-20260930/README.md) and
+[production MXF candidate](evidence/bounded-mxf-app-production-20260930/README.md).
+Native spoken accessibility, hardware/soak, remaining editor and distribution
+gates are still open.
+The [canonical continuation verification](evidence/release-candidate-bounded-continuation-20260930/README.md)
+passes for implementation commit `82597597ba3e4f854799b03857a916d864873cab`:
+730 passes, eight allowlisted opt-in skips, both isolated transport checks,
+static analysis and 61 preflight checks. The first missing-fixture rejection is
+retained; existing explicit fixture generation resolved it without skip changes.
+Later documentation retention does not replace matching-HEAD release checks.
+
 The Review & Report implementation is substantially present: structured point
 and range findings, versioned local sidecars, relinking, deliberate historical
 timebase migration, save recovery, and CSV/PDF/editor-format export. That makes

@@ -94,6 +94,12 @@ candidate. Forced sleep still invalidates the run. Each isolated transport
 test has a 120-second execution allowance; synchronization tolerances are
 unchanged. A sleep-interrupted attempt must be retained as diagnosis and
 replaced by a fresh awake verification.
+Generate the existing media fixtures explicitly before running the verifier
+in a new checkout: `scripts/generate-test-fixtures.sh`. The ignored
+`Test Fixtures/Generated` tree is absent from a Git clone. Missing/stale fixtures
+cause required decoder tests to skip, which the verifier correctly rejects;
+fixture generation is preparation, not additional skip allowance. It requires
+the documented full FFmpeg encoder build, rather than the bundled image-only binary.
 The destructive disk-image check, external-reference checks, fixture generation,
 and production profilers—including representative live-audio-meter acceptance—
 remain explicit opt-ins rather than ordinary candidate verifier work.
