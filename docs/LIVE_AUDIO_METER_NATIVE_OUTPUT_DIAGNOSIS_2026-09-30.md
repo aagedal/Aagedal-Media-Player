@@ -177,3 +177,11 @@ records remain historical source-meter evidence; the prior safe baseline is
 explicitly rejected by the new native-output gate. Twenty Python validator
 tests pass, including the retained false-passing baseline rejection; shell syntax
 and the native probe compile checks pass.
+
+After canonical verification, the same clean source `7bccab4` ran the actual
+Release profiler against the original generated stereo-video input at both
+explicit ordinals. All four logging receipts are retained; the XCTest and two
+source-meter records pass, but CoreAudio channel-map failures make final
+validation exit 1 with no passing summary. This supplies actual Release
+integration evidence for the new rejection path, without claiming the output
+defect is repaired. See [retained native run](evidence/live-meter-native-output-20260930/release-output-gate/README.md).

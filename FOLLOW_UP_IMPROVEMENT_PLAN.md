@@ -3526,6 +3526,26 @@ See [source defect and coverage](docs/evidence/review-current-range-correction-2
 The computer-use app connection hung until cancelled; no native interaction or
 spoken acceptance is inferred from this source fix.
 
+## Phase 159 — Integrated Release verification and native output rejection
+
+Status: Canonical gate passed on 2026-09-30 at clean commit
+`7bccab4f619eb88f7a1ad08de1c6fddf9e8943d9`.
+
+- [x] Pass 707 optimized Release tests with eight named optional skips, no
+  failures/runtime warnings, both isolated transport directions, Release
+  analysis and all 61 source-tree preflight checks.
+- [x] Retain verified no-sleep evidence and revalidate exact source, clean
+  checkout, resolved-package and pinned package-cache identities.
+- [x] Run the same source's actual Release native profiler on both original
+  selected stereo-video tracks: source-meter rows and XCTest pass, but logged
+  CoreAudio map errors correctly reject the run with exit 1 and no summary.
+
+See [canonical evidence](docs/evidence/release-candidate-2-continuation-final-20260930/README.md)
+and [native rejection](docs/evidence/live-meter-native-output-20260930/release-output-gate/README.md).
+The output repair, XMP/JXL reconciliation and external editor/accessibility,
+representative delivery/hardware and distribution acceptance remain open.
+This evidence-report commit follows the verified implementation commit.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -3872,3 +3892,4 @@ spoken acceptance is inferred from this source fix.
 148. Phase 156 isolated CoreAudio contract proof and fail-closed output profiles.
 149. Phase 157 recover authentic Sony raw and verify exact metadata release.
 150. Phase 158 correct unchanged current-frame Review range drafts.
+151. Phase 159 integrated Release verification and native output rejection.

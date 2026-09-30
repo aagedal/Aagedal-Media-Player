@@ -114,6 +114,18 @@ workflow/media/performance gates remain open. See [current candidate evidence](e
 
 ## Must close before a defensible 2.0 candidate
 
+The integrated continuation passes canonical verification at clean commit
+`7bccab4f619eb88f7a1ad08de1c6fddf9e8943d9`: 707 optimized Release passes,
+eight documented optional skips, both isolated transport directions, Release
+static analysis, all 61 preflight checks and verified no-sleep evidence. Final
+source/package/cache identities agree. See [current integrated evidence](evidence/release-candidate-2-continuation-final-20260930/README.md).
+The same source's actual Release native profile then confirms the stronger
+output gate: both source-meter rows and XCTest pass, but logged CoreAudio
+channel-map failures make the runner exit 1 without a passing summary. See
+[current native rejection](evidence/live-meter-native-output-20260930/release-output-gate/README.md).
+The dependency repair remains pending; these records do not close external
+media, editor/accessibility, hardware or distribution gates.
+
 The next September 30 continuation fixes Review's current-range action leaving
 invalid typed input behind when its accepted endpoint is unchanged. It also
 passes 4,896 momentary/short-term comparisons from the production live decoder
