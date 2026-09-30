@@ -4305,6 +4305,23 @@ The preparation changes the source clock and preserves codec payload/PCM. Its
 pass does not accept the rejected original timestamps. See
 [DTS evidence](docs/evidence/live-meter-dts-lossless-preparation-20260930/README.md).
 
+## Phase 196 — Integrated availability, PDF and dependency continuation
+
+Status: Canonical optimized Release verification passes at clean implementation
+commit `4c91fe3e27b7d1af52adb94bc7c8ed0d76142443` on 2026-09-30.
+
+- [x] Run the canonical verifier with fresh DerivedData and unchanged validated
+  package cache; pass 750 aggregate checks (741 passes and nine named opt-in skips).
+- [x] Require all five new Review/PDF regressions in the exact detailed result;
+  pass both isolated mixed-backend transport directions, analysis and 61 preflight checks.
+- [x] Pass the full script gate and no-sleep/final-source/package/cache checks;
+  retain source, result and power receipts alongside separate DTS acceptance.
+- [ ] Complete matching-HEAD distribution, public dependency publication/repin,
+  native spoken accessibility, editor, hardware and sustained audible/device gates.
+
+See [integrated receipts](docs/evidence/release-candidate-next-continuation-20260930/README.md).
+Documentation-only retention does not replace matching-HEAD release consumption.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -4689,3 +4706,4 @@ pass does not accept the rejected original timestamps. See
 185. Phase 193 complete PDF source/capture identity.
 186. Phase 194 repeatable reconstruction audit.
 187. Phase 195 lossless DTS-HD MA clock qualification.
+188. Phase 196 integrated availability/PDF/dependency verification.

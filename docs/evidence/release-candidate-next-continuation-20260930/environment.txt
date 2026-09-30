@@ -1,0 +1,10 @@
+sourceCommit=4c91fe3e27b7d1af52adb94bc7c8ed0d76142443
+packageResolvedSHA256=6aea6d64326f3040345c3523a0a39c95d53335777e233b3aa311e8ba90ad475d
+packageCache=/private/tmp/aagedal-itu-live-dd-20260930/SourcePackages
+startedAt=2026-09-30T21:19:29Z
+powerStartedAtLocal=2026-09-30 23:19:29
+host=macOS 27.0.1 (26A434)
+Xcode 27.0
+Build version 27A266a
+completedAt=2026-09-30T21:24:52Z
+status=passed

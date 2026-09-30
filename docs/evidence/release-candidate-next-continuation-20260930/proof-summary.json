@@ -1,0 +1,95 @@
+{
+  "sourceCommit": "4c91fe3e27b7d1af52adb94bc7c8ed0d76142443",
+  "packageResolvedSHA256": "6aea6d64326f3040345c3523a0a39c95d53335777e233b3aa311e8ba90ad475d",
+  "aggregate": {
+    "devicesAndConfigurations": [
+      {
+        "device": {
+          "architecture": "arm64",
+          "deviceId": "00006050-001C293C22F9401C",
+          "deviceName": "My Mac",
+          "modelName": "MacBook Pro",
+          "osBuildNumber": "26A434",
+          "osVersion": "27.0.1",
+          "platform": "macOS"
+        },
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "passedTests": 741,
+        "skippedTests": 9,
+        "testPlanConfiguration": {
+          "configurationId": "1",
+          "configurationName": "Test Scheme Action"
+        }
+      }
+    ],
+    "environmentDescription": "Aagedal Media Player \u00b7 Built with macOS 27.0.1",
+    "expectedFailures": 0,
+    "failedTests": 0,
+    "finishTime": 1790803394.394,
+    "passedTests": 741,
+    "result": "Passed",
+    "runtimeWarnings": [],
+    "skippedTests": 9,
+    "startTime": 1790803191.183,
+    "statistics": [],
+    "testFailures": [],
+    "title": "Test - Aagedal Media Player",
+    "topInsights": [
+      {
+        "category": "Longest Test Runs",
+        "impact": "68% of duration",
+        "text": "11 longest test runs with outlier durations exceeding 3.17s (three standard deviations)"
+      }
+    ],
+    "totalTestCount": 750
+  },
+  "isolatedTransport": {
+    "devicesAndConfigurations": [
+      {
+        "device": {
+          "architecture": "arm64",
+          "deviceId": "00006050-001C293C22F9401C",
+          "deviceName": "My Mac",
+          "modelName": "MacBook Pro",
+          "osBuildNumber": "26A434",
+          "osVersion": "27.0.1",
+          "platform": "macOS"
+        },
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "passedTests": 2,
+        "skippedTests": 0,
+        "testPlanConfiguration": {
+          "configurationId": "1",
+          "configurationName": "Test Scheme Action"
+        }
+      }
+    ],
+    "environmentDescription": "Aagedal Media Player \u00b7 Built with macOS 27.0.1",
+    "expectedFailures": 0,
+    "failedTests": 0,
+    "finishTime": 1790803419.946,
+    "passedTests": 2,
+    "result": "Passed",
+    "runtimeWarnings": [],
+    "skippedTests": 0,
+    "startTime": 1790803396.075,
+    "statistics": [],
+    "testFailures": [],
+    "title": "Test - Aagedal Media Player",
+    "topInsights": [],
+    "totalTestCount": 2
+  },
+  "requiredNewTestValidation": "PASS: release XCTest evidence contains 750 tests, 9 allowlisted explicit skip(s), and no runtime warnings",
+  "analysisSucceeded": true,
+  "preflight": "Release preflight passed 61 checks for 1.6.1 (163) [candidate].",
+  "power": {
+    "start": "2026-09-30 23:19:29",
+    "end": "2026-09-30 23:24:50",
+    "events": [],
+    "sleepObserved": false
+  },
+  "scriptValidatorsSucceeded": true,
+  "qualification": "Fresh DerivedData, clean committed checkout and unchanged validated offline package cache; named optional skips retained. DTS preparation uses separately identified retained local dependency binaries. Native spoken accessibility, hardware/editor/public-dependency/distribution gates remain open."
+}

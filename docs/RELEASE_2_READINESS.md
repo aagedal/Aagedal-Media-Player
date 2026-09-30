@@ -135,7 +135,11 @@ Three Review and two PDF regressions raise candidate consumption to 750 aggregat
 tests plus both isolated transport directions. All sixty focused optimized
 Release checks and script validators pass; all three PDF fixture pages are
 visually checked. See [focused evidence](evidence/review-pdf-availability-20260930/README.md).
-Final integrated verification follows separately. The offline dependency auditor passes 11,089 declared
+Canonical optimized Release verification passes at clean implementation commit
+`4c91fe3e27b7d1af52adb94bc7c8ed0d76142443`: 741 passes, nine named skips,
+both isolated transport directions, analysis, 61 preflight checks and final
+source/package/cache/no-sleep identity. All five new regressions pass detailed
+validation. See [integrated receipts](evidence/release-candidate-next-continuation-20260930/README.md). The offline dependency auditor passes 11,089 declared
 source files and twenty input ZIPs, with upstream provenance now bound to the
 receipt; public compilation/publication/repin remains open. See
 [reconstruction audit](evidence/coreaudio-reconstruction-audit-20260930/README.md).
