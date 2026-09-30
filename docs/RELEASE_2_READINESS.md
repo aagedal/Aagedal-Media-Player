@@ -91,6 +91,18 @@ UI state and is cancelled after 639.7 seconds; keyboard/Full Keyboard Access/
 spoken VoiceOver acceptance remains open. See
 [range correction evidence](evidence/review-range-correction-ownership-20260930/README.md).
 
+The resource/Review batch passes canonical optimized Release verification at
+`dfc9137fe39e4c93ed01f63cbe81717dec01902e`: 731 passes, nine named opt-in skips
+(740 total), both isolated transport checks, static analysis, all 61 preflight
+checks and no-sleep/source/package evidence. Exact validation requires the new
+range correction regression. A subsequent script-only validator follow-up has
+thirteen passing focused checks and byte-identical stricter resource receipts;
+app/test/package hashes still match the canonical run. Final script checks and
+source identity are retained separately. See
+[integrated continuation evidence](evidence/release-candidate-resource-continuation-20260930/README.md).
+Matching-HEAD release consumption, dependency publication and native/hardware/
+editor/distribution gates remain open.
+
 The Review & Report implementation is substantially present: structured point
 and range findings, versioned local sidecars, relinking, deliberate historical
 timebase migration, save recovery, and CSV/PDF/editor-format export. That makes

@@ -4141,6 +4141,28 @@ This changes profile validation scripts and their tests only; app and XCTest
 sources are unchanged. See
 [post-review evidence](docs/evidence/bounded-mxf-reimports-20260930/post-review-validation.json).
 
+## Phase 186 — Integrated resource and Review continuation verification
+
+Status: Canonical optimized Release verification passes on 2026-09-30 at
+`dfc9137fe39e4c93ed01f63cbe81717dec01902e`, with a separately verified script-only follow-up.
+
+- [x] Verify a source-only clean detached clone with fresh DerivedData,
+  unchanged validated package cache and hashed existing schema-5 fixtures.
+- [x] Pass 740 aggregate tests: 731 passes and nine explicit allowlisted skips,
+  with no failures, expected failures or runtime warnings.
+- [x] Require exactly 740 tests and the new Review range correction regression.
+- [x] Pass both isolated transport checks, static analysis, all 61 preflight
+  checks, script validators and no-sleep/source/package identity checks.
+- [x] Bind final script-only follow-up to unchanged app/test/package sources;
+  retain final script tests and stronger unchanged-resource-data validation.
+- [ ] Complete matching-HEAD distribution, published dependencies, native/editor,
+  supported-macOS/base-M1 and sustained audible/device acceptance.
+
+The separate local dependency candidates are not shipping repins. Final script
+checks are distinct from the canonical app verification commit; documentation
+retention does not replace matching-HEAD release consumption. See
+[integrated receipts](docs/evidence/release-candidate-resource-continuation-20260930/README.md).
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with

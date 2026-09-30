@@ -1,0 +1,93 @@
+{
+  "sourceCommit": "dfc9137fe39e4c93ed01f63cbe81717dec01902e",
+  "aggregate": {
+    "devicesAndConfigurations": [
+      {
+        "device": {
+          "architecture": "arm64",
+          "deviceId": "00006050-001C293C22F9401C",
+          "deviceName": "My Mac",
+          "modelName": "MacBook Pro",
+          "osBuildNumber": "26A434",
+          "osVersion": "27.0.1",
+          "platform": "macOS"
+        },
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "passedTests": 731,
+        "skippedTests": 9,
+        "testPlanConfiguration": {
+          "configurationId": "1",
+          "configurationName": "Test Scheme Action"
+        }
+      }
+    ],
+    "environmentDescription": "Aagedal Media Player \u00b7 Built with macOS 27.0.1",
+    "expectedFailures": 0,
+    "failedTests": 0,
+    "finishTime": 1790798270.918,
+    "passedTests": 731,
+    "result": "Passed",
+    "runtimeWarnings": [],
+    "skippedTests": 9,
+    "startTime": 1790798035.496,
+    "statistics": [],
+    "testFailures": [],
+    "title": "Test - Aagedal Media Player",
+    "topInsights": [
+      {
+        "category": "Longest Test Runs",
+        "impact": "64% of duration",
+        "text": "11 longest test runs with outlier durations exceeding 3.25s (three standard deviations)"
+      }
+    ],
+    "totalTestCount": 740
+  },
+  "isolatedTransport": {
+    "devicesAndConfigurations": [
+      {
+        "device": {
+          "architecture": "arm64",
+          "deviceId": "00006050-001C293C22F9401C",
+          "deviceName": "My Mac",
+          "modelName": "MacBook Pro",
+          "osBuildNumber": "26A434",
+          "osVersion": "27.0.1",
+          "platform": "macOS"
+        },
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "passedTests": 2,
+        "skippedTests": 0,
+        "testPlanConfiguration": {
+          "configurationId": "1",
+          "configurationName": "Test Scheme Action"
+        }
+      }
+    ],
+    "environmentDescription": "Aagedal Media Player \u00b7 Built with macOS 27.0.1",
+    "expectedFailures": 0,
+    "failedTests": 0,
+    "finishTime": 1790798299.743,
+    "passedTests": 2,
+    "result": "Passed",
+    "runtimeWarnings": [],
+    "skippedTests": 0,
+    "startTime": 1790798274.908,
+    "statistics": [],
+    "testFailures": [],
+    "title": "Test - Aagedal Media Player",
+    "topInsights": [],
+    "totalTestCount": 2
+  },
+  "requiredReviewRegression": "PASS: release XCTest evidence contains 740 tests, 9 allowlisted explicit skip(s), and no runtime warnings",
+  "sourceStatus": "",
+  "qualification": "Shipping dependency pins, clean source-only clone, fresh DerivedData. Local dependency-native/resource observations remain separately identified; documentation retention follows implementation verification.",
+  "finalScripts": {
+    "sourceCommit": "61ce66f0c8b847b6b03818f723d653eb92906e0d",
+    "scriptValidatorGate": "passed",
+    "logSHA256": "6b80ab6ad6cab2b6dfc2b161cc99970ad50893522eeae1b8ef9169f85b595b64",
+    "reimportValidatorTests": 13,
+    "appAndTestSourcesMatchCanonical": true
+  }
+}
