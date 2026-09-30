@@ -4322,6 +4322,67 @@ commit `4c91fe3e27b7d1af52adb94bc7c8ed0d76142443` on 2026-09-30.
 See [integrated receipts](docs/evidence/release-candidate-next-continuation-20260930/README.md).
 Documentation-only retention does not replace matching-HEAD release consumption.
 
+## Phase 197 — Bound live-meter startup before first PCM
+
+Status: Implemented on 2026-09-30; 69 focused Debug audio checks pass.
+
+- [x] Assess the initial request position before the first reduced DSP bucket.
+- [x] Apply the existing two-second catch-up allowance to stalled startup;
+  cancel and retain failure context when it expires.
+- [x] Keep requested positions from establishing decoder synchronization.
+- [x] Cover stalled startup, first-PCM recovery and invalid playing clocks.
+
+Acceptance: a playing meter cannot warm indefinitely without PCM; no clock
+or timestamp tolerance is relaxed. Native output/soak/hardware gates remain.
+
+## Phase 198 — Explicit PDF source and relative timecodes
+
+Status: Implemented on 2026-09-30; 41 focused optimized Release checks pass.
+
+- [x] Label compact timecode columns SRC TC or REL TC.
+- [x] Retain complete source and relative values in wrapped finding text.
+- [x] Explain unavailable source timecode after different-rate relinking.
+- [x] Verify the relink regression and visually inspect four fixture pages.
+
+Acceptance: report recipients can distinguish original source coordinates
+from relative coordinates even when compact columns truncate.
+
+## Phase 199 — Exact offline dependency payload inventory
+
+Status: Implemented on 2026-09-30; 16 reconstruction and 17 publication
+regressions pass. The retained workspace passes all 11,109 payload files.
+
+- [x] Reject undeclared source files, ignored build/cache inputs and empty
+  extra directories rather than relying on clean Git status.
+- [x] Reject redirected directories/Git pointers and nonregular inputs.
+- [x] Verify the exact 11,089 source files and twenty auxiliary ZIPs.
+- [ ] Complete public compilation/publication, fresh resolution and app repin.
+
+Acceptance: a passing offline input audit includes precisely the declared
+payload. It does not demonstrate compilation or byte-identical rebuilding.
+
+## Phase 200 — Safe comparison metadata labels
+
+Status: Implemented on 2026-09-30; all thirteen focused Release checks pass.
+
+- [x] Avoid trapping integer conversions for finite extreme frame rates or
+  durations and overflowing millisecond multiplication.
+- [x] Preserve large duration hours without 32-bit format truncation.
+- [x] Cover extreme finite metadata and large readable duration labels.
+
+Acceptance: constructing technical mismatch UI preserves reported values
+without crashing on malformed finite metadata.
+
+## Phase 201 — Integrated startup, PDF and payload verification
+
+Status: Awaiting canonical clean-checkout verification.
+
+The candidate and release floor is now 756 aggregate tests, with nine named
+opt-in skips and both mixed-backend transport directions verified separately.
+All six new app regressions must pass in detailed candidate evidence.
+Native keyboard/spoken accessibility, public dependencies, hardware/soak,
+remaining editor and distribution gates remain open.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -4707,3 +4768,9 @@ Documentation-only retention does not replace matching-HEAD release consumption.
 186. Phase 194 repeatable reconstruction audit.
 187. Phase 195 lossless DTS-HD MA clock qualification.
 188. Phase 196 integrated availability/PDF/dependency verification.
+
+189. Phase 197 bounded live-meter first-PCM startup.
+190. Phase 198 explicit PDF source/relative timecode provenance.
+191. Phase 199 exact offline dependency payload inventory.
+192. Phase 200 overflow-safe comparison metadata labels.
+193. Phase 201 integrated startup/PDF/payload verification.
