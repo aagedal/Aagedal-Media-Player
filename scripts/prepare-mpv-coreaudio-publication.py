@@ -28,6 +28,9 @@ AUXILIARIES = ('Libssl', 'Libcrypto', 'Libass', 'Libfreetype', 'Libfribidi', 'Li
                'MoltenVK', 'Libshaderc_combined', 'lcms2', 'Libplacebo', 'Libdovi', 'Libunibreak',
                'Libsmbclient', 'gmp', 'nettle', 'hogweed', 'gnutls', 'Libdav1d', 'Libuavs3d',
                'Libuchardet', 'Libbluray')
+SOURCE_ORIGINS = {'MPVKit-recipe': 'https://github.com/aagedal/MPVKit',
+                  'libmpv-v0.41.0': 'https://github.com/mpv-player/mpv',
+                  'FFmpeg-n8.1.2': 'https://github.com/FFmpeg/FFmpeg'}
 BLOCKERS = [
     'Proposed release URLs have not been published or downloaded.',
     'Auxiliary binary target and build-input URLs/checksums are upstream recipe declarations, not remote authentication.',
@@ -299,6 +302,11 @@ def verify(output):
     if snapshots[0]['revision'] != receipt['candidateMPVKitRevision']:
         raise ValueError('retained recipe revision mismatch')
     for entry in snapshots:
+        upstream_revision = (receipt['upstreamMPVKitRevision'] if entry['name'] == 'MPVKit-recipe'
+                             else receipt['sourceInputs'][entry['name']]['upstreamRevision'])
+        if (entry.get('upstreamRevision') != upstream_revision
+                or entry.get('upstreamURL') != SOURCE_ORIGINS[entry['name']]):
+            raise ValueError('source upstream provenance mismatch')
         if entry['archivePath'] not in files or entry['commitPath'] not in files:
             raise ValueError('source archive absent from publication inventory')
         commit = (output / entry['commitPath']).read_bytes()
@@ -432,6 +440,22 @@ def restore_source(archive_path, commit_path, destination, expected):
         raise ValueError('reconstructed source unexpectedly modified')
 
 
+def reconstruction_build_plan(output):
+    """Declare a workspace-specific command and caches without running tools."""
+    checkout = output / 'MPVKit'
+    command = ['swift', 'run', '--disable-sandbox']
+    for option, directory in [('build-path', 'swift-build'), ('cache-path', 'swift-package-cache'),
+                              ('config-path', 'swift-package-config'), ('security-path', 'swift-package-security')]:
+        command += ['--' + option, str(output / directory)]
+    command += ['--package-path', str(checkout / 'Sources/BuildScripts'), '-Xswiftc', '-module-cache-path',
+                '-Xswiftc', str(output / 'swift-cache'), 'build', 'enable-gpl', 'platform=macos',
+                'version=local-coreaudio-gpl-candidate']
+    return {'candidateBuildCommand': command, 'buildWorkingDirectory': str(checkout),
+            'isolatedEnvironmentPaths': {key: str(output / directory) for key, directory in
+                                        [('CLANG_MODULE_CACHE_PATH', 'clang-cache'),
+                                         ('SWIFT_MODULECACHE_PATH', 'swift-cache'), ('TMPDIR', 'temporary')]}}
+
+
 def reconstruct(stage, output, expected_publication_sha256):
     """Materialize exact retained sources and inputs; never invoke the recipe."""
     if not re.fullmatch(r'[a-f0-9]{64}', expected_publication_sha256):
@@ -464,21 +488,11 @@ def reconstruct(stage, output, expected_publication_sha256):
         # Retain ZIPs exactly as the original recipe expects. Its ZipBaseBuild
         # extracts them; source reconstruction does not execute that recipe.
         input_receipts.append({'relativePath': entry['relativePath'], **identity(destination)})
-    command = ['swift', 'run', '--disable-sandbox']
-    for option, directory in [('build-path', 'swift-build'), ('cache-path', 'swift-package-cache'),
-                              ('config-path', 'swift-package-config'), ('security-path', 'swift-package-security')]:
-        command += ['--' + option, str(output / directory)]
-    command += ['--package-path', str(checkout / 'Sources/BuildScripts'), '-Xswiftc', '-module-cache-path',
-                '-Xswiftc', str(output / 'swift-cache'), 'build', 'enable-gpl', 'platform=macos',
-                'version=local-coreaudio-gpl-candidate']
     result = {'schemaVersion': 1, 'status': 'reconstructed-inputs-not-built',
               'publicationSHA256': verified['publicationSHA256'],
               'reconstructionDriverSHA256': sha(output / 'reconstruction-driver.py'),
               'sourceSnapshots': metadata['sourceSnapshots'], 'auxiliaryBuildInputs': input_receipts,
-              'candidateBuildCommand': command, 'buildWorkingDirectory': str(checkout),
-              'isolatedEnvironmentPaths': {key: str(output / directory) for key, directory in
-                                          [('CLANG_MODULE_CACHE_PATH', 'clang-cache'),
-                                           ('SWIFT_MODULECACHE_PATH', 'swift-cache'), ('TMPDIR', 'temporary')]},
+              **reconstruction_build_plan(output),
               'environmentDeclaration': reconstruction_environment(receipt),
               'sourceHistory': 'Exact retained commits/trees, with shallow boundaries; upstream parent history is not included.',
               'recipePathRelocations': [], 'buildExecuted': False, 'blockers': metadata['blockers']}

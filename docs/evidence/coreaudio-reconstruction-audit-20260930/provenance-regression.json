@@ -1,0 +1,14 @@
+{
+  "baselineAcceptedReplacedProvenance": true,
+  "baselineRevision": "00514ecc2268a4642d16987ac87bace65518182b",
+  "baselineVerifierSHA256": "2d7ce33a8cdf71ef57375738d2daef2405bb25ad584c3035b1c256bd1d8f72d9",
+  "currentRejectedReplacedProvenance": true,
+  "mutation": {
+    "fields": [
+      "upstreamRevision",
+      "upstreamURL"
+    ],
+    "source": "libmpv-v0.41.0"
+  },
+  "scope": "Synthetic publication fixture; no retained payload or remote source modified."
+}

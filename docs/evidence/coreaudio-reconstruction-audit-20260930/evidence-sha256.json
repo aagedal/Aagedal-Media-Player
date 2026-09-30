@@ -1,0 +1,42 @@
+{
+  "docs/evidence/coreaudio-reconstruction-audit-20260930/README.md": {
+    "sha256": "542b22c39b1296f75303cf77d6f2be4210328c68ef7de2afaf60fbaa0d3f8b43",
+    "sizeBytes": 3056
+  },
+  "docs/evidence/coreaudio-reconstruction-audit-20260930/provenance-regression.json": {
+    "sha256": "bb51bbee35dfe260b6ca8bed9e836fed1a2507fe804392f26f50e3807c2b0d58",
+    "sizeBytes": 469
+  },
+  "docs/evidence/coreaudio-reconstruction-audit-20260930/publication-regressions.log": {
+    "sha256": "b53a32347384bcbce1f04aeae1fd1aba8f839a13b67bb5b3da66c1fcb5a960bf",
+    "sizeBytes": 116
+  },
+  "docs/evidence/coreaudio-reconstruction-audit-20260930/reconstruction-regressions.log": {
+    "sha256": "670a5afa3c6570c7b593d6b8cfacde7808c76f7f0a646fa8222bc4ebcd27484d",
+    "sizeBytes": 109
+  },
+  "docs/evidence/coreaudio-reconstruction-audit-20260930/verification.json": {
+    "sha256": "085dea81521ef5cb51dee13025249560c1896c4577abcda54f3287dc1b8bdceb",
+    "sizeBytes": 1635
+  },
+  "scripts/prepare-mpv-coreaudio-publication.py": {
+    "sha256": "e34d44ac254755a0ad645ed2d6d0b8c9785c453a967e26c99fc41c37c8b1582e",
+    "sizeBytes": 32777
+  },
+  "scripts/test-mpv-coreaudio-publication.py": {
+    "sha256": "7d86ae57163c02851392c9237a8d7e177c688c546ae6e1752373bd6c3a5b4659",
+    "sizeBytes": 20679
+  },
+  "scripts/test-mpv-coreaudio-reconstruction.py": {
+    "sha256": "fe62e7f4529c6f7c6a1999bf2eaaa4f6952c56d8726f6e712c20df87a80b4cc5",
+    "sizeBytes": 7409
+  },
+  "scripts/test-script-validators.sh": {
+    "sha256": "12377104b4a0f397cfe2298575e80cc579f250e754f4e900e8f77f5be2c49e8c",
+    "sizeBytes": 2671
+  },
+  "scripts/verify-mpv-coreaudio-reconstruction.py": {
+    "sha256": "da0cf2b134d8793cf72fcac7e2c27d7eb253b8e349246761618ae7e0e432b71b",
+    "sizeBytes": 6360
+  }
+}

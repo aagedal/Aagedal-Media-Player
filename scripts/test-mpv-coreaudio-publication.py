@@ -20,6 +20,7 @@ BASE = 'https://github.com/aagedal/MPVKit/releases/download/test-immutable-tag'
 class PublicationTests(unittest.TestCase):
     def fixture(self, root):
         receipt = {'buildSucceeded': True, 'shippingProduct': 'MPVKit-GPL', 'builderSHA256': '',
+                   'upstreamMPVKitRevision': 'upstream-recipe',
                    'candidateMPVKitRevision': 'recipe', 'artifacts': {}, 'prebuiltAuxiliaryInputs': [],
                    'verification': {'shippingFeatureParity': {'passed': True}},
                    'sourceInputs': {name: {'candidateRevision': name, 'candidateTree': name + '-tree'}
@@ -85,8 +86,11 @@ class PublicationTests(unittest.TestCase):
             if name == 'MPVKit-recipe':
                 receipt['candidateMPVKitRevision'] = revision
             else:
-                receipt['sourceInputs'][name] = {'candidateRevision': revision, 'candidateTree': tree}
+                receipt['sourceInputs'][name] = {'candidateRevision': revision, 'candidateTree': tree,
+                                               'upstreamRevision': 'upstream-' + name}
             snapshots.append({'name': name, 'revision': revision, 'tree': tree,
+                              'upstreamRevision': 'upstream-recipe' if name == 'MPVKit-recipe' else 'upstream-' + name,
+                              'upstreamURL': publication.SOURCE_ORIGINS[name],
                               'archivePath': path, 'commitPath': commit_path})
         receipt_path = write('provenance/build-receipt.json', json.dumps(receipt).encode())
         metadata = {'schemaVersion': 1, 'status': 'prepared-local-unpublished', 'shippingProduct': 'MPVKit-GPL',
@@ -176,6 +180,17 @@ class PublicationTests(unittest.TestCase):
             self.save(root, metadata)
             with self.assertRaisesRegex(ValueError, 'Git identity mismatch'):
                 publication.verify(root)
+
+    def test_source_upstream_provenance_must_match_retained_receipt(self):
+        for source in range(3):
+            for field in ('upstreamRevision', 'upstreamURL'):
+                with self.subTest(source=source, field=field), tempfile.TemporaryDirectory() as temporary:
+                    root = Path(temporary)
+                    metadata = self.fixture(root)
+                    metadata['sourceSnapshots'][source][field] = 'replacement'
+                    self.save(root, metadata)
+                    with self.assertRaisesRegex(ValueError, 'upstream provenance mismatch'):
+                        publication.verify(root)
 
     def test_untracked_file_and_missing_file_rejected(self):
         for mutation in ('extra', 'nested-publication', 'missing'):

@@ -45,6 +45,7 @@ python_tests=(
     scripts/test-mpv-coreaudio-candidate.py
     scripts/test-mpv-coreaudio-clean-candidate.py
     scripts/test-mpv-coreaudio-publication.py
+    scripts/test-mpv-coreaudio-reconstruction.py
     scripts/test-metadata-candidate-validation.py
     scripts/test-metadata-cli-validation.py
     scripts/test-metadata-jxl-diagnostic.py
