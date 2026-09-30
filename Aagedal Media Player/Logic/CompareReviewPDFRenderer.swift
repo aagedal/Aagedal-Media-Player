@@ -195,7 +195,14 @@ nonisolated enum CompareReviewPDFRenderer {
             // Preserve exact coordinates even if the compact timecode column
             // truncates a large frame ordinal or current metadata differs.
             let coordinates = "A frame \(row.primaryFrame) at \(row.primaryRateNumerator)/\(row.primaryRateDenominator) fps\nB frame \(row.secondaryFrame) at \(row.secondaryRateNumerator)/\(row.secondaryRateDenominator) fps"
-            let details = [row.classificationLabel, coordinates, row.rangeLabel, row.note, unavailableStill]
+            // Replacement media can no longer establish source TC for a
+            // finding's original timebase. Label that distinction and retain
+            // complete timecodes in wrapped text; the compact column truncates.
+            let timecodes = [
+                timecodeDetails(source: row.primarySourceTimecode, relative: row.primaryRelativeTimecode, side: "A"),
+                timecodeDetails(source: row.secondarySourceTimecode, relative: row.secondaryRelativeTimecode, side: "B"),
+            ].joined(separator: "\n")
+            let details = [row.classificationLabel, coordinates, timecodes, row.rangeLabel, row.note, unavailableStill]
                 .compactMap { $0 }.joined(separator: "\n")
             let noteLines = wrappedLines(
                 details,
@@ -356,7 +363,13 @@ nonisolated enum CompareReviewPDFRenderer {
     }
 
     private static func displayTimecode(source: String?, relative: String) -> String {
-        source ?? relative
+        if let source { return "SRC TC \(source)" }
+        return "REL TC \(relative)"
+    }
+
+    private static func timecodeDetails(source: String?, relative: String, side: String) -> String {
+        if let source { return "\(side) Source TC \(source)\n\(side) Relative TC \(relative)" }
+        return "\(side) Relative TC \(relative) (source TC unavailable)"
     }
 
     private static func fittedStillSize(

@@ -421,6 +421,35 @@ final class CompareReviewReportExporterTests: XCTestCase {
         }
     }
 
+    func testPDFDistinguishesSourceAndRelativeTimecodesAfterDifferentRateRelink() throws {
+        let snapshot = CompareReviewReportSnapshot(
+            primaryItem: makeItem(path: "/tmp/Master.mov", duration: 20,
+                                  startTimecode: "01:00:00:00", frameRate: "24/1"),
+            secondaryItem: makeItem(path: "/tmp/Replacement.mp4", duration: 20,
+                                    startTimecode: "02:00:00:00", frameRate: "30/1"),
+            alignmentMode: .sourceTimecode,
+            notes: [CompareReviewNote(
+                primaryFrame: 240, primaryTime: 0, secondaryFrame: 240, secondaryTime: 0,
+                primaryRateNumerator: 24, secondaryRateNumerator: 24,
+                text: "Captured before replacing B"
+            )]
+        )
+        let data = try CompareReviewReportExporter.data(for: .pdf, snapshot: snapshot)
+        let document = try XCTUnwrap(PDFDocument(data: data))
+        let text = try XCTUnwrap(document.string)
+        XCTAssertTrue(text.contains("A Source TC 01:00:10:00"))
+        XCTAssertTrue(text.contains("A Relative TC 00:00:10:00"))
+        XCTAssertTrue(text.contains("B Relative TC 00:00:10:00"))
+        XCTAssertTrue(text.contains("source TC unavailable"))
+        XCTAssertFalse(text.contains("B Source TC"))
+        XCTAssertFalse(text.contains("02:00:10:00"))
+        XCTAssertTrue(text.contains("Captured before replacing B"))
+        if let directory = ProcessInfo.processInfo.environment["COMPARE_REVIEW_PDF_FIXTURE_DIRECTORY"] {
+            try data.write(to: URL(fileURLWithPath: directory).appendingPathComponent("timecode-provenance.pdf"),
+                           options: .withoutOverwriting)
+        }
+    }
+
     func testPDFPaginatesLongSourceURLsWithoutLosingFindings() throws {
         let longDirectory = String(repeating: "long-source-directory/", count: 180)
         let primary = makeItem(path: "/tmp/\(longDirectory)Master.mov", duration: 5)
