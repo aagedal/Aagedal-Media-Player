@@ -1,0 +1,52 @@
+{
+  "devicesAndConfigurations" : [
+    {
+      "device" : {
+        "architecture" : "arm64",
+        "deviceId" : "00006050-001C293C22F9401C",
+        "deviceName" : "My Mac",
+        "modelName" : "MacBook Pro",
+        "osBuildNumber" : "26A434",
+        "osVersion" : "27.0.1",
+        "platform" : "macOS"
+      },
+      "expectedFailures" : 0,
+      "failedTests" : 1,
+      "passedTests" : 0,
+      "skippedTests" : 0,
+      "testPlanConfiguration" : {
+        "configurationId" : "1",
+        "configurationName" : "Test Scheme Action"
+      }
+    }
+  ],
+  "environmentDescription" : "Aagedal Media Player · Built with macOS 27.0.1",
+  "expectedFailures" : 0,
+  "failedTests" : 1,
+  "finishTime" : 1790792829.048,
+  "passedTests" : 0,
+  "result" : "Failed",
+  "runtimeWarnings" : [
+
+  ],
+  "skippedTests" : 0,
+  "startTime" : 1790792782.096,
+  "statistics" : [
+
+  ],
+  "testFailures" : [
+    {
+      "failureText" : "XCTAssertTrue failed - Replacement must resume and track A after explicit playDelayedAck during loading. A=5.208333333333333, B=3.083333333333333, B playing=false",
+      "targetName" : "Aagedal Media Player Tests",
+      "testIdentifier" : 1,
+      "testIdentifierString" : "CompareLiveBackendTests/testExplicitTransportDuringSuspendedReplacementOverridesPreservedPauseIntent()",
+      "testIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareLiveBackendTests/testExplicitTransportDuringSuspendedReplacementOverridesPreservedPauseIntent",
+      "testName" : "testExplicitTransportDuringSuspendedReplacementOverridesPreservedPauseIntent()"
+    }
+  ],
+  "title" : "Test - Aagedal Media Player",
+  "topInsights" : [
+
+  ],
+  "totalTestCount" : 1
+}

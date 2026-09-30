@@ -22,3 +22,10 @@ these local artifacts. The app package pin remains unchanged. This evidence
 supports local candidate observations and does not close release-floor,
 audible-output, device-switch, 30-minute, accessibility or numerical-calibration
 acceptance.
+
+The subsequent configuration audit identifies GPL and FFmpeg Metal support
+missing from the full-built artifact relative to MPVKit-GPL. The retained
+observations attest to that artifact, not shipping feature parity. The corrected
+builder requires GPL and Metal configuration checks; a replacement build remains
+open while Xcode's Metal compiler is missing. See the
+[clean-build audit](../live-meter-native-output-20260930/clean-rebuild/README.md).

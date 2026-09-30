@@ -1120,7 +1120,7 @@ struct ControlsView: View {
     // MARK: - Compare-aware transport
 
     private func togglePlayback() {
-        if compareSession.isActive {
+        if compareSession.isActive || compareSession.isLoading {
             compareSession.togglePlayback(primary: controller)
         } else {
             controller.togglePlayback()

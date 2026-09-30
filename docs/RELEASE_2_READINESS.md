@@ -124,6 +124,12 @@ unexplained. Local artifact publication/package repin, audible/device/surround
 and hardware acceptance remain open. See [clean build](evidence/live-meter-native-output-20260930/clean-rebuild/README.md)
 and [authentic native checks](LIVE_AUDIO_METER_AUTHENTIC_NATIVE_CHECK_2026-09-30.md).
 
+A subsequent configuration audit finds GPL components and FFmpeg Metal support
+disabled in that full-built candidate relative to shipping MPVKit-GPL. The builder
+now needs explicit product/configuration gates; the missing Xcode Metal compiler
+blocks a feature-equivalent replacement. These local playback observations do
+not qualify a shipping repin.
+
 Three authentic camera metadata profiles pass cache parity, but expose a
 transient 368.516 MiB peak increase on the original 8.64 GB FX6 MXF. A complete
 mapped KLV header/peek scan is consistent with that cost; bounded file-backed
@@ -136,8 +142,15 @@ with three Release checks against unchanged library sources and the original
 fixture. Upstream reconciliation and the historical XMP remain open. Review
 now preserves correction requests across unrelated fields and findings; native
 app binding again hung, so no new keyboard or spoken accessibility acceptance
-is inferred. The expanded candidate floor is 731 aggregate tests plus both
-isolated transport directions; fresh integrated verification follows.
+is inferred. The first integrated run at `8626ae9` rejects one paused mixed-backend alignment
+failure (722 passes, eight skips, one failure). The unchanged isolated repeat
+passes. A new deterministic regression reproduces B resuming from a delayed
+primary playing observation while A remains paused. Explicit Pause now remains
+authoritative until deliberate playback resumes. Explicit Play/shuttle during B
+loading stays with the session, and its request arms synchronization even before
+A publishes the Play acknowledgement; 16 final focused Release checks pass. The candidate/release floor is 733 aggregate tests plus both isolated
+transport directions; fresh committed-source verification follows. See
+[transport diagnosis and correction](evidence/compare-paused-alignment-20260930/README.md).
 
 The sustained-acceptance continuation passes canonical verification at clean
 commit `601bbb859c436037388c3d3c080cb0132b7e357d`: 721 optimized Release passes,

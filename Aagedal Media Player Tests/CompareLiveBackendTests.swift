@@ -63,6 +63,26 @@ final class CompareLiveBackendTests: XCTestCase {
         }
     }
 
+    @MainActor
+    private final class ReplacementMetadataGate {
+        var suspendNextLoad = false
+        private var continuation: CheckedContinuation<Void, Never>?
+        var isWaiting: Bool { continuation != nil }
+
+        func load(_ url: URL) async throws -> MediaMetadata {
+            if suspendNextLoad {
+                suspendNextLoad = false
+                await withCheckedContinuation { continuation = $0 }
+            }
+            return try await MetadataService.shared.metadata(for: url)
+        }
+
+        func release() {
+            continuation?.resume()
+            continuation = nil
+        }
+    }
+
     private var retainedPlaybackSurfaces: [RetainedPlaybackSurface] = []
 
     override func setUp() async throws {
@@ -732,6 +752,186 @@ final class CompareLiveBackendTests: XCTestCase {
 
     func testAVFoundationPrimaryAndMPVSecondaryApplyManualAlignmentDuringTransport() async throws {
         try await exerciseManualAlignment(primaryBackend: .avFoundation, secondaryBackend: .mpv)
+    }
+
+    func testPausedAlignmentAndSeekIgnoreSimulatedDelayedMPVPlayingObservation() async throws {
+        let fixtures = try fixtureDirectory()
+        let tolerance = 1.0 / 24.0
+        try await exercisePreparedPair(
+            primaryURL: fixtures.appending(path: "compare/source-a.mov"),
+            secondaryURL: fixtures.appending(path: "compare/source-b.mov"),
+            primaryBackend: .mpv,
+            secondaryBackend: .mpv,
+            seekTarget: 2, tolerance: tolerance,
+            description: "delayed primary pause observation"
+        ) { primary, secondary, session in
+            session.pause(primary: primary)
+            session.seek(primary: primary, to: 2)
+            let settled = await self.waitUntil {
+                !primary.isPlaying && !secondary.isPlaying
+                    && abs(primary.playbackTimeSnapshot() - 2) <= tolerance
+                    && abs(secondary.playbackTimeSnapshot() - 3) <= tolerance
+            }
+            XCTAssertTrue(settled)
+            let primaryMPV = try XCTUnwrap(primary.mpvPlayer)
+            XCTAssertEqual(primaryMPV.playbackTimeSnapshot() ?? -1, 2, accuracy: tolerance)
+
+            var secondaryResumed = false
+            let observation = secondary.$isPlaying.sink { playing in
+                if playing { secondaryResumed = true }
+            }
+            defer { observation.cancel() }
+            // Both real backends are paused. readEvents publishes a previously
+            // captured MPV pause value asynchronously on the main queue; this
+            // cached flag has no setter that changes libmpv's actual pause.
+            // Simulate its brief lag after an explicit Pause, without sending
+            // Play to A or adding a production test hook.
+            primaryMPV.isPlaying = true
+            primary.syncIsPlaying()
+            session.setManualOffset(0.5, primary: primary)
+            session.seek(primary: primary, to: 2)
+            primaryMPV.isPlaying = false
+            primary.syncIsPlaying()
+
+            try await Task.sleep(for: .milliseconds(500))
+            XCTAssertFalse(secondaryResumed,
+                           "A delayed playing observation must not override explicit Pause.")
+            XCTAssertFalse(secondary.isPlaying)
+            XCTAssertEqual(secondary.playbackTimeSnapshot(), 2.5, accuracy: tolerance)
+            XCTAssertEqual(primary.playbackTimeSnapshot(), 2, accuracy: tolerance,
+                           "Changing an observed cache must leave A's decoder paused.")
+
+            primaryMPV.isPlaying = true
+            primary.syncIsPlaying()
+            session.togglePlayback(primary: primary)
+            let resumed = await self.waitUntil { primary.isPlaying && secondary.isPlaying }
+            XCTAssertTrue(resumed, "Explicit toggle must resume despite the delayed observation.")
+            observation.cancel()
+            session.pause(primary: primary)
+
+            let pausedAgain = await self.waitUntil { !primary.isPlaying && !secondary.isPlaying }
+            XCTAssertTrue(pausedAgain)
+            let primaryPreparation = primary.preparationID
+            let secondaryPreparation = secondary.preparationID
+            let pausedTime = primary.playbackTimeSnapshot()
+            primaryMPV.isPlaying = true
+            primary.syncIsPlaying()
+            session.reload(primary: primary)
+            try await self.attachRenderSurface(to: primary)
+            try await self.attachRenderSurface(to: secondary)
+            let reloaded = await self.waitUntil {
+                primary.preparationID > primaryPreparation
+                    && secondary.preparationID > secondaryPreparation
+                    && primary.isReady && secondary.isReady
+            }
+            XCTAssertTrue(reloaded)
+            try await Task.sleep(for: .milliseconds(500))
+            XCTAssertFalse(primary.isPlaying)
+            XCTAssertFalse(secondary.isPlaying)
+            XCTAssertEqual(primary.playbackTimeSnapshot(), pausedTime, accuracy: tolerance,
+                           "Reload must not capture a delayed observation as resume intent.")
+            XCTAssertEqual(secondary.playbackTimeSnapshot(), pausedTime + 0.5, accuracy: tolerance)
+
+            session.slowForward(primary: primary)
+            let shuttleResumed = await self.waitUntil { primary.isPlaying && secondary.isPlaying }
+            XCTAssertTrue(shuttleResumed, "Explicit shuttle must clear the Pause intent.")
+            session.pause(primary: primary)
+        }
+    }
+
+    func testExplicitTransportDuringSuspendedReplacementOverridesPreservedPauseIntent() async throws {
+        let fixtures = try fixtureDirectory()
+        let secondaryURL = fixtures.appending(path: "compare/source-b.mov")
+        let tolerance = 1.0 / 24.0 + 0.001
+        for transport in ["play", "playDelayedAck", "slowForward", "pause"] {
+            let primary = makeController(forcedBackend: transport == "playDelayedAck" ? .mpv : .avFoundation)
+            let secondary = makeController(forcedBackend: .mpv)
+            let metadataGate = ReplacementMetadataGate()
+            let session = CompareSessionController(
+                secondaryController: secondary, metadataLoader: { try await metadataGate.load($0) }
+            )
+            defer {
+                metadataGate.release()
+                session.stop()
+                primary.teardown()
+            }
+            try await loadPrimary(primary, url: fixtures.appending(path: "compare/source-a.mov"))
+            try await attachRenderSurface(to: primary)
+            let primaryReady = await waitUntil { primary.isReady }
+            XCTAssertTrue(primaryReady, transport)
+            session.loadSecondary(secondaryURL, alignedWith: primary)
+            let metadataLoaded = await waitUntil { session.secondaryURL == secondaryURL }
+            XCTAssertTrue(metadataLoaded, transport)
+            try await attachRenderSurface(to: secondary)
+            let secondaryReady = await waitUntil { secondary.isReady }
+            XCTAssertTrue(secondaryReady, transport)
+            session.pause(primary: primary)
+            session.seek(primary: primary, to: 2)
+            let paused = await waitUntil {
+                !primary.isPlaying && !secondary.isPlaying
+                    && abs(primary.playbackTimeSnapshot() - 2) <= tolerance
+                    && abs(secondary.playbackTimeSnapshot() - 3) <= tolerance
+            }
+            XCTAssertTrue(paused, transport)
+
+            metadataGate.suspendNextLoad = true
+            session.loadSecondary(secondaryURL, alignedWith: primary)
+            let suspended = await waitUntil { metadataGate.isWaiting }
+            XCTAssertTrue(suspended, transport)
+            XCTAssertTrue(session.isLoading)
+            XCTAssertFalse(session.isActive)
+            // The keyboard and button routes must keep using the session
+            // while B has no URL, so this clears the preserved Pause intent.
+            switch transport {
+            case "play", "playDelayedAck": session.play(primary: primary)
+            case "slowForward": session.slowForward(primary: primary)
+            default: session.pause(primary: primary)
+            }
+            if transport != "pause" {
+                let playingWhileLoading = await waitUntil { primary.isPlaying }
+                XCTAssertTrue(playingWhileLoading, transport)
+            }
+            let delayedPrimaryMPV = transport == "playDelayedAck" ? primary.mpvPlayer : nil
+            if let delayedPrimaryMPV {
+                // Play has reached the real decoder. Hold only its published
+                // observation at the prior paused value until B is ready.
+                delayedPrimaryMPV.isPlaying = false
+                primary.syncIsPlaying()
+                XCTAssertFalse(primary.isPlaying)
+            }
+            let primaryStart = primary.playbackTimeSnapshot()
+            metadataGate.release()
+            let replacementLoaded = await waitUntil { session.secondaryURL == secondaryURL }
+            XCTAssertTrue(replacementLoaded, transport)
+            try await attachRenderSurface(to: secondary)
+            let replacementReady = await waitUntil { secondary.isReady }
+            XCTAssertTrue(replacementReady, transport)
+            if let delayedPrimaryMPV {
+                try await Task.sleep(for: .milliseconds(100))
+                XCTAssertFalse(primary.isPlaying)
+                delayedPrimaryMPV.isPlaying = true
+                primary.syncIsPlaying()
+            }
+            if transport == "pause" {
+                try await Task.sleep(for: .milliseconds(500))
+                XCTAssertFalse(primary.isPlaying)
+                XCTAssertFalse(secondary.isPlaying)
+                XCTAssertEqual(primary.playbackTimeSnapshot(), primaryStart, accuracy: tolerance)
+                XCTAssertEqual(secondary.playbackTimeSnapshot(), primaryStart + 1, accuracy: tolerance)
+            } else {
+                let resumedAndAligned = await waitUntil({
+                    primary.isPlaying && secondary.isPlaying
+                        && primary.playbackTimeSnapshot() > primaryStart + 0.25
+                        && abs(secondary.playbackTimeSnapshot()
+                               - session.secondaryTime(forPrimaryTime: primary.playbackTimeSnapshot())) <= tolerance
+                }, timeout: .seconds(3))
+                XCTAssertTrue(resumedAndAligned,
+                              "Replacement must resume and track A after explicit \(transport) during loading. "
+                              + "A=\(primary.playbackTimeSnapshot()), B=\(secondary.playbackTimeSnapshot()), "
+                              + "B playing=\(secondary.isPlaying)")
+            }
+            session.pause(primary: primary)
+        }
     }
 
     func testSupportedFrameRatesUseRelativeAlignmentAndPairedSeek() async throws {

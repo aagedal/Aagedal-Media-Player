@@ -1,0 +1,79 @@
+{
+  "devices" : [
+    {
+      "architecture" : "arm64",
+      "deviceId" : "00006050-001C293C22F9401C",
+      "deviceName" : "My Mac",
+      "modelName" : "MacBook Pro",
+      "osBuildNumber" : "26A434",
+      "osVersion" : "27.0.1",
+      "platform" : "macOS"
+    }
+  ],
+  "testNodes" : [
+    {
+      "children" : [
+        {
+          "children" : [
+            {
+              "children" : [
+                {
+                  "children" : [
+                    {
+                      "name" : "XCTAssertFalse failed - A delayed playing observation must not override explicit Pause.",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift",
+                        "lineNumber" : 777
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertFalse failed",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift",
+                        "lineNumber" : 779
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertEqualWithAccuracy failed: (\"3.208333333333333\") is not equal to (\"2.5\") +/- (\"0.041666666666666664\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/CompareLiveBackendTests.swift",
+                        "lineNumber" : 780
+                      }
+                    }
+                  ],
+                  "duration" : "1s",
+                  "durationInSeconds" : 1.7580209970474243,
+                  "name" : "testPausedAlignmentAndSeekIgnoreSimulatedDelayedMPVPlayingObservation()",
+                  "nodeIdentifier" : "CompareLiveBackendTests/testPausedAlignmentAndSeekIgnoreSimulatedDelayedMPVPlayingObservation()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareLiveBackendTests/testPausedAlignmentAndSeekIgnoreSimulatedDelayedMPVPlayingObservation",
+                  "nodeType" : "Test Case",
+                  "result" : "Failed"
+                }
+              ],
+              "name" : "CompareLiveBackendTests",
+              "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareLiveBackendTests",
+              "nodeType" : "Test Suite",
+              "result" : "Failed"
+            }
+          ],
+          "name" : "Aagedal Media Player Tests",
+          "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests",
+          "nodeType" : "Unit test bundle",
+          "result" : "Failed"
+        }
+      ],
+      "name" : "Aagedal Media Player",
+      "nodeType" : "Test Plan",
+      "result" : "Failed"
+    }
+  ],
+  "testPlanConfigurations" : [
+    {
+      "configurationId" : "1",
+      "configurationName" : "Test Scheme Action"
+    }
+  ]
+}

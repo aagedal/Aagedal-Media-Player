@@ -224,3 +224,10 @@ link all eight clean-built frameworks and pass AAC, selected FX6 mono tracks and
 a qualified ITU six-channel preparation. A matched FX6 120-second run passes,
 while an earlier incremental-candidate near-EOF synchronization failure remains
 unexplained. These local checks do not change the shipping package pin.
+
+The subsequent [shipping parity audit](evidence/live-meter-native-output-20260930/shipping-parity-audit/README.md)
+finds GPL components and FFmpeg Metal support disabled relative to MPVKit-GPL.
+This historical full-object build is not feature-equivalent to shipping. The
+corrected builder explicitly requests GPL and rejects missing Metal tooling,
+configuration loss and ZIP/checksum substitutions against original receipts.
+A replacement build remains open until Xcode's Metal compiler is available.

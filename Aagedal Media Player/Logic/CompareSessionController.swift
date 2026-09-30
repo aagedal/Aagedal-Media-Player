@@ -467,6 +467,12 @@ final class CompareSessionController: ObservableObject {
     private var pendingReload: (primary: Int, secondary: Int?, time: TimeInterval, shouldResume: Bool)?
     private var driftCorrectionTask: Task<Void, Never>?
     private var pauseSynchronizationTask: Task<Void, Never>?
+    // Decoder observations acknowledge Pause asynchronously. Keep that
+    // explicit intent authoritative until the user requests transport again.
+    private weak var explicitlyPausedPrimary: PlayerController?
+    // A may acknowledge an explicit Play after B is ready. Arm its clock
+    // monitor from that request instead of relying on the observed playing flag.
+    private var secondaryTransportRequestedWhileLoading = false
     private var secondaryLoadSignpostState: OSSignpostIntervalState?
     private var driftMonitoringSignpostState: OSSignpostIntervalState?
     private var audioTrackSelectionTask: Task<Void, Never>?
@@ -522,6 +528,7 @@ final class CompareSessionController: ObservableObject {
         readinessTask?.cancel()
         readinessTask = nil
         pendingReload = nil
+        secondaryTransportRequestedWhileLoading = false
         endSecondaryLoadSignpost()
         Self.signposter.emitEvent("Secondary decoder failed")
         selectComparedAudioChannel(nil, primary: primary)
@@ -530,6 +537,8 @@ final class CompareSessionController: ObservableObject {
     }
 
     func loadSecondary(_ url: URL, alignedWith primary: PlayerController) {
+        secondaryTransportRequestedWhileLoading = false
+        if explicitlyPausedPrimary !== primary { explicitlyPausedPrimary = nil }
         if primaryAudioController !== primary {
             secondaryController.setAudioSuppressed(true)
             primaryAudioController?.setAudioSuppressed(false)
@@ -651,6 +660,8 @@ final class CompareSessionController: ObservableObject {
         pauseSynchronizationTask?.cancel()
         pauseSynchronizationTask = nil
         pendingReload = nil
+        explicitlyPausedPrimary = nil
+        secondaryTransportRequestedWhileLoading = false
         cancelReviewRelink()
         reviewLoadTask?.cancel()
         reviewLoadTask = nil
@@ -785,9 +796,9 @@ final class CompareSessionController: ObservableObject {
         guard target.audioTrackOptions.indices.contains(position),
               position != target.selectedAudioTrackOrderIndex else { return }
 
-        let wasPlaying = primary.isPlaying
+        let wasPlaying = explicitlyPausedPrimary !== primary && (primary.isPlaying
             || secondaryController.isPlaying
-            || shouldResumeAfterAudioTrackSelection
+            || shouldResumeAfterAudioTrackSelection)
         shouldResumeAfterAudioTrackSelection = wasPlaying
         primary.pause()
         secondaryController.pause()
@@ -863,7 +874,7 @@ final class CompareSessionController: ObservableObject {
         }
         secondaryBoundaryHold = nil
         synchronize(primary: primary)
-        if primary.isPlaying && !isScrubbing {
+        if primary.isPlaying && explicitlyPausedPrimary !== primary && !isScrubbing {
             updateSecondaryTransport(primary: primary, forceRateMatch: true)
             startDriftCorrection(primary: primary)
         }
@@ -1718,16 +1729,24 @@ final class CompareSessionController: ObservableObject {
     }
 
     func togglePlayback(primary: PlayerController) {
-        if primary.isPlaying || secondaryController.isPlaying {
+        if explicitlyPausedPrimary === primary {
+            play(primary: primary)
+        } else if primary.isPlaying || secondaryController.isPlaying {
             pause(primary: primary)
         } else {
             play(primary: primary)
         }
     }
 
-    func play(primary: PlayerController) {
+    private func clearExplicitPause() {
+        explicitlyPausedPrimary = nil
+        secondaryTransportRequestedWhileLoading = isLoading
         pauseSynchronizationTask?.cancel()
         pauseSynchronizationTask = nil
+    }
+
+    func play(primary: PlayerController) {
+        clearExplicitPause()
         guard isActive else {
             primary.play()
             return
@@ -1741,6 +1760,9 @@ final class CompareSessionController: ObservableObject {
         // Keep comparison readiness alive to finish B's setup, but an explicit
         // pause always overrides the transport intent captured before reload.
         pendingReload?.shouldResume = false
+        shouldResumeAfterAudioTrackSelection = false
+        explicitlyPausedPrimary = primary
+        secondaryTransportRequestedWhileLoading = false
         isScrubbing = false
         primary.pause()
         guard isActive else { return }
@@ -1775,6 +1797,7 @@ final class CompareSessionController: ObservableObject {
     }
 
     func reverse(primary: PlayerController) {
+        clearExplicitPause()
         guard isActive else {
             primary.startReverse()
             return
@@ -1786,6 +1809,7 @@ final class CompareSessionController: ObservableObject {
     }
 
     func fastForward(primary: PlayerController) {
+        clearExplicitPause()
         guard isActive else {
             primary.fastForward()
             return
@@ -1797,6 +1821,7 @@ final class CompareSessionController: ObservableObject {
     }
 
     func slowForward(primary: PlayerController) {
+        clearExplicitPause()
         guard isActive else {
             primary.slowForward()
             return
@@ -1808,6 +1833,7 @@ final class CompareSessionController: ObservableObject {
     }
 
     func slowReverse(primary: PlayerController) {
+        clearExplicitPause()
         guard isActive else {
             primary.slowReverse()
             return
@@ -1871,7 +1897,8 @@ final class CompareSessionController: ObservableObject {
         // Repeated geometry refreshes can arrive before the previous decoder
         // is ready. Preserve its intent only while it still owns these sources.
         let existingReload = ownsPendingReload(primary: primary) ? pendingReload : nil
-        let wasPlaying = primary.isPlaying || existingReload?.shouldResume == true
+        let wasPlaying = explicitlyPausedPrimary !== primary
+            && (primary.isPlaying || existingReload?.shouldResume == true)
         let primaryTime = existingReload?.time ?? primary.playbackTimeSnapshot()
         primary.publishLiveAudioMeterDiscontinuity(.geometryReload, at: primaryTime)
         if isActive {
@@ -2033,12 +2060,15 @@ final class CompareSessionController: ObservableObject {
                     }
                     let shouldResume = isReload && self.ownsPendingReload(primary: primary)
                         && self.pendingReload?.shouldResume == true
+                    let transportRequestedWhileLoading = self.secondaryTransportRequestedWhileLoading
+                    self.secondaryTransportRequestedWhileLoading = false
                     if shouldResume { primary.play() }
                     self.pendingReload = nil
                     // Backend playing notifications arrive asynchronously.
                     // Arm correction from the requested intent so B starts
                     // when A acknowledges Play instead of staying paused.
-                    if shouldResume || primary.isPlaying {
+                    if self.explicitlyPausedPrimary !== primary
+                        && (shouldResume || primary.isPlaying || transportRequestedWhileLoading) {
                         self.updateSecondaryTransport(
                             primary: primary,
                             forceRateMatch: true
@@ -2105,6 +2135,7 @@ final class CompareSessionController: ObservableObject {
         audioTrackSelectionTask?.cancel()
         audioTrackSelectionTask = nil
         shouldResumeAfterAudioTrackSelection = false
+        secondaryTransportRequestedWhileLoading = false
         stopDriftCorrection()
         secondaryBoundaryHold = nil
         selectComparedAudioChannel(nil, primary: primary)
@@ -2133,7 +2164,7 @@ final class CompareSessionController: ObservableObject {
         case .advance:
             let wasHeldAtBoundary = secondaryBoundaryHold != nil
             secondaryBoundaryHold = nil
-            guard primary.isPlaying else { return }
+            guard primary.isPlaying, explicitlyPausedPrimary !== primary else { return }
             if wasHeldAtBoundary {
                 secondaryController.seekTo(mappedSecondaryTime(for: primaryTime))
             }
@@ -2200,7 +2231,7 @@ final class CompareSessionController: ObservableObject {
     }
 
     private func startDriftCorrection(primary: PlayerController) {
-        guard isActive else { return }
+        guard isActive, explicitlyPausedPrimary !== primary else { return }
         stopDriftCorrection()
         driftMonitoringSignpostState = Self.signposter.beginInterval("Drift monitoring")
         let generation = loadGeneration.current

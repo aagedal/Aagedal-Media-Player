@@ -3742,6 +3742,12 @@ see [complete local build evidence](docs/evidence/live-meter-native-output-20260
 The subsequent production profiles identify this new artifact separately from
 both the incremental repair and shipping pin.
 
+A subsequent recipe audit finds that this historical full build disables GPL
+components and FFmpeg Metal support relative to shipping MPVKit-GPL. It remains
+complete object/provenance evidence for its recorded configuration, but is not
+feature-equivalent. Explicit product/configuration gates and the missing Xcode
+Metal compiler must precede a replacement build and shipping repin.
+
 ## Phase 169 — Authentic native meter and camera metadata observations
 
 Status: Producer-original camera checks and clean dependency production
@@ -3786,6 +3792,58 @@ Status: Implemented and all 21 focused optimized Release checks pass on
 The native app binding hung and was cancelled without any interaction acceptance.
 See [source findings and native limitation](docs/evidence/review-field-correction-20260930/README.md).
 Committed implementation: `edd3566`.
+
+## Phase 171 — Authoritative paused comparison transport
+
+Status: Deterministic delayed Pause and Play observation bugs reproduced;
+all 16 final focused optimized Release checks pass on 2026-09-30.
+
+- [x] Retain the rejected 731-test canonical run and unchanged isolated pass.
+- [x] Reproduce B resuming during paused alignment/seek from a delayed primary
+  playing cache while A's real decoder stays paused.
+- [x] Preserve primary-scoped explicit Pause through alignment, readiness,
+  reload and audio-track changes, until deliberate Play/toggle/shuttle resumes.
+- [x] Clear stale pause settlement on resume and reset intent on session stop
+  or a different primary while preserving it when only B is replaced.
+- [x] Route explicit Play/toggle/shuttle through the comparison session while B
+  metadata loads, so paused replacement can resume deliberately.
+- [x] Retain the current loading generation's explicit playback request until B
+  readiness can arm synchronization despite a delayed primary Play observation.
+- [x] Add two live regressions and require 733 aggregate candidate/release tests.
+- [x] Pass both regressions, both manual-alignment and shared-transport directions,
+  and all ten lifecycle tests without skips/failures/runtime warnings.
+- [ ] Complete fresh canonical verification of the committed batch.
+
+See [retained diagnosis](docs/evidence/compare-paused-alignment-20260930/README.md).
+The initial full-suite event sequence remains unobserved; deterministic
+reproduction establishes the source bug without claiming complete attribution.
+No timing tolerance or test exclusion is relaxed.
+
+## Phase 172 — Shipping dependency feature parity and bounded MXF scope
+
+Status: Additional source/configuration audits expose concrete remaining work
+on 2026-09-30.
+
+- [x] Identify missing GPL components, SMB/GPL codec/filter support and FFmpeg
+  Metal in the historical full local candidate relative to MPVKit-GPL.
+- [x] Make the builder request GPL, check Samba/Metal prerequisites and verify
+  retained codec/backend configuration identities independently on both slices.
+- [x] Keep historical provenance separate from shipping-feature verification.
+- [x] Bind ZIP hashes/sizes and recorded object/configuration identities to the
+  original build receipt; all thirteen clean-builder regressions pass.
+- [x] Retain a bounded read-only MXF header inventory and proposed file-cursor
+  scope, preserving original profile receipts and metadata compatibility.
+- [ ] Build a replacement with Xcode Metal tooling and complete immutable
+  publication/repin plus native/output/hardware acceptance.
+- [ ] Implement and validate the upstream bounded MXF reader before repinning.
+
+The current host lacks the Metal compiler; the corrected builder rejects this
+prerequisite before allocating/building a candidate. The mapped-page union
+estimate (367.188 MiB) is close to the observed 368.516 MiB increase but is an
+inference, not an allocation/RSS trace. See the
+[build audit](docs/evidence/live-meter-native-output-20260930/clean-rebuild/README.md)
+and [bounded-reader investigation](docs/evidence/authentic-camera-metadata-memory-20260930/bounded-reader-investigation.md).
+Committed GPL/receipt gates: `7dc46b5`; bounded-reader diagnosis: `17e1548`.
 
 ## Remaining work after this continuation
 

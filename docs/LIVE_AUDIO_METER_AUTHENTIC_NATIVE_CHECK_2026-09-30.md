@@ -13,6 +13,13 @@ candidates, not shipping-pin or release-floor acceptance. An earlier incremental
 FX6 run loses synchronization near EOF; its failure remains retained and
 unexplained despite the later successful matched repeat.
 
+A subsequent recipe audit finds that the full-built candidate disables GPL
+components and FFmpeg Metal support, whereas the shipping MPVKit-GPL build
+enables them. These playback results remain valid for their recorded artifacts,
+but do not establish shipping feature parity. The corrected builder requires
+the GPL product and the missing Xcode Metal compiler before a replacement build.
+See [configuration parity audit](evidence/live-meter-native-output-20260930/clean-rebuild/README.md).
+
 ## Inputs and completed runs
 
 The GoPro and DJI originals retain the exact SHA-256 identities from

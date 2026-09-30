@@ -1,0 +1,18 @@
+{
+  "controller": {
+    "sourceSnapshot": "/tmp/aagedal-pause-intent-loading-final-controller-source.swift",
+    "sha256": "137d35a52c6eff3532ac0181d3ac5ec85135364ce67de3bcbfef2272581b3195"
+  },
+  "test": {
+    "sourceSnapshot": "/tmp/aagedal-pause-intent-loading-final-test-source.swift",
+    "sha256": "50f0179e869b4d975abf7215cf0f91e2052cfe2838a09554647189efbb613867"
+  },
+  "command": {
+    "sourceSnapshot": "/tmp/aagedal-pause-intent-loading-final-command-source.swift",
+    "sha256": "9b533d23538e62dc128425a9964b2348b8b7cf904f516ab540f59d9b968cd234"
+  },
+  "controls": {
+    "sourceSnapshot": "/tmp/aagedal-pause-intent-loading-final-controls-source.swift",
+    "sha256": "0ebf44768a5a99147049ceb3d71723c4612fc252d9919a1fc7bc390f8a681f27"
+  }
+}

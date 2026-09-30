@@ -1,0 +1,10 @@
+{
+  "controller": {
+    "sourceSnapshot": "/tmp/aagedal-loading-play-ack-baseline-controller-source.swift",
+    "sha256": "137d35a52c6eff3532ac0181d3ac5ec85135364ce67de3bcbfef2272581b3195"
+  },
+  "test": {
+    "sourceSnapshot": "/tmp/aagedal-loading-play-ack-baseline-test-source.swift",
+    "sha256": "bfd9da426e5f9713f46bffa229b02bb4c4b37e33a77f76bae9e34af0d75a67a7"
+  }
+}

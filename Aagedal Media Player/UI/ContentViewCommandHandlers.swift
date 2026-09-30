@@ -368,7 +368,7 @@ private struct PlaybackHandlers: ViewModifier {
                 guard let command = notification.appCommand,
                       case .togglePlayback = command else { return }
                 guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
-                if compareSession.isActive {
+                if compareSession.isActive || compareSession.isLoading {
                     compareSession.togglePlayback(primary: controller)
                 } else {
                     controller.togglePlayback()
@@ -398,7 +398,7 @@ private struct PlaybackHandlers: ViewModifier {
                 guard let command = notification.appCommand,
                       case .reverse = command else { return }
                 guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
-                if compareSession.isActive {
+                if compareSession.isActive || compareSession.isLoading {
                     compareSession.reverse(primary: controller)
                 } else {
                     controller.startReverse()
@@ -408,7 +408,7 @@ private struct PlaybackHandlers: ViewModifier {
                 guard let command = notification.appCommand,
                       case .fastForward = command else { return }
                 guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
-                if compareSession.isActive {
+                if compareSession.isActive || compareSession.isLoading {
                     compareSession.fastForward(primary: controller)
                 } else {
                     controller.fastForward()
@@ -418,7 +418,7 @@ private struct PlaybackHandlers: ViewModifier {
                 guard let command = notification.appCommand,
                       case .slowForward = command else { return }
                 guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
-                if compareSession.isActive {
+                if compareSession.isActive || compareSession.isLoading {
                     compareSession.slowForward(primary: controller)
                 } else {
                     controller.slowForward()
@@ -428,7 +428,7 @@ private struct PlaybackHandlers: ViewModifier {
                 guard let command = notification.appCommand,
                       case .slowReverse = command else { return }
                 guard WindowManager.shared.shouldHandlePlaybackCommand(window: nsWindow) else { return }
-                if compareSession.isActive {
+                if compareSession.isActive || compareSession.isLoading {
                     compareSession.slowReverse(primary: controller)
                 } else {
                     controller.slowReverse()

@@ -1,0 +1,6 @@
+{
+  "Aagedal Media Player/Logic/CompareSessionController.swift": "137d35a52c6eff3532ac0181d3ac5ec85135364ce67de3bcbfef2272581b3195",
+  "Aagedal Media Player Tests/CompareLiveBackendTests.swift": "9dd37e5a1a963644dfc4ec28eaa4289fef78ecdaccc02d4eab0baff70cdb7ef2",
+  "scripts/verify-release-candidate.sh": "8cfa6224367085ef1f11539a1f0ce91c91bc2d6da89432941a8e980bfa196c66",
+  "scripts/release.sh": "c5d5cb14632ee21e6d398385a25af91240029a3b4441149efb6f7df9bcb51d0c"
+}

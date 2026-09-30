@@ -1,0 +1,18 @@
+{
+  "Aagedal Media Player/Logic/CompareSessionController.swift": {
+    "sha256": "f319b91fad195e281fbb91b75c3c3f03cd2d3dc567cc0bf01e32ac1456e1f7f6",
+    "snapshot": "/tmp/aagedal-loading-play-ack-final-controller-source.swift"
+  },
+  "Aagedal Media Player Tests/CompareLiveBackendTests.swift": {
+    "sha256": "bfd9da426e5f9713f46bffa229b02bb4c4b37e33a77f76bae9e34af0d75a67a7",
+    "snapshot": "/tmp/aagedal-loading-play-ack-final-test-source.swift"
+  },
+  "Aagedal Media Player/UI/ContentViewCommandHandlers.swift": {
+    "sha256": "9b533d23538e62dc128425a9964b2348b8b7cf904f516ab540f59d9b968cd234",
+    "snapshot": "/tmp/aagedal-loading-play-ack-final-command-source.swift"
+  },
+  "Aagedal Media Player/UI/ControlsView.swift": {
+    "sha256": "0ebf44768a5a99147049ceb3d71723c4612fc252d9919a1fc7bc390f8a681f27",
+    "snapshot": "/tmp/aagedal-loading-play-ack-final-controls-source.swift"
+  }
+}
