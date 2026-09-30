@@ -77,6 +77,30 @@ struct CompareReviewDraftState {
         correctionRequest = nil
     }
 
+    /// Return, Apply and ordinary blur validation need the same ownership as
+    /// action preflight. Otherwise another field's blur can steal focus while
+    /// the first invalid field is being revealed.
+    mutating func recordFieldValidationError(
+        _ error: String?, note: CompareReviewNote,
+        field: CompareReviewCorrectionRequest.Field, canEdit: Bool
+    ) {
+        switch field {
+        case .text: noteActionErrors[note.id] = error
+        case .rangeEnd: rangeActionErrors[note.id] = error
+        }
+        guard let error else {
+            if correctionRequest?.noteID == note.id, correctionRequest?.field == field {
+                clearActionNotice()
+            }
+            return
+        }
+        // Unavailable fields retain their error and draft, but cannot receive
+        // correction focus until loading has made them editable again.
+        guard canEdit else { return }
+        blockAction(noteID: note.id, field: field, error: error,
+                    notice: "Review note at source A frame \(note.primaryFrame): \(error)")
+    }
+
     /// Editing one field must not dismiss the correction selected for another.
     /// That request also arbitrates focus-loss validation during the handoff.
     mutating func updateNoteTextDraft(_ text: String, noteID: UUID) {
@@ -498,7 +522,10 @@ struct CompareReviewView: View {
             ),
             noteActionError: Binding(
                 get: { drafts.noteActionErrors[note.id] },
-                set: { drafts.noteActionErrors[note.id] = $0 }
+                set: {
+                    drafts.recordFieldValidationError($0, note: note, field: .text,
+                                                      canEdit: compareSession.canEditReviewNotes)
+                }
             ),
             endFrameDraft: Binding(
                 get: { drafts.rangeDrafts[note.id] ?? note.primaryEndFrame.map(String.init) ?? "" },
@@ -510,7 +537,10 @@ struct CompareReviewView: View {
             ),
             rangeActionError: Binding(
                 get: { drafts.rangeActionErrors[note.id] },
-                set: { drafts.rangeActionErrors[note.id] = $0 }
+                set: {
+                    drafts.recordFieldValidationError($0, note: note, field: .rangeEnd,
+                                                      canEdit: compareSession.canEditReviewNotes)
+                }
             ),
             timecodeLabel: timecodeLabel(for: note),
             canEdit: compareSession.canEditReviewNotes,

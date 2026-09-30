@@ -7,6 +7,102 @@ import XCTest
 
 final class CompareReviewTextCommitTests: XCTestCase {
     @MainActor
+    func testOrdinaryEmptyTextValidationOwnsFocusThroughCompetingRangeBlur() {
+        let note = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
+            secondaryFrame: 10, secondaryTime: 1, text: "Saved finding", primaryEndFrame: 20)
+        var drafts = CompareReviewDraftState()
+        drafts.updateNoteTextDraft("  ", noteID: note.id)
+        drafts.updateRangeEndDraft("not a frame", noteID: note.id)
+        drafts.rangeActionErrors[note.id] = "Earlier range error"
+
+        // Return/blur uses the row's error binding without report preflight.
+        XCTAssertEqual(CompareReviewTextCommitResult.attempt(
+            draft: drafts.noteDrafts[note.id]!, savedText: note.text, canEdit: true,
+            update: { _ in XCTFail("An empty finding must not be saved"); return true }), .empty)
+        drafts.recordFieldValidationError("Enter note text before continuing.",
+            note: note, field: .text, canEdit: true)
+
+        XCTAssertEqual(drafts.correctionRequest?.noteID, note.id)
+        XCTAssertEqual(drafts.correctionRequest?.field, .text)
+        XCTAssertFalse(CompareReviewRangeFocusLossPolicy.shouldCommit(
+            draft: drafts.rangeDrafts[note.id]!, savedEndFrame: note.primaryEndFrame,
+            noteID: note.id, correctionRequest: drafts.correctionRequest))
+        XCTAssertEqual(drafts.noteDrafts[note.id], "  ")
+        XCTAssertEqual(drafts.rangeDrafts[note.id], "not a frame")
+
+        drafts.updateNoteTextDraft("Corrected finding", noteID: note.id)
+        XCTAssertEqual(CompareReviewTextCommitResult.attempt(
+            draft: drafts.noteDrafts[note.id]!, savedText: note.text,
+            canEdit: true, update: { $0 == "Corrected finding" }), .accepted)
+        drafts.recordFieldValidationError(nil, note: note, field: .text, canEdit: true)
+        drafts.finishNoteTextCommit(noteID: note.id)
+        XCTAssertNil(drafts.correctionRequest)
+        XCTAssertNil(drafts.noteActionErrors[note.id])
+        XCTAssertEqual(drafts.rangeActionErrors[note.id], "Earlier range error")
+        XCTAssertTrue(CompareReviewRangeFocusLossPolicy.shouldCommit(
+            draft: drafts.rangeDrafts[note.id]!, savedEndFrame: note.primaryEndFrame,
+            noteID: note.id, correctionRequest: drafts.correctionRequest))
+    }
+
+    @MainActor
+    func testOrdinaryRangeValidationDefersPassiveFieldsAndExplicitFailureCanReplaceIt() {
+        let note = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
+            secondaryFrame: 10, secondaryTime: 1, text: "Saved finding", primaryEndFrame: 20)
+        let other = CompareReviewNote(primaryFrame: 30, primaryTime: 3,
+            secondaryFrame: 30, secondaryTime: 3, text: "Other finding")
+        var drafts = CompareReviewDraftState()
+        drafts.updateRangeEndDraft("not a frame", noteID: note.id)
+        drafts.updateNoteTextDraft("", noteID: other.id)
+        drafts.recordFieldValidationError("Enter a whole-number end frame.",
+            note: note, field: .rangeEnd, canEdit: true)
+        let rangeRequest = drafts.correctionRequest
+
+        for noteID in [note.id, other.id] {
+            XCTAssertFalse(CompareReviewTextFocusLossPolicy.shouldCommit(
+                noteID: noteID, correctionRequest: drafts.correctionRequest))
+        }
+        XCTAssertFalse(CompareReviewRangeFocusLossPolicy.canHandlePassively(
+            noteID: other.id, correctionRequest: drafts.correctionRequest))
+        drafts.recordFieldValidationError(nil, note: other, field: .text, canEdit: true)
+        XCTAssertEqual(drafts.correctionRequest, rangeRequest,
+            "An unrelated successful callback must preserve the selected range")
+
+        // An explicit Return in the other text field deliberately chooses
+        // its new failure; the now-unrelated range callback must defer.
+        XCTAssertEqual(CompareReviewTextCommitResult.attempt(
+            draft: drafts.noteDrafts[other.id]!, savedText: other.text, canEdit: true,
+            update: { _ in XCTFail("An empty finding must not be saved"); return true }), .empty)
+        drafts.recordFieldValidationError("Enter note text before continuing.",
+            note: other, field: .text, canEdit: true)
+        let textRequest = drafts.correctionRequest
+        XCTAssertEqual(textRequest?.noteID, other.id)
+        XCTAssertEqual(textRequest?.field, .text)
+        XCTAssertFalse(CompareReviewRangeFocusLossPolicy.canHandlePassively(
+            noteID: note.id, correctionRequest: textRequest))
+        drafts.recordFieldValidationError(nil, note: note, field: .rangeEnd, canEdit: true)
+        XCTAssertEqual(drafts.correctionRequest, textRequest)
+        XCTAssertEqual(drafts.noteActionErrors[other.id], "Enter note text before continuing.")
+        XCTAssertEqual(drafts.rangeDrafts[note.id], "not a frame")
+    }
+
+    @MainActor
+    func testUnavailableFieldValidationRetainsInputWithoutRequestingDisabledFocus() {
+        let note = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
+            secondaryFrame: 10, secondaryTime: 1, text: "Saved finding")
+        var drafts = CompareReviewDraftState()
+        drafts.updateNoteTextDraft("Pending edit", noteID: note.id)
+        XCTAssertEqual(CompareReviewTextCommitResult.attempt(
+            draft: drafts.noteDrafts[note.id]!, savedText: note.text, canEdit: false,
+            update: { _ in XCTFail("Unavailable notes must not be saved"); return true }), .unavailable)
+        drafts.recordFieldValidationError("Review notes cannot be edited right now.",
+            note: note, field: .text, canEdit: false)
+        XCTAssertEqual(drafts.noteDrafts[note.id], "Pending edit")
+        XCTAssertEqual(drafts.noteActionErrors[note.id], "Review notes cannot be edited right now.")
+        XCTAssertNil(drafts.correctionRequest)
+        XCTAssertNil(drafts.rangeActionNotice)
+    }
+
+    @MainActor
     func testTextCorrectionDefersOtherFindingTextBlurWithoutDroppingDrafts() {
         let selectedID = UUID()
         let otherID = UUID()
