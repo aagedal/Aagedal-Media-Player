@@ -179,6 +179,99 @@ class CleanCandidateTests(unittest.TestCase):
                 clone.assert_not_called()
                 self.assertFalse((root.parent / (root.name + '-output')).exists())
 
+    def test_explicit_metal_requires_real_compile_and_link_outputs(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            for name in ('metal', 'metallib'):
+                tool = root / 'usr/bin' / name
+                tool.parent.mkdir(parents=True, exist_ok=True)
+                tool.write_text('#!/bin/sh\nexit 0\n')
+                tool.chmod(0o755)
+            with self.assertRaisesRegex(ValueError, 'did not produce compiled AIR'):
+                candidate.metal_toolchain_prerequisite(root)
+            metal = root / 'usr/bin/metal'
+            metal.write_text('#!/bin/sh\nif [ "$1" = "-v" ]; then echo test-metal; exit 0; fi\n'
+                             'while [ "$1" != "-o" ]; do shift; done\nprintf air > "$2"\n')
+            linker = root / 'usr/bin/metallib'
+            linker.write_text('#!/bin/sh\nwhile [ "$1" != "-o" ]; do shift; done\nprintf library > "$2"\n')
+            identity = candidate.metal_toolchain_prerequisite(root)
+            self.assertIn('test-metal', identity['version'])
+            candidate.verify_metal_toolchain(identity)
+            linker.write_text('changed linker')
+            with self.assertRaisesRegex(ValueError, 'Metal toolchain changed: metallib'):
+                candidate.verify_metal_toolchain(identity)
+
+    def test_explicit_metal_paths_cannot_be_split_or_executed_as_shell_commands(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            main = Path(temporary) / 'main.swift'
+            before = '        var arguments = ffmpegConfiguers\n'
+            main.write_text(before)
+            for invalid in ["/tool chain/metal", "/tool's/metal", '/tools/$(touch BAD)/metal', '/tools/linker;touchBAD']:
+                with self.subTest(path=invalid), self.assertRaisesRegex(ValueError, 'cannot be represented by FFmpeg'):
+                    candidate.apply_metal_toolchain_recipe(main, {'tools': {
+                        'metal': {'path': invalid}, 'metallib': {'path': '/valid/metallib'}}})
+                self.assertEqual(main.read_text(), before)
+            paths = {'metal': '/tools/metal', 'metallib': '/tools/metallib'}
+            candidate.apply_metal_toolchain_recipe(main, {'tools': {name: {'path': path} for name, path in paths.items()}})
+            arguments = [json.loads(line.split('arguments.append(', 1)[1][:-1])
+                         for line in main.read_text().splitlines()[1:]]
+            self.assertEqual(arguments, ['--metalcc=/tools/metal', '--metallib=/tools/metallib'])
+
+    def test_changed_metal_implementation_cannot_hide_behind_unchanged_launcher(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            launcher = root / 'metal'
+            payload = root / 'implementation'
+            entry = root / 'current-metal'
+            entry.symlink_to(payload.name)
+            launcher.write_text('unchanged launcher')
+            payload.write_text('original implementation')
+            identity = {'tools': {'metal': {'path': str(launcher), 'sha256': candidate.sha(launcher),
+                        'implementation': {'entryPath': str(entry), 'path': str(payload.resolve()), 'sha256': candidate.sha(payload)}}}}
+            candidate.verify_metal_toolchain(identity)
+            alternate = root / 'alternate'
+            alternate.write_text('other implementation')
+            entry.unlink()
+            entry.symlink_to(alternate.name)
+            with self.assertRaisesRegex(ValueError, 'Metal implementation changed: metal'):
+                candidate.verify_metal_toolchain(identity)
+            entry.unlink()
+            entry.symlink_to(payload.name)
+            payload.write_text('changed implementation')
+            with self.assertRaisesRegex(ValueError, 'Metal implementation changed: metal'):
+                candidate.verify_metal_toolchain(identity)
+
+    def test_explicit_metal_missing_linker_cannot_start_build(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            archive = root / candidate.SMB_ZIP
+            archive.parent.mkdir(parents=True)
+            with zipfile.ZipFile(archive, 'w') as file:
+                for arch in ('arm64', 'x86_64'):
+                    file.writestr(f'lib/macos/thin/{arch}/lib/libsmbclient.a', 'archive')
+            metal = root / 'tools/usr/bin/metal'
+            metal.parent.mkdir(parents=True)
+            metal.write_text('#!/bin/sh\nexit 0\n')
+            metal.chmod(0o755)
+            output = root.parent / (root.name + '-output')
+            with patch.object(candidate, 'clone_clean') as clone:
+                with self.assertRaisesRegex(ValueError, 'no executable metallib'):
+                    candidate.build(root, output, root / 'tools')
+                clone.assert_not_called()
+                self.assertFalse(output.exists())
+
+    def test_builder_receipt_keeps_snapshot_identity_when_live_source_changes(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source = root / 'live-builder.py'
+            snapshot = root / 'builder.py'
+            source.write_text('executed source')
+            identity = candidate.snapshot_builder(source, snapshot)
+            source.write_text('later edits must not change receipt identity')
+            self.assertEqual(identity, candidate.sha(snapshot))
+            self.assertNotEqual(identity, candidate.sha(source))
+            self.assertEqual(snapshot.read_text(), 'executed source')
+
     def test_verify_exit_status_rejects_legacy_receipt_without_shipping_product(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

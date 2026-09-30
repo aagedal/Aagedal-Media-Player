@@ -105,7 +105,63 @@ def unpack_zip(archive, destination):
         file.extractall(destination)
 
 
-def shipping_prerequisites(mpvkit):
+def metal_toolchain_prerequisite(toolchain):
+    """Validate an explicitly selected installed compiler with a real kernel/link."""
+    toolchain = toolchain.resolve()
+    tools = {name: toolchain / 'usr/bin' / name for name in ('metal', 'metallib')}
+    for name, path in tools.items():
+        if not path.is_file() or not os.access(path, os.X_OK):
+            raise ValueError(f'explicit Metal toolchain has no executable {name}: {path}')
+    for path in tools.values():
+        if not re.fullmatch(r'/[A-Za-z0-9_./+\-]+', str(path)):
+            raise ValueError(f'Metal executable path cannot be represented by FFmpeg configure: {path}')
+    identities = {name: {'path': str(path), 'sha256': sha(path)} for name, path in tools.items()}
+    version = capture([tools['metal'], '-v'], stderr=subprocess.STDOUT)
+    for name in tools:
+        payload = toolchain / 'usr/metal/current/bin' / name
+        if payload.is_file():
+            identities[name]['implementation'] = {'entryPath': str(payload), 'path': str(payload.resolve()), 'sha256': sha(payload)}
+    with tempfile.TemporaryDirectory(prefix='aagedal-metal-probe-') as temporary:
+        root = Path(temporary)
+        source = root / 'probe.metal'
+        source.write_text('#include <metal_stdlib>\nusing namespace metal;\n'
+                          'kernel void probe(device float *out [[buffer(0)]], uint i [[thread_position_in_grid]]) { out[i] = 0.0f; }\n')
+        air = root / 'probe.air'
+        library = root / 'probe.metallib'
+        run([tools['metal'], '-c', source, '-o', air], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        run([tools['metallib'], air, '-o', library], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if not air.is_file() or not library.is_file() or not air.stat().st_size or not library.stat().st_size:
+            raise ValueError('explicit Metal toolchain did not produce compiled AIR and linked metallib')
+        artifacts = {'airSHA256': sha(air), 'metallibSHA256': sha(library)}
+    return {'root': str(toolchain), 'tools': identities, 'version': version, 'kernelProbe': artifacts}
+
+
+def apply_metal_toolchain_recipe(main, identity):
+    # FFmpeg expands these command values without an eval, so embedded shell
+    # quotes cannot preserve spaces. Require one unambiguous executable word.
+    for name in ('metal', 'metallib'):
+        path = identity['tools'][name]['path']
+        if not re.fullmatch(r'/[A-Za-z0-9_./+\-]+', path):
+            raise ValueError(f'Metal executable path cannot be represented by FFmpeg configure: {path}')
+    options = [f'--{option}={identity["tools"][name]["path"]}'
+               for option, name in [('metalcc', 'metal'), ('metallib', 'metallib')]]
+    fragment = '        var arguments = ffmpegConfiguers'
+    replacement = fragment + ''.join('\n        arguments.append(' + json.dumps(option) + ')' for option in options)
+    replace_once(main, fragment, replacement)
+
+
+def verify_metal_toolchain(identity):
+    for name, tool in identity['tools'].items():
+        path = Path(tool['path'])
+        if not path.is_file() or sha(path) != tool['sha256']:
+            raise ValueError(f'explicit Metal toolchain changed: {name}')
+        implementation = tool.get('implementation')
+        if implementation and (Path(implementation.get('entryPath', implementation['path'])).resolve() != Path(implementation['path'])
+                               or not Path(implementation['path']).is_file() or sha(implementation['path']) != implementation['sha256']):
+            raise ValueError(f'explicit Metal implementation changed: {name}')
+
+
+def shipping_prerequisites(mpvkit, metal_toolchain=None):
     """Refuse known feature loss before allocating/building a new candidate."""
     archive = mpvkit / SMB_ZIP
     if not archive.is_file():
@@ -115,6 +171,9 @@ def shipping_prerequisites(mpvkit):
             prefix = f'lib/macos/thin/{arch}/lib/'
             if not any(name.startswith(prefix) and name.endswith('.a') for name in file.namelist()):
                 raise ValueError(f'{SHIPPING_PRODUCT} Samba input lacks macOS/{arch} static libraries')
+    if metal_toolchain is not None:
+        return {'sambaZIP': {'relativePath': SMB_ZIP, 'sha256': sha(archive)},
+                'metalToolchain': metal_toolchain_prerequisite(metal_toolchain)}
     probe = subprocess.run(['xcrun', '--sdk', 'macosx', 'metal', '-v'],
                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, check=False)
     if probe.returncode:
@@ -154,6 +213,9 @@ def shipping_configuration(output, require_shipping):
 def verify_build(output, receipt, require_shipping=True):
     """Verify immutable source, reconstructed inputs and actual output slices."""
     checkout = output / 'MPVKit'
+    metal_identity = receipt.get('shippingPrerequisites', {}).get('metalToolchain')
+    if metal_identity:
+        verify_metal_toolchain(metal_identity)
     result = {'sourceInputs': {}, 'copiedAuxiliaryZIPsMatch': True, 'xcframeworks': {}, 'freshObjects': {}}
     if git(checkout, 'rev-parse', 'HEAD') != receipt['candidateMPVKitRevision']:
         raise ValueError('candidate MPVKit recipe revision changed during build')
@@ -248,7 +310,15 @@ def verify_build(output, receipt, require_shipping=True):
     return result
 
 
-def build(mpvkit, output):
+def snapshot_builder(source, destination):
+    identity = sha(source)
+    shutil.copy2(source, destination)
+    if sha(destination) != identity:
+        raise ValueError('builder source changed while retaining its snapshot')
+    return identity
+
+
+def build(mpvkit, output, metal_toolchain=None):
     if output.exists():
         raise ValueError(f'output already exists: {output}')
     if mpvkit == output or mpvkit in output.parents:
@@ -256,10 +326,10 @@ def build(mpvkit, output):
     identity = json.loads(IDENTITY.read_text())
     if sha(PATCH) != identity['iinaPatchSHA256']:
         raise ValueError('retained CoreAudio patch hash mismatch')
-    prerequisites = shipping_prerequisites(mpvkit)
+    prerequisites = shipping_prerequisites(mpvkit, metal_toolchain)
     original_status = git(mpvkit, 'status', '--porcelain')
     output.mkdir(parents=True)
-    shutil.copy2(Path(__file__), output / 'builder.py')
+    builder_identity = snapshot_builder(Path(__file__), output / 'builder.py')
     checkout = output / 'MPVKit'
     clone_clean(mpvkit, checkout, MPVKIT_REVISION)
     dist = checkout / 'dist'
@@ -348,6 +418,8 @@ def build(mpvkit, output):
                  '    func generatePackageManagerFile() throws {\n        if self is ZipBaseBuild { return } // Local offline candidate: omit remote auxiliary manifest generation.')
     replace_once(base, '        task.environment = environment',
                  '        for key in ["CLANG_MODULE_CACHE_PATH", "SWIFT_MODULECACHE_PATH", "TMPDIR"] {\n            if let value = ProcessInfo.processInfo.environment[key] { environment[key] = value }\n        }\n        task.environment = environment')
+    if 'metalToolchain' in prerequisites:
+        apply_metal_toolchain_recipe(main, prerequisites['metalToolchain'])
     # The source change above is identical to this upstream transformation.
     start = main.read_text().index('        let path = directoryURL + "libavcodec/videotoolbox.c"')
     end = main.read_text().index('\n    override func flagsDependencelibrarys()', start)
@@ -358,6 +430,8 @@ def build(mpvkit, output):
         'Pass isolated Clang/Swift module cache and temporary directory locations into spawned build processes.',
         'Apply upstream FFmpeg Metal pixel-buffer source change once before committing candidate source.',
     ]
+    if 'metalToolchain' in prerequisites:
+        receipt['recipeAdaptations'].append('Use explicit verified Metal compiler/linker paths through FFmpeg configure, preserving CONFIG_METAL on both slices.')
     (checkout / 'local-candidate-inputs.json').write_text(json.dumps(receipt, indent=2) + '\n')
     receipt['candidateMPVKitRevision'] = commit(checkout, 'Record isolated macOS CoreAudio candidate build recipe and immutable inputs')
     receipt['compilerVersion'] = capture(['/usr/bin/clang', '--version'])
@@ -365,7 +439,7 @@ def build(mpvkit, output):
     receipt['sdkPath'] = capture(['xcrun', '--sdk', 'macosx', '--show-sdk-path'])
     receipt['mesonVersion'] = capture(['meson', '--version'])
     receipt['ninjaVersion'] = capture(['ninja', '--version'])
-    receipt['builderSHA256'] = sha(Path(__file__))
+    receipt['builderSHA256'] = builder_identity
     (output / 'input-receipt.json').write_text(json.dumps(receipt, indent=2) + '\n')
     env = os.environ.copy()
     env['CLANG_MODULE_CACHE_PATH'] = str(output / 'clang-cache')
@@ -400,13 +474,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('mpvkit', type=Path, nargs='?')
     parser.add_argument('output', type=Path, nargs='?', help='new directory outside the original checkout')
+    parser.add_argument('--metal-toolchain', type=Path, help='installed Metal.xctoolchain root; probe and bind compiler/linker identities explicitly')
     modes = parser.add_mutually_exclusive_group()
     modes.add_argument('--verify', type=Path, help='require shipping feature parity and verify a completed build')
     modes.add_argument('--diagnose-historical', type=Path, help='record identity provenance and failed parity of an earlier diagnostic artifact')
     args = parser.parse_args()
     try:
         if args.verify or args.diagnose_historical:
-            if args.mpvkit or args.output:
+            if args.mpvkit or args.output or args.metal_toolchain:
                 parser.error('verification/diagnosis cannot be combined with build inputs')
             output = (args.verify or args.diagnose_historical).resolve()
             receipt = json.loads((output / 'receipt.json').read_text())
@@ -422,7 +497,7 @@ def main():
         else:
             if not args.mpvkit or not args.output:
                 parser.error('provide the input MPVKit checkout and new output directory')
-            build(args.mpvkit.resolve(), args.output.resolve())
+            build(args.mpvkit.resolve(), args.output.resolve(), args.metal_toolchain)
     except (OSError, ValueError, subprocess.CalledProcessError, zipfile.BadZipFile) as error:
         print(f'Clean candidate build failed: {error}', file=sys.stderr)
         return 1
