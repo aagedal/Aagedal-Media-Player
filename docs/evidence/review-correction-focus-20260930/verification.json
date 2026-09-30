@@ -1,0 +1,18 @@
+{
+  "date": "2026-09-30",
+  "sourceCommit": "919fa27cf2b32846d5aa2205a001d863155fea3d",
+  "checkout": "working tree with parallel implementation changes",
+  "configuration": "Release",
+  "testResultBundle": "/private/tmp/aagedal-review-focus-20260930-verified.xcresult",
+  "testLog": "/private/tmp/aagedal-review-focus-20260930-verified.log",
+  "testCount": 19,
+  "testFailures": 0,
+  "testSkips": 0,
+  "runtimeWarnings": 0,
+  "sourceSHA256": {
+    "Aagedal Media Player/UI/CompareReviewView.swift": "fd111be05f582387eefff5bf5fc94c675be06f9b322046d53f1bcb41bbb8b42b",
+    "Aagedal Media Player Tests/CompareReviewTextCommitTests.swift": "7d612281cb92e567c607fefcec90a0a868592b19e9289cfa603b5ba097f99d3c",
+    "Aagedal Media Player Tests/CompareSessionLifecycleTests.swift": "e8c735ac1856f66d094b4793b5e3c5c8805b72b29d316619475d06aea22f664a",
+    "Aagedal Media Player.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved": "6aea6d64326f3040345c3523a0a39c95d53335777e233b3aa311e8ba90ad475d"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "date": "2026-09-30",
+  "method": "cua.getState()",
+  "requestedTimeoutMilliseconds": 20000,
+  "observedWallSeconds": 7.636,
+  "apps": [],
+  "nativeError": "Native apps: Error: The Mac is locked and automatic unlock could not unlock it. Ask the user to unlock the Mac manually before continuing.",
+  "nativeActionsCompleted": 0,
+  "keyboardAcceptance": false,
+  "fullKeyboardAccessAcceptance": false,
+  "spokenVoiceOverAcceptance": false
+}

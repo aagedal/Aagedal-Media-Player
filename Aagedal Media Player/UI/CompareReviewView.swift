@@ -14,6 +14,19 @@ struct CompareReviewCorrectionRequest: Equatable {
     let field: Field
 }
 
+/// Moving focus to the text correction selected by action preflight must not
+/// validate an unrelated range draft and immediately steal that focus back.
+enum CompareReviewRangeFocusLossPolicy {
+    static func shouldCommit(
+        draft: String, savedEndFrame: Int64?,
+        correctionField: CompareReviewCorrectionRequest.Field?
+    ) -> Bool {
+        guard correctionField != .text else { return false }
+        let entered = draft.trimmingCharacters(in: .whitespacesAndNewlines)
+        return !entered.isEmpty && entered != (savedEndFrame.map(String.init) ?? "")
+    }
+}
+
 /// Drafts belong to the player window so dismissing Review cannot discard an
 /// invalid edit before the user returns to correct it.
 struct CompareReviewDraftState {
@@ -44,6 +57,14 @@ struct CompareReviewDraftState {
         rangeActionNotice = nil
         rangeActionNoticeNoteID = nil
         correctionRequest = nil
+    }
+
+    mutating func finishNoteTextCommit(noteID: UUID) {
+        noteDrafts[noteID] = nil
+        noteActionErrors[noteID] = nil
+        if correctionRequest?.noteID == noteID, correctionRequest?.field == .text {
+            clearActionNotice()
+        }
     }
 
     /// The explicit current-frame action replaces typed input even when it
@@ -468,7 +489,7 @@ struct CompareReviewView: View {
                 compareSession.seekToReviewNote(note, primary: primaryController)
             },
             onUpdate: { text in compareSession.updateReviewNote(id: note.id, text: text) },
-            onCommitFinished: { drafts.noteDrafts[note.id] = nil },
+            onCommitFinished: { drafts.finishNoteTextCommit(noteID: note.id) },
             onDelete: {
                 drafts.noteDrafts[note.id] = nil
                 drafts.noteActionErrors[note.id] = nil
@@ -934,7 +955,7 @@ private struct CompareReviewNoteRow: View {
             endFrameDraft = end.map(String.init) ?? ""
         }
         .onChange(of: rangeActionError) { _, error in
-            if error != nil {
+            if error != nil && correctionRequest?.field != .text {
                 if isRangeExpanded { isEndFrameFocused = true }
                 else { isRangeExpanded = true }
             }
@@ -951,7 +972,9 @@ private struct CompareReviewNoteRow: View {
             else if rangeActionError != nil { isRangeExpanded = true }
         }
         .onChange(of: isRangeExpanded) { _, expanded in
-            if expanded && rangeActionError != nil { isEndFrameFocused = true }
+            if expanded && rangeActionError != nil && correctionRequest?.field != .text {
+                isEndFrameFocused = true
+            }
         }
         .padding(8)
         .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8))
@@ -993,11 +1016,12 @@ private struct CompareReviewNoteRow: View {
                 .onSubmit(applyRange)
                 .onChange(of: isEndFrameFocused) { wasFocused, focused in
                     guard wasFocused && !focused else { return }
-                    let entered = endFrameDraft.trimmingCharacters(in: .whitespacesAndNewlines)
-                    let saved = note.primaryEndFrame.map(String.init) ?? ""
                     // Tab and pointer navigation commit like Return or Apply.
                     // Keep an empty draft for the explicit Clear range action.
-                    if !entered.isEmpty && entered != saved { applyRange() }
+                    if CompareReviewRangeFocusLossPolicy.shouldCommit(
+                        draft: endFrameDraft, savedEndFrame: note.primaryEndFrame,
+                        correctionField: correctionRequest?.field
+                    ) { applyRange() }
                 }
                 .onChange(of: endFrameDraft) { _, _ in
                     rangeActionError = nil
