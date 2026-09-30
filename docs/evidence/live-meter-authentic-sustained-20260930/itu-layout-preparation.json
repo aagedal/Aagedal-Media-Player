@@ -1,0 +1,23 @@
+{
+  "sourcePath": "/private/tmp/aagedal-itu-live-references-20260930/1770-2 Conf 6ch VinCntr-23LKFS.wav",
+  "sourceSHA256": "ef2a0baef7f50db39eddfb1ba6f2a5445646050d113f81c6365cddca7f0448a0",
+  "preparedPath": "/private/tmp/aagedal-live-authentic-20260930/itu-6ch-unchanged-pcm-5.1-side.wav",
+  "preparedSHA256": "01fd864e6ad367d792443023ace2713cddb12c3cbaa2d6e6afede57c5a92f159",
+  "pcmSHA256": "5e1020672b02d963f98aab2d827961656f941da79ab4b14733f62b574737848f",
+  "originalPCMEqualsPreparedPCM": true,
+  "channels": 6,
+  "sampleRate": 48000,
+  "sampleFrames": 3994582,
+  "durationSeconds": 83.22045833333334,
+  "speakerMask": "0x60f",
+  "layout": "5.1(side)",
+  "channelOrder": [
+    "L",
+    "R",
+    "C",
+    "LFE",
+    "Ls",
+    "Rs"
+  ],
+  "preparation": "Unchanged PCM words/order; explicit 5.1(side) WAVE speaker mask 0x60f, matching existing ITU reference preparation."
+}

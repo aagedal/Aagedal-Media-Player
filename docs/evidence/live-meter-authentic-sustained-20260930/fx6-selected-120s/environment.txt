@@ -1,0 +1,28 @@
+1a156ff33dbc3762292d039326cbd5fcf3791dc0
+?? docs/dependency-patches/swift-media-metadata-3.0.1-jxl-real-fixture-tests.patch
+ProductName:		macOS
+ProductVersion:		27.0.1
+BuildVersion:		26A434
+Hardware:
+
+    Hardware Overview:
+
+      Model Name: MacBook Pro
+      Model Identifier: Mac17,8
+      Model Number: Z1MW000K9H/A
+      Chip: Apple M5 Pro
+      Total Number of Cores: 18 (6 Super and 12 Performance)
+      Memory: 64 GB
+      System Firmware Version: 20457.1.29
+      OS Loader Version: 20457.1.29
+
+Xcode 27.0
+Build version 27A266a
+Now drawing from 'AC Power'
+ -InternalBattery-0 (id=36700259)	30%; discharging; 1:09 remaining present: true
+Observation seconds: 120
+Build configuration: Release
+Fresh build-for-testing followed by isolated repaired-dependency relink.
+Source head: 36ae497ac4094c9490a80a42a670fd7f2399c605
+Test host: /private/tmp/aagedal-live-authentic-20260930/current-repaired-candidate/Aagedal Media Player.app
+Concurrent dependency clean-build work: resource observations under contention.

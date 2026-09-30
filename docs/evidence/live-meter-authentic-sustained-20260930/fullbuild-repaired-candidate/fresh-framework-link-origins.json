@@ -1,0 +1,10 @@
+{
+  "/private/tmp/aagedal-coreaudio-clean-build-v4-20260930/MPVKit/dist/libmpv/macos/Libmpv.framework/Libmpv": 217,
+  "/private/tmp/aagedal-coreaudio-clean-build-v4-20260930/MPVKit/dist/FFmpeg/macos/Libavcodec.framework/Libavcodec": 634,
+  "/private/tmp/aagedal-coreaudio-clean-build-v4-20260930/MPVKit/dist/FFmpeg/macos/Libavdevice.framework/Libavdevice": 2,
+  "/private/tmp/aagedal-coreaudio-clean-build-v4-20260930/MPVKit/dist/FFmpeg/macos/Libavfilter.framework/Libavfilter": 80,
+  "/private/tmp/aagedal-coreaudio-clean-build-v4-20260930/MPVKit/dist/FFmpeg/macos/Libavformat.framework/Libavformat": 203,
+  "/private/tmp/aagedal-coreaudio-clean-build-v4-20260930/MPVKit/dist/FFmpeg/macos/Libavutil.framework/Libavutil": 88,
+  "/private/tmp/aagedal-coreaudio-clean-build-v4-20260930/MPVKit/dist/FFmpeg/macos/Libswresample.framework/Libswresample": 12,
+  "/private/tmp/aagedal-coreaudio-clean-build-v4-20260930/MPVKit/dist/FFmpeg/macos/Libswscale.framework/Libswscale": 38
+}

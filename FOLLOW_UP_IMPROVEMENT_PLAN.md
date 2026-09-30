@@ -3705,6 +3705,88 @@ Finder hung and was cancelled without interaction acceptance. See
 `docs/evidence/release-candidate-sustained-20260930/README.md`.
 This evidence-report commit follows the verified implementation commit.
 
+## Phase 167 — Proposed upstream JXL fixture contract correction
+
+Status: Test-only proposal retained and Release-verified on 2026-09-30.
+
+- [x] Distinguish the original real JXL container from its extracted authentic
+  codestream without replacing the reviewed fixture.
+- [x] Pass three optimized Release checks for container preservation, byte-identical
+  bare writes, metadata wrapping/orientation and repeated-write preservation.
+- [x] Verify exact 3.0.1 library sources and original fixture are unchanged.
+- [ ] Reconcile the proposal upstream and recover the missing historical XMP.
+
+The patch does not replace the unchanged fixture gate's 17 passes, two skips
+and one failure. Committed proposal: `36ae497`; see
+[proposal and evidence](docs/evidence/jxl-contract-proposal-20260930/README.md).
+
+## Phase 168 — Complete local macOS CoreAudio dependency build
+
+Status: Fresh mpv/FFmpeg build and independent provenance verification pass
+on 2026-09-30; shipping dependency remains unchanged.
+
+- [x] Compile every mpv and FFmpeg object from isolated committed source for
+  arm64 and x86_64, without cached objects/generated headers/build databases.
+- [x] Preserve pinned tvOS guards while porting the attributed CoreAudio repair;
+  retain exact source and offline recipe adaptations in local Git commits.
+- [x] Verify all eight actual universal XCFramework binaries, archive checksums,
+  clean source trees, fresh object manifests and copied auxiliary ZIP identities.
+- [x] Pass seven new builder safety regressions and the existing twelve
+  incremental-builder checks; integrate the new checks into the script gate.
+- [ ] Publish immutable artifacts/package metadata, repin the app, and complete
+  audible output, device-switch, surround, supported-macOS and hardware acceptance.
+
+The upstream recipe's auxiliary libraries remain hash-recorded prebuilt inputs;
+this does not rebuild every third-party component. Committed tooling: `9f6c9aa`;
+see [complete local build evidence](docs/evidence/live-meter-native-output-20260930/clean-rebuild/README.md).
+The subsequent production profiles identify this new artifact separately from
+both the incremental repair and shipping pin.
+
+## Phase 169 — Authentic native meter and camera metadata observations
+
+Status: Producer-original camera checks and clean dependency production
+profiles completed on 2026-09-30, with observed limitations retained.
+
+- [x] Pass three shipping-pin production metadata profiles in fresh Release
+  hosts with cache parity and unchanged media/sidecar/source/binary identities.
+- [x] Retain the FX6 MXF's transient 368.516 MiB lifetime-peak increase and an
+  independent KLV/header-page diagnostic; do not infer bounded long-file memory.
+- [x] Pass two authentic AAC 90-second production meter rows using the current
+  harness and incremental repair, without sleep or output initialization errors.
+- [x] Link all eight clean-built frameworks into a separate current Release app;
+  pass authentic AAC, FX6 mono ordinal 7 and sample-preserving ITU six-channel
+  30-second rows, then the matched FX6 mono ordinal 0 120-second repeat.
+- [x] Preserve the earlier incremental FX6 ordinal 0 near-EOF synchronization
+  failure. The successful clean-build repeat does not establish its cause.
+- [ ] Resolve/qualify intermittent FX6 synchronization and transient metadata
+  memory, then complete long-play, calibrated compressed-media, native/audible,
+  device-switch and release-floor acceptance with the shipping repair.
+
+These are actual production-path observations with explicit source and binary
+identities. The eight-track FX6 contains separate mono tracks; the ITU preparation
+retains PCM/order with an explicit 5.1 mask and uses a two-channel physical output.
+No surround-hardware, audible-output or shipping-repin claim is made.
+See [authentic live checks](docs/LIVE_AUDIO_METER_AUTHENTIC_NATIVE_CHECK_2026-09-30.md)
+and [camera metadata observations](docs/evidence/authentic-camera-metadata-memory-20260930/README.md).
+Committed metadata evidence: `c556e62`.
+
+## Phase 170 — Preserve Review corrections across fields and findings
+
+Status: Implemented and all 21 focused optimized Release checks pass on
+2026-09-30, without skips, failures or runtime warnings.
+
+- [x] Clear correction requests only when their selected field is edited,
+  preserving unrelated text/range errors and typed drafts.
+- [x] Share selected text-correction priority across every finding's range
+  blur/error/disclosure handlers while keeping actual focus requests note-scoped.
+- [x] Add two regressions for same-/different-finding editing and correction
+  priority, and raise candidate/release consumption to 731 aggregate tests.
+- [ ] Complete native keyboard, Full Keyboard Access and spoken VoiceOver checks.
+
+The native app binding hung and was cancelled without any interaction acceptance.
+See [source findings and native limitation](docs/evidence/review-field-correction-20260930/README.md).
+Committed implementation: `edd3566`.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with

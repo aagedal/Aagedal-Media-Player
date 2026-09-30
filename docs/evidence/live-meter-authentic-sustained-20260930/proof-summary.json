@@ -1,0 +1,60 @@
+{
+  "artifactRoot": "/private/tmp/aagedal-live-authentic-20260930",
+  "shippingMPVKitRevision": "230c3174f1515898f24599147ad61c2a277d0dc2",
+  "appBuildSourceHead": "36ae497ac4094c9490a80a42a670fd7f2399c605",
+  "appBuildHasConcurrentReviewOnlyEdits": true,
+  "tests": [
+    {
+      "name": "compressed-90s",
+      "passingSummary": true,
+      "completedRows": 2,
+      "diagnosticStarts": 4,
+      "nativeLoggingReceipts": 4,
+      "testCaseReceipts": [
+        "Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterPerformanceTests testRepresentativeProductionPathWhenRequested]' started.",
+        "Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterPerformanceTests testRepresentativeProductionPathWhenRequested]' passed (196.125 seconds)."
+      ],
+      "xcresultPath": "/private/tmp/aagedal-live-authentic-20260930/compressed-90s/LiveAudioMeterProfile.xcresult",
+      "attachments": "/private/tmp/aagedal-live-authentic-20260930/compressed-90s/attachments"
+    },
+    {
+      "name": "fx6-selected-120s",
+      "passingSummary": false,
+      "completedRows": 0,
+      "diagnosticStarts": 2,
+      "nativeLoggingReceipts": 2,
+      "testCaseReceipts": [
+        "Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterPerformanceTests testRepresentativeProductionPathWhenRequested]' started.",
+        "Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterPerformanceTests testRepresentativeProductionPathWhenRequested]' failed (122.755 seconds)."
+      ],
+      "xcresultPath": "/private/tmp/aagedal-live-authentic-20260930/fx6-selected-120s/LiveAudioMeterProfile.xcresult",
+      "attachments": "/private/tmp/aagedal-live-authentic-20260930/fx6-selected-120s/attachments"
+    },
+    {
+      "name": "fullbuild-authentic-30s",
+      "passingSummary": true,
+      "completedRows": 3,
+      "diagnosticStarts": 6,
+      "nativeLoggingReceipts": 6,
+      "testCaseReceipts": [
+        "Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterPerformanceTests testRepresentativeProductionPathWhenRequested]' started.",
+        "Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterPerformanceTests testRepresentativeProductionPathWhenRequested]' passed (114.634 seconds)."
+      ],
+      "xcresultPath": "/private/tmp/aagedal-live-authentic-20260930/fullbuild-authentic-30s/LiveAudioMeterProfile.xcresult",
+      "attachments": "/private/tmp/aagedal-live-authentic-20260930/fullbuild-authentic-30s/attachments"
+    },
+    {
+      "name": "fullbuild-fx6-120s",
+      "passingSummary": true,
+      "completedRows": 1,
+      "diagnosticStarts": 2,
+      "nativeLoggingReceipts": 2,
+      "testCaseReceipts": [
+        "Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterPerformanceTests testRepresentativeProductionPathWhenRequested]' started.",
+        "Test Case '-[Aagedal_Media_Player_Tests.LiveAudioMeterPerformanceTests testRepresentativeProductionPathWhenRequested]' passed (128.388 seconds)."
+      ],
+      "xcresultPath": "/private/tmp/aagedal-live-authentic-20260930/fullbuild-fx6-120s/LiveAudioMeterProfile.xcresult",
+      "attachments": "/private/tmp/aagedal-live-authentic-20260930/fullbuild-fx6-120s/attachments"
+    }
+  ]
+}

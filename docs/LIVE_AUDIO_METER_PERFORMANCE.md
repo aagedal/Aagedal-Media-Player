@@ -42,6 +42,15 @@ rejected evidence removes any stale summary. Earlier passing source-meter rows
 with logged output failures remain historical plumbing evidence and fail this
 stronger output regression requirement. A clean log still does not prove sound.
 
+The [authentic native observations](LIVE_AUDIO_METER_AUTHENTIC_NATIVE_CHECK_2026-09-30.md)
+retain two 90-second producer-original AAC rows on an isolated incremental
+CoreAudio repair, plus full-built MPV/FFmpeg candidate observations covering
+explicit Sony FX6 mono-track selections, a sample-preserving ITU 5.1 preparation
+and a matched 120-second FX6 repeat. A prior incremental FX6 near-EOF
+synchronization failure remains retained and unexplained. These are local
+candidate observations; the shipping package pin and remaining acceptance
+requirements below are unchanged.
+
 The artifact directory must not exist. Each input must have at least 20 seconds
 of audio, and at least ten seconds more than the selected observation interval,
 in a format currently supported by the live meter: one through eight channels

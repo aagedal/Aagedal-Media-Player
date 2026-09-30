@@ -218,3 +218,9 @@ trees after build. See [complete build provenance and exact limitations](evidenc
 This closes the local full-object build step, not remote artifact publication,
 shipping repin or playback/output acceptance for the new artifact. Existing
 incremental candidate playback evidence remains tied to its original hashes.
+
+The [subsequent authentic profiles](LIVE_AUDIO_METER_AUTHENTIC_NATIVE_CHECK_2026-09-30.md)
+link all eight clean-built frameworks and pass AAC, selected FX6 mono tracks and
+a qualified ITU six-channel preparation. A matched FX6 120-second run passes,
+while an earlier incremental-candidate near-EOF synchronization failure remains
+unexplained. These local checks do not change the shipping package pin.

@@ -1,0 +1,148 @@
+[
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/GoPro/DolomitesSet1-Hero9-GX019609.MP4",
+    "sha256": "e8e87cd4fdc21085fb1df8c540ed4ed8a2687f615a8d1c77c69da41cb8f6b20d",
+    "bytes": 825867613,
+    "durationSeconds": 109.7096,
+    "audio": [
+      {
+        "index": 1,
+        "codec_name": "aac",
+        "codec_long_name": "AAC (Advanced Audio Coding)",
+        "codec_type": "audio",
+        "codec_tag_string": "mp4a",
+        "sample_rate": "48000",
+        "channels": 2,
+        "channel_layout": "stereo",
+        "duration": "109.653333",
+        "duration_ts": 5263360,
+        "time_base": "1/48000"
+      }
+    ]
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/GoPro/Sunset Comparison/NightSet1-Action4-DJI_20230905195641_0033_D.MP4",
+    "sha256": "9bde57a41e90bc1fb4cd0aab7e0865f4786f939044d884424d9f10c2b4f20f00",
+    "bytes": 1263320832,
+    "durationSeconds": 109.653333,
+    "audio": [
+      {
+        "index": 1,
+        "codec_name": "aac",
+        "codec_long_name": "AAC (Advanced Audio Coding)",
+        "codec_type": "audio",
+        "codec_tag_string": "mp4a",
+        "sample_rate": "48000",
+        "channels": 2,
+        "channel_layout": "stereo",
+        "duration": "109.653333",
+        "duration_ts": 5263360,
+        "time_base": "1/48000"
+      }
+    ]
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/A1_v_FX6/FX6/OJ_FX6A0021.MXF",
+    "sha256": "5d1c636920c80e7ce83af6486a8de9184c5cacee8a316e799dbb52e8f02174a8",
+    "bytes": 8643449904,
+    "durationSeconds": 139.84,
+    "audio": [
+      {
+        "index": 1,
+        "codec_name": "pcm_s24le",
+        "codec_long_name": "PCM signed 24-bit little-endian",
+        "codec_type": "audio",
+        "codec_tag_string": "[0][0][0][0]",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "139.840000",
+        "duration_ts": 6712320,
+        "time_base": "1/48000"
+      },
+      {
+        "index": 2,
+        "codec_name": "pcm_s24le",
+        "codec_long_name": "PCM signed 24-bit little-endian",
+        "codec_type": "audio",
+        "codec_tag_string": "[0][0][0][0]",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "139.840000",
+        "duration_ts": 6712320,
+        "time_base": "1/48000"
+      },
+      {
+        "index": 3,
+        "codec_name": "pcm_s24le",
+        "codec_long_name": "PCM signed 24-bit little-endian",
+        "codec_type": "audio",
+        "codec_tag_string": "[0][0][0][0]",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "139.840000",
+        "duration_ts": 6712320,
+        "time_base": "1/48000"
+      },
+      {
+        "index": 4,
+        "codec_name": "pcm_s24le",
+        "codec_long_name": "PCM signed 24-bit little-endian",
+        "codec_type": "audio",
+        "codec_tag_string": "[0][0][0][0]",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "139.840000",
+        "duration_ts": 6712320,
+        "time_base": "1/48000"
+      },
+      {
+        "index": 5,
+        "codec_name": "pcm_s24le",
+        "codec_long_name": "PCM signed 24-bit little-endian",
+        "codec_type": "audio",
+        "codec_tag_string": "[0][0][0][0]",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "139.840000",
+        "duration_ts": 6712320,
+        "time_base": "1/48000"
+      },
+      {
+        "index": 6,
+        "codec_name": "pcm_s24le",
+        "codec_long_name": "PCM signed 24-bit little-endian",
+        "codec_type": "audio",
+        "codec_tag_string": "[0][0][0][0]",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "139.840000",
+        "duration_ts": 6712320,
+        "time_base": "1/48000"
+      },
+      {
+        "index": 7,
+        "codec_name": "pcm_s24le",
+        "codec_long_name": "PCM signed 24-bit little-endian",
+        "codec_type": "audio",
+        "codec_tag_string": "[0][0][0][0]",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "139.840000",
+        "duration_ts": 6712320,
+        "time_base": "1/48000"
+      },
+      {
+        "index": 8,
+        "codec_name": "pcm_s24le",
+        "codec_long_name": "PCM signed 24-bit little-endian",
+        "codec_type": "audio",
+        "codec_tag_string": "[0][0][0][0]",
+        "sample_rate": "48000",
+        "channels": 1,
+        "duration": "139.840000",
+        "duration_ts": 6712320,
+        "time_base": "1/48000"
+      }
+    ]
+  }
+]

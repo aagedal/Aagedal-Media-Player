@@ -114,6 +114,31 @@ workflow/media/performance gates remain open. See [current candidate evidence](e
 
 ## Must close before a defensible 2.0 candidate
 
+The latest parallel continuation produces a complete isolated macOS mpv/FFmpeg
+build for both architectures, with immutable local source/recipe commits and
+verified universal artifacts. A separately linked current Release app passes
+producer-original AAC and selected FX6 mono tracks, plus a sample-preserving
+ITU six-channel preparation. The matched FX6 120-second repeat passes; an
+incremental candidate's earlier near-EOF synchronization failure remains
+unexplained. Local artifact publication/package repin, audible/device/surround
+and hardware acceptance remain open. See [clean build](evidence/live-meter-native-output-20260930/clean-rebuild/README.md)
+and [authentic native checks](LIVE_AUDIO_METER_AUTHENTIC_NATIVE_CHECK_2026-09-30.md).
+
+Three authentic camera metadata profiles pass cache parity, but expose a
+transient 368.516 MiB peak increase on the original 8.64 GB FX6 MXF. A complete
+mapped KLV header/peek scan is consistent with that cost; bounded file-backed
+reading and long-duration scaling need investigation. These observations do
+not replace the resolved top-level MP4 payload-copy fix. See
+[camera memory evidence](evidence/authentic-camera-metadata-memory-20260930/README.md).
+
+The JXL contradiction now has a [tested upstream correction proposal](evidence/jxl-contract-proposal-20260930/README.md),
+with three Release checks against unchanged library sources and the original
+fixture. Upstream reconciliation and the historical XMP remain open. Review
+now preserves correction requests across unrelated fields and findings; native
+app binding again hung, so no new keyboard or spoken accessibility acceptance
+is inferred. The expanded candidate floor is 731 aggregate tests plus both
+isolated transport directions; fresh integrated verification follows.
+
 The sustained-acceptance continuation passes canonical verification at clean
 commit `601bbb859c436037388c3d3c080cb0132b7e357d`: 721 optimized Release passes,
 eight documented optional skips (729 total), both isolated transport directions,

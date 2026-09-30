@@ -1,0 +1,183 @@
+diff --git a/Aagedal Media Player Tests/CompareReviewTextCommitTests.swift b/Aagedal Media Player Tests/CompareReviewTextCommitTests.swift
+index 184b8b2..f0c7195 100644
+--- a/Aagedal Media Player Tests/CompareReviewTextCommitTests.swift	
++++ b/Aagedal Media Player Tests/CompareReviewTextCommitTests.swift	
+@@ -6,6 +6,69 @@ import XCTest
+ @testable import Aagedal_Media_Player
+ 
+ final class CompareReviewTextCommitTests: XCTestCase {
++    @MainActor
++    func testEditingRangePreservesTextCorrectionAndItsFocusPriority() {
++        let noteID = UUID()
++        let anotherNoteID = UUID()
++        var drafts = CompareReviewDraftState()
++        drafts.noteDrafts[noteID] = "  "
++        drafts.blockAction(noteID: noteID, field: .text,
++            error: "Enter note text", notice: "Correct this note")
++        let correction = drafts.correctionRequest
++
++        // A range in another row must see the same preflight priority even
++        // though only the text row receives the actual focus request.
++        drafts.updateRangeEndDraft("invalid other end", noteID: anotherNoteID)
++        XCTAssertEqual(drafts.correctionRequest, correction)
++        XCTAssertFalse(CompareReviewRangeFocusLossPolicy.shouldCommit(
++            draft: drafts.rangeDrafts[anotherNoteID]!, savedEndFrame: 10,
++            correctionField: drafts.correctionRequest?.field))
++
++        // The real range binding also receives saved-endpoint changes from
++        // Clear range. Neither input path corrects the empty note text.
++        for range in ["invalid end", "20", ""] {
++            drafts.updateRangeEndDraft(range, noteID: noteID)
++            XCTAssertEqual(drafts.rangeDrafts[noteID], range)
++            XCTAssertEqual(drafts.correctionRequest, correction)
++            XCTAssertEqual(drafts.rangeActionNotice, "Correct this note")
++            XCTAssertEqual(drafts.noteActionErrors[noteID], "Enter note text")
++            XCTAssertFalse(CompareReviewRangeFocusLossPolicy.shouldCommit(
++                draft: range, savedEndFrame: 10,
++                correctionField: drafts.correctionRequest?.field))
++        }
++
++        drafts.updateNoteTextDraft("Corrected finding", noteID: noteID)
++        XCTAssertNil(drafts.correctionRequest)
++        XCTAssertNil(drafts.rangeActionNotice)
++        XCTAssertNil(drafts.noteActionErrors[noteID])
++        XCTAssertEqual(drafts.noteDrafts[noteID], "Corrected finding")
++    }
++
++    @MainActor
++    func testEditingTextPreservesRangeCorrectionUntilRangeIsEdited() {
++        let noteID = UUID()
++        let anotherNoteID = UUID()
++        var drafts = CompareReviewDraftState()
++        drafts.rangeDrafts[noteID] = "invalid end"
++        drafts.noteActionErrors[noteID] = "Earlier text error"
++        drafts.blockAction(noteID: noteID, field: .rangeEnd,
++            error: "Enter a whole-number end frame", notice: "Correct this range")
++        let correction = drafts.correctionRequest
++
++        drafts.updateNoteTextDraft("Corrected finding", noteID: noteID)
++        drafts.updateRangeEndDraft("30", noteID: anotherNoteID)
++        XCTAssertEqual(drafts.correctionRequest, correction)
++        XCTAssertEqual(drafts.rangeActionNotice, "Correct this range")
++        XCTAssertEqual(drafts.rangeActionErrors[noteID], "Enter a whole-number end frame")
++        XCTAssertEqual(drafts.rangeDrafts[noteID], "invalid end")
++        XCTAssertNil(drafts.noteActionErrors[noteID])
++
++        drafts.updateRangeEndDraft("20", noteID: noteID)
++        XCTAssertNil(drafts.correctionRequest)
++        XCTAssertNil(drafts.rangeActionNotice)
++        XCTAssertEqual(drafts.rangeDrafts[noteID], "20")
++    }
++
+     @MainActor
+     func testTextCorrectionDoesNotCommitOrRefocusAnUnrelatedRangeDraft() {
+         let noteID = UUID()
+diff --git a/Aagedal Media Player/UI/CompareReviewView.swift b/Aagedal Media Player/UI/CompareReviewView.swift
+index c75df21..685fe34 100644
+--- a/Aagedal Media Player/UI/CompareReviewView.swift	
++++ b/Aagedal Media Player/UI/CompareReviewView.swift	
+@@ -59,6 +59,23 @@ struct CompareReviewDraftState {
+         correctionRequest = nil
+     }
+ 
++    /// Editing one field must not dismiss the correction selected for another.
++    /// That request also arbitrates focus-loss validation during the handoff.
++    mutating func updateNoteTextDraft(_ text: String, noteID: UUID) {
++        noteDrafts[noteID] = text
++        noteActionErrors[noteID] = nil
++        if correctionRequest?.noteID == noteID, correctionRequest?.field == .text {
++            clearActionNotice()
++        }
++    }
++
++    mutating func updateRangeEndDraft(_ text: String, noteID: UUID) {
++        rangeDrafts[noteID] = text
++        if correctionRequest?.noteID == noteID, correctionRequest?.field == .rangeEnd {
++            clearActionNotice()
++        }
++    }
++
+     mutating func finishNoteTextCommit(noteID: UUID) {
+         noteDrafts[noteID] = nil
+         noteActionErrors[noteID] = nil
+@@ -452,15 +469,12 @@ struct CompareReviewView: View {
+             position: position,
+             count: count,
+             correctionRequest: drafts.correctionRequest.flatMap { $0.noteID == note.id ? $0 : nil },
++            activeCorrectionField: drafts.correctionRequest?.field,
+             draft: Binding(
+                 get: { drafts.noteDrafts[note.id] ?? note.text },
+                 set: {
+                     if !compareSession.isReviewActionPending {
+-                        drafts.noteDrafts[note.id] = $0
+-                        drafts.noteActionErrors[note.id] = nil
+-                        if drafts.rangeActionNoticeNoteID == note.id {
+-                            drafts.clearActionNotice()
+-                        }
++                        drafts.updateNoteTextDraft($0, noteID: note.id)
+                     }
+                 }
+             ),
+@@ -472,10 +486,7 @@ struct CompareReviewView: View {
+                 get: { drafts.rangeDrafts[note.id] ?? note.primaryEndFrame.map(String.init) ?? "" },
+                 set: {
+                     if !compareSession.isReviewActionPending {
+-                        drafts.rangeDrafts[note.id] = $0
+-                        if drafts.rangeActionNoticeNoteID == note.id {
+-                            drafts.clearActionNotice()
+-                        }
++                        drafts.updateRangeEndDraft($0, noteID: note.id)
+                     }
+                 }
+             ),
+@@ -787,6 +798,7 @@ private struct CompareReviewNoteRow: View {
+     let position: Int
+     let count: Int
+     let correctionRequest: CompareReviewCorrectionRequest?
++    let activeCorrectionField: CompareReviewCorrectionRequest.Field?
+     let timecodeLabel: String
+     let canEdit: Bool
+     let onSeek: () -> Void
+@@ -813,6 +825,7 @@ private struct CompareReviewNoteRow: View {
+         position: Int,
+         count: Int,
+         correctionRequest: CompareReviewCorrectionRequest?,
++        activeCorrectionField: CompareReviewCorrectionRequest.Field?,
+         draft: Binding<String>,
+         noteActionError: Binding<String?>,
+         endFrameDraft: Binding<String>,
+@@ -832,6 +845,7 @@ private struct CompareReviewNoteRow: View {
+         self.position = position
+         self.count = count
+         self.correctionRequest = correctionRequest
++        self.activeCorrectionField = activeCorrectionField
+         self.timecodeLabel = timecodeLabel
+         self.canEdit = canEdit
+         self.onSeek = onSeek
+@@ -955,7 +969,7 @@ private struct CompareReviewNoteRow: View {
+             endFrameDraft = end.map(String.init) ?? ""
+         }
+         .onChange(of: rangeActionError) { _, error in
+-            if error != nil && correctionRequest?.field != .text {
++            if error != nil && activeCorrectionField != .text {
+                 if isRangeExpanded { isEndFrameFocused = true }
+                 else { isRangeExpanded = true }
+             }
+@@ -972,7 +986,7 @@ private struct CompareReviewNoteRow: View {
+             else if rangeActionError != nil { isRangeExpanded = true }
+         }
+         .onChange(of: isRangeExpanded) { _, expanded in
+-            if expanded && rangeActionError != nil && correctionRequest?.field != .text {
++            if expanded && rangeActionError != nil && activeCorrectionField != .text {
+                 isEndFrameFocused = true
+             }
+         }
+@@ -1020,7 +1034,7 @@ private struct CompareReviewNoteRow: View {
+                     // Keep an empty draft for the explicit Clear range action.
+                     if CompareReviewRangeFocusLossPolicy.shouldCommit(
+                         draft: endFrameDraft, savedEndFrame: note.primaryEndFrame,
+-                        correctionField: correctionRequest?.field
++                        correctionField: activeCorrectionField
+                     ) { applyRange() }
+                 }
+                 .onChange(of: endFrameDraft) { _, _ in

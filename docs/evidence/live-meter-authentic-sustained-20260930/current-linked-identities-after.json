@@ -1,0 +1,26 @@
+{
+  "inputsUnchanged": true,
+  "identities": {
+    "/private/tmp/aagedal-live-authentic-current-dd-20260930/Build/Products/Release/Aagedal Media Player.app/Contents/MacOS/Aagedal Media Player": "b6857df558cd09c8c2448979bf9108f5d3c9e2981f0ec89981e1fbd9253b05d4",
+    "/private/tmp/aagedal-live-authentic-20260930/current-repaired-candidate/Aagedal Media Player.app/Contents/MacOS/Aagedal Media Player": "4763ecd1ec5b87c6d86c62366f10c16811354636b9ab34948b9f29401ae98a0f",
+    "/private/tmp/aagedal-live-authentic-20260930/current-repaired-candidate/Aagedal Media Player.app/Contents/PlugIns/Aagedal Media Player Tests.xctest/Contents/MacOS/Aagedal Media Player Tests": "061e8a7c04a79583ab661c0c7398f8e8507978078e540bb073629c14df5ae761",
+    "/private/tmp/aagedal-live-authentic-current-dd-20260930/Build/Products/Aagedal Media Player_Aagedal Media Player_macosx27.0-arm64.xctestrun": "67c1d1f47443f724e6fa8228e4807581dd61b39016b0b2c71c7e0aea019caad7",
+    "/private/tmp/aagedal-live-authentic-20260930/current-original-link-command.json": "98e095c28e8aa9511ee9790b8b03b866092470a25c9787d2659887287927b660",
+    "/private/tmp/aagedal-live-authentic-20260930/current-repaired-candidate/relink-command.json": "d1fc4b83e308baf119c186ba3bac220b9326b3f22af9830ed2ff9875a205aa13",
+    "/private/tmp/aagedal-live-authentic-20260930/current-repaired-candidate/link.map": "22cbd5a51fa216a55fd3c40988f3dac6d071aeb22c857edd0eb7210fb56b1fe5",
+    "/private/tmp/aagedal-coreaudio-rebuilt-final-20260930/Libmpv.framework/Versions/A/Libmpv": "9b658193cdb7c68eff68e641800de5b9315107cadb8f116f4231c984561e143f",
+    "/private/tmp/aagedal-live-authentic-20260930/fullbuild-repaired-candidate/Aagedal Media Player.app/Contents/MacOS/Aagedal Media Player": "6efe7fb0ab2e9c0251bb560a6de8a9a0cb12656eb0f95ff2bae68e5aaea84319",
+    "/private/tmp/aagedal-live-authentic-20260930/fullbuild-repaired-candidate/Aagedal Media Player.app/Contents/PlugIns/Aagedal Media Player Tests.xctest/Contents/MacOS/Aagedal Media Player Tests": "061e8a7c04a79583ab661c0c7398f8e8507978078e540bb073629c14df5ae761",
+    "/private/tmp/aagedal-live-authentic-20260930/fullbuild-authentic-30s/candidate.xctestrun": "3dc588167d7a9f219529a1a67814d705c8f0876183f0a0ffae88cae379e4732d",
+    "/private/tmp/aagedal-live-authentic-20260930/fullbuild-repaired-candidate/link.map": "777c089b89bb3724244d9a0e045b30937d050dd419048aa28e845a1ccf50ef20",
+    "/private/tmp/aagedal-live-authentic-20260930/fullbuild-repaired-candidate/relink-command.json": "37211ec3a12e0ebd6c61df986b24507da758532bdfb961dd56e2c50640245f8f",
+    "/private/tmp/aagedal-coreaudio-clean-build-v4-20260930/MPVKit/dist/libmpv/macos/Libmpv.framework/Libmpv": "5ebd682bfa0618694570f2f958d68ea143c4b4a1b1b98859a9374870ba4b2fc3",
+    "/private/tmp/aagedal-coreaudio-clean-build-v4-20260930/MPVKit/dist/FFmpeg/macos/Libswresample.framework/Libswresample": "d0f147d210b93b51eb5b3d87fb0bb1ff4ad276298c8b9cbfb71fe41c8a2da775",
+    "/private/tmp/aagedal-coreaudio-clean-build-v4-20260930/MPVKit/dist/FFmpeg/macos/Libavfilter.framework/Libavfilter": "7a90e5ff0311ecb4d86ff071f8639746bb39075868d31ac7b75af2f5942f6b32",
+    "/private/tmp/aagedal-coreaudio-clean-build-v4-20260930/MPVKit/dist/FFmpeg/macos/Libavformat.framework/Libavformat": "9e255a4d88aa0bc2ed4df8b8601e24158a921fcaadc9cad6f529ba82ab42a075",
+    "/private/tmp/aagedal-coreaudio-clean-build-v4-20260930/MPVKit/dist/FFmpeg/macos/Libavutil.framework/Libavutil": "cfadbe95e5b203ec30bacce06a8912ef09c5a4780ff5426e43d89ef11e7e40f9",
+    "/private/tmp/aagedal-coreaudio-clean-build-v4-20260930/MPVKit/dist/FFmpeg/macos/Libswscale.framework/Libswscale": "b4bf90ced172ca93bbd6dc8599a6d3b4c4855ce47e247aaa4e129fc9ba86e908",
+    "/private/tmp/aagedal-coreaudio-clean-build-v4-20260930/MPVKit/dist/FFmpeg/macos/Libavdevice.framework/Libavdevice": "86f09d4e176c81d559d901c5e3f9fba6a1c07fdc7c36dcbb023ebe0fffd0d9ba",
+    "/private/tmp/aagedal-coreaudio-clean-build-v4-20260930/MPVKit/dist/FFmpeg/macos/Libavcodec.framework/Libavcodec": "f1e4d912c789dc6ca544e45c23b80f4e7cf26a49070d8fa32917de4de3fd9e1c"
+  }
+}

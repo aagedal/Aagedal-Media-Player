@@ -42,6 +42,9 @@ The shipping-pin `build-for-testing` came from current development source at
 unchanged. [The environment](environment.json) retains exact identities and
 worktree status; no clean-release-source claim is made for this profiling app.
 The source build and live meter's copied repaired apps are separate artifacts.
+The original derived-data directory was reused for focused Review verification
+after profiling identity checks; its current app path does not promise the
+historical profiling binary recorded in the environment.
 
 The first temporary manifest used the wrong test-root location and did not run
 tests. A corrected sandboxed invocation could not access `testmanagerd`; the

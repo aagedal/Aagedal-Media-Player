@@ -1,0 +1,14 @@
+[
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/GoPro/DolomitesSet1-Hero9-GX019609.MP4",
+    "sha256": "e8e87cd4fdc21085fb1df8c540ed4ed8a2687f615a8d1c77c69da41cb8f6b20d",
+    "audioStreamOrderIndex": 0,
+    "audioTrackSelectionExplicit": true
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/GoPro/Sunset Comparison/NightSet1-Action4-DJI_20230905195641_0033_D.MP4",
+    "sha256": "9bde57a41e90bc1fb4cd0aab7e0865f4786f939044d884424d9f10c2b4f20f00",
+    "audioStreamOrderIndex": 0,
+    "audioTrackSelectionExplicit": true
+  }
+]

@@ -1,0 +1,6 @@
+{
+  "scripts/validate-live-audio-meter-profile.py": "d20bbcee2537aecb5b02160d2782744d19371df0296a8a358843dd470fb939e3",
+  "scripts/check-programme-profile-power.py": "f6b4ff5ec7791fdcd863f51a598c541ae04622dc75fb6cd57b66b376daa1a62f",
+  "scripts/live-audio-meter-profile-settings.py": "b92584b0bf951a2f117693e24b528134678aaa015e68cccf33993b384bbefb37",
+  "Aagedal Media Player Tests/LiveAudioMeterPerformanceTests.swift": "aee5f5408bf623dce370d8eb49a633857cc23bae9513f77a49c82d1148b3612e"
+}

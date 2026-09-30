@@ -11,6 +11,12 @@ candidate; the build itself supplies no actual production playback,
 audible-output, device-switch, surround, supported-macOS or release-floor
 acceptance. Follow-up app profiles must identify these exact new artifacts.
 
+The subsequent [authentic production profiles](../../live-meter-authentic-sustained-20260930/README.md)
+now identify and link all eight artifacts and pass AAC, selected FX6 mono tracks
+and a sample-preserving ITU six-channel preparation. Those local observations
+retain an earlier incremental-candidate synchronization failure separately.
+Shipping repin and the external output/hardware gates remain open.
+
 | Verified output | arm64 fresh objects | x86_64 fresh objects |
 | --- | ---: | ---: |
 | mpv | 221 | 220 |
@@ -123,6 +129,6 @@ expanded XCFramework directories when it packages the next library, which is
 why verification reads each final ZIP directly.
 
 Remote publication with a final checksum/immutable package revision, shipping
-repin, production app playback on these exact artifacts and the remaining
-hardware/output release checks are still open. Earlier passing incremental
-candidate profiles cannot be transferred to this new full artifact by inference.
+repin and the remaining hardware/output release checks are still open. The
+subsequent production profiles supply their own exact-artifact playback evidence;
+earlier incremental candidate profiles cannot transfer to it by inference.
