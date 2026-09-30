@@ -1,0 +1,8 @@
+{
+  "arguments": [
+    "/opt/homebrew/bin/ffprobe",
+    "-version"
+  ],
+  "exitCode": 0,
+  "stdoutSHA256": "77d70151c217e31ea81b22abeea5e5d09718d2a36c99691cc75bbf1aec705976"
+}

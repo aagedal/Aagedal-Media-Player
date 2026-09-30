@@ -128,6 +128,24 @@ aggregate tests plus both isolated mixed-backend checks. Native keyboard/spoken
 accessibility, public dependencies, hardware/soak/editor and distribution gates
 remain open.
 
+The next continuation defers Review focus and passive commits while editing is
+unavailable, restores the selected correction when editing resumes, and preserves
+complete source URLs and exact per-finding capture rates/frames in PDF reports.
+Three Review and two PDF regressions raise candidate consumption to 750 aggregate
+tests plus both isolated transport directions. All sixty focused optimized
+Release checks and script validators pass; all three PDF fixture pages are
+visually checked. See [focused evidence](evidence/review-pdf-availability-20260930/README.md).
+Final integrated verification follows separately. The offline dependency auditor passes 11,089 declared
+source files and twenty input ZIPs, with upstream provenance now bound to the
+receipt; public compilation/publication/repin remains open. See
+[reconstruction audit](evidence/coreaudio-reconstruction-audit-20260930/README.md).
+A separately qualified lossless DTS-HD MA extraction/remux preserves every coded
+packet and decoded PCM sample and passes a twenty-second six-channel production
+profile with exact EOF drainage. The new source clock does not qualify the
+original rejected timestamps; stereo native output does not establish audible
+surround/hardware acceptance. See
+[DTS preparation](evidence/live-meter-dts-lossless-preparation-20260930/README.md).
+
 The Review & Report implementation is substantially present: structured point
 and range findings, versioned local sidecars, relinking, deliberate historical
 timebase migration, save recovery, and CSV/PDF/editor-format export. That makes

@@ -1,0 +1,8 @@
+{
+  "arguments": [
+    "/opt/homebrew/bin/ffmpeg",
+    "-version"
+  ],
+  "exitCode": 0,
+  "stdoutSHA256": "78352a6983ade79cdaf6744ad453c2d9f86cbd2277086a6a1fa87036e4ba89c4"
+}

@@ -1,0 +1,17 @@
+{
+  "/private/tmp/aagedal-live-meter-gpl-metal-native-ready-20260930/candidate/Aagedal Media Player.app/Contents/MacOS/Aagedal Media Player": "e13dc023fa13590ab8331c7d3355ec7dc6b2f3e8ebfb1bfc1b291c6410140706",
+  "/private/tmp/aagedal-live-meter-gpl-metal-native-ready-20260930/candidate/Aagedal Media Player.app/Contents/PlugIns/Aagedal Media Player Tests.xctest/Contents/MacOS/Aagedal Media Player Tests": "17ef28a51cbffec676d24ae7dcbd92d990de385fe3924426a1196c9e082f5372",
+  "/private/tmp/aagedal-live-meter-gpl-metal-native-ready-20260930/authentic-5s/candidate.xctestrun": "11a3ddb3dc6a7dd162bf6c026a4b25b2dac518380362374c38c58afdf5869aa1",
+  "/private/tmp/aagedal-live-meter-gpl-metal-native-ready-20260930/candidate/link.map": "9a418fa40c4aaf7333642f676b17736d164128367f358ef8c1efd522a6ccaae2",
+  "/private/tmp/aagedal-live-meter-gpl-metal-native-ready-20260930/candidate/relink-command.json": "d44ffc3eaaae3d87787a0e7794f340bd4afb9c4806efe65e8f283a85dc1df3b9",
+  "/private/tmp/aagedal-coreaudio-gpl-metal-build-v2-20260930/receipt.json": "ca02e472cf08c650bb662e295665d82abf222d19342b4139f7a8c46f90c89e38",
+  "/private/tmp/aagedal-coreaudio-gpl-metal-build-v2-20260930/builder.py": "6ff54c5d91d62ce9c67058af1cabb315329ba822881f559e036b0d0f810d5f9b",
+  "/private/tmp/aagedal-coreaudio-gpl-metal-build-v2-20260930/MPVKit/dist/libmpv/macos/Libmpv.framework/Libmpv": "cd1b06c7bfb965e1259ffb24fb3d4f99890fed759d08a713a0b1fea5df2e3a06",
+  "/private/tmp/aagedal-coreaudio-gpl-metal-build-v2-20260930/MPVKit/dist/FFmpeg/macos/Libswresample.framework/Libswresample": "6c999490ea8b8bb920f7108fbc2877bde79a6637a149579c577825ca7dac319c",
+  "/private/tmp/aagedal-coreaudio-gpl-metal-build-v2-20260930/MPVKit/dist/FFmpeg/macos/Libavfilter.framework/Libavfilter": "385516a89cfc0ad19ffe877a864c125f3e23fcfe8f9dfb1cb8be85556593b10c",
+  "/private/tmp/aagedal-coreaudio-gpl-metal-build-v2-20260930/MPVKit/dist/FFmpeg/macos/Libavformat.framework/Libavformat": "13bc9ca8e1ee5c65a1d548e2a648f91010fac3ce2544f861b0003651f2b6678a",
+  "/private/tmp/aagedal-coreaudio-gpl-metal-build-v2-20260930/MPVKit/dist/FFmpeg/macos/Libavutil.framework/Libavutil": "0107e727f9b1c69985b4e19f8ce35891c9a29a74723eb0a194b5229dca63490e",
+  "/private/tmp/aagedal-coreaudio-gpl-metal-build-v2-20260930/MPVKit/dist/FFmpeg/macos/Libswscale.framework/Libswscale": "2070210940c9d9f29c8823d4a2b502dbfcbbe1a5c94cea7b6318b957590fa980",
+  "/private/tmp/aagedal-coreaudio-gpl-metal-build-v2-20260930/MPVKit/dist/FFmpeg/macos/Libavdevice.framework/Libavdevice": "05eaea6f889d63862cb213a1cc936954816a2bd6f4b5baca6cee8c1cac0a1e2b",
+  "/private/tmp/aagedal-coreaudio-gpl-metal-build-v2-20260930/MPVKit/dist/FFmpeg/macos/Libavcodec.framework/Libavcodec": "36a5dca544195300054b034609067f4d99289b316049a352a921637c712ae962"
+}

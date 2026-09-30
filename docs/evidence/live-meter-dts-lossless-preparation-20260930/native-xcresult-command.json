@@ -1,0 +1,12 @@
+{
+  "arguments": [
+    "/usr/bin/xcrun",
+    "xcresulttool",
+    "get",
+    "test-results",
+    "summary",
+    "--path",
+    "/private/tmp/aagedal-dts-lossless-native-20260930/LiveAudioMeterProfile.xcresult"
+  ],
+  "exitCode": 0
+}

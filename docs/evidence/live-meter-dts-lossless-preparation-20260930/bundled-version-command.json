@@ -1,0 +1,8 @@
+{
+  "arguments": [
+    "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player/Binaries/ffmpeg",
+    "-version"
+  ],
+  "exitCode": 0,
+  "stdoutSHA256": "06db15fe5dfa61d9b6214bc6808b0644b91068008861ffed0f4b5ef681e0ee2c"
+}

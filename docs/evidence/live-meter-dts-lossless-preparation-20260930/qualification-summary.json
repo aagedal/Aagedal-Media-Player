@@ -1,0 +1,68 @@
+{
+  "source": {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/Interstellar_2014_copy.mkv",
+    "sha256": "d52b99beb349bbcbecd2c44bdd02cda4fbf1b2604503c73d4d03665d31d09003"
+  },
+  "elementary": {
+    "path": "/private/tmp/aagedal-dts-lossless-qualification-20260930/source-copy.dtshd",
+    "sha256": "d5ca2d579b7a545a67367d8d5810dc3d2375c4f3748d01be1d53926bd157a02f",
+    "bytes": 17905620
+  },
+  "prepared": {
+    "path": "/private/tmp/aagedal-dts-lossless-qualification-20260930/source-copy.mka",
+    "sha256": "c376070de2c98a411c576fe22eabde94da6101ecddd723fc9922805f6b8ef11e",
+    "bytes": 17926048
+  },
+  "packetCount": 2813,
+  "sourceFrameCount": 1440256,
+  "sampleRate": 48000,
+  "sourceChannels": 6,
+  "channelLayout": "5.1(side)",
+  "profile": "DTS-HD MA",
+  "codedPacketSequenceSHA256": "7c89e717ef8b6c449cdb713a1e663fb989e41bc2c3ec072a9e11be79843c646b",
+  "decodedPCM": {
+    "bundled-original-pcm": {
+      "pcmByteCount": 34566144,
+      "pcmSHA256": "38ce7dc7cff6ec1d33c7bf74804f8abaa3c25507ba4a4c6fe030fcea7081b9c5"
+    },
+    "bundled-elementary-pcm": {
+      "pcmByteCount": 34566144,
+      "pcmSHA256": "38ce7dc7cff6ec1d33c7bf74804f8abaa3c25507ba4a4c6fe030fcea7081b9c5"
+    },
+    "bundled-prepared-pcm": {
+      "pcmByteCount": 34566144,
+      "pcmSHA256": "38ce7dc7cff6ec1d33c7bf74804f8abaa3c25507ba4a4c6fe030fcea7081b9c5"
+    },
+    "independent-original-pcm": {
+      "pcmByteCount": 34566144,
+      "pcmSHA256": "38ce7dc7cff6ec1d33c7bf74804f8abaa3c25507ba4a4c6fe030fcea7081b9c5"
+    },
+    "independent-elementary-pcm": {
+      "pcmByteCount": 34566144,
+      "pcmSHA256": "38ce7dc7cff6ec1d33c7bf74804f8abaa3c25507ba4a4c6fe030fcea7081b9c5"
+    },
+    "independent-prepared-pcm": {
+      "pcmByteCount": 34566144,
+      "pcmSHA256": "38ce7dc7cff6ec1d33c7bf74804f8abaa3c25507ba4a4c6fe030fcea7081b9c5"
+    }
+  },
+  "allSixPCMDecodesMatch": true,
+  "preparedProductionFilterInitialPTS": 0,
+  "preparedProductionFilterMaximumAbsoluteTimestampDeviationFrames": 0,
+  "scope": "New source clock from lossless elementary stream preparation; original container timestamps remain rejected.",
+  "originalPrefixElementaryAndPreparedCodedPacketsMatch": true,
+  "toolIdentities": {
+    "bundledFFmpeg": {
+      "path": "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player/Binaries/ffmpeg",
+      "sha256": "dc3770d91735cfe8b0ef8f4eb7c6f8431d722cca0d79c0959d62be216868d604"
+    },
+    "independentFFmpeg": {
+      "path": "/opt/homebrew/bin/ffmpeg",
+      "sha256": "c8173e9755795978bce8e104f8d7044fabe7d6d84044aba37d3648c6f4e4e1a8"
+    },
+    "independentFFprobe": {
+      "path": "/opt/homebrew/bin/ffprobe",
+      "sha256": "56559c234422b0e3722c54b2bd99bbd8cd83d3732a13a6d207589982a6b7085e"
+    }
+  }
+}

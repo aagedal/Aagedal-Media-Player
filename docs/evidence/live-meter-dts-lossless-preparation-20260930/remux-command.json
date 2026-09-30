@@ -1,0 +1,21 @@
+{
+  "arguments": [
+    "/opt/homebrew/bin/ffmpeg",
+    "-hide_banner",
+    "-nostdin",
+    "-v",
+    "error",
+    "-f",
+    "dts",
+    "-i",
+    "/private/tmp/aagedal-dts-lossless-qualification-20260930/source-copy.dtshd",
+    "-map",
+    "0:a:0",
+    "-c:a",
+    "copy",
+    "-y",
+    "/private/tmp/aagedal-dts-lossless-qualification-20260930/source-copy.mka"
+  ],
+  "exitCode": 0,
+  "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

@@ -5,6 +5,9 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Changed
+- Review defers correction focus and passive draft commits while editing is unavailable, then restores the selected field when editing resumes.
+- PDF review reports preserve full source URLs and each finding’s stored rational frame coordinates, with pagination for long paths.
+- GPL dependency publication validation binds upstream source origins/revisions, and reconstructed workspaces can be independently audited against the pinned payload.
 - Ordinary Review field validation owns correction focus, preventing unrelated text or range callbacks from displacing the selected field.
 - Programme loudness profiles stay awake and retain partial results and power diagnostics on failed or sleep-interrupted measurements.
 - Repeated metadata profile validation clears stale passing receipts for malformed arguments and rejects lifetime peaks below observed resident-memory samples.
@@ -29,7 +32,7 @@ All notable changes to Aagedal Media Player.
 - Candidate verification temporarily keeps the Mac awake, rejects sleep-interrupted evidence, and bounds each isolated transport test to 120 seconds.
 - AVFoundation loupe capture follows the enabled video track and clears stale raster proof after track or composition changes; composed and ambiguous output remains a display preview.
 - Live-meter profile validation rejects mismatched sample-rate timestamp provenance and impossible snapshot timing.
-- Candidate verification and release consumption now require at least 745 aggregate tests, alongside both isolated mixed-backend transport checks.
+- Candidate verification and release consumption now require at least 750 aggregate tests, alongside both isolated mixed-backend transport checks.
 - Review keeps an edited note draft when its update is rejected, and report actions stop with visible feedback if pending edits cannot be applied.
 - Review drafts now survive a playback or comparison geometry reload of the same sources; replacing a source or changing the active notes copy still clears them.
 - Review keeps new-note, edited-text, and range drafts when its popover closes; a later keyboard export reopens Review to validate unfinished edits and asks for an unsubmitted new note to be added or cleared.
@@ -45,6 +48,7 @@ All notable changes to Aagedal Media Player.
 - Metadata container-edge validation checks the independent error behavior of frame, gyroscope, and accelerometer RTMD readers against both the 3.0.0 baseline and integrated 3.0.1 dependency.
 
 ### Added
+- Independently qualified lossless DTS-HD MA preparation and a passing six-channel production live-meter observation, with original-container timing limitations retained.
 - Clean eight-hour production split-mono programme profiling, with consistent whole-file and early/late Stereo and 5.1 measurements and retained memory/power evidence.
 - Offline reconstruction of verified GPL dependency source commits and exact cached inputs, with explicit environment and compilation prerequisites.
 - DTS timestamp qualification with retained source/decoder evidence and contiguous six-channel DTS regression coverage.

@@ -1,0 +1,8 @@
+{
+  "arguments": [
+    "/opt/homebrew/bin/python3",
+    "docs/evidence/live-meter-dts-lossless-preparation-20260930/finish-native-profile.py"
+  ],
+  "workingDirectory": "/Users/truls.aagedal/Developer/Aagedal-Media-Player",
+  "exitCode": 0
+}

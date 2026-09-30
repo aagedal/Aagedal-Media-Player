@@ -1,0 +1,103 @@
+{
+  "Aagedal Media Player/UI/LiveAudioMeterWindowController.swift": {
+    "retainedBuildSHA256": "86ba1edeb615676452cfdc4eb4440ab511b2e448783420df7ffa7e20c3a1afd8",
+    "currentSHA256": "86ba1edeb615676452cfdc4eb4440ab511b2e448783420df7ffa7e20c3a1afd8",
+    "exactMatch": true
+  },
+  "Aagedal Media Player/UI/LiveAudioMeterView.swift": {
+    "retainedBuildSHA256": "55e0e2b094eb64bf529c11e911d6ad12a4389951bee63ded32bd4ef6242fb7c5",
+    "currentSHA256": "55e0e2b094eb64bf529c11e911d6ad12a4389951bee63ded32bd4ef6242fb7c5",
+    "exactMatch": true
+  },
+  "Aagedal Media Player/Logic/LiveAudioMeterPlaybackSource.swift": {
+    "retainedBuildSHA256": "d073397871ed112b988a18c33cccee5cf5fdff6e5817992bea88e9332eec2a36",
+    "currentSHA256": "d073397871ed112b988a18c33cccee5cf5fdff6e5817992bea88e9332eec2a36",
+    "exactMatch": true
+  },
+  "Aagedal Media Player/Logic/LiveAudioMeterDecoder.swift": {
+    "retainedBuildSHA256": "4472e6cb586bbc09448f666cc8aa4ce78ba0c215115ae713d006eb2c804cfc87",
+    "currentSHA256": "ea00815eeb2eafbcf4965ac29ce63be8204d8d0a739fdefbf530b0b0eee55fee",
+    "exactMatch": false,
+    "onlyFullLineCommentChanges": true
+  },
+  "Aagedal Media Player/Logic/LiveAudioMeterSession.swift": {
+    "retainedBuildSHA256": "3d94d17bbbeea0f7236bfb7c29c15f146ab471aa09ff951d4563fba9055336b5",
+    "currentSHA256": "3d94d17bbbeea0f7236bfb7c29c15f146ab471aa09ff951d4563fba9055336b5",
+    "exactMatch": true
+  },
+  "Aagedal Media Player/Logic/LiveAudioMeterDSP.swift": {
+    "retainedBuildSHA256": "00926b5ad9346077376408a6c00afd006d03c0704fea8ebf6d92f3c644df5ecf",
+    "currentSHA256": "00926b5ad9346077376408a6c00afd006d03c0704fea8ebf6d92f3c644df5ecf",
+    "exactMatch": true
+  },
+  "Aagedal Media Player/Logic/LiveAudioMeterPresentation.swift": {
+    "retainedBuildSHA256": "6ec03b82589d5740722d28b5596245fb203602e893a35fd93c3ab0ceca986689",
+    "currentSHA256": "6ec03b82589d5740722d28b5596245fb203602e893a35fd93c3ab0ceca986689",
+    "exactMatch": true
+  },
+  "Aagedal Media Player/Logic/LiveAudioMeterCoordinator.swift": {
+    "retainedBuildSHA256": "1e4f45cc694d26a53794a8fee55ad6f0f6f982faad779b0aee34ad42be70c74d",
+    "currentSHA256": "1e4f45cc694d26a53794a8fee55ad6f0f6f982faad779b0aee34ad42be70c74d",
+    "exactMatch": true
+  },
+  "Aagedal Media Player/Logic/LiveAudioMeterTransport.swift": {
+    "retainedBuildSHA256": "0e8b3cd23972d81529062c4881be4f48e3d12de14b362a4455b7affaf9eb4518",
+    "currentSHA256": "0e8b3cd23972d81529062c4881be4f48e3d12de14b362a4455b7affaf9eb4518",
+    "exactMatch": true
+  },
+  "Aagedal Media Player/Logic/LiveAudioMeterDisplay.swift": {
+    "retainedBuildSHA256": "194c3ebbe22c3ff4bd31b856e5aa1ef0c918b1bdcc5becd19a37a44b8c30cc27",
+    "currentSHA256": "194c3ebbe22c3ff4bd31b856e5aa1ef0c918b1bdcc5becd19a37a44b8c30cc27",
+    "exactMatch": true
+  },
+  "Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift": {
+    "retainedBuildSHA256": "be8a7e5fc41ddfbb7102e573d00cb1f05cf62da02622969a9f0a7ea96651f486",
+    "currentSHA256": "be8a7e5fc41ddfbb7102e573d00cb1f05cf62da02622969a9f0a7ea96651f486",
+    "exactMatch": true
+  },
+  "Aagedal Media Player Tests/LiveAudioMeterDisplayTests.swift": {
+    "retainedBuildSHA256": "574a6bfd62c82d7324729cc60cc970be2ed893d21a13f0c2eee7395d05606304",
+    "currentSHA256": "574a6bfd62c82d7324729cc60cc970be2ed893d21a13f0c2eee7395d05606304",
+    "exactMatch": true
+  },
+  "Aagedal Media Player Tests/LiveAudioMeterPlaybackSourceTests.swift": {
+    "retainedBuildSHA256": "d9a8df4fb1f2c08ad98319ce65c2905b5cce96aa7a26e1095143fd369af9744a",
+    "currentSHA256": "d9a8df4fb1f2c08ad98319ce65c2905b5cce96aa7a26e1095143fd369af9744a",
+    "exactMatch": true
+  },
+  "Aagedal Media Player Tests/LiveAudioMeterDSPTests.swift": {
+    "retainedBuildSHA256": "6ec9cbda1de781aff21d1302810b7b74305602326a09164486a5bb4c04f0d116",
+    "currentSHA256": "6ec9cbda1de781aff21d1302810b7b74305602326a09164486a5bb4c04f0d116",
+    "exactMatch": true
+  },
+  "Aagedal Media Player Tests/LiveAudioMeterPresentationTests.swift": {
+    "retainedBuildSHA256": "f9b23ea3e9f725e971e98d11d74bd4a743df5806b8dc88e4f7824be4f2219c48",
+    "currentSHA256": "f9b23ea3e9f725e971e98d11d74bd4a743df5806b8dc88e4f7824be4f2219c48",
+    "exactMatch": true
+  },
+  "Aagedal Media Player Tests/LiveAudioMeterTransportTests.swift": {
+    "retainedBuildSHA256": "8ae2d08cc78d6ba45423a3fa04c4bcfd8306d32090e6ba09e9ab224bab4b7106",
+    "currentSHA256": "8ae2d08cc78d6ba45423a3fa04c4bcfd8306d32090e6ba09e9ab224bab4b7106",
+    "exactMatch": true
+  },
+  "Aagedal Media Player Tests/LiveAudioMeterSessionTests.swift": {
+    "retainedBuildSHA256": "95f17b97e036df3e6561f75eddaa94d9b415420a9576bc94f68dfdc2ad8c2cdf",
+    "currentSHA256": "95f17b97e036df3e6561f75eddaa94d9b415420a9576bc94f68dfdc2ad8c2cdf",
+    "exactMatch": true
+  },
+  "Aagedal Media Player Tests/LiveAudioMeterDecoderTests.swift": {
+    "retainedBuildSHA256": "8136c0d1b3a7d101a379ea5959478ff24edda32cfd43ff3d4124132d9bc0f92b",
+    "currentSHA256": "08de60a866e5c5d573d90c0c617a701eadc3149d3c323e8898419ed89e6787e0",
+    "exactMatch": false
+  },
+  "Aagedal Media Player Tests/LiveAudioMeterWindowControllerTests.swift": {
+    "retainedBuildSHA256": "a76bd47cccbc4da5c8020d7b5fc7b98babd0444653ecdd8496c413bb8e9f592b",
+    "currentSHA256": "a76bd47cccbc4da5c8020d7b5fc7b98babd0444653ecdd8496c413bb8e9f592b",
+    "exactMatch": true
+  },
+  "Aagedal Media Player Tests/LiveAudioMeterPerformanceTests.swift": {
+    "retainedBuildSHA256": "954e43ba4da9dff96e936f5ef255b0b6fc5ae91048efe55da7301d301e2843ab",
+    "currentSHA256": "954e43ba4da9dff96e936f5ef255b0b6fc5ae91048efe55da7301d301e2843ab",
+    "exactMatch": true
+  }
+}

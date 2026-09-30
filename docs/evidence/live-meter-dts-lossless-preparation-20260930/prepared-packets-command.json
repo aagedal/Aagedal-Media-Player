@@ -1,0 +1,18 @@
+{
+  "arguments": [
+    "/opt/homebrew/bin/ffprobe",
+    "-v",
+    "error",
+    "-select_streams",
+    "a:0",
+    "-show_packets",
+    "-show_streams",
+    "-show_data_hash",
+    "sha256",
+    "-of",
+    "json",
+    "/private/tmp/aagedal-dts-lossless-qualification-20260930/source-copy.mka"
+  ],
+  "exitCode": 0,
+  "stdoutSHA256": "43f2a16d2c07cf635368e0f68ae6faf309b3e2be016f8e085fd07d6075bc20a9"
+}

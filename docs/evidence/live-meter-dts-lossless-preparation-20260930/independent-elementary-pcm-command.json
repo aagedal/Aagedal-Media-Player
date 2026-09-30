@@ -1,0 +1,27 @@
+{
+  "arguments": [
+    "/opt/homebrew/bin/ffmpeg",
+    "-hide_banner",
+    "-nostdin",
+    "-v",
+    "error",
+    "-drc_scale",
+    "0",
+    "-target_level",
+    "0",
+    "-i",
+    "/private/tmp/aagedal-dts-lossless-qualification-20260930/source-copy.dtshd",
+    "-map",
+    "0:a:0",
+    "-frames:a",
+    "2813",
+    "-c:a",
+    "pcm_f32le",
+    "-f",
+    "f32le",
+    "pipe:1"
+  ],
+  "exitCode": 0,
+  "pcmByteCount": 34566144,
+  "pcmSHA256": "38ce7dc7cff6ec1d33c7bf74804f8abaa3c25507ba4a4c6fe030fcea7081b9c5"
+}

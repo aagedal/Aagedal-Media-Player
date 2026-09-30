@@ -1,0 +1,11 @@
+{
+  "candidateBuildSourceHEAD": "060f611f7ba1d669a1af7b7846cdf1812f53b531",
+  "candidateBuildDirtyInputs": "/Users/truls.aagedal/Developer/Aagedal-Media-Player/docs/evidence/live-meter-gpl-metal-native-20260930/source.diff",
+  "currentRunContextHEAD": "00514ecc2268a4642d16987ac87bace65518182b",
+  "candidateSourceHashes": "/Users/truls.aagedal/Developer/Aagedal-Media-Player/docs/evidence/live-meter-gpl-metal-native-20260930/source-sha256.json",
+  "qualificationSummarySHA256": "34baf2ceae795b010dbe2bfcffca7aa9556ebd0cf6f40e72bf39f450a3a7c719",
+  "newManifestSHA256": "912432e765729263e06293c0c3bf7a0e04b461f64fc1f9c65d3c73f3b8d6655f",
+  "newXCTestRunSHA256": "88748349931031a1e9e3c026087b8b6522d7825804086b23e19cd203bf54d149",
+  "observationSeconds": 20,
+  "scope": "Existing development test host, authentic DTS-HD MA coded payload on explicitly new source clock; stereo native output; no audible claim."
+}

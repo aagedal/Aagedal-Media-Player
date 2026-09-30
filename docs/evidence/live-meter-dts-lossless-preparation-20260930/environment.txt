@@ -1,0 +1,7 @@
+00514ecc2268a4642d16987ac87bace65518182b
+ProductName:		macOS
+ProductVersion:		27.0.1
+BuildVersion:		26A434
+Build configuration: Release
+Observation seconds: 20
+Existing feature-qualified GPL/Metal candidate; original source context 060f611 plus retained dirty clock correction.

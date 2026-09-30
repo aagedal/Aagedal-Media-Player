@@ -4254,6 +4254,57 @@ The initial wrong-working-directory launcher is stopped before building the app;
 only the explicit-clone rerun establishes app verification. See
 [integrated receipts](docs/evidence/release-candidate-completion-20260930/README.md).
 
+## Phase 192 — Defer Review correction while editing is unavailable
+
+- [x] Stop error callbacks and lazy-row recreation from assigning focus to disabled
+  note/range fields; restore the globally selected field when editing resumes.
+- [x] Defer passive text/range blur while loading or saving disables editing,
+  preserving invalid, changed and unchanged drafts, errors and correction ownership.
+- [x] Pass three new regressions within sixty focused optimized Release checks;
+  native Full Keyboard Access and spoken VoiceOver acceptance remain open.
+
+## Phase 193 — Preserve PDF source and capture identity
+
+- [x] Retain complete A/B source URLs so equal filenames in different directories
+  remain distinguishable; wrap and paginate long paths before the findings table.
+- [x] Retain exact stored A/B frame ordinals and rational rates per finding,
+  including after relinking to different-rate media.
+- [x] Add identity and long-path pagination regressions with optional production
+  PDF fixtures; all sixty focused Release checks pass and all three rendered
+  fixture pages show no clipping or overlap. See
+  [focused receipts](docs/evidence/review-pdf-availability-20260930/README.md).
+
+## Phase 194 — Repeatable offline dependency reconstruction audit
+
+- [x] Bind upstream source URLs and revisions to expected origins and retained
+  build receipts; retain the original verifier’s reproduced provenance false-pass.
+- [x] Add an externally digest-pinned workspace auditor checking three Git
+  snapshots, actual source bytes/executable modes, twenty input ZIPs and declared
+  driver/command/cache/environment identities.
+- [x] Pass the actual retained workspace audit: 11,089 source files and all inputs;
+  seventeen publication and ten reconstruction regressions pass in the normal gate.
+- [ ] Complete public publication/authenticated downloads, portable compilation,
+  fresh package resolution/repin and native/hardware acceptance.
+
+See [reconstruction audit](docs/evidence/coreaudio-reconstruction-audit-20260930/README.md).
+The audit checks declared retained files and does not certify absence of extra
+files, hermetic build readiness or byte-identical libraries.
+
+## Phase 195 — Lossless DTS-HD MA source-clock qualification
+
+- [x] Preserve and independently hash all 2,813 compressed source packets through
+  extraction/remux; compare complete PCM output with two decoder builds.
+- [x] Validate the newly timestamped preparation through the existing production
+  packet verifier without changing the one-millisecond timestamp contract.
+- [x] Pass a twenty-second native six-channel production observation with bounded
+  admission/drift, routing/pause/cancellation and exact authoritative EOF drainage.
+- [ ] Qualify the original container clock, audible/surround/device behavior,
+  sustained/base-M1 acceptance and a shipping published dependency repin.
+
+The preparation changes the source clock and preserves codec payload/PCM. Its
+pass does not accept the rejected original timestamps. See
+[DTS evidence](docs/evidence/live-meter-dts-lossless-preparation-20260930/README.md).
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -4622,3 +4673,19 @@ only the explicit-clone rerun establishes app verification. See
 170. Phase 178 feature-qualified fresh GPL/Metal CoreAudio candidate.
 171. Phase 179 bounded MXF production app integration evidence.
 172. Phase 180 integrated bounded-reader continuation verification.
+
+173. Phase 181 awake extended native meter observations.
+174. Phase 182 repeated authentic bounded-MXF imports.
+175. Phase 183 local GPL dependency publication payload.
+176. Phase 184 passive Review range correction ownership.
+177. Phase 185 reimport validator arguments and peak evidence.
+178. Phase 186 integrated resource/Review verification.
+179. Phase 187 ordinary Review validation correction ownership.
+180. Phase 188 DTS cumulative timestamp qualification.
+181. Phase 189 offline dependency source/input reconstruction.
+182. Phase 190 awake programme analysis and eight-hour evidence.
+183. Phase 191 integrated Review/DTS/reconstruction verification.
+184. Phase 192 Review availability and correction focus.
+185. Phase 193 complete PDF source/capture identity.
+186. Phase 194 repeatable reconstruction audit.
+187. Phase 195 lossless DTS-HD MA clock qualification.
