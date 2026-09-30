@@ -12,6 +12,7 @@ import json
 import os
 from pathlib import Path
 import re
+import stat
 import subprocess
 import sys
 import tarfile
@@ -20,6 +21,75 @@ spec = importlib.util.spec_from_file_location(
     'publication', Path(__file__).with_name('prepare-mpv-coreaudio-publication.py'))
 publication = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(publication)
+
+
+def verify_payload_inventory(stage, workspace, metadata):
+    """Require precisely the retained inputs, including ignored build files.
+
+    Git status is insufficient: ignored headers, Swift sources and prior build
+    output can affect compilation without changing any committed source byte.
+    Only each restored repository's own Git metadata directory is excluded.
+    """
+    cache_names = {'clang-cache', 'swift-cache', 'temporary'}
+    expected_workspace = cache_names | {'MPVKit', 'reconstruction-driver.py', 'reconstruction.json'}
+    if {path.name for path in workspace.iterdir()} != expected_workspace:
+        raise ValueError('reconstructed payload inventory mismatch: workspace entries')
+    for name in expected_workspace:
+        path = workspace / name
+        if path.is_symlink():
+            raise ValueError('reconstructed payload inventory mismatch: workspace symlink ' + name)
+        if name in cache_names:
+            if not path.is_dir() or any(path.iterdir()):
+                raise ValueError('reconstructed payload inventory mismatch: nonempty or missing cache ' + name)
+        elif name != 'MPVKit' and not stat.S_ISREG(path.lstat().st_mode):
+            raise ValueError('reconstructed payload inventory mismatch: nonregular workspace file ' + name)
+    checkout = workspace / 'MPVKit'
+    expected_files, expected_directories, git_directories = set(), {Path('.')}, set()
+
+    def include(path, is_directory=False):
+        (expected_directories if is_directory else expected_files).add(path)
+        expected_directories.update(path.parents)
+
+    for snapshot in metadata['sourceSnapshots']:
+        root = Path('.') if snapshot['name'] == 'MPVKit-recipe' else Path('dist') / snapshot['name']
+        include(root, is_directory=True)
+        git_directories.add(root / '.git')
+        with tarfile.open(stage / snapshot['archivePath'], 'r:gz') as archive:
+            for member in archive:
+                if not (member.isfile() or member.isdir()):
+                    raise ValueError('unsupported reconstruction source archive entry')
+                include(root / member.name, is_directory=member.isdir())
+    for entry in metadata['auxiliaryBuildInputs']:
+        include(Path(entry['relativePath']))
+
+    if checkout.is_symlink() or not checkout.is_dir():
+        raise ValueError('reconstructed payload inventory mismatch: MPVKit directory')
+    actual_files, actual_directories, actual_git = set(), {Path('.')}, set()
+    def walk_error(error):
+        raise error
+    for root, directories, files in os.walk(checkout, topdown=True, followlinks=False, onerror=walk_error):
+        for name in directories[:]:
+            path = Path(root) / name
+            relative = path.relative_to(checkout)
+            if path.is_symlink():
+                raise ValueError('reconstructed payload inventory mismatch: symlink ' + str(relative))
+            if relative in git_directories:
+                actual_git.add(relative)
+                directories.remove(name)
+            else:
+                actual_directories.add(relative)
+        for name in files:
+            path = Path(root) / name
+            relative = path.relative_to(checkout)
+            if not stat.S_ISREG(path.lstat().st_mode):
+                raise ValueError('reconstructed payload inventory mismatch: nonregular file ' + str(relative))
+            actual_files.add(relative)
+    if (actual_files != expected_files or actual_directories != expected_directories
+            or actual_git != git_directories):
+        extras = sorted(str(path) for path in (actual_files - expected_files) | (actual_directories - expected_directories))
+        missing = sorted(str(path) for path in (expected_files - actual_files) | (expected_directories - actual_directories) | (git_directories - actual_git))
+        raise ValueError('reconstructed payload inventory mismatch: extra=' + repr(extras) + ', missing=' + repr(missing))
+    return len(actual_files)
 
 
 def verify(stage, workspace, expected_publication_sha256):
@@ -31,6 +101,7 @@ def verify(stage, workspace, expected_publication_sha256):
     # immutable receipt, source archive/commit objects or declared origins.
     publication.verify(stage)
     metadata = json.loads((stage / 'publication.json').read_text())
+    payload_file_count = verify_payload_inventory(stage, workspace, metadata)
     retained = json.loads((stage / 'provenance/build-receipt.json').read_text())
     reconstructed = json.loads((workspace / 'reconstruction.json').read_text())
     driver_sha = publication.sha(workspace / 'reconstruction-driver.py')
@@ -88,6 +159,7 @@ def verify(stage, workspace, expected_publication_sha256):
             'reconstructionSHA256': publication.sha(workspace / 'reconstruction.json'),
             'driverSHA256': driver_sha, 'sourceSnapshots': sources,
             'sourceFileCount': source_file_count, 'auxiliaryInputCount': len(expected_inputs),
+            'payloadFileCount': payload_file_count,
             'byteIdenticalRebuildDemonstrated': False, 'blockers': metadata['blockers']}
 
 

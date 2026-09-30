@@ -4,6 +4,7 @@
 import importlib.util
 import json
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -47,6 +48,7 @@ class ReconstructionAuditTests(unittest.TestCase):
         self.assertTrue(result['passed'])
         self.assertEqual(result['auxiliaryInputCount'], 20)
         self.assertEqual(result['sourceFileCount'], 7)
+        self.assertEqual(result['payloadFileCount'], 27)
         self.assertEqual(len(result['sourceSnapshots']), 3)
         self.assertTrue(all(entry['shallow'] for entry in result['sourceSnapshots']))
         self.assertFalse((self.workspace / 'MPVKit/dist/release').exists())
@@ -58,6 +60,80 @@ class ReconstructionAuditTests(unittest.TestCase):
         (directory / 'source.txt').write_bytes(b'edited')
         self.assertEqual(self.git(directory, 'status', '--porcelain'), b'')
         with self.assertRaisesRegex(ValueError, 'working-file identity mismatch'):
+            self.verify()
+
+    def test_added_sources_ignored_inputs_and_build_outputs_are_rejected(self):
+        checkout = self.workspace / 'MPVKit'
+        # info/exclude deliberately hides each mutation from Git's ordinary
+        # status so this verifies the filesystem inventory, not an index diff.
+        (checkout / '.git/info').mkdir(exist_ok=True)
+        with (checkout / '.git/info/exclude').open('a') as file:
+            file.write('\nSources/BuildScripts/XCFrameworkBuild/Injected.swift\n/dist/\n/.build/\n')
+        for name in ('Sources/BuildScripts/XCFrameworkBuild/Injected.swift',
+                     'dist/libmpv-v0.41.0/unlisted-header.h',
+                     'dist/example0-1/unlisted-input.zip', '.build/cached-object.o'):
+            with self.subTest(path=name):
+                path = checkout / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(b'extra compilation input')
+                self.assertEqual(self.git(checkout, 'status', '--porcelain'), b'')
+                with self.assertRaisesRegex(ValueError, 'payload inventory mismatch'):
+                    self.verify()
+                path.unlink()
+                if name.startswith('.build/'):
+                    path.parent.rmdir()
+        self.assertTrue(self.verify()['passed'])
+
+    def test_unlisted_empty_directories_and_nested_git_metadata_are_rejected(self):
+        for name in ('dist/release', 'Sources/BuildScripts/.git'):
+            with self.subTest(path=name):
+                path = self.workspace / 'MPVKit' / name
+                path.mkdir()
+                with self.assertRaisesRegex(ValueError, 'payload inventory mismatch'):
+                    self.verify()
+                path.rmdir()
+
+    def test_workspace_build_products_and_cache_payloads_are_rejected(self):
+        for name in ('build.log', 'swift-build', 'swift-package-config',
+                     'clang-cache/module.pcm', 'swift-cache/module.swiftmodule', 'temporary/cached-header.h'):
+            with self.subTest(path=name):
+                path = self.workspace / name
+                if '.' in path.name:
+                    path.write_bytes(b'unretained cached input')
+                else:
+                    path.mkdir()
+                with self.assertRaisesRegex(ValueError, 'payload inventory mismatch'):
+                    self.verify()
+                if path.is_dir():
+                    path.rmdir()
+                else:
+                    path.unlink()
+        self.assertTrue(self.verify()['passed'])
+
+    def test_identical_source_parent_symlink_is_rejected(self):
+        checkout = self.workspace / 'MPVKit'
+        original = checkout / 'Sources'
+        moved = checkout / 'retained-sources'
+        original.rename(moved)
+        original.symlink_to(moved, target_is_directory=True)
+        with self.assertRaisesRegex(ValueError, 'payload inventory mismatch: symlink Sources'):
+            self.verify()
+
+    def test_external_git_directory_pointer_is_rejected(self):
+        directory = self.workspace / 'MPVKit/dist/libmpv-v0.41.0'
+        moved = self.root / 'external-git'
+        shutil.move(directory / '.git', moved)
+        (directory / '.git').write_text('gitdir: ' + str(moved) + '\n')
+        self.assertEqual(self.git(directory, 'rev-parse', 'HEAD').decode().strip(),
+                         self.metadata['sourceSnapshots'][1]['revision'])
+        with self.assertRaisesRegex(ValueError, 'payload inventory mismatch'):
+            self.verify()
+
+    def test_nonregular_input_is_rejected_without_opening_it(self):
+        path = self.workspace / 'MPVKit' / self.metadata['auxiliaryBuildInputs'][0]['relativePath']
+        path.unlink()
+        audit.os.mkfifo(path)
+        with self.assertRaisesRegex(ValueError, 'payload inventory mismatch: nonregular file'):
             self.verify()
 
     def test_executable_mode_is_checked_even_if_git_ignores_filemode(self):
@@ -126,7 +202,7 @@ class ReconstructionAuditTests(unittest.TestCase):
         other.write_bytes(path.read_bytes())
         path.unlink()
         path.symlink_to(other)
-        with self.assertRaisesRegex(ValueError, 'working-file identity mismatch'):
+        with self.assertRaisesRegex(ValueError, 'payload inventory mismatch: nonregular file'):
             self.verify()
 
     def test_command_line_reports_success_and_wrong_digest_failure(self):
