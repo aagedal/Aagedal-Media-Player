@@ -1,0 +1,20 @@
+919fa27cf2b32846d5aa2205a001d863155fea3d
+ M "Aagedal Media Player Tests/CompareReviewTextCommitTests.swift"
+ M "Aagedal Media Player Tests/ITUProgrammeLoudnessTests.swift"
+ M "Aagedal Media Player/Logic/LoupeFrameCapture.swift"
+ M "Aagedal Media Player/Logic/MPV/MPVPlayer.swift"
+ M "Aagedal Media Player/UI/CompareReviewView.swift"
+ M scripts/check-itu-programme-loudness.sh
+ M scripts/itu-programme-true-peak-reference.py
+ M scripts/test-itu-programme-true-peak-reference.py
+?? "Aagedal Media Player Tests/MPVRawScreenshotTests.swift"
+?? scripts/rebuild-mpv-coreaudio-candidate.py
+?? scripts/test-mpv-coreaudio-candidate.py
+ProductName:		macOS
+ProductVersion:		27.0.1
+BuildVersion:		26A434
+Xcode 27.0
+Build version 27A266a
+f8b318474b158c9f2ee842f0cfadf58ffcf504ffe8daa172220190d12dd0785b  /private/tmp/aagedal-itu-live-references-20260930/1770-2 Conf Mono Voice+Music-23LKFS.wav
+3ff26c997d838aff36b4319f9e0a673c0b51fe26722ecb0153887b66f38c296f  /private/tmp/aagedal-itu-live-references-20260930/1770-2 Conf Stereo VinL+R-23LKFS.wav
+ef2a0baef7f50db39eddfb1ba6f2a5445646050d113f81c6365cddca7f0448a0  /private/tmp/aagedal-itu-live-references-20260930/1770-2 Conf 6ch VinCntr-23LKFS.wav

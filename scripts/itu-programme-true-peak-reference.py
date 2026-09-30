@@ -24,6 +24,7 @@ spec.loader.exec_module(programme)
 ALGORITHM = 'bs1770-5-annex2-48k-pcm16-fir4-v1'
 SOURCE = 'https://www.itu.int/dms_pubrec/itu-r/rec/bs/R-REC-BS.1770-5-202311-I!!PDF-E.pdf'
 TOLERANCE_DB = 0.4  # Project comparison tolerance; not an official programme target tolerance.
+LIVE_TOLERANCE_DB = 1e-7  # Same published FIR on losslessly decoded PCM16, not a device tolerance.
 CHUNK_FRAMES = 4096
 # BS.1770-5 Annex 2, printed pp. 18–19, table columns (newest sample first).
 # Every published coefficient is an exact multiple of 1/8192. Integer dot
@@ -138,8 +139,73 @@ def validate_measurements(rows):
     return values
 
 
-def compare(directory, measurements):
+def validate_live_measurements(rows):
+    if not isinstance(rows, list) or len(rows) != len(programme.REFERENCES):
+        raise ValueError('Require all three distinct live peak measurements')
+    identities = {name: (digest, len(weights)) for name, digest, weights in programme.REFERENCES}
+    validated = {}
+    for row in rows:
+        if (not isinstance(row, dict) or not isinstance(row.get('file'), str)
+                or row['file'] not in identities or row['file'] in validated):
+            raise ValueError('Unknown or duplicate live peak source')
+        digest, channels = identities[row['file']]
+        required = dict(schemaVersion=1, sha256=digest, channels=channels, sampleRate=48000,
+                        channelLayout={1: 'mono', 2: 'stereo', 6: '5.1(side)'}[channels],
+                        algorithm='bs1770-5-k-weighting-annex2-fir4-v1',
+                        finalSnapshotIsFinal=True, reconstructionTailFrames=11,
+                        syntheticInitialSilenceFrameCount=0, timestampTimeBase='1/48000')
+        for key, expected in required.items():
+            if type(row.get(key)) is not type(expected) or row[key] != expected:
+                raise ValueError(f'Invalid live peak provenance: {key}')
+        for key in ('decodedEndFrame', 'snapshotCount'):
+            if type(row.get(key)) is not int or row[key] <= 0:
+                raise ValueError(f'Invalid live peak coverage: {key}')
+        if row['snapshotCount'] != row['decodedEndFrame'] // 2400 + 1:
+            raise ValueError('Incomplete live peak snapshot coverage')
+        if not isinstance(row.get('decoderVersion'), str) or not row['decoderVersion'].strip():
+            raise ValueError('Missing live peak decoder identity')
+        if channels == 6 and row.get('preparedPCMSHA256') != '5e1020672b02d963f98aab2d827961656f941da79ab4b14733f62b574737848f':
+            raise ValueError('Missing sample-preserving live 5.1 identity')
+        for key in ('maximumSamplePeakDBFS', 'maximumTruePeakDBTP'):
+            values = row.get(key)
+            if not isinstance(values, list) or len(values) != channels:
+                raise ValueError(f'Incomplete live peak channel values: {key}')
+            for value in values:
+                if value is not None:
+                    try:
+                        valid = type(value) in (int, float) and math.isfinite(value)
+                    except OverflowError:
+                        valid = False
+                    if not valid:
+                        raise ValueError(f'Invalid live peak channel value: {key}')
+        validated[row['file']] = row
+    return validated
+
+
+def compare_live_peaks(measurement, calculated):
+    if measurement['decodedEndFrame'] != calculated['frameCount']:
+        raise ValueError('Live peak decoder did not reach the exact PCM endpoint')
+    channels = []
+    for index, target in enumerate(calculated['perChannel']):
+        row = dict(channel=index, passed=True)
+        for live_key, target_key in [('maximumSamplePeakDBFS', 'samplePeakDBFS'),
+                                     ('maximumTruePeakDBTP', 'truePeakDBTP')]:
+            actual, expected = measurement[live_key][index], target[target_key]
+            # Null denotes exact digital silence, never a missing measurement.
+            difference = actual - expected if actual is not None and expected is not None else None
+            passed = (actual is None and expected is None) or (
+                difference is not None and abs(difference) <= LIVE_TOLERANCE_DB)
+            row[target_key] = dict(production=actual, independent=expected,
+                                   differenceDB=difference, passed=passed)
+            row['passed'] = row['passed'] and passed
+        channels.append(row)
+    return dict(measurement=measurement, regressionToleranceDB=LIVE_TOLERANCE_DB,
+                perChannel=channels, passed=all(row['passed'] for row in channels))
+
+
+def compare(directory, measurements, live_measurements=None):
     measured = validate_measurements(measurements)
+    live = validate_live_measurements(live_measurements) if live_measurements is not None else None
     # Validate the complete original set before spending time on interpolation.
     for name, digest, _ in programme.REFERENCES:
         if programme.sha256(Path(directory) / name) != digest:
@@ -151,10 +217,14 @@ def compare(directory, measurements):
         if expected is None:
             raise ValueError(f'Original programme unexpectedly silent: {name}')
         difference = measured[name] - expected
-        rows.append(dict(file=name, sha256=digest, channels=len(weights),
+        row = dict(file=name, sha256=digest, channels=len(weights),
                          independentCalculation=result, productionTruePeakDBTP=measured[name],
                          differenceDB=difference, regressionToleranceDB=TOLERANCE_DB,
-                         passed=abs(difference) <= TOLERANCE_DB))
+                         passed=abs(difference) <= TOLERANCE_DB)
+        if live is not None:
+            row['livePeakComparison'] = compare_live_peaks(live[name], result)
+            row['passed'] = row['passed'] and row['livePeakComparison']['passed']
+        rows.append(row)
     return dict(algorithm=ALGORITHM, calculatorSHA256=programme.sha256(__file__),
                 sourceValidationSHA256=programme.sha256(programme.__file__),
                 pythonVersion=sys.version, source=SOURCE,
@@ -170,17 +240,30 @@ def main():
     parser.add_argument('reference_directory', type=Path)
     parser.add_argument('measurements', type=Path, help='Production runner measurements.json')
     parser.add_argument('output', type=Path, help='New independent comparison JSON artifact')
+    parser.add_argument('--live-measurements', type=Path, help='Optional complete live decoder/DSP peak evidence')
     args = parser.parse_args()
     if args.output.exists():
         parser.error('Output already exists; choose a new artifact path')
     try:
-        report = compare(args.reference_directory, json.loads(args.measurements.read_text()))
+        live = json.loads(args.live_measurements.read_text()) if args.live_measurements else None
+        if args.live_measurements:
+            # An explicitly supplied null document is malformed evidence, not
+            # a request to omit the optional live comparison.
+            validate_live_measurements(live)
+        report = compare(args.reference_directory, json.loads(args.measurements.read_text()), live)
         with args.output.open('x') as destination:
             json.dump(report, destination, indent=2, sort_keys=True, allow_nan=False)
             destination.write('\n')
         for row in report['measurements']:
             print(f'{row["file"]}: independent {row["independentCalculation"]["truePeakDBTP"]:.4f} dBTP; '
                   f'production {row["productionTruePeakDBTP"]:.1f} dBTP; difference {row["differenceDB"]:+.4f} dB')
+            if 'livePeakComparison' in row:
+                live = row['livePeakComparison']
+                print(f'  Live per-channel sample/true peaks: {"passed" if live["passed"] else "FAILED"}; '
+                      f'{len(live["perChannel"])} channels; tolerance {LIVE_TOLERANCE_DB:g} dB')
+                for channel in live['perChannel']:
+                    if not channel['passed']:
+                        print(f'  Channel {channel["channel"]}: {json.dumps(channel, allow_nan=False)}')
         return 0 if all(row['passed'] for row in report['measurements']) else 1
     except (ValueError, KeyError, TypeError, OSError, wave.Error) as error:
         parser.exit(1, f'Programme true-peak reference failed: {error}\n')

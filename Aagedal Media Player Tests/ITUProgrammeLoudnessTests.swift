@@ -221,10 +221,39 @@ final class ITUProgrammeLoudnessTests: XCTestCase {
             report["preparedPCMSHA256"] = preparedPayloadHash
             report["preparation"] = "Unchanged PCM words/order; explicit 5.1(side) WAVE speaker mask 0x60f"
         }
-        for (name, object) in [("ITU_LIVE_LOUDNESS", report), ("ITU_LIVE_LOUDNESS_WINDOWS", ["windows": rows])] {
+        // Retain full-precision, channel-separated maxima after the decoder has
+        // drained the FIR tail. The independent integer-PCM Annex 2 calculator
+        // compares these values, including silent channels, outside this test.
+        func peakValues(_ values: [Double]) -> [Any] {
+            values.map { value in
+                XCTAssertTrue(value.isFinite || value == -.infinity)
+                return value == -.infinity ? NSNull() : value as Any
+            }
+        }
+        let peakReport: [String: Any] = [
+            "schemaVersion": 1,
+            "file": url.lastPathComponent, "sha256": sha256, "channels": channels,
+            "sampleRate": format.sampleRate,
+            "channelLayout": try XCTUnwrap(layout.ffmpegChannelLayoutName),
+            "algorithm": LiveAudioMeterDSP.algorithm,
+            "decodedEndFrame": final.endFrame,
+            "snapshotCount": snapshots.values.count,
+            "finalSnapshotIsFinal": final.isFinal,
+            "reconstructionTailFrames": LiveAudioMeterDSP.reconstructionTailFrames,
+            "syntheticInitialSilenceFrameCount": completion.provenance.syntheticInitialSilenceFrameCount,
+            "timestampTimeBase": completion.provenance.timestampTimeBase,
+            "decoderVersion": completion.provenance.decoderVersion,
+            "maximumSamplePeakDBFS": peakValues(final.maximumSamplePeakDBFS),
+            "maximumTruePeakDBTP": peakValues(final.maximumTruePeakDBTP),
+        ].merging(preparedPayloadHash.map { ["preparedPCMSHA256": $0] } ?? [:]) { _, new in new }
+        for (name, object) in [
+            ("ITU_LIVE_LOUDNESS", report),
+            ("ITU_LIVE_LOUDNESS_WINDOWS", ["windows": rows]),
+            ("ITU_LIVE_PEAKS", peakReport),
+        ] {
             let data = try JSONSerialization.data(withJSONObject: object, options: [.sortedKeys])
             let line = name + " " + String(decoding: data, as: UTF8.self)
-            if name == "ITU_LIVE_LOUDNESS" { print(line) }
+            if name != "ITU_LIVE_LOUDNESS_WINDOWS" { print(line) }
             let attachment = XCTAttachment(string: line)
             attachment.name = "\(name) — \(channels) channels"
             attachment.lifetime = .keepAlways

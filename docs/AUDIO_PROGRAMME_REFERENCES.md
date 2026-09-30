@@ -12,6 +12,24 @@ sample position, with a 0.1 LU tolerance and retained raw oracle output and
 window-by-window comparisons. These are calculated reference-tool targets,
 separate from ITU's published whole-programme integrated target.
 
+The same decoder run now retains each channel's sample-peak and true-peak
+maxima after EOF reconstruction drainage. The independent integer-PCM Annex 2
+calculator compares both arrays, including exact silent channels, at the
+original PCM frame count. `live-peak-measurements.json` records decoder,
+timestamp, speaker-layout, algorithm, snapshot-count and filter-tail provenance.
+The comparison appears as `livePeakComparison` in each row of
+`independent-true-peak-comparison.json`. Missing channels, changed identities,
+incomplete endpoints and invalid measurements fail the runner.
+
+This live comparison uses a **1e-7 dB numerical tolerance**: PCM16 samples are
+exactly representable in the decoder's Float32 output, and the independently
+implemented integer calculator and Swift DSP use the same published FIR.
+The tolerance checks that implementation and lossless decoding agree; it is
+not a device calibration budget or an official programme tolerance. Null
+represents exact digital silence. The existing ±0.4 dB offline FFmpeg comparison
+retains its separate tolerance. These whole-programme live maxima do not
+establish display ballistics, per-bucket peak timing or playback/output acceptance.
+
 The six-channel original has no speaker mask. For this live check only, its
 hash-pinned PCM words and channel order are preserved in a temporary extensible
 WAVE with the ITU-declared L/R/C/LFE/Ls/Rs roles (`5.1(side)`, mask `0x60f`).
@@ -155,13 +173,16 @@ or a published programme true-peak target**. Two compliant meters can differ
 because of interpolation filters and grid under-read; this finite FIR is an
 independent estimate, not an exact continuous-waveform maximum.
 
-The runner first requires all 11 standalone calculator tests to pass. These
+The runner first requires all 16 standalone calculator tests to pass. These
 cover all five analytic tone cases with both polarities, intersample peaks above
 full scale, channel isolation, LFE inclusion, final-sample flushing, chunk
 boundaries, safe block skipping, explicit silence, malformed PCM, complete
 source identity, invalid measurements, rejected comparisons, and preserved
 existing output files. The runner retains `true-peak-calculator-tests.log`,
 the calculator and its tests, and `independent-true-peak-comparison.json`.
+The live evidence checks also cover missing/duplicate sources, invalid decoder
+provenance, incomplete snapshot coverage, per-channel silence, exact EOF,
+full-precision comparisons and propagation of live failures to the final result.
 
 The independent comparison on 2026-09-09 passes against the retained Release
 production measurements from 2026-09-08:

@@ -82,6 +82,7 @@ import json, math, pathlib, sys
 root = pathlib.Path(sys.argv[1])
 rows = []
 live_rows = []
+peak_rows = []
 for path in (root / 'attachments').rglob('*'):
     if path.is_file():
         for line in path.read_text(errors='replace').splitlines():
@@ -89,6 +90,8 @@ for path in (root / 'attachments').rglob('*'):
                 rows.append(json.loads(line.removeprefix('ITU_PROGRAMME_LOUDNESS ')))
             elif line.startswith('ITU_LIVE_LOUDNESS '):
                 live_rows.append(json.loads(line.removeprefix('ITU_LIVE_LOUDNESS ')))
+            elif line.startswith('ITU_LIVE_PEAKS '):
+                peak_rows.append(json.loads(line.removeprefix('ITU_LIVE_PEAKS ')))
 if len(rows) != 3 or {row['channels'] for row in rows} != {1, 2, 6}:
     raise SystemExit('Missing or duplicate ITU programme measurement attachments')
 for row in rows:
@@ -115,6 +118,9 @@ for row in live_rows:
     if row['channels'] == 6 and row.get('preparedPCMSHA256') != '5e1020672b02d963f98aab2d827961656f941da79ab4b14733f62b574737848f':
         raise SystemExit('Missing sample-preserving 5.1 preparation identity')
 (root / 'live-loudness-comparison.json').write_text(json.dumps(live_rows, indent=2, sort_keys=True) + '\n')
+if len(peak_rows) != 3 or {row['channels'] for row in peak_rows} != {1, 2, 6}:
+    raise SystemExit('Missing or duplicate live peak measurement attachments')
+(root / 'live-peak-measurements.json').write_text(json.dumps(peak_rows, indent=2, sort_keys=True, allow_nan=False) + '\n')
 print('All three live M/S comparisons passed at exact source-frame endpoints.')
 print('All three official integrated loudness references passed. Checking independently calculated programme LRA next.')
 PY
@@ -140,5 +146,6 @@ cp scripts/itu-programme-true-peak-reference.py scripts/test-itu-programme-true-
 print -u2 'Comparing programme true peak to the independent PCM calculation…'
 /usr/bin/python3 scripts/itu-programme-true-peak-reference.py "$reference_dir" \
   "$artifact_dir/measurements.json" "$artifact_dir/independent-true-peak-comparison.json" \
+  --live-measurements "$artifact_dir/live-peak-measurements.json" \
   | tee "$artifact_dir/true-peak-comparison.log"
 print -r -- "Artifacts: $artifact_dir"

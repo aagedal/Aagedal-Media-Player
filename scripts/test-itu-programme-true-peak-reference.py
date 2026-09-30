@@ -4,6 +4,7 @@
 from array import array
 import copy
 import importlib.util
+import json
 import math
 from pathlib import Path
 import random
@@ -32,6 +33,18 @@ def write_pcm(path, channels, samples, rate=48000, width=2):
 def measurement_rows():
     return [dict(file=name, sha256=digest, channels=len(weights), sampleRate=48000,
                  unreferencedObservations=dict(loudnessRangeLU='10.0', truePeakDBTP='-6.0'))
+            for name, digest, weights in reference.programme.REFERENCES]
+
+
+def live_rows():
+    return [dict(schemaVersion=1, file=name, sha256=digest, channels=len(weights), sampleRate=48000,
+                 channelLayout={1: 'mono', 2: 'stereo', 6: '5.1(side)'}[len(weights)],
+                 algorithm='bs1770-5-k-weighting-annex2-fir4-v1', decodedEndFrame=48000,
+                 snapshotCount=21, finalSnapshotIsFinal=True, reconstructionTailFrames=11,
+                 syntheticInitialSilenceFrameCount=0, timestampTimeBase='1/48000',
+                 decoderVersion='reference decoder', maximumSamplePeakDBFS=[-6.0] * len(weights),
+                 maximumTruePeakDBTP=[-5.9] * len(weights),
+                 preparedPCMSHA256='5e1020672b02d963f98aab2d827961656f941da79ab4b14733f62b574737848f')
             for name, digest, weights in reference.programme.REFERENCES]
 
 
@@ -176,6 +189,82 @@ class ProgrammeTruePeakReferenceTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn(b'Output already exists', result.stderr)
         self.assertEqual(output.read_text(), 'preserve existing artifact')
+
+    def test_live_requires_complete_pinned_decoder_and_channel_evidence(self):
+        rows = live_rows()
+        self.assertEqual(len(reference.validate_live_measurements(rows)), 3)
+        for invalid in (None, {}, rows[:2], rows + [rows[0]], [rows[0], rows[0], rows[2]]):
+            with self.subTest(invalid=invalid), self.assertRaises(ValueError):
+                reference.validate_live_measurements(invalid)
+        for key, value in [('file', []), ('sha256', 'wrong'), ('channels', True), ('schemaVersion', True),
+                           ('sampleRate', 44100), ('channelLayout', 'stereo'),
+                           ('algorithm', 'another FIR'), ('decodedEndFrame', 0),
+                           ('decodedEndFrame', 48000.0), ('snapshotCount', 20),
+                           ('finalSnapshotIsFinal', 1), ('reconstructionTailFrames', 0),
+                           ('syntheticInitialSilenceFrameCount', 1), ('timestampTimeBase', '1/44100'),
+                           ('decoderVersion', ''), ('maximumSamplePeakDBFS', []),
+                           ('maximumTruePeakDBTP', [float('nan')]),
+                           ('maximumTruePeakDBTP', [float('inf')]), ('maximumTruePeakDBTP', [True]),
+                           ('maximumTruePeakDBTP', [10 ** 400])]:
+            changed = copy.deepcopy(rows)
+            changed[0][key] = value
+            with self.subTest(key=key, value=value), self.assertRaises(ValueError):
+                reference.validate_live_measurements(changed)
+        rows[2]['preparedPCMSHA256'] = 'changed samples'
+        with self.assertRaisesRegex(ValueError, 'sample-preserving'):
+            reference.validate_live_measurements(rows)
+
+    def test_explicit_null_live_file_does_not_disable_required_comparison(self):
+        measurements = self.directory / 'measurements.json'
+        measurements.write_text(json.dumps(measurement_rows()))
+        live = self.directory / 'live.json'
+        live.write_text('null')
+        output = self.directory / 'comparison.json'
+        result = subprocess.run([sys.executable, str(Path(reference.__file__)), str(self.directory),
+                                 str(measurements), str(output), '--live-measurements', str(live)],
+                                capture_output=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn(b'Require all three distinct live peak measurements', result.stderr)
+        self.assertFalse(output.exists())
+
+    def test_live_silence_is_distinct_from_missing_or_wrong_channel_values(self):
+        measured = live_rows()[2]
+        measured['maximumSamplePeakDBFS'] = [None, None, -6.0, None, None, None]
+        measured['maximumTruePeakDBTP'] = [None, None, -5.9, None, None, None]
+        target = dict(frameCount=48000, perChannel=[
+            dict(samplePeakDBFS=sample, truePeakDBTP=peak) for sample, peak in zip(
+                measured['maximumSamplePeakDBFS'], measured['maximumTruePeakDBTP'])])
+        result = reference.compare_live_peaks(measured, target)
+        self.assertTrue(result['passed'])
+        self.assertEqual(len(result['perChannel']), 6)
+        measured['maximumSamplePeakDBFS'][0] = -100.0
+        self.assertFalse(reference.compare_live_peaks(measured, target)['passed'])
+        measured['maximumSamplePeakDBFS'][0] = None
+        measured['maximumTruePeakDBTP'][2] = None
+        self.assertFalse(reference.compare_live_peaks(measured, target)['passed'])
+
+    def test_live_comparison_requires_exact_eof_and_full_precision_maxima(self):
+        measured = live_rows()[0]
+        target = dict(frameCount=48000, perChannel=[dict(samplePeakDBFS=-6.0, truePeakDBTP=-5.9)])
+        self.assertTrue(reference.compare_live_peaks(measured, target)['passed'])
+        measured['maximumTruePeakDBTP'][0] += 1e-4
+        self.assertFalse(reference.compare_live_peaks(measured, target)['passed'])
+        measured['decodedEndFrame'] -= 1
+        with self.assertRaisesRegex(ValueError, 'exact PCM endpoint'):
+            reference.compare_live_peaks(measured, target)
+
+    def test_live_failure_propagates_to_programme_result(self):
+        rows = measurement_rows()
+        measured = live_rows()
+        measured[1]['maximumTruePeakDBTP'][1] = -6.1
+        digests = [digest for _, digest, _ in reference.programme.REFERENCES]
+        def calculated(_path, channels):
+            return dict(truePeakDBTP=-6.0, frameCount=48000,
+                        perChannel=[dict(samplePeakDBFS=-6.0, truePeakDBTP=-5.9)] * channels)
+        with patch.object(reference.programme, 'sha256', side_effect=digests + ['calculator', 'identity']), \
+                patch.object(reference, 'pcm_true_peak', side_effect=calculated):
+            result = reference.compare(self.directory, rows, measured)
+        self.assertEqual([row['passed'] for row in result['measurements']], [True, False, True])
 
 
 if __name__ == '__main__':

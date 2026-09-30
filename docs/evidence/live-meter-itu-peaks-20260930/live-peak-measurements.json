@@ -1,0 +1,81 @@
+[
+  {
+    "algorithm": "bs1770-5-k-weighting-annex2-fir4-v1",
+    "channelLayout": "mono",
+    "channels": 1,
+    "decodedEndFrame": 3998849,
+    "decoderVersion": "ffmpeg version 9.0.1 Copyright (c) 2000-2026 the FFmpeg developers",
+    "file": "1770-2 Conf Mono Voice+Music-23LKFS.wav",
+    "finalSnapshotIsFinal": true,
+    "maximumSamplePeakDBFS": [
+      -4.780681806125388
+    ],
+    "maximumTruePeakDBTP": [
+      -4.775462384181754
+    ],
+    "reconstructionTailFrames": 11,
+    "sampleRate": 48000,
+    "schemaVersion": 1,
+    "sha256": "f8b318474b158c9f2ee842f0cfadf58ffcf504ffe8daa172220190d12dd0785b",
+    "snapshotCount": 1667,
+    "syntheticInitialSilenceFrameCount": 0,
+    "timestampTimeBase": "1/48000"
+  },
+  {
+    "algorithm": "bs1770-5-k-weighting-annex2-fir4-v1",
+    "channelLayout": "stereo",
+    "channels": 2,
+    "decodedEndFrame": 3991527,
+    "decoderVersion": "ffmpeg version 9.0.1 Copyright (c) 2000-2026 the FFmpeg developers",
+    "file": "1770-2 Conf Stereo VinL+R-23LKFS.wav",
+    "finalSnapshotIsFinal": true,
+    "maximumSamplePeakDBFS": [
+      -7.937091394719119,
+      -8.226087688114195
+    ],
+    "maximumTruePeakDBTP": [
+      -7.92648416882351,
+      -8.217019734006648
+    ],
+    "reconstructionTailFrames": 11,
+    "sampleRate": 48000,
+    "schemaVersion": 1,
+    "sha256": "3ff26c997d838aff36b4319f9e0a673c0b51fe26722ecb0153887b66f38c296f",
+    "snapshotCount": 1664,
+    "syntheticInitialSilenceFrameCount": 0,
+    "timestampTimeBase": "1/48000"
+  },
+  {
+    "algorithm": "bs1770-5-k-weighting-annex2-fir4-v1",
+    "channelLayout": "5.1(side)",
+    "channels": 6,
+    "decodedEndFrame": 3994582,
+    "decoderVersion": "ffmpeg version 9.0.1 Copyright (c) 2000-2026 the FFmpeg developers",
+    "file": "1770-2 Conf 6ch VinCntr-23LKFS.wav",
+    "finalSnapshotIsFinal": true,
+    "maximumSamplePeakDBFS": [
+      -9.553299864121609,
+      -7.802627136723829,
+      -7.037423395418875,
+      -68.72537377824186,
+      -14.806988721613862,
+      -14.408091290771859
+    ],
+    "maximumTruePeakDBTP": [
+      -9.54027310452188,
+      -7.789625228674474,
+      -6.839261081495399,
+      -68.00407135856679,
+      -14.739309856407543,
+      -14.39445472846357
+    ],
+    "preparedPCMSHA256": "5e1020672b02d963f98aab2d827961656f941da79ab4b14733f62b574737848f",
+    "reconstructionTailFrames": 11,
+    "sampleRate": 48000,
+    "schemaVersion": 1,
+    "sha256": "ef2a0baef7f50db39eddfb1ba6f2a5445646050d113f81c6365cddca7f0448a0",
+    "snapshotCount": 1665,
+    "syntheticInitialSilenceFrameCount": 0,
+    "timestampTimeBase": "1/48000"
+  }
+]

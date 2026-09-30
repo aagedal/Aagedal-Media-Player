@@ -1,0 +1,8 @@
+{
+  "Aagedal Media Player Tests/ITUProgrammeLoudnessTests.swift": "a05742148c43544a8e31c8b82f60739be6ff669bf42b58c74c7f073286ac3c8d",
+  "Aagedal Media Player/Logic/LiveAudioMeterDSP.swift": "00926b5ad9346077376408a6c00afd006d03c0704fea8ebf6d92f3c644df5ecf",
+  "Aagedal Media Player/Logic/LiveAudioMeterDecoder.swift": "4472e6cb586bbc09448f666cc8aa4ce78ba0c215115ae713d006eb2c804cfc87",
+  "scripts/check-itu-programme-loudness.sh": "6cddbe376aa2c5fe533bdff384ee73165fc47edfa300a71f9c272bd4e402c23e",
+  "scripts/itu-programme-true-peak-reference.py": "aa93cd175a32a4a11444a3ce7d0fcfd0ef5049748a7da09edb8863f5112e294d",
+  "scripts/test-itu-programme-true-peak-reference.py": "aa6cfdc798c4a75b3ce6e5b94ec9b063c179bac0e0e3d043025339e49092df07"
+}
