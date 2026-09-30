@@ -103,6 +103,23 @@ source identity are retained separately. See
 Matching-HEAD release consumption, dependency publication and native/hardware/
 editor/distribution gates remain open.
 
+The latest implementation continuation extends Review correction ownership to
+ordinary Return/Apply/blur/current-frame failures, with three new regressions.
+DTS qualification rules out source-zero seeking and coarse container timing
+alone as grounds to accept the retained timestamp sequence; two codec/timestamp
+regressions preserve the existing one-millisecond contract. See
+[DTS qualification](evidence/live-meter-dts-timestamp-qualification-20260930/README.md).
+Offline dependency tooling restores verified exact source commits and cached
+inputs and declares missing compilation/environment prerequisites. Actual
+reconstruction passes independent identity checks; see
+[offline reconstruction](evidence/coreaudio-offline-reconstruction-20260930/README.md).
+It does not publish or compile a dependency. Programme profiling now stays awake and retains
+failed-test and sleep diagnostics; the clean eight-hour production matrix and
+integrated Release verification follow separately. The candidate floor is 745
+aggregate tests plus both isolated mixed-backend checks. Native keyboard/spoken
+accessibility, public dependencies, hardware/soak/editor and distribution gates
+remain open.
+
 The Review & Report implementation is substantially present: structured point
 and range findings, versioned local sidecars, relinking, deliberate historical
 timebase migration, save recovery, and CSV/PDF/editor-format export. That makes

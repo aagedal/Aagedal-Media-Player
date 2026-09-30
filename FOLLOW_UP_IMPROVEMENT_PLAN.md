@@ -4163,6 +4163,66 @@ checks are distinct from the canonical app verification commit; documentation
 retention does not replace matching-HEAD release consumption. See
 [integrated receipts](docs/evidence/release-candidate-resource-continuation-20260930/README.md).
 
+## Phase 187 — Ordinary Review validation correction ownership
+
+Status: Implementation complete on 2026-09-30; integrated Release verification follows.
+
+- [x] Give Return, Apply, blur and current-frame row failures the same selected
+  finding/field ownership as report-action preflight.
+- [x] Defer competing passive callbacks and preserve unrelated correction errors
+  when a field succeeds; retain unavailable-field drafts without disabled focus.
+- [x] Add three focused regressions and pass Swift frontend parsing.
+- [ ] Complete native keyboard, Full Keyboard Access and spoken VoiceOver checks.
+
+## Phase 188 — Qualify retained DTS cumulative timestamp overlap
+
+Status: Source/decoder qualification complete on 2026-09-30; integrated Release verification follows.
+
+- [x] Reproduce the exact 3,728/3,672 rejection through paced production arguments.
+- [x] Verify five-second checksummed replays are identical with and without
+  input seeking; retain independent source timestamps and the bounded sawtooth.
+- [x] Add cumulative-overlap rejection and contiguous six-channel DTS/Matroska
+  regressions while preserving the existing one-millisecond tolerance.
+- [ ] Establish independent DTS-HD MA source-time qualification before changing
+  policy or claiming native acceptance of the rejected local preparation.
+
+See [retained DTS evidence](docs/evidence/live-meter-dts-timestamp-qualification-20260930/README.md).
+
+## Phase 189 — Offline dependency source and input reconstruction
+
+Status: Offline reconstruction implemented on 2026-09-30; publication remains open.
+
+- [x] Require an externally retained publication digest and verified complete
+  stage before restoring exact source Git trees/commits and cached input ZIPs.
+- [x] Refuse existing/nested output and unsafe archive entries, isolate host Git
+  configuration, and retain genuine shallow boundaries for absent history.
+- [x] Declare candidate commands, isolated cache paths and recorded/missing tool,
+  SDK/header, Metal and optional-feature prerequisites without running the recipe.
+- [x] Pass fifteen publication and eighteen clean-candidate regressions, then
+  independently verify all three source Git identities and twenty inputs restored
+  from the actual retained 46-file publication stage.
+- [ ] Complete a portable fresh-host compilation, public publication/provenance,
+  ordinary fresh package resolution and a shipping repin with native acceptance.
+
+See [offline reconstruction evidence](docs/evidence/coreaudio-offline-reconstruction-20260930/README.md).
+
+## Phase 190 — Awake programme analysis and failed-run evidence
+
+Status: Runner hardening complete on 2026-09-30; clean eight-hour production rerun follows.
+
+- [x] Own a temporary awake assertion through build and analysis, cleaning it
+  and the copied test manifest on every exit.
+- [x] Retain partial attachments and start/end/interval power evidence after
+  XCTest or sleep failure; never publish a passing summary for rejected runs.
+- [x] Pass six power/runner regressions including real shell exit paths with
+  stubbed native tools.
+- [ ] Run the corrected analyzer's full eight-hour production matrix without
+  sleep; keep synthetic-duration evidence distinct from elapsed-time/hardware soak.
+
+Candidate and release consumption now require 745 aggregate tests plus both
+isolated mixed-backend transport directions. Shipping dependencies and version
+remain unchanged; current-source verification is still required.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
