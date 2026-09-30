@@ -784,7 +784,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
     // MARK: - Screenshot
 
     /// Raw pixel data returned by `screenshot-raw`.
-    struct RawScreenshot: Sendable {
+    nonisolated struct RawScreenshot: Sendable {
         let data: Data
         let width: Int
         let height: Int
@@ -794,6 +794,22 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         /// `screenshot-raw`. The uncertainty is half of that clock interval.
         let playbackTime: TimeInterval?
         let playbackTimeUncertainty: TimeInterval?
+
+        /// This is only a memory-layout check. A valid RGB display screenshot
+        /// still cannot establish decoder-raster/source-pixel provenance.
+        nonisolated static func byteCount(width: Int, height: Int, stride: Int, format: String) -> Int? {
+            let bytesPerPixel: Int
+            switch format {
+            case "bgr0", "bgra", "rgba": bytesPerPixel = 4
+            case "rgba64": bytesPerPixel = 8
+            default: return nil
+            }
+            guard width > 0, height > 0, stride > 0,
+                  width <= Int.max / bytesPerPixel,
+                  stride >= width * bytesPerPixel,
+                  height <= Int.max / stride else { return nil }
+            return height * stride
+        }
     }
 
     /// Capture MPV's display-processed video image as raw pixels. The `video`
@@ -852,45 +868,65 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
 
         defer { mpv_free_node_contents(&result) }
 
-        guard err == 0,
-              result.format == MPV_FORMAT_NODE_MAP,
-              let resultList = result.u.list else { return nil }
+        guard err == 0 else { return nil }
+        return Self.rawScreenshot(from: result,
+                                  playbackTime: bracketedTime?.time,
+                                  playbackTimeUncertainty: bracketedTime?.uncertainty)
+    }
 
-        let num = Int(resultList.pointee.num)
-        var width = 0, height = 0, stride = 0
-        var pixelData: Data?
-        var format = "bgr0"
-
-        for i in 0..<num {
-            guard let keyPtr = resultList.pointee.keys?[i] else { continue }
+    /// Check the libmpv node tags before touching their union storage. Missing
+    /// format information must not silently reinterpret arbitrary pixels as
+    /// bgr0. Validate dimensions before copying the returned byte array.
+    nonisolated static func rawScreenshot(
+        from result: mpv_node,
+        playbackTime: TimeInterval?,
+        playbackTimeUncertainty: TimeInterval?
+    ) -> RawScreenshot? {
+        guard result.format == MPV_FORMAT_NODE_MAP,
+              let resultList = result.u.list,
+              resultList.pointee.num > 0,
+              let keys = resultList.pointee.keys,
+              let values = resultList.pointee.values else { return nil }
+        var width: Int?, height: Int?, stride: Int?
+        var format: String?
+        var byteArray: UnsafeMutablePointer<mpv_byte_array>?
+        var seen = Set<String>()
+        for i in 0..<Int(resultList.pointee.num) {
+            guard let keyPtr = keys[i] else { return nil }
             let key = String(cString: keyPtr)
-            let val = resultList.pointee.values[i]
-
+            let val = values[i]
+            if ["w", "h", "stride", "format", "data"].contains(key),
+               !seen.insert(key).inserted { return nil }
             switch key {
-            case "w": width = Int(val.u.int64)
-            case "h": height = Int(val.u.int64)
-            case "stride": stride = Int(val.u.int64)
+            case "w", "h", "stride":
+                guard val.format == MPV_FORMAT_INT64,
+                      let number = Int(exactly: val.u.int64) else { return nil }
+                switch key {
+                case "w": width = number
+                case "h": height = number
+                default: stride = number
+                }
             case "format":
-                if val.format == MPV_FORMAT_STRING, let s = val.u.string {
-                    format = String(cString: s)
-                }
+                guard val.format == MPV_FORMAT_STRING, let string = val.u.string else { return nil }
+                format = String(cString: string)
             case "data":
-                if let ba = val.u.ba {
-                    pixelData = Data(bytes: ba.pointee.data, count: ba.pointee.size)
-                }
+                guard val.format == MPV_FORMAT_BYTE_ARRAY, let array = val.u.ba else { return nil }
+                byteArray = array
             default: break
             }
         }
-
-        guard let data = pixelData, width > 0, height > 0, stride > 0 else { return nil }
+        guard let width, let height, let stride, let format, let byteArray,
+              let byteCount = RawScreenshot.byteCount(width: width, height: height, stride: stride, format: format),
+              byteArray.pointee.size >= byteCount,
+              let bytes = byteArray.pointee.data else { return nil }
         return RawScreenshot(
-            data: data,
+            data: Data(bytes: bytes, count: byteCount),
             width: width,
             height: height,
             stride: stride,
             format: format,
-            playbackTime: bracketedTime?.time,
-            playbackTimeUncertainty: bracketedTime?.uncertainty
+            playbackTime: playbackTime,
+            playbackTimeUncertainty: playbackTimeUncertainty
         )
     }
 

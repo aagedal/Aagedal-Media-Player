@@ -331,12 +331,9 @@ final class LoupeFrameCapture: ObservableObject {
             info = CGBitmapInfo(rawValue: CGImageAlphaInfo.last.rawValue | CGBitmapInfo.byteOrder16Little.rawValue)
         default: return nil
         }
-        let bytesPerPixel = bits / 8 * 4
-        guard raw.width > 0, raw.height > 0,
-              raw.width <= Int.max / bytesPerPixel,
-              raw.stride >= raw.width * bytesPerPixel,
-              raw.height <= Int.max / raw.stride,
-              raw.data.count >= raw.height * raw.stride,
+        guard let byteCount = MPVPlayer.RawScreenshot.byteCount(
+            width: raw.width, height: raw.height, stride: raw.stride, format: raw.format
+        ), raw.data.count >= byteCount,
               let provider = CGDataProvider(data: raw.data as CFData) else { return nil }
         return CGImage(width: raw.width, height: raw.height,
                        bitsPerComponent: bits, bitsPerPixel: bits * 4,

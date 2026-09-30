@@ -1,0 +1,30 @@
+[
+  {
+    "path": "Aagedal Media Player/Logic/MPV/MPVPlayer.swift",
+    "sha256": "d60a2dc78db91f876985fed97f8e7ddd8d1bd32f957ccee8c494185476b19046"
+  },
+  {
+    "path": "Aagedal Media Player/Logic/LoupeFrameCapture.swift",
+    "sha256": "bd670cdadab97400921e1c37203b9fd91dcf89a8d96848cfa57f0ca49cd59e40"
+  },
+  {
+    "path": "Aagedal Media Player Tests/MPVRawScreenshotTests.swift",
+    "sha256": "219884934cb500cec07112ab5416d765d8bbb2fc5118ad4fe970b77e0352f828"
+  },
+  {
+    "path": "Aagedal Media Player.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved",
+    "sha256": "6aea6d64326f3040345c3523a0a39c95d53335777e233b3aa311e8ba90ad475d"
+  },
+  {
+    "path": "docs/evidence/mpv-screenshot-parser-20260930/parser-gate-summary.json",
+    "sha256": "cbaa6b36f09e1aebf4a85a9bc18d5b2bf9538f7d840858c7824b3fb1460264ad"
+  },
+  {
+    "path": "docs/evidence/mpv-screenshot-parser-20260930/live-geometry-summary.json",
+    "sha256": "74e5f97dc52c57bd4ca6d5a67c7d7c46b326a60c8b4cae57b6a0089793b8aa92"
+  },
+  {
+    "path": "/private/tmp/aagedal-itu-live-dd-20260930/SourcePackages/artifacts/mpvkit/Libmpv-GPL/Libmpv.xcframework/macos-arm64_x86_64/Libmpv.framework/Versions/A/Libmpv",
+    "sha256": "b5ddaaa2fa61ccfbb92bcbcb6e5ddcdb6b4f14316ffde283a8fe23ee1ceba84d"
+  }
+]
