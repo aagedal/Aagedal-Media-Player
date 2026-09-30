@@ -136,6 +136,11 @@ match the committed Xcode project metadata, revalidates the candidate's XCTest
 summary and skip details, and requires its source commit and `Package.resolved`
 hash to match the checkout. It resolves and prints the full source commit before
 invoking the toolchain and uses that exact commit as a newly created GitHub release's target.
+It rechecks HEAD, the resolved-package hash and checkout cleanliness before
+archive work, after export, before each GitHub publication and before replacing
+the appcast. A source change during preparation stops publication and preserves
+the prepared artifacts for diagnosis; restore and reverify the intended clean
+commit before attempting a release again.
 It runs the preflight again before deleting `build/`, verifies the exported
 app's version, architecture, hardened-runtime Developer ID signature, and nested
 signatures before notarization. The archive is restricted to the revisions in

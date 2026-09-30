@@ -18,6 +18,12 @@ fi
 # when deliberately selecting a different FFmpeg audio-only ordinal.
 input_manifest="$(/usr/bin/python3 "$repository_dir/scripts/live-audio-meter-profile-inputs.py" "$@")"
 input_count="$(print -r -- "$input_manifest" | /usr/bin/python3 -c 'import json, sys; print(len(json.load(sys.stdin)))')"
+observation_seconds="${LIVE_AUDIO_METER_PROFILE_SECONDS:-5}"
+# A sustained 30-minute observation must fit inside XCTest's deadline. Keep
+# the existing setup/routing/EOF allowance in addition to each paced interval.
+# Validate before creating artifacts or doing an expensive build.
+test_allowance="$(/usr/bin/python3 "$repository_dir/scripts/live-audio-meter-profile-settings.py" \
+  "$observation_seconds" "$input_count")"
 mkdir -p "$artifact_dir"
 derived_data="${LIVE_AUDIO_METER_PROFILE_DERIVED_DATA:-${TMPDIR:-/tmp/}aagedal-live-audio-meter-profile-derived}"
 build_configuration="${LIVE_AUDIO_METER_PROFILE_CONFIGURATION:-Release}"
@@ -25,8 +31,6 @@ if [[ "$build_configuration" != Release && "$build_configuration" != Debug ]]; t
   print -u2 'LIVE_AUDIO_METER_PROFILE_CONFIGURATION must be Release or Debug.'
   exit 1
 fi
-observation_seconds="${LIVE_AUDIO_METER_PROFILE_SECONDS:-5}"
-test_allowance=$((120 + 90 * input_count))
 cd "$repository_dir"
 
 print -r -- "$input_manifest" > "$artifact_dir/inputs.json"

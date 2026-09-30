@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import importlib.util
+import hashlib
 import os
 from pathlib import Path
 import plistlib
@@ -219,7 +220,7 @@ exit 91
         self.assertLess(summary, details)
         self.assertLess(details, validation)
         self.assertLess(validation, analysis)
-        self.assertIn('--minimum-tests 726', source)
+        self.assertIn('--minimum-tests 729', source)
         self.assertIn('-parallel-testing-enabled NO', source)
         self.assertEqual(source.count('-skip-testing:'), 2)
         focused = source.index('echo "==> Focused mixed-backend transport repeat"')
@@ -279,8 +280,63 @@ exit 91
         self.assertLess(package_match, result_validation)
         self.assertLess(result_validation, preflight)
         self.assertLess(result_validation, archive)
-        self.assertIn('--minimum-tests 726', self.source)
+        self.assertIn('--minimum-tests 729', self.source)
         self.assertEqual(self.source.count('--require-test'), 2)
+
+    def test_release_rechecks_source_before_build_and_publication(self) -> None:
+        previous_action = self.source.index('verify_source_identity()')
+        for action in ('rm -rf "$BUILD_DIR"', 'xcodebuild archive',
+                       'gh release upload', 'gh release create',
+                       'mv "$PENDING_APPCAST" "$APPCAST"'):
+            position = self.source.index(action)
+            guard = self.source.rfind('\nverify_source_identity\n', 0, position)
+            indented_guard = self.source.rfind('\n    verify_source_identity\n', 0, position)
+            self.assertGreater(max(guard, indented_guard), previous_action)
+            previous_action = position
+
+    def test_source_identity_guard_rejects_changes_during_preparation(self) -> None:
+        # Execute the actual release guard against real disposable Git states;
+        # no archive, signing, notarization or publication tools are invoked.
+        start = self.source.index('verify_source_identity() {')
+        end = self.source.index('\n}\n', start) + 3
+        guard = self.source[start:end]
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            subprocess.run(['git', 'init', '-q', str(root)], check=True)
+            packages = root / 'Package.resolved'
+            packages.write_text('reviewed packages\n')
+            (root / 'source.swift').write_text('reviewed source\n')
+            subprocess.run(['git', '-C', str(root), 'add', '.'], check=True)
+            commit = ['git', '-C', str(root), '-c', 'user.name=Release Test',
+                      '-c', 'user.email=release-test@example.invalid', 'commit', '-qm']
+            subprocess.run([*commit, 'baseline'], check=True)
+            source_commit = subprocess.check_output(
+                ['git', '-C', str(root), 'rev-parse', 'HEAD'], text=True).strip()
+            package_hash = hashlib.sha256(packages.read_bytes()).hexdigest()
+            environment = dict(os.environ, SOURCE_COMMIT=source_commit,
+                               CURRENT_PACKAGE_SHA256=package_hash,
+                               RESOLVED_PACKAGES=str(packages))
+
+            def check(accepted: bool) -> None:
+                result = subprocess.run(['/bin/bash', '-euo', 'pipefail', '-c',
+                                         guard + '\nverify_source_identity'],
+                                        cwd=root, env=environment, text=True, capture_output=True)
+                self.assertEqual(result.returncode == 0, accepted, result.stderr)
+                if not accepted:
+                    self.assertIn('source checkout changed', result.stderr)
+
+            check(True)
+            (root / 'source.swift').write_text('edited during archive\n')
+            check(False)
+            subprocess.run(['git', '-C', str(root), 'checkout', '--', 'source.swift'], check=True)
+            (root / 'new.swift').write_text('untracked source\n')
+            check(False)
+            (root / 'new.swift').unlink()
+            packages.write_text('changed packages\n')
+            check(False)
+            subprocess.run(['git', '-C', str(root), 'checkout', '--', 'Package.resolved'], check=True)
+            subprocess.run([*commit, 'changed HEAD', '--allow-empty'], check=True)
+            check(False)
 
     def test_exported_app_rejects_changed_update_metadata(self) -> None:
         spec = importlib.util.spec_from_file_location("release_preflight", PREFLIGHT_SCRIPT)

@@ -57,8 +57,9 @@ component. The final receipt fingerprints the entire cached source tree,
 generated headers, compile databases and compiler; the upstream source revision
 is explicitly qualified as coming from the retained diagnosis. Compiler arguments
 fail closed on unknown flags and response files so diagnostic/profiling/temp
-outputs cannot accidentally write into the input cache. Six builder safety tests
-are included in the canonical script-validator gate.
+outputs cannot accidentally write into the input cache. The original production
+candidate was built with the six safety checks available at that time; the
+follow-up below strengthens those checks without changing its retained evidence.
 
 ```bash
 python3 scripts/rebuild-mpv-coreaudio-candidate.py \
@@ -104,3 +105,34 @@ followed by supported-device/macOS, device-switch, surround, actual audible-outp
 and base-M1 checks, remain necessary before closing the shipping native-output
 gate. No fallback driver, forced-stereo policy or freshness-limit relaxation was
 introduced into production.
+
+## Input-preservation guard follow-up
+
+The builder now fingerprints the cached source tree, framework payload and
+symlinks, retained patch/identity record, compile databases, generated headers
+and the four cached objects before running build tools. It rechecks every
+recorded input before writing a successful receipt. Any mismatch fails the
+build, and only a matching result receives `inputsUnchanged: true`. Files can
+remain in a failed output directory; a ZIP without a successful receipt does
+not establish a verified candidate.
+
+Archive member paths are rejected before extraction, including absolute paths,
+parent traversal and control characters. Cached `-arch` and `-target` flags must
+agree with the requested architecture, with no repeated flags. Source and
+framework symlinks must remain inside their respective trees, so the copy cannot
+pull unrecorded external source payloads or retain links to the original
+framework. Twelve builder safety regressions pass.
+
+An actual universal incremental rebuild using the same retained checkout and
+resolved framework completed successfully at
+`/tmp/aagedal-coreaudio-input-guards-final-20260930`. Both architecture archives
+retain 218 unrelated objects byte-for-byte, and the final input snapshot matches
+the initial snapshot. Its [receipt](input-guard-rebuild-receipt.json) records
+the new candidate/ZIP identities and complete input snapshot. The native
+production harness was not rerun for this follow-up candidate; the earlier
+candidate's playback evidence above remains tied to its original identities.
+
+These checks verify the recorded cached inputs were preserved. They do not
+establish an upstream clean source tree, a full immutable build of all dependency
+components, or immutable SDK/external dependency headers. Those release-build
+requirements and the shipping package repin remain open.

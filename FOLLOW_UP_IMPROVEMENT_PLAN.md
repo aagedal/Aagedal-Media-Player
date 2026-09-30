@@ -3650,6 +3650,40 @@ it. Repin, MPV 1:1, native accessibility/editor, hardware and distribution
 acceptance remain open. Evidence:
 `docs/evidence/release-candidate-parallel-20260930/README.md`.
 
+## Phase 165 — Review endpoints and sustained acceptance tooling
+
+Status: Implemented on 2026-09-30; integrated Release verification follows.
+
+- [x] Clamp exact clip-end Review positions to the last playable frame despite
+  fractional-rate floating-point rounding, retain genuine partial-frame endings,
+  and bound extreme finite frame metadata without trapping integer conversion.
+  Three focused timeline regressions cover these cases.
+- [x] Enable explicit live-meter observations from 5 through 1,800 seconds,
+  budget XCTest deadlines for observation and both load/EOF segments, and reject
+  early EOF or insufficient sustained source-frame progress. Twenty-three fast
+  Python checks pass; both retained linked candidate profiles still validate
+  their nine aggregate rows under the stricter progress rule.
+- [x] Harden isolated CoreAudio rebuilding with safe archive member names,
+  requested-slice architecture checks, contained framework links and matching
+  pre/post source/framework/database/header/object input snapshots. Twelve
+  dependency-builder safety checks and an actual universal incremental rebuild
+  pass; both archives preserve all 218 unrelated objects per architecture.
+- [x] Recheck release source/package identity and checkout cleanliness before
+  building, after export, before GitHub mutation and before replacing appcast.
+  Fifteen release-script checks pass, including real temporary Git states for
+  clean, edited, untracked, changed-package and changed-HEAD cases.
+- [x] Advance aggregate candidate/release consumption to a 729-test floor,
+  alongside the unchanged two isolated mixed-backend transport checks.
+- [ ] Complete sustained native/representative-media/base-M1 acceptance,
+  immutable full dependency build/repin, native Review keyboard and spoken
+  accessibility, editor interoperability and distribution gates.
+
+The longer profiler interval enables the documented soak requirement; it does
+not claim that a 30-minute production observation has run. Retained native
+profiles still refer to their earlier locally repaired dependency candidates,
+not the shipping pin. See `docs/LIVE_AUDIO_METER_PERFORMANCE.md` and
+`docs/RELEASE.md` for the revised run contracts.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with

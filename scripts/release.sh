@@ -156,6 +156,24 @@ EVIDENCE_SOURCE_COMMIT=$(awk -F= '$1 == "sourceCommit" { print $2; exit }' "$CAN
 EVIDENCE_PACKAGE_SHA256=$(awk -F= '$1 == "packageResolvedSHA256" { print $2; exit }' "$CANDIDATE_ENVIRONMENT")
 EVIDENCE_STATUS=$(awk -F= '$1 == "status" { print $2; exit }' "$CANDIDATE_ENVIRONMENT")
 CURRENT_PACKAGE_SHA256=$(shasum -a 256 "$RESOLVED_PACKAGES" | awk '{print $1}')
+
+# Archive/export/notarization can take long enough for an editor or another
+# process to change this checkout. Do not publish an artifact against the
+# captured candidate identity after any such change.
+verify_source_identity() {
+    local current_commit current_packages current_status
+    current_commit=$(git rev-parse --verify HEAD) || return 1
+    current_packages=$(shasum -a 256 "$RESOLVED_PACKAGES" | awk '{print $1}') || return 1
+    current_status=$(git status --porcelain) || return 1
+    if [[ "$current_commit" != "$SOURCE_COMMIT" \
+       || "$current_packages" != "$CURRENT_PACKAGE_SHA256" \
+       || -n "$current_status" ]]; then
+        echo "ERROR: source checkout changed during release preparation; publication stopped." >&2
+        echo "The prepared artifacts remain in build/. Reverify the intended clean commit before releasing." >&2
+        return 1
+    fi
+}
+
 if [[ "$EVIDENCE_STATUS" != "passed" \
    || "$EVIDENCE_SOURCE_COMMIT" != "$SOURCE_COMMIT" \
    || "$EVIDENCE_PACKAGE_SHA256" != "$CURRENT_PACKAGE_SHA256" ]]; then
@@ -164,7 +182,7 @@ if [[ "$EVIDENCE_STATUS" != "passed" \
     exit 2
 fi
 python3 scripts/validate-release-xcresult.py \
-    "$CANDIDATE_SUMMARY" "$CANDIDATE_DETAILS" --minimum-tests 726
+    "$CANDIDATE_SUMMARY" "$CANDIDATE_DETAILS" --minimum-tests 729
 python3 scripts/validate-release-xcresult.py \
     "$CANDIDATE_MIXED_SUMMARY" "$CANDIDATE_MIXED_DETAILS" --minimum-tests 2 \
     --exact-tests 2 \
@@ -188,6 +206,7 @@ ARCHIVE_PATH="$BUILD_DIR/AagedalMediaPlayer.xcarchive"
 EXPORT_DIR="$BUILD_DIR/export"
 EXPORT_OPTIONS_PLIST="$BUILD_DIR/ExportOptions.plist"
 
+verify_source_identity
 rm -rf "$BUILD_DIR"
 mkdir -p "$BUILD_DIR"
 
@@ -206,6 +225,7 @@ EOF
 
 # ARCHS=arm64 ONLY_ACTIVE_ARCH=NO: keep SwiftPM dependencies from also
 # compiling an x86_64 slice that the arm64-only main target would discard.
+verify_source_identity
 xcodebuild archive \
     -project "$PROJECT" \
     -scheme "$SCHEME" \
@@ -224,6 +244,7 @@ xcodebuild -exportArchive \
 
 APP_PATH="$EXPORT_DIR/$SCHEME.app"
 [[ -d "$APP_PATH" ]] || { echo "Build produced no .app at $APP_PATH" >&2; exit 1; }
+verify_source_identity
 
 # Confirm the exported bundle contains the requested metadata, is arm64-only,
 # carries hardened-runtime Developer ID signatures, and passes strict nested
@@ -391,6 +412,7 @@ python3 scripts/release-preflight.py \
 # -----------------------------------------------------------------------------
 # Upload only after the pending feed has passed every deterministic check
 # -----------------------------------------------------------------------------
+verify_source_identity
 if ! command -v gh >/dev/null 2>&1 || ! gh auth status >/dev/null 2>&1; then
     echo "ERROR: GitHub CLI is unavailable or unauthenticated." >&2
     echo "The signed artifact and pending appcast remain in $BUILD_DIR; appcast.xml was not changed." >&2
@@ -422,11 +444,13 @@ verify_release_identity() {
 if gh release view "$MARKETING_VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
     # Check before --clobber so an unrelated existing release is never mutated.
     verify_release_identity
+    verify_source_identity
     echo "==> Uploading $RELEASE_ZIP_NAME to existing GitHub release $MARKETING_VERSION"
     gh release upload "$MARKETING_VERSION" "$RELEASE_ZIP" \
         --repo "$GITHUB_REPOSITORY" \
         --clobber
 else
+    verify_source_identity
     echo "==> Creating GitHub release $MARKETING_VERSION"
     gh release create "$MARKETING_VERSION" "$RELEASE_ZIP" \
         --repo "$GITHUB_REPOSITORY" \
@@ -447,6 +471,7 @@ python3 scripts/validate-github-release-asset.py \
 
 # Publish the already-validated feed locally only after the release target and
 # exact downloadable asset have been verified.
+verify_source_identity
 mv "$PENDING_APPCAST" "$APPCAST"
 
 echo "==> Prepended and validated appcast entry. Review and commit:"

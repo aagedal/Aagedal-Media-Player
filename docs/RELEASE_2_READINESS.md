@@ -114,6 +114,15 @@ workflow/media/performance gates remain open. See [current candidate evidence](e
 
 ## Must close before a defensible 2.0 candidate
 
+The next continuation bounds Review's clip-end frame calculation, extends the
+live-meter profiler through an explicit 30-minute observation, hardens archive
+and input identity for isolated CoreAudio builds, and stops release publication
+if its source checkout changes during preparation. The longer observation still
+requires an actual native run; immutable full MPVKit build/repin, editor,
+accessibility, base-M1 and distribution gates remain open. Aggregate candidate
+verification and release consumption now require 729 tests plus both isolated
+transport directions; current integrated verification is recorded separately.
+
 The integrated parallel continuation passes canonical verification at clean
 commit `88e8bdbfaacb1136770a9d6fcbb88296c8d0608b`: 718 optimized Release passes,
 eight documented optional skips (726 total), both isolated transport directions,

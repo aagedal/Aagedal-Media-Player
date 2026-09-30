@@ -5,6 +5,10 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Changed
+- Review clamps exact clip-end timing to its last playable frame at fractional rates and safely bounds extreme frame metadata.
+- Release preparation rechecks source and package identity before building and publishing, stopping if the checkout changes during archive, export or notarization.
+- Live-meter profiling supports requested observations up to 30 minutes with scaled test deadlines and sustained source-progress checks.
+- Isolated CoreAudio candidate rebuilds validate archive member paths and architecture flags, contain framework links and verify cached inputs remain unchanged.
 - Review keeps correction focus on empty note text while preserving unrelated range drafts, and clears accepted text correction state without dropping range errors.
 - MPV screenshot capture validates node types, raster bounds and buffer sizes before reading or copying pixels.
 - Review's End at current frame action clears an invalid range draft even when the chosen endpoint is already saved, allowing reports to proceed after correction.
@@ -13,7 +17,7 @@ All notable changes to Aagedal Media Player.
 - Candidate verification temporarily keeps the Mac awake, rejects sleep-interrupted evidence, and bounds each isolated transport test to 120 seconds.
 - AVFoundation loupe capture follows the enabled video track and clears stale raster proof after track or composition changes; composed and ambiguous output remains a display preview.
 - Live-meter profile validation rejects mismatched sample-rate timestamp provenance and impossible snapshot timing.
-- Candidate verification and release consumption now require at least the verified 726 aggregate tests, alongside both isolated mixed-backend transport checks.
+- Candidate verification and release consumption now require at least 729 aggregate tests, alongside both isolated mixed-backend transport checks.
 - Review keeps an edited note draft when its update is rejected, and report actions stop with visible feedback if pending edits cannot be applied.
 - Review drafts now survive a playback or comparison geometry reload of the same sources; replacing a source or changing the active notes copy still clears them.
 - Review keeps new-note, edited-text, and range drafts when its popover closes; a later keyboard export reopens Review to validate unfinished edits and asks for an unsubmitted new note to be added or cleared.

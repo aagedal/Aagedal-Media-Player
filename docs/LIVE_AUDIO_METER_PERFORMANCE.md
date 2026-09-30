@@ -51,7 +51,11 @@ permission-cleared files whose codec, channel order, level and expected duration
 are independently known. Inputs are never copied into the repository.
 
 `LIVE_AUDIO_METER_PROFILE_SECONDS` selects the paced observation interval from
-5 through 30 seconds; the default is five seconds. Use
+5 through 1,800 seconds; the default is five seconds. For an explicit sustained
+30-minute observation, set `LIVE_AUDIO_METER_PROFILE_SECONDS=1800` and supply
+media with at least 1,810 seconds of measurable audio. The XCTest deadline scales
+with the interval and input count, retaining allowance for both playback loads,
+routing checks, cancellation and the separate near-EOF segment. Use
 `LIVE_AUDIO_METER_PROFILE_DERIVED_DATA` to select a compatible Xcode build
 cache. Keep other tests and native app automation idle while profiling because
 the isolated XCTest host assumes its direct child process is the meter's bundled
@@ -107,9 +111,12 @@ non-finite timing, absent snapshots or child-memory sampling, decoded work beyon
 the 250 ms admission bound, routing retargeting, incomplete cancellation, and
 missing/inconsistent EOF timestamp provenance. The timestamp time base must be
 exactly `1/sampleRate` for the selected stream, as emitted by the production
-decoder. The requested observation must remain within the runner's 5–30 second
+decoder. The requested observation must remain within the runner's 5–1,800 second
 range, and reported first-snapshot latency and snapshot intervals must fit within
-the recorded observation wall time. These are evidence-consistency checks;
+the recorded observation wall time. Source-frame progress must cover the requested
+interval with at most one second of startup/reporting headroom. The harness fails
+promptly if the measured audio ends during observation; waiting on a frozen EOF
+reading cannot qualify as a soak. These are evidence-consistency checks;
 they do not establish a UI cadence or first-reading performance target.
 Run its fast regression tests
 directly with:
@@ -157,3 +164,5 @@ simultaneous. It does not measure GPU use, thermals, energy, speaker correctness
 audible output, UI drawing cadence, or every malformed-media failure. Passing
 artifacts therefore **enable but do not by themselves complete** representative-
 media, accuracy, accessibility, soak, or base-M1 release acceptance.
+The extended interval enables the contract's 30-minute observation; no sustained
+30-minute or base-M1 acceptance run is claimed by this harness change.

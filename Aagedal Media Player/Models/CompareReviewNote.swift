@@ -59,8 +59,24 @@ nonisolated enum CompareReviewTimeline {
         guard frameRate.isFinite, frameRate > 0 else { return 0 }
         let duration = max(0, duration.isFinite ? duration : 0)
         let time = max(0, min(time.isFinite ? time : 0, duration))
-        let lastFrame = max(0, Int64((duration * frameRate).rounded(.up)) - 1)
-        return min(Int64((time * frameRate).rounded()), lastFrame)
+        let frameCount = duration * frameRate
+        // A duration expressed in seconds can round an exact frame count a
+        // few floating-point steps upward (25 / (24000 / 1001), for example).
+        // Ceil alone would then expose a nonexistent frame at the media end.
+        let nearestCount = frameCount.rounded()
+        let wholeFrameCount = frameCount.isFinite
+            && abs(frameCount - nearestCount) <= frameCount.ulp * 8
+            ? nearestCount : frameCount.rounded(.up)
+        let lastFrame = boundedFrameIndex(max(0, wholeFrameCount - 1))
+        return min(boundedFrameIndex((time * frameRate).rounded()), lastFrame)
+    }
+
+    /// Double(Int64.max) rounds to 2^63, so conversion must use a strict
+    /// bound. Invalid or oversized metadata must never trap a Review action.
+    private static func boundedFrameIndex(_ value: Double) -> Int64 {
+        guard value > 0 else { return 0 }
+        guard value < Double(Int64.max) else { return Int64.max }
+        return Int64(value)
     }
 
     static func time(

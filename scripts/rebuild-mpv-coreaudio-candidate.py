@@ -9,6 +9,7 @@ This is engineering tooling, not a clean release build or audible-output proof.
 import argparse
 import hashlib
 import json
+import os
 import re
 from pathlib import Path
 import shlex
@@ -35,13 +36,14 @@ def capture(args, **kwargs):
     return run(args, stdout=subprocess.PIPE, **kwargs).stdout
 
 
-def compile_command(entry, source, patched_source, output, sdk):
+def compile_command(entry, source, patched_source, output, sdk, expected_arch):
     """Reuse original flags and generated headers, writing ONLY to output."""
     cwd = Path(entry['directory'])
     tokens = shlex.split(entry['command'])
     if not tokens or tokens[0] != '/usr/bin/clang':
         raise ValueError('compile database must invoke /usr/bin/clang directly')
     result = [tokens[0]]
+    architecture_flags = []
     index = 1
     while index < len(tokens):
         token = tokens[index]
@@ -61,11 +63,13 @@ def compile_command(entry, source, patched_source, output, sdk):
                 include = patched_source / include.relative_to(source)
             token = '-I' + str(include)
         elif token in ('-arch', '-target'):
+            if index + 1 == len(tokens):
+                raise ValueError(f'missing cached compile argument for {token}')
             value = tokens[index + 1]
-            if token == '-arch' and value not in ARCHES:
-                raise ValueError(f'unsupported architecture: {value}')
-            if token == '-target' and value not in [arch + '-apple-macos12.0' for arch in ARCHES]:
-                raise ValueError(f'unsupported target: {value}')
+            expected = expected_arch if token == '-arch' else expected_arch + '-apple-macos12.0'
+            if expected_arch not in ARCHES or value != expected:
+                raise ValueError(f'cached compile architecture does not match {expected_arch}: {value}')
+            architecture_flags.append(token)
             result += [token, value]
             index += 2
             continue
@@ -79,20 +83,33 @@ def compile_command(entry, source, patched_source, output, sdk):
             raise ValueError(f'unsupported cached compile argument: {token}')
         result.append(token)
         index += 1
+    if not architecture_flags or len(architecture_flags) != len(set(architecture_flags)):
+        raise ValueError('expected nonduplicated cached compile architecture flags')
     return result + ['-isysroot', str(sdk), '-o', str(output)]
 
 
 def source_tree_sha(directory):
     manifest = []
     for file in sorted(directory.rglob('*')):
-        if file.is_file() and '.git' not in file.relative_to(directory).parts:
+        if '.git' in file.relative_to(directory).parts:
+            continue
+        if file.is_symlink():
+            manifest.append(str(file.relative_to(directory)) + '\0symlink\0' + os.readlink(file))
+        elif file.is_file():
             manifest.append(str(file.relative_to(directory)) + '\0' + sha(file))
     return hashlib.sha256('\n'.join(manifest).encode()).hexdigest()
 
 
 def archive_members(archive):
-    names = [name for name in capture(['/usr/bin/ar', 't', archive]).decode().splitlines()
-             if not name.startswith('__.SYMDEF')]
+    names = capture(['/usr/bin/ar', 't', archive]).decode().splitlines()
+    # ar extraction uses these names as output paths. Check before extraction,
+    # including entries that might otherwise resemble a symbol-table name.
+    if any(name in ('', '.', '..') or Path(name).name != name or '\\' in name or
+           any(ord(character) < 32 or ord(character) == 127 for character in name)
+           for name in names):
+        raise ValueError(f'unsafe archive member name: {archive}')
+    symbols = {'__.SYMDEF', '__.SYMDEF SORTED', '__.SYMDEF_64', '__.SYMDEF_64 SORTED'}
+    names = [name for name in names if name not in symbols]
     # Duplicate names make extraction/comparison ambiguous. Refuse such input.
     if len(names) != len(set(names)):
         raise ValueError(f'duplicate archive members: {archive}')
@@ -117,6 +134,8 @@ def validate_inputs(mpvkit, framework, output):
             raise ValueError(f'pinned source hash mismatch: {name}')
     if not binary.is_file():
         raise ValueError('input must be the resolved Libmpv.framework')
+    validate_tree_links(source, 'cached source')
+    validate_framework_links(framework)
     architectures = capture(['/usr/bin/lipo', '-archs', binary]).decode().split()
     if set(architectures) != set(ARCHES):
         raise ValueError(f'expected universal macOS framework, got: {architectures}')
@@ -134,8 +153,63 @@ def framework_binary_destination(framework):
     return destination
 
 
+def validate_tree_links(directory, description):
+    """A tree fingerprint must include every payload reachable through links."""
+    root = directory.resolve()
+    for path in directory.rglob('*'):
+        if path.is_symlink():
+            try:
+                destination = path.resolve()
+            except RuntimeError as error:
+                raise ValueError(f'{description} symlink loop: {path}') from error
+            if destination != root and root not in destination.parents:
+                raise ValueError(f'{description} symlink escapes isolated candidate: {path}')
+
+
+def validate_framework_links(framework):
+    """Copied framework links must refer only to the isolated candidate."""
+    validate_tree_links(framework, 'framework')
+
+
+def snapshot_inputs(mpvkit, source, framework):
+    """Record cached inputs before running tools, then require the same identities."""
+    snapshot = {
+        'mpvkitRevision': capture(['git', '-C', mpvkit, 'rev-parse', 'HEAD']).decode().strip(),
+        'sourceTreeSHA256': source_tree_sha(source),
+        'frameworkTreeSHA256': source_tree_sha(framework),
+        'frameworkBinarySHA256': sha(framework / 'Libmpv'),
+        'patchSHA256': sha(PATCH),
+        'identitySHA256': sha(IDENTITY),
+        'architectures': {},
+    }
+    for arch in ARCHES:
+        scratch = mpvkit / 'dist/libmpv/macos/scratch' / arch
+        database = scratch / 'compile_commands.json'
+        entries = json.loads(database.read_text())
+        objects = {}
+        for name in FILES:
+            matches = [entry for entry in entries if Path(entry['file']).name == name]
+            if len(matches) != 1:
+                raise ValueError(f'expected one compile command for {arch}/{name}')
+            objects[matches[0]['output']] = sha(scratch / matches[0]['output'])
+        snapshot['architectures'][arch] = {
+            'compileDatabaseSHA256': sha(database),
+            'generatedHeaderSHA256': {str(header.relative_to(scratch)): sha(header)
+                                      for header in sorted(scratch.rglob('*.h'))},
+            'cachedObjectSHA256': objects,
+        }
+    return snapshot
+
+
+def verify_inputs_unchanged(before, after):
+    if before != after:
+        changed = [name for name in before.keys() | after.keys() if before.get(name) != after.get(name)]
+        raise ValueError('candidate inputs changed during rebuild: ' + ', '.join(sorted(changed)))
+
+
 def rebuild(mpvkit, framework, output):
     identity, source, binary = validate_inputs(mpvkit, framework, output)
+    input_snapshot = snapshot_inputs(mpvkit, source, framework)
     sdk = capture(['xcrun', '--sdk', 'macosx', '--show-sdk-path']).decode().strip()
     output.mkdir(parents=True)
     patched_source = output / 'source'
@@ -147,7 +221,7 @@ def rebuild(mpvkit, framework, output):
         'mpvkitRevision': identity['mpvkitRevision'],
         'retainedMPVSourceRevision': identity['mpvSourceRevision'],
         'sourceRevisionVerification': 'Revision from prior diagnosis; three patched files independently hash-checked. Full tree fingerprint below records current cached inputs, not an upstream clean checkout assertion.',
-        'inputSourceTreeSHA256': source_tree_sha(source),
+        'inputSourceTreeSHA256': input_snapshot['sourceTreeSHA256'],
         'compilerVersion': capture(['/usr/bin/clang', '--version']).decode().strip(),
         'iinaPatchURL': identity['iinaPatchURL'],
         'iinaPatchRevision': identity['iinaPatchRevision'],
@@ -187,7 +261,7 @@ def rebuild(mpvkit, framework, output):
             if arch == 'arm64' and name == 'ao_coreaudio.c' and sha(extraction / member) != identity['linkedCoreAudioObjectSHA256']:
                 raise ValueError('framework does not match retained native diagnosis')
             object_path = directory / member
-            command = compile_command(entry, source, patched_source, object_path, sdk)
+            command = compile_command(entry, source, patched_source, object_path, sdk, arch)
             with (directory / (name + '.log')).open('wb') as log:
                 run(command, cwd=scratch, stdout=log, stderr=subprocess.STDOUT)
             changed[member] = {'originalSHA256': sha(extraction / member), 'rebuiltSHA256': sha(object_path), 'command': command}
@@ -207,6 +281,7 @@ def rebuild(mpvkit, framework, output):
         archives.append(candidate)
     candidate_framework = output / 'Libmpv.framework'
     shutil.copytree(framework, candidate_framework, symlinks=True)
+    validate_framework_links(candidate_framework)
     run(['/usr/bin/lipo', '-create'] + archives + ['-output', framework_binary_destination(candidate_framework)])
     xcframework = output / 'Libmpv.xcframework'
     run(['xcodebuild', '-create-xcframework', '-framework', candidate_framework, '-output', xcframework])
@@ -215,6 +290,9 @@ def rebuild(mpvkit, framework, output):
     receipt['candidateFrameworkSHA256'] = sha(candidate_framework / 'Libmpv')
     receipt['xcframeworkZIPChecksum'] = sha(archive)
     receipt['patchedSourceSHA256'] = {name: sha(patched_source / 'audio/out' / name) for name in identity['sourceSHA256']}
+    verify_inputs_unchanged(input_snapshot, snapshot_inputs(mpvkit, source, framework))
+    receipt['inputSnapshot'] = input_snapshot
+    receipt['inputsUnchanged'] = True
     (output / 'receipt.json').write_text(json.dumps(receipt, indent=2) + '\n')
     print(f'Local candidate and identity receipt: {output}')
 

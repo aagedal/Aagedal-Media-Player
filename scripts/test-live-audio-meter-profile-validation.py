@@ -5,7 +5,9 @@ import copy
 import hashlib
 import importlib.util
 import json
+import os
 from pathlib import Path
+import subprocess
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -21,6 +23,11 @@ input_spec = importlib.util.spec_from_file_location(
 )
 inputs = importlib.util.module_from_spec(input_spec)
 input_spec.loader.exec_module(inputs)
+settings_spec = importlib.util.spec_from_file_location(
+    "settings", Path(__file__).with_name("live-audio-meter-profile-settings.py")
+)
+settings = importlib.util.module_from_spec(settings_spec)
+settings_spec.loader.exec_module(settings)
 
 
 class ValidationTests(unittest.TestCase):
@@ -290,12 +297,48 @@ class ValidationTests(unittest.TestCase):
                 validator.validate([row], self.manifest())
 
     def test_observation_duration_matches_supported_runner_range(self):
-        row = self.record()
-        row["observation"].update({"observationSeconds": 30, "wallSeconds": 30.1})
-        validator.validate([row], self.manifest())
-        row["observation"].update({"observationSeconds": 31, "wallSeconds": 31.1})
+        for duration in (5, 30, 1_800):
+            row = self.record()
+            row["durationSeconds"] = duration + 20
+            row["observation"].update({"observationSeconds": duration, "wallSeconds": duration + 0.1,
+                                       "endSourceFrame": duration * row["sampleRate"]})
+            with self.subTest(duration=duration):
+                validator.validate([row], self.manifest())
+        row["observation"].update({"observationSeconds": 1_801, "wallSeconds": 1_801.1})
         with self.assertRaisesRegex(ValueError, "observation duration"):
             validator.validate([row], self.manifest())
+
+    def test_long_observation_requires_source_progress_and_transport_headroom(self):
+        row = self.record()
+        row["durationSeconds"] = 1_820
+        row["observation"].update({"observationSeconds": 1_800, "wallSeconds": 1_800.1})
+        with self.assertRaisesRegex(ValueError, "enough paced source frames"):
+            validator.validate([row], self.manifest())
+        row["observation"]["endSourceFrame"] = 1_800 * row["sampleRate"]
+        row["durationSeconds"] = 1_809
+        with self.assertRaisesRegex(ValueError, "transport-check headroom"):
+            validator.validate([row], self.manifest())
+
+    def test_runner_deadline_scales_for_soak_and_each_input(self):
+        self.assertEqual(settings.execution_time_allowance("5", 1), 305)
+        self.assertEqual(settings.execution_time_allowance("5.5", 2), 491)
+        self.assertEqual(settings.execution_time_allowance("1800", 2), 4_080)
+        for value in ("bad", "nan", "inf", "4.99", "1800.01"):
+            with self.subTest(value=value), self.assertRaisesRegex(ValueError, "PROFILE_SECONDS"):
+                settings.execution_time_allowance(value, 1)
+
+    def test_runner_rejects_invalid_duration_before_build_or_artifact_creation(self):
+        script = Path(__file__).with_name("profile-live-audio-meter.sh").resolve()
+        for value in ("nan", "1800.01"):
+            artifact = Path(self.temporary.name) / f"invalid-duration-{value}"
+            environment = dict(os.environ, LIVE_AUDIO_METER_PROFILE_SECONDS=value)
+            result = subprocess.run(["/bin/zsh", str(script), str(artifact), str(self.input)],
+                                    env=environment, capture_output=True, text=True, timeout=10)
+            with self.subTest(value=value):
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("LIVE_AUDIO_METER_PROFILE_SECONDS", result.stderr)
+                self.assertNotIn("Building production", result.stderr)
+                self.assertFalse(artifact.exists())
 
     def test_rejects_non_finite_numbers(self):
         for section, key in [

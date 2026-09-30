@@ -49,9 +49,12 @@ def validate_observation(observation, sample_rate):
     if end <= observation["startSourceFrame"]:
         raise ValueError("observation did not advance source frames")
     integer(observation["publishedSnapshotCount"], "published snapshot count", minimum=2)
-    duration = number(observation["observationSeconds"], "observation duration", minimum=5, maximum=30)
+    duration = number(observation["observationSeconds"], "observation duration", minimum=5, maximum=1_800)
     wall = number(observation["wallSeconds"], "observation wall duration", minimum=duration)
-    if end - observation["startSourceFrame"] < sample_rate * min(3, duration - 1):
+    # Preserve one second of startup/reporting headroom, but require continuous
+    # source progress over the requested observation. A meter which ended after
+    # a few seconds cannot qualify a longer wall-clock wait as a soak.
+    if end - observation["startSourceFrame"] < sample_rate * (duration - 1):
         raise ValueError("observation did not retain enough paced source frames")
     latency = number(observation["firstSnapshotLatencySeconds"], "first snapshot latency", minimum=0, maximum=wall)
     interval = number(observation["maximumSnapshotIntervalSeconds"], "maximum snapshot interval", minimum=0, maximum=wall - latency)

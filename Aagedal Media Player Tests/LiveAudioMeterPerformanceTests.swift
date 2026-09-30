@@ -48,8 +48,8 @@ final class LiveAudioMeterPerformanceTests: XCTestCase {
         let inputs = try JSONDecoder().decode([ProfileInput].self, from: Data(encodedInputs.utf8))
         XCTAssertFalse(inputs.isEmpty)
         let observationSeconds = Double(environment["LIVE_AUDIO_METER_PROFILE_SECONDS"] ?? "5") ?? 0
-        XCTAssertTrue((5...30).contains(observationSeconds))
-        guard !inputs.isEmpty, (5...30).contains(observationSeconds) else { return }
+        XCTAssertTrue((5...1_800).contains(observationSeconds))
+        guard !inputs.isEmpty, (5...1_800).contains(observationSeconds) else { return }
 
         for (inputIndex, input) in inputs.enumerated() {
             let url = URL(fileURLWithPath: input.path)
@@ -349,6 +349,12 @@ final class LiveAudioMeterPerformanceTests: XCTestCase {
         while seconds(start.duration(to: .now)) < requestedSeconds {
             try updateSamples(player: player, session: session, start: start,
                               previousCount: &previousCount, previousSnapshotTime: &previousSnapshotTime, run: &run)
+            if case .ended = session.coordinator.status {
+                attachPlaybackDiagnostic(player: player, session: session, stage: "observation-early-eof")
+                throw NSError(domain: "LiveAudioMeterPerformanceEarlyEOF", code: 1,
+                              userInfo: [NSLocalizedDescriptionKey:
+                                "The measured audio ended before the requested observation completed."])
+            }
             try await Task.sleep(for: .milliseconds(20))
         }
         try updateSamples(player: player, session: session, start: start,

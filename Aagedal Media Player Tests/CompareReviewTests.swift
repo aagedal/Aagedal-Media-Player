@@ -132,6 +132,36 @@ final class CompareReviewTimelineTests: XCTestCase {
             originalFrame
         )
     }
+
+    func testExactClipDurationDoesNotExposeAnExtraFrameFromFloatingPointRounding() {
+        for (frameCount, rate) in [(25.0, 24_000.0 / 1_001.0),
+                                   (15.0, 30_000.0 / 1_001.0),
+                                   (15.0, 60_000.0 / 1_001.0),
+                                   (7.0, 25.0)] {
+            let duration = frameCount / rate
+            XCTAssertEqual(CompareReviewTimeline.frameIndex(
+                for: duration, duration: duration, frameRate: rate), Int64(frameCount) - 1)
+        }
+    }
+
+    func testGenuinePartialFrameDurationStillIncludesItsLastFrame() {
+        let rate = 24_000.0 / 1_001.0
+        let duration = 25.0001 / rate
+        XCTAssertEqual(CompareReviewTimeline.frameIndex(
+            for: duration, duration: duration, frameRate: rate), 25)
+    }
+
+    func testFiniteExtremeMetadataDoesNotTrapFrameConversion() {
+        XCTAssertEqual(CompareReviewTimeline.frameIndex(
+            for: .greatestFiniteMagnitude, duration: .greatestFiniteMagnitude,
+            frameRate: .greatestFiniteMagnitude), .max)
+        XCTAssertEqual(CompareReviewTimeline.frameIndex(
+            for: 1, duration: Double(Int64.max), frameRate: 1), 1)
+        XCTAssertEqual(CompareReviewTimeline.frameIndex(
+            for: Double(Int64.max), duration: Double(Int64.max), frameRate: 1), .max)
+        XCTAssertEqual(CompareReviewTimeline.frameIndex(
+            for: 0, duration: .greatestFiniteMagnitude, frameRate: 30), 0)
+    }
 }
 
 final class CompareReviewSidecarStoreTests: XCTestCase {
