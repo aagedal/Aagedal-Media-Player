@@ -1,0 +1,2 @@
+Clean candidate build failed: MPVKit-GPL requires a working Metal compiler to preserve CONFIG_METAL=1. Native prerequisite command xcrun --sdk macosx metal -v failed:
+error: error: cannot execute tool 'metal' due to missing Metal Toolchain; use: xcodebuild -downloadComponent MetalToolchain

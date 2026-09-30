@@ -1,0 +1,224 @@
+{
+  "baselineScope": "retained pinned cached MPVKit-GPL build configuration; app product explicitly MPVKit-GPL",
+  "configurationDifferences": {
+    "arm64": {
+      "libmpv/config.h": {
+        "baselinePath": "/Users/truls.aagedal/Developer/MPVKit/dist/libmpv/macos/scratch/arm64/config.h",
+        "baselineHeaderSHA256": "85a7776ced1092fccab8c4c7a3b11d8fe2d7b163815fa4fc72b2d51ad1b68dc7",
+        "candidatePath": "/tmp/aagedal-coreaudio-clean-build-v4-20260930/MPVKit/dist/libmpv/macos/scratch/arm64/config.h",
+        "candidateHeaderSHA256": "c02478de260ef7b6ce9180d6253556ece1f0751d966c3cfed04d3a9ab86d6452",
+        "differences": {
+          "HAVE_GPL": {
+            "baseline": "1",
+            "candidate": "0"
+          }
+        }
+      },
+      "FFmpeg/config.h": {
+        "baselinePath": "/Users/truls.aagedal/Developer/MPVKit/dist/FFmpeg/macos/scratch/arm64/config.h",
+        "baselineHeaderSHA256": "b33f58850bde20985552f6af5922d298ffbb6474637fd0427ebe698a57637100",
+        "candidatePath": "/tmp/aagedal-coreaudio-clean-build-v4-20260930/MPVKit/dist/FFmpeg/macos/scratch/arm64/config.h",
+        "candidateHeaderSHA256": "1e7de50210a719bf7285f943af80f30cea0c2d63fe413a53bcf020c73808a244",
+        "differences": {
+          "CONFIG_GPL": {
+            "baseline": "1",
+            "candidate": "0"
+          },
+          "CONFIG_GPLV3": {
+            "baseline": "1",
+            "candidate": "0"
+          },
+          "CONFIG_LGPLV3": {
+            "baseline": "0",
+            "candidate": "1"
+          },
+          "CONFIG_LIBSMBCLIENT": {
+            "baseline": "1",
+            "candidate": "0"
+          },
+          "CONFIG_METAL": {
+            "baseline": "1",
+            "candidate": "0"
+          }
+        }
+      },
+      "FFmpeg/config_components.h": {
+        "baselinePath": "/Users/truls.aagedal/Developer/MPVKit/dist/FFmpeg/macos/scratch/arm64/config_components.h",
+        "baselineHeaderSHA256": "0b501a48f37e4e5c4b641e0fc661aa9c5fae256ed4e7b729d9cccc0a18f47d98",
+        "candidatePath": "/tmp/aagedal-coreaudio-clean-build-v4-20260930/MPVKit/dist/FFmpeg/macos/scratch/arm64/config_components.h",
+        "candidateHeaderSHA256": "58315bd6bd30bfcae07f8fe60f114e46566d356d3cbb870c309be82aacf1a5c4",
+        "differences": {
+          "CONFIG_ADPCM_CIRCUS_DECODER": {
+            "baseline": "1",
+            "candidate": "0"
+          },
+          "CONFIG_ADPCM_IMA_ESCAPE_DECODER": {
+            "baseline": "1",
+            "candidate": "0"
+          },
+          "CONFIG_ADPCM_IMA_HVQM2_DECODER": {
+            "baseline": "1",
+            "candidate": "0"
+          },
+          "CONFIG_ADPCM_IMA_HVQM4_DECODER": {
+            "baseline": "1",
+            "candidate": "0"
+          },
+          "CONFIG_ADPCM_IMA_MAGIX_DECODER": {
+            "baseline": "1",
+            "candidate": "0"
+          },
+          "CONFIG_ADPCM_IMA_PDA_DECODER": {
+            "baseline": "1",
+            "candidate": "0"
+          },
+          "CONFIG_ADPCM_N64_DECODER": {
+            "baseline": "1",
+            "candidate": "0"
+          },
+          "CONFIG_ADPCM_PSXC_DECODER": {
+            "baseline": "1",
+            "candidate": "0"
+          },
+          "CONFIG_AHX_PARSER": {
+            "baseline": "1",
+            "candidate": "0"
+          },
+          "CONFIG_AHX_TO_MP2_BSF": {
+            "baseline": "1",
+            "candidate": "0"
+          },
+          "CONFIG_DELOGO_FILTER": {
+            "baseline": "1",
+            "candidate": "0"
+          },
+          "CONFIG_LIBSMBCLIENT_PROTOCOL": {
+            "baseline": "1",
+            "candidate": "0"
+          }
+        }
+      }
+    },
+    "x86_64": {
+      "libmpv/config.h": {
+        "baselinePath": "/Users/truls.aagedal/Developer/MPVKit/dist/libmpv/macos/scratch/x86_64/config.h",
+        "baselineHeaderSHA256": "22441409bd96d8f99dcec09db27eb8ddfb9a09820d2a01909f9c133a474035fa",
+        "candidatePath": "/tmp/aagedal-coreaudio-clean-build-v4-20260930/MPVKit/dist/libmpv/macos/scratch/x86_64/config.h",
+        "candidateHeaderSHA256": "c70b894cd00ca86ff0c6be8c7a129a8149eae09ddca0eb289381d8eb089b5ead",
+        "differences": {
+          "HAVE_GPL": {
+            "baseline": "1",
+            "candidate": "0"
+          }
+        }
+      },
+      "FFmpeg/config.h": {
+        "baselinePath": "/Users/truls.aagedal/Developer/MPVKit/dist/FFmpeg/macos/scratch/x86_64/config.h",
+        "baselineHeaderSHA256": "62be41b24a39cad5e93081b63f8b19699dbd91f99f575ab49447ea1ca6e9ae4c",
+        "candidatePath": "/tmp/aagedal-coreaudio-clean-build-v4-20260930/MPVKit/dist/FFmpeg/macos/scratch/x86_64/config.h",
+        "candidateHeaderSHA256": "074bda02552d171f2b6eaa50e16dbdeb30bc084c50f095621be9c1d4ec269689",
+        "differences": {
+          "CONFIG_GPL": {
+            "baseline": "1",
+            "candidate": "0"
+          },
+          "CONFIG_GPLV3": {
+            "baseline": "1",
+            "candidate": "0"
+          },
+          "CONFIG_LGPLV3": {
+            "baseline": "0",
+            "candidate": "1"
+          },
+          "CONFIG_LIBSMBCLIENT": {
+            "baseline": "1",
+            "candidate": "0"
+          },
+          "CONFIG_METAL": {
+            "baseline": "1",
+            "candidate": "0"
+          }
+        }
+      },
+      "FFmpeg/config_components.h": {
+        "baselinePath": "/Users/truls.aagedal/Developer/MPVKit/dist/FFmpeg/macos/scratch/x86_64/config_components.h",
+        "baselineHeaderSHA256": "a3bdbf4c5b41f522871ce5b7e49f22a9cb49f51ee15c9896f0c1447f1b2fdee8",
+        "candidatePath": "/tmp/aagedal-coreaudio-clean-build-v4-20260930/MPVKit/dist/FFmpeg/macos/scratch/x86_64/config_components.h",
+        "candidateHeaderSHA256": "787c93ab9ba76079d9648f815a1aca741ddcdac99a9aaa8f1d21755898add13e",
+        "differences": {
+          "CONFIG_ADPCM_CIRCUS_DECODER": {
+            "baseline": "1",
+            "candidate": "0"
+          },
+          "CONFIG_ADPCM_IMA_ESCAPE_DECODER": {
+            "baseline": "1",
+            "candidate": "0"
+          },
+          "CONFIG_ADPCM_IMA_HVQM2_DECODER": {
+            "baseline": "1",
+            "candidate": "0"
+          },
+          "CONFIG_ADPCM_IMA_HVQM4_DECODER": {
+            "baseline": "1",
+            "candidate": "0"
+          },
+          "CONFIG_ADPCM_IMA_MAGIX_DECODER": {
+            "baseline": "1",
+            "candidate": "0"
+          },
+          "CONFIG_ADPCM_IMA_PDA_DECODER": {
+            "baseline": "1",
+            "candidate": "0"
+          },
+          "CONFIG_ADPCM_N64_DECODER": {
+            "baseline": "1",
+            "candidate": "0"
+          },
+          "CONFIG_ADPCM_PSXC_DECODER": {
+            "baseline": "1",
+            "candidate": "0"
+          },
+          "CONFIG_AHX_PARSER": {
+            "baseline": "1",
+            "candidate": "0"
+          },
+          "CONFIG_AHX_TO_MP2_BSF": {
+            "baseline": "1",
+            "candidate": "0"
+          },
+          "CONFIG_DELOGO_FILTER": {
+            "baseline": "1",
+            "candidate": "0"
+          },
+          "CONFIG_LIBSMBCLIENT_PROTOCOL": {
+            "baseline": "1",
+            "candidate": "0"
+          }
+        }
+      }
+    }
+  },
+  "metalPrerequisite": {
+    "nativeCommand": [
+      "xcrun",
+      "--sdk",
+      "macosx",
+      "metal",
+      "-v"
+    ],
+    "nativeExitCode": 1,
+    "output": "error: error: cannot execute tool 'metal' due to missing Metal Toolchain; use: xcodebuild -downloadComponent MetalToolchain"
+  },
+  "gplPreflightExitCode": 1,
+  "gplOutputDirectoryCreated": false,
+  "historicalDefaultShippingVerificationExitCode": 1,
+  "builderSHA256": "b9b2097f9bc0f146bec9bea15dbb778cee0fcf13541f5f0ab18b75975c457997",
+  "currentBuilderSHA256": "7b18d663d7898cfd8ee4aeb8c22f63da1248083a8457c80194af0cb24a7d0b21",
+  "currentTestsSHA256": "aa8918929682878c75debd4fa1acb33cc792372a106539572afb4cbb72d911d4",
+  "safetyTests": {
+    "count": 13,
+    "status": "passed"
+  },
+  "immutableArtifactReceiptHashesRechecked": true,
+  "originalSourceSnapshotAndLogsRechecked": true
+}

@@ -11,6 +11,12 @@ candidate; the build itself supplies no actual production playback,
 audible-output, device-switch, surround, supported-macOS or release-floor
 acceptance. Follow-up app profiles must identify these exact new artifacts.
 
+The subsequent [shipping parity audit](../shipping-parity-audit/README.md)
+establishes that this historical candidate omitted GPL features and that its
+FFmpeg Metal configuration differs from the shipping product. It remains a
+diagnostic artifact; a feature-equivalent shipping rebuild is blocked on the
+missing Xcode Metal compiler. Original artifact and playback receipts are retained.
+
 The subsequent [authentic production profiles](../../live-meter-authentic-sustained-20260930/README.md)
 now identify and link all eight artifacts and pass AAC, selected FX6 mono tracks
 and a sample-preserving ITU six-channel preparation. Those local observations
@@ -98,7 +104,7 @@ recipe or historical builder identity.
 python3 scripts/build-mpv-coreaudio-clean-candidate.py \
   /Users/truls.aagedal/Developer/MPVKit /tmp/new-clean-coreaudio-candidate
 python3 scripts/build-mpv-coreaudio-clean-candidate.py \
-  --verify /tmp/aagedal-coreaudio-clean-build-v4-20260930
+  --diagnose-historical /tmp/aagedal-coreaudio-clean-build-v4-20260930
 python3 scripts/test-mpv-coreaudio-clean-candidate.py
 ```
 

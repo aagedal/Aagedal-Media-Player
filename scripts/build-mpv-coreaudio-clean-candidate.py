@@ -13,6 +13,7 @@ import json
 import os
 from pathlib import Path
 import plistlib
+import re
 import shutil
 import subprocess
 import sys
@@ -25,6 +26,27 @@ IDENTITY = EVIDENCE / 'source-identities.json'
 PATCH = EVIDENCE / 'iina-18384-audio-channel.patch'
 MPVKIT_REVISION = '230c3174f1515898f24599147ad61c2a277d0dc2'
 FFMPEG_REVISION = '38b88335f99e76ed89ff3c93f877fdefce736c13'
+SHIPPING_PRODUCT = 'MPVKit-GPL'
+SMB_ZIP = 'dist/libsmbclient-4.15.13-2512/libsmbclient.zip'
+SHIPPING_FLAGS = {
+    'libmpv/config.h': dict.fromkeys([
+        'HAVE_GPL', 'HAVE_COREAUDIO', 'HAVE_AVFOUNDATION', 'HAVE_COCOA',
+        'HAVE_FFMPEG', 'HAVE_GL', 'HAVE_GL_COCOA', 'HAVE_LIBASS', 'HAVE_LIBBLURAY',
+        'HAVE_MOLTENVK', 'HAVE_SWIFT', 'HAVE_VIDEOTOOLBOX_GL', 'HAVE_VIDEOTOOLBOX_PL', 'HAVE_VULKAN'], 1) | {'HAVE_LUA': 0},
+    'FFmpeg/config.h': dict.fromkeys([
+        'CONFIG_GPL', 'CONFIG_GPLV3', 'CONFIG_LIBSMBCLIENT', 'CONFIG_METAL',
+        'CONFIG_LIBASS', 'CONFIG_LIBDAV1D', 'CONFIG_LIBPLACEBO', 'CONFIG_LIBUAVS3D',
+        'CONFIG_VIDEOTOOLBOX', 'CONFIG_VULKAN'], 1) | {'CONFIG_LGPLV3': 0},
+    'FFmpeg/config_components.h': dict.fromkeys([
+        'CONFIG_LIBSMBCLIENT_PROTOCOL', 'CONFIG_DELOGO_FILTER', 'CONFIG_PAN_FILTER',
+        'CONFIG_ARESAMPLE_FILTER', 'CONFIG_ASS_FILTER', 'CONFIG_SUBTITLES_FILTER',
+        'CONFIG_LIBPLACEBO_FILTER', 'CONFIG_LIBDAV1D_DECODER', 'CONFIG_LIBUAVS3D_DECODER',
+        'CONFIG_ADPCM_CIRCUS_DECODER', 'CONFIG_ADPCM_IMA_ESCAPE_DECODER',
+        'CONFIG_ADPCM_IMA_HVQM2_DECODER', 'CONFIG_ADPCM_IMA_HVQM4_DECODER',
+        'CONFIG_ADPCM_IMA_MAGIX_DECODER', 'CONFIG_ADPCM_IMA_PDA_DECODER',
+        'CONFIG_ADPCM_N64_DECODER', 'CONFIG_ADPCM_PSXC_DECODER',
+        'CONFIG_AHX_PARSER', 'CONFIG_AHX_TO_MP2_BSF'], 1),
+}
 
 
 def sha(path):
@@ -83,7 +105,53 @@ def unpack_zip(archive, destination):
         file.extractall(destination)
 
 
-def verify_build(output, receipt):
+def shipping_prerequisites(mpvkit):
+    """Refuse known feature loss before allocating/building a new candidate."""
+    archive = mpvkit / SMB_ZIP
+    if not archive.is_file():
+        raise ValueError(f'{SHIPPING_PRODUCT} requires pinned cached Samba input: {archive}')
+    with zipfile.ZipFile(archive) as file:
+        for arch in ('arm64', 'x86_64'):
+            prefix = f'lib/macos/thin/{arch}/lib/'
+            if not any(name.startswith(prefix) and name.endswith('.a') for name in file.namelist()):
+                raise ValueError(f'{SHIPPING_PRODUCT} Samba input lacks macOS/{arch} static libraries')
+    probe = subprocess.run(['xcrun', '--sdk', 'macosx', 'metal', '-v'],
+                           stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, check=False)
+    if probe.returncode:
+        raise ValueError(f'{SHIPPING_PRODUCT} requires a working Metal compiler to preserve CONFIG_METAL=1. '
+                         f'Native prerequisite command xcrun --sdk macosx metal -v failed:\n{probe.stdout.strip()}')
+    return {'sambaZIP': {'relativePath': SMB_ZIP, 'sha256': sha(archive)},
+            'metalCompilerProbe': {'command': ['xcrun', '--sdk', 'macosx', 'metal', '-v'],
+                                   'output': probe.stdout.strip(), 'exitCode': probe.returncode}}
+
+
+def shipping_configuration(output, require_shipping):
+    result = {'product': SHIPPING_PRODUCT, 'architectures': {}, 'mismatches': []}
+    for arch in ('arm64', 'x86_64'):
+        actual = {}
+        for identity, expected in SHIPPING_FLAGS.items():
+            library, header = identity.split('/')
+            path = output / 'MPVKit/dist' / library / 'macos/scratch' / arch / header
+            macros = {key: int(value) for key, value in re.findall(
+                r'^#define ((?:HAVE|CONFIG)_[A-Z0-9_]+) ([01])$', path.read_text(), re.MULTILINE)}
+            relevant = {key: macros.get(key) for key in expected}
+            actual[identity] = {'headerSHA256': sha(path), 'requiredFeatures': relevant,
+                               'booleanConfigurationSHA256': hashlib.sha256(
+                                   json.dumps(macros, sort_keys=True, separators=(',', ':')).encode()).hexdigest()}
+            for key, value in expected.items():
+                if relevant[key] != value:
+                    result['mismatches'].append({'architecture': arch, 'header': identity,
+                                                 'feature': key, 'expected': value, 'actual': relevant[key]})
+        result['architectures'][arch] = actual
+    result['passed'] = not result['mismatches']
+    if require_shipping and not result['passed']:
+        details = ', '.join(f'{item["architecture"]}/{item["feature"]}={item["actual"]}, expected {item["expected"]}'
+                            for item in result['mismatches'])
+        raise ValueError(f'{SHIPPING_PRODUCT} feature parity failed: {details}')
+    return result
+
+
+def verify_build(output, receipt, require_shipping=True):
     """Verify immutable source, reconstructed inputs and actual output slices."""
     checkout = output / 'MPVKit'
     result = {'sourceInputs': {}, 'copiedAuxiliaryZIPsMatch': True, 'xcframeworks': {}, 'freshObjects': {}}
@@ -103,10 +171,21 @@ def verify_build(output, receipt):
         copied = checkout / entry['relativePath']
         if sha(copied) != entry['sha256'] or sha(entry['path']) != entry['sha256']:
             raise ValueError(f'copied/original auxiliary ZIP mismatch: {entry["relativePath"]}')
+    recorded_artifacts = receipt.get('artifacts')
+    if not recorded_artifacts:
+        raise ValueError('build receipt has no immutable artifact identities')
+    for name, identity in recorded_artifacts.items():
+        archive = (checkout / name).resolve()
+        if checkout.resolve() not in archive.parents:
+            raise ValueError('recorded artifact path escapes candidate checkout')
+        if not archive.is_file() or archive.stat().st_size != identity['sizeBytes'] or sha(archive) != identity['sha256']:
+            raise ValueError(f'artifact differs from immutable build receipt: {name}')
     names = ['Libmpv', 'Libavcodec', 'Libavdevice', 'Libavfilter', 'Libavformat',
              'Libavutil', 'Libswresample', 'Libswscale']
     for name in names:
         archive = checkout / 'dist/release' / (name + '.xcframework.zip')
+        if str(archive.relative_to(checkout)) not in recorded_artifacts:
+            raise ValueError(f'missing immutable artifact receipt identity: {name}')
         # The upstream builder removes earlier expanded XCFrameworks while
         # packaging the next library. Verify the retained shipping ZIP itself.
         with zipfile.ZipFile(archive) as file:
@@ -158,6 +237,14 @@ def verify_build(output, receipt):
                         raise ValueError('CoreAudio compile command used a different source tree')
                     patched_objects[file] = {'objectSHA256': sha(scratch / entry['output']), 'sourceSHA256': sha(source)}
                 result['freshObjects'][library][arch]['coreaudioObjects'] = patched_objects
+    result['shippingFeatureParity'] = shipping_configuration(output, require_shipping)
+    recorded_verification = receipt.get('verification', {})
+    for identity in ('xcframeworks', 'freshObjects'):
+        if identity in recorded_verification and result[identity] != recorded_verification[identity]:
+            raise ValueError(f'candidate {identity} differ from recorded build verification')
+    recorded_features = recorded_verification.get('shippingFeatureParity', {}).get('architectures')
+    if recorded_features is not None and result['shippingFeatureParity']['architectures'] != recorded_features:
+        raise ValueError('candidate configuration differs from recorded build verification')
     return result
 
 
@@ -169,6 +256,7 @@ def build(mpvkit, output):
     identity = json.loads(IDENTITY.read_text())
     if sha(PATCH) != identity['iinaPatchSHA256']:
         raise ValueError('retained CoreAudio patch hash mismatch')
+    prerequisites = shipping_prerequisites(mpvkit)
     original_status = git(mpvkit, 'status', '--porcelain')
     output.mkdir(parents=True)
     shutil.copy2(Path(__file__), output / 'builder.py')
@@ -184,6 +272,9 @@ def build(mpvkit, output):
         'prebuiltAuxiliaryInputs': [],
         'sourceInputs': {},
         'architectures': ['arm64', 'x86_64'],
+        'shippingProduct': SHIPPING_PRODUCT,
+        'enableGPL': True,
+        'shippingPrerequisites': prerequisites,
         'limitations': ['Auxiliary third-party dependencies use the upstream prebuilt ZIP recipe.',
                         'Local checksum identities do not authenticate auxiliary ZIPs against remote release provenance.',
                         'No remote artifact publication or shipping app package repin.',
@@ -284,7 +375,7 @@ def build(mpvkit, output):
     command = ['swift', 'run', '--disable-sandbox', '--build-path', output / 'swift-build', '--cache-path', output / 'swift-package-cache',
                '--config-path', output / 'swift-package-config', '--security-path', output / 'swift-package-security',
                '--package-path', checkout / 'Sources/BuildScripts', '-Xswiftc', '-module-cache-path',
-               '-Xswiftc', output / 'swift-cache', 'build', 'platform=macos', 'version=local-coreaudio-candidate']
+               '-Xswiftc', output / 'swift-cache', 'build', 'enable-gpl', 'platform=macos', 'version=local-coreaudio-gpl-candidate']
     receipt['buildCommand'] = [str(arg) for arg in command]
     print(f'Fresh build log: {output / "build.log"}', flush=True)
     with (output / 'build.log').open('wb') as log:
@@ -309,21 +400,25 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('mpvkit', type=Path, nargs='?')
     parser.add_argument('output', type=Path, nargs='?', help='new directory outside the original checkout')
-    parser.add_argument('--verify', type=Path, help='verify a completed build; writes a separate verification.json')
+    modes = parser.add_mutually_exclusive_group()
+    modes.add_argument('--verify', type=Path, help='require shipping feature parity and verify a completed build')
+    modes.add_argument('--diagnose-historical', type=Path, help='record identity provenance and failed parity of an earlier diagnostic artifact')
     args = parser.parse_args()
     try:
-        if args.verify:
+        if args.verify or args.diagnose_historical:
             if args.mpvkit or args.output:
-                parser.error('--verify cannot be combined with build inputs')
-            output = args.verify.resolve()
+                parser.error('verification/diagnosis cannot be combined with build inputs')
+            output = (args.verify or args.diagnose_historical).resolve()
             receipt = json.loads((output / 'receipt.json').read_text())
             if not receipt.get('buildSucceeded') or sha(output / 'builder.py') != receipt['builderSHA256']:
                 raise ValueError('completed build receipt/builder identity mismatch')
-            result = verify_build(output, receipt)
+            result = verify_build(output, receipt, require_shipping=not args.diagnose_historical)
             result['verifierSHA256'] = sha(Path(__file__))
             result['actualBuilderSnapshotSHA256'] = receipt['builderSHA256']
-            (output / 'verification.json').write_text(json.dumps(result, indent=2) + '\n')
-            print(f'Verified complete local candidate: {output}')
+            name = 'historical-parity-diagnostic.json' if args.diagnose_historical else 'shipping-verification.json'
+            (output / name).write_text(json.dumps(result, indent=2) + '\n')
+            parity = 'passed' if result['shippingFeatureParity']['passed'] else 'FAILED (historical artifact is not shipping-feature-equivalent)'
+            print(f'Verified local artifact identities: {output}; {SHIPPING_PRODUCT} feature parity: {parity}')
         else:
             if not args.mpvkit or not args.output:
                 parser.error('provide the input MPVKit checkout and new output directory')
