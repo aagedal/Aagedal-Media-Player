@@ -1,0 +1,43 @@
+{
+  "date": "2026-09-30",
+  "method": "cua.getState() followed by a single cua.getApp() attempt",
+  "inventory": {
+    "requestedTimeoutMilliseconds": 20000,
+    "observedWallSeconds": 2.2114,
+    "nativeAppsPresent": true,
+    "playerIsRunning": false,
+    "lockErrorReported": false
+  },
+  "appSelection": {
+    "requestedTimeoutMilliseconds": 30000,
+    "observedWallSecondsUntilAbort": 572.2,
+    "outcome": "aborted; no initial application UI state returned",
+    "requestedAppPath": "/tmp/aagedal-sustained-2-candidate-20260930/DerivedData/Build/Products/Release/Aagedal Media Player.app",
+    "executableSHA256": "33ddeaf41cb6712b6fbd0af6cfa4fde97a00101b3d50d4581327805a6b490179"
+  },
+  "nativeActionsCompleted": 0,
+  "keyboardAcceptance": false,
+  "fullKeyboardAccessAcceptance": false,
+  "spokenVoiceOverAcceptance": false,
+  "sourceChecks": {
+    "swiftFrontendParse": "passed",
+    "gitDiffCheck": "passed",
+    "xctest": {
+      "configuration": "Release",
+      "passed": 21,
+      "skipped": 0,
+      "failed": 0,
+      "runtimeWarnings": 0,
+      "evidenceValidatorPassed": true,
+      "resultBundle": "/tmp/aagedal-review-field-correction-20260930.xcresult"
+    }
+  },
+  "newRegressions": [
+    "CompareReviewTextCommitTests.testEditingRangePreservesTextCorrectionAndItsFocusPriority",
+    "CompareReviewTextCommitTests.testEditingTextPreservesRangeCorrectionUntilRangeIsEdited"
+  ],
+  "sourceSHA256": {
+    "Aagedal Media Player/UI/CompareReviewView.swift": "6e1a99092e41caae79facc8de427be5a8452b3463207d4c2a5f705215b949e06",
+    "Aagedal Media Player Tests/CompareReviewTextCommitTests.swift": "cee4242658c8581cd860773e3f8241eec89dad92eb33140c98406a76a3aecdd5"
+  }
+}

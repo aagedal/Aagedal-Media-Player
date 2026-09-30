@@ -59,6 +59,23 @@ struct CompareReviewDraftState {
         correctionRequest = nil
     }
 
+    /// Editing one field must not dismiss the correction selected for another.
+    /// That request also arbitrates focus-loss validation during the handoff.
+    mutating func updateNoteTextDraft(_ text: String, noteID: UUID) {
+        noteDrafts[noteID] = text
+        noteActionErrors[noteID] = nil
+        if correctionRequest?.noteID == noteID, correctionRequest?.field == .text {
+            clearActionNotice()
+        }
+    }
+
+    mutating func updateRangeEndDraft(_ text: String, noteID: UUID) {
+        rangeDrafts[noteID] = text
+        if correctionRequest?.noteID == noteID, correctionRequest?.field == .rangeEnd {
+            clearActionNotice()
+        }
+    }
+
     mutating func finishNoteTextCommit(noteID: UUID) {
         noteDrafts[noteID] = nil
         noteActionErrors[noteID] = nil
@@ -452,15 +469,12 @@ struct CompareReviewView: View {
             position: position,
             count: count,
             correctionRequest: drafts.correctionRequest.flatMap { $0.noteID == note.id ? $0 : nil },
+            activeCorrectionField: drafts.correctionRequest?.field,
             draft: Binding(
                 get: { drafts.noteDrafts[note.id] ?? note.text },
                 set: {
                     if !compareSession.isReviewActionPending {
-                        drafts.noteDrafts[note.id] = $0
-                        drafts.noteActionErrors[note.id] = nil
-                        if drafts.rangeActionNoticeNoteID == note.id {
-                            drafts.clearActionNotice()
-                        }
+                        drafts.updateNoteTextDraft($0, noteID: note.id)
                     }
                 }
             ),
@@ -472,10 +486,7 @@ struct CompareReviewView: View {
                 get: { drafts.rangeDrafts[note.id] ?? note.primaryEndFrame.map(String.init) ?? "" },
                 set: {
                     if !compareSession.isReviewActionPending {
-                        drafts.rangeDrafts[note.id] = $0
-                        if drafts.rangeActionNoticeNoteID == note.id {
-                            drafts.clearActionNotice()
-                        }
+                        drafts.updateRangeEndDraft($0, noteID: note.id)
                     }
                 }
             ),
@@ -787,6 +798,9 @@ private struct CompareReviewNoteRow: View {
     let position: Int
     let count: Int
     let correctionRequest: CompareReviewCorrectionRequest?
+    // Focus goes to one finding, but every range field must respect a text
+    // correction while its own focus-loss callback runs.
+    let activeCorrectionField: CompareReviewCorrectionRequest.Field?
     let timecodeLabel: String
     let canEdit: Bool
     let onSeek: () -> Void
@@ -813,6 +827,7 @@ private struct CompareReviewNoteRow: View {
         position: Int,
         count: Int,
         correctionRequest: CompareReviewCorrectionRequest?,
+        activeCorrectionField: CompareReviewCorrectionRequest.Field?,
         draft: Binding<String>,
         noteActionError: Binding<String?>,
         endFrameDraft: Binding<String>,
@@ -832,6 +847,7 @@ private struct CompareReviewNoteRow: View {
         self.position = position
         self.count = count
         self.correctionRequest = correctionRequest
+        self.activeCorrectionField = activeCorrectionField
         self.timecodeLabel = timecodeLabel
         self.canEdit = canEdit
         self.onSeek = onSeek
@@ -955,7 +971,7 @@ private struct CompareReviewNoteRow: View {
             endFrameDraft = end.map(String.init) ?? ""
         }
         .onChange(of: rangeActionError) { _, error in
-            if error != nil && correctionRequest?.field != .text {
+            if error != nil && activeCorrectionField != .text {
                 if isRangeExpanded { isEndFrameFocused = true }
                 else { isRangeExpanded = true }
             }
@@ -972,7 +988,7 @@ private struct CompareReviewNoteRow: View {
             else if rangeActionError != nil { isRangeExpanded = true }
         }
         .onChange(of: isRangeExpanded) { _, expanded in
-            if expanded && rangeActionError != nil && correctionRequest?.field != .text {
+            if expanded && rangeActionError != nil && activeCorrectionField != .text {
                 isEndFrameFocused = true
             }
         }
@@ -1020,7 +1036,7 @@ private struct CompareReviewNoteRow: View {
                     // Keep an empty draft for the explicit Clear range action.
                     if CompareReviewRangeFocusLossPolicy.shouldCommit(
                         draft: endFrameDraft, savedEndFrame: note.primaryEndFrame,
-                        correctionField: correctionRequest?.field
+                        correctionField: activeCorrectionField
                     ) { applyRange() }
                 }
                 .onChange(of: endFrameDraft) { _, _ in

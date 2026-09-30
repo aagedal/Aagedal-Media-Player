@@ -7,6 +7,69 @@ import XCTest
 
 final class CompareReviewTextCommitTests: XCTestCase {
     @MainActor
+    func testEditingRangePreservesTextCorrectionAndItsFocusPriority() {
+        let noteID = UUID()
+        let anotherNoteID = UUID()
+        var drafts = CompareReviewDraftState()
+        drafts.noteDrafts[noteID] = "  "
+        drafts.blockAction(noteID: noteID, field: .text,
+            error: "Enter note text", notice: "Correct this note")
+        let correction = drafts.correctionRequest
+
+        // A range in another row must see the same preflight priority even
+        // though only the text row receives the actual focus request.
+        drafts.updateRangeEndDraft("invalid other end", noteID: anotherNoteID)
+        XCTAssertEqual(drafts.correctionRequest, correction)
+        XCTAssertFalse(CompareReviewRangeFocusLossPolicy.shouldCommit(
+            draft: drafts.rangeDrafts[anotherNoteID]!, savedEndFrame: 10,
+            correctionField: drafts.correctionRequest?.field))
+
+        // The real range binding also receives saved-endpoint changes from
+        // Clear range. Neither input path corrects the empty note text.
+        for range in ["invalid end", "20", ""] {
+            drafts.updateRangeEndDraft(range, noteID: noteID)
+            XCTAssertEqual(drafts.rangeDrafts[noteID], range)
+            XCTAssertEqual(drafts.correctionRequest, correction)
+            XCTAssertEqual(drafts.rangeActionNotice, "Correct this note")
+            XCTAssertEqual(drafts.noteActionErrors[noteID], "Enter note text")
+            XCTAssertFalse(CompareReviewRangeFocusLossPolicy.shouldCommit(
+                draft: range, savedEndFrame: 10,
+                correctionField: drafts.correctionRequest?.field))
+        }
+
+        drafts.updateNoteTextDraft("Corrected finding", noteID: noteID)
+        XCTAssertNil(drafts.correctionRequest)
+        XCTAssertNil(drafts.rangeActionNotice)
+        XCTAssertNil(drafts.noteActionErrors[noteID])
+        XCTAssertEqual(drafts.noteDrafts[noteID], "Corrected finding")
+    }
+
+    @MainActor
+    func testEditingTextPreservesRangeCorrectionUntilRangeIsEdited() {
+        let noteID = UUID()
+        let anotherNoteID = UUID()
+        var drafts = CompareReviewDraftState()
+        drafts.rangeDrafts[noteID] = "invalid end"
+        drafts.noteActionErrors[noteID] = "Earlier text error"
+        drafts.blockAction(noteID: noteID, field: .rangeEnd,
+            error: "Enter a whole-number end frame", notice: "Correct this range")
+        let correction = drafts.correctionRequest
+
+        drafts.updateNoteTextDraft("Corrected finding", noteID: noteID)
+        drafts.updateRangeEndDraft("30", noteID: anotherNoteID)
+        XCTAssertEqual(drafts.correctionRequest, correction)
+        XCTAssertEqual(drafts.rangeActionNotice, "Correct this range")
+        XCTAssertEqual(drafts.rangeActionErrors[noteID], "Enter a whole-number end frame")
+        XCTAssertEqual(drafts.rangeDrafts[noteID], "invalid end")
+        XCTAssertNil(drafts.noteActionErrors[noteID])
+
+        drafts.updateRangeEndDraft("20", noteID: noteID)
+        XCTAssertNil(drafts.correctionRequest)
+        XCTAssertNil(drafts.rangeActionNotice)
+        XCTAssertEqual(drafts.rangeDrafts[noteID], "20")
+    }
+
+    @MainActor
     func testTextCorrectionDoesNotCommitOrRefocusAnUnrelatedRangeDraft() {
         let noteID = UUID()
         var drafts = CompareReviewDraftState()

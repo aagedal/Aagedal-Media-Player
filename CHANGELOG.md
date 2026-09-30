@@ -5,6 +5,7 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Changed
+- Review draft edits preserve corrections for other fields and findings, keeping range validation from displacing the selected text correction.
 - Review clamps exact clip-end timing to its last playable frame at fractional rates and safely bounds extreme frame metadata.
 - Release preparation rechecks source and package identity before building and publishing, stopping if the checkout changes during archive, export or notarization.
 - Live-meter profiling supports requested observations up to 30 minutes with scaled test deadlines and sustained source-progress checks.
@@ -17,7 +18,7 @@ All notable changes to Aagedal Media Player.
 - Candidate verification temporarily keeps the Mac awake, rejects sleep-interrupted evidence, and bounds each isolated transport test to 120 seconds.
 - AVFoundation loupe capture follows the enabled video track and clears stale raster proof after track or composition changes; composed and ambiguous output remains a display preview.
 - Live-meter profile validation rejects mismatched sample-rate timestamp provenance and impossible snapshot timing.
-- Candidate verification and release consumption now require at least 729 aggregate tests, alongside both isolated mixed-backend transport checks.
+- Candidate verification and release consumption now require at least 731 aggregate tests, alongside both isolated mixed-backend transport checks.
 - Review keeps an edited note draft when its update is rejected, and report actions stop with visible feedback if pending edits cannot be applied.
 - Review drafts now survive a playback or comparison geometry reload of the same sources; replacing a source or changing the active notes copy still clears them.
 - Review keeps new-note, edited-text, and range drafts when its popover closes; a later keyboard export reopens Review to validate unfinished edits and asks for an unsubmitted new note to be added or cleared.
@@ -33,6 +34,7 @@ All notable changes to Aagedal Media Player.
 - Metadata container-edge validation checks the independent error behavior of frame, gyroscope, and accelerometer RTMD readers against both the 3.0.0 baseline and integrated 3.0.1 dependency.
 
 ### Added
+- A clean macOS CoreAudio dependency candidate builder that recompiles every MPV/FFmpeg object for arm64 and x86_64 and verifies source, auxiliary-input and universal-artifact provenance.
 - An opt-in isolated CoreAudio dependency rebuild tool with source, compiler and archive provenance, validated against local production-path mono/stereo and authentic Sony playback profiles.
 - Per-channel authentic ITU live sample/true-peak comparisons against an independent PCM reference, with exact EOF and filter-tail provenance.
 - Independent momentary/short-term loudness comparisons for the live decoder/DSP against original ITU programmes, with exact source-frame endpoints and retained reference readings.

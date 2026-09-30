@@ -182,7 +182,7 @@ if [[ "$EVIDENCE_STATUS" != "passed" \
     exit 2
 fi
 python3 scripts/validate-release-xcresult.py \
-    "$CANDIDATE_SUMMARY" "$CANDIDATE_DETAILS" --minimum-tests 729
+    "$CANDIDATE_SUMMARY" "$CANDIDATE_DETAILS" --minimum-tests 731
 python3 scripts/validate-release-xcresult.py \
     "$CANDIDATE_MIXED_SUMMARY" "$CANDIDATE_MIXED_DETAILS" --minimum-tests 2 \
     --exact-tests 2 \
