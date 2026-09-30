@@ -1,0 +1,335 @@
+warning: /Users/truls.aagedal/Library/org.swift.swiftpm/configuration is not accessible or not writable, disabling user-level cache features.
+warning: /Users/truls.aagedal/Library/org.swift.swiftpm/security is not accessible or not writable, disabling user-level cache features.
+warning: /Users/truls.aagedal/Library/Caches/org.swift.swiftpm is not accessible or not writable, disabling user-level cache features.
+warning: 'aagedal-bounded-mxf-candidate-20260930': failed storing manifest for 'aagedal-bounded-mxf-candidate-20260930' in cache: attempt to write a readonly database
+Building for debugging...
+[2 / 5] SwiftMediaMetadataTests-product
+[4 / 7] SwiftMediaMetadataTests-product
+[10 / 12] SwiftMediaMetadataTests-product
+Build complete! (2,19 sec)
+Test Suite 'Selected tests' started at 2026-09-30 20:54:56.843.
+Test Suite 'SwiftMediaMetadataTests.xctest' started at 2026-09-30 20:54:56.848.
+Test Suite 'ARRIJSONParserTests' started at 2026-09-30 20:54:56.848.
+Test Case '-[SwiftMediaMetadataTests.ARRIJSONParserTests testFindEmbeddedJSONBlobsExtractsSingleBlob]' started.
+Test Case '-[SwiftMediaMetadataTests.ARRIJSONParserTests testFindEmbeddedJSONBlobsExtractsSingleBlob]' passed (0.001 seconds).
+Test Case '-[SwiftMediaMetadataTests.ARRIJSONParserTests testFindEmbeddedJSONBlobsHandlesMultipleBlobsAndSortsBySchema]' started.
+Test Case '-[SwiftMediaMetadataTests.ARRIJSONParserTests testFindEmbeddedJSONBlobsHandlesMultipleBlobsAndSortsBySchema]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.ARRIJSONParserTests testFindEmbeddedJSONBlobsHandlesSlicedDataWithNonZeroStartIndex]' started.
+Test Case '-[SwiftMediaMetadataTests.ARRIJSONParserTests testFindEmbeddedJSONBlobsHandlesSlicedDataWithNonZeroStartIndex]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.ARRIJSONParserTests testFindEmbeddedJSONBlobsResolvesNestedSchemaPath]' started.
+Test Case '-[SwiftMediaMetadataTests.ARRIJSONParserTests testFindEmbeddedJSONBlobsResolvesNestedSchemaPath]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.ARRIJSONParserTests testFindEmbeddedJSONBlobsReturnsEmptyForUnrelatedData]' started.
+Test Case '-[SwiftMediaMetadataTests.ARRIJSONParserTests testFindEmbeddedJSONBlobsReturnsEmptyForUnrelatedData]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.ARRIJSONParserTests testFindEmbeddedJSONBlobsSkipsMalformedJSON]' started.
+Test Case '-[SwiftMediaMetadataTests.ARRIJSONParserTests testFindEmbeddedJSONBlobsSkipsMalformedJSON]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.ARRIJSONParserTests testFindEmbeddedJSONBlobsSkipsTagsThatLookLikeJSONButAreNot]' started.
+Test Case '-[SwiftMediaMetadataTests.ARRIJSONParserTests testFindEmbeddedJSONBlobsSkipsTagsThatLookLikeJSONButAreNot]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.ARRIJSONParserTests testMergeDoesNotForceManufacturerWhenSlateMissingARRI]' started.
+Test Case '-[SwiftMediaMetadataTests.ARRIJSONParserTests testMergeDoesNotForceManufacturerWhenSlateMissingARRI]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.ARRIJSONParserTests testMergeDoesNotOverwriteExistingTypedFields]' started.
+Test Case '-[SwiftMediaMetadataTests.ARRIJSONParserTests testMergeDoesNotOverwriteExistingTypedFields]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.ARRIJSONParserTests testMergeFlattensUserInfoArray]' started.
+Test Case '-[SwiftMediaMetadataTests.ARRIJSONParserTests testMergeFlattensUserInfoArray]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.ARRIJSONParserTests testMergeFramelineFlattensRectArray]' started.
+Test Case '-[SwiftMediaMetadataTests.ARRIJSONParserTests testMergeFramelineFlattensRectArray]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.ARRIJSONParserTests testMergeLUT3DStripsPrefix]' started.
+Test Case '-[SwiftMediaMetadataTests.ARRIJSONParserTests testMergeLUT3DStripsPrefix]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.ARRIJSONParserTests testMergeMapsCameraDeviceToTypedSlots]' started.
+Test Case '-[SwiftMediaMetadataTests.ARRIJSONParserTests testMergeMapsCameraDeviceToTypedSlots]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.ARRIJSONParserTests testMergeMapsLensModelToTypedSlot]' started.
+Test Case '-[SwiftMediaMetadataTests.ARRIJSONParserTests testMergeMapsLensModelToTypedSlot]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.ARRIJSONParserTests testMergePushesSlateFieldsToUserMeta]' started.
+Test Case '-[SwiftMediaMetadataTests.ARRIJSONParserTests testMergePushesSlateFieldsToUserMeta]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.ARRIJSONParserTests testMergeRecordingMediumStripsPrefix]' started.
+Test Case '-[SwiftMediaMetadataTests.ARRIJSONParserTests testMergeRecordingMediumStripsPrefix]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.ARRIJSONParserTests testMergeSetsManufacturerFromSlateProductionCompany]' started.
+Test Case '-[SwiftMediaMetadataTests.ARRIJSONParserTests testMergeSetsManufacturerFromSlateProductionCompany]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.ARRIJSONParserTests testStringifyDropsEmptyStringsAndNull]' started.
+Test Case '-[SwiftMediaMetadataTests.ARRIJSONParserTests testStringifyDropsEmptyStringsAndNull]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.ARRIJSONParserTests testStringifyEncodesNestedJSON]' started.
+Test Case '-[SwiftMediaMetadataTests.ARRIJSONParserTests testStringifyEncodesNestedJSON]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.ARRIJSONParserTests testStringifyHandlesBooleans]' started.
+Test Case '-[SwiftMediaMetadataTests.ARRIJSONParserTests testStringifyHandlesBooleans]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.ARRIJSONParserTests testStringifyHandlesNumericTypes]' started.
+Test Case '-[SwiftMediaMetadataTests.ARRIJSONParserTests testStringifyHandlesNumericTypes]' passed (0.000 seconds).
+Test Suite 'ARRIJSONParserTests' passed at 2026-09-30 20:54:56.853.
+	 Executed 21 tests, with 0 failures (0 unexpected) in 0.004 (0.005) seconds
+Test Suite 'MXFFileCursorTests' started at 2026-09-30 20:54:56.853.
+Test Case '-[SwiftMediaMetadataTests.MXFFileCursorTests testAuthenticCameraExporterParityWhenOptedIn]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFFileCursorTests testAuthenticCameraExporterParityWhenOptedIn]' passed (11.276 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFFileCursorTests testConcurrentTruncationFailsExactReadAndExtentCheck]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFFileCursorTests testConcurrentTruncationFailsExactReadAndExtentCheck]' passed (0.026 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFFileCursorTests testCursorBoundsRejectOverflowAndNegativeOffsets]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFFileCursorTests testCursorBoundsRejectOverflowAndNegativeOffsets]' passed (0.002 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFFileCursorTests testInvalidAndOverflowingBERToleratedEqually]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFFileCursorTests testInvalidAndOverflowingBERToleratedEqually]' passed (0.011 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFFileCursorTests testIOErrorsPropagateInsteadOfReturningPartialMetadata]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFFileCursorTests testIOErrorsPropagateInsteadOfReturningPartialMetadata]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFFileCursorTests testLateDurationAndTimecodeEncounterOrder]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFFileCursorTests testLateDurationAndTimecodeEncounterOrder]' passed (0.046 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFFileCursorTests testNonzeroStartIndexDataSliceMatchesFile]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFFileCursorTests testNonzeroStartIndexDataSliceMatchesFile]' passed (0.005 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFFileCursorTests testSparseEssenceSkippedAndFooterMetadataStillRead]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFFileCursorTests testSparseEssenceSkippedAndFooterMetadataStillRead]' passed (0.336 seconds).
+Test Suite 'MXFFileCursorTests' passed at 2026-09-30 20:55:08.556.
+	 Executed 8 tests, with 0 failures (0 unexpected) in 11.702 (11.703) seconds
+Test Suite 'MXFMCALabelsTests' started at 2026-09-30 20:55:08.556.
+Test Case '-[SwiftMediaMetadataTests.MXFMCALabelsTests testParseSyntheticMCAFixture]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFMCALabelsTests testParseSyntheticMCAFixture]' passed (0.003 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFMCALabelsTests testRealBmxToolsFixture]' started.
+/private/tmp/aagedal-bounded-mxf-candidate-20260930/Tests/SwiftMediaMetadataTests/Video/MXFMCALabelsTests.swift:176: -[SwiftMediaMetadataTests.MXFMCALabelsTests testRealBmxToolsFixture] : Test skipped - Real MCA fixture not present: /Users/traag222/Movies/TestVideo/MCA_Test/n-intervju_with-MCA-labels.mxf
+Test Case '-[SwiftMediaMetadataTests.MXFMCALabelsTests testRealBmxToolsFixture]' skipped (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFMCALabelsTests testRenderRoundTripsBmxStereoPlusMonoLayout]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFMCALabelsTests testRenderRoundTripsBmxStereoPlusMonoLayout]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFMCALabelsTests testRenderSkipsOrphanChannels]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFMCALabelsTests testRenderSkipsOrphanChannels]' passed (0.000 seconds).
+Test Suite 'MXFMCALabelsTests' passed at 2026-09-30 20:55:08.560.
+	 Executed 4 tests, with 1 test skipped and 0 failures (0 unexpected) in 0.004 (0.004) seconds
+Test Suite 'MXFReaderTests' started at 2026-09-30 20:55:08.560.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testAssembleAudioLabelingDeduplicatesAcrossTracksByLinkUID]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testAssembleAudioLabelingDeduplicatesAcrossTracksByLinkUID]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testAssembleAudioLabelingPicksUpUnreferencedChannels]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testAssembleAudioLabelingPicksUpUnreferencedChannels]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testAssembleAudioLabelingResolvesChannelToTrackIndex]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testAssembleAudioLabelingResolvesChannelToTrackIndex]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testBERLengthBoundary7F]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testBERLengthBoundary7F]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testBERLengthFourByteLongForm]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testBERLengthFourByteLongForm]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testBERLengthSingleByteLongForm]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testBERLengthSingleByteLongForm]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testBERLengthZero]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testBERLengthZero]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testDecodeASCIIOrUTF8ReturnsNilForAllNUL]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testDecodeASCIIOrUTF8ReturnsNilForAllNUL]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testDecodeASCIIOrUTF8StripsTrailingNULs]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testDecodeASCIIOrUTF8StripsTrailingNULs]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testDecodeUTF16BEStringHandlesNULOnly]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testDecodeUTF16BEStringHandlesNULOnly]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testDecodeUTF16BEStringRejectsSingleByte]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testDecodeUTF16BEStringRejectsSingleByte]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testDecodeUTF16BEStringStripsTrailingNUL]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testDecodeUTF16BEStringStripsTrailingNUL]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testDecodeUUIDArrayCapsAtSafetyLimit]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testDecodeUUIDArrayCapsAtSafetyLimit]' passed (0.002 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testDecodeUUIDArrayHandlesTruncatedTail]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testDecodeUUIDArrayHandlesTruncatedTail]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testDecodeUUIDArrayParsesCountAndItems]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testDecodeUUIDArrayParsesCountAndItems]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testDecodeUUIDArrayRejectsWrongItemLength]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testDecodeUUIDArrayRejectsWrongItemLength]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testDecodeUUIDDecodesSixteenBytes]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testDecodeUUIDDecodesSixteenBytes]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testExtractSubDescriptorUIDsFallsBackTo0x3F01WithoutPrimerMapping]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testExtractSubDescriptorUIDsFallsBackTo0x3F01WithoutPrimerMapping]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testExtractSubDescriptorUIDsUsesPrimerMappedTag]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testExtractSubDescriptorUIDsUsesPrimerMappedTag]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testIsPrimerPackKeyRecognizesPrefix]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testIsPrimerPackKeyRecognizesPrefix]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testMCAPropertyRecognizesUniversalInstanceUID]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testMCAPropertyRecognizesUniversalInstanceUID]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testMCAPropertyRecognizesUniversalSubDescriptors]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testMCAPropertyRecognizesUniversalSubDescriptors]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testMCAPropertyRecognizesV0xDLegacyULs]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testMCAPropertyRecognizesV0xDLegacyULs]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testMCAPropertyRecognizesV0xEBmxtoolsULs]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testMCAPropertyRecognizesV0xEBmxtoolsULs]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testMCAPropertyRejectsNonSMPTEPrefix]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testMCAPropertyRejectsNonSMPTEPrefix]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testMCAPropertyRejectsUnknownBody]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testMCAPropertyRejectsUnknownBody]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testMCASubDescriptorKindRecognizesChannelLabelKey]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testMCASubDescriptorKindRecognizesChannelLabelKey]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testMCASubDescriptorKindRecognizesGroupOfGroupsKey]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testMCASubDescriptorKindRecognizesGroupOfGroupsKey]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testMCASubDescriptorKindRecognizesSoundfieldGroupKey]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testMCASubDescriptorKindRecognizesSoundfieldGroupKey]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testMCASubDescriptorKindRejectsSoundDescriptorByte14]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testMCASubDescriptorKindRejectsSoundDescriptorByte14]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParseMCASubDescriptorDecodesGroupOfGroupsLinkIDsArray]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParseMCASubDescriptorDecodesGroupOfGroupsLinkIDsArray]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParseMCASubDescriptorIgnoresUnmappedTags]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParseMCASubDescriptorIgnoresUnmappedTags]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParseMCASubDescriptorReadsLinkIDSymbolAndName]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParseMCASubDescriptorReadsLinkIDSymbolAndName]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParseMCASubDescriptorReturnsNilWithoutInstanceUID]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParseMCASubDescriptorReturnsNilWithoutInstanceUID]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorComputesDurationFromContainerDurationAndFrameRate]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorComputesDurationFromContainerDurationAndFrameRate]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorComputesFrameRateFromSampleRateRational]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorComputesFrameRateFromSampleRateRational]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorDefaultsInterlacedToTFFWithoutDominance]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorDefaultsInterlacedToTFFWithoutDominance]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorDerives420From2x2]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorDerives420From2x2]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorDerives422From2x1]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorDerives422From2x1]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorDerives444From1x1]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorDerives444From1x1]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorDetectsAVCIntraHigh10]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorDetectsAVCIntraHigh10]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorDetectsAVCIntraHigh422]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorDetectsAVCIntraHigh422]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorDoesNotSetDurationWhenSampleRateMissing]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorDoesNotSetDurationWhenSampleRateMissing]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorLeavesChromaNilForUnknownSubsampling]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorLeavesChromaNilForUnknownSubsampling]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorMapsARRIRAWUL]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorMapsARRIRAWUL]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorMapsAVCULToAvc1]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorMapsAVCULToAvc1]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorMapsBT2020PQColorULs]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorMapsBT2020PQColorULs]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorMapsBT709ColorULs]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorMapsBT709ColorULs]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorMapsHEVCULToHvc1]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorMapsHEVCULToHvc1]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorMapsHLGTransfer]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorMapsHLGTransfer]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorMapsInterlacedBFFFromDominance]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorMapsInterlacedBFFFromDominance]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorMapsInterlacedTFFFromDominance]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorMapsInterlacedTFFFromDominance]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorMapsJPEG2000UL]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorMapsJPEG2000UL]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorMapsMPEG2UL]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorMapsMPEG2UL]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorMapsProgressiveLayout]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorMapsProgressiveLayout]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorMapsProResUL]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorMapsProResUL]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorMapsPsFAsProgressive]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorMapsPsFAsProgressive]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorOverridesDARWhenAspectRatioPresent]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorOverridesDARWhenAspectRatioPresent]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorReadsBitDepth]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorReadsBitDepth]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorReadsStoredAndDisplayDimensions]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorReadsStoredAndDisplayDimensions]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorSkipsAspectRatioOverrideWhenZero]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorSkipsAspectRatioOverrideWhenZero]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorSurvivesOverflowingDimensionsAndAspectRatio]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParsePictureDescriptorSurvivesOverflowingDimensionsAndAspectRatio]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParseSetDurationIgnoresOversizedValuesAtIntMax]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParseSetDurationIgnoresOversizedValuesAtIntMax]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParseSetDurationReturnsLargestValue]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParseSetDurationReturnsLargestValue]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParseSetDurationReturnsNilWhenZero]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParseSetDurationReturnsNilWhenZero]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParseSoundDescriptorDefaultsChannelLayoutFromEightChannels]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParseSoundDescriptorDefaultsChannelLayoutFromEightChannels]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParseSoundDescriptorDefaultsChannelLayoutFromOneChannel]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParseSoundDescriptorDefaultsChannelLayoutFromOneChannel]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParseSoundDescriptorDefaultsChannelLayoutFromSixChannels]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParseSoundDescriptorDefaultsChannelLayoutFromSixChannels]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParseSoundDescriptorMapsPCMUL]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParseSoundDescriptorMapsPCMUL]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParseSoundDescriptorReadsChannelsAndBitDepth]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParseSoundDescriptorReadsChannelsAndBitDepth]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParseSoundDescriptorReadsRationalSampleRate]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParseSoundDescriptorReadsRationalSampleRate]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParseTimecodeComponentDropFrame2997]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParseTimecodeComponentDropFrame2997]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParseTimecodeComponentNonDropFrame]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParseTimecodeComponentNonDropFrame]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParseTimecodeComponentReturnsNilWhenBaseMissing]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParseTimecodeComponentReturnsNilWhenBaseMissing]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParseTimecodeComponentReturnsNilWhenStartNegative]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParseTimecodeComponentReturnsNilWhenStartNegative]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParseTrackEditRateReadsRational]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParseTrackEditRateReadsRational]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParseTrackEditRateReturnsNilWithDenZero]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testParseTrackEditRateReturnsNilWithDenZero]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testPrimerContextIngestsTagToULMappings]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testPrimerContextIngestsTagToULMappings]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testPrimerContextRejectsWrongItemLength]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testPrimerContextRejectsWrongItemLength]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testPrimerContextSubDescriptorsTagDefaultsTo0x3F01]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testPrimerContextSubDescriptorsTagDefaultsTo0x3F01]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testPrimerContextSubDescriptorsTagRespectsExplicitMapping]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testPrimerContextSubDescriptorsTagRespectsExplicitMapping]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testWalkLocalSetBailsOnTruncatedLength]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testWalkLocalSetBailsOnTruncatedLength]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testWalkLocalSetIgnoresTrailingBytesUnder4]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testWalkLocalSetIgnoresTrailingBytesUnder4]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testWalkLocalSetIteratesTagLengthValueTriplets]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFReaderTests testWalkLocalSetIteratesTagLengthValueTriplets]' passed (0.000 seconds).
+Test Suite 'MXFReaderTests' passed at 2026-09-30 20:55:08.571.
+	 Executed 84 tests, with 0 failures (0 unexpected) in 0.008 (0.011) seconds
+Test Suite 'VideoContainerTests' started at 2026-09-30 20:55:08.571.
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testAsyncReadVideoC2PAMetadataPopulatesForSignedMP4]' started.
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testAsyncReadVideoC2PAMetadataPopulatesForSignedMP4]' passed (0.003 seconds).
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testAsyncReadVideoC2PAMetadataReturnsNilForPlainMP4]' started.
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testAsyncReadVideoC2PAMetadataReturnsNilForPlainMP4]' passed (0.002 seconds).
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testAsyncReadVideoCameraMetadataReturnsNilForPlainMOV]' started.
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testAsyncReadVideoCameraMetadataReturnsNilForPlainMOV]' passed (0.002 seconds).
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testAsyncReadVideoCameraMetadataUsesSidecar]' started.
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testAsyncReadVideoCameraMetadataUsesSidecar]' passed (0.004 seconds).
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testBERLengthLongForm]' started.
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testBERLengthLongForm]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testBERLengthShortForm]' started.
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testBERLengthShortForm]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testCameraAttributesBackfillsCinemaBody]' started.
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testCameraAttributesBackfillsCinemaBody]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testEmbeddedNRTInMP4UUIDBox]' started.
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testEmbeddedNRTInMP4UUIDBox]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testExplicitDeviceWinsOverCameraAttributes]' started.
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testExplicitDeviceWinsOverCameraAttributes]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testFilesWithBothC2PAAndCameraXMLPopulateIndependently]' started.
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testFilesWithBothC2PAAndCameraXMLPopulateIndependently]' passed (0.003 seconds).
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testIdentityASCCDLSuppressed]' started.
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testIdentityASCCDLSuppressed]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testMOVWithC2PAUUIDBox]' started.
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testMOVWithC2PAUUIDBox]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testMP4WithC2PATopLevelJumb]' started.
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testMP4WithC2PATopLevelJumb]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testMP4WithC2PAUUIDBox]' started.
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testMP4WithC2PAUUIDBox]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testMXFFindsNRTXMLEmbeddedInsideMetadataSet]' started.
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testMXFFindsNRTXMLEmbeddedInsideMetadataSet]' passed (0.002 seconds).
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testMXFIgnoresGiantMetadataKLVAboveSafetyCap]' started.
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testMXFIgnoresGiantMetadataKLVAboveSafetyCap]' passed (0.642 seconds).
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testMXFMagicDetected]' started.
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testMXFMagicDetected]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testMXFSkipsLargeEssenceKLVsWithoutLoadingThem]' started.
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testMXFSkipsLargeEssenceKLVsWithoutLoadingThem]' passed (0.159 seconds).
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testMXFWithBothC2PAAndNRT]' started.
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testMXFWithBothC2PAAndNRT]' passed (0.003 seconds).
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testMXFWithC2PAUnderDarkKey]' started.
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testMXFWithC2PAUnderDarkKey]' passed (0.002 seconds).
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testMXFWithC2PAUnderSMPTEUL]' started.
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testMXFWithC2PAUnderSMPTEUL]' passed (0.002 seconds).
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testMXFWithEmbeddedNRT]' started.
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testMXFWithEmbeddedNRT]' passed (0.002 seconds).
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testNRTCameraMetadataIsEmptyForBlankXML]' started.
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testNRTCameraMetadataIsEmptyForBlankXML]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testNRTParserRejectsMalformed]' started.
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testNRTParserRejectsMalformed]' passed (0.002 seconds).
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testParseNRTFrameRateFraction]' started.
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testParseNRTFrameRateFraction]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testParseSonyNRTWithNamespacePrefix]' started.
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testParseSonyNRTWithNamespacePrefix]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testParseSonyNRTXML]' started.
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testParseSonyNRTXML]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testParseSonyXOCNNRTXML]' started.
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testParseSonyXOCNNRTXML]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testPlainMP4HasNoC2PA]' started.
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testPlainMP4HasNoC2PA]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testPlainMXFHasNoC2PA]' started.
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testPlainMXFHasNoC2PA]' passed (0.002 seconds).
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testSidecarCandidatesCoverCaseVariants]' started.
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testSidecarCandidatesCoverCaseVariants]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testSidecarDiscoveryFindsSonyXAVCM01Pattern]' started.
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testSidecarDiscoveryFindsSonyXAVCM01Pattern]' passed (0.003 seconds).
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testSidecarDiscoveryFindsXMLNextToMXF]' started.
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testSidecarDiscoveryFindsXMLNextToMXF]' passed (0.003 seconds).
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testSidecarURLLookupMissingReturnsNil]' started.
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testSidecarURLLookupMissingReturnsNil]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testUnknownMPCCodeLeavesModelUnset]' started.
+Test Case '-[SwiftMediaMetadataTests.VideoContainerTests testUnknownMPCCodeLeavesModelUnset]' passed (0.000 seconds).
+Test Suite 'VideoContainerTests' passed at 2026-09-30 20:55:09.412.
+	 Executed 35 tests, with 0 failures (0 unexpected) in 0.840 (0.842) seconds
+Test Suite 'SwiftMediaMetadataTests.xctest' passed at 2026-09-30 20:55:09.412.
+	 Executed 152 tests, with 1 test skipped and 0 failures (0 unexpected) in 12.558 (12.564) seconds
+Test Suite 'Selected tests' passed at 2026-09-30 20:55:09.412.
+	 Executed 152 tests, with 1 test skipped and 0 failures (0 unexpected) in 12.558 (12.569) seconds

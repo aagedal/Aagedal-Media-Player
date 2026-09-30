@@ -1,0 +1,116 @@
+{
+  "afterLoad" : {
+    "lifetimePeakResidentBytes" : 72515584,
+    "residentBytes" : 72515584
+  },
+  "afterRelease" : {
+    "lifetimePeakResidentBytes" : 72630272,
+    "residentBytes" : 43450368
+  },
+  "before" : {
+    "lifetimePeakResidentBytes" : 6438912,
+    "residentBytes" : 6438912
+  },
+  "exporter" : {
+    "AcquisitionRecord" : {
+      "CameraUnitMetadataSet" : {
+        "CaptureColorPrimaries" : "s-gamut3",
+        "CaptureGammaEquation" : "s-log3",
+        "CodingEquations" : "rec709"
+      }
+    },
+    "ActionsAction" : "c2pa.created",
+    "ActionsDigitalSourceType" : "http:\/\/cv.iptc.org\/newscodes\/digitalsourcetype\/digitalCapture",
+    "Assertions" : [
+      "c2pa.actions.v2",
+      "c2pa.thumbnail.claim.jpeg",
+      "c2pa.hash.bmff.v3",
+      "sony.original.signature"
+    ],
+    "AudioBitRate" : 1536000,
+    "AudioChannels" : 2,
+    "AudioCodec" : "twos",
+    "AudioDefaultFlags" : [
+      true
+    ],
+    "AudioSampleRate" : 48000,
+    "AudioStreamCount" : 1,
+    "AvgFrameRate" : 50,
+    "BitDepth" : 10,
+    "BitRate" : 112716470,
+    "CaptureFps" : 50,
+    "CaptureGammaEquation" : "s-log3",
+    "ChromaSubsampling" : "4:2:2",
+    "ClaimGenerator" : "SONY_CAMERA",
+    "ClaimGeneratorInfoName" : "SONY_CAMERA",
+    "ClaimTitle" : "20260502_TRA_MOV_0240.MP4",
+    "ColorPrimaries" : 2,
+    "ColorRange" : "pc",
+    "ColorSpace" : "mc2",
+    "CreationDate" : "2026-05-02T15:10:10Z",
+    "CreationDateValue" : "2026-05-02T15:10:10Z",
+    "DeviceManufacturer" : "Sony",
+    "DeviceModelName" : "ILCE-1",
+    "DeviceSerialNumber" : "03774988",
+    "DisplayHeight" : 2160,
+    "DisplayWidth" : 3840,
+    "Duration" : 111.36,
+    "FieldOrder" : "progressive",
+    "FileFormat" : "MP4",
+    "FileSize" : 1569013272,
+    "FormatLongName" : "QuickTime \/ MOV",
+    "FrameRate" : 50,
+    "HasContentCredentials" : true,
+    "HasRTMDTrack" : true,
+    "HasSignature" : true,
+    "LensModelName" : "FE 35mm F1.4 GM",
+    "ManifestLabel" : "urn:c2pa:b04a2414-1120-44b4-8d8b-bbedee747386",
+    "MatrixCoefficients" : 2,
+    "ModificationDate" : "2026-05-02T15:10:10Z",
+    "PixelAspectRatio" : "1:1",
+    "PixelFormat" : "yuv422p10le",
+    "RecordingMode" : "normal",
+    "RFrameRate" : 50,
+    "RTMDFirstFrameDateTime" : "2026:05:02 16:10:10",
+    "RTMDFirstFrameExposureTime" : 0.0099009900990099011,
+    "RTMDFirstFrameFNumber" : 1.8046068539925515,
+    "RTMDFirstFrameFrameRate" : 50,
+    "RTMDFirstFrameISO" : 800,
+    "RTMDIMUSampleRateHz" : 2000,
+    "SignatureAlgorithm" : "ES256",
+    "SignatureCertificateCount" : 2,
+    "Timecode" : "18:31:17:19",
+    "Timecodes" : [
+      {
+        "frameRate" : 50,
+        "source" : "sonyNRT",
+        "value" : "18:31:17:19"
+      }
+    ],
+    "TransferCharacteristics" : 2,
+    "UserDescriptiveMetadataMetaContent" : [
+      "(C2PA+SSIG)",
+      "-25"
+    ],
+    "UserDescriptiveMetadataMetaName" : [
+      "DigitalSignatureTypes",
+      "Tsfiller"
+    ],
+    "VideoAttachedPicFlags" : [
+      false
+    ],
+    "VideoBitRate" : 97208587,
+    "VideoCodec" : "hvc1",
+    "VideoCodecLabel" : "HEVC_3840_2160_M42210P@L51HT",
+    "VideoDefaultFlags" : [
+      true
+    ],
+    "VideoFrameAspectRatio" : "16:9",
+    "VideoHeight" : 2160,
+    "VideoProfile" : "Main 4:2:2 10",
+    "VideoStreamCount" : 1,
+    "VideoWidth" : 3840
+  },
+  "path" : "\/Users\/truls.aagedal\/Movies\/TestVideo\/Sony A1 Card\/M4ROOT\/CLIP\/20260502_TRA_MOV_0240.MP4",
+  "wallSeconds" : 0.024695749999999999
+}

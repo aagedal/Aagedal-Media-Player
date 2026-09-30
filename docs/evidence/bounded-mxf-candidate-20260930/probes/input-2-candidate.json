@@ -1,0 +1,100 @@
+{
+  "afterLoad" : {
+    "lifetimePeakResidentBytes" : 29196288,
+    "residentBytes" : 29196288
+  },
+  "afterRelease" : {
+    "lifetimePeakResidentBytes" : 29261824,
+    "residentBytes" : 29261824
+  },
+  "before" : {
+    "lifetimePeakResidentBytes" : 6438912,
+    "residentBytes" : 6438912
+  },
+  "exporter" : {
+    "AcquisitionRecord" : {
+      "CameraUnitMetadataSet" : {
+        "CaptureColorPrimaries" : "s-gamut3",
+        "CaptureGammaEquation" : "s-log3",
+        "CodingEquations" : "rec709"
+      }
+    },
+    "AudioBitRate" : 1152000,
+    "AudioChannelLayout" : "mono",
+    "AudioChannels" : 1,
+    "AudioCodec" : "pcm_s24le",
+    "AudioDefaultFlags" : [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ],
+    "AudioSampleRate" : 48000,
+    "AudioStreamCount" : 8,
+    "AvgFrameRate" : 50,
+    "BitDepth" : 10,
+    "BitRate" : 494476539,
+    "CaptureFps" : 50,
+    "CaptureGammaEquation" : "s-log3",
+    "ChromaLocation" : "left",
+    "ColorSpace" : "bt709",
+    "CreationDateValue" : "2026-01-18T13:02:31Z",
+    "DeviceManufacturer" : "Sony",
+    "DeviceModelName" : "ILME-FX6V",
+    "DeviceSerialNumber" : "4012864",
+    "DisplayHeight" : 2160,
+    "DisplayWidth" : 3840,
+    "Duration" : 139.84,
+    "FieldOrder" : "progressive",
+    "FileFormat" : "MXF",
+    "FileSize" : 8643449904,
+    "FormatLongName" : "MXF (Material eXchange Format)",
+    "FrameRate" : 50,
+    "LensModelName" : "FE 24-105mm F4 G OSS",
+    "MatrixCoefficients" : 1,
+    "PixelAspectRatio" : "1:1",
+    "PixelFormat" : "yuv422p10le",
+    "RecordingMode" : "normal",
+    "RFrameRate" : 50,
+    "Timecode" : "20:51:59:22",
+    "Timecodes" : [
+      {
+        "source" : "mxfMaterialPackage",
+        "value" : "20:51:59:22"
+      },
+      {
+        "source" : "mxfFilePackage",
+        "value" : "20:51:59:22"
+      },
+      {
+        "frameRate" : 50,
+        "source" : "sonyNRT",
+        "value" : "20:51:59:11"
+      }
+    ],
+    "TransferCharacteristics" : 14,
+    "VideoAttachedPicFlags" : [
+      false
+    ],
+    "VideoCodec" : "avc1",
+    "VideoCodecLabel" : "AVC_3840_2160_H422IP@L52",
+    "VideoDefaultFlags" : [
+      false
+    ],
+    "VideoFrameAspectRatio" : "16:9",
+    "VideoHeight" : 2160,
+    "VideoProfile" : "High 4:2:2 Intra",
+    "VideoStreamCount" : 1,
+    "VideoWidth" : 3840,
+    "Warnings" : [
+      "timecode mismatch: mxfMaterialPackage=20:51:59:22 vs sonyNRT=20:51:59:11",
+      "timecode mismatch: mxfFilePackage=20:51:59:22 vs sonyNRT=20:51:59:11"
+    ]
+  },
+  "path" : "\/Users\/truls.aagedal\/Movies\/TestVideo\/A1_v_FX6\/FX6\/OJ_FX6A0021.MXF",
+  "wallSeconds" : 0.398622166
+}

@@ -1,0 +1,22 @@
+warning: /Users/truls.aagedal/Library/org.swift.swiftpm/configuration is not accessible or not writable, disabling user-level cache features.
+warning: /Users/truls.aagedal/Library/org.swift.swiftpm/security is not accessible or not writable, disabling user-level cache features.
+warning: /Users/truls.aagedal/Library/Caches/org.swift.swiftpm is not accessible or not writable, disabling user-level cache features.
+warning: 'aagedal-bounded-mxf-candidate-20260930': failed storing manifest for 'aagedal-bounded-mxf-candidate-20260930' in cache: attempt to write a readonly database
+Building for debugging...
+[2 / 5] SwiftMediaMetadataTests-product
+[4 / 7] SwiftMediaMetadataTests-product
+[9 / 11] SwiftMediaMetadataTests-product
+[11 / 11] SwiftMediaMetadataTests-product
+Build complete! (2,48 sec)
+Test Suite 'Selected tests' started at 2026-09-30 20:58:33.699.
+Test Suite 'SwiftMediaMetadataTests.xctest' started at 2026-09-30 20:58:33.705.
+Test Suite 'MXFFileCursorTests' started at 2026-09-30 20:58:33.705.
+Test Case '-[SwiftMediaMetadataTests.MXFFileCursorTests testAuthenticCameraExporterParityWhenOptedIn]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFFileCursorTests testAuthenticCameraExporterParityWhenOptedIn]' passed (15.382 seconds).
+Test Suite 'MXFFileCursorTests' passed at 2026-09-30 20:58:49.088.
+	 Executed 1 test, with 0 failures (0 unexpected) in 15.382 (15.383) seconds
+Test Suite 'SwiftMediaMetadataTests.xctest' passed at 2026-09-30 20:58:49.088.
+	 Executed 1 test, with 0 failures (0 unexpected) in 15.382 (15.383) seconds
+Test Suite 'Selected tests' passed at 2026-09-30 20:58:49.088.
+	 Executed 1 test, with 0 failures (0 unexpected) in 15.382 (15.389) seconds
+MXF_FILE_CURSOR_READS requests=965737 bytes=72730354 maximumRequest=16777216 fileBytes=8643449904

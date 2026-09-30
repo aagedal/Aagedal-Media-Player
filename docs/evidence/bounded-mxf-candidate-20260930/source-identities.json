@@ -1,0 +1,20 @@
+{
+  "baseRevision": "8662054299a3e13c49c65f74c564360559d1bf7f",
+  "baseSourceSHA256": {
+    "Sources/SwiftMediaMetadata/API/VideoMetadata.swift": "47e0c3212ada08874c1203a4c2456bb0dbffabddc6cb6319e9057dca228cbb97",
+    "Sources/SwiftMediaMetadata/Video/MXFReader.swift": "da2cbe18fc2482bd6d3d91b6022878a235c8e309e4e6eb16955c30613c07af33",
+    "Tests/SwiftMediaMetadataTests/Video/VideoContainerTests.swift": "1dffdd1a56fbdf17194b8fb3eeb76ef085d55602aab3bd2ceba37bae63bcc355",
+    "Tests/SwiftMediaMetadataTests/Video/MXFMCALabelsTests.swift": "bd03ebd421c5dd9df184594e80ccb17cc659f8ef9dc302170fd2f2871b7ff35e"
+  },
+  "candidateSourceSHA256": {
+    "Sources/SwiftMediaMetadata/API/VideoMetadata.swift": "e0105ea99605a11a6b7a25dce9ae967f32a34639daf64b311e7db1405414b99e",
+    "Sources/SwiftMediaMetadata/Video/MXFReader.swift": "4382a3e502994508fdb88536f962411498e19d91a7a655ec56401e5a2771ff0d",
+    "Sources/SwiftMediaMetadata/Video/MXFFileCursor.swift": "8a4715a45a33da0bf32a1f878eb47bf1c2040d21b77b5118019d7aa40310bd37",
+    "Tests/SwiftMediaMetadataTests/Video/VideoContainerTests.swift": "1df32455bf651e9b9a65fd05c29ab1937dad8d17b5a5785f35bc0db4b471492a",
+    "Tests/SwiftMediaMetadataTests/Video/MXFMCALabelsTests.swift": "242199391067d03240167ef3cff7be183c1f3827db144708d8dc7a598a251210",
+    "Tests/SwiftMediaMetadataTests/Video/MXFFileCursorTests.swift": "67bef66695a3e33cb2692be84b8d29cf4e245f36303de16f4bcb6e6f704b683a"
+  },
+  "patchSHA256": "5da87e3d3dd7e40f93ae25cf0b57528c02684f59a6552244898875f1bbbed883",
+  "patchApplyCheck": "Passed against isolated baseline checkout at baseRevision",
+  "shippingPinChanged": false
+}

@@ -1,0 +1,144 @@
+{
+  "afterLoad" : {
+    "lifetimePeakResidentBytes" : 88948736,
+    "residentBytes" : 9535488
+  },
+  "afterRelease" : {
+    "lifetimePeakResidentBytes" : 88948736,
+    "residentBytes" : 9666560
+  },
+  "before" : {
+    "lifetimePeakResidentBytes" : 6438912,
+    "residentBytes" : 6438912
+  },
+  "exporter" : {
+    "AudioBitRate" : 768000,
+    "AudioChannelLayout" : "mono",
+    "AudioChannels" : 1,
+    "AudioCodec" : "pcm_s16le",
+    "AudioDefaultFlags" : [
+      false,
+      false,
+      false,
+      false
+    ],
+    "AudioSampleRate" : 48000,
+    "AudioStreamCount" : 4,
+    "AvgFrameRate" : 25,
+    "BitDepth" : 10,
+    "BitRate" : 59312276,
+    "ChromaLocation" : "left",
+    "DisplayHeight" : 1080,
+    "DisplayWidth" : 1920,
+    "Duration" : 79.719999999999999,
+    "FieldOrder" : "top-field-first",
+    "FileFormat" : "MXF",
+    "FileSize" : 591046832,
+    "FormatLongName" : "MXF (Material eXchange Format)",
+    "FrameRate" : 25,
+    "MCAAudioLabeling" : {
+      "Channels" : [
+        {
+          "LinkID" : "5566C36F-200D-4482-B817-728E59EF6333",
+          "Name" : "Left",
+          "SoundfieldGroupLinkID" : "80A05A93-C035-48DE-BC37-B908EA09D3B7",
+          "Symbol" : "chL",
+          "TrackIndex" : 0
+        },
+        {
+          "LinkID" : "B52F8A2D-D310-44CE-9B83-27DAF746F7C8",
+          "Name" : "Right",
+          "SoundfieldGroupLinkID" : "80A05A93-C035-48DE-BC37-B908EA09D3B7",
+          "Symbol" : "chR",
+          "TrackIndex" : 1
+        },
+        {
+          "LinkID" : "608BFD49-0210-49E2-A704-A0A745052662",
+          "Name" : "Mono One",
+          "SoundfieldGroupLinkID" : "6D3C3742-6B93-458D-893A-EABCBF8279D4",
+          "Symbol" : "chM1",
+          "TrackIndex" : 2
+        },
+        {
+          "LinkID" : "31FC2F1C-BF7C-4D22-8CD3-7F5BB111E578",
+          "Name" : "Mono One",
+          "SoundfieldGroupLinkID" : "01AA22F9-BB61-4E37-9B81-958CB6DFDE9D",
+          "Symbol" : "chM1",
+          "TrackIndex" : 3
+        }
+      ],
+      "GroupsOfSoundfieldGroups" : [
+        {
+          "Language" : "en",
+          "LinkID" : "3278B910-14F7-4E6E-9835-376EB5EB1141",
+          "Name" : "Main Program",
+          "Symbol" : "ggMPg"
+        },
+        {
+          "LinkID" : "D1A59DDE-2B81-4085-AF76-B79FB4ED1054",
+          "Name" : "Music and Effects",
+          "Symbol" : "ggME"
+        },
+        {
+          "Language" : "en",
+          "LinkID" : "8BA889FB-3014-43E8-AB49-1E46F2F409E8",
+          "Name" : "Dialog Centric Mix",
+          "Symbol" : "ggDcm"
+        }
+      ],
+      "SoundfieldGroups" : [
+        {
+          "GroupOfSoundfieldGroupsLinkIDs" : [
+            "8BA889FB-3014-43E8-AB49-1E46F2F409E8"
+          ],
+          "LinkID" : "6D3C3742-6B93-458D-893A-EABCBF8279D4",
+          "Name" : "Monoaural",
+          "Symbol" : "sgM"
+        },
+        {
+          "GroupOfSoundfieldGroupsLinkIDs" : [
+            "3278B910-14F7-4E6E-9835-376EB5EB1141"
+          ],
+          "LinkID" : "80A05A93-C035-48DE-BC37-B908EA09D3B7",
+          "Name" : "Standard Stereo",
+          "Symbol" : "sgST"
+        },
+        {
+          "GroupOfSoundfieldGroupsLinkIDs" : [
+            "D1A59DDE-2B81-4085-AF76-B79FB4ED1054"
+          ],
+          "LinkID" : "01AA22F9-BB61-4E37-9B81-958CB6DFDE9D",
+          "Name" : "Monoaural",
+          "Symbol" : "sgM"
+        }
+      ]
+    },
+    "PixelAspectRatio" : "1:1",
+    "PixelFormat" : "yuv420p10le",
+    "RFrameRate" : 25,
+    "Timecode" : "11:08:07:14",
+    "Timecodes" : [
+      {
+        "source" : "mxfMaterialPackage",
+        "value" : "11:08:07:14"
+      },
+      {
+        "source" : "mxfFilePackage",
+        "value" : "11:08:07:14"
+      }
+    ],
+    "VideoAttachedPicFlags" : [
+      false
+    ],
+    "VideoCodec" : "avc1",
+    "VideoDefaultFlags" : [
+      false
+    ],
+    "VideoHeight" : 1080,
+    "VideoProfile" : "High 10 Intra",
+    "VideoStreamCount" : 1,
+    "VideoWidth" : 1920
+  },
+  "path" : "\/Users\/truls.aagedal\/Movies\/TestVideo\/MCA_Test\/n-intervju_with-MCA-labels.mxf",
+  "wallSeconds" : 0.043519334
+}

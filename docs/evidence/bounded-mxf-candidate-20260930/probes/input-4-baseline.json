@@ -1,0 +1,164 @@
+{
+  "afterLoad" : {
+    "lifetimePeakResidentBytes" : 44285952,
+    "residentBytes" : 12681216
+  },
+  "afterRelease" : {
+    "lifetimePeakResidentBytes" : 44285952,
+    "residentBytes" : 12812288
+  },
+  "before" : {
+    "lifetimePeakResidentBytes" : 6438912,
+    "residentBytes" : 6438912
+  },
+  "exporter" : {
+    "AcquisitionRecord" : {
+      "CameraUnitMetadataSet" : {
+        "AutoExposureMode" : "ManualExposureMode",
+        "AutoFocusSensingAreaSetting" : "ManualFocusMode",
+        "AutoWhiteBalanceMode" : "PresetWhiteBalanceSetup",
+        "CameraAttributes" : "MPC-2610 0000048 Version1.00",
+        "CameraMasterGainAdjustment" : "0.00db",
+        "CaptureFrameRate" : "120",
+        "CaptureGammaEquation" : "scene-linear",
+        "ElectricalExtenderMagnification" : "100%",
+        "ExposureIndexOfPhotoMeter" : "3200",
+        "ImageSensorEffectiveHeight" : "8985",
+        "ImageSensorEffectiveWidth" : "17039",
+        "ImageSensorReadoutMode" : "ProgressiveFrame",
+        "ISOSensitivity" : "3200",
+        "NeutralDensityFilterWheelSetting" : "8",
+        "ShutterSpeed_Angle" : "358.00deg",
+        "ShutterSpeed_Time" : "8.26ms",
+        "TintCorrection" : "0",
+        "WhiteBalance" : "5600"
+      },
+      "LensUnitMetadataSet" : {
+        "LensAttributes" : "Unknown",
+        "LensZoom35mmStillCameraEquivalent" : "0.00mm",
+        "LensZoomActualFocalLength" : "409500.00mm"
+      },
+      "SonyF65CameraMetadataSet" : {
+        "ActiveAreaAspectRatio" : "4096:2160",
+        "CameraProcessDiscriminationCode" : "0C01h",
+        "ColorForLook" : "s-gamut3-cine",
+        "EffectiveMarkerAspectRatio" : "4096:2160",
+        "EffectiveMarkerCoverage" : "4096\/4096",
+        "GammaForLook" : "s-log3-cine",
+        "ImageOrientation" : "Normal",
+        "LookProcessBaked" : "false",
+        "MonitoringBaseCurve" : "rec709",
+        "MonitoringCharacteristics" : "rec709",
+        "MonitoringCodingEquations" : "rec709",
+        "MonitoringColorPrimaries" : "rec709",
+        "MonitoringDescriptions" : "LUT:SL3SG3CtoTealOR_709.cube",
+        "PixelAspectRatio" : "1:1",
+        "PreCDLTransform" : "LUT:SL3SG3CtoTealOR_709.cube",
+        "RawBlackCodeValue" : "512",
+        "RawGrayCodeValue" : "1504",
+        "RawWhiteCodeValue" : "5472"
+      }
+    },
+    "ActiveAreaAspectRatio" : "4096:2160",
+    "AudioBitRate" : 1152000,
+    "AudioChannelLayout" : "mono",
+    "AudioChannels" : 1,
+    "AudioCodec" : "pcm_s24le",
+    "AudioDefaultFlags" : [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ],
+    "AudioSampleRate" : 48000,
+    "AudioStreamCount" : 8,
+    "AutoExposureMode" : "ManualExposureMode",
+    "AutoWhiteBalanceMode" : "PresetWhiteBalanceSetup",
+    "AvgFrameRate" : 24,
+    "BitRate" : 392051700,
+    "CameraAttributes" : "MPC-2610 0000048 Version1.00",
+    "CameraMasterGainAdjustmentDb" : 0,
+    "CameraProcessDiscriminationCode" : "0C01h",
+    "CaptureFps" : 120,
+    "CaptureGammaEquation" : "scene-linear",
+    "ColorForLook" : "s-gamut3-cine",
+    "CreationDateValue" : "2024-05-13T05:36:36Z",
+    "DeviceManufacturer" : "Sony",
+    "DeviceModelName" : "BURANO",
+    "DeviceSerialNumber" : "0000048",
+    "DisplayHeight" : 2168,
+    "DisplayWidth" : 4111,
+    "Duration" : 11.5,
+    "EffectiveMarkerAspectRatio" : "4096:2160",
+    "EffectiveMarkerCoverage" : "4096\/4096",
+    "ElectricalExtenderMagnification" : "100%",
+    "ExposureIndexOfPhotoMeter" : 3200,
+    "FieldOrder" : "progressive",
+    "FileFormat" : "XOCN",
+    "FileSize" : 563574320,
+    "FormatLongName" : "Sony X-OCN (MXF)",
+    "FrameRate" : 24,
+    "GammaForLook" : "s-log3-cine",
+    "ImageOrientation" : "Normal",
+    "ImageSensorEffectiveHeight" : 8985,
+    "ImageSensorEffectiveWidth" : 17039,
+    "ImageSensorReadoutMode" : "ProgressiveFrame",
+    "ISOSensitivity" : 3200,
+    "LensZoom35mmStillCameraEquivalent" : 0,
+    "LensZoomActualFocalLength" : 409500,
+    "LookProcessBaked" : false,
+    "MonitoringBaseCurve" : "rec709",
+    "MonitoringCharacteristics" : "rec709",
+    "MonitoringCodingEquations" : "rec709",
+    "MonitoringColorPrimaries" : "rec709",
+    "MonitoringDescriptions" : "LUT:SL3SG3CtoTealOR_709.cube",
+    "NeutralDensityFilterWheelSetting" : "8",
+    "PixelAspect" : "1:1",
+    "PixelAspectRatio" : "17344:17415",
+    "PreCDLTransform" : "LUT:SL3SG3CtoTealOR_709.cube",
+    "RawBlackCodeValue" : 512,
+    "RawGrayCodeValue" : 1504,
+    "RawWhiteCodeValue" : 5472,
+    "RFrameRate" : 24,
+    "ShutterAngle" : 358,
+    "ShutterTimeMs" : 8.2599999999999998,
+    "Timecode" : "00:28:38:08",
+    "Timecodes" : [
+      {
+        "source" : "mxfMaterialPackage",
+        "value" : "00:28:38:08"
+      },
+      {
+        "source" : "mxfFilePackage",
+        "value" : "00:28:38:08"
+      },
+      {
+        "frameRate" : 120,
+        "source" : "sonyNRT",
+        "value" : "00:28:38:08"
+      }
+    ],
+    "TintCorrection" : 0,
+    "VideoAttachedPicFlags" : [
+      false,
+      false
+    ],
+    "VideoCodec" : "xocn",
+    "VideoCodecLabel" : "X-OCN_G_LT_4096_2160",
+    "VideoDefaultFlags" : [
+      false,
+      false
+    ],
+    "VideoFrameAspectRatio" : "256:135",
+    "VideoHeight" : 2168,
+    "VideoStreamCount" : 2,
+    "VideoWidth" : 4128,
+    "WhiteBalance" : 5600
+  },
+  "path" : "\/Users\/truls.aagedal\/Movies\/TestVideo\/Sony RAW\/Scene 1\/S35c 4K X-OCN LT 120p 17.9 (SCENE 4).mxf",
+  "wallSeconds" : 0.041289667000000002
+}

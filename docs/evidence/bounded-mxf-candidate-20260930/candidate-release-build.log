@@ -1,0 +1,12 @@
+warning: /Users/truls.aagedal/Library/org.swift.swiftpm/configuration is not accessible or not writable, disabling user-level cache features.
+warning: /Users/truls.aagedal/Library/org.swift.swiftpm/security is not accessible or not writable, disabling user-level cache features.
+warning: /Users/truls.aagedal/Library/Caches/org.swift.swiftpm is not accessible or not writable, disabling user-level cache features.
+warning: 'aagedal-bounded-mxf-candidate-20260930': failed storing manifest for 'aagedal-bounded-mxf-candidate-20260930' in cache: attempt to write a readonly database
+Building for production...
+[Planning deferred tasks]
+[3 / 14] SwiftMediaMetadata
+[5 / 15] SwiftMediaMetadata
+[10 / 14] Benchmark-product
+[12 / 15] Benchmark-product
+[14 / 15] Benchmark-product
+Build complete! (46,01 sec)

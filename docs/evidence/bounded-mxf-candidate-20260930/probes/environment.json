@@ -1,0 +1,56 @@
+{
+  "startedUTC": "2026-09-30T18:59:09.483408+00:00",
+  "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+  "machine": "arm64",
+  "qualification": "Concurrent root app/dependency compilation was active around these checks. Baseline and candidate built with identical Release -debug-info-format none; no thermal, throughput, app-cache, external-volume, or base-M1 acceptance. Serial baseline-before-candidate ordering and filesystem cache are uncontrolled.",
+  "scope": "Fresh standalone library URL-read processes; no app cache/production acceptance.",
+  "ordering": "Baseline then candidate for each input; filesystem cache is not controlled.",
+  "identitiesBefore": {
+    "/private/tmp/aagedal-bounded-mxf-baseline-release-20260930/out/Products/Release/Benchmark": {
+      "bytes": 4682184,
+      "sha256": "22dbf3bd1b60ced187b4b8c6cbac305e934ed5404c7ab9a92adb6952ff267022"
+    },
+    "/private/tmp/aagedal-bounded-mxf-release-20260930/out/Products/Release/Benchmark": {
+      "bytes": 4719304,
+      "sha256": "1c228f36c8b8e6dc3ebf9ab2bae439527b4c4aba04da06cba2fd11d3bca74979"
+    },
+    "/Users/truls.aagedal/Movies/TestVideo/testmappe_agedal_media_stitch/M4ROOT/CLIP/rre_8073.MP4": {
+      "bytes": 1879319902,
+      "sha256": "d44dcfd089c2712a1fa1e40f08a293cc78dc33a472071c6edbe4224bda06d87a"
+    },
+    "/Users/truls.aagedal/Movies/TestVideo/Sony A1 Card/M4ROOT/CLIP/20260502_TRA_MOV_0240.MP4": {
+      "bytes": 1569013272,
+      "sha256": "d8f32f9e827dba821a8101c7dd713580e37b03e9723c4ffbf136919829d6fbe1"
+    },
+    "/Users/truls.aagedal/Movies/TestVideo/A1_v_FX6/FX6/OJ_FX6A0021.MXF": {
+      "bytes": 8643449904,
+      "sha256": "5d1c636920c80e7ce83af6486a8de9184c5cacee8a316e799dbb52e8f02174a8"
+    },
+    "/Users/truls.aagedal/Movies/TestVideo/ARRIRAW/DW0001C021_251020_132307_a1I7H.mxf": {
+      "bytes": 691732564,
+      "sha256": "acb1ec2f25b55cfe8a8d604d1a1f04679d75ce1568c5399db2a42aaa5e75236c"
+    },
+    "/Users/truls.aagedal/Movies/TestVideo/Sony RAW/Scene 1/S35c 4K X-OCN LT 120p 17.9 (SCENE 4).mxf": {
+      "bytes": 563574320,
+      "sha256": "f6fe38a3109b9d59d0613ed030726bc0e69d86f453b8b7a8c68ab2aca9eff7dc"
+    },
+    "/Users/truls.aagedal/Movies/TestVideo/MCA_Test/n-intervju_with-MCA-labels.mxf": {
+      "bytes": 591046832,
+      "sha256": "e6b67949b33cad33126b675dbf8bf74eb0e1a6b119ccd392eb00a393fccf3abf"
+    },
+    "/Users/truls.aagedal/Movies/TestVideo/Sony A1 Card/M4ROOT/CLIP/20260502_TRA_MOV_0240M01.XML": {
+      "bytes": 2285,
+      "sha256": "a6b232115555e2253c7a1acc36398429b94d373e17196f325993dd897368bb10"
+    },
+    "/Users/truls.aagedal/Movies/TestVideo/A1_v_FX6/FX6/OJ_FX6A0021M01.XML": {
+      "bytes": 3379,
+      "sha256": "15b267b83754ca061afb475c3f3fdd632f1915b5a9bcf20aeaa5b33744f1a7c3"
+    },
+    "/Users/truls.aagedal/Movies/TestVideo/Sony RAW/Scene 1/S35c 4K X-OCN LT 120p 17.9 (SCENE 4)M01.xml": {
+      "bytes": 3955,
+      "sha256": "d06be1a11ce895076031ce0355d4020a8901022348692ac6f519a5bee8b3ee50"
+    }
+  },
+  "identitiesUnchangedAfter": true,
+  "endedUTC": "2026-09-30T18:59:16.157060+00:00"
+}

@@ -1,0 +1,224 @@
+[
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/testmappe_agedal_media_stitch/M4ROOT/CLIP/rre_8073.MP4",
+    "inputBytes": 1879319902,
+    "completeExporterParity": true,
+    "baseline": {
+      "wallSeconds": 0.015385833,
+      "before": {
+        "lifetimePeakResidentBytes": 6438912,
+        "residentBytes": 6438912
+      },
+      "afterLoad": {
+        "lifetimePeakResidentBytes": 11157504,
+        "residentBytes": 11157504
+      },
+      "afterRelease": {
+        "lifetimePeakResidentBytes": 13254656,
+        "residentBytes": 12943360
+      },
+      "lifetimePeakIncreaseBytes": 4718592
+    },
+    "candidate": {
+      "wallSeconds": 0.01490175,
+      "before": {
+        "lifetimePeakResidentBytes": 6455296,
+        "residentBytes": 6455296
+      },
+      "afterLoad": {
+        "lifetimePeakResidentBytes": 11206656,
+        "residentBytes": 11206656
+      },
+      "afterRelease": {
+        "lifetimePeakResidentBytes": 13156352,
+        "residentBytes": 12845056
+      },
+      "lifetimePeakIncreaseBytes": 4751360
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/Sony A1 Card/M4ROOT/CLIP/20260502_TRA_MOV_0240.MP4",
+    "inputBytes": 1569013272,
+    "completeExporterParity": true,
+    "baseline": {
+      "wallSeconds": 0.02469575,
+      "before": {
+        "lifetimePeakResidentBytes": 6438912,
+        "residentBytes": 6438912
+      },
+      "afterLoad": {
+        "lifetimePeakResidentBytes": 72515584,
+        "residentBytes": 72515584
+      },
+      "afterRelease": {
+        "lifetimePeakResidentBytes": 72630272,
+        "residentBytes": 43450368
+      },
+      "lifetimePeakIncreaseBytes": 66076672
+    },
+    "candidate": {
+      "wallSeconds": 0.023490833,
+      "before": {
+        "lifetimePeakResidentBytes": 6438912,
+        "residentBytes": 6438912
+      },
+      "afterLoad": {
+        "lifetimePeakResidentBytes": 71843840,
+        "residentBytes": 71843840
+      },
+      "afterRelease": {
+        "lifetimePeakResidentBytes": 71925760,
+        "residentBytes": 42745856
+      },
+      "lifetimePeakIncreaseBytes": 65404928
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/A1_v_FX6/FX6/OJ_FX6A0021.MXF",
+    "inputBytes": 8643449904,
+    "completeExporterParity": true,
+    "baseline": {
+      "wallSeconds": 0.196586625,
+      "before": {
+        "lifetimePeakResidentBytes": 6438912,
+        "residentBytes": 6438912
+      },
+      "afterLoad": {
+        "lifetimePeakResidentBytes": 397557760,
+        "residentBytes": 12533760
+      },
+      "afterRelease": {
+        "lifetimePeakResidentBytes": 397557760,
+        "residentBytes": 12681216
+      },
+      "lifetimePeakIncreaseBytes": 391118848
+    },
+    "candidate": {
+      "wallSeconds": 0.398622166,
+      "before": {
+        "lifetimePeakResidentBytes": 6438912,
+        "residentBytes": 6438912
+      },
+      "afterLoad": {
+        "lifetimePeakResidentBytes": 29196288,
+        "residentBytes": 29196288
+      },
+      "afterRelease": {
+        "lifetimePeakResidentBytes": 29261824,
+        "residentBytes": 29261824
+      },
+      "lifetimePeakIncreaseBytes": 22757376
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/ARRIRAW/DW0001C021_251020_132307_a1I7H.mxf",
+    "inputBytes": 691732564,
+    "completeExporterParity": true,
+    "baseline": {
+      "wallSeconds": 0.044189667,
+      "before": {
+        "lifetimePeakResidentBytes": 6438912,
+        "residentBytes": 6438912
+      },
+      "afterLoad": {
+        "lifetimePeakResidentBytes": 38387712,
+        "residentBytes": 11157504
+      },
+      "afterRelease": {
+        "lifetimePeakResidentBytes": 38387712,
+        "residentBytes": 11288576
+      },
+      "lifetimePeakIncreaseBytes": 31948800
+    },
+    "candidate": {
+      "wallSeconds": 0.044364625,
+      "before": {
+        "lifetimePeakResidentBytes": 6455296,
+        "residentBytes": 6455296
+      },
+      "afterLoad": {
+        "lifetimePeakResidentBytes": 27951104,
+        "residentBytes": 27951104
+      },
+      "afterRelease": {
+        "lifetimePeakResidentBytes": 28049408,
+        "residentBytes": 28049408
+      },
+      "lifetimePeakIncreaseBytes": 21495808
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/Sony RAW/Scene 1/S35c 4K X-OCN LT 120p 17.9 (SCENE 4).mxf",
+    "inputBytes": 563574320,
+    "completeExporterParity": true,
+    "baseline": {
+      "wallSeconds": 0.041289667,
+      "before": {
+        "lifetimePeakResidentBytes": 6438912,
+        "residentBytes": 6438912
+      },
+      "afterLoad": {
+        "lifetimePeakResidentBytes": 44285952,
+        "residentBytes": 12681216
+      },
+      "afterRelease": {
+        "lifetimePeakResidentBytes": 44285952,
+        "residentBytes": 12812288
+      },
+      "lifetimePeakIncreaseBytes": 37847040
+    },
+    "candidate": {
+      "wallSeconds": 0.040039166,
+      "before": {
+        "lifetimePeakResidentBytes": 6438912,
+        "residentBytes": 6438912
+      },
+      "afterLoad": {
+        "lifetimePeakResidentBytes": 29229056,
+        "residentBytes": 29229056
+      },
+      "afterRelease": {
+        "lifetimePeakResidentBytes": 29294592,
+        "residentBytes": 29294592
+      },
+      "lifetimePeakIncreaseBytes": 22790144
+    }
+  },
+  {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/MCA_Test/n-intervju_with-MCA-labels.mxf",
+    "inputBytes": 591046832,
+    "completeExporterParity": true,
+    "baseline": {
+      "wallSeconds": 0.043519334,
+      "before": {
+        "lifetimePeakResidentBytes": 6438912,
+        "residentBytes": 6438912
+      },
+      "afterLoad": {
+        "lifetimePeakResidentBytes": 88948736,
+        "residentBytes": 9535488
+      },
+      "afterRelease": {
+        "lifetimePeakResidentBytes": 88948736,
+        "residentBytes": 9666560
+      },
+      "lifetimePeakIncreaseBytes": 82509824
+    },
+    "candidate": {
+      "wallSeconds": 0.0543215,
+      "before": {
+        "lifetimePeakResidentBytes": 6455296,
+        "residentBytes": 6455296
+      },
+      "afterLoad": {
+        "lifetimePeakResidentBytes": 26181632,
+        "residentBytes": 26181632
+      },
+      "afterRelease": {
+        "lifetimePeakResidentBytes": 26296320,
+        "residentBytes": 26296320
+      },
+      "lifetimePeakIncreaseBytes": 19726336
+    }
+  }
+]

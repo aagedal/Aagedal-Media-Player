@@ -1,0 +1,64 @@
+{
+  "afterLoad" : {
+    "lifetimePeakResidentBytes" : 11157504,
+    "residentBytes" : 11157504
+  },
+  "afterRelease" : {
+    "lifetimePeakResidentBytes" : 13254656,
+    "residentBytes" : 12943360
+  },
+  "before" : {
+    "lifetimePeakResidentBytes" : 6438912,
+    "residentBytes" : 6438912
+  },
+  "exporter" : {
+    "AudioBitRate" : 1536000,
+    "AudioChannels" : 2,
+    "AudioCodec" : "twos",
+    "AudioDefaultFlags" : [
+      true
+    ],
+    "AudioSampleRate" : 48000,
+    "AudioStreamCount" : 1,
+    "AvgFrameRate" : 49.999999999999993,
+    "BitDepth" : 8,
+    "BitRate" : 58111314,
+    "ChromaLocation" : "left",
+    "ChromaSubsampling" : "4:2:0",
+    "CreationDate" : "2026-04-13T10:21:01Z",
+    "DisplayHeight" : 1080,
+    "DisplayWidth" : 1920,
+    "Duration" : 258.72000000000003,
+    "FieldOrder" : "progressive",
+    "FileFormat" : "MP4",
+    "FileSize" : 1879319902,
+    "FormatLongName" : "QuickTime \/ MOV",
+    "FrameRate" : 49.999999999999993,
+    "HasRTMDTrack" : true,
+    "ModificationDate" : "2026-04-13T10:21:01Z",
+    "PixelAspectRatio" : "1:1",
+    "PixelFormat" : "yuv420p",
+    "RFrameRate" : 50,
+    "RTMDFirstFrameDateTime" : "2026:04:13 12:21:02",
+    "RTMDFirstFrameExposureTime" : 0.019607843137254902,
+    "RTMDFirstFrameFNumber" : 4.0003384650907776,
+    "RTMDFirstFrameFrameRate" : 50,
+    "RTMDFirstFrameISO" : 125,
+    "RTMDFirstFrameWhiteBalance" : "Preset",
+    "RTMDIMUSampleRateHz" : 2000,
+    "VideoAttachedPicFlags" : [
+      false
+    ],
+    "VideoBitRate" : 46970525,
+    "VideoCodec" : "avc1",
+    "VideoDefaultFlags" : [
+      true
+    ],
+    "VideoHeight" : 1080,
+    "VideoProfile" : "High 4:2:2",
+    "VideoStreamCount" : 1,
+    "VideoWidth" : 1920
+  },
+  "path" : "\/Users\/truls.aagedal\/Movies\/TestVideo\/testmappe_agedal_media_stitch\/M4ROOT\/CLIP\/rre_8073.MP4",
+  "wallSeconds" : 0.015385833
+}

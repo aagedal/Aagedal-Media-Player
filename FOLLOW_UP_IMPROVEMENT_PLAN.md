@@ -3868,6 +3868,31 @@ acceptance remain open. See
 [retained integrated evidence](docs/evidence/release-candidate-authentic-continuation-20260930/README.md).
 This evidence-report commit follows the verified implementation commit.
 
+## Phase 174 — Isolated bounded MXF reader candidate
+
+Status: Portable upstream candidate implemented and validated on 2026-09-30;
+shipping SwiftMediaMetadata pin is unchanged.
+
+- [x] Share the Data/file KLV parser with a bounded positional file cursor,
+  preserving footer metadata, sniffing, caps, timecodes, MCA and URL postprocessing.
+- [x] Pass 1,674 upstream library tests with 21 explicit opt-in skips, and
+  152 focused tests with one unrelated skip, without failures.
+- [x] Compare complete exporter output for six Sony/ARRIRAW/X-OCN/MCA inputs,
+  retaining unchanged media, sidecar and binary identities.
+- [x] Observe FX6 peak increase fall from 373.000 to 21.703 MiB in fresh
+  library URL-reader processes; retain 0.197/0.399-second baseline/candidate
+  observations with concurrent-build, cache and run-order qualifications.
+- [x] Retain the cleanly applicable six-file patch, bounded-read instrumentation,
+  probe source, raw outputs and identity manifests.
+- [ ] Complete app cache/production memory, external-volume, Linux, multi-hour
+  and base-M1 acceptance; publish an immutable upstream revision before repinning.
+
+The complete FX6 walk requests 72,730,354 bytes in 965,737 positional reads,
+with a maximum 16 MiB request, against an 8.64 GB original. Parsed result count
+can still grow, same-size concurrent changes remain undetected, and syscall
+cost needs upstream review. This is library-only candidate evidence, not a
+shipping correction. See [candidate patch and checks](docs/evidence/bounded-mxf-candidate-20260930/README.md).
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
