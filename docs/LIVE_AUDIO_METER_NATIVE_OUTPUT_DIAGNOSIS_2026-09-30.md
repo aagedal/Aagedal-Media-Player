@@ -185,3 +185,23 @@ source-meter records pass, but CoreAudio channel-map failures make final
 validation exit 1 with no passing summary. This supplies actual Release
 integration evidence for the new rejection path, without claiming the output
 defect is repaired. See [retained native run](evidence/live-meter-native-output-20260930/release-output-gate/README.md).
+
+## Linked incremental repair candidate
+
+The next parallel continuation provides an isolated rebuild tool and a locally
+linked Release candidate. It rebuilds the two CoreAudio objects for both
+architectures, verifies every unrelated archive object, preserves versioned
+framework links and records source/config/compiler/database provenance. Six
+builder safety regressions pass.
+
+The unchanged production profile/output validator accepts four generated
+input/track rows, then five rows in a second run including a hash-verified
+authentic Sony stereo recording. Native logging receipts identify CoreAudio
+and contain no output-initialization errors. Meter source identity, routing,
+cancellation and EOF checks also pass. See
+[the candidate build and native evidence](evidence/live-meter-native-output-20260930/incremental-rebuild/README.md).
+
+This corrects the reproduced initialization defect in a local incremental
+candidate. The app's shipping package pin remains unchanged. A full immutable
+MPVKit build/repin, actual audible output, device switching, supported macOS,
+surround hardware and release-floor acceptance remain open.

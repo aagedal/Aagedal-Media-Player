@@ -1,0 +1,67 @@
+{
+  "scope": "local incremental repaired dependency; unchanged shipping package pin",
+  "builderSHA256": "a73938cd9de8d58a3f33727c7d082c1435bd898d41ba8ff918d7ef9066eebcf0",
+  "builderSafetyTestCount": 6,
+  "productionBuildHEAD": "919fa27cf2b32846d5aa2205a001d863155fea3d",
+  "productionBuildWorktreeDiffSHA256": "18067afff8415100107c3a70c320bfda3cf6cddf6d3ee7fdc905c7c100a100b0",
+  "productionBuildLogSHA256": "f0abe4a8a26d2752cc6f48b6dd613ffefa56a4f89d14b415508d3c97e3286235",
+  "nativeResultRoot": "/tmp/aagedal-coreaudio-production-candidate-20260930",
+  "runs": [
+    {
+      "run": 1,
+      "build": "v3",
+      "profileRowCount": 4,
+      "xctestFailureCount": 0,
+      "xctestSeconds": 52.048,
+      "unchangedProfileValidatorStatus": "passed",
+      "nativeLoggingReceiptCount": 8,
+      "observedAudioOutputDrivers": [
+        "coreaudio"
+      ],
+      "profilesSHA256": "a3bc92bc9fb6bef3460adb2ee3bc68824deb28ed5392377ec1be03908bdb1042",
+      "nativeLogSHA256": "0d24b4d3aa5678f2abd7209ebfb8611efcf225c4038cd84a1ba5bd906f4b9f5d",
+      "xcresultPath": "/tmp/aagedal-coreaudio-production-candidate-20260930/Run1.xcresult",
+      "attachmentDirectory": "/tmp/aagedal-coreaudio-production-candidate-20260930/run1/attachments"
+    },
+    {
+      "run": 2,
+      "build": "final",
+      "profileRowCount": 5,
+      "xctestFailureCount": 0,
+      "xctestSeconds": 64.842,
+      "unchangedProfileValidatorStatus": "passed",
+      "nativeLoggingReceiptCount": 10,
+      "observedAudioOutputDrivers": [
+        "coreaudio"
+      ],
+      "profilesSHA256": "59d457a23cbc800d72233c176a3a310abe7e0d0554a4befc88703606f2568bab",
+      "nativeLogSHA256": "9f1afe53c2f27765c661c19f49ceda0a02724a1356a7b6f6a86654eab35346ba",
+      "xcresultPath": "/tmp/aagedal-coreaudio-production-candidate-20260930/Run2.xcresult",
+      "attachmentDirectory": "/tmp/aagedal-coreaudio-production-candidate-20260930/run2/attachments"
+    }
+  ],
+  "baselineRejectionEvidence": "../release-output-gate/README.md",
+  "limitations": [
+    "Both architectures rebuilt; only arm64 native playback exercised.",
+    "Two local builds share identical patched C/header contents; build paths embedded in objects differ.",
+    "No power/sleep acceptance check in this isolated manifest-run procedure.",
+    "Not a published dependency repair, package repin, clean full rebuild, actual audible-output, surround/default-device-switch or base-M1 release acceptance."
+  ],
+  "candidate-link.map": [
+    "[316] /tmp/aagedal-coreaudio-rebuilt-v3-20260930/Libmpv.framework/Libmpv(audio_out_ao_coreaudio.c.o)",
+    "[317] /tmp/aagedal-coreaudio-rebuilt-v3-20260930/Libmpv.framework/Libmpv(audio_out_ao_coreaudio_exclusive.c.o)",
+    "[318] /tmp/aagedal-coreaudio-rebuilt-v3-20260930/Libmpv.framework/Libmpv(audio_out_ao_coreaudio_properties.c.o)",
+    "[319] /tmp/aagedal-coreaudio-rebuilt-v3-20260930/Libmpv.framework/Libmpv(audio_out_ao_coreaudio_chmap.c.o)",
+    "[320] /tmp/aagedal-coreaudio-rebuilt-v3-20260930/Libmpv.framework/Libmpv(audio_out_ao_coreaudio_utils.c.o)"
+  ],
+  "final-candidate-link.map": [
+    "[316] /tmp/aagedal-coreaudio-rebuilt-final-20260930/Libmpv.framework/Libmpv(audio_out_ao_coreaudio.c.o)",
+    "[317] /tmp/aagedal-coreaudio-rebuilt-final-20260930/Libmpv.framework/Libmpv(audio_out_ao_coreaudio_exclusive.c.o)",
+    "[318] /tmp/aagedal-coreaudio-rebuilt-final-20260930/Libmpv.framework/Libmpv(audio_out_ao_coreaudio_properties.c.o)",
+    "[319] /tmp/aagedal-coreaudio-rebuilt-final-20260930/Libmpv.framework/Libmpv(audio_out_ao_coreaudio_chmap.c.o)",
+    "[320] /tmp/aagedal-coreaudio-rebuilt-final-20260930/Libmpv.framework/Libmpv(audio_out_ao_coreaudio_utils.c.o)"
+  ],
+  "firstRelinkCommandSHA256": "51f6c42702f59b4d1c26fe90e2c88321a557cae74f6a6bc1a400e21c8035e9a8",
+  "finalRelinkCommandSHA256": "f3411ececbc7c62dbef4afdc4a7ccdbc7b599306accc1ea51940708c9d3cc623",
+  "finalCandidatePlayerSHA256": "b1eb37a071f792f496a53bf5a7a18209c5ca73a558fe3f574d7f646d81e2eedb"
+}

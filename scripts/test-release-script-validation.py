@@ -219,7 +219,7 @@ exit 91
         self.assertLess(summary, details)
         self.assertLess(details, validation)
         self.assertLess(validation, analysis)
-        self.assertIn('--minimum-tests 710', source)
+        self.assertIn('--minimum-tests 726', source)
         self.assertIn('-parallel-testing-enabled NO', source)
         self.assertEqual(source.count('-skip-testing:'), 2)
         focused = source.index('echo "==> Focused mixed-backend transport repeat"')
@@ -279,7 +279,7 @@ exit 91
         self.assertLess(package_match, result_validation)
         self.assertLess(result_validation, preflight)
         self.assertLess(result_validation, archive)
-        self.assertIn('--minimum-tests 710', self.source)
+        self.assertIn('--minimum-tests 726', self.source)
         self.assertEqual(self.source.count('--require-test'), 2)
 
     def test_exported_app_rejects_changed_update_metadata(self) -> None:

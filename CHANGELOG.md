@@ -5,6 +5,8 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Changed
+- Review keeps correction focus on empty note text while preserving unrelated range drafts, and clears accepted text correction state without dropping range errors.
+- MPV screenshot capture validates node types, raster bounds and buffer sizes before reading or copying pixels.
 - Review's End at current frame action clears an invalid range draft even when the chosen endpoint is already saved, allowing reports to proceed after correction.
 - Live-meter profiles retain Release native-output logs and failed-test diagnostics, reject audio-output initialization errors, and remove stale passing summaries.
 - Metadata fixture validation now pins a recovered authentic Sony ARW, supports current SwiftPM suite naming, and diagnoses JXL behavior against an exact dependency release.
@@ -27,6 +29,8 @@ All notable changes to Aagedal Media Player.
 - Metadata container-edge validation checks the independent error behavior of frame, gyroscope, and accelerometer RTMD readers against both the 3.0.0 baseline and integrated 3.0.1 dependency.
 
 ### Added
+- An opt-in isolated CoreAudio dependency rebuild tool with source, compiler and archive provenance, validated against local production-path mono/stereo and authentic Sony playback profiles.
+- Per-channel authentic ITU live sample/true-peak comparisons against an independent PCM reference, with exact EOF and filter-tail provenance.
 - Independent momentary/short-term loudness comparisons for the live decoder/DSP against original ITU programmes, with exact source-frame endpoints and retained reference readings.
 - File → Add Comparison File and Cmd–Option–O for keyboard comparison setup without changing macOS keyboard-navigation preferences.
 - Review → Export Review menu access to every report/marker format, plus Cmd–Option–E for CSV, with pending note edits saved before export.

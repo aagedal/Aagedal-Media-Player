@@ -1,0 +1,26 @@
+[
+  {
+    "path": "/private/tmp/live-meter-engineering-multitrack-20260929.mp4",
+    "sha256": "af567c0e9eeedce1c08a5cd3f01759014389e4fe54ac336e3337ad822c5fdaf7",
+    "audioStreamOrderIndex": 0,
+    "audioTrackSelectionExplicit": true
+  },
+  {
+    "path": "/private/tmp/live-meter-engineering-multitrack-20260929.mp4",
+    "sha256": "af567c0e9eeedce1c08a5cd3f01759014389e4fe54ac336e3337ad822c5fdaf7",
+    "audioStreamOrderIndex": 1,
+    "audioTrackSelectionExplicit": true
+  },
+  {
+    "path": "/private/tmp/live-meter-engineering-multitrack-video-20260929.mp4",
+    "sha256": "dfa0cc691d2b3455226b4521c973e06397a3a8220f99ae3dbd5fe541d708950e",
+    "audioStreamOrderIndex": 0,
+    "audioTrackSelectionExplicit": true
+  },
+  {
+    "path": "/private/tmp/live-meter-engineering-multitrack-video-20260929.mp4",
+    "sha256": "dfa0cc691d2b3455226b4521c973e06397a3a8220f99ae3dbd5fe541d708950e",
+    "audioStreamOrderIndex": 1,
+    "audioTrackSelectionExplicit": true
+  }
+]

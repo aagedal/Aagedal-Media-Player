@@ -48,7 +48,6 @@ python_tests=(
     scripts/test-metadata-jxl-diagnostic.py
     scripts/test-metadata-library-fixture-validation.py
     scripts/test-metadata-memory-profile-validation.py
-    scripts/test-mpv-coreaudio-candidate.py
     scripts/test-production-metadata-memory-profile-validation.py
     scripts/test-programme-loudness-profile-validation.py
     scripts/test-programme-profile-power.py

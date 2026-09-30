@@ -3546,6 +3546,89 @@ The output repair, XMP/JXL reconciliation and external editor/accessibility,
 representative delivery/hardware and distribution acceptance remain open.
 This evidence-report commit follows the verified implementation commit.
 
+## Phase 160 — Review correction-focus arbitration
+
+Status: Implemented and focused Release-verified on 2026-09-30.
+
+- [x] Keep an action's selected empty-text correction from being displaced by
+  validation when an unrelated range field loses focus.
+- [x] Preserve that range draft without partially committing it during the
+  correction handoff; resume ordinary blur validation after text correction.
+- [x] Clear accepted text correction state while retaining separate range errors.
+- [x] Pass nineteen optimized Release text-commit/session-lifecycle tests without
+  skips, failures or runtime warnings, including three new regressions.
+- [ ] Complete native focus, Full Keyboard Access and spoken VoiceOver checks.
+  A bounded native inventory returned a locked Mac; no interaction was attempted.
+
+Evidence: `docs/evidence/review-correction-focus-20260930/README.md`.
+Committed implementation: `d1e9a49`.
+
+## Phase 161 — Typed MPV screenshot and raster boundary
+
+Status: Implemented and focused Release-verified on 2026-09-30.
+
+- [x] Validate required libmpv node tags before reading union payloads; reject
+  missing/duplicate fields, null/truncated arrays and unsupported pixel formats.
+- [x] Validate overflow-safe dimensions/stride before copying pixels and share
+  the layout check with loupe CGImage construction.
+- [x] Make the immutable capture payload nonisolated for background conversion.
+- [x] Pass thirty-four optimized Release checks without skips/failures/runtime
+  warnings, including eight parser cases and real MPV asymmetric decoder capture.
+- [ ] Provide a dependency capture API exposing the coded decoder raster before
+  display conversion, with geometry/track/PTS provenance, before enabling MPV 1:1.
+
+The audit confirms `screenshot-raw` performs display-size RGB conversion; matching
+metadata dimensions cannot prove native pixels. The restriction remains.
+Evidence: `docs/evidence/mpv-screenshot-parser-20260930/README.md`.
+Committed implementation: `d81e589`.
+
+## Phase 162 — Authentic programme live sample/true-peak references
+
+Status: Implemented and reference-verified on 2026-09-30.
+
+- [x] Retain per-channel live decoder/DSP maxima after exact-source EOF and FIR
+  drainage, including source/layout/decoder/timestamp and snapshot provenance.
+- [x] Compare all nine channels of the original ITU mono/stereo/six-channel
+  programmes against the independent integer-PCM Annex 2 calculation.
+- [x] Require complete channel arrays, exact frame counts, zero synthetic initial
+  silence and all publications; distinguish exact silence from unavailable data.
+- [x] Reject explicit null live-evidence files instead of silently omitting checks.
+- [x] Pass the optimized Release reference test in 250.041 seconds and sixteen
+  calculator/validator regressions. Every sample/true-peak difference is 0 dB
+  at the chosen 1e-7 dB numerical tolerance; 4,896 M/S readings also reconfirm.
+
+The six-channel live preparation preserves its original PCM words/order with
+the documented explicit speaker mask. This verifies full-programme maxima,
+separate from per-bucket timing, display ballistics, owning playback/session,
+native output, compressed authentic sources and release-floor acceptance.
+Evidence: `docs/evidence/live-meter-itu-peaks-20260930/README.md`.
+Committed implementation: `a97489f`.
+
+## Phase 163 — Linked local CoreAudio repair candidate
+
+Status: Local dependency candidate rebuilt and production-profiled on 2026-09-30;
+shipping dependency remains unchanged.
+
+- [x] Rebuild both affected CoreAudio objects for arm64 and x86_64 from matched
+  pinned source/build objects, substituting them only into copied archives.
+- [x] Verify archive member order and all 218 unchanged objects per architecture;
+  retain patch, source-tree, generated-header, compile-database and compiler hashes.
+- [x] Preserve versioned-framework binary links and reject escaping destinations;
+  reject unknown compiler/output flags and keep cached source/build inputs intact.
+- [x] Pass six isolated builder safety tests and include them in the canonical
+  script-validator gate.
+- [x] Link the repaired objects into a copied current Release app and pass the
+  unchanged native-output/profile validator on four generated input/track rows.
+- [x] Repeat the four rows and add a hash-verified authentic 111.36-second Sony
+  recording: all five production-profile rows pass without native output errors.
+- [ ] Produce an immutable fully built MPVKit release, repin the app, and repeat
+  native/audible, monitoring, device-switch, hardware and supported-macOS acceptance.
+
+The local incremental candidate is not a shipped dependency, audible-output proof
+or clean full MPVKit build. The committed app still links its original pin.
+Committed tooling: `16dd543`; evidence:
+`docs/evidence/live-meter-native-output-20260930/incremental-rebuild/README.md`.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -3893,3 +3976,7 @@ This evidence-report commit follows the verified implementation commit.
 149. Phase 157 recover authentic Sony raw and verify exact metadata release.
 150. Phase 158 correct unchanged current-frame Review range drafts.
 151. Phase 159 integrated Release verification and native output rejection.
+152. Phase 160 Review correction-focus arbitration.
+153. Phase 161 typed MPV screenshot and raster boundary.
+154. Phase 162 authentic programme live sample/true-peak references.
+155. Phase 163 linked local CoreAudio repair candidate.

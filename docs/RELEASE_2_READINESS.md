@@ -114,6 +114,41 @@ workflow/media/performance gates remain open. See [current candidate evidence](e
 
 ## Must close before a defensible 2.0 candidate
 
+The CoreAudio repair now advances from compile-only diagnosis to a locally
+linked dependency candidate. Both architecture archives retain all unrelated
+objects byte-for-byte. A copied current Release app passes the unchanged native
+profile/output validator on four generated inputs, then repeats them alongside
+an authentic Sony stereo recording (five rows). No output-initialization errors
+occur in those candidate runs. Rebuild receipts bind source/config/compiler and
+archive identities, with six safety tests in the script-validator gate.
+This is an incremental local build; the app's shipping dependency pin is
+unchanged. An immutable full MPVKit build/repin and repeated audible, device-switch,
+monitoring, supported-macOS and hardware acceptance remain required. See
+[linked candidate evidence](evidence/live-meter-native-output-20260930/incremental-rebuild/README.md).
+
+The parallel continuation fixes a Review correction-focus handoff: correcting
+empty text now takes priority over unrelated range blur validation, and accepted
+text clears its own correction without dropping range errors. Nineteen focused
+optimized Release tests pass. Native inventory returns a locked Mac, so keyboard,
+Full Keyboard Access and spoken VoiceOver remain unverified. See
+[Review correction evidence](evidence/review-correction-focus-20260930/README.md).
+
+MPV screenshot capture now validates node tags and overflow-safe raster storage
+before reading/copying pixels. Thirty-four focused Release tests pass, including
+real asymmetric MPV capture. The source audit confirms display-size RGB conversion
+in the public screenshot path; MPV Native pixels still requires a decoder-raster
+dependency API with geometry and timing provenance. See
+[screenshot boundary evidence](evidence/mpv-screenshot-parser-20260930/README.md).
+
+The same continuation compares authentic ITU live decoder/DSP per-channel
+sample/true-peak maxima with the independent integer-PCM Annex 2 reference.
+All nine channels agree with 0 dB difference, including exact EOF/filter-tail
+provenance. The runner also rejects an explicitly supplied null live-evidence
+file. Sixteen validator/calculator tests pass. These whole-programme maxima
+close a numerical gap, while live display timing, playback/session, native output,
+compressed authentic media and hardware acceptance remain separate. See
+[live peak references](evidence/live-meter-itu-peaks-20260930/README.md).
+
 The integrated continuation passes canonical verification at clean commit
 `7bccab4f619eb88f7a1ad08de1c6fddf9e8943d9`: 707 optimized Release passes,
 eight documented optional skips, both isolated transport directions, Release
