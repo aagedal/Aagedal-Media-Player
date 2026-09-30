@@ -1,0 +1,33 @@
+{
+  "arguments": [
+    "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player/Binaries/ffmpeg",
+    "-hide_banner",
+    "-nostdin",
+    "-nostats",
+    "-loglevel",
+    "error",
+    "-drc_scale",
+    "0",
+    "-target_level",
+    "0",
+    "-i",
+    "/Users/truls.aagedal/Movies/TestVideo/Interstellar_2014_copy.mkv",
+    "-map",
+    "0:a:0",
+    "-vn",
+    "-sn",
+    "-dn",
+    "-map_metadata",
+    "-1",
+    "-af",
+    "asettb=expr=1/sr,atrim=start_pts=0,asetpts=PTS-0",
+    "-t",
+    "5",
+    "-c:a",
+    "pcm_f32le",
+    "-f",
+    "framecrc",
+    "pipe:1"
+  ],
+  "exitCode": 0
+}

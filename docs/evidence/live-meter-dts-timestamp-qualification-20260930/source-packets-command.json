@@ -1,0 +1,18 @@
+{
+  "arguments": [
+    "/opt/homebrew/bin/ffprobe",
+    "-v",
+    "error",
+    "-read_intervals",
+    "%+0.15",
+    "-select_streams",
+    "a:0",
+    "-show_packets",
+    "-show_entries",
+    "packet=pts,pts_time,duration,duration_time,size,pos",
+    "-of",
+    "json",
+    "/Users/truls.aagedal/Movies/TestVideo/Interstellar_2014_copy.mkv"
+  ],
+  "exitCode": 0
+}

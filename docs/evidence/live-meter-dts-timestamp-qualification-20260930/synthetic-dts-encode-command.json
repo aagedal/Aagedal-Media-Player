@@ -1,0 +1,21 @@
+{
+  "arguments": [
+    "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player/Binaries/ffmpeg",
+    "-hide_banner",
+    "-nostdin",
+    "-loglevel",
+    "error",
+    "-y",
+    "-f",
+    "lavfi",
+    "-i",
+    "aevalsrc=0.1*sin(2*PI*1000*t)|0.1*sin(2*PI*1000*t)|0.1*sin(2*PI*1000*t)|0.1*sin(2*PI*1000*t)|0.1*sin(2*PI*1000*t)|0.1*sin(2*PI*1000*t):s=48000:d=0.2:c=5.1(side)",
+    "-c:a",
+    "dca",
+    "-strict",
+    "-2",
+    "/private/tmp/live-meter-dts-calibration-20260930.mkv"
+  ],
+  "exitCode": 0,
+  "fixtureSHA256": "63ca3ee847b6617b1e670b1beb4c5e3adc12501278a3991515bf5366de1cc365"
+}

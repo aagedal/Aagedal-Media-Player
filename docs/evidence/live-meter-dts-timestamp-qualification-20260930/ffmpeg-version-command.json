@@ -1,0 +1,7 @@
+{
+  "arguments": [
+    "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player/Binaries/ffmpeg",
+    "-version"
+  ],
+  "exitCode": 0
+}

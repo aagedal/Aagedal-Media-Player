@@ -1,0 +1,53 @@
+{
+  "production-zero": {
+    "framecrcSHA256": "1085634813a36db46fd351644fe2ea25aa6102a684a0f23b21c77233e58c9a01",
+    "packetCount": 469,
+    "decodedFrameCount": 240024,
+    "initialPTS": 144,
+    "minimumDeviationFrames": -88,
+    "maximumDeviationFrames": 0,
+    "firstAdmissionFailure": {
+      "packetOrdinal": 8,
+      "expectedFrame": 3728,
+      "actualFrame": 3672,
+      "deviationFrames": -56
+    }
+  },
+  "no-input-seek": {
+    "framecrcSHA256": "1085634813a36db46fd351644fe2ea25aa6102a684a0f23b21c77233e58c9a01",
+    "packetCount": 469,
+    "decodedFrameCount": 240024,
+    "initialPTS": 144,
+    "minimumDeviationFrames": -88,
+    "maximumDeviationFrames": 0,
+    "firstAdmissionFailure": {
+      "packetOrdinal": 8,
+      "expectedFrame": 3728,
+      "actualFrame": 3672,
+      "deviationFrames": -56
+    }
+  },
+  "synthetic-dts-framecrc": {
+    "framecrcSHA256": "d0535ff4c1279c2ade9becc0e4b59d1f61635126a27779f3947c31af8bb16617",
+    "packetCount": 19,
+    "decodedFrameCount": 9600,
+    "initialPTS": 0,
+    "minimumDeviationFrames": 0,
+    "maximumDeviationFrames": 0,
+    "firstAdmissionFailure": null
+  },
+  "sourceFrameInspection": {
+    "frameCount": 469,
+    "timestampTimeBase": "1/1000",
+    "nbSamplesCounts": {
+      "512": 469
+    },
+    "adjacentPTSMillisecondsCounts": {
+      "10": 211,
+      "11": 203,
+      "12": 54
+    },
+    "minimumAnchoredDeviationSourceFrames": -112,
+    "maximumAnchoredDeviationSourceFrames": 0
+  }
+}

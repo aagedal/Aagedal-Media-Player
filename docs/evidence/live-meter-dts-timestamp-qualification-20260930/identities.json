@@ -1,0 +1,11 @@
+{
+  "source": {
+    "path": "/Users/truls.aagedal/Movies/TestVideo/Interstellar_2014_copy.mkv",
+    "bytes": 1233665589,
+    "sha256": "d52b99beb349bbcbecd2c44bdd02cda4fbf1b2604503c73d4d03665d31d09003"
+  },
+  "bundledFFmpeg": {
+    "path": "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player/Binaries/ffmpeg",
+    "sha256": "dc3770d91735cfe8b0ef8f4eb7c6f8431d722cca0d79c0959d62be216868d604"
+  }
+}

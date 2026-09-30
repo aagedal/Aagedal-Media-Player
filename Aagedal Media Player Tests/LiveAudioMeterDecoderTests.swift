@@ -131,6 +131,43 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
         XCTAssertEqual(received.values.last?.endFrame, 384)
     }
 
+    func testTimestampedProcessorRejectsRetainedDTSCumulativeTimestampOverlap() throws {
+        let request = try makeRequest(layout: .surround5Point1)
+        let received = SnapshotBox()
+        let processor = try LiveAudioMeterTimestampedStreamProcessor(request: request) {
+            received.append($0)
+        }
+        XCTAssertNil(processor.consumeTimingLine("#tb 0: 1/48000"))
+        XCTAssertNil(processor.consumeTimingLine("#sample_rate 0: 48000"))
+        XCTAssertNil(processor.consumeTimingLine("#channel_layout_name 0: 5.1(side)"))
+        let packet = bytes([Float](repeating: 0.1, count: 512 * 6))
+        // Timestamp sequence independently retained from the local DTS-HD MA
+        // source. Synthetic PCM keeps this regression redistributable; every
+        // packet has its own valid checksum and its declared 512 source frames.
+        // Each adjacent overlap is at most 16 frames, but the eighth packet is
+        // 56 frames behind the cumulative clock anchored at the initial PTS.
+        for pts in [Int64(144), 648, 1_160, 1_656, 2_168, 2_664, 3_176] {
+            XCTAssertNil(processor.consumeTimingLine(frameCRCLine(
+                pts: pts, frames: 512, data: packet
+            )))
+            try processor.consumePCM(packet)
+        }
+        let failure = LiveAudioMeterDecoder.Failure.timestampDiscontinuity(
+            expectedFrame: 3_728, actualFrame: 3_672
+        )
+        XCTAssertEqual(processor.consumeTimingLine(frameCRCLine(
+            pts: 3_672, frames: 512, data: packet
+        )), failure)
+        XCTAssertThrowsError(try processor.consumePCM(packet)) { error in
+            XCTAssertEqual(error as? LiveAudioMeterDecoder.Failure, failure)
+        }
+        processor.finishTiming()
+        XCTAssertThrowsError(try processor.finish()) { error in
+            XCTAssertEqual(error as? LiveAudioMeterDecoder.Failure, failure)
+        }
+        XCTAssertTrue(received.values.allSatisfy { !$0.isFinal })
+    }
+
     func testTimestampedProcessorRejectsMalformedGapAndChecksumMismatch() throws {
         let request = try makeRequest()
         let malformed = try LiveAudioMeterTimestampedStreamProcessor(request: request) { _ in }
@@ -741,6 +778,33 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
                 )
             }
         }
+    }
+
+    func testBundledDecoderPreservesContiguousDTSInMillisecondMatroskaContainer() async throws {
+        guard FFmpegService.ffmpegPath != nil else { throw XCTSkip("Bundled ffmpeg is required") }
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("live-meter-contiguous-dts-\(UUID().uuidString).mkv")
+        defer { try? FileManager.default.removeItem(at: url) }
+        try await FFmpegService.run(arguments: [
+            "-hide_banner", "-nostdin", "-loglevel", "error", "-y",
+            "-f", "lavfi", "-i",
+            "aevalsrc=0.1*sin(2*PI*1000*t)|0.1*sin(2*PI*1000*t)|0.1*sin(2*PI*1000*t)|0.1*sin(2*PI*1000*t)|0.1*sin(2*PI*1000*t)|0.1*sin(2*PI*1000*t):s=48000:d=0.2:c=5.1(side)",
+            "-c:a", "dca", "-strict", "-2", url.path,
+        ])
+        let request = try LiveAudioMeterDecodeRequest(
+            url: url, audioStreamOrderIndex: 0,
+            format: LiveAudioMeterFormat(sampleRate: 48_000, layout: .surround5Point1),
+            startSourceFrame: 0, startSourceTime: 0
+        )
+
+        let completion = try await LiveAudioMeterDecoder.decode(request) { _ in }
+
+        XCTAssertEqual(completion.provenance.timestampTimeBase, "1/48000")
+        XCTAssertEqual(completion.provenance.timestampFrameCount, 9_600)
+        XCTAssertEqual(completion.provenance.syntheticInitialSilenceFrameCount, 0)
+        XCTAssertEqual(completion.finalSnapshot?.endFrame, 9_600)
+        XCTAssertEqual(completion.finalSnapshot?.samplePeakDBFS.count, 6)
+        XCTAssertTrue(completion.finalSnapshot?.isFinal == true)
     }
 
     func testBundledDecoderRejectsCompressedTimestampGapInsteadOfConcatenatingPCM() async throws {

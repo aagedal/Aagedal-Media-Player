@@ -363,8 +363,11 @@ nonisolated final class LiveAudioMeterTimestampedStreamProcessor: @unchecked Sen
         // FFmpeg expresses the decoded packets in 1/sampleRate units. Independent
         // packet rounding can then move a timestamp by a few source frames (for
         // example 128 followed by 120) although the checksummed PCM is complete.
-        // One millisecond covers that quantization without concealing an audible
-        // discontinuity.
+        // Admit at most one millisecond relative to the segment's cumulative
+        // PCM clock, never relative to the previous packet's rounded PTS. Small
+        // successive overlaps must not accumulate into an accepted source-time
+        // shift. A coarse container time base alone does not qualify larger
+        // deviations as rounding.
         maximumTimestampJitterFrames = Int64(max(1, request.format.sampleRate / 1_000))
         maximumUnmatchedByteCount = request.format.sampleRate / 4 * bytesPerFrame
         pendingPCM.reserveCapacity(maximumUnmatchedByteCount)
