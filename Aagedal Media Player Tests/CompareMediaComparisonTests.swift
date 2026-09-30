@@ -180,11 +180,20 @@ final class CompareMediaComparisonTests: XCTestCase {
         )
 
         let duration = try XCTUnwrap(mismatches.first { $0.kind == .duration })
-        XCTAssertEqual(duration.primaryValue, "1.79769e+308 seconds")
-        XCTAssertEqual(duration.secondaryValue, "9.22337e+15 seconds")
+        XCTAssertEqual(duration.primaryValue, "1.7976931348623157e+308 seconds")
+        XCTAssertEqual(duration.secondaryValue, "9.223372036854776e+15 seconds")
         let frameRate = try XCTUnwrap(mismatches.first { $0.kind == .frameRate })
         XCTAssertTrue(frameRate.primaryValue.hasSuffix(" fps"))
         XCTAssertEqual(frameRate.secondaryValue, "9223372036854775808 fps")
+
+        let nearbyDurations = CompareMediaComparison.mismatches(
+            primary: descriptor(duration: 1e16),
+            secondary: descriptor(duration: 1e16 + 1e10)
+        )
+        let nearby = try XCTUnwrap(nearbyDurations.first)
+        XCTAssertNotEqual(nearby.primaryValue, nearby.secondaryValue)
+        XCTAssertEqual(nearby.primaryValue, "1e+16 seconds")
+        XCTAssertEqual(nearby.secondaryValue, "1.000001e+16 seconds")
     }
 
     func testDurationHoursDoNotTruncateToThirtyTwoBits() throws {

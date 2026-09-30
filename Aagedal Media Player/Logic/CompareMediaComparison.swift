@@ -375,7 +375,7 @@ nonisolated enum CompareMediaComparison {
         // overflows Double or Int. Preserve the reported value without trapping
         // while the mismatch UI is being built.
         guard let totalMilliseconds = Int(exactly: (value * 1_000).rounded()) else {
-            return String(format: "%.6g seconds", value)
+            return "\(value) seconds"
         }
         let hours = totalMilliseconds / 3_600_000
         let minutes = (totalMilliseconds / 60_000) % 60

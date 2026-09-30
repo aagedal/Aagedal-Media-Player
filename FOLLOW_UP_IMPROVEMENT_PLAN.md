@@ -4368,7 +4368,8 @@ Status: Implemented on 2026-09-30; all thirteen focused Release checks pass.
 - [x] Avoid trapping integer conversions for finite extreme frame rates or
   durations and overflowing millisecond multiplication.
 - [x] Preserve large duration hours without 32-bit format truncation.
-- [x] Cover extreme finite metadata and large readable duration labels.
+- [x] Cover extreme finite metadata, distinct overflow-fallback values and
+  large readable duration labels.
 
 Acceptance: constructing technical mismatch UI preserves reported values
 without crashing on malformed finite metadata.
