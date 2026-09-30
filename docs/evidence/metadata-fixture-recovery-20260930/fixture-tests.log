@@ -1,0 +1,285 @@
+Building for production...
+[Planning deferred tasks]
+[45 / 66]
+[46 / 67] SwiftMediaMetadata
+[57 / 107]
+[62 / 107]
+[67 / 107]
+[69 / 107]
+[73 / 107]
+[75 / 107]
+[78 / 107]
+[82 / 107]
+[84 / 107]
+[85 / 107]
+[87 / 107] SwiftMediaMetadata
+[93 / 107] SwiftMediaMetadata
+[98 / 108] SwiftMediaMetadataTests-product
+[115 / 140]
+[119 / 140]
+[121 / 140]
+[125 / 140]
+[126 / 140]
+[129 / 140]
+[130 / 140]
+/private/tmp/aagedal-metadata-fixtures-301-reviewed-20260930/candidate/Tests/SwiftMediaMetadataTests/API/Phase1FeatureTests.swift:417:30: warning: mutation of captured var 'mismatches' in concurrently-executing code [#SendableClosureCaptures]
+415 |             let r = ImageMetadata.shiftExifDateString(c.0, by: c.1)
+416 |             if r != c.2 {
+417 |                 lock.lock(); mismatches.append((c.0, r)); lock.unlock()
+    |                              `- warning: mutation of captured var 'mismatches' in concurrently-executing code [#SendableClosureCaptures]
+418 |             }
+419 |         }
+
+/private/tmp/aagedal-metadata-fixtures-301-reviewed-20260930/candidate/Tests/SwiftMediaMetadataTests/API/Phase4FeatureTests.swift:28:13: warning: variable 'metadata' was never mutated; consider changing to 'let' constant [#VariableNeverMutated]
+ 26 |         // Build JPEG with ICC profile
+ 27 |         let jpegData = makeJPEGWithICCProfile(profile.data)
+ 28 |         var metadata = try ImageMetadata.read(from: jpegData)
+    |             `- warning: variable 'metadata' was never mutated; consider changing to 'let' constant [#VariableNeverMutated]
+ 29 | 
+ 30 |         XCTAssertNotNil(metadata.iccProfile)
+
+/private/tmp/aagedal-metadata-fixtures-301-reviewed-20260930/candidate/Tests/SwiftMediaMetadataTests/API/Phase4FeatureTests.swift:49:13: warning: variable 'metadata' was never mutated; consider changing to 'let' constant [#VariableNeverMutated]
+ 47 |         // Build TIFF with ICC profile tag
+ 48 |         let tiffData = makeTIFFWithICCProfile(profile.data)
+ 49 |         var metadata = try ImageMetadata.read(from: tiffData)
+    |             `- warning: variable 'metadata' was never mutated; consider changing to 'let' constant [#VariableNeverMutated]
+ 50 | 
+ 51 |         XCTAssertNotNil(metadata.iccProfile)
+
+/private/tmp/aagedal-metadata-fixtures-301-reviewed-20260930/candidate/Tests/SwiftMediaMetadataTests/API/Phase5FeatureTests.swift:551:13: warning: variable 'isoData' was never mutated; consider changing to 'let' constant [#VariableNeverMutated]
+549 |         let orientEntry = IFDEntry(tag: ExifTag.orientation, type: .short, count: 1, valueData: orientData)
+550 | 
+551 |         var isoData = Data([0x06, 0x40, 0x00, 0x00]) // 1600 big-endian
+    |             `- warning: variable 'isoData' was never mutated; consider changing to 'let' constant [#VariableNeverMutated]
+552 |         let isoEntry = IFDEntry(tag: ExifTag.isoSpeedRatings, type: .short, count: 1, valueData: isoData)
+553 | 
+
+/private/tmp/aagedal-metadata-fixtures-301-reviewed-20260930/candidate/Tests/SwiftMediaMetadataTests/API/Phase8FeatureTests.swift:147:13: warning: variable 'isoData' was never mutated; consider changing to 'let' constant [#VariableNeverMutated]
+145 | 
+146 |         // Exif Sub-IFD
+147 |         var isoData = Data([0x01, 0x90, 0x00, 0x00]) // ISO 400 big-endian
+    |             `- warning: variable 'isoData' was never mutated; consider changing to 'let' constant [#VariableNeverMutated]
+148 |         let isoEntry = IFDEntry(tag: ExifTag.isoSpeedRatings, type: .short, count: 1, valueData: isoData)
+149 |         let dateStr = "2024:06:15 14:30:45\0"
+
+/private/tmp/aagedal-metadata-fixtures-301-reviewed-20260930/candidate/Tests/SwiftMediaMetadataTests/API/Phase8FeatureTests.swift:402:13: warning: variable 'metadata' was never mutated; consider changing to 'let' constant [#VariableNeverMutated]
+400 |         try jpegData.write(to: fileURL)
+401 | 
+402 |         var metadata = try ImageMetadata.read(from: fileURL)
+    |             `- warning: variable 'metadata' was never mutated; consider changing to 'let' constant [#VariableNeverMutated]
+403 |         let options = ImageMetadata.WriteOptions(atomic: true, createBackup: true, backupSuffix: ".bak")
+404 |         try metadata.write(to: fileURL, options: options)
+
+/private/tmp/aagedal-metadata-fixtures-301-reviewed-20260930/candidate/Tests/SwiftMediaMetadataTests/AVIF/AVIFWriterTests.swift:8:13: warning: variable 'metadata' was never mutated; consider changing to 'let' constant [#VariableNeverMutated]
+ 6 |     func testExifRoundTrip() throws {
+ 7 |         let original = TestFixtures.avifWithExif(make: "AVIF Cam", model: "A-1")
+ 8 |         var metadata = try ImageMetadata.read(from: original)
+   |             `- warning: variable 'metadata' was never mutated; consider changing to 'let' constant [#VariableNeverMutated]
+ 9 | 
+10 |         XCTAssertEqual(metadata.exif?.make, "AVIF Cam")
+
+/private/tmp/aagedal-metadata-fixtures-301-reviewed-20260930/candidate/Tests/SwiftMediaMetadataTests/GIF/GIFWriterTests.swift:16:13: warning: variable 'file' was never mutated; consider changing to 'let' constant [#VariableNeverMutated]
+14 |     func testInsertXMPWhenSourceHasNone() throws {
+15 |         let original = TestFixtures.minimalGIF()
+16 |         var file = try GIFParser.parse(original)
+   |             `- warning: variable 'file' was never mutated; consider changing to 'let' constant [#VariableNeverMutated]
+17 | 
+18 |         var xmp = XMPData()
+
+/private/tmp/aagedal-metadata-fixtures-301-reviewed-20260930/candidate/Tests/SwiftMediaMetadataTests/Geolocation/ReverseGeocoderTests.swift:139:13: warning: initialization of immutable value 'result' was never used; consider replacing with assignment to '_' or removing it [#NoUsage]
+137 |     func testMaxDistanceFiltering() {
+138 |         // Very small maxDistance — should return nil even near a city
+139 |         let result = geocoder.lookup(latitude: 59.9139, longitude: 10.7522, maxDistance: 0.001)
+    |             `- warning: initialization of immutable value 'result' was never used; consider replacing with assignment to '_' or removing it [#NoUsage]
+140 |         // Might be nil if database city isn't exactly at these coords
+141 |         // The point is it shouldn't crash
+
+/private/tmp/aagedal-metadata-fixtures-301-reviewed-20260930/candidate/Tests/SwiftMediaMetadataTests/IPTC/PhotoshopIRBTests.swift:32:13: warning: variable 'blocks' was never mutated; consider changing to 'let' constant [#VariableNeverMutated]
+ 30 |     func testMultipleIRBBlocks() throws {
+ 31 |         // Create APP13 with IPTC + a dummy block
+ 32 |         var blocks = [
+    |             `- warning: variable 'blocks' was never mutated; consider changing to 'let' constant [#VariableNeverMutated]
+ 33 |             IRBBlock(resourceID: 0x0404, data: try IPTCWriter.write(IPTCData(datasets: [
+ 34 |                 try IPTCDataSet(tag: .headline, stringValue: "Multi Block"),
+
+/private/tmp/aagedal-metadata-fixtures-301-reviewed-20260930/candidate/Tests/SwiftMediaMetadataTests/JPEG/MarkerCoverageTests.swift:33:62: warning: parameter 'file' with default argument '#file' passed to parameter 'file', whose default argument is '#filePath'
+ 27 |     }
+ 28 | 
+ 29 |     private func assertParseAndReadSucceed(_ jpeg: Data, file: StaticString = #file, line: UInt = #line) {
+    |                                                                               `- note: did you mean for parameter 'file' to default to '#filePath'?
+ 30 |         do {
+ 31 |             _ = try JPEGParser.parse(jpeg)
+ 32 |         } catch {
+ 33 |             XCTFail("JPEGParser.parse threw \(error)", file: file, line: line)
+    |                                                              |- warning: parameter 'file' with default argument '#file' passed to parameter 'file', whose default argument is '#filePath'
+    |                                                              `- note: add parentheses to silence this warning
+ 34 |             return
+ 35 |         }
+
+XCTest.XCTFail.file:1:1: note: 'file' declared here
+1 | file: StaticString
+  | `- note: 'file' declared here
+
+/private/tmp/aagedal-metadata-fixtures-301-reviewed-20260930/candidate/Tests/SwiftMediaMetadataTests/JPEG/MarkerCoverageTests.swift:38:80: warning: parameter 'file' with default argument '#file' passed to parameter 'file', whose default argument is '#filePath'
+ 27 |     }
+ 28 | 
+ 29 |     private func assertParseAndReadSucceed(_ jpeg: Data, file: StaticString = #file, line: UInt = #line) {
+    |                                                                               `- note: did you mean for parameter 'file' to default to '#filePath'?
+ 30 |         do {
+ 31 |             _ = try JPEGParser.parse(jpeg)
+    :
+ 36 |         do {
+ 37 |             let m = try ImageMetadata.read(from: jpeg)
+ 38 |             XCTAssertTrue(m.warnings.isEmpty, "warnings: \(m.warnings)", file: file, line: line)
+    |                                                                                |- warning: parameter 'file' with default argument '#file' passed to parameter 'file', whose default argument is '#filePath'
+    |                                                                                `- note: add parentheses to silence this warning
+ 39 |         } catch {
+ 40 |             XCTFail("ImageMetadata.read threw \(error)", file: file, line: line)
+
+XCTest.XCTAssertTrue.file:1:1: note: 'file' declared here
+1 | file: StaticString
+  | `- note: 'file' declared here
+
+/private/tmp/aagedal-metadata-fixtures-301-reviewed-20260930/candidate/Tests/SwiftMediaMetadataTests/JPEG/MarkerCoverageTests.swift:40:64: warning: parameter 'file' with default argument '#file' passed to parameter 'file', whose default argument is '#filePath'
+ 27 |     }
+ 28 | 
+ 29 |     private func assertParseAndReadSucceed(_ jpeg: Data, file: StaticString = #file, line: UInt = #line) {
+    |                                                                               `- note: did you mean for parameter 'file' to default to '#filePath'?
+ 30 |         do {
+ 31 |             _ = try JPEGParser.parse(jpeg)
+    :
+ 38 |             XCTAssertTrue(m.warnings.isEmpty, "warnings: \(m.warnings)", file: file, line: line)
+ 39 |         } catch {
+ 40 |             XCTFail("ImageMetadata.read threw \(error)", file: file, line: line)
+    |                                                                |- warning: parameter 'file' with default argument '#file' passed to parameter 'file', whose default argument is '#filePath'
+    |                                                                `- note: add parentheses to silence this warning
+ 41 |         }
+ 42 |     }
+
+XCTest.XCTFail.file:1:1: note: 'file' declared here
+1 | file: StaticString
+  | `- note: 'file' declared here
+
+/private/tmp/aagedal-metadata-fixtures-301-reviewed-20260930/candidate/Tests/SwiftMediaMetadataTests/JPEGXL/JXLWriterTests.swift:23:13: warning: variable 'metadata' was never mutated; consider changing to 'let' constant [#VariableNeverMutated]
+ 21 |     func testExifRoundTrip() throws {
+ 22 |         let original = TestFixtures.jxlWithExif(make: "JXL Cam", model: "JXL-1")
+ 23 |         var metadata = try ImageMetadata.read(from: original)
+    |             `- warning: variable 'metadata' was never mutated; consider changing to 'let' constant [#VariableNeverMutated]
+ 24 | 
+ 25 |         XCTAssertEqual(metadata.exif?.make, "JXL Cam")
+
+/private/tmp/aagedal-metadata-fixtures-301-reviewed-20260930/candidate/Tests/SwiftMediaMetadataTests/PDF/PDFTests.swift:91:13: warning: variable 'metadata' was never mutated; consider changing to 'let' constant [#VariableNeverMutated]
+ 89 |     func testWritePDFPreservesOriginal() throws {
+ 90 |         let pdf = buildMinimalPDF(title: "Original")
+ 91 |         var metadata = try ImageMetadata.read(from: pdf)
+    |             `- warning: variable 'metadata' was never mutated; consider changing to 'let' constant [#VariableNeverMutated]
+ 92 | 
+ 93 |         let written = try metadata.writeToData()
+
+/private/tmp/aagedal-metadata-fixtures-301-reviewed-20260930/candidate/Tests/SwiftMediaMetadataTests/PNG/PNGWriterTests.swift:21:13: warning: variable 'metadata' was never mutated; consider changing to 'let' constant [#VariableNeverMutated]
+19 |     func testExifRoundTrip() throws {
+20 |         let original = TestFixtures.pngWithExif(make: "TestCam", model: "PNG-1")
+21 |         var metadata = try ImageMetadata.read(from: original)
+   |             `- warning: variable 'metadata' was never mutated; consider changing to 'let' constant [#VariableNeverMutated]
+22 | 
+23 |         XCTAssertEqual(metadata.exif?.make, "TestCam")
+
+/private/tmp/aagedal-metadata-fixtures-301-reviewed-20260930/candidate/Tests/SwiftMediaMetadataTests/TIFF/TIFFWriterTests.swift:8:13: warning: variable 'metadata' was never mutated; consider changing to 'let' constant [#VariableNeverMutated]
+  6 |     func testExifPreserved() throws {
+  7 |         let original = TestFixtures.tiffWithExif(make: "Nikon", model: "D850")
+  8 |         var metadata = try ImageMetadata.read(from: original)
+    |             `- warning: variable 'metadata' was never mutated; consider changing to 'let' constant [#VariableNeverMutated]
+  9 | 
+ 10 |         XCTAssertEqual(metadata.exif?.make, "Nikon")
+
+/private/tmp/aagedal-metadata-fixtures-301-reviewed-20260930/candidate/Tests/SwiftMediaMetadataTests/TIFF/TIFFWriterTests.swift:383:13: warning: initialization of immutable value 'stripOffset' was never used; consider replacing with assignment to '_' or removing it [#NoUsage]
+381 |         let exifOffset = 8 + ifd0Size
+382 |         let interopOffset = exifOffset + exifIFDSize
+383 |         let stripOffset = interopOffset + interopIFDSize
+    |             `- warning: initialization of immutable value 'stripOffset' was never used; consider replacing with assignment to '_' or removing it [#NoUsage]
+384 |         let strip = Data([0xDE, 0xAD, 0xBE, 0xEF])
+385 | 
+
+/private/tmp/aagedal-metadata-fixtures-301-reviewed-20260930/candidate/Tests/SwiftMediaMetadataTests/Video/BRAWFrameReaderTests.swift:196:13: warning: variable 'samples' was never mutated; consider changing to 'let' constant [#VariableNeverMutated]
+194 |     func testReadMotionSamplesBailsOnKeyIDMismatch() throws {
+195 |         // Two valid gyro samples followed by a bogus accel-key sample.
+196 |         var samples = [
+    |             `- warning: variable 'samples' was never mutated; consider changing to 'let' constant [#VariableNeverMutated]
+197 |             makeMebxSample(keyID: "mogy", x: 1.0, y: 2.0, z: 3.0),
+198 |             makeMebxSample(keyID: "mogy", x: 4.0, y: 5.0, z: 6.0),
+
+/private/tmp/aagedal-metadata-fixtures-301-reviewed-20260930/candidate/Tests/SwiftMediaMetadataTests/Video/CRMReaderTests.swift:346:13: warning: variable 'minf' was never mutated; consider changing to 'let' constant [#VariableNeverMutated]
+344 |         stbl.append(writeBoxRaw("stco", payload: stco))
+345 | 
+346 |         var minf = writeBoxRaw("stbl", payload: stbl)
+    |             `- warning: variable 'minf' was never mutated; consider changing to 'let' constant [#VariableNeverMutated]
+347 | 
+348 |         var mdia = writeBoxRaw("hdlr", payload: hdlr)
+
+[#NoUsage]: <https://docs.swift.org/compiler/documentation/diagnostics/no-usage>
+[#SendableClosureCaptures]: <https://docs.swift.org/compiler/documentation/diagnostics/sendable-closure-captures>
+[#VariableNeverMutated]: <https://docs.swift.org/compiler/documentation/diagnostics/variable-never-mutated>
+[131 / 140] SwiftMediaMetadataTests-product
+[136 / 140] SwiftMediaMetadataTests-product
+[138 / 140] SwiftMediaMetadataTests-product
+Build complete! (76,23 sec)
+Test Suite 'Selected tests' started at 2026-09-30 15:40:40.745.
+Test Suite 'SwiftMediaMetadataTests.xctest' started at 2026-09-30 15:40:40.750.
+Test Suite 'CRMReaderTests' started at 2026-09-30 15:40:40.750.
+Test Case '-[SwiftMediaMetadataTests.CRMReaderTests testRealC70CRMSampleIfPresent]' started.
+Test Case '-[SwiftMediaMetadataTests.CRMReaderTests testRealC70CRMSampleIfPresent]' passed (0.018 seconds).
+Test Suite 'CRMReaderTests' passed at 2026-09-30 15:40:40.768.
+	 Executed 1 test, with 0 failures (0 unexpected) in 0.018 (0.019) seconds
+Test Suite 'MXFMCALabelsTests' started at 2026-09-30 15:40:40.768.
+Test Case '-[SwiftMediaMetadataTests.MXFMCALabelsTests testRealBmxToolsFixture]' started.
+Test Case '-[SwiftMediaMetadataTests.MXFMCALabelsTests testRealBmxToolsFixture]' passed (0.035 seconds).
+Test Suite 'MXFMCALabelsTests' passed at 2026-09-30 15:40:40.803.
+	 Executed 1 test, with 0 failures (0 unexpected) in 0.035 (0.035) seconds
+Test Suite 'RealFileTests' started at 2026-09-30 15:40:40.803.
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testARWWriteIPTCAndXMP]' started.
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testARWWriteIPTCAndXMP]' passed (0.019 seconds).
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testJPEGIPTCXMPSyncRoundTrip]' started.
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testJPEGIPTCXMPSyncRoundTrip]' passed (0.003 seconds).
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testJPEGRoundTripPreservesImageData]' started.
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testJPEGRoundTripPreservesImageData]' passed (0.001 seconds).
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testJPEGWriteReadIPTC]' started.
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testJPEGWriteReadIPTC]' passed (0.001 seconds).
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testJXLContainerWriteXMP]' started.
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testJXLContainerWriteXMP]' passed (0.004 seconds).
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testJXLRoundTripPreservesCodestream]' started.
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testJXLRoundTripPreservesCodestream]' passed (0.003 seconds).
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testJXLWithExistingMetadata]' started.
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testJXLWithExistingMetadata]' passed (0.002 seconds).
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testMultipleJPEGModifications]' started.
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testMultipleJPEGModifications]' passed (0.001 seconds).
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testReadARW]' started.
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testReadARW]' passed (0.001 seconds).
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testReadExistingNepobabySidecar]' started.
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testReadExistingNepobabySidecar]' passed (0.001 seconds).
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testReadExistingSidecar]' started.
+/private/tmp/aagedal-metadata-fixtures-301-reviewed-20260930/candidate/Tests/SwiftMediaMetadataTests/Integration/RealFileTests.swift:21: -[SwiftMediaMetadataTests.RealFileTests testReadExistingSidecar] : Test skipped - Test image not found: TRA03164.xmp
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testReadExistingSidecar]' skipped (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testReadJPEGWithIPTC]' started.
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testReadJPEGWithIPTC]' passed (0.002 seconds).
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testReadJPEGWithRichMetadata]' started.
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testReadJPEGWithRichMetadata]' passed (0.004 seconds).
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testReadJXLBareCodestream]' started.
+/private/tmp/aagedal-metadata-fixtures-301-reviewed-20260930/candidate/Tests/SwiftMediaMetadataTests/Integration/RealFileTests.swift:176: error: -[SwiftMediaMetadataTests.RealFileTests testReadJXLBareCodestream] : XCTAssertThrowsError failed: did not throw an error
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testReadJXLBareCodestream]' failed (0.146 seconds).
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testReadJXLContainer]' started.
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testReadJXLContainer]' passed (0.002 seconds).
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testReadSidecarMatchesManualRead]' started.
+/private/tmp/aagedal-metadata-fixtures-301-reviewed-20260930/candidate/Tests/SwiftMediaMetadataTests/Integration/RealFileTests.swift:21: -[SwiftMediaMetadataTests.RealFileTests testReadSidecarMatchesManualRead] : Test skipped - Test image not found: TRA03164.xmp
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testReadSidecarMatchesManualRead]' skipped (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testWriteJPEGToTempFile]' started.
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testWriteJPEGToTempFile]' passed (0.003 seconds).
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testWriteSidecarForARW]' started.
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testWriteSidecarForARW]' passed (0.002 seconds).
+Test Suite 'RealFileTests' failed at 2026-09-30 15:40:40.999.
+	 Executed 18 tests, with 2 tests skipped and 1 failure (0 unexpected) in 0.196 (0.196) seconds
+Test Suite 'SwiftMediaMetadataTests.xctest' failed at 2026-09-30 15:40:40.999.
+	 Executed 20 tests, with 2 tests skipped and 1 failure (0 unexpected) in 0.249 (0.250) seconds
+Test Suite 'Selected tests' failed at 2026-09-30 15:40:40.999.
+	 Executed 20 tests, with 2 tests skipped and 1 failure (0 unexpected) in 0.249 (0.255) seconds
+Note: Some test targets reported failures:
+  - SwiftMediaMetadataTests (XCTest)

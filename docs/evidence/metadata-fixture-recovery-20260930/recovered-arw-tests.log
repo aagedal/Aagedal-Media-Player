@@ -1,0 +1,15 @@
+Test Suite 'Selected tests' started at 2026-09-30 15:37:50.873.
+Test Suite 'SwiftMediaMetadataTests.xctest' started at 2026-09-30 15:37:50.878.
+Test Suite 'RealFileTests' started at 2026-09-30 15:37:50.878.
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testARWWriteIPTCAndXMP]' started.
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testARWWriteIPTCAndXMP]' passed (0.026 seconds).
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testReadARW]' started.
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testReadARW]' passed (0.001 seconds).
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testWriteSidecarForARW]' started.
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testWriteSidecarForARW]' passed (0.003 seconds).
+Test Suite 'RealFileTests' passed at 2026-09-30 15:37:50.908.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.030 (0.031) seconds
+Test Suite 'SwiftMediaMetadataTests.xctest' passed at 2026-09-30 15:37:50.908.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.030 (0.031) seconds
+Test Suite 'Selected tests' passed at 2026-09-30 15:37:50.908.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.030 (0.035) seconds

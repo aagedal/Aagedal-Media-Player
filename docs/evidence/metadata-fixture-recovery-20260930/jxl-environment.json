@@ -1,0 +1,38 @@
+{
+  "dependencyRevision": "c2d77c2dcefcb997623e52beca57bc61ce302cb9",
+  "candidateProvenance": {
+    "schemaVersion": 1,
+    "mode": "exactCheckout",
+    "baselineRevision": "c2d77c2dcefcb997623e52beca57bc61ce302cb9",
+    "baselineCheckout": "/private/tmp/aagedal-metadata-baseline-20260930",
+    "baselineArchiveSHA256": "6cd761e36b7cf357874dcedf37431ba2ce7702289a83704cbb0e7fbc36aac6da",
+    "candidateExpectedRevision": "8662054299a3e13c49c65f74c564360559d1bf7f",
+    "candidateResolvedRevision": "8662054299a3e13c49c65f74c564360559d1bf7f",
+    "candidateCheckout": "/Users/truls.aagedal/Developer/SwiftMediaMetadata",
+    "candidateArchiveSHA256": "d39d2832db741ff5d28cf62a3fbac71f2db0aade53519e79535c8f93fed4f162",
+    "patchSHA256": null
+  },
+  "sourceArchiveSHA256": {
+    "baseline": "6cd761e36b7cf357874dcedf37431ba2ce7702289a83704cbb0e7fbc36aac6da",
+    "candidate": "d39d2832db741ff5d28cf62a3fbac71f2db0aade53519e79535c8f93fed4f162"
+  },
+  "fixture": "/Users/truls.aagedal/Pictures/TestImages/ShortPlantHDR_seq_000001.jxl",
+  "fixtureSHA256": "92ae631a48e89f3ef73a355d79df1f4be2c5f7c2fa54572dce3c053dc1963e57",
+  "upstreamTests": {
+    "baseline": {
+      "sha256": "bb2b39e261dd909789342270d6b9e4992133e033251e9c6c8bc1ade24acd2edc",
+      "writeExpectation": "writeNotSupported"
+    },
+    "candidate": {
+      "sha256": "bb2b39e261dd909789342270d6b9e4992133e033251e9c6c8bc1ade24acd2edc",
+      "writeExpectation": "writeNotSupported"
+    }
+  },
+  "hashes": {
+    "/Users/truls.aagedal/Developer/Aagedal-Media-Player/scripts/diagnose-metadata-jxl-fixture.py": "057e131a4482c4568900a906f7a727eb6ffd42198f4a53e8a824815555e435ce",
+    "/Users/truls.aagedal/Developer/Aagedal-Media-Player/scripts/metadata_candidate.py": "01a94029358df649b0400ad48f3f482de26b8eeea20d99ae9132bffc7ae0f993",
+    "/Users/truls.aagedal/Developer/Aagedal-Media-Player/docs/dependency-patches/swift-media-metadata-3.0.0-rtmd-skip-mdat.patch": "ba5078af0ee3ca0e46d6a311a6584497b5919b98bfc672150fb039edee83de9f",
+    "/Users/truls.aagedal/Developer/Aagedal-Media-Player/scripts/MetadataJXLFixtureProbe.swift": "8b277c782e22b2c01812de7d68ea38fa10b0d1dab67ac149c780ffc1a0957d98"
+  },
+  "toolchain": "Apple Swift version 6.4 (swiftlang-6.4.0.34.1 clang-2100.3.34.1)\nTarget: arm64-apple-macosx27.0.0\n"
+}

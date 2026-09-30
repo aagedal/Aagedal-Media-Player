@@ -1,0 +1,34 @@
+{
+  "date": "2026-09-30",
+  "exifToolVersion": "13.55",
+  "recoveredInputs": [
+    {
+      "path": "/Users/truls.aagedal/Library/Mobile Documents/com~apple~CloudDocs/Photos/2026/2026-01-01 \u2013 Tur Til Andrea \u2013 Ma\u030ane/TRA03164.ARW",
+      "bytes": 60850176,
+      "sha256": "385d5397ab5338e86bb2ef68b5543a05aa82b7ff9d93b7607cb19279e33fae3b",
+      "independentExifToolMetadata": {
+        "SourceFile": "/Users/truls.aagedal/Library/Mobile Documents/com~apple~CloudDocs/Photos/2026/2026-01-01 \u2013 Tur Til Andrea \u2013 Ma\u030ane/TRA03164.ARW",
+        "FileSize": 60850176,
+        "Make": "SONY",
+        "Model": "ILCE-1",
+        "DateTimeOriginal": "2026:01:01 15:30:09",
+        "ImageWidth": 8704,
+        "ImageHeight": 6144,
+        "SonyModelID": "ILCE-1",
+        "LensModel": "FE 35mm F1.4 GM"
+      }
+    },
+    {
+      "path": "/Users/truls.aagedal/Library/Mobile Documents/com~apple~CloudDocs/Photos/2026/2026-01-01 \u2013 Tur Til Andrea \u2013 Ma\u030ane/TRA03164.XMP",
+      "bytes": 3666,
+      "sha256": "4355af3b782b449a8438ebf440d4858d9e810e70dc94c86c702e117ecf061b7c",
+      "independentExifToolMetadata": {
+        "SourceFile": "/Users/truls.aagedal/Library/Mobile Documents/com~apple~CloudDocs/Photos/2026/2026-01-01 \u2013 Tur Til Andrea \u2013 Ma\u030ane/TRA03164.XMP",
+        "FileSize": 3666
+      }
+    }
+  ],
+  "rawReviewedForAcceptance": true,
+  "sidecarReviewedForAcceptance": false,
+  "upstreamMainRevision": "8662054299a3e13c49c65f74c564360559d1bf7f"
+}

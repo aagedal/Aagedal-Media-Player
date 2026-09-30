@@ -1,0 +1,43 @@
+{
+  "passed": false,
+  "allFixturesCovered": false,
+  "exitCode": 1,
+  "timedOut": false,
+  "cases": {
+    "CRMReaderTests/testRealC70CRMSampleIfPresent": "passed",
+    "MXFMCALabelsTests/testRealBmxToolsFixture": "passed",
+    "RealFileTests/testARWWriteIPTCAndXMP": "passed",
+    "RealFileTests/testJPEGIPTCXMPSyncRoundTrip": "passed",
+    "RealFileTests/testJPEGRoundTripPreservesImageData": "passed",
+    "RealFileTests/testJPEGWriteReadIPTC": "passed",
+    "RealFileTests/testJXLContainerWriteXMP": "passed",
+    "RealFileTests/testJXLRoundTripPreservesCodestream": "passed",
+    "RealFileTests/testJXLWithExistingMetadata": "passed",
+    "RealFileTests/testMultipleJPEGModifications": "passed",
+    "RealFileTests/testReadARW": "passed",
+    "RealFileTests/testReadExistingNepobabySidecar": "passed",
+    "RealFileTests/testReadExistingSidecar": "skipped",
+    "RealFileTests/testReadJPEGWithIPTC": "passed",
+    "RealFileTests/testReadJPEGWithRichMetadata": "passed",
+    "RealFileTests/testReadJXLBareCodestream": "failed",
+    "RealFileTests/testReadJXLContainer": "passed",
+    "RealFileTests/testReadSidecarMatchesManualRead": "skipped",
+    "RealFileTests/testWriteJPEGToTempFile": "passed",
+    "RealFileTests/testWriteSidecarForARW": "passed"
+  },
+  "executed": 20,
+  "passedCases": 17,
+  "skippedCases": [
+    "RealFileTests/testReadExistingSidecar",
+    "RealFileTests/testReadSidecarMatchesManualRead"
+  ],
+  "errors": [
+    "Unexpected fixture result: RealFileTests/testReadJXLBareCodestream",
+    "Unexpected suite summary: RealFileTests",
+    "Unexpected suite summary: MetadataFixtureValidationPackageTests.xctest",
+    "Unexpected suite summary: Selected tests",
+    "Fixture test process failed or timed out"
+  ],
+  "logSHA256": "b50df66357cf4ce7cbe87f62a56bd36c3a0df1603015651873ba8fb0ff2afe41",
+  "inputsAndCheckoutUnchanged": true
+}

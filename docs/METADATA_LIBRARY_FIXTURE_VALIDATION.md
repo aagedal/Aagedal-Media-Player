@@ -41,12 +41,14 @@ absence are rechecked. The environment records the committed archive hash,
 script/patch hashes, both relocated test hashes, toolchain, fixture sizes/hashes,
 and exact case selection. Build and test output remains local. Current fixtures
 need about 2.5 GB of temporary space, plus the package/build artifacts.
-The harness also checks the nine available image/sidecar files and both video
+The harness also checks the ten reviewed image/raw/sidecar files and both video
 clips against the SHA-256 identities in the table below before creating an
 output directory. A different file with the expected name fails at preflight.
-The unavailable `TRA03164.ARW` and `TRA03164.xmp` have no reviewed hashes;
-the harness now refuses to stage even same-named files until their originals
-are independently verified and their hashes pinned in the validator and this
+The recovered `TRA03164.ARW` was independently checked and pinned on
+2026-09-30; see [the recovery evidence](METADATA_FIXTURE_RECOVERY_20260930.md).
+The unavailable historical `TRA03164.xmp` still has no reviewed hash; the
+harness refuses to stage same-named sidecars until their originals are
+independently verified and their hashes pinned in the validator and this
 document. With `--allow-missing-images`, absent files remain explicit skips.
 This prevents an unreviewed substitute from appearing as full coverage.
 Updating a fixture identity, especially the disputed JXL file, requires review
@@ -102,6 +104,7 @@ production checkout remained clean. Exact local paths and all candidate records:
 
 | Fixture | Bytes | SHA-256 |
 | --- | ---: | --- |
+| TRA03164.ARW | 60,850,176 | `385d5397ab5338e86bb2ef68b5543a05aa82b7ff9d93b7607cb19279e33fae3b` |
 | Nepobaby sesong 2 01.jpg | 7,807,107 | `79177d554a27f15183c8bd0861a0c4fc3c92be7c8cbaba1829bfeca88818b757` |
 | TRA03167_edit.jpg | 16,036,356 | `e425f11497a948acd14158941b8f7c12b28d96d308dce7877f346126f6150be9` |
 | S01E13 The Parting of Ways-0003.jpg | 383,109 | `67a6631a76e6ab226da4f9367d63c6373c6a160b5dcc670016e9dbbd0db6b3fb` |
@@ -199,3 +202,10 @@ against a separate clean pinned baseline and this exact 3.0.1 checkout, with
 zero skips and zero failures. The eight fixture-validator, four JXL-diagnostic,
 and ten candidate-provenance focused regressions pass locally; they validate
 the harness and evidence rules, not the absent media inputs.
+
+## Recovered inputs and exact release rerun — 2026-09-30
+
+See [the durable recovery and release evidence](METADATA_FIXTURE_RECOVERY_20260930.md)
+for the recovered nine previously reviewed inputs, newly pinned authentic Sony
+ARW, unchanged upstream JXL assertion, and exact 3.0.1 outcomes. The historical
+XMP sidecar and upstream JXL reconciliation remain outstanding.

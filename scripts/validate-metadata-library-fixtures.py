@@ -33,8 +33,9 @@ IMAGE_TESTS = {
 EXPECTED_CASES = {f"RealFileTests/{name}" for names in IMAGE_TESTS.values() for name in names} | {
     "CRMReaderTests/testRealC70CRMSampleIfPresent", "MXFMCALabelsTests/testRealBmxToolsFixture"}
 # Identities from the 2026-09-09 run in METADATA_LIBRARY_FIXTURE_VALIDATION.md.
-# The two unavailable Sony originals have no reviewed hashes yet.
+# The Sony ARW was recovered and reviewed on 2026-09-30. The historical XMP remains unavailable.
 KNOWN_FIXTURE_SHA256 = {
+    "TRA03164.ARW": "385d5397ab5338e86bb2ef68b5543a05aa82b7ff9d93b7607cb19279e33fae3b",
     "Nepobaby sesong 2 01.jpg": "79177d554a27f15183c8bd0861a0c4fc3c92be7c8cbaba1829bfeca88818b757",
     "TRA03167_edit.jpg": "e425f11497a948acd14158941b8f7c12b28d96d308dce7877f346126f6150be9",
     "S01E13 The Parting of Ways-0003.jpg": "67a6631a76e6ab226da4f9367d63c6373c6a160b5dcc670016e9dbbd0db6b3fb",
@@ -91,6 +92,10 @@ def validate_result(output, code, missing_cases, timed_out=False, candidate_prov
     pattern = (r"^Test Suite '([^']+)' (passed|failed) at [^\n]+\n"
                r"[ \t]*Executed (\d+) tests?, with (?:(\d+) tests? skipped and )?(\d+) failures?[^\n]*$")
     for suite, status, count, skipped, failed in re.findall(pattern, output, re.MULTILINE):
+        # Current SwiftPM emits the test-target product name; older SwiftPM
+        # emits the package-generated product name. Both identify this one target.
+        if suite == "SwiftMediaMetadataTests.xctest":
+            suite = "MetadataFixtureValidationPackageTests.xctest"
         if suite in summaries:
             errors.append(f"Duplicate completed suite: {suite}")
         summaries[suite] = (status, int(count), int(skipped or 0), int(failed))

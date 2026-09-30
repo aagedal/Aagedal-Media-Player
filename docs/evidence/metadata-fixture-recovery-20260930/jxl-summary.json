@@ -1,0 +1,69 @@
+{
+  "diagnosticPassed": true,
+  "fixtureGateComplete": false,
+  "inputsAndCheckoutUnchanged": true,
+  "results": {
+    "baseline": {
+      "bareWritePreservesBytes": true,
+      "bareWriteSucceeds": true,
+      "boxTypes": [
+        "ftyp",
+        "Exif",
+        "jxlc",
+        "xml "
+      ],
+      "codestreamBytes": 584049,
+      "codestreamSHA256": "124ae9b5ecd477f23a3e87072dc01f4c20f78752cf4fa7dfbbbf05267561ac06",
+      "containerPreservesCodestream": true,
+      "containerWriteSucceeds": true,
+      "editedBareOrientationRoundTrips": true,
+      "editedBarePreservesCodestream": true,
+      "editedBareWrapsOnce": true,
+      "fixtureBytes": 587205,
+      "fixtureSHA256": "92ae631a48e89f3ef73a355d79df1f4be2c5f7c2fa54572dce3c053dc1963e57"
+    },
+    "candidate": {
+      "bareWritePreservesBytes": true,
+      "bareWriteSucceeds": true,
+      "boxTypes": [
+        "ftyp",
+        "Exif",
+        "jxlc",
+        "xml "
+      ],
+      "codestreamBytes": 584049,
+      "codestreamSHA256": "124ae9b5ecd477f23a3e87072dc01f4c20f78752cf4fa7dfbbbf05267561ac06",
+      "containerPreservesCodestream": true,
+      "containerWriteSucceeds": true,
+      "editedBareOrientationRoundTrips": true,
+      "editedBarePreservesCodestream": true,
+      "editedBareWrapsOnce": true,
+      "fixtureBytes": 587205,
+      "fixtureSHA256": "92ae631a48e89f3ef73a355d79df1f4be2c5f7c2fa54572dce3c053dc1963e57"
+    }
+  },
+  "candidateProvenance": {
+    "schemaVersion": 1,
+    "mode": "exactCheckout",
+    "baselineRevision": "c2d77c2dcefcb997623e52beca57bc61ce302cb9",
+    "baselineCheckout": "/private/tmp/aagedal-metadata-baseline-20260930",
+    "baselineArchiveSHA256": "6cd761e36b7cf357874dcedf37431ba2ce7702289a83704cbb0e7fbc36aac6da",
+    "candidateExpectedRevision": "8662054299a3e13c49c65f74c564360559d1bf7f",
+    "candidateResolvedRevision": "8662054299a3e13c49c65f74c564360559d1bf7f",
+    "candidateCheckout": "/Users/truls.aagedal/Developer/SwiftMediaMetadata",
+    "candidateArchiveSHA256": "d39d2832db741ff5d28cf62a3fbac71f2db0aade53519e79535c8f93fed4f162",
+    "patchSHA256": null
+  },
+  "fixtureAssertionContract": {
+    "fixtureKind": "container",
+    "upstreamWriteExpectation": "writeNotSupported",
+    "containerAndBareWritesSucceeded": true,
+    "fixtureNameDisagreesWithBytes": true,
+    "assertionDisagreesWithObservedWrites": true,
+    "requiresUpstreamReview": true
+  },
+  "upstreamWriteExpectations": {
+    "baseline": "writeNotSupported",
+    "candidate": "writeNotSupported"
+  }
+}

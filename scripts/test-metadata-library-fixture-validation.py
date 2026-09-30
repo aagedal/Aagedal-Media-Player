@@ -29,6 +29,17 @@ class FixtureAcceptanceTests(unittest.TestCase):
         self.assertTrue(result["allFixturesCovered"])
         self.assertEqual(result["passedCases"], 20)
 
+    def test_swift_target_product_suite_name_is_supported_without_extra_suites(self):
+        current = fixture_log().replace("MetadataFixtureValidationPackageTests.xctest", "SwiftMediaMetadataTests.xctest")
+        self.assertTrue(validation.validate_result(current, 0, set())["passed"])
+        duplicate = current + ("Test Suite 'MetadataFixtureValidationPackageTests.xctest' passed at 2026-09-30 01:00:00.000.\n"
+                               "\t Executed 20 tests, with 0 failures (0 unexpected) in 0.1 (0.1) seconds\n")
+        result = validation.validate_result(duplicate, 0, set())
+        self.assertFalse(result["passed"])
+        self.assertIn("Duplicate completed suite: MetadataFixtureValidationPackageTests.xctest", result["errors"])
+        unknown = current.replace("SwiftMediaMetadataTests.xctest", "UnrelatedTests.xctest")
+        self.assertFalse(validation.validate_result(unknown, 0, set())["passed"])
+
     def test_declared_absence_remains_partial(self):
         missing = {"RealFileTests/" + name for file in ["TRA03164.ARW", "TRA03164.xmp"] for name in validation.IMAGE_TESTS[file]}
         result = validation.validate_result(fixture_log(missing), 0, missing)
@@ -36,6 +47,15 @@ class FixtureAcceptanceTests(unittest.TestCase):
         self.assertFalse(result["allFixturesCovered"])
         self.assertEqual(result["passedCases"], 15)
         self.assertEqual(result["skippedCases"], sorted(missing))
+
+    def test_recovered_raw_leaves_only_two_sidecar_skips(self):
+        missing = {"RealFileTests/" + name for name in validation.IMAGE_TESTS["TRA03164.xmp"]}
+        result = validation.validate_result(fixture_log(missing), 0, missing)
+        self.assertTrue(result["passed"])
+        self.assertFalse(result["allFixturesCovered"])
+        self.assertEqual(result["passedCases"], 18)
+        for name in validation.IMAGE_TESTS["TRA03164.ARW"]:
+            self.assertEqual(result["cases"]["RealFileTests/" + name], "passed")
 
     def test_missing_duplicate_unexpected_or_failed_case_rejected(self):
         lines = fixture_log().splitlines(keepends=True)
@@ -73,7 +93,7 @@ class FixtureAcceptanceTests(unittest.TestCase):
 
     def test_documented_fixture_hashes_are_enforced(self):
         self.assertEqual(set(validation.KNOWN_FIXTURE_SHA256),
-                         set(validation.IMAGE_TESTS) - {"TRA03164.ARW", "TRA03164.xmp"} | {"CRM.CRM", "MCA.mxf"})
+                         set(validation.IMAGE_TESTS) - {"TRA03164.xmp"} | {"CRM.CRM", "MCA.mxf"})
         document = (Path(__file__).resolve().parent.parent / "docs/METADATA_LIBRARY_FIXTURE_VALIDATION.md").read_text()
         table = dict(re.findall(r"^\| ([^|]+) \| [0-9,]+ \| `([0-9a-f]{64})` \|$", document, re.MULTILINE))
         self.assertEqual(table, {**{name: sha for name, sha in validation.KNOWN_FIXTURE_SHA256.items()
@@ -86,12 +106,12 @@ class FixtureAcceptanceTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "Fixture SHA-256 mismatch"):
                     validation.validate_known_fixture_identity(name, "0" * 64)
 
-    def test_unreviewed_sony_originals_cannot_be_staged_by_name_alone(self):
-        for name in ("TRA03164.ARW", "TRA03164.xmp"):
+    def test_unreviewed_sony_sidecar_cannot_be_staged_by_name_alone(self):
+        for name in ("TRA03164.xmp",):
             self.assertNotIn(name, validation.KNOWN_FIXTURE_SHA256)
             with self.assertRaisesRegex(ValueError, "No reviewed fixture SHA-256"):
                 validation.validate_known_fixture_identity(name, "0" * 64)
-        with self.assertRaisesRegex(ValueError, "TRA03164.ARW, TRA03164.xmp"):
+        with self.assertRaisesRegex(ValueError, "TRA03164.xmp"):
             validation.require_reviewed_fixture_identities(validation.IMAGE_TESTS)
         validation.require_reviewed_fixture_identities(validation.KNOWN_FIXTURE_SHA256)
 

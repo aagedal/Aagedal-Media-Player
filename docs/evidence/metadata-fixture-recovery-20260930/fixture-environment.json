@@ -1,0 +1,129 @@
+{
+  "dependencyRevision": "c2d77c2dcefcb997623e52beca57bc61ce302cb9",
+  "candidateProvenance": {
+    "schemaVersion": 1,
+    "mode": "exactCheckout",
+    "baselineRevision": "c2d77c2dcefcb997623e52beca57bc61ce302cb9",
+    "baselineCheckout": "/private/tmp/aagedal-metadata-baseline-20260930",
+    "baselineArchiveSHA256": "6cd761e36b7cf357874dcedf37431ba2ce7702289a83704cbb0e7fbc36aac6da",
+    "candidateExpectedRevision": "8662054299a3e13c49c65f74c564360559d1bf7f",
+    "candidateResolvedRevision": "8662054299a3e13c49c65f74c564360559d1bf7f",
+    "candidateCheckout": "/Users/truls.aagedal/Developer/SwiftMediaMetadata",
+    "candidateArchiveSHA256": "d39d2832db741ff5d28cf62a3fbac71f2db0aade53519e79535c8f93fed4f162",
+    "patchSHA256": null
+  },
+  "variant": "candidate",
+  "sourceArchiveSHA256": "d39d2832db741ff5d28cf62a3fbac71f2db0aade53519e79535c8f93fed4f162",
+  "scriptSHA256": "3f1d8b3c0fe0df82692d3d747b8fd2ffb85f58d659746d124a4edb3da0a172d6",
+  "patchSHA256": "ba5078af0ee3ca0e46d6a311a6584497b5919b98bfc672150fb039edee83de9f",
+  "toolchain": "Apple Swift version 6.4 (swiftlang-6.4.0.34.1 clang-2100.3.34.1)\nTarget: arm64-apple-macosx27.0.0\n",
+  "inputs": [
+    {
+      "path": "/private/tmp/aagedal-reviewed-images-20260930/Nepobaby sesong 2 01.jpg",
+      "copy": "/private/tmp/aagedal-metadata-fixtures-301-reviewed-20260930/candidate/TestImages/Nepobaby sesong 2 01.jpg",
+      "bytes": 7807107,
+      "sha256": "79177d554a27f15183c8bd0861a0c4fc3c92be7c8cbaba1829bfeca88818b757"
+    },
+    {
+      "path": "/private/tmp/aagedal-reviewed-images-20260930/TRA03167_edit.jpg",
+      "copy": "/private/tmp/aagedal-metadata-fixtures-301-reviewed-20260930/candidate/TestImages/TRA03167_edit.jpg",
+      "bytes": 16036356,
+      "sha256": "e425f11497a948acd14158941b8f7c12b28d96d308dce7877f346126f6150be9"
+    },
+    {
+      "path": "/private/tmp/aagedal-reviewed-images-20260930/S01E13 The Parting of Ways-0003.jpg",
+      "copy": "/private/tmp/aagedal-metadata-fixtures-301-reviewed-20260930/candidate/TestImages/S01E13 The Parting of Ways-0003.jpg",
+      "bytes": 383109,
+      "sha256": "67a6631a76e6ab226da4f9367d63c6373c6a160b5dcc670016e9dbbd0db6b3fb"
+    },
+    {
+      "path": "/private/tmp/aagedal-reviewed-images-20260930/S01E13 The Parting of Ways-0006.jpg",
+      "copy": "/private/tmp/aagedal-metadata-fixtures-301-reviewed-20260930/candidate/TestImages/S01E13 The Parting of Ways-0006.jpg",
+      "bytes": 279629,
+      "sha256": "ea07a8985925092731d91ffa100c61e87eff820e7ce9b64430ba7f2b49dc51d7"
+    },
+    {
+      "path": "/private/tmp/aagedal-reviewed-images-20260930/Vixen 2026 05.jpg",
+      "copy": "/private/tmp/aagedal-metadata-fixtures-301-reviewed-20260930/candidate/TestImages/Vixen 2026 05.jpg",
+      "bytes": 3020246,
+      "sha256": "eb0d79c52deb04b0e67ca7f8c091d9ec0aa4b585e95134638622154c23544f7b"
+    },
+    {
+      "path": "/private/tmp/aagedal-reviewed-images-20260930/TRA03164.ARW",
+      "copy": "/private/tmp/aagedal-metadata-fixtures-301-reviewed-20260930/candidate/TestImages/TRA03164.ARW",
+      "bytes": 60850176,
+      "sha256": "385d5397ab5338e86bb2ef68b5543a05aa82b7ff9d93b7607cb19279e33fae3b"
+    },
+    {
+      "path": "/private/tmp/aagedal-reviewed-images-20260930/ShortPlantHDR_seq_000001.jxl",
+      "copy": "/private/tmp/aagedal-metadata-fixtures-301-reviewed-20260930/candidate/TestImages/ShortPlantHDR_seq_000001.jxl",
+      "bytes": 587205,
+      "sha256": "92ae631a48e89f3ef73a355d79df1f4be2c5f7c2fa54572dce3c053dc1963e57"
+    },
+    {
+      "path": "/private/tmp/aagedal-reviewed-images-20260930/TRA03168_edit_002.jxl",
+      "copy": "/private/tmp/aagedal-metadata-fixtures-301-reviewed-20260930/candidate/TestImages/TRA03168_edit_002.jxl",
+      "bytes": 7936580,
+      "sha256": "75c772fac47508798e3ef96618dc405676a53f2a0e74186eb965b61379923a89"
+    },
+    {
+      "path": "/private/tmp/aagedal-reviewed-images-20260930/Nepobaby sesong 2 06.xmp",
+      "copy": "/private/tmp/aagedal-metadata-fixtures-301-reviewed-20260930/candidate/TestImages/Nepobaby sesong 2 06.xmp",
+      "bytes": 3505,
+      "sha256": "64802bc1bc6735e6d6b34138120c71f68cce190da0dfbe4f4031045db145d6c7"
+    },
+    {
+      "path": "/private/tmp/aagedal-reviewed-images-20260930/DEI_8158_edit.jpg",
+      "copy": "/private/tmp/aagedal-metadata-fixtures-301-reviewed-20260930/candidate/TestImages/DEI_8158_edit.jpg",
+      "bytes": 1594293,
+      "sha256": "4f97e1d1239d804fadaadd84f466f0b415a6eb02db5842dc250a07bf956dd039"
+    },
+    {
+      "path": "/Users/truls.aagedal/Movies/TestVideo/Canon Cinema RAW Light/A001C004_22032472_CANON.CRM",
+      "copy": "/private/tmp/aagedal-metadata-fixtures-301-reviewed-20260930/candidate/VideoFixtures/CRM.CRM",
+      "bytes": 1798905972,
+      "sha256": "b869a48d567d39a01d525cc532d88b5c720fbc5ac5c7c84f43b3734fa2bbdaf6"
+    },
+    {
+      "path": "/Users/truls.aagedal/Movies/TestVideo/MCA_Test/n-intervju_with-MCA-labels.mxf",
+      "copy": "/private/tmp/aagedal-metadata-fixtures-301-reviewed-20260930/candidate/VideoFixtures/MCA.mxf",
+      "bytes": 591046832,
+      "sha256": "e6b67949b33cad33126b675dbf8bf74eb0e1a6b119ccd392eb00a393fccf3abf"
+    }
+  ],
+  "missingImages": [
+    "TRA03164.xmp"
+  ],
+  "testPathRelocations": {
+    "Video/CRMReaderTests.swift": {
+      "originalSHA256": "241af6177fc355e88dce706469634b10d08caff2be87d03df1e5dbdc41b879f2",
+      "relocatedSHA256": "92504074c5129904cb379c10b7d01551f852aefa0dd0eba42841820f09efc820"
+    },
+    "Video/MXFMCALabelsTests.swift": {
+      "originalSHA256": "bd03ebd421c5dd9df184594e80ccb17cc659f8ef9dc302170fd2f2871b7ff35e",
+      "relocatedSHA256": "b79379412266b2d65cc0eb648ca3a1672e011d18064607e5b8f82b85ce35761b"
+    }
+  },
+  "selectedCases": [
+    "CRMReaderTests/testRealC70CRMSampleIfPresent",
+    "MXFMCALabelsTests/testRealBmxToolsFixture",
+    "RealFileTests/testARWWriteIPTCAndXMP",
+    "RealFileTests/testJPEGIPTCXMPSyncRoundTrip",
+    "RealFileTests/testJPEGRoundTripPreservesImageData",
+    "RealFileTests/testJPEGWriteReadIPTC",
+    "RealFileTests/testJXLContainerWriteXMP",
+    "RealFileTests/testJXLRoundTripPreservesCodestream",
+    "RealFileTests/testJXLWithExistingMetadata",
+    "RealFileTests/testMultipleJPEGModifications",
+    "RealFileTests/testReadARW",
+    "RealFileTests/testReadExistingNepobabySidecar",
+    "RealFileTests/testReadExistingSidecar",
+    "RealFileTests/testReadJPEGWithIPTC",
+    "RealFileTests/testReadJPEGWithRichMetadata",
+    "RealFileTests/testReadJXLBareCodestream",
+    "RealFileTests/testReadJXLContainer",
+    "RealFileTests/testReadSidecarMatchesManualRead",
+    "RealFileTests/testWriteJPEGToTempFile",
+    "RealFileTests/testWriteSidecarForARW"
+  ]
+}
