@@ -193,6 +193,14 @@ expected failures, or runtime warnings.
 
 ## Acceptance still required
 
+The September 30 [authentic camera production profiles](evidence/authentic-camera-metadata-memory-20260930/README.md)
+pass cache parity on three original Sony MP4/MXF recordings. They also expose
+a transient 368.516 MiB lifetime-peak increase while reading an 8.64 GB FX6
+MXF, with resident memory returning near baseline after conversion. A full KLV
+header/peek scan of the mapped source is consistent with this cost; bounded
+file-backed reading and long-duration scaling need investigation. These
+observations do not establish multi-hour or base-M1 acceptance.
+
 The synthetic ALAC files have no video or RTMD track. They establish the negative
 probe regression and audio metadata parity only. The subsequent
 [synthetic container validation](METADATA_CONTAINER_VALIDATION.md) checks

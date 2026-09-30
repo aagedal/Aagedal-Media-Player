@@ -1,0 +1,54 @@
+{
+  "startedUTC": "2026-09-30T17:15:57.464928+00:00",
+  "sourceHEAD": "36ae497ac4094c9490a80a42a670fd7f2399c605",
+  "worktreeStatus": " M \"Aagedal Media Player Tests/CompareReviewTextCommitTests.swift\"\n M \"Aagedal Media Player/UI/CompareReviewView.swift\"\n?? docs/evidence/review-field-correction-20260930/\n?? scripts/build-mpv-coreaudio-clean-candidate.py\n",
+  "buildEnvironment": "Current shipping-pin Release build-for-testing; development Review edits; concurrent clean dependency build. No throughput/thermal acceptance.",
+  "inputsAndBinariesBefore": {
+    "/tmp/aagedal-live-authentic-current-dd-20260930/Build/Products/Release/Aagedal Media Player.app/Contents/MacOS/Aagedal Media Player": {
+      "sha256": "b6857df558cd09c8c2448979bf9108f5d3c9e2981f0ec89981e1fbd9253b05d4",
+      "bytes": 79672688
+    },
+    "/tmp/aagedal-live-authentic-current-dd-20260930/Build/Products/Release/Aagedal Media Player.app/Contents/PlugIns/Aagedal Media Player Tests.xctest/Contents/MacOS/Aagedal Media Player Tests": {
+      "sha256": "7d26f64bb724e8592b09a55eec8cd9a6d409813c93e427485389211e4ee1ae2d",
+      "bytes": 16114256
+    },
+    "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved": {
+      "sha256": "6aea6d64326f3040345c3523a0a39c95d53335777e233b3aa311e8ba90ad475d",
+      "bytes": 919
+    },
+    "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/ProductionMetadataMemoryPerformanceTests.swift": {
+      "sha256": "cf10f5d4c12a043fb5de1623b8eb1356dc138cc3275211a01db6d3b164426a71",
+      "bytes": 8366
+    },
+    "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player/Logic/MetadataService.swift": {
+      "sha256": "3b7be4df3f79baf975ea1353c4c652a145456ffbee5f9e2770408ce8856a840a",
+      "bytes": 15277
+    },
+    "/tmp/aagedal-live-authentic-current-dd-20260930/Build/Products/Aagedal Media Player_Aagedal Media Player_macosx27.0-arm64.xctestrun": {
+      "sha256": "67c1d1f47443f724e6fa8228e4807581dd61b39016b0b2c71c7e0aea019caad7",
+      "bytes": 26127
+    },
+    "/Users/truls.aagedal/Movies/TestVideo/testmappe_agedal_media_stitch/M4ROOT/CLIP/rre_8073.MP4": {
+      "sha256": "d44dcfd089c2712a1fa1e40f08a293cc78dc33a472071c6edbe4224bda06d87a",
+      "bytes": 1879319902
+    },
+    "/Users/truls.aagedal/Movies/TestVideo/Sony A1 Card/M4ROOT/CLIP/20260502_TRA_MOV_0240.MP4": {
+      "sha256": "d8f32f9e827dba821a8101c7dd713580e37b03e9723c4ffbf136919829d6fbe1",
+      "bytes": 1569013272
+    },
+    "/Users/truls.aagedal/Movies/TestVideo/A1_v_FX6/FX6/OJ_FX6A0021.MXF": {
+      "sha256": "5d1c636920c80e7ce83af6486a8de9184c5cacee8a316e799dbb52e8f02174a8",
+      "bytes": 8643449904
+    },
+    "/Users/truls.aagedal/Movies/TestVideo/Sony A1 Card/M4ROOT/CLIP/20260502_TRA_MOV_0240M01.XML": {
+      "sha256": "a6b232115555e2253c7a1acc36398429b94d373e17196f325993dd897368bb10",
+      "bytes": 2285
+    },
+    "/Users/truls.aagedal/Movies/TestVideo/A1_v_FX6/FX6/OJ_FX6A0021M01.XML": {
+      "sha256": "15b267b83754ca061afb475c3f3fdd632f1915b5a9bcf20aeaa5b33744f1a7c3",
+      "bytes": 3379
+    }
+  },
+  "inputsAndBinariesUnchangedAfter": true,
+  "endedUTC": "2026-09-30T17:16:10.033057+00:00"
+}

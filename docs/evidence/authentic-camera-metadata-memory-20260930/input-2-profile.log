@@ -1,0 +1,40 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild test-without-building -xctestrun /tmp/aagedal-authentic-production-metadata-v3-20260930/input-2.xctestrun -destination platform=macOS -derivedDataPath /tmp/aagedal-live-authentic-current-dd-20260930 -parallel-testing-enabled NO -test-timeouts-enabled NO -resultBundlePath /tmp/aagedal-authentic-production-metadata-v3-20260930/runs/input-2/Profile.xcresult "-only-testing:Aagedal Media Player Tests/ProductionMetadataMemoryPerformanceTests/testProductionMetadataMemoryProfileWhenRequested"
+
+Writing result bundle at path:
+	/tmp/aagedal-authentic-production-metadata-v3-20260930/runs/input-2/Profile.xcresult
+
+--- xcodebuild: WARNING: Using the first of multiple matching destinations:
+{ platform:macOS, arch:arm64e, id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:arm64, id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:x86_64, id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:arm64e, variant:Mac Catalyst, id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:arm64, variant:Mac Catalyst, id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:x86_64, variant:Mac Catalyst, id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:arm64e, variant:DriverKit, id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:arm64, variant:DriverKit, id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:arm64e, variant:Designed for [iPad,iPhone], id:00006050-001C293C22F9401C, name:My Mac }
+{ platform:macOS, arch:arm64, variant:Designed for [iPad,iPhone], id:00006050-001C293C22F9401C, name:My Mac }
+2026-09-30 19:16:04.718210+0200 Aagedal Media Player[31217:1468446] ApplePersistenceIgnoreState: Existing state will not be touched. New state will be written to /var/folders/pv/f8g9jgrd7px_0xvh3kxgmyg40000gp/T/com.aagedal.MediaPlayer.savedState
+Test Suite 'Selected tests' started at 2026-09-30 19:16:04.908.
+Test Suite 'Aagedal Media Player Tests.xctest' started at 2026-09-30 19:16:04.909.
+Test Suite 'ProductionMetadataMemoryPerformanceTests' started at 2026-09-30 19:16:04.909.
+Test Case '-[Aagedal_Media_Player_Tests.ProductionMetadataMemoryPerformanceTests testProductionMetadataMemoryProfileWhenRequested]' started.
+PRODUCTION_METADATA_MEMORY_PROFILE {"afterCachedReadLifetimePeakResidentBytes":504692736,"afterCachedReadResidentBytes":119767040,"afterLoadLifetimePeakResidentBytes":504692736,"afterLoadResidentBytes":119767040,"afterLocalReleaseLifetimePeakResidentBytes":504692736,"afterLocalReleaseResidentBytes":119881728,"cachedReadWallSeconds":3.8457999999999997e-05,"cacheParity":true,"file":"OJ_FX6A0021.MXF","initialLifetimePeakResidentBytes":118276096,"initialResidentBytes":118276096,"inputFileBytes":8643449904,"inputIndex":2,"loadWallSeconds":0.1836055,"metadata":{"audioStreamCount":8,"audioStreams":[{"bitDepth":24,"channelLayout":"mono","channels":1,"codec":"pcm_s24le","sampleRate":48000},{"bitDepth":24,"channelLayout":"mono","channels":1,"codec":"pcm_s24le","sampleRate":48000},{"bitDepth":24,"channelLayout":"mono","channels":1,"codec":"pcm_s24le","sampleRate":48000},{"bitDepth":24,"channelLayout":"mono","channels":1,"codec":"pcm_s24le","sampleRate":48000},{"bitDepth":24,"channelLayout":"mono","channels":1,"codec":"pcm_s24le","sampleRate":48000},{"bitDepth":24,"channelLayout":"mono","channels":1,"codec":"pcm_s24le","sampleRate":48000},{"bitDepth":24,"channelLayout":"mono","channels":1,"codec":"pcm_s24le","sampleRate":48000},{"bitDepth":24,"channelLayout":"mono","channels":1,"codec":"pcm_s24le","sampleRate":48000}],"bitRate":494476539,"chapterCount":0,"durationSeconds":139.84,"formatName":"mxf","sizeBytes":8643449904,"subtitleStreamCount":0,"videoStreamCount":1,"videoStreams":[{"codec":"avc1","frameRateDenominator":1,"frameRateNumerator":50,"height":2160,"width":3840}]},"processIdentifier":31217,"sampleCount":18,"sampledPeakResidentBytes":496173056,"sampleIntervalMilliseconds":10}
+Test Case '-[Aagedal_Media_Player_Tests.ProductionMetadataMemoryPerformanceTests testProductionMetadataMemoryProfileWhenRequested]' passed (0.290 seconds).
+Test Suite 'ProductionMetadataMemoryPerformanceTests' passed at 2026-09-30 19:16:05.199.
+	 Executed 1 test, with 0 failures (0 unexpected) in 0.290 (0.290) seconds
+Test Suite 'Aagedal Media Player Tests.xctest' passed at 2026-09-30 19:16:05.199.
+	 Executed 1 test, with 0 failures (0 unexpected) in 0.290 (0.291) seconds
+Test Suite 'Selected tests' passed at 2026-09-30 19:16:05.200.
+	 Executed 1 test, with 0 failures (0 unexpected) in 0.290 (0.291) seconds
+2026-09-30 19:16:05.487 xcodebuild[31205:1468361] [MT] IDETestOperationsObserverDebug: 1.163 elapsed -- Testing started completed.
+2026-09-30 19:16:05.487 xcodebuild[31205:1468361] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-09-30 19:16:05.487 xcodebuild[31205:1468361] [MT] IDETestOperationsObserverDebug: 1.163 sec, +1.163 sec -- end
+
+Test session results, code coverage, and logs:
+	/tmp/aagedal-authentic-production-metadata-v3-20260930/runs/input-2/Profile.xcresult
+
+** TEST EXECUTE SUCCEEDED **
+
+Testing started

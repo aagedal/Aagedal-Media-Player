@@ -1,0 +1,13 @@
+{
+  "file": "OJ_FX6A0021.MXF",
+  "fileBytes": 8643449904,
+  "method": "KLV offsets and projected pages for the exact 3.0.1 key/BER plus512-byte value-peek loop; no metadata decoding or simulated RSS",
+  "pageSizeBytes": 16384,
+  "completeKLVCount": 160944,
+  "parsedThroughByteOffset": 8643449904,
+  "distinctProjectedHeaderPeekPages": 22523,
+  "projectedHeaderPeekMappedBytes": 369016832,
+  "totalValuePeekBytes": 52723414,
+  "remainingValueBytes": 8587507610,
+  "causalAttributionProven": false
+}
