@@ -3812,7 +3812,8 @@ all 16 final focused optimized Release checks pass on 2026-09-30.
 - [x] Add two live regressions and require 733 aggregate candidate/release tests.
 - [x] Pass both regressions, both manual-alignment and shared-transport directions,
   and all ten lifecycle tests without skips/failures/runtime warnings.
-- [ ] Complete fresh canonical verification of the committed batch.
+- [x] Complete fresh canonical verification of the committed batch at
+  `1e8023258c7192b8c426ea42f5e64162b4890ca4`; see Phase 173.
 
 See [retained diagnosis](docs/evidence/compare-paused-alignment-20260930/README.md).
 The initial full-suite event sequence remains unobserved; deterministic
@@ -3844,6 +3845,28 @@ inference, not an allocation/RSS trace. See the
 [build audit](docs/evidence/live-meter-native-output-20260930/clean-rebuild/README.md)
 and [bounded-reader investigation](docs/evidence/authentic-camera-metadata-memory-20260930/bounded-reader-investigation.md).
 Committed GPL/receipt gates: `7dc46b5`; bounded-reader diagnosis: `17e1548`.
+
+## Phase 173 — Integrated authentic continuation verification
+
+Status: Canonical clean-checkout verification passed on 2026-09-30 at
+`1e8023258c7192b8c426ea42f5e64162b4890ca4`.
+
+- [x] Pass 725 optimized Release tests with eight documented optional skips
+  (733 total), no failures/expected failures/runtime warnings and reconciled
+  detailed results, including both new Review and both transport regressions.
+- [x] Pass both isolated mixed-backend transport directions, Release static
+  analysis, all script validators and all 61 source preflight checks.
+- [x] Retain no-sleep evidence and unchanged source/package/cache identities.
+- [x] Preserve the first rejected canonical run, unchanged isolated repeat and
+  deterministic before-fix failures alongside corrected focused/full results.
+
+The shipping package pin is unchanged. The new tooling rejects the historical
+full local artifact's GPL/Metal feature loss; the missing Metal compiler blocks
+a replacement build. Bounded MXF implementation, intermittent FX6 qualification,
+upstream JXL/XMP, native/audible/accessibility/editor/hardware and distribution
+acceptance remain open. See
+[retained integrated evidence](docs/evidence/release-candidate-authentic-continuation-20260930/README.md).
+This evidence-report commit follows the verified implementation commit.
 
 ## Remaining work after this continuation
 
@@ -4197,3 +4220,12 @@ Committed GPL/receipt gates: `7dc46b5`; bounded-reader diagnosis: `17e1548`.
 154. Phase 162 authentic programme live sample/true-peak references.
 155. Phase 163 linked local CoreAudio repair candidate.
 156. Phase 164 integrated parallel continuation verification.
+157. Phase 165 Review endpoints and sustained acceptance tooling.
+158. Phase 166 sustained-acceptance continuation verification.
+159. Phase 167 proposed upstream JXL fixture contract correction.
+160. Phase 168 complete local macOS CoreAudio dependency build.
+161. Phase 169 authentic native meter and camera metadata observations.
+162. Phase 170 preserve Review corrections across fields and findings.
+163. Phase 171 authoritative paused comparison transport.
+164. Phase 172 shipping dependency feature parity and bounded MXF scope.
+165. Phase 173 integrated authentic continuation verification.

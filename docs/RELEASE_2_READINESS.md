@@ -149,8 +149,19 @@ primary playing observation while A remains paused. Explicit Pause now remains
 authoritative until deliberate playback resumes. Explicit Play/shuttle during B
 loading stays with the session, and its request arms synchronization even before
 A publishes the Play acknowledgement; 16 final focused Release checks pass. The candidate/release floor is 733 aggregate tests plus both isolated
-transport directions; fresh committed-source verification follows. See
+transport directions. Canonical committed-source verification passes below. See
 [transport diagnosis and correction](evidence/compare-paused-alignment-20260930/README.md).
+
+The integrated authentic continuation passes canonical verification at clean
+commit `1e8023258c7192b8c426ea42f5e64162b4890ca4`: 725 optimized Release passes,
+eight documented optional skips (733 total), both isolated transport directions,
+Release static analysis, the complete script-validator gate and all 61 preflight
+checks. The four new Review/transport cases pass exact detailed validation.
+Power/source/package/cache evidence passes. The first rejected run and reproduced
+transport bugs are retained. This verifies the engineering batch against the
+unchanged shipping dependency; a feature-equivalent CoreAudio rebuild/repin,
+bounded MXF implementation and native/hardware/distribution gates remain open.
+See [integrated evidence](evidence/release-candidate-authentic-continuation-20260930/README.md).
 
 The sustained-acceptance continuation passes canonical verification at clean
 commit `601bbb859c436037388c3d3c080cb0132b7e357d`: 721 optimized Release passes,

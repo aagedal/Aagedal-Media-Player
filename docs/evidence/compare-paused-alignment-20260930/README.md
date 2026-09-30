@@ -115,3 +115,10 @@ lifecycle cases also pass. `final-focused-*` retains those results, and
 sources against the retained full snapshots. The final delayed-ack case runs
 in 4.750 seconds. Consumption requires 733 aggregate tests plus both isolated
 transport directions. The fresh clean committed-source candidate run follows.
+
+The subsequent canonical verifier at clean implementation commit
+`1e8023258c7192b8c426ea42f5e64162b4890ca4` passes the 733-test gate
+(725 passes, eight documented optional skips), both isolated transport checks,
+Release static analysis and all 61 preflight checks. Both new transport cases
+pass exact detailed validation. Power and final source/package/cache evidence
+pass; see [integrated verification](../release-candidate-authentic-continuation-20260930/README.md).
