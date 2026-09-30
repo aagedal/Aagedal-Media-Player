@@ -96,6 +96,14 @@ class ReimportProfileValidationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'descriptor growth'):
             validator.validate([row], 1, 3)
 
+    def test_loaded_lifetime_peak_covers_samples_and_before_load_memory(self):
+        for before, peak in [(10, 36), (36, 36)]:
+            row = record()
+            row['imports'][0]['beforeLoadResidentBytes'] = before
+            row['imports'][0]['sampledPeakResidentBytes'] = peak
+            with self.subTest(before=before, peak=peak), self.assertRaisesRegex(ValueError, 'Lifetime peak'):
+                validator.validate([row], 1, 3)
+
     def test_memory_budget_checks_middle_cycle_even_if_final_recovers(self):
         row = record()
         row['imports'][1]['afterLocalReleaseResidentBytes'] = 30
@@ -165,6 +173,29 @@ class ReimportProfileValidationTests(unittest.TestCase):
                     self.assertNotEqual(result.returncode, 0)
                     self.assertFalse(artifacts.exists())
                     self.assertNotIn('Building', result.stderr)
+
+    def test_malformed_cli_revalidation_removes_previous_passing_receipts(self):
+        arguments = [
+            ['bad', '3'], ['1', 'bad'],
+            ['1', '3', '--max-resident-growth-mib', 'bad'],
+            ['1', '3', '--max-descriptor-growth', 'bad'],
+            ['1', '3', '--unknown-option'],
+            ['1', '3', '--max-resident-growth-mib'],
+            ['1', '3', '--max-descriptor-growth'],
+            ['1'], [],
+        ]
+        script = str(Path(__file__).with_name('validate-production-metadata-reimport-profile.py'))
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for remaining in arguments:
+                for filename in ('summary.json', 'validation.json'):
+                    (root / filename).write_text('{"passed":true}\n')
+                result = subprocess.run([sys.executable, script, str(root), *remaining],
+                                        capture_output=True, text=True)
+                with self.subTest(arguments=remaining):
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertFalse((root / 'summary.json').exists())
+                    self.assertFalse((root / 'validation.json').exists())
 
 
 if __name__ == '__main__':

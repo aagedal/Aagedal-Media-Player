@@ -97,3 +97,22 @@ bad measurements, middle-cycle growth hidden by final recovery, invalid runner
 configuration before a build, and stale passing receipts after failed
 revalidation. Ordinary release verification skips this expensive opt-in test
 unless its input and repeat-count environment are explicitly supplied.
+
+## Validator follow-up after independent review
+
+The validator now converts numeric CLI tokens only after removing old receipts.
+Malformed counts/budgets, unknown options, missing counts and missing budget
+values therefore cannot leave a prior pass at an identified artifact directory.
+The lifetime peak after each load must also cover both the sampled maximum and
+the before-load RSS observation, in addition to after-load RSS. Thirteen focused
+[self-tests pass](post-review-validator-self-tests.log), including regressions
+for these two review findings.
+
+The stricter validator [passes the original three-by-thirty dataset](post-review-validation.log)
+under the same 32 MiB/four-descriptor budgets. Its generated summary and budget
+receipt are byte-identical to the original retained files; no native observation
+or expectation changed. [The follow-up receipt](post-review-validation.json)
+records both validator source hashes. The
+[historical run's exact validator source](profile-run-reimport-validator.py)
+is retained and matches the hash in the original environment receipt. This
+script correction requires no app-source change or additional native profile.

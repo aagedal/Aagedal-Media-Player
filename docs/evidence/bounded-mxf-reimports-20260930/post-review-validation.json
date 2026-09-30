@@ -1,0 +1,10 @@
+{
+  "historicalRunValidatorSHA256": "c2aa5f52896039ac1b1efb793edf602602a3f0941e6fe12baa84e5935d69a5bc",
+  "postReviewValidatorSHA256": "4d9eebbd868cf3c171db9e78287f6468055b84caf506233c1019d69699cc1fe7",
+  "stricterSampledAndBeforeLoadLifetimePeakChecksPassed": true,
+  "originalSummaryAndResourceBudgetReceiptsByteIdentical": true,
+  "inputCount": 3,
+  "distinctImportsPerInput": 30,
+  "maximumResidentGrowthBytesAfterFirstRelease": 33554432,
+  "maximumOpenDescriptorGrowth": 4
+}

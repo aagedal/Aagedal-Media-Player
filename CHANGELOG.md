@@ -5,6 +5,7 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Changed
+- Repeated metadata profile validation clears stale passing receipts for malformed arguments and rejects lifetime peaks below observed resident-memory samples.
 - Passive Review range callbacks preserve the finding and field selected by action correction, preventing unrelated range edits from saving or stealing focus.
 - Production live-meter profiles own a temporary awake assertion and retain interval power evidence on failed tests.
 - CoreAudio candidate builds can select a verified installed Metal compiler directly and bind provenance to the retained builder snapshot.

@@ -69,8 +69,7 @@ def validate(rows, expected_count, import_count, max_growth_bytes=None,
                 raise ValueError('Sampled peak does not cover the uncached load')
             loaded_peak, released_peak = [single.integer(observation[key], key, 1) for key in (
                 'afterLoadLifetimePeakResidentBytes', 'afterLocalReleaseLifetimePeakResidentBytes')]
-            if not lifetime <= loaded_peak <= released_peak \
-                    or loaded_peak < max(before, peak, after) or released_peak < release:
+            if not lifetime <= loaded_peak <= released_peak or loaded_peak < after or released_peak < release:
                 raise ValueError('Lifetime peak decreased or is below resident memory')
             lifetime = released_peak
             released.append(release)
@@ -98,30 +97,17 @@ def validate(rows, expected_count, import_count, max_growth_bytes=None,
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
+    parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('artifact_directory', type=Path)
-    # Parse numeric tokens without conversion, and defer missing-value errors,
-    # so an identified artifact directory is invalidated even for malformed CLI
-    # counts/budgets. Help and a missing artifact directory have no validation
-    # target and deliberately do not remove any receipts.
-    parser.add_argument('input_count', nargs='?')
-    parser.add_argument('import_count', nargs='?')
-    parser.add_argument('--max-resident-growth-mib', nargs='?', const='')
-    parser.add_argument('--max-descriptor-growth', nargs='?', const='', default='4')
-    args, unknown = parser.parse_known_args()
+    parser.add_argument('input_count', type=int)
+    parser.add_argument('import_count', type=int)
+    parser.add_argument('--max-resident-growth-mib', type=int)
+    parser.add_argument('--max-descriptor-growth', type=int, default=4)
+    args = parser.parse_args()
     # Clear earlier receipts before reading observations or checking budgets.
     # Failed revalidation must never leave a previously passing summary behind.
     for filename in ('summary.json', 'validation.json'):
         (args.artifact_directory / filename).unlink(missing_ok=True)
-    if unknown:
-        parser.error('unrecognized arguments: ' + ' '.join(unknown))
-    if args.input_count is None or args.import_count is None:
-        parser.error('input_count and import_count are required')
-    args.input_count = int(args.input_count)
-    args.import_count = int(args.import_count)
-    args.max_descriptor_growth = int(args.max_descriptor_growth)
-    if args.max_resident_growth_mib is not None:
-        args.max_resident_growth_mib = int(args.max_resident_growth_mib)
     rows = []
     for path in (args.artifact_directory / 'attachments').rglob('*'):
         if path.is_file():

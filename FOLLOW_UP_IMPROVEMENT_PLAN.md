@@ -4124,6 +4124,23 @@ and is cancelled after 639.7 seconds. No keyboard input or settings change occur
 this is a binding limitation rather than native acceptance. See
 [range source correction and native attempt](docs/evidence/review-range-correction-ownership-20260930/README.md).
 
+## Phase 185 — Fail-closed reimport validator arguments and peak evidence
+
+Status: Independent review follow-up implemented and verified on 2026-09-30.
+
+- [x] Invalidate prior passing receipts before numeric conversion, missing-value
+  and unknown-option rejection for an identified artifact directory.
+- [x] Require native lifetime peak to cover before-load, sampled-peak and
+  after-load resident observations.
+- [x] Pass thirteen focused regressions and revalidate the unchanged three-by-thirty
+  authentic dataset under the same 32 MiB/four-descriptor budgets.
+- [x] Retain original/final validator identities, actual follow-up commands and
+  byte-identical regenerated resource receipts.
+
+This changes profile validation scripts and their tests only; app and XCTest
+sources are unchanged. See
+[post-review evidence](docs/evidence/bounded-mxf-reimports-20260930/post-review-validation.json).
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
