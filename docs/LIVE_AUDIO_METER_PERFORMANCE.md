@@ -95,7 +95,13 @@ missing or replaced inputs, duplicate file/track requests, manifest/hash
 mismatches, unsupported or malformed source metadata, unknown backends,
 non-finite timing, absent snapshots or child-memory sampling, decoded work beyond
 the 250 ms admission bound, routing retargeting, incomplete cancellation, and
-missing/inconsistent EOF timestamp provenance. Run its fast regression tests
+missing/inconsistent EOF timestamp provenance. The timestamp time base must be
+exactly `1/sampleRate` for the selected stream, as emitted by the production
+decoder. The requested observation must remain within the runner's 5–30 second
+range, and reported first-snapshot latency and snapshot intervals must fit within
+the recorded observation wall time. These are evidence-consistency checks;
+they do not establish a UI cadence or first-reading performance target.
+Run its fast regression tests
 directly with:
 
 ```bash

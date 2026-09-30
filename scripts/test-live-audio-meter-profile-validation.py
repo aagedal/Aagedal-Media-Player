@@ -214,6 +214,39 @@ class ValidationTests(unittest.TestCase):
             with self.subTest(key=key), self.assertRaises(ValueError):
                 validator.validate([row], self.manifest())
 
+    def test_eof_time_base_must_match_each_supported_selected_rate(self):
+        for rate in (44_100, 48_000, 96_000):
+            row = self.record()
+            row["sampleRate"] = rate
+            row["observation"]["endSourceFrame"] = 5 * rate
+            row["eof"]["timestampTimeBase"] = f"1/{rate}"
+            with self.subTest(rate=rate):
+                validator.validate([row], self.manifest())
+                for invalid in ("1/1", "1/48001", "0/48000", "estimated", None):
+                    row["eof"]["timestampTimeBase"] = invalid
+                    with self.subTest(time_base=invalid), self.assertRaisesRegex(ValueError, "time base"):
+                        validator.validate([row], self.manifest())
+
+    def test_rejects_snapshot_timings_outside_observed_wall_interval(self):
+        for changes in (
+            {"firstSnapshotLatencySeconds": 5.03},
+            {"maximumSnapshotIntervalSeconds": 5.03},
+            {"firstSnapshotLatencySeconds": 4, "maximumSnapshotIntervalSeconds": 2},
+            {"maximumSnapshotIntervalSeconds": 0},
+        ):
+            row = self.record()
+            row["observation"].update(changes)
+            with self.subTest(changes=changes), self.assertRaises(ValueError):
+                validator.validate([row], self.manifest())
+
+    def test_observation_duration_matches_supported_runner_range(self):
+        row = self.record()
+        row["observation"].update({"observationSeconds": 30, "wallSeconds": 30.1})
+        validator.validate([row], self.manifest())
+        row["observation"].update({"observationSeconds": 31, "wallSeconds": 31.1})
+        with self.assertRaisesRegex(ValueError, "observation duration"):
+            validator.validate([row], self.manifest())
+
     def test_rejects_non_finite_numbers(self):
         for section, key in [
             ("observation", "firstSnapshotLatencySeconds"),

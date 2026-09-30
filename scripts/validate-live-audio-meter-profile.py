@@ -47,12 +47,14 @@ def validate_observation(observation, sample_rate):
     if end <= observation["startSourceFrame"]:
         raise ValueError("observation did not advance source frames")
     integer(observation["publishedSnapshotCount"], "published snapshot count", minimum=2)
-    duration = number(observation["observationSeconds"], "observation duration", minimum=5)
-    number(observation["wallSeconds"], "observation wall duration", minimum=duration)
+    duration = number(observation["observationSeconds"], "observation duration", minimum=5, maximum=30)
+    wall = number(observation["wallSeconds"], "observation wall duration", minimum=duration)
     if end - observation["startSourceFrame"] < sample_rate * min(3, duration - 1):
         raise ValueError("observation did not retain enough paced source frames")
-    number(observation["firstSnapshotLatencySeconds"], "first snapshot latency", minimum=0)
-    number(observation["maximumSnapshotIntervalSeconds"], "maximum snapshot interval", minimum=0)
+    latency = number(observation["firstSnapshotLatencySeconds"], "first snapshot latency", minimum=0, maximum=wall)
+    interval = number(observation["maximumSnapshotIntervalSeconds"], "maximum snapshot interval", minimum=0, maximum=wall - latency)
+    if interval == 0:
+        raise ValueError("multiple published snapshots require a positive snapshot interval")
     number(observation["maximumAbsoluteClockDriftSeconds"], "maximum clock drift", minimum=0)
     integer(observation["clockDriftSampleCount"], "clock drift sample count", minimum=1)
     # The production worker's hard admission limit is 250 ms. Allow one source
@@ -85,7 +87,8 @@ def validate_eof(eof, sample_rate):
     text(eof["decoderVersion"], "decoder version")
     if eof.get("timestampSource") != TIMESTAMP_SOURCE:
         raise ValueError("unexpected timestamp provenance")
-    text(eof["timestampTimeBase"], "timestamp time base")
+    if eof.get("timestampTimeBase") != f"1/{sample_rate}":
+        raise ValueError("timestamp time base does not match the selected sample rate")
     count = integer(eof["timestampFrameCount"], "timestamp frame count", minimum=1)
     silence = integer(
         eof["syntheticInitialSilenceFrameCount"],
