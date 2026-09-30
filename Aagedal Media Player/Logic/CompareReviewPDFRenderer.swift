@@ -72,7 +72,29 @@ nonisolated enum CompareReviewPDFRenderer {
         var pageNumber = 0
         var cursor: CGFloat = 0
 
-        func beginPage() {
+        func drawColumnHeadings() {
+            drawText(
+                "MARKER / TIMECODE",
+                x: margin + 6,
+                top: cursor,
+                maximumWidth: metadataWidth - 6,
+                font: headingFont,
+                color: secondary,
+                context: context
+            )
+            drawText(
+                "NOTE",
+                x: noteX,
+                top: cursor,
+                maximumWidth: noteWidth,
+                font: headingFont,
+                color: secondary,
+                context: context
+            )
+            cursor += 22
+        }
+
+        func beginPage(showColumnHeadings: Bool = true) {
             pageNumber += 1
             context.beginPDFPage(nil)
             context.setFillColor(CGColor(gray: 1, alpha: 1))
@@ -126,37 +148,54 @@ nonisolated enum CompareReviewPDFRenderer {
             )
 
             drawRule(top: 112, color: rule, context: context)
-            drawText(
-                "MARKER / TIMECODE",
-                x: margin + 6,
-                top: 121,
-                maximumWidth: metadataWidth - 6,
-                font: headingFont,
-                color: secondary,
-                context: context
-            )
-            drawText(
-                "NOTE",
-                x: noteX,
-                top: 121,
-                maximumWidth: noteWidth,
-                font: headingFont,
-                color: secondary,
-                context: context
-            )
-            cursor = 143
+            cursor = 121
+            if showColumnHeadings { drawColumnHeadings() }
         }
 
         func endPage() {
             context.endPDFPage()
         }
 
-        beginPage()
+        beginPage(showColumnHeadings: false)
+
+        // Filenames alone cannot identify equal-named media in different
+        // directories. Wrap the complete URLs instead of truncating them in
+        // the repeating header, and paginate unusually long source paths.
+        for source in [
+            "Source A URL: \(snapshot.primaryURL.absoluteString)",
+            "Source B URL: \(snapshot.secondaryURL.absoluteString)",
+        ] {
+            let sourceLines = wrappedLines(
+                source, width: contentWidth - 12, font: metadataFont, color: secondary
+            )
+            for line in sourceLines {
+                if cursor + noteLineHeight > pageRect.height - margin {
+                    endPage()
+                    beginPage(showColumnHeadings: false)
+                }
+                drawLine(
+                    line, x: margin + 6, top: cursor,
+                    font: metadataFont, context: context
+                )
+                cursor += noteLineHeight
+            }
+            cursor += rowGap
+        }
+        cursor += rowGap
+        if cursor + 22 + minimumRowHeight > pageRect.height - margin {
+            endPage()
+            beginPage(showColumnHeadings: false)
+        }
+        drawColumnHeadings()
 
         for row in snapshot.rows {
             let unavailableStill = row.hasAvailableStillFrames ? nil
                 : "Still unavailable: recorded frame is outside the available A/B media."
-            let details = [row.classificationLabel, row.rangeLabel, row.note, unavailableStill]
+            // Findings keep their capture timebase through media replacement.
+            // Preserve exact coordinates even if the compact timecode column
+            // truncates a large frame ordinal or current metadata differs.
+            let coordinates = "A frame \(row.primaryFrame) at \(row.primaryRateNumerator)/\(row.primaryRateDenominator) fps\nB frame \(row.secondaryFrame) at \(row.secondaryRateNumerator)/\(row.secondaryRateDenominator) fps"
+            let details = [row.classificationLabel, coordinates, row.rangeLabel, row.note, unavailableStill]
                 .compactMap { $0 }.joined(separator: "\n")
             let noteLines = wrappedLines(
                 details,

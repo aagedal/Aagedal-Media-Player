@@ -394,6 +394,65 @@ final class CompareReviewReportExporterTests: XCTestCase {
         XCTAssertGreaterThan(document.numberOfPages, 1)
     }
 
+    func testPDFPreservesFullSourceIdentityAndStoredRationalCoordinates() throws {
+        let primary = makeItem(path: "/tmp/original master/Master.mov", duration: 5)
+        let secondary = makeItem(path: "/tmp/replacement encode/Master.mov", duration: 5)
+        let snapshot = CompareReviewReportSnapshot(
+            primaryItem: primary, secondaryItem: secondary, alignmentMode: .relative,
+            notes: [CompareReviewNote(
+                primaryFrame: 48, primaryTime: 0, secondaryFrame: 60, secondaryTime: 0,
+                primaryRateNumerator: 24_000, primaryRateDenominator: 1_001,
+                secondaryRateNumerator: 30_000, secondaryRateDenominator: 1_001,
+                text: "Recorded before relinking"
+            )]
+        )
+        let data = try CompareReviewReportExporter.data(for: .pdf, snapshot: snapshot)
+        let document = try XCTUnwrap(PDFDocument(data: data))
+        let text = try XCTUnwrap(document.string)
+        let compactText = text.filter { !$0.isWhitespace }
+        XCTAssertTrue(compactText.contains(primary.url.absoluteString))
+        XCTAssertTrue(compactText.contains(secondary.url.absoluteString))
+        XCTAssertTrue(text.contains("A frame 48 at 24000/1001 fps"))
+        XCTAssertTrue(text.contains("B frame 60 at 30000/1001 fps"))
+        XCTAssertTrue(text.contains("Recorded before relinking"))
+        if let directory = ProcessInfo.processInfo.environment["COMPARE_REVIEW_PDF_FIXTURE_DIRECTORY"] {
+            try data.write(to: URL(fileURLWithPath: directory).appendingPathComponent("provenance.pdf"),
+                           options: .withoutOverwriting)
+        }
+    }
+
+    func testPDFPaginatesLongSourceURLsWithoutLosingFindings() throws {
+        let longDirectory = String(repeating: "long-source-directory/", count: 180)
+        let primary = makeItem(path: "/tmp/\(longDirectory)Master.mov", duration: 5)
+        let secondary = makeItem(path: "/tmp/\(longDirectory)Encode.mp4", duration: 5)
+        let snapshot = CompareReviewReportSnapshot(
+            primaryItem: primary, secondaryItem: secondary, alignmentMode: .relative,
+            notes: [CompareReviewNote(
+                primaryFrame: 0, primaryTime: 0, secondaryFrame: 0, secondaryTime: 0,
+                text: "Finding after the complete source identity"
+            )]
+        )
+        let data = try CompareReviewReportExporter.data(for: .pdf, snapshot: snapshot)
+        let document = try XCTUnwrap(PDFDocument(data: data))
+        XCTAssertGreaterThan(document.pageCount, 1)
+        let text = try XCTUnwrap(document.string)
+        // Read below each repeating header so a URL split across pages can be
+        // reconstructed without interleaved page titles or column headings.
+        let bodyText = (0..<document.pageCount).compactMap { index in
+            document.page(at: index)?.selection(
+                for: CGRect(x: 40, y: 40, width: 515, height: 682)
+            )?.string
+        }.joined()
+        let compactText = bodyText.filter { !$0.isWhitespace }
+        XCTAssertTrue(compactText.contains(primary.url.absoluteString))
+        XCTAssertTrue(compactText.contains(secondary.url.absoluteString))
+        XCTAssertTrue(text.contains("Finding after the complete source identity"))
+        if let directory = ProcessInfo.processInfo.environment["COMPARE_REVIEW_PDF_FIXTURE_DIRECTORY"] {
+            try data.write(to: URL(fileURLWithPath: directory).appendingPathComponent("long-sources.pdf"),
+                           options: .withoutOverwriting)
+        }
+    }
+
     func testAnnotatedStillPreparationUsesStoredFrameTimesAndCachesDuplicatePairs() async throws {
         let primary = makeItem(
             path: "/tmp/Master.mov",

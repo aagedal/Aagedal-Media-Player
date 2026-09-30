@@ -105,7 +105,10 @@ when replacement media has different metadata. The URLs distinguish equal
 filenames in different directories; they identify the currently loaded source
 pair, while the JSON sidecar retains filesystem identity. These appended fields
 leave the original column positions intact. PDF reports show classification
-labels and the inclusive A frame range beside the finding text.
+labels and the inclusive A frame range beside the finding text. They also retain
+both complete current source URLs and each finding’s exact stored A/B frame
+ordinals and rational rates. Long source URLs wrap and paginate; relinked media
+does not replace the finding’s capture timebase.
 
 Report relative timecodes are derived from each finding's stored frame and
 rational rate, even after relinking to shorter media. Source timecodes are

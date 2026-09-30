@@ -1,0 +1,25 @@
+{
+  "baseCommit": "00514ecc2268a4642d16987ac87bace65518182b",
+  "focusedReleaseTests": {
+    "passed": 60,
+    "skipped": 0,
+    "failed": 0,
+    "runtimeWarnings": 0
+  },
+  "newRegressions": 5,
+  "sourceSHA256": {
+    "Aagedal Media Player/UI/CompareReviewView.swift": "453310a2c56e5a25034cae7a682e7c90d430ecadcc10e82d78f2e3cc4439a94e",
+    "Aagedal Media Player/Logic/CompareReviewPDFRenderer.swift": "a8212f09c74dcd49635ba19183d11b42253af2832b661a743313ae40ec625066",
+    "Aagedal Media Player Tests/CompareReviewTextCommitTests.swift": "236e7350ff52c5784122a061808b0e50a4142815d55a3b4b8ab832429255f90f",
+    "Aagedal Media Player Tests/CompareReviewReportExporterTests.swift": "4573ea94f4d529edcc8eb637fff5595d6284cb688ae515094fd885a5f26777c2"
+  },
+  "pdfVisualQA": {
+    "renderer": "Poppler pdftoppm",
+    "inspectedPages": {
+      "provenance.pdf": 1,
+      "long-sources.pdf": 2
+    },
+    "result": "No clipping, overlap or missing source/finding text observed."
+  },
+  "qualification": "Focused implementation verification; not native keyboard/VoiceOver acceptance or a clean full candidate."
+}

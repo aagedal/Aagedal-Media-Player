@@ -7,6 +7,106 @@ import XCTest
 
 final class CompareReviewTextCommitTests: XCTestCase {
     @MainActor
+    func testDisabledTextBlurPreservesDraftErrorAndCorrection() {
+        let note = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
+            secondaryFrame: 10, secondaryTime: 1, text: "Saved finding")
+        for draft in ["", "Pending edit", note.text] {
+            var drafts = CompareReviewDraftState()
+            drafts.updateNoteTextDraft(draft, noteID: note.id)
+            drafts.blockAction(noteID: note.id, field: .text,
+                error: "Retained text error", notice: "Correct this finding")
+            let selectedRequest = drafts.correctionRequest
+
+            // Disabling the field resigns FocusState. Neither validation nor
+            // unchanged-text cleanup may run from that passive blur.
+            if CompareReviewTextFocusLossPolicy.shouldCommit(
+                noteID: note.id, correctionRequest: selectedRequest, canEdit: false
+            ) {
+                switch CompareReviewTextCommitResult.attempt(
+                    draft: draft, savedText: note.text, canEdit: false,
+                    update: { _ in XCTFail("Disabled blur must not save"); return true }
+                ) {
+                case .accepted: drafts.finishNoteTextCommit(noteID: note.id)
+                case .empty, .unavailable, .rejected:
+                    drafts.recordFieldValidationError("Blur changed the error",
+                        note: note, field: .text, canEdit: false)
+                }
+            }
+            XCTAssertEqual(drafts.noteDrafts[note.id], draft)
+            XCTAssertEqual(drafts.noteActionErrors[note.id], "Retained text error")
+            XCTAssertEqual(drafts.correctionRequest, selectedRequest)
+            XCTAssertEqual(drafts.rangeActionNotice, "Correct this finding")
+            XCTAssertTrue(CompareReviewTextFocusLossPolicy.shouldCommit(
+                noteID: note.id, correctionRequest: selectedRequest, canEdit: true),
+                "Ordinary blur validation must resume after loading")
+        }
+    }
+
+    @MainActor
+    func testRetainedCorrectionWaitsForEditableRowAndResumesSelectedField() {
+        let note = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
+            secondaryFrame: 10, secondaryTime: 1, text: "Saved finding", primaryEndFrame: 20)
+        let otherID = UUID()
+        for field in [CompareReviewCorrectionRequest.Field.text, .rangeEnd] {
+            var drafts = CompareReviewDraftState()
+            drafts.updateNoteTextDraft("", noteID: note.id)
+            drafts.updateRangeEndDraft("invalid end", noteID: note.id)
+            drafts.noteActionErrors[note.id] = "Earlier text error"
+            drafts.rangeActionErrors[note.id] = "Earlier range error"
+            drafts.blockAction(noteID: note.id, field: field,
+                error: "Correct selected field", notice: "Review needs attention")
+            let selectedRequest = drafts.correctionRequest
+
+            // A retained invalid row can be recreated while the review is
+            // unavailable. Error fallback and request replay must both defer.
+            XCTAssertNil(CompareReviewCorrectionFocusPolicy.target(
+                noteID: note.id, correctionRequest: selectedRequest,
+                textError: drafts.noteActionErrors[note.id],
+                rangeError: drafts.rangeActionErrors[note.id], canEdit: false))
+            XCTAssertEqual(drafts.correctionRequest, selectedRequest)
+            XCTAssertEqual(drafts.noteDrafts[note.id], "")
+            XCTAssertEqual(drafts.rangeDrafts[note.id], "invalid end")
+
+            // Completing load replays the originally selected field, even
+            // when a different field and another lazy row also have errors.
+            XCTAssertEqual(CompareReviewCorrectionFocusPolicy.target(
+                noteID: note.id, correctionRequest: drafts.correctionRequest,
+                textError: drafts.noteActionErrors[note.id],
+                rangeError: drafts.rangeActionErrors[note.id], canEdit: true), field)
+            XCTAssertNil(CompareReviewCorrectionFocusPolicy.target(
+                noteID: otherID, correctionRequest: drafts.correctionRequest,
+                textError: "Other text error", rangeError: "Other range error", canEdit: true))
+        }
+    }
+
+    @MainActor
+    func testUnavailableTextErrorDefersFallbackFocusUntilLoadingCompletes() {
+        let note = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
+            secondaryFrame: 10, secondaryTime: 1, text: "Saved finding")
+        var drafts = CompareReviewDraftState()
+        drafts.updateNoteTextDraft("Pending edit", noteID: note.id)
+        XCTAssertEqual(CompareReviewTextCommitResult.attempt(
+            draft: drafts.noteDrafts[note.id]!, savedText: note.text, canEdit: false,
+            update: { _ in XCTFail("Loading must retain the edit"); return true }), .unavailable)
+        drafts.recordFieldValidationError("Review notes cannot be edited right now.",
+            note: note, field: .text, canEdit: false)
+        XCTAssertNil(drafts.correctionRequest)
+        XCTAssertNil(CompareReviewCorrectionFocusPolicy.target(
+            noteID: note.id, correctionRequest: drafts.correctionRequest,
+            textError: drafts.noteActionErrors[note.id], rangeError: nil, canEdit: false))
+        XCTAssertEqual(CompareReviewCorrectionFocusPolicy.target(
+            noteID: note.id, correctionRequest: drafts.correctionRequest,
+            textError: drafts.noteActionErrors[note.id], rangeError: nil, canEdit: true), .text)
+        XCTAssertEqual(CompareReviewTextCommitResult.attempt(
+            draft: drafts.noteDrafts[note.id]!, savedText: note.text, canEdit: true,
+            update: { $0 == "Pending edit" }), .accepted)
+        drafts.finishNoteTextCommit(noteID: note.id)
+        XCTAssertNil(CompareReviewCorrectionFocusPolicy.target(
+            noteID: note.id, correctionRequest: drafts.correctionRequest,
+            textError: drafts.noteActionErrors[note.id], rangeError: nil, canEdit: true))
+    }
+
+    @MainActor
     func testOrdinaryEmptyTextValidationOwnsFocusThroughCompetingRangeBlur() {
         let note = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
             secondaryFrame: 10, secondaryTime: 1, text: "Saved finding", primaryEndFrame: 20)
@@ -59,7 +159,7 @@ final class CompareReviewTextCommitTests: XCTestCase {
 
         for noteID in [note.id, other.id] {
             XCTAssertFalse(CompareReviewTextFocusLossPolicy.shouldCommit(
-                noteID: noteID, correctionRequest: drafts.correctionRequest))
+                noteID: noteID, correctionRequest: drafts.correctionRequest, canEdit: true))
         }
         XCTAssertFalse(CompareReviewRangeFocusLossPolicy.canHandlePassively(
             noteID: other.id, correctionRequest: drafts.correctionRequest))
@@ -117,16 +217,16 @@ final class CompareReviewTextCommitTests: XCTestCase {
         // A focus handoff or lazy-row disappearance must not run the other
         // empty field's commit/refocus path, including a pre-existing error.
         XCTAssertFalse(CompareReviewTextFocusLossPolicy.shouldCommit(
-            noteID: otherID, correctionRequest: selectedRequest))
+            noteID: otherID, correctionRequest: selectedRequest, canEdit: true))
         XCTAssertTrue(CompareReviewTextFocusLossPolicy.shouldCommit(
-            noteID: selectedID, correctionRequest: selectedRequest))
+            noteID: selectedID, correctionRequest: selectedRequest, canEdit: true))
         XCTAssertEqual(drafts.noteDrafts[otherID], "")
         XCTAssertEqual(drafts.noteActionErrors[otherID], "Earlier empty text error")
         XCTAssertEqual(drafts.correctionRequest, selectedRequest)
 
         drafts.updateNoteTextDraft("Corrected selected finding", noteID: selectedID)
         XCTAssertTrue(CompareReviewTextFocusLossPolicy.shouldCommit(
-            noteID: otherID, correctionRequest: drafts.correctionRequest))
+            noteID: otherID, correctionRequest: drafts.correctionRequest, canEdit: true))
         XCTAssertEqual(CompareReviewTextCommitResult.attempt(
             draft: drafts.noteDrafts[otherID]!, savedText: "Other finding", canEdit: true,
             update: { _ in XCTFail("Empty text must never be saved"); return true }), .empty)
@@ -146,7 +246,7 @@ final class CompareReviewTextCommitTests: XCTestCase {
         for noteID in [selectedID, otherID] {
             drafts.updateNoteTextDraft("Corrected text for \(noteID)", noteID: noteID)
             if CompareReviewTextFocusLossPolicy.shouldCommit(
-                noteID: noteID, correctionRequest: drafts.correctionRequest
+                noteID: noteID, correctionRequest: drafts.correctionRequest, canEdit: true
             ) {
                 _ = CompareReviewTextCommitResult.attempt(
                     draft: drafts.noteDrafts[noteID]!, savedText: "Saved text", canEdit: true
@@ -162,7 +262,7 @@ final class CompareReviewTextCommitTests: XCTestCase {
         drafts.updateRangeEndDraft("20", noteID: selectedID)
         for noteID in [selectedID, otherID] {
             XCTAssertTrue(CompareReviewTextFocusLossPolicy.shouldCommit(
-                noteID: noteID, correctionRequest: drafts.correctionRequest))
+                noteID: noteID, correctionRequest: drafts.correctionRequest, canEdit: true))
             XCTAssertEqual(CompareReviewTextCommitResult.attempt(
                 draft: drafts.noteDrafts[noteID]!, savedText: "Saved text", canEdit: true
             ) { updates.append($0); return true }, .accepted)

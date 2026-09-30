@@ -38,10 +38,29 @@ enum CompareReviewRangeFocusLossPolicy {
 /// the correction selected by action preflight. Explicit Return still commits.
 enum CompareReviewTextFocusLossPolicy {
     static func shouldCommit(
-        noteID: UUID, correctionRequest: CompareReviewCorrectionRequest?
+        noteID: UUID, correctionRequest: CompareReviewCorrectionRequest?, canEdit: Bool
     ) -> Bool {
+        guard canEdit else { return false }
         guard let correctionRequest else { return true }
         return correctionRequest.noteID == noteID && correctionRequest.field == .text
+    }
+}
+
+/// Error callbacks and lazy-row recreation can happen while loading or a save
+/// has disabled editing. Retain the correction and reveal it when editing
+/// resumes, without assigning keyboard focus to an unavailable field.
+enum CompareReviewCorrectionFocusPolicy {
+    static func target(
+        noteID: UUID, correctionRequest: CompareReviewCorrectionRequest?,
+        textError: String?, rangeError: String?, canEdit: Bool
+    ) -> CompareReviewCorrectionRequest.Field? {
+        guard canEdit else { return nil }
+        if let correctionRequest {
+            return correctionRequest.noteID == noteID ? correctionRequest.field : nil
+        }
+        if textError != nil { return .text }
+        if rangeError != nil { return .rangeEnd }
+        return nil
     }
 }
 
@@ -849,11 +868,6 @@ private struct CompareReviewNoteRow: View {
     // Every field respects the selected correction during passive callbacks,
     // including a range correction in another finding.
     let activeCorrectionRequest: CompareReviewCorrectionRequest?
-    private var canPassivelyHandleRange: Bool {
-        CompareReviewRangeFocusLossPolicy.canHandlePassively(
-            noteID: note.id, correctionRequest: activeCorrectionRequest
-        )
-    }
     let timecodeLabel: String
     let canEdit: Bool
     let onSeek: () -> Void
@@ -1024,24 +1038,24 @@ private struct CompareReviewNoteRow: View {
             endFrameDraft = end.map(String.init) ?? ""
         }
         .onChange(of: rangeActionError) { _, error in
-            if error != nil && canPassivelyHandleRange {
-                if isRangeExpanded { isEndFrameFocused = true }
-                else { isRangeExpanded = true }
-            }
+            if error != nil { restoreCorrectionFocus() }
         }
         .onChange(of: noteActionError) { _, error in
-            if error != nil && canPassivelyCommitText { isFocused = true }
+            if error != nil { restoreCorrectionFocus() }
         }
         .onChange(of: correctionRequest) { _, request in
-            if let request { focusCorrection(request.field) }
+            if request != nil { restoreCorrectionFocus() }
         }
-        .onAppear {
-            if let correctionRequest { focusCorrection(correctionRequest.field) }
-            else if noteActionError != nil && canPassivelyCommitText { isFocused = true }
-            else if rangeActionError != nil && canPassivelyHandleRange { isRangeExpanded = true }
+        .onAppear(perform: restoreCorrectionFocus)
+        .onChange(of: canEdit) { _, available in
+            if available { restoreCorrectionFocus() }
+            else {
+                isFocused = false
+                isEndFrameFocused = false
+            }
         }
         .onChange(of: isRangeExpanded) { _, expanded in
-            if expanded && rangeActionError != nil && canPassivelyHandleRange {
+            if expanded && correctionFocusTarget == .rangeEnd {
                 isEndFrameFocused = true
             }
         }
@@ -1084,7 +1098,7 @@ private struct CompareReviewNoteRow: View {
                 .focused($isEndFrameFocused)
                 .onSubmit(applyRange)
                 .onChange(of: isEndFrameFocused) { wasFocused, focused in
-                    guard wasFocused && !focused else { return }
+                    guard wasFocused && !focused && canEdit else { return }
                     // Tab and pointer navigation commit like Return or Apply.
                     // Keep an empty draft for the explicit Clear range action.
                     if CompareReviewRangeFocusLossPolicy.shouldCommit(
@@ -1109,7 +1123,19 @@ private struct CompareReviewNoteRow: View {
         "review note \(position) of \(count) at source A frame \(note.primaryFrame)"
     }
 
+    private var correctionFocusTarget: CompareReviewCorrectionRequest.Field? {
+        CompareReviewCorrectionFocusPolicy.target(
+            noteID: note.id, correctionRequest: activeCorrectionRequest,
+            textError: noteActionError, rangeError: rangeActionError, canEdit: canEdit
+        )
+    }
+
+    private func restoreCorrectionFocus() {
+        if let target = correctionFocusTarget { focusCorrection(target) }
+    }
+
     private func focusCorrection(_ field: CompareReviewCorrectionRequest.Field) {
+        guard canEdit else { return }
         switch field {
         case .text:
             isEndFrameFocused = false
@@ -1138,7 +1164,7 @@ private struct CompareReviewNoteRow: View {
 
     private var canPassivelyCommitText: Bool {
         CompareReviewTextFocusLossPolicy.shouldCommit(
-            noteID: note.id, correctionRequest: activeCorrectionRequest
+            noteID: note.id, correctionRequest: activeCorrectionRequest, canEdit: canEdit
         )
     }
 
