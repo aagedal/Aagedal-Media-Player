@@ -3652,7 +3652,7 @@ acceptance remain open. Evidence:
 
 ## Phase 165 — Review endpoints and sustained acceptance tooling
 
-Status: Implemented on 2026-09-30; integrated Release verification follows.
+Status: Implemented and integrated Release-verified on 2026-09-30 at `601bbb8`.
 
 - [x] Clamp exact clip-end Review positions to the last playable frame despite
   fractional-rate floating-point rounding, retain genuine partial-frame endings,
@@ -3683,6 +3683,27 @@ not claim that a 30-minute production observation has run. Retained native
 profiles still refer to their earlier locally repaired dependency candidates,
 not the shipping pin. See `docs/LIVE_AUDIO_METER_PERFORMANCE.md` and
 `docs/RELEASE.md` for the revised run contracts.
+
+## Phase 166 — Sustained-acceptance continuation verification
+
+Status: Canonical clean-checkout verification passed on 2026-09-30 at
+`601bbb859c436037388c3d3c080cb0132b7e357d`.
+
+- [x] Pass 721 optimized Release tests with eight documented optional skips
+  (729 total), no failures/expected failures/runtime warnings and fully
+  reconciled detailed outcomes, including all three new Review regressions.
+- [x] Pass both isolated mixed-backend transport checks, Release static
+  analysis, the complete script-validator gate and all 61 source preflight checks.
+- [x] Retain no-sleep evidence and revalidate source/package/cache identities.
+- [x] Retain the separate universal incremental dependency-build receipt;
+  all recorded inputs match before/after and unrelated archive objects survive.
+
+The verifier uses the unchanged shipping dependency. Extended native soak,
+immutable full MPVKit build/repin, accessibility/editor and base-M1/distribution
+acceptance remain open. Native inventory listed the player as stopped; selecting
+Finder hung and was cancelled without interaction acceptance. See
+`docs/evidence/release-candidate-sustained-20260930/README.md`.
+This evidence-report commit follows the verified implementation commit.
 
 ## Remaining work after this continuation
 
