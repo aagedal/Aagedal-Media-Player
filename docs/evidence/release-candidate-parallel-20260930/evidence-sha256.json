@@ -1,0 +1,17 @@
+{
+  "../aagedal-parallel-2-candidate-20260930-run.log": "fd1a84bee7047de692a9d34ddd9494b76b559ed6d098085e260fc03bd88a4f52",
+  "analyze.log": "7773de5d297ea286dac22dfb04cd99db8a1937b160d30e18a86d89ab64839afe",
+  "environment.txt": "1174f000820f540d12927432774c62bc5115fc081d4d77f8ed71fe67ce7a6a9b",
+  "mixed-backend-transport-details.json": "08b21c9036cad4e43fd585ba215e4072d452aef6f81bee19e8366b2695f1b14a",
+  "mixed-backend-transport-summary.json": "2c7d718be9e260c6224dcc7100c959a60605b66eb5f8f79c4906b0602af09c75",
+  "mixed-backend-transport-validation.log": "6675fbb1bef734e96dfc603b27c184d813e6da80577136e73dae60ddcb2ff6ec",
+  "mixed-backend-transport.log": "63fdaea8a4e8433f158778f30f553d33b4bad2566e190f78059a395408bf5789",
+  "power-events.json": "54990561605e11b4a95e1274fa0bd1df707384a3155d9c24af44fae0b780498b",
+  "power-evidence-validation.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "preflight.log": "f1132982b7f49495b9faa3fd20fcb09c18fc390a12c2873d8c446c59b17a1cfb",
+  "script-validator-tests.log": "c37bd881ebc40f70455aa867849f9d2aca33aab81f6f30efde5cfdb28a789c48",
+  "test-details.json": "874ec924374ef386fe81c6c1f3b4538e0b5308a4cf1584ee8d0918ebd09e879c",
+  "test-evidence-validation.log": "9cde6d0fa205248fe85c36e9bc238edd2cb769e5d9232dadedbd937c335356a4",
+  "test-summary.json": "68f84accabaaeff4e8310487278b68f992a44fb7901e759199273c5b0f0ad9d6",
+  "tests.log": "c44084f3f9901e0b4ef40a8b601d869d2de1e0cdc2db06ded38c6509499b7fc6"
+}

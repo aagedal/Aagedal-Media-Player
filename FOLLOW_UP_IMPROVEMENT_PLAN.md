@@ -3629,6 +3629,27 @@ or clean full MPVKit build. The committed app still links its original pin.
 Committed tooling: `16dd543`; evidence:
 `docs/evidence/live-meter-native-output-20260930/incremental-rebuild/README.md`.
 
+## Phase 164 — Integrated parallel continuation verification
+
+Status: Canonical clean-checkout verification passed on 2026-09-30 at
+`88e8bdbfaacb1136770a9d6fcbb88296c8d0608b`.
+
+- [x] Pass 718 optimized Release tests with eight documented optional skips
+  (726 total), no failures/expected failures/runtime warnings, and fully
+  reconciled detailed outcomes.
+- [x] Pass both isolated mixed-backend transport checks in a fresh serial runner.
+- [x] Pass Release static analysis, all 61 source preflight checks and the
+  expanded script-validator gate.
+- [x] Retain no-sleep evidence and revalidate source/package/cache identities.
+- [x] Raise candidate verification and release consumption to the expanded
+  726-test aggregate floor, alongside both transport directions.
+
+This canonical run consumes the unchanged shipping MPVKit pin. The locally
+repaired dependency's separate production-profile evidence does not replace
+it. Repin, MPV 1:1, native accessibility/editor, hardware and distribution
+acceptance remain open. Evidence:
+`docs/evidence/release-candidate-parallel-20260930/README.md`.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -3980,3 +4001,4 @@ Committed tooling: `16dd543`; evidence:
 153. Phase 161 typed MPV screenshot and raster boundary.
 154. Phase 162 authentic programme live sample/true-peak references.
 155. Phase 163 linked local CoreAudio repair candidate.
+156. Phase 164 integrated parallel continuation verification.

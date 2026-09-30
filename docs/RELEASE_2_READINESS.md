@@ -114,6 +114,15 @@ workflow/media/performance gates remain open. See [current candidate evidence](e
 
 ## Must close before a defensible 2.0 candidate
 
+The integrated parallel continuation passes canonical verification at clean
+commit `88e8bdbfaacb1136770a9d6fcbb88296c8d0608b`: 718 optimized Release passes,
+eight documented optional skips (726 total), both isolated transport directions,
+Release static analysis and all 61 preflight checks. Expanded script validators,
+no-sleep evidence and final source/package/cache identity checks pass. The
+candidate/release aggregate floor is now 726. This run uses the shipping pin;
+the repaired local dependency's production evidence remains separate. See
+[integrated continuation evidence](evidence/release-candidate-parallel-20260930/README.md).
+
 The CoreAudio repair now advances from compile-only diagnosis to a locally
 linked dependency candidate. Both architecture archives retain all unrelated
 objects byte-for-byte. A copied current Release app passes the unchanged native
