@@ -13,10 +13,12 @@ can select a compatible Xcode build cache. The runner builds Release tests and
 records the commit/working-tree state, hardware, OS, Xcode, power state and input
 SHA-256 hashes, alongside build/test logs, `.xcresult`, attachments and validated
 `summary.json`. Keep the isolated test-host player and native automation idle.
-The runner also saves `power-events.json` for its measurement interval and fails
-if macOS reports sleep during that interval. It preserves the interrupted
-measurements for diagnosis, but they must not be used as clean timing evidence.
-Keep the laptop open during measurement; the runner does not override sleep.
+The runner owns a temporary awake assertion through build and measurement,
+releases it on every exit, and saves `power-start.txt`, `power-end.txt` and
+`power-events.json` for its measurement interval. It still fails if macOS reports
+sleep during that interval. Failed XCTest and sleep checks preserve partial
+attachments and power diagnostics without producing a passing summary. Keep the
+laptop open during measurement; persistent power preferences are unchanged.
 
 For each input, the first two known mono audio ordinals form Stereo (FL, FR),
 and the first six form 5.1 (FL, FR, FC, LFE, SL, SR). Other tracks are excluded.
@@ -80,6 +82,9 @@ validation also has its own suite:
 and event-type checks run with
 `python3 scripts/test-programme-profile-power.py`. The detector was also checked
 against the actual uninterrupted one-hour and interrupted eight-hour runs.
+Runner regressions exercise successful measurement, build failure, XCTest
+failure and sleep rejection with stubbed native tools, including partial
+diagnostic retention and removal of the temporary profile test manifest.
 
 `ProgrammeLoudnessTests.testLateSelectedRangeRetainsEveryAssignedFivePointOneChannel`
 is the compact automated channel-retention check. Its six-second, eight-mono-track

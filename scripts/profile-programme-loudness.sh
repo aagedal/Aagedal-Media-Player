@@ -25,6 +25,15 @@ done
 mkdir -p "$artifact_dir"
 derived_data="${PROGRAMME_LOUDNESS_PROFILE_DERIVED_DATA:-${TMPDIR:-/tmp/}aagedal-programme-loudness-profile-derived}"
 cd "$repository_dir"
+# Keep long decodes awake without changing persistent system preferences.
+profile_run=''
+/usr/bin/caffeinate -disu -w "$$" &
+power_assertion_pid=$!
+cleanup() {
+  if [[ -n "$profile_run" ]]; then rm -f -- "$profile_run"; fi
+  kill "$power_assertion_pid" 2>/dev/null || true
+}
+trap cleanup EXIT
 {
   git rev-parse HEAD
   git status --short
@@ -51,7 +60,6 @@ fi
 # Copy beside the original so relative __TESTROOT__ paths remain valid; do
 # not leave profile environment variables in a shared build's test manifest.
 profile_run="$derived_data/Build/Products/ProgrammeLoudnessProfile.$(uuidgen).xctestrun"
-trap 'rm -f -- "$profile_run"' EXIT
 cp "$xctestrun_files[1]" "$profile_run"
 /usr/bin/python3 - "$profile_run" "${inputs[@]}" <<'PY'
 import json, plistlib, sys
@@ -65,18 +73,29 @@ with open(path, 'wb') as destination:
     plistlib.dump(run, destination)
 PY
 profile_start="$(date '+%Y-%m-%d %H:%M:%S')"
+pmset -g batt > "$artifact_dir/power-start.txt"
 print -u2 'Measuring whole-file and early/late 30-second stereo and 5.1 split-mono loudness…'
+profile_status=0
 if ! xcodebuild test-without-building -xctestrun "$profile_run" \
   -destination 'platform=macOS' -parallel-testing-enabled NO -test-timeouts-enabled NO \
   -resultBundlePath "$artifact_dir/ProgrammeLoudnessProfile.xcresult" \
   -only-testing:'Aagedal Media Player Tests/ProgrammeLoudnessPerformanceTests/testProductionProgrammeLoudnessProfileWhenRequested' \
   > "$artifact_dir/profile.log" 2>&1; then
   tail -n 100 "$artifact_dir/profile.log" >&2
-  exit 1
+  profile_status=1
 fi
 profile_end="$(date '+%Y-%m-%d %H:%M:%S')"
+# Retain completed workloads and power diagnostics even if XCTest fails.
+pmset -g batt > "$artifact_dir/power-end.txt"
+power_status=0
+if ! /usr/bin/python3 "$repository_dir/scripts/check-programme-profile-power.py" "$profile_start" "$profile_end" "$artifact_dir"; then
+  power_status=1
+fi
 xcrun xcresulttool export attachments --path "$artifact_dir/ProgrammeLoudnessProfile.xcresult" \
   --output-path "$artifact_dir/attachments" >/dev/null
+if (( profile_status != 0 || power_status != 0 )); then
+  print -u2 "Production programme profile failed; retained diagnostics: $artifact_dir"
+  exit 1
+fi
 /usr/bin/python3 "$repository_dir/scripts/validate-programme-loudness-profile.py" "$artifact_dir" "${#inputs}"
-/usr/bin/python3 "$repository_dir/scripts/check-programme-profile-power.py" "$profile_start" "$profile_end" "$artifact_dir"
 print -r -- "Artifacts: $artifact_dir"
