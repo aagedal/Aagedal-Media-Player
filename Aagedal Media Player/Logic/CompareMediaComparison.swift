@@ -353,7 +353,7 @@ nonisolated enum CompareMediaComparison {
 
     private static func frameRateLabel(_ value: Double) -> String {
         if abs(value - value.rounded()) < 0.0005 {
-            return "\(Int(value.rounded())) fps"
+            return "\(String(format: "%.0f", value)) fps"
         }
         return "\(trimmedDecimal(value, fractionDigits: 3)) fps"
     }
@@ -371,13 +371,18 @@ nonisolated enum CompareMediaComparison {
     }
 
     private static func durationLabel(_ value: TimeInterval) -> String {
-        let totalMilliseconds = Int((value * 1_000).rounded())
+        // Metadata can contain finite values whose millisecond conversion
+        // overflows Double or Int. Preserve the reported value without trapping
+        // while the mismatch UI is being built.
+        guard let totalMilliseconds = Int(exactly: (value * 1_000).rounded()) else {
+            return String(format: "%.6g seconds", value)
+        }
         let hours = totalMilliseconds / 3_600_000
         let minutes = (totalMilliseconds / 60_000) % 60
         let seconds = (totalMilliseconds / 1_000) % 60
         let milliseconds = totalMilliseconds % 1_000
         if hours > 0 {
-            return String(format: "%d:%02d:%02d.%03d", hours, minutes, seconds, milliseconds)
+            return "\(hours):" + String(format: "%02d:%02d.%03d", minutes, seconds, milliseconds)
         }
         return String(format: "%d:%02d.%03d", minutes, seconds, milliseconds)
     }

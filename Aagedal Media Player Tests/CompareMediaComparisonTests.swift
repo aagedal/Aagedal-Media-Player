@@ -173,6 +173,32 @@ final class CompareMediaComparisonTests: XCTestCase {
         XCTAssertEqual(mismatch.secondaryValue, "1:01:02.500")
     }
 
+    func testExtremeFiniteMetadataValuesRemainDisplayable() throws {
+        let mismatches = CompareMediaComparison.mismatches(
+            primary: descriptor(duration: .greatestFiniteMagnitude, frameRate: .greatestFiniteMagnitude),
+            secondary: descriptor(duration: Double(Int.max) / 1_000, frameRate: Double(Int.max))
+        )
+
+        let duration = try XCTUnwrap(mismatches.first { $0.kind == .duration })
+        XCTAssertEqual(duration.primaryValue, "1.79769e+308 seconds")
+        XCTAssertEqual(duration.secondaryValue, "9.22337e+15 seconds")
+        let frameRate = try XCTUnwrap(mismatches.first { $0.kind == .frameRate })
+        XCTAssertTrue(frameRate.primaryValue.hasSuffix(" fps"))
+        XCTAssertEqual(frameRate.secondaryValue, "9223372036854775808 fps")
+    }
+
+    func testDurationHoursDoNotTruncateToThirtyTwoBits() throws {
+        let hours = Int64(Int32.max) + 1
+        let mismatches = CompareMediaComparison.mismatches(
+            primary: descriptor(duration: Double(hours) * 3_600 + 61.25),
+            secondary: descriptor(duration: Double(hours) * 3_600 + 62.5)
+        )
+
+        let duration = try XCTUnwrap(mismatches.first)
+        XCTAssertEqual(duration.primaryValue, "2147483648:01:01.250")
+        XCTAssertEqual(duration.secondaryValue, "2147483648:01:02.500")
+    }
+
     func testDescriptorSummarizesEveryAudioStreamWithChannelFallbacks() {
         let item = mediaItem(audioStreams: [
             audioStream(channels: 2, channelLayout: nil),
