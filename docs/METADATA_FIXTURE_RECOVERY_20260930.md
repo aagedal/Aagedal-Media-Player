@@ -119,3 +119,10 @@ The recovered ARW closes three former missing-input skips. The historical XMP
 sidecar and reviewed upstream JXL fixture/assertion reconciliation remain
 required for a zero-skip, zero-failure fixture acceptance gate. This work does
 not replace camera-mode validation or complete production memory profiling.
+
+A subsequent [test-only JXL correction proposal](evidence/jxl-contract-proposal-20260930/README.md)
+now passes three optimized Release checks against unchanged 3.0.1 library
+sources and the original fixture. It distinguishes the real container from its
+extracted authentic codestream and tests the documented preservation/wrapping
+behavior. The patch is retained for upstream review; the unchanged fixture gate
+and missing historical XMP remain open.

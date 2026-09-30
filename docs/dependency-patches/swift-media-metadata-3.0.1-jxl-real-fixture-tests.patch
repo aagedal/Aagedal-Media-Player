@@ -1,0 +1,77 @@
+--- a/Tests/SwiftMediaMetadataTests/Integration/RealFileTests.swift
++++ b/Tests/SwiftMediaMetadataTests/Integration/RealFileTests.swift
+@@ -165,21 +165,61 @@
+ 
+     // MARK: - JPEG XL Reading and Writing
+ 
++    // Despite its filename, this real fixture contains a complete JXL container.
++    // Extract its authentic jxlc payload to exercise the bare-codestream contract.
++    private func realJXLCodestream() throws -> (container: Data, codestream: Data) {
++        let url = testImageURL("ShortPlantHDR_seq_000001.jxl")
++        try skipIfMissing(url)
++        let container = try Data(contentsOf: url)
++        let parsed = try JXLParser.parse(container)
++        XCTAssertTrue(parsed.isContainer)
++        let streams = parsed.boxes.filter { $0.type == "jxlc" }
++        XCTAssertEqual(streams.count, 1)
++        XCTAssertFalse(parsed.boxes.contains { $0.type == "jxlp" })
++        let codestream = try XCTUnwrap(streams.first?.data)
++        XCTAssertTrue(codestream.starts(with: [0xff, 0x0a]))
++        return (container, codestream)
++    }
++
++    func testRealJXLContainerWritePreservesCodestream() throws {
++        let fixture = try realJXLCodestream()
++        let metadata = try ImageMetadata.read(from: fixture.container)
++        XCTAssertEqual(metadata.format, .jpegXL)
++        let written = try metadata.writeToData()
++        let parsed = try JXLParser.parse(written)
++        XCTAssertTrue(parsed.isContainer)
++        XCTAssertEqual(parsed.boxes.filter { $0.type == "jxlc" }.count, 1)
++        XCTAssertEqual(parsed.findBox("jxlc")?.data, fixture.codestream)
++    }
++
+     func testReadJXLBareCodestream() throws {
+-        let url = testImageURL("ShortPlantHDR_seq_000001.jxl")
+-        try skipIfMissing(url)
+-
+-        let metadata = try ImageMetadata.read(from: url)
++        let fixture = try realJXLCodestream()
++        let parsed = try JXLParser.parse(fixture.codestream)
++        XCTAssertFalse(parsed.isContainer)
++        let metadata = try ImageMetadata.read(from: fixture.codestream)
+         XCTAssertEqual(metadata.format, .jpegXL)
+-
+-        // Bare codestream — writing should fail gracefully
+-        XCTAssertThrowsError(try metadata.writeToData()) { error in
+-            guard let metaError = error as? MetadataError,
+-                  case .writeNotSupported = metaError else {
+-                XCTFail("Expected writeNotSupported for bare codestream")
+-                return
+-            }
+-        }
++        // The writer promises byte-identical output when no metadata is added.
++        XCTAssertEqual(try metadata.writeToData(), fixture.codestream)
++    }
++
++    func testRealJXLBareCodestreamMetadataWrite() throws {
++        let fixture = try realJXLCodestream()
++        var metadata = try ImageMetadata.read(from: fixture.codestream)
++        metadata.setOrientation(6)
++        let written = try metadata.writeToData()
++        let parsed = try JXLParser.parse(written)
++        XCTAssertTrue(parsed.isContainer)
++        XCTAssertEqual(parsed.boxes.filter { $0.type == "ftyp" }.count, 1)
++        XCTAssertEqual(parsed.boxes.filter { $0.type == "jxlc" }.count, 1)
++        XCTAssertFalse(parsed.boxes.contains { $0.type == "jxlp" })
++        XCTAssertEqual(parsed.findBox("jxlc")?.data, fixture.codestream)
++        let reread = try ImageMetadata.read(from: written)
++        XCTAssertEqual(reread.exif?.orientation, 6)
++        // A repeated write must retain exactly one codestream container.
++        let repeated = try JXLParser.parse(reread.writeToData())
++        XCTAssertEqual(repeated.boxes.filter { $0.type == "ftyp" }.count, 1)
++        XCTAssertEqual(repeated.boxes.filter { $0.type == "jxlc" }.count, 1)
++        XCTAssertEqual(repeated.findBox("jxlc")?.data, fixture.codestream)
+     }
+ 
+     func testReadJXLContainer() throws {

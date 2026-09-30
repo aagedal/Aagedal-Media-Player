@@ -1,0 +1,20 @@
+Building for production...
+[1 / 19]
+[6 / 8] SwiftMediaMetadataTests-product
+[8 / 8] SwiftMediaMetadataTests-product
+Build complete! (112,35 sec)
+Test Suite 'Selected tests' started at 2026-09-30 19:05:49.226.
+Test Suite 'SwiftMediaMetadataTests.xctest' started at 2026-09-30 19:05:49.231.
+Test Suite 'RealFileTests' started at 2026-09-30 19:05:49.231.
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testReadJXLBareCodestream]' started.
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testReadJXLBareCodestream]' passed (0.001 seconds).
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testRealJXLBareCodestreamMetadataWrite]' started.
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testRealJXLBareCodestreamMetadataWrite]' passed (0.000 seconds).
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testRealJXLContainerWritePreservesCodestream]' started.
+Test Case '-[SwiftMediaMetadataTests.RealFileTests testRealJXLContainerWritePreservesCodestream]' passed (0.001 seconds).
+Test Suite 'RealFileTests' passed at 2026-09-30 19:05:49.234.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.002 (0.003) seconds
+Test Suite 'SwiftMediaMetadataTests.xctest' passed at 2026-09-30 19:05:49.234.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.002 (0.003) seconds
+Test Suite 'Selected tests' passed at 2026-09-30 19:05:49.234.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.002 (0.007) seconds
