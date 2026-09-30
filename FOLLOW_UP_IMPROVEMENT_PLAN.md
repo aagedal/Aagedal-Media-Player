@@ -3317,6 +3317,23 @@ remains open.
 - [ ] Retain producer-authentic multi-track runs, trusted reference comparisons,
   long-play and release-floor performance evidence.
 
+## Phase 148 — Final integrated clean-checkout verification
+
+Status: Canonical optimized candidate gate passed on 2026-09-30 at clean
+commit `2d314c8b47c090555a99f19bc6dd890c40053d75`.
+
+- [x] Include failed-profile observation-session cleanup and retain the generated
+  selected-track pass plus unresolved mono-output diagnosis.
+- [x] Pass 702 optimized Release tests with eight allowlisted optional skips,
+  zero failures/runtime warnings and both isolated mixed-backend transport tests.
+- [x] Pass Release static analysis, all 61 source-tree preflight checks and final
+  source/package/cache identity validation.
+
+See [retained candidate evidence](docs/evidence/release-candidate-20260930/README.md).
+Native workflow, mono-output diagnosis, representative-media/reference accuracy,
+MPV source pixels, release-floor and distribution acceptance remain open.
+The documentation/evidence commit follows the verified implementation commit.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -3649,3 +3666,4 @@ remains open.
 137. Phase 145 repeatable Review correction focus.
 138. Phase 146 AVFoundation coded-buffer loupe provenance.
 139. Phase 147 deliberate live-meter selected-track profiling.
+140. Phase 148 final integrated clean-checkout verification.

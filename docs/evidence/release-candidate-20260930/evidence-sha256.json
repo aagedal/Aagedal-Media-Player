@@ -1,0 +1,14 @@
+{
+  "environment.txt": "cc9e3961fd4a2489e7c46779dcbb673062deec6c3a86f58d66cb95f9a5265cff",
+  "test-summary.json": "832330892dbdb2dbb8a790cec05c55b2641c58b49d3758fa122ef80406a87999",
+  "test-details.json": "60d5d99f836db635bafc1dc8062d643a161b9cdc9f45e1a421e5776e9b935bc3",
+  "test-evidence-validation.log": "d743009c8e1a9def69b5f9e3479272fae4c7e2c953b8d60dac8714064ba06ff1",
+  "mixed-backend-transport-summary.json": "fd97f33415d33a2b8ba27c548aa0de8c8d1ed15c5d345fb3a3f66c5ce8c25aa8",
+  "mixed-backend-transport-details.json": "75c5e3ce0afb64b1339bea711afd8fdb82ee2f778d602fd54f3a1ed954ef7944",
+  "mixed-backend-transport-validation.log": "6675fbb1bef734e96dfc603b27c184d813e6da80577136e73dae60ddcb2ff6ec",
+  "preflight.log": "f1132982b7f49495b9faa3fd20fcb09c18fc390a12c2873d8c446c59b17a1cfb",
+  "script-validator-tests.log": "fb374ef44c1430e6b631fb7578f529f81945d9a3ebf3a0b9df10115354943728",
+  "/private/tmp/aagedal-candidate-2d314c8-20260930/tests.log": "7e36eae425e4a5a0b83b688e560a97ceb1363c9a4fc3a2fc4adaea13ddb07cd4",
+  "/private/tmp/aagedal-candidate-2d314c8-20260930/mixed-backend-transport.log": "4de84cee5b130a01033794b2ff30c0e9e4231bfad333a354024ae5196c58086c",
+  "/private/tmp/aagedal-candidate-2d314c8-20260930/analyze.log": "a0330d065fde525b393a994415037c2e2febd4781538657193696571a0db0fc1"
+}

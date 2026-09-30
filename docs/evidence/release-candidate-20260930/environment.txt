@@ -1,0 +1,9 @@
+sourceCommit=2d314c8b47c090555a99f19bc6dd890c40053d75
+packageResolvedSHA256=6aea6d64326f3040345c3523a0a39c95d53335777e233b3aa311e8ba90ad475d
+packageCache=/private/tmp/aagedal-2-review-drafts/SourcePackages
+startedAt=2026-09-30T09:43:29Z
+host=macOS 27.0.1 (26A434)
+Xcode 27.0
+Build version 27A266a
+completedAt=2026-09-30T09:49:30Z
+status=passed

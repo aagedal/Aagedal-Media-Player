@@ -1,6 +1,6 @@
 # 2.0 release readiness
 
-Assessment updated: 2026-09-23. This is a prioritization of the existing
+Assessment updated: 2026-09-30. This is a prioritization of the existing
 [product roadmap](../PRODUCT_ROADMAP.md), not a change to its committed scope.
 It is based on the repository's plans and retained verification reports,
 including the September 12 meter foundation and programme-loudness follow-up.
@@ -102,6 +102,15 @@ audio-only mono input fails with CoreAudio errors and remains under diagnosis.
 See [selected-track engineering evidence](evidence/live-meter-selected-tracks-20260929/README.md). These changes advance
 correctness and repeatable acceptance, without closing producer-authentic media,
 MPV 1:1, native accessibility or release-floor gates.
+
+Phase 148 passes the canonical clean-checkout verifier at
+`2d314c8b47c090555a99f19bc6dd890c40053d75`: 702 optimized Release tests pass
+with eight documented optional skips, both isolated mixed-backend transport
+tests pass, Release static analysis succeeds and all 61 preflight checks pass.
+Source, package and cache identities are revalidated. The final harness also
+closes its observation session on failed checks. This verifies the integrated
+engineering batch, while the retained mono native-output failure and external
+workflow/media/performance gates remain open. See [current candidate evidence](evidence/release-candidate-20260930/README.md).
 
 ## Must close before a defensible 2.0 candidate
 
