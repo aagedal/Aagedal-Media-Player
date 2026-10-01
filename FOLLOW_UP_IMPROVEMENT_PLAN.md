@@ -3239,14 +3239,17 @@ fixture/assertion reconciliation remains open.
 ## Phase 143 — Native Avid First EDL import diagnosis
 
 Status: Focused native import observed on 2026-09-29; Avid marker acceptance
-remains open.
+remains unverified. Verification is optional for 2.0 under the user’s
+2026-10-01 decision and may be skipped if it causes problems; only the free
+Media Composer First edition is available.
 
 - [x] Import the unchanged seven-finding 29.97 DF Resolve EDL into a disposable
   Media Composer First 26.8 project and record its source hash and outcome.
 - [x] Qualify the result: Avid created an offline sequence, but no marker count,
   note content or source-media identity was verified.
-- [ ] Import the app's Avid marker-text export with current-source fixtures and
-  verify marker positions, content and any supported re-export.
+- [ ] Optional: import the app's Avid marker-text export with current-source
+  fixtures and verify marker positions, content and any supported re-export.
+  This does not block 2.0; First-specific limitations are not full-edition results.
 
 See the [Avid import record](docs/evidence/avid-first-edl-import-20260929/README.md).
 
@@ -4464,6 +4467,12 @@ remaining editor and distribution gates remain open.
 
 ## Remaining work after this continuation
 
+The user’s 2026-10-01 scope decision makes Avid native compatibility optional
+for 2.0. Skip problematic Avid checks and prioritize Resolve/Final Cut Pro.
+Keep historical Avid evidence as unverified observations; the free Media
+Composer First edition may have limitations that do not apply to the full edition.
+
+
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
   producer-authentic long media and on the release-floor base M1. Synthetic
   containers, selected real Sony/raw media, and the exact 3.0.1 library suite
@@ -4514,8 +4523,10 @@ remaining editor and distribution gates remain open.
   the latter two retain current-source provenance. Same-frame findings remain
   explicitly rejected. Final Cut’s first native round trip loses overlapping
   findings; Phase 110 replaces the guard with native-verified one-frame/grouped
-  markers preserving all findings, with remaining raster, duration and whitespace issues. Complete Final Cut Pro and Avid acceptance separately,
+  markers preserving all findings, with remaining raster, duration and whitespace issues. Complete Final Cut Pro acceptance,
   including fractional rates, DF boundaries, inclusive ranges and source identity.
+  Avid checks are optional for 2.0 and may be skipped if problematic; only free
+  Media Composer First is available, and its results do not qualify the full edition.
 - Oldest-supported Apple Silicon UHD/HDR playback, reflected loupe/scopes,
   and long-file thumbnail performance profiling.
 - Release signing/notarization/update-feed validation, representative-media

@@ -1,6 +1,6 @@
 # Aagedal Media Player Product Roadmap
 
-Last updated: 2026-09-13
+Last updated: 2026-10-01
 
 See [2.0 release readiness](docs/RELEASE_2_READINESS.md) for the prioritized
 remaining release gates and the threshold for calling a candidate close to 2.0.
@@ -396,8 +396,13 @@ Editor acceptance and hands-on keyboard review remain.
 - [x] Export CSV and PDF reports locally.
 - [ ] Export common NLE marker formats after validating round trips with target
   editors. Resolve EDL, Final Cut Pro XML, and Avid marker-text exporters are
-  implemented and covered by automated tests; actual editor round trips remain
-  pending in `docs/COMPARE_MODE_INTERCHANGE.md`.
+  implemented and covered by automated tests. Resolve and Final Cut Pro
+  round-trip acceptance remain required; Avid compatibility is optional for
+  2.0 and may be skipped if verification runs into problems. The available Avid
+  installation is the free Media Composer First edition; its results or
+  limitations do not establish full Media Composer compatibility. This scope
+  decision was confirmed by the user on 2026-10-01. See
+  `docs/COMPARE_MODE_INTERCHANGE.md` for retained evidence.
 - [x] Keep reports useful without requiring an account or cloud service.
 
 Release gates:
@@ -410,7 +415,8 @@ Release gates:
   identity without rounding errors.
   Historical rounded broadcast timebases now have an explicit preview/save-copy
   migration that retains recorded frame numbers and source identities. Exact
-  rates then enable editor exports; actual editor round trips remain required.
+  rates then enable editor exports; Resolve and Final Cut Pro round trips
+  remain required. Avid verification is optional under the scope decision above.
   Focused native migration preview, save/adoption, explicit copy reopening and
   default EDL filename checks now pass with original source/sidecar hash checks.
   See `docs/COMPARE_REVIEW_SIDECAR.md`.

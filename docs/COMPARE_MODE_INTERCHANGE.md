@@ -138,6 +138,17 @@ before exporting the target marker format.
 
 ## Import and round trip
 
+### 2.0 editor scope decision — 2026-10-01
+
+The user makes Avid compatibility optional for 2.0 and authorizes skipping it
+when verification causes problems. Prioritize Resolve and Final Cut Pro release
+acceptance. Keep the implemented Avid marker-text exporter and its automated
+checks; unverified native compatibility is not a passing acceptance result.
+Only the free Media Composer First edition is available. Record any observed
+edition-specific limitation without assuming it affects full Media Composer.
+No full Media Composer license, upgrade or workaround is required for 2.0.
+
+
 ### Installed editors available for acceptance — 2026-09-19
 
 The user confirms that Final Cut Pro, Adobe Premiere Pro, and Avid Media
@@ -149,11 +160,10 @@ running each check; installation alone does not establish format compatibility.
 - Premiere Pro: investigate a supported marker interchange path and retain
   native results before claiming support. The app currently has no dedicated
   Premiere exporter; Resolve marker EDL extensions must not be assumed compatible.
-- Media Composer First: the user observed that EDL import was unlocked. Exercise
-  that available path in a disposable project and check whether it imports review
-  markers or only edit events. Separately check availability of the app's existing
-  Avid marker-text import workflow. Record First-specific limitations and do not
-  generalize its results to full Media Composer.
+- Media Composer First: optional acceptance only. Earlier EDL import was
+  observed unlocked, but review-marker behavior was not established. If future
+  checks proceed, use a disposable project and record First-specific results;
+  skip the check if it causes problems. Do not generalize to full Media Composer.
 
 On 2026-09-29, Media Composer First 26.8.0.58987 on macOS 27.0.1 accepted the
 retained 29.97 DF `unique-markers.edl` through **File → Input → Import EDL…**
@@ -163,7 +173,7 @@ starting at `00;00;58;00`. The EDL's source paths were no longer present, and
 the imported media was offline. This confirms only that the EDL importer can
 create a sequence from the file. Marker count, note content, source identity,
 range handling, re-export and the separate Avid marker-text path were not
-verified. Keep both Avid acceptance rows open; see the
+verified. Both Avid rows remain unverified and optional for 2.0; see the
 [focused import record](evidence/avid-first-edl-import-20260929/README.md).
 
 These installed applications provide additional native acceptance routes. An
@@ -317,8 +327,8 @@ marked passed. The native export result is independent of that outstanding gate.
 | Final Cut Pro | Pending | | | | | Not run |
 | Resolve Studio 21.1.0.14 | Generated 23.976, no embedded TC; zero-start timeline and current-source seven-finding copy | 7/7 imported | All actual anchors and durations exact; current source-A placement verified | Exact text, colors and current URLs retained; unchanged fixture hashes | 7/7 exact records; unchanged fixture hashes | Focused round-trip pass; [retained evidence](evidence/resolve-markers-23976-20260919/README.md) |
 | Adobe Premiere Pro | Pending | | | | | Installed per user; interchange path not yet validated |
-| Media Composer First | Pending | | | | | Installed per user; EDL import observed unlocked; marker behavior not yet tested |
-| Media Composer | Pending | | | | | Not run |
+| Media Composer First (free edition) | Optional / unverified | | | | | May be skipped for 2.0; EDL sequence creation observed, marker-text compatibility unverified |
+| Media Composer | Optional / unverified | | | | | Full edition unavailable; no 2.0 release gate |
 
 ### Resolve preparation — 2026-09-09 continuation
 
