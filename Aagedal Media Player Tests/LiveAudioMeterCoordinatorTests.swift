@@ -727,6 +727,46 @@ final class LiveAudioMeterCoordinatorTests: XCTestCase {
         secondCoordinator.close()
     }
 
+    func testClosedCoordinatorRejectsQueuedTransportEventsAndSpeedSuspension() async throws {
+        let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
+        let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
+        coordinator.start(try request(stream: 0, startFrame: 0))
+        await decoder.waitUntilAttached(stream: 0)
+        decoder.emit(snapshot(endFrame: 2_400), stream: 0)
+        await eventually { coordinator.snapshot?.endFrame == 2_400 }
+        coordinator.close()
+        await decoder.waitUntilCancelled(stream: 0)
+        let closedGeneration = coordinator.generation
+        let closedStatus = coordinator.status
+
+        let observation = playback(time: 3, playing: true)
+        var queuedEvents: [LiveAudioMeterPlaybackEvent] = [
+            .clock(observation), .transport(observation),
+            .scrubbing(observation), .ended(observation),
+        ]
+        let causes: [LiveAudioMeterPlaybackDiscontinuity] = [
+            .seek, .frameStep, .scrub, .loopWrap, .geometryReload,
+            .sourceReplacement, .audioTrackReplacement,
+        ]
+        for cause in causes {
+            queuedEvents.append(.discontinuity(cause, snapshot: observation))
+        }
+        for event in queuedEvents {
+            coordinator.handlePlaybackEvent(event)
+            XCTAssertEqual(coordinator.generation, closedGeneration)
+            XCTAssertEqual(coordinator.status, closedStatus)
+        }
+        coordinator.suspendForUnsupportedSpeed()
+        coordinator.updatePlaybackClock(observation)
+        XCTAssertEqual(coordinator.generation, closedGeneration)
+        XCTAssertEqual(coordinator.status, closedStatus)
+        XCTAssertNil(coordinator.snapshot)
+        XCTAssertNil(coordinator.reducedSnapshot)
+        XCTAssertNil(coordinator.provenance)
+        XCTAssertFalse(coordinator.retry())
+        XCTAssertEqual(decoder.activeCount, 0)
+    }
+
     func testDeinitCancelsOwnedWorkerAndLeavesNoOrphan() async throws {
         let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
         weak var weakCoordinator: LiveAudioMeterCoordinator?

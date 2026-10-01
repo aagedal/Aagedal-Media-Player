@@ -135,6 +135,10 @@ struct CompareReviewDraftState {
 
     mutating func updateRangeEndDraft(_ text: String, noteID: UUID) {
         rangeDrafts[noteID] = text
+        // Clear the previous input error in this same owner mutation. A row's
+        // deferred onChange can run after validation of this new draft and
+        // must not erase that newer error or its selected correction.
+        rangeActionErrors[noteID] = nil
         if correctionRequest?.noteID == noteID, correctionRequest?.field == .rangeEnd {
             clearActionNotice()
         }
@@ -144,6 +148,17 @@ struct CompareReviewDraftState {
         noteDrafts[noteID] = nil
         noteActionErrors[noteID] = nil
         if correctionRequest?.noteID == noteID, correctionRequest?.field == .text {
+            clearActionNotice()
+        }
+    }
+
+    /// Once accepted, an endpoint belongs to the saved note. Keeping a settled
+    /// draft would override a newer endpoint merged from another window or
+    /// loaded from this same sidecar. Only genuine user input stays in drafts.
+    mutating func finishRangeEndCommit(noteID: UUID) {
+        rangeDrafts[noteID] = nil
+        rangeActionErrors[noteID] = nil
+        if correctionRequest?.noteID == noteID, correctionRequest?.field == .rangeEnd {
             clearActionNotice()
         }
     }
@@ -178,12 +193,8 @@ struct CompareReviewDraftState {
     /// chooses the existing endpoint, which emits no note-value change.
     @discardableResult
     mutating func applyCurrentRangeEnd(noteID: UUID, action: () -> Int64?) -> Bool {
-        guard let endFrame = action() else { return false }
-        rangeDrafts[noteID] = String(endFrame)
-        rangeActionErrors[noteID] = nil
-        if correctionRequest?.noteID == noteID, correctionRequest?.field == .rangeEnd {
-            clearActionNotice()
-        }
+        guard action() != nil else { return false }
+        finishRangeEndCommit(noteID: noteID)
         return true
     }
 
@@ -194,11 +205,14 @@ struct CompareReviewDraftState {
         note: CompareReviewNote, canEdit: Bool, update: (Int64) -> Bool
     ) {
         guard canEdit, let draft = rangeDrafts[note.id],
-              CompareReviewRangeFocusLossPolicy.shouldCommit(
-                draft: draft, savedEndFrame: note.primaryEndFrame,
+              CompareReviewRangeFocusLossPolicy.canHandlePassively(
                 noteID: note.id, correctionRequest: correctionRequest
               ) else { return }
         let entered = draft.trimmingCharacters(in: .whitespacesAndNewlines)
+        if entered == (note.primaryEndFrame.map(String.init) ?? "") {
+            finishRangeEndCommit(noteID: note.id)
+            return
+        }
         guard !entered.isEmpty else {
             recordFieldValidationError("Use Clear range to remove the saved end frame.",
                 note: note, field: .rangeEnd, canEdit: canEdit)
@@ -214,8 +228,7 @@ struct CompareReviewDraftState {
                 note: note, field: .rangeEnd, canEdit: canEdit)
             return
         }
-        rangeDrafts[note.id] = String(end)
-        recordFieldValidationError(nil, note: note, field: .rangeEnd, canEdit: canEdit)
+        finishRangeEndCommit(noteID: note.id)
     }
 
     /// Ordinary Return/blur validation can select a finding just as its row
@@ -670,7 +683,11 @@ struct CompareReviewView: View {
                     id: note.id, severity: severity, category: category, status: status
                 )
             },
-            onRange: { compareSession.updateReviewRange(id: note.id, endFrame: $0) },
+            onRange: { endFrame in
+                guard compareSession.updateReviewRange(id: note.id, endFrame: endFrame) else { return false }
+                drafts.finishRangeEndCommit(noteID: note.id)
+                return true
+            },
             onRangeDeparture: {
                 guard let currentNote = compareSession.reviewNotes.first(where: { $0.id == note.id }) else { return }
                 drafts.commitRangeOnDeparture(note: currentNote, canEdit: compareSession.canEditReviewNotes) {
@@ -777,8 +794,7 @@ struct CompareReviewView: View {
                 revealInvalidNote(update.id)
                 return
             }
-            drafts.rangeDrafts[update.id] = String(update.endFrame)
-            drafts.rangeActionErrors[update.id] = nil
+            drafts.finishRangeEndCommit(noteID: update.id)
         }
         drafts.clearActionNotice()
         // TextField bindings record drafts immediately, before focus-loss or
@@ -800,6 +816,10 @@ struct CompareReviewView: View {
         }
         drafts.noteDrafts.removeAll()
         drafts.noteActionErrors.removeAll()
+        // Preflight also accepted unchanged endpoint input; retire those
+        // drafts so subsequent same-sidecar merges remain authoritative.
+        drafts.rangeDrafts.removeAll()
+        drafts.rangeActionErrors.removeAll()
         compareSession.performReviewActionAfterSaving(primary: primaryController, action: action)
     }
 
@@ -982,6 +1002,9 @@ private struct CompareReviewNoteRow: View {
     let onCurrentEnd: () -> Bool
     let onSeekEnd: () -> Void
 
+    // Untouched input reads the saved endpoint through its binding. Explicit
+    // range actions update the draft themselves; a deferred saved-value
+    // observer would overwrite input typed after that action was accepted.
     @Binding private var endFrameDraft: String
     @Binding private var rangeActionError: String?
     @State private var isRangeExpanded = false
@@ -1144,9 +1167,6 @@ private struct CompareReviewNoteRow: View {
             }
             .font(.caption)
         }
-        .onChange(of: note.primaryEndFrame) { _, end in
-            endFrameDraft = end.map(String.init) ?? ""
-        }
         .onChange(of: rangeActionError) { _, error in
             if error != nil { restoreCorrectionFocus() }
         }
@@ -1195,7 +1215,7 @@ private struct CompareReviewNoteRow: View {
                 .accessibilityLabel("Seek to source A frame \(endFrame), the end of \(noteIdentity)")
                 .accessibilityIdentifier(identifier("range-seek-end"))
             Button("Clear range") {
-                if onRange(nil) { endFrameDraft = ""; rangeActionError = nil }
+                if onRange(nil) { rangeActionError = nil }
             }
             .accessibilityLabel("Clear range for \(noteIdentity)")
             .accessibilityIdentifier(identifier("range-clear"))
@@ -1216,9 +1236,6 @@ private struct CompareReviewNoteRow: View {
                     // Blur and removal use the same live owner state. Another
                     // field may have selected a correction since this render.
                     onRangeDeparture()
-                }
-                .onChange(of: endFrameDraft) { _, _ in
-                    rangeActionError = nil
                 }
             Button("Apply", action: applyRange)
                 .accessibilityLabel("Apply range end for \(noteIdentity)")
@@ -1269,7 +1286,6 @@ private struct CompareReviewNoteRow: View {
             isEndFrameFocused = true
             return
         }
-        endFrameDraft = String(end)
         rangeActionError = nil
     }
 

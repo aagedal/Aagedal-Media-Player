@@ -1307,6 +1307,33 @@ final class CompareReviewReportExporterTests: XCTestCase {
         XCTAssertEqual(try markers[1].nodes(forXPath: "out").first?.stringValue, "44")
     }
 
+    func testPremiereGroupedSeparatorKeepsUserTextAndLiteralEntityLookingContent() throws {
+        let firstText = "First & <tag> \"quoted\" literal &#10;\nUser line"
+        let secondText = "Second finding | literal || delimiter"
+        let notes = [
+            CompareReviewNote(id: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!,
+                              primaryFrame: 42, primaryTime: 0, secondaryFrame: 42, secondaryTime: 0,
+                              text: firstText, createdAt: Date(timeIntervalSince1970: 0)),
+            CompareReviewNote(id: UUID(uuidString: "00000000-0000-0000-0000-000000000002")!,
+                              primaryFrame: 42, primaryTime: 0, secondaryFrame: 42, secondaryTime: 0,
+                              text: secondText, createdAt: Date(timeIntervalSince1970: 0)),
+        ]
+        let snapshot = CompareReviewReportSnapshot(
+            primaryItem: makeItem(path: "/tmp/A.mov", duration: 5),
+            secondaryItem: makeItem(path: "/tmp/B.mov", duration: 5),
+            alignmentMode: .relative, notes: notes
+        )
+        let xml = try XMLDocument(xmlString: CompareReviewReportExporter.premiereProXML(snapshot: snapshot))
+        let markers = try xml.nodes(forXPath: "//sequence/marker")
+        XCTAssertEqual(markers.count, 1)
+        let comment = try XCTUnwrap(try markers[0].nodes(forXPath: "comment").first?.stringValue)
+        XCTAssertTrue(comment.contains("[QC 001] \(firstText)"))
+        XCTAssertTrue(comment.contains(" || [QC 002] \(secondText)"))
+        XCTAssertEqual(comment.filter { $0 == "\n" }.count, 1, "Only the user's line break remains")
+        XCTAssertEqual(try markers[0].nodes(forXPath: "in").first?.stringValue, "42")
+        XCTAssertEqual(try markers[0].nodes(forXPath: "out").first?.stringValue, "43")
+    }
+
     func testPremiereKeepsSourceDurationWhileRetainingFindingsBeyondShorterReplacement() throws {
         let snapshot = CompareReviewReportSnapshot(
             primaryItem: makeItem(path: "/tmp/A.mov", duration: 1, frameRate: "30/1"),

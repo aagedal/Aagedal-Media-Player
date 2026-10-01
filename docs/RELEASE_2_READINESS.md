@@ -3,6 +3,19 @@
 Assessment updated: 2026-10-01. This assessment reflects the
 [product roadmap](../PRODUCT_ROADMAP.md) and its recorded scope decisions.
 
+The current continuation preserves newer Review range edits and same-sidecar
+merged endpoints, keeps closed live meters terminal across queued transport
+events, and advances observed Premiere interoperability. Native Premiere 26.5.1
+imports/re-exports the tested 23.976 and 29.97 DF minute-boundary carriers with
+exact timing, source bytes and pixel aspect. Numeric and literal line-feed
+separators fail differently; the new visible grouped separator preserves exact
+comments in the native diagnostic. Unknown field order becoming progressive
+remains explicitly flagged, and user multiline formatting/broader conform
+acceptance remains open. See [native receipts](evidence/premiere-native-roundtrip-20261001/README.md).
+All 73 focused Review/lifecycle/meter Release checks pass. Candidate/release
+consumption now requires the seven new app identities and 788 aggregate tests;
+final integrated committed-source verification follows separately.
+
 The current continuation fixes three concrete workflow defects: erased saved
 Review endpoints now explain the required Clear range action on departure,
 malformed live-meter timestamps release paced PCM callbacks during shutdown,

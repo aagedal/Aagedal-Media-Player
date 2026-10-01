@@ -335,6 +335,10 @@ final class LiveAudioMeterCoordinator: ObservableObject {
     /// deliberately require the window session to supply a newly resolved
     /// request; reusing the old stream identity would be unsafe.
     func handlePlaybackEvent(_ event: LiveAudioMeterPlaybackEvent) {
+        // Transport publishers can already have queued a callback when their
+        // owning window unsubscribes. Closure owns the terminal state across
+        // every event kind, including events which bypass clock reconciliation.
+        guard !isClosed else { return }
         switch event {
         case .clock(let playback), .transport(let playback):
             updatePlaybackClock(playback)
@@ -396,7 +400,7 @@ final class LiveAudioMeterCoordinator: ObservableObject {
     }
 
     func suspendForUnsupportedSpeed() {
-        guard !isWaitingForSupportedSpeed else { return }
+        guard !isClosed, !isWaitingForSupportedSpeed else { return }
         invalidateCurrent(
             status: .unavailable(
                 reason: "Meters require forward 1× playback.",

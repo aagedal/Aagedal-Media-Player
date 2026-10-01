@@ -89,6 +89,27 @@ class RoundTripTests(unittest.TestCase):
         self.assertEqual(result["status"], "exact-match")
         self.assertEqual(result["returned"]["encodedMarkerOutFrames"][0], -1)
 
+    def test_native_double_escaped_marker_linefeed_is_content_difference(self):
+        # Observed in Premiere's 23.976 XML round trip on 2026-10-01:
+        # app XML &#10;&#10; becomes native XML &amp;#10;&amp;#10;.
+        # Decode XML once; recursively decoding would conceal changed text.
+        original = fixture()
+        returned = copy.deepcopy(original)
+        comment = returned.findall(".//sequence/marker")[2].find("comment")
+        comment.text = comment.text.replace("\n", "&#10;")
+        ET.ElementTree(original).write(self.before, encoding="utf-8")
+        self.before.write_bytes(self.before.read_bytes().replace(
+            b"(inclusive)\n\nQC", b"(inclusive)&#10;&#10;QC"))
+        ET.ElementTree(returned).write(self.after, encoding="utf-8")
+        self.assertIn(b"&#10;&#10;", self.before.read_bytes())
+        self.assertIn(b"&amp;#10;&amp;#10;", self.after.read_bytes())
+        result = premiere.compare(self.before, self.after)
+        self.assertEqual(result["status"], "differences")
+        self.assertEqual([key for key, passed in result["checks"].items() if not passed],
+                         ["exactMarkerContent"])
+        self.assertIn("\n\n", result["original"]["markers"][2][3])
+        self.assertIn("&#10;&#10;", result["returned"]["markers"][2][3])
+
     def test_all_supported_exact_rates_and_drop_frame_modes(self):
         for base, ntsc, df, expected in ((24, True, False, "24000/1001"), (30, True, True, "30000/1001"),
                                          (60, True, True, "60000/1001"), (24, False, False, "24")):
@@ -122,6 +143,33 @@ class RoundTripTests(unittest.TestCase):
                     self.compare(lambda root: label(root, value, source))
         with self.assertRaises(ValueError):
             self.compare(lambda root: (label(root, "00:00:58;00"), label(root, "00:00:58;00")))
+
+    def test_native_semicolon_separated_df_timecode_preserves_frame_semantics(self):
+        # Premiere 26.5.1 returned this source/sequence label for frame 1798
+        # in the native 29.97 DF minute-boundary fixture on 2026-10-01.
+        original = fixture()
+        for tc in original.findall(".//timecode"):
+            tc.find("frame").text = "1798"
+            ET.SubElement(tc, "string").text = "00:00:59;28"
+        returned = copy.deepcopy(original)
+        for tc in returned.findall(".//timecode"):
+            tc.find("string").text = "00;00;59;28"
+        ET.ElementTree(original).write(self.before)
+        ET.ElementTree(returned).write(self.after)
+        result = premiere.compare(self.before, self.after)
+        self.assertEqual(result["status"], "exact-match")
+        self.assertEqual(result["returned"]["sourceTimecode"], dict(frame=1798, displayFormat="DF"))
+        for value in ("00;00:59;28", "00:00;59;28", "00;00;59:28", "00;00:59:28",
+                      "00:00;59:28", "00;00;59;29", "00;01;00;00"):
+            returned.find(".//sequence/timecode/string").text = value
+            ET.ElementTree(returned).write(self.after)
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                premiere.compare(self.before, self.after)
+        returned.find(".//sequence/timecode/string").text = "00;00;59;28"
+        returned.find(".//sequence/timecode/displayformat").text = "NDF"
+        ET.ElementTree(returned).write(self.after)
+        with self.assertRaisesRegex(ValueError, "delimiter contradict"):
+            premiere.compare(self.before, self.after)
 
     def test_changed_sequence_source_and_clip_field_order_cannot_pass(self):
         for path, check in ((".//format/samplecharacteristics", "sequenceGeometry"),
@@ -165,13 +213,14 @@ class RoundTripTests(unittest.TestCase):
     def test_drop_frame_strings_at_minute_and_ten_minute_boundaries(self):
         for base, frame, value in ((30, 1800, "00:01:00;02"), (30, 17982, "00:10:00;00"),
                                    (60, 3600, "00:01:00;04"), (60, 35964, "00:10:00;00")):
-            root = fixture(base, True, True)
-            for tc in root.findall(".//timecode"):
-                tc.find("frame").text = str(frame)
-                ET.SubElement(tc, "string").text = value
-            ET.ElementTree(root).write(self.before)
-            with self.subTest(label=value, base=base):
-                self.assertEqual(premiere.read_export(self.before)["sequenceTimecode"]["frame"], frame)
+            for label in (value, value.replace(":", ";")):
+                root = fixture(base, True, True)
+                for tc in root.findall(".//timecode"):
+                    tc.find("frame").text = str(frame)
+                    ET.SubElement(tc, "string").text = label
+                ET.ElementTree(root).write(self.before)
+                with self.subTest(label=label, base=base):
+                    self.assertEqual(premiere.read_export(self.before)["sequenceTimecode"]["frame"], frame)
 
     def test_short_relinked_media_and_absent_geometry_do_not_fake_source_duration(self):
         def mutate(root):
@@ -199,6 +248,39 @@ class RoundTripTests(unittest.TestCase):
             media.find("pathurl").text = "file://localhost/tmp/source-a.mov"
             root.append(media)
         self.assertEqual(self.compare(mutate)["status"], "exact-match")
+
+    def test_changed_clip_pixel_aspect_cannot_pass_unchanged_file_and_sequence(self):
+        result = self.compare(lambda root: setattr(
+            ET.SubElement(root.find(".//clipitem"), "pixelaspectratio"), "text", "NTSC-601"))
+        self.assertEqual(result["status"], "differences")
+        self.assertTrue(result["checks"]["sequenceGeometry"])
+        self.assertTrue(result["checks"]["sourceGeometry"])
+        self.assertFalse(result["checks"]["clipPixelAspect"])
+        self.assertEqual(result["original"]["clipPixelAspect"], "square")
+        self.assertEqual(result["returned"]["clipPixelAspect"], "NTSC-601")
+
+    def test_matching_clip_pixel_aspect_override_uses_source_not_sequence(self):
+        original = fixture()
+        original.find(".//file/media/video/samplecharacteristics/pixelaspectratio").text = "PAL-601"
+        returned = copy.deepcopy(original)
+        ET.SubElement(returned.find(".//clipitem"), "pixelaspectratio").text = "PAL-601"
+        ET.ElementTree(original).write(self.before)
+        ET.ElementTree(returned).write(self.after)
+        result = premiere.compare(self.before, self.after)
+        self.assertEqual(result["status"], "exact-match")
+        self.assertEqual(result["original"]["clipPixelAspect"], "PAL-601")
+        self.assertEqual(result["returned"]["clipPixelAspect"], "PAL-601")
+        returned.find(".//clipitem/pixelaspectratio").text = "square"
+        ET.ElementTree(returned).write(self.after)
+        self.assertFalse(premiere.compare(self.before, self.after)["checks"]["clipPixelAspect"])
+
+    def test_empty_and_ambiguous_clip_pixel_aspect_overrides_rejected(self):
+        for values in ((None,), ("",), (" ",), ("square", "square"), ("square", "NTSC-601")):
+            def mutate(root):
+                for value in values:
+                    ET.SubElement(root.find(".//clipitem"), "pixelaspectratio").text = value
+            with self.subTest(values=values), self.assertRaisesRegex(ValueError, "pixel aspect"):
+                self.compare(mutate)
 
     def test_explicit_enabled_sequence_track_and_clip_match_default_enabled(self):
         def mutate(root):

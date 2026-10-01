@@ -4606,6 +4606,43 @@ Integrated clean-checkout verification is recorded in Phase 219 below.
 - [ ] Complete native editor/accessibility, public dependencies, hardware and
   signing/notarization/distribution acceptance.
 
+## Phase 220 — Preserve newer Review ranges and merged saved endpoints
+
+- [x] Clear stale range validation synchronously when the owning draft changes;
+  remove deferred callbacks that could erase newer corrections or typed endpoints.
+- [x] Retire accepted range drafts after passive, current-frame, Apply/Clear and
+  preflight commits, so same-sidecar merges remain authoritative.
+- [x] Preserve uncommitted/rejected input across those merges and add five
+  regressions. All 73 focused optimized Release Review/lifecycle/meter checks pass.
+- [ ] Complete native keyboard, Full Keyboard Access and spoken VoiceOver checks.
+
+## Phase 221 — Keep live-meter closure authoritative
+
+- [x] Reject queued typed transport events and unsupported-speed suspension
+  after close, preserving generation, empty readings and canceled workers.
+- [x] Exercise every event/discontinuity in the new coordinator regression;
+  all 29 focused optimized Release coordinator checks pass.
+
+## Phase 222 — Native Premiere marker text and drop-frame evidence
+
+- [x] Observe actual Premiere 26.5.1 import/timeline/re-export of 23.976 and
+  29.97 DF minute-boundary fixtures with exact timing/source-byte checks.
+- [x] Retain numeric-reference and literal-LF failures; verify a visible ` || `
+  grouped separator preserves complete marker comments in the native editor.
+- [x] Use the verified separator in the exporter without altering user text;
+  disclose native tab/line-break limitations in the export panel.
+- [x] Accept consistent native DF separators while rejecting contradictions,
+  dropped labels and malformed separator combinations; detect clip PAR overrides.
+- [x] Add one exporter and five comparator regressions. Require all seven new
+  app regressions and at least 788 aggregate candidate tests, plus both isolated
+  mixed-backend transport directions.
+- [ ] Complete native interlaced/PAR/range/rate/whitespace matrix and verify
+  fresh production exports. Unknown field order becoming progressive remains
+  an explicit difference, rather than an exact-conform claim.
+
+See [native evidence](docs/evidence/premiere-native-roundtrip-20261001/README.md).
+Integrated committed-source verification follows separately.
+
 ## Remaining work after this continuation
 
 The user’s 2026-10-01 scope decision makes Avid native compatibility optional
@@ -5025,3 +5062,7 @@ Composer First edition may have limitations that do not apply to the full editio
 203. Phase 218 Premiere scan-order preservation.
 
 204. Phase 219 integrated range/decoder/scan-order verification.
+
+205. Phase 220 newer Review ranges and same-sidecar merge ownership.
+206. Phase 221 terminal live-meter closure.
+207. Phase 222 native Premiere marker text and drop-frame evidence.

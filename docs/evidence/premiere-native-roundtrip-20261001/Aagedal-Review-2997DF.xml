@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xmeml>
+<xmeml version="5">
+  <project><name>Aagedal Compare Review</name><children>
+    <sequence id="aagedal-review-sequence">
+      <name>29.97-minute.mov vs 29.97-minute.mov Review</name>
+      <duration>15</duration>
+      <rate><timebase>30</timebase><ntsc>TRUE</ntsc></rate>
+      <timecode><rate><timebase>30</timebase><ntsc>TRUE</ntsc></rate><string>00:00:59;28</string><frame>1798</frame><displayformat>DF</displayformat></timecode>
+      <media><video>
+        <format><samplecharacteristics><rate><timebase>30</timebase><ntsc>TRUE</ntsc></rate><width>160</width><height>90</height><pixelaspectratio>square</pixelaspectratio></samplecharacteristics></format>
+        <track><clipitem id="aagedal-source-a-clip">
+          <name>29.97-minute.mov</name>
+          <duration>15</duration><rate><timebase>30</timebase><ntsc>TRUE</ntsc></rate>
+          <start>0</start><end>15</end><in>0</in><out>15</out>
+          <file id="aagedal-source-a-file">
+            <name>29.97-minute.mov</name>
+            <pathurl>file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/drop-frame-boundaries/29.97-minute.mov</pathurl>
+            <duration>15</duration><rate><timebase>30</timebase><ntsc>TRUE</ntsc></rate>
+            <timecode><rate><timebase>30</timebase><ntsc>TRUE</ntsc></rate><string>00:00:59;28</string><frame>1798</frame><displayformat>DF</displayformat></timecode>
+            <media><video><samplecharacteristics><rate><timebase>30</timebase><ntsc>TRUE</ntsc></rate><width>160</width><height>90</height><pixelaspectratio>square</pixelaspectratio></samplecharacteristics></video></media>
+          </file>
+        </clipitem></track>
+      </video></media>
+      <marker><name>QC 001</name><comment>[QC 001] Generated source at the drop-frame minute boundary | Source B: 29.97-minute.mov, SRC TC 00:01:00;02, frame 2 | Alignment: Source timecode | Severity: Info | Category: General | Status: Open | A rate: 30000/1001 | B rate: 30000/1001 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/drop-frame-boundaries/29.97-minute.mov | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/drop-frame-boundaries/29.97-minute.mov | Source A: SRC TC 00:01:00;02, frame 2</comment><in>2</in><out>3</out></marker>
+    </sequence>
+  </children></project>
+</xmeml>

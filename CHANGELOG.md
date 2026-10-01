@@ -5,6 +5,9 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Changed
+- Review preserves newer range input through delayed callbacks and retires accepted drafts so concurrent sidecar merges remain authoritative.
+- Closed live meters ignore queued transport events and speed suspension, preserving teardown state.
+- Premiere grouped findings use a native-verified visible separator; export guidance explains note-formatting changes. Round-trip validation accepts Premiere’s consistent drop-frame separators and detects clip pixel-aspect overrides.
 - Live-meter timestamp failures and cancellation release decoder callbacks blocked by playback pacing, preserving the original error instead of hanging shutdown.
 - Review immediately explains how to clear a saved range when its endpoint is erased and the field is left, preserving the saved endpoint and draft.
 - Premiere XML retains known progressive or interlaced field order for source and sequence; mixed scan order requires CSV/PDF. Round-trip checks detect changed field order and clip overrides.
@@ -12,7 +15,7 @@ All notable changes to Aagedal Media Player.
 - Premiere round-trip validation rejects disabled or ambiguous source-A playback and encoded DTD/entity declarations.
 - Release publication retains the original packaged ZIP hash through signing, upload and update-feed preparation, rejecting same-size artifact replacements.
 - Review saves pending range edits when filtering, closing the panel, or collapsing a range removes its field, while preserving correction focus and rejected drafts.
-- Candidate verification and release consumption require the Premiere, Review and decoder-shutdown regressions and at least 781 aggregate tests, alongside both isolated mixed-backend transport checks.
+- Candidate verification and release consumption require the Premiere, Review and decoder-shutdown regressions and at least 788 aggregate tests, alongside both isolated mixed-backend transport checks.
 - Live meters enforce bounded startup even before the first PCM snapshot arrives, clearing stalled work with retained diagnostics.
 - PDF review reports identify source and relative timecodes explicitly and preserve complete values after relinking.
 - Dependency reconstruction audits reject undeclared sources, stale build caches, redirected directories and nonregular inputs.

@@ -398,7 +398,11 @@ Editor acceptance and hands-on keyboard review remain.
   editors. Resolve EDL, Final Cut Pro XML, and Avid marker-text exporters are
   implemented and covered by automated tests. Adobe Premiere Pro is a priority
   for 2.0. A dedicated legacy FCP7 XML exporter now creates a source-A review
-  sequence with grouped findings and inclusive ranges; native Premiere
+  sequence with grouped findings and inclusive ranges. Observed Premiere 26.5.1
+  round trips preserve tested 23.976 and 29.97 DF timing/source bytes; a visible
+  grouped separator preserves comments. Unknown field-order inference and note
+  formatting limits remain explicit; see the retained native evidence in
+  `docs/evidence/premiere-native-roundtrip-20261001/README.md`. Broader native Premiere
   import/re-export validation remains before claiming compatibility.
   Known progressive/interlaced field order is retained in source and sequence
   formats, and round-trip validation detects field-order changes or clip overrides.

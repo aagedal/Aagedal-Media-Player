@@ -102,7 +102,7 @@ xcrun xcresulttool get test-results tests \
 python3 scripts/validate-release-xcresult.py \
     "$artifact_dir/test-summary.json" \
     "$artifact_dir/test-details.json" \
-    --minimum-tests 781 \
+    --minimum-tests 788 \
     --require-test "CompareReviewTextCommitTests/testOrdinaryTextValidationRevealsFindingHiddenByFilterWithoutSavingDrafts()" \
     --require-test "CompareReviewTextCommitTests/testRetainedRangeCorrectionRevealsOnlyExistingEditableHiddenFinding()" \
     --require-test "LiveAudioMeterCoordinatorTests/testMalformedCurrentLoudnessFailsGenerationAndCancelsWorker()" \
@@ -123,11 +123,18 @@ python3 scripts/validate-release-xcresult.py \
     --require-test "CompareReviewTextCommitTests/testPassiveTextDepartureRetainsFailuresAndCommitsOnceAfterRetry()" \
     --require-test "CompareReviewTextCommitTests/testPassiveRangeBlurUsesTextCorrectionSelectedAfterRowRender()" \
     --require-test "CompareReviewTextCommitTests/testErasedSavedRangeDepartureExplainsExplicitClearWithoutChangingEndpoint()" \
+    --require-test "CompareReviewTextCommitTests/testRangeDraftEditClearsPreviousErrorBeforeNewValidation()" \
+    --require-test "CompareReviewTextCommitTests/testNewerRangeDraftAfterCurrentFrameActionCommitsAgainstCurrentSavedEndpoint()" \
+    --require-test "CompareReviewTextCommitTests/testRangeDraftEditClearsOnlyItsOwnErrorDuringAnotherCorrection()" \
+    --require-test "CompareReviewTextCommitTests/testAcceptedRangeDraftDoesNotOverrideSameSidecarMergedEndpoint()" \
+    --require-test "CompareReviewTextCommitTests/testUncommittedRangeDraftSurvivesSameSidecarMergeIncludingEarlierSavedValue()" \
+    --require-test "LiveAudioMeterCoordinatorTests/testClosedCoordinatorRejectsQueuedTransportEventsAndSpeedSuspension()" \
     --require-test "LiveAudioMeterDecoderTests/testTimestampedProcessorCancellationWakesPlaybackGateDuringInitialSilence()" \
     --require-test "LiveAudioMeterDecoderTests/testTimestampFailureWakesPlaybackGateAndPreservesOriginalDiagnostic()" \
     --require-test "CompareReviewReportExporterTests/testPremierePreservesKnownSourceAndSequenceFieldOrder()" \
     --require-test "CompareReviewReportExporterTests/testPremiereDoesNotInventUnknownFieldOrder()" \
     --require-test "CompareReviewReportExporterTests/testPremiereRejectsUnrepresentableFieldOrder()" \
+    --require-test "CompareReviewReportExporterTests/testPremiereGroupedSeparatorKeepsUserTextAndLiteralEntityLookingContent()" \
     --require-test "LiveAudioMeterDecoderTests/testBundledDecoderPreservesContiguousDTSInMillisecondMatroskaContainer()" \
     2>&1 | tee "$artifact_dir/test-evidence-validation.log"
 

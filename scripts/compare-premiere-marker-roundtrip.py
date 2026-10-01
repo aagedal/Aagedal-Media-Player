@@ -53,13 +53,18 @@ def timecode(element, expected_rate):
         raise ValueError("Ambiguous timecode string")
     if labels:
         label = labels[0].text or ""
-        match = re.fullmatch(r"(\d{2}):(\d{2}):(\d{2})([:;])(\d{2,3})", label)
+        match = re.fullmatch(r"(\d{2})([:;])(\d{2})([:;])(\d{2})([:;])(\d{2,3})", label)
         if not match:
             raise ValueError(f"Invalid timecode string: {label!r}")
-        hour, minute, second, delimiter, subframe = match.groups()
+        hour, hour_delimiter, minute, minute_delimiter, second, frame_delimiter, subframe = match.groups()
         hour, minute, second, subframe = map(int, (hour, minute, second, subframe))
         nominal = int(expected_rate + Fraction(1, 2))
-        if hour >= 24 or minute >= 60 or second >= 60 or subframe >= nominal or (display == "NDF" and delimiter != ":"):
+        delimiters = hour_delimiter + minute_delimiter + frame_delimiter
+        # Premiere 26.5.1 writes HH;MM;SS;FF for DF. Preserve the existing
+        # colon and HH:MM:SS;FF forms, rejecting every other mixed form.
+        permitted_delimiters = (":::", "::;", ";;;") if display == "DF" else (":::",)
+        if (hour >= 24 or minute >= 60 or second >= 60 or subframe >= nominal
+                or delimiters not in permitted_delimiters):
             raise ValueError("Timecode string fields or delimiter contradict display format")
         label_frame = ((hour * 60 + minute) * 60 + second) * nominal + subframe
         if display == "DF":
@@ -95,10 +100,18 @@ def geometry(element, expected_rate):
     if rate(element) != expected_rate:
         raise ValueError("Video sample rate differs from sequence")
     width, height = integer(element, "width"), integer(element, "height")
-    par = text(element, "pixelaspectratio")
-    if min(width, height) <= 0 or not par.strip():
+    par = pixel_aspect(element, required=True)
+    if min(width, height) <= 0:
         raise ValueError("Invalid raster or pixel aspect")
     return dict(raster=[width, height], pixelAspect=par, fieldDominance=field_dominance(element))
+
+
+def pixel_aspect(element, required=False):
+    values = element.findall("pixelaspectratio")
+    if (len(values) > 1 or (required and not values)
+            or (values and not (values[0].text or "").strip())):
+        raise ValueError("Invalid or ambiguous pixel aspect")
+    return values[0].text if values else None
 
 
 def field_dominance(element):
@@ -173,6 +186,11 @@ def read_export(path, sequence_name=None):
     clip_field_dominance = field_dominance(clip)
     if clip_field_dominance is None and source_geometry:
         clip_field_dominance = source_geometry["fieldDominance"]
+    # XMEML permits pixelaspectratio directly on clipitem. An unchanged file
+    # and sequence raster/PAR cannot prove an unchanged clip interpretation.
+    clip_pixel_aspect = pixel_aspect(clip)
+    if clip_pixel_aspect is None and source_geometry:
+        clip_pixel_aspect = source_geometry["pixelAspect"]
     markers = []
     encoded_outs = []
     for marker in sequence.findall("marker"):
@@ -196,6 +214,7 @@ def read_export(path, sequence_name=None):
                 sequenceTimecode=timecode(sequence, fps), sourceTimecode=timecode(media, fps),
                 sequenceGeometry=geometry(seq_format[0], fps) if seq_format else None,
                 sourceGeometry=source_geometry, clipFieldDominance=clip_field_dominance,
+                clipPixelAspect=clip_pixel_aspect,
                 sourceURL=source_url, sourcePath=str(media_path(source_url)),
                 markers=markers, encodedMarkerOutFrames=encoded_outs)
 
@@ -205,7 +224,7 @@ def compare(original, returned, verify_media=False, returned_sequence_name=None)
     after = read_export(returned, returned_sequence_name)
     checks = {key: before[key] == after[key] for key in
               ("rate", "durationFrames", "sourceDurationFrames", "clipPlacement", "sequenceTimecode", "sourceTimecode",
-               "sequenceGeometry", "sourceGeometry", "clipFieldDominance", "sourcePath")}
+               "sequenceGeometry", "sourceGeometry", "clipFieldDominance", "clipPixelAspect", "sourcePath")}
     checks["markerTimingAndTitles"] = Counter(m[:3] for m in before["markers"]) == Counter(m[:3] for m in after["markers"])
     checks["exactMarkerContent"] = Counter(before["markers"]) == Counter(after["markers"])
     if verify_media:

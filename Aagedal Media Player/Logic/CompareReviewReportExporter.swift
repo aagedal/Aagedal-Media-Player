@@ -656,9 +656,12 @@ nonisolated enum CompareReviewReportExporter {
             }
             let labels = rows.map { "QC \(String(format: "%03d", $0.markerNumber))" }
             let title = rows.count == 1 ? labels[0] : "\(labels.joined(separator: " + ")) (\(rows.count) findings)"
+            // Premiere 26.5.1 double-escapes numeric LF references and drops
+            // literal LF separators on native XML round trips. Keep generated
+            // finding boundaries visible without changing user-authored text.
             let comment = zip(labels, rows).map { label, row in
                 "[\(label)] \(markerNote(row: row, snapshot: snapshot)) | Source A: \(reportTimecode(source: row.primarySourceTimecode, relative: row.primaryRelativeTimecode)), frame \(row.primaryFrame)"
-            }.joined(separator: "\n\n")
+            }.joined(separator: " || ")
             lines.append("      <marker><name>\(xmlAttribute(title))</name><comment>\(xmlAttribute(comment))</comment><in>\(frame)</in><out>\(end)</out></marker>")
         }
         lines.append(contentsOf: ["    </sequence>", "  </children></project>", "</xmeml>", ""])

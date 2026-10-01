@@ -7,6 +7,162 @@ import XCTest
 
 final class CompareReviewTextCommitTests: XCTestCase {
     @MainActor
+    func testRangeDraftEditClearsPreviousErrorBeforeNewValidation() {
+        let note = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
+            secondaryFrame: 10, secondaryTime: 1, text: "Finding", primaryEndFrame: 20)
+        var drafts = CompareReviewDraftState()
+        drafts.updateRangeEndDraft("invalid old end", noteID: note.id)
+        drafts.blockAction(noteID: note.id, field: .rangeEnd,
+            error: "Previous range error", notice: "Correct the previous input")
+
+        // Input clears its old error synchronously. Return or action preflight
+        // can validate the new value before the row's onChange would execute.
+        drafts.updateRangeEndDraft("invalid new end", noteID: note.id)
+        XCTAssertNil(drafts.rangeActionErrors[note.id])
+        XCTAssertNil(drafts.correctionRequest)
+        drafts.commitRangeOnDeparture(note: note, canEdit: true) { _ in
+            XCTFail("Invalid new input must not save")
+            return true
+        }
+        let correction = drafts.correctionRequest
+        XCTAssertEqual(drafts.rangeActionErrors[note.id], "Enter a whole-number end frame.")
+        XCTAssertEqual(correction?.field, .rangeEnd)
+
+        // Other passive callbacks must respect the new correction, preserving
+        // its draft and error until the user edits the selected endpoint.
+        drafts.commitTextOnDeparture(note: note, canEdit: true) { _ in
+            XCTFail("Text departure must not steal the selected range correction")
+            return true
+        }
+        XCTAssertEqual(drafts.rangeDrafts[note.id], "invalid new end")
+        XCTAssertEqual(drafts.rangeActionErrors[note.id], "Enter a whole-number end frame.")
+        XCTAssertEqual(drafts.correctionRequest, correction)
+    }
+
+    @MainActor
+    func testNewerRangeDraftAfterCurrentFrameActionCommitsAgainstCurrentSavedEndpoint() {
+        let note = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
+            secondaryFrame: 10, secondaryTime: 1, text: "Finding", primaryEndFrame: 20)
+        for entered in [" 35 ", "20", "invalid end", ""] {
+            var drafts = CompareReviewDraftState()
+            XCTAssertTrue(drafts.applyCurrentRangeEnd(noteID: note.id) { 30 })
+            drafts.updateRangeEndDraft(entered, noteID: note.id)
+            var currentNote = note
+            currentNote.primaryEndFrame = 30
+            XCTAssertTrue(drafts.hasPendingEdits(in: [currentNote]))
+            XCTAssertEqual(drafts.rangeDrafts[note.id], entered)
+
+            // A row's earlier note held 20, but the live owner now holds 30.
+            // Even typing the earlier saved endpoint is a pending edit. No
+            // deferred saved-value observer may overwrite it with 30.
+            var savedEndpoints: [Int64] = []
+            drafts.commitRangeOnDeparture(note: currentNote, canEdit: true) {
+                savedEndpoints.append($0)
+                return true
+            }
+            if let end = Int64(entered.trimmingCharacters(in: .whitespacesAndNewlines)) {
+                XCTAssertEqual(savedEndpoints, [end])
+                XCTAssertNil(drafts.rangeDrafts[note.id])
+                XCTAssertNil(drafts.rangeActionErrors[note.id])
+                currentNote.primaryEndFrame = end
+                XCTAssertFalse(drafts.hasPendingEdits(in: [currentNote]))
+            } else {
+                XCTAssertTrue(savedEndpoints.isEmpty)
+                XCTAssertEqual(drafts.rangeDrafts[note.id], entered)
+                XCTAssertNotNil(drafts.rangeActionErrors[note.id])
+                XCTAssertEqual(drafts.correctionRequest?.field, .rangeEnd)
+            }
+        }
+    }
+
+    @MainActor
+    func testRangeDraftEditClearsOnlyItsOwnErrorDuringAnotherCorrection() {
+        let noteID = UUID()
+        let otherID = UUID()
+        var drafts = CompareReviewDraftState()
+        drafts.rangeActionErrors[noteID] = "Earlier range error"
+        drafts.blockAction(noteID: otherID, field: .rangeEnd,
+            error: "Selected range error", notice: "Correct the other finding")
+        let correction = drafts.correctionRequest
+
+        drafts.updateRangeEndDraft("30", noteID: noteID)
+        XCTAssertNil(drafts.rangeActionErrors[noteID])
+        XCTAssertEqual(drafts.rangeActionErrors[otherID], "Selected range error")
+        XCTAssertEqual(drafts.correctionRequest, correction)
+        XCTAssertEqual(drafts.rangeActionNotice, "Correct the other finding")
+    }
+
+    @MainActor
+    func testAcceptedRangeDraftDoesNotOverrideSameSidecarMergedEndpoint() {
+        let original = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
+            secondaryFrame: 10, secondaryTime: 1, text: "Finding", primaryEndFrame: 20)
+        for acceptance in ["departure", "current frame", "explicit apply", "explicit clear", "unchanged departure"] {
+            var drafts = CompareReviewDraftState()
+            var saved = original
+            drafts.updateRangeEndDraft(acceptance == "unchanged departure" ? " 20 " : "30", noteID: saved.id)
+            switch acceptance {
+            case "departure", "unchanged departure":
+                drafts.commitRangeOnDeparture(note: saved, canEdit: true) {
+                    saved.primaryEndFrame = $0
+                    return true
+                }
+            case "current frame":
+                XCTAssertTrue(drafts.applyCurrentRangeEnd(noteID: saved.id) {
+                    saved.primaryEndFrame = 30
+                    return 30
+                })
+            default:
+                // Apply, Clear and validated action preflight finish through
+                // the same owner method after the controller accepts the edit.
+                saved.primaryEndFrame = acceptance == "explicit clear" ? nil : 30
+                drafts.finishRangeEndCommit(noteID: saved.id)
+            }
+            XCTAssertNil(drafts.rangeDrafts[saved.id], acceptance)
+            XCTAssertFalse(drafts.hasPendingEdits(in: [saved]), acceptance)
+
+            // Another player window's save is merged into this same sidecar;
+            // the note ID and active URL stay unchanged. Its endpoint must
+            // remain authoritative through blur and later action preflight.
+            saved.primaryEndFrame = 40
+            XCTAssertEqual(drafts.rangeDrafts[saved.id] ?? saved.primaryEndFrame.map(String.init) ?? "", "40", acceptance)
+            XCTAssertFalse(drafts.hasPendingEdits(in: [saved]), acceptance)
+            drafts.commitRangeOnDeparture(note: saved, canEdit: true) { _ in
+                XCTFail("A settled draft must not write the previous endpoint over a same-sidecar merge")
+                return true
+            }
+            XCTAssertEqual(saved.primaryEndFrame, 40, acceptance)
+        }
+    }
+
+    @MainActor
+    func testUncommittedRangeDraftSurvivesSameSidecarMergeIncludingEarlierSavedValue() {
+        let original = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
+            secondaryFrame: 10, secondaryTime: 1, text: "Finding", primaryEndFrame: 20)
+        for entered in [" 30 ", "20", "invalid end", ""] {
+            var drafts = CompareReviewDraftState()
+            drafts.updateRangeEndDraft(entered, noteID: original.id)
+            var merged = original
+            merged.primaryEndFrame = 40
+            XCTAssertEqual(drafts.rangeDrafts[merged.id], entered)
+            XCTAssertTrue(drafts.hasPendingEdits(in: [merged]))
+            var updates: [Int64] = []
+            drafts.commitRangeOnDeparture(note: merged, canEdit: true) {
+                updates.append($0)
+                return true
+            }
+            if let end = Int64(entered.trimmingCharacters(in: .whitespacesAndNewlines)) {
+                XCTAssertEqual(updates, [end])
+                XCTAssertNil(drafts.rangeDrafts[merged.id])
+            } else {
+                XCTAssertTrue(updates.isEmpty)
+                XCTAssertEqual(drafts.rangeDrafts[merged.id], entered)
+                XCTAssertNotNil(drafts.rangeActionErrors[merged.id])
+                XCTAssertEqual(drafts.correctionRequest?.field, .rangeEnd)
+            }
+        }
+    }
+
+    @MainActor
     func testPassiveTextDepartureUsesCorrectionSelectedAfterRowRender() {
         let selected = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
             secondaryFrame: 10, secondaryTime: 1, text: "Selected finding", primaryEndFrame: 20)
@@ -144,7 +300,7 @@ final class CompareReviewTextCommitTests: XCTestCase {
             return true
         }
         XCTAssertEqual(savedEndpoints, [30])
-        XCTAssertEqual(drafts.rangeDrafts[note.id], "30")
+        XCTAssertNil(drafts.rangeDrafts[note.id])
         XCTAssertNil(drafts.rangeActionErrors[note.id])
         var saved = note
         saved.primaryEndFrame = 30
@@ -771,7 +927,7 @@ final class CompareReviewTextCommitTests: XCTestCase {
         // current frame already equals the saved end. No onChange will fire.
         XCTAssertTrue(drafts.applyCurrentRangeEnd(noteID: note.id) { note.primaryEndFrame })
 
-        XCTAssertEqual(drafts.rangeDrafts[note.id], "20")
+        XCTAssertNil(drafts.rangeDrafts[note.id])
         XCTAssertFalse(drafts.hasPendingEdits(in: [note]))
         XCTAssertNil(drafts.rangeActionErrors[note.id])
         XCTAssertNil(drafts.rangeActionNotice)
@@ -794,7 +950,7 @@ final class CompareReviewTextCommitTests: XCTestCase {
         XCTAssertEqual(drafts.correctionRequest, correction)
 
         XCTAssertTrue(drafts.applyCurrentRangeEnd(noteID: noteID) { 20 })
-        XCTAssertEqual(drafts.rangeDrafts[noteID], "20")
+        XCTAssertNil(drafts.rangeDrafts[noteID])
         XCTAssertNil(drafts.rangeActionErrors[noteID])
         XCTAssertEqual(drafts.noteActionErrors[noteID], "Enter note text")
         XCTAssertEqual(drafts.rangeActionNotice, "Correct this note")

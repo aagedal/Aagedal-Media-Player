@@ -279,7 +279,11 @@ integer or nominal × 1000/1001 rates, source start and DF/NDF interpretation.
 Points use one-frame intervals; review ranges use `end + 1` as exclusive `out`.
 Findings sharing a start frame occupy one marker spanning their longest range.
 Each finding keeps its own QC label, text, classification, inclusive endpoints,
-A/B rates and source URLs in the marker comment. Compare grouped findings
+A/B rates and source URLs in the marker comment. Generated finding entries now
+use a visible ` || ` separator after Premiere's native round trip changed both
+numeric and literal linefeed separators. User-authored text remains unchanged
+in the app XML; Premiere can change its tabs or line breaks on import/re-export.
+Keep CSV or PDF when formatting matters. Compare grouped findings
 individually against the CSV; carrier-marker count can differ from finding count.
 Quarter-turn sources and unsupported pixel aspect representations produce
 actionable export errors pending native geometry validation. Historical rounded
@@ -311,10 +315,12 @@ exactly one sequence. The checker requires one untrimmed source-A video clip
 at sequence frame zero and nonempty sequence markers. It compares exact rates,
 source/sequence starts and display formats, clip placement and actual duration,
 sequence duration, separate source/sequence geometry and field dominance,
-effective clip field-order overrides, source path, marker
+effective clip field-order and pixel-aspect overrides, source path, marker
 anchors/durations/titles and exact comments, preserving duplicate multiplicity.
 Optional timecode strings must agree with their encoded frame and DF/NDF rules;
-contradictory or skipped DF labels fail. String-only timecodes are unsupported
+contradictory or skipped DF labels fail. DF accepts `HH:MM:SS:FF`,
+`HH:MM:SS;FF` and the observed native Premiere `HH;MM;SS;FF` form; NDF accepts
+only colon separators. Other mixed separators fail. String-only timecodes are unsupported
 by this deliberately narrow checker. A native point `out=-1` compares as one
 frame, with its original encoding retained in the report.
 
@@ -325,16 +331,70 @@ pre-import fixture hashes separately to prove input immutability. A comparison
 of a file with itself only establishes format validity. It cannot establish
 native loading, rendering, editor version or a round trip.
 
-Fourteen self-contained Python regressions pass, including contradictory
+Twenty-seven self-contained Python regressions pass, including contradictory
 timecode-string rejection, 29.97/59.94 DF minute/ten-minute boundaries, adjacent
 and final-frame markers, Unicode/multiline content, grouped range duration,
 source path/geometry changes, malformed input and output-report preservation.
 All ten production-generated XML/CSV fixture pairs also parse and compare to
 themselves with current source-media hashes. See the
 [engineering evidence](evidence/premiere-review-engineering-20261001/README.md).
-The bounded Premiere app-binding attempt returned no UI state and was canceled
-after several minutes. No import, native marker inspection or re-export was
-observed. Premiere native acceptance remains **unverified**.
+The earlier bounded Premiere app-binding attempt returned no UI state and was
+canceled after several minutes. A later native check successfully imported and
+re-exported the 23.976 fixture in Premiere Pro 26.5.1. Its focused result and
+remaining limitations follow; broader Premiere acceptance remains open.
+
+### Premiere Pro 26.5.1 native round trip — 2026-10-01
+
+Premiere imported the unchanged `Aagedal-Review-23976.xml` and exported
+`Aagedal-Review-23976-Premiere-Roundtrip.xml` through its native UI. The returned
+document uses XMEML version 4; the original uses version 5. The independent
+checker reports **differences**, while confirming exact `24000/1001` rate,
+12-frame source/sequence durations, zero-start NDF timecode, full source-A clip
+placement, source path, current media bytes, raster, pixel aspect, marker titles,
+anchors and durations. The two carrier markers retain the timing of all three
+findings: an inclusive range at frames 0–2 and two grouped findings at frame 1.
+See the [retained native evidence](evidence/premiere-native-roundtrip-20261001/README.md).
+
+Two differences remain explicit. Premiere filled previously unspecified source
+and sequence field dominance with `none`, which also becomes the effective clip
+field interpretation. Unspecified and known progressive metadata are distinct;
+the checker does not assume they are equivalent. The grouped comment's original
+`&#10;&#10;` XML references decode to two actual linefeeds, but Premiere returned
+`&amp;#10;&amp;#10;`, which decodes to literal `&#10;&#10;` text. Thus exact marker
+content fails even though Unicode, the inclusive range comment, finding labels
+and provenance survive. A separate diagnostic changed only the original numeric
+linefeed separator to literal LF and gave the sequence a unique name. Premiere
+dropped those linefeeds entirely, joining `frame 1` directly to `[QC 003]`.
+Neither encoding preserved the generated separator. These diagnostics cover
+exporter-generated separators; they do not establish preservation of arbitrary
+user-authored multiline notes. The implementation now uses a visible ASCII
+separator for generated entries while preserving user-authored content in its XML.
+The subsequent ` || ` diagnostic imported and re-exported through Premiere with
+**exact marker content**, timing and titles. Rate, start labels, durations, clip
+placement, source bytes, raster and PAR also remained exact; unknown field order
+still became `none`. This native diagnostic supports the generated separator
+change. It was a modified copy of the earlier export, so the focused exporter
+regression separately verifies the implementation preserves reserved XML
+characters, intentional entity-looking text and user-authored linefeeds.
+
+The unchanged 29.97 DF minute-boundary fixture also imported and re-exported
+through the native UI. Both original source and sequence start at encoded frame
+1798 (`00:00:59;28`); Premiere returned the equivalent `00;00;59;28` form with
+`displayformat=DF`. Its marker at relative frame 2 retains source timecode
+`00:01:00;02`, exact one-frame duration, title, full comment and media bytes.
+The 15-frame source/sequence duration, zero-start clip placement, raster and PAR
+also survive. The comparator now accepts that consistent all-semicolon DF form
+while retaining frame/string agreement, skipped-label checks and mixed-separator
+rejection. This round trip reports differences only for previously unspecified
+field dominance becoming `none`; it is not an exact geometry acceptance pass.
+
+The comparator decodes XML once and retains the original and returned comments
+in its report. It must not recursively unescape entity-looking text or suppress
+the field-order difference to turn this partial result into an exact pass.
+The observed double-escaped linefeed and native DF string form have regressions.
+Native visible marker-content inspection, other fractional rates, 59.94 DF,
+ten-minute DF boundaries and known interlaced field-order interpretation remain
+separate acceptance checks.
 
 Resolve EDL rejects multiple findings starting at the same source-A frame.
 The retained Resolve import lost a same-frame finding, so the exporter now
@@ -404,7 +464,9 @@ marked passed. The native export result is independent of that outstanding gate.
 | Resolve Studio 21.1.0.14 | Fresh generated 59.94 DF / `00:00:58;00`; current-source seven-finding copy | 7/7 | All anchors exact, including first/adjacent/final and DF boundary frames | Exact text, colors, ranges and current URLs retained; actual source-A media/placement verified | 7/7 exact records; unchanged fixture hashes | Focused round-trip pass; [retained evidence](evidence/resolve-markers-5994-20260919/README.md) |
 | Final Cut Pro | Pending | | | | | Not run |
 | Resolve Studio 21.1.0.14 | Generated 23.976, no embedded TC; zero-start timeline and current-source seven-finding copy | 7/7 imported | All actual anchors and durations exact; current source-A placement verified | Exact text, colors and current URLs retained; unchanged fixture hashes | 7/7 exact records; unchanged fixture hashes | Focused round-trip pass; [retained evidence](evidence/resolve-markers-23976-20260919/README.md) |
-| Adobe Premiere Pro | Native check pending; ten production XML/CSV fixture pairs prepared | | | | | FCP7 XML exporter and independent file validator implemented; app binding returned no UI state; native acceptance unverified |
+| Adobe Premiere Pro 26.5.1 | Generated 23.976 / zero-start NDF; 12 frames | 2 carrier markers / 3 findings | Native returned anchors and durations exact: range 0–2 and grouped frame 1 | Unicode and provenance retained; grouped linefeed separator returned as literal entity-looking text | Timing, placement, source bytes, raster and PAR exact; unknown field order becomes `none`; exact comments differ | Focused partial native round trip; [retained evidence](evidence/premiere-native-roundtrip-20261001/README.md); broader acceptance open |
+| Adobe Premiere Pro 26.5.1 | Generated 29.97 DF / `00:00:59;28`; 15 frames | 1/1 | Relative frame 2 / `00:01:00;02` and one-frame duration exact | Exact title, comment and provenance retained | Rate, equivalent native DF labels, placement, duration, media bytes, raster and PAR exact; unknown field order becomes `none` | Focused partial native round trip; [retained evidence](evidence/premiere-native-roundtrip-20261001/README.md); broader acceptance open |
+| Adobe Premiere Pro 26.5.1 | Generated 23.976 / zero-start NDF; visible ASCII grouped separator diagnostic | 2 carrier markers / 3 findings | Same anchors and durations exact | Exact titles, comments and grouped visible separator retained | Rate, placement, durations, source bytes, raster and PAR exact; unknown field order becomes `none` | Native diagnostic supports generated separator fix; [retained evidence](evidence/premiere-native-roundtrip-20261001/README.md); user multiline and broader acceptance open |
 | Media Composer First (free edition) | Optional / unverified | | | | | May be skipped for 2.0; EDL sequence creation observed, marker-text compatibility unverified |
 | Media Composer | Optional / unverified | | | | | Full edition unavailable; no 2.0 release gate |
 

@@ -455,7 +455,7 @@ final class CompareSessionLifecycleTests: XCTestCase {
             return session.reviewNotes.first { $0.id == original.id }?.primaryEndFrame
         })
         XCTAssertEqual(session.reviewNotes.first, ranged)
-        XCTAssertEqual(drafts.rangeDrafts[original.id], "90")
+        XCTAssertNil(drafts.rangeDrafts[original.id])
         XCTAssertFalse(drafts.hasPendingEdits(in: session.reviewNotes))
         XCTAssertNil(drafts.rangeActionErrors[original.id])
         XCTAssertNil(drafts.correctionRequest)

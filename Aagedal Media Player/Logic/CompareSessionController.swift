@@ -1345,7 +1345,7 @@ final class CompareSessionController: ObservableObject {
         if format == .finalCutProXML {
             panel.message = "Final Cut Pro can replace tabs and line breaks with spaces when markers are exported and re-imported. Keep a CSV or PDF report if note formatting matters. Ranges are included in marker text; findings at the same frame share a labelled marker."
         } else if format == .premiereProXML {
-            panel.message = "In Premiere Pro, use File → Import to create a separate review sequence with source A on V1 and sequence markers. This does not add markers to an existing edit. Findings at the same frame share one labelled marker spanning their longest range; each original finding and range remains in its comment. Keep CSV or PDF for the complete review."
+            panel.message = "In Premiere Pro, use File → Import to create a separate review sequence with source A on V1 and sequence markers. Findings at the same frame share one labelled marker spanning their longest range, with each finding in its comment. Premiere can change tabs and line breaks in note text during import/re-export. Keep CSV or PDF if note formatting matters."
         }
 
         panel.begin { [weak self] response in
