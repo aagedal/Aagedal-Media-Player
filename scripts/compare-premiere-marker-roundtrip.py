@@ -101,9 +101,20 @@ def geometry(element, expected_rate):
     return dict(raster=[width, height], pixelAspect=par)
 
 
+def require_enabled(element):
+    # XMEML defaults omitted enabled elements to TRUE. A muted track or clip
+    # cannot establish the unchanged source-A review sequence described here.
+    values = element.findall("enabled")
+    if len(values) > 1 or (values and values[0].text != "TRUE"):
+        raise ValueError(f"Review {element.tag} must be enabled with an unambiguous TRUE value")
+
+
 def read_export(path, sequence_name=None):
     data = path.read_bytes()
-    if re.search(br"<!ENTITY|<!DOCTYPE\s+[^>]*(?:SYSTEM|PUBLIC|\[)", data, re.I):
+    # XML may be UTF-16 or UTF-32. Strip NUL padding only for this ASCII
+    # declaration scan; the parser still receives the untouched document.
+    declarations = data.replace(b"\x00", b"")
+    if re.search(br"<!ENTITY|<!DOCTYPE\s+[^>]*(?:SYSTEM|PUBLIC|\[)", declarations, re.I):
         raise ValueError("External DTDs and entity declarations are unsupported")
     root = ET.fromstring(data)
     if root.tag != "xmeml" or root.get("version") not in ("4", "5"):
@@ -114,15 +125,19 @@ def read_export(path, sequence_name=None):
     if len(sequences) != 1:
         raise ValueError("Expected one unique review sequence; select its exact name if necessary")
     sequence = sequences[0]
+    require_enabled(sequence)
     fps = rate(sequence)
     duration = integer(sequence, "duration")
     if duration <= 0:
         raise ValueError("Sequence duration must be positive")
     tracks = sequence.findall("media/video/track")
     clips = sequence.findall("media/video/track/clipitem")
-    if len(tracks) != 1 or len(clips) != 1 or tracks[0].find("transitionitem") is not None:
+    if (len(tracks) != 1 or len(clips) != 1
+            or tracks[0].find("transitionitem") is not None or tracks[0].find("generatoritem") is not None):
         raise ValueError("Expected exactly one video track and one untrimmed source-A clip")
+    require_enabled(tracks[0])
     clip = clips[0]
+    require_enabled(clip)
     placement = {p: integer(clip, p) for p in ("start", "end", "in", "out", "duration")}
     media_duration = placement["duration"]
     if media_duration <= 0 or media_duration > duration or placement != dict(

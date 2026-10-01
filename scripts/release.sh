@@ -182,7 +182,7 @@ if [[ "$EVIDENCE_STATUS" != "passed" \
     exit 2
 fi
 python3 scripts/validate-release-xcresult.py \
-    "$CANDIDATE_SUMMARY" "$CANDIDATE_DETAILS" --minimum-tests 772 \
+    "$CANDIDATE_SUMMARY" "$CANDIDATE_DETAILS" --minimum-tests 775 \
     --require-test "CompareReviewTextCommitTests/testOrdinaryTextValidationRevealsFindingHiddenByFilterWithoutSavingDrafts()" \
     --require-test "CompareReviewTextCommitTests/testRetainedRangeCorrectionRevealsOnlyExistingEditableHiddenFinding()" \
     --require-test "LiveAudioMeterCoordinatorTests/testMalformedCurrentLoudnessFailsGenerationAndCancelsWorker()" \
@@ -199,6 +199,9 @@ python3 scripts/validate-release-xcresult.py \
     --require-test "CompareReviewTextCommitTests/testRangeDepartureSavesPendingEndpointWhenFocusCallbackDoesNotRun()" \
     --require-test "CompareReviewTextCommitTests/testRangeDepartureRetainsInvalidEndpointAndRevealsHiddenFinding()" \
     --require-test "CompareReviewTextCommitTests/testRangeDepartureRespectsLiveTextCorrectionUnavailableEditingAndExplicitClear()" \
+    --require-test "CompareReviewTextCommitTests/testPassiveTextDepartureUsesCorrectionSelectedAfterRowRender()" \
+    --require-test "CompareReviewTextCommitTests/testPassiveTextDepartureRetainsFailuresAndCommitsOnceAfterRetry()" \
+    --require-test "CompareReviewTextCommitTests/testPassiveRangeBlurUsesTextCorrectionSelectedAfterRowRender()" \
     --require-test "LiveAudioMeterDecoderTests/testBundledDecoderPreservesContiguousDTSInMillisecondMatroskaContainer()"
 python3 scripts/validate-release-xcresult.py \
     "$CANDIDATE_MIXED_SUMMARY" "$CANDIDATE_MIXED_DETAILS" --minimum-tests 2 \
@@ -300,7 +303,22 @@ RELEASE_ZIP="$BUILD_DIR/$RELEASE_ZIP_NAME"
 /usr/bin/ditto -c -k --keepParent --norsrc --noextattr --noacl --noqtn "$APP_PATH" "$RELEASE_ZIP"
 
 ZIP_SIZE=$(/usr/bin/stat -f%z "$RELEASE_ZIP")
+ZIP_SHA256=$(shasum -a 256 "$RELEASE_ZIP" | awk '{print $1}')
 echo "==> Release zip: $RELEASE_ZIP ($ZIP_SIZE bytes)"
+
+# Retain the packaged ZIP identity before checking or signing it. Hashing only
+# after upload could accept a replacement ZIP whose Sparkle signature belongs
+# to earlier bytes. Recheck at each publication boundary against this identity.
+verify_release_artifact() {
+    local current_size current_sha256
+    current_size=$(/usr/bin/stat -f%z "$RELEASE_ZIP") || return 1
+    current_sha256=$(shasum -a 256 "$RELEASE_ZIP" | awk '{print $1}') || return 1
+    if [[ "$current_size" != "$ZIP_SIZE" || "$current_sha256" != "$ZIP_SHA256" ]]; then
+        echo "ERROR: release ZIP changed during preparation; publication stopped." >&2
+        echo "Recreate and verify the distribution artifact before signing or publishing it." >&2
+        return 1
+    fi
+}
 
 # Validate the artifact users will actually download, not only the exported app
 # from which it was created. This catches packaging damage, a missing stapled
@@ -326,6 +344,7 @@ if [[ ! -x "$SIGN_UPDATE_BIN" ]]; then
     exit 1
 fi
 
+verify_release_artifact
 ED_SIGNATURE_LINE=$("$SIGN_UPDATE_BIN" "$RELEASE_ZIP")
 echo "==> Sparkle signature: $ED_SIGNATURE_LINE"
 
@@ -462,12 +481,14 @@ if gh release view "$MARKETING_VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2
     # Check before --clobber so an unrelated existing release is never mutated.
     verify_release_identity
     verify_source_identity
+    verify_release_artifact
     echo "==> Uploading $RELEASE_ZIP_NAME to existing GitHub release $MARKETING_VERSION"
     gh release upload "$MARKETING_VERSION" "$RELEASE_ZIP" \
         --repo "$GITHUB_REPOSITORY" \
         --clobber
 else
     verify_source_identity
+    verify_release_artifact
     echo "==> Creating GitHub release $MARKETING_VERSION"
     gh release create "$MARKETING_VERSION" "$RELEASE_ZIP" \
         --repo "$GITHUB_REPOSITORY" \
@@ -479,8 +500,8 @@ fi
 # Recheck identity after mutation, then prove that the remote asset's name,
 # byte size and GitHub-computed SHA-256 identify the exact local ZIP before
 # publishing its update URL.
+verify_release_artifact
 verify_release_identity
-ZIP_SHA256=$(shasum -a 256 "$RELEASE_ZIP" | awk '{print $1}')
 PUBLISHED_RELEASE_JSON="$BUILD_DIR/published-release.json"
 gh api "repos/$GITHUB_REPOSITORY/releases/tags/$MARKETING_VERSION" > "$PUBLISHED_RELEASE_JSON"
 python3 scripts/validate-github-release-asset.py \
@@ -489,6 +510,7 @@ python3 scripts/validate-github-release-asset.py \
 # Publish the already-validated feed locally only after the release target and
 # exact downloadable asset have been verified.
 verify_source_identity
+verify_release_artifact
 mv "$PENDING_APPCAST" "$APPCAST"
 
 echo "==> Prepended and validated appcast entry. Review and commit:"

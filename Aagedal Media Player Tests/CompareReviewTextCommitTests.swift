@@ -7,6 +7,128 @@ import XCTest
 
 final class CompareReviewTextCommitTests: XCTestCase {
     @MainActor
+    func testPassiveTextDepartureUsesCorrectionSelectedAfterRowRender() {
+        let selected = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
+            secondaryFrame: 10, secondaryTime: 1, text: "Selected finding", primaryEndFrame: 20)
+        let other = CompareReviewNote(primaryFrame: 30, primaryTime: 3,
+            secondaryFrame: 30, secondaryTime: 3, text: "Other finding")
+        for field in [CompareReviewCorrectionRequest.Field.text, .rangeEnd] {
+            for departingNote in [selected, other] where field == .rangeEnd || departingNote.id != selected.id {
+                for text in ["", "Pending valid edit"] {
+                    var drafts = CompareReviewDraftState()
+                    let renderedRequest = drafts.correctionRequest
+                    drafts.updateNoteTextDraft(text, noteID: departingNote.id)
+                    drafts.noteActionErrors[departingNote.id] = "Earlier departing error"
+                    if field == .rangeEnd {
+                        drafts.updateRangeEndDraft("invalid end", noteID: selected.id)
+                        drafts.commitRangeOnDeparture(note: selected, canEdit: true) { _ in
+                            XCTFail("Invalid range must not save")
+                            return true
+                        }
+                    } else {
+                        drafts.updateNoteTextDraft("", noteID: selected.id)
+                        drafts.commitTextOnDeparture(note: selected, canEdit: true) { _ in
+                            XCTFail("Empty text must not save")
+                            return true
+                        }
+                    }
+                    let selectedRequest = drafts.correctionRequest
+                    XCTAssertEqual(selectedRequest?.noteID, selected.id)
+                    XCTAssertEqual(selectedRequest?.field, field)
+                    XCTAssertTrue(CompareReviewTextFocusLossPolicy.shouldCommit(
+                        noteID: departingNote.id, correctionRequest: renderedRequest, canEdit: true),
+                        "The departing row's stale snapshot would permit this callback")
+
+                    drafts.commitTextOnDeparture(note: departingNote, canEdit: true) { _ in
+                        XCTFail("Passive text must defer to the newly selected correction")
+                        return true
+                    }
+                    XCTAssertEqual(drafts.correctionRequest, selectedRequest)
+                    XCTAssertEqual(drafts.noteDrafts[departingNote.id], text)
+                    XCTAssertEqual(drafts.noteActionErrors[departingNote.id], "Earlier departing error")
+                }
+            }
+        }
+    }
+
+    @MainActor
+    func testPassiveTextDepartureRetainsFailuresAndCommitsOnceAfterRetry() {
+        let note = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
+            secondaryFrame: 10, secondaryTime: 1, text: "Saved finding")
+        var drafts = CompareReviewDraftState()
+        drafts.updateNoteTextDraft("  Pending edit \n", noteID: note.id)
+        drafts.noteActionErrors[note.id] = "Retained error"
+        drafts.commitTextOnDeparture(note: note, canEdit: false) { _ in
+            XCTFail("Disabled departure must not save")
+            return true
+        }
+        XCTAssertEqual(drafts.noteActionErrors[note.id], "Retained error")
+        XCTAssertEqual(drafts.noteDrafts[note.id], "  Pending edit \n")
+
+        drafts.commitTextOnDeparture(note: note, canEdit: true) { _ in false }
+        XCTAssertEqual(drafts.noteActionErrors[note.id], "This note could not be updated. Retry the edit.")
+        XCTAssertEqual(drafts.correctionRequest?.field, .text)
+        XCTAssertEqual(drafts.noteDrafts[note.id], "  Pending edit \n")
+
+        var savedTexts: [String] = []
+        drafts.commitTextOnDeparture(note: note, canEdit: true) {
+            savedTexts.append($0)
+            return true
+        }
+        XCTAssertEqual(savedTexts, ["Pending edit"])
+        XCTAssertNil(drafts.noteDrafts[note.id])
+        XCTAssertNil(drafts.noteActionErrors[note.id])
+        XCTAssertNil(drafts.correctionRequest)
+        drafts.commitTextOnDeparture(note: note, canEdit: true) { _ in
+            XCTFail("Blur followed by row removal must not save the text again")
+            return true
+        }
+
+        // A queued explicit commit may already have updated the controller
+        // while the departing row still holds the old note value.
+        var currentNote = note
+        currentNote.text = "Pending edit"
+        drafts.updateNoteTextDraft(" Pending edit ", noteID: note.id)
+        drafts.commitTextOnDeparture(note: currentNote, canEdit: true) { _ in
+            XCTFail("Departure must compare against the current saved note")
+            return true
+        }
+        XCTAssertNil(drafts.noteDrafts[note.id])
+    }
+
+    @MainActor
+    func testPassiveRangeBlurUsesTextCorrectionSelectedAfterRowRender() {
+        let note = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
+            secondaryFrame: 10, secondaryTime: 1, text: "Saved finding", primaryEndFrame: 20)
+        var drafts = CompareReviewDraftState()
+        drafts.updateRangeEndDraft("30", noteID: note.id)
+        let renderedRequest = drafts.correctionRequest
+        drafts.updateNoteTextDraft("", noteID: note.id)
+        drafts.commitTextOnDeparture(note: note, canEdit: true) { _ in
+            XCTFail("Empty text must not save")
+            return true
+        }
+        let textRequest = drafts.correctionRequest
+        XCTAssertTrue(CompareReviewRangeFocusLossPolicy.shouldCommit(
+            draft: "30", savedEndFrame: 20, noteID: note.id, correctionRequest: renderedRequest))
+        drafts.commitRangeOnDeparture(note: note, canEdit: true) { _ in
+            XCTFail("Range blur must defer to the live text correction")
+            return true
+        }
+        XCTAssertEqual(drafts.correctionRequest, textRequest)
+        XCTAssertEqual(drafts.rangeDrafts[note.id], "30")
+
+        drafts.updateNoteTextDraft("Corrected finding", noteID: note.id)
+        drafts.commitTextOnDeparture(note: note, canEdit: true) { $0 == "Corrected finding" }
+        var savedEndpoints: [Int64] = []
+        drafts.commitRangeOnDeparture(note: note, canEdit: true) {
+            savedEndpoints.append($0)
+            return true
+        }
+        XCTAssertEqual(savedEndpoints, [30], "Normal passive range saving resumes after correction")
+    }
+
+    @MainActor
     func testRangeDepartureSavesPendingEndpointWhenFocusCallbackDoesNotRun() {
         let note = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
             secondaryFrame: 10, secondaryTime: 1, text: "Finding", primaryEndFrame: 20)

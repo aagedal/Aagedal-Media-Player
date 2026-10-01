@@ -4519,6 +4519,29 @@ and at least 772 aggregate tests, plus both isolated mixed-backend directions.
 - [ ] Complete native Premiere round-trip acceptance and the unchanged wider
   accessibility, public dependency, hardware and distribution gates.
 
+## Phase 213 — Use live correction ownership on every passive Review exit
+
+- [x] Route passive text blur/removal and range blur through the live draft owner
+  and current saved note, preserving corrections selected after a row rendered.
+- [x] Pass all 28 optimized Release text/correction checks, including three new
+  regressions for both field orderings, rejected-update retry and duplicate exit.
+- [ ] Complete native keyboard, Full Keyboard Access and spoken VoiceOver checks.
+
+## Phase 214 — Reject invalid Premiere playback evidence and ZIP replacement
+
+- [x] Reject disabled/ambiguous source-A sequences, tracks and clips, extra V1
+  generators and UTF-16/32 DTD/entity declarations; all 19 comparator checks pass.
+- [x] Bind the original packaged ZIP hash before signing and recheck publication
+  boundaries. All 18 release-script checks pass, including executable same-size
+  replacement simulations before/during upload; no publication is performed.
+- [x] Require 775 aggregate candidate tests and all three new exact Review
+  identities, preserving both isolated transport directions. All 14 evidence
+  validator checks and all 61 normal source preflight checks pass.
+
+See [focused receipts](docs/evidence/passive-review-release-integrity-20261001/README.md).
+Canonical committed-source verification follows separately; editor/accessibility,
+public dependencies, hardware and distribution gates remain open.
+
 ## Remaining work after this continuation
 
 The user’s 2026-10-01 scope decision makes Avid native compatibility optional

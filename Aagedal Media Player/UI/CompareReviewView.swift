@@ -145,6 +145,32 @@ struct CompareReviewDraftState {
         }
     }
 
+    /// Passive callbacks can arrive after another disappearing field has
+    /// selected a correction. Read the owner's live request and draft rather
+    /// than the row's earlier snapshot, including when a blur precedes removal.
+    mutating func commitTextOnDeparture(
+        note: CompareReviewNote, canEdit: Bool, update: (String) -> Bool
+    ) {
+        guard CompareReviewTextFocusLossPolicy.shouldCommit(
+            noteID: note.id, correctionRequest: correctionRequest, canEdit: canEdit
+        ), let draft = noteDrafts[note.id] else { return }
+        switch CompareReviewTextCommitResult.attempt(
+            draft: draft, savedText: note.text, canEdit: canEdit, update: update
+        ) {
+        case .accepted:
+            finishNoteTextCommit(noteID: note.id)
+        case .empty:
+            recordFieldValidationError("Enter note text before continuing.",
+                note: note, field: .text, canEdit: canEdit)
+        case .unavailable:
+            recordFieldValidationError("Review notes cannot be edited right now. Retry loading the review before continuing.",
+                note: note, field: .text, canEdit: canEdit)
+        case .rejected:
+            recordFieldValidationError("This note could not be updated. Retry the edit.",
+                note: note, field: .text, canEdit: canEdit)
+        }
+    }
+
     /// The explicit current-frame action replaces typed input even when it
     /// chooses the existing endpoint, which emits no note-value change.
     @discardableResult
@@ -614,6 +640,12 @@ struct CompareReviewView: View {
             },
             onUpdate: { text in compareSession.updateReviewNote(id: note.id, text: text) },
             onCommitFinished: { drafts.finishNoteTextCommit(noteID: note.id) },
+            onTextDeparture: {
+                guard let currentNote = compareSession.reviewNotes.first(where: { $0.id == note.id }) else { return }
+                drafts.commitTextOnDeparture(note: currentNote, canEdit: compareSession.canEditReviewNotes) {
+                    compareSession.updateReviewNote(id: note.id, text: $0)
+                }
+            },
             onDelete: {
                 drafts.noteDrafts[note.id] = nil
                 drafts.noteActionErrors[note.id] = nil
@@ -933,6 +965,7 @@ private struct CompareReviewNoteRow: View {
     let onSeek: () -> Void
     let onUpdate: (String) -> Bool
     let onCommitFinished: () -> Void
+    let onTextDeparture: () -> Void
     let onDelete: () -> Void
     let onClassification: (CompareReviewSeverity?, CompareReviewCategory?, CompareReviewStatus?) -> Void
     let onRange: (Int64?) -> Bool
@@ -965,6 +998,7 @@ private struct CompareReviewNoteRow: View {
         onSeek: @escaping () -> Void,
         onUpdate: @escaping (String) -> Bool,
         onCommitFinished: @escaping () -> Void,
+        onTextDeparture: @escaping () -> Void,
         onDelete: @escaping () -> Void,
         onClassification: @escaping (CompareReviewSeverity?, CompareReviewCategory?, CompareReviewStatus?) -> Void,
         onRange: @escaping (Int64?) -> Bool,
@@ -982,6 +1016,7 @@ private struct CompareReviewNoteRow: View {
         self.onSeek = onSeek
         self.onUpdate = onUpdate
         self.onCommitFinished = onCommitFinished
+        self.onTextDeparture = onTextDeparture
         self.onDelete = onDelete
         self.onClassification = onClassification
         self.onRange = onRange
@@ -1168,13 +1203,10 @@ private struct CompareReviewNoteRow: View {
                 .focused($isEndFrameFocused)
                 .onSubmit(applyRange)
                 .onChange(of: isEndFrameFocused) { wasFocused, focused in
-                    guard wasFocused && !focused && canEdit else { return }
-                    // Tab and pointer navigation commit like Return or Apply.
-                    // Keep an empty draft for the explicit Clear range action.
-                    if CompareReviewRangeFocusLossPolicy.shouldCommit(
-                        draft: endFrameDraft, savedEndFrame: note.primaryEndFrame,
-                        noteID: note.id, correctionRequest: activeCorrectionRequest
-                    ) { applyRange() }
+                    guard wasFocused && !focused && !isDeleting else { return }
+                    // Blur and removal use the same live owner state. Another
+                    // field may have selected a correction since this render.
+                    onRangeDeparture()
                 }
                 .onChange(of: endFrameDraft) { _, _ in
                     rangeActionError = nil
@@ -1232,15 +1264,9 @@ private struct CompareReviewNoteRow: View {
         rangeActionError = nil
     }
 
-    private var canPassivelyCommitText: Bool {
-        CompareReviewTextFocusLossPolicy.shouldCommit(
-            noteID: note.id, correctionRequest: activeCorrectionRequest, canEdit: canEdit
-        )
-    }
-
     private func commitOnFocusLoss() {
-        guard canPassivelyCommitText else { return }
-        commit()
+        guard !isDeleting else { return }
+        onTextDeparture()
     }
 
     private func commit() {

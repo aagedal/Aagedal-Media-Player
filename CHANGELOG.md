@@ -5,8 +5,11 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Changed
+- Passive Review blur/removal callbacks use current correction ownership, preserving unrelated drafts and avoiding duplicate text saves.
+- Premiere round-trip validation rejects disabled or ambiguous source-A playback and encoded DTD/entity declarations.
+- Release publication retains the original packaged ZIP hash through signing, upload and update-feed preparation, rejecting same-size artifact replacements.
 - Review saves pending range edits when filtering, closing the panel, or collapsing a range removes its field, while preserving correction focus and rejected drafts.
-- Candidate verification and release consumption require the nine new Premiere and Review regressions and at least 772 aggregate tests, alongside both isolated mixed-backend transport checks.
+- Candidate verification and release consumption require the Premiere and Review regressions, including three passive-callback checks, and at least 775 aggregate tests, alongside both isolated mixed-backend transport checks.
 - Live meters enforce bounded startup even before the first PCM snapshot arrives, clearing stalled work with retained diagnostics.
 - PDF review reports identify source and relative timecodes explicitly and preserve complete values after relinking.
 - Dependency reconstruction audits reject undeclared sources, stale build caches, redirected directories and nonregular inputs.

@@ -161,6 +161,30 @@ class RoundTripTests(unittest.TestCase):
             root.append(media)
         self.assertEqual(self.compare(mutate)["status"], "exact-match")
 
+    def test_explicit_enabled_sequence_track_and_clip_match_default_enabled(self):
+        def mutate(root):
+            for path in (".//sequence", ".//sequence/media/video/track", ".//clipitem"):
+                ET.SubElement(root.find(path), "enabled").text = "TRUE"
+        self.assertEqual(self.compare(mutate)["status"], "exact-match")
+
+    def test_disabled_invalid_and_duplicate_enabled_values_rejected(self):
+        for path in (".//sequence", ".//sequence/media/video/track", ".//clipitem"):
+            for values in (("FALSE",), ("true",), ("MAYBE",), (None,), ("TRUE", "TRUE"), ("TRUE", "FALSE")):
+                def mutate(root):
+                    for value in values:
+                        ET.SubElement(root.find(path), "enabled").text = value
+                with self.subTest(path=path, values=values), self.assertRaisesRegex(ValueError, "must be enabled"):
+                    self.compare(mutate)
+
+    def test_additional_generator_on_source_a_video_track_rejected(self):
+        def mutate(root):
+            generator = ET.SubElement(root.find(".//sequence/media/video/track"), "generatoritem")
+            ET.SubElement(generator, "name").text = "Unexpected title"
+            ET.SubElement(generator, "start").text = "0"
+            ET.SubElement(generator, "end").text = "20000"
+        with self.assertRaisesRegex(ValueError, "exactly one video track"):
+            self.compare(mutate)
+
     def test_returned_multiple_sequences_require_unique_explicit_selection(self):
         def mutate(root):
             children = root.find("project/children")
@@ -194,6 +218,27 @@ class RoundTripTests(unittest.TestCase):
             self.before.write_bytes(data)
             with self.subTest(data=data), self.assertRaises(ValueError):
                 premiere.read_export(self.before)
+
+    def test_encoded_dtd_and_entity_declarations_rejected_before_parsing(self):
+        document = ET.tostring(fixture(), encoding="unicode")
+        declarations = ('<!DOCTYPE xmeml SYSTEM "remote.dtd">',
+                        '<!DOCTYPE xmeml PUBLIC "remote" "remote.dtd">',
+                        '<!DOCTYPE xmeml [<!ENTITY title "QC 001">]>')
+        for encoding in ("utf-8", "utf-16", "utf-16-le", "utf-16-be", "utf-32", "utf-32-le", "utf-32-be"):
+            for declaration in declarations:
+                xml = document.replace("QC 001", "&title;") if "<!ENTITY" in declaration else document
+                self.before.write_bytes((f'<?xml version="1.0" encoding="{encoding}"?>'
+                                         + declaration + xml).encode(encoding))
+                with self.subTest(encoding=encoding, declaration=declaration), self.assertRaisesRegex(
+                        ValueError, "External DTDs and entity declarations are unsupported"):
+                    premiere.read_export(self.before)
+
+    def test_plain_doctype_and_utf16_unicode_document_remain_supported(self):
+        document = ET.tostring(fixture(), encoding="unicode")
+        self.before.write_bytes(document.encode("utf-8"))
+        self.after.write_bytes(('<?xml version="1.0" encoding="UTF-16"?><!DOCTYPE xmeml>'
+                                + document).encode("utf-16"))
+        self.assertEqual(premiere.compare(self.before, self.after)["status"], "exact-match")
 
     def test_optional_media_bytes_and_report_no_overwrite(self):
         media = self.root / "source a.mov"

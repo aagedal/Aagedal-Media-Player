@@ -150,6 +150,116 @@ exit 91
         self.assertNotIn('skipping upload', self.source)
         self.assertIn('"$RELEASE_ZIP_NAME" "$ZIP_SIZE" "$ZIP_SHA256"', self.source)
 
+    def test_zip_identity_is_retained_before_signing_and_checked_at_publication_boundaries(self) -> None:
+        capture = self.source.index('ZIP_SHA256=$(shasum -a 256 "$RELEASE_ZIP"')
+        self.assertEqual(self.source.count('ZIP_SHA256=$(shasum'), 1)
+        signing = self.source.index('ED_SIGNATURE_LINE=$("$SIGN_UPDATE_BIN"')
+        upload = self.source.index('    gh release upload')
+        create = self.source.index('    gh release create')
+        remote_validation = self.source.index('python3 scripts/validate-github-release-asset.py')
+        feed_publish = self.source.index('mv "$PENDING_APPCAST" "$APPCAST"')
+        self.assertLess(capture, signing)
+        for boundary in (signing, upload, create, remote_validation, feed_publish):
+            guard = self.source.rfind('\nverify_release_artifact\n', capture, boundary)
+            indented_guard = self.source.rfind('\n    verify_release_artifact\n', capture, boundary)
+            self.assertGreater(max(guard, indented_guard), capture)
+        self.assertIn('    verify_source_identity\n    verify_release_artifact\n    echo "==> Uploading', self.source)
+        self.assertIn('    verify_source_identity\n    verify_release_artifact\n    echo "==> Creating', self.source)
+        self.assertIn('verify_source_identity\nverify_release_artifact\nmv "$PENDING_APPCAST"', self.source)
+
+    def test_zip_guard_rejects_same_size_replacement_changed_size_and_missing_artifact(self) -> None:
+        start = self.source.index('verify_release_artifact() {')
+        end = self.source.index('\n}\n', start) + len('\n}\n')
+        guard = self.source[start:end]
+        with tempfile.TemporaryDirectory() as directory:
+            artifact = Path(directory) / 'distribution.zip'
+            original = b'original signed ZIP bytes'
+            environment = os.environ.copy()
+            environment.update(RELEASE_ZIP=str(artifact), ZIP_SIZE=str(len(original)),
+                               ZIP_SHA256=hashlib.sha256(original).hexdigest())
+            for name, payload, accepted in (
+                ('unchanged', original, True),
+                ('same-size replacement', b'x' * len(original), False),
+                ('changed size', original + b'changed', False),
+                ('missing artifact', None, False),
+            ):
+                with self.subTest(mutation=name):
+                    if payload is None:
+                        artifact.unlink()
+                    else:
+                        artifact.write_bytes(payload)
+                    result = subprocess.run(
+                        ['/bin/bash', '-c', 'set -euo pipefail\n' + guard + '\nverify_release_artifact'],
+                        env=environment, text=True, capture_output=True, check=False,
+                    )
+                    self.assertEqual(result.returncode == 0, accepted, result.stderr)
+                    if payload is not None and not accepted:
+                        self.assertIn('release ZIP changed during preparation', result.stderr)
+
+    def test_replaced_zip_cannot_publish_appcast_or_reach_upload_before_verification(self) -> None:
+        start = self.source.index('verify_release_artifact() {')
+        end = self.source.index('\n}\n', start) + len('\n}\n')
+        guard = self.source[start:end]
+        start = self.source.index('if gh release view "$MARKETING_VERSION"')
+        end = self.source.index('mv "$PENDING_APPCAST" "$APPCAST"', start)
+        end += len('mv "$PENDING_APPCAST" "$APPCAST"')
+        publication = self.source[start:end]
+        # Stub remote operations; the production shell guards and publication
+        # branches execute against real files. No GitHub or signing tool runs.
+        stubs = '''
+verify_source_identity() { :; }
+verify_release_identity() { :; }
+gh() {
+    if [[ "$1 $2" == "release view" ]]; then
+        [[ "$EXISTING_RELEASE" == true ]]
+    elif [[ "$1 $2" == "release upload" || "$1 $2" == "release create" ]]; then
+        echo mutation >> "$TRACE"
+        if [[ "$REPLACE_DURING_UPLOAD" == true ]]; then
+            cp "$REPLACEMENT" "$RELEASE_ZIP"
+        fi
+    elif [[ "$1" == api ]]; then
+        echo '{}'
+    else
+        return 99
+    fi
+}
+python3() { echo remote-validation >> "$TRACE"; }
+'''
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            artifact, replacement = root / 'distribution.zip', root / 'replacement.zip'
+            appcast, pending, trace = root / 'appcast.xml', root / 'pending.xml', root / 'trace'
+            original = b'original signed ZIP bytes'
+            replacement.write_bytes(b'x' * len(original))
+            environment = os.environ.copy()
+            environment.update(RELEASE_ZIP=str(artifact), RELEASE_ZIP_NAME=artifact.name,
+                               ZIP_SIZE=str(len(original)), ZIP_SHA256=hashlib.sha256(original).hexdigest(),
+                               BUILD_DIR=str(root), APPCAST=str(appcast), PENDING_APPCAST=str(pending),
+                               TRACE=str(trace), REPLACEMENT=str(replacement),
+                               GITHUB_REPOSITORY='unused/test', MARKETING_VERSION='2.0.0', SOURCE_COMMIT='a' * 40)
+            for existing in ('true', 'false'):
+                for mutation in ('none', 'before-upload', 'during-upload'):
+                    with self.subTest(existing=existing, mutation=mutation):
+                        artifact.write_bytes(replacement.read_bytes() if mutation == 'before-upload' else original)
+                        appcast.write_text('previous feed')
+                        pending.write_text('pending signed update')
+                        trace.write_text('')
+                        environment.update(EXISTING_RELEASE=existing,
+                                           REPLACE_DURING_UPLOAD=str(mutation == 'during-upload').lower())
+                        result = subprocess.run(
+                            ['/bin/bash', '-c', 'set -euo pipefail\n' + guard + stubs + publication],
+                            env=environment, text=True, capture_output=True, check=False,
+                        )
+                        self.assertEqual(result.returncode == 0, mutation == 'none', result.stderr)
+                        if mutation == 'none':
+                            self.assertEqual(appcast.read_text(), 'pending signed update')
+                            self.assertEqual(trace.read_text(), 'mutation\nremote-validation\n')
+                        else:
+                            self.assertEqual(appcast.read_text(), 'previous feed')
+                            self.assertTrue(pending.exists())
+                            self.assertEqual(trace.read_text(), '' if mutation == 'before-upload' else 'mutation\n')
+                            self.assertIn('release ZIP changed during preparation', result.stderr)
+
     def test_automated_tap_update_requires_clean_checkout_and_exact_rewrite(self) -> None:
         tap_guard = self.source.index('verify_tap_checkout()')
         self.assertIn('python3 scripts/validate-tap-cask-path.py "$TAP_LOCAL_PATH" "$TAP_CASK_FILE"', self.source)
@@ -220,7 +330,7 @@ exit 91
         self.assertLess(summary, details)
         self.assertLess(details, validation)
         self.assertLess(validation, analysis)
-        self.assertIn('--minimum-tests 772', source)
+        self.assertIn('--minimum-tests 775', source)
         self.assertIn('-parallel-testing-enabled NO', source)
         self.assertEqual(source.count('-skip-testing:'), 2)
         focused = source.index('echo "==> Focused mixed-backend transport repeat"')
@@ -230,7 +340,11 @@ exit 91
         self.assertLess(focused_validation, analysis)
         self.assertIn('testAVFoundationPrimaryAndMPVSecondaryShareTransport', source)
         self.assertIn('testMPVPrimaryAndAVFoundationSecondaryShareTransport', source)
-        self.assertEqual(source.count('--require-test'), 19)
+        self.assertEqual(source.count('--require-test'), 22)
+        for name in ('testPassiveTextDepartureUsesCorrectionSelectedAfterRowRender',
+                     'testPassiveTextDepartureRetainsFailuresAndCommitsOnceAfterRetry',
+                     'testPassiveRangeBlurUsesTextCorrectionSelectedAfterRowRender'):
+            self.assertIn(f'--require-test "CompareReviewTextCommitTests/{name}()"', source)
         self.assertIn('os.path.realpath', source)
         self.assertIn('candidate evidence must be written outside the source checkout', source)
         self.assertIn('HEAD changed during candidate verification', source)
@@ -280,8 +394,12 @@ exit 91
         self.assertLess(package_match, result_validation)
         self.assertLess(result_validation, preflight)
         self.assertLess(result_validation, archive)
-        self.assertIn('--minimum-tests 772', self.source)
-        self.assertEqual(self.source.count('--require-test'), 19)
+        self.assertIn('--minimum-tests 775', self.source)
+        self.assertEqual(self.source.count('--require-test'), 22)
+        for name in ('testPassiveTextDepartureUsesCorrectionSelectedAfterRowRender',
+                     'testPassiveTextDepartureRetainsFailuresAndCommitsOnceAfterRetry',
+                     'testPassiveRangeBlurUsesTextCorrectionSelectedAfterRowRender'):
+            self.assertIn(f'--require-test "CompareReviewTextCommitTests/{name}()"', self.source)
 
     def test_release_rechecks_source_before_build_and_publication(self) -> None:
         previous_action = self.source.index('verify_source_identity()')

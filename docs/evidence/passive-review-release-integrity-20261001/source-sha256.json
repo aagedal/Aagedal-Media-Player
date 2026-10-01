@@ -1,0 +1,10 @@
+{
+  "Aagedal Media Player/UI/CompareReviewView.swift": "af26e7f141e40dae27f955e30b733168abfe71335d21b557919b5d1b1cf951fa",
+  "Aagedal Media Player Tests/CompareReviewTextCommitTests.swift": "bc36305d9a5449f97c898064f16ad111999f1c0d54bc85c09d6939143946f303",
+  "scripts/compare-premiere-marker-roundtrip.py": "dfe7b7a573cdad39c5ca80ceb2809480da473681b491065869fa6296d7b447e3",
+  "scripts/test-premiere-marker-roundtrip.py": "a4759e24975d5c4aea0d558703beda0cf9f36802278f18f2bfb267adb781e77b",
+  "scripts/release.sh": "b025648a8a80ffbd876a7ff2872359f965eaa45d6b377e41d908e950597d110c",
+  "scripts/verify-release-candidate.sh": "c33523edd19cacb585b4206f3beed5302bc53bba4aaf69426346369d06c31dd9",
+  "scripts/test-release-script-validation.py": "676f8f41265bf9496ef2e91d5e942ad2967e5ae66693126b7d1fbc5514b227cb",
+  "Aagedal Media Player.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved": "6aea6d64326f3040345c3523a0a39c95d53335777e233b3aa311e8ba90ad475d"
+}

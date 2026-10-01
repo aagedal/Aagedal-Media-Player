@@ -3,6 +3,15 @@
 Assessment updated: 2026-10-01. This assessment reflects the
 [product roadmap](../PRODUCT_ROADMAP.md) and its recorded scope decisions.
 
+The latest continuation fixes stale passive Review callbacks using live correction
+ownership, rejects disabled/ambiguous Premiere playback evidence, and binds
+release signing/publication to the original packaged ZIP hash. All 28 focused
+optimized Release Review checks pass, including three new regressions; script
+validators and all 61 normal source preflight checks pass. Candidate/release
+consumption now requires 775 aggregate tests and the new exact identities.
+See [focused receipts](evidence/passive-review-release-integrity-20261001/README.md).
+Canonical committed-source verification and native acceptance remain separate.
+
 The latest scope decision prioritizes Premiere Pro above optional Avid support.
 A dedicated legacy FCP7 XML exporter now carries source-A review sequence
 markers with exact timebases, inclusive ranges and grouped same-frame findings.
@@ -11,7 +20,7 @@ Release build and all 90 focused tests pass, with ten production-metadata
 XML/CSV fixture pairs retained. See
 [engineering evidence](evidence/premiere-review-engineering-20261001/README.md).
 Native Premiere import/re-export acceptance remains separate; Avid is optional
-and does not block 2.0. Candidate verification now requires 772 aggregate tests
+and does not block 2.0. The preceding Premiere candidate required 772 aggregate tests
 and all nine new regressions, plus both isolated mixed-backend transport checks.
 
 Canonical optimized Release verification now passes at clean commit
