@@ -218,6 +218,73 @@ class PublicationTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'payload identity mismatch'):
                 publication.verify(root)
 
+    def test_unlisted_directories_nonregular_inputs_and_redirects_are_rejected(self):
+        for mutation in ('empty-directory', 'nested-empty-directory', 'fifo', 'directory-symlink', 'dangling-symlink'):
+            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                self.fixture(root)
+                path = root / 'unexpected'
+                if mutation == 'empty-directory':
+                    path.mkdir()
+                elif mutation == 'nested-empty-directory':
+                    path = root / 'inputs/unlisted-version'
+                    path.mkdir()
+                elif mutation == 'fifo':
+                    publication.os.mkfifo(path)
+                elif mutation == 'directory-symlink':
+                    path.symlink_to(root / 'assets', target_is_directory=True)
+                else:
+                    path.symlink_to(root / 'missing')
+                with self.assertRaisesRegex(ValueError, 'inventory mismatch'):
+                    publication.verify(root)
+
+    def test_declared_fifo_is_rejected_before_any_payload_is_opened(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            metadata = self.fixture(root)
+            path = root / metadata['binaryTargets'][0]['assetPath']
+            path.unlink()
+            publication.os.mkfifo(path)
+            # sha would block opening the pipe if inventory validation did not
+            # reject it before checksum work. The guard also keeps this test bounded.
+            with patch.object(publication, 'identity', side_effect=AssertionError('payload was opened')):
+                with self.assertRaisesRegex(ValueError, 'payload identity mismatch: nonregular file'):
+                    publication.verify(root)
+
+    def test_nonregular_manifest_is_rejected_before_reading_or_hashing_it(self):
+        for mutation in ('fifo', 'symlink'):
+            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                stage, workspace = root / 'stage', root / 'workspace'
+                stage.mkdir()
+                self.fixture(stage)
+                manifest = stage / 'publication.json'
+                digest = publication.sha(manifest)
+                manifest.rename(stage / 'saved-manifest.json')
+                if mutation == 'fifo':
+                    publication.os.mkfifo(manifest)
+                else:
+                    manifest.symlink_to(stage / 'saved-manifest.json')
+                with patch.object(Path, 'read_text', side_effect=AssertionError('manifest was opened')):
+                    with self.assertRaisesRegex(ValueError, 'nonregular publication.json'):
+                        publication.verify(stage)
+                with patch.object(publication, 'sha', side_effect=AssertionError('manifest was hashed')):
+                    with self.assertRaisesRegex(ValueError, 'nonregular publication.json'):
+                        publication.reconstruct(stage, workspace, digest)
+                self.assertFalse(workspace.exists())
+
+    def test_reconstruction_rejects_unlisted_stage_input_before_creating_workspace(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            stage, workspace = root / 'stage', root / 'workspace'
+            stage.mkdir()
+            self.fixture(stage)
+            digest = publication.sha(stage / 'publication.json')
+            publication.os.mkfifo(stage / 'unlisted-input')
+            with self.assertRaisesRegex(ValueError, 'inventory mismatch'):
+                publication.reconstruct(stage, workspace, digest)
+            self.assertFalse(workspace.exists())
+
     def test_existing_output_never_overwritten(self):
         with tempfile.TemporaryDirectory() as temporary:
             with self.assertRaisesRegex(ValueError, 'never overwritten'):

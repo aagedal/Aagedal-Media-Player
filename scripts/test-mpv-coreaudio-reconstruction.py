@@ -192,6 +192,19 @@ class ReconstructionAuditTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'publication payload identity mismatch'):
             self.verify()
 
+    def test_nonregular_publication_manifest_is_rejected_before_hashing(self):
+        path = self.stage / 'publication.json'
+        path.unlink()
+        audit.os.mkfifo(path)
+        with patch.object(audit.publication, 'sha', side_effect=AssertionError('manifest was hashed')):
+            with self.assertRaisesRegex(ValueError, 'nonregular publication.json'):
+                self.verify()
+
+    def test_unlisted_publication_directory_is_rejected(self):
+        (self.stage / 'unretained-build').mkdir()
+        with self.assertRaisesRegex(ValueError, 'publication file inventory mismatch'):
+            self.verify()
+
     def test_inherited_git_directory_does_not_redirect_audit(self):
         with patch.dict(audit.os.environ, {'GIT_DIR': str(self.root / 'unrelated-git')}):
             self.assertTrue(self.verify()['passed'])

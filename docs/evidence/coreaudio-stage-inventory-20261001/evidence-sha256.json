@@ -1,0 +1,50 @@
+{
+  "docs/evidence/coreaudio-stage-inventory-20261001/README.md": {
+    "sha256": "05dab4b84b469a090683d1aa3ccb561a11a1b689d282b978e77bbb85c76d059d",
+    "sizeBytes": 2454
+  },
+  "docs/evidence/coreaudio-stage-inventory-20261001/mutation-verification.json": {
+    "sha256": "5b733d9a2d171fa349f61520913f9882508f89609ec68499a42f2e4d79d5da4d",
+    "sizeBytes": 1423
+  },
+  "docs/evidence/coreaudio-stage-inventory-20261001/publication-verification.json": {
+    "sha256": "3eac989a9f20188a7dd208b3ee110fa3fbac017c5d897cf55858184def2aa4da",
+    "sizeBytes": 820
+  },
+  "docs/evidence/coreaudio-stage-inventory-20261001/reconstruction-verification.json": {
+    "sha256": "20e410d31ad12d699779bde69e6a6fb47d452774987a3fab195b44b013e4a574",
+    "sizeBytes": 1664
+  },
+  "docs/evidence/coreaudio-stage-inventory-20261001/test-mpv-coreaudio-candidate.log": {
+    "sha256": "9dac12ca9bcb4fd29b7c16113e91083114b84a24ee30b09ad76db688cb328e59",
+    "sizeBytes": 111
+  },
+  "docs/evidence/coreaudio-stage-inventory-20261001/test-mpv-coreaudio-clean-candidate.log": {
+    "sha256": "014554cd79513f4b9f9bc1797f1069a91aa3f7f1be6f69ad6813e6557208bf2b",
+    "sizeBytes": 409
+  },
+  "docs/evidence/coreaudio-stage-inventory-20261001/test-mpv-coreaudio-publication.log": {
+    "sha256": "d966594ef96da29f12788f37b7015aa1a4349c5d2727e92990008f0bacee1a28",
+    "sizeBytes": 120
+  },
+  "docs/evidence/coreaudio-stage-inventory-20261001/test-mpv-coreaudio-reconstruction.log": {
+    "sha256": "fe6cdb9867258b66dd46fe15940a47a63465c0c71aaac88f2b2d00b582e5bcb5",
+    "sizeBytes": 118
+  },
+  "scripts/prepare-mpv-coreaudio-publication.py": {
+    "sha256": "c95da78190a0ed63d9c6908227e356c6d0f7b8352f27a4e4a2b2ae566482e1ea",
+    "sizeBytes": 34463
+  },
+  "scripts/test-mpv-coreaudio-publication.py": {
+    "sha256": "4b19a00007d2edd0ec0dd1a884a6218c98d114dabab3b3bd5921a640ee919cc7",
+    "sizeBytes": 24459
+  },
+  "scripts/test-mpv-coreaudio-reconstruction.py": {
+    "sha256": "6e751798f816b90e99c3e8eb50eab2de700d8d4b5e2670b070f5fa18aeb0ab51",
+    "sizeBytes": 11955
+  },
+  "scripts/verify-mpv-coreaudio-reconstruction.py": {
+    "sha256": "04c0bdc7a22a2035effbfb9ad64a02864603b3484e60d5bf9d86a77be7a3ecdd",
+    "sizeBytes": 10474
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "auxiliaryInputCount": 20,
+  "blockers": [
+    "Proposed release URLs have not been published or downloaded.",
+    "Auxiliary binary target and build-input URLs/checksums are upstream recipe declarations, not remote authentication.",
+    "Fresh ordinary SwiftPM resolution and the shipping app build against the published package remain required.",
+    "Source/configuration reproducibility is retained; byte-identical rebuilds have not been demonstrated.",
+    "Recipe contains host paths and autodetection; environment isolation and supported-macOS/hardware acceptance remain open."
+  ],
+  "byteIdenticalRebuildDemonstrated": false,
+  "driverSHA256": "09d96ca66426aab2b9ef035e2bc14fa3abfd2221f8f0b743f34b4748358fc9ac",
+  "passed": true,
+  "payloadFileCount": 11109,
+  "publicationSHA256": "3eb8f8dd20ce2de6802b7d080e6df30a69ca00b6706dc408823291576b96616c",
+  "reconstructionSHA256": "e8e0801dc7e655c9cf5f5c2f880fd32f93245ecddbbcf0cd27d34ca6b0353a17",
+  "scope": "Retained source/input identity audit; dependency compilation is not verified.",
+  "sourceFileCount": 11089,
+  "sourceSnapshots": [
+    {
+      "name": "MPVKit-recipe",
+      "revision": "42cf977668f4b20f7423993d3eea9232077481d5",
+      "shallow": true,
+      "tree": "e3fb4877be9ca1a3a2aa56e42fe2b1698cc4ca5f"
+    },
+    {
+      "name": "libmpv-v0.41.0",
+      "revision": "50fd4f2fb9e4bed909cef5c9648a1bd33aaef72f",
+      "shallow": true,
+      "tree": "54755f0392d635a53a3f644668ba76b303be4512"
+    },
+    {
+      "name": "FFmpeg-n8.1.2",
+      "revision": "c7aba78212570ed0bd693a441d917d86f2744ad6",
+      "shallow": true,
+      "tree": "9b3a672a066ef0655b6cf42bf967e57f1d832c88"
+    }
+  ]
+}

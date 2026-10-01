@@ -95,7 +95,7 @@ def verify_payload_inventory(stage, workspace, metadata):
 def verify(stage, workspace, expected_publication_sha256):
     if not re.fullmatch(r'[a-f0-9]{64}', expected_publication_sha256):
         raise ValueError('expected publication SHA-256 must be an externally retained lowercase digest')
-    if publication.sha(stage / 'publication.json') != expected_publication_sha256:
+    if publication.sha(publication.publication_manifest(stage)) != expected_publication_sha256:
         raise ValueError('publication does not match externally retained SHA-256')
     # Verifying the stage is necessary: the manifest alone does not verify the
     # immutable receipt, source archive/commit objects or declared origins.

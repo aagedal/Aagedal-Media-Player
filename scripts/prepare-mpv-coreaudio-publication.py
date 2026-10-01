@@ -16,6 +16,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -264,8 +265,46 @@ def prepare(build, output, base):
     return metadata
 
 
+def publication_manifest(output):
+    path = output / 'publication.json'
+    if not stat.S_ISREG(path.lstat().st_mode):
+        raise ValueError('publication file inventory mismatch: nonregular publication.json')
+    return path
+
+
+def verify_publication_inventory(output, files):
+    """Reject undeclared directories, redirects and nonregular payloads before reading."""
+    expected_files = set(files) | {'publication.json'}
+    expected_directories = {Path('.')}
+    for name in expected_files:
+        path = Path(name)
+        if path.is_absolute() or '..' in path.parts or path.as_posix() != name:
+            raise ValueError('publication file inventory mismatch: unsafe payload path')
+        expected_directories.update(path.parents)
+    actual_files, actual_directories = set(), {Path('.')}
+    def walk_error(error):
+        raise error
+    for root, directories, names in os.walk(output, followlinks=False, onerror=walk_error):
+        for name in directories:
+            path = Path(root) / name
+            relative = path.relative_to(output)
+            if path.is_symlink():
+                raise ValueError('publication file inventory mismatch: directory symlink ' + str(relative))
+            actual_directories.add(relative)
+        for name in names:
+            path = Path(root) / name
+            relative = str(path.relative_to(output))
+            if not stat.S_ISREG(path.lstat().st_mode):
+                if relative in files:
+                    raise ValueError('publication payload identity mismatch: nonregular file ' + relative)
+                raise ValueError('publication file inventory mismatch: nonregular file ' + relative)
+            actual_files.add(relative)
+    if actual_files != expected_files or actual_directories != expected_directories:
+        raise ValueError('publication file inventory mismatch')
+
+
 def verify(output):
-    metadata = json.loads((output / 'publication.json').read_text())
+    metadata = json.loads(publication_manifest(output).read_text())
     if metadata.get('schemaVersion') != 1 or metadata.get('status') != 'prepared-local-unpublished':
         raise ValueError('unexpected publication schema/status')
     if (metadata.get('shippingProduct') != 'MPVKit-GPL' or metadata.get('platforms') != ['macos']
@@ -274,9 +313,7 @@ def verify(output):
         raise ValueError('publication shipping policy mismatch')
     release_base(metadata['releaseBaseURL'])
     files = metadata['files']
-    actual = {str(file.relative_to(output)) for file in output.rglob('*') if file.is_file() and file != output / 'publication.json'}
-    if actual != set(files):
-        raise ValueError('publication file inventory mismatch')
+    verify_publication_inventory(output, files)
     for name, expected in files.items():
         path = output / name
         if path.is_symlink() or output.resolve() not in path.resolve().parents or identity(path) != expected:
@@ -460,7 +497,7 @@ def reconstruct(stage, output, expected_publication_sha256):
     """Materialize exact retained sources and inputs; never invoke the recipe."""
     if not re.fullmatch(r'[a-f0-9]{64}', expected_publication_sha256):
         raise ValueError('expected publication SHA-256 must be an externally retained lowercase digest')
-    if sha(stage / 'publication.json') != expected_publication_sha256:
+    if sha(publication_manifest(stage)) != expected_publication_sha256:
         raise ValueError('publication does not match externally retained SHA-256')
     if output.exists():
         raise ValueError('reconstruction output must be new; retained workspaces are never overwritten')

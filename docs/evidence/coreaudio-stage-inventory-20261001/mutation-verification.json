@@ -1,0 +1,43 @@
+{
+  "baselineGitRevision": "a1acf230c8452523c3d6f53b86a03cb1b620b7e6",
+  "baselinePreparerSHA256": "e34d44ac254755a0ad645ed2d6d0b8c9785c453a967e26c99fc41c37c8b1582e",
+  "currentPreparerSHA256": "c95da78190a0ed63d9c6908227e356c6d0f7b8352f27a4e4a2b2ae566482e1ea",
+  "results": [
+    {
+      "baselineAccepted": true,
+      "currentAccepted": false,
+      "mutation": "empty-directory",
+      "rejection": "publication file inventory mismatch"
+    },
+    {
+      "baselineAccepted": true,
+      "currentAccepted": false,
+      "mutation": "nested-empty-directory",
+      "rejection": "publication file inventory mismatch"
+    },
+    {
+      "baselineAccepted": true,
+      "currentAccepted": false,
+      "mutation": "fifo",
+      "rejection": "publication file inventory mismatch: nonregular file unexpected"
+    },
+    {
+      "baselineAccepted": true,
+      "currentAccepted": false,
+      "mutation": "directory-symlink",
+      "rejection": "publication file inventory mismatch: directory symlink unexpected"
+    },
+    {
+      "baselineAccepted": true,
+      "currentAccepted": false,
+      "mutation": "dangling-symlink",
+      "rejection": "publication file inventory mismatch: nonregular file unexpected"
+    },
+    {
+      "baselineAccepted": true,
+      "currentAccepted": false,
+      "mutation": "manifest-symlink",
+      "rejection": "publication file inventory mismatch: nonregular publication.json"
+    }
+  ]
+}
