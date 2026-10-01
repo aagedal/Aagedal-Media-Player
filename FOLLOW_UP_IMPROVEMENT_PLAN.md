@@ -4391,6 +4391,44 @@ All six new app regressions must pass in detailed candidate evidence.
 Native keyboard/spoken accessibility, public dependencies, hardware/soak,
 remaining editor and distribution gates remain open.
 
+## Phase 202 — Reveal filtered Review corrections
+
+- [x] Reveal an existing editable finding hidden by the filter when ordinary
+  Return/blur/range validation selects it, Review reopens or editing resumes.
+- [x] Preserve all pending drafts and exact queries for visible, missing or
+  unavailable targets; add two production-policy regressions.
+- [x] Pass all 22 optimized Release Review text/correction checks. Native focus
+  timing and keyboard/spoken acceptance remain open.
+
+## Phase 203 — Validate current live loudness at handoff
+
+- [x] Reject NaN/positive-infinity current Momentary/Short-term readings before
+  display reduction, clearing results and canceling the owning generation.
+- [x] Preserve nil warm-up and negative-infinity silence after Clear Maxima;
+  two regressions pass with all 28 optimized Release Coordinator checks.
+
+## Phase 204 — Exact dependency publication-stage inventory
+
+- [x] Reject undeclared directories, symlinks and nonregular entries, including
+  pipes; reject nonregular manifests before reading or hashing.
+- [x] Pass 21 publication, 18 reconstruction, 12 candidate and 18 clean-candidate
+  Python checks and the unchanged 46-file stage/11,109-file workspace audit.
+- [x] Retain six before/after mutation observations and exact payload identities
+  in [stage evidence](docs/evidence/coreaudio-stage-inventory-20261001/README.md).
+  No dependency compilation, publication or shipping repin is implied.
+
+## Phase 205 — Require current correction/meter candidate regressions
+
+- [x] Raise aggregate candidate consumption to 760 tests and require all four
+  new Review/Coordinator regressions by exact identity in both verification and
+  release consumption; both isolated transport checks remain mandatory.
+- [x] Pass the complete script-validator gate and retain the fifty passing
+  focused optimized Release checks in
+  [focused evidence](docs/evidence/review-meter-integrity-20261001/README.md).
+- [ ] Run fresh canonical committed-source Release verification.
+  Native Avid First reaches the disposable project and EDL picker but path
+  navigation fails; its marker-text import and all editor acceptance stay open.
+
 ## Remaining work after this continuation
 
 - Repeat the now-integrated SwiftMediaMetadata 3.0.1 production profile with
@@ -4782,3 +4820,8 @@ remaining editor and distribution gates remain open.
 191. Phase 199 exact offline dependency payload inventory.
 192. Phase 200 overflow-safe comparison metadata labels.
 193. Phase 201 integrated startup/PDF/payload verification.
+
+194. Phase 202 filtered Review correction visibility.
+195. Phase 203 current loudness handoff validation.
+196. Phase 204 exact dependency publication-stage inventory.
+197. Phase 205 explicit correction/meter candidate regression consumption.

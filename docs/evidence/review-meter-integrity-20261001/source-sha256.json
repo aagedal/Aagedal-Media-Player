@@ -1,0 +1,10 @@
+{
+  "Aagedal Media Player Tests/CompareReviewTextCommitTests.swift": "9ebbee19b9a89426d42c34b1512efc229a3488b14a7458f2de61b244f7361b18",
+  "Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift": "2504193b19d5567ad963223c95e400e8c5d0c8869337f6541fab757554a6811a",
+  "Aagedal Media Player/Binaries/ffmpeg": "dc3770d91735cfe8b0ef8f4eb7c6f8431d722cca0d79c0959d62be216868d604",
+  "Aagedal Media Player/Logic/LiveAudioMeterCoordinator.swift": "7c65ef9c895a3c34e70313db4861570fd88b50a2fc3431c5c75945a55ed9a6bf",
+  "Aagedal Media Player/UI/CompareReviewView.swift": "a0343234a5be58f4208f55e5fb5f2ee1b697537588c9b259054f0b42e222cc8e",
+  "scripts/release.sh": "79486156caff562672f97a9c75c74760fbdbf9e639647d45f25344e9d0054e38",
+  "scripts/test-release-script-validation.py": "aad96001d551919e88e3ce3e61d033b6e01758df8c280bc41246f8f041e56213",
+  "scripts/verify-release-candidate.sh": "6d6a02d67400c89e5cf72a76999f1ae8f49dba700f1afacba94d09fab11cedc5"
+}

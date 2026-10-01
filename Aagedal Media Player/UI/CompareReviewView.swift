@@ -158,6 +158,19 @@ struct CompareReviewDraftState {
         return true
     }
 
+    /// Ordinary Return/blur validation can select a finding just as its row
+    /// disappears under a filter. Reveal that correction from the stable
+    /// popover, including when reopening it or restoring editing after load.
+    func filterRevealingCorrection(
+        in notes: [CompareReviewNote], query: String, canEdit: Bool
+    ) -> String {
+        guard canEdit, let noteID = correctionRequest?.noteID,
+              notes.contains(where: { $0.id == noteID }),
+              !CompareReviewNavigation.filtered(notes, query: query).contains(where: { $0.id == noteID })
+        else { return query }
+        return ""
+    }
+
     func hasPendingEdits(in notes: [CompareReviewNote]) -> Bool {
         !newNoteDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || notes.contains { note in
             let textChanged = noteDrafts[note.id].map {
@@ -503,11 +516,16 @@ struct CompareReviewView: View {
         .frame(width: 420)
         .disabled(compareSession.isReviewActionPending)
         .onAppear {
+            revealSelectedCorrection()
             focusedField = requestedFocus ?? .newNote
             requestedFocus = nil
             consumeExportRequest()
         }
         .onChange(of: requestedExport) { _, _ in consumeExportRequest() }
+        .onChange(of: drafts.correctionRequest) { _, _ in revealSelectedCorrection() }
+        .onChange(of: compareSession.canEditReviewNotes) { _, available in
+            if available { revealSelectedCorrection() }
+        }
         .onChange(of: requestedFocus) { _, target in
             guard let target else { return }
             focusedField = target
@@ -714,6 +732,14 @@ struct CompareReviewView: View {
         if !compareSession.filteredReviewNotes.contains(where: { $0.id == id }) {
             compareSession.reviewSearchQuery = ""
         }
+    }
+
+    private func revealSelectedCorrection() {
+        let query = drafts.filterRevealingCorrection(
+            in: compareSession.reviewNotes, query: compareSession.reviewSearchQuery,
+            canEdit: compareSession.canEditReviewNotes
+        )
+        if query != compareSession.reviewSearchQuery { compareSession.reviewSearchQuery = query }
     }
 
     private func navigationButton(

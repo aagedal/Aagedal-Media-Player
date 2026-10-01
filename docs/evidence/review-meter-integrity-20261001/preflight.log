@@ -1,0 +1,3 @@
+Release preflight FAILED (1 error(s)):
+  - bundled ffmpeg strict code-signature verification failed: /Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player/Binaries/ffmpeg: invalid signature (code or signature have been modified)
+In architecture: arm64

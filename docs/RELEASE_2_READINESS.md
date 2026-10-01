@@ -1,6 +1,6 @@
 # 2.0 release readiness
 
-Assessment updated: 2026-09-30. This is a prioritization of the existing
+Assessment updated: 2026-10-01. This is a prioritization of the existing
 [product roadmap](../PRODUCT_ROADMAP.md), not a change to its committed scope.
 It is based on the repository's plans and retained verification reports,
 including the September 12 meter foundation and programme-loudness follow-up.
@@ -165,6 +165,19 @@ checked. See [integrated receipts](evidence/release-candidate-startup-pdf-202609
 Native accessibility/editor, public dependencies, audible/device/surround,
 hardware/soak/base-M1 and distribution gates remain open. Documentation
 retention does not replace matching-HEAD release consumption.
+
+The October 1 continuation reveals filtered-out ordinary Review corrections,
+rejects non-finite current live loudness, and enforces exact dependency stage
+inventory including nonregular manifests. All fifty focused optimized Release
+checks and the script-validator gate pass. Four new regressions raise aggregate
+candidate consumption to 760 tests plus both isolated transport checks; all four
+are required by exact test identity. Canonical committed-source verification
+follows separately. A native Avid First attempt reaches a disposable project and
+EDL picker but does not complete file navigation or reach marker-text import;
+editor acceptance stays open. See [focused evidence](evidence/review-meter-integrity-20261001/README.md)
+and [dependency stage evidence](evidence/coreaudio-stage-inventory-20261001/README.md).
+Native/accessibility, editor, hardware/soak, public dependencies and distribution
+gates remain open.
 
 The Review & Report implementation is substantially present: structured point
 and range findings, versioned local sidecars, relinking, deliberate historical

@@ -1,0 +1,18 @@
+{
+  "date": "2026-10-01",
+  "application": "Avid Media Composer First",
+  "bundleVersion": "26.8.0",
+  "shortVersion": "26.8.0.58987",
+  "project": "Aagedal 2 marker text 20261001",
+  "projectRoot": "/private/tmp/aagedal-avid-marker-text-20261001",
+  "format": "30i NTSC / 29.97 fps",
+  "result": "incomplete",
+  "observations": [
+    "Native disposable project opened with empty Markers panel.",
+    "Tools > Markers and File > Input > Import EDL commands were available.",
+    "Native EDL file picker and Go to Folder sheet opened.",
+    "Path navigation did not complete; clipboard entry also returned timeout -10005."
+  ],
+  "markerTextImport": "not reached",
+  "acceptance": "No marker import, count, position, text, media identity or re-export acceptance established."
+}

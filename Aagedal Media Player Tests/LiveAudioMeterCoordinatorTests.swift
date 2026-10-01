@@ -610,6 +610,62 @@ final class LiveAudioMeterCoordinatorTests: XCTestCase {
         XCTAssertEqual(decoder.activeCount, 0)
     }
 
+    func testMalformedCurrentLoudnessFailsGenerationAndCancelsWorker() async throws {
+        for invalidLevel in [Double.nan, Double.infinity] {
+            for invalidatesMomentary in [true, false] {
+                let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
+                let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
+                coordinator.start(try request(stream: 0, startFrame: 0))
+                await decoder.waitUntilAttached(stream: 0)
+                decoder.emit(snapshot(endFrame: 144_000), stream: 0)
+                await eventually { coordinator.status == .active(frame: 144_000) }
+
+                // Current loudness must be validated independently of maxima:
+                // these malformed readings carry otherwise valid peak values
+                // and nil loudness maxima, just as a post-clear bucket can.
+                decoder.emit(snapshot(
+                    endFrame: 146_400, peak: -12,
+                    loudness: invalidatesMomentary ? (invalidLevel, -23) : (-23, invalidLevel)
+                ), stream: 0)
+
+                await eventually {
+                    guard case .unavailable(_, let diagnostic) = coordinator.status else { return false }
+                    return diagnostic?.contains("malformed or non-finite level") == true
+                }
+                XCTAssertNil(coordinator.snapshot)
+                XCTAssertNil(coordinator.reducedSnapshot)
+                await decoder.waitUntilCancelled(stream: 0)
+                XCTAssertEqual(decoder.activeCount, 0)
+                coordinator.close()
+            }
+        }
+    }
+
+    func testSilentCurrentLoudnessRemainsValidAfterMaximaClear() async throws {
+        let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
+        let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
+        coordinator.start(try request(stream: 0, startFrame: 0))
+        await decoder.waitUntilAttached(stream: 0)
+        decoder.emit(snapshot(endFrame: 144_000), stream: 0)
+        await eventually { coordinator.status == .active(frame: 144_000) }
+        coordinator.clearMaxima()
+
+        decoder.emit(snapshot(
+            endFrame: 146_400, peak: -.infinity,
+            loudness: (-.infinity, -.infinity)
+        ), stream: 0)
+        await eventually { coordinator.snapshot?.endFrame == 146_400 }
+
+        XCTAssertEqual(coordinator.status, .active(frame: 146_400))
+        XCTAssertEqual(coordinator.reducedSnapshot?.loudness.momentary, -.infinity)
+        XCTAssertEqual(coordinator.reducedSnapshot?.loudness.shortTerm, -.infinity)
+        XCTAssertNil(coordinator.reducedSnapshot?.loudness.maximumMomentary)
+        XCTAssertNil(coordinator.reducedSnapshot?.loudness.maximumShortTerm)
+        XCTAssertTrue(decoder.isActive(stream: 0))
+        coordinator.close()
+        await decoder.waitUntilCancelled(stream: 0)
+    }
+
     func testMalformedSnapshotWinsRaceWithDecoderFailureDiagnostic() async throws {
         let decoder = ControlledLiveMeterDecoder(honorCancellation: false)
         let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
@@ -706,13 +762,14 @@ final class LiveAudioMeterCoordinatorTests: XCTestCase {
     private func snapshot(
         endFrame: Int64,
         segmentStart: Int64 = 0,
-        peak: Double
+        peak: Double,
+        loudness: (momentary: Double?, shortTerm: Double?)? = nil
     ) -> LiveAudioMeterSnapshot {
         LiveAudioMeterSnapshot(
             endFrame: endFrame, segmentStartFrame: segmentStart,
             samplePeakDBFS: [peak, peak], truePeakDBTP: [peak + 0.2, peak + 0.2],
-            momentaryLUFS: endFrame - segmentStart >= 19_200 ? -23 : nil,
-            shortTermLUFS: endFrame - segmentStart >= 144_000 ? -23 : nil,
+            momentaryLUFS: loudness?.momentary ?? (endFrame - segmentStart >= 19_200 ? -23 : nil),
+            shortTermLUFS: loudness?.shortTerm ?? (endFrame - segmentStart >= 144_000 ? -23 : nil),
             loudnessEndFrame: nil, maximumSamplePeakDBFS: [peak, peak],
             maximumTruePeakDBTP: [peak + 0.2, peak + 0.2], maximumMomentaryLUFS: nil,
             maximumShortTermLUFS: nil, maximaResetRevision: 0, isFinal: false

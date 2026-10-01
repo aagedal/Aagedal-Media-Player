@@ -7,6 +7,70 @@ import XCTest
 
 final class CompareReviewTextCommitTests: XCTestCase {
     @MainActor
+    func testOrdinaryTextValidationRevealsFindingHiddenByFilterWithoutSavingDrafts() {
+        let note = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
+            secondaryFrame: 10, secondaryTime: 1, text: "Picture finding")
+        let other = CompareReviewNote(primaryFrame: 20, primaryTime: 2,
+            secondaryFrame: 20, secondaryTime: 2, text: "Audio finding")
+        let notes = [note, other]
+        for query in ["audio", "no matching finding"] {
+            var drafts = CompareReviewDraftState()
+            drafts.updateNoteTextDraft("  ", noteID: note.id)
+            drafts.updateNoteTextDraft("Pending other edit", noteID: other.id)
+            drafts.updateRangeEndDraft("invalid range", noteID: other.id)
+
+            // Typing a filter can remove the row before its blur/disappear
+            // callback rejects the empty text. No export preflight runs here.
+            XCTAssertFalse(CompareReviewNavigation.filtered(notes, query: query).contains(note))
+            XCTAssertEqual(CompareReviewTextCommitResult.attempt(
+                draft: drafts.noteDrafts[note.id]!, savedText: note.text, canEdit: true,
+                update: { _ in XCTFail("Empty text must not save"); return true }), .empty)
+            drafts.recordFieldValidationError("Enter note text before continuing.",
+                note: note, field: .text, canEdit: true)
+            let selectedRequest = drafts.correctionRequest
+
+            let revealedQuery = drafts.filterRevealingCorrection(in: notes, query: query, canEdit: true)
+            XCTAssertEqual(revealedQuery, "")
+            XCTAssertTrue(CompareReviewNavigation.filtered(notes, query: revealedQuery).contains(note))
+            XCTAssertEqual(CompareReviewCorrectionFocusPolicy.target(
+                noteID: note.id, correctionRequest: selectedRequest,
+                textError: drafts.noteActionErrors[note.id], rangeError: nil, canEdit: true), .text)
+            XCTAssertEqual(drafts.correctionRequest, selectedRequest)
+            XCTAssertEqual(drafts.noteDrafts[note.id], "  ")
+            XCTAssertEqual(drafts.noteDrafts[other.id], "Pending other edit")
+            XCTAssertEqual(drafts.rangeDrafts[other.id], "invalid range")
+        }
+    }
+
+    @MainActor
+    func testRetainedRangeCorrectionRevealsOnlyExistingEditableHiddenFinding() {
+        let note = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
+            secondaryFrame: 10, secondaryTime: 1, text: "Picture finding", primaryEndFrame: 20)
+        var drafts = CompareReviewDraftState()
+        drafts.updateRangeEndDraft("invalid range", noteID: note.id)
+        XCTAssertEqual(drafts.filterRevealingCorrection(in: [note], query: "audio", canEdit: true), "audio",
+            "An ordinary filter remains usable when no correction was selected")
+        drafts.recordFieldValidationError("Enter a whole-number end frame.",
+            note: note, field: .rangeEnd, canEdit: true)
+        let selectedRequest = drafts.correctionRequest
+
+        // Closing Review or loading does not discard the selected correction.
+        // Reopening/restoring editing reveals its row before replaying focus.
+        XCTAssertEqual(drafts.filterRevealingCorrection(in: [note], query: "audio", canEdit: false), "audio")
+        XCTAssertEqual(drafts.filterRevealingCorrection(in: [note], query: "audio", canEdit: true), "")
+        XCTAssertEqual(drafts.filterRevealingCorrection(in: [note], query: " PICTURE ", canEdit: true), " PICTURE ",
+            "A filter already showing the finding must retain its exact input")
+        XCTAssertEqual(drafts.filterRevealingCorrection(in: [], query: "audio", canEdit: true), "audio",
+            "A removed finding cannot force an unrelated filter reset")
+        XCTAssertEqual(drafts.correctionRequest, selectedRequest)
+        XCTAssertEqual(drafts.rangeDrafts[note.id], "invalid range")
+        XCTAssertEqual(drafts.rangeActionErrors[note.id], "Enter a whole-number end frame.")
+        XCTAssertEqual(CompareReviewCorrectionFocusPolicy.target(
+            noteID: note.id, correctionRequest: selectedRequest,
+            textError: nil, rangeError: drafts.rangeActionErrors[note.id], canEdit: true), .rangeEnd)
+    }
+
+    @MainActor
     func testDisabledTextBlurPreservesDraftErrorAndCorrection() {
         let note = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
             secondaryFrame: 10, secondaryTime: 1, text: "Saved finding")
