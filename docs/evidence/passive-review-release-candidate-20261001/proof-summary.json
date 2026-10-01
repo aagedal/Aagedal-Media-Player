@@ -1,0 +1,17 @@
+{
+  "sourceCommit": "bac4b10a3aaaa8d7a72487d157ecb3e84dcea640",
+  "configuration": "Release",
+  "aggregateTests": 775,
+  "passedTests": 766,
+  "allowlistedOptInSkips": 9,
+  "isolatedTransportPasses": 2,
+  "requiredNewRegressions": 3,
+  "failedTests": 0,
+  "runtimeWarnings": 0,
+  "staticAnalysis": "passed",
+  "releasePreflightChecks": 61,
+  "scriptValidators": "passed",
+  "sourcePackageCachePowerIdentity": "passed",
+  "nativePremiereAcceptance": false,
+  "fullArtifacts": "/private/tmp/aagedal-passive-review-canonical-20261001"
+}

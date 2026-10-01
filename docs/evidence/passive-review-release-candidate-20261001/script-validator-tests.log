@@ -1,0 +1,177 @@
+==> Script syntax
+==> scripts/test-audio-loudness-profile-validation.py
+.....
+----------------------------------------------------------------------
+Ran 5 tests in 0.000s
+
+OK
+==> scripts/test-candidate-package-cache-validation.py
+....
+----------------------------------------------------------------------
+Ran 4 tests in 0.397s
+
+OK
+==> scripts/test-fcp-marker-roundtrip.py
+.................
+----------------------------------------------------------------------
+Ran 17 tests in 0.067s
+
+OK
+==> scripts/test-github-release-asset-validation.py
+.....
+----------------------------------------------------------------------
+Ran 5 tests in 0.000s
+
+OK
+==> scripts/test-homebrew-cask-update.py
+....
+----------------------------------------------------------------------
+Ran 4 tests in 0.000s
+
+OK
+==> scripts/test-itu-programme-lra-reference.py
+.........
+----------------------------------------------------------------------
+Ran 9 tests in 3.060s
+
+OK
+==> scripts/test-itu-programme-true-peak-reference.py
+................
+----------------------------------------------------------------------
+Ran 16 tests in 0.347s
+
+OK
+==> scripts/test-live-audio-meter-profile-validation.py
+.......................
+----------------------------------------------------------------------
+Ran 23 tests in 0.254s
+
+OK
+==> scripts/test-mpv-coreaudio-candidate.py
+............
+----------------------------------------------------------------------
+Ran 12 tests in 0.042s
+
+OK
+==> scripts/test-mpv-coreaudio-clean-candidate.py
+..............Clean candidate build failed: MPVKit-GPL feature parity failed: arm64/CONFIG_GPL=0, expected 1
+....
+----------------------------------------------------------------------
+Ran 18 tests in 0.339s
+
+OK
+Verified local artifact identities: /private/var/folders/pv/f8g9jgrd7px_0xvh3kxgmyg40000gp/T/tmp5izto_a1; MPVKit-GPL feature parity: FAILED (historical artifact is not shipping-feature-equivalent)
+==> scripts/test-mpv-coreaudio-publication.py
+.....................
+----------------------------------------------------------------------
+Ran 21 tests in 2.126s
+
+OK
+==> scripts/test-mpv-coreaudio-reconstruction.py
+..................
+----------------------------------------------------------------------
+Ran 18 tests in 8.185s
+
+OK
+==> scripts/test-metadata-candidate-validation.py
+.usage: test-metadata-candidate-validation.py [-h]
+test-metadata-candidate-validation.py: error: --expected-candidate-sha must be a full lowercase 40-character commit SHA
+..usage: test-metadata-candidate-validation.py [-h]
+test-metadata-candidate-validation.py: error: candidate mismatch
+......usage: test-metadata-candidate-validation.py [-h]
+test-metadata-candidate-validation.py: error: --candidate-checkout and --expected-candidate-sha must be supplied together
+usage: test-metadata-candidate-validation.py [-h]
+test-metadata-candidate-validation.py: error: --candidate-checkout and --expected-candidate-sha must be supplied together
+.
+----------------------------------------------------------------------
+Ran 10 tests in 0.004s
+
+OK
+==> scripts/test-metadata-cli-validation.py
+..........
+----------------------------------------------------------------------
+Ran 10 tests in 0.000s
+
+OK
+==> scripts/test-metadata-jxl-diagnostic.py
+.........
+----------------------------------------------------------------------
+Ran 9 tests in 0.000s
+
+OK
+==> scripts/test-metadata-library-fixture-validation.py
+............
+----------------------------------------------------------------------
+Ran 12 tests in 0.002s
+
+OK
+==> scripts/test-metadata-memory-profile-validation.py
+........
+----------------------------------------------------------------------
+Ran 8 tests in 0.190s
+
+OK
+==> scripts/test-production-metadata-memory-profile-validation.py
+.....
+----------------------------------------------------------------------
+Ran 5 tests in 0.000s
+
+OK
+==> scripts/test-production-metadata-reimport-profile-validation.py
+.............
+----------------------------------------------------------------------
+Ran 13 tests in 0.523s
+
+OK
+==> scripts/test-premiere-marker-roundtrip.py
+...................
+----------------------------------------------------------------------
+Ran 19 tests in 0.188s
+
+OK
+==> scripts/test-programme-loudness-profile-validation.py
+.....
+----------------------------------------------------------------------
+Ran 5 tests in 0.000s
+
+OK
+==> scripts/test-programme-profile-power.py
+......
+----------------------------------------------------------------------
+Ran 6 tests in 2.937s
+
+OK
+==> scripts/test-quadrant-render.py
+..........
+----------------------------------------------------------------------
+Ran 10 tests in 1.129s
+
+OK
+==> scripts/test-release-script-validation.py
+..................
+----------------------------------------------------------------------
+Ran 18 tests in 1.093s
+
+OK
+==> scripts/test-release-xcresult-validation.py
+..............
+----------------------------------------------------------------------
+Ran 14 tests in 0.005s
+
+OK
+==> scripts/test-resolve-marker-roundtrip.py
+..................
+----------------------------------------------------------------------
+Ran 18 tests in 0.096s
+
+OK
+==> scripts/test_native_review_disk_full.py
+.................
+----------------------------------------------------------------------
+Ran 17 tests in 0.003s
+
+OK
+==> scripts/test-compare-profile-validation.sh
+PASS: profile metric validation (complete, missing, duplicate, unexpected, malformed, skipped, empty)
+PASS: reflection option and fixture reuse validation (matching, mismatched, legacy, invalid)
+==> Script-validator self-tests passed

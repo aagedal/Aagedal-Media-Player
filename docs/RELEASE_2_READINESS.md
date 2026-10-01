@@ -10,7 +10,14 @@ optimized Release Review checks pass, including three new regressions; script
 validators and all 61 normal source preflight checks pass. Candidate/release
 consumption now requires 775 aggregate tests and the new exact identities.
 See [focused receipts](evidence/passive-review-release-integrity-20261001/README.md).
-Canonical committed-source verification and native acceptance remain separate.
+Canonical optimized Release verification now passes at clean implementation
+commit `bac4b10a3aaaa8d7a72487d157ecb3e84dcea640`: 766 passes, nine named opt-in
+skips (775 total), all three new exact identities, both isolated transport
+checks, analysis, all 61 preflight checks and final source/package/cache/power
+identity. See [integrated receipts](evidence/passive-review-release-candidate-20261001/README.md).
+Native editor/accessibility, public dependencies, hardware and distribution
+acceptance remain open; documentation retention does not replace matching-HEAD
+release consumption.
 
 The latest scope decision prioritizes Premiere Pro above optional Avid support.
 A dedicated legacy FCP7 XML exporter now carries source-A review sequence

@@ -4542,6 +4542,19 @@ See [focused receipts](docs/evidence/passive-review-release-integrity-20261001/R
 Canonical committed-source verification follows separately; editor/accessibility,
 public dependencies, hardware and distribution gates remain open.
 
+## Phase 215 — Verify integrated passive Review and publication integrity
+
+- [x] Pass canonical optimized Release verification at clean implementation
+  commit `bac4b10a3aaaa8d7a72487d157ecb3e84dcea640`: 766 passes, nine named skips
+  (775 total), all three new exact identities and both isolated transport checks.
+- [x] Pass static analysis, all 61 preflight checks, script validators and final
+  source/package/cache/power identity, with no runtime warnings or sleep.
+- [x] Retain [complete accepted receipts](docs/evidence/passive-review-release-candidate-20261001/README.md).
+- [x] Record the native Premiere project/picker attempt and stalled delegated
+  binding; no media import or re-export acceptance is claimed.
+- [ ] Complete native editor/accessibility, published dependencies, hardware
+  and signing/notarization/distribution acceptance.
+
 ## Remaining work after this continuation
 
 The user’s 2026-10-01 scope decision makes Avid native compatibility optional
