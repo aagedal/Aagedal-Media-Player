@@ -4465,10 +4465,54 @@ remaining editor and distribution gates remain open.
   See [accepted receipts](docs/evidence/release-candidate-review-meter-20261001/README.md);
   the preceding rejected attempt remains retained.
 
+## Phase 209 — Premiere sequence-marker interchange
+
+- [x] Implement a dedicated Premiere Pro legacy FCP7 XML exporter and expose it
+  in Review and the application menu, with explicit import guidance.
+- [x] Preserve exact timebases, source start, relative anchors, inclusive ranges,
+  grouped findings and original A/B provenance; retain actual source duration
+  independently of a longer review sequence after relinking.
+- [x] Reject unrepresentable rates, unsupported raster/PAR combinations and
+  quarter-turn geometry before claiming a conform that has not been verified.
+- [x] Pass five new exporter regressions and a production metadata/export matrix
+  spanning eight common rates plus real 29.97/59.94 DF minute-boundary fixtures.
+- [ ] Complete native Premiere import/re-export acceptance, including marker
+  timing, text, ranges, source identity and geometry.
+
+## Phase 210 — Save range drafts when their fields disappear
+
+- [x] Flush pending ranges when filtering, panel closure or range disclosure
+  collapse removes a field before its focus callback can run.
+- [x] Use the current saved note and live correction ownership to avoid duplicate
+  saves and preserve rejected drafts or unavailable editing.
+- [x] Pass three new regressions; all 90 focused optimized Release tests pass
+  with no skips, failures or runtime warnings. All 61 preflight checks pass.
+- [ ] Complete native keyboard, Full Keyboard Access and spoken VoiceOver
+  acceptance for the revised departure paths.
+
+See [focused engineering evidence](docs/evidence/premiere-review-engineering-20261001/README.md).
+Canonical candidate/release consumption now requires all nine new regressions
+and at least 772 aggregate tests, plus both isolated mixed-backend directions.
+
+## Phase 211 — Independently validate Premiere XML round trips
+
+- [x] Add a strict standalone comparator for exact marker intervals/content,
+  source identity, untrimmed clip placement, geometry and timecodes.
+- [x] Reject contradictory timecode strings, malformed intervals and unsupported
+  scopes; preserve marker multiplicity and refuse existing output reports.
+- [x] Pass all 14 validator regressions and parse all ten production fixture
+  pairs with media hashing. Self-comparison establishes file validity only.
+- [x] Publish the import/re-export workflow and keep native acceptance explicitly
+  unverified: app binding returned no UI state and was canceled.
+- [ ] Complete observed Premiere import/re-export and current editor-version
+  acceptance before claiming compatibility.
+
 ## Remaining work after this continuation
 
 The user’s 2026-10-01 scope decision makes Avid native compatibility optional
-for 2.0. Skip problematic Avid checks and prioritize Resolve/Final Cut Pro.
+for 2.0. Skip problematic Avid checks. The same day's continuation explicitly
+prioritizes Premiere Pro support above Avid; implement and validate a dedicated
+Premiere interchange path alongside Resolve/Final Cut Pro.
 Keep historical Avid evidence as unverified observations; the free Media
 Composer First edition may have limitations that do not apply to the full edition.
 
@@ -4525,6 +4569,9 @@ Composer First edition may have limitations that do not apply to the full editio
   findings; Phase 110 replaces the guard with native-verified one-frame/grouped
   markers preserving all findings, with remaining raster, duration and whitespace issues. Complete Final Cut Pro acceptance,
   including fractional rates, DF boundaries, inclusive ranges and source identity.
+  Premiere Pro is also required and takes priority over optional Avid work;
+  validate its dedicated import path rather than assuming Resolve EDL extensions
+  or modern FCPXML are compatible.
   Avid checks are optional for 2.0 and may be skipped if problematic; only free
   Media Composer First is available, and its results do not qualify the full edition.
 - Oldest-supported Apple Silicon UHD/HDR playback, reflected loupe/scopes,

@@ -1,0 +1,11 @@
+{
+  "Aagedal Media Player Tests/CompareReviewReportExporterTests.swift": "36fd3e8facb906ff41896e4df07e5bd027e042e042a2b3a2c29e5efbba47838d",
+  "Aagedal Media Player Tests/CompareReviewTextCommitTests.swift": "daaa300479359c17f2c1565d6e63ae6908469093777433e9ec55ff8394d55aa4",
+  "Aagedal Media Player Tests/CompareReviewTimebaseMigrationControllerTests.swift": "fd9b8989a64136b7f61de542be8829ca3b05679d11dcf178bc46659a06425647",
+  "Aagedal Media Player Tests/GeneratedMediaFixtureTests.swift": "fc678bddd53a2d0f87fe6f6bd8549f90d5556866d5140599ef3938dcd5e53620",
+  "Aagedal Media Player.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved": "6aea6d64326f3040345c3523a0a39c95d53335777e233b3aa311e8ba90ad475d",
+  "Aagedal Media Player/Aagedal_Media_PlayerApp.swift": "34df7d2bd020f9b8ac6ba94c1e66fd778278fa26f0dc423e94ab3bb25b05d1bf",
+  "Aagedal Media Player/Logic/CompareReviewReportExporter.swift": "18528bf1b5e47af11c0b1edf7366f35dd91080de3df059bafe8b237fda6b4b0d",
+  "Aagedal Media Player/Logic/CompareSessionController.swift": "bb1f5b4fa8df5d344748b6e610e44443b226f8e42313d363701e221a555a6a39",
+  "Aagedal Media Player/UI/CompareReviewView.swift": "4c765a61399a8651ea21bb2fb0a3efc46d4edf25a9a6fb6db0838b560f4388c1"
+}

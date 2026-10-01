@@ -1,0 +1,13 @@
+{
+  "implementationCommit": "b8115c22c6d3f73efa241a40186a461a8321feec",
+  "configuration": "Release",
+  "totalTests": 90,
+  "passedTests": 90,
+  "skippedTests": 0,
+  "failedTests": 0,
+  "runtimeWarnings": 0,
+  "sourceTreePreflightChecks": 61,
+  "nativeEditorAcceptance": false,
+  "packageCache": "/private/tmp/aagedal-itu-live-dd-20260930/SourcePackages",
+  "derivedData": "/private/tmp/aagedal-premiere-focused-20261001/DerivedData"
+}

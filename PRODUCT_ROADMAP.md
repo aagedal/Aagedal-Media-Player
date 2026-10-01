@@ -396,7 +396,11 @@ Editor acceptance and hands-on keyboard review remain.
 - [x] Export CSV and PDF reports locally.
 - [ ] Export common NLE marker formats after validating round trips with target
   editors. Resolve EDL, Final Cut Pro XML, and Avid marker-text exporters are
-  implemented and covered by automated tests. Resolve and Final Cut Pro
+  implemented and covered by automated tests. Adobe Premiere Pro is a priority
+  for 2.0. A dedicated legacy FCP7 XML exporter now creates a source-A review
+  sequence with grouped findings and inclusive ranges; native Premiere
+  import/re-export validation remains before claiming compatibility.
+  Resolve, Final Cut Pro and Premiere Pro
   round-trip acceptance remain required; Avid compatibility is optional for
   2.0 and may be skipped if verification runs into problems. The available Avid
   installation is the free Media Composer First edition; its results or
@@ -415,7 +419,7 @@ Release gates:
   identity without rounding errors.
   Historical rounded broadcast timebases now have an explicit preview/save-copy
   migration that retains recorded frame numbers and source identities. Exact
-  rates then enable editor exports; Resolve and Final Cut Pro round trips
+  rates then enable editor exports; Resolve, Final Cut Pro and Premiere Pro round trips
   remain required. Avid verification is optional under the scope decision above.
   Focused native migration preview, save/adoption, explicit copy reopening and
   default EDL filename checks now pass with original source/sidecar hash checks.

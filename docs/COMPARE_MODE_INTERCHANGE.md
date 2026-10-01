@@ -140,9 +140,9 @@ before exporting the target marker format.
 
 ### 2.0 editor scope decision — 2026-10-01
 
-The user makes Avid compatibility optional for 2.0 and authorizes skipping it
-when verification causes problems. Prioritize Resolve and Final Cut Pro release
-acceptance. Keep the implemented Avid marker-text exporter and its automated
+The user makes Avid compatibility optional for 2.0 and prioritizes Premiere
+support. Prioritize the new Premiere interchange path alongside the existing
+Resolve and Final Cut Pro acceptance work. Keep the implemented Avid marker-text exporter and its automated
 checks; unverified native compatibility is not a passing acceptance result.
 Only the free Media Composer First edition is available. Record any observed
 edition-specific limitation without assuming it affects full Media Composer.
@@ -157,9 +157,9 @@ running each check; installation alone does not establish format compatibility.
 
 - Final Cut Pro: continue the existing FCPXML import/re-export gate. Earlier
   launch-automation timeouts do not mean the editor is unavailable.
-- Premiere Pro: investigate a supported marker interchange path and retain
-  native results before claiming support. The app currently has no dedicated
-  Premiere exporter; Resolve marker EDL extensions must not be assumed compatible.
+- Premiere Pro: the dedicated Premiere XML exporter now produces FCP7 `xmeml`
+  sequence markers. Retain native results before claiming accepted compatibility;
+  Resolve marker EDL extensions must not be assumed compatible.
 - Media Composer First: optional acceptance only. Earlier EDL import was
   observed unlocked, but review-marker behavior was not established. If future
   checks proceed, use a disposable project and record First-specific results;
@@ -184,6 +184,7 @@ identity survive import; inspect the resulting records and re-export where avail
 | --- | --- | --- |
 | DaVinci Resolve | Marker EDL | A's source timecode, or relative zero when unavailable; inclusive range duration, or one frame for a point finding |
 | Final Cut Pro | FCPXML | Browser clip for source A, rational source start plus relative frame, explicit DF/NDF display and one-frame duration; inclusive ranges retained in note text; same-frame findings grouped |
+| Adobe Premiere Pro | Premiere XML (FCP7 `xmeml` v5) | Sequence marker at source-A relative start frame; source-A start timecode on sequence/file; inclusive ranges use exclusive `out`; same-frame findings grouped with each original finding retained in comment |
 | Avid Media Composer | Marker text | Zero-based source-A relative start frame on V1; inclusive range annotated in marker text |
 
 1. Import source A into a fresh editor project with the matching rate and
@@ -258,6 +259,76 @@ the inclusive frame count. Avid's five-column marker text retains a point
 anchor and includes `A frames start–end (inclusive)` in its text; no native
 Avid range duration is claimed.
 
+### Premiere XML preparation and strict comparison — 2026-10-01
+
+**Review → Export → Premiere Pro Sequence Markers (.xml)…** exports a separate FCP7 XML document
+(`xmeml` version 5, `.xml`). Adobe documents the
+[Final Cut Pro XML export workflow](https://helpx.adobe.com/uk/premiere/desktop/render-and-export/export-files/export-a-project-as-a-final-cut-pro-xml-file.html)
+for Final Cut Pro 7 and compatible tools. Adobe's
+[Premiere reference, XML project import section](https://helpx.adobe.com/pdf/cs6/premiere_pro_reference.pdf)
+documents retained sequence markers, settings and starting timecode on XML
+import through **File → Import**. Apple's archived
+[FCP7 elements catalog](https://developer.apple.com/library/archive/documentation/AppleApplications/Reference/FinalCutPro_XML/Elements/Elements.html)
+defines sequence markers and integer `in`/`out` frame coordinates. This supports
+the chosen format; it does not prove current native Premiere acceptance. The
+existing `.fcpxml` exporter targets modern Final Cut Pro and is a distinct format.
+
+The carrier sequence has one full, untrimmed source-A video clip at relative
+frame zero; source B appears in finding provenance. The exporter retains exact
+integer or nominal × 1000/1001 rates, source start and DF/NDF interpretation.
+Points use one-frame intervals; review ranges use `end + 1` as exclusive `out`.
+Findings sharing a start frame occupy one marker spanning their longest range.
+Each finding keeps its own QC label, text, classification, inclusive endpoints,
+A/B rates and source URLs in the marker comment. Compare grouped findings
+individually against the CSV; carrier-marker count can differ from finding count.
+Quarter-turn sources and unsupported pixel aspect representations produce
+actionable export errors pending native geometry validation. Historical rounded
+note rates need deliberate migration before editor export, as with other editor
+formats. A shorter relinked source can leave findings after the source clip ends;
+the sequence extends to retain them, while the source clip keeps its actual length.
+
+Import the unchanged app XML into a disposable Premiere project through
+**File → Import**, verify source A is linked and its sequence settings/timecode
+match the source, then inspect marker frames, ranges, duplicate grouping and
+exact note content against the CSV. Activate that sequence and export through
+**File → Export → Final Cut Pro XML**. Retain Premiere's translation log and
+both unmodified XML files. Compare them with:
+
+```bash
+python3 scripts/compare-premiere-marker-roundtrip.py original.xml returned.xml \
+  --verify-media --output new-premiere-comparison.json
+```
+
+If the returned project contains multiple sequences, add
+`--returned-sequence-name 'Exact Review Sequence Name'`. The name must select
+exactly one sequence. The checker requires one untrimmed source-A video clip
+at sequence frame zero and nonempty sequence markers. It compares exact rates,
+source/sequence starts and display formats, clip placement and actual duration,
+sequence duration, separate source/sequence geometry, source path, marker
+anchors/durations/titles and exact comments, preserving duplicate multiplicity.
+Optional timecode strings must agree with their encoded frame and DF/NDF rules;
+contradictory or skipped DF labels fail. String-only timecodes are unsupported
+by this deliberately narrow checker. A native point `out=-1` compares as one
+frame, with its original encoding retained in the report.
+
+The checker exits 0 for an exact file comparison, 1 for differences and 2 for
+invalid/unsupported input. Existing output reports are refused. `--verify-media`
+reads and hashes both currently referenced media files; retain and verify the
+pre-import fixture hashes separately to prove input immutability. A comparison
+of a file with itself only establishes format validity. It cannot establish
+native loading, rendering, editor version or a round trip.
+
+Fourteen self-contained Python regressions pass, including contradictory
+timecode-string rejection, 29.97/59.94 DF minute/ten-minute boundaries, adjacent
+and final-frame markers, Unicode/multiline content, grouped range duration,
+source path/geometry changes, malformed input and output-report preservation.
+All ten production-generated XML/CSV fixture pairs also parse and compare to
+themselves with current source-media hashes. See the
+[engineering evidence](evidence/premiere-review-engineering-20261001/README.md).
+The bounded Premiere app-binding attempt returned no UI state and was canceled
+after several minutes. No import, native marker inspection or re-export was
+observed. Premiere native acceptance remains **unverified**.
+
 Resolve EDL rejects multiple findings starting at the same source-A frame.
 The retained Resolve import lost a same-frame finding, so the exporter now
 fails with an actionable CSV/PDF alternative rather than producing an EDL that
@@ -326,7 +397,7 @@ marked passed. The native export result is independent of that outstanding gate.
 | Resolve Studio 21.1.0.14 | Fresh generated 59.94 DF / `00:00:58;00`; current-source seven-finding copy | 7/7 | All anchors exact, including first/adjacent/final and DF boundary frames | Exact text, colors, ranges and current URLs retained; actual source-A media/placement verified | 7/7 exact records; unchanged fixture hashes | Focused round-trip pass; [retained evidence](evidence/resolve-markers-5994-20260919/README.md) |
 | Final Cut Pro | Pending | | | | | Not run |
 | Resolve Studio 21.1.0.14 | Generated 23.976, no embedded TC; zero-start timeline and current-source seven-finding copy | 7/7 imported | All actual anchors and durations exact; current source-A placement verified | Exact text, colors and current URLs retained; unchanged fixture hashes | 7/7 exact records; unchanged fixture hashes | Focused round-trip pass; [retained evidence](evidence/resolve-markers-23976-20260919/README.md) |
-| Adobe Premiere Pro | Pending | | | | | Installed per user; interchange path not yet validated |
+| Adobe Premiere Pro | Native check pending; ten production XML/CSV fixture pairs prepared | | | | | FCP7 XML exporter and independent file validator implemented; app binding returned no UI state; native acceptance unverified |
 | Media Composer First (free edition) | Optional / unverified | | | | | May be skipped for 2.0; EDL sequence creation observed, marker-text compatibility unverified |
 | Media Composer | Optional / unverified | | | | | Full edition unavailable; no 2.0 release gate |
 

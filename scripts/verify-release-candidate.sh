@@ -102,7 +102,7 @@ xcrun xcresulttool get test-results tests \
 python3 scripts/validate-release-xcresult.py \
     "$artifact_dir/test-summary.json" \
     "$artifact_dir/test-details.json" \
-    --minimum-tests 763 \
+    --minimum-tests 772 \
     --require-test "CompareReviewTextCommitTests/testOrdinaryTextValidationRevealsFindingHiddenByFilterWithoutSavingDrafts()" \
     --require-test "CompareReviewTextCommitTests/testRetainedRangeCorrectionRevealsOnlyExistingEditableHiddenFinding()" \
     --require-test "LiveAudioMeterCoordinatorTests/testMalformedCurrentLoudnessFailsGenerationAndCancelsWorker()" \
@@ -110,6 +110,15 @@ python3 scripts/validate-release-xcresult.py \
     --require-test "SubprocessServiceTests/testFFmpegFailureWithoutUsableStderrPreservesExitStatus()" \
     --require-test "SubprocessServiceTests/testFFmpegFailureWithoutStderrPreservesTerminationSignal()" \
     --require-test "SubprocessServiceTests/testFFmpegTerminationValidationPreservesDiagnosticAndAcceptsSuccess()" \
+    --require-test "CompareReviewReportExporterTests/testPremiereSequenceCarriesExactRateSourceStartAndRelativeRanges()" \
+    --require-test "CompareReviewReportExporterTests/testPremiereGroupsSameFrameFindingsWithoutLosingOriginalRangesOrText()" \
+    --require-test "CompareReviewReportExporterTests/testPremiereKeepsSourceDurationWhileRetainingFindingsBeyondShorterReplacement()" \
+    --require-test "CompareReviewReportExporterTests/testPremiereRejectsRatesThatWouldRequireRounding()" \
+    --require-test "CompareReviewReportExporterTests/testPremiereUsesKnownPixelAspectAndRejectsUnsupportedGeometry()" \
+    --require-test "GeneratedMediaFixtureTests/testPremiereExportsRealMetadataAtCommonRatesWithGroupedFindingsAndRanges()" \
+    --require-test "CompareReviewTextCommitTests/testRangeDepartureSavesPendingEndpointWhenFocusCallbackDoesNotRun()" \
+    --require-test "CompareReviewTextCommitTests/testRangeDepartureRetainsInvalidEndpointAndRevealsHiddenFinding()" \
+    --require-test "CompareReviewTextCommitTests/testRangeDepartureRespectsLiveTextCorrectionUnavailableEditingAndExplicitClear()" \
     --require-test "LiveAudioMeterDecoderTests/testBundledDecoderPreservesContiguousDTSInMillisecondMatroskaContainer()" \
     2>&1 | tee "$artifact_dir/test-evidence-validation.log"
 

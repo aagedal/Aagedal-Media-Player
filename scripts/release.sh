@@ -182,7 +182,7 @@ if [[ "$EVIDENCE_STATUS" != "passed" \
     exit 2
 fi
 python3 scripts/validate-release-xcresult.py \
-    "$CANDIDATE_SUMMARY" "$CANDIDATE_DETAILS" --minimum-tests 763 \
+    "$CANDIDATE_SUMMARY" "$CANDIDATE_DETAILS" --minimum-tests 772 \
     --require-test "CompareReviewTextCommitTests/testOrdinaryTextValidationRevealsFindingHiddenByFilterWithoutSavingDrafts()" \
     --require-test "CompareReviewTextCommitTests/testRetainedRangeCorrectionRevealsOnlyExistingEditableHiddenFinding()" \
     --require-test "LiveAudioMeterCoordinatorTests/testMalformedCurrentLoudnessFailsGenerationAndCancelsWorker()" \
@@ -190,6 +190,15 @@ python3 scripts/validate-release-xcresult.py \
     --require-test "SubprocessServiceTests/testFFmpegFailureWithoutUsableStderrPreservesExitStatus()" \
     --require-test "SubprocessServiceTests/testFFmpegFailureWithoutStderrPreservesTerminationSignal()" \
     --require-test "SubprocessServiceTests/testFFmpegTerminationValidationPreservesDiagnosticAndAcceptsSuccess()" \
+    --require-test "CompareReviewReportExporterTests/testPremiereSequenceCarriesExactRateSourceStartAndRelativeRanges()" \
+    --require-test "CompareReviewReportExporterTests/testPremiereGroupsSameFrameFindingsWithoutLosingOriginalRangesOrText()" \
+    --require-test "CompareReviewReportExporterTests/testPremiereKeepsSourceDurationWhileRetainingFindingsBeyondShorterReplacement()" \
+    --require-test "CompareReviewReportExporterTests/testPremiereRejectsRatesThatWouldRequireRounding()" \
+    --require-test "CompareReviewReportExporterTests/testPremiereUsesKnownPixelAspectAndRejectsUnsupportedGeometry()" \
+    --require-test "GeneratedMediaFixtureTests/testPremiereExportsRealMetadataAtCommonRatesWithGroupedFindingsAndRanges()" \
+    --require-test "CompareReviewTextCommitTests/testRangeDepartureSavesPendingEndpointWhenFocusCallbackDoesNotRun()" \
+    --require-test "CompareReviewTextCommitTests/testRangeDepartureRetainsInvalidEndpointAndRevealsHiddenFinding()" \
+    --require-test "CompareReviewTextCommitTests/testRangeDepartureRespectsLiveTextCorrectionUnavailableEditingAndExplicitClear()" \
     --require-test "LiveAudioMeterDecoderTests/testBundledDecoderPreservesContiguousDTSInMillisecondMatroskaContainer()"
 python3 scripts/validate-release-xcresult.py \
     "$CANDIDATE_MIXED_SUMMARY" "$CANDIDATE_MIXED_DETAILS" --minimum-tests 2 \

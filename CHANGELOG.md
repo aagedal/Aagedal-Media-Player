@@ -5,6 +5,8 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Changed
+- Review saves pending range edits when filtering, closing the panel, or collapsing a range removes its field, while preserving correction focus and rejected drafts.
+- Candidate verification and release consumption require the nine new Premiere and Review regressions and at least 772 aggregate tests, alongside both isolated mixed-backend transport checks.
 - Live meters enforce bounded startup even before the first PCM snapshot arrives, clearing stalled work with retained diagnostics.
 - PDF review reports identify source and relative timecodes explicitly and preserve complete values after relinking.
 - Dependency reconstruction audits reject undeclared sources, stale build caches, redirected directories and nonregular inputs.
@@ -52,6 +54,8 @@ All notable changes to Aagedal Media Player.
 - Metadata container-edge validation checks the independent error behavior of frame, gyroscope, and accelerometer RTMD readers against both the 3.0.0 baseline and integrated 3.0.1 dependency.
 
 ### Added
+- Premiere Pro sequence-marker export using legacy Final Cut Pro 7 XML, with exact timebases, source provenance, inclusive ranges and grouped findings at the same frame. Native editor compatibility remains under validation.
+- An independent Premiere XML round-trip comparator that checks timing, note content, source identity and geometry; passing file checks alone does not establish native editor acceptance.
 - Independently qualified lossless DTS-HD MA preparation and a passing six-channel production live-meter observation, with original-container timing limitations retained.
 - Clean eight-hour production split-mono programme profiling, with consistent whole-file and early/late Stereo and 5.1 measurements and retained memory/power evidence.
 - Offline reconstruction of verified GPL dependency source commits and exact cached inputs, with explicit environment and compilation prerequisites.

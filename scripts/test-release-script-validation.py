@@ -220,7 +220,7 @@ exit 91
         self.assertLess(summary, details)
         self.assertLess(details, validation)
         self.assertLess(validation, analysis)
-        self.assertIn('--minimum-tests 763', source)
+        self.assertIn('--minimum-tests 772', source)
         self.assertIn('-parallel-testing-enabled NO', source)
         self.assertEqual(source.count('-skip-testing:'), 2)
         focused = source.index('echo "==> Focused mixed-backend transport repeat"')
@@ -230,7 +230,7 @@ exit 91
         self.assertLess(focused_validation, analysis)
         self.assertIn('testAVFoundationPrimaryAndMPVSecondaryShareTransport', source)
         self.assertIn('testMPVPrimaryAndAVFoundationSecondaryShareTransport', source)
-        self.assertEqual(source.count('--require-test'), 10)
+        self.assertEqual(source.count('--require-test'), 19)
         self.assertIn('os.path.realpath', source)
         self.assertIn('candidate evidence must be written outside the source checkout', source)
         self.assertIn('HEAD changed during candidate verification', source)
@@ -280,8 +280,8 @@ exit 91
         self.assertLess(package_match, result_validation)
         self.assertLess(result_validation, preflight)
         self.assertLess(result_validation, archive)
-        self.assertIn('--minimum-tests 763', self.source)
-        self.assertEqual(self.source.count('--require-test'), 10)
+        self.assertIn('--minimum-tests 772', self.source)
+        self.assertEqual(self.source.count('--require-test'), 19)
 
     def test_release_rechecks_source_before_build_and_publication(self) -> None:
         previous_action = self.source.index('verify_source_identity()')

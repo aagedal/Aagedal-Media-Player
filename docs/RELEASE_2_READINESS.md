@@ -2,6 +2,18 @@
 
 Assessment updated: 2026-10-01. This assessment reflects the
 [product roadmap](../PRODUCT_ROADMAP.md) and its recorded scope decisions.
+
+The latest scope decision prioritizes Premiere Pro above optional Avid support.
+A dedicated legacy FCP7 XML exporter now carries source-A review sequence
+markers with exact timebases, inclusive ranges and grouped same-frame findings.
+Review also saves range edits when their fields disappear. A fresh optimized
+Release build and all 90 focused tests pass, with ten production-metadata
+XML/CSV fixture pairs retained. See
+[engineering evidence](evidence/premiere-review-engineering-20261001/README.md).
+Native Premiere import/re-export acceptance remains separate; Avid is optional
+and does not block 2.0. Candidate verification now requires 772 aggregate tests
+and all nine new regressions, plus both isolated mixed-backend transport checks.
+
 It is based on the repository's plans and retained verification reports,
 including the September 12 meter foundation and programme-loudness follow-up.
 The same continuation now adds selected-track meter identity, typed player

@@ -1,0 +1,1338 @@
+{
+  "scope": "Production-exported fixture validity and current media hashing only; self-comparison is not an editor round trip",
+  "nativeEditorAcceptance": false,
+  "fixtures": {
+    "23.976.xml": {
+      "status": "exact-match",
+      "scope": "Single source-A review sequence XML comparison; not native editor acceptance",
+      "returnedSequenceName": null,
+      "checks": {
+        "rate": true,
+        "durationFrames": true,
+        "sourceDurationFrames": true,
+        "clipPlacement": true,
+        "sequenceTimecode": true,
+        "sourceTimecode": true,
+        "sequenceGeometry": true,
+        "sourceGeometry": true,
+        "sourcePath": true,
+        "markerTimingAndTitles": true,
+        "exactMarkerContent": true,
+        "sourceMediaBytes": true
+      },
+      "mediaBytesCompared": true,
+      "original": {
+        "sha256": "c8bc6a20ba876338963bf997c7c31f5cd0ac24847db4cc794ce8cb5b9c49fc8a",
+        "xmlVersion": "5",
+        "sequenceName": "23.976.mp4 vs 23.976.mp4 Review",
+        "rate": "24000/1001",
+        "durationFrames": 12,
+        "sourceDurationFrames": 12,
+        "clipPlacement": {
+          "start": 0,
+          "end": 12,
+          "in": 0,
+          "out": 12,
+          "duration": 12
+        },
+        "sequenceTimecode": {
+          "frame": 0,
+          "displayFormat": "NDF"
+        },
+        "sourceTimecode": {
+          "frame": 0,
+          "displayFormat": "NDF"
+        },
+        "sequenceGeometry": {
+          "raster": [
+            160,
+            90
+          ],
+          "pixelAspect": "square"
+        },
+        "sourceGeometry": {
+          "raster": [
+            160,
+            90
+          ],
+          "pixelAspect": "square"
+        },
+        "sourceURL": "file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/23.976.mp4",
+        "sourcePath": "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Test Fixtures/Generated/rates/23.976.mp4",
+        "markers": [
+          [
+            0,
+            3,
+            "QC 001",
+            "[QC 001] Inclusive range æøå 日本語 & <picture> | Source B: 23.976.mp4, REL TC 00:00:00:00, frame 0 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A frames 0–2 (inclusive) | A rate: 24000/1001 | B rate: 24000/1001 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/23.976.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/23.976.mp4 | Source A: REL TC 00:00:00:00, frame 0"
+          ],
+          [
+            1,
+            1,
+            "QC 002 + QC 003 (2 findings)",
+            "[QC 002] First same-frame finding | Source B: 23.976.mp4, REL TC 00:00:00:01, frame 1 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 24000/1001 | B rate: 24000/1001 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/23.976.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/23.976.mp4 | Source A: REL TC 00:00:00:01, frame 1\n\n[QC 003] Second same-frame finding | Source B: 23.976.mp4, REL TC 00:00:00:01, frame 1 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 24000/1001 | B rate: 24000/1001 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/23.976.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/23.976.mp4 | Source A: REL TC 00:00:00:01, frame 1"
+          ]
+        ],
+        "encodedMarkerOutFrames": [
+          3,
+          2
+        ],
+        "mediaSHA256": "a0523254fa4dca3a351a5c44ebb5ceb8a90ed0d66ed8ba585ac17fa80175f71d"
+      },
+      "returned": {
+        "sha256": "c8bc6a20ba876338963bf997c7c31f5cd0ac24847db4cc794ce8cb5b9c49fc8a",
+        "xmlVersion": "5",
+        "sequenceName": "23.976.mp4 vs 23.976.mp4 Review",
+        "rate": "24000/1001",
+        "durationFrames": 12,
+        "sourceDurationFrames": 12,
+        "clipPlacement": {
+          "start": 0,
+          "end": 12,
+          "in": 0,
+          "out": 12,
+          "duration": 12
+        },
+        "sequenceTimecode": {
+          "frame": 0,
+          "displayFormat": "NDF"
+        },
+        "sourceTimecode": {
+          "frame": 0,
+          "displayFormat": "NDF"
+        },
+        "sequenceGeometry": {
+          "raster": [
+            160,
+            90
+          ],
+          "pixelAspect": "square"
+        },
+        "sourceGeometry": {
+          "raster": [
+            160,
+            90
+          ],
+          "pixelAspect": "square"
+        },
+        "sourceURL": "file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/23.976.mp4",
+        "sourcePath": "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Test Fixtures/Generated/rates/23.976.mp4",
+        "markers": [
+          [
+            0,
+            3,
+            "QC 001",
+            "[QC 001] Inclusive range æøå 日本語 & <picture> | Source B: 23.976.mp4, REL TC 00:00:00:00, frame 0 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A frames 0–2 (inclusive) | A rate: 24000/1001 | B rate: 24000/1001 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/23.976.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/23.976.mp4 | Source A: REL TC 00:00:00:00, frame 0"
+          ],
+          [
+            1,
+            1,
+            "QC 002 + QC 003 (2 findings)",
+            "[QC 002] First same-frame finding | Source B: 23.976.mp4, REL TC 00:00:00:01, frame 1 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 24000/1001 | B rate: 24000/1001 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/23.976.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/23.976.mp4 | Source A: REL TC 00:00:00:01, frame 1\n\n[QC 003] Second same-frame finding | Source B: 23.976.mp4, REL TC 00:00:00:01, frame 1 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 24000/1001 | B rate: 24000/1001 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/23.976.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/23.976.mp4 | Source A: REL TC 00:00:00:01, frame 1"
+          ]
+        ],
+        "encodedMarkerOutFrames": [
+          3,
+          2
+        ],
+        "mediaSHA256": "a0523254fa4dca3a351a5c44ebb5ceb8a90ed0d66ed8ba585ac17fa80175f71d"
+      }
+    },
+    "24.xml": {
+      "status": "exact-match",
+      "scope": "Single source-A review sequence XML comparison; not native editor acceptance",
+      "returnedSequenceName": null,
+      "checks": {
+        "rate": true,
+        "durationFrames": true,
+        "sourceDurationFrames": true,
+        "clipPlacement": true,
+        "sequenceTimecode": true,
+        "sourceTimecode": true,
+        "sequenceGeometry": true,
+        "sourceGeometry": true,
+        "sourcePath": true,
+        "markerTimingAndTitles": true,
+        "exactMarkerContent": true,
+        "sourceMediaBytes": true
+      },
+      "mediaBytesCompared": true,
+      "original": {
+        "sha256": "f933f58906fadff64b79f408654a30fb60d22ebebc174b5b500cebd4ed6698b9",
+        "xmlVersion": "5",
+        "sequenceName": "24.mp4 vs 24.mp4 Review",
+        "rate": "24",
+        "durationFrames": 12,
+        "sourceDurationFrames": 12,
+        "clipPlacement": {
+          "start": 0,
+          "end": 12,
+          "in": 0,
+          "out": 12,
+          "duration": 12
+        },
+        "sequenceTimecode": {
+          "frame": 0,
+          "displayFormat": "NDF"
+        },
+        "sourceTimecode": {
+          "frame": 0,
+          "displayFormat": "NDF"
+        },
+        "sequenceGeometry": {
+          "raster": [
+            160,
+            90
+          ],
+          "pixelAspect": "square"
+        },
+        "sourceGeometry": {
+          "raster": [
+            160,
+            90
+          ],
+          "pixelAspect": "square"
+        },
+        "sourceURL": "file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/24.mp4",
+        "sourcePath": "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Test Fixtures/Generated/rates/24.mp4",
+        "markers": [
+          [
+            0,
+            3,
+            "QC 001",
+            "[QC 001] Inclusive range æøå 日本語 & <picture> | Source B: 24.mp4, REL TC 00:00:00:00, frame 0 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A frames 0–2 (inclusive) | A rate: 24/1 | B rate: 24/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/24.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/24.mp4 | Source A: REL TC 00:00:00:00, frame 0"
+          ],
+          [
+            1,
+            1,
+            "QC 002 + QC 003 (2 findings)",
+            "[QC 002] First same-frame finding | Source B: 24.mp4, REL TC 00:00:00:01, frame 1 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 24/1 | B rate: 24/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/24.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/24.mp4 | Source A: REL TC 00:00:00:01, frame 1\n\n[QC 003] Second same-frame finding | Source B: 24.mp4, REL TC 00:00:00:01, frame 1 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 24/1 | B rate: 24/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/24.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/24.mp4 | Source A: REL TC 00:00:00:01, frame 1"
+          ]
+        ],
+        "encodedMarkerOutFrames": [
+          3,
+          2
+        ],
+        "mediaSHA256": "8444664c90313c855db21aa4e7ae95889c18dfcfdda89bec92160ef07d1f8525"
+      },
+      "returned": {
+        "sha256": "f933f58906fadff64b79f408654a30fb60d22ebebc174b5b500cebd4ed6698b9",
+        "xmlVersion": "5",
+        "sequenceName": "24.mp4 vs 24.mp4 Review",
+        "rate": "24",
+        "durationFrames": 12,
+        "sourceDurationFrames": 12,
+        "clipPlacement": {
+          "start": 0,
+          "end": 12,
+          "in": 0,
+          "out": 12,
+          "duration": 12
+        },
+        "sequenceTimecode": {
+          "frame": 0,
+          "displayFormat": "NDF"
+        },
+        "sourceTimecode": {
+          "frame": 0,
+          "displayFormat": "NDF"
+        },
+        "sequenceGeometry": {
+          "raster": [
+            160,
+            90
+          ],
+          "pixelAspect": "square"
+        },
+        "sourceGeometry": {
+          "raster": [
+            160,
+            90
+          ],
+          "pixelAspect": "square"
+        },
+        "sourceURL": "file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/24.mp4",
+        "sourcePath": "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Test Fixtures/Generated/rates/24.mp4",
+        "markers": [
+          [
+            0,
+            3,
+            "QC 001",
+            "[QC 001] Inclusive range æøå 日本語 & <picture> | Source B: 24.mp4, REL TC 00:00:00:00, frame 0 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A frames 0–2 (inclusive) | A rate: 24/1 | B rate: 24/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/24.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/24.mp4 | Source A: REL TC 00:00:00:00, frame 0"
+          ],
+          [
+            1,
+            1,
+            "QC 002 + QC 003 (2 findings)",
+            "[QC 002] First same-frame finding | Source B: 24.mp4, REL TC 00:00:00:01, frame 1 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 24/1 | B rate: 24/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/24.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/24.mp4 | Source A: REL TC 00:00:00:01, frame 1\n\n[QC 003] Second same-frame finding | Source B: 24.mp4, REL TC 00:00:00:01, frame 1 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 24/1 | B rate: 24/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/24.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/24.mp4 | Source A: REL TC 00:00:00:01, frame 1"
+          ]
+        ],
+        "encodedMarkerOutFrames": [
+          3,
+          2
+        ],
+        "mediaSHA256": "8444664c90313c855db21aa4e7ae95889c18dfcfdda89bec92160ef07d1f8525"
+      }
+    },
+    "25.xml": {
+      "status": "exact-match",
+      "scope": "Single source-A review sequence XML comparison; not native editor acceptance",
+      "returnedSequenceName": null,
+      "checks": {
+        "rate": true,
+        "durationFrames": true,
+        "sourceDurationFrames": true,
+        "clipPlacement": true,
+        "sequenceTimecode": true,
+        "sourceTimecode": true,
+        "sequenceGeometry": true,
+        "sourceGeometry": true,
+        "sourcePath": true,
+        "markerTimingAndTitles": true,
+        "exactMarkerContent": true,
+        "sourceMediaBytes": true
+      },
+      "mediaBytesCompared": true,
+      "original": {
+        "sha256": "e18d2fbbc448501559953b18f45d464c91db5052dd41cc602c85a4fdb80cf026",
+        "xmlVersion": "5",
+        "sequenceName": "25.mp4 vs 25.mp4 Review",
+        "rate": "25",
+        "durationFrames": 13,
+        "sourceDurationFrames": 13,
+        "clipPlacement": {
+          "start": 0,
+          "end": 13,
+          "in": 0,
+          "out": 13,
+          "duration": 13
+        },
+        "sequenceTimecode": {
+          "frame": 0,
+          "displayFormat": "NDF"
+        },
+        "sourceTimecode": {
+          "frame": 0,
+          "displayFormat": "NDF"
+        },
+        "sequenceGeometry": {
+          "raster": [
+            160,
+            90
+          ],
+          "pixelAspect": "square"
+        },
+        "sourceGeometry": {
+          "raster": [
+            160,
+            90
+          ],
+          "pixelAspect": "square"
+        },
+        "sourceURL": "file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/25.mp4",
+        "sourcePath": "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Test Fixtures/Generated/rates/25.mp4",
+        "markers": [
+          [
+            0,
+            3,
+            "QC 001",
+            "[QC 001] Inclusive range æøå 日本語 & <picture> | Source B: 25.mp4, REL TC 00:00:00:00, frame 0 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A frames 0–2 (inclusive) | A rate: 25/1 | B rate: 25/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/25.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/25.mp4 | Source A: REL TC 00:00:00:00, frame 0"
+          ],
+          [
+            1,
+            1,
+            "QC 002 + QC 003 (2 findings)",
+            "[QC 002] First same-frame finding | Source B: 25.mp4, REL TC 00:00:00:01, frame 1 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 25/1 | B rate: 25/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/25.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/25.mp4 | Source A: REL TC 00:00:00:01, frame 1\n\n[QC 003] Second same-frame finding | Source B: 25.mp4, REL TC 00:00:00:01, frame 1 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 25/1 | B rate: 25/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/25.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/25.mp4 | Source A: REL TC 00:00:00:01, frame 1"
+          ]
+        ],
+        "encodedMarkerOutFrames": [
+          3,
+          2
+        ],
+        "mediaSHA256": "b3a6e1d3073e4a399be80c072e8fc00d2703565a9ac4076299797b5d29e73e08"
+      },
+      "returned": {
+        "sha256": "e18d2fbbc448501559953b18f45d464c91db5052dd41cc602c85a4fdb80cf026",
+        "xmlVersion": "5",
+        "sequenceName": "25.mp4 vs 25.mp4 Review",
+        "rate": "25",
+        "durationFrames": 13,
+        "sourceDurationFrames": 13,
+        "clipPlacement": {
+          "start": 0,
+          "end": 13,
+          "in": 0,
+          "out": 13,
+          "duration": 13
+        },
+        "sequenceTimecode": {
+          "frame": 0,
+          "displayFormat": "NDF"
+        },
+        "sourceTimecode": {
+          "frame": 0,
+          "displayFormat": "NDF"
+        },
+        "sequenceGeometry": {
+          "raster": [
+            160,
+            90
+          ],
+          "pixelAspect": "square"
+        },
+        "sourceGeometry": {
+          "raster": [
+            160,
+            90
+          ],
+          "pixelAspect": "square"
+        },
+        "sourceURL": "file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/25.mp4",
+        "sourcePath": "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Test Fixtures/Generated/rates/25.mp4",
+        "markers": [
+          [
+            0,
+            3,
+            "QC 001",
+            "[QC 001] Inclusive range æøå 日本語 & <picture> | Source B: 25.mp4, REL TC 00:00:00:00, frame 0 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A frames 0–2 (inclusive) | A rate: 25/1 | B rate: 25/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/25.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/25.mp4 | Source A: REL TC 00:00:00:00, frame 0"
+          ],
+          [
+            1,
+            1,
+            "QC 002 + QC 003 (2 findings)",
+            "[QC 002] First same-frame finding | Source B: 25.mp4, REL TC 00:00:00:01, frame 1 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 25/1 | B rate: 25/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/25.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/25.mp4 | Source A: REL TC 00:00:00:01, frame 1\n\n[QC 003] Second same-frame finding | Source B: 25.mp4, REL TC 00:00:00:01, frame 1 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 25/1 | B rate: 25/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/25.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/25.mp4 | Source A: REL TC 00:00:00:01, frame 1"
+          ]
+        ],
+        "encodedMarkerOutFrames": [
+          3,
+          2
+        ],
+        "mediaSHA256": "b3a6e1d3073e4a399be80c072e8fc00d2703565a9ac4076299797b5d29e73e08"
+      }
+    },
+    "29.97-minute.xml": {
+      "status": "exact-match",
+      "scope": "Single source-A review sequence XML comparison; not native editor acceptance",
+      "returnedSequenceName": null,
+      "checks": {
+        "rate": true,
+        "durationFrames": true,
+        "sourceDurationFrames": true,
+        "clipPlacement": true,
+        "sequenceTimecode": true,
+        "sourceTimecode": true,
+        "sequenceGeometry": true,
+        "sourceGeometry": true,
+        "sourcePath": true,
+        "markerTimingAndTitles": true,
+        "exactMarkerContent": true,
+        "sourceMediaBytes": true
+      },
+      "mediaBytesCompared": true,
+      "original": {
+        "sha256": "9c931dae1269a7ac1f8d4bc63dec8c4bfd7a1db941b947e8a5603dd750068585",
+        "xmlVersion": "5",
+        "sequenceName": "29.97-minute.mov vs 29.97-minute.mov Review",
+        "rate": "30000/1001",
+        "durationFrames": 15,
+        "sourceDurationFrames": 15,
+        "clipPlacement": {
+          "start": 0,
+          "end": 15,
+          "in": 0,
+          "out": 15,
+          "duration": 15
+        },
+        "sequenceTimecode": {
+          "frame": 1798,
+          "displayFormat": "DF"
+        },
+        "sourceTimecode": {
+          "frame": 1798,
+          "displayFormat": "DF"
+        },
+        "sequenceGeometry": {
+          "raster": [
+            160,
+            90
+          ],
+          "pixelAspect": "square"
+        },
+        "sourceGeometry": {
+          "raster": [
+            160,
+            90
+          ],
+          "pixelAspect": "square"
+        },
+        "sourceURL": "file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/drop-frame-boundaries/29.97-minute.mov",
+        "sourcePath": "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Test Fixtures/Generated/drop-frame-boundaries/29.97-minute.mov",
+        "markers": [
+          [
+            2,
+            1,
+            "QC 001",
+            "[QC 001] Generated source at the drop-frame minute boundary | Source B: 29.97-minute.mov, SRC TC 00:01:00;02, frame 2 | Alignment: Source timecode | Severity: Info | Category: General | Status: Open | A rate: 30000/1001 | B rate: 30000/1001 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/drop-frame-boundaries/29.97-minute.mov | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/drop-frame-boundaries/29.97-minute.mov | Source A: SRC TC 00:01:00;02, frame 2"
+          ]
+        ],
+        "encodedMarkerOutFrames": [
+          3
+        ],
+        "mediaSHA256": "b3b88a7ca015f9f072d476f095715a8cdf1232506006072765b6d19b0c4eedbd"
+      },
+      "returned": {
+        "sha256": "9c931dae1269a7ac1f8d4bc63dec8c4bfd7a1db941b947e8a5603dd750068585",
+        "xmlVersion": "5",
+        "sequenceName": "29.97-minute.mov vs 29.97-minute.mov Review",
+        "rate": "30000/1001",
+        "durationFrames": 15,
+        "sourceDurationFrames": 15,
+        "clipPlacement": {
+          "start": 0,
+          "end": 15,
+          "in": 0,
+          "out": 15,
+          "duration": 15
+        },
+        "sequenceTimecode": {
+          "frame": 1798,
+          "displayFormat": "DF"
+        },
+        "sourceTimecode": {
+          "frame": 1798,
+          "displayFormat": "DF"
+        },
+        "sequenceGeometry": {
+          "raster": [
+            160,
+            90
+          ],
+          "pixelAspect": "square"
+        },
+        "sourceGeometry": {
+          "raster": [
+            160,
+            90
+          ],
+          "pixelAspect": "square"
+        },
+        "sourceURL": "file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/drop-frame-boundaries/29.97-minute.mov",
+        "sourcePath": "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Test Fixtures/Generated/drop-frame-boundaries/29.97-minute.mov",
+        "markers": [
+          [
+            2,
+            1,
+            "QC 001",
+            "[QC 001] Generated source at the drop-frame minute boundary | Source B: 29.97-minute.mov, SRC TC 00:01:00;02, frame 2 | Alignment: Source timecode | Severity: Info | Category: General | Status: Open | A rate: 30000/1001 | B rate: 30000/1001 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/drop-frame-boundaries/29.97-minute.mov | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/drop-frame-boundaries/29.97-minute.mov | Source A: SRC TC 00:01:00;02, frame 2"
+          ]
+        ],
+        "encodedMarkerOutFrames": [
+          3
+        ],
+        "mediaSHA256": "b3b88a7ca015f9f072d476f095715a8cdf1232506006072765b6d19b0c4eedbd"
+      }
+    },
+    "29.97.xml": {
+      "status": "exact-match",
+      "scope": "Single source-A review sequence XML comparison; not native editor acceptance",
+      "returnedSequenceName": null,
+      "checks": {
+        "rate": true,
+        "durationFrames": true,
+        "sourceDurationFrames": true,
+        "clipPlacement": true,
+        "sequenceTimecode": true,
+        "sourceTimecode": true,
+        "sequenceGeometry": true,
+        "sourceGeometry": true,
+        "sourcePath": true,
+        "markerTimingAndTitles": true,
+        "exactMarkerContent": true,
+        "sourceMediaBytes": true
+      },
+      "mediaBytesCompared": true,
+      "original": {
+        "sha256": "181cea90739cfb579de4880dfeb7fd3ae5b1ac501a3cf5275b3036fef9b19480",
+        "xmlVersion": "5",
+        "sequenceName": "29.97.mp4 vs 29.97.mp4 Review",
+        "rate": "30000/1001",
+        "durationFrames": 15,
+        "sourceDurationFrames": 15,
+        "clipPlacement": {
+          "start": 0,
+          "end": 15,
+          "in": 0,
+          "out": 15,
+          "duration": 15
+        },
+        "sequenceTimecode": {
+          "frame": 0,
+          "displayFormat": "NDF"
+        },
+        "sourceTimecode": {
+          "frame": 0,
+          "displayFormat": "NDF"
+        },
+        "sequenceGeometry": {
+          "raster": [
+            160,
+            90
+          ],
+          "pixelAspect": "square"
+        },
+        "sourceGeometry": {
+          "raster": [
+            160,
+            90
+          ],
+          "pixelAspect": "square"
+        },
+        "sourceURL": "file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/29.97.mp4",
+        "sourcePath": "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Test Fixtures/Generated/rates/29.97.mp4",
+        "markers": [
+          [
+            0,
+            3,
+            "QC 001",
+            "[QC 001] Inclusive range æøå 日本語 & <picture> | Source B: 29.97.mp4, REL TC 00:00:00:00, frame 0 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A frames 0–2 (inclusive) | A rate: 30000/1001 | B rate: 30000/1001 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/29.97.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/29.97.mp4 | Source A: REL TC 00:00:00:00, frame 0"
+          ],
+          [
+            1,
+            1,
+            "QC 002 + QC 003 (2 findings)",
+            "[QC 002] First same-frame finding | Source B: 29.97.mp4, REL TC 00:00:00:01, frame 1 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 30000/1001 | B rate: 30000/1001 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/29.97.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/29.97.mp4 | Source A: REL TC 00:00:00:01, frame 1\n\n[QC 003] Second same-frame finding | Source B: 29.97.mp4, REL TC 00:00:00:01, frame 1 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 30000/1001 | B rate: 30000/1001 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/29.97.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/29.97.mp4 | Source A: REL TC 00:00:00:01, frame 1"
+          ]
+        ],
+        "encodedMarkerOutFrames": [
+          3,
+          2
+        ],
+        "mediaSHA256": "bd91bf3d218143d4f5e8dc0ecd9bee96b1b28d3ad508a2d1ce4c71e3175fb614"
+      },
+      "returned": {
+        "sha256": "181cea90739cfb579de4880dfeb7fd3ae5b1ac501a3cf5275b3036fef9b19480",
+        "xmlVersion": "5",
+        "sequenceName": "29.97.mp4 vs 29.97.mp4 Review",
+        "rate": "30000/1001",
+        "durationFrames": 15,
+        "sourceDurationFrames": 15,
+        "clipPlacement": {
+          "start": 0,
+          "end": 15,
+          "in": 0,
+          "out": 15,
+          "duration": 15
+        },
+        "sequenceTimecode": {
+          "frame": 0,
+          "displayFormat": "NDF"
+        },
+        "sourceTimecode": {
+          "frame": 0,
+          "displayFormat": "NDF"
+        },
+        "sequenceGeometry": {
+          "raster": [
+            160,
+            90
+          ],
+          "pixelAspect": "square"
+        },
+        "sourceGeometry": {
+          "raster": [
+            160,
+            90
+          ],
+          "pixelAspect": "square"
+        },
+        "sourceURL": "file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/29.97.mp4",
+        "sourcePath": "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Test Fixtures/Generated/rates/29.97.mp4",
+        "markers": [
+          [
+            0,
+            3,
+            "QC 001",
+            "[QC 001] Inclusive range æøå 日本語 & <picture> | Source B: 29.97.mp4, REL TC 00:00:00:00, frame 0 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A frames 0–2 (inclusive) | A rate: 30000/1001 | B rate: 30000/1001 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/29.97.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/29.97.mp4 | Source A: REL TC 00:00:00:00, frame 0"
+          ],
+          [
+            1,
+            1,
+            "QC 002 + QC 003 (2 findings)",
+            "[QC 002] First same-frame finding | Source B: 29.97.mp4, REL TC 00:00:00:01, frame 1 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 30000/1001 | B rate: 30000/1001 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/29.97.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/29.97.mp4 | Source A: REL TC 00:00:00:01, frame 1\n\n[QC 003] Second same-frame finding | Source B: 29.97.mp4, REL TC 00:00:00:01, frame 1 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 30000/1001 | B rate: 30000/1001 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/29.97.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/29.97.mp4 | Source A: REL TC 00:00:00:01, frame 1"
+          ]
+        ],
+        "encodedMarkerOutFrames": [
+          3,
+          2
+        ],
+        "mediaSHA256": "bd91bf3d218143d4f5e8dc0ecd9bee96b1b28d3ad508a2d1ce4c71e3175fb614"
+      }
+    },
+    "30.xml": {
+      "status": "exact-match",
+      "scope": "Single source-A review sequence XML comparison; not native editor acceptance",
+      "returnedSequenceName": null,
+      "checks": {
+        "rate": true,
+        "durationFrames": true,
+        "sourceDurationFrames": true,
+        "clipPlacement": true,
+        "sequenceTimecode": true,
+        "sourceTimecode": true,
+        "sequenceGeometry": true,
+        "sourceGeometry": true,
+        "sourcePath": true,
+        "markerTimingAndTitles": true,
+        "exactMarkerContent": true,
+        "sourceMediaBytes": true
+      },
+      "mediaBytesCompared": true,
+      "original": {
+        "sha256": "f718dba00a8cd20643b8da94fd5c690a69cbf57e4b093ce476e970d332700bb5",
+        "xmlVersion": "5",
+        "sequenceName": "30.mp4 vs 30.mp4 Review",
+        "rate": "30",
+        "durationFrames": 15,
+        "sourceDurationFrames": 15,
+        "clipPlacement": {
+          "start": 0,
+          "end": 15,
+          "in": 0,
+          "out": 15,
+          "duration": 15
+        },
+        "sequenceTimecode": {
+          "frame": 0,
+          "displayFormat": "NDF"
+        },
+        "sourceTimecode": {
+          "frame": 0,
+          "displayFormat": "NDF"
+        },
+        "sequenceGeometry": {
+          "raster": [
+            160,
+            90
+          ],
+          "pixelAspect": "square"
+        },
+        "sourceGeometry": {
+          "raster": [
+            160,
+            90
+          ],
+          "pixelAspect": "square"
+        },
+        "sourceURL": "file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/30.mp4",
+        "sourcePath": "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Test Fixtures/Generated/rates/30.mp4",
+        "markers": [
+          [
+            0,
+            3,
+            "QC 001",
+            "[QC 001] Inclusive range æøå 日本語 & <picture> | Source B: 30.mp4, REL TC 00:00:00:00, frame 0 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A frames 0–2 (inclusive) | A rate: 30/1 | B rate: 30/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/30.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/30.mp4 | Source A: REL TC 00:00:00:00, frame 0"
+          ],
+          [
+            1,
+            1,
+            "QC 002 + QC 003 (2 findings)",
+            "[QC 002] First same-frame finding | Source B: 30.mp4, REL TC 00:00:00:01, frame 1 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 30/1 | B rate: 30/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/30.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/30.mp4 | Source A: REL TC 00:00:00:01, frame 1\n\n[QC 003] Second same-frame finding | Source B: 30.mp4, REL TC 00:00:00:01, frame 1 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 30/1 | B rate: 30/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/30.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/30.mp4 | Source A: REL TC 00:00:00:01, frame 1"
+          ]
+        ],
+        "encodedMarkerOutFrames": [
+          3,
+          2
+        ],
+        "mediaSHA256": "a711a53d37573a2a9839dc74b595ae4713c3b32ff8cacca33eda9abb30a81d91"
+      },
+      "returned": {
+        "sha256": "f718dba00a8cd20643b8da94fd5c690a69cbf57e4b093ce476e970d332700bb5",
+        "xmlVersion": "5",
+        "sequenceName": "30.mp4 vs 30.mp4 Review",
+        "rate": "30",
+        "durationFrames": 15,
+        "sourceDurationFrames": 15,
+        "clipPlacement": {
+          "start": 0,
+          "end": 15,
+          "in": 0,
+          "out": 15,
+          "duration": 15
+        },
+        "sequenceTimecode": {
+          "frame": 0,
+          "displayFormat": "NDF"
+        },
+        "sourceTimecode": {
+          "frame": 0,
+          "displayFormat": "NDF"
+        },
+        "sequenceGeometry": {
+          "raster": [
+            160,
+            90
+          ],
+          "pixelAspect": "square"
+        },
+        "sourceGeometry": {
+          "raster": [
+            160,
+            90
+          ],
+          "pixelAspect": "square"
+        },
+        "sourceURL": "file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/30.mp4",
+        "sourcePath": "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Test Fixtures/Generated/rates/30.mp4",
+        "markers": [
+          [
+            0,
+            3,
+            "QC 001",
+            "[QC 001] Inclusive range æøå 日本語 & <picture> | Source B: 30.mp4, REL TC 00:00:00:00, frame 0 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A frames 0–2 (inclusive) | A rate: 30/1 | B rate: 30/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/30.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/30.mp4 | Source A: REL TC 00:00:00:00, frame 0"
+          ],
+          [
+            1,
+            1,
+            "QC 002 + QC 003 (2 findings)",
+            "[QC 002] First same-frame finding | Source B: 30.mp4, REL TC 00:00:00:01, frame 1 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 30/1 | B rate: 30/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/30.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/30.mp4 | Source A: REL TC 00:00:00:01, frame 1\n\n[QC 003] Second same-frame finding | Source B: 30.mp4, REL TC 00:00:00:01, frame 1 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 30/1 | B rate: 30/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/30.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/30.mp4 | Source A: REL TC 00:00:00:01, frame 1"
+          ]
+        ],
+        "encodedMarkerOutFrames": [
+          3,
+          2
+        ],
+        "mediaSHA256": "a711a53d37573a2a9839dc74b595ae4713c3b32ff8cacca33eda9abb30a81d91"
+      }
+    },
+    "50.xml": {
+      "status": "exact-match",
+      "scope": "Single source-A review sequence XML comparison; not native editor acceptance",
+      "returnedSequenceName": null,
+      "checks": {
+        "rate": true,
+        "durationFrames": true,
+        "sourceDurationFrames": true,
+        "clipPlacement": true,
+        "sequenceTimecode": true,
+        "sourceTimecode": true,
+        "sequenceGeometry": true,
+        "sourceGeometry": true,
+        "sourcePath": true,
+        "markerTimingAndTitles": true,
+        "exactMarkerContent": true,
+        "sourceMediaBytes": true
+      },
+      "mediaBytesCompared": true,
+      "original": {
+        "sha256": "47bfeb451ba80b9984389d7d50067ca7039f184d0e29ed743c2b2e874f50c11c",
+        "xmlVersion": "5",
+        "sequenceName": "50.mp4 vs 50.mp4 Review",
+        "rate": "50",
+        "durationFrames": 25,
+        "sourceDurationFrames": 25,
+        "clipPlacement": {
+          "start": 0,
+          "end": 25,
+          "in": 0,
+          "out": 25,
+          "duration": 25
+        },
+        "sequenceTimecode": {
+          "frame": 0,
+          "displayFormat": "NDF"
+        },
+        "sourceTimecode": {
+          "frame": 0,
+          "displayFormat": "NDF"
+        },
+        "sequenceGeometry": {
+          "raster": [
+            160,
+            90
+          ],
+          "pixelAspect": "square"
+        },
+        "sourceGeometry": {
+          "raster": [
+            160,
+            90
+          ],
+          "pixelAspect": "square"
+        },
+        "sourceURL": "file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/50.mp4",
+        "sourcePath": "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Test Fixtures/Generated/rates/50.mp4",
+        "markers": [
+          [
+            0,
+            3,
+            "QC 001",
+            "[QC 001] Inclusive range æøå 日本語 & <picture> | Source B: 50.mp4, REL TC 00:00:00:00, frame 0 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A frames 0–2 (inclusive) | A rate: 50/1 | B rate: 50/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/50.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/50.mp4 | Source A: REL TC 00:00:00:00, frame 0"
+          ],
+          [
+            1,
+            1,
+            "QC 002 + QC 003 (2 findings)",
+            "[QC 002] First same-frame finding | Source B: 50.mp4, REL TC 00:00:00:01, frame 1 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 50/1 | B rate: 50/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/50.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/50.mp4 | Source A: REL TC 00:00:00:01, frame 1\n\n[QC 003] Second same-frame finding | Source B: 50.mp4, REL TC 00:00:00:01, frame 1 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 50/1 | B rate: 50/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/50.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/50.mp4 | Source A: REL TC 00:00:00:01, frame 1"
+          ]
+        ],
+        "encodedMarkerOutFrames": [
+          3,
+          2
+        ],
+        "mediaSHA256": "6b3e352b906a61c3cf73fa562484a58a8392123a74aaf8b1650af81a28cf1dd4"
+      },
+      "returned": {
+        "sha256": "47bfeb451ba80b9984389d7d50067ca7039f184d0e29ed743c2b2e874f50c11c",
+        "xmlVersion": "5",
+        "sequenceName": "50.mp4 vs 50.mp4 Review",
+        "rate": "50",
+        "durationFrames": 25,
+        "sourceDurationFrames": 25,
+        "clipPlacement": {
+          "start": 0,
+          "end": 25,
+          "in": 0,
+          "out": 25,
+          "duration": 25
+        },
+        "sequenceTimecode": {
+          "frame": 0,
+          "displayFormat": "NDF"
+        },
+        "sourceTimecode": {
+          "frame": 0,
+          "displayFormat": "NDF"
+        },
+        "sequenceGeometry": {
+          "raster": [
+            160,
+            90
+          ],
+          "pixelAspect": "square"
+        },
+        "sourceGeometry": {
+          "raster": [
+            160,
+            90
+          ],
+          "pixelAspect": "square"
+        },
+        "sourceURL": "file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/50.mp4",
+        "sourcePath": "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Test Fixtures/Generated/rates/50.mp4",
+        "markers": [
+          [
+            0,
+            3,
+            "QC 001",
+            "[QC 001] Inclusive range æøå 日本語 & <picture> | Source B: 50.mp4, REL TC 00:00:00:00, frame 0 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A frames 0–2 (inclusive) | A rate: 50/1 | B rate: 50/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/50.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/50.mp4 | Source A: REL TC 00:00:00:00, frame 0"
+          ],
+          [
+            1,
+            1,
+            "QC 002 + QC 003 (2 findings)",
+            "[QC 002] First same-frame finding | Source B: 50.mp4, REL TC 00:00:00:01, frame 1 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 50/1 | B rate: 50/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/50.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/50.mp4 | Source A: REL TC 00:00:00:01, frame 1\n\n[QC 003] Second same-frame finding | Source B: 50.mp4, REL TC 00:00:00:01, frame 1 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 50/1 | B rate: 50/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/50.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/50.mp4 | Source A: REL TC 00:00:00:01, frame 1"
+          ]
+        ],
+        "encodedMarkerOutFrames": [
+          3,
+          2
+        ],
+        "mediaSHA256": "6b3e352b906a61c3cf73fa562484a58a8392123a74aaf8b1650af81a28cf1dd4"
+      }
+    },
+    "59.94-minute.xml": {
+      "status": "exact-match",
+      "scope": "Single source-A review sequence XML comparison; not native editor acceptance",
+      "returnedSequenceName": null,
+      "checks": {
+        "rate": true,
+        "durationFrames": true,
+        "sourceDurationFrames": true,
+        "clipPlacement": true,
+        "sequenceTimecode": true,
+        "sourceTimecode": true,
+        "sequenceGeometry": true,
+        "sourceGeometry": true,
+        "sourcePath": true,
+        "markerTimingAndTitles": true,
+        "exactMarkerContent": true,
+        "sourceMediaBytes": true
+      },
+      "mediaBytesCompared": true,
+      "original": {
+        "sha256": "d559578a3e0c3adc2a169d425ccf489a6e296763471dbd1a68a3bbd5b06f096f",
+        "xmlVersion": "5",
+        "sequenceName": "59.94-minute.mov vs 59.94-minute.mov Review",
+        "rate": "60000/1001",
+        "durationFrames": 30,
+        "sourceDurationFrames": 30,
+        "clipPlacement": {
+          "start": 0,
+          "end": 30,
+          "in": 0,
+          "out": 30,
+          "duration": 30
+        },
+        "sequenceTimecode": {
+          "frame": 3596,
+          "displayFormat": "DF"
+        },
+        "sourceTimecode": {
+          "frame": 3596,
+          "displayFormat": "DF"
+        },
+        "sequenceGeometry": {
+          "raster": [
+            160,
+            90
+          ],
+          "pixelAspect": "square"
+        },
+        "sourceGeometry": {
+          "raster": [
+            160,
+            90
+          ],
+          "pixelAspect": "square"
+        },
+        "sourceURL": "file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/drop-frame-boundaries/59.94-minute.mov",
+        "sourcePath": "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Test Fixtures/Generated/drop-frame-boundaries/59.94-minute.mov",
+        "markers": [
+          [
+            4,
+            1,
+            "QC 001",
+            "[QC 001] Generated source at the drop-frame minute boundary | Source B: 59.94-minute.mov, SRC TC 00:01:00;04, frame 4 | Alignment: Source timecode | Severity: Info | Category: General | Status: Open | A rate: 60000/1001 | B rate: 60000/1001 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/drop-frame-boundaries/59.94-minute.mov | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/drop-frame-boundaries/59.94-minute.mov | Source A: SRC TC 00:01:00;04, frame 4"
+          ]
+        ],
+        "encodedMarkerOutFrames": [
+          5
+        ],
+        "mediaSHA256": "6c838ca8eac52b8450d3cd340da322a5268f14d1e07a06a05b1db8bd1a632abb"
+      },
+      "returned": {
+        "sha256": "d559578a3e0c3adc2a169d425ccf489a6e296763471dbd1a68a3bbd5b06f096f",
+        "xmlVersion": "5",
+        "sequenceName": "59.94-minute.mov vs 59.94-minute.mov Review",
+        "rate": "60000/1001",
+        "durationFrames": 30,
+        "sourceDurationFrames": 30,
+        "clipPlacement": {
+          "start": 0,
+          "end": 30,
+          "in": 0,
+          "out": 30,
+          "duration": 30
+        },
+        "sequenceTimecode": {
+          "frame": 3596,
+          "displayFormat": "DF"
+        },
+        "sourceTimecode": {
+          "frame": 3596,
+          "displayFormat": "DF"
+        },
+        "sequenceGeometry": {
+          "raster": [
+            160,
+            90
+          ],
+          "pixelAspect": "square"
+        },
+        "sourceGeometry": {
+          "raster": [
+            160,
+            90
+          ],
+          "pixelAspect": "square"
+        },
+        "sourceURL": "file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/drop-frame-boundaries/59.94-minute.mov",
+        "sourcePath": "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Test Fixtures/Generated/drop-frame-boundaries/59.94-minute.mov",
+        "markers": [
+          [
+            4,
+            1,
+            "QC 001",
+            "[QC 001] Generated source at the drop-frame minute boundary | Source B: 59.94-minute.mov, SRC TC 00:01:00;04, frame 4 | Alignment: Source timecode | Severity: Info | Category: General | Status: Open | A rate: 60000/1001 | B rate: 60000/1001 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/drop-frame-boundaries/59.94-minute.mov | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/drop-frame-boundaries/59.94-minute.mov | Source A: SRC TC 00:01:00;04, frame 4"
+          ]
+        ],
+        "encodedMarkerOutFrames": [
+          5
+        ],
+        "mediaSHA256": "6c838ca8eac52b8450d3cd340da322a5268f14d1e07a06a05b1db8bd1a632abb"
+      }
+    },
+    "59.94.xml": {
+      "status": "exact-match",
+      "scope": "Single source-A review sequence XML comparison; not native editor acceptance",
+      "returnedSequenceName": null,
+      "checks": {
+        "rate": true,
+        "durationFrames": true,
+        "sourceDurationFrames": true,
+        "clipPlacement": true,
+        "sequenceTimecode": true,
+        "sourceTimecode": true,
+        "sequenceGeometry": true,
+        "sourceGeometry": true,
+        "sourcePath": true,
+        "markerTimingAndTitles": true,
+        "exactMarkerContent": true,
+        "sourceMediaBytes": true
+      },
+      "mediaBytesCompared": true,
+      "original": {
+        "sha256": "81fea34340b9ef85ede4760af59d9618d24762ecd5f6912cd27f26a406a6341b",
+        "xmlVersion": "5",
+        "sequenceName": "59.94.mp4 vs 59.94.mp4 Review",
+        "rate": "60000/1001",
+        "durationFrames": 30,
+        "sourceDurationFrames": 30,
+        "clipPlacement": {
+          "start": 0,
+          "end": 30,
+          "in": 0,
+          "out": 30,
+          "duration": 30
+        },
+        "sequenceTimecode": {
+          "frame": 0,
+          "displayFormat": "NDF"
+        },
+        "sourceTimecode": {
+          "frame": 0,
+          "displayFormat": "NDF"
+        },
+        "sequenceGeometry": {
+          "raster": [
+            160,
+            90
+          ],
+          "pixelAspect": "square"
+        },
+        "sourceGeometry": {
+          "raster": [
+            160,
+            90
+          ],
+          "pixelAspect": "square"
+        },
+        "sourceURL": "file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/59.94.mp4",
+        "sourcePath": "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Test Fixtures/Generated/rates/59.94.mp4",
+        "markers": [
+          [
+            0,
+            3,
+            "QC 001",
+            "[QC 001] Inclusive range æøå 日本語 & <picture> | Source B: 59.94.mp4, REL TC 00:00:00:00, frame 0 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A frames 0–2 (inclusive) | A rate: 60000/1001 | B rate: 60000/1001 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/59.94.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/59.94.mp4 | Source A: REL TC 00:00:00:00, frame 0"
+          ],
+          [
+            1,
+            1,
+            "QC 002 + QC 003 (2 findings)",
+            "[QC 002] First same-frame finding | Source B: 59.94.mp4, REL TC 00:00:00:01, frame 1 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 60000/1001 | B rate: 60000/1001 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/59.94.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/59.94.mp4 | Source A: REL TC 00:00:00:01, frame 1\n\n[QC 003] Second same-frame finding | Source B: 59.94.mp4, REL TC 00:00:00:01, frame 1 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 60000/1001 | B rate: 60000/1001 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/59.94.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/59.94.mp4 | Source A: REL TC 00:00:00:01, frame 1"
+          ]
+        ],
+        "encodedMarkerOutFrames": [
+          3,
+          2
+        ],
+        "mediaSHA256": "621d56cd215e33533ee80f17413dc16af8c88abc06399fb99f105e9616647fa2"
+      },
+      "returned": {
+        "sha256": "81fea34340b9ef85ede4760af59d9618d24762ecd5f6912cd27f26a406a6341b",
+        "xmlVersion": "5",
+        "sequenceName": "59.94.mp4 vs 59.94.mp4 Review",
+        "rate": "60000/1001",
+        "durationFrames": 30,
+        "sourceDurationFrames": 30,
+        "clipPlacement": {
+          "start": 0,
+          "end": 30,
+          "in": 0,
+          "out": 30,
+          "duration": 30
+        },
+        "sequenceTimecode": {
+          "frame": 0,
+          "displayFormat": "NDF"
+        },
+        "sourceTimecode": {
+          "frame": 0,
+          "displayFormat": "NDF"
+        },
+        "sequenceGeometry": {
+          "raster": [
+            160,
+            90
+          ],
+          "pixelAspect": "square"
+        },
+        "sourceGeometry": {
+          "raster": [
+            160,
+            90
+          ],
+          "pixelAspect": "square"
+        },
+        "sourceURL": "file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/59.94.mp4",
+        "sourcePath": "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Test Fixtures/Generated/rates/59.94.mp4",
+        "markers": [
+          [
+            0,
+            3,
+            "QC 001",
+            "[QC 001] Inclusive range æøå 日本語 & <picture> | Source B: 59.94.mp4, REL TC 00:00:00:00, frame 0 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A frames 0–2 (inclusive) | A rate: 60000/1001 | B rate: 60000/1001 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/59.94.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/59.94.mp4 | Source A: REL TC 00:00:00:00, frame 0"
+          ],
+          [
+            1,
+            1,
+            "QC 002 + QC 003 (2 findings)",
+            "[QC 002] First same-frame finding | Source B: 59.94.mp4, REL TC 00:00:00:01, frame 1 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 60000/1001 | B rate: 60000/1001 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/59.94.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/59.94.mp4 | Source A: REL TC 00:00:00:01, frame 1\n\n[QC 003] Second same-frame finding | Source B: 59.94.mp4, REL TC 00:00:00:01, frame 1 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 60000/1001 | B rate: 60000/1001 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/59.94.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/59.94.mp4 | Source A: REL TC 00:00:00:01, frame 1"
+          ]
+        ],
+        "encodedMarkerOutFrames": [
+          3,
+          2
+        ],
+        "mediaSHA256": "621d56cd215e33533ee80f17413dc16af8c88abc06399fb99f105e9616647fa2"
+      }
+    },
+    "60.xml": {
+      "status": "exact-match",
+      "scope": "Single source-A review sequence XML comparison; not native editor acceptance",
+      "returnedSequenceName": null,
+      "checks": {
+        "rate": true,
+        "durationFrames": true,
+        "sourceDurationFrames": true,
+        "clipPlacement": true,
+        "sequenceTimecode": true,
+        "sourceTimecode": true,
+        "sequenceGeometry": true,
+        "sourceGeometry": true,
+        "sourcePath": true,
+        "markerTimingAndTitles": true,
+        "exactMarkerContent": true,
+        "sourceMediaBytes": true
+      },
+      "mediaBytesCompared": true,
+      "original": {
+        "sha256": "22bae2141973724412e3305f8c74d88d726434cf95682366b2153ad77849cdb0",
+        "xmlVersion": "5",
+        "sequenceName": "60.mp4 vs 60.mp4 Review",
+        "rate": "60",
+        "durationFrames": 30,
+        "sourceDurationFrames": 30,
+        "clipPlacement": {
+          "start": 0,
+          "end": 30,
+          "in": 0,
+          "out": 30,
+          "duration": 30
+        },
+        "sequenceTimecode": {
+          "frame": 0,
+          "displayFormat": "NDF"
+        },
+        "sourceTimecode": {
+          "frame": 0,
+          "displayFormat": "NDF"
+        },
+        "sequenceGeometry": {
+          "raster": [
+            160,
+            90
+          ],
+          "pixelAspect": "square"
+        },
+        "sourceGeometry": {
+          "raster": [
+            160,
+            90
+          ],
+          "pixelAspect": "square"
+        },
+        "sourceURL": "file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/60.mp4",
+        "sourcePath": "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Test Fixtures/Generated/rates/60.mp4",
+        "markers": [
+          [
+            0,
+            3,
+            "QC 001",
+            "[QC 001] Inclusive range æøå 日本語 & <picture> | Source B: 60.mp4, REL TC 00:00:00:00, frame 0 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A frames 0–2 (inclusive) | A rate: 60/1 | B rate: 60/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/60.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/60.mp4 | Source A: REL TC 00:00:00:00, frame 0"
+          ],
+          [
+            1,
+            1,
+            "QC 002 + QC 003 (2 findings)",
+            "[QC 002] First same-frame finding | Source B: 60.mp4, REL TC 00:00:00:01, frame 1 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 60/1 | B rate: 60/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/60.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/60.mp4 | Source A: REL TC 00:00:00:01, frame 1\n\n[QC 003] Second same-frame finding | Source B: 60.mp4, REL TC 00:00:00:01, frame 1 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 60/1 | B rate: 60/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/60.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/60.mp4 | Source A: REL TC 00:00:00:01, frame 1"
+          ]
+        ],
+        "encodedMarkerOutFrames": [
+          3,
+          2
+        ],
+        "mediaSHA256": "36ba579f44730080d9a4a7b7b564d5d27dcb7840fc9f9259ec480bb6528aa066"
+      },
+      "returned": {
+        "sha256": "22bae2141973724412e3305f8c74d88d726434cf95682366b2153ad77849cdb0",
+        "xmlVersion": "5",
+        "sequenceName": "60.mp4 vs 60.mp4 Review",
+        "rate": "60",
+        "durationFrames": 30,
+        "sourceDurationFrames": 30,
+        "clipPlacement": {
+          "start": 0,
+          "end": 30,
+          "in": 0,
+          "out": 30,
+          "duration": 30
+        },
+        "sequenceTimecode": {
+          "frame": 0,
+          "displayFormat": "NDF"
+        },
+        "sourceTimecode": {
+          "frame": 0,
+          "displayFormat": "NDF"
+        },
+        "sequenceGeometry": {
+          "raster": [
+            160,
+            90
+          ],
+          "pixelAspect": "square"
+        },
+        "sourceGeometry": {
+          "raster": [
+            160,
+            90
+          ],
+          "pixelAspect": "square"
+        },
+        "sourceURL": "file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/60.mp4",
+        "sourcePath": "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Test Fixtures/Generated/rates/60.mp4",
+        "markers": [
+          [
+            0,
+            3,
+            "QC 001",
+            "[QC 001] Inclusive range æøå 日本語 & <picture> | Source B: 60.mp4, REL TC 00:00:00:00, frame 0 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A frames 0–2 (inclusive) | A rate: 60/1 | B rate: 60/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/60.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/60.mp4 | Source A: REL TC 00:00:00:00, frame 0"
+          ],
+          [
+            1,
+            1,
+            "QC 002 + QC 003 (2 findings)",
+            "[QC 002] First same-frame finding | Source B: 60.mp4, REL TC 00:00:00:01, frame 1 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 60/1 | B rate: 60/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/60.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/60.mp4 | Source A: REL TC 00:00:00:01, frame 1\n\n[QC 003] Second same-frame finding | Source B: 60.mp4, REL TC 00:00:00:01, frame 1 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 60/1 | B rate: 60/1 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/60.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/60.mp4 | Source A: REL TC 00:00:00:01, frame 1"
+          ]
+        ],
+        "encodedMarkerOutFrames": [
+          3,
+          2
+        ],
+        "mediaSHA256": "36ba579f44730080d9a4a7b7b564d5d27dcb7840fc9f9259ec480bb6528aa066"
+      }
+    }
+  }
+}

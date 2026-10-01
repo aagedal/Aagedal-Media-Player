@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xmeml>
+<xmeml version="5">
+  <project><name>Aagedal Compare Review</name><children>
+    <sequence id="aagedal-review-sequence">
+      <name>29.97.mp4 vs 29.97.mp4 Review</name>
+      <duration>15</duration>
+      <rate><timebase>30</timebase><ntsc>TRUE</ntsc></rate>
+      <timecode><rate><timebase>30</timebase><ntsc>TRUE</ntsc></rate><string>00:00:00:00</string><frame>0</frame><displayformat>NDF</displayformat></timecode>
+      <media><video>
+        <format><samplecharacteristics><rate><timebase>30</timebase><ntsc>TRUE</ntsc></rate><width>160</width><height>90</height><pixelaspectratio>square</pixelaspectratio></samplecharacteristics></format>
+        <track><clipitem id="aagedal-source-a-clip">
+          <name>29.97.mp4</name>
+          <duration>15</duration><rate><timebase>30</timebase><ntsc>TRUE</ntsc></rate>
+          <start>0</start><end>15</end><in>0</in><out>15</out>
+          <file id="aagedal-source-a-file">
+            <name>29.97.mp4</name>
+            <pathurl>file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/29.97.mp4</pathurl>
+            <duration>15</duration><rate><timebase>30</timebase><ntsc>TRUE</ntsc></rate>
+            <timecode><rate><timebase>30</timebase><ntsc>TRUE</ntsc></rate><string>00:00:00:00</string><frame>0</frame><displayformat>NDF</displayformat></timecode>
+            <media><video><samplecharacteristics><rate><timebase>30</timebase><ntsc>TRUE</ntsc></rate><width>160</width><height>90</height><pixelaspectratio>square</pixelaspectratio></samplecharacteristics></video></media>
+          </file>
+        </clipitem></track>
+      </video></media>
+      <marker><name>QC 001</name><comment>[QC 001] Inclusive range æøå 日本語 &amp; &lt;picture&gt; | Source B: 29.97.mp4, REL TC 00:00:00:00, frame 0 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A frames 0–2 (inclusive) | A rate: 30000/1001 | B rate: 30000/1001 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/29.97.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/29.97.mp4 | Source A: REL TC 00:00:00:00, frame 0</comment><in>0</in><out>3</out></marker>
+      <marker><name>QC 002 + QC 003 (2 findings)</name><comment>[QC 002] First same-frame finding | Source B: 29.97.mp4, REL TC 00:00:00:01, frame 1 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 30000/1001 | B rate: 30000/1001 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/29.97.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/29.97.mp4 | Source A: REL TC 00:00:00:01, frame 1&#10;&#10;[QC 003] Second same-frame finding | Source B: 29.97.mp4, REL TC 00:00:00:01, frame 1 | Alignment: Relative start | Severity: Info | Category: General | Status: Open | A rate: 30000/1001 | B rate: 30000/1001 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/29.97.mp4 | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/rates/29.97.mp4 | Source A: REL TC 00:00:00:01, frame 1</comment><in>1</in><out>2</out></marker>
+    </sequence>
+  </children></project>
+</xmeml>
