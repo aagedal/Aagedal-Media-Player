@@ -4643,6 +4643,21 @@ Integrated clean-checkout verification is recorded in Phase 219 below.
 See [native evidence](docs/evidence/premiere-native-roundtrip-20261001/README.md).
 Integrated committed-source verification follows separately.
 
+## Phase 223 — Integrated Review closure and native Premiere continuation
+
+- [x] Pass canonical optimized Release verification at clean implementation
+  commit `6fe38adf18b652c31a9637f8994c0c9d385ee389`: 779 passes, nine named
+  opt-in skips (788 total), all seven new exact identities and both isolated
+  mixed-backend transport directions.
+- [x] Pass static analysis, all 61 preflight checks, complete script validators
+  and final source/package/cache/no-sleep identity with no runtime warnings.
+- [x] Retain [complete canonical receipts](docs/evidence/review-close-premiere-candidate-20261001/README.md).
+- [x] Extend native Premiere evidence to the 59.94 DF minute boundary: exact
+  timing, marker comment, duration, source bytes and PAR; unknown-to-progressive
+  field order remains flagged rather than accepted as unchanged.
+- [ ] Complete broader native editor/accessibility, dependency publication,
+  hardware/soak and signing/notarization/distribution acceptance.
+
 ## Remaining work after this continuation
 
 The user’s 2026-10-01 scope decision makes Avid native compatibility optional
@@ -5066,3 +5081,5 @@ Composer First edition may have limitations that do not apply to the full editio
 205. Phase 220 newer Review ranges and same-sidecar merge ownership.
 206. Phase 221 terminal live-meter closure.
 207. Phase 222 native Premiere marker text and drop-frame evidence.
+
+208. Phase 223 integrated Review closure and native Premiere continuation.

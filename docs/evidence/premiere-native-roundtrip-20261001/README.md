@@ -13,6 +13,7 @@ No user production project was changed.
 | --- | --- | --- | --- |
 | Original 23.976, numeric LF separator | Preserved | Changed: numeric LF becomes literal `&#10;` text | Unknown becomes `none` |
 | 29.97 DF, source `00:00:59;28`, marker at relative frame 2 | Preserved across the DF minute boundary | Preserved | Unknown becomes `none` |
+| 59.94 DF, source `00:00:59;56`, marker at relative frame 4 | Preserved across the DF minute boundary | Preserved | Unknown becomes `none` |
 | 23.976 literal LF diagnostic | Preserved | Changed: line feeds disappear, adjoining finding labels | Unknown becomes `none` |
 | 23.976 visible ` || ` separator diagnostic | Preserved | Preserved, including all three findings in two overlapping markers | Unknown becomes `none` |
 
@@ -40,7 +41,7 @@ media binaries are reproducible generated fixtures and are not copied here.
 This closes the previously unobserved import/re-export attempt for these
 specific carriers. It does not establish the wider Premiere matrix: fresh
 final-app exports, interlaced/PAR/rotation interpretation, additional rates,
-59.94 DF, final-frame and relinked-duration cases, user multiline/tab behavior,
+final-frame and relinked-duration cases, user multiline/tab behavior,
 or rendered geometry remain open. No exact-conform acceptance is claimed for
 unknown field order. No library publication, signing/notarization or hardware
 acceptance occurred.

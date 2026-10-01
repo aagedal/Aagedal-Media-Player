@@ -14,7 +14,14 @@ remains explicitly flagged, and user multiline formatting/broader conform
 acceptance remains open. See [native receipts](evidence/premiere-native-roundtrip-20261001/README.md).
 All 73 focused Review/lifecycle/meter Release checks pass. Candidate/release
 consumption now requires the seven new app identities and 788 aggregate tests;
-final integrated committed-source verification follows separately.
+canonical optimized Release verification passes at clean implementation commit
+`6fe38adf18b652c31a9637f8994c0c9d385ee389`: 779 passes, nine named opt-in skips,
+all seven required new identities, both isolated transport directions, analysis,
+61 preflight checks and final source/package/cache/no-sleep identity. See
+[retained canonical receipts](evidence/review-close-premiere-candidate-20261001/README.md).
+A subsequent native 59.94 DF minute-boundary round trip preserves timing, content
+and source bytes with the same explicitly flagged field-order inference.
+Documentation retention does not replace matching-HEAD release consumption.
 
 The current continuation fixes three concrete workflow defects: erased saved
 Review endpoints now explain the required Clear range action on departure,

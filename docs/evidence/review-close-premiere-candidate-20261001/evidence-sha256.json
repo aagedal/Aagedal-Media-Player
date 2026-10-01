@@ -1,0 +1,19 @@
+{
+  "analyze.log.gz": "5b27afed0f92208b52dbcb57382b814c3b75fb11e589ea4a9464dfd2afdcdccc",
+  "canonical-run.log.gz": "80edaaed2db1bb6e7dcc5113cd55d9977d54249ece0bbbbcd86c159b9a6d7675",
+  "environment.txt": "403691545d172cf9824eec90f5c4a2e7e11ba21a0d028ce67efea8a42bde71ad",
+  "mixed-backend-transport-details.json": "c84f38a81a9576906e8c11e76b6f75e361cd4cd92608462923686e2b891a3aa6",
+  "mixed-backend-transport-summary.json": "d06a66e6172776f112182f5b7c7f8a4794d72d620cd4607cde80d6c14f3b2186",
+  "mixed-backend-transport-validation.log": "6675fbb1bef734e96dfc603b27c184d813e6da80577136e73dae60ddcb2ff6ec",
+  "mixed-backend-transport.log.gz": "08e2b5e8bd11a4d29262f30b65e5b3e4d189bf668b601bbbf2b005c83c6a6cb8",
+  "power-events.json": "8ec6387c7bab2a24d638bb7b9d81183965fcf9ab40fd640e199067a31447791c",
+  "power-evidence-validation.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "preflight.log": "f1132982b7f49495b9faa3fd20fcb09c18fc390a12c2873d8c446c59b17a1cfb",
+  "proof-summary.json": "f19260d5d5f34dc0ad25f365f8713c9f0375357b3753f72a15a15be384911594",
+  "script-validator-tests.log": "f6c46e1435a2c87a16514a1fb9c1a0b5d15013fafcabc727f9be952b08644471",
+  "source-sha256.json": "d0666e49e12ce50ac6cbbb14f68d0eb594cb7daa9a1cd045a6b825237ff25473",
+  "test-details.json": "c444c361418545ab28fd089a9446d90e759c1a73891fe9b41c27a9a43de03189",
+  "test-evidence-validation.log": "0fece31ef35bc928af7964e1a99f76af05d179c1c594d13f6d1a680f84257a94",
+  "test-summary.json": "dfdecee44a6d2d01ea9b70e20164b4dec9aefa51be68340c09c4434a93c4fd46",
+  "tests.log.gz": "24df7afad9f6c12d21e203afd8a856977a10092430dd5ab8574ccd03ee9b9b9d"
+}

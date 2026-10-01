@@ -1,0 +1,132 @@
+{
+  "status": "differences",
+  "scope": "Single source-A review sequence XML comparison; not native editor acceptance",
+  "returnedSequenceName": null,
+  "checks": {
+    "rate": true,
+    "durationFrames": true,
+    "sourceDurationFrames": true,
+    "clipPlacement": true,
+    "sequenceTimecode": true,
+    "sourceTimecode": true,
+    "sequenceGeometry": false,
+    "sourceGeometry": false,
+    "clipFieldDominance": false,
+    "clipPixelAspect": true,
+    "sourcePath": true,
+    "markerTimingAndTitles": true,
+    "exactMarkerContent": true,
+    "sourceMediaBytes": true
+  },
+  "mediaBytesCompared": true,
+  "original": {
+    "sha256": "d559578a3e0c3adc2a169d425ccf489a6e296763471dbd1a68a3bbd5b06f096f",
+    "xmlVersion": "5",
+    "sequenceName": "59.94-minute.mov vs 59.94-minute.mov Review",
+    "rate": "60000/1001",
+    "durationFrames": 30,
+    "sourceDurationFrames": 30,
+    "clipPlacement": {
+      "start": 0,
+      "end": 30,
+      "in": 0,
+      "out": 30,
+      "duration": 30
+    },
+    "sequenceTimecode": {
+      "frame": 3596,
+      "displayFormat": "DF"
+    },
+    "sourceTimecode": {
+      "frame": 3596,
+      "displayFormat": "DF"
+    },
+    "sequenceGeometry": {
+      "raster": [
+        160,
+        90
+      ],
+      "pixelAspect": "square",
+      "fieldDominance": null
+    },
+    "sourceGeometry": {
+      "raster": [
+        160,
+        90
+      ],
+      "pixelAspect": "square",
+      "fieldDominance": null
+    },
+    "clipFieldDominance": null,
+    "clipPixelAspect": "square",
+    "sourceURL": "file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/drop-frame-boundaries/59.94-minute.mov",
+    "sourcePath": "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Test Fixtures/Generated/drop-frame-boundaries/59.94-minute.mov",
+    "markers": [
+      [
+        4,
+        1,
+        "QC 001",
+        "[QC 001] Generated source at the drop-frame minute boundary | Source B: 59.94-minute.mov, SRC TC 00:01:00;04, frame 4 | Alignment: Source timecode | Severity: Info | Category: General | Status: Open | A rate: 60000/1001 | B rate: 60000/1001 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/drop-frame-boundaries/59.94-minute.mov | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/drop-frame-boundaries/59.94-minute.mov | Source A: SRC TC 00:01:00;04, frame 4"
+      ]
+    ],
+    "encodedMarkerOutFrames": [
+      5
+    ],
+    "mediaSHA256": "6c838ca8eac52b8450d3cd340da322a5268f14d1e07a06a05b1db8bd1a632abb"
+  },
+  "returned": {
+    "sha256": "5ac20e5d8b5f632489ce57766ff41e94b7007f1559af612cefdd81ea66409002",
+    "xmlVersion": "4",
+    "sequenceName": "59.94-minute.mov vs 59.94-minute.mov Review",
+    "rate": "60000/1001",
+    "durationFrames": 30,
+    "sourceDurationFrames": 30,
+    "clipPlacement": {
+      "start": 0,
+      "end": 30,
+      "in": 0,
+      "out": 30,
+      "duration": 30
+    },
+    "sequenceTimecode": {
+      "frame": 3596,
+      "displayFormat": "DF"
+    },
+    "sourceTimecode": {
+      "frame": 3596,
+      "displayFormat": "DF"
+    },
+    "sequenceGeometry": {
+      "raster": [
+        160,
+        90
+      ],
+      "pixelAspect": "square",
+      "fieldDominance": "none"
+    },
+    "sourceGeometry": {
+      "raster": [
+        160,
+        90
+      ],
+      "pixelAspect": "square",
+      "fieldDominance": "none"
+    },
+    "clipFieldDominance": "none",
+    "clipPixelAspect": "square",
+    "sourceURL": "file://localhost///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/drop-frame-boundaries/59.94-minute.mov",
+    "sourcePath": "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Test Fixtures/Generated/drop-frame-boundaries/59.94-minute.mov",
+    "markers": [
+      [
+        4,
+        1,
+        "QC 001",
+        "[QC 001] Generated source at the drop-frame minute boundary | Source B: 59.94-minute.mov, SRC TC 00:01:00;04, frame 4 | Alignment: Source timecode | Severity: Info | Category: General | Status: Open | A rate: 60000/1001 | B rate: 60000/1001 | Source A URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/drop-frame-boundaries/59.94-minute.mov | Source B URL: file:///Users/truls.aagedal/Developer/Aagedal-Media-Player/Test%20Fixtures/Generated/drop-frame-boundaries/59.94-minute.mov | Source A: SRC TC 00:01:00;04, frame 4"
+      ]
+    ],
+    "encodedMarkerOutFrames": [
+      5
+    ],
+    "mediaSHA256": "6c838ca8eac52b8450d3cd340da322a5268f14d1e07a06a05b1db8bd1a632abb"
+  }
+}

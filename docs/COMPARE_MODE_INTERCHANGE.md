@@ -721,3 +721,10 @@ survive. The app now explains the limitation in its save panel and recommends
 CSV/PDF for retaining note formatting. Strict exact-content comparison still
 fails; no lossless round-trip claim is made. See the
 [retained native evidence](evidence/fcp-whitespace-reimport-20260920/README.md).
+
+The subsequent native 59.94 DF minute-boundary carrier also preserves its exact
+`60000/1001` rate, source frame 3596 (`00;00;59;56`), relative frame-4 marker,
+comment, duration, source bytes and PAR. Only unknown-to-progressive field-order
+inference remains flagged. Its original/returned XML and independent comparison
+are retained in the same native evidence directory. This observed carrier does
+not establish the broader interlaced/PAR/render/formatting acceptance matrix.
