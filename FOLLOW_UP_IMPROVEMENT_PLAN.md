@@ -4456,8 +4456,11 @@ remaining editor and distribution gates remain open.
   mixed-backend transport checks.
 - [x] Pass all 44 focused optimized Release decoder/subprocess checks and the
   full script-validator gate, with no skips, failures or runtime warnings.
-- [ ] Complete a fresh committed-source canonical Release run, retaining the
-  preceding rejected attempt.
+- [x] Complete fresh canonical optimized Release verification at `8c8b6efe51ef9fd5c39d8e9ff2d78615bcd06a1d`:
+  754 passes, nine named skips (763 total), both isolated transport directions,
+  analysis, 61 preflight checks and final source/package/cache/no-sleep identity.
+  See [accepted receipts](docs/evidence/release-candidate-review-meter-20261001/README.md);
+  the preceding rejected attempt remains retained.
 
 ## Remaining work after this continuation
 
