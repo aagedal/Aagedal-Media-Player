@@ -1,0 +1,31 @@
+{
+  "scope": "Focused optimized Release engineering checks; native/editor/hardware acceptance remains open",
+  "initialFocused": {
+    "passed": 138,
+    "failed": 0,
+    "skipped": 0,
+    "runtimeWarnings": 0
+  },
+  "decoderBaseline": {
+    "tests": 2,
+    "failedTests": 2,
+    "assertionFailures": 4,
+    "expectedResult": "Failed",
+    "baselineCommit": "d390be580f424377faafd253865b56d3f7551475",
+    "decoderSHA256": "ea00815eeb2eafbcf4965ac29ce63be8204d8d0a739fdefbf530b0b0eee55fee"
+  },
+  "decoderFixed": {
+    "passed": 2,
+    "failed": 0,
+    "skipped": 0,
+    "runtimeWarnings": 0
+  },
+  "decoderHarnessStrengthenedAfterInitialFocus": true,
+  "premiereComparator": {
+    "passed": 22
+  },
+  "releaseScriptRegressions": {
+    "passed": 18
+  },
+  "candidateMinimumTests": 781
+}

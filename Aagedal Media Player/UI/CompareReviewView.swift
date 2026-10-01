@@ -30,7 +30,10 @@ enum CompareReviewRangeFocusLossPolicy {
     ) -> Bool {
         guard canHandlePassively(noteID: noteID, correctionRequest: correctionRequest) else { return false }
         let entered = draft.trimmingCharacters(in: .whitespacesAndNewlines)
-        return !entered.isEmpty && entered != (savedEndFrame.map(String.init) ?? "")
+        // Erasing a saved endpoint is a changed draft too. It needs explicit
+        // Clear range guidance rather than silently displaying an empty field
+        // while the finding still retains its saved range.
+        return entered != (savedEndFrame.map(String.init) ?? "")
     }
 }
 
@@ -195,7 +198,13 @@ struct CompareReviewDraftState {
                 draft: draft, savedEndFrame: note.primaryEndFrame,
                 noteID: note.id, correctionRequest: correctionRequest
               ) else { return }
-        guard let end = Int64(draft.trimmingCharacters(in: .whitespacesAndNewlines)) else {
+        let entered = draft.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !entered.isEmpty else {
+            recordFieldValidationError("Use Clear range to remove the saved end frame.",
+                note: note, field: .rangeEnd, canEdit: canEdit)
+            return
+        }
+        guard let end = Int64(entered) else {
             recordFieldValidationError("Enter a whole-number end frame.",
                 note: note, field: .rangeEnd, canEdit: canEdit)
             return

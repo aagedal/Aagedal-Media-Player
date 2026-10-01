@@ -4555,6 +4555,44 @@ public dependencies, hardware and distribution gates remain open.
 - [ ] Complete native editor/accessibility, published dependencies, hardware
   and signing/notarization/distribution acceptance.
 
+## Phase 216 — Explain erased saved ranges on passive departure
+
+- [x] Treat blank/whitespace replacements of a saved inclusive endpoint as
+  changed drafts and show the explicit Clear range instruction immediately.
+- [x] Retain the saved endpoint and draft, preserve live correction ownership,
+  and leave empty point-note fields unchanged.
+- [x] Add the erased-endpoint regression; all 29 focused optimized Release
+  Review text/correction checks pass.
+- [ ] Complete native keyboard, Full Keyboard Access and spoken VoiceOver checks.
+
+## Phase 217 — Release paced PCM admission on timestamp failure
+
+- [x] Cancel the shared playback admission gate when the timestamp processor
+  fails or cancels, so stdout cannot block subprocess shutdown indefinitely.
+- [x] Preserve the stored timestamp failure when the released PCM callback
+  throws, avoiding a race with generic cancellation feedback.
+- [x] Add two regressions with a snapshot-handler handshake that establishes
+  the consumer is midway through synthetic silence or verified PCM processing.
+- [x] Retain the old implementation's expected blocked-completion and lost-
+  diagnostic failures, with bounded cleanup rather than a hung test process.
+  The same two deterministic optimized Release checks pass with the fix.
+
+## Phase 218 — Preserve Premiere source and sequence scan order
+
+- [x] Carry known progressive/top/bottom field order into source and sequence
+  formats; leave unknown order unspecified and reject mixed/unsupported order.
+- [x] Compare field dominance in sequence, source and effective clip override;
+  reject ambiguous/invalid values instead of claiming an unchanged conform.
+- [x] Add three exporter regressions and three comparator regressions. All
+  49 focused optimized Release exporter tests and 22 Python checks pass.
+- [x] Require all six new app regressions and at least 781 aggregate candidate
+  tests, preserving both isolated mixed-backend transport directions.
+- [ ] Complete observed native Premiere import/field-order/marker/re-export
+  acceptance and the unchanged wider 2.0 release gates.
+
+See [focused and baseline receipts](docs/evidence/range-meter-field-order-20261001/README.md).
+Fresh integrated clean-checkout verification follows separately.
+
 ## Remaining work after this continuation
 
 The user’s 2026-10-01 scope decision makes Avid native compatibility optional
@@ -4968,3 +5006,7 @@ Composer First edition may have limitations that do not apply to the full editio
 198. Phase 206 quiet FFmpeg failure context.
 199. Phase 207 pinned DTS decoder fixture and encoder crash diagnosis.
 200. Phase 208 canonical candidate recovery.
+
+201. Phase 216 passive erased-range correction.
+202. Phase 217 decoder admission cancellation and diagnostic ownership.
+203. Phase 218 Premiere scan-order preservation.

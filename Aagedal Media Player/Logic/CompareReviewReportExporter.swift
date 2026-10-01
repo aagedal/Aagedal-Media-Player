@@ -56,6 +56,7 @@ nonisolated enum CompareReviewReportExportError: Error, LocalizedError {
     case unsupportedFinalCutProRotatedAnamorphicSource
     case unsupportedPremiereFrameRate(Int64, Int64)
     case unsupportedPremierePixelAspect
+    case unsupportedPremiereFieldOrder
     case incompatiblePrimaryFrameRate(Int)
 
     var errorDescription: String? {
@@ -80,6 +81,8 @@ nonisolated enum CompareReviewReportExportError: Error, LocalizedError {
             "Premiere Pro marker XML cannot represent source A's \(numerator)/\(denominator) frame rate exactly. Use CSV or PDF to preserve the recorded review positions."
         case .unsupportedPremierePixelAspect:
             "Premiere Pro marker XML cannot represent source A's rotation, pixel aspect, and raster combination reliably. Export CSV or PDF to preserve the review findings."
+        case .unsupportedPremiereFieldOrder:
+            "Premiere Pro marker XML cannot represent source A's mixed or unsupported field order reliably. Export CSV or PDF to preserve the review findings."
         case .incompatiblePrimaryFrameRate(let marker):
             "Review marker \(marker) was captured at a different source A frame rate. Load media at the original review frame rate, or use Notes → Migrate Rounded Timebases… for historical rounded broadcast rates. CSV and PDF reports remain available; markers are not automatically retimed."
         }
@@ -139,6 +142,7 @@ nonisolated struct CompareReviewReportSnapshot: Equatable, Sendable {
     let primaryPixelAspectVertical: Int?
     let primaryHasQuarterTurnAnamorphicGeometry: Bool
     let primaryHasQuarterTurnRotation: Bool
+    let primaryFieldOrder: String?
     let primaryUsesDropFrame: Bool
     let rows: [CompareReviewReportRow]
 
@@ -164,6 +168,7 @@ nonisolated struct CompareReviewReportSnapshot: Equatable, Sendable {
         // pixel axes, so invert PAR without baking it into the raster dimensions.
         // Leaving coded geometry here distorts rotated anamorphic browser clips.
         let primaryVideo = primaryItem.metadata?.primaryVideoStream
+        primaryFieldOrder = primaryVideo?.fieldOrder
         let rotation = ((primaryVideo?.rotation ?? 0) % 360 + 360) % 360
         let swapsAxes = rotation == 90 || rotation == 270
         primaryHasQuarterTurnRotation = swapsAxes
@@ -578,15 +583,26 @@ nonisolated enum CompareReviewReportExporter {
         }
         let rateXML = "<rate><timebase>\(rate.nominalFPS)</timebase><ntsc>\(ntsc ? "TRUE" : "FALSE")</ntsc></rate>"
         let timecodeXML = "<timecode>\(rateXML)<string>\(rate.timecode(forFrameCount: snapshot.primaryStartFrame))</string><frame>\(snapshot.primaryStartFrame)</frame><displayformat>\(rate.isDropFrame ? "DF" : "NDF")</displayformat></timecode>"
+        let fieldDominanceXML: String
+        switch snapshot.primaryFieldOrder {
+        case "progressive": fieldDominanceXML = "<fielddominance>none</fielddominance>"
+        case "top-field-first": fieldDominanceXML = "<fielddominance>upper</fielddominance>"
+        case "bottom-field-first": fieldDominanceXML = "<fielddominance>lower</fielddominance>"
+        case nil, "unknown": fieldDominanceXML = ""
+        default: throw CompareReviewReportExportError.unsupportedPremiereFieldOrder
+        }
         let sampleXML: String
         if let width = snapshot.primaryRasterWidth, let height = snapshot.primaryRasterHeight {
             let pixelAspect = try premierePixelAspect(snapshot: snapshot, width: width, height: height)
-            sampleXML = "<samplecharacteristics>\(rateXML)<width>\(width)</width><height>\(height)</height><pixelaspectratio>\(pixelAspect)</pixelaspectratio></samplecharacteristics>"
+            sampleXML = "<samplecharacteristics>\(rateXML)<width>\(width)</width><height>\(height)</height><pixelaspectratio>\(pixelAspect)</pixelaspectratio>\(fieldDominanceXML)</samplecharacteristics>"
         } else {
             // Let the importer infer missing geometry from the linked source.
             // Never invent a raster for media whose metadata is unavailable.
             guard !snapshot.primaryHasQuarterTurnAnamorphicGeometry else {
                 throw CompareReviewReportExportError.unsupportedPremierePixelAspect
+            }
+            guard fieldDominanceXML.isEmpty else {
+                throw CompareReviewReportExportError.unsupportedPremiereFieldOrder
             }
             sampleXML = ""
         }

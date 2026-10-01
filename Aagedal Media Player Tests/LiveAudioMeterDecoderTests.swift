@@ -381,6 +381,95 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
         }
     }
 
+    func testTimestampedProcessorCancellationWakesPlaybackGateDuringInitialSilence() async throws {
+        let request = try makeRequest(startFrame: 9_600)
+        let gate = LiveAudioMeterWorkerGate(request: request)
+        gate.update(playbackTime: 0)
+        let entered = FlagBox()
+        let releaseSnapshot = DispatchSemaphore(value: 0)
+        let processor = try LiveAudioMeterTimestampedStreamProcessor(
+            request: request, workerGate: gate
+        ) { _ in
+            entered.set()
+            releaseSnapshot.wait()
+        }
+        XCTAssertNil(processor.consumeTimingLine("#tb 0: 1/48000"))
+        XCTAssertNil(processor.consumeTimingLine("#sample_rate 0: 48000"))
+        XCTAssertNil(processor.consumeTimingLine("#channel_layout_name 0: stereo"))
+        let packet = bytes([Float](repeating: 0, count: 4_800 * 2))
+        XCTAssertNil(processor.consumeTimingLine(frameCRCLine(pts: 4_800, frames: 4_800, data: packet)))
+        let completed = FlagBox()
+        let consumeTask = Task.detached {
+            defer { completed.set() }
+            try processor.consumePCM(packet)
+        }
+        // One 2,400-frame block fits before the gate endpoint of 12,000.
+        // Holding its callback proves the consumer is midway through the
+        // 4,800-frame synthetic-silence call before cancellation is injected.
+        await eventually { entered.value }
+        XCTAssertFalse(completed.value)
+
+        processor.cancel()
+        releaseSnapshot.signal()
+
+        await eventually { completed.value }
+        // Always release the gate after the bounded assertion, including when
+        // run against the regression, so a failure cannot hang the test host.
+        gate.cancel()
+        do {
+            try await consumeTask.value
+            XCTFail("Expected cancellation to release initial silence blocked in the playback gate")
+        } catch {
+            XCTAssertEqual(error as? LiveAudioMeterDecoder.Failure, .cancelled)
+        }
+    }
+
+    func testTimestampFailureWakesPlaybackGateAndPreservesOriginalDiagnostic() async throws {
+        let request = try makeRequest(startFrame: 9_600)
+        let gate = LiveAudioMeterWorkerGate(request: request)
+        gate.update(playbackTime: 0)
+        let entered = FlagBox()
+        let releaseSnapshot = DispatchSemaphore(value: 0)
+        let processor = try LiveAudioMeterTimestampedStreamProcessor(
+            request: request, workerGate: gate
+        ) { _ in
+            entered.set()
+            releaseSnapshot.wait()
+        }
+        XCTAssertNil(processor.consumeTimingLine("#tb 0: 1/48000"))
+        XCTAssertNil(processor.consumeTimingLine("#sample_rate 0: 48000"))
+        XCTAssertNil(processor.consumeTimingLine("#channel_layout_name 0: stereo"))
+        let packet = bytes([Float](repeating: 0, count: 4_800 * 2))
+        XCTAssertNil(processor.consumeTimingLine(frameCRCLine(pts: 0, frames: 4_800, data: packet)))
+        let completed = FlagBox()
+        let consumeTask = Task.detached {
+            defer { completed.set() }
+            try processor.consumePCM(packet)
+        }
+        // The snapshot callback establishes that verified PCM is already
+        // inside downstream.consume, with another block awaiting admission.
+        await eventually { entered.value }
+        XCTAssertFalse(completed.value)
+
+        let expected = LiveAudioMeterDecoder.Failure.timestampTimeBaseMismatch(
+            expected: "1/48000", actual: "1/44100"
+        )
+        XCTAssertEqual(processor.consumeTimingLine("#tb 0: 1/44100"), expected)
+        releaseSnapshot.signal()
+
+        await eventually { completed.value }
+        gate.cancel()
+        do {
+            try await consumeTask.value
+            XCTFail("Expected the timestamp failure to release PCM blocked in the playback gate")
+        } catch {
+            XCTAssertEqual(error as? LiveAudioMeterDecoder.Failure, expected)
+        }
+        XCTAssertThrowsError(try processor.finish()) { error in
+            XCTAssertEqual(error as? LiveAudioMeterDecoder.Failure, expected)
+        }
+    }
+
     func testTimestampedProcessorBackpressuresThenDrainsBothUnmatchedSides() async throws {
         let request = try makeRequest()
         let packet = bytes([Float](repeating: 0, count: 6_000 * 2))

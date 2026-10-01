@@ -182,7 +182,7 @@ if [[ "$EVIDENCE_STATUS" != "passed" \
     exit 2
 fi
 python3 scripts/validate-release-xcresult.py \
-    "$CANDIDATE_SUMMARY" "$CANDIDATE_DETAILS" --minimum-tests 775 \
+    "$CANDIDATE_SUMMARY" "$CANDIDATE_DETAILS" --minimum-tests 781 \
     --require-test "CompareReviewTextCommitTests/testOrdinaryTextValidationRevealsFindingHiddenByFilterWithoutSavingDrafts()" \
     --require-test "CompareReviewTextCommitTests/testRetainedRangeCorrectionRevealsOnlyExistingEditableHiddenFinding()" \
     --require-test "LiveAudioMeterCoordinatorTests/testMalformedCurrentLoudnessFailsGenerationAndCancelsWorker()" \
@@ -202,6 +202,12 @@ python3 scripts/validate-release-xcresult.py \
     --require-test "CompareReviewTextCommitTests/testPassiveTextDepartureUsesCorrectionSelectedAfterRowRender()" \
     --require-test "CompareReviewTextCommitTests/testPassiveTextDepartureRetainsFailuresAndCommitsOnceAfterRetry()" \
     --require-test "CompareReviewTextCommitTests/testPassiveRangeBlurUsesTextCorrectionSelectedAfterRowRender()" \
+    --require-test "CompareReviewTextCommitTests/testErasedSavedRangeDepartureExplainsExplicitClearWithoutChangingEndpoint()" \
+    --require-test "LiveAudioMeterDecoderTests/testTimestampedProcessorCancellationWakesPlaybackGateDuringInitialSilence()" \
+    --require-test "LiveAudioMeterDecoderTests/testTimestampFailureWakesPlaybackGateAndPreservesOriginalDiagnostic()" \
+    --require-test "CompareReviewReportExporterTests/testPremierePreservesKnownSourceAndSequenceFieldOrder()" \
+    --require-test "CompareReviewReportExporterTests/testPremiereDoesNotInventUnknownFieldOrder()" \
+    --require-test "CompareReviewReportExporterTests/testPremiereRejectsUnrepresentableFieldOrder()" \
     --require-test "LiveAudioMeterDecoderTests/testBundledDecoderPreservesContiguousDTSInMillisecondMatroskaContainer()"
 python3 scripts/validate-release-xcresult.py \
     "$CANDIDATE_MIXED_SUMMARY" "$CANDIDATE_MIXED_DETAILS" --minimum-tests 2 \

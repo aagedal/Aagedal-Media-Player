@@ -39,3 +39,9 @@ audible/device/surround, hardware/soak/base-M1 and signing/notarization/distribu
 gates remain open. Avid is optional for 2.0. Subsequent evidence retention does
 not replace matching-HEAD release consumption; the accepted source commit above
 stays explicit. No remote release was published during this continuation.
+
+Later validation on October 1 reused this temporary `DerivedData` for the
+range/decoder/field-order continuation. Its current built products therefore
+no longer represent `bac4b10`; the original result bundles and retained
+summaries/logs above remain the evidence for that historical source. The new
+canonical candidate uses a separate output directory.

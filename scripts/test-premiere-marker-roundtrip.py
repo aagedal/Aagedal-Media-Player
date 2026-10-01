@@ -123,6 +123,45 @@ class RoundTripTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.compare(lambda root: (label(root, "00:00:58;00"), label(root, "00:00:58;00")))
 
+    def test_changed_sequence_source_and_clip_field_order_cannot_pass(self):
+        for path, check in ((".//format/samplecharacteristics", "sequenceGeometry"),
+                            (".//file/media/video/samplecharacteristics", "sourceGeometry"),
+                            (".//clipitem", "clipFieldDominance")):
+            def mutate(root):
+                ET.SubElement(root.find(path), "fielddominance").text = "upper"
+            with self.subTest(path=path):
+                result = self.compare(mutate)
+                self.assertEqual(result["status"], "differences")
+                self.assertFalse(result["checks"][check])
+
+    def test_known_field_order_retained_and_matching_clip_override_is_equivalent(self):
+        for value in ("none", "upper", "lower", "odd", "even"):
+            original = fixture()
+            for sample in original.findall(".//samplecharacteristics"):
+                ET.SubElement(sample, "fielddominance").text = value
+            returned = copy.deepcopy(original)
+            ET.SubElement(returned.find(".//clipitem"), "fielddominance").text = value
+            ET.ElementTree(original).write(self.before)
+            ET.ElementTree(returned).write(self.after)
+            with self.subTest(value=value):
+                result = premiere.compare(self.before, self.after)
+                self.assertEqual(result["status"], "exact-match")
+                self.assertEqual(result["original"]["sequenceGeometry"]["fieldDominance"], value)
+                self.assertEqual(result["original"]["sourceGeometry"]["fieldDominance"], value)
+                self.assertEqual(result["returned"]["clipFieldDominance"], value)
+            returned.find(".//clipitem/fielddominance").text = "lower" if value == "upper" else "upper"
+            ET.ElementTree(returned).write(self.after)
+            self.assertFalse(premiere.compare(self.before, self.after)["checks"]["clipFieldDominance"])
+
+    def test_invalid_or_ambiguous_field_order_rejected_at_every_scope(self):
+        for path in (".//format/samplecharacteristics", ".//file/media/video/samplecharacteristics", ".//clipitem"):
+            for values in ((None,), ("mixed",), ("UPPER",), ("upper", "upper"), ("upper", "lower")):
+                def mutate(root):
+                    for value in values:
+                        ET.SubElement(root.find(path), "fielddominance").text = value
+                with self.subTest(path=path, values=values), self.assertRaisesRegex(ValueError, "field dominance"):
+                    self.compare(mutate)
+
     def test_drop_frame_strings_at_minute_and_ten_minute_boundaries(self):
         for base, frame, value in ((30, 1800, "00:01:00;02"), (30, 17982, "00:10:00;00"),
                                    (60, 3600, "00:01:00;04"), (60, 35964, "00:10:00;00")):

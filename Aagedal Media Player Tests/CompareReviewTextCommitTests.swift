@@ -216,6 +216,42 @@ final class CompareReviewTextCommitTests: XCTestCase {
         }
         XCTAssertEqual(drafts.rangeDrafts[note.id], "")
         XCTAssertTrue(drafts.hasPendingEdits(in: [note]))
+        XCTAssertEqual(drafts.rangeActionErrors[note.id], "Use Clear range to remove the saved end frame.")
+        XCTAssertEqual(drafts.correctionRequest?.field, .rangeEnd)
+    }
+
+    @MainActor
+    func testErasedSavedRangeDepartureExplainsExplicitClearWithoutChangingEndpoint() {
+        let note = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
+            secondaryFrame: 10, secondaryTime: 1, text: "Picture finding", primaryEndFrame: 20)
+        for input in ["", " \n "] {
+            var drafts = CompareReviewDraftState()
+            drafts.updateRangeEndDraft(input, noteID: note.id)
+            drafts.commitRangeOnDeparture(note: note, canEdit: true) { _ in
+                XCTFail("Erasing an endpoint must not change its saved range")
+                return true
+            }
+            XCTAssertEqual(drafts.rangeDrafts[note.id], input)
+            XCTAssertEqual(drafts.rangeActionErrors[note.id], "Use Clear range to remove the saved end frame.")
+            XCTAssertEqual(drafts.correctionRequest?.noteID, note.id)
+            XCTAssertEqual(drafts.correctionRequest?.field, .rangeEnd)
+            XCTAssertTrue(drafts.hasPendingEdits(in: [note]))
+            XCTAssertEqual(drafts.filterRevealingCorrection(in: [note], query: "audio", canEdit: true), "")
+
+            // After explicit Clear range succeeds, the same empty draft is
+            // unchanged and a queued blur/removal must not report an error.
+            var cleared = note
+            cleared.primaryEndFrame = nil
+            drafts.updateRangeEndDraft("", noteID: note.id)
+            drafts.recordFieldValidationError(nil, note: cleared, field: .rangeEnd, canEdit: true)
+            drafts.commitRangeOnDeparture(note: cleared, canEdit: true) { _ in
+                XCTFail("An empty point-note field must remain unchanged")
+                return true
+            }
+            XCTAssertNil(drafts.rangeActionErrors[note.id])
+            XCTAssertNil(drafts.correctionRequest)
+            XCTAssertFalse(drafts.hasPendingEdits(in: [cleared]))
+        }
     }
 
     @MainActor
@@ -646,13 +682,17 @@ final class CompareReviewTextCommitTests: XCTestCase {
         let corrections: [CompareReviewCorrectionRequest?] = [nil,
             CompareReviewCorrectionRequest(noteID: noteID, field: .rangeEnd)]
         for correction in corrections {
-            for draft in ["21", "not a frame", "19"] {
+            for draft in ["21", "not a frame", "19", "", " \n "] {
                 XCTAssertTrue(CompareReviewRangeFocusLossPolicy.shouldCommit(
                     draft: draft, savedEndFrame: 20, noteID: noteID, correctionRequest: correction))
             }
-            for draft in ["", " \n ", " 20 "] {
+            for draft in [" 20 "] {
                 XCTAssertFalse(CompareReviewRangeFocusLossPolicy.shouldCommit(
                     draft: draft, savedEndFrame: 20, noteID: noteID, correctionRequest: correction))
+            }
+            for draft in ["", " \n "] {
+                XCTAssertFalse(CompareReviewRangeFocusLossPolicy.shouldCommit(
+                    draft: draft, savedEndFrame: nil, noteID: noteID, correctionRequest: correction))
             }
         }
         XCTAssertFalse(CompareReviewRangeFocusLossPolicy.shouldCommit(

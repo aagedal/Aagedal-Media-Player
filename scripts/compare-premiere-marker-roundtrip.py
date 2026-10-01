@@ -98,7 +98,14 @@ def geometry(element, expected_rate):
     par = text(element, "pixelaspectratio")
     if min(width, height) <= 0 or not par.strip():
         raise ValueError("Invalid raster or pixel aspect")
-    return dict(raster=[width, height], pixelAspect=par)
+    return dict(raster=[width, height], pixelAspect=par, fieldDominance=field_dominance(element))
+
+
+def field_dominance(element):
+    values = element.findall("fielddominance")
+    if len(values) > 1 or (values and values[0].text not in ("none", "lower", "upper", "odd", "even")):
+        raise ValueError("Invalid or ambiguous field dominance")
+    return values[0].text if values else None
 
 
 def require_enabled(element):
@@ -160,6 +167,12 @@ def read_export(path, sequence_name=None):
     file_format = media.findall("media/video/samplecharacteristics")
     if len(seq_format) > 1 or len(file_format) > 1:
         raise ValueError("Ambiguous sequence/source video geometry")
+    source_geometry = geometry(file_format[0], fps) if file_format else None
+    # A native clip override can change displayed field order despite an
+    # unchanged file and sequence format. Compare its effective interpretation.
+    clip_field_dominance = field_dominance(clip)
+    if clip_field_dominance is None and source_geometry:
+        clip_field_dominance = source_geometry["fieldDominance"]
     markers = []
     encoded_outs = []
     for marker in sequence.findall("marker"):
@@ -182,7 +195,7 @@ def read_export(path, sequence_name=None):
                 sourceDurationFrames=media_duration, clipPlacement=placement,
                 sequenceTimecode=timecode(sequence, fps), sourceTimecode=timecode(media, fps),
                 sequenceGeometry=geometry(seq_format[0], fps) if seq_format else None,
-                sourceGeometry=geometry(file_format[0], fps) if file_format else None,
+                sourceGeometry=source_geometry, clipFieldDominance=clip_field_dominance,
                 sourceURL=source_url, sourcePath=str(media_path(source_url)),
                 markers=markers, encodedMarkerOutFrames=encoded_outs)
 
@@ -192,7 +205,7 @@ def compare(original, returned, verify_media=False, returned_sequence_name=None)
     after = read_export(returned, returned_sequence_name)
     checks = {key: before[key] == after[key] for key in
               ("rate", "durationFrames", "sourceDurationFrames", "clipPlacement", "sequenceTimecode", "sourceTimecode",
-               "sequenceGeometry", "sourceGeometry", "sourcePath")}
+               "sequenceGeometry", "sourceGeometry", "clipFieldDominance", "sourcePath")}
     checks["markerTimingAndTitles"] = Counter(m[:3] for m in before["markers"]) == Counter(m[:3] for m in after["markers"])
     checks["exactMarkerContent"] = Counter(before["markers"]) == Counter(after["markers"])
     if verify_media:

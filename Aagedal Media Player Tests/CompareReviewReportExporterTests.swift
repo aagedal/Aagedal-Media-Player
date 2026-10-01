@@ -1379,6 +1379,48 @@ final class CompareReviewReportExporterTests: XCTestCase {
         }
     }
 
+    func testPremierePreservesKnownSourceAndSequenceFieldOrder() throws {
+        for (fieldOrder, expected) in [("progressive", "none"), ("top-field-first", "upper"),
+                                       ("bottom-field-first", "lower")] {
+            let snapshot = CompareReviewReportSnapshot(
+                primaryItem: makeItem(path: "/tmp/A.mov", duration: 5, frameRate: "25/1", fieldOrder: fieldOrder),
+                secondaryItem: makeItem(path: "/tmp/B.mov", duration: 5), alignmentMode: .relative, notes: []
+            )
+            let xml = try XMLDocument(xmlString: CompareReviewReportExporter.premiereProXML(snapshot: snapshot))
+            for path in ["//sequence/media/video/format/samplecharacteristics/fielddominance",
+                         "//file/media/video/samplecharacteristics/fielddominance"] {
+                XCTAssertEqual(try xml.nodes(forXPath: path).first?.stringValue, expected, fieldOrder)
+            }
+        }
+    }
+
+    func testPremiereDoesNotInventUnknownFieldOrder() throws {
+        for fieldOrder: String? in [nil, "unknown"] {
+            let snapshot = CompareReviewReportSnapshot(
+                primaryItem: makeItem(path: "/tmp/A.mov", duration: 5, frameRate: "25/1", fieldOrder: fieldOrder),
+                secondaryItem: makeItem(path: "/tmp/B.mov", duration: 5), alignmentMode: .relative, notes: []
+            )
+            let xml = try XMLDocument(xmlString: CompareReviewReportExporter.premiereProXML(snapshot: snapshot))
+            XCTAssertTrue(try xml.nodes(forXPath: "//fielddominance").isEmpty)
+        }
+    }
+
+    func testPremiereRejectsUnrepresentableFieldOrder() {
+        for (fieldOrder, width): (String, Int?) in [("mixed", 1920), ("unexpected", 1920),
+                                                   ("top-field-first", nil)] {
+            let snapshot = CompareReviewReportSnapshot(
+                primaryItem: makeItem(path: "/tmp/A.mov", duration: 5, frameRate: "25/1", width: width,
+                                      fieldOrder: fieldOrder),
+                secondaryItem: makeItem(path: "/tmp/B.mov", duration: 5), alignmentMode: .relative, notes: []
+            )
+            XCTAssertThrowsError(try CompareReviewReportExporter.premiereProXML(snapshot: snapshot)) { error in
+                guard case CompareReviewReportExportError.unsupportedPremiereFieldOrder = error else {
+                    return XCTFail("Expected unsupported field order, got \(error)")
+                }
+            }
+        }
+    }
+
     private func makeItem(
         path: String,
         duration: TimeInterval,
@@ -1388,7 +1430,8 @@ final class CompareReviewReportExporterTests: XCTestCase {
         height: Int? = 1_080,
         pixelAspectRatio: MediaMetadata.Ratio? = nil,
         frameCount: Int? = nil,
-        rotation: Int? = nil
+        rotation: Int? = nil,
+        fieldOrder: String? = nil
     ) -> MediaItem {
         let videoStreams = frameRate.map { value in
             [MediaMetadata.VideoStream(
@@ -1411,7 +1454,7 @@ final class CompareReviewReportExporterTests: XCTestCase {
                 colorSpace: nil,
                 colorRange: nil,
                 chromaLocation: nil,
-                fieldOrder: nil,
+                fieldOrder: fieldOrder,
                 isInterlaced: nil,
                 rotation: rotation,
                 maxCLL: nil,

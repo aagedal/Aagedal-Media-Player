@@ -287,6 +287,12 @@ note rates need deliberate migration before editor export, as with other editor
 formats. A shorter relinked source can leave findings after the source clip ends;
 the sequence extends to retain them, while the source clip keeps its actual length.
 
+Known progressive, top-field-first and bottom-field-first metadata now maps to
+XMEML `none`, `upper` and `lower` field dominance in both source and sequence
+formats. Unknown metadata remains unspecified. Mixed scan order, unsupported
+values, or known scan order without a usable raster fail with CSV/PDF guidance.
+Native field-order interpretation remains part of the Premiere acceptance check.
+
 Import the unchanged app XML into a disposable Premiere project through
 **File → Import**, verify source A is linked and its sequence settings/timecode
 match the source, then inspect marker frames, ranges, duplicate grouping and
@@ -304,7 +310,8 @@ If the returned project contains multiple sequences, add
 exactly one sequence. The checker requires one untrimmed source-A video clip
 at sequence frame zero and nonempty sequence markers. It compares exact rates,
 source/sequence starts and display formats, clip placement and actual duration,
-sequence duration, separate source/sequence geometry, source path, marker
+sequence duration, separate source/sequence geometry and field dominance,
+effective clip field-order overrides, source path, marker
 anchors/durations/titles and exact comments, preserving duplicate multiplicity.
 Optional timecode strings must agree with their encoded frame and DF/NDF rules;
 contradictory or skipped DF labels fail. String-only timecodes are unsupported

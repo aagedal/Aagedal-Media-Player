@@ -329,6 +329,7 @@ nonisolated final class LiveAudioMeterTimestampedStreamProcessor: @unchecked Sen
     private let condition = NSCondition()
     private let admissionLock = NSLock()
     private let downstream: LiveAudioMeterPCMStreamProcessor
+    private let workerGate: LiveAudioMeterWorkerGate?
     private let expectedSampleRate: Int
     private let expectedLayout: LiveAudioMeterFormat.Layout
     private let bytesPerFrame: Int
@@ -356,6 +357,7 @@ nonisolated final class LiveAudioMeterTimestampedStreamProcessor: @unchecked Sen
         downstream = try LiveAudioMeterPCMStreamProcessor(
             request: request, workerGate: workerGate, onSnapshot: onSnapshot
         )
+        self.workerGate = workerGate
         expectedSampleRate = request.format.sampleRate
         expectedLayout = request.format.layout
         bytesPerFrame = request.format.channelCount * MemoryLayout<Float>.size
@@ -507,7 +509,7 @@ nonisolated final class LiveAudioMeterTimestampedStreamProcessor: @unchecked Sen
                 let byteCount = pendingInitialSilenceByteCount
                 pendingInitialSilenceByteCount = 0
                 condition.unlock()
-                try downstream.consume(Data(count: byteCount))
+                try consumeVerifiedPCM(Data(count: byteCount))
                 continue
             }
             if let record = records.first {
@@ -533,7 +535,7 @@ nonisolated final class LiveAudioMeterTimestampedStreamProcessor: @unchecked Sen
                         recordFailure(discovered)
                         throw discovered
                     }
-                    try downstream.consume(packet)
+                    try consumeVerifiedPCM(packet)
                     continue
                 }
             } else if cursor < data.endIndex {
@@ -613,11 +615,27 @@ nonisolated final class LiveAudioMeterTimestampedStreamProcessor: @unchecked Sen
         condition.withLock { _ = failLocked(discovered) }
     }
 
+    private func consumeVerifiedPCM(_ data: Data) throws {
+        do {
+            try downstream.consume(data)
+        } catch {
+            // A timestamp failure can wake a stdout callback already blocked
+            // in the playback admission gate. Retain that original failure so
+            // the callback cannot race stderr with a generic cancellation.
+            if let failure = condition.withLock({ failure }) { throw failure }
+            throw error
+        }
+    }
+
     @discardableResult
     private func failLocked(
         _ discovered: LiveAudioMeterDecoder.Failure
     ) -> LiveAudioMeterDecoder.Failure {
         if failure == nil { failure = discovered }
+        // The PCM callback may have left this processor's condition and be
+        // waiting in the downstream playback gate. Waking only this condition
+        // leaves process termination blocked behind that stdout callback.
+        workerGate?.cancel()
         condition.broadcast()
         return failure ?? discovered
     }

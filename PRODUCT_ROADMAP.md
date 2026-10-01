@@ -400,6 +400,8 @@ Editor acceptance and hands-on keyboard review remain.
   for 2.0. A dedicated legacy FCP7 XML exporter now creates a source-A review
   sequence with grouped findings and inclusive ranges; native Premiere
   import/re-export validation remains before claiming compatibility.
+  Known progressive/interlaced field order is retained in source and sequence
+  formats, and round-trip validation detects field-order changes or clip overrides.
   Resolve, Final Cut Pro and Premiere Pro
   round-trip acceptance remain required; Avid compatibility is optional for
   2.0 and may be skipped if verification runs into problems. The available Avid

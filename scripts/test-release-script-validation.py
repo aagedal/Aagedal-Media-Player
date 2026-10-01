@@ -330,7 +330,7 @@ python3() { echo remote-validation >> "$TRACE"; }
         self.assertLess(summary, details)
         self.assertLess(details, validation)
         self.assertLess(validation, analysis)
-        self.assertIn('--minimum-tests 775', source)
+        self.assertIn('--minimum-tests 781', source)
         self.assertIn('-parallel-testing-enabled NO', source)
         self.assertEqual(source.count('-skip-testing:'), 2)
         focused = source.index('echo "==> Focused mixed-backend transport repeat"')
@@ -340,11 +340,20 @@ python3() { echo remote-validation >> "$TRACE"; }
         self.assertLess(focused_validation, analysis)
         self.assertIn('testAVFoundationPrimaryAndMPVSecondaryShareTransport', source)
         self.assertIn('testMPVPrimaryAndAVFoundationSecondaryShareTransport', source)
-        self.assertEqual(source.count('--require-test'), 22)
+        self.assertEqual(source.count('--require-test'), 28)
         for name in ('testPassiveTextDepartureUsesCorrectionSelectedAfterRowRender',
                      'testPassiveTextDepartureRetainsFailuresAndCommitsOnceAfterRetry',
                      'testPassiveRangeBlurUsesTextCorrectionSelectedAfterRowRender'):
             self.assertIn(f'--require-test "CompareReviewTextCommitTests/{name}()"', source)
+        for class_name, name in (
+            ('CompareReviewTextCommitTests', 'testErasedSavedRangeDepartureExplainsExplicitClearWithoutChangingEndpoint'),
+            ('LiveAudioMeterDecoderTests', 'testTimestampedProcessorCancellationWakesPlaybackGateDuringInitialSilence'),
+            ('LiveAudioMeterDecoderTests', 'testTimestampFailureWakesPlaybackGateAndPreservesOriginalDiagnostic'),
+            ('CompareReviewReportExporterTests', 'testPremierePreservesKnownSourceAndSequenceFieldOrder'),
+            ('CompareReviewReportExporterTests', 'testPremiereDoesNotInventUnknownFieldOrder'),
+            ('CompareReviewReportExporterTests', 'testPremiereRejectsUnrepresentableFieldOrder'),
+        ):
+            self.assertIn(f'--require-test "{class_name}/{name}()"', source)
         self.assertIn('os.path.realpath', source)
         self.assertIn('candidate evidence must be written outside the source checkout', source)
         self.assertIn('HEAD changed during candidate verification', source)
@@ -394,12 +403,21 @@ python3() { echo remote-validation >> "$TRACE"; }
         self.assertLess(package_match, result_validation)
         self.assertLess(result_validation, preflight)
         self.assertLess(result_validation, archive)
-        self.assertIn('--minimum-tests 775', self.source)
-        self.assertEqual(self.source.count('--require-test'), 22)
+        self.assertIn('--minimum-tests 781', self.source)
+        self.assertEqual(self.source.count('--require-test'), 28)
         for name in ('testPassiveTextDepartureUsesCorrectionSelectedAfterRowRender',
                      'testPassiveTextDepartureRetainsFailuresAndCommitsOnceAfterRetry',
                      'testPassiveRangeBlurUsesTextCorrectionSelectedAfterRowRender'):
             self.assertIn(f'--require-test "CompareReviewTextCommitTests/{name}()"', self.source)
+        for class_name, name in (
+            ('CompareReviewTextCommitTests', 'testErasedSavedRangeDepartureExplainsExplicitClearWithoutChangingEndpoint'),
+            ('LiveAudioMeterDecoderTests', 'testTimestampedProcessorCancellationWakesPlaybackGateDuringInitialSilence'),
+            ('LiveAudioMeterDecoderTests', 'testTimestampFailureWakesPlaybackGateAndPreservesOriginalDiagnostic'),
+            ('CompareReviewReportExporterTests', 'testPremierePreservesKnownSourceAndSequenceFieldOrder'),
+            ('CompareReviewReportExporterTests', 'testPremiereDoesNotInventUnknownFieldOrder'),
+            ('CompareReviewReportExporterTests', 'testPremiereRejectsUnrepresentableFieldOrder'),
+        ):
+            self.assertIn(f'--require-test "{class_name}/{name}()"', self.source)
 
     def test_release_rechecks_source_before_build_and_publication(self) -> None:
         previous_action = self.source.index('verify_source_identity()')
