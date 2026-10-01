@@ -158,6 +158,31 @@ struct CompareReviewDraftState {
         return true
     }
 
+    /// A range field can leave the hierarchy before its FocusState callback
+    /// runs. Flush its draft from the owning state as the row disappears,
+    /// respecting any correction selected by the preceding text departure.
+    mutating func commitRangeOnDeparture(
+        note: CompareReviewNote, canEdit: Bool, update: (Int64) -> Bool
+    ) {
+        guard canEdit, let draft = rangeDrafts[note.id],
+              CompareReviewRangeFocusLossPolicy.shouldCommit(
+                draft: draft, savedEndFrame: note.primaryEndFrame,
+                noteID: note.id, correctionRequest: correctionRequest
+              ) else { return }
+        guard let end = Int64(draft.trimmingCharacters(in: .whitespacesAndNewlines)) else {
+            recordFieldValidationError("Enter a whole-number end frame.",
+                note: note, field: .rangeEnd, canEdit: canEdit)
+            return
+        }
+        guard update(end) else {
+            recordFieldValidationError("End frame must be from the note's start through the last media frame.",
+                note: note, field: .rangeEnd, canEdit: canEdit)
+            return
+        }
+        rangeDrafts[note.id] = String(end)
+        recordFieldValidationError(nil, note: note, field: .rangeEnd, canEdit: canEdit)
+    }
+
     /// Ordinary Return/blur validation can select a finding just as its row
     /// disappears under a filter. Reveal that correction from the stable
     /// popover, including when reopening it or restoring editing after load.
@@ -463,6 +488,9 @@ struct CompareReviewView: View {
                     Button("DaVinci Resolve Markers (.edl)…") {
                         performReviewAction { $0.exportReviewReport(.resolveMarkersEDL, primary: $1) }
                     }
+                    Button("Premiere Pro Sequence Markers (.xml)…") {
+                        performReviewAction { $0.exportReviewReport(.premiereProXML, primary: $1) }
+                    }
                     Button("Final Cut Pro Markers (.fcpxml)…") {
                         performReviewAction { $0.exportReviewReport(.finalCutProXML, primary: $1) }
                     }
@@ -602,6 +630,12 @@ struct CompareReviewView: View {
                 )
             },
             onRange: { compareSession.updateReviewRange(id: note.id, endFrame: $0) },
+            onRangeDeparture: {
+                guard let currentNote = compareSession.reviewNotes.first(where: { $0.id == note.id }) else { return }
+                drafts.commitRangeOnDeparture(note: currentNote, canEdit: compareSession.canEditReviewNotes) {
+                    compareSession.updateReviewRange(id: note.id, endFrame: $0)
+                }
+            },
             onCurrentEnd: {
                 drafts.applyCurrentRangeEnd(noteID: note.id) {
                     guard compareSession.endReviewRangeAtCurrentFrame(id: note.id, primary: primaryController) else {
@@ -902,6 +936,7 @@ private struct CompareReviewNoteRow: View {
     let onDelete: () -> Void
     let onClassification: (CompareReviewSeverity?, CompareReviewCategory?, CompareReviewStatus?) -> Void
     let onRange: (Int64?) -> Bool
+    let onRangeDeparture: () -> Void
     let onCurrentEnd: () -> Bool
     let onSeekEnd: () -> Void
 
@@ -933,6 +968,7 @@ private struct CompareReviewNoteRow: View {
         onDelete: @escaping () -> Void,
         onClassification: @escaping (CompareReviewSeverity?, CompareReviewCategory?, CompareReviewStatus?) -> Void,
         onRange: @escaping (Int64?) -> Bool,
+        onRangeDeparture: @escaping () -> Void,
         onCurrentEnd: @escaping () -> Bool,
         onSeekEnd: @escaping () -> Void
     ) {
@@ -949,6 +985,7 @@ private struct CompareReviewNoteRow: View {
         self.onDelete = onDelete
         self.onClassification = onClassification
         self.onRange = onRange
+        self.onRangeDeparture = onRangeDeparture
         self.onCurrentEnd = onCurrentEnd
         self.onSeekEnd = onSeekEnd
         _draft = draft
@@ -1032,6 +1069,9 @@ private struct CompareReviewNoteRow: View {
                     .accessibilityLabel("Status for \(noteIdentity)")
                     .accessibilityIdentifier(identifier("status"))
                     rangeEditor
+                        .onDisappear {
+                            if !isDeleting { onRangeDeparture() }
+                        }
                     ViewThatFits(in: .horizontal) {
                         HStack {
                             rangeActions
@@ -1087,7 +1127,11 @@ private struct CompareReviewNoteRow: View {
         }
         .padding(8)
         .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8))
-        .onDisappear { commitOnFocusLoss() }
+        .onDisappear {
+            guard !isDeleting else { return }
+            commitOnFocusLoss()
+            onRangeDeparture()
+        }
     }
 
     @ViewBuilder

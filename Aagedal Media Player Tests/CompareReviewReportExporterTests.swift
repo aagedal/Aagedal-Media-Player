@@ -134,7 +134,7 @@ final class CompareReviewReportExporterTests: XCTestCase {
                     text: "Original-rate finding", primaryEndFrame: 263
                 )]
             )
-            for format: CompareReviewReportFormat in [.resolveMarkersEDL, .finalCutProXML, .avidMarkersText] {
+            for format: CompareReviewReportFormat in [.resolveMarkersEDL, .premiereProXML, .finalCutProXML, .avidMarkersText] {
                 XCTAssertThrowsError(try CompareReviewReportExporter.data(for: format, snapshot: snapshot)) { error in
                     guard case CompareReviewReportExportError.incompatiblePrimaryFrameRate(1) = error else {
                         return XCTFail("Expected frame-rate mismatch for \(format), got \(error)")
@@ -165,7 +165,7 @@ final class CompareReviewReportExporterTests: XCTestCase {
                     text: "Equivalent-rate finding"
                 )]
             )
-            for format: CompareReviewReportFormat in [.resolveMarkersEDL, .finalCutProXML, .avidMarkersText] {
+            for format: CompareReviewReportFormat in [.resolveMarkersEDL, .premiereProXML, .finalCutProXML, .avidMarkersText] {
                 XCTAssertNoThrow(try CompareReviewReportExporter.data(for: format, snapshot: snapshot))
             }
         }
@@ -1224,9 +1224,158 @@ final class CompareReviewReportExporterTests: XCTestCase {
                     text: "Invalid range", primaryEndFrame: endFrame
                 )]
             )
-            for format: CompareReviewReportFormat in [.resolveMarkersEDL, .finalCutProXML] {
+            for format: CompareReviewReportFormat in [.resolveMarkersEDL, .premiereProXML, .finalCutProXML] {
                 XCTAssertThrowsError(try CompareReviewReportExporter.data(for: format, snapshot: snapshot))
             }
+        }
+    }
+
+    func testPremiereSequenceCarriesExactRateSourceStartAndRelativeRanges() throws {
+        for (frameRate, numerator, denominator, start, ntsc, display): (String, Int64, Int64, String, String, String) in [
+            ("24/1", 24, 1, "01:00:00:00", "FALSE", "NDF"),
+            ("24000/1001", 24_000, 1_001, "01:00:00:00", "TRUE", "NDF"),
+            ("30000/1001", 30_000, 1_001, "00:00:58;00", "TRUE", "DF"),
+            ("60000/1001", 60_000, 1_001, "00:00:58;00", "TRUE", "DF"),
+            ("120/1", 120, 1, "01:00:00:00", "FALSE", "NDF"),
+        ] {
+            let snapshot = CompareReviewReportSnapshot(
+                primaryItem: makeItem(path: "/tmp/source A & master.mov", duration: 120,
+                                      startTimecode: start, frameRate: frameRate),
+                secondaryItem: makeItem(path: "/tmp/encode.mp4", duration: 120),
+                alignmentMode: .sourceTimecode,
+                notes: [CompareReviewNote(
+                    primaryFrame: 60, primaryTime: 0, secondaryFrame: 61, secondaryTime: 0,
+                    primaryRateNumerator: numerator, primaryRateDenominator: denominator,
+                    text: "Inclusive range",
+                    severity: .major, category: .picture, status: .inProgress, primaryEndFrame: 65
+                )]
+            )
+            let xml = try XMLDocument(data: CompareReviewReportExporter.data(for: .premiereProXML, snapshot: snapshot))
+            XCTAssertEqual(xml.rootElement()?.name, "xmeml")
+            XCTAssertEqual(xml.rootElement()?.attribute(forName: "version")?.stringValue, "5")
+            let sequence = "/xmeml/project/children/sequence"
+            let rate = TimecodeRate(numerator: Int(numerator), denominator: Int(denominator), dropFrame: display == "DF")
+            XCTAssertEqual(try xml.nodes(forXPath: "\(sequence)/rate/timebase").first?.stringValue, String(rate.nominalFPS))
+            XCTAssertEqual(try xml.nodes(forXPath: "\(sequence)/rate/ntsc").first?.stringValue, ntsc)
+            XCTAssertEqual(try xml.nodes(forXPath: "\(sequence)/timecode/frame").first?.stringValue, String(snapshot.primaryStartFrame))
+            XCTAssertEqual(try xml.nodes(forXPath: "\(sequence)/timecode/displayformat").first?.stringValue, display)
+            XCTAssertEqual(try xml.nodes(forXPath: "\(sequence)/marker/in").first?.stringValue, "60")
+            XCTAssertEqual(try xml.nodes(forXPath: "\(sequence)/marker/out").first?.stringValue, "66")
+            let comment = try XCTUnwrap(try xml.nodes(forXPath: "\(sequence)/marker/comment").first?.stringValue)
+            XCTAssertTrue(comment.contains("A frames 60–65 (inclusive)"))
+            XCTAssertTrue(comment.contains("Severity: Major | Category: Picture | Status: In Progress"))
+            XCTAssertTrue(comment.contains("Source B: encode.mp4"))
+            XCTAssertTrue(comment.contains("Source A: SRC TC \(try XCTUnwrap(snapshot.rows.first?.primarySourceTimecode)), frame 60"))
+            let file = "\(sequence)/media/video/track/clipitem/file"
+            XCTAssertEqual(try xml.nodes(forXPath: "\(file)/pathurl").first?.stringValue, snapshot.primaryURL.absoluteString)
+            XCTAssertEqual(try xml.nodes(forXPath: "\(file)/rate/ntsc").first?.stringValue, ntsc)
+            XCTAssertEqual(try xml.nodes(forXPath: "\(file)/timecode/frame").first?.stringValue, String(snapshot.primaryStartFrame))
+            XCTAssertEqual(try xml.nodes(forXPath: "\(file)/media/video/samplecharacteristics/width").first?.stringValue, "1920")
+            XCTAssertTrue(try xml.nodes(forXPath: "//audio").isEmpty)
+            XCTAssertEqual(CompareReviewReportExporter.preferredFilename(for: .premiereProXML, snapshot: snapshot),
+                           "source A & master_vs_encode_review.xml")
+        }
+    }
+
+    func testPremiereGroupsSameFrameFindingsWithoutLosingOriginalRangesOrText() throws {
+        let notes = [
+            CompareReviewNote(id: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!,
+                              primaryFrame: 42, primaryTime: 0, secondaryFrame: 42, secondaryTime: 0,
+                              text: "Point\tline\n雪 & <tag>\u{1}", createdAt: Date(timeIntervalSince1970: 0)),
+            CompareReviewNote(id: UUID(uuidString: "00000000-0000-0000-0000-000000000002")!,
+                              primaryFrame: 42, primaryTime: 0, secondaryFrame: 42, secondaryTime: 0,
+                              text: "Long range", primaryEndFrame: 52, createdAt: Date(timeIntervalSince1970: 0)),
+            CompareReviewNote(primaryFrame: 43, primaryTime: 0, secondaryFrame: 43, secondaryTime: 0,
+                              text: "Adjacent point"),
+        ]
+        let snapshot = CompareReviewReportSnapshot(
+            primaryItem: makeItem(path: "/tmp/A.mov", duration: 5),
+            secondaryItem: makeItem(path: "/tmp/B.mov", duration: 5),
+            alignmentMode: .relative, notes: notes.reversed()
+        )
+        let xml = try XMLDocument(xmlString: CompareReviewReportExporter.premiereProXML(snapshot: snapshot))
+        let markers = try xml.nodes(forXPath: "//sequence/marker")
+        XCTAssertEqual(markers.count, 2)
+        XCTAssertEqual(try markers[0].nodes(forXPath: "name").first?.stringValue, "QC 001 + QC 002 (2 findings)")
+        XCTAssertEqual(try markers[0].nodes(forXPath: "in").first?.stringValue, "42")
+        XCTAssertEqual(try markers[0].nodes(forXPath: "out").first?.stringValue, "53")
+        let comment = try XCTUnwrap(try markers[0].nodes(forXPath: "comment").first?.stringValue)
+        XCTAssertTrue(comment.contains("[QC 001] Point\tline\n雪 & <tag>�"))
+        XCTAssertTrue(comment.contains("[QC 002] Long range"))
+        XCTAssertTrue(comment.contains("A frames 42–52 (inclusive)"))
+        XCTAssertEqual(try markers[1].nodes(forXPath: "in").first?.stringValue, "43")
+        XCTAssertEqual(try markers[1].nodes(forXPath: "out").first?.stringValue, "44")
+    }
+
+    func testPremiereKeepsSourceDurationWhileRetainingFindingsBeyondShorterReplacement() throws {
+        let snapshot = CompareReviewReportSnapshot(
+            primaryItem: makeItem(path: "/tmp/A.mov", duration: 1, frameRate: "30/1"),
+            secondaryItem: makeItem(path: "/tmp/B.mov", duration: 5),
+            alignmentMode: .relative,
+            notes: [CompareReviewNote(primaryFrame: 60, primaryTime: 0, secondaryFrame: 60, secondaryTime: 0,
+                                      text: "Now unavailable", primaryEndFrame: 71)]
+        )
+        let xml = try XMLDocument(xmlString: CompareReviewReportExporter.premiereProXML(snapshot: snapshot))
+        XCTAssertEqual(snapshot.primaryMediaDurationFrames, 30)
+        XCTAssertEqual(try xml.nodes(forXPath: "//sequence/duration").first?.stringValue, "72")
+        for path in ["//clipitem/duration", "//clipitem/end", "//clipitem/out", "//file/duration"] {
+            XCTAssertEqual(try xml.nodes(forXPath: path).first?.stringValue, "30")
+        }
+        XCTAssertEqual(try xml.nodes(forXPath: "//sequence/marker/in").first?.stringValue, "60")
+        XCTAssertEqual(try xml.nodes(forXPath: "//sequence/marker/out").first?.stringValue, "72")
+    }
+
+    func testPremiereRejectsRatesThatWouldRequireRounding() {
+        for frameRate in ["2997/100", "25/2", "121/1"] {
+            let rate = TimecodeRate(numerator: Int(frameRate.split(separator: "/")[0])!,
+                                    denominator: Int(frameRate.split(separator: "/")[1])!)
+            let snapshot = CompareReviewReportSnapshot(
+                primaryItem: makeItem(path: "/tmp/A.mov", duration: 5, frameRate: frameRate),
+                secondaryItem: makeItem(path: "/tmp/B.mov", duration: 5),
+                alignmentMode: .relative,
+                notes: [CompareReviewNote(primaryFrame: 10, primaryTime: 0, secondaryFrame: 10, secondaryTime: 0,
+                                          primaryRateNumerator: rate.numerator, primaryRateDenominator: rate.denominator,
+                                          text: "Keep exact frames")]
+            )
+            XCTAssertThrowsError(try CompareReviewReportExporter.premiereProXML(snapshot: snapshot)) { error in
+                guard case CompareReviewReportExportError.unsupportedPremiereFrameRate = error else {
+                    return XCTFail("Expected unsupported exact rate, got \(error)")
+                }
+            }
+        }
+    }
+
+    func testPremiereUsesKnownPixelAspectAndRejectsUnsupportedGeometry() throws {
+        for (width, height, numerator, denominator, expected): (Int, Int, Int, Int, String?) in [
+            (1440, 1080, 4, 3, "HD-(1440x1080)"),
+            (1280, 1080, 3, 2, "HD-(1280x1080)"),
+            (960, 720, 4, 3, "HD-(960x720)"),
+            (1920, 1080, 2, 1, nil),
+        ] {
+            let snapshot = CompareReviewReportSnapshot(
+                primaryItem: makeItem(path: "/tmp/A.mov", duration: 5, frameRate: "30/1", width: width, height: height,
+                                      pixelAspectRatio: .init(numerator: numerator, denominator: denominator)),
+                secondaryItem: makeItem(path: "/tmp/B.mov", duration: 5), alignmentMode: .relative, notes: []
+            )
+            if let expected {
+                let xml = try XMLDocument(xmlString: CompareReviewReportExporter.premiereProXML(snapshot: snapshot))
+                XCTAssertEqual(try xml.nodes(forXPath: "//sequence/media/video/format/samplecharacteristics/pixelaspectratio").first?.stringValue, expected)
+            } else {
+                XCTAssertThrowsError(try CompareReviewReportExporter.premiereProXML(snapshot: snapshot))
+            }
+        }
+        let rotated = CompareReviewReportSnapshot(
+            primaryItem: makeItem(path: "/tmp/A.mov", duration: 5, frameRate: "30/1", width: 1440, height: 1080,
+                                  pixelAspectRatio: .init(numerator: 4, denominator: 3), rotation: 90),
+            secondaryItem: makeItem(path: "/tmp/B.mov", duration: 5), alignmentMode: .relative, notes: []
+        )
+        XCTAssertThrowsError(try CompareReviewReportExporter.premiereProXML(snapshot: rotated))
+        for rotation in [90, 270] {
+            let squarePixels = CompareReviewReportSnapshot(
+                primaryItem: makeItem(path: "/tmp/A.mov", duration: 5, frameRate: "30/1", rotation: rotation),
+                secondaryItem: makeItem(path: "/tmp/B.mov", duration: 5), alignmentMode: .relative, notes: []
+            )
+            XCTAssertThrowsError(try CompareReviewReportExporter.premiereProXML(snapshot: squarePixels))
         }
     }
 

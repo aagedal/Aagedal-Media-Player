@@ -306,7 +306,7 @@ struct Aagedal_Media_PlayerApp: App {
                         NotificationCenter.default.post(.exportCompareReviewReport(.pdf))
                     }
                     Divider()
-                    ForEach([CompareReviewReportFormat.resolveMarkersEDL, .finalCutProXML, .avidMarkersText], id: \.self) { format in
+                    ForEach([CompareReviewReportFormat.resolveMarkersEDL, .premiereProXML, .finalCutProXML, .avidMarkersText], id: \.self) { format in
                         Button("\(format.label)…") {
                             NotificationCenter.default.post(.exportCompareReviewReport(format))
                         }

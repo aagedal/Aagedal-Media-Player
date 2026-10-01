@@ -1327,6 +1327,8 @@ final class CompareSessionController: ObservableObject {
             [UTType(filenameExtension: "edl") ?? .plainText]
         case .finalCutProXML:
             [UTType(filenameExtension: "fcpxml") ?? .xml]
+        case .premiereProXML:
+            [.xml]
         case .avidMarkersText:
             [.plainText]
         }
@@ -1342,6 +1344,8 @@ final class CompareSessionController: ObservableObject {
         panel.directoryURL = primaryItem.url.deletingLastPathComponent()
         if format == .finalCutProXML {
             panel.message = "Final Cut Pro can replace tabs and line breaks with spaces when markers are exported and re-imported. Keep a CSV or PDF report if note formatting matters. Ranges are included in marker text; findings at the same frame share a labelled marker."
+        } else if format == .premiereProXML {
+            panel.message = "In Premiere Pro, use File → Import to create a separate review sequence with source A on V1 and sequence markers. This does not add markers to an existing edit. Findings at the same frame share one labelled marker spanning their longest range; each original finding and range remains in its comment. Keep CSV or PDF for the complete review."
         }
 
         panel.begin { [weak self] response in

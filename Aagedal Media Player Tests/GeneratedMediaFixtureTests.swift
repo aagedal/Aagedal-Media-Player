@@ -55,7 +55,7 @@ final class GeneratedMediaFixtureTests: XCTestCase {
             XCTAssertEqual(snapshot.primaryRateNumerator, numerator, name)
             XCTAssertEqual(snapshot.primaryRateDenominator, 1_001, name)
             XCTAssertTrue(snapshot.primaryUsesDropFrame, name)
-            for format: CompareReviewReportFormat in [.csv, .resolveMarkersEDL, .finalCutProXML, .avidMarkersText] {
+            for format: CompareReviewReportFormat in [.csv, .resolveMarkersEDL, .finalCutProXML, .premiereProXML, .avidMarkersText] {
                 let exported = String(decoding: try CompareReviewReportExporter.data(for: format, snapshot: snapshot), as: UTF8.self)
                 XCTAssertTrue(exported.contains(expectedLabel), "\(name) \(format)")
             }
@@ -70,6 +70,78 @@ final class GeneratedMediaFixtureTests: XCTestCase {
             )
             XCTAssertNil(legacySnapshot.rows.first?.primarySourceTimecode, name)
             XCTAssertThrowsError(try CompareReviewReportExporter.finalCutProXML(snapshot: legacySnapshot), name)
+            XCTAssertThrowsError(try CompareReviewReportExporter.premiereProXML(snapshot: legacySnapshot), name)
+            if let output = ProcessInfo.processInfo.environment["PREMIERE_INTERCHANGE_FIXTURE_OUTPUT"] {
+                let root = URL(fileURLWithPath: output)
+                try CompareReviewReportExporter.data(for: .premiereProXML, snapshot: snapshot)
+                    .write(to: root.appending(path: "\(name).xml"), options: .withoutOverwriting)
+                try CompareReviewReportExporter.data(for: .csv, snapshot: snapshot)
+                    .write(to: root.appending(path: "\(name).csv"), options: .withoutOverwriting)
+            }
+        }
+    }
+
+    @MainActor
+    func testPremiereExportsRealMetadataAtCommonRatesWithGroupedFindingsAndRanges() async throws {
+        let directory = try fixtureDirectory()
+        for (name, numerator, denominator): (String, Int64, Int64) in [
+            ("23.976", 24_000, 1_001), ("24", 24, 1), ("25", 25, 1),
+            ("29.97", 30_000, 1_001), ("30", 30, 1), ("50", 50, 1),
+            ("59.94", 60_000, 1_001), ("60", 60, 1),
+        ] {
+            let url = directory.appending(path: "rates/\(name).mp4")
+            let metadata = try await MetadataService.shared.metadata(for: url)
+            var item = PlayerWindowCoordinator.makeMediaItem(for: url)
+            item.metadata = metadata
+            item.durationSeconds = metadata.duration ?? 0
+            let snapshot = CompareReviewReportSnapshot(
+                primaryItem: item, secondaryItem: item, alignmentMode: .relative,
+                notes: [
+                    CompareReviewNote(
+                        primaryFrame: 0, primaryTime: 0, secondaryFrame: 0, secondaryTime: 0,
+                        primaryRateNumerator: numerator, primaryRateDenominator: denominator,
+                        secondaryRateNumerator: numerator, secondaryRateDenominator: denominator,
+                        text: "Inclusive range æøå 日本語 & <picture>", primaryEndFrame: 2
+                    ),
+                    CompareReviewNote(
+                        primaryFrame: 1, primaryTime: 0, secondaryFrame: 1, secondaryTime: 0,
+                        primaryRateNumerator: numerator, primaryRateDenominator: denominator,
+                        secondaryRateNumerator: numerator, secondaryRateDenominator: denominator,
+                        text: "First same-frame finding"
+                    ),
+                    CompareReviewNote(
+                        primaryFrame: 1, primaryTime: 0, secondaryFrame: 1, secondaryTime: 0,
+                        primaryRateNumerator: numerator, primaryRateDenominator: denominator,
+                        secondaryRateNumerator: numerator, secondaryRateDenominator: denominator,
+                        text: "Second same-frame finding"
+                    ),
+                ]
+            )
+            let data = try CompareReviewReportExporter.data(for: .premiereProXML, snapshot: snapshot)
+            let document = try XMLDocument(data: data)
+            let sequence = try XCTUnwrap(document.nodes(forXPath: "/xmeml/project/children/sequence").first)
+            XCTAssertEqual(try sequence.nodes(forXPath: "rate/timebase").first?.stringValue,
+                           String(Int((Double(numerator) / Double(denominator)).rounded())), name)
+            XCTAssertEqual(try sequence.nodes(forXPath: "rate/ntsc").first?.stringValue,
+                           denominator == 1_001 ? "TRUE" : "FALSE", name)
+            XCTAssertEqual(try sequence.nodes(forXPath: "timecode/displayformat").first?.stringValue, "NDF", name)
+            XCTAssertEqual(try sequence.nodes(forXPath: "media/video/track/clipitem/file/pathurl").first?.stringValue,
+                           url.absoluteString, name)
+            let markers = try sequence.nodes(forXPath: "marker")
+            XCTAssertEqual(markers.count, 2, name)
+            XCTAssertEqual(try markers.map { try $0.nodes(forXPath: "in").first?.stringValue }, ["0", "1"], name)
+            XCTAssertEqual(try markers.first?.nodes(forXPath: "out").first?.stringValue, "3", name)
+            let comments = try markers.compactMap { try $0.nodes(forXPath: "comment").first?.stringValue }.joined(separator: "\n")
+            for note in snapshot.rows {
+                XCTAssertTrue(comments.contains(note.note), "\(name): \(note.note)")
+            }
+            XCTAssertTrue(comments.contains(url.absoluteString), name)
+            if let output = ProcessInfo.processInfo.environment["PREMIERE_INTERCHANGE_FIXTURE_OUTPUT"] {
+                let root = URL(fileURLWithPath: output)
+                try data.write(to: root.appending(path: "\(name).xml"), options: .withoutOverwriting)
+                try CompareReviewReportExporter.data(for: .csv, snapshot: snapshot)
+                    .write(to: root.appending(path: "\(name).csv"), options: .withoutOverwriting)
+            }
         }
     }
 

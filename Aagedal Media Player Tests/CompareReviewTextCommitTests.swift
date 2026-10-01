@@ -7,6 +7,96 @@ import XCTest
 
 final class CompareReviewTextCommitTests: XCTestCase {
     @MainActor
+    func testRangeDepartureSavesPendingEndpointWhenFocusCallbackDoesNotRun() {
+        let note = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
+            secondaryFrame: 10, secondaryTime: 1, text: "Finding", primaryEndFrame: 20)
+        var drafts = CompareReviewDraftState()
+        drafts.updateRangeEndDraft(" 30 ", noteID: note.id)
+        drafts.rangeActionErrors[note.id] = "Earlier range error"
+        var savedEndpoints: [Int64] = []
+
+        // Filtering or closing Review removes the field with its row. Its
+        // stable owner must commit even if FocusState never delivers a blur.
+        drafts.commitRangeOnDeparture(note: note, canEdit: true) {
+            savedEndpoints.append($0)
+            return true
+        }
+        XCTAssertEqual(savedEndpoints, [30])
+        XCTAssertEqual(drafts.rangeDrafts[note.id], "30")
+        XCTAssertNil(drafts.rangeActionErrors[note.id])
+        var saved = note
+        saved.primaryEndFrame = 30
+        XCTAssertFalse(drafts.hasPendingEdits(in: [saved]))
+
+        // Repeated row destruction must not save an already accepted edit.
+        drafts.commitRangeOnDeparture(note: saved, canEdit: true) { _ in
+            XCTFail("An unchanged endpoint must not be resaved")
+            return true
+        }
+    }
+
+    @MainActor
+    func testRangeDepartureRetainsInvalidEndpointAndRevealsHiddenFinding() {
+        let note = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
+            secondaryFrame: 10, secondaryTime: 1, text: "Picture finding", primaryEndFrame: 20)
+        for input in ["not a frame", "9", "999"] {
+            var drafts = CompareReviewDraftState()
+            drafts.updateRangeEndDraft(input, noteID: note.id)
+            var attemptedEndpoints: [Int64] = []
+            drafts.commitRangeOnDeparture(note: note, canEdit: true) {
+                attemptedEndpoints.append($0)
+                return false
+            }
+
+            XCTAssertEqual(attemptedEndpoints, Int64(input).map { [$0] } ?? [])
+            XCTAssertEqual(drafts.rangeDrafts[note.id], input)
+            XCTAssertTrue(drafts.hasPendingEdits(in: [note]))
+            XCTAssertNotNil(drafts.rangeActionErrors[note.id])
+            XCTAssertEqual(drafts.correctionRequest?.noteID, note.id)
+            XCTAssertEqual(drafts.correctionRequest?.field, .rangeEnd)
+            XCTAssertEqual(drafts.filterRevealingCorrection(in: [note], query: "audio", canEdit: true), "")
+        }
+    }
+
+    @MainActor
+    func testRangeDepartureRespectsLiveTextCorrectionUnavailableEditingAndExplicitClear() {
+        let note = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
+            secondaryFrame: 10, secondaryTime: 1, text: "Finding", primaryEndFrame: 20)
+        var drafts = CompareReviewDraftState()
+        drafts.updateRangeEndDraft("30", noteID: note.id)
+
+        // Text departure runs first and can select a correction after the
+        // disappearing row captured its earlier nil correction property.
+        drafts.updateNoteTextDraft("", noteID: note.id)
+        drafts.recordFieldValidationError("Enter note text before continuing.",
+            note: note, field: .text, canEdit: true)
+        let textCorrection = drafts.correctionRequest
+        drafts.commitRangeOnDeparture(note: note, canEdit: true) { _ in
+            XCTFail("Range departure must read the owner's new text correction")
+            return true
+        }
+        XCTAssertEqual(drafts.correctionRequest, textCorrection)
+        XCTAssertEqual(drafts.rangeDrafts[note.id], "30")
+
+        drafts.finishNoteTextCommit(noteID: note.id)
+        drafts.rangeActionErrors[note.id] = "Retained range error"
+        drafts.commitRangeOnDeparture(note: note, canEdit: false) { _ in
+            XCTFail("Unavailable editing must retain the pending endpoint")
+            return true
+        }
+        XCTAssertEqual(drafts.rangeDrafts[note.id], "30")
+        XCTAssertEqual(drafts.rangeActionErrors[note.id], "Retained range error")
+
+        drafts.updateRangeEndDraft("", noteID: note.id)
+        drafts.commitRangeOnDeparture(note: note, canEdit: true) { _ in
+            XCTFail("An empty draft must wait for explicit Clear range")
+            return true
+        }
+        XCTAssertEqual(drafts.rangeDrafts[note.id], "")
+        XCTAssertTrue(drafts.hasPendingEdits(in: [note]))
+    }
+
+    @MainActor
     func testOrdinaryTextValidationRevealsFindingHiddenByFilterWithoutSavingDrafts() {
         let note = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
             secondaryFrame: 10, secondaryTime: 1, text: "Picture finding")

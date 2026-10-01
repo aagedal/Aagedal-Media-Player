@@ -289,6 +289,7 @@ final class CompareReviewTimebaseMigrationControllerTests: XCTestCase {
         let oldSnapshot = CompareReviewReportSnapshot(primaryItem: f.item(url: f.primary),
             secondaryItem: f.item(url: f.secondary), alignmentMode: .relative, notes: session.reviewNotes)
         XCTAssertThrowsError(try CompareReviewReportExporter.finalCutProXML(snapshot: oldSnapshot))
+        XCTAssertThrowsError(try CompareReviewReportExporter.premiereProXML(snapshot: oldSnapshot))
         session.previewReviewTimebaseMigration(primary: primary, destinationURL: f.destination)
         await assertEventually { session.reviewRelinkPreview != nil }
         session.confirmReviewRelink(primary: primary)
@@ -298,7 +299,7 @@ final class CompareReviewTimebaseMigrationControllerTests: XCTestCase {
         XCTAssertEqual(session.reviewNotes[0].primaryRateNumerator, 30_000)
         let snapshot = CompareReviewReportSnapshot(primaryItem: f.item(url: f.primary),
             secondaryItem: f.item(url: f.secondary), alignmentMode: .relative, notes: session.reviewNotes)
-        for format in [CompareReviewReportFormat.resolveMarkersEDL, .finalCutProXML, .avidMarkersText] {
+        for format in [CompareReviewReportFormat.resolveMarkersEDL, .finalCutProXML, .premiereProXML, .avidMarkersText] {
             XCTAssertNoThrow(try CompareReviewReportExporter.data(for: format, snapshot: snapshot))
         }
         session.updateReviewNote(id: session.reviewNotes[0].id, text: "Edit migrated copy")

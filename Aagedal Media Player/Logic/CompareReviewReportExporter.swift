@@ -9,6 +9,7 @@ nonisolated enum CompareReviewReportFormat: String, CaseIterable, Sendable {
     case csv
     case pdf
     case resolveMarkersEDL
+    case premiereProXML
     case finalCutProXML
     case avidMarkersText
 
@@ -17,6 +18,7 @@ nonisolated enum CompareReviewReportFormat: String, CaseIterable, Sendable {
         case .csv: "CSV Report"
         case .pdf: "PDF Report"
         case .resolveMarkersEDL: "DaVinci Resolve Markers"
+        case .premiereProXML: "Premiere Pro Sequence Markers"
         case .finalCutProXML: "Final Cut Pro Markers"
         case .avidMarkersText: "Avid Media Composer Markers"
         }
@@ -27,6 +29,7 @@ nonisolated enum CompareReviewReportFormat: String, CaseIterable, Sendable {
         case .csv: "csv"
         case .pdf: "pdf"
         case .resolveMarkersEDL: "edl"
+        case .premiereProXML: "xml"
         case .finalCutProXML: "fcpxml"
         case .avidMarkersText: "txt"
         }
@@ -51,6 +54,8 @@ nonisolated enum CompareReviewReportExportError: Error, LocalizedError {
     case unrepresentableMarkerRange
     case unrepresentableFinalCutProTime
     case unsupportedFinalCutProRotatedAnamorphicSource
+    case unsupportedPremiereFrameRate(Int64, Int64)
+    case unsupportedPremierePixelAspect
     case incompatiblePrimaryFrameRate(Int)
 
     var errorDescription: String? {
@@ -71,6 +76,10 @@ nonisolated enum CompareReviewReportExportError: Error, LocalizedError {
             "A comparison marker exceeds the supported Final Cut Pro time range at source A's frame rate. Check the review's frame positions before exporting again."
         case .unsupportedFinalCutProRotatedAnamorphicSource:
             "Final Cut Pro XML export is unavailable because source A combines 90° or 270° rotation with non-square pixels. Final Cut Pro can add incorrect padding to this combination. Export CSV or PDF to preserve the review findings."
+        case .unsupportedPremiereFrameRate(let numerator, let denominator):
+            "Premiere Pro marker XML cannot represent source A's \(numerator)/\(denominator) frame rate exactly. Use CSV or PDF to preserve the recorded review positions."
+        case .unsupportedPremierePixelAspect:
+            "Premiere Pro marker XML cannot represent source A's rotation, pixel aspect, and raster combination reliably. Export CSV or PDF to preserve the review findings."
         case .incompatiblePrimaryFrameRate(let marker):
             "Review marker \(marker) was captured at a different source A frame rate. Load media at the original review frame rate, or use Notes → Migrate Rounded Timebases… for historical rounded broadcast rates. CSV and PDF reports remain available; markers are not automatically retimed."
         }
@@ -123,11 +132,13 @@ nonisolated struct CompareReviewReportSnapshot: Equatable, Sendable {
     let primaryRateDenominator: Int64
     let primaryStartFrame: Int64
     let primaryDurationFrames: Int64
+    let primaryMediaDurationFrames: Int64
     let primaryRasterWidth: Int?
     let primaryRasterHeight: Int?
     let primaryPixelAspectHorizontal: Int?
     let primaryPixelAspectVertical: Int?
     let primaryHasQuarterTurnAnamorphicGeometry: Bool
+    let primaryHasQuarterTurnRotation: Bool
     let primaryUsesDropFrame: Bool
     let rows: [CompareReviewReportRow]
 
@@ -155,6 +166,7 @@ nonisolated struct CompareReviewReportSnapshot: Equatable, Sendable {
         let primaryVideo = primaryItem.metadata?.primaryVideoStream
         let rotation = ((primaryVideo?.rotation ?? 0) % 360 + 360) % 360
         let swapsAxes = rotation == 90 || rotation == 270
+        primaryHasQuarterTurnRotation = swapsAxes
         if let aspect = primaryVideo?.pixelAspectRatio {
             primaryHasQuarterTurnAnamorphicGeometry = swapsAxes
                 && aspect.numerator > 0 && aspect.denominator > 0
@@ -267,7 +279,8 @@ nonisolated struct CompareReviewReportSnapshot: Equatable, Sendable {
         let finalMarkerFrame = rows.map { $0.primaryEndFrame ?? $0.primaryFrame }.max().map {
             $0 == Int64.max ? Int64.max : $0 + 1
         } ?? 0
-        primaryDurationFrames = max(1, durationFrames, finalMarkerFrame)
+        primaryMediaDurationFrames = max(1, durationFrames)
+        primaryDurationFrames = max(primaryMediaDurationFrames, finalMarkerFrame)
     }
 
     private static func hasAvailableFrame(at time: TimeInterval, duration: TimeInterval) -> Bool {
@@ -420,6 +433,8 @@ nonisolated enum CompareReviewReportExporter {
             )
         case .resolveMarkersEDL:
             Data(try resolveMarkersEDL(snapshot: snapshot).utf8)
+        case .premiereProXML:
+            Data(try premiereProXML(snapshot: snapshot).utf8)
         case .finalCutProXML:
             Data(try finalCutProXML(snapshot: snapshot).utf8)
         case .avidMarkersText:
@@ -534,6 +549,129 @@ nonisolated enum CompareReviewReportExporter {
             lines.append("")
         }
         return lines.joined(separator: "\r\n")
+    }
+
+    /// Premiere imports legacy Final Cut Pro 7 XMEML, not modern FCPXML.
+    /// Carry review markers on a new sequence, with source A at relative zero.
+    /// The sequence's display timecode and the file's source timecode retain A's
+    /// start, while marker in/out values remain relative, integer frame counts.
+    static func premiereProXML(snapshot: CompareReviewReportSnapshot) throws -> String {
+        try validateEditorMarkerRates(snapshot)
+        // Snapshot raster is oriented for FCPXML. XMEML also describes linked
+        // file raster; wait for native conform evidence before emitting a
+        // quarter-turn file with already-swapped dimensions.
+        guard !snapshot.primaryHasQuarterTurnRotation else {
+            throw CompareReviewReportExportError.unsupportedPremierePixelAspect
+        }
+        let rate = TimecodeRate(
+            numerator: Int(snapshot.primaryRateNumerator),
+            denominator: Int(snapshot.primaryRateDenominator),
+            dropFrame: snapshot.primaryUsesDropFrame
+        )
+        let ntsc = rate.denominator == 1_001 && rate.numerator == rate.nominalFPS * 1_000
+        guard (1...120).contains(rate.nominalFPS),
+              (rate.denominator == 1 || ntsc),
+              !snapshot.primaryUsesDropFrame || rate.isDropFrame else {
+            throw CompareReviewReportExportError.unsupportedPremiereFrameRate(
+                snapshot.primaryRateNumerator, snapshot.primaryRateDenominator
+            )
+        }
+        let rateXML = "<rate><timebase>\(rate.nominalFPS)</timebase><ntsc>\(ntsc ? "TRUE" : "FALSE")</ntsc></rate>"
+        let timecodeXML = "<timecode>\(rateXML)<string>\(rate.timecode(forFrameCount: snapshot.primaryStartFrame))</string><frame>\(snapshot.primaryStartFrame)</frame><displayformat>\(rate.isDropFrame ? "DF" : "NDF")</displayformat></timecode>"
+        let sampleXML: String
+        if let width = snapshot.primaryRasterWidth, let height = snapshot.primaryRasterHeight {
+            let pixelAspect = try premierePixelAspect(snapshot: snapshot, width: width, height: height)
+            sampleXML = "<samplecharacteristics>\(rateXML)<width>\(width)</width><height>\(height)</height><pixelaspectratio>\(pixelAspect)</pixelaspectratio></samplecharacteristics>"
+        } else {
+            // Let the importer infer missing geometry from the linked source.
+            // Never invent a raster for media whose metadata is unavailable.
+            guard !snapshot.primaryHasQuarterTurnAnamorphicGeometry else {
+                throw CompareReviewReportExportError.unsupportedPremierePixelAspect
+            }
+            sampleXML = ""
+        }
+        let sourceDuration = snapshot.primaryMediaDurationFrames
+        let sequenceDuration = snapshot.primaryDurationFrames
+        let name = "\(snapshot.primaryFilename) vs \(snapshot.secondaryFilename) Review"
+        var lines = [
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
+            "<!DOCTYPE xmeml>",
+            "<xmeml version=\"5\">",
+            "  <project><name>Aagedal Compare Review</name><children>",
+            "    <sequence id=\"aagedal-review-sequence\">",
+            "      <name>\(xmlAttribute(name))</name>",
+            "      <duration>\(sequenceDuration)</duration>",
+            "      \(rateXML)",
+            "      \(timecodeXML)",
+            "      <media><video>",
+        ]
+        if !sampleXML.isEmpty { lines.append("        <format>\(sampleXML)</format>") }
+        lines.append(contentsOf: [
+            "        <track><clipitem id=\"aagedal-source-a-clip\">",
+            "          <name>\(xmlAttribute(snapshot.primaryFilename))</name>",
+            "          <duration>\(sourceDuration)</duration>\(rateXML)",
+            "          <start>0</start><end>\(sourceDuration)</end><in>0</in><out>\(sourceDuration)</out>",
+            "          <file id=\"aagedal-source-a-file\">",
+            "            <name>\(xmlAttribute(snapshot.primaryFilename))</name>",
+            "            <pathurl>\(xmlAttribute(snapshot.primaryURL.absoluteString))</pathurl>",
+            "            <duration>\(sourceDuration)</duration>\(rateXML)",
+            "            \(timecodeXML)",
+        ])
+        if !sampleXML.isEmpty { lines.append("            <media><video>\(sampleXML)</video></media>") }
+        lines.append(contentsOf: [
+            "          </file>",
+            "        </clipitem></track>",
+            "      </video></media>",
+        ])
+
+        // Unknown native collision behavior must not discard same-frame notes.
+        // Keep a single interval with a labelled, lossless text entry per finding.
+        let groups = Dictionary(grouping: snapshot.rows, by: \.primaryFrame)
+        for frame in groups.keys.sorted() {
+            let rows = groups[frame]!
+            var end = frame
+            for row in rows {
+                let duration = try markerDurationFrames(row)
+                let (exclusiveEnd, overflow) = frame.addingReportingOverflow(duration)
+                guard frame >= 0, !overflow, exclusiveEnd <= sequenceDuration else {
+                    throw CompareReviewReportExportError.unrepresentableMarkerRange
+                }
+                end = max(end, exclusiveEnd)
+            }
+            let labels = rows.map { "QC \(String(format: "%03d", $0.markerNumber))" }
+            let title = rows.count == 1 ? labels[0] : "\(labels.joined(separator: " + ")) (\(rows.count) findings)"
+            let comment = zip(labels, rows).map { label, row in
+                "[\(label)] \(markerNote(row: row, snapshot: snapshot)) | Source A: \(reportTimecode(source: row.primarySourceTimecode, relative: row.primaryRelativeTimecode)), frame \(row.primaryFrame)"
+            }.joined(separator: "\n\n")
+            lines.append("      <marker><name>\(xmlAttribute(title))</name><comment>\(xmlAttribute(comment))</comment><in>\(frame)</in><out>\(end)</out></marker>")
+        }
+        lines.append(contentsOf: ["    </sequence>", "  </children></project>", "</xmeml>", ""])
+        return lines.joined(separator: "\n")
+    }
+
+    private static func premierePixelAspect(
+        snapshot: CompareReviewReportSnapshot, width: Int, height: Int
+    ) throws -> String {
+        guard !snapshot.primaryHasQuarterTurnAnamorphicGeometry else {
+            throw CompareReviewReportExportError.unsupportedPremierePixelAspect
+        }
+        guard let horizontal = snapshot.primaryPixelAspectHorizontal,
+              let vertical = snapshot.primaryPixelAspectVertical,
+              horizontal != vertical else { return "square" }
+        let divisor = greatestCommonDivisor(Int64(horizontal), Int64(vertical))
+        let numerator = Int64(horizontal) / divisor
+        let denominator = Int64(vertical) / divisor
+        // XMEML's pixelaspectratio is an enumeration, not a rational field.
+        // Restrict it to established raster/PAR pairs instead of guessing an
+        // editor-specific numeric extension or changing the original raster.
+        switch (width, height, numerator, denominator) {
+        case (720, 480, 8, 9), (720, 486, 10, 11): return "NTSC-601"
+        case (720, 576, 16, 15): return "PAL-601"
+        case (960, 720, 4, 3): return "HD-(960x720)"
+        case (1280, 1080, 3, 2): return "HD-(1280x1080)"
+        case (1440, 1080, 4, 3): return "HD-(1440x1080)"
+        default: throw CompareReviewReportExportError.unsupportedPremierePixelAspect
+        }
     }
 
     /// Avid's marker interchange is a tab-delimited, frame-addressed format.
