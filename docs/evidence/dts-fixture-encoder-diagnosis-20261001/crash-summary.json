@@ -1,0 +1,38 @@
+{
+  "captureTime": "2026-10-01 14:48:21.3794 +0200",
+  "pid": 83308,
+  "parentPid": 83265,
+  "exception": {
+    "codes": "0x0000000000000002, 0x0000007a43bffffc",
+    "rawCodes": [
+      2,
+      525122666492
+    ],
+    "type": "EXC_BAD_ACCESS",
+    "signal": "SIGBUS",
+    "subtype": "KERN_PROTECTION_FAILURE at 0x0000007a43bffffc"
+  },
+  "termination": {
+    "flags": 0,
+    "code": 10,
+    "namespace": "SIGNAL",
+    "indicator": "Bus error: 10",
+    "byProc": "exc handler",
+    "byPid": 83308
+  },
+  "threadName": "enc0:0:dca",
+  "frames": [
+    {
+      "imageOffset": 7051916,
+      "imageIndex": 0
+    },
+    {
+      "imageOffset": 7404,
+      "symbol": "thread_start",
+      "symbolLocation": 8,
+      "imageIndex": 2
+    }
+  ],
+  "binaryUUID": "6c6a2402-9855-3f76-85df-8e7893ad0e52",
+  "imageBase": 4365189120
+}

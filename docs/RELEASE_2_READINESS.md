@@ -179,6 +179,18 @@ and [dependency stage evidence](evidence/coreaudio-stage-inventory-20261001/READ
 Native/accessibility, editor, hardware/soak, public dependencies and distribution
 gates remain open.
 
+The first October 1 canonical run is rejected: 750 passes, nine named skips
+and one SIGBUS while the bundled experimental DCA encoder creates a synthetic
+fixture. Production live decoding had not started. Direct trials reproduce it,
+including with SIMD disabled. The decoder check now uses pinned generated DTS
+bytes without changing its assertions, and all FFmpeg wrappers preserve quiet
+failure exit/signal details. Three new regressions raise candidate consumption
+to 763, with seven new checks and the pinned DTS decoder check required by exact
+identity. Focused and fresh canonical verification follow separately. The DCA
+encoder defect remains open; this fixture setup correction supplies no authentic
+DTS/native/hardware acceptance. See [diagnosis](evidence/dts-fixture-encoder-diagnosis-20261001/README.md)
+and [rejected candidate evidence](evidence/encoder-diagnostics-20261001/README.md).
+
 The Review & Report implementation is substantially present: structured point
 and range findings, versioned local sidecars, relinking, deliberate historical
 timebase migration, save recovery, and CSV/PDF/editor-format export. That makes

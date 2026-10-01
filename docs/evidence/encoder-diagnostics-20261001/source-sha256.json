@@ -1,0 +1,9 @@
+{
+  "Aagedal Media Player Tests/LiveAudioMeterDecoderTests.swift": "30a0c3d75f0fddf9b54a82f86b748792b5556ba83370607818bf01550160925b",
+  "Aagedal Media Player Tests/SubprocessServiceTests.swift": "f1d2d88e38f64b0408838583c6752cf6b10fa0194579e556ebd8e7dc8b301132",
+  "Aagedal Media Player/Logic/FFmpegService.swift": "2b93225b895bd6cbede59e282240e54888381e8c4793237f8a8e44127f5eeb1d",
+  "Test Fixtures/LiveAudioMeter/contiguous-dts.mkv": "4b8333804b796a3c323e54c05ef14095bbc23a35d4092cf6093a1357957073a1",
+  "scripts/release.sh": "265f27e1ff4e00e1984339592f191d5b61fc6918c7040ab196f562a4add36b80",
+  "scripts/test-release-script-validation.py": "bdd5b95b5c606dbb7cfe75c292dafe0cf5105c40d8eb13e5b44328265b5ab34d",
+  "scripts/verify-release-candidate.sh": "8f0864e37d9a82393371d21b95160a37fb71e2fe760be856d3cd041c8613ae14"
+}

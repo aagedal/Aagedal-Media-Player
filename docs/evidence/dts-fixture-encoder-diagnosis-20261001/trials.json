@@ -1,0 +1,3502 @@
+[
+  {
+    "mode": "baseline",
+    "trial": 1,
+    "returncode": 0,
+    "elapsed": 0.01896025000314694,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 2,
+    "returncode": 0,
+    "elapsed": 0.0213696249993518,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 3,
+    "returncode": 0,
+    "elapsed": 0.017847583003458567,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 4,
+    "returncode": 0,
+    "elapsed": 0.01887854200322181,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 5,
+    "returncode": 0,
+    "elapsed": 0.01974158300436102,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 6,
+    "returncode": 0,
+    "elapsed": 0.01893950000521727,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 7,
+    "returncode": 0,
+    "elapsed": 0.01846845900581684,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 8,
+    "returncode": 0,
+    "elapsed": 0.019424041995080188,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 9,
+    "returncode": 0,
+    "elapsed": 0.019364499996299855,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 10,
+    "returncode": 0,
+    "elapsed": 0.018582749995402992,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 11,
+    "returncode": 0,
+    "elapsed": 0.01802579099603463,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 12,
+    "returncode": 0,
+    "elapsed": 0.018498999997973442,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 13,
+    "returncode": 0,
+    "elapsed": 0.019038957994780503,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 14,
+    "returncode": 0,
+    "elapsed": 0.018211457994766533,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 15,
+    "returncode": 0,
+    "elapsed": 0.017663167003775015,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 16,
+    "returncode": 0,
+    "elapsed": 0.017859915998997167,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 17,
+    "returncode": 0,
+    "elapsed": 0.018132375000277534,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 18,
+    "returncode": 0,
+    "elapsed": 0.01921008298813831,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 19,
+    "returncode": 0,
+    "elapsed": 0.01823266700375825,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 20,
+    "returncode": 0,
+    "elapsed": 0.017810833000112325,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 21,
+    "returncode": 0,
+    "elapsed": 0.018195125012425706,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 22,
+    "returncode": 0,
+    "elapsed": 0.019874916004482657,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 23,
+    "returncode": 0,
+    "elapsed": 0.019040666011278518,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 24,
+    "returncode": 0,
+    "elapsed": 0.018544042002758943,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 25,
+    "returncode": 0,
+    "elapsed": 0.01973516700672917,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 26,
+    "returncode": 0,
+    "elapsed": 0.019534749997546896,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 27,
+    "returncode": 0,
+    "elapsed": 0.017895540993777104,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 28,
+    "returncode": 0,
+    "elapsed": 0.01814395800465718,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 29,
+    "returncode": 0,
+    "elapsed": 0.018990958007634617,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 30,
+    "returncode": 0,
+    "elapsed": 0.019844791997456923,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 31,
+    "returncode": 0,
+    "elapsed": 0.018594499997561797,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 32,
+    "returncode": 0,
+    "elapsed": 0.01919462499790825,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 33,
+    "returncode": 0,
+    "elapsed": 0.019240291992900893,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 34,
+    "returncode": 0,
+    "elapsed": 0.018470791997970082,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 35,
+    "returncode": 0,
+    "elapsed": 0.018723500004853122,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 36,
+    "returncode": 0,
+    "elapsed": 0.018832583009498194,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 37,
+    "returncode": 0,
+    "elapsed": 0.01922058300988283,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 38,
+    "returncode": 0,
+    "elapsed": 0.018264208993059583,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 39,
+    "returncode": 0,
+    "elapsed": 0.017998875002376735,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 40,
+    "returncode": 0,
+    "elapsed": 0.01831908400345128,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 41,
+    "returncode": -10,
+    "elapsed": 0.15202708399738185,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 42,
+    "returncode": 0,
+    "elapsed": 0.019429291991400532,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 43,
+    "returncode": 0,
+    "elapsed": 0.017944916005944833,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 44,
+    "returncode": 0,
+    "elapsed": 0.017424749996280298,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 45,
+    "returncode": 0,
+    "elapsed": 0.020564457998261787,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 46,
+    "returncode": 0,
+    "elapsed": 0.01731324999127537,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 47,
+    "returncode": 0,
+    "elapsed": 0.018654875006177463,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 48,
+    "returncode": 0,
+    "elapsed": 0.018245500003104098,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 49,
+    "returncode": 0,
+    "elapsed": 0.01709925000614021,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 50,
+    "returncode": 0,
+    "elapsed": 0.01800933398772031,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 1,
+    "returncode": 0,
+    "elapsed": 0.019401124998694286,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 2,
+    "returncode": 0,
+    "elapsed": 0.018505000000004657,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 3,
+    "returncode": 0,
+    "elapsed": 0.019209249992854893,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 4,
+    "returncode": 0,
+    "elapsed": 0.01734020799631253,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 5,
+    "returncode": 0,
+    "elapsed": 0.018307292004465126,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 6,
+    "returncode": 0,
+    "elapsed": 0.018055499996989965,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 7,
+    "returncode": 0,
+    "elapsed": 0.01871120800205972,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 8,
+    "returncode": 0,
+    "elapsed": 0.01746875001117587,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 9,
+    "returncode": 0,
+    "elapsed": 0.017561124986968935,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 10,
+    "returncode": 0,
+    "elapsed": 0.017341000013402663,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 11,
+    "returncode": 0,
+    "elapsed": 0.019107500003883615,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 12,
+    "returncode": 0,
+    "elapsed": 0.019735082998522557,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 13,
+    "returncode": 0,
+    "elapsed": 0.018640291003976017,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 14,
+    "returncode": 0,
+    "elapsed": 0.01970054100092966,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 15,
+    "returncode": 0,
+    "elapsed": 0.018704916001297534,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 16,
+    "returncode": 0,
+    "elapsed": 0.018991208999068476,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 17,
+    "returncode": 0,
+    "elapsed": 0.01860566700634081,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 18,
+    "returncode": 0,
+    "elapsed": 0.018999374995473772,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 19,
+    "returncode": 0,
+    "elapsed": 0.019236000007367693,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 20,
+    "returncode": 0,
+    "elapsed": 0.018874666988267563,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 21,
+    "returncode": 0,
+    "elapsed": 0.01967220799997449,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 22,
+    "returncode": 0,
+    "elapsed": 0.019530250006937422,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 23,
+    "returncode": 0,
+    "elapsed": 0.018351624996284954,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 24,
+    "returncode": 0,
+    "elapsed": 0.018128833995433524,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 25,
+    "returncode": 0,
+    "elapsed": 0.019293374993139878,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 26,
+    "returncode": 0,
+    "elapsed": 0.019270415999926627,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 27,
+    "returncode": 0,
+    "elapsed": 0.01827462500659749,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 28,
+    "returncode": 0,
+    "elapsed": 0.018332749998080544,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 29,
+    "returncode": 0,
+    "elapsed": 0.018772750001517124,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 30,
+    "returncode": 0,
+    "elapsed": 0.019688957996550016,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 31,
+    "returncode": 0,
+    "elapsed": 0.019384833998628892,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 32,
+    "returncode": 0,
+    "elapsed": 0.0189739999914309,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 33,
+    "returncode": 0,
+    "elapsed": 0.019570792006561533,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 34,
+    "returncode": 0,
+    "elapsed": 0.018856833994504996,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 35,
+    "returncode": 0,
+    "elapsed": 0.01894637499935925,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 36,
+    "returncode": 0,
+    "elapsed": 0.020658374996855855,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 37,
+    "returncode": 0,
+    "elapsed": 0.019467124991933815,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 38,
+    "returncode": 0,
+    "elapsed": 0.018511583999497816,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 39,
+    "returncode": 0,
+    "elapsed": 0.019144790989230387,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 40,
+    "returncode": 0,
+    "elapsed": 0.01989954200689681,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 41,
+    "returncode": 0,
+    "elapsed": 0.019911541996407323,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 42,
+    "returncode": 0,
+    "elapsed": 0.02022908399521839,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 43,
+    "returncode": 0,
+    "elapsed": 0.019220333007979207,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 44,
+    "returncode": 0,
+    "elapsed": 0.018451958007062785,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 45,
+    "returncode": 0,
+    "elapsed": 0.020073541993042454,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 46,
+    "returncode": 0,
+    "elapsed": 0.019468458005576394,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 47,
+    "returncode": 0,
+    "elapsed": 0.020674250001320615,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 48,
+    "returncode": 0,
+    "elapsed": 0.02323604200500995,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 49,
+    "returncode": 0,
+    "elapsed": 0.02004825000767596,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 50,
+    "returncode": 0,
+    "elapsed": 0.019218124987673946,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 51,
+    "returncode": 0,
+    "elapsed": 0.01826295799401123,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 52,
+    "returncode": 0,
+    "elapsed": 0.017627540990361013,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 53,
+    "returncode": 0,
+    "elapsed": 0.018692750003538094,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 54,
+    "returncode": 0,
+    "elapsed": 0.021743459001299925,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 55,
+    "returncode": 0,
+    "elapsed": 0.017818000007537194,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 56,
+    "returncode": 0,
+    "elapsed": 0.018208167006378062,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 57,
+    "returncode": 0,
+    "elapsed": 0.019376291005755775,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 58,
+    "returncode": 0,
+    "elapsed": 0.017967666004551575,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 59,
+    "returncode": 0,
+    "elapsed": 0.018254542010254227,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 60,
+    "returncode": 0,
+    "elapsed": 0.017316249999566935,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 61,
+    "returncode": 0,
+    "elapsed": 0.017918958998052403,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 62,
+    "returncode": 0,
+    "elapsed": 0.019036083001992665,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 63,
+    "returncode": 0,
+    "elapsed": 0.019300582993309945,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 64,
+    "returncode": 0,
+    "elapsed": 0.01767237499007024,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 65,
+    "returncode": 0,
+    "elapsed": 0.01797320799960289,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 66,
+    "returncode": 0,
+    "elapsed": 0.018686374998651445,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 67,
+    "returncode": 0,
+    "elapsed": 0.019420542012085207,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 68,
+    "returncode": 0,
+    "elapsed": 0.01818108299630694,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 69,
+    "returncode": 0,
+    "elapsed": 0.01782574999378994,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 70,
+    "returncode": 0,
+    "elapsed": 0.01777329100877978,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 71,
+    "returncode": 0,
+    "elapsed": 0.017777374989236705,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 72,
+    "returncode": 0,
+    "elapsed": 0.019466458004899323,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 73,
+    "returncode": 0,
+    "elapsed": 0.01851949999399949,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 74,
+    "returncode": 0,
+    "elapsed": 0.01837183399766218,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 75,
+    "returncode": 0,
+    "elapsed": 0.01758391599287279,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 76,
+    "returncode": 0,
+    "elapsed": 0.01872133300639689,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 77,
+    "returncode": 0,
+    "elapsed": 0.019468792001134716,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 78,
+    "returncode": 0,
+    "elapsed": 0.017997167000430636,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 79,
+    "returncode": 0,
+    "elapsed": 0.017572582990396768,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 80,
+    "returncode": 0,
+    "elapsed": 0.01732433299184777,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 81,
+    "returncode": 0,
+    "elapsed": 0.017723500001011416,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 82,
+    "returncode": 0,
+    "elapsed": 0.018453249998856336,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 83,
+    "returncode": 0,
+    "elapsed": 0.018685915987589397,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 84,
+    "returncode": 0,
+    "elapsed": 0.017615250006201677,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 85,
+    "returncode": 0,
+    "elapsed": 0.017199166992213577,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 86,
+    "returncode": 0,
+    "elapsed": 0.01729808299569413,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 87,
+    "returncode": 0,
+    "elapsed": 0.017643083003349602,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 88,
+    "returncode": 0,
+    "elapsed": 0.01795875000243541,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 89,
+    "returncode": 0,
+    "elapsed": 0.01930308301234618,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 90,
+    "returncode": 0,
+    "elapsed": 0.01815350000106264,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 91,
+    "returncode": 0,
+    "elapsed": 0.018215625008451752,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 92,
+    "returncode": 0,
+    "elapsed": 0.018624792006448843,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 93,
+    "returncode": 0,
+    "elapsed": 0.01821812501293607,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 94,
+    "returncode": 0,
+    "elapsed": 0.01926979199924972,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 95,
+    "returncode": 0,
+    "elapsed": 0.01831987500190735,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 96,
+    "returncode": 0,
+    "elapsed": 0.018264499987708405,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 97,
+    "returncode": 0,
+    "elapsed": 0.01738529199792538,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 98,
+    "returncode": 0,
+    "elapsed": 0.016729541996028274,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 99,
+    "returncode": 0,
+    "elapsed": 0.016845167003339157,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 100,
+    "returncode": 0,
+    "elapsed": 0.018445875000907108,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 101,
+    "returncode": 0,
+    "elapsed": 0.01833962500677444,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 102,
+    "returncode": 0,
+    "elapsed": 0.017813915997976437,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 103,
+    "returncode": 0,
+    "elapsed": 0.017274750003707595,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 104,
+    "returncode": 0,
+    "elapsed": 0.017296291000093333,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 105,
+    "returncode": 0,
+    "elapsed": 0.017969833003007807,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 106,
+    "returncode": 0,
+    "elapsed": 0.018253000002005138,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 107,
+    "returncode": 0,
+    "elapsed": 0.018652083002962172,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 108,
+    "returncode": 0,
+    "elapsed": 0.01872837499831803,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 109,
+    "returncode": 0,
+    "elapsed": 0.02071345799777191,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 110,
+    "returncode": 0,
+    "elapsed": 0.019028665992664173,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 111,
+    "returncode": 0,
+    "elapsed": 0.01852258399594575,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 112,
+    "returncode": 0,
+    "elapsed": 0.018710165997617878,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 113,
+    "returncode": 0,
+    "elapsed": 0.018930999998701736,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 114,
+    "returncode": 0,
+    "elapsed": 0.01862904200970661,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 115,
+    "returncode": 0,
+    "elapsed": 0.018920666989288293,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 116,
+    "returncode": 0,
+    "elapsed": 0.01848574999894481,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 117,
+    "returncode": 0,
+    "elapsed": 0.018731749994913116,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 118,
+    "returncode": 0,
+    "elapsed": 0.018579750001663342,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 119,
+    "returncode": 0,
+    "elapsed": 0.018571458000224084,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 120,
+    "returncode": 0,
+    "elapsed": 0.018631875005667098,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 121,
+    "returncode": 0,
+    "elapsed": 0.019170749990735203,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 122,
+    "returncode": 0,
+    "elapsed": 0.020198250000248663,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 123,
+    "returncode": 0,
+    "elapsed": 0.01906783400045242,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 124,
+    "returncode": 0,
+    "elapsed": 0.018987083007232286,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 125,
+    "returncode": 0,
+    "elapsed": 0.01874337499612011,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 126,
+    "returncode": 0,
+    "elapsed": 0.020142958004726097,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 127,
+    "returncode": 0,
+    "elapsed": 0.018638790992554277,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 128,
+    "returncode": 0,
+    "elapsed": 0.019340833008755,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 129,
+    "returncode": 0,
+    "elapsed": 0.018326917008380406,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 130,
+    "returncode": 0,
+    "elapsed": 0.01924520800821483,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 131,
+    "returncode": 0,
+    "elapsed": 0.019751957996049896,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 132,
+    "returncode": 0,
+    "elapsed": 0.019117832998745143,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 133,
+    "returncode": 0,
+    "elapsed": 0.018836584000382572,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 134,
+    "returncode": 0,
+    "elapsed": 0.01878204199601896,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 135,
+    "returncode": 0,
+    "elapsed": 0.018503125000279397,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 136,
+    "returncode": 0,
+    "elapsed": 0.020118667001952417,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 137,
+    "returncode": 0,
+    "elapsed": 0.018821833000401966,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 138,
+    "returncode": 0,
+    "elapsed": 0.017251875004149042,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 139,
+    "returncode": 0,
+    "elapsed": 0.018037958012428135,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 140,
+    "returncode": 0,
+    "elapsed": 0.018731874995864928,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 141,
+    "returncode": -10,
+    "elapsed": 0.1277512079977896,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 142,
+    "returncode": 0,
+    "elapsed": 0.019330625000293367,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 143,
+    "returncode": 0,
+    "elapsed": 0.018043875010334887,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 144,
+    "returncode": 0,
+    "elapsed": 0.019133834008243866,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 145,
+    "returncode": 0,
+    "elapsed": 0.018683458009036258,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 146,
+    "returncode": 0,
+    "elapsed": 0.018066957985865884,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 147,
+    "returncode": 0,
+    "elapsed": 0.017878665996249765,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 148,
+    "returncode": 0,
+    "elapsed": 0.01818583399290219,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 149,
+    "returncode": 0,
+    "elapsed": 0.01803920799284242,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 150,
+    "returncode": 0,
+    "elapsed": 0.019398708987864666,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 151,
+    "returncode": 0,
+    "elapsed": 0.017256209001061507,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 152,
+    "returncode": 0,
+    "elapsed": 0.01714870799332857,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 153,
+    "returncode": 0,
+    "elapsed": 0.017168624995974824,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 154,
+    "returncode": 0,
+    "elapsed": 0.01802554100868292,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 155,
+    "returncode": 0,
+    "elapsed": 0.018272041008458473,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 156,
+    "returncode": 0,
+    "elapsed": 0.01863962500647176,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 157,
+    "returncode": 0,
+    "elapsed": 0.01994845800800249,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 158,
+    "returncode": 0,
+    "elapsed": 0.018229999986942858,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 159,
+    "returncode": 0,
+    "elapsed": 0.01839608400769066,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 160,
+    "returncode": 0,
+    "elapsed": 0.01847687500412576,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 161,
+    "returncode": 0,
+    "elapsed": 0.017877124992082827,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 162,
+    "returncode": 0,
+    "elapsed": 0.01769554200291168,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 163,
+    "returncode": 0,
+    "elapsed": 0.01715104200411588,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 164,
+    "returncode": 0,
+    "elapsed": 0.018130750002455898,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 165,
+    "returncode": 0,
+    "elapsed": 0.017241875000763685,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 166,
+    "returncode": 0,
+    "elapsed": 0.01851925000664778,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 167,
+    "returncode": 0,
+    "elapsed": 0.018904625001596287,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 168,
+    "returncode": 0,
+    "elapsed": 0.018746334011666477,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 169,
+    "returncode": 0,
+    "elapsed": 0.017944166000233963,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 170,
+    "returncode": 0,
+    "elapsed": 0.017231083009392023,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 171,
+    "returncode": 0,
+    "elapsed": 0.018964458009577356,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 172,
+    "returncode": 0,
+    "elapsed": 0.018725665999227203,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 173,
+    "returncode": 0,
+    "elapsed": 0.01811495900619775,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 174,
+    "returncode": 0,
+    "elapsed": 0.0167420000070706,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 175,
+    "returncode": 0,
+    "elapsed": 0.01780020799196791,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 176,
+    "returncode": 0,
+    "elapsed": 0.018739082996034995,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 177,
+    "returncode": 0,
+    "elapsed": 0.01945495800464414,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 178,
+    "returncode": 0,
+    "elapsed": 0.01815316700958647,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 179,
+    "returncode": 0,
+    "elapsed": 0.018403374997433275,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 180,
+    "returncode": 0,
+    "elapsed": 0.01902624999638647,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 181,
+    "returncode": 0,
+    "elapsed": 0.018673124999622814,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 182,
+    "returncode": 0,
+    "elapsed": 0.017769375001080334,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 183,
+    "returncode": 0,
+    "elapsed": 0.017765875003533438,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 184,
+    "returncode": 0,
+    "elapsed": 0.017703333011013456,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 185,
+    "returncode": 0,
+    "elapsed": 0.01693754200823605,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 186,
+    "returncode": 0,
+    "elapsed": 0.01791229199443478,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 187,
+    "returncode": 0,
+    "elapsed": 0.01828529199701734,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 188,
+    "returncode": 0,
+    "elapsed": 0.01929383398965001,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 189,
+    "returncode": 0,
+    "elapsed": 0.018053708001389168,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 190,
+    "returncode": 0,
+    "elapsed": 0.01741158400545828,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 191,
+    "returncode": 0,
+    "elapsed": 0.01705962501000613,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 192,
+    "returncode": 0,
+    "elapsed": 0.01808500000333879,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 193,
+    "returncode": 0,
+    "elapsed": 0.01836412500415463,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 194,
+    "returncode": 0,
+    "elapsed": 0.01919866699608974,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 195,
+    "returncode": 0,
+    "elapsed": 0.018234290997497737,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 196,
+    "returncode": 0,
+    "elapsed": 0.01784558298822958,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 197,
+    "returncode": 0,
+    "elapsed": 0.01814133299922105,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 198,
+    "returncode": 0,
+    "elapsed": 0.018981708999490365,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 199,
+    "returncode": -10,
+    "elapsed": 0.14007962499454152,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 200,
+    "returncode": 0,
+    "elapsed": 0.017836083003203385,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 201,
+    "returncode": 0,
+    "elapsed": 0.018511291011236608,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 202,
+    "returncode": 0,
+    "elapsed": 0.018313042004592717,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 203,
+    "returncode": 0,
+    "elapsed": 0.01871045799634885,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 204,
+    "returncode": 0,
+    "elapsed": 0.017162541989819147,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 205,
+    "returncode": 0,
+    "elapsed": 0.020503874999121763,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 206,
+    "returncode": 0,
+    "elapsed": 0.019345833992701955,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 207,
+    "returncode": 0,
+    "elapsed": 0.01811629098665435,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 208,
+    "returncode": 0,
+    "elapsed": 0.019358584002475254,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 209,
+    "returncode": 0,
+    "elapsed": 0.018825666993507184,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 210,
+    "returncode": 0,
+    "elapsed": 0.018342082999879494,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 211,
+    "returncode": 0,
+    "elapsed": 0.0178837499988731,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 212,
+    "returncode": 0,
+    "elapsed": 0.018243084006826393,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 213,
+    "returncode": 0,
+    "elapsed": 0.017895500001031905,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 214,
+    "returncode": 0,
+    "elapsed": 0.018394792001345195,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 215,
+    "returncode": 0,
+    "elapsed": 0.018297124988748692,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 216,
+    "returncode": 0,
+    "elapsed": 0.018476749988622032,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 217,
+    "returncode": 0,
+    "elapsed": 0.018168499998864718,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 218,
+    "returncode": 0,
+    "elapsed": 0.02243162499507889,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 219,
+    "returncode": 0,
+    "elapsed": 0.019111582994810306,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 220,
+    "returncode": 0,
+    "elapsed": 0.022865582999656908,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 221,
+    "returncode": 0,
+    "elapsed": 0.018458541002473794,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 222,
+    "returncode": 0,
+    "elapsed": 0.024766333008301444,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 223,
+    "returncode": 0,
+    "elapsed": 0.024981666007079184,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 224,
+    "returncode": 0,
+    "elapsed": 0.02597491699270904,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 225,
+    "returncode": 0,
+    "elapsed": 0.026083040997036733,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 226,
+    "returncode": 0,
+    "elapsed": 0.024083208001684397,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 227,
+    "returncode": 0,
+    "elapsed": 0.019380333993467502,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 228,
+    "returncode": 0,
+    "elapsed": 0.018742542000836693,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 229,
+    "returncode": 0,
+    "elapsed": 0.018444832996465266,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 230,
+    "returncode": 0,
+    "elapsed": 0.019045749999349937,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 231,
+    "returncode": 0,
+    "elapsed": 0.020187834001262672,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 232,
+    "returncode": 0,
+    "elapsed": 0.018484041996998712,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 233,
+    "returncode": 0,
+    "elapsed": 0.018999167004949413,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 234,
+    "returncode": 0,
+    "elapsed": 0.020366666009067558,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 235,
+    "returncode": 0,
+    "elapsed": 0.019333959004143253,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 236,
+    "returncode": 0,
+    "elapsed": 0.019669500004965812,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 237,
+    "returncode": 0,
+    "elapsed": 0.0196476670098491,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 238,
+    "returncode": 0,
+    "elapsed": 0.01974974999029655,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 239,
+    "returncode": 0,
+    "elapsed": 0.019529500001226552,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 240,
+    "returncode": 0,
+    "elapsed": 0.019204833995900117,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 241,
+    "returncode": 0,
+    "elapsed": 0.018620500006363727,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 242,
+    "returncode": 0,
+    "elapsed": 0.018893332991865464,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 243,
+    "returncode": 0,
+    "elapsed": 0.020121207999181934,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 244,
+    "returncode": 0,
+    "elapsed": 0.01849200000287965,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 245,
+    "returncode": 0,
+    "elapsed": 0.018911125007434748,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 246,
+    "returncode": 0,
+    "elapsed": 0.020148707990301773,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 247,
+    "returncode": 0,
+    "elapsed": 0.01906970799609553,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 248,
+    "returncode": 0,
+    "elapsed": 0.018815041999914683,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 249,
+    "returncode": 0,
+    "elapsed": 0.019122792000416666,
+    "stderr": ""
+  },
+  {
+    "mode": "baseline",
+    "trial": 250,
+    "returncode": 0,
+    "elapsed": 0.019900917002814822,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 51,
+    "returncode": 0,
+    "elapsed": 0.01746991700201761,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 52,
+    "returncode": 0,
+    "elapsed": 0.01987904100678861,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 53,
+    "returncode": 0,
+    "elapsed": 0.019483750002109446,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 54,
+    "returncode": 0,
+    "elapsed": 0.019081916005234234,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 55,
+    "returncode": 0,
+    "elapsed": 0.018991165998158976,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 56,
+    "returncode": 0,
+    "elapsed": 0.02295504200446885,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 57,
+    "returncode": 0,
+    "elapsed": 0.019306916001369245,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 58,
+    "returncode": 0,
+    "elapsed": 0.019742292002774775,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 59,
+    "returncode": 0,
+    "elapsed": 0.019016958991414867,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 60,
+    "returncode": 0,
+    "elapsed": 0.018287334009073675,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 61,
+    "returncode": 0,
+    "elapsed": 0.019312749995151535,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 62,
+    "returncode": 0,
+    "elapsed": 0.01944129199546296,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 63,
+    "returncode": 0,
+    "elapsed": 0.018191124996519648,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 64,
+    "returncode": 0,
+    "elapsed": 0.020048541991855018,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 65,
+    "returncode": 0,
+    "elapsed": 0.019476374989608303,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 66,
+    "returncode": 0,
+    "elapsed": 0.018504709005355835,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 67,
+    "returncode": 0,
+    "elapsed": 0.018142458007787354,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 68,
+    "returncode": 0,
+    "elapsed": 0.020112459009396844,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 69,
+    "returncode": 0,
+    "elapsed": 0.01872262499819044,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 70,
+    "returncode": 0,
+    "elapsed": 0.019212416009395383,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 71,
+    "returncode": 0,
+    "elapsed": 0.018062874994939193,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 72,
+    "returncode": 0,
+    "elapsed": 0.018877666996559128,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 73,
+    "returncode": 0,
+    "elapsed": 0.017813792001106776,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 74,
+    "returncode": 0,
+    "elapsed": 0.017841834007413127,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 75,
+    "returncode": 0,
+    "elapsed": 0.017057916993508115,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 76,
+    "returncode": 0,
+    "elapsed": 0.018116000006557442,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 77,
+    "returncode": 0,
+    "elapsed": 0.017544874994200654,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 78,
+    "returncode": 0,
+    "elapsed": 0.0180851659970358,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 79,
+    "returncode": 0,
+    "elapsed": 0.01934774999972433,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 80,
+    "returncode": 0,
+    "elapsed": 0.018033874992397614,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 81,
+    "returncode": 0,
+    "elapsed": 0.017928499990375713,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 82,
+    "returncode": 0,
+    "elapsed": 0.019978666998213157,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 83,
+    "returncode": 0,
+    "elapsed": 0.019681916004628874,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 84,
+    "returncode": 0,
+    "elapsed": 0.018216958997072652,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 85,
+    "returncode": 0,
+    "elapsed": 0.01814537499740254,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 86,
+    "returncode": 0,
+    "elapsed": 0.019172749991412275,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 87,
+    "returncode": 0,
+    "elapsed": 0.019095625000772998,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 88,
+    "returncode": 0,
+    "elapsed": 0.01962962500692811,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 89,
+    "returncode": 0,
+    "elapsed": 0.019196958994143642,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 90,
+    "returncode": 0,
+    "elapsed": 0.019241332993260585,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 91,
+    "returncode": 0,
+    "elapsed": 0.019920082995668054,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 92,
+    "returncode": 0,
+    "elapsed": 0.01893612499407027,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 93,
+    "returncode": 0,
+    "elapsed": 0.020004707999760285,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 94,
+    "returncode": 0,
+    "elapsed": 0.018531333000282757,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 95,
+    "returncode": 0,
+    "elapsed": 0.019396042000153102,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 96,
+    "returncode": 0,
+    "elapsed": 0.020179667000775225,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 97,
+    "returncode": 0,
+    "elapsed": 0.020096416992601007,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 98,
+    "returncode": 0,
+    "elapsed": 0.01992158299253788,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 99,
+    "returncode": 0,
+    "elapsed": 0.019648540997877717,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 100,
+    "returncode": 0,
+    "elapsed": 0.01828304200898856,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 101,
+    "returncode": 0,
+    "elapsed": 0.0199860420107143,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 102,
+    "returncode": 0,
+    "elapsed": 0.019795833999523893,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 103,
+    "returncode": 0,
+    "elapsed": 0.019324416993185878,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 104,
+    "returncode": 0,
+    "elapsed": 0.02149404199735727,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 105,
+    "returncode": 0,
+    "elapsed": 0.020533165996312164,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 106,
+    "returncode": 0,
+    "elapsed": 0.020131957993726246,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 107,
+    "returncode": 0,
+    "elapsed": 0.01897179200022947,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 108,
+    "returncode": 0,
+    "elapsed": 0.02359795900702011,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 109,
+    "returncode": 0,
+    "elapsed": 0.021712125002522953,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 110,
+    "returncode": 0,
+    "elapsed": 0.01976341599947773,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 111,
+    "returncode": 0,
+    "elapsed": 0.01779833299224265,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 112,
+    "returncode": 0,
+    "elapsed": 0.018447750000632368,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 113,
+    "returncode": 0,
+    "elapsed": 0.01858616700337734,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 114,
+    "returncode": 0,
+    "elapsed": 0.019594458004576154,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 115,
+    "returncode": 0,
+    "elapsed": 0.01841266699193511,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 116,
+    "returncode": 0,
+    "elapsed": 0.018387125004664995,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 117,
+    "returncode": 0,
+    "elapsed": 0.018807667001965456,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 118,
+    "returncode": 0,
+    "elapsed": 0.019582584005547687,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 119,
+    "returncode": 0,
+    "elapsed": 0.018647000004420988,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 120,
+    "returncode": 0,
+    "elapsed": 0.018754333999822848,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 121,
+    "returncode": 0,
+    "elapsed": 0.01899779100494925,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 122,
+    "returncode": 0,
+    "elapsed": 0.019102500009466894,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 123,
+    "returncode": 0,
+    "elapsed": 0.018178041995270178,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 124,
+    "returncode": 0,
+    "elapsed": 0.0187462079920806,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 125,
+    "returncode": 0,
+    "elapsed": 0.01942862500436604,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 126,
+    "returncode": 0,
+    "elapsed": 0.017928665998624638,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 127,
+    "returncode": 0,
+    "elapsed": 0.01757283299230039,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 128,
+    "returncode": 0,
+    "elapsed": 0.018215167001471855,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 129,
+    "returncode": 0,
+    "elapsed": 0.01847716700285673,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 130,
+    "returncode": 0,
+    "elapsed": 0.019033042000955902,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 131,
+    "returncode": 0,
+    "elapsed": 0.018720167005085386,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 132,
+    "returncode": 0,
+    "elapsed": 0.018205832995590754,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 133,
+    "returncode": 0,
+    "elapsed": 0.018110999997588806,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 134,
+    "returncode": 0,
+    "elapsed": 0.01795908399799373,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 135,
+    "returncode": 0,
+    "elapsed": 0.01834279199829325,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 136,
+    "returncode": 0,
+    "elapsed": 0.018502167004044168,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 137,
+    "returncode": 0,
+    "elapsed": 0.017963792008231394,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 138,
+    "returncode": 0,
+    "elapsed": 0.01830504200188443,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 139,
+    "returncode": 0,
+    "elapsed": 0.01893104100599885,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 140,
+    "returncode": 0,
+    "elapsed": 0.01899174999562092,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 141,
+    "returncode": 0,
+    "elapsed": 0.018474500000593252,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 142,
+    "returncode": 0,
+    "elapsed": 0.018113707992597483,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 143,
+    "returncode": 0,
+    "elapsed": 0.019228000004659407,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 144,
+    "returncode": 0,
+    "elapsed": 0.01952495801378973,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 145,
+    "returncode": 0,
+    "elapsed": 0.018714542005909607,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 146,
+    "returncode": 0,
+    "elapsed": 0.017966917002922855,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 147,
+    "returncode": 0,
+    "elapsed": 0.019049459006055258,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 148,
+    "returncode": 0,
+    "elapsed": 0.019476749992463738,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 149,
+    "returncode": 0,
+    "elapsed": 0.018705166003201157,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 150,
+    "returncode": 0,
+    "elapsed": 0.01959441599319689,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 151,
+    "returncode": 0,
+    "elapsed": 0.01876783299667295,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 152,
+    "returncode": 0,
+    "elapsed": 0.019033499993383884,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 153,
+    "returncode": 0,
+    "elapsed": 0.017192041996167973,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 154,
+    "returncode": 0,
+    "elapsed": 0.018610917002661154,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 155,
+    "returncode": 0,
+    "elapsed": 0.01877516700187698,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 156,
+    "returncode": 0,
+    "elapsed": 0.01927166699897498,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 157,
+    "returncode": 0,
+    "elapsed": 0.01873287500347942,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 158,
+    "returncode": 0,
+    "elapsed": 0.019563791996915825,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 159,
+    "returncode": 0,
+    "elapsed": 0.01879666700551752,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 160,
+    "returncode": 0,
+    "elapsed": 0.018576125003164634,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 161,
+    "returncode": 0,
+    "elapsed": 0.01822241699846927,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 162,
+    "returncode": 0,
+    "elapsed": 0.021744624988059513,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 163,
+    "returncode": 0,
+    "elapsed": 0.019046708999667317,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 164,
+    "returncode": 0,
+    "elapsed": 0.018735207995632663,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 165,
+    "returncode": 0,
+    "elapsed": 0.01960020799015183,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 166,
+    "returncode": 0,
+    "elapsed": 0.018903417003457434,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 167,
+    "returncode": 0,
+    "elapsed": 0.018974458012962714,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 168,
+    "returncode": 0,
+    "elapsed": 0.01832766699953936,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 169,
+    "returncode": -10,
+    "elapsed": 0.1376048750098562,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 170,
+    "returncode": 0,
+    "elapsed": 0.01885741698788479,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 171,
+    "returncode": 0,
+    "elapsed": 0.01822500000707805,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 172,
+    "returncode": 0,
+    "elapsed": 0.01832837500842288,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 173,
+    "returncode": 0,
+    "elapsed": 0.01823145800153725,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 174,
+    "returncode": 0,
+    "elapsed": 0.017797542008338496,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 175,
+    "returncode": 0,
+    "elapsed": 0.017416874994523823,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 176,
+    "returncode": 0,
+    "elapsed": 0.017281207998166792,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 177,
+    "returncode": 0,
+    "elapsed": 0.02010958400205709,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 178,
+    "returncode": 0,
+    "elapsed": 0.01848374999826774,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 179,
+    "returncode": 0,
+    "elapsed": 0.018366999996942468,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 180,
+    "returncode": 0,
+    "elapsed": 0.01763533300254494,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 181,
+    "returncode": 0,
+    "elapsed": 0.017116791001171805,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 182,
+    "returncode": 0,
+    "elapsed": 0.017157458991277963,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 183,
+    "returncode": 0,
+    "elapsed": 0.017839833002653904,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 184,
+    "returncode": 0,
+    "elapsed": 0.01750970899593085,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 185,
+    "returncode": 0,
+    "elapsed": 0.01833404100034386,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 186,
+    "returncode": 0,
+    "elapsed": 0.018126583003322594,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 187,
+    "returncode": 0,
+    "elapsed": 0.018104167000274174,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 188,
+    "returncode": 0,
+    "elapsed": 0.017911540999193676,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 189,
+    "returncode": 0,
+    "elapsed": 0.019056207995163277,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 190,
+    "returncode": 0,
+    "elapsed": 0.019290249998448417,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 191,
+    "returncode": 0,
+    "elapsed": 0.018516916999942623,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 192,
+    "returncode": 0,
+    "elapsed": 0.017556999999214895,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 193,
+    "returncode": 0,
+    "elapsed": 0.01735570801247377,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 194,
+    "returncode": 0,
+    "elapsed": 0.018747707988950424,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 195,
+    "returncode": 0,
+    "elapsed": 0.018804082996211946,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 196,
+    "returncode": 0,
+    "elapsed": 0.018643374991370365,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 197,
+    "returncode": 0,
+    "elapsed": 0.01893612499407027,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 198,
+    "returncode": 0,
+    "elapsed": 0.01824175000365358,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 199,
+    "returncode": 0,
+    "elapsed": 0.019893458011210896,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 200,
+    "returncode": 0,
+    "elapsed": 0.01892224999028258,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 201,
+    "returncode": 0,
+    "elapsed": 0.01883274999272544,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 202,
+    "returncode": 0,
+    "elapsed": 0.019341749997693114,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 203,
+    "returncode": 0,
+    "elapsed": 0.019076541007962078,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 204,
+    "returncode": 0,
+    "elapsed": 0.01862575000268407,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 205,
+    "returncode": 0,
+    "elapsed": 0.018623959011165425,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 206,
+    "returncode": 0,
+    "elapsed": 0.019779374997597188,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 207,
+    "returncode": 0,
+    "elapsed": 0.019104999999399297,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 208,
+    "returncode": 0,
+    "elapsed": 0.017945707993931137,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 209,
+    "returncode": 0,
+    "elapsed": 0.01788591599324718,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 210,
+    "returncode": 0,
+    "elapsed": 0.02149762499902863,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 211,
+    "returncode": 0,
+    "elapsed": 0.01974737500131596,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 212,
+    "returncode": 0,
+    "elapsed": 0.018700250002439134,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 213,
+    "returncode": 0,
+    "elapsed": 0.019361250000656582,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 214,
+    "returncode": 0,
+    "elapsed": 0.019003249995876104,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 215,
+    "returncode": 0,
+    "elapsed": 0.01970025000628084,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 216,
+    "returncode": 0,
+    "elapsed": 0.01978429200244136,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 217,
+    "returncode": 0,
+    "elapsed": 0.01833904199884273,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 218,
+    "returncode": 0,
+    "elapsed": 0.01810341700911522,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 219,
+    "returncode": 0,
+    "elapsed": 0.018078624998452142,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 220,
+    "returncode": 0,
+    "elapsed": 0.019432166998740286,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 221,
+    "returncode": 0,
+    "elapsed": 0.018545708997407928,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 222,
+    "returncode": 0,
+    "elapsed": 0.018977792002260685,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 223,
+    "returncode": 0,
+    "elapsed": 0.01793612500478048,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 224,
+    "returncode": 0,
+    "elapsed": 0.019687291991431266,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 225,
+    "returncode": 0,
+    "elapsed": 0.018606707992148586,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 226,
+    "returncode": 0,
+    "elapsed": 0.018206875000032596,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 227,
+    "returncode": 0,
+    "elapsed": 0.018343042000196874,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 228,
+    "returncode": 0,
+    "elapsed": 0.019044791988562793,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 229,
+    "returncode": 0,
+    "elapsed": 0.01858054200420156,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 230,
+    "returncode": 0,
+    "elapsed": 0.01875550000113435,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 231,
+    "returncode": 0,
+    "elapsed": 0.019038625003304332,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 232,
+    "returncode": 0,
+    "elapsed": 0.01931666700693313,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 233,
+    "returncode": 0,
+    "elapsed": 0.018134082987671718,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 234,
+    "returncode": 0,
+    "elapsed": 0.017589249997399747,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 235,
+    "returncode": 0,
+    "elapsed": 0.018366584001341835,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 236,
+    "returncode": 0,
+    "elapsed": 0.018242000005557202,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 237,
+    "returncode": 0,
+    "elapsed": 0.018544917009421624,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 238,
+    "returncode": 0,
+    "elapsed": 0.018503792001865804,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 239,
+    "returncode": 0,
+    "elapsed": 0.01781829199171625,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 240,
+    "returncode": 0,
+    "elapsed": 0.017960832992685027,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 241,
+    "returncode": 0,
+    "elapsed": 0.018293958011781797,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 242,
+    "returncode": 0,
+    "elapsed": 0.018744916989817284,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 243,
+    "returncode": 0,
+    "elapsed": 0.019311875003040768,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 244,
+    "returncode": 0,
+    "elapsed": 0.018449499999405816,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 245,
+    "returncode": 0,
+    "elapsed": 0.018852124994737096,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 246,
+    "returncode": 0,
+    "elapsed": 0.01864062499953434,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 247,
+    "returncode": 0,
+    "elapsed": 0.01890662500227336,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 248,
+    "returncode": 0,
+    "elapsed": 0.018480541999451816,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 249,
+    "returncode": 0,
+    "elapsed": 0.019481041992548853,
+    "stderr": ""
+  },
+  {
+    "mode": "fixture-encoder-cpuflags0",
+    "trial": 250,
+    "returncode": 0,
+    "elapsed": 0.01928204200521577,
+    "stderr": ""
+  }
+]

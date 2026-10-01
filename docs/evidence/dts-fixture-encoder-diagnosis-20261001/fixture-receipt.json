@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "fixture": "Test Fixtures/LiveAudioMeter/contiguous-dts.mkv",
+  "fixtureBytes": 36493,
+  "fixtureSHA256": "4b8333804b796a3c323e54c05ef14095bbc23a35d4092cf6093a1357957073a1",
+  "ffmpeg": "Aagedal Media Player/Binaries/ffmpeg",
+  "ffmpegSHA256": "dc3770d91735cfe8b0ef8f4eb7c6f8431d722cca0d79c0959d62be216868d604",
+  "ffmpegVersion": "ffmpeg version 9.0.1 Copyright (c) 2000-2026 the FFmpeg developers",
+  "signal": "Six channels, each 0.1*sin(2*PI*1000*t), 48000 Hz, 0.2 seconds, 5.1(side)",
+  "signalFrameCount": 9600,
+  "producer": "FFmpeg lavfi aevalsrc; entirely synthetic, no external copyrighted media",
+  "generatorSourceSHA256": "9db852d2ec1daaa2baf506572106e5a3100fb8d62d6a4a525a0fc2af62e7dd84",
+  "generationCommand": "fixture-generation-command.json",
+  "expectedDecoder": "Production LiveAudioMeterDecoder with ordinary CPU flags; DTS/millisecond Matroska timestamp regression, no numerical or authentic DTS-HD MA acceptance",
+  "generatorSource": "signal-source.txt",
+  "generationCommandSHA256": "767d88a5634ed86ae139e2fd1f3bbc81e80887560de509921114b619f05dd027"
+}

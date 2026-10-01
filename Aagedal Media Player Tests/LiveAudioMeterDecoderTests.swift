@@ -2,6 +2,7 @@
 // Copyright © 2026 Truls Aagedal
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+import CryptoKit
 import Foundation
 import XCTest
 @testable import Aagedal_Media_Player
@@ -782,15 +783,16 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
 
     func testBundledDecoderPreservesContiguousDTSInMillisecondMatroskaContainer() async throws {
         guard FFmpegService.ffmpegPath != nil else { throw XCTSkip("Bundled ffmpeg is required") }
-        let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("live-meter-contiguous-dts-\(UUID().uuidString).mkv")
-        defer { try? FileManager.default.removeItem(at: url) }
-        try await FFmpegService.run(arguments: [
-            "-hide_banner", "-nostdin", "-loglevel", "error", "-y",
-            "-f", "lavfi", "-i",
-            "aevalsrc=0.1*sin(2*PI*1000*t)|0.1*sin(2*PI*1000*t)|0.1*sin(2*PI*1000*t)|0.1*sin(2*PI*1000*t)|0.1*sin(2*PI*1000*t)|0.1*sin(2*PI*1000*t):s=48000:d=0.2:c=5.1(side)",
-            "-c:a", "dca", "-strict", "-2", url.path,
-        ])
+        // Pin this decoder/timestamp fixture instead of invoking the unrelated
+        // bundled DCA encoder, which intermittently crashes with SIGBUS during
+        // setup. The production decoder and every decode assertion stay intact.
+        // Missing or changed fixture bytes fail the test rather than skip it.
+        let repository = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent().deletingLastPathComponent()
+        let url = repository.appending(path: "Test Fixtures/LiveAudioMeter/contiguous-dts.mkv")
+        let fixture = try Data(contentsOf: url)
+        let fixtureSHA256 = SHA256.hash(data: fixture).map { String(format: "%02x", $0) }.joined()
+        XCTAssertEqual(fixtureSHA256, "4b8333804b796a3c323e54c05ef14095bbc23a35d4092cf6093a1357957073a1")
         let request = try LiveAudioMeterDecodeRequest(
             url: url, audioStreamOrderIndex: 0,
             format: LiveAudioMeterFormat(sampleRate: 48_000, layout: .surround5Point1),

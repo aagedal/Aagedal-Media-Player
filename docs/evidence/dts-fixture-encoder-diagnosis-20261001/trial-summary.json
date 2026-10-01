@@ -1,0 +1,12 @@
+{
+  "baseline": {
+    "trials": 250,
+    "passes": 247,
+    "failures": 3
+  },
+  "fixture-encoder-cpuflags0": {
+    "trials": 250,
+    "passes": 249,
+    "failures": 1
+  }
+}

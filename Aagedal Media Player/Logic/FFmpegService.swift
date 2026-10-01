@@ -75,10 +75,7 @@ enum FFmpegService {
             throw FFmpegError.cancelled
         }
 
-        guard result.terminationStatus == 0 else {
-            let message = String(data: result.standardError, encoding: .utf8) ?? "Unknown ffmpeg error"
-            throw FFmpegError.processFailed(message.trimmingCharacters(in: .whitespacesAndNewlines))
-        }
+        try validateTermination(result)
     }
 
     /// Run ffmpeg with progress reporting and optional cancellation.
@@ -126,10 +123,27 @@ enum FFmpegService {
             throw FFmpegError.cancelled
         }
 
-        guard result.terminationStatus == 0 else {
-            let message = String(data: result.standardError, encoding: .utf8) ?? "Unknown ffmpeg error"
-            throw FFmpegError.processFailed(message.trimmingCharacters(in: .whitespacesAndNewlines))
+        try validateTermination(result)
+    }
+
+    /// A crash or quiet failure can leave stderr empty. Preserve the process
+    /// outcome so these failures remain diagnosable in every execution path.
+    nonisolated static func validateTermination(_ result: SubprocessResult) throws {
+        guard result.terminationStatus != 0 else { return }
+        let diagnostic = String(data: result.standardError, encoding: .utf8)?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !diagnostic.isEmpty { throw FFmpegError.processFailed(diagnostic) }
+
+        let outcome: String
+        switch result.terminationReason {
+        case .exit:
+            outcome = "Process exited with status \(result.terminationStatus)."
+        case .uncaughtSignal:
+            outcome = "Process terminated by signal \(result.terminationStatus)."
+        @unknown default:
+            outcome = "Process terminated with status \(result.terminationStatus)."
         }
+        throw FFmpegError.processFailed("\(outcome) No diagnostic output was available.")
     }
 
     // MARK: - LUFS Analysis
@@ -255,10 +269,8 @@ enum FFmpegService {
         } catch is CancellationError {
             throw FFmpegError.cancelled
         }
+        try validateTermination(result)
         let output = String(data: result.standardError, encoding: .utf8) ?? ""
-        guard result.terminationStatus == 0 else {
-            throw FFmpegError.processFailed(output.trimmingCharacters(in: .whitespacesAndNewlines))
-        }
         // A successful empty ebur128 graph still reports a plausible summary.
         // Require output samples; genuine digital silence advances this clock.
         let progress = String(data: result.standardOutput, encoding: .utf8) ?? ""

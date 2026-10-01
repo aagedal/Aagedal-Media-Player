@@ -4425,9 +4425,39 @@ remaining editor and distribution gates remain open.
 - [x] Pass the complete script-validator gate and retain the fifty passing
   focused optimized Release checks in
   [focused evidence](docs/evidence/review-meter-integrity-20261001/README.md).
-- [ ] Run fresh canonical committed-source Release verification.
+- [x] Attempt fresh canonical committed-source verification; the encoder
+  fixture crash is diagnosed and recovered separately in Phases 207–208.
   Native Avid First reaches the disposable project and EDL picker but path
   navigation fails; its marker-text import and all editor acceptance stay open.
+
+## Phase 206 — Preserve quiet FFmpeg failure context
+
+- [x] Preserve native exit status or uncaught-signal number when FFmpeg stderr
+  is empty, whitespace-only or undecodable across all three wrappers.
+- [x] Preserve existing rich diagnostics and cancellation/loudness semantics;
+  add three actual-subprocess regressions.
+
+## Phase 207 — Separate DTS decoding from intermittent fixture encoding
+
+- [x] Diagnose rejected canonical run at `09e0026`: 750 passes, nine skips and
+  one synthetic DCA fixture-encoder SIGBUS before live decoding begins.
+- [x] Reproduce the encoder crash in a bounded 500-trial matrix; reject the
+  proposed SIMD workaround because it also crashes.
+- [x] Pin a generated 36,493-byte DTS/Matroska asset with a SHA-256 check;
+  preserve all decoder/frame/timestamp/channel/EOF assertions without retries
+  or skips. The experimental encoder defect remains open.
+- [x] Retain [diagnosis](docs/evidence/dts-fixture-encoder-diagnosis-20261001/README.md)
+  and [failed candidate receipts](docs/evidence/encoder-diagnostics-20261001/README.md).
+
+## Phase 208 — Recover canonical candidate verification
+
+- [x] Raise aggregate consumption to 763 and explicitly require all seven
+  new regressions plus the existing pinned DTS decoder check and two isolated
+  mixed-backend transport checks.
+- [x] Pass all 44 focused optimized Release decoder/subprocess checks and the
+  full script-validator gate, with no skips, failures or runtime warnings.
+- [ ] Complete a fresh committed-source canonical Release run, retaining the
+  preceding rejected attempt.
 
 ## Remaining work after this continuation
 
@@ -4825,3 +4855,7 @@ remaining editor and distribution gates remain open.
 195. Phase 203 current loudness handoff validation.
 196. Phase 204 exact dependency publication-stage inventory.
 197. Phase 205 explicit correction/meter candidate regression consumption.
+
+198. Phase 206 quiet FFmpeg failure context.
+199. Phase 207 pinned DTS decoder fixture and encoder crash diagnosis.
+200. Phase 208 canonical candidate recovery.

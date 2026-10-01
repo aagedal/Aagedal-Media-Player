@@ -1,0 +1,23 @@
+{
+  "workingDirectory": "repository root",
+  "arguments": [
+    "Aagedal Media Player/Binaries/ffmpeg",
+    "-hide_banner",
+    "-nostdin",
+    "-loglevel",
+    "error",
+    "-y",
+    "-f",
+    "lavfi",
+    "-i",
+    "aevalsrc=0.1*sin(2*PI*1000*t)|0.1*sin(2*PI*1000*t)|0.1*sin(2*PI*1000*t)|0.1*sin(2*PI*1000*t)|0.1*sin(2*PI*1000*t)|0.1*sin(2*PI*1000*t):s=48000:d=0.2:c=5.1(side)",
+    "-c:a",
+    "dca",
+    "-strict",
+    "-2",
+    "Test Fixtures/LiveAudioMeter/contiguous-dts.mkv"
+  ],
+  "terminationStatus": 0,
+  "stdout": "",
+  "stderr": ""
+}

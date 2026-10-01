@@ -3,9 +3,64 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import XCTest
+import Darwin
 @testable import Aagedal_Media_Player
 
 final class SubprocessServiceTests: XCTestCase {
+    func testFFmpegFailureWithoutUsableStderrPreservesExitStatus() async throws {
+        for (script, status) in [
+            ("exit 7", 7),
+            ("printf ' \\n\\t' >&2; exit 9", 9),
+            ("printf '\\377' >&2; exit 23", 23)
+        ] {
+            let result = try await SubprocessService.run(
+                executableURL: URL(fileURLWithPath: "/bin/sh"), arguments: ["-c", script]
+            )
+            XCTAssertEqual(result.terminationStatus, Int32(status))
+            XCTAssertEqual(result.terminationReason, .exit)
+            XCTAssertThrowsError(try FFmpegService.validateTermination(result)) { error in
+                XCTAssertEqual(error as? FFmpegError, .processFailed(
+                    "Process exited with status \(status). No diagnostic output was available."
+                ))
+            }
+        }
+    }
+
+    func testFFmpegFailureWithoutStderrPreservesTerminationSignal() async throws {
+        // SIGTERM ends only this fixture subprocess without generating a crash
+        // report. Cancellation is not requested, so its signal result survives.
+        let result = try await SubprocessService.run(
+            executableURL: URL(fileURLWithPath: "/bin/sh"), arguments: ["-c", "kill -TERM $$"]
+        )
+        XCTAssertTrue(result.standardError.isEmpty)
+        XCTAssertEqual(result.terminationStatus, SIGTERM)
+        XCTAssertEqual(result.terminationReason, .uncaughtSignal)
+        XCTAssertThrowsError(try FFmpegService.validateTermination(result)) { error in
+            XCTAssertEqual(error as? FFmpegError, .processFailed(
+                "Process terminated by signal \(SIGTERM). No diagnostic output was available."
+            ))
+        }
+    }
+
+    func testFFmpegTerminationValidationPreservesDiagnosticAndAcceptsSuccess() async throws {
+        for status in [0, 11] {
+            let result = try await SubprocessService.run(
+                executableURL: URL(fileURLWithPath: "/bin/sh"),
+                arguments: ["-c", "printf ' \\nDecoder failed\\nSource packet was invalid\\n ' >&2; exit \(status)"]
+            )
+            if status == 0 {
+                XCTAssertNoThrow(try FFmpegService.validateTermination(result),
+                    "Stderr output does not itself make a successful process fail")
+            } else {
+                XCTAssertThrowsError(try FFmpegService.validateTermination(result)) { error in
+                    XCTAssertEqual(error as? FFmpegError, .processFailed(
+                        "Decoder failed\nSource packet was invalid"
+                    ))
+                }
+            }
+        }
+    }
+
     func testDrainsBothStreamsAndKeepsBoundedTails() async throws {
         let result = try await SubprocessService.run(
             executableURL: URL(fileURLWithPath: "/bin/sh"),
