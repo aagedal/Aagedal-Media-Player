@@ -1,0 +1,17 @@
+{
+  "sourceCommit": "aa4e617e8848ffd1496e7bf537d72031eecab164",
+  "configuration": "Release",
+  "aggregateTests": 781,
+  "passedTests": 772,
+  "allowlistedOptInSkips": 9,
+  "isolatedTransportPasses": 2,
+  "requiredNewRegressions": 6,
+  "failedTests": 0,
+  "runtimeWarnings": 0,
+  "staticAnalysis": "passed",
+  "releasePreflightChecks": 61,
+  "scriptValidators": "passed",
+  "sourcePackageCachePowerIdentity": "passed",
+  "nativePremiereAcceptance": false,
+  "fullArtifacts": "/private/tmp/aagedal-range-meter-field-order-canonical-20261001"
+}

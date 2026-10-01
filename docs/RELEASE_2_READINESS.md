@@ -12,8 +12,14 @@ pass, and the stronger decoder regressions reproduce the old implementation's
 blocked completion and lost diagnostic. Candidate/release consumption requires
 all six new regression identities and 781 aggregate tests. See
 [focused receipts](evidence/range-meter-field-order-20261001/README.md).
+Canonical optimized Release verification passes at clean implementation
+commit `aa4e617e8848ffd1496e7bf537d72031eecab164`: 772 passes, nine named skips
+(781 total), all six new exact identities, both isolated transport directions,
+analysis, all 61 preflight checks and final source/package/cache/no-sleep identity.
+See [integrated receipts](evidence/range-meter-field-order-candidate-20261001/README.md).
 Native Premiere import, accessibility, public dependencies, hardware and
-distribution acceptance remain open; fresh canonical verification follows.
+distribution acceptance remain open. Later documentation retention does not
+replace matching-HEAD release consumption.
 
 The latest continuation fixes stale passive Review callbacks using live correction
 ownership, rejects disabled/ambiguous Premiere playback evidence, and binds

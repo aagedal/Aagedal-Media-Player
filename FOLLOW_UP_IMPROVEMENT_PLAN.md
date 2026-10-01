@@ -4591,7 +4591,20 @@ public dependencies, hardware and distribution gates remain open.
   acceptance and the unchanged wider 2.0 release gates.
 
 See [focused and baseline receipts](docs/evidence/range-meter-field-order-20261001/README.md).
-Fresh integrated clean-checkout verification follows separately.
+Integrated clean-checkout verification is recorded in Phase 219 below.
+
+## Phase 219 — Verify the integrated range/decoder/scan-order candidate
+
+- [x] Pass canonical optimized Release verification at clean implementation
+  commit `aa4e617e8848ffd1496e7bf537d72031eecab164`: 772 passes, nine named skips
+  (781 total), all six new exact regression identities and both isolated
+  mixed-backend transport directions.
+- [x] Pass static analysis, all 61 preflight checks, the complete script-validator
+  suite and final source/package/cache/no-sleep identity with no runtime warnings.
+- [x] Retain [complete accepted receipts](docs/evidence/range-meter-field-order-candidate-20261001/README.md)
+  and the old decoder's deterministic rejection beside the final passing checks.
+- [ ] Complete native editor/accessibility, public dependencies, hardware and
+  signing/notarization/distribution acceptance.
 
 ## Remaining work after this continuation
 
@@ -5010,3 +5023,5 @@ Composer First edition may have limitations that do not apply to the full editio
 201. Phase 216 passive erased-range correction.
 202. Phase 217 decoder admission cancellation and diagnostic ownership.
 203. Phase 218 Premiere scan-order preservation.
+
+204. Phase 219 integrated range/decoder/scan-order verification.
