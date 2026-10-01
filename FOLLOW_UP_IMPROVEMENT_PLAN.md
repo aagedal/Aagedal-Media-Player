@@ -4507,6 +4507,18 @@ and at least 772 aggregate tests, plus both isolated mixed-backend directions.
 - [ ] Complete observed Premiere import/re-export and current editor-version
   acceptance before claiming compatibility.
 
+## Phase 212 — Verify the integrated Premiere and Review candidate
+
+- [x] Pass canonical optimized Release verification at clean commit
+  `f0486a58632e05bc95de979237e85e4108c0ec50`: 763 passes, nine named skips
+  (772 total), both isolated mixed-backend directions, static analysis, all
+  61 preflight checks and final source/package/cache/power identity.
+- [x] Require and pass all nine new regressions by exact detailed identity.
+- [x] Retain complete summaries/details, compressed logs and source/power
+  receipts in [integrated evidence](docs/evidence/premiere-release-candidate-20261001/README.md).
+- [ ] Complete native Premiere round-trip acceptance and the unchanged wider
+  accessibility, public dependency, hardware and distribution gates.
+
 ## Remaining work after this continuation
 
 The user’s 2026-10-01 scope decision makes Avid native compatibility optional

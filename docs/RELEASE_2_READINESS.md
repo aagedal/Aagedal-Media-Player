@@ -14,6 +14,16 @@ Native Premiere import/re-export acceptance remains separate; Avid is optional
 and does not block 2.0. Candidate verification now requires 772 aggregate tests
 and all nine new regressions, plus both isolated mixed-backend transport checks.
 
+Canonical optimized Release verification now passes at clean commit
+`f0486a58632e05bc95de979237e85e4108c0ec50`: 763 passes and nine named skips
+(772 total), both isolated transport directions, static analysis, all 61
+preflight checks and final source/package/cache/power identity. All nine new
+regressions pass exact detailed validation. See
+[integrated receipts](evidence/premiere-release-candidate-20261001/README.md).
+Native Premiere binding returned no UI state before cancellation; no editor
+acceptance is inferred. Documentation retention does not replace matching-HEAD
+release verification.
+
 It is based on the repository's plans and retained verification reports,
 including the September 12 meter foundation and programme-loudness follow-up.
 The same continuation now adds selected-track meter identity, typed player

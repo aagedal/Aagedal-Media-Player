@@ -1,0 +1,17 @@
+{
+  "sourceCommit": "f0486a58632e05bc95de979237e85e4108c0ec50",
+  "configuration": "Release",
+  "aggregateTests": 772,
+  "passedTests": 763,
+  "allowlistedOptInSkips": 9,
+  "isolatedTransportPasses": 2,
+  "requiredNewRegressions": 9,
+  "failedTests": 0,
+  "runtimeWarnings": 0,
+  "staticAnalysis": "passed",
+  "releasePreflightChecks": 61,
+  "scriptValidators": "passed",
+  "sourcePackageCachePowerIdentity": "passed",
+  "nativePremiereAcceptance": false,
+  "fullArtifacts": "/private/tmp/aagedal-premiere-canonical-20261001"
+}
