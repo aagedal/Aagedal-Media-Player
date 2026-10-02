@@ -91,6 +91,18 @@ final class LoupeGeometryTests: XCTestCase {
         XCTAssertTrue(mixed.explanation.contains("source B"))
     }
 
+    func testMPVNativePixelsRequireExplicitDecoderProofForBothSources() {
+        var verified = nativePixelSource(backend: .mpv)
+        verified.verifiedMPVDecoderRaster = true
+        XCTAssertTrue(LoupeNativePixelAvailability.evaluate(primary: verified).isAvailable)
+        var mismatch = nativePixelSource(backend: .mpv, capturedWidth: 1_280, capturedHeight: 720)
+        mismatch.verifiedMPVDecoderRaster = true
+        XCTAssertFalse(LoupeNativePixelAvailability.evaluate(primary: mismatch).isAvailable)
+        XCTAssertFalse(LoupeNativePixelAvailability.evaluate(
+            primary: verified, secondary: nativePixelSource(name: "source B", backend: .mpv)
+        ).isAvailable)
+    }
+
     func testPinnedOverlayRemainsInsideCanvasAfterResize() {
         let canvas = CGSize(width: 500, height: 400)
         let overlay = CGSize(width: 366, height: 166)

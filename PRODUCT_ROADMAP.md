@@ -178,6 +178,9 @@ also pass.
   pixel option is now exposed for AVFoundation-backed sources only after the
   captured dimensions match the expected rotation-aware coded raster; mixed or
   MPV-backed comparisons remain on the clearly labelled display-space modes.
+  A guarded app consumer and restricted upstream provider candidate are prepared;
+  linked runtime proof, transformed/hardware support, publication and activation
+  remain required. See [provider status](docs/MPV_DECODER_RASTER_PROVIDER.md).
 - [x] Allow the loupe to be pinned so the pointer can operate playback controls.
 - [x] Refresh from the active decoder while paused, seeking, stepping, and
   playing, with bounded capture work. Production-resolution cadence remains a

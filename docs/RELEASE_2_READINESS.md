@@ -76,6 +76,13 @@ checkout now builds with the original manifest, Benchmark, lockfile and CLI:
 1,674 library tests pass with 21 named opt-in skips, and all 50 opted-in CLI
 tests pass without skips. See [upstream preparation receipts](evidence/bounded-mxf-upstream-preparation-20261002/README.md).
 
+The next source-pixel continuation supplies a guarded app consumer and a
+restricted opt-in upstream decoder-raster patch. The shipping pin has no provider
+and stays preview-only. The candidate is not release acceptance: linked runtime
+proof, hardware/PAR/rotation/reflection support, publication and activation remain
+engineering work. See [provider status](MPV_DECODER_RASTER_PROVIDER.md) and the
+[manual completion checklist](RELEASE_2_MANUAL_COMPLETION.md).
+
 Current delivery status and order:
 
 1. Published and repinned the CoreAudio/GPL/Metal and bounded-MXF dependencies.

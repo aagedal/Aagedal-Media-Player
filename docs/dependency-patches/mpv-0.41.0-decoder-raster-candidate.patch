@@ -1,0 +1,270 @@
+diff --git a/filters/f_decoder_wrapper.c b/filters/f_decoder_wrapper.c
+index 5e2e8d7..527f664 100644
+--- a/filters/f_decoder_wrapper.c
++++ b/filters/f_decoder_wrapper.c
+@@ -97,6 +97,7 @@ struct dec_wrapper_opts {
+     int aspect_method;
+     double fps_override;
+     bool correct_pts;
++    bool aagedal_decoder_raster;
+     int video_rotate;
+     char *audio_decoders;
+     char *video_decoders;
+@@ -112,6 +113,7 @@ static int decoder_list_help(struct mp_log *log, const m_option_t *opt,
+ 
+ const struct m_sub_options dec_wrapper_conf = {
+     .opts = (const struct m_option[]){
++        {"aagedal-decoder-raster", OPT_BOOL(aagedal_decoder_raster)},
+         {"correct-pts", OPT_BOOL(correct_pts)},
+         {"container-fps-override", OPT_DOUBLE(fps_override), M_RANGE(0, DBL_MAX)},
+         {"ad", OPT_STRING(audio_decoders),
+@@ -195,6 +197,9 @@ struct priv {
+ 
+     struct mp_image_params dec_format, last_format, fixed_format;
+ 
++    // Protected by cache_lock; bounded software decoder raster references.
++    struct mp_image *source_rasters[4];
++
+     double fps;
+ 
+     double start_pts;
+@@ -328,6 +333,8 @@ static void decf_reset(struct mp_filter *f)
+     p->last_format = p->fixed_format = (struct mp_image_params){0};
+ 
+     mp_mutex_lock(&p->cache_lock);
++    for (int n = 0; n < 4; n++)
++        mp_image_unrefp(&p->source_rasters[n]);
+     p->pts_reset = false;
+     p->attempt_framedrops = 0;
+     p->dropped_frames = 0;
+@@ -845,6 +852,22 @@ static void process_output_frame(struct priv *p, struct mp_frame frame)
+ 
+         correct_video_pts(p, mpi);
+ 
++        // Capture the decoder grid before parameter overrides or any vf.
++        // Skip hardware surfaces and large rasters: four refs are <=64 MiB
++        // for accepted software rasters.
++        if (p->opts->aagedal_decoder_raster && mpi->w > 0 && mpi->h > 0 && mpi->w <= 4096 && mpi->h <= 4096 &&
++            (int64_t)mpi->w * mpi->h <= 4194304 &&
++            !IMGFMT_IS_HWACCEL(mpi->imgfmt) &&
++            mp_image_approx_byte_size(mpi) > 0 &&
++            mp_image_approx_byte_size(mpi) <= 16 * 1024 * 1024) {
++            mp_mutex_lock(&p->cache_lock);
++            mp_image_unrefp(&p->source_rasters[3]);
++            for (int n = 3; n > 0; n--)
++                p->source_rasters[n] = p->source_rasters[n - 1];
++            p->source_rasters[0] = mp_image_new_ref(mpi);
++            mp_mutex_unlock(&p->cache_lock);
++        }
++
+         if (!mp_image_params_equal(&p->last_format, &mpi->params)) {
+             fix_image_params(p, &mpi->params,
+                 mp_image_params_static_equal(&p->last_format, &mpi->params));
+@@ -1171,6 +1194,8 @@ static void public_f_destroy(struct mp_filter *f)
+ 
+     talloc_free(p->dec_root_filter);
+     talloc_free(p->queue);
++    for (int n = 0; n < 4; n++)
++        mp_image_unrefp(&p->source_rasters[n]);
+     mp_mutex_destroy(&p->cache_lock);
+ }
+ 
+@@ -1352,3 +1377,33 @@ void lavc_process(struct mp_filter *f, struct lavc_state *state,
+         mp_filter_internal_mark_progress(f);
+     }
+ }
++
++// The core calls this while paused. The decoder can still run ahead, so only
++// return an unambiguous exact presented-PTS match, never the newest frame.
++struct mp_image *mp_decoder_wrapper_source_raster(struct mp_decoder_wrapper *d,
++                                                  double pts)
++{
++    struct priv *p = d->f->priv;
++    struct mp_image *result = NULL;
++    int matches = 0;
++    thread_lock(p);
++    bool allowed = p->opts->aagedal_decoder_raster &&
++        p->opts->video_rotate == 0 && p->opts->movie_aspect == -2 &&
++        p->opts->aspect_method == 2 && p->opts->correct_pts &&
++        p->opts->fps_override == 0 && p->play_dir == 1;
++    thread_unlock(p);
++    if (!allowed)
++        return NULL;
++    mp_mutex_lock(&p->cache_lock);
++    for (int n = 0; n < 4; n++) {
++        if (p->source_rasters[n] && p->source_rasters[n]->pts == pts) {
++            matches++;
++            if (!result)
++                result = mp_image_new_ref(p->source_rasters[n]);
++        }
++    }
++    mp_mutex_unlock(&p->cache_lock);
++    if (matches != 1)
++        mp_image_unrefp(&result);
++    return result;
++}
+diff --git a/filters/f_decoder_wrapper.h b/filters/f_decoder_wrapper.h
+index a352dc0..1e60bb8 100644
+--- a/filters/f_decoder_wrapper.h
++++ b/filters/f_decoder_wrapper.h
+@@ -119,3 +119,6 @@ void lavc_process(struct mp_filter *f, struct lavc_state *state,
+ 
+ // ad_spdif.c
+ struct mp_decoder_list *select_spdif_codec(const char *codec, const char *pref);
++
++struct mp_image *mp_decoder_wrapper_source_raster(struct mp_decoder_wrapper *d,
++                                                  double pts);
+diff --git a/player/command.c b/player/command.c
+index 96bc06a..1a8b4af 100644
+--- a/player/command.c
++++ b/player/command.c
+@@ -893,6 +893,15 @@ static int mp_property_playtime_remaining(void *ctx, struct m_property *prop,
+     return property_time(action, arg, remaining / speed);
+ }
+ 
++static int mp_property_aagedal_decoder_raster_pts(void *ctx,
++    struct m_property *prop, int action, void *arg)
++{
++    double pts = aagedal_decoder_raster_pts(ctx);
++    if (!isfinite(pts))
++        return M_PROPERTY_UNAVAILABLE;
++    return m_property_double_ro(action, arg, pts);
++}
++
+ static int mp_property_remaining_file_loops(void *ctx, struct m_property *prop,
+         int action, void *arg)
+ {
+@@ -4374,6 +4383,7 @@ static const struct m_property mp_properties_base[] = {
+     {"vo-delayed-frame-count", mp_property_vo_delayed_frame_count},
+     {"percent-pos", mp_property_percent_pos},
+     {"time-start", mp_property_time_start},
++    {"aagedal-decoder-raster-pts", mp_property_aagedal_decoder_raster_pts},
+     {"time-pos", mp_property_time_pos},
+     {"time-remaining", mp_property_remaining},
+     {"audio-pts", mp_property_audio_pts},
+@@ -7385,6 +7395,7 @@ const struct mp_cmd_def mp_cmds[] = {
+         },
+         .spawn_thread = true,
+     },
++    { "aagedal-decoder-raster", cmd_aagedal_decoder_raster },
+     { "screenshot-raw", cmd_screenshot_raw,
+         {
+             {"flags", OPT_CHOICE(v.i,
+diff --git a/player/screenshot.c b/player/screenshot.c
+index c733a2b..cf07409 100644
+--- a/player/screenshot.c
++++ b/player/screenshot.c
+@@ -15,6 +15,7 @@
+  * License along with mpv.  If not, see <http://www.gnu.org/licenses/>.
+  */
+ 
++#include <math.h>
+ #include <stdlib.h>
+ #include <string.h>
+ #include <time.h>
+@@ -25,6 +26,8 @@
+ 
+ #include "mpv_talloc.h"
+ #include "screenshot.h"
++#include "filters/f_decoder_wrapper.h"
++#include "options/m_option.h"
+ #include "core.h"
+ #include "command.h"
+ #include "input/cmd.h"
+@@ -621,3 +624,84 @@ void handle_each_frame_screenshot(struct MPContext *mpctx)
+ 
+     mp_waiter_wait(&wait);
+ }
++
++static struct mp_image *aagedal_source_raster(struct MPContext *mpctx)
++{
++    struct track *track = mpctx->current_track[0][STREAM_VIDEO];
++    if (!mpctx->restart_complete || mpctx->seek.type || mpctx->hrseek_active ||
++        !mpctx->paused || !track || !track->dec ||
++        mpctx->opts->filter_opts->deinterlace != 0 ||
++        mpctx->opts->vo->video_crop.xy_valid ||
++        mpctx->opts->vo->video_crop.wh_valid ||
++        !isfinite(mpctx->video_pts) || mpctx->video_pts < 0 ||
++        (mpctx->opts->vf_settings && mpctx->opts->vf_settings[0].name))
++        return NULL;
++    struct mp_image *src = mp_decoder_wrapper_source_raster(track->dec,
++                                                           mpctx->video_pts);
++    if (!src)
++        return NULL;
++    struct mp_image_params sp = src->params;
++    if (sp.rotate || sp.p_w != sp.p_h ||
++        sp.crop.x0 || sp.crop.y0 || sp.crop.x1 != src->w || sp.crop.y1 != src->h)
++        talloc_free(src);
++    else
++        return src;
++    return NULL;
++}
++
++double aagedal_decoder_raster_pts(struct MPContext *mpctx)
++{
++    struct mp_image *src = aagedal_source_raster(mpctx);
++    if (!src)
++        return NAN;
++    double pts = src->pts;
++    talloc_free(src);
++    return pts;
++}
++
++// Restrictive candidate protocol: paused, software, square pixels, no vf or
++// orientation. A failed request provides no source-pixel capability claim.
++void cmd_aagedal_decoder_raster(void *p)
++{
++    struct mp_cmd_ctx *cmd = p;
++    struct MPContext *mpctx = cmd->mpctx;
++    struct track *track = mpctx->current_track[0][STREAM_VIDEO];
++    cmd->success = false;
++    struct mp_image *src = aagedal_source_raster(mpctx);
++    if (!src)
++        return;
++    struct mp_image *rgb = mp_image_alloc(IMGFMT_BGRA, src->w, src->h);
++    if (!rgb)
++        goto done;
++    mp_image_copy_attributes(rgb, src);
++    rgb->params.p_w = rgb->params.p_h = 1;
++    rgb->params.rotate = 0;
++    struct mp_sws_context *sws = mp_sws_alloc(NULL);
++    bool ok = mp_sws_scale(sws, rgb, src) >= 0;
++    talloc_free(sws);
++    if (!ok) {
++        talloc_free(rgb);
++        goto done;
++    }
++    struct mpv_node *res = &cmd->result;
++    node_init(res, MPV_FORMAT_NODE_MAP, NULL);
++    node_map_add_int64(res, "protocol", 1);
++    node_map_add_int64(res, "w", rgb->w);
++    node_map_add_int64(res, "h", rgb->h);
++    node_map_add_int64(res, "coded-w", src->w);
++    node_map_add_int64(res, "coded-h", src->h);
++    node_map_add_int64(res, "stride", rgb->stride[0]);
++    node_map_add_int64(res, "rotation", 0);
++    node_map_add_int64(res, "track-id", track->user_tid);
++    node_map_add_double(res, "pts", src->pts);
++    node_map_add_flag(res, "mirrored", false);
++    node_map_add_flag(res, "pixel-preserving", true);
++    node_map_add_flag(res, "presented-frame", true);
++    node_map_add_string(res, "format", "bgra");
++    struct mpv_byte_array *ba = node_map_add(res, "data", MPV_FORMAT_BYTE_ARRAY)->u.ba;
++    *ba = (struct mpv_byte_array){rgb->planes[0], rgb->stride[0] * rgb->h};
++    talloc_steal(ba, rgb);
++    cmd->success = true;
++done:
++    talloc_free(src);
++}
+diff --git a/player/screenshot.h b/player/screenshot.h
+index 97abc79..6c36be2 100644
+--- a/player/screenshot.h
++++ b/player/screenshot.h
+@@ -43,4 +43,7 @@ void cmd_screenshot(void *p);
+ void cmd_screenshot_to_file(void *p);
+ void cmd_screenshot_raw(void *p);
+ 
++void cmd_aagedal_decoder_raster(void *p);
++double aagedal_decoder_raster_pts(struct MPContext *mpctx);
++
+ #endif /* MPLAYER_SCREENSHOT_H */

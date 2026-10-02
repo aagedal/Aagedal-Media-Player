@@ -116,6 +116,40 @@ final class LoupeTrackDecoderTests: XCTestCase {
         XCTAssertFalse(capture.hasVerifiedAVRaster(for: controller), "Composition track format descriptions cannot prove the current segment's pixel provenance")
     }
 
+    func testBundledMPVFallbackPreviewNeverCertifiesMatchingDimensions() async throws {
+        let controller = PlayerController(proResRAWDetector: { _, _ in false })
+        let capture = LoupeFrameCapture()
+        defer { capture.stop(); controller.teardown() }
+        controller.loadMedia(PlayerWindowCoordinator.makeMediaItem(for: try fixture("landscape")))
+        let constructed = await waitUntil { controller.useMPV && controller.mpvPlayer != nil }
+        XCTAssertTrue(constructed)
+        let mpv = try XCTUnwrap(controller.mpvPlayer)
+        let view = NSView(frame: CGRect(x: 0, y: 0, width: 320, height: 180))
+        let layer = MPVMetalLayer()
+        layer.frame = view.bounds
+        layer.drawableSize = view.bounds.size
+        view.layer = layer
+        view.wantsLayer = true
+        retainedSurfaces.append(view)
+        mpv.attachDrawable(layer)
+        let ready = await waitUntil { controller.isReady }
+        XCTAssertTrue(ready)
+        controller.pause()
+        capture.start(controller: controller)
+        let preview = await waitUntil { capture.image?.width == 320 && capture.image?.height == 180 }
+        XCTAssertTrue(preview, "The bundled backend must retain its existing full-resolution preview")
+        try assertQuadrants([.red, .green, .blue, .yellow], image: XCTUnwrap(capture.image))
+        XCTAssertNil(mpv.decoderRaster(), "The shipping backend does not expose the candidate provider")
+        XCTAssertFalse(mpv.isDecoderRasterCurrent(pts: 0, trackID: 1),
+                       "A missing validity property must reject proof immediately")
+        XCTAssertFalse(capture.hasVerifiedSourceRaster(for: controller),
+                       "Matching coded dimensions must not promote a display screenshot to source-pixel proof")
+        XCTAssertFalse(controller.isPlaying, "Capture must preserve paused transport")
+        capture.stop()
+        XCTAssertNil(capture.image)
+        XCTAssertFalse(capture.hasVerifiedSourceRaster(for: controller))
+    }
+
     private func makeController(url: URL) async throws -> PlayerController {
         let controller = PlayerController(proResRAWDetector: { _, _ in true })
         controller.loadMedia(PlayerWindowCoordinator.makeMediaItem(for: url))

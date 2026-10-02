@@ -46,6 +46,8 @@ final class LoupeFrameCapture: ObservableObject {
     private var lastCaptureStartedAt: TimeInterval = -.infinity
     private var source: SourceIdentity?
     private var verifiedAVRasterSource: SourceIdentity?
+    private var verifiedMPVRasterSource: SourceIdentity?
+    private var verifiedMPVRasterPTS: TimeInterval?
     private var attachedItem: AVPlayerItem?
     private var output: AVPlayerItemVideoOutput?
 
@@ -56,6 +58,7 @@ final class LoupeFrameCapture: ObservableObject {
         // video output. Such a change invalidates both the image and its proof.
         let enabledVideoTracks: [CMPersistentTrackID]
         let videoComposition: ObjectIdentifier?
+        var mpvVideoTrackID: Int64? = nil
     }
 
     /// Dimensions alone do not identify a decoded raster: an old MPV preview
@@ -67,6 +70,18 @@ final class LoupeFrameCapture: ObservableObject {
               let item = controller.player?.currentItem, item.status == .readyToPlay else { return false }
         let current = avSourceIdentity(controller: controller, item: item)
         return source == current && verifiedAVRasterSource == current
+    }
+
+    func hasVerifiedSourceRaster(for controller: PlayerController) -> Bool {
+        if !controller.useMPV { return hasVerifiedAVRaster(for: controller) }
+        guard self.controller === controller, image != nil, controller.isReady,
+              let mpv = controller.mpvPlayer, mpv.canInspectDecoderRaster,
+              !controller.isPlaying, let pts = verifiedMPVRasterPTS,
+              let source, let trackID = source.mpvVideoTrackID,
+              source.preparationID == controller.preparationID,
+              source.backend == ObjectIdentifier(mpv),
+              verifiedMPVRasterSource == source else { return false }
+        return mpv.isDecoderRasterCurrent(pts: pts, trackID: trackID)
     }
 
     func start(controller: PlayerController) {
@@ -103,6 +118,8 @@ final class LoupeFrameCapture: ObservableObject {
         detachOutput()
         source = nil
         verifiedAVRasterSource = nil
+        verifiedMPVRasterSource = nil
+        verifiedMPVRasterPTS = nil
         controller = nil
         image = nil
     }
@@ -111,7 +128,8 @@ final class LoupeFrameCapture: ObservableObject {
         guard let controller, controller.isReady else { return nil }
         if controller.useMPV, let mpv = controller.mpvPlayer {
             return SourceIdentity(preparationID: controller.preparationID, backend: ObjectIdentifier(mpv),
-                                  enabledVideoTracks: [], videoComposition: nil)
+                                  enabledVideoTracks: [], videoComposition: nil,
+                                  mpvVideoTrackID: mpv.canInspectDecoderRaster ? mpv.loupeVideoTrackID() : nil)
         }
         if let item = controller.player?.currentItem, item.status == .readyToPlay {
             return avSourceIdentity(controller: controller, item: item)
@@ -152,6 +170,8 @@ final class LoupeFrameCapture: ObservableObject {
         detachOutput()
         image = nil
         verifiedAVRasterSource = nil
+        verifiedMPVRasterSource = nil
+        verifiedMPVRasterPTS = nil
         source = latest
         if latest != nil, let controller, !controller.useMPV,
            let item = controller.player?.currentItem {
@@ -179,7 +199,7 @@ final class LoupeFrameCapture: ObservableObject {
         let request: Request
         let isAVRaster: Bool
         if controller.useMPV, let mpv = controller.mpvPlayer {
-            request = .mpv(mpv)
+            request = .mpv(mpv, canVerify: mpv.canInspectDecoderRaster)
             isAVRaster = false
         } else if let item = attachedItem, let output, let player = controller.player {
             // Acquire the frame while its playback timestamp is current. At
@@ -211,7 +231,14 @@ final class LoupeFrameCapture: ObservableObject {
             guard canPublish, self.source == source, self.currentSource() == source else { return }
             if let result {
                 self.verifiedAVRasterSource = isAVRaster && result.preservesSourcePixels ? source : nil
+                self.verifiedMPVRasterSource = !isAVRaster && result.preservesSourcePixels ? source : nil
+                self.verifiedMPVRasterPTS = !isAVRaster && result.preservesSourcePixels ? result.pts : nil
                 self.image = result.image
+            } else {
+                self.objectWillChange.send()
+                self.verifiedAVRasterSource = nil
+                self.verifiedMPVRasterSource = nil
+                self.verifiedMPVRasterPTS = nil
             }
         }
     }
@@ -220,20 +247,24 @@ final class LoupeFrameCapture: ObservableObject {
     // The worker retains that immutable snapshot and its selected track until conversion
     // completes; all output attachment and removal remain on MainActor.
     private nonisolated enum Request: @unchecked Sendable {
-        case mpv(MPVPlayer)
+        case mpv(MPVPlayer, canVerify: Bool)
         case av(AVAssetTrack?, CVPixelBuffer, canVerify: Bool)
     }
 
     private nonisolated struct CapturedImage {
         let image: CGImage
         let preservesSourcePixels: Bool
+        var pts: TimeInterval? = nil
     }
 
     private nonisolated static let context = CIContext(options: [.cacheIntermediates: false])
 
     private nonisolated static func makeImage(_ request: Request) async -> CapturedImage? {
         switch request {
-        case .mpv(let mpv):
+        case .mpv(let mpv, let canVerify):
+            if canVerify, let raster = mpv.decoderRaster(), let image = image(from: raster.pixels) {
+                return CapturedImage(image: image, preservesSourcePixels: true, pts: raster.pixels.playbackTime)
+            }
             guard let raw = mpv.screenshotRaw() else { return nil }
             guard let image = image(from: raw) else { return nil }
             return CapturedImage(image: image, preservesSourcePixels: false)

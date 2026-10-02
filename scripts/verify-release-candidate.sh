@@ -102,7 +102,15 @@ xcrun xcresulttool get test-results tests \
 python3 scripts/validate-release-xcresult.py \
     "$artifact_dir/test-summary.json" \
     "$artifact_dir/test-details.json" \
-    --minimum-tests 818 \
+    --minimum-tests 826 \
+    --require-test "LoupeTrackDecoderTests/testBundledMPVFallbackPreviewNeverCertifiesMatchingDimensions()" \
+    --require-test "MPVDecoderRasterTests/testCapabilityRequiresExactCommandName()" \
+    --require-test "MPVDecoderRasterTests/testAcceptsOnlyVersionedPresentedDecoderProofAndCopiesPixels()" \
+    --require-test "MPVDecoderRasterTests/testRejectsMissingMistypedDuplicateAndNegativeProofFields()" \
+    --require-test "MPVDecoderRasterTests/testRejectsChangedUnselectedAndUnknownTrack()" \
+    --require-test "MPVDecoderRasterTests/testRejectsResampledRasterUnsupportedRotationAndInvalidFrameTime()" \
+    --require-test "MPVDecoderRasterTests/testDisplayScreenshotCannotBecomeDecoderProof()" \
+    --require-test "LoupeGeometryTests/testMPVNativePixelsRequireExplicitDecoderProofForBothSources()" \
     --require-test "CompareReviewTextCommitTests/testOrdinaryTextValidationRevealsFindingHiddenByFilterWithoutSavingDrafts()" \
     --require-test "CompareReviewTextCommitTests/testRetainedRangeCorrectionRevealsOnlyExistingEditableHiddenFinding()" \
     --require-test "LiveAudioMeterCoordinatorTests/testMalformedCurrentLoudnessFailsGenerationAndCancelsWorker()" \

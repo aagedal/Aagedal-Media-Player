@@ -111,7 +111,7 @@ struct ContentView: View {
         capture: LoupeFrameCapture
     ) -> LoupeNativePixelSource {
         let stream = controller.mediaItem?.metadata?.primaryVideoStream
-        let image = capture.hasVerifiedAVRaster(for: controller) ? capture.image : nil
+        let image = capture.hasVerifiedSourceRaster(for: controller) ? capture.image : nil
         return LoupeNativePixelSource(
             name: name,
             backend: controller.playbackBackend,
@@ -119,7 +119,8 @@ struct ContentView: View {
             codedHeight: stream?.height,
             rotation: stream?.rotation,
             capturedWidth: image?.width,
-            capturedHeight: image?.height
+            capturedHeight: image?.height,
+            verifiedMPVDecoderRaster: controller.useMPV && image != nil
         )
     }
 

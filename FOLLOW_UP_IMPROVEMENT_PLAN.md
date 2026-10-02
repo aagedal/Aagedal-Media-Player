@@ -4018,7 +4018,7 @@ immediate baseline recovery is unproven. See
 ## Phase 180 — Integrated bounded-reader continuation verification
 
 Status: Canonical optimized Release verification passes on 2026-09-30 for
-implementation commit `82597597ba3e4f854799b03857a916d864873cab`.
+implementation commit `82697597ba3e4f854799b03857a916d864873cab`.
 
 - [x] Use a clean detached clone, fresh DerivedData and validated unchanged
   pinned dependency cache; retain exact source and package identity.
@@ -4745,6 +4745,23 @@ Integrated committed-source verification follows separately.
   [integrated receipts](docs/evidence/review-clock-source-candidate-20261002/README.md).
 - [ ] Complete unchanged native/editor/accessibility/dependency/hardware/
   distribution acceptance gates.
+
+## Phase 232 — Prepare guarded MPV decoder-raster inspection
+
+- [x] Add a typed app consumer for a separate decoder-raster command; reject
+  absent/malformed proof, changed tracks and stale paused-frame identity.
+- [x] Preserve the published MPV display-preview fallback and explicitly reject
+  equal screenshot dimensions as source-pixel evidence.
+- [x] Prepare an opt-in pre-filter software-frame provider patch with bounded
+  retained references and exact presented-PTS matching. Patch applicability and
+  six C syntax checks pass; linking/runtime proof remains separate.
+- [x] Require eight additional loupe/provider regressions and at least 826
+  aggregate tests in both candidate verification and release consumption.
+- [ ] Link and qualify the provider, extend hardware/PAR/orientation coverage,
+  publish/re-pin and explicitly activate it only after runtime acceptance.
+  The MPV 1:1 beta gate remains open. See
+  [provider engineering](docs/MPV_DECODER_RASTER_PROVIDER.md) and
+  [manual completion](docs/RELEASE_2_MANUAL_COMPLETION.md).
 
 ## Remaining work after this continuation
 
