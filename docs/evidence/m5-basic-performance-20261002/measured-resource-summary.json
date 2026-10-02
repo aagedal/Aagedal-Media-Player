@@ -1,0 +1,11 @@
+{
+  "samplingSeconds": 1,
+  "sampleCount": 301,
+  "firstUTC": "2026-10-02T19:14:45.964394+00:00",
+  "lastUTC": "2026-10-02T19:20:02.594557+00:00",
+  "peakAppRSSMiB": 1947.90625,
+  "medianAppRSSMiB": 1552.640625,
+  "peakAppCPUPercentOneCore": 125.8,
+  "medianAppCPUPercentOneCore": 24.6,
+  "limitations": "Sampled hosted app only; RSS excludes some shared/unified GPU allocations. CPU percentage uses one core as 100%, not all 18 cores. This is a short development profile on the active user desktop, not an isolated long soak or total memory-pressure qualification."
+}

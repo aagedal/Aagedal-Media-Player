@@ -1,0 +1,7 @@
+Aagedal Media Player Compare Mode profiling fixtures
+schema=5
+reflected=0
+size=3840x2160
+frame_rate=24
+duration=35
+ffmpeg=ffmpeg version 9.0.2 Copyright (c) 2000-2026 the FFmpeg developers

@@ -1,0 +1,42 @@
+[in#0 @ 0x7a49024000] st: 0 edit list: 1 Missing key frame while searching for timestamp: 1000
+[in#0 @ 0x7a49024000] st: 0 edit list 1 Cannot find an index entry before timestamp: 1000.
+[in#0 @ 0x7a49024000] infe version < 2 is not implemented. Update your FFmpeg version to the newest one from Git. If the problem still occurs, it means that your file has a feature which has not been implemented.
+[aist#0:1/pcm_s16be @ 0x7a48c14480] Guessed Channel Layout: stereo
+Input #0, mov,mp4,m4a,3gp,3g2,mj2, from '/Users/truls.aagedal/Movies/TestVideo/testmappe_agedal_media_stitch/M4ROOT/CLIP/rre_8073.MP4':
+  Metadata:
+    major_brand     : XAVC
+    minor_version   : 17506303
+    compatible_brands: XAVCmp42iso6
+    creation_time   : 2026-04-13T10:21:01.000000Z
+  Duration: 00:04:18.72, start: 0.000000, bitrate: 58111 kb/s
+  Stream #0:0[0x1](und): Video: h264 (High 4:2:2) (avc1 / 0x31637661), yuv422p10le(tv, bt709, progressive), 1920x1080 [SAR 1:1 DAR 16:9], 46970 kb/s, 50 fps, 50 tbr, 50k tbn (default)
+    Metadata:
+      creation_time   : 2026-04-13T10:21:01.000000Z
+      handler_name    : Video Media Handler
+      encoder         : AVC Coding
+  Stream #0:1[0x2](und): Audio: pcm_s16be (twos / 0x736F7774), 48000 Hz, stereo, s16, 1536 kb/s (default)
+    Metadata:
+      creation_time   : 2026-04-13T10:21:01.000000Z
+      handler_name    : Sound Media Handler
+  Stream #0:2[0x3](und): Data: none (rtmd / 0x646D7472), 7782 kb/s (default)
+    Metadata:
+      creation_time   : 2026-04-13T10:21:01.000000Z
+      handler_name    : Timed Metadata Media Handler
+      timecode        : 11:13:33:12
+Stream mapping:
+  Stream #0:0 -> #0:0 (h264 (native) -> wrapped_avframe (native))
+Output #0, null, to 'pipe:':
+  Metadata:
+    major_brand     : XAVC
+    minor_version   : 17506303
+    compatible_brands: XAVCmp42iso6
+    encoder         : Lavf63.1.101
+  Stream #0:0(und): Video: wrapped_avframe, yuv422p10le(tv, bt709, progressive), 1920x1080 [SAR 1:1 DAR 16:9], q=2-31, 200 kb/s, 50 fps, 50 tbn (default)
+    Metadata:
+      encoder         : Lavc63.1.101 wrapped_avframe
+      creation_time   : 2026-04-13T10:21:01.000000Z
+      handler_name    : Video Media Handler
+[out#0/null @ 0x7a48c443c0] video:83KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: unknown
+frame=  200 fps=0.0 q=-0.0 Lsize=N/A time=00:00:04.00 bitrate=N/A speed=12.7x elapsed=0:00:00.31    
+bench: utime=2.321s stime=0.065s rtime=0.314s
+bench: maxrss=273743872KiB

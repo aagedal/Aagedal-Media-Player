@@ -1,0 +1,65 @@
+{
+  "sourceCommit": "53d055b7f1839f5a6c209e9441c1c4e764592f15",
+  "sourceTreeClean": true,
+  "packageResolvedSHA256": "91ff8b51c0b73b91f653360fc8f1252944f6a5eaf513ea83c9c08871fe525d05",
+  "pins": [
+    {
+      "identity": "mpvkit",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/aagedal/MPVKit",
+      "state": {
+        "revision": "1d44b9a0aa9e8faa5b8bf222173f6cc2930ed233"
+      }
+    },
+    {
+      "identity": "sparkle",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/sparkle-project/Sparkle",
+      "state": {
+        "revision": "ac2def288cbff5cfc7df3ffef6abdf45b72bcb0a",
+        "version": "2.9.6"
+      }
+    },
+    {
+      "identity": "swiftmediametadata",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/aagedal/SwiftMediaMetadata",
+      "state": {
+        "revision": "9e8e912deb8d941da66a4b76854a90e3e9f01e3f",
+        "version": "3.0.2"
+      }
+    }
+  ],
+  "releaseConfiguration": "Release ENABLE_TESTABILITY=YES",
+  "filesBeforeProfiles": [
+    {
+      "path": "/private/tmp/aagedal-m5-basic-performance-20261002/DerivedData/Build/Products/Release/Aagedal Media Player.app/Contents/MacOS/Aagedal Media Player",
+      "sha256": "0736021b60c1905fe9bf28a57f0567ee064ab006be0b33ff3b18b4df9301a90d",
+      "sizeBytes": 80492912
+    },
+    {
+      "path": "/private/tmp/aagedal-m5-basic-performance-20261002/DerivedData/Build/Products/Release/Aagedal Media Player.app/Contents/Resources/ffmpeg",
+      "sha256": "dc3770d91735cfe8b0ef8f4eb7c6f8431d722cca0d79c0959d62be216868d604",
+      "sizeBytes": 54679648
+    }
+  ],
+  "scope": "This test host is a separate ordinary optimized build with freshly resolved shipping pins; the app test-host signing differs from distribution signing.",
+  "filesAfterMeasuredProfile": [
+    {
+      "path": "/private/tmp/aagedal-m5-basic-performance-20261002/DerivedData/Build/Products/Release/Aagedal Media Player.app/Contents/MacOS/Aagedal Media Player",
+      "sha256": "2893c9cbd35d18764255be7b5ae227493349f2f40486e3edd267f4fcdd6d24c2",
+      "sizeBytes": 80492912,
+      "modifiedUTC": "2026-10-02T19:14:44.627134+00:00"
+    },
+    {
+      "path": "/private/tmp/aagedal-m5-basic-performance-20261002/DerivedData/Build/Products/Release/Aagedal Media Player.app/Contents/Resources/ffmpeg",
+      "sha256": "dc3770d91735cfe8b0ef8f4eb7c6f8431d722cca0d79c0959d62be216868d604",
+      "sizeBytes": 54679648,
+      "modifiedUTC": "2026-10-02T19:07:02.194123+00:00"
+    }
+  ],
+  "signatureDifference": "The preparation executable hash differs from the measured executable: Xcode reran CodeSign in the incremental build before the measured run. Retain both whole-file identities; no byte-identical claim across preparation and measurement.",
+  "measuredBuildRecompiledOrLinkedApp": false,
+  "sourceCommitAfterProfiles": "53d055b7f1839f5a6c209e9441c1c4e764592f15",
+  "sourceTreeCleanAfterProfiles": true
+}

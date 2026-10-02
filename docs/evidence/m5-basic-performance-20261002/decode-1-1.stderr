@@ -1,0 +1,72 @@
+[aist#0:1/pcm_s24le @ 0x7cb5018480] Guessed Channel Layout: mono
+[aist#0:2/pcm_s24le @ 0x7cb5018600] Guessed Channel Layout: mono
+[aist#0:3/pcm_s24le @ 0x7cb5018780] Guessed Channel Layout: mono
+[aist#0:4/pcm_s24le @ 0x7cb5018900] Guessed Channel Layout: mono
+[aist#0:5/pcm_s24le @ 0x7cb5018a80] Guessed Channel Layout: mono
+[aist#0:6/pcm_s24le @ 0x7cb5018c00] Guessed Channel Layout: mono
+[aist#0:7/pcm_s24le @ 0x7cb5018d80] Guessed Channel Layout: mono
+[aist#0:8/pcm_s24le @ 0x7cb5018f00] Guessed Channel Layout: mono
+Input #0, mxf, from '/Users/truls.aagedal/Movies/TestVideo/A1_v_FX6/FX6/OJ_FX6A0021.MXF':
+  Metadata:
+    operational_pattern_ul: 060e2b34.04010101.0d010201.01010900
+    uid             : 14e2cd8a-3a2d-1238-a162-ec5c842c03be
+    generation_uid  : 14e2cd94-3a2d-1238-890a-ec5c842c03be
+    company_name    : Sony
+    product_name    : Mem 
+    product_version : 2.00
+    product_uid     : cede1104-8280-11de-8a39-08004678031c
+    modification_date: 2026-01-18T13:02:31.000000Z
+    material_package_umid: 0x060A2B340101010501010D4313000000F5331D8B581006D1EC5C84FFFE2C03BE
+    timecode        : 20:51:59:22
+  Duration: 00:02:19.84, start: 0.000000, bitrate: 494476 kb/s
+  Stream #0:0: Video: h264 (High 4:2:2 Intra), yuv422p10le(tv, bt709/unknown/unknown, progressive), 3840x2160 [SAR 1:1 DAR 16:9], 50 fps, 50 tbr, 50 tbn
+    Metadata:
+      file_package_umid: 0x060A2B340101010501010D4313000000F6331D8B581006D1EC5C84FFFE2C03BE
+  Stream #0:1: Audio: pcm_s24le, 48000 Hz, mono, s32 (24 bit), 1152 kb/s
+    Metadata:
+      file_package_umid: 0x060A2B340101010501010D4313000000F6331D8B581006D1EC5C84FFFE2C03BE
+  Stream #0:2: Audio: pcm_s24le, 48000 Hz, mono, s32 (24 bit), 1152 kb/s
+    Metadata:
+      file_package_umid: 0x060A2B340101010501010D4313000000F6331D8B581006D1EC5C84FFFE2C03BE
+  Stream #0:3: Audio: pcm_s24le, 48000 Hz, mono, s32 (24 bit), 1152 kb/s
+    Metadata:
+      file_package_umid: 0x060A2B340101010501010D4313000000F6331D8B581006D1EC5C84FFFE2C03BE
+  Stream #0:4: Audio: pcm_s24le, 48000 Hz, mono, s32 (24 bit), 1152 kb/s
+    Metadata:
+      file_package_umid: 0x060A2B340101010501010D4313000000F6331D8B581006D1EC5C84FFFE2C03BE
+  Stream #0:5: Audio: pcm_s24le, 48000 Hz, mono, s32 (24 bit), 1152 kb/s
+    Metadata:
+      file_package_umid: 0x060A2B340101010501010D4313000000F6331D8B581006D1EC5C84FFFE2C03BE
+  Stream #0:6: Audio: pcm_s24le, 48000 Hz, mono, s32 (24 bit), 1152 kb/s
+    Metadata:
+      file_package_umid: 0x060A2B340101010501010D4313000000F6331D8B581006D1EC5C84FFFE2C03BE
+  Stream #0:7: Audio: pcm_s24le, 48000 Hz, mono, s32 (24 bit), 1152 kb/s
+    Metadata:
+      file_package_umid: 0x060A2B340101010501010D4313000000F6331D8B581006D1EC5C84FFFE2C03BE
+  Stream #0:8: Audio: pcm_s24le, 48000 Hz, mono, s32 (24 bit), 1152 kb/s
+    Metadata:
+      file_package_umid: 0x060A2B340101010501010D4313000000F6331D8B581006D1EC5C84FFFE2C03BE
+  Stream #0:9: Data: smpte_436m_anc
+    Metadata:
+      file_package_umid: 0x060A2B340101010501010D4313000000F6331D8B581006D1EC5C84FFFE2C03BE
+      data_type       : vbi_vanc_smpte_436M
+Stream mapping:
+  Stream #0:0 -> #0:0 (h264 (native) -> wrapped_avframe (native))
+Output #0, null, to 'pipe:':
+  Metadata:
+    operational_pattern_ul: 060e2b34.04010101.0d010201.01010900
+    uid             : 14e2cd8a-3a2d-1238-a162-ec5c842c03be
+    generation_uid  : 14e2cd94-3a2d-1238-890a-ec5c842c03be
+    timecode        : 20:51:59:22
+    material_package_umid: 0x060A2B340101010501010D4313000000F5331D8B581006D1EC5C84FFFE2C03BE
+    modification_date: 2026-01-18T13:02:31.000000Z
+    product_uid     : cede1104-8280-11de-8a39-08004678031c
+    encoder         : Lavf63.1.101
+  Stream #0:0: Video: wrapped_avframe, yuv422p10le(pc, progressive), 3840x2160 [SAR 1:1 DAR 16:9], q=2-31, 200 kb/s, 50 fps, 50 tbn
+    Metadata:
+      encoder         : Lavc63.1.101 wrapped_avframe
+      file_package_umid: 0x060A2B340101010501010D4313000000F6331D8B581006D1EC5C84FFFE2C03BE
+[out#0/null @ 0x7cb500d380] video:248KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: unknown
+frame=  600 fps=550 q=-0.0 Lsize=N/A time=00:00:12.00 bitrate=N/A speed=  11x elapsed=0:00:01.09    
+bench: utime=16.338s stime=0.132s rtime=1.090s
+bench: maxrss=936624128KiB

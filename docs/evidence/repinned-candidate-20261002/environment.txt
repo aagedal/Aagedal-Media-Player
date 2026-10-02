@@ -1,0 +1,10 @@
+sourceCommit=53d055b7f1839f5a6c209e9441c1c4e764592f15
+packageResolvedSHA256=91ff8b51c0b73b91f653360fc8f1252944f6a5eaf513ea83c9c08871fe525d05
+packageCache=/private/tmp/aagedal-repinned-resolution-20261002/SourcePackages
+startedAt=2026-10-02T18:47:56Z
+powerStartedAtLocal=2026-10-02 20:47:56
+host=macOS 27.0.1 (26A434)
+Xcode 27.0
+Build version 27A266a
+completedAt=2026-10-02T18:53:32Z
+status=passed

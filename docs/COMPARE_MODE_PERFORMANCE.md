@@ -5,6 +5,18 @@ ordinary test suite uses small generated fixtures to catch synchronization and
 lifecycle regressions quickly, but those clips do not establish that two UHD
 HDR streams are sustainable on release hardware.
 
+## Current-machine basic result — 2026-10-02
+
+The repinned M5 Pro/64-GB Release development profile passes all ten 30-second
+UHD/HDR scenarios without skips or runtime warnings. Authentic HD/UHD software
+decode headroom scores are 1320.7/985.6 (100 means realtime), both above the
+user's threshold. Direct app sampling peaks at 1.90 GiB RSS and 125.8% CPU
+(one core = 100%). The run uses battery power on the active desktop.
+MPV-primary/AVFoundation-secondary timing excursions remain a follow-up:
+its scope case is within one frame for 45.4% of samples despite passing the
+existing recovery contract. These results do not qualify M1 or the meter/device
+soak. See [measured evidence](evidence/m5-basic-performance-20261002/README.md).
+
 ## Release baseline
 
 On 2026-10-02 the user deferred the M1-specific run for the current editor beta
