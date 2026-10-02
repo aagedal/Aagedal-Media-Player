@@ -5,6 +5,8 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Changed
+- Review retires corrections for findings deleted by another window's sidecar merge, allowing edits to surviving findings while preserving drafts during reload.
+- Premiere round-trip checks can consume a captured pre-import media receipt to detect source files replaced at an unchanged path.
 - Review preserves unsaved text, ranges and correction focus when a queued deletion is rejected during saving or loading. New-note edits retain current export guidance.
 - Live meters clear readings and cancel decoding when the playback clock becomes invalid at end of file or during final drainage.
 - Premiere round-trip validation rejects freeze frames, source slips, multiclips and conflicting native tick endpoints.

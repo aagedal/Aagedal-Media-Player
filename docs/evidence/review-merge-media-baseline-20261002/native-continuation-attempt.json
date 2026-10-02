@@ -1,0 +1,13 @@
+{
+  "applicationPath": "/private/tmp/aagedal-2-reconcile-focused-20261002/Build/Products/Release/Aagedal Media Player.app/Contents/MacOS/Aagedal Media Player",
+  "applicationSHA256": "146474074ed98dc905ad2006ef99d8fb31f958da0d849bb4b97ebce971c2f72c",
+  "savedReviewReopened": true,
+  "savedNoteText": "Keyboard range colour finding edited",
+  "newSurvivingFindingCreated": true,
+  "invalidRangeRejected": true,
+  "externalDeletionSimulatedInIsolatedSidecar": true,
+  "productionMergeTriggered": false,
+  "mergeAcceptance": "inconclusive: retained correction kept focus on rejected range and entry could not be redirected to add-note field",
+  "testSidecarRestoredFromBackup": true,
+  "scope": "Focused continuation app; no full keyboard/accessibility or two-window merge acceptance"
+}

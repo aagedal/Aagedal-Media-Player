@@ -4748,6 +4748,32 @@ Integrated committed-source verification follows separately.
 
 ## Remaining work after this continuation
 
+### October 2 merged-deletion and media-baseline continuation
+
+- [x] Retire orphan Review drafts/errors/corrections after a successful
+  same-sidecar merge deletes their finding. Preserve surviving input, new-note
+  text, reload drafts and window-level notices. All 46 focused optimized Release
+  text-commit checks pass, including four new reconciliation regressions.
+- [x] Add Premiere pre-import byte baselines bound to original XML/source-path
+  identity; retain an in-place replacement reproduction missed by post-only
+  hashing. All 47 Premiere checks and the full script-validator gate pass.
+- [x] Retain partial native keyboard setup, note creation/editing, inclusive
+  range/filter/CSV acceptance on the preceding verified app, with unchanged
+  media bytes. One disclosure required an accessibility click; complete keyboard,
+  Full Keyboard Access and spoken VoiceOver remain unaccepted.
+- [x] Require the four reconciliation identities and at least 810 aggregate
+  tests in both candidate verification and release consumption.
+- [x] Record exact retained dependency inputs and ordered publication/repin work
+  in `docs/RELEASE_2_DEPENDENCY_HANDOFF.md`.
+- [x] Build/test the six-file bounded-MXF patch in a fresh normal upstream
+  checkout preserving the manifest, Benchmark, lockfile and CLI. Library:
+  1,674 tests, 21 named opt-in skips, zero failures. Opted-in CLI: all 50 checks
+  pass without skips. Retain independent input/source/cache/executable receipts
+  in `docs/evidence/bounded-mxf-upstream-preparation-20261002/`.
+- [ ] Complete final-app cross-window native recovery, immutable shipping
+  dependencies, broader editor/accessibility, hardware/soak and distribution
+  gates in the prioritized `docs/RELEASE_2_READINESS.md` next-delivery list.
+
 The user’s 2026-10-01 scope decision makes Avid native compatibility optional
 for 2.0. Skip problematic Avid checks. The same day's continuation explicitly
 prioritizes Premiere Pro support above Avid; implement and validate a dedicated

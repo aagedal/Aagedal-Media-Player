@@ -1,0 +1,37 @@
+{
+  "notes" : [
+    {
+      "category" : "general",
+      "createdAt" : 1790954033056.6711,
+      "id" : "479099AF-F588-4A34-8B4C-6FB08958734F",
+      "primaryEndFrame" : 24,
+      "primaryFrame" : 0,
+      "primaryRateDenominator" : 1,
+      "primaryRateNumerator" : 24,
+      "primaryTime" : 0,
+      "secondaryFrame" : 24,
+      "secondaryRateDenominator" : 1,
+      "secondaryRateNumerator" : 24,
+      "secondaryTime" : 1,
+      "severity" : "info",
+      "status" : "open",
+      "text" : "Keyboard range colour finding edited",
+      "updatedAt" : 1790954120703.4202
+    }
+  ],
+  "primarySource" : {
+    "canonicalPath" : "\/tmp\/aagedal-2-native-structured-review-20261002\/reference.mov",
+    "fileNumber" : 87317600,
+    "fileSize" : 781507,
+    "fileSystemNumber" : 16777232,
+    "modificationDate" : 1790953977922
+  },
+  "schemaVersion" : 2,
+  "secondarySource" : {
+    "canonicalPath" : "\/tmp\/aagedal-2-native-structured-review-20261002\/delivery.mov",
+    "fileNumber" : 87317601,
+    "fileSize" : 842838,
+    "fileSystemNumber" : 16777232,
+    "modificationDate" : 1790953977926
+  }
+}

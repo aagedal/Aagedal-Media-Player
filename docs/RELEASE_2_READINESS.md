@@ -3,6 +3,43 @@
 Assessment updated: 2026-10-02. This assessment reflects the
 [product roadmap](../PRODUCT_ROADMAP.md) and its recorded scope decisions.
 
+The merged-deletion continuation retires Review corrections for findings removed
+by another window's successful sidecar merge, preserving surviving drafts and
+temporary reload input. All 46 focused optimized Release text-commit tests pass
+without skips or warnings. Premiere validation now accepts a captured pre-import
+media receipt, detecting in-place source replacements that post-only hashing
+misses; all 47 Premiere checks and the full script-validator gate pass.
+[Focused receipts](evidence/review-merge-media-baseline-20261002/README.md) also
+retain a partial native keyboard comparison/note/edit/range/filter/CSV workflow
+on the preceding verified app. One classification disclosure used an
+accessibility click, so complete keyboard and spoken accessibility remain open.
+Candidate/release consumption requires all four new identities and 810 total
+tests. Dependency preparation is mapped in the
+[publication handoff](RELEASE_2_DEPENDENCY_HANDOFF.md); immutable publication,
+fresh resolution and shipping repins remain required. A fresh bounded-MXF
+checkout now builds with the original manifest, Benchmark, lockfile and CLI:
+1,674 library tests pass with 21 named opt-in skips, and all 50 opted-in CLI
+tests pass without skips. See [upstream preparation receipts](evidence/bounded-mxf-upstream-preparation-20261002/README.md).
+
+Next delivery order:
+
+1. Prepare the bounded-MXF release revision from the tested six-file patch and
+   finish the portable GPL/Metal CoreAudio build environment, then publish immutable dependencies,
+   resolve fresh caches and repin the app. Use the dependency handoff's retained
+   inputs and acceptance sequence; local linked builds do not qualify shipping.
+2. Run native two-window Review deletion/merge recovery, complete structured
+   keyboard review and Full Keyboard Access/spoken VoiceOver across both backends,
+   including relink, migration, save recovery and narrow layouts.
+3. Repeat final-app Premiere import/re-export with pre-import byte baselines,
+   authored whitespace, interlaced/PAR cases, ranges and fractional/DF boundaries;
+   close the remaining Resolve/Final Cut matrix or record exact limitations.
+4. Run repinned authentic live-meter routing/accuracy/device/EOF checks, 30-minute
+   soak and the named base-M1/8-GB UHD/HDR/comparison/resource matrix. Resolve
+   committed source-pixel and content-mismatch scope decisions explicitly.
+5. Choose the release version/channel, pass matching-HEAD canonical verification
+   and representative smoke tests, then sign/notarize, verify Gatekeeper/update
+   installation, refresh imagery/demo and complete the editor beta.
+
 The October 2 EOF/deletion continuation preserves unsaved Review input when
 queued deletion is rejected, validates meter clocks during playback EOF drainage,
 and rejects Premiere freeze/slip/multiclip/native-tick contradictions. All 94

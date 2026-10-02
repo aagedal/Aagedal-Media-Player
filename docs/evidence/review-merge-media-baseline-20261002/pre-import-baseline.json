@@ -1,0 +1,174 @@
+{
+  "status": "exact-match",
+  "scope": "Single source-A review sequence XML comparison; not native editor acceptance",
+  "returnedSequenceName": null,
+  "checks": {
+    "rate": true,
+    "durationFrames": true,
+    "sourceDurationFrames": true,
+    "clipPlacement": true,
+    "sequenceTimecode": true,
+    "sourceTimecode": true,
+    "sequenceGeometry": true,
+    "sourceGeometry": true,
+    "clipFieldDominance": true,
+    "clipPixelAspect": true,
+    "sourcePath": true,
+    "markerTimingAndTitles": true,
+    "exactMarkerContent": true,
+    "sourceMediaBytes": true
+  },
+  "mediaBytesCompared": true,
+  "original": {
+    "sha256": "e71b4d2662ebe89f81982098debf8e2f863e3ee7c417100b7c6a953339c1ac5c",
+    "xmlVersion": "5",
+    "sequenceName": "Review",
+    "rate": "30000/1001",
+    "durationFrames": 20000,
+    "sourceDurationFrames": 20000,
+    "clipPlacement": {
+      "start": 0,
+      "end": 20000,
+      "in": 0,
+      "out": 20000,
+      "duration": 20000
+    },
+    "sequenceTimecode": {
+      "frame": 1740,
+      "displayFormat": "DF"
+    },
+    "sourceTimecode": {
+      "frame": 1740,
+      "displayFormat": "DF"
+    },
+    "sequenceGeometry": {
+      "raster": [
+        160,
+        90
+      ],
+      "pixelAspect": "square",
+      "fieldDominance": null
+    },
+    "sourceGeometry": {
+      "raster": [
+        160,
+        90
+      ],
+      "pixelAspect": "square",
+      "fieldDominance": null
+    },
+    "clipFieldDominance": null,
+    "clipPixelAspect": "square",
+    "sourceURL": "file:///private/tmp/aagedal-premiere-baseline-20261002-0dstccbt/source%20a.mov",
+    "sourcePath": "/private/tmp/aagedal-premiere-baseline-20261002-0dstccbt/source a.mov",
+    "markers": [
+      [
+        0,
+        1,
+        "QC 001",
+        "\u00e6\u00f8\u00e5 \u65e5\u672c\u8a9e & <picture> \"quoted\"\tcolumn\nSecond line"
+      ],
+      [
+        1,
+        1,
+        "QC 002",
+        "Adjacent"
+      ],
+      [
+        60,
+        3,
+        "QC 003\u2013004 (2 findings)",
+        "QC 003: A frames 60\u201362 (inclusive)\n\nQC 004: duplicate"
+      ],
+      [
+        19999,
+        1,
+        "QC 005",
+        "Final frame"
+      ]
+    ],
+    "encodedMarkerOutFrames": [
+      1,
+      2,
+      63,
+      20000
+    ],
+    "mediaSHA256": "79fe8d7cb100a4ef1d5c0ce3e69c3da8265e2f54951d5f5fecabdf87261542cd"
+  },
+  "returned": {
+    "sha256": "e71b4d2662ebe89f81982098debf8e2f863e3ee7c417100b7c6a953339c1ac5c",
+    "xmlVersion": "5",
+    "sequenceName": "Review",
+    "rate": "30000/1001",
+    "durationFrames": 20000,
+    "sourceDurationFrames": 20000,
+    "clipPlacement": {
+      "start": 0,
+      "end": 20000,
+      "in": 0,
+      "out": 20000,
+      "duration": 20000
+    },
+    "sequenceTimecode": {
+      "frame": 1740,
+      "displayFormat": "DF"
+    },
+    "sourceTimecode": {
+      "frame": 1740,
+      "displayFormat": "DF"
+    },
+    "sequenceGeometry": {
+      "raster": [
+        160,
+        90
+      ],
+      "pixelAspect": "square",
+      "fieldDominance": null
+    },
+    "sourceGeometry": {
+      "raster": [
+        160,
+        90
+      ],
+      "pixelAspect": "square",
+      "fieldDominance": null
+    },
+    "clipFieldDominance": null,
+    "clipPixelAspect": "square",
+    "sourceURL": "file:///private/tmp/aagedal-premiere-baseline-20261002-0dstccbt/source%20a.mov",
+    "sourcePath": "/private/tmp/aagedal-premiere-baseline-20261002-0dstccbt/source a.mov",
+    "markers": [
+      [
+        0,
+        1,
+        "QC 001",
+        "\u00e6\u00f8\u00e5 \u65e5\u672c\u8a9e & <picture> \"quoted\"\tcolumn\nSecond line"
+      ],
+      [
+        1,
+        1,
+        "QC 002",
+        "Adjacent"
+      ],
+      [
+        60,
+        3,
+        "QC 003\u2013004 (2 findings)",
+        "QC 003: A frames 60\u201362 (inclusive)\n\nQC 004: duplicate"
+      ],
+      [
+        19999,
+        1,
+        "QC 005",
+        "Final frame"
+      ]
+    ],
+    "encodedMarkerOutFrames": [
+      1,
+      2,
+      63,
+      20000
+    ],
+    "mediaSHA256": "79fe8d7cb100a4ef1d5c0ce3e69c3da8265e2f54951d5f5fecabdf87261542cd"
+  }
+}

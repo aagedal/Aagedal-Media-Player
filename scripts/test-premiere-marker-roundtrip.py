@@ -620,6 +620,95 @@ class RoundTripTests(unittest.TestCase):
         with self.assertRaises(OSError):
             premiere.compare(self.before, self.after, verify_media=True)
 
+    def capture_media_baseline(self):
+        media = self.root / "source a.mov"
+        media.write_bytes(b"original permission-cleared fixture")
+        original = fixture()
+        original.find(".//file/pathurl").text = media.as_uri()
+        ET.ElementTree(original).write(self.before)
+        ET.ElementTree(original).write(self.after)
+        report = self.root / "baseline.json"
+        report.write_text(json.dumps(premiere.compare(self.before, self.before, verify_media=True)))
+        return media, report
+
+    def test_preimport_baseline_detects_media_replaced_at_unchanged_source_path(self):
+        media, baseline = self.capture_media_baseline()
+        previous_receipt = baseline.read_bytes()
+        result = premiere.compare(self.before, self.after, baseline_report=baseline)
+        self.assertEqual(result["status"], "exact-match")
+        self.assertTrue(result["mediaBytesCompared"])
+        self.assertTrue(result["checks"]["sourceMediaMatchesBaseline"])
+        expected_hash = result["mediaBaseline"]["mediaSHA256"]
+        # Both XMLs reference the same pathname. Replacing bytes in place after
+        # import used to pass because post-only verification read it twice.
+        media.write_bytes(b"replaced permission-cleared fixture")
+        self.assertEqual(premiere.compare(self.before, self.after, verify_media=True)["status"], "exact-match")
+        result = premiere.compare(self.before, self.after, baseline_report=baseline)
+        self.assertEqual(result["status"], "differences")
+        self.assertTrue(result["checks"]["sourceMediaBytes"])
+        self.assertEqual([key for key, passed in result["checks"].items() if not passed],
+                         ["sourceMediaMatchesBaseline"])
+        self.assertEqual(result["mediaBaseline"]["mediaSHA256"], expected_hash)
+        self.assertNotEqual(result["returned"]["mediaSHA256"], expected_hash)
+        self.assertEqual(baseline.read_bytes(), previous_receipt)
+
+    def test_baseline_requires_exact_original_xml_hash_and_source_path(self):
+        media, baseline = self.capture_media_baseline()
+        captured = json.loads(baseline.read_text())
+        for field, value in (("sha256", "0" * 64), ("sourcePath", str(self.root / "other.mov"))):
+            report = copy.deepcopy(captured)
+            report["original"][field] = value
+            baseline.write_text(json.dumps(report))
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError, "does not match"):
+                premiere.compare(self.before, self.after, baseline_report=baseline)
+        baseline.write_text(json.dumps(captured))
+        original = ET.parse(self.before)
+        original.find(".//sequence/name").text = "Edited original"
+        original.write(self.before)
+        # The receipt cannot be reused for an edited XML even if the source
+        # pathname, frame timing and file bytes are all still identical.
+        with self.assertRaisesRegex(ValueError, "original XML SHA-256"):
+            premiere.compare(self.before, self.after, baseline_report=baseline)
+
+    def test_baseline_rejects_missing_invalid_or_unverified_byte_receipts(self):
+        media, baseline = self.capture_media_baseline()
+        captured = json.loads(baseline.read_text())
+        for field, value in (("status", "invalid"), ("mediaBytesCompared", False),
+                             ("checks", {"sourceMediaBytes": False}), ("original", None)):
+            report = copy.deepcopy(captured)
+            report[field] = value
+            baseline.write_text(json.dumps(report))
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError, "byte receipt"):
+                premiere.compare(self.before, self.after, baseline_report=baseline)
+        for checksum in (None, "", "0" * 63, "z" * 64, "A" * 64, 123):
+            report = copy.deepcopy(captured)
+            report["original"]["mediaSHA256"] = checksum
+            baseline.write_text(json.dumps(report))
+            with self.subTest(checksum=checksum), self.assertRaisesRegex(ValueError, "valid original media SHA-256"):
+                premiere.compare(self.before, self.after, baseline_report=baseline)
+        for contents in ("null", "[]", "{}", "not JSON"):
+            baseline.write_text(contents)
+            with self.subTest(contents=contents), self.assertRaises(ValueError):
+                premiere.compare(self.before, self.after, baseline_report=baseline)
+
+    def test_baseline_cli_capture_compare_mutation_and_missing_media_exit_codes(self):
+        media, baseline = self.capture_media_baseline()
+        baseline.unlink()
+        command = [sys.executable, str(Path(premiere.__file__)), str(self.before), str(self.before),
+                   "--verify-media", "--output", str(baseline)]
+        self.assertEqual(subprocess.run(command, capture_output=True).returncode, 0)
+        compare_command = [sys.executable, str(Path(premiere.__file__)), str(self.before), str(self.after),
+                           "--baseline-report", str(baseline)]
+        self.assertEqual(subprocess.run(compare_command, capture_output=True).returncode, 0)
+        media.write_bytes(b"changed media still at the same path")
+        completed = subprocess.run(compare_command, capture_output=True)
+        self.assertEqual(completed.returncode, 1)
+        self.assertFalse(json.loads(completed.stdout)["checks"]["sourceMediaMatchesBaseline"])
+        media.unlink()
+        completed = subprocess.run(compare_command, capture_output=True)
+        self.assertEqual(completed.returncode, 2)
+        self.assertEqual(json.loads(completed.stdout)["status"], "invalid")
+
 
 if __name__ == "__main__":
     unittest.main()

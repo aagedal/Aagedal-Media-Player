@@ -303,6 +303,24 @@ struct CompareReviewDraftState {
         }
     }
 
+    /// A successful same-sidecar save can merge another window's deletion.
+    /// Its removed finding must no longer arbitrate blur or correction focus
+    /// for surviving rows. Loading temporarily empties notes, so reconcile
+    /// only after the current review is editable again.
+    mutating func reconcileNotes(_ notes: [CompareReviewNote], canEdit: Bool) {
+        guard canEdit else { return }
+        let noteIDs = Set(notes.map(\.id))
+        noteDrafts = noteDrafts.filter { noteIDs.contains($0.key) }
+        noteActionErrors = noteActionErrors.filter { noteIDs.contains($0.key) }
+        rangeDrafts = rangeDrafts.filter { noteIDs.contains($0.key) }
+        rangeActionErrors = rangeActionErrors.filter { noteIDs.contains($0.key) }
+        if let selectedID = correctionRequest?.noteID, !noteIDs.contains(selectedID) {
+            clearActionNotice()
+        } else if let noticeID = rangeActionNoticeNoteID, !noteIDs.contains(noticeID) {
+            clearActionNotice()
+        }
+    }
+
     mutating func clear() { self = Self() }
 }
 
@@ -638,6 +656,7 @@ struct CompareReviewView: View {
         .frame(width: 420)
         .disabled(compareSession.isReviewActionPending)
         .onAppear {
+            drafts.reconcileNotes(compareSession.reviewNotes, canEdit: compareSession.canEditReviewNotes)
             revealSelectedCorrection()
             focusedField = requestedFocus ?? .newNote
             requestedFocus = nil
@@ -770,6 +789,7 @@ struct CompareReviewView: View {
         _ action: @escaping @MainActor (CompareSessionController, PlayerController) -> Void
     ) {
         guard !compareSession.isReviewActionPending else { return }
+        drafts.reconcileNotes(compareSession.reviewNotes, canEdit: compareSession.canEditReviewNotes)
         if !drafts.newNoteDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             drafts.newNoteActionError = "Add or clear the new note before continuing."
             focusedField = .newNote

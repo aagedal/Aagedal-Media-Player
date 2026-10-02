@@ -310,11 +310,16 @@ Import the unchanged app XML into a disposable Premiere project through
 match the source, then inspect marker frames, ranges, duplicate grouping and
 exact note content against the CSV. Activate that sequence and export through
 **File → Export → Final Cut Pro XML**. Retain Premiere's translation log and
-both unmodified XML files. Compare them with:
+both unmodified XML files. Capture the media-byte baseline before import, then
+compare the re-export against it:
 
 ```bash
+python3 scripts/compare-premiere-marker-roundtrip.py original.xml original.xml \
+  --verify-media --output pre-import-baseline.json
+
+# Run after native import and re-export:
 python3 scripts/compare-premiere-marker-roundtrip.py original.xml returned.xml \
-  --verify-media --output new-premiere-comparison.json
+  --baseline-report pre-import-baseline.json --output new-premiere-comparison.json
 ```
 
 If the returned project contains multiple sequences, add
@@ -334,8 +339,13 @@ frame, with its original encoding retained in the report.
 
 The checker exits 0 for an exact file comparison, 1 for differences and 2 for
 invalid/unsupported input. Existing output reports are refused. `--verify-media`
-reads and hashes both currently referenced media files; retain and verify the
-pre-import fixture hashes separately to prove input immutability. A comparison
+reads and hashes both currently referenced media files, so replacing the same
+path before comparison can still pass. `--baseline-report` binds the captured
+original XML hash and canonical source path, hashes current media implicitly,
+and requires both current media hashes to match the captured original hash.
+The baseline must contain a successful media-byte comparison; it may retain
+unrelated XML differences. Historical post-only comparisons require their
+separately retained pre-import hashes. A comparison
 of a file with itself only establishes format validity. It cannot establish
 native loading, rendering, editor version or a round trip.
 

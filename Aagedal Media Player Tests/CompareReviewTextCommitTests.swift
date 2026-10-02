@@ -7,6 +7,135 @@ import XCTest
 
 final class CompareReviewTextCommitTests: XCTestCase {
     @MainActor
+    func testMergedDeletionRetiresRemovedCorrectionAndResumesSurvivingDraftCommits() {
+        let removed = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
+            secondaryFrame: 10, secondaryTime: 1, text: "Removed finding", primaryEndFrame: 20)
+        let surviving = CompareReviewNote(primaryFrame: 30, primaryTime: 3,
+            secondaryFrame: 30, secondaryTime: 3, text: "Surviving finding", primaryEndFrame: 40)
+        for field in [CompareReviewCorrectionRequest.Field.text, .rangeEnd] {
+            var drafts = CompareReviewDraftState()
+            drafts.updateNoteTextDraft("", noteID: removed.id)
+            drafts.updateRangeEndDraft("invalid end", noteID: removed.id)
+            drafts.noteActionErrors[removed.id] = "Text needs correction"
+            drafts.rangeActionErrors[removed.id] = "Range needs correction"
+            drafts.blockAction(noteID: removed.id, field: field,
+                error: "Correct the removed finding", notice: "Review needs attention")
+            drafts.updateNoteTextDraft("Updated surviving finding", noteID: surviving.id)
+            drafts.updateRangeEndDraft("45", noteID: surviving.id)
+
+            // Before reconciliation, the deleted finding still arbitrates
+            // focus and prevents either surviving field from committing.
+            drafts.commitTextOnDeparture(note: surviving, canEdit: true) { _ in
+                XCTFail("A selected correction should defer another field")
+                return true
+            }
+            drafts.commitRangeOnDeparture(note: surviving, canEdit: true) { _ in
+                XCTFail("A selected correction should defer another field")
+                return true
+            }
+
+            drafts.reconcileNotes([surviving], canEdit: true)
+            XCTAssertNil(drafts.noteDrafts[removed.id])
+            XCTAssertNil(drafts.noteActionErrors[removed.id])
+            XCTAssertNil(drafts.rangeDrafts[removed.id])
+            XCTAssertNil(drafts.rangeActionErrors[removed.id])
+            XCTAssertNil(drafts.correctionRequest)
+            XCTAssertNil(drafts.rangeActionNotice)
+            XCTAssertNil(drafts.rangeActionNoticeNoteID)
+
+            var texts: [String] = []
+            var ends: [Int64] = []
+            drafts.commitTextOnDeparture(note: surviving, canEdit: true) {
+                texts.append($0)
+                return true
+            }
+            drafts.commitRangeOnDeparture(note: surviving, canEdit: true) {
+                ends.append($0)
+                return true
+            }
+            XCTAssertEqual(texts, ["Updated surviving finding"])
+            XCTAssertEqual(ends, [45])
+            XCTAssertNil(drafts.noteDrafts[surviving.id])
+            XCTAssertNil(drafts.rangeDrafts[surviving.id])
+        }
+    }
+
+    @MainActor
+    func testMergedDeletionPreservesSurvivingCorrectionAndUnaddedNote() {
+        let removedID = UUID()
+        let surviving = CompareReviewNote(primaryFrame: 30, primaryTime: 3,
+            secondaryFrame: 30, secondaryTime: 3, text: "Surviving finding", primaryEndFrame: 40)
+        var drafts = CompareReviewDraftState()
+        drafts.updateNewNoteDraft("Unadded finding")
+        drafts.newNoteActionError = "Add or clear the new note before continuing."
+        drafts.updateNoteTextDraft("Obsolete input", noteID: removedID)
+        drafts.updateRangeEndDraft("25", noteID: removedID)
+        drafts.updateNoteTextDraft("", noteID: surviving.id)
+        drafts.updateRangeEndDraft("invalid surviving end", noteID: surviving.id)
+        drafts.rangeActionErrors[surviving.id] = "Earlier range error"
+        drafts.blockAction(noteID: surviving.id, field: .text,
+            error: "Enter note text", notice: "Correct the surviving finding")
+        let correction = drafts.correctionRequest
+
+        drafts.reconcileNotes([surviving], canEdit: true)
+
+        XCTAssertNil(drafts.noteDrafts[removedID])
+        XCTAssertNil(drafts.rangeDrafts[removedID])
+        XCTAssertEqual(drafts.noteDrafts[surviving.id], "")
+        XCTAssertEqual(drafts.rangeDrafts[surviving.id], "invalid surviving end")
+        XCTAssertEqual(drafts.noteActionErrors[surviving.id], "Enter note text")
+        XCTAssertEqual(drafts.rangeActionErrors[surviving.id], "Earlier range error")
+        XCTAssertEqual(drafts.correctionRequest, correction)
+        XCTAssertEqual(drafts.rangeActionNotice, "Correct the surviving finding")
+        XCTAssertEqual(drafts.newNoteDraft, "Unadded finding")
+        XCTAssertEqual(drafts.newNoteActionError, "Add or clear the new note before continuing.")
+    }
+
+    @MainActor
+    func testTemporaryUnavailableReviewPreservesDraftsUntilLoadedNotesCanReconcile() {
+        let note = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
+            secondaryFrame: 10, secondaryTime: 1, text: "Finding", primaryEndFrame: 20)
+        var drafts = CompareReviewDraftState()
+        drafts.updateNoteTextDraft("Pending text", noteID: note.id)
+        drafts.updateRangeEndDraft("invalid end", noteID: note.id)
+        drafts.blockAction(noteID: note.id, field: .rangeEnd,
+            error: "Enter an end frame", notice: "Correct this range")
+        let correction = drafts.correctionRequest
+
+        // Same-source reload clears the controller's notes while loading.
+        // A failed load also remains unavailable until the user retries.
+        drafts.reconcileNotes([], canEdit: false)
+        XCTAssertEqual(drafts.noteDrafts[note.id], "Pending text")
+        XCTAssertEqual(drafts.rangeDrafts[note.id], "invalid end")
+        XCTAssertEqual(drafts.rangeActionErrors[note.id], "Enter an end frame")
+        XCTAssertEqual(drafts.correctionRequest, correction)
+        XCTAssertEqual(drafts.rangeActionNotice, "Correct this range")
+
+        drafts.reconcileNotes([note], canEdit: true)
+        XCTAssertEqual(drafts.noteDrafts[note.id], "Pending text")
+        XCTAssertEqual(drafts.rangeDrafts[note.id], "invalid end")
+        XCTAssertEqual(drafts.correctionRequest, correction)
+
+        // Only a successfully loaded review without this finding retires it.
+        drafts.reconcileNotes([], canEdit: true)
+        XCTAssertTrue(drafts.noteDrafts.isEmpty)
+        XCTAssertTrue(drafts.rangeDrafts.isEmpty)
+        XCTAssertTrue(drafts.rangeActionErrors.isEmpty)
+        XCTAssertNil(drafts.correctionRequest)
+    }
+
+    @MainActor
+    func testReconciliationPreservesWindowLevelUnavailableActionNotice() {
+        var drafts = CompareReviewDraftState()
+        drafts.rangeActionNotice = "Review notes cannot be edited right now. Retry loading the review before continuing."
+        drafts.reconcileNotes([], canEdit: true)
+        XCTAssertEqual(drafts.rangeActionNotice,
+            "Review notes cannot be edited right now. Retry loading the review before continuing.")
+        XCTAssertNil(drafts.rangeActionNoticeNoteID)
+        XCTAssertNil(drafts.correctionRequest)
+    }
+
+    @MainActor
     func testAcceptedDeletePreservesAnotherFindingsCorrectionAndDrafts() {
         let deletedID = UUID()
         let otherID = UUID()

@@ -244,6 +244,12 @@ struct ContentView: View {
         .onChange(of: compareSession.reviewSidecarURL) { _, _ in
             compareReviewDrafts.clear()
         }
+        .onChange(of: compareSession.reviewNotes.map(\.id)) { _, _ in
+            compareReviewDrafts.reconcileNotes(compareSession.reviewNotes, canEdit: compareSession.canEditReviewNotes)
+        }
+        .onChange(of: compareSession.canEditReviewNotes) { _, available in
+            compareReviewDrafts.reconcileNotes(compareSession.reviewNotes, canEdit: available)
+        }
         .onChange(of: loupe.isEnabled) { _, enabled in
             if !enabled {
                 loupePrimaryCapture.stop()

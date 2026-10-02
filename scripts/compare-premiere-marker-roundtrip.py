@@ -4,6 +4,9 @@
 
 XML comparison is file evidence, not proof of native Premiere acceptance.
 The scope is one untrimmed source-A video clip and its sequence markers.
+Capture a --verify-media self-comparison report before importing into Premiere,
+then pass it as --baseline-report on the round-trip comparison to detect media
+replaced in place. Post-only media hashing cannot prove pre/post immutability.
 """
 import argparse
 from collections import Counter
@@ -113,6 +116,29 @@ def digest(path):
         for chunk in iter(lambda: source.read(1024 * 1024), b""):
             sha.update(chunk)
     return sha.hexdigest()
+
+
+def media_baseline(path, original):
+    """Bind a previously captured byte receipt to this unchanged original XML."""
+    try:
+        report = json.loads(path.read_text())
+    except (UnicodeError, json.JSONDecodeError) as error:
+        raise ValueError("Invalid media baseline JSON") from error
+    if (not isinstance(report, dict) or report.get("status") not in ("exact-match", "differences")
+            or report.get("mediaBytesCompared") is not True
+            or not isinstance(report.get("checks"), dict)
+            or report["checks"].get("sourceMediaBytes") is not True
+            or not isinstance(report.get("original"), dict)):
+        raise ValueError("Media baseline must be a prior successful --verify-media byte receipt")
+    baseline = report["original"]
+    checksum = baseline.get("mediaSHA256")
+    if not isinstance(checksum, str) or not re.fullmatch(r"[0-9a-f]{64}", checksum):
+        raise ValueError("Media baseline must contain a valid original media SHA-256")
+    if baseline.get("sha256") != original["sha256"]:
+        raise ValueError("Media baseline original XML SHA-256 does not match this original XML")
+    if baseline.get("sourcePath") != original["sourcePath"]:
+        raise ValueError("Media baseline original source path does not match this original XML")
+    return dict(originalXMLSHA256=baseline["sha256"], sourcePath=baseline["sourcePath"], mediaSHA256=checksum)
 
 
 def geometry(element, expected_rate):
@@ -297,34 +323,43 @@ def read_export(path, sequence_name=None):
                 markers=markers, encodedMarkerOutFrames=encoded_outs)
 
 
-def compare(original, returned, verify_media=False, returned_sequence_name=None):
+def compare(original, returned, verify_media=False, returned_sequence_name=None, baseline_report=None):
     before = read_export(original)
     after = read_export(returned, returned_sequence_name)
+    baseline = media_baseline(baseline_report, before) if baseline_report is not None else None
     checks = {key: before[key] == after[key] for key in
               ("rate", "durationFrames", "sourceDurationFrames", "clipPlacement", "sequenceTimecode", "sourceTimecode",
                "sequenceGeometry", "sourceGeometry", "clipFieldDominance", "clipPixelAspect", "sourcePath")}
     checks["markerTimingAndTitles"] = Counter(m[:3] for m in before["markers"]) == Counter(m[:3] for m in after["markers"])
     checks["exactMarkerContent"] = Counter(before["markers"]) == Counter(after["markers"])
-    if verify_media:
+    if verify_media or baseline is not None:
         before["mediaSHA256"] = digest(Path(before["sourcePath"]))
         after["mediaSHA256"] = digest(Path(after["sourcePath"]))
         checks["sourceMediaBytes"] = before["mediaSHA256"] == after["mediaSHA256"]
-    return dict(status="exact-match" if all(checks.values()) else "differences",
+    if baseline is not None:
+        checks["sourceMediaMatchesBaseline"] = before["mediaSHA256"] == after["mediaSHA256"] == baseline["mediaSHA256"]
+    report = dict(status="exact-match" if all(checks.values()) else "differences",
                 scope="Single source-A review sequence XML comparison; not native editor acceptance",
                 returnedSequenceName=returned_sequence_name, checks=checks,
-                mediaBytesCompared=verify_media, original=before, returned=after)
+                mediaBytesCompared=verify_media or baseline is not None, original=before, returned=after)
+    if baseline is not None:
+        report["mediaBaseline"] = baseline
+    return report
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("original", type=Path)
     parser.add_argument("returned", type=Path)
-    parser.add_argument("--verify-media", action="store_true")
+    parser.add_argument("--verify-media", action="store_true",
+                        help="Hash current media paths; alone this cannot detect prior in-place replacement")
+    parser.add_argument("--baseline-report", type=Path,
+                        help="Prior --verify-media report captured before import; original XML hash and source path must match; implies current media hashing")
     parser.add_argument("--returned-sequence-name", help="Select one unique exact sequence name in a returned project XML")
     parser.add_argument("--output", type=Path, help="Write a new JSON report; existing files are refused")
     args = parser.parse_args()
     try:
-        report = compare(args.original, args.returned, args.verify_media, args.returned_sequence_name)
+        report = compare(args.original, args.returned, args.verify_media, args.returned_sequence_name, args.baseline_report)
     except (ValueError, KeyError, OSError, ET.ParseError, ZeroDivisionError) as error:
         report = dict(status="invalid", error=str(error))
     output = json.dumps(report, indent=2, ensure_ascii=False) + "\n"

@@ -1,0 +1,36 @@
+{
+  "date": "2026-10-02",
+  "candidateImplementationCommit": "af0fd03f1a83ec9e9442832266c42d37f159f024",
+  "applicationPath": "/private/tmp/aagedal-review-eof-premiere-canonical-20261002/DerivedData/Build/Products/Release/Aagedal Media Player.app/Contents/MacOS/Aagedal Media Player",
+  "applicationSHA256": "9f386bd33d9f4e04554ffe3636cbcee6490317a636a3361a4307168d2e5fd15d",
+  "inputs": {
+    "reference.mov": "b14c18540b36e40e6faf3a088ef792ef2edf393ed4571f77ef5640b13f6603af",
+    "delivery.mov": "cb6ac77cc86a30a1de378f189c0ddaf66a558d424b1483ba9b78b632e77a0ed3"
+  },
+  "inputBytesUnchanged": true,
+  "exportedFindingCount": 1,
+  "sourceAFrame": 0,
+  "sourceAInclusiveEndFrame": 24,
+  "sourceBFrame": 24,
+  "noteText": "Keyboard range colour finding edited",
+  "keyboardActions": [
+    "Command-O, Go to Folder path, Return: source A",
+    "Command-Option-O, d, Return: source B",
+    "Command-Option-N, type text, Return: add finding",
+    "Tab twice, type text, Return: edit finding",
+    "Tab, type 24, Return: range after disclosure click",
+    "Command-Option-F, type unmatched filter",
+    "Command-Option-E, name CSV, Return: export all findings",
+    "Command-Option-F, Command-A, Backspace: reveal finding again"
+  ],
+  "pointerActions": [
+    "Accessibility click: expand classification/range disclosure"
+  ],
+  "notAccepted": [
+    "Full keyboard structured classification traversal",
+    "Full Keyboard Access",
+    "Spoken VoiceOver",
+    "New merged-deletion native scenario",
+    "Final continuation app native acceptance"
+  ]
+}

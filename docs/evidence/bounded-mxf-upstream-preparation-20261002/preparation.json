@@ -1,0 +1,200 @@
+{
+  "baseRevision": "8662054299a3e13c49c65f74c564360559d1bf7f",
+  "packageRoot": "/private/tmp/aagedal-bounded-mxf-upstream-preparation-20261002/SwiftMediaMetadata",
+  "cacheRoot": "/private/tmp/aagedal-bounded-mxf-upstream-preparation-20261002/cache",
+  "commands": [
+    [
+      "git",
+      "clone",
+      "--no-hardlinks",
+      "--no-checkout",
+      "/Users/truls.aagedal/Developer/SwiftMediaMetadata",
+      "/private/tmp/aagedal-bounded-mxf-upstream-preparation-20261002/SwiftMediaMetadata"
+    ],
+    [
+      "git",
+      "-C",
+      "/private/tmp/aagedal-bounded-mxf-upstream-preparation-20261002/SwiftMediaMetadata",
+      "checkout",
+      "--detach",
+      "8662054299a3e13c49c65f74c564360559d1bf7f"
+    ],
+    [
+      "git",
+      "-C",
+      "/private/tmp/aagedal-bounded-mxf-upstream-preparation-20261002/SwiftMediaMetadata",
+      "apply",
+      "--check",
+      "/Users/truls.aagedal/Developer/Aagedal-Media-Player/docs/evidence/bounded-mxf-candidate-20260930/swift-media-metadata-bounded-mxf.patch"
+    ],
+    [
+      "git",
+      "-C",
+      "/private/tmp/aagedal-bounded-mxf-upstream-preparation-20261002/SwiftMediaMetadata",
+      "apply",
+      "/Users/truls.aagedal/Developer/Aagedal-Media-Player/docs/evidence/bounded-mxf-candidate-20260930/swift-media-metadata-bounded-mxf.patch"
+    ],
+    [
+      "git",
+      "-C",
+      "/private/tmp/aagedal-bounded-mxf-upstream-preparation-20261002/SwiftMediaMetadata",
+      "diff",
+      "--check"
+    ],
+    [
+      "git",
+      "clone",
+      "--mirror",
+      "--no-hardlinks",
+      "/Users/truls.aagedal/Library/Caches/org.swift.swiftpm/repositories/swift-argument-parser-54a11a8d",
+      "/private/tmp/aagedal-bounded-mxf-upstream-preparation-20261002/cache/repositories/swift-argument-parser-54a11a8d"
+    ],
+    [
+      "git",
+      "-C",
+      "/private/tmp/aagedal-bounded-mxf-upstream-preparation-20261002/cache/repositories/swift-argument-parser-54a11a8d",
+      "remote",
+      "set-url",
+      "origin",
+      "https://github.com/apple/swift-argument-parser"
+    ],
+    [
+      "git",
+      "-C",
+      "/private/tmp/aagedal-bounded-mxf-upstream-preparation-20261002/cache/repositories/swift-argument-parser-54a11a8d",
+      "fsck",
+      "--full",
+      "--no-reflogs"
+    ]
+  ],
+  "argumentParser": {
+    "originalCache": "/Users/truls.aagedal/Library/Caches/org.swift.swiftpm/repositories/swift-argument-parser-54a11a8d",
+    "origin": "https://github.com/apple/swift-argument-parser",
+    "revision": "626b5b7b2f45e1b0b1c6f4a309296d1d21d7311b",
+    "version": "1.7.1",
+    "offlineGitObjectIntegrityChecked": true,
+    "remoteDownloadedOrAuthenticatedThisRun": false
+  },
+  "sourceSHA256Before": {
+    "Package.swift": "fdebfd8b2faf5698be56b02aafc16cf55d4bdbab675b6b378ac0d0f47642b0ce",
+    "Package.resolved": "d1a2ea86507e72c540e5ca3eab9e46206cd1bc8d0ca20a321a71c7e5a2b36b21",
+    "Sources/Benchmark/main.swift": "0eb4753bbfc703df15eaaf982b3f21d7b9e0fcfd20ba871203a135867af0fa00",
+    "Sources/SwiftMediaMetadata/API/VideoMetadata.swift": "e0105ea99605a11a6b7a25dce9ae967f32a34639daf64b311e7db1405414b99e",
+    "Sources/SwiftMediaMetadata/Video/MXFReader.swift": "4382a3e502994508fdb88536f962411498e19d91a7a655ec56401e5a2771ff0d",
+    "Sources/SwiftMediaMetadata/Video/MXFFileCursor.swift": "8a4715a45a33da0bf32a1f878eb47bf1c2040d21b77b5118019d7aa40310bd37",
+    "Tests/SwiftMediaMetadataTests/Video/VideoContainerTests.swift": "1df32455bf651e9b9a65fd05c29ab1937dad8d17b5a5785f35bc0db4b471492a",
+    "Tests/SwiftMediaMetadataTests/Video/MXFMCALabelsTests.swift": "242199391067d03240167ef3cff7be183c1f3827db144708d8dc7a598a251210",
+    "Tests/SwiftMediaMetadataTests/Video/MXFFileCursorTests.swift": "67bef66695a3e33cb2692be84b8d29cf4e245f36303de16f4bcb6e6f704b683a"
+  },
+  "upstreamManifestBenchmarkLockfileUnmodified": true,
+  "date": "2026-10-02",
+  "sourceSHA256After": {
+    "Package.swift": "fdebfd8b2faf5698be56b02aafc16cf55d4bdbab675b6b378ac0d0f47642b0ce",
+    "Package.resolved": "d1a2ea86507e72c540e5ca3eab9e46206cd1bc8d0ca20a321a71c7e5a2b36b21",
+    "Sources/Benchmark/main.swift": "0eb4753bbfc703df15eaaf982b3f21d7b9e0fcfd20ba871203a135867af0fa00",
+    "Sources/SwiftMediaMetadata/API/VideoMetadata.swift": "e0105ea99605a11a6b7a25dce9ae967f32a34639daf64b311e7db1405414b99e",
+    "Sources/SwiftMediaMetadata/Video/MXFReader.swift": "4382a3e502994508fdb88536f962411498e19d91a7a655ec56401e5a2771ff0d",
+    "Sources/SwiftMediaMetadata/Video/MXFFileCursor.swift": "8a4715a45a33da0bf32a1f878eb47bf1c2040d21b77b5118019d7aa40310bd37",
+    "Tests/SwiftMediaMetadataTests/Video/VideoContainerTests.swift": "1df32455bf651e9b9a65fd05c29ab1937dad8d17b5a5785f35bc0db4b471492a",
+    "Tests/SwiftMediaMetadataTests/Video/MXFMCALabelsTests.swift": "242199391067d03240167ef3cff7be183c1f3827db144708d8dc7a598a251210",
+    "Tests/SwiftMediaMetadataTests/Video/MXFFileCursorTests.swift": "67bef66695a3e33cb2692be84b8d29cf4e245f36303de16f4bcb6e6f704b683a"
+  },
+  "sourcesUnchangedDuringTests": true,
+  "gitStatusAfter": " M Sources/SwiftMediaMetadata/API/VideoMetadata.swift\n M Sources/SwiftMediaMetadata/Video/MXFReader.swift\n M Tests/SwiftMediaMetadataTests/Video/MXFMCALabelsTests.swift\n M Tests/SwiftMediaMetadataTests/Video/VideoContainerTests.swift\n?? Sources/SwiftMediaMetadata/Video/MXFFileCursor.swift\n?? Tests/SwiftMediaMetadataTests/Video/MXFFileCursorTests.swift\n",
+  "swiftVersion": "Apple Swift version 6.4 (swiftlang-6.4.0.34.1 clang-2100.3.34.1)\nTarget: arm64-apple-macosx27.0.0",
+  "argumentParserCheckout": {
+    "path": "/private/tmp/aagedal-bounded-mxf-upstream-preparation-20261002/build/checkouts/swift-argument-parser",
+    "revision": "626b5b7b2f45e1b0b1c6f4a309296d1d21d7311b",
+    "status": "",
+    "fsckExitStatus": 0
+  },
+  "tests": [
+    {
+      "scope": "Normal complete upstream swift test; library and CLI targets compiled",
+      "command": [
+        "swift",
+        "test",
+        "--package-path",
+        "/private/tmp/aagedal-bounded-mxf-upstream-preparation-20261002/SwiftMediaMetadata",
+        "--cache-path",
+        "/private/tmp/aagedal-bounded-mxf-upstream-preparation-20261002/cache",
+        "--config-path",
+        "/private/tmp/aagedal-bounded-mxf-upstream-preparation-20261002/config",
+        "--security-path",
+        "/private/tmp/aagedal-bounded-mxf-upstream-preparation-20261002/security",
+        "--scratch-path",
+        "/private/tmp/aagedal-bounded-mxf-upstream-preparation-20261002/build",
+        "--disable-sandbox",
+        "--force-resolved-versions",
+        "--skip-update",
+        "-debug-info-format",
+        "none"
+      ],
+      "environment": {
+        "CLANG_MODULE_CACHE_PATH": "/private/tmp/aagedal-bounded-mxf-upstream-preparation-20261002/clang-cache",
+        "SWIFT_MODULECACHE_PATH": "/private/tmp/aagedal-bounded-mxf-upstream-preparation-20261002/swift-cache",
+        "TMPDIR": "/private/tmp/aagedal-bounded-mxf-upstream-preparation-20261002/temporary"
+      },
+      "exitStatus": 0,
+      "libraryTests": 1674,
+      "librarySkipped": 21,
+      "libraryFailures": 0,
+      "defaultCLItests": 50,
+      "defaultCLIskipped": 28,
+      "defaultCLIfailures": 0
+    },
+    {
+      "scope": "Opted-in upstream black-box CLI target",
+      "command": [
+        "swift",
+        "test",
+        "--package-path",
+        "/private/tmp/aagedal-bounded-mxf-upstream-preparation-20261002/SwiftMediaMetadata",
+        "--cache-path",
+        "/private/tmp/aagedal-bounded-mxf-upstream-preparation-20261002/cache",
+        "--config-path",
+        "/private/tmp/aagedal-bounded-mxf-upstream-preparation-20261002/config",
+        "--security-path",
+        "/private/tmp/aagedal-bounded-mxf-upstream-preparation-20261002/security",
+        "--scratch-path",
+        "/private/tmp/aagedal-bounded-mxf-upstream-preparation-20261002/build",
+        "--disable-sandbox",
+        "--force-resolved-versions",
+        "--skip-update",
+        "-debug-info-format",
+        "none",
+        "--filter",
+        "SwiftMediaMetadataCLITests"
+      ],
+      "environment": {
+        "CLANG_MODULE_CACHE_PATH": "/private/tmp/aagedal-bounded-mxf-upstream-preparation-20261002/clang-cache",
+        "SWIFT_MODULECACHE_PATH": "/private/tmp/aagedal-bounded-mxf-upstream-preparation-20261002/swift-cache",
+        "TMPDIR": "/private/tmp/aagedal-bounded-mxf-upstream-preparation-20261002/temporary",
+        "SWIFT_EXIF_RUN_CLI_TESTS": "1",
+        "SWIFT_EXIF_CLI_BINARY": "/private/tmp/aagedal-bounded-mxf-upstream-preparation-20261002/build/debug/swift-exif"
+      },
+      "exitStatus": 0,
+      "tests": 50,
+      "skipped": 0,
+      "failures": 0
+    }
+  ],
+  "cliBinary": {
+    "path": "/private/tmp/aagedal-bounded-mxf-upstream-preparation-20261002/build/debug/swift-exif",
+    "sha256": "788f6e1415f2c611cb954a15ba08b5aea067032675062657da97da43be0b428a"
+  },
+  "rawLogSHA256": {
+    "library-tests.log": "e7c0c4851ae937b952239e1dbe42e358da7a42952358f755437d2da938f22d71",
+    "cli-tests.log": "bb29070c4223e46d21342446a2687092bc570ac53d3ca96ac3112d194205d9f9",
+    "preparation.log": "282ad40b24c949108ef51571283cd228bc03ee34bee53c817bf389a830636860",
+    "initial-missing-temp-directory.log": "8e0f154910ea8e342435a8ab31457575b55587c1f1ea2741d6eec6ffe5fca23e",
+    "initial-cli-binary-location-failure.log": "e193b27f541f2e030e424bed1d1dabb13eb437fe62dedc495d45c0ea30b8d48b"
+  },
+  "qualification": [
+    "Local Debug SwiftPM tests with unmodified normal package targets; no upstream publication/tag/commit or app repin.",
+    "Git cache object integrity and pinned revision checked offline; no remote payload downloaded/authenticated this run.",
+    "Initial setup failures retained: missing TMPDIR, then harness default binary lookup outside chosen scratch path. Corrected with existing directory and documented binary override, without source edits.",
+    "Twenty-one library opt-in skips remain; no new authentic-media profile, Release archive, Linux/external-volume/base-M1 acceptance or shipping integration claimed."
+  ],
+  "patchSHA256": "5da87e3d3dd7e40f93ae25cf0b57528c02684f59a6552244898875f1bbbed883"
+}

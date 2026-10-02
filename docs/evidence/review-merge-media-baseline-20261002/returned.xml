@@ -1,0 +1,14 @@
+<xmeml version="5"><project><children><sequence id="review">
+<name>Review</name><duration>20000</duration><rate><timebase>30</timebase><ntsc>TRUE</ntsc></rate><timecode><rate><timebase>30</timebase><ntsc>TRUE</ntsc></rate><frame>1740</frame><displayformat>DF</displayformat></timecode>
+<marker><name>QC 001</name><in>0</in><out>1</out><comment>æøå 日本語 &amp; &lt;picture&gt; "quoted"	column
+Second line</comment></marker>
+<marker><name>QC 002</name><in>1</in><out>2</out><comment>Adjacent</comment></marker>
+<marker><name>QC 003–004 (2 findings)</name><in>60</in><out>63</out><comment>QC 003: A frames 60–62 (inclusive)
+
+QC 004: duplicate</comment></marker>
+<marker><name>QC 005</name><in>19999</in><out>20000</out><comment>Final frame</comment></marker>
+<media><video><format><samplecharacteristics><rate><timebase>30</timebase><ntsc>TRUE</ntsc></rate><width>160</width><height>90</height><pixelaspectratio>square</pixelaspectratio></samplecharacteristics></format><track><clipitem id="source-a"><name>source-a.mov</name>
+<duration>20000</duration><rate><timebase>30</timebase><ntsc>TRUE</ntsc></rate><start>0</start><end>20000</end><in>0</in><out>20000</out>
+<file id="media-a"><name>source-a.mov</name><pathurl>file:///private/tmp/aagedal-premiere-baseline-20261002-0dstccbt/source%20a.mov</pathurl>
+<rate><timebase>30</timebase><ntsc>TRUE</ntsc></rate><duration>20000</duration><timecode><rate><timebase>30</timebase><ntsc>TRUE</ntsc></rate><frame>1740</frame><displayformat>DF</displayformat></timecode><media><video><samplecharacteristics><rate><timebase>30</timebase><ntsc>TRUE</ntsc></rate><width>160</width><height>90</height><pixelaspectratio>square</pixelaspectratio></samplecharacteristics></video></media></file>
+</clipitem></track></video></media></sequence></children></project></xmeml>
