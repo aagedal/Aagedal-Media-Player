@@ -1,0 +1,16 @@
+{
+  "auxiliaryInputCount": 20,
+  "auxiliaryTargetCount": 21,
+  "blockers": [
+    "Proposed release URLs have not been published or downloaded.",
+    "Auxiliary binary target and build-input URLs/checksums are upstream recipe declarations, not remote authentication.",
+    "Fresh ordinary SwiftPM resolution and the shipping app build against the published package remain required.",
+    "Source/configuration reproducibility is retained; byte-identical rebuilds have not been demonstrated.",
+    "Recipe contains host paths and autodetection; environment isolation and supported-macOS/hardware acceptance remain open."
+  ],
+  "fileCount": 46,
+  "gplArtifactCount": 8,
+  "passed": true,
+  "publicationSHA256": "3eb8f8dd20ce2de6802b7d080e6df30a69ca00b6706dc408823291576b96616c",
+  "status": "prepared-local-unpublished"
+}

@@ -7,8 +7,9 @@ prerelease is public at `1d44b9a0aa9e8faa5b8bf222173f6cc2930ed233` and tag
 MPVKit revision and exact SwiftMediaMetadata version. A fresh remote package
 resolution succeeds with Sparkle unchanged. The portable offline CoreAudio
 rebuild passes both architectures and every qualified boolean configuration
-digest. Remote stage/download verification and canonical app acceptance are
-still running. See [publication receipts](evidence/dependency-publication-20261002/README.md).
+digest. All 49 declared binary/input URL downloads and the corrected metadata-free
+source stage now pass fresh remote hash/inventory verification. Canonical app
+acceptance is being retried after generating this worktree's missing fixtures. See [publication receipts](evidence/dependency-publication-20261002/README.md).
 
 The preparation record below is retained as historical context. Its local-only,
 unpublished and old-shipping-pin statements describe the earlier handoff,

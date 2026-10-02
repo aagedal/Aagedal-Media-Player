@@ -1,0 +1,47 @@
+{
+  "sourceCommit": "7c95d27",
+  "applicationPath": "/private/tmp/aagedal-repinned-candidate-20261002/DerivedData/Build/Products/Release/Aagedal Media Player.app",
+  "applicationSHA256": "9eba73bb206e08ba5cbdaa58da679e02bdf2ffd0f11a03512a52460ee5e3e17c",
+  "windows": [
+    "player-AppWindow-1",
+    "player-AppWindow-2"
+  ],
+  "sidecar": "/private/tmp/aagedal-repinned-native-review-20261002/reference vs delivery-1ce8e54197a78a75.aagedal-compare.json",
+  "deletedFinding": "40611EF4-0A4E-4353-B40A-46DE7C45738B",
+  "survivingFinding": "A7251DF3-B3CE-48D3-AB9B-53360808E8BF",
+  "rejectedEndpoint": "-1",
+  "retainedUnaddedDraft": "Unadded draft from window one",
+  "observations": [
+    "Window one rejected the invalid range and kept its correction notice",
+    "Window one New Note navigation preserved the range correction and unadded draft",
+    "Window two loaded the same sidecar and saved deletion using its native Delete action",
+    "Window one still showed both old findings and the unadded draft after returning",
+    "Return in New Note merged the real deletion, saved the draft and retired the removed finding/correction notice",
+    "Keyboard Tab traversal and Return saved the surviving finding after merge",
+    "The original media hashes remain unchanged"
+  ],
+  "keyboard": [
+    "Open comparison B using Command-Option-O, d, Return",
+    "Create findings using Command-Option-N and Return",
+    "Reach inclusive range using three Tab presses",
+    "Retain invalid endpoint -1 using Return",
+    "Focus New Note with Command-Option-N without clearing invalid input",
+    "Save after real deletion using Return",
+    "Reach surviving text with two Tab presses, type replacement and Return"
+  ],
+  "accessibilityActions": [
+    "File chooser path correction",
+    "Enable and restore Allow Multiple Windows",
+    "Expand classification/range disclosure",
+    "Choose windows from Window menu",
+    "Delete backed-up disposable finding from window two"
+  ],
+  "notAccepted": [
+    "Complete keyboard-only classification traversal",
+    "Full Keyboard Access",
+    "Spoken VoiceOver",
+    "Other backend pairings",
+    "Relink/migration/save-recovery matrix",
+    "Final-tree canonical verification"
+  ]
+}

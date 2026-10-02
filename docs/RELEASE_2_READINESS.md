@@ -13,6 +13,16 @@ inspection before the editor beta. Automatic time-localized content-mismatch
 detection moves to a later release; existing manual Review findings, metadata
 mismatch summaries and missing-counterpart intervals remain available.
 
+Published dependency integration now pins MPVKit revision
+`1d44b9a0aa9e8faa5b8bf222173f6cc2930ed233` and exact SwiftMediaMetadata 3.0.2
+`9e8e912deb8d941da66a4b76854a90e3e9f01e3f`. All 49 binary/input URLs and the
+metadata-free complete source stage pass fresh remote verification; ordinary
+fresh-cache Xcode resolution succeeds. See [publication evidence](evidence/dependency-publication-20261002/README.md).
+The repinned native app also passes the bounded real two-window deletion,
+correction retirement, retained draft and surviving edit scenario. See
+[native evidence](evidence/repinned-two-window-review-20261002/README.md).
+Full keyboard/accessibility/editor/runtime acceptance remains separate.
+
 The native Review continuation exposed correction focus overriding deliberate
 New Note/Filter navigation. A shared focus owner, passive validation identity
 and explicit navigation suspension preserve rejected input while allowing those

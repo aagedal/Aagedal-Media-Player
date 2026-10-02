@@ -32,7 +32,25 @@ recompilation is not claimed byte-identical. The missing original environment
 identities remain historical gaps. Dependency slices do not establish downstream
 runtime or platform acceptance.
 
-Fresh verification of all 29 binary-target URLs and twenty build-input URLs,
-remote stage re-download, fresh repinned app resolution and canonical app
-acceptance are in progress. Native/editor/accessibility, runtime/device/soak,
+All 29 binary-target URLs and twenty build-input URLs now pass fresh HTTPS
+byte/hash verification with retained redirect identities. Fresh ordinary Xcode
+resolution from a new package directory succeeds with the exact app pins and
+Sparkle unchanged; the package-cache gate confirms all three clean checkout
+identities.
+
+The initial published stage archive retains macOS AppleDouble metadata and
+fails strict inventory validation when extracted by Python. It is retained as
+superseded. A new metadata-free `coreaudio-publication-stage-portable.tar.gz`
+asset and `release-assets-portable.json` are public, without replacing any prior
+asset. The new archive passes local Python extraction and complete stage
+verification; its fresh remote re-download now passes the external archive hash/size and complete
+strict stage verification after Python extraction. Its SHA-256 is
+`726d1b7bffcc4d7cfaf73a489140870c2bacda2fd55cb5454d4deabec1e08ade`.
+
+The first app verifier at `7c95d27` executes 764 passing tests with zero failures
+or runtime warnings, but rejects 54 skips because this new worktree lacked its
+ignored generated fixture tree. This is rejected evidence. The current fixture
+generator has now populated the normal ignored path; a fresh canonical retry
+is required. Native app work uses that repinned Release product, without claiming
+its incomplete aggregate run is accepted. Native/editor/accessibility, runtime/device/soak,
 source-pixel and distribution/beta gates are not closed by publication.
