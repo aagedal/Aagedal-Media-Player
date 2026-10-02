@@ -13,6 +13,12 @@ regressions fail on the preceding implementation; a retained comparator
 reproduction also demonstrates the preceding false exact-match. Candidate and
 release consumption require all seven new identities and 795 aggregate tests.
 See [focused receipts](evidence/review-meter-premiere-continuation-20261002/README.md).
+Canonical optimized Release verification passes at clean implementation commit
+`84ec5aa10b17bde549c036a71560daabaa872e01`: 786 passes, nine named opt-in skips
+(795 total), all seven new exact identities, both isolated transport directions,
+static analysis, all 61 preflight checks and final source/package/cache/no-sleep
+identity. See [integrated receipts](evidence/review-meter-premiere-candidate-20261002/README.md).
+Later documentation retention does not replace matching-HEAD release consumption.
 A native Premiere connection returns only a menu bar after 1,947 seconds;
 it supplies no new import, playback, or export acceptance. Wider native editor,
 accessibility, dependency, hardware and distribution gates remain open.

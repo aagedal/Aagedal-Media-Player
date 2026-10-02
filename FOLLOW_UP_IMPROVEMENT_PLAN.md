@@ -4691,8 +4691,13 @@ Integrated committed-source verification follows separately.
   candidate verification and release consumption; script-validator suite passes.
 - [x] Retain focused results, baseline failures and the comparator reproduction
   in `docs/evidence/review-meter-premiere-continuation-20261002/`.
-- [ ] Complete clean committed-source canonical verification and unchanged
-  native/editor/accessibility/dependency/hardware/distribution gates.
+- [x] Pass canonical optimized Release verification at clean implementation
+  commit `84ec5aa10b17bde549c036a71560daabaa872e01`: 786 passes, nine named opt-in
+  skips (795 total), all seven new required identities, both isolated transport
+  directions, static analysis, all 61 preflight checks and final source/package/
+  cache/no-sleep identity. Retain complete accepted receipts in
+  `docs/evidence/review-meter-premiere-candidate-20261002/`.
+- [ ] Complete native/editor/accessibility/dependency/hardware/distribution gates.
 
 ## Remaining work after this continuation
 
