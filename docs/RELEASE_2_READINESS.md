@@ -12,8 +12,13 @@ The native file-picker attempt is inconclusive; no new keyboard or spoken
 accessibility acceptance is claimed. Candidate/release consumption now requires
 all four new identities and 806 aggregate tests. See
 [focused receipts](evidence/review-eof-premiere-timing-20261002/README.md).
-Canonical committed-source verification follows separately; dependency, native,
-hardware and distribution gates remain open.
+Canonical optimized Release verification passes at clean implementation commit
+`af0fd03f1a83ec9e9442832266c42d37f159f024`: 797 passes, nine named opt-in skips
+(806 total), all four new identities, both isolated transport directions, static
+analysis, all 61 preflight checks and final source/package/cache/no-sleep identity.
+See [integrated receipts](evidence/review-eof-premiere-candidate-20261002/README.md).
+Later documentation retention does not replace matching-HEAD release consumption.
+Dependency, native, hardware and distribution gates remain open.
 
 The latest October 2 continuation moves explicit Review range Apply/Return to
 current draft ownership, cancels invalid paused/buffering meter clocks, and

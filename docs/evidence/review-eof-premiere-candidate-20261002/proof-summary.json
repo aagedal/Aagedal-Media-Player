@@ -1,0 +1,17 @@
+{
+  "sourceCommit": "af0fd03f1a83ec9e9442832266c42d37f159f024",
+  "configuration": "Release",
+  "aggregateTests": 806,
+  "passedTests": 797,
+  "allowlistedOptInSkips": 9,
+  "isolatedTransportPasses": 2,
+  "requiredNewRegressions": 4,
+  "failedTests": 0,
+  "runtimeWarnings": 0,
+  "staticAnalysis": "passed",
+  "releasePreflightChecks": 61,
+  "scriptValidators": "passed",
+  "sourcePackageCachePowerIdentity": "passed",
+  "newNativeAcceptance": false,
+  "fullArtifacts": "/private/tmp/aagedal-review-eof-premiere-canonical-20261002"
+}
