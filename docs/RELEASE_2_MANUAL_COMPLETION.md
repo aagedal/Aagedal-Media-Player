@@ -1,0 +1,34 @@
+# Manual completion of 2.0
+
+Updated 2026-10-02. Use this checklist with the [readiness assessment](RELEASE_2_READINESS.md). Historical receipts qualify their recorded build; repeat acceptance on the final candidate. Record the app commit, package pins, macOS/editor/device versions, media hashes, results and exact limitations for each run.
+
+## Implementation and product decisions
+
+- Confirm verified MPV decoder-raster source-pixel inspection is implemented and passes its final checks before editor beta. Then perform the Retina/PAR/rotation/live-pixel checks in the [loupe run sheet](INSPECTION_LOUPE_MANUAL_TESTS.md), including differing A/B raster sizes and source replacement. This handoff does not claim that gate is complete.
+- Resolve the measured MPV-primary/AVFoundation-secondary comparison drift follow-up; repeat it on the final app and retain results. See [current-machine performance evidence](evidence/m5-basic-performance-20261002/README.md).
+- Decide whether the reliability/comparison milestones ship separately or are consolidated into 2.0, and record that decision. Keep committed live Audio QC acceptance in scope unless you explicitly choose to re-sequence it.
+- Choose the version/build and private-beta versus stable-release channel. The existing release script publishes a stable GitHub release and stable Sparkle appcast; it rejects prereleases. A private editor beta needs a deliberate distribution procedure before invoking that script.
+
+## Native workflow, editors and hardware
+
+1. Complete a keyboard-only structured review with both playback backends: create/edit notes and classifications, inclusive ranges, filter/navigation, validation correction, export all findings while filtered, reopen, two-window edits/deletion, relink, migration and save recovery. Repeat narrow-window and Full Keyboard Access checks. The bounded two-window scenario already has evidence, but it does not replace the complete workflow. Retain sidecar/report hashes and avoid pointer or accessibility clicks in a claimed keyboard-only run.
+2. If closing accessibility acceptance, listen with VoiceOver while navigating those workflows, correction focus and live meter controls. Spoken VoiceOver is explicitly left open by the current scope decision; record it as an unclosed limitation if it remains untested.
+3. Repeat Premiere Pro import/re-export from the final app, prioritizing fractional rates and DF minute/ten-minute boundaries, inclusive ranges, duplicate positions, authored whitespace/multiline text, interlaced field order, rotation/PAR and source identity. Capture the media byte baseline **before** import; verify playback/conform as well as exported XML. Finish the remaining Resolve and Final Cut Pro matrix or document precise beta limitations, including observed marker loss. Follow the [interchange run sheet](COMPARE_MODE_INTERCHANGE.md); parser tests alone are insufficient.
+4. Use authentic stereo and surround media with the repinned app. Compare peak/true-peak and loudness against trusted references; listen to selected-track/A/B routing, switch actual output devices, and check pause/seek/source replacement, cancellation and EOF. Run a continuous 30-minute meter/device soak and retain bounded memory/resource observations. Follow [live-meter acceptance](LIVE_AUDIO_METER_PERFORMANCE.md); generated fixtures and short profiles do not close audible/device or long-play acceptance.
+5. Complete current-machine comparison playback/drift/resource smoke checks, including UHD/HDR, mixed backends, reflected sources, scopes and loupe. Retain measured results using the [performance run sheet](COMPARE_MODE_PERFORMANCE.md). Exercise authentic long-file thumbnails/loudness and real external-volume media where relevant. The basic M5 runs already pass their recorded short scenarios; they do not establish base-M1 performance.
+
+## Candidate, distribution and editor beta
+
+1. Update the project version/build and matching `CHANGELOG.md` section; commit all candidate changes. Verify published dependency resolution from the committed pins. Dependency publication and shipping repins are already recorded as complete; do not repeat the historical local-only publication handoff.
+2. Generate ignored test fixtures with `scripts/generate-test-fixtures.sh` using the documented full FFmpeg encoder build. From the clean final commit, run `scripts/verify-release-candidate.sh /tmp/aagedal-candidate-VERSION-BUILD` with a new external output directory. An optional `AAGEDAL_CANDIDATE_PACKAGE_CACHE` must contain clean exact pinned checkouts. Retain passing Release tests, isolated transport checks, static analysis and preflight evidence for that exact HEAD.
+3. Complete representative-media smoke tests against that app. Retain current screenshots and a workflow demo using the [demo run sheet](COMPARE_MODE_DEMO.md).
+4. For stable publication, confirm Developer ID signing credentials, the existing Sparkle private key/`SIGN_UPDATE_BIN`, the notarytool Keychain profile (`AagedalMediaPlayer` by default), and authenticated `gh`. Follow [release engineering](RELEASE.md), then run `CANDIDATE_EVIDENCE_DIR=/tmp/aagedal-candidate-VERSION-BUILD scripts/release.sh`. This builds, signs, notarizes and **publishes** the release. Do not use it as a private-beta packaging command.
+5. Verify the downloaded ZIP on a clean supported Apple-Silicon Mac: stapled ticket, Gatekeeper acceptance, launch/playback, installation and Sparkle upgrade from the preceding release. Commit/push the generated appcast after checking it. Update the Homebrew tap manually if `TAP_LOCAL_PATH` was not configured; follow the exact version/SHA instructions printed by the release script. The app remains arm64-only with macOS 15 minimum.
+6. Run a short editor/colorist beta, retain feedback, fix blocking findings and repeat final verification for any changed source. Do not call a later build qualified by an earlier candidate receipt.
+
+## Deferred or optional scope
+
+- Base 2020 M1/8-GB qualification is deferred by the October 2 decision; current M5 measurements or scaled estimates do not qualify it.
+- Automatic time-localized content-mismatch detection is deferred to a later release. Manual findings, metadata summaries and missing-counterpart intervals remain in scope.
+- Avid is optional for 2.0; Media Composer First evidence must not be generalized to full Media Composer compatibility.
+- Spatial image-region annotations, persistent editable attachments, playlists, batch preflight, caption QC, objective PSNR/SSIM/VMAF analysis and wider unverified immersive/legacy-format support remain outside the bounded release scope.

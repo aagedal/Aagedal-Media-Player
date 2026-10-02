@@ -31,9 +31,9 @@ The shared scheme includes the `Aagedal Media Player Tests` XCTest target. No Gi
 
 Swift Package dependencies (all remote, resolved via SPM):
 
-- **MPVKit-GPL** — `https://github.com/aagedal/MPVKit`, branch `main`. Truls's fork of MPVKit. Bundles mpv 0.41.0, FFmpeg n8.1.2, MoltenVK 1.4.2, Libplacebo 7.360.1.
-- **SwiftMediaMetadata** — `https://github.com/aagedal/SwiftMediaMetadata`, semver `3.0.1..<4.0.0`. Pure-Swift metadata library, replaces the earlier ffprobe shell-out for stream metadata. Version 3.0.1 is the minimum because it avoids materializing top-level `mdat` payloads during Sony RTMD discovery.
-- **Sparkle** — `https://github.com/sparkle-project/Sparkle`, semver `>= 2.9.1`. Auto-update infrastructure.
+- **MPVKit-GPL** — `https://github.com/aagedal/MPVKit`, exact revision `1d44b9a0aa9e8faa5b8bf222173f6cc2930ed233` (published GPL/CoreAudio/Metal build). Truls's fork of MPVKit. Bundles mpv 0.41.0, FFmpeg n8.1.2, MoltenVK 1.4.2, Libplacebo 7.360.1.
+- **SwiftMediaMetadata** — `https://github.com/aagedal/SwiftMediaMetadata`, exact version `3.0.2` (`9e8e912deb8d941da66a4b76854a90e3e9f01e3f`). Pure-Swift metadata library, replaces the earlier ffprobe shell-out for stream metadata. Version 3.0.2 includes bounded MXF reading; the earlier 3.0.1 correction avoids materializing top-level `mdat` payloads during Sony RTMD discovery.
+- **Sparkle** — `https://github.com/sparkle-project/Sparkle`, semver `>= 2.9.1`, currently resolved to `2.9.6`. Auto-update infrastructure.
 
 The app also ships a bundled `ffmpeg` binary at `Aagedal Media Player/Binaries/ffmpeg`, used for screenshot capture and lossless trim export (not for metadata).
 
