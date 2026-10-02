@@ -12,7 +12,8 @@ match the expected rotation-aware coded raster. This maps one captured source
 pixel to one physical display pixel, including on Retina displays. Both sources
 must independently pass that check
 in Compare Mode. Source replacement, a verified dimension mismatch, or an MPV-
-backed source returns the loupe to 2× and explains why 1:1 is unavailable.
+backed source without a verified decoder-raster provider returns the loupe to
+2× and explains why 1:1 is unavailable.
 
 The pointer selects a normalized coordinate inside the visible picture. Black
 bars do not change the selected coordinate. Compare Mode uses that coordinate
@@ -183,3 +184,38 @@ Before release:
   close with Full Keyboard Access and VoiceOver.
 - Close/reopen rapidly, replace B, replace A, and close the window during a
   capture; confirm no repeating work or stale picture remains.
+
+## Decoder-raster provider candidate — 2026-10-02
+
+The app now has a guarded consumer for the private `aagedal-decoder-raster`
+command. It discovers support through `command-list` once per MPV context. The
+published dependency does not implement this command, so its behavior remains
+display-preview capture with Native pixels unavailable. The source patch is a
+reviewable candidate, not a validated shipping provider. The consumer never
+enables the provider option automatically; app activation requires reviewed
+dependency identity, native proof, and an explicit engineering change.
+
+The version 1 response contains the regular typed RGB byte-array fields plus
+coded raster dimensions, track identity, orientation, actual frame PTS, and
+explicit pixel-preserving/presented-frame assertions. The consumer rejects
+missing, duplicate, mistyped, unsupported, or inconsistent proof fields. Track
+reads bracket the native command. A successful response must match the current
+source preparation and backend before publication. Dimensions alone and an
+ordinary `screenshot-raw` result never establish this proof.
+
+Native-pixel availability also requires a paused player, unchanged selected
+track, and the provider's `aagedal-decoder-raster-pts` property to match the
+captured PTS exactly. The property must become unavailable when a seek, playback,
+filter, or unsupported source state invalidates the presented-frame association.
+Capture failure revokes the previous proof. A missing provider command/property
+or a rejected capture falls back to the existing display screenshot. QuickTime
+reflection correction is explicitly ineligible for this candidate.
+
+The initial provider candidate is intentionally restricted to paused software
+frames with no filters, rotation, crop, or anamorphic PAR. This does not complete
+the MPV 1:1 release gate. Compile and native regression validation, packaging and
+publication, source-pixel registration against reference fixtures, stale frame
+rejection after seek/track/reload, and production-resolution capture costs must
+all pass first. Hardware decoding, PAR, rotation/reflection, and playing capture
+remain unsupported until individually implemented and verified. See the
+[provider contract](MPV_DECODER_RASTER_PROVIDER.md).

@@ -330,7 +330,7 @@ python3() { echo remote-validation >> "$TRACE"; }
         self.assertLess(summary, details)
         self.assertLess(details, validation)
         self.assertLess(validation, analysis)
-        self.assertIn('--minimum-tests 818', source)
+        self.assertIn('--minimum-tests 826', source)
         self.assertIn('-parallel-testing-enabled NO', source)
         self.assertEqual(source.count('-skip-testing:'), 2)
         focused = source.index('echo "==> Focused mixed-backend transport repeat"')
@@ -340,12 +340,20 @@ python3() { echo remote-validation >> "$TRACE"; }
         self.assertLess(focused_validation, analysis)
         self.assertIn('testAVFoundationPrimaryAndMPVSecondaryShareTransport', source)
         self.assertIn('testMPVPrimaryAndAVFoundationSecondaryShareTransport', source)
-        self.assertEqual(source.count('--require-test'), 65)
+        self.assertEqual(source.count('--require-test'), 73)
         for name in ('testPassiveTextDepartureUsesCorrectionSelectedAfterRowRender',
                      'testPassiveTextDepartureRetainsFailuresAndCommitsOnceAfterRetry',
                      'testPassiveRangeBlurUsesTextCorrectionSelectedAfterRowRender'):
             self.assertIn(f'--require-test "CompareReviewTextCommitTests/{name}()"', source)
         for class_name, name in (
+            ('MPVDecoderRasterTests', 'testCapabilityRequiresExactCommandName'),
+            ('LoupeTrackDecoderTests', 'testBundledMPVFallbackPreviewNeverCertifiesMatchingDimensions'),
+            ('MPVDecoderRasterTests', 'testAcceptsOnlyVersionedPresentedDecoderProofAndCopiesPixels'),
+            ('MPVDecoderRasterTests', 'testRejectsMissingMistypedDuplicateAndNegativeProofFields'),
+            ('MPVDecoderRasterTests', 'testRejectsChangedUnselectedAndUnknownTrack'),
+            ('MPVDecoderRasterTests', 'testRejectsResampledRasterUnsupportedRotationAndInvalidFrameTime'),
+            ('MPVDecoderRasterTests', 'testDisplayScreenshotCannotBecomeDecoderProof'),
+            ('LoupeGeometryTests', 'testMPVNativePixelsRequireExplicitDecoderProofForBothSources'),
             ('CompareReviewTextCommitTests', 'testErasedSavedRangeDepartureExplainsExplicitClearWithoutChangingEndpoint'),
             ('CompareReviewTextCommitTests', 'testRangeDraftEditClearsPreviousErrorBeforeNewValidation'),
             ('CompareReviewTextCommitTests', 'testNewerRangeDraftAfterCurrentFrameActionCommitsAgainstCurrentSavedEndpoint'),
@@ -440,13 +448,21 @@ python3() { echo remote-validation >> "$TRACE"; }
         self.assertLess(package_match, result_validation)
         self.assertLess(result_validation, preflight)
         self.assertLess(result_validation, archive)
-        self.assertIn('--minimum-tests 818', self.source)
-        self.assertEqual(self.source.count('--require-test'), 65)
+        self.assertIn('--minimum-tests 826', self.source)
+        self.assertEqual(self.source.count('--require-test'), 73)
         for name in ('testPassiveTextDepartureUsesCorrectionSelectedAfterRowRender',
                      'testPassiveTextDepartureRetainsFailuresAndCommitsOnceAfterRetry',
                      'testPassiveRangeBlurUsesTextCorrectionSelectedAfterRowRender'):
             self.assertIn(f'--require-test "CompareReviewTextCommitTests/{name}()"', self.source)
         for class_name, name in (
+            ('MPVDecoderRasterTests', 'testCapabilityRequiresExactCommandName'),
+            ('LoupeTrackDecoderTests', 'testBundledMPVFallbackPreviewNeverCertifiesMatchingDimensions'),
+            ('MPVDecoderRasterTests', 'testAcceptsOnlyVersionedPresentedDecoderProofAndCopiesPixels'),
+            ('MPVDecoderRasterTests', 'testRejectsMissingMistypedDuplicateAndNegativeProofFields'),
+            ('MPVDecoderRasterTests', 'testRejectsChangedUnselectedAndUnknownTrack'),
+            ('MPVDecoderRasterTests', 'testRejectsResampledRasterUnsupportedRotationAndInvalidFrameTime'),
+            ('MPVDecoderRasterTests', 'testDisplayScreenshotCannotBecomeDecoderProof'),
+            ('LoupeGeometryTests', 'testMPVNativePixelsRequireExplicitDecoderProofForBothSources'),
             ('CompareReviewTextCommitTests', 'testErasedSavedRangeDepartureExplainsExplicitClearWithoutChangingEndpoint'),
             ('CompareReviewTextCommitTests', 'testRangeDraftEditClearsPreviousErrorBeforeNewValidation'),
             ('CompareReviewTextCommitTests', 'testNewerRangeDraftAfterCurrentFrameActionCommitsAgainstCurrentSavedEndpoint'),

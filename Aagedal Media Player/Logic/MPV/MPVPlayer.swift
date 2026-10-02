@@ -67,6 +67,9 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
     let backwardPlaybackFailed = PassthroughSubject<Void, Never>()
 
     private var correctsReflection = false
+
+    private var supportsDecoderRasterCapture = false
+    var canInspectDecoderRaster: Bool { supportsDecoderRasterCapture && !correctsReflection }
     private var isInitialized = false
     private var startPaused = false
     private nonisolated(unsafe) var wakeupContext: UnsafeMutableRawPointer?
@@ -160,6 +163,8 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
             return
         }
 
+        decoderRasterCapability = nil
+        supportsDecoderRasterCapture = false
         mpv = mpv_create()
         guard mpv != nil else {
             logger.error("Failed to create MPV context")
@@ -236,6 +241,12 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
             error = "MPV initialization failed: \(message)"
             return
         }
+
+        var availableCommands = mpv_node()
+        let commandStatus = mpv_get_property(mpv, "command-list", MPV_FORMAT_NODE, &availableCommands)
+        supportsDecoderRasterCapture = commandStatus >= 0 && Self.hasDecoderRasterCommand(availableCommands)
+        decoderRasterCapability = supportsDecoderRasterCapture
+        mpv_free_node_contents(&availableCommands)
 
         // These values may have been assigned while load() was still pending,
         // before the drawable existed and mpv had an initialized context.
@@ -825,6 +836,83 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
     /// torn down or observes `mpv == nil` and bails.
     nonisolated func screenshotRaw() -> RawScreenshot? {
         queue.sync { screenshotRawLocked() }
+    }
+
+    /// A missing private provider command leaves shipping binaries on display
+    /// capture. Probe command-list first to avoid logging unsupported commands
+    /// every time the loupe refreshes. No player options or filters are changed.
+    private nonisolated(unsafe) var decoderRasterCapability: Bool?
+
+    nonisolated func decoderRaster() -> MPVDecoderRaster? {
+        queue.sync { () -> MPVDecoderRaster? in
+            guard let context = mpv else { return nil }
+            if decoderRasterCapability == nil {
+                var commands = mpv_node()
+                let status = mpv_get_property(context, "command-list", MPV_FORMAT_NODE, &commands)
+                defer { mpv_free_node_contents(&commands) }
+                decoderRasterCapability = status >= 0 && Self.hasDecoderRasterCommand(commands)
+            }
+            guard decoderRasterCapability == true else { return nil }
+            func trackID() -> Int64? {
+                var value: Int64 = 0
+                return mpv_get_property(context, "vid", MPV_FORMAT_INT64, &value) >= 0 ? value : nil
+            }
+            let before = trackID()
+            let name = strdup("aagedal-decoder-raster")
+            defer { free(name) }
+            var arguments: [UnsafePointer<CChar>?] = [name.map { UnsafePointer<CChar>($0) }, nil]
+            var result = mpv_node()
+            let status = arguments.withUnsafeMutableBufferPointer {
+                mpv_command_ret(context, $0.baseAddress, &result)
+            }
+            defer { mpv_free_node_contents(&result) }
+            guard status >= 0 else { return nil }
+            return MPVDecoderRaster.parse(result, trackBefore: before, trackAfter: trackID())
+        }
+    }
+
+    /// Revoke the proof as soon as playback/seek/filter state changes, without
+    /// waiting for the next asynchronous capture to complete. Missing provider
+    /// state is a rejection, never permission to retain the previous proof.
+    nonisolated func isDecoderRasterCurrent(pts: TimeInterval, trackID: Int64) -> Bool {
+        queue.sync {
+            guard let context = mpv, pts.isFinite else { return false }
+            var selectedTrack: Int64 = 0
+            guard mpv_get_property(context, "vid", MPV_FORMAT_INT64, &selectedTrack) >= 0,
+                  selectedTrack == trackID else { return false }
+            var paused: Int32 = 0
+            guard mpv_get_property(context, "pause", MPV_FORMAT_FLAG, &paused) >= 0, paused == 1 else { return false }
+            guard let presentedPTS = doublePropertyLocked("aagedal-decoder-raster-pts", context: context),
+                  presentedPTS == pts else { return false }
+            return true
+        }
+    }
+
+    nonisolated func loupeVideoTrackID() -> Int64? {
+        queue.sync {
+            guard let context = mpv else { return nil }
+            var value: Int64 = 0
+            guard mpv_get_property(context, "vid", MPV_FORMAT_INT64, &value) >= 0, value > 0 else { return nil }
+            return value
+        }
+    }
+
+    nonisolated static func hasDecoderRasterCommand(_ node: mpv_node) -> Bool {
+        guard node.format == MPV_FORMAT_NODE_ARRAY, let list = node.u.list,
+              list.pointee.num > 0, let entries = list.pointee.values else { return false }
+        for index in 0..<Int(list.pointee.num) {
+            let entry = entries[index]
+            guard entry.format == MPV_FORMAT_NODE_MAP, let map = entry.u.list,
+                  map.pointee.num > 0, let keys = map.pointee.keys,
+                  let values = map.pointee.values else { continue }
+            for field in 0..<Int(map.pointee.num) {
+                guard let key = keys[field], String(cString: key) == "name" else { continue }
+                let value = values[field]
+                if value.format == MPV_FORMAT_STRING, let name = value.u.string,
+                   String(cString: name) == "aagedal-decoder-raster" { return true }
+            }
+        }
+        return false
     }
 
     /// Must run on `queue`. Touches the mpv context directly.
