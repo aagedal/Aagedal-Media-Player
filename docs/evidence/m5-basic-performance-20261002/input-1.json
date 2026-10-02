@@ -1,0 +1,30 @@
+{
+  "command": [
+    "/opt/homebrew/bin/ffprobe",
+    "-v",
+    "error",
+    "-select_streams",
+    "v:0",
+    "-show_entries",
+    "stream=codec_name,width,height,r_frame_rate,avg_frame_rate,pix_fmt,color_transfer,duration",
+    "-of",
+    "json",
+    "/Users/truls.aagedal/Movies/TestVideo/A1_v_FX6/FX6/OJ_FX6A0021.MXF"
+  ],
+  "metadata": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_name": "h264",
+        "width": 3840,
+        "height": 2160,
+        "pix_fmt": "yuv422p10le",
+        "r_frame_rate": "50/1",
+        "avg_frame_rate": "50/1",
+        "duration": "139.840000"
+      }
+    ]
+  },
+  "sizeBytes": 8643449904
+}

@@ -1,0 +1,30 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -resolvePackageDependencies -project "Aagedal Media Player.xcodeproj" -scheme "Aagedal Media Player" -derivedDataPath /private/tmp/aagedal-repinned-resolution-20261002/DerivedData -clonedSourcePackagesDirPath /private/tmp/aagedal-repinned-resolution-20261002/SourcePackages
+
+Resolve Package Graph
+
+Fetching from https://github.com/sparkle-project/Sparkle (cached)
+
+Fetching from https://github.com/aagedal/MPVKit (cached)
+
+Fetching from https://github.com/aagedal/SwiftMediaMetadata (cached)
+
+Creating working copy of package ‘MPVKit’
+
+Creating working copy of package ‘Sparkle’
+
+Creating working copy of package ‘SwiftMediaMetadata’
+
+Checking out 3.0.2 of package ‘SwiftMediaMetadata’
+
+Checking out 1d44b9a0aa9e8faa5b8bf222173f6cc2930ed233 of package ‘MPVKit’
+
+Checking out 2.9.6 of package ‘Sparkle’
+
+
+Resolved source packages:
+  Sparkle: https://github.com/sparkle-project/Sparkle @ 2.9.6
+  SwiftMediaMetadata: https://github.com/aagedal/SwiftMediaMetadata @ 3.0.2
+  MPVKit: https://github.com/aagedal/MPVKit @ 1d44b9a
+
+resolved source packages: Sparkle, SwiftMediaMetadata, MPVKit

@@ -1,0 +1,31 @@
+{
+  "command": [
+    "/opt/homebrew/bin/ffprobe",
+    "-v",
+    "error",
+    "-select_streams",
+    "v:0",
+    "-show_entries",
+    "stream=codec_name,width,height,r_frame_rate,avg_frame_rate,pix_fmt,color_transfer,duration",
+    "-of",
+    "json",
+    "/Users/truls.aagedal/Movies/TestVideo/testmappe_agedal_media_stitch/M4ROOT/CLIP/rre_8073.MP4"
+  ],
+  "metadata": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_name": "h264",
+        "width": 1920,
+        "height": 1080,
+        "pix_fmt": "yuv422p10le",
+        "color_transfer": "bt709",
+        "r_frame_rate": "50/1",
+        "avg_frame_rate": "50/1",
+        "duration": "258.720000"
+      }
+    ]
+  },
+  "sizeBytes": 1879319902
+}

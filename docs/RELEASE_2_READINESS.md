@@ -3,6 +3,36 @@
 Assessment updated: 2026-10-02. This assessment reflects the
 [product roadmap](../PRODUCT_ROADMAP.md) and its recorded scope decisions.
 
+The user deferred the M1-specific tests on 2026-10-02 and requested basic
+performance checks on this M5 Pro/64-GB machine. For the current editor beta,
+use measured current-machine playback/drift/resource results. The named M1/8-GB
+gate remains deferred; hypothetical performance scaling is not acceptance.
+
+The user's 2026-10-02 scope decision requires verified MPV source-pixel
+inspection before the editor beta. Automatic time-localized content-mismatch
+detection moves to a later release; existing manual Review findings, metadata
+mismatch summaries and missing-counterpart intervals remain available.
+
+Published dependency integration now pins MPVKit revision
+`1d44b9a0aa9e8faa5b8bf222173f6cc2930ed233` and exact SwiftMediaMetadata 3.0.2
+`9e8e912deb8d941da66a4b76854a90e3e9f01e3f`. All 49 binary/input URLs and the
+metadata-free complete source stage pass fresh remote verification; ordinary
+fresh-cache Xcode resolution succeeds. See [publication evidence](evidence/dependency-publication-20261002/README.md).
+The repinned native app also passes the bounded real two-window deletion,
+correction retirement, retained draft and surviving edit scenario. See
+[native evidence](evidence/repinned-two-window-review-20261002/README.md).
+Full keyboard/accessibility/editor/runtime acceptance remains separate.
+
+Canonical verification of the repinned source passes at
+`53d055b7f1839f5a6c209e9441c1c4e764592f15`: 809 passes, nine named opt-in
+skips, both isolated transport directions, static analysis and all 61 preflight
+checks. See [candidate receipts](evidence/repinned-candidate-20261002/README.md).
+Basic M5 performance passes both decoder headroom thresholds and all ten
+30-second UHD/HDR development scenarios. MPV-primary/AVFoundation-secondary
+drift remains a comparison follow-up; the 30-minute meter/device soak remains
+open. See [performance receipts](evidence/m5-basic-performance-20261002/README.md).
+The user explicitly leaves spoken VoiceOver acceptance open.
+
 The native Review continuation exposed correction focus overriding deliberate
 New Note/Filter navigation. A shared focus owner, passive validation identity
 and explicit navigation suspension preserve rejected input while allowing those
@@ -46,22 +76,28 @@ checkout now builds with the original manifest, Benchmark, lockfile and CLI:
 1,674 library tests pass with 21 named opt-in skips, and all 50 opted-in CLI
 tests pass without skips. See [upstream preparation receipts](evidence/bounded-mxf-upstream-preparation-20261002/README.md).
 
-Next delivery order:
+Current delivery status and order:
 
-1. Publish the prepared bounded-MXF source revision after upstream review and
-   finish the portable GPL/Metal CoreAudio build environment, then publish immutable dependencies,
-   resolve fresh caches and repin the app. Use the dependency handoff's retained
-   inputs and acceptance sequence; local linked builds do not qualify shipping.
-2. Run native two-window Review deletion/merge recovery, complete structured
-   keyboard review and Full Keyboard Access/spoken VoiceOver across both backends,
-   including relink, migration, save recovery and narrow layouts.
+1. Published and repinned the CoreAudio/GPL/Metal and bounded-MXF dependencies.
+   Fresh remote verification and ordinary package resolution pass. Canonical
+   optimized Release verification at `53d055b7f1839f5a6c209e9441c1c4e764592f15`
+   passes: 809 tests, nine named opt-in skips, both isolated transport directions,
+   static analysis and all 61 preflight checks. See
+   [repinned candidate receipts](evidence/repinned-candidate-20261002/README.md).
+2. The bounded real two-window deletion/merge/draft scenario passes. Complete
+   structured keyboard review, Full Keyboard Access, relink, migration, save
+   recovery and narrow layouts across both backends remain open. The user
+   explicitly leaves spoken VoiceOver acceptance open on 2026-10-02.
 3. Repeat final-app Premiere import/re-export with pre-import byte baselines,
    authored whitespace, interlaced/PAR cases, ranges and fractional/DF boundaries;
    close the remaining Resolve/Final Cut matrix or record exact limitations.
-4. Run repinned authentic live-meter routing/accuracy/device/EOF checks, 30-minute
-   soak and the named base-M1/8-GB UHD/HDR/comparison/resource matrix. Resolve
-   committed source-pixel and content-mismatch scope decisions explicitly.
-5. Choose the release version/channel, pass matching-HEAD canonical verification
+4. Run repinned authentic live-meter routing/accuracy/device/EOF checks and
+   30-minute soak. The user defers the base-M1/8-GB matrix and substitutes basic
+   current-machine performance testing; hypothetical scaling does not qualify M1.
+5. Verified MPV source-pixel inspection remains required before beta.
+   Automatic time-localized content-mismatch detection moves to a later release;
+   retain manual Review findings and metadata mismatch summaries.
+6. Choose the release version/channel, pass matching-HEAD canonical verification
    and representative smoke tests, then sign/notarize, verify Gatekeeper/update
    installation, refresh imagery/demo and complete the editor beta.
 
@@ -973,19 +1009,25 @@ hashes match. Exact note whitespace remains the only comparator failure; ten
 Python regressions pass. This does not close the remaining rate/raster/editor
 or accessibility gates. See [the retained 59.94 DF evidence](evidence/fcp-native-markers-5994-20260919/README.md).
 
-## Remaining scope that needs an explicit product decision
+## Recorded scope decisions and remaining implementation
 
-These are unfinished roadmap commitments, not silently deferred features:
+The user made these editor-beta scope decisions on 2026-10-02:
 
-- **Verified 1:1 source-pixel inspection:** the app now enables native-pixel
-  placement for AVFoundation only after the live capture matches the expected
-  oriented coded raster. Complete and validate an equivalent MPV path, or
-  explicitly limit the release promise to this guarded AVFoundation capability
-  plus the existing display-space loupe. The current MPV screenshot may resample.
-- **Time-localized mismatch markers:** define what detects a mismatch and its
-  timestamp, then implement and validate the model. Static A/B metadata
-  differences do not establish time-localized findings. Removing this from
-  the milestone requires a recorded roadmap decision.
+- **Verified 1:1 source-pixel inspection:** verified MPV source pixels are
+  required before beta. The existing guarded AVFoundation path is insufficient
+  to close this gate. MPV's current display-space screenshot may resample;
+  complete and validate a decoder-raster path before enabling MPV native pixels.
+- **Automatic time-localized content-mismatch detection:** move to a later
+  release. Manual Review findings, metadata mismatch summaries and known
+  missing-counterpart intervals remain available. The roadmap records the
+  deferral; automatic detection is not marked implemented.
+- **Performance:** defer M1-specific testing and use basic performance testing
+  on this M5 Pro/64-GB machine. Scaled M1 estimates are hypothetical.
+- **Spoken VoiceOver:** leave acceptance open. Accessibility automation does
+  not establish correct audible labels or correction-focus announcements.
+
+Other sequencing decisions remain open:
+
 - **Live meters:** a narrower 2.0 centered on Compare & Review could be a product
   choice, but it would explicitly re-sequence Audio QC. This assessment does
   not make that choice or mark the 1.8 milestone complete.

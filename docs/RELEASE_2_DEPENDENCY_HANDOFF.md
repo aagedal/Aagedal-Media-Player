@@ -1,5 +1,22 @@
 # 2.0 dependency publication and repin handoff
 
+Publication continuation, 2026-10-02: SwiftMediaMetadata 3.0.2 is public at
+`9e8e912deb8d941da66a4b76854a90e3e9f01e3f`; the GPL CoreAudio dependency
+prerelease is public at `1d44b9a0aa9e8faa5b8bf222173f6cc2930ed233` and tag
+`aagedal-2.0.0-coreaudio-20260930`. The app worktree now requires that exact
+MPVKit revision and exact SwiftMediaMetadata version. A fresh remote package
+resolution succeeds with Sparkle unchanged. The portable offline CoreAudio
+rebuild passes both architectures and every qualified boolean configuration
+digest. All 49 declared binary/input URL downloads and the corrected metadata-free
+source stage now pass fresh remote hash/inventory verification. Canonical app
+acceptance is being retried after generating this worktree's missing fixtures. See [publication receipts](evidence/dependency-publication-20261002/README.md).
+
+The preparation record below is retained as historical context. Its local-only,
+unpublished and old-shipping-pin statements describe the earlier handoff,
+not the publication continuation above.
+
+## Historical preparation record
+
 Prepared 2026-10-02. Both corrections remain local candidates. This handoff
 records retained inputs, local upstream preparation and the next acceptance
 steps; it adds no CoreAudio rebuild, publication, fresh-resolution or runtime

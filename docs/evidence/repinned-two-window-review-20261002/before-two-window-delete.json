@@ -1,0 +1,53 @@
+{
+  "notes" : [
+    {
+      "category" : "general",
+      "createdAt" : 1790966331192.127,
+      "id" : "40611EF4-0A4E-4353-B40A-46DE7C45738B",
+      "primaryFrame" : 0,
+      "primaryRateDenominator" : 1,
+      "primaryRateNumerator" : 24,
+      "primaryTime" : 0,
+      "secondaryFrame" : 24,
+      "secondaryRateDenominator" : 1,
+      "secondaryRateNumerator" : 24,
+      "secondaryTime" : 1,
+      "severity" : "info",
+      "status" : "open",
+      "text" : "Window one deletion target",
+      "updatedAt" : 1790966331192.127
+    },
+    {
+      "category" : "general",
+      "createdAt" : 1790966338634.0588,
+      "id" : "A7251DF3-B3CE-48D3-AB9B-53360808E8BF",
+      "primaryFrame" : 0,
+      "primaryRateDenominator" : 1,
+      "primaryRateNumerator" : 24,
+      "primaryTime" : 0,
+      "secondaryFrame" : 24,
+      "secondaryRateDenominator" : 1,
+      "secondaryRateNumerator" : 24,
+      "secondaryTime" : 1,
+      "severity" : "info",
+      "status" : "open",
+      "text" : "Window one surviving finding",
+      "updatedAt" : 1790966338634.0588
+    }
+  ],
+  "primarySource" : {
+    "canonicalPath" : "\/tmp\/aagedal-repinned-native-review-20261002\/reference.mov",
+    "fileNumber" : 88062334,
+    "fileSize" : 781507,
+    "fileSystemNumber" : 16777232,
+    "modificationDate" : 1790965863248
+  },
+  "schemaVersion" : 2,
+  "secondarySource" : {
+    "canonicalPath" : "\/tmp\/aagedal-repinned-native-review-20261002\/delivery.mov",
+    "fileNumber" : 88062335,
+    "fileSize" : 842838,
+    "fileSystemNumber" : 16777232,
+    "modificationDate" : 1790965863249
+  }
+}

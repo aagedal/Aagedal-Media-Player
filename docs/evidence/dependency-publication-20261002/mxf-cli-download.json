@@ -1,0 +1,10 @@
+{
+  "version": "3.0.2",
+  "commit": "9e8e912deb8d941da66a4b76854a90e3e9f01e3f",
+  "workflowRun": "https://github.com/aagedal/SwiftMediaMetadata/actions/runs/37044322314",
+  "ciConclusion": "success",
+  "archiveSHA256": "bb609b43dee4061fb5fc299751da8bec14815908366da07713208d05fd09f18b",
+  "checksumVerification": "passed",
+  "cliVersionOutput": "3.0.2",
+  "geocodeOutput": "Oslo, Oslo, Norway (NOR) \u2014 Europe/Oslo \u2014 0.4 km"
+}
