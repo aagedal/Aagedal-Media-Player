@@ -1,0 +1,47 @@
+{
+  "scope": "Final native Review subset; classification disclosure used AX click; no full keyboard or spoken accessibility acceptance",
+  "appPath": "/private/tmp/aagedal-2-reconcile-focused-20261002/Build/Products/Release/Aagedal Media Player.app",
+  "appSHA256": "a9a35b6036ff3ee549a314927b1ad5f9ee6635cc6cf048c6d84d8b6719f84917",
+  "steps": [
+    {
+      "action": "Open A Cmd-O and B Cmd-Option-O using isolated fixtures",
+      "result": "saved four-note review loaded"
+    },
+    {
+      "action": "AX disclosure click, Tab traversal, type -1 Return",
+      "result": "invalid draft/error retained; saved end24 unchanged"
+    },
+    {
+      "action": "Cmd-Option-F no-matching",
+      "result": "Filter focused; zero matching notes; error retained"
+    },
+    {
+      "action": "Cmd-Option-E",
+      "result": "no Save dialog; filter clears; range -1 selected"
+    },
+    {
+      "action": "Type25 Return without clicking a field",
+      "result": "range25 saved; error/banner removed; retained sidecar confirms end25"
+    },
+    {
+      "action": "Type -1 Return then Cmd-Option-N type Mounted focus navigation draft",
+      "result": "NewNote focused and draft typed; invalid range/error preserved"
+    },
+    {
+      "action": "Clear NewNote then Cmd-Option-E",
+      "result": "invalid range -1 selected again"
+    },
+    {
+      "action": "Escape then Cmd-Option-R",
+      "result": "ordinary reopening restores selected range -1"
+    },
+    {
+      "action": "Quit candidate",
+      "result": "app quit"
+    }
+  ],
+  "mediaSHA256": {
+    "reference.mov": "b14c18540b36e40e6faf3a088ef792ef2edf393ed4571f77ef5640b13f6603af",
+    "delivery.mov": "cb6ac77cc86a30a1de378f189c0ddaf66a558d424b1483ba9b78b632e77a0ed3"
+  }
+}

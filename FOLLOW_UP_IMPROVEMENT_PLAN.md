@@ -4748,6 +4748,18 @@ Integrated committed-source verification follows separately.
 
 ## Remaining work after this continuation
 
+### October 2 native Review focus continuation
+
+- [x] Use one shared Review field focus owner; keep invalid drafts/errors while
+  explicit New Note and Filter navigation proceeds. Passive repeated validation
+  does not reacquire correction focus; explicit retries still do.
+- [x] Preserve unchanged field callbacks and ordinary Review reopening. Require
+  all seven regressions and at least 817 aggregate tests for release consumption.
+- [x] Prepare a local upstream bounded-MXF commit with independently restorable
+  Git bundle and exact source receipt; keep shipping dependency pins unchanged.
+- [ ] Complete the prioritized dependency, full native/editor/accessibility,
+  hardware and distribution gates in `docs/RELEASE_2_READINESS.md`.
+
 ### October 2 merged-deletion and media-baseline continuation
 
 - [x] Retire orphan Review drafts/errors/corrections after a successful

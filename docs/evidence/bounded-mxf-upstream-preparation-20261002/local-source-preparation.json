@@ -1,0 +1,86 @@
+{
+  "scope": "Local isolated source commit and portable artifacts only; no version/tag/publication/app repin",
+  "baseRevision": "8662054299a3e13c49c65f74c564360559d1bf7f",
+  "commit": "8297324bb00ad1358b4070575c1ea59e698d3f2f",
+  "branch": "codex/bounded-mxf-reader",
+  "sourceTree": "bf6e0f344a7ae4fd99d594dbca4ae32415d9061b",
+  "changedFiles": [
+    "Sources/SwiftMediaMetadata/API/VideoMetadata.swift",
+    "Sources/SwiftMediaMetadata/Video/MXFFileCursor.swift",
+    "Sources/SwiftMediaMetadata/Video/MXFReader.swift",
+    "Tests/SwiftMediaMetadataTests/Video/MXFFileCursorTests.swift",
+    "Tests/SwiftMediaMetadataTests/Video/MXFMCALabelsTests.swift",
+    "Tests/SwiftMediaMetadataTests/Video/VideoContainerTests.swift"
+  ],
+  "sourceSHA256": {
+    "Package.swift": "fdebfd8b2faf5698be56b02aafc16cf55d4bdbab675b6b378ac0d0f47642b0ce",
+    "Package.resolved": "d1a2ea86507e72c540e5ca3eab9e46206cd1bc8d0ca20a321a71c7e5a2b36b21",
+    "Sources/Benchmark/main.swift": "0eb4753bbfc703df15eaaf982b3f21d7b9e0fcfd20ba871203a135867af0fa00",
+    "Sources/SwiftMediaMetadata/API/VideoMetadata.swift": "e0105ea99605a11a6b7a25dce9ae967f32a34639daf64b311e7db1405414b99e",
+    "Sources/SwiftMediaMetadata/Video/MXFReader.swift": "4382a3e502994508fdb88536f962411498e19d91a7a655ec56401e5a2771ff0d",
+    "Sources/SwiftMediaMetadata/Video/MXFFileCursor.swift": "8a4715a45a33da0bf32a1f878eb47bf1c2040d21b77b5118019d7aa40310bd37",
+    "Tests/SwiftMediaMetadataTests/Video/VideoContainerTests.swift": "1df32455bf651e9b9a65fd05c29ab1937dad8d17b5a5785f35bc0db4b471492a",
+    "Tests/SwiftMediaMetadataTests/Video/MXFMCALabelsTests.swift": "242199391067d03240167ef3cff7be183c1f3827db144708d8dc7a598a251210",
+    "Tests/SwiftMediaMetadataTests/Video/MXFFileCursorTests.swift": "67bef66695a3e33cb2692be84b8d29cf4e245f36303de16f4bcb6e6f704b683a"
+  },
+  "workingTreeCleanAfterCommit": true,
+  "sourceIdentityMatchesExistingTestReceipt": true,
+  "existingTestReceiptUnmodified": true,
+  "bundle": {
+    "path": "/private/tmp/aagedal-bounded-mxf-upstream-preparation-20261002/bounded-mxf-reader.bundle",
+    "sha256": "43d42c2c5660cacafaae42c6073c9145907092fb39e14e8a4e648b457e9e2b58",
+    "sizeBytes": 2919333,
+    "standaloneNoBasePrerequisite": true,
+    "verification": "The bundle contains this ref:\n8297324bb00ad1358b4070575c1ea59e698d3f2f refs/heads/codex/bounded-mxf-reader\nThe bundle records a complete history.\nThe bundle uses this hash algorithm: sha1\n/private/tmp/aagedal-bounded-mxf-upstream-preparation-20261002/bounded-mxf-reader.bundle is okay\n",
+    "restoredCommit": "8297324bb00ad1358b4070575c1ea59e698d3f2f",
+    "cloneWithoutOriginalCheckoutOrBaseSucceeded": true
+  },
+  "formatPatch": {
+    "path": "/private/tmp/aagedal-bounded-mxf-upstream-preparation-20261002/bounded-mxf-reader.patch",
+    "sha256": "4e2158de7712bf2e6b60e5f7829cc64eb377c54c6a282aac774754dc51fa77c7",
+    "sizeBytes": 34696,
+    "applyCheckPassedAtExactBase": true,
+    "appliedSourceHashesMatch": true
+  },
+  "verificationWorkspace": "/private/tmp/aagedal-bounded-mxf-upstream-preparation-20261002/bundle-verification",
+  "commands": [
+    [
+      "git",
+      "-C",
+      "/private/tmp/aagedal-bounded-mxf-upstream-preparation-20261002/SwiftMediaMetadata",
+      "switch",
+      "-c",
+      "codex/bounded-mxf-reader"
+    ],
+    [
+      "git",
+      "-C",
+      "/private/tmp/aagedal-bounded-mxf-upstream-preparation-20261002/SwiftMediaMetadata",
+      "add",
+      "--",
+      "Sources/SwiftMediaMetadata/API/VideoMetadata.swift",
+      "Sources/SwiftMediaMetadata/Video/MXFFileCursor.swift",
+      "Sources/SwiftMediaMetadata/Video/MXFReader.swift",
+      "Tests/SwiftMediaMetadataTests/Video/MXFFileCursorTests.swift",
+      "Tests/SwiftMediaMetadataTests/Video/MXFMCALabelsTests.swift",
+      "Tests/SwiftMediaMetadataTests/Video/VideoContainerTests.swift"
+    ],
+    [
+      "git",
+      "-C",
+      "/private/tmp/aagedal-bounded-mxf-upstream-preparation-20261002/SwiftMediaMetadata",
+      "diff",
+      "--cached",
+      "--check"
+    ],
+    [
+      "git",
+      "-C",
+      "/private/tmp/aagedal-bounded-mxf-upstream-preparation-20261002/SwiftMediaMetadata",
+      "commit",
+      "-m",
+      "Bound MXF URL parsing with positional file reads"
+    ]
+  ],
+  "standaloneVerificationWorkspace": "/private/tmp/aagedal-bounded-mxf-upstream-preparation-20261002/standalone-bundle-verification"
+}

@@ -4,6 +4,21 @@
 
 import SwiftUI
 
+/// Every Review text field shares one focus owner. Separate row FocusStates
+/// can leave the parent's new-note value stale while a range owns the actual
+/// keyboard focus, making an explicit new-note assignment have no effect.
+nonisolated enum CompareReviewFieldFocusTarget: Hashable {
+    case newNote, filter
+    case noteText(UUID), rangeEnd(UUID)
+
+    init(_ target: CompareReviewFocusTarget) {
+        switch target {
+        case .newNote: self = .newNote
+        case .filter: self = .filter
+        }
+    }
+}
+
 /// Each blocked action must reveal its correction field again, even when the
 /// finding and error message are unchanged from the previous attempt.
 struct CompareReviewCorrectionRequest: Equatable {
@@ -12,6 +27,16 @@ struct CompareReviewCorrectionRequest: Equatable {
     let id = UUID()
     let noteID: UUID
     let field: Field
+}
+
+/// Mounting, editing availability and explicit navigation can change while a
+/// focus task yields. Changes cancel that task before it can restore old focus.
+private struct CompareReviewMountedFocusRequest: Equatable {
+    let correctionRequest: CompareReviewCorrectionRequest?
+    let textError: String?
+    let rangeError: String?
+    let canEdit: Bool
+    let canRestoreFocus: Bool
 }
 
 /// Moving focus to the correction selected by action preflight must not
@@ -55,9 +80,10 @@ enum CompareReviewTextFocusLossPolicy {
 enum CompareReviewCorrectionFocusPolicy {
     static func target(
         noteID: UUID, correctionRequest: CompareReviewCorrectionRequest?,
-        textError: String?, rangeError: String?, canEdit: Bool
+        textError: String?, rangeError: String?, canEdit: Bool,
+        canRestoreFocus: Bool = true
     ) -> CompareReviewCorrectionRequest.Field? {
-        guard canEdit else { return nil }
+        guard canEdit, canRestoreFocus else { return nil }
         if let correctionRequest {
             return correctionRequest.noteID == noteID ? correctionRequest.field : nil
         }
@@ -79,6 +105,37 @@ struct CompareReviewDraftState {
     var rangeActionNotice: String?
     var rangeActionNoticeNoteID: UUID?
     var correctionRequest: CompareReviewCorrectionRequest?
+    var isCorrectionFocusSuspended = false
+
+    /// An explicit new-note/filter destination takes precedence over restoring
+    /// an older row's correction, including when the popover is recreated.
+    /// Keep its draft, error and selected correction for action preflight.
+    mutating func allowExplicitNavigation() {
+        isCorrectionFocusSuspended = true
+    }
+
+    /// Parent and lazy-row appearance callbacks must choose the same field.
+    /// Default new-note focus cannot overwrite a retained row correction, but
+    /// an explicit new-note/filter request still takes precedence over it.
+    func initialFocusTarget(
+        requested: CompareReviewFocusTarget?, notes: [CompareReviewNote], canEdit: Bool
+    ) -> CompareReviewFieldFocusTarget {
+        if let requested { return CompareReviewFieldFocusTarget(requested) }
+        return correctionFocusTarget(in: notes, canEdit: canEdit) ?? .newNote
+    }
+
+    /// The stable popover must select a blocked action's field even when its
+    /// lazy row is being recreated after a filter hid every finding.
+    func correctionFocusTarget(
+        in notes: [CompareReviewNote], canEdit: Bool
+    ) -> CompareReviewFieldFocusTarget? {
+        guard canEdit, !isCorrectionFocusSuspended, let correctionRequest,
+              notes.contains(where: { $0.id == correctionRequest.noteID }) else { return nil }
+        switch correctionRequest.field {
+        case .text: return .noteText(correctionRequest.noteID)
+        case .rangeEnd: return .rangeEnd(correctionRequest.noteID)
+        }
+    }
 
     mutating func updateNewNoteDraft(_ text: String) {
         newNoteDraft = text
@@ -104,6 +161,7 @@ struct CompareReviewDraftState {
         noteID: UUID, field: CompareReviewCorrectionRequest.Field,
         error: String, notice: String
     ) {
+        isCorrectionFocusSuspended = false
         switch field {
         case .text: noteActionErrors[noteID] = error
         case .rangeEnd: rangeActionErrors[noteID] = error
@@ -124,8 +182,10 @@ struct CompareReviewDraftState {
     /// the first invalid field is being revealed.
     mutating func recordFieldValidationError(
         _ error: String?, note: CompareReviewNote,
-        field: CompareReviewCorrectionRequest.Field, canEdit: Bool
+        field: CompareReviewCorrectionRequest.Field, canEdit: Bool,
+        isPassive: Bool = false
     ) {
+        let previousError = field == .text ? noteActionErrors[note.id] : rangeActionErrors[note.id]
         switch field {
         case .text: noteActionErrors[note.id] = error
         case .rangeEnd: rangeActionErrors[note.id] = error
@@ -139,6 +199,15 @@ struct CompareReviewDraftState {
         // Unavailable fields retain their error and draft, but cannot receive
         // correction focus until loading has made them editable again.
         guard canEdit else { return }
+        // Leaving an already-invalid correction must allow Tab, clicks and
+        // explicit field commands to move away. A fresh UUID here would make
+        // the row reacquire focus after every blur. Return/Apply and action
+        // preflight still request correction focus on every blocked attempt.
+        if isPassive {
+            if isCorrectionFocusSuspended { return }
+            if previousError == error, correctionRequest?.noteID == note.id,
+               correctionRequest?.field == field { return }
+        }
         blockAction(noteID: note.id, field: field, error: error,
                     notice: "Review note at source A frame \(note.primaryFrame): \(error)")
     }
@@ -146,6 +215,8 @@ struct CompareReviewDraftState {
     /// Editing one field must not dismiss the correction selected for another.
     /// That request also arbitrates focus-loss validation during the handoff.
     mutating func updateNoteTextDraft(_ text: String, noteID: UUID) {
+        guard noteDrafts[noteID] != text else { return }
+        isCorrectionFocusSuspended = false
         noteDrafts[noteID] = text
         noteActionErrors[noteID] = nil
         if correctionRequest?.noteID == noteID, correctionRequest?.field == .text {
@@ -154,6 +225,10 @@ struct CompareReviewDraftState {
     }
 
     mutating func updateRangeEndDraft(_ text: String, noteID: UUID) {
+        // A field may echo its unchanged value during a focus handoff. That
+        // callback must not erase the error or resume correction restoration.
+        guard rangeDrafts[noteID] != text else { return }
+        isCorrectionFocusSuspended = false
         rangeDrafts[noteID] = text
         // Clear the previous input error in this same owner mutation. A row's
         // deferred onChange can run after validation of this new draft and
@@ -192,14 +267,15 @@ struct CompareReviewDraftState {
         guard CompareReviewTextFocusLossPolicy.shouldCommit(
             noteID: note.id, correctionRequest: correctionRequest, canEdit: canEdit
         ) else { return }
-        commitNoteText(note: note, canEdit: canEdit, update: update)
+        commitNoteText(note: note, canEdit: canEdit, isPassive: true, update: update)
     }
 
     /// Return can arrive from a row rendered before another window's sidecar
     /// save was merged. Compare the live draft with the current saved note,
     /// just as departure does, rather than retiring input against that old row.
     mutating func commitNoteText(
-        note: CompareReviewNote, canEdit: Bool, update: (String) -> Bool
+        note: CompareReviewNote, canEdit: Bool, isPassive: Bool = false,
+        update: (String) -> Bool
     ) {
         guard let draft = noteDrafts[note.id] else { return }
         switch CompareReviewTextCommitResult.attempt(
@@ -209,13 +285,13 @@ struct CompareReviewDraftState {
             finishNoteTextCommit(noteID: note.id)
         case .empty:
             recordFieldValidationError("Enter note text before continuing.",
-                note: note, field: .text, canEdit: canEdit)
+                note: note, field: .text, canEdit: canEdit, isPassive: isPassive)
         case .unavailable:
             recordFieldValidationError("Review notes cannot be edited right now. Retry loading the review before continuing.",
-                note: note, field: .text, canEdit: canEdit)
+                note: note, field: .text, canEdit: canEdit, isPassive: isPassive)
         case .rejected:
             recordFieldValidationError("This note could not be updated. Retry the edit.",
-                note: note, field: .text, canEdit: canEdit)
+                note: note, field: .text, canEdit: canEdit, isPassive: isPassive)
         }
     }
 
@@ -238,7 +314,7 @@ struct CompareReviewDraftState {
               CompareReviewRangeFocusLossPolicy.canHandlePassively(
                 noteID: note.id, correctionRequest: correctionRequest
               ) else { return }
-        commitRangeEnd(note: note, canEdit: canEdit, update: update)
+        commitRangeEnd(note: note, canEdit: canEdit, isPassive: true, update: update)
     }
 
     /// Apply and Return must use the live draft and current saved endpoint,
@@ -246,7 +322,8 @@ struct CompareReviewDraftState {
     /// An untouched field has no input to submit and must not replay that row's
     /// old saved endpoint over the merged finding.
     mutating func commitRangeEnd(
-        note: CompareReviewNote, canEdit: Bool, update: (Int64) -> Bool
+        note: CompareReviewNote, canEdit: Bool, isPassive: Bool = false,
+        update: (Int64) -> Bool
     ) {
         guard let draft = rangeDrafts[note.id] else { return }
         let entered = draft.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -256,22 +333,22 @@ struct CompareReviewDraftState {
         }
         guard canEdit else {
             recordFieldValidationError("Review notes cannot be edited right now. Retry loading the review before continuing.",
-                note: note, field: .rangeEnd, canEdit: canEdit)
+                note: note, field: .rangeEnd, canEdit: canEdit, isPassive: isPassive)
             return
         }
         guard !entered.isEmpty else {
             recordFieldValidationError("Use Clear range to remove the saved end frame.",
-                note: note, field: .rangeEnd, canEdit: canEdit)
+                note: note, field: .rangeEnd, canEdit: canEdit, isPassive: isPassive)
             return
         }
         guard let end = Int64(entered) else {
             recordFieldValidationError("Enter a whole-number end frame.",
-                note: note, field: .rangeEnd, canEdit: canEdit)
+                note: note, field: .rangeEnd, canEdit: canEdit, isPassive: isPassive)
             return
         }
         guard update(end) else {
             recordFieldValidationError("End frame must be from the note's start through the last media frame.",
-                note: note, field: .rangeEnd, canEdit: canEdit)
+                note: note, field: .rangeEnd, canEdit: canEdit, isPassive: isPassive)
             return
         }
         finishRangeEndCommit(noteID: note.id)
@@ -375,7 +452,7 @@ struct CompareReviewView: View {
     @Binding var requestedExport: CompareReviewReportFormat?
     @Binding var drafts: CompareReviewDraftState
 
-    @FocusState private var focusedField: CompareReviewFocusTarget?
+    @FocusState private var focusedField: CompareReviewFieldFocusTarget?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -658,7 +735,11 @@ struct CompareReviewView: View {
         .onAppear {
             drafts.reconcileNotes(compareSession.reviewNotes, canEdit: compareSession.canEditReviewNotes)
             revealSelectedCorrection()
-            focusedField = requestedFocus ?? .newNote
+            let target = drafts.initialFocusTarget(
+                requested: requestedFocus, notes: compareSession.reviewNotes,
+                canEdit: compareSession.canEditReviewNotes)
+            if requestedFocus != nil { drafts.allowExplicitNavigation() }
+            focusedField = target
             requestedFocus = nil
             consumeExportRequest()
         }
@@ -669,7 +750,8 @@ struct CompareReviewView: View {
         }
         .onChange(of: requestedFocus) { _, target in
             guard let target else { return }
-            focusedField = target
+            drafts.allowExplicitNavigation()
+            focusedField = CompareReviewFieldFocusTarget(target)
             requestedFocus = nil
         }
         .onDisappear { requestedExport = nil }
@@ -690,6 +772,11 @@ struct CompareReviewView: View {
             count: count,
             correctionRequest: drafts.correctionRequest.flatMap { $0.noteID == note.id ? $0 : nil },
             activeCorrectionRequest: drafts.correctionRequest,
+            canRestoreCorrectionFocus: !drafts.isCorrectionFocusSuspended,
+            focusedField: $focusedField,
+            onMountedCorrectionFocus: { field in
+                await restoreMountedCorrectionFocus(noteID: note.id, field: field)
+            },
             draft: Binding(
                 get: { drafts.noteDrafts[note.id] ?? note.text },
                 set: {
@@ -906,6 +993,38 @@ struct CompareReviewView: View {
             canEdit: compareSession.canEditReviewNotes
         )
         if query != compareSession.reviewSearchQuery { compareSession.reviewSearchQuery = query }
+        if let target = drafts.correctionFocusTarget(
+            in: compareSession.reviewNotes, canEdit: compareSession.canEditReviewNotes
+        ) {
+            focusedField = target
+        }
+    }
+
+    /// A lazy row and its disclosure content may not exist when preflight
+    /// chooses a correction. Its mounted field performs the actual handoff,
+    /// using the live draft owner again after yielding so newer navigation or
+    /// corrections cannot be overwritten by an earlier field's task.
+    private func restoreMountedCorrectionFocus(
+        noteID: UUID, field: CompareReviewCorrectionRequest.Field
+    ) async {
+        func liveTarget() -> CompareReviewCorrectionRequest.Field? {
+            guard compareSession.reviewNotes.contains(where: { $0.id == noteID }) else { return nil }
+            return CompareReviewCorrectionFocusPolicy.target(
+                noteID: noteID, correctionRequest: drafts.correctionRequest,
+                textError: drafts.noteActionErrors[noteID], rangeError: drafts.rangeActionErrors[noteID],
+                canEdit: compareSession.canEditReviewNotes,
+                canRestoreFocus: !drafts.isCorrectionFocusSuspended)
+        }
+        guard !Task.isCancelled, liveTarget() == field else { return }
+        let request = drafts.correctionRequest
+        focusedField = nil
+        await Task.yield()
+        guard !Task.isCancelled, drafts.correctionRequest == request,
+              liveTarget() == field else { return }
+        switch field {
+        case .text: focusedField = .noteText(noteID)
+        case .rangeEnd: focusedField = .rangeEnd(noteID)
+        }
     }
 
     private func navigationButton(
@@ -1060,6 +1179,9 @@ private struct CompareReviewNoteRow: View {
     // Every field respects the selected correction during passive callbacks,
     // including a range correction in another finding.
     let activeCorrectionRequest: CompareReviewCorrectionRequest?
+    let canRestoreCorrectionFocus: Bool
+    let focusedField: FocusState<CompareReviewFieldFocusTarget?>.Binding
+    let onMountedCorrectionFocus: @MainActor (CompareReviewCorrectionRequest.Field) async -> Void
     let timecodeLabel: String
     let canEdit: Bool
     let onSeek: () -> Void
@@ -1083,8 +1205,6 @@ private struct CompareReviewNoteRow: View {
     @Binding private var draft: String
     @Binding private var noteActionError: String?
     @State private var isDeleting = false
-    @FocusState private var isFocused: Bool
-    @FocusState private var isEndFrameFocused: Bool
 
     init(
         note: CompareReviewNote,
@@ -1092,6 +1212,9 @@ private struct CompareReviewNoteRow: View {
         count: Int,
         correctionRequest: CompareReviewCorrectionRequest?,
         activeCorrectionRequest: CompareReviewCorrectionRequest?,
+        canRestoreCorrectionFocus: Bool,
+        focusedField: FocusState<CompareReviewFieldFocusTarget?>.Binding,
+        onMountedCorrectionFocus: @escaping @MainActor (CompareReviewCorrectionRequest.Field) async -> Void,
         draft: Binding<String>,
         noteActionError: Binding<String?>,
         endFrameDraft: Binding<String>,
@@ -1114,6 +1237,9 @@ private struct CompareReviewNoteRow: View {
         self.count = count
         self.correctionRequest = correctionRequest
         self.activeCorrectionRequest = activeCorrectionRequest
+        self.canRestoreCorrectionFocus = canRestoreCorrectionFocus
+        self.focusedField = focusedField
+        self.onMountedCorrectionFocus = onMountedCorrectionFocus
         self.timecodeLabel = timecodeLabel
         self.canEdit = canEdit
         self.onSeek = onSeek
@@ -1155,12 +1281,10 @@ private struct CompareReviewNoteRow: View {
                     .accessibilityLabel("Text for \(noteIdentity)")
                     .accessibilityIdentifier(identifier("text"))
                     .lineLimit(1...4)
-                    .focused($isFocused)
+                    .focused(focusedField, equals: .noteText(note.id))
                     .disabled(!canEdit)
                     .onSubmit(commit)
-                    .onChange(of: isFocused) { wasFocused, focused in
-                        if wasFocused && !focused { commitOnFocusLoss() }
-                    }
+                    .task(id: mountedFocusRequest) { await onMountedCorrectionFocus(.text) }
                 Button(role: .destructive) {
                     isDeleting = onDelete()
                 } label: {
@@ -1247,16 +1371,26 @@ private struct CompareReviewNoteRow: View {
             if request != nil { restoreCorrectionFocus() }
         }
         .onAppear(perform: restoreCorrectionFocus)
+        .onChange(of: focusedField.wrappedValue) { previous, current in
+            if previous == .noteText(note.id), current != previous {
+                commitOnFocusLoss()
+            }
+            if previous == .rangeEnd(note.id), current != previous, !isDeleting {
+                // Blur and removal use the same live owner state. Another
+                // field may have selected a correction since this render.
+                onRangeDeparture()
+            }
+        }
         .onChange(of: canEdit) { _, available in
             if available { restoreCorrectionFocus() }
-            else {
-                isFocused = false
-                isEndFrameFocused = false
+            else if focusedField.wrappedValue == .noteText(note.id)
+                || focusedField.wrappedValue == .rangeEnd(note.id) {
+                focusedField.wrappedValue = nil
             }
         }
         .onChange(of: isRangeExpanded) { _, expanded in
             if expanded && correctionFocusTarget == .rangeEnd {
-                isEndFrameFocused = true
+                focusedField.wrappedValue = .rangeEnd(note.id)
             }
         }
         .padding(8)
@@ -1275,7 +1409,7 @@ private struct CompareReviewNoteRow: View {
                 rangeActionError = nil
             } else {
                 rangeActionError = "Current frame is before the note's start. Enter an end frame or seek forward."
-                isEndFrameFocused = true
+                focusedField.wrappedValue = .rangeEnd(note.id)
             }
         }
         .accessibilityLabel("End \(noteIdentity) at the current frame")
@@ -1299,14 +1433,9 @@ private struct CompareReviewNoteRow: View {
                 .accessibilityLabel("Inclusive range end frame for \(noteIdentity)")
                 .accessibilityHint(rangeActionError ?? "Enter a whole source A frame number from the note's start through the last media frame.")
                 .accessibilityIdentifier(identifier("range-end"))
-                .focused($isEndFrameFocused)
+                .focused(focusedField, equals: .rangeEnd(note.id))
                 .onSubmit(applyRange)
-                .onChange(of: isEndFrameFocused) { wasFocused, focused in
-                    guard wasFocused && !focused && !isDeleting else { return }
-                    // Blur and removal use the same live owner state. Another
-                    // field may have selected a correction since this render.
-                    onRangeDeparture()
-                }
+                .task(id: mountedFocusRequest) { await onMountedCorrectionFocus(.rangeEnd) }
             Button("Apply", action: applyRange)
                 .accessibilityLabel("Apply range end for \(noteIdentity)")
                 .accessibilityIdentifier(identifier("range-apply"))
@@ -1324,8 +1453,16 @@ private struct CompareReviewNoteRow: View {
     private var correctionFocusTarget: CompareReviewCorrectionRequest.Field? {
         CompareReviewCorrectionFocusPolicy.target(
             noteID: note.id, correctionRequest: activeCorrectionRequest,
-            textError: noteActionError, rangeError: rangeActionError, canEdit: canEdit
+            textError: noteActionError, rangeError: rangeActionError, canEdit: canEdit,
+            canRestoreFocus: canRestoreCorrectionFocus
         )
+    }
+
+    private var mountedFocusRequest: CompareReviewMountedFocusRequest {
+        CompareReviewMountedFocusRequest(
+            correctionRequest: activeCorrectionRequest,
+            textError: noteActionError, rangeError: rangeActionError,
+            canEdit: canEdit, canRestoreFocus: canRestoreCorrectionFocus)
     }
 
     private func restoreCorrectionFocus() {
@@ -1336,11 +1473,9 @@ private struct CompareReviewNoteRow: View {
         guard canEdit else { return }
         switch field {
         case .text:
-            isEndFrameFocused = false
-            isFocused = true
+            focusedField.wrappedValue = .noteText(note.id)
         case .rangeEnd:
-            isFocused = false
-            if isRangeExpanded { isEndFrameFocused = true }
+            if isRangeExpanded { focusedField.wrappedValue = .rangeEnd(note.id) }
             else { isRangeExpanded = true }
         }
     }

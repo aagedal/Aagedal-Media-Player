@@ -7,6 +7,194 @@ import XCTest
 
 final class CompareReviewTextCommitTests: XCTestCase {
     @MainActor
+    func testOpeningReviewRespectsRetainedCorrectionUnlessNavigationOverridesIt() {
+        let note = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
+            secondaryFrame: 10, secondaryTime: 1, text: "Finding", primaryEndFrame: 20)
+        for field in [CompareReviewCorrectionRequest.Field.text, .rangeEnd] {
+            var drafts = CompareReviewDraftState()
+            drafts.blockAction(noteID: note.id, field: field,
+                error: "Correct this field", notice: "Review needs attention")
+            let expected: CompareReviewFieldFocusTarget = field == .text
+                ? .noteText(note.id) : .rangeEnd(note.id)
+            XCTAssertEqual(drafts.initialFocusTarget(requested: nil, notes: [note], canEdit: true), expected)
+            XCTAssertEqual(drafts.initialFocusTarget(requested: .newNote, notes: [note], canEdit: true), .newNote)
+            XCTAssertEqual(drafts.initialFocusTarget(requested: .filter, notes: [note], canEdit: true), .filter)
+            XCTAssertEqual(drafts.initialFocusTarget(requested: nil, notes: [], canEdit: true), .newNote)
+            XCTAssertEqual(drafts.initialFocusTarget(requested: nil, notes: [note], canEdit: false), .newNote)
+            drafts.allowExplicitNavigation()
+            XCTAssertEqual(drafts.initialFocusTarget(requested: nil, notes: [note], canEdit: true), .newNote)
+            XCTAssertEqual(drafts.correctionRequest?.noteID, note.id)
+            XCTAssertEqual(drafts.correctionRequest?.field, field)
+        }
+    }
+
+    @MainActor
+    func testUnchangedFieldCallbacksPreserveCorrectionDuringExplicitNavigation() throws {
+        let note = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
+            secondaryFrame: 10, secondaryTime: 1, text: "Finding", primaryEndFrame: 20)
+        for field in [CompareReviewCorrectionRequest.Field.text, .rangeEnd] {
+            var drafts = CompareReviewDraftState()
+            drafts.updateNoteTextDraft(" \n ", noteID: note.id)
+            drafts.updateRangeEndDraft("-1", noteID: note.id)
+            switch field {
+            case .text: drafts.commitNoteText(note: note, canEdit: true) { _ in false }
+            case .rangeEnd: drafts.commitRangeEnd(note: note, canEdit: true) { _ in false }
+            }
+            let correction = try XCTUnwrap(drafts.correctionRequest)
+            let textError = drafts.noteActionErrors[note.id]
+            let rangeError = drafts.rangeActionErrors[note.id]
+            let notice = drafts.rangeActionNotice
+            drafts.allowExplicitNavigation()
+
+            // Native fields may echo their existing value while focus moves
+            // to the new-note/filter field. An echo is not an input edit.
+            drafts.updateNoteTextDraft(" \n ", noteID: note.id)
+            drafts.updateRangeEndDraft("-1", noteID: note.id)
+            XCTAssertTrue(drafts.isCorrectionFocusSuspended)
+            XCTAssertEqual(drafts.correctionRequest, correction)
+            XCTAssertEqual(drafts.noteActionErrors[note.id], textError)
+            XCTAssertEqual(drafts.rangeActionErrors[note.id], rangeError)
+            XCTAssertEqual(drafts.rangeActionNotice, notice)
+            XCTAssertEqual(drafts.noteDrafts[note.id], " \n ")
+            XCTAssertEqual(drafts.rangeDrafts[note.id], "-1")
+        }
+    }
+
+    @MainActor
+    func testRepeatedInvalidRangeDepartureDoesNotReacquireCorrectionFocus() throws {
+        let note = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
+            secondaryFrame: 10, secondaryTime: 1, text: "Finding", primaryEndFrame: 20)
+        var drafts = CompareReviewDraftState()
+        drafts.updateRangeEndDraft("-1", noteID: note.id)
+        drafts.commitRangeOnDeparture(note: note, canEdit: true) { _ in false }
+        let firstRequest = try XCTUnwrap(drafts.correctionRequest)
+
+        // Clicking another field or pressing Tab blurs this same invalid
+        // range again. Preserve feedback without publishing a new focus event.
+        for _ in 0..<3 {
+            drafts.commitRangeOnDeparture(note: note, canEdit: true) { _ in false }
+            XCTAssertEqual(drafts.correctionRequest, firstRequest)
+            XCTAssertEqual(drafts.rangeDrafts[note.id], "-1")
+            XCTAssertEqual(drafts.rangeActionErrors[note.id],
+                "End frame must be from the note's start through the last media frame.")
+        }
+
+        // Explicit Apply/Return still reveals the same invalid range again.
+        drafts.commitRangeEnd(note: note, canEdit: true) { _ in false }
+        XCTAssertNotEqual(drafts.correctionRequest, firstRequest)
+        XCTAssertEqual(drafts.correctionRequest?.field, .rangeEnd)
+        XCTAssertEqual(drafts.rangeDrafts[note.id], "-1")
+    }
+
+    @MainActor
+    func testRepeatedEmptyTextDepartureDoesNotReacquireCorrectionFocus() throws {
+        let note = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
+            secondaryFrame: 10, secondaryTime: 1, text: "Finding")
+        var drafts = CompareReviewDraftState()
+        drafts.updateNoteTextDraft(" \n ", noteID: note.id)
+        drafts.commitTextOnDeparture(note: note, canEdit: true) { _ in
+            XCTFail("Empty text must never save")
+            return true
+        }
+        let firstRequest = try XCTUnwrap(drafts.correctionRequest)
+        drafts.commitTextOnDeparture(note: note, canEdit: true) { _ in
+            XCTFail("Empty text must never save")
+            return true
+        }
+        XCTAssertEqual(drafts.correctionRequest, firstRequest)
+        XCTAssertEqual(drafts.noteDrafts[note.id], " \n ")
+        XCTAssertEqual(drafts.noteActionErrors[note.id], "Enter note text before continuing.")
+
+        drafts.commitNoteText(note: note, canEdit: true) { _ in false }
+        XCTAssertNotEqual(drafts.correctionRequest, firstRequest)
+        XCTAssertEqual(drafts.correctionRequest?.field, .text)
+        XCTAssertEqual(drafts.noteDrafts[note.id], " \n ")
+    }
+
+    @MainActor
+    func testExplicitNavigationPreservesInvalidDraftWithoutRowRestoration() throws {
+        let note = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
+            secondaryFrame: 10, secondaryTime: 1, text: "Finding", primaryEndFrame: 20)
+        var drafts = CompareReviewDraftState()
+        drafts.updateRangeEndDraft("-1", noteID: note.id)
+        drafts.commitRangeEnd(note: note, canEdit: true) { _ in false }
+        let correction = try XCTUnwrap(drafts.correctionRequest)
+        let error = drafts.rangeActionErrors[note.id]
+        let notice = drafts.rangeActionNotice
+
+        // The command owner does this before showing a closed popover. A
+        // recreated row and editing-restoration callback must respect it too.
+        drafts.allowExplicitNavigation()
+        drafts.commitRangeOnDeparture(note: note, canEdit: true) { _ in false }
+        drafts.updateNewNoteDraft("Another finding")
+        XCTAssertTrue(drafts.isCorrectionFocusSuspended)
+        XCTAssertEqual(drafts.correctionRequest, correction)
+        XCTAssertEqual(drafts.rangeDrafts[note.id], "-1")
+        XCTAssertEqual(drafts.rangeActionErrors[note.id], error)
+        XCTAssertEqual(drafts.rangeActionNotice, notice)
+        XCTAssertEqual(drafts.newNoteDraft, "Another finding")
+        for canEdit in [false, true] {
+            XCTAssertNil(CompareReviewCorrectionFocusPolicy.target(
+                noteID: note.id, correctionRequest: drafts.correctionRequest,
+                textError: nil, rangeError: error, canEdit: canEdit,
+                canRestoreFocus: !drafts.isCorrectionFocusSuspended))
+        }
+    }
+
+    @MainActor
+    func testExplicitActionRetriesResumeCorrectionFocusAfterNavigation() throws {
+        let note = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
+            secondaryFrame: 10, secondaryTime: 1, text: "Finding", primaryEndFrame: 20)
+        var drafts = CompareReviewDraftState()
+        drafts.updateRangeEndDraft("-1", noteID: note.id)
+        drafts.commitRangeEnd(note: note, canEdit: true) { _ in false }
+        var previous = try XCTUnwrap(drafts.correctionRequest)
+        for _ in 0..<3 {
+            drafts.allowExplicitNavigation()
+            // Report/copy action preflight uses blockAction, independent of
+            // the passive duplicate-error policy. Every retry must refocus.
+            drafts.blockAction(noteID: note.id, field: .rangeEnd,
+                error: "End frame must be from the note's start through the last media frame.",
+                notice: "Correct this finding before exporting")
+            let current = try XCTUnwrap(drafts.correctionRequest)
+            XCTAssertNotEqual(current, previous)
+            XCTAssertFalse(drafts.isCorrectionFocusSuspended)
+            XCTAssertEqual(CompareReviewCorrectionFocusPolicy.target(
+                noteID: note.id, correctionRequest: current, textError: nil,
+                rangeError: drafts.rangeActionErrors[note.id], canEdit: true,
+                canRestoreFocus: !drafts.isCorrectionFocusSuspended), .rangeEnd)
+            XCTAssertEqual(drafts.rangeDrafts[note.id], "-1")
+            previous = current
+        }
+    }
+
+    @MainActor
+    func testExplicitNavigationBeforeInitialBlurPreservesErrorAndAllowsLaterCorrection() throws {
+        let note = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
+            secondaryFrame: 10, secondaryTime: 1, text: "Finding", primaryEndFrame: 20)
+        var drafts = CompareReviewDraftState()
+        drafts.updateRangeEndDraft("-1", noteID: note.id)
+        drafts.allowExplicitNavigation()
+        drafts.commitRangeOnDeparture(note: note, canEdit: true) { _ in false }
+        XCTAssertNil(drafts.correctionRequest)
+        XCTAssertEqual(drafts.rangeDrafts[note.id], "-1")
+        XCTAssertNotNil(drafts.rangeActionErrors[note.id])
+        XCTAssertNil(CompareReviewCorrectionFocusPolicy.target(
+            noteID: note.id, correctionRequest: nil, textError: nil,
+            rangeError: drafts.rangeActionErrors[note.id], canEdit: true,
+            canRestoreFocus: !drafts.isCorrectionFocusSuspended))
+
+        // Editing the row again resumes ordinary blur feedback. A first or
+        // changed invalid error must still reveal its correction normally.
+        drafts.updateRangeEndDraft("not a frame", noteID: note.id)
+        drafts.commitRangeOnDeparture(note: note, canEdit: true) { _ in false }
+        XCTAssertFalse(drafts.isCorrectionFocusSuspended)
+        XCTAssertEqual(try XCTUnwrap(drafts.correctionRequest).field, .rangeEnd)
+        XCTAssertEqual(drafts.rangeActionErrors[note.id], "Enter a whole-number end frame.")
+        XCTAssertEqual(drafts.rangeDrafts[note.id], "not a frame")
+    }
+
+    @MainActor
     func testMergedDeletionRetiresRemovedCorrectionAndResumesSurvivingDraftCommits() {
         let removed = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
             secondaryFrame: 10, secondaryTime: 1, text: "Removed finding", primaryEndFrame: 20)

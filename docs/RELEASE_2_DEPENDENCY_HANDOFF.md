@@ -1,8 +1,9 @@
 # 2.0 dependency publication and repin handoff
 
 Prepared 2026-10-02. Both corrections remain local candidates. This handoff
-records retained inputs and the next acceptance steps; it adds no dependency
-build, publication, fresh-resolution or runtime acceptance claim.
+records retained inputs, local upstream preparation and the next acceptance
+steps; it adds no CoreAudio rebuild, publication, fresh-resolution or runtime
+acceptance claim.
 
 ## Current shipping identities and retained payloads
 
@@ -21,7 +22,7 @@ together, using an immutable revision or version.
 | Offline reconstruction | `/private/tmp/aagedal-coreaudio-reconstructed-v2-20260930`; additional attributes-isolated workspace `/private/tmp/aagedal-coreaudio-reconstructed-attributes-isolated-20260930` |
 | Bounded MXF patch | [portable six-file patch](evidence/bounded-mxf-candidate-20260930/swift-media-metadata-bounded-mxf.patch), SHA-256 `5da87e3d3dd7e40f93ae25cf0b57528c02684f59a6552244898875f1bbbed883`, against SwiftMediaMetadata revision `8662054299a3e13c49c65f74c564360559d1bf7f` |
 | Historical bounded MXF working candidate | `/private/tmp/aagedal-bounded-mxf-candidate-20260930`; HEAD remains the unpatched base revision, with the correction and temporary probe changes local |
-| Normal upstream package preparation | `/private/tmp/aagedal-bounded-mxf-upstream-preparation-20261002/SwiftMediaMetadata`; portable patch only, original manifest/Benchmark/lockfile preserved; [source/test receipt](evidence/bounded-mxf-upstream-preparation-20261002/README.md) |
+| Normal upstream package preparation | Local commit `8297324bb00ad1358b4070575c1ea59e698d3f2f` on `codex/bounded-mxf-reader` at `/private/tmp/aagedal-bounded-mxf-upstream-preparation-20261002/SwiftMediaMetadata`; portable patch only, original manifest/Benchmark/lockfile preserved; [source/test receipt and standalone bundle](evidence/bounded-mxf-upstream-preparation-20261002/README.md) |
 | Historical app/reimport products | `/private/tmp/aagedal-metadata-reimport-dd-20260930`; result bundles `/private/tmp/aagedal-metadata-reimport-artifacts-20260930/runs/input-{0,1,2}/Profile.xcresult`; independent package cache `/private/tmp/aagedal-metadata-reimport-packages-20260930` |
 
 Read-only inspection on 2026-10-02 found those directories present, the staged
@@ -29,8 +30,10 @@ manifest digest unchanged, all 46 declared stage files present with their
 recorded sizes, the patch digest unchanged, and all six bounded-MXF candidate
 source hashes matching [source-identities.json](evidence/bounded-mxf-candidate-20260930/source-identities.json).
 This inspection did not rehash every large payload or rerun historical profiles.
-Temporary storage is the sole retained location for the large payloads; copy
-and independently verify it before cleanup or host migration.
+Temporary storage is the sole retained location for the large CoreAudio
+payloads; copy and independently verify them before cleanup or host migration.
+The bounded-MXF source commit now has a verified standalone bundle retained
+in this repository; it restores the exact commit independently of that checkout.
 
 ## CoreAudio: local work that can proceed before publication
 
@@ -109,7 +112,8 @@ broken-alternate checkout and stripped-manifest candidate were not reused.
 Exact commands and cache/input identities are retained in the new receipt;
 this offline check does not authenticate remote payloads. The CLI harness uses
 its existing `SWIFT_EXIF_CLI_BINARY` override for the isolated scratch path.
-No final revision/version exists yet. Prepare version/release material and run
+The local source commit is prepared; no released version or published immutable
+revision exists yet. Prepare version/release material and run
 checks on that final tree before a release commit/tag. Review the FX6
 positional-read syscall cost, then repeat
 authentic exporter parity, app-model/cache parity and repeated imports against

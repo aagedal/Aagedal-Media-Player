@@ -1,0 +1,15 @@
+{
+  "applicationPath": "/private/tmp/aagedal-2-reconcile-focused-20261002/Build/Products/Release/Aagedal Media Player.app/Contents/MacOS/Aagedal Media Player",
+  "applicationSHA256": "5e588443a6215b2d78f2a2d0aa97f2999fc5442b2f1daa739982038daf09bf18",
+  "focusedTestsPassed": 51,
+  "nativeActions": [
+    "Open A/B saved pair; zoom window; open Review",
+    "Expand first finding; Tab into range; type -1; Return",
+    "Command-Option-N",
+    "Type Native focus escaped finding"
+  ],
+  "observedTypedField": "Inclusive range end frame for review note 1 of 2 at source A frame 0",
+  "observedRangeValue": "Native focus escaped finding",
+  "observedNewNoteValue": "empty",
+  "result": "rejected native focus handoff; no claim of merged-deletion acceptance"
+}

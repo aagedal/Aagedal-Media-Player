@@ -46,3 +46,12 @@ tag, publication or shipping app repin ran. The 21 library opt-in skips and
 existing external-volume, multi-hour, Linux, supported-macOS/base-M1 and
 shipping-integration acceptance gates remain open. A final release revision
 still requires version/release preparation and checks on its exact final tree.
+
+The unchanged validated six-file correction is now a local source commit
+`8297324bb00ad1358b4070575c1ea59e698d3f2f`, parented to the exact 3.0.1 base,
+on `codex/bounded-mxf-reader`. [A standalone source bundle](bounded-mxf-reader.bundle)
+restores the exact commit independently; [format-patch](bounded-mxf-reader.patch)
+applies at the exact base. [Local source receipt](local-source-preparation.json)
+binds commit/tree and artifact hashes to the prior test source identities.
+This adds durable local source preparation, without a release tag, publication
+or shipping app repin.

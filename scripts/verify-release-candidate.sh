@@ -102,7 +102,7 @@ xcrun xcresulttool get test-results tests \
 python3 scripts/validate-release-xcresult.py \
     "$artifact_dir/test-summary.json" \
     "$artifact_dir/test-details.json" \
-    --minimum-tests 810 \
+    --minimum-tests 817 \
     --require-test "CompareReviewTextCommitTests/testOrdinaryTextValidationRevealsFindingHiddenByFilterWithoutSavingDrafts()" \
     --require-test "CompareReviewTextCommitTests/testRetainedRangeCorrectionRevealsOnlyExistingEditableHiddenFinding()" \
     --require-test "LiveAudioMeterCoordinatorTests/testMalformedCurrentLoudnessFailsGenerationAndCancelsWorker()" \
@@ -157,6 +157,13 @@ python3 scripts/validate-release-xcresult.py \
     --require-test "CompareReviewTextCommitTests/testMergedDeletionPreservesSurvivingCorrectionAndUnaddedNote()" \
     --require-test "CompareReviewTextCommitTests/testTemporaryUnavailableReviewPreservesDraftsUntilLoadedNotesCanReconcile()" \
     --require-test "CompareReviewTextCommitTests/testReconciliationPreservesWindowLevelUnavailableActionNotice()" \
+    --require-test "CompareReviewTextCommitTests/testRepeatedInvalidRangeDepartureDoesNotReacquireCorrectionFocus()" \
+    --require-test "CompareReviewTextCommitTests/testRepeatedEmptyTextDepartureDoesNotReacquireCorrectionFocus()" \
+    --require-test "CompareReviewTextCommitTests/testExplicitNavigationPreservesInvalidDraftWithoutRowRestoration()" \
+    --require-test "CompareReviewTextCommitTests/testExplicitActionRetriesResumeCorrectionFocusAfterNavigation()" \
+    --require-test "CompareReviewTextCommitTests/testExplicitNavigationBeforeInitialBlurPreservesErrorAndAllowsLaterCorrection()" \
+    --require-test "CompareReviewTextCommitTests/testUnchangedFieldCallbacksPreserveCorrectionDuringExplicitNavigation()" \
+    --require-test "CompareReviewTextCommitTests/testOpeningReviewRespectsRetainedCorrectionUnlessNavigationOverridesIt()" \
     --require-test "LiveAudioMeterDecoderTests/testBundledDecoderPreservesContiguousDTSInMillisecondMatroskaContainer()" \
     2>&1 | tee "$artifact_dir/test-evidence-validation.log"
 

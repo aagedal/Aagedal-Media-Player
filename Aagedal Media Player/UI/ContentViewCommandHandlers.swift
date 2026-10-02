@@ -151,6 +151,7 @@ private struct FileAndWindowHandlers: ViewModifier {
                 guard let command = notification.appCommand,
                       case let .focusCompareReviewField(target) = command else { return }
                 guard WindowManager.shared.isActiveWindow(nsWindow), compareSession.isActive else { return }
+                compareReviewDrafts.allowExplicitNavigation()
                 compareReviewFocusTarget = target
                 showReviewNotes = true
             }

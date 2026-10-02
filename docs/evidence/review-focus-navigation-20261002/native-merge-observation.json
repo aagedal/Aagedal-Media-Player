@@ -1,0 +1,19 @@
+{
+  "scope": "Mixed native pointer/keyboard workflow; externally edited isolated test sidecar, not real two-window acceptance",
+  "appPath": "/private/tmp/aagedal-2-reconcile-focused-20261002/Build/Products/Release/Aagedal Media Player.app",
+  "appSHA256": "b6ac95280c6ee30963d584d073f24c82d69f3ccf885a06b3fd459e7d20098129",
+  "observations": {
+    "invalidRangePreserved": true,
+    "newNoteNavigationAndAdd": true,
+    "filterNavigation": true,
+    "filteredExportBlockedAndRevealed": true,
+    "filteredExportActualFocus": "New Note; correction focus still failed before mounted-field follow-up",
+    "externalTestDeletionMergedByAddSave": true,
+    "deletedCorrectionRowAndErrorRetired": true,
+    "survivingTextCommittedOnTab": true
+  },
+  "unchangedMediaSHA256": {
+    "reference.mov": "b14c18540b36e40e6faf3a088ef792ef2edf393ed4571f77ef5640b13f6603af",
+    "delivery.mov": "cb6ac77cc86a30a1de378f189c0ddaf66a558d424b1483ba9b78b632e77a0ed3"
+  }
+}

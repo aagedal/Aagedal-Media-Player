@@ -5,6 +5,7 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Changed
+- Review uses one keyboard focus owner, preserving invalid drafts while New Note and Filter navigation proceeds; explicit actions reveal and focus the required correction.
 - Review retires corrections for findings deleted by another window's sidecar merge, allowing edits to surviving findings while preserving drafts during reload.
 - Premiere round-trip checks can consume a captured pre-import media receipt to detect source files replaced at an unchanged path.
 - Review preserves unsaved text, ranges and correction focus when a queued deletion is rejected during saving or loading. New-note edits retain current export guidance.
@@ -26,7 +27,7 @@ All notable changes to Aagedal Media Player.
 - Explicit Review range Apply and Return preserve newer same-sidecar endpoints when a queued row action has no typed draft left, and retain rejected input for correction and retry.
 - Live audio meters clear readings and cancel suspended decoding when a paused or buffering source clock becomes invalid; valid contiguous suspension preserves readings and held maxima.
 - Premiere round-trip validation rejects unsupported source-track, auxiliary timecode and field-offset overrides that unchanged media paths and frame numbers previously concealed.
-- Candidate verification and release consumption require the Premiere, Review and meter lifecycle regressions and at least 802 aggregate tests, alongside both isolated mixed-backend transport checks.
+- Candidate verification and release consumption require the Premiere, Review and meter lifecycle regressions and at least 817 aggregate tests, alongside both isolated mixed-backend transport checks.
 - Live meters enforce bounded startup even before the first PCM snapshot arrives, clearing stalled work with retained diagnostics.
 - PDF review reports identify source and relative timecodes explicitly and preserve complete values after relinking.
 - Dependency reconstruction audits reject undeclared sources, stale build caches, redirected directories and nonregular inputs.

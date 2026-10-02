@@ -1,9 +1,12 @@
 {
-  "README.md": "fb328a2d41b71235ea9a789c387f4f45d4873def657e17d49cd29414de608bfa",
+  "README.md": "eafaf5e5feb02d128b6565d422d9f3aff568e5822e140feb50ab108aa71ccb0b",
+  "bounded-mxf-reader.bundle": "43d42c2c5660cacafaae42c6073c9145907092fb39e14e8a4e648b457e9e2b58",
+  "bounded-mxf-reader.patch": "4e2158de7712bf2e6b60e5f7829cc64eb377c54c6a282aac774754dc51fa77c7",
   "cli-tests.log.gz": "f3994e3a6ba4b3c5bc3b6c43b44d167280cc3f92bb722fa57621a6d85f54c3b7",
   "initial-cli-binary-location-failure.log.gz": "10139166c5b3e223afb891de673fc62195f289fbf8a8b12338594c532ea23836",
   "initial-missing-temp-directory.log.gz": "a2eaef8de10f5bae7e7a5e635dcbab3e7a95bcd7e09a22aa89ddadca7f870f23",
   "library-tests.log.gz": "b35ab6191224d2287f25cba6c877ec83d5aafcf81815cce84b6857760867acb1",
+  "local-source-preparation.json": "9a3dc29cd73b97732a2789233f033c1e5bf799a57bd61c44a6b0427f4a4bd27e",
   "preparation.json": "1ca91488ea14ece50661f1ae35235b7a12aa2add6bda1807a22b1de724a6ef7f",
   "preparation.log.gz": "b4cf31a3acf7b111d48b9cbd0a635f5ce855bf259d988e796b302aac0c4e1485"
 }

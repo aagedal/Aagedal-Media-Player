@@ -3,6 +3,19 @@
 Assessment updated: 2026-10-02. This assessment reflects the
 [product roadmap](../PRODUCT_ROADMAP.md) and its recorded scope decisions.
 
+The native Review continuation exposed correction focus overriding deliberate
+New Note/Filter navigation. A shared focus owner, passive validation identity
+and explicit navigation suspension preserve rejected input while allowing those
+commands to proceed. Opening Review restores retained correction focus; report
+preflight owns the correction destination after revealing filtered findings.
+Candidate/release consumption requires seven additional regressions and 817
+aggregate tests. Focused and final native results are recorded in
+[focus receipts](evidence/review-focus-navigation-20261002/README.md).
+The earlier merged-deletion/media-baseline batch passed clean canonical
+verification at `316e1bfdb6de7f1f5a7d697a09e259f7185357d3`: 801 passes,
+nine named opt-in skips, both isolated transport directions and all 61 preflight
+checks. See [integrated receipts](evidence/review-merge-baseline-candidate-20261002/README.md).
+
 The merged-deletion continuation retires Review corrections for findings removed
 by another window's successful sidecar merge, preserving surviving drafts and
 temporary reload input. All 46 focused optimized Release text-commit tests pass
@@ -13,7 +26,7 @@ misses; all 47 Premiere checks and the full script-validator gate pass.
 retain a partial native keyboard comparison/note/edit/range/filter/CSV workflow
 on the preceding verified app. One classification disclosure used an
 accessibility click, so complete keyboard and spoken accessibility remain open.
-Candidate/release consumption requires all four new identities and 810 total
+That batch required all four new identities and 810 total
 tests. Dependency preparation is mapped in the
 [publication handoff](RELEASE_2_DEPENDENCY_HANDOFF.md); immutable publication,
 fresh resolution and shipping repins remain required. A fresh bounded-MXF
@@ -23,7 +36,7 @@ tests pass without skips. See [upstream preparation receipts](evidence/bounded-m
 
 Next delivery order:
 
-1. Prepare the bounded-MXF release revision from the tested six-file patch and
+1. Publish the prepared bounded-MXF source revision after upstream review and
    finish the portable GPL/Metal CoreAudio build environment, then publish immutable dependencies,
    resolve fresh caches and repin the app. Use the dependency handoff's retained
    inputs and acceptance sequence; local linked builds do not qualify shipping.
@@ -46,7 +59,7 @@ and rejects Premiere freeze/slip/multiclip/native-tick contradictions. All 94
 focused optimized Release checks pass with no skips or runtime warnings, all 43
 Premiere checks pass, and both meter regressions reproduce the preceding defect.
 The native file-picker attempt is inconclusive; no new keyboard or spoken
-accessibility acceptance is claimed. Candidate/release consumption now requires
+accessibility acceptance is claimed. That batch required
 all four new identities and 806 aggregate tests. See
 [focused receipts](evidence/review-eof-premiere-timing-20261002/README.md).
 Canonical optimized Release verification passes at clean implementation commit
