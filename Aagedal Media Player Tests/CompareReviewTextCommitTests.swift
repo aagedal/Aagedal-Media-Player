@@ -7,6 +7,79 @@ import XCTest
 
 final class CompareReviewTextCommitTests: XCTestCase {
     @MainActor
+    func testExplicitTextReturnCommitsEarlierSavedTextAgainstCurrentSameSidecarMerge() {
+        let rendered = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
+            secondaryFrame: 10, secondaryTime: 1, text: "Earlier saved finding")
+        var current = rendered
+        current.text = "Merged finding from another window"
+        var drafts = CompareReviewDraftState()
+        drafts.updateNoteTextDraft("  Earlier saved finding \n", noteID: rendered.id)
+        var updates: [String] = []
+
+        // Return must compare with the live controller note. Comparing with
+        // rendered.text would accept this draft without restoring the text
+        // that the user entered after the other window's same-sidecar save.
+        drafts.commitNoteText(note: current, canEdit: true) {
+            updates.append($0)
+            return true
+        }
+        XCTAssertEqual(updates, ["Earlier saved finding"])
+        XCTAssertNil(drafts.noteDrafts[current.id])
+        XCTAssertNil(drafts.noteActionErrors[current.id])
+    }
+
+    @MainActor
+    func testExplicitTextReturnRetiresMergedOrAbsentDraftWithoutRewritingSavedText() {
+        let rendered = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
+            secondaryFrame: 10, secondaryTime: 1, text: "Earlier saved finding")
+        var current = rendered
+        current.text = "Merged finding from another window"
+        for entered in [String?.none, "  Merged finding from another window \n"] {
+            var drafts = CompareReviewDraftState()
+            if let entered { drafts.updateNoteTextDraft(entered, noteID: current.id) }
+            drafts.commitNoteText(note: current, canEdit: true) { _ in
+                XCTFail("Absent or current saved input must not rewrite a merged finding")
+                return true
+            }
+            XCTAssertNil(drafts.noteDrafts[current.id])
+            XCTAssertFalse(drafts.hasPendingEdits(in: [current]))
+        }
+    }
+
+    @MainActor
+    func testExplicitTextReturnRetainsSameSidecarDraftUntilLiveUpdateAcceptsIt() {
+        let rendered = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
+            secondaryFrame: 10, secondaryTime: 1, text: "Earlier saved finding")
+        var current = rendered
+        current.text = "Merged finding from another window"
+        var drafts = CompareReviewDraftState()
+        drafts.updateNoteTextDraft(rendered.text, noteID: current.id)
+        drafts.commitNoteText(note: current, canEdit: false) { _ in
+            XCTFail("An unavailable Return must not save")
+            return true
+        }
+        XCTAssertEqual(drafts.noteDrafts[current.id], rendered.text)
+        XCTAssertNotNil(drafts.noteActionErrors[current.id])
+        XCTAssertNil(drafts.correctionRequest)
+
+        drafts.commitNoteText(note: current, canEdit: true) { _ in false }
+        XCTAssertEqual(drafts.noteDrafts[current.id], rendered.text)
+        XCTAssertEqual(drafts.noteActionErrors[current.id], "This note could not be updated. Retry the edit.")
+        XCTAssertEqual(drafts.correctionRequest?.noteID, current.id)
+        XCTAssertEqual(drafts.correctionRequest?.field, .text)
+
+        var updates: [String] = []
+        drafts.commitNoteText(note: current, canEdit: true) {
+            updates.append($0)
+            return true
+        }
+        XCTAssertEqual(updates, [rendered.text])
+        XCTAssertNil(drafts.noteDrafts[current.id])
+        XCTAssertNil(drafts.noteActionErrors[current.id])
+        XCTAssertNil(drafts.correctionRequest)
+    }
+
+    @MainActor
     func testRangeDraftEditClearsPreviousErrorBeforeNewValidation() {
         let note = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
             secondaryFrame: 10, secondaryTime: 1, text: "Finding", primaryEndFrame: 20)

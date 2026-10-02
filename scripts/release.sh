@@ -182,7 +182,7 @@ if [[ "$EVIDENCE_STATUS" != "passed" \
     exit 2
 fi
 python3 scripts/validate-release-xcresult.py \
-    "$CANDIDATE_SUMMARY" "$CANDIDATE_DETAILS" --minimum-tests 788 \
+    "$CANDIDATE_SUMMARY" "$CANDIDATE_DETAILS" --minimum-tests 795 \
     --require-test "CompareReviewTextCommitTests/testOrdinaryTextValidationRevealsFindingHiddenByFilterWithoutSavingDrafts()" \
     --require-test "CompareReviewTextCommitTests/testRetainedRangeCorrectionRevealsOnlyExistingEditableHiddenFinding()" \
     --require-test "LiveAudioMeterCoordinatorTests/testMalformedCurrentLoudnessFailsGenerationAndCancelsWorker()" \
@@ -215,6 +215,13 @@ python3 scripts/validate-release-xcresult.py \
     --require-test "CompareReviewReportExporterTests/testPremiereDoesNotInventUnknownFieldOrder()" \
     --require-test "CompareReviewReportExporterTests/testPremiereRejectsUnrepresentableFieldOrder()" \
     --require-test "CompareReviewReportExporterTests/testPremiereGroupedSeparatorKeepsUserTextAndLiteralEntityLookingContent()" \
+    --require-test "CompareReviewTextCommitTests/testExplicitTextReturnCommitsEarlierSavedTextAgainstCurrentSameSidecarMerge()" \
+    --require-test "CompareReviewTextCommitTests/testExplicitTextReturnRetiresMergedOrAbsentDraftWithoutRewritingSavedText()" \
+    --require-test "CompareReviewTextCommitTests/testExplicitTextReturnRetainsSameSidecarDraftUntilLiveUpdateAcceptsIt()" \
+    --require-test "LiveAudioMeterWindowControllerTests/testClosedControllerRejectsQueuedShowBeforeAndAfterPanelCreation()" \
+    --require-test "LiveAudioMeterWindowControllerTests/testCloseCallbackCannotReopenRetiredPanelController()" \
+    --require-test "CompareReviewReportExporterTests/testPremierePreservesAuthoredWhitespaceScalarsInParsedMarkerComments()" \
+    --require-test "CompareReviewReportExporterTests/testPremierePreservesCarriageReturnsInSourceAndSequenceNames()" \
     --require-test "LiveAudioMeterDecoderTests/testBundledDecoderPreservesContiguousDTSInMillisecondMatroskaContainer()"
 python3 scripts/validate-release-xcresult.py \
     "$CANDIDATE_MIXED_SUMMARY" "$CANDIDATE_MIXED_DETAILS" --minimum-tests 2 \

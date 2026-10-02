@@ -16,11 +16,21 @@ from urllib.parse import unquote, urlsplit
 import xml.etree.ElementTree as ET
 
 
+def scalar_text(element, label, allow_empty=False):
+    # XMEML scalar fields cannot contain XML elements. Reading only .text
+    # would silently discard child/tail content and could report exact-match.
+    if len(element):
+        raise ValueError(f"Nested content in scalar {label}")
+    if element.text is None and not allow_empty:
+        raise ValueError(f"Expected populated {label}")
+    return element.text or ""
+
+
 def text(element, path):
     items = element.findall(path)
-    if len(items) != 1 or items[0].text is None:
+    if len(items) != 1:
         raise ValueError(f"Expected exactly one populated {path}")
-    return items[0].text
+    return scalar_text(items[0], path)
 
 
 def integer(element, path):
@@ -52,7 +62,7 @@ def timecode(element, expected_rate):
     if len(labels) > 1:
         raise ValueError("Ambiguous timecode string")
     if labels:
-        label = labels[0].text or ""
+        label = scalar_text(labels[0], "timecode string", allow_empty=True)
         match = re.fullmatch(r"(\d{2})([:;])(\d{2})([:;])(\d{2})([:;])(\d{2,3})", label)
         if not match:
             raise ValueError(f"Invalid timecode string: {label!r}")
@@ -111,21 +121,21 @@ def pixel_aspect(element, required=False):
     if (len(values) > 1 or (required and not values)
             or (values and not (values[0].text or "").strip())):
         raise ValueError("Invalid or ambiguous pixel aspect")
-    return values[0].text if values else None
+    return scalar_text(values[0], "pixel aspect") if values else None
 
 
 def field_dominance(element):
     values = element.findall("fielddominance")
     if len(values) > 1 or (values and values[0].text not in ("none", "lower", "upper", "odd", "even")):
         raise ValueError("Invalid or ambiguous field dominance")
-    return values[0].text if values else None
+    return scalar_text(values[0], "field dominance") if values else None
 
 
 def require_enabled(element):
     # XMEML defaults omitted enabled elements to TRUE. A muted track or clip
     # cannot establish the unchanged source-A review sequence described here.
     values = element.findall("enabled")
-    if len(values) > 1 or (values and values[0].text != "TRUE"):
+    if len(values) > 1 or (values and scalar_text(values[0], "enabled", allow_empty=True) != "TRUE"):
         raise ValueError(f"Review {element.tag} must be enabled with an unambiguous TRUE value")
 
 
@@ -203,7 +213,7 @@ def read_export(path, sequence_name=None):
         comments = marker.findall("comment")
         if len(comments) != 1:
             raise ValueError("Expected exactly one marker comment")
-        markers.append((start, stop - start, text(marker, "name"), comments[0].text or ""))
+        markers.append((start, stop - start, text(marker, "name"), scalar_text(comments[0], "marker comment", allow_empty=True)))
         encoded_outs.append(end)
     if not markers or len(sequence.findall(".//marker")) != len(markers):
         raise ValueError("Expected nonempty markers belonging only to the sequence")

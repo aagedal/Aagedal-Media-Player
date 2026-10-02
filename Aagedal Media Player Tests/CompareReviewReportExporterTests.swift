@@ -1334,6 +1334,40 @@ final class CompareReviewReportExporterTests: XCTestCase {
         XCTAssertEqual(try markers[0].nodes(forXPath: "out").first?.stringValue, "43")
     }
 
+    func testPremierePreservesAuthoredWhitespaceScalarsInParsedMarkerComments() throws {
+        let authored = "  Leading\tcolumn\rCR\r\nCRLF\nLF\n\nblank line 雪 &#13; &#10;  "
+        let snapshot = CompareReviewReportSnapshot(
+            primaryItem: makeItem(path: "/tmp/A.mov", duration: 5),
+            secondaryItem: makeItem(path: "/tmp/B.mov", duration: 5),
+            alignmentMode: .relative,
+            notes: [CompareReviewNote(primaryFrame: 42, primaryTime: 0, secondaryFrame: 42,
+                                      secondaryTime: 0, text: authored)]
+        )
+        let exported = try CompareReviewReportExporter.premiereProXML(snapshot: snapshot)
+        let xml = try XMLDocument(xmlString: exported)
+        let comment = try XCTUnwrap(try xml.nodes(forXPath: "//sequence/marker/comment").first?.stringValue)
+        XCTAssertTrue(comment.hasPrefix("[QC 001] " + authored + " | Source B:"))
+        XCTAssertTrue(exported.contains("column&#13;CR&#13;&#10;CRLF&#10;LF&#10;&#10;"))
+        XCTAssertTrue(exported.contains("&amp;#13; &amp;#10;"))
+        // This verifies the app's carrier text, not Premiere's native handling.
+        XCTAssertEqual(Array(comment.unicodeScalars.filter { [9, 10, 13].contains($0.value) }),
+                       Array(authored.unicodeScalars.filter { [9, 10, 13].contains($0.value) }))
+    }
+
+    func testPremierePreservesCarriageReturnsInSourceAndSequenceNames() throws {
+        let snapshot = CompareReviewReportSnapshot(
+            primaryItem: makeItem(path: "/tmp/A\r\n雪.mov", duration: 5),
+            secondaryItem: makeItem(path: "/tmp/B\r.mov", duration: 5),
+            alignmentMode: .relative, notes: []
+        )
+        let xml = try XMLDocument(xmlString: CompareReviewReportExporter.premiereProXML(snapshot: snapshot))
+        XCTAssertEqual(try xml.nodes(forXPath: "//sequence/name").first?.stringValue,
+                       snapshot.primaryFilename + " vs " + snapshot.secondaryFilename + " Review")
+        for path in ["//clipitem/name", "//file/name"] {
+            XCTAssertEqual(try xml.nodes(forXPath: path).first?.stringValue, snapshot.primaryFilename)
+        }
+    }
+
     func testPremiereKeepsSourceDurationWhileRetainingFindingsBeyondShorterReplacement() throws {
         let snapshot = CompareReviewReportSnapshot(
             primaryItem: makeItem(path: "/tmp/A.mov", duration: 1, frameRate: "30/1"),

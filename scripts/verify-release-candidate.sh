@@ -102,7 +102,7 @@ xcrun xcresulttool get test-results tests \
 python3 scripts/validate-release-xcresult.py \
     "$artifact_dir/test-summary.json" \
     "$artifact_dir/test-details.json" \
-    --minimum-tests 788 \
+    --minimum-tests 795 \
     --require-test "CompareReviewTextCommitTests/testOrdinaryTextValidationRevealsFindingHiddenByFilterWithoutSavingDrafts()" \
     --require-test "CompareReviewTextCommitTests/testRetainedRangeCorrectionRevealsOnlyExistingEditableHiddenFinding()" \
     --require-test "LiveAudioMeterCoordinatorTests/testMalformedCurrentLoudnessFailsGenerationAndCancelsWorker()" \
@@ -135,6 +135,13 @@ python3 scripts/validate-release-xcresult.py \
     --require-test "CompareReviewReportExporterTests/testPremiereDoesNotInventUnknownFieldOrder()" \
     --require-test "CompareReviewReportExporterTests/testPremiereRejectsUnrepresentableFieldOrder()" \
     --require-test "CompareReviewReportExporterTests/testPremiereGroupedSeparatorKeepsUserTextAndLiteralEntityLookingContent()" \
+    --require-test "CompareReviewTextCommitTests/testExplicitTextReturnCommitsEarlierSavedTextAgainstCurrentSameSidecarMerge()" \
+    --require-test "CompareReviewTextCommitTests/testExplicitTextReturnRetiresMergedOrAbsentDraftWithoutRewritingSavedText()" \
+    --require-test "CompareReviewTextCommitTests/testExplicitTextReturnRetainsSameSidecarDraftUntilLiveUpdateAcceptsIt()" \
+    --require-test "LiveAudioMeterWindowControllerTests/testClosedControllerRejectsQueuedShowBeforeAndAfterPanelCreation()" \
+    --require-test "LiveAudioMeterWindowControllerTests/testCloseCallbackCannotReopenRetiredPanelController()" \
+    --require-test "CompareReviewReportExporterTests/testPremierePreservesAuthoredWhitespaceScalarsInParsedMarkerComments()" \
+    --require-test "CompareReviewReportExporterTests/testPremierePreservesCarriageReturnsInSourceAndSequenceNames()" \
     --require-test "LiveAudioMeterDecoderTests/testBundledDecoderPreservesContiguousDTSInMillisecondMatroskaContainer()" \
     2>&1 | tee "$artifact_dir/test-evidence-validation.log"
 

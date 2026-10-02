@@ -171,7 +171,17 @@ struct CompareReviewDraftState {
     ) {
         guard CompareReviewTextFocusLossPolicy.shouldCommit(
             noteID: note.id, correctionRequest: correctionRequest, canEdit: canEdit
-        ), let draft = noteDrafts[note.id] else { return }
+        ) else { return }
+        commitNoteText(note: note, canEdit: canEdit, update: update)
+    }
+
+    /// Return can arrive from a row rendered before another window's sidecar
+    /// save was merged. Compare the live draft with the current saved note,
+    /// just as departure does, rather than retiring input against that old row.
+    mutating func commitNoteText(
+        note: CompareReviewNote, canEdit: Bool, update: (String) -> Bool
+    ) {
+        guard let draft = noteDrafts[note.id] else { return }
         switch CompareReviewTextCommitResult.attempt(
             draft: draft, savedText: note.text, canEdit: canEdit, update: update
         ) {
@@ -660,8 +670,12 @@ struct CompareReviewView: View {
             onSeek: {
                 compareSession.seekToReviewNote(note, primary: primaryController)
             },
-            onUpdate: { text in compareSession.updateReviewNote(id: note.id, text: text) },
-            onCommitFinished: { drafts.finishNoteTextCommit(noteID: note.id) },
+            onTextCommit: {
+                guard let currentNote = compareSession.reviewNotes.first(where: { $0.id == note.id }) else { return }
+                drafts.commitNoteText(note: currentNote, canEdit: compareSession.canEditReviewNotes) {
+                    compareSession.updateReviewNote(id: note.id, text: $0)
+                }
+            },
             onTextDeparture: {
                 guard let currentNote = compareSession.reviewNotes.first(where: { $0.id == note.id }) else { return }
                 drafts.commitTextOnDeparture(note: currentNote, canEdit: compareSession.canEditReviewNotes) {
@@ -992,8 +1006,7 @@ private struct CompareReviewNoteRow: View {
     let timecodeLabel: String
     let canEdit: Bool
     let onSeek: () -> Void
-    let onUpdate: (String) -> Bool
-    let onCommitFinished: () -> Void
+    let onTextCommit: () -> Void
     let onTextDeparture: () -> Void
     let onDelete: () -> Void
     let onClassification: (CompareReviewSeverity?, CompareReviewCategory?, CompareReviewStatus?) -> Void
@@ -1028,8 +1041,7 @@ private struct CompareReviewNoteRow: View {
         timecodeLabel: String,
         canEdit: Bool,
         onSeek: @escaping () -> Void,
-        onUpdate: @escaping (String) -> Bool,
-        onCommitFinished: @escaping () -> Void,
+        onTextCommit: @escaping () -> Void,
         onTextDeparture: @escaping () -> Void,
         onDelete: @escaping () -> Void,
         onClassification: @escaping (CompareReviewSeverity?, CompareReviewCategory?, CompareReviewStatus?) -> Void,
@@ -1046,8 +1058,7 @@ private struct CompareReviewNoteRow: View {
         self.timecodeLabel = timecodeLabel
         self.canEdit = canEdit
         self.onSeek = onSeek
-        self.onUpdate = onUpdate
-        self.onCommitFinished = onCommitFinished
+        self.onTextCommit = onTextCommit
         self.onTextDeparture = onTextDeparture
         self.onDelete = onDelete
         self.onClassification = onClassification
@@ -1296,20 +1307,6 @@ private struct CompareReviewNoteRow: View {
 
     private func commit() {
         guard !isDeleting else { return }
-        switch CompareReviewTextCommitResult.attempt(
-            draft: draft, savedText: note.text, canEdit: canEdit, update: onUpdate
-        ) {
-        case .accepted:
-            noteActionError = nil
-            onCommitFinished()
-        case .empty:
-            noteActionError = "Enter note text before continuing."
-            if canEdit { isFocused = true }
-        case .unavailable:
-            noteActionError = "Review notes cannot be edited right now. Retry loading the review before continuing."
-        case .rejected:
-            noteActionError = "This note could not be updated. Retry the edit."
-            isFocused = true
-        }
+        onTextCommit()
     }
 }

@@ -615,7 +615,7 @@ nonisolated enum CompareReviewReportExporter {
             "<xmeml version=\"5\">",
             "  <project><name>Aagedal Compare Review</name><children>",
             "    <sequence id=\"aagedal-review-sequence\">",
-            "      <name>\(xmlAttribute(name))</name>",
+            "      <name>\(xmlElementText(name))</name>",
             "      <duration>\(sequenceDuration)</duration>",
             "      \(rateXML)",
             "      \(timecodeXML)",
@@ -624,12 +624,12 @@ nonisolated enum CompareReviewReportExporter {
         if !sampleXML.isEmpty { lines.append("        <format>\(sampleXML)</format>") }
         lines.append(contentsOf: [
             "        <track><clipitem id=\"aagedal-source-a-clip\">",
-            "          <name>\(xmlAttribute(snapshot.primaryFilename))</name>",
+            "          <name>\(xmlElementText(snapshot.primaryFilename))</name>",
             "          <duration>\(sourceDuration)</duration>\(rateXML)",
             "          <start>0</start><end>\(sourceDuration)</end><in>0</in><out>\(sourceDuration)</out>",
             "          <file id=\"aagedal-source-a-file\">",
-            "            <name>\(xmlAttribute(snapshot.primaryFilename))</name>",
-            "            <pathurl>\(xmlAttribute(snapshot.primaryURL.absoluteString))</pathurl>",
+            "            <name>\(xmlElementText(snapshot.primaryFilename))</name>",
+            "            <pathurl>\(xmlElementText(snapshot.primaryURL.absoluteString))</pathurl>",
             "            <duration>\(sourceDuration)</duration>\(rateXML)",
             "            \(timecodeXML)",
         ])
@@ -662,7 +662,7 @@ nonisolated enum CompareReviewReportExporter {
             let comment = zip(labels, rows).map { label, row in
                 "[\(label)] \(markerNote(row: row, snapshot: snapshot)) | Source A: \(reportTimecode(source: row.primarySourceTimecode, relative: row.primaryRelativeTimecode)), frame \(row.primaryFrame)"
             }.joined(separator: " || ")
-            lines.append("      <marker><name>\(xmlAttribute(title))</name><comment>\(xmlAttribute(comment))</comment><in>\(frame)</in><out>\(end)</out></marker>")
+            lines.append("      <marker><name>\(xmlElementText(title))</name><comment>\(xmlElementText(comment))</comment><in>\(frame)</in><out>\(end)</out></marker>")
         }
         lines.append(contentsOf: ["    </sequence>", "  </children></project>", "</xmeml>", ""])
         return lines.joined(separator: "\n")
@@ -866,9 +866,17 @@ nonisolated enum CompareReviewReportExporter {
     }
 
     private static func xmlAttribute(_ value: String) -> String {
+        // Keep FCPXML's established attribute newline convention.
+        xmlElementText(value)
+            .replacingOccurrences(of: "&#13;&#10;", with: "&#10;")
+            .replacingOccurrences(of: "&#13;", with: "&#10;")
+    }
+
+    private static func xmlElementText(_ value: String) -> String {
         // Pasted notes can contain characters that XML 1.0 cannot represent,
         // even as numeric references. Replace only those scalars, preserving
-        // Unicode text and encoding tabs so attribute normalization keeps them.
+        // Unicode text and using character references to preserve every XML-valid
+        // whitespace scalar. Literal CR/CRLF would normalize to LF on parsing.
         let validXML = String(String.UnicodeScalarView(value.unicodeScalars.map { scalar in
             switch scalar.value {
             case 0x09, 0x0A, 0x0D, 0x20...0xD7FF, 0xE000...0xFFFD, 0x10000...0x10FFFF:
@@ -883,8 +891,7 @@ nonisolated enum CompareReviewReportExporter {
             .replacingOccurrences(of: "<", with: "&lt;")
             .replacingOccurrences(of: ">", with: "&gt;")
             .replacingOccurrences(of: "\t", with: "&#9;")
-            .replacingOccurrences(of: "\r\n", with: "&#10;")
-            .replacingOccurrences(of: "\r", with: "&#10;")
+            .replacingOccurrences(of: "\r", with: "&#13;")
             .replacingOccurrences(of: "\n", with: "&#10;")
     }
 

@@ -94,6 +94,10 @@ final class LiveAudioMeterWindowController {
     var isVisible: Bool { panel?.isVisible ?? false }
 
     func show() {
+        // Cleanup permanently closes this controller's session and retires its
+        // owner callback. Queued or reentrant shows must not create an orphan
+        // panel whose worker and subsequent cleanup can no longer be owned.
+        guard !didCleanUp else { return }
         if let panel {
             panel.makeKeyAndOrderFront(nil)
             return

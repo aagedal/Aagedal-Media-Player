@@ -1,0 +1,114 @@
+{
+  "devices" : [
+    {
+      "architecture" : "arm64",
+      "deviceId" : "00006050-001C293C22F9401C",
+      "deviceName" : "My Mac",
+      "modelName" : "MacBook Pro",
+      "osBuildNumber" : "26A434",
+      "osVersion" : "27.0.1",
+      "platform" : "macOS"
+    }
+  ],
+  "testNodes" : [
+    {
+      "children" : [
+        {
+          "children" : [
+            {
+              "children" : [
+                {
+                  "children" : [
+                    {
+                      "name" : "XCTAssertFalse failed",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterWindowControllerTests.swift",
+                        "lineNumber" : 57
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertTrue failed",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterWindowControllerTests.swift",
+                        "lineNumber" : 58
+                      }
+                    }
+                  ],
+                  "duration" : "0,6s",
+                  "durationInSeconds" : 0.6020408868789673,
+                  "name" : "testCloseCallbackCannotReopenRetiredPanelController()",
+                  "nodeIdentifier" : "LiveAudioMeterWindowControllerTests/testCloseCallbackCannotReopenRetiredPanelController()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterWindowControllerTests/testCloseCallbackCannotReopenRetiredPanelController",
+                  "nodeType" : "Test Case",
+                  "result" : "Failed"
+                },
+                {
+                  "children" : [
+                    {
+                      "name" : "XCTAssertFalse failed",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterWindowControllerTests.swift",
+                        "lineNumber" : 30
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertTrue failed",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterWindowControllerTests.swift",
+                        "lineNumber" : 31
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertFalse failed",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterWindowControllerTests.swift",
+                        "lineNumber" : 30
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertTrue failed",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterWindowControllerTests.swift",
+                        "lineNumber" : 31
+                      }
+                    }
+                  ],
+                  "duration" : "0,075s",
+                  "durationInSeconds" : 0.07498502731323242,
+                  "name" : "testClosedControllerRejectsQueuedShowBeforeAndAfterPanelCreation()",
+                  "nodeIdentifier" : "LiveAudioMeterWindowControllerTests/testClosedControllerRejectsQueuedShowBeforeAndAfterPanelCreation()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterWindowControllerTests/testClosedControllerRejectsQueuedShowBeforeAndAfterPanelCreation",
+                  "nodeType" : "Test Case",
+                  "result" : "Failed"
+                }
+              ],
+              "name" : "LiveAudioMeterWindowControllerTests",
+              "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterWindowControllerTests",
+              "nodeType" : "Test Suite",
+              "result" : "Failed"
+            }
+          ],
+          "name" : "Aagedal Media Player Tests",
+          "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests",
+          "nodeType" : "Unit test bundle",
+          "result" : "Failed"
+        }
+      ],
+      "name" : "Aagedal Media Player",
+      "nodeType" : "Test Plan",
+      "result" : "Failed"
+    }
+  ],
+  "testPlanConfigurations" : [
+    {
+      "configurationId" : "1",
+      "configurationName" : "Test Scheme Action"
+    }
+  ]
+}

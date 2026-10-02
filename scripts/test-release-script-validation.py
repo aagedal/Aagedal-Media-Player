@@ -330,7 +330,7 @@ python3() { echo remote-validation >> "$TRACE"; }
         self.assertLess(summary, details)
         self.assertLess(details, validation)
         self.assertLess(validation, analysis)
-        self.assertIn('--minimum-tests 788', source)
+        self.assertIn('--minimum-tests 795', source)
         self.assertIn('-parallel-testing-enabled NO', source)
         self.assertEqual(source.count('-skip-testing:'), 2)
         focused = source.index('echo "==> Focused mixed-backend transport repeat"')
@@ -340,7 +340,7 @@ python3() { echo remote-validation >> "$TRACE"; }
         self.assertLess(focused_validation, analysis)
         self.assertIn('testAVFoundationPrimaryAndMPVSecondaryShareTransport', source)
         self.assertIn('testMPVPrimaryAndAVFoundationSecondaryShareTransport', source)
-        self.assertEqual(source.count('--require-test'), 35)
+        self.assertEqual(source.count('--require-test'), 42)
         for name in ('testPassiveTextDepartureUsesCorrectionSelectedAfterRowRender',
                      'testPassiveTextDepartureRetainsFailuresAndCommitsOnceAfterRetry',
                      'testPassiveRangeBlurUsesTextCorrectionSelectedAfterRowRender'):
@@ -359,6 +359,13 @@ python3() { echo remote-validation >> "$TRACE"; }
             ('CompareReviewReportExporterTests', 'testPremiereDoesNotInventUnknownFieldOrder'),
             ('CompareReviewReportExporterTests', 'testPremiereRejectsUnrepresentableFieldOrder'),
             ('CompareReviewReportExporterTests', 'testPremiereGroupedSeparatorKeepsUserTextAndLiteralEntityLookingContent'),
+            ('CompareReviewTextCommitTests', 'testExplicitTextReturnCommitsEarlierSavedTextAgainstCurrentSameSidecarMerge'),
+            ('CompareReviewTextCommitTests', 'testExplicitTextReturnRetiresMergedOrAbsentDraftWithoutRewritingSavedText'),
+            ('CompareReviewTextCommitTests', 'testExplicitTextReturnRetainsSameSidecarDraftUntilLiveUpdateAcceptsIt'),
+            ('LiveAudioMeterWindowControllerTests', 'testClosedControllerRejectsQueuedShowBeforeAndAfterPanelCreation'),
+            ('LiveAudioMeterWindowControllerTests', 'testCloseCallbackCannotReopenRetiredPanelController'),
+            ('CompareReviewReportExporterTests', 'testPremierePreservesAuthoredWhitespaceScalarsInParsedMarkerComments'),
+            ('CompareReviewReportExporterTests', 'testPremierePreservesCarriageReturnsInSourceAndSequenceNames'),
         ):
             self.assertIn(f'--require-test "{class_name}/{name}()"', source)
         self.assertIn('os.path.realpath', source)
@@ -410,8 +417,8 @@ python3() { echo remote-validation >> "$TRACE"; }
         self.assertLess(package_match, result_validation)
         self.assertLess(result_validation, preflight)
         self.assertLess(result_validation, archive)
-        self.assertIn('--minimum-tests 788', self.source)
-        self.assertEqual(self.source.count('--require-test'), 35)
+        self.assertIn('--minimum-tests 795', self.source)
+        self.assertEqual(self.source.count('--require-test'), 42)
         for name in ('testPassiveTextDepartureUsesCorrectionSelectedAfterRowRender',
                      'testPassiveTextDepartureRetainsFailuresAndCommitsOnceAfterRetry',
                      'testPassiveRangeBlurUsesTextCorrectionSelectedAfterRowRender'):
@@ -430,6 +437,13 @@ python3() { echo remote-validation >> "$TRACE"; }
             ('CompareReviewReportExporterTests', 'testPremiereDoesNotInventUnknownFieldOrder'),
             ('CompareReviewReportExporterTests', 'testPremiereRejectsUnrepresentableFieldOrder'),
             ('CompareReviewReportExporterTests', 'testPremiereGroupedSeparatorKeepsUserTextAndLiteralEntityLookingContent'),
+            ('CompareReviewTextCommitTests', 'testExplicitTextReturnCommitsEarlierSavedTextAgainstCurrentSameSidecarMerge'),
+            ('CompareReviewTextCommitTests', 'testExplicitTextReturnRetiresMergedOrAbsentDraftWithoutRewritingSavedText'),
+            ('CompareReviewTextCommitTests', 'testExplicitTextReturnRetainsSameSidecarDraftUntilLiveUpdateAcceptsIt'),
+            ('LiveAudioMeterWindowControllerTests', 'testClosedControllerRejectsQueuedShowBeforeAndAfterPanelCreation'),
+            ('LiveAudioMeterWindowControllerTests', 'testCloseCallbackCannotReopenRetiredPanelController'),
+            ('CompareReviewReportExporterTests', 'testPremierePreservesAuthoredWhitespaceScalarsInParsedMarkerComments'),
+            ('CompareReviewReportExporterTests', 'testPremierePreservesCarriageReturnsInSourceAndSequenceNames'),
         ):
             self.assertIn(f'--require-test "{class_name}/{name}()"', self.source)
 

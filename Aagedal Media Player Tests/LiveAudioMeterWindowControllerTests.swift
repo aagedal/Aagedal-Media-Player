@@ -8,6 +8,60 @@ import XCTest
 
 @MainActor
 final class LiveAudioMeterWindowControllerTests: XCTestCase {
+    func testClosedControllerRejectsQueuedShowBeforeAndAfterPanelCreation() {
+        for showBeforeClose in [false, true] {
+            let parent = makeParentWindow()
+            var closeCount = 0
+            let controller = LiveAudioMeterWindowController(
+                primaryController: PlayerController(),
+                compareSession: CompareSessionController(),
+                windowCoordinator: PlayerWindowCoordinator(),
+                parentWindow: parent,
+                onClose: { closeCount += 1 }
+            )
+            if showBeforeClose { controller.show() }
+            controller.close()
+
+            // The owner can already have queued show when closure removes this
+            // controller. Its permanently closed session cannot own a new panel.
+            controller.show()
+            controller.show()
+
+            XCTAssertFalse(controller.isVisible)
+            XCTAssertTrue(parent.childWindows?.isEmpty != false)
+            XCTAssertEqual(closeCount, 1)
+            controller.close()
+            XCTAssertEqual(closeCount, 1)
+        }
+    }
+
+    func testCloseCallbackCannotReopenRetiredPanelController() {
+        let parent = makeParentWindow()
+        var closeCount = 0
+        var controller: LiveAudioMeterWindowController?
+        controller = LiveAudioMeterWindowController(
+            primaryController: PlayerController(),
+            compareSession: CompareSessionController(),
+            windowCoordinator: PlayerWindowCoordinator(),
+            parentWindow: parent,
+            onClose: {
+                closeCount += 1
+                controller?.show()
+            }
+        )
+        controller?.show()
+        let panel = parent.childWindows?.first
+
+        panel?.close()
+
+        XCTAssertFalse(controller?.isVisible == true)
+        XCTAssertTrue(parent.childWindows?.isEmpty == true)
+        XCTAssertEqual(closeCount, 1)
+        controller?.close()
+        XCTAssertEqual(closeCount, 1)
+        controller = nil
+    }
+
     func testShowReusesActivatingChildPanelAndDirectCloseCleansUpOnce() {
         let parent = makeParentWindow()
         var closeCount = 0

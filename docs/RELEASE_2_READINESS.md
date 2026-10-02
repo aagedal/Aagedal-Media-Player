@@ -1,7 +1,21 @@
 # 2.0 release readiness
 
-Assessment updated: 2026-10-01. This assessment reflects the
+Assessment updated: 2026-10-02. This assessment reflects the
 [product roadmap](../PRODUCT_ROADMAP.md) and its recorded scope decisions.
+
+The October 2 continuation fixes Review Return discarding a draft after a
+same-sidecar merge, terminal live-meter panel reopening, and Premiere carrier
+whitespace normalization. Its independent comparator also rejects nested scalar
+XML that previously concealed changed marker text. All 202 focused optimized
+Release checks pass with no skips or runtime warnings (37 Review, 113 meter,
+52 exporter), and the complete script-validator suite passes. Both meter
+regressions fail on the preceding implementation; a retained comparator
+reproduction also demonstrates the preceding false exact-match. Candidate and
+release consumption require all seven new identities and 795 aggregate tests.
+See [focused receipts](evidence/review-meter-premiere-continuation-20261002/README.md).
+A native Premiere connection returns only a menu bar after 1,947 seconds;
+it supplies no new import, playback, or export acceptance. Wider native editor,
+accessibility, dependency, hardware and distribution gates remain open.
 
 The current continuation preserves newer Review range edits and same-sidecar
 merged endpoints, keeps closed live meters terminal across queued transport

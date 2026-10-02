@@ -165,6 +165,14 @@ running each check; installation alone does not establish format compatibility.
   checks proceed, use a disposable project and record First-specific results;
   skip the check if it causes problems. Do not generalize to full Media Composer.
 
+The October 2 exporter preserves each XML-valid authored whitespace scalar in
+Premiere element text, including CR, CRLF, LF and tabs. This is verified by
+parsing the app's XML carrier; Premiere's own whitespace handling remains a
+native acceptance gate. The independent comparator now rejects nested elements
+inside scalar fields instead of ignoring their child/tail content. All five
+retained native receipts keep their recorded differences and parsed payloads;
+rechecking those XML files does not re-establish absent media-byte evidence.
+
 On 2026-09-29, Media Composer First 26.8.0.58987 on macOS 27.0.1 accepted the
 retained 29.97 DF `unique-markers.edl` through **File → Input → Import EDL…**
 in a new disposable 30i NTSC project. It reported that sequence creation

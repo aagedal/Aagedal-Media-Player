@@ -4658,6 +4658,42 @@ Integrated committed-source verification follows separately.
 - [ ] Complete broader native editor/accessibility, dependency publication,
   hardware/soak and signing/notarization/distribution acceptance.
 
+## Phase 224 — Commit Review Return against the current finding
+
+- [x] Move explicit text submission into the live window draft owner and resolve
+  the controller's current note before comparing saved text. Same-sidecar merges
+  no longer cause a draft matching the old row to be silently discarded.
+- [x] Cover restored earlier text, absent/current drafts, unavailable editing
+  and rejected retry. All 37 optimized Release text-commit tests pass.
+- [ ] Complete native keyboard, Full Keyboard Access and spoken VoiceOver checks.
+
+## Phase 225 — Keep closed meter panel controllers terminal
+
+- [x] Reject queued/reentrant show calls after terminal cleanup, including close
+  before panel creation and owner-callback reopening.
+- [x] Reproduce both new regressions on the old implementation, then pass all
+  113 focused optimized Release live-meter tests with no skips or warnings.
+
+## Phase 226 — Preserve Premiere carrier whitespace and scalar integrity
+
+- [x] Preserve authored CR/CRLF/LF/tabs in parsed Premiere XML without changing
+  FCPXML's attribute newline convention. All 52 exporter checks pass.
+- [x] Reject nested XML in scalar fields; retain the preceding comparator's false
+  exact-match reproduction. All 31 Python checks pass, including the five native
+  receipts with their existing differences unchanged.
+- [ ] Complete fresh native whitespace, interlaced/PAR/range/rate/conform checks.
+  The October 2 native binding returns only a menu bar after 1,947 seconds and
+  establishes no new import or re-export acceptance.
+
+## Phase 227 — Integrate the Review, panel and carrier continuation
+
+- [x] Require seven new exact test identities and 795 aggregate tests in both
+  candidate verification and release consumption; script-validator suite passes.
+- [x] Retain focused results, baseline failures and the comparator reproduction
+  in `docs/evidence/review-meter-premiere-continuation-20261002/`.
+- [ ] Complete clean committed-source canonical verification and unchanged
+  native/editor/accessibility/dependency/hardware/distribution gates.
+
 ## Remaining work after this continuation
 
 The user’s 2026-10-01 scope decision makes Avid native compatibility optional

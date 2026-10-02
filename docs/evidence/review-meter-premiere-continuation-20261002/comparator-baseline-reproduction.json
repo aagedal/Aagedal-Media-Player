@@ -1,0 +1,5 @@
+{
+  "baselineStatus": "exact-match",
+  "currentStatus": "invalid",
+  "currentError": "Nested content in scalar marker comment"
+}

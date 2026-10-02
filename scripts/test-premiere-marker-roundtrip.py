@@ -58,6 +58,25 @@ class RoundTripTests(unittest.TestCase):
         self.assertIn('æøå 日本語 & <picture> "quoted"\tcolumn\nSecond line', result["original"]["markers"][0][3])
         self.assertFalse(result["mediaBytesCompared"])
 
+    def test_retained_native_roundtrips_keep_recorded_differences_and_payloads(self):
+        evidence = Path(__file__).resolve().parents[1] / "docs/evidence/premiere-native-roundtrip-20261001"
+        for carrier, receipt in (("23976", "23976"), ("2997DF", "2997DF"),
+                                 ("5994DF", "5994DF"), ("LiteralLF", "LiteralLF"),
+                                 ("VisibleDelimiter", "VisibleDelimiter")):
+            recorded = json.loads((evidence / f"{receipt}-comparison.json").read_text())
+            result = premiere.compare(evidence / f"Aagedal-Review-{carrier}.xml",
+                                      evidence / f"Aagedal-Review-{carrier}-Premiere-Roundtrip.xml")
+            # The media is intentionally not retained. XML fixtures alone can
+            # preserve observed differences but cannot re-establish byte proof.
+            with self.subTest(carrier=carrier):
+                self.assertEqual(result["status"], "differences")
+                self.assertFalse(result["mediaBytesCompared"])
+                self.assertEqual(result["checks"], {key: value for key, value in recorded["checks"].items()
+                                                    if key != "sourceMediaBytes"})
+                for side in ("original", "returned"):
+                    self.assertEqual(json.loads(json.dumps(result[side])),
+                                     {key: value for key, value in recorded[side].items() if key != "mediaSHA256"})
+
     def test_reordered_markers_and_xml_ids_are_not_marker_identity(self):
         def mutate(root):
             sequence = root.find(".//sequence")
@@ -109,6 +128,63 @@ class RoundTripTests(unittest.TestCase):
                          ["exactMarkerContent"])
         self.assertIn("\n\n", result["original"]["markers"][2][3])
         self.assertIn("&#10;&#10;", result["returned"]["markers"][2][3])
+
+    def test_changed_authored_whitespace_is_exact_content_difference(self):
+        # References preserve CR separately from LF; comparing stripped or
+        # normalized text would conceal real native whitespace loss.
+        for before, after in (("  leading and trailing  ", "leading and trailing"),
+                              ("tab\tcolumn", "tab column"),
+                              ("CR\rline", "CR\nline"),
+                              ("CRLF\r\nline", "CRLF\nline"),
+                              ("blank\n\nline", "blank\nline"),
+                              ("literal &#13;", "literal \r")):
+            original = fixture()
+            original.find(".//marker/comment").text = before
+            returned = copy.deepcopy(original)
+            returned.find(".//marker/comment").text = after
+            for path, root in ((self.before, original), (self.after, returned)):
+                path.write_bytes(ET.tostring(root, encoding="utf-8").replace(b"\r", b"&#13;"))
+            with self.subTest(before=before, after=after):
+                result = premiere.compare(self.before, self.after)
+                self.assertEqual(result["status"], "differences")
+                self.assertEqual(result["original"]["markers"][0][3], before)
+                self.assertEqual(result["returned"]["markers"][0][3], after)
+                self.assertEqual([key for key, passed in result["checks"].items() if not passed],
+                                 ["exactMarkerContent"])
+
+    def test_nested_scalar_content_cannot_be_silently_ignored(self):
+        paths = (".//marker/comment", ".//marker/name", ".//marker/in", ".//marker/out",
+                 ".//sequence/name", ".//sequence/duration", ".//sequence/rate/timebase",
+                 ".//sequence/rate/ntsc", ".//sequence/timecode/frame",
+                 ".//sequence/timecode/displayformat", ".//file/pathurl",
+                 ".//format/samplecharacteristics/width",
+                 ".//format/samplecharacteristics/pixelaspectratio")
+        for path in paths:
+            def mutate(root):
+                child = ET.SubElement(root.find(path), "unexpected")
+                child.text = "hidden native content"
+                child.tail = "silently omitted tail"
+            with self.subTest(path=path), self.assertRaisesRegex(ValueError, "Nested content in scalar"):
+                self.compare(mutate)
+        for parent, field, value in ((".//sequence/timecode", "string", "00:00:58;00"),
+                                     (".//clipitem", "pixelaspectratio", "square"),
+                                     (".//clipitem", "fielddominance", "upper"),
+                                     (".//clipitem", "enabled", "TRUE")):
+            def mutate(root):
+                node = ET.SubElement(root.find(parent), field)
+                node.text = value
+                ET.SubElement(node, "unexpected").text = "hidden"
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError, "Nested content in scalar"):
+                self.compare(mutate)
+
+    def test_empty_scalar_marker_comment_remains_supported(self):
+        root = fixture()
+        root.find(".//marker/comment").text = None
+        ET.ElementTree(root).write(self.before)
+        ET.ElementTree(root).write(self.after)
+        result = premiere.compare(self.before, self.after)
+        self.assertEqual(result["status"], "exact-match")
+        self.assertEqual(result["original"]["markers"][0][3], "")
 
     def test_all_supported_exact_rates_and_drop_frame_modes(self):
         for base, ntsc, df, expected in ((24, True, False, "24000/1001"), (30, True, True, "30000/1001"),
