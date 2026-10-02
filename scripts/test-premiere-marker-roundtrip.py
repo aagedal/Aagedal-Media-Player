@@ -193,6 +193,40 @@ class RoundTripTests(unittest.TestCase):
                 ET.ElementTree(fixture(base, ntsc, df)).write(self.before)
                 self.assertEqual(premiere.read_export(self.before)["rate"], expected)
 
+    def test_explicit_default_timecode_field_and_source_match_omitted_defaults(self):
+        def mutate(root):
+            for tc in root.findall(".//timecode"):
+                ET.SubElement(tc, "field").text = "0"
+                ET.SubElement(tc, "source").text = "source"
+        result = self.compare(mutate)
+        self.assertEqual(result["status"], "exact-match")
+        self.assertEqual(result["original"]["sequenceTimecode"], result["returned"]["sequenceTimecode"])
+        self.assertEqual(result["original"]["sourceTimecode"], result["returned"]["sourceTimecode"])
+
+    def test_nondefault_invalid_and_ambiguous_timecode_field_or_source_rejected(self):
+        # Identical encoded frame numbers do not prove the same timecode clock
+        # or field. Before this guard these changed carriers passed exact-match.
+        for path in (".//sequence/timecode", ".//file/timecode"):
+            for field, variants in (("field", (("1",), ("-1",), (None,), ("0", "0"), ("0", "1"))),
+                                    ("source", (("aux1",), ("aux2",), ("sound",), ("SOURCE",),
+                                                (None,), ("source", "source"), ("source", "aux1")))):
+                for values in variants:
+                    def mutate(root):
+                        for value in values:
+                            ET.SubElement(root.find(path), field).text = value
+                    with self.subTest(path=path, field=field, values=values), self.assertRaises(ValueError):
+                        self.compare(mutate)
+
+    def test_nested_timecode_field_and_source_rejected(self):
+        for path in (".//sequence/timecode", ".//file/timecode"):
+            for field, value in (("field", "0"), ("source", "source")):
+                def mutate(root):
+                    node = ET.SubElement(root.find(path), field)
+                    node.text = value
+                    ET.SubElement(node, "unexpected").text = "hidden native content"
+                with self.subTest(path=path, field=field), self.assertRaisesRegex(ValueError, "Nested content in scalar"):
+                    self.compare(mutate)
+
     def test_changed_timecode_media_path_and_geometry_fail(self):
         mutations = (("sequenceTimecode", "./project/children/sequence/timecode/frame", "1741"),
                      ("sourceTimecode", ".//file/timecode/displayformat", "NDF"),
@@ -324,6 +358,51 @@ class RoundTripTests(unittest.TestCase):
             media.find("pathurl").text = "file://localhost/tmp/source-a.mov"
             root.append(media)
         self.assertEqual(self.compare(mutate)["status"], "exact-match")
+
+    def test_explicit_primary_video_source_track_matches_implicit_carrier(self):
+        for include_index in (False, True):
+            def mutate(root):
+                selector = ET.SubElement(root.find(".//clipitem"), "sourcetrack")
+                ET.SubElement(selector, "mediatype").text = "video"
+                if include_index:
+                    ET.SubElement(selector, "trackindex").text = "1"
+            with self.subTest(include_index=include_index):
+                self.assertEqual(self.compare(mutate)["status"], "exact-match")
+
+    def test_changed_invalid_or_ambiguous_source_track_cannot_pass_same_file(self):
+        # Source path, clip placement and marker content all stay unchanged.
+        # A different connected track must not masquerade as the same source A.
+        for media_types, indices, copies in ((("video",), ("2",), 1),
+                                              (("video",), ("0",), 1),
+                                              (("video",), ("-1",), 1),
+                                              (("video",), (None,), 1),
+                                              (("video",), ("1", "1"), 1),
+                                              (("video",), ("1", "2"), 1),
+                                              (("audio",), ("1",), 1),
+                                              (("VIDEO",), ("1",), 1),
+                                              ((None,), ("1",), 1),
+                                              ((), ("1",), 1),
+                                              (("video", "video"), ("1",), 1),
+                                              (("video",), ("1",), 2)):
+            def mutate(root):
+                for _ in range(copies):
+                    selector = ET.SubElement(root.find(".//clipitem"), "sourcetrack")
+                    for value in media_types:
+                        ET.SubElement(selector, "mediatype").text = value
+                    for value in indices:
+                        ET.SubElement(selector, "trackindex").text = value
+            with self.subTest(media_types=media_types, indices=indices, copies=copies), self.assertRaises(ValueError):
+                self.compare(mutate)
+
+    def test_nested_source_track_scalar_fields_rejected(self):
+        for field in ("mediatype", "trackindex"):
+            def mutate(root):
+                selector = ET.SubElement(root.find(".//clipitem"), "sourcetrack")
+                ET.SubElement(selector, "mediatype").text = "video"
+                ET.SubElement(selector, "trackindex").text = "1"
+                ET.SubElement(selector.find(field), "unexpected").text = "hidden native content"
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError, "Nested content in scalar"):
+                self.compare(mutate)
 
     def test_changed_clip_pixel_aspect_cannot_pass_unchanged_file_and_sequence(self):
         result = self.compare(lambda root: setattr(

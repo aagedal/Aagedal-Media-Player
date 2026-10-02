@@ -396,6 +396,18 @@ while retaining frame/string agreement, skipped-label checks and mixed-separator
 rejection. This round trip reports differences only for previously unspecified
 field dominance becoming `none`; it is not an exact geometry acceptance pass.
 
+The October 2 source-selection continuation also validates `clipitem/sourcetrack`
+and the sequence/file timecode `field` and `source` selectors. Unchanged paths
+and frame numbers cannot establish the same connected video track, full-frame
+position or source clock when those selectors change. The comparator accepts
+omitted selectors and explicit first-video-track, field-zero, primary-source
+defaults; unsupported or ambiguous overrides fail validation. Apple's
+[XMEML element catalog](https://developer.apple.com/library/archive/documentation/AppleApplications/Reference/FinalCutPro_XML/Elements/Elements.html)
+defines these selectors. All 37 self-contained comparator checks pass, including
+the five retained native receipts with their existing differences unchanged.
+This adds engineering coverage; fresh native source-selection acceptance remains
+open.
+
 The comparator decodes XML once and retains the original and returned comments
 in its report. It must not recursively unescape entity-looking text or suppress
 the field-order difference to turn this partial result into an exact pass.

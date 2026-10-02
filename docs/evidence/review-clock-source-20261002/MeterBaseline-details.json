@@ -1,0 +1,946 @@
+{
+  "devices" : [
+    {
+      "architecture" : "arm64",
+      "deviceId" : "00006050-001C293C22F9401C",
+      "deviceName" : "My Mac",
+      "modelName" : "MacBook Pro",
+      "osBuildNumber" : "26A434",
+      "osVersion" : "27.0.1",
+      "platform" : "macOS"
+    }
+  ],
+  "testNodes" : [
+    {
+      "children" : [
+        {
+          "children" : [
+            {
+              "children" : [
+                {
+                  "children" : [
+                    {
+                      "name" : "XCTAssertEqual failed: (\"buffering(frame: 0)\") is not equal to (\"unavailable(reason: \"The playback clock is unavailable.\", diagnostic: Optional(\"Retry after the player reports a finite source position.\"))\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 332
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertGreaterThan failed: (\"1\") is not greater than (\"1\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 336
+                      }
+                    },
+                    {
+                      "name" : "failed - Decoder stream 0 was not cancelled",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 1101
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertEqual failed: (\"1\") is not equal to (\"0\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 341
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertEqual failed: (\"buffering(frame: 0)\") is not equal to (\"unavailable(reason: \"The playback clock is unavailable.\", diagnostic: Optional(\"Retry after the player reports a finite source position.\"))\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 332
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertGreaterThan failed: (\"1\") is not greater than (\"1\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 336
+                      }
+                    },
+                    {
+                      "name" : "failed - Decoder stream 0 was not cancelled",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 1101
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertEqual failed: (\"1\") is not equal to (\"0\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 341
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertEqual failed: (\"buffering(frame: 0)\") is not equal to (\"unavailable(reason: \"The playback clock is unavailable.\", diagnostic: Optional(\"Retry after the player reports a finite source position.\"))\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 332
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertGreaterThan failed: (\"1\") is not greater than (\"1\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 336
+                      }
+                    },
+                    {
+                      "name" : "failed - Decoder stream 0 was not cancelled",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 1101
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertEqual failed: (\"1\") is not equal to (\"0\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 341
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertEqual failed: (\"buffering(frame: 0)\") is not equal to (\"unavailable(reason: \"The playback clock is unavailable.\", diagnostic: Optional(\"Retry after the player reports a finite source position.\"))\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 332
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertGreaterThan failed: (\"1\") is not greater than (\"1\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 336
+                      }
+                    },
+                    {
+                      "name" : "failed - Decoder stream 0 was not cancelled",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 1101
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertEqual failed: (\"1\") is not equal to (\"0\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 341
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertEqual failed: (\"buffering(frame: 0)\") is not equal to (\"unavailable(reason: \"The playback clock is unavailable.\", diagnostic: Optional(\"Retry after the player reports a finite source position.\"))\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 332
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertGreaterThan failed: (\"1\") is not greater than (\"1\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 336
+                      }
+                    },
+                    {
+                      "name" : "failed - Decoder stream 0 was not cancelled",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 1101
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertEqual failed: (\"1\") is not equal to (\"0\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 341
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertEqual failed: (\"buffering(frame: 2400)\") is not equal to (\"unavailable(reason: \"The playback clock is unavailable.\", diagnostic: Optional(\"Retry after the player reports a finite source position.\"))\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 332
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertGreaterThan failed: (\"1\") is not greater than (\"1\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 336
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertNil failed: \"LiveAudioMeterSnapshot(endFrame: 2400, segmentStartFrame: 0, samplePeakDBFS: [-12.0, -12.0], truePeakDBTP: [-11.8, -11.8], momentaryLUFS: nil, shortTermLUFS: nil, loudnessEndFrame: nil, maximumSamplePeakDBFS: [-12.0, -12.0], maximumTruePeakDBTP: [-11.8, -11.8], maximumMomentaryLUFS: nil, maximumShortTermLUFS: nil, maximaResetRevision: 0, isFinal: false)\"",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 337
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertNil failed: \"LiveAudioMeterReducedSnapshot(measurement: Aagedal_Media_Player.LiveAudioMeterSnapshot(endFrame: 2400, segmentStartFrame: 0, samplePeakDBFS: [-12.0, -12.0], truePeakDBTP: [-11.8, -11.8], momentaryLUFS: nil, shortTermLUFS: nil, loudnessEndFrame: nil, maximumSamplePeakDBFS: [-12.0, -12.0], maximumTruePeakDBTP: [-11.8, -11.8], maximumMomentaryLUFS: nil, maximumShortTermLUFS: nil, maximaResetRevision: 0, isFinal: false), samplePeaks: [Aagedal_Media_Player.LiveAudioMeterLevelState(current: Optional(-12.0), bar: Optional(-12.0), marker: Optional(-12.0), maximum: Optional(-12.0)), Aagedal_Media_Player.LiveAudioMeterLevelState(current: Optional(-12.0), bar: Optional(-12.0), marker: Optional(-12.0), maximum: Optional(-12.0))], truePeaks: [Aagedal_Media_Player.LiveAudioMeterLevelState(current: Optional(-11.8), bar: Optional(-11.8), marker: Optional(-11.8), maximum: Optional(-11.8)), Aagedal_Media_Player.LiveAudioMeterLevelState(current: Optional(-11.8), bar: Optional(-11.8), marker: Optional(-11.8), maximum: Optional(-11.8))], loudness: Aagedal_Media_Player.LiveAudioMeterLoudnessState(momentary: nil, maximumMomentary: nil, shortTerm: nil, maximumShortTerm: nil))\"",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 338
+                      }
+                    },
+                    {
+                      "name" : "failed - Decoder stream 0 was not cancelled",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 1101
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertEqual failed: (\"1\") is not equal to (\"0\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 341
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertNil failed: \"LiveAudioMeterSnapshot(endFrame: 2400, segmentStartFrame: 0, samplePeakDBFS: [-12.0, -12.0], truePeakDBTP: [-11.8, -11.8], momentaryLUFS: nil, shortTermLUFS: nil, loudnessEndFrame: nil, maximumSamplePeakDBFS: [-12.0, -12.0], maximumTruePeakDBTP: [-11.8, -11.8], maximumMomentaryLUFS: nil, maximumShortTermLUFS: nil, maximaResetRevision: 0, isFinal: false)\"",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 348
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertEqual failed: (\"buffering(frame: 2400)\") is not equal to (\"unavailable(reason: \"The playback clock is unavailable.\", diagnostic: Optional(\"Retry after the player reports a finite source position.\"))\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 332
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertGreaterThan failed: (\"1\") is not greater than (\"1\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 336
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertNil failed: \"LiveAudioMeterSnapshot(endFrame: 2400, segmentStartFrame: 0, samplePeakDBFS: [-12.0, -12.0], truePeakDBTP: [-11.8, -11.8], momentaryLUFS: nil, shortTermLUFS: nil, loudnessEndFrame: nil, maximumSamplePeakDBFS: [-12.0, -12.0], maximumTruePeakDBTP: [-11.8, -11.8], maximumMomentaryLUFS: nil, maximumShortTermLUFS: nil, maximaResetRevision: 0, isFinal: false)\"",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 337
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertNil failed: \"LiveAudioMeterReducedSnapshot(measurement: Aagedal_Media_Player.LiveAudioMeterSnapshot(endFrame: 2400, segmentStartFrame: 0, samplePeakDBFS: [-12.0, -12.0], truePeakDBTP: [-11.8, -11.8], momentaryLUFS: nil, shortTermLUFS: nil, loudnessEndFrame: nil, maximumSamplePeakDBFS: [-12.0, -12.0], maximumTruePeakDBTP: [-11.8, -11.8], maximumMomentaryLUFS: nil, maximumShortTermLUFS: nil, maximaResetRevision: 0, isFinal: false), samplePeaks: [Aagedal_Media_Player.LiveAudioMeterLevelState(current: Optional(-12.0), bar: Optional(-12.0), marker: Optional(-12.0), maximum: Optional(-12.0)), Aagedal_Media_Player.LiveAudioMeterLevelState(current: Optional(-12.0), bar: Optional(-12.0), marker: Optional(-12.0), maximum: Optional(-12.0))], truePeaks: [Aagedal_Media_Player.LiveAudioMeterLevelState(current: Optional(-11.8), bar: Optional(-11.8), marker: Optional(-11.8), maximum: Optional(-11.8)), Aagedal_Media_Player.LiveAudioMeterLevelState(current: Optional(-11.8), bar: Optional(-11.8), marker: Optional(-11.8), maximum: Optional(-11.8))], loudness: Aagedal_Media_Player.LiveAudioMeterLoudnessState(momentary: nil, maximumMomentary: nil, shortTerm: nil, maximumShortTerm: nil))\"",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 338
+                      }
+                    },
+                    {
+                      "name" : "failed - Decoder stream 0 was not cancelled",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 1101
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertEqual failed: (\"1\") is not equal to (\"0\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 341
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertNil failed: \"LiveAudioMeterSnapshot(endFrame: 2400, segmentStartFrame: 0, samplePeakDBFS: [-12.0, -12.0], truePeakDBTP: [-11.8, -11.8], momentaryLUFS: nil, shortTermLUFS: nil, loudnessEndFrame: nil, maximumSamplePeakDBFS: [-12.0, -12.0], maximumTruePeakDBTP: [-11.8, -11.8], maximumMomentaryLUFS: nil, maximumShortTermLUFS: nil, maximaResetRevision: 0, isFinal: false)\"",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 348
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertEqual failed: (\"buffering(frame: 2400)\") is not equal to (\"unavailable(reason: \"The playback clock is unavailable.\", diagnostic: Optional(\"Retry after the player reports a finite source position.\"))\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 332
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertGreaterThan failed: (\"1\") is not greater than (\"1\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 336
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertNil failed: \"LiveAudioMeterSnapshot(endFrame: 2400, segmentStartFrame: 0, samplePeakDBFS: [-12.0, -12.0], truePeakDBTP: [-11.8, -11.8], momentaryLUFS: nil, shortTermLUFS: nil, loudnessEndFrame: nil, maximumSamplePeakDBFS: [-12.0, -12.0], maximumTruePeakDBTP: [-11.8, -11.8], maximumMomentaryLUFS: nil, maximumShortTermLUFS: nil, maximaResetRevision: 0, isFinal: false)\"",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 337
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertNil failed: \"LiveAudioMeterReducedSnapshot(measurement: Aagedal_Media_Player.LiveAudioMeterSnapshot(endFrame: 2400, segmentStartFrame: 0, samplePeakDBFS: [-12.0, -12.0], truePeakDBTP: [-11.8, -11.8], momentaryLUFS: nil, shortTermLUFS: nil, loudnessEndFrame: nil, maximumSamplePeakDBFS: [-12.0, -12.0], maximumTruePeakDBTP: [-11.8, -11.8], maximumMomentaryLUFS: nil, maximumShortTermLUFS: nil, maximaResetRevision: 0, isFinal: false), samplePeaks: [Aagedal_Media_Player.LiveAudioMeterLevelState(current: Optional(-12.0), bar: Optional(-12.0), marker: Optional(-12.0), maximum: Optional(-12.0)), Aagedal_Media_Player.LiveAudioMeterLevelState(current: Optional(-12.0), bar: Optional(-12.0), marker: Optional(-12.0), maximum: Optional(-12.0))], truePeaks: [Aagedal_Media_Player.LiveAudioMeterLevelState(current: Optional(-11.8), bar: Optional(-11.8), marker: Optional(-11.8), maximum: Optional(-11.8)), Aagedal_Media_Player.LiveAudioMeterLevelState(current: Optional(-11.8), bar: Optional(-11.8), marker: Optional(-11.8), maximum: Optional(-11.8))], loudness: Aagedal_Media_Player.LiveAudioMeterLoudnessState(momentary: nil, maximumMomentary: nil, shortTerm: nil, maximumShortTerm: nil))\"",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 338
+                      }
+                    },
+                    {
+                      "name" : "failed - Decoder stream 0 was not cancelled",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 1101
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertEqual failed: (\"1\") is not equal to (\"0\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 341
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertNil failed: \"LiveAudioMeterSnapshot(endFrame: 2400, segmentStartFrame: 0, samplePeakDBFS: [-12.0, -12.0], truePeakDBTP: [-11.8, -11.8], momentaryLUFS: nil, shortTermLUFS: nil, loudnessEndFrame: nil, maximumSamplePeakDBFS: [-12.0, -12.0], maximumTruePeakDBTP: [-11.8, -11.8], maximumMomentaryLUFS: nil, maximumShortTermLUFS: nil, maximaResetRevision: 0, isFinal: false)\"",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 348
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertEqual failed: (\"buffering(frame: 2400)\") is not equal to (\"unavailable(reason: \"The playback clock is unavailable.\", diagnostic: Optional(\"Retry after the player reports a finite source position.\"))\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 332
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertGreaterThan failed: (\"1\") is not greater than (\"1\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 336
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertNil failed: \"LiveAudioMeterSnapshot(endFrame: 2400, segmentStartFrame: 0, samplePeakDBFS: [-12.0, -12.0], truePeakDBTP: [-11.8, -11.8], momentaryLUFS: nil, shortTermLUFS: nil, loudnessEndFrame: nil, maximumSamplePeakDBFS: [-12.0, -12.0], maximumTruePeakDBTP: [-11.8, -11.8], maximumMomentaryLUFS: nil, maximumShortTermLUFS: nil, maximaResetRevision: 0, isFinal: false)\"",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 337
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertNil failed: \"LiveAudioMeterReducedSnapshot(measurement: Aagedal_Media_Player.LiveAudioMeterSnapshot(endFrame: 2400, segmentStartFrame: 0, samplePeakDBFS: [-12.0, -12.0], truePeakDBTP: [-11.8, -11.8], momentaryLUFS: nil, shortTermLUFS: nil, loudnessEndFrame: nil, maximumSamplePeakDBFS: [-12.0, -12.0], maximumTruePeakDBTP: [-11.8, -11.8], maximumMomentaryLUFS: nil, maximumShortTermLUFS: nil, maximaResetRevision: 0, isFinal: false), samplePeaks: [Aagedal_Media_Player.LiveAudioMeterLevelState(current: Optional(-12.0), bar: Optional(-12.0), marker: Optional(-12.0), maximum: Optional(-12.0)), Aagedal_Media_Player.LiveAudioMeterLevelState(current: Optional(-12.0), bar: Optional(-12.0), marker: Optional(-12.0), maximum: Optional(-12.0))], truePeaks: [Aagedal_Media_Player.LiveAudioMeterLevelState(current: Optional(-11.8), bar: Optional(-11.8), marker: Optional(-11.8), maximum: Optional(-11.8)), Aagedal_Media_Player.LiveAudioMeterLevelState(current: Optional(-11.8), bar: Optional(-11.8), marker: Optional(-11.8), maximum: Optional(-11.8))], loudness: Aagedal_Media_Player.LiveAudioMeterLoudnessState(momentary: nil, maximumMomentary: nil, shortTerm: nil, maximumShortTerm: nil))\"",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 338
+                      }
+                    },
+                    {
+                      "name" : "failed - Decoder stream 0 was not cancelled",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 1101
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertEqual failed: (\"1\") is not equal to (\"0\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 341
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertNil failed: \"LiveAudioMeterSnapshot(endFrame: 2400, segmentStartFrame: 0, samplePeakDBFS: [-12.0, -12.0], truePeakDBTP: [-11.8, -11.8], momentaryLUFS: nil, shortTermLUFS: nil, loudnessEndFrame: nil, maximumSamplePeakDBFS: [-12.0, -12.0], maximumTruePeakDBTP: [-11.8, -11.8], maximumMomentaryLUFS: nil, maximumShortTermLUFS: nil, maximaResetRevision: 0, isFinal: false)\"",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 348
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertEqual failed: (\"buffering(frame: 2400)\") is not equal to (\"unavailable(reason: \"The playback clock is unavailable.\", diagnostic: Optional(\"Retry after the player reports a finite source position.\"))\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 332
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertGreaterThan failed: (\"1\") is not greater than (\"1\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 336
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertNil failed: \"LiveAudioMeterSnapshot(endFrame: 2400, segmentStartFrame: 0, samplePeakDBFS: [-12.0, -12.0], truePeakDBTP: [-11.8, -11.8], momentaryLUFS: nil, shortTermLUFS: nil, loudnessEndFrame: nil, maximumSamplePeakDBFS: [-12.0, -12.0], maximumTruePeakDBTP: [-11.8, -11.8], maximumMomentaryLUFS: nil, maximumShortTermLUFS: nil, maximaResetRevision: 0, isFinal: false)\"",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 337
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertNil failed: \"LiveAudioMeterReducedSnapshot(measurement: Aagedal_Media_Player.LiveAudioMeterSnapshot(endFrame: 2400, segmentStartFrame: 0, samplePeakDBFS: [-12.0, -12.0], truePeakDBTP: [-11.8, -11.8], momentaryLUFS: nil, shortTermLUFS: nil, loudnessEndFrame: nil, maximumSamplePeakDBFS: [-12.0, -12.0], maximumTruePeakDBTP: [-11.8, -11.8], maximumMomentaryLUFS: nil, maximumShortTermLUFS: nil, maximaResetRevision: 0, isFinal: false), samplePeaks: [Aagedal_Media_Player.LiveAudioMeterLevelState(current: Optional(-12.0), bar: Optional(-12.0), marker: Optional(-12.0), maximum: Optional(-12.0)), Aagedal_Media_Player.LiveAudioMeterLevelState(current: Optional(-12.0), bar: Optional(-12.0), marker: Optional(-12.0), maximum: Optional(-12.0))], truePeaks: [Aagedal_Media_Player.LiveAudioMeterLevelState(current: Optional(-11.8), bar: Optional(-11.8), marker: Optional(-11.8), maximum: Optional(-11.8)), Aagedal_Media_Player.LiveAudioMeterLevelState(current: Optional(-11.8), bar: Optional(-11.8), marker: Optional(-11.8), maximum: Optional(-11.8))], loudness: Aagedal_Media_Player.LiveAudioMeterLoudnessState(momentary: nil, maximumMomentary: nil, shortTerm: nil, maximumShortTerm: nil))\"",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 338
+                      }
+                    },
+                    {
+                      "name" : "failed - Decoder stream 0 was not cancelled",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 1101
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertEqual failed: (\"1\") is not equal to (\"0\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 341
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertNil failed: \"LiveAudioMeterSnapshot(endFrame: 2400, segmentStartFrame: 0, samplePeakDBFS: [-12.0, -12.0], truePeakDBTP: [-11.8, -11.8], momentaryLUFS: nil, shortTermLUFS: nil, loudnessEndFrame: nil, maximumSamplePeakDBFS: [-12.0, -12.0], maximumTruePeakDBTP: [-11.8, -11.8], maximumMomentaryLUFS: nil, maximumShortTermLUFS: nil, maximaResetRevision: 0, isFinal: false)\"",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 348
+                      }
+                    }
+                  ],
+                  "duration" : "20s",
+                  "durationInSeconds" : 20.397357940673828,
+                  "name" : "testBufferingClockLossClearsReadingsAndCancelsSuspendedWorker()",
+                  "nodeIdentifier" : "LiveAudioMeterCoordinatorTests/testBufferingClockLossClearsReadingsAndCancelsSuspendedWorker()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterCoordinatorTests/testBufferingClockLossClearsReadingsAndCancelsSuspendedWorker",
+                  "nodeType" : "Test Case",
+                  "result" : "Failed"
+                },
+                {
+                  "children" : [
+                    {
+                      "name" : "XCTAssertEqual failed: (\"paused(frame: 0)\") is not equal to (\"unavailable(reason: \"The playback clock is unavailable.\", diagnostic: Optional(\"Retry after the player reports a finite source position.\"))\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 332
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertGreaterThan failed: (\"1\") is not greater than (\"1\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 336
+                      }
+                    },
+                    {
+                      "name" : "failed - Decoder stream 0 was not cancelled",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 1101
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertEqual failed: (\"1\") is not equal to (\"0\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 341
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertEqual failed: (\"paused(frame: 0)\") is not equal to (\"unavailable(reason: \"The playback clock is unavailable.\", diagnostic: Optional(\"Retry after the player reports a finite source position.\"))\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 332
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertGreaterThan failed: (\"1\") is not greater than (\"1\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 336
+                      }
+                    },
+                    {
+                      "name" : "failed - Decoder stream 0 was not cancelled",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 1101
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertEqual failed: (\"1\") is not equal to (\"0\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 341
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertEqual failed: (\"paused(frame: 0)\") is not equal to (\"unavailable(reason: \"The playback clock is unavailable.\", diagnostic: Optional(\"Retry after the player reports a finite source position.\"))\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 332
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertGreaterThan failed: (\"1\") is not greater than (\"1\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 336
+                      }
+                    },
+                    {
+                      "name" : "failed - Decoder stream 0 was not cancelled",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 1101
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertEqual failed: (\"1\") is not equal to (\"0\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 341
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertEqual failed: (\"paused(frame: 0)\") is not equal to (\"unavailable(reason: \"The playback clock is unavailable.\", diagnostic: Optional(\"Retry after the player reports a finite source position.\"))\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 332
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertGreaterThan failed: (\"1\") is not greater than (\"1\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 336
+                      }
+                    },
+                    {
+                      "name" : "failed - Decoder stream 0 was not cancelled",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 1101
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertEqual failed: (\"1\") is not equal to (\"0\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 341
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertEqual failed: (\"paused(frame: 0)\") is not equal to (\"unavailable(reason: \"The playback clock is unavailable.\", diagnostic: Optional(\"Retry after the player reports a finite source position.\"))\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 332
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertGreaterThan failed: (\"1\") is not greater than (\"1\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 336
+                      }
+                    },
+                    {
+                      "name" : "failed - Decoder stream 0 was not cancelled",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 1101
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertEqual failed: (\"1\") is not equal to (\"0\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 341
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertEqual failed: (\"paused(frame: 2400)\") is not equal to (\"unavailable(reason: \"The playback clock is unavailable.\", diagnostic: Optional(\"Retry after the player reports a finite source position.\"))\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 332
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertGreaterThan failed: (\"1\") is not greater than (\"1\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 336
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertNil failed: \"LiveAudioMeterSnapshot(endFrame: 2400, segmentStartFrame: 0, samplePeakDBFS: [-12.0, -12.0], truePeakDBTP: [-11.8, -11.8], momentaryLUFS: nil, shortTermLUFS: nil, loudnessEndFrame: nil, maximumSamplePeakDBFS: [-12.0, -12.0], maximumTruePeakDBTP: [-11.8, -11.8], maximumMomentaryLUFS: nil, maximumShortTermLUFS: nil, maximaResetRevision: 0, isFinal: false)\"",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 337
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertNil failed: \"LiveAudioMeterReducedSnapshot(measurement: Aagedal_Media_Player.LiveAudioMeterSnapshot(endFrame: 2400, segmentStartFrame: 0, samplePeakDBFS: [-12.0, -12.0], truePeakDBTP: [-11.8, -11.8], momentaryLUFS: nil, shortTermLUFS: nil, loudnessEndFrame: nil, maximumSamplePeakDBFS: [-12.0, -12.0], maximumTruePeakDBTP: [-11.8, -11.8], maximumMomentaryLUFS: nil, maximumShortTermLUFS: nil, maximaResetRevision: 0, isFinal: false), samplePeaks: [Aagedal_Media_Player.LiveAudioMeterLevelState(current: Optional(-12.0), bar: Optional(-12.0), marker: Optional(-12.0), maximum: Optional(-12.0)), Aagedal_Media_Player.LiveAudioMeterLevelState(current: Optional(-12.0), bar: Optional(-12.0), marker: Optional(-12.0), maximum: Optional(-12.0))], truePeaks: [Aagedal_Media_Player.LiveAudioMeterLevelState(current: Optional(-11.8), bar: Optional(-11.8), marker: Optional(-11.8), maximum: Optional(-11.8)), Aagedal_Media_Player.LiveAudioMeterLevelState(current: Optional(-11.8), bar: Optional(-11.8), marker: Optional(-11.8), maximum: Optional(-11.8))], loudness: Aagedal_Media_Player.LiveAudioMeterLoudnessState(momentary: nil, maximumMomentary: nil, shortTerm: nil, maximumShortTerm: nil))\"",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 338
+                      }
+                    },
+                    {
+                      "name" : "failed - Decoder stream 0 was not cancelled",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 1101
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertEqual failed: (\"1\") is not equal to (\"0\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 341
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertNil failed: \"LiveAudioMeterSnapshot(endFrame: 2400, segmentStartFrame: 0, samplePeakDBFS: [-12.0, -12.0], truePeakDBTP: [-11.8, -11.8], momentaryLUFS: nil, shortTermLUFS: nil, loudnessEndFrame: nil, maximumSamplePeakDBFS: [-12.0, -12.0], maximumTruePeakDBTP: [-11.8, -11.8], maximumMomentaryLUFS: nil, maximumShortTermLUFS: nil, maximaResetRevision: 0, isFinal: false)\"",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 348
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertEqual failed: (\"paused(frame: 2400)\") is not equal to (\"unavailable(reason: \"The playback clock is unavailable.\", diagnostic: Optional(\"Retry after the player reports a finite source position.\"))\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 332
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertGreaterThan failed: (\"1\") is not greater than (\"1\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 336
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertNil failed: \"LiveAudioMeterSnapshot(endFrame: 2400, segmentStartFrame: 0, samplePeakDBFS: [-12.0, -12.0], truePeakDBTP: [-11.8, -11.8], momentaryLUFS: nil, shortTermLUFS: nil, loudnessEndFrame: nil, maximumSamplePeakDBFS: [-12.0, -12.0], maximumTruePeakDBTP: [-11.8, -11.8], maximumMomentaryLUFS: nil, maximumShortTermLUFS: nil, maximaResetRevision: 0, isFinal: false)\"",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 337
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertNil failed: \"LiveAudioMeterReducedSnapshot(measurement: Aagedal_Media_Player.LiveAudioMeterSnapshot(endFrame: 2400, segmentStartFrame: 0, samplePeakDBFS: [-12.0, -12.0], truePeakDBTP: [-11.8, -11.8], momentaryLUFS: nil, shortTermLUFS: nil, loudnessEndFrame: nil, maximumSamplePeakDBFS: [-12.0, -12.0], maximumTruePeakDBTP: [-11.8, -11.8], maximumMomentaryLUFS: nil, maximumShortTermLUFS: nil, maximaResetRevision: 0, isFinal: false), samplePeaks: [Aagedal_Media_Player.LiveAudioMeterLevelState(current: Optional(-12.0), bar: Optional(-12.0), marker: Optional(-12.0), maximum: Optional(-12.0)), Aagedal_Media_Player.LiveAudioMeterLevelState(current: Optional(-12.0), bar: Optional(-12.0), marker: Optional(-12.0), maximum: Optional(-12.0))], truePeaks: [Aagedal_Media_Player.LiveAudioMeterLevelState(current: Optional(-11.8), bar: Optional(-11.8), marker: Optional(-11.8), maximum: Optional(-11.8)), Aagedal_Media_Player.LiveAudioMeterLevelState(current: Optional(-11.8), bar: Optional(-11.8), marker: Optional(-11.8), maximum: Optional(-11.8))], loudness: Aagedal_Media_Player.LiveAudioMeterLoudnessState(momentary: nil, maximumMomentary: nil, shortTerm: nil, maximumShortTerm: nil))\"",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 338
+                      }
+                    },
+                    {
+                      "name" : "failed - Decoder stream 0 was not cancelled",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 1101
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertEqual failed: (\"1\") is not equal to (\"0\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 341
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertNil failed: \"LiveAudioMeterSnapshot(endFrame: 2400, segmentStartFrame: 0, samplePeakDBFS: [-12.0, -12.0], truePeakDBTP: [-11.8, -11.8], momentaryLUFS: nil, shortTermLUFS: nil, loudnessEndFrame: nil, maximumSamplePeakDBFS: [-12.0, -12.0], maximumTruePeakDBTP: [-11.8, -11.8], maximumMomentaryLUFS: nil, maximumShortTermLUFS: nil, maximaResetRevision: 0, isFinal: false)\"",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 348
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertEqual failed: (\"paused(frame: 2400)\") is not equal to (\"unavailable(reason: \"The playback clock is unavailable.\", diagnostic: Optional(\"Retry after the player reports a finite source position.\"))\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 332
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertGreaterThan failed: (\"1\") is not greater than (\"1\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 336
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertNil failed: \"LiveAudioMeterSnapshot(endFrame: 2400, segmentStartFrame: 0, samplePeakDBFS: [-12.0, -12.0], truePeakDBTP: [-11.8, -11.8], momentaryLUFS: nil, shortTermLUFS: nil, loudnessEndFrame: nil, maximumSamplePeakDBFS: [-12.0, -12.0], maximumTruePeakDBTP: [-11.8, -11.8], maximumMomentaryLUFS: nil, maximumShortTermLUFS: nil, maximaResetRevision: 0, isFinal: false)\"",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 337
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertNil failed: \"LiveAudioMeterReducedSnapshot(measurement: Aagedal_Media_Player.LiveAudioMeterSnapshot(endFrame: 2400, segmentStartFrame: 0, samplePeakDBFS: [-12.0, -12.0], truePeakDBTP: [-11.8, -11.8], momentaryLUFS: nil, shortTermLUFS: nil, loudnessEndFrame: nil, maximumSamplePeakDBFS: [-12.0, -12.0], maximumTruePeakDBTP: [-11.8, -11.8], maximumMomentaryLUFS: nil, maximumShortTermLUFS: nil, maximaResetRevision: 0, isFinal: false), samplePeaks: [Aagedal_Media_Player.LiveAudioMeterLevelState(current: Optional(-12.0), bar: Optional(-12.0), marker: Optional(-12.0), maximum: Optional(-12.0)), Aagedal_Media_Player.LiveAudioMeterLevelState(current: Optional(-12.0), bar: Optional(-12.0), marker: Optional(-12.0), maximum: Optional(-12.0))], truePeaks: [Aagedal_Media_Player.LiveAudioMeterLevelState(current: Optional(-11.8), bar: Optional(-11.8), marker: Optional(-11.8), maximum: Optional(-11.8)), Aagedal_Media_Player.LiveAudioMeterLevelState(current: Optional(-11.8), bar: Optional(-11.8), marker: Optional(-11.8), maximum: Optional(-11.8))], loudness: Aagedal_Media_Player.LiveAudioMeterLoudnessState(momentary: nil, maximumMomentary: nil, shortTerm: nil, maximumShortTerm: nil))\"",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 338
+                      }
+                    },
+                    {
+                      "name" : "failed - Decoder stream 0 was not cancelled",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 1101
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertEqual failed: (\"1\") is not equal to (\"0\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 341
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertNil failed: \"LiveAudioMeterSnapshot(endFrame: 2400, segmentStartFrame: 0, samplePeakDBFS: [-12.0, -12.0], truePeakDBTP: [-11.8, -11.8], momentaryLUFS: nil, shortTermLUFS: nil, loudnessEndFrame: nil, maximumSamplePeakDBFS: [-12.0, -12.0], maximumTruePeakDBTP: [-11.8, -11.8], maximumMomentaryLUFS: nil, maximumShortTermLUFS: nil, maximaResetRevision: 0, isFinal: false)\"",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 348
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertEqual failed: (\"paused(frame: 2400)\") is not equal to (\"unavailable(reason: \"The playback clock is unavailable.\", diagnostic: Optional(\"Retry after the player reports a finite source position.\"))\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 332
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertGreaterThan failed: (\"1\") is not greater than (\"1\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 336
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertNil failed: \"LiveAudioMeterSnapshot(endFrame: 2400, segmentStartFrame: 0, samplePeakDBFS: [-12.0, -12.0], truePeakDBTP: [-11.8, -11.8], momentaryLUFS: nil, shortTermLUFS: nil, loudnessEndFrame: nil, maximumSamplePeakDBFS: [-12.0, -12.0], maximumTruePeakDBTP: [-11.8, -11.8], maximumMomentaryLUFS: nil, maximumShortTermLUFS: nil, maximaResetRevision: 0, isFinal: false)\"",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 337
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertNil failed: \"LiveAudioMeterReducedSnapshot(measurement: Aagedal_Media_Player.LiveAudioMeterSnapshot(endFrame: 2400, segmentStartFrame: 0, samplePeakDBFS: [-12.0, -12.0], truePeakDBTP: [-11.8, -11.8], momentaryLUFS: nil, shortTermLUFS: nil, loudnessEndFrame: nil, maximumSamplePeakDBFS: [-12.0, -12.0], maximumTruePeakDBTP: [-11.8, -11.8], maximumMomentaryLUFS: nil, maximumShortTermLUFS: nil, maximaResetRevision: 0, isFinal: false), samplePeaks: [Aagedal_Media_Player.LiveAudioMeterLevelState(current: Optional(-12.0), bar: Optional(-12.0), marker: Optional(-12.0), maximum: Optional(-12.0)), Aagedal_Media_Player.LiveAudioMeterLevelState(current: Optional(-12.0), bar: Optional(-12.0), marker: Optional(-12.0), maximum: Optional(-12.0))], truePeaks: [Aagedal_Media_Player.LiveAudioMeterLevelState(current: Optional(-11.8), bar: Optional(-11.8), marker: Optional(-11.8), maximum: Optional(-11.8)), Aagedal_Media_Player.LiveAudioMeterLevelState(current: Optional(-11.8), bar: Optional(-11.8), marker: Optional(-11.8), maximum: Optional(-11.8))], loudness: Aagedal_Media_Player.LiveAudioMeterLoudnessState(momentary: nil, maximumMomentary: nil, shortTerm: nil, maximumShortTerm: nil))\"",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 338
+                      }
+                    },
+                    {
+                      "name" : "failed - Decoder stream 0 was not cancelled",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 1101
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertEqual failed: (\"1\") is not equal to (\"0\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 341
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertNil failed: \"LiveAudioMeterSnapshot(endFrame: 2400, segmentStartFrame: 0, samplePeakDBFS: [-12.0, -12.0], truePeakDBTP: [-11.8, -11.8], momentaryLUFS: nil, shortTermLUFS: nil, loudnessEndFrame: nil, maximumSamplePeakDBFS: [-12.0, -12.0], maximumTruePeakDBTP: [-11.8, -11.8], maximumMomentaryLUFS: nil, maximumShortTermLUFS: nil, maximaResetRevision: 0, isFinal: false)\"",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 348
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertEqual failed: (\"paused(frame: 2400)\") is not equal to (\"unavailable(reason: \"The playback clock is unavailable.\", diagnostic: Optional(\"Retry after the player reports a finite source position.\"))\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 332
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertGreaterThan failed: (\"1\") is not greater than (\"1\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 336
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertNil failed: \"LiveAudioMeterSnapshot(endFrame: 2400, segmentStartFrame: 0, samplePeakDBFS: [-12.0, -12.0], truePeakDBTP: [-11.8, -11.8], momentaryLUFS: nil, shortTermLUFS: nil, loudnessEndFrame: nil, maximumSamplePeakDBFS: [-12.0, -12.0], maximumTruePeakDBTP: [-11.8, -11.8], maximumMomentaryLUFS: nil, maximumShortTermLUFS: nil, maximaResetRevision: 0, isFinal: false)\"",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 337
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertNil failed: \"LiveAudioMeterReducedSnapshot(measurement: Aagedal_Media_Player.LiveAudioMeterSnapshot(endFrame: 2400, segmentStartFrame: 0, samplePeakDBFS: [-12.0, -12.0], truePeakDBTP: [-11.8, -11.8], momentaryLUFS: nil, shortTermLUFS: nil, loudnessEndFrame: nil, maximumSamplePeakDBFS: [-12.0, -12.0], maximumTruePeakDBTP: [-11.8, -11.8], maximumMomentaryLUFS: nil, maximumShortTermLUFS: nil, maximaResetRevision: 0, isFinal: false), samplePeaks: [Aagedal_Media_Player.LiveAudioMeterLevelState(current: Optional(-12.0), bar: Optional(-12.0), marker: Optional(-12.0), maximum: Optional(-12.0)), Aagedal_Media_Player.LiveAudioMeterLevelState(current: Optional(-12.0), bar: Optional(-12.0), marker: Optional(-12.0), maximum: Optional(-12.0))], truePeaks: [Aagedal_Media_Player.LiveAudioMeterLevelState(current: Optional(-11.8), bar: Optional(-11.8), marker: Optional(-11.8), maximum: Optional(-11.8)), Aagedal_Media_Player.LiveAudioMeterLevelState(current: Optional(-11.8), bar: Optional(-11.8), marker: Optional(-11.8), maximum: Optional(-11.8))], loudness: Aagedal_Media_Player.LiveAudioMeterLoudnessState(momentary: nil, maximumMomentary: nil, shortTerm: nil, maximumShortTerm: nil))\"",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 338
+                      }
+                    },
+                    {
+                      "name" : "failed - Decoder stream 0 was not cancelled",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 1101
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertEqual failed: (\"1\") is not equal to (\"0\")",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 341
+                      }
+                    },
+                    {
+                      "name" : "XCTAssertNil failed: \"LiveAudioMeterSnapshot(endFrame: 2400, segmentStartFrame: 0, samplePeakDBFS: [-12.0, -12.0], truePeakDBTP: [-11.8, -11.8], momentaryLUFS: nil, shortTermLUFS: nil, loudnessEndFrame: nil, maximumSamplePeakDBFS: [-12.0, -12.0], maximumTruePeakDBTP: [-11.8, -11.8], maximumMomentaryLUFS: nil, maximumShortTermLUFS: nil, maximaResetRevision: 0, isFinal: false)\"",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 348
+                      }
+                    }
+                  ],
+                  "duration" : "20s",
+                  "durationInSeconds" : 20.22842299938202,
+                  "name" : "testPausedClockLossClearsReadingsAndCancelsSuspendedWorker()",
+                  "nodeIdentifier" : "LiveAudioMeterCoordinatorTests/testPausedClockLossClearsReadingsAndCancelsSuspendedWorker()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterCoordinatorTests/testPausedClockLossClearsReadingsAndCancelsSuspendedWorker",
+                  "nodeType" : "Test Case",
+                  "result" : "Failed"
+                }
+              ],
+              "name" : "LiveAudioMeterCoordinatorTests",
+              "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterCoordinatorTests",
+              "nodeType" : "Test Suite",
+              "result" : "Failed"
+            }
+          ],
+          "name" : "Aagedal Media Player Tests",
+          "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests",
+          "nodeType" : "Unit test bundle",
+          "result" : "Failed"
+        }
+      ],
+      "name" : "Aagedal Media Player",
+      "nodeType" : "Test Plan",
+      "result" : "Failed"
+    }
+  ],
+  "testPlanConfigurations" : [
+    {
+      "configurationId" : "1",
+      "configurationName" : "Test Scheme Action"
+    }
+  ]
+}

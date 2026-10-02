@@ -1,0 +1,26 @@
+{
+  "baselineCommit": "e90b74ea77edaf462acc795f7b6be7a9565ee434",
+  "baselineComparatorSHA256": "4d5bfae85c95238599f4f7bd3b3c818b6b6af5745f52fe3a0b231f2a1bca53c9",
+  "fixedComparatorSHA256": "73de43748fd96e71d2661d8d95cfe50a4eaae99194fe088d507d6dbcebeb30de",
+  "catalog": "https://developer.apple.com/library/archive/documentation/AppleApplications/Reference/FinalCutPro_XML/Elements/Elements.html",
+  "cases": [
+    {
+      "mutation": "video source track 2",
+      "baselineStatus": "exact-match",
+      "fixedStatus": "invalid-or-unsupported",
+      "fixedError": "Unsupported or ambiguous source-A video track index"
+    },
+    {
+      "mutation": "sequence timecode field 1",
+      "baselineStatus": "exact-match",
+      "fixedStatus": "invalid-or-unsupported",
+      "fixedError": "Unsupported or ambiguous timecode field offset"
+    },
+    {
+      "mutation": "source timecode aux1",
+      "baselineStatus": "exact-match",
+      "fixedStatus": "invalid-or-unsupported",
+      "fixedError": "Unsupported or ambiguous auxiliary timecode source"
+    }
+  ]
+}

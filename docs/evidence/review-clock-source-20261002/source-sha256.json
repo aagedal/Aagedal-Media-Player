@@ -1,0 +1,12 @@
+{
+  "Aagedal Media Player Tests/CompareReviewTextCommitTests.swift": "1d268725c9a9902653b78dd624de1853a75f49e3a31f0e0032e67a56c5aa80b8",
+  "Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift": "4a968521529f8a355f011135be3584f2cc5e93cd0441459919297e8dccbee930",
+  "Aagedal Media Player/Logic/LiveAudioMeterCoordinator.swift": "abfe459985ce2f3b5c44bb16e13f9a60ce15f5403e91d5903fdb010bb779f554",
+  "Aagedal Media Player/UI/CompareReviewView.swift": "06d179b3feaaba47fc13b06f74d803b86bf5554ff55b92466e1b5df0bc917f3a",
+  "scripts/compare-premiere-marker-roundtrip.py": "73de43748fd96e71d2661d8d95cfe50a4eaae99194fe088d507d6dbcebeb30de",
+  "scripts/release.sh": "28e6c8bebda57e5b18f623cb63a98b0ba4856c0eeba9ec8cc12d0815d2bb3260",
+  "scripts/test-premiere-marker-roundtrip.py": "93a0a4eec94192222ce5b66b67ac3dc03d753d9273ae04dd637e8a598fbd183f",
+  "scripts/test-release-script-validation.py": "d73db0b9240c8b570fb8c6241215f8858fd7bcc1ecd18123ca23d661f2b7e077",
+  "scripts/verify-release-candidate.sh": "c51637dfc1cd7c077570870ff10aa75c74494de83eeb4ab7cdd4f72130658694",
+  "Aagedal Media Player.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved": "6aea6d64326f3040345c3523a0a39c95d53335777e233b3aa311e8ba90ad475d"
+}

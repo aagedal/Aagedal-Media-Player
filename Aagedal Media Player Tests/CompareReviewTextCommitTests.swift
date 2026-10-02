@@ -7,6 +7,111 @@ import XCTest
 
 final class CompareReviewTextCommitTests: XCTestCase {
     @MainActor
+    func testExplicitRangeApplyDoesNotReplayUntouchedOrRetiredRowEndpointAfterMerge() {
+        let rendered = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
+            secondaryFrame: 10, secondaryTime: 1, text: "Finding", primaryEndFrame: 20)
+        for retireDraft in [false, true] {
+            var drafts = CompareReviewDraftState()
+            if retireDraft {
+                drafts.updateRangeEndDraft("30", noteID: rendered.id)
+                drafts.commitRangeEnd(note: rendered, canEdit: true) { _ in true }
+            }
+            var current = rendered
+            current.primaryEndFrame = 40
+
+            // A queued Apply/Return callback can still belong to the row that
+            // displayed 20. With no remaining user input, its old binding
+            // fallback must not be submitted over the live saved endpoint.
+            drafts.commitRangeEnd(note: current, canEdit: true) { _ in
+                XCTFail("An untouched or accepted range must not overwrite a newer merge")
+                return true
+            }
+            XCTAssertNil(drafts.rangeDrafts[current.id])
+            XCTAssertFalse(drafts.hasPendingEdits(in: [current]))
+        }
+    }
+
+    @MainActor
+    func testExplicitRangeApplyRestoresEarlierEndpointAgainstCurrentSameSidecarMerge() {
+        let rendered = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
+            secondaryFrame: 10, secondaryTime: 1, text: "Finding", primaryEndFrame: 20)
+        var current = rendered
+        current.primaryEndFrame = 40
+        let cases: [(String, [Int64])] = [(" 20 \n", [20]), (" 40 \n", [])]
+        for (entered, expectedUpdates) in cases {
+            var drafts = CompareReviewDraftState()
+            drafts.updateRangeEndDraft(entered, noteID: rendered.id)
+            // Explicit Apply, like text Return, can commit this field while
+            // another finding's correction is selected. Passive blur defers.
+            drafts.blockAction(noteID: UUID(), field: .text,
+                error: "Enter note text", notice: "Correct another finding")
+            let correction = drafts.correctionRequest
+            var updates: [Int64] = []
+            drafts.commitRangeEnd(note: current, canEdit: true) {
+                updates.append($0)
+                return true
+            }
+            XCTAssertEqual(updates, expectedUpdates)
+            XCTAssertNil(drafts.rangeDrafts[current.id])
+            XCTAssertNil(drafts.rangeActionErrors[current.id])
+            XCTAssertEqual(drafts.correctionRequest, correction)
+        }
+    }
+
+    @MainActor
+    func testExplicitRangeApplyRetainsUnavailableAndRejectedDraftUntilAccepted() {
+        let note = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
+            secondaryFrame: 10, secondaryTime: 1, text: "Finding", primaryEndFrame: 40)
+        var drafts = CompareReviewDraftState()
+        drafts.updateRangeEndDraft("20", noteID: note.id)
+        drafts.commitRangeEnd(note: note, canEdit: false) { _ in
+            XCTFail("Unavailable range input must not save")
+            return true
+        }
+        XCTAssertEqual(drafts.rangeDrafts[note.id], "20")
+        XCTAssertEqual(drafts.rangeActionErrors[note.id],
+            "Review notes cannot be edited right now. Retry loading the review before continuing.")
+        XCTAssertNil(drafts.correctionRequest)
+
+        drafts.commitRangeEnd(note: note, canEdit: true) { _ in false }
+        XCTAssertEqual(drafts.rangeDrafts[note.id], "20")
+        XCTAssertEqual(drafts.rangeActionErrors[note.id],
+            "End frame must be from the note's start through the last media frame.")
+        XCTAssertEqual(drafts.correctionRequest?.noteID, note.id)
+        XCTAssertEqual(drafts.correctionRequest?.field, .rangeEnd)
+
+        var updates: [Int64] = []
+        drafts.commitRangeEnd(note: note, canEdit: true) {
+            updates.append($0)
+            return true
+        }
+        XCTAssertEqual(updates, [20])
+        XCTAssertNil(drafts.rangeDrafts[note.id])
+        XCTAssertNil(drafts.rangeActionErrors[note.id])
+        XCTAssertNil(drafts.correctionRequest)
+    }
+
+    @MainActor
+    func testExplicitRangeApplyPreservesInvalidAndErasedEndpointDrafts() {
+        let note = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
+            secondaryFrame: 10, secondaryTime: 1, text: "Finding", primaryEndFrame: 40)
+        for (entered, error) in [
+            ("invalid end", "Enter a whole-number end frame."),
+            (" \n ", "Use Clear range to remove the saved end frame.")
+        ] {
+            var drafts = CompareReviewDraftState()
+            drafts.updateRangeEndDraft(entered, noteID: note.id)
+            drafts.commitRangeEnd(note: note, canEdit: true) { _ in
+                XCTFail("Invalid input must not save")
+                return true
+            }
+            XCTAssertEqual(drafts.rangeDrafts[note.id], entered)
+            XCTAssertEqual(drafts.rangeActionErrors[note.id], error)
+            XCTAssertEqual(drafts.correctionRequest?.field, .rangeEnd)
+        }
+    }
+
+    @MainActor
     func testExplicitTextReturnCommitsEarlierSavedTextAgainstCurrentSameSidecarMerge() {
         let rendered = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
             secondaryFrame: 10, secondaryTime: 1, text: "Earlier saved finding")

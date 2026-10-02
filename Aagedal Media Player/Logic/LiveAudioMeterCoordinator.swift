@@ -222,6 +222,22 @@ final class LiveAudioMeterCoordinator: ObservableObject {
            let repositioned = try? request.repositioned(at: playback.time) {
             begin(repositioned, cause: .speedRestored)
         }
+        if let handoff, let request {
+            // Pause and buffering preserve a continuous source segment only
+            // while its source clock remains valid. Check before those early
+            // returns: the admission gate ignores invalid times, which would
+            // otherwise leave stale readings and a suspended worker alive.
+            if let rejection = handoff.rejection {
+                fail(rejection, handoff: handoff, generation: generation)
+                return
+            }
+            let sourceFrame = playback.time * Double(request.format.sampleRate)
+            guard playback.time.isFinite, playback.time >= 0,
+                  sourceFrame.isFinite, sourceFrame < Double(Int64.max) else {
+                invalidateForInvalidPlaybackClock()
+                return
+            }
+        }
         if playback.phase == .buffering {
             workerGate?.update(playbackTime: playback.time)
             markBuffering()
@@ -321,14 +337,18 @@ final class LiveAudioMeterCoordinator: ObservableObject {
             )
             clockFailureContext = failureContext
         case .invalidClock:
-            invalidateCurrent(
-                status: .unavailable(
-                    reason: "The playback clock is unavailable.",
-                    diagnostic: "Retry after the player reports a finite source position."
-                ),
-                clearRequest: false
-            )
+            invalidateForInvalidPlaybackClock()
         }
+    }
+
+    private func invalidateForInvalidPlaybackClock() {
+        invalidateCurrent(
+            status: .unavailable(
+                reason: "The playback clock is unavailable.",
+                diagnostic: "Retry after the player reports a finite source position."
+            ),
+            clearRequest: false
+        )
     }
 
     /// Applies the typed transport boundary. Source and track replacements

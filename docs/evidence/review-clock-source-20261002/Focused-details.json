@@ -1,0 +1,709 @@
+{
+  "devices" : [
+    {
+      "architecture" : "arm64",
+      "deviceId" : "00006050-001C293C22F9401C",
+      "deviceName" : "My Mac",
+      "modelName" : "MacBook Pro",
+      "osBuildNumber" : "26A434",
+      "osVersion" : "27.0.1",
+      "platform" : "macOS"
+    }
+  ],
+  "testNodes" : [
+    {
+      "children" : [
+        {
+          "children" : [
+            {
+              "children" : [
+                {
+                  "duration" : "0,00076s",
+                  "durationInSeconds" : 0.0007599592208862305,
+                  "name" : "testAcceptedEditUsesTrimmedText()",
+                  "nodeIdentifier" : "CompareReviewTextCommitTests/testAcceptedEditUsesTrimmedText()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testAcceptedEditUsesTrimmedText",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,00055s",
+                  "durationInSeconds" : 0.0005450248718261719,
+                  "name" : "testAcceptedRangeDraftDoesNotOverrideSameSidecarMergedEndpoint()",
+                  "nodeIdentifier" : "CompareReviewTextCommitTests/testAcceptedRangeDraftDoesNotOverrideSameSidecarMergedEndpoint()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testAcceptedRangeDraftDoesNotOverrideSameSidecarMergedEndpoint",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,00049s",
+                  "durationInSeconds" : 0.0004940032958984375,
+                  "name" : "testCurrentRangeActionReplacesInvalidDraftEvenWhenSavedEndpointIsUnchanged()",
+                  "nodeIdentifier" : "CompareReviewTextCommitTests/testCurrentRangeActionReplacesInvalidDraftEvenWhenSavedEndpointIsUnchanged()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testCurrentRangeActionReplacesInvalidDraftEvenWhenSavedEndpointIsUnchanged",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,0005s",
+                  "durationInSeconds" : 0.0004979372024536133,
+                  "name" : "testCurrentRangeActionRetainsFailedInputAndUnrelatedTextCorrection()",
+                  "nodeIdentifier" : "CompareReviewTextCommitTests/testCurrentRangeActionRetainsFailedInputAndUnrelatedTextCorrection()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testCurrentRangeActionRetainsFailedInputAndUnrelatedTextCorrection",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,00057s",
+                  "durationInSeconds" : 0.0005700588226318359,
+                  "name" : "testDisabledTextBlurPreservesDraftErrorAndCorrection()",
+                  "nodeIdentifier" : "CompareReviewTextCommitTests/testDisabledTextBlurPreservesDraftErrorAndCorrection()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testDisabledTextBlurPreservesDraftErrorAndCorrection",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,0004s",
+                  "durationInSeconds" : 0.0004010200500488281,
+                  "name" : "testEditingRangePreservesTextCorrectionAndItsFocusPriority()",
+                  "nodeIdentifier" : "CompareReviewTextCommitTests/testEditingRangePreservesTextCorrectionAndItsFocusPriority()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testEditingRangePreservesTextCorrectionAndItsFocusPriority",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,00053s",
+                  "durationInSeconds" : 0.000532984733581543,
+                  "name" : "testEditingTextPreservesRangeCorrectionUntilRangeIsEdited()",
+                  "nodeIdentifier" : "CompareReviewTextCommitTests/testEditingTextPreservesRangeCorrectionUntilRangeIsEdited()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testEditingTextPreservesRangeCorrectionUntilRangeIsEdited",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,00038s",
+                  "durationInSeconds" : 0.00038301944732666016,
+                  "name" : "testEmptyAndUnchangedEditsDoNotMutateNote()",
+                  "nodeIdentifier" : "CompareReviewTextCommitTests/testEmptyAndUnchangedEditsDoNotMutateNote()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testEmptyAndUnchangedEditsDoNotMutateNote",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,00054s",
+                  "durationInSeconds" : 0.0005359649658203125,
+                  "name" : "testErasedSavedRangeDepartureExplainsExplicitClearWithoutChangingEndpoint()",
+                  "nodeIdentifier" : "CompareReviewTextCommitTests/testErasedSavedRangeDepartureExplainsExplicitClearWithoutChangingEndpoint()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testErasedSavedRangeDepartureExplainsExplicitClearWithoutChangingEndpoint",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,00043s",
+                  "durationInSeconds" : 0.0004329681396484375,
+                  "name" : "testExplicitRangeApplyDoesNotReplayUntouchedOrRetiredRowEndpointAfterMerge()",
+                  "nodeIdentifier" : "CompareReviewTextCommitTests/testExplicitRangeApplyDoesNotReplayUntouchedOrRetiredRowEndpointAfterMerge()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testExplicitRangeApplyDoesNotReplayUntouchedOrRetiredRowEndpointAfterMerge",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,0019s",
+                  "durationInSeconds" : 0.0019099712371826172,
+                  "name" : "testExplicitRangeApplyPreservesInvalidAndErasedEndpointDrafts()",
+                  "nodeIdentifier" : "CompareReviewTextCommitTests/testExplicitRangeApplyPreservesInvalidAndErasedEndpointDrafts()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testExplicitRangeApplyPreservesInvalidAndErasedEndpointDrafts",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,00045s",
+                  "durationInSeconds" : 0.0004540681838989258,
+                  "name" : "testExplicitRangeApplyRestoresEarlierEndpointAgainstCurrentSameSidecarMerge()",
+                  "nodeIdentifier" : "CompareReviewTextCommitTests/testExplicitRangeApplyRestoresEarlierEndpointAgainstCurrentSameSidecarMerge()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testExplicitRangeApplyRestoresEarlierEndpointAgainstCurrentSameSidecarMerge",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,00041s",
+                  "durationInSeconds" : 0.00041103363037109375,
+                  "name" : "testExplicitRangeApplyRetainsUnavailableAndRejectedDraftUntilAccepted()",
+                  "nodeIdentifier" : "CompareReviewTextCommitTests/testExplicitRangeApplyRetainsUnavailableAndRejectedDraftUntilAccepted()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testExplicitRangeApplyRetainsUnavailableAndRejectedDraftUntilAccepted",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,00057s",
+                  "durationInSeconds" : 0.0005730390548706055,
+                  "name" : "testExplicitTextReturnCommitsEarlierSavedTextAgainstCurrentSameSidecarMerge()",
+                  "nodeIdentifier" : "CompareReviewTextCommitTests/testExplicitTextReturnCommitsEarlierSavedTextAgainstCurrentSameSidecarMerge()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testExplicitTextReturnCommitsEarlierSavedTextAgainstCurrentSameSidecarMerge",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,00038s",
+                  "durationInSeconds" : 0.0003809928894042969,
+                  "name" : "testExplicitTextReturnRetainsSameSidecarDraftUntilLiveUpdateAcceptsIt()",
+                  "nodeIdentifier" : "CompareReviewTextCommitTests/testExplicitTextReturnRetainsSameSidecarDraftUntilLiveUpdateAcceptsIt()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testExplicitTextReturnRetainsSameSidecarDraftUntilLiveUpdateAcceptsIt",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,00039s",
+                  "durationInSeconds" : 0.0003910064697265625,
+                  "name" : "testExplicitTextReturnRetiresMergedOrAbsentDraftWithoutRewritingSavedText()",
+                  "nodeIdentifier" : "CompareReviewTextCommitTests/testExplicitTextReturnRetiresMergedOrAbsentDraftWithoutRewritingSavedText()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testExplicitTextReturnRetiresMergedOrAbsentDraftWithoutRewritingSavedText",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,00044s",
+                  "durationInSeconds" : 0.00043702125549316406,
+                  "name" : "testNewerRangeDraftAfterCurrentFrameActionCommitsAgainstCurrentSavedEndpoint()",
+                  "nodeIdentifier" : "CompareReviewTextCommitTests/testNewerRangeDraftAfterCurrentFrameActionCommitsAgainstCurrentSavedEndpoint()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testNewerRangeDraftAfterCurrentFrameActionCommitsAgainstCurrentSavedEndpoint",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,00045s",
+                  "durationInSeconds" : 0.000453948974609375,
+                  "name" : "testOrdinaryEmptyTextValidationOwnsFocusThroughCompetingRangeBlur()",
+                  "nodeIdentifier" : "CompareReviewTextCommitTests/testOrdinaryEmptyTextValidationOwnsFocusThroughCompetingRangeBlur()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testOrdinaryEmptyTextValidationOwnsFocusThroughCompetingRangeBlur",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,00048s",
+                  "durationInSeconds" : 0.0004769563674926758,
+                  "name" : "testOrdinaryRangeValidationDefersPassiveFieldsAndExplicitFailureCanReplaceIt()",
+                  "nodeIdentifier" : "CompareReviewTextCommitTests/testOrdinaryRangeValidationDefersPassiveFieldsAndExplicitFailureCanReplaceIt()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testOrdinaryRangeValidationDefersPassiveFieldsAndExplicitFailureCanReplaceIt",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,00056s",
+                  "durationInSeconds" : 0.0005620718002319336,
+                  "name" : "testOrdinaryTextValidationRevealsFindingHiddenByFilterWithoutSavingDrafts()",
+                  "nodeIdentifier" : "CompareReviewTextCommitTests/testOrdinaryTextValidationRevealsFindingHiddenByFilterWithoutSavingDrafts()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testOrdinaryTextValidationRevealsFindingHiddenByFilterWithoutSavingDrafts",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,00044s",
+                  "durationInSeconds" : 0.0004431009292602539,
+                  "name" : "testPassiveRangeBlurUsesTextCorrectionSelectedAfterRowRender()",
+                  "nodeIdentifier" : "CompareReviewTextCommitTests/testPassiveRangeBlurUsesTextCorrectionSelectedAfterRowRender()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testPassiveRangeBlurUsesTextCorrectionSelectedAfterRowRender",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,00055s",
+                  "durationInSeconds" : 0.0005509853363037109,
+                  "name" : "testPassiveTextDepartureRetainsFailuresAndCommitsOnceAfterRetry()",
+                  "nodeIdentifier" : "CompareReviewTextCommitTests/testPassiveTextDepartureRetainsFailuresAndCommitsOnceAfterRetry()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testPassiveTextDepartureRetainsFailuresAndCommitsOnceAfterRetry",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,00043s",
+                  "durationInSeconds" : 0.0004330873489379883,
+                  "name" : "testPassiveTextDepartureUsesCorrectionSelectedAfterRowRender()",
+                  "nodeIdentifier" : "CompareReviewTextCommitTests/testPassiveTextDepartureUsesCorrectionSelectedAfterRowRender()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testPassiveTextDepartureUsesCorrectionSelectedAfterRowRender",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,00041s",
+                  "durationInSeconds" : 0.00040793418884277344,
+                  "name" : "testRangeCorrectionDefersOtherFindingRangeBlurAndPassiveFocus()",
+                  "nodeIdentifier" : "CompareReviewTextCommitTests/testRangeCorrectionDefersOtherFindingRangeBlurAndPassiveFocus()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testRangeCorrectionDefersOtherFindingRangeBlurAndPassiveFocus",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,00044s",
+                  "durationInSeconds" : 0.0004439353942871094,
+                  "name" : "testRangeCorrectionDefersSameAndOtherFindingTextBlurUntilCorrected()",
+                  "nodeIdentifier" : "CompareReviewTextCommitTests/testRangeCorrectionDefersSameAndOtherFindingTextBlurUntilCorrected()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testRangeCorrectionDefersSameAndOtherFindingTextBlurUntilCorrected",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,00037s",
+                  "durationInSeconds" : 0.0003739595413208008,
+                  "name" : "testRangeDepartureRespectsLiveTextCorrectionUnavailableEditingAndExplicitClear()",
+                  "nodeIdentifier" : "CompareReviewTextCommitTests/testRangeDepartureRespectsLiveTextCorrectionUnavailableEditingAndExplicitClear()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testRangeDepartureRespectsLiveTextCorrectionUnavailableEditingAndExplicitClear",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,00042s",
+                  "durationInSeconds" : 0.0004169940948486328,
+                  "name" : "testRangeDepartureRetainsInvalidEndpointAndRevealsHiddenFinding()",
+                  "nodeIdentifier" : "CompareReviewTextCommitTests/testRangeDepartureRetainsInvalidEndpointAndRevealsHiddenFinding()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testRangeDepartureRetainsInvalidEndpointAndRevealsHiddenFinding",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,00039s",
+                  "durationInSeconds" : 0.0003870725631713867,
+                  "name" : "testRangeDepartureSavesPendingEndpointWhenFocusCallbackDoesNotRun()",
+                  "nodeIdentifier" : "CompareReviewTextCommitTests/testRangeDepartureSavesPendingEndpointWhenFocusCallbackDoesNotRun()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testRangeDepartureSavesPendingEndpointWhenFocusCallbackDoesNotRun",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,00037s",
+                  "durationInSeconds" : 0.00037097930908203125,
+                  "name" : "testRangeDraftEditClearsOnlyItsOwnErrorDuringAnotherCorrection()",
+                  "nodeIdentifier" : "CompareReviewTextCommitTests/testRangeDraftEditClearsOnlyItsOwnErrorDuringAnotherCorrection()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testRangeDraftEditClearsOnlyItsOwnErrorDuringAnotherCorrection",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,00038s",
+                  "durationInSeconds" : 0.0003769397735595703,
+                  "name" : "testRangeDraftEditClearsPreviousErrorBeforeNewValidation()",
+                  "nodeIdentifier" : "CompareReviewTextCommitTests/testRangeDraftEditClearsPreviousErrorBeforeNewValidation()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testRangeDraftEditClearsPreviousErrorBeforeNewValidation",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,0005s",
+                  "durationInSeconds" : 0.0005009174346923828,
+                  "name" : "testRangeFocusLossKeepsNormalChangedDraftValidation()",
+                  "nodeIdentifier" : "CompareReviewTextCommitTests/testRangeFocusLossKeepsNormalChangedDraftValidation()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testRangeFocusLossKeepsNormalChangedDraftValidation",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,00036s",
+                  "durationInSeconds" : 0.0003609657287597656,
+                  "name" : "testRejectedAndUnavailableEditsRemainUnaccepted()",
+                  "nodeIdentifier" : "CompareReviewTextCommitTests/testRejectedAndUnavailableEditsRemainUnaccepted()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testRejectedAndUnavailableEditsRemainUnaccepted",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,00033s",
+                  "durationInSeconds" : 0.0003260374069213867,
+                  "name" : "testRepeatedBlockedActionRevealsSameCorrectionWithoutDiscardingDrafts()",
+                  "nodeIdentifier" : "CompareReviewTextCommitTests/testRepeatedBlockedActionRevealsSameCorrectionWithoutDiscardingDrafts()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testRepeatedBlockedActionRevealsSameCorrectionWithoutDiscardingDrafts",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,00036s",
+                  "durationInSeconds" : 0.00035500526428222656,
+                  "name" : "testRetainedCorrectionWaitsForEditableRowAndResumesSelectedField()",
+                  "nodeIdentifier" : "CompareReviewTextCommitTests/testRetainedCorrectionWaitsForEditableRowAndResumesSelectedField()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testRetainedCorrectionWaitsForEditableRowAndResumesSelectedField",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,00046s",
+                  "durationInSeconds" : 0.0004570484161376953,
+                  "name" : "testRetainedRangeCorrectionRevealsOnlyExistingEditableHiddenFinding()",
+                  "nodeIdentifier" : "CompareReviewTextCommitTests/testRetainedRangeCorrectionRevealsOnlyExistingEditableHiddenFinding()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testRetainedRangeCorrectionRevealsOnlyExistingEditableHiddenFinding",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,00043s",
+                  "durationInSeconds" : 0.00042688846588134766,
+                  "name" : "testSuccessfulTextCommitPreservesASeparateRangeCorrection()",
+                  "nodeIdentifier" : "CompareReviewTextCommitTests/testSuccessfulTextCommitPreservesASeparateRangeCorrection()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testSuccessfulTextCommitPreservesASeparateRangeCorrection",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,00042s",
+                  "durationInSeconds" : 0.0004159212112426758,
+                  "name" : "testTextCorrectionDefersOtherFindingTextBlurWithoutDroppingDrafts()",
+                  "nodeIdentifier" : "CompareReviewTextCommitTests/testTextCorrectionDefersOtherFindingTextBlurWithoutDroppingDrafts()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testTextCorrectionDefersOtherFindingTextBlurWithoutDroppingDrafts",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,00041s",
+                  "durationInSeconds" : 0.0004069805145263672,
+                  "name" : "testTextCorrectionDoesNotCommitOrRefocusAnUnrelatedRangeDraft()",
+                  "nodeIdentifier" : "CompareReviewTextCommitTests/testTextCorrectionDoesNotCommitOrRefocusAnUnrelatedRangeDraft()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testTextCorrectionDoesNotCommitOrRefocusAnUnrelatedRangeDraft",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,0018s",
+                  "durationInSeconds" : 0.0018310546875,
+                  "name" : "testUnavailableFieldValidationRetainsInputWithoutRequestingDisabledFocus()",
+                  "nodeIdentifier" : "CompareReviewTextCommitTests/testUnavailableFieldValidationRetainsInputWithoutRequestingDisabledFocus()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testUnavailableFieldValidationRetainsInputWithoutRequestingDisabledFocus",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,00045s",
+                  "durationInSeconds" : 0.000453948974609375,
+                  "name" : "testUnavailableTextErrorDefersFallbackFocusUntilLoadingCompletes()",
+                  "nodeIdentifier" : "CompareReviewTextCommitTests/testUnavailableTextErrorDefersFallbackFocusUntilLoadingCompletes()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testUnavailableTextErrorDefersFallbackFocusUntilLoadingCompletes",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,00047s",
+                  "durationInSeconds" : 0.0004680156707763672,
+                  "name" : "testUncommittedRangeDraftSurvivesSameSidecarMergeIncludingEarlierSavedValue()",
+                  "nodeIdentifier" : "CompareReviewTextCommitTests/testUncommittedRangeDraftSurvivesSameSidecarMergeIncludingEarlierSavedValue()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testUncommittedRangeDraftSurvivesSameSidecarMergeIncludingEarlierSavedValue",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                }
+              ],
+              "name" : "CompareReviewTextCommitTests",
+              "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests",
+              "nodeType" : "Test Suite",
+              "result" : "Passed"
+            },
+            {
+              "children" : [
+                {
+                  "duration" : "0,002s",
+                  "durationInSeconds" : 0.0020020008087158203,
+                  "name" : "testAllDiscontinuityCausesStartCleanGenerations()",
+                  "nodeIdentifier" : "LiveAudioMeterCoordinatorTests/testAllDiscontinuityCausesStartCleanGenerations()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterCoordinatorTests/testAllDiscontinuityCausesStartCleanGenerations",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,15s",
+                  "durationInSeconds" : 0.1513659954071045,
+                  "name" : "testBufferingClockLossClearsReadingsAndCancelsSuspendedWorker()",
+                  "nodeIdentifier" : "LiveAudioMeterCoordinatorTests/testBufferingClockLossClearsReadingsAndCancelsSuspendedWorker()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterCoordinatorTests/testBufferingClockLossClearsReadingsAndCancelsSuspendedWorker",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,013s",
+                  "durationInSeconds" : 0.013000011444091797,
+                  "name" : "testCancellationBeforeAndAfterDecoderAttachmentCleansWorkers()",
+                  "nodeIdentifier" : "LiveAudioMeterCoordinatorTests/testCancellationBeforeAndAfterDecoderAttachmentCleansWorkers()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterCoordinatorTests/testCancellationBeforeAndAfterDecoderAttachmentCleansWorkers",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,031s",
+                  "durationInSeconds" : 0.03148293495178223,
+                  "name" : "testClearMaximaPreservesBarsAndRebasesSubsequentMaxima()",
+                  "nodeIdentifier" : "LiveAudioMeterCoordinatorTests/testClearMaximaPreservesBarsAndRebasesSubsequentMaxima()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterCoordinatorTests/testClearMaximaPreservesBarsAndRebasesSubsequentMaxima",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,014s",
+                  "durationInSeconds" : 0.01361703872680664,
+                  "name" : "testClockFailureRetainsRejectedSegmentContextWithoutKeepingReadingOrWorker()",
+                  "nodeIdentifier" : "LiveAudioMeterCoordinatorTests/testClockFailureRetainsRejectedSegmentContextWithoutKeepingReadingOrWorker()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterCoordinatorTests/testClockFailureRetainsRejectedSegmentContextWithoutKeepingReadingOrWorker",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,052s",
+                  "durationInSeconds" : 0.05151402950286865,
+                  "name" : "testClosedCoordinatorRejectsQueuedTransportEventsAndSpeedSuspension()",
+                  "nodeIdentifier" : "LiveAudioMeterCoordinatorTests/testClosedCoordinatorRejectsQueuedTransportEventsAndSpeedSuspension()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterCoordinatorTests/testClosedCoordinatorRejectsQueuedTransportEventsAndSpeedSuspension",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,012s",
+                  "durationInSeconds" : 0.012274980545043945,
+                  "name" : "testCoalescedSnapshotsRetainIntermediateTransientBallistics()",
+                  "nodeIdentifier" : "LiveAudioMeterCoordinatorTests/testCoalescedSnapshotsRetainIntermediateTransientBallistics()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterCoordinatorTests/testCoalescedSnapshotsRetainIntermediateTransientBallistics",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,019s",
+                  "durationInSeconds" : 0.018864035606384277,
+                  "name" : "testDecoderEOFFreezesFinalReadingWhileContainerClockContinues()",
+                  "nodeIdentifier" : "LiveAudioMeterCoordinatorTests/testDecoderEOFFreezesFinalReadingWhileContainerClockContinues()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterCoordinatorTests/testDecoderEOFFreezesFinalReadingWhileContainerClockContinues",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,019s",
+                  "durationInSeconds" : 0.019216060638427734,
+                  "name" : "testDeinitCancelsOwnedWorkerAndLeavesNoOrphan()",
+                  "nodeIdentifier" : "LiveAudioMeterCoordinatorTests/testDeinitCancelsOwnedWorkerAndLeavesNoOrphan()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterCoordinatorTests/testDeinitCancelsOwnedWorkerAndLeavesNoOrphan",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,053s",
+                  "durationInSeconds" : 0.052581071853637695,
+                  "name" : "testInitialClockLagCanCatchUpBeforeSteadyStateDriftFails()",
+                  "nodeIdentifier" : "LiveAudioMeterCoordinatorTests/testInitialClockLagCanCatchUpBeforeSteadyStateDriftFails()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterCoordinatorTests/testInitialClockLagCanCatchUpBeforeSteadyStateDriftFails",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,083s",
+                  "durationInSeconds" : 0.08313500881195068,
+                  "name" : "testMalformedCurrentLoudnessFailsGenerationAndCancelsWorker()",
+                  "nodeIdentifier" : "LiveAudioMeterCoordinatorTests/testMalformedCurrentLoudnessFailsGenerationAndCancelsWorker()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterCoordinatorTests/testMalformedCurrentLoudnessFailsGenerationAndCancelsWorker",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,12s",
+                  "durationInSeconds" : 0.12085199356079102,
+                  "name" : "testMalformedSnapshotFailsGenerationAndCancelsWorker()",
+                  "nodeIdentifier" : "LiveAudioMeterCoordinatorTests/testMalformedSnapshotFailsGenerationAndCancelsWorker()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterCoordinatorTests/testMalformedSnapshotFailsGenerationAndCancelsWorker",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,02s",
+                  "durationInSeconds" : 0.019775986671447754,
+                  "name" : "testMalformedSnapshotWinsRaceWithDecoderFailureDiagnostic()",
+                  "nodeIdentifier" : "LiveAudioMeterCoordinatorTests/testMalformedSnapshotWinsRaceWithDecoderFailureDiagnostic()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterCoordinatorTests/testMalformedSnapshotWinsRaceWithDecoderFailureDiagnostic",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,02s",
+                  "durationInSeconds" : 0.020364999771118164,
+                  "name" : "testPauseAndBufferingFreezeThenResumeContinuousGeneration()",
+                  "nodeIdentifier" : "LiveAudioMeterCoordinatorTests/testPauseAndBufferingFreezeThenResumeContinuousGeneration()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterCoordinatorTests/testPauseAndBufferingFreezeThenResumeContinuousGeneration",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,15s",
+                  "durationInSeconds" : 0.1538550853729248,
+                  "name" : "testPausedClockLossClearsReadingsAndCancelsSuspendedWorker()",
+                  "nodeIdentifier" : "LiveAudioMeterCoordinatorTests/testPausedClockLossClearsReadingsAndCancelsSuspendedWorker()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterCoordinatorTests/testPausedClockLossClearsReadingsAndCancelsSuspendedWorker",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,045s",
+                  "durationInSeconds" : 0.04546093940734863,
+                  "name" : "testPausedSeekImmediatelySuspendsReplacementGenerationAtNewClock()",
+                  "nodeIdentifier" : "LiveAudioMeterCoordinatorTests/testPausedSeekImmediatelySuspendsReplacementGenerationAtNewClock()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterCoordinatorTests/testPausedSeekImmediatelySuspendsReplacementGenerationAtNewClock",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,12s",
+                  "durationInSeconds" : 0.11505591869354248,
+                  "name" : "testPendingMalformedSnapshotWinsRaceWithPlaybackClockFailure()",
+                  "nodeIdentifier" : "LiveAudioMeterCoordinatorTests/testPendingMalformedSnapshotWinsRaceWithPlaybackClockFailure()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterCoordinatorTests/testPendingMalformedSnapshotWinsRaceWithPlaybackClockFailure",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,014s",
+                  "durationInSeconds" : 0.013864994049072266,
+                  "name" : "testPlaybackClockAssessesNewestReducedSnapshotBeforeScheduledPresentationDrain()",
+                  "nodeIdentifier" : "LiveAudioMeterCoordinatorTests/testPlaybackClockAssessesNewestReducedSnapshotBeforeScheduledPresentationDrain()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterCoordinatorTests/testPlaybackClockAssessesNewestReducedSnapshotBeforeScheduledPresentationDrain",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,05s",
+                  "durationInSeconds" : 0.04982101917266846,
+                  "name" : "testPlaybackEOFKeepsDecoderDrainRunningAcrossTrailingTransportTicks()",
+                  "nodeIdentifier" : "LiveAudioMeterCoordinatorTests/testPlaybackEOFKeepsDecoderDrainRunningAcrossTrailingTransportTicks()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterCoordinatorTests/testPlaybackEOFKeepsDecoderDrainRunningAcrossTrailingTransportTicks",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,045s",
+                  "durationInSeconds" : 0.04527604579925537,
+                  "name" : "testReplacementAtUnsupportedSpeedCannotReviveRetainedSourceAtOneTimes()",
+                  "nodeIdentifier" : "LiveAudioMeterCoordinatorTests/testReplacementAtUnsupportedSpeedCannotReviveRetainedSourceAtOneTimes()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterCoordinatorTests/testReplacementAtUnsupportedSpeedCannotReviveRetainedSourceAtOneTimes",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,028s",
+                  "durationInSeconds" : 0.028154969215393066,
+                  "name" : "testRestartRejectsStaleSnapshotsCompletionsAndErrors()",
+                  "nodeIdentifier" : "LiveAudioMeterCoordinatorTests/testRestartRejectsStaleSnapshotsCompletionsAndErrors()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterCoordinatorTests/testRestartRejectsStaleSnapshotsCompletionsAndErrors",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,019s",
+                  "durationInSeconds" : 0.019448041915893555,
+                  "name" : "testRetryAndManualResetUseCurrentPlaybackClock()",
+                  "nodeIdentifier" : "LiveAudioMeterCoordinatorTests/testRetryAndManualResetUseCurrentPlaybackClock()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterCoordinatorTests/testRetryAndManualResetUseCurrentPlaybackClock",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,026s",
+                  "durationInSeconds" : 0.026278972625732422,
+                  "name" : "testRetryStartsNewGenerationAfterActionableFailure()",
+                  "nodeIdentifier" : "LiveAudioMeterCoordinatorTests/testRetryStartsNewGenerationAfterActionableFailure()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterCoordinatorTests/testRetryStartsNewGenerationAfterActionableFailure",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,12s",
+                  "durationInSeconds" : 0.12066304683685303,
+                  "name" : "testSilentCurrentLoudnessRemainsValidAfterMaximaClear()",
+                  "nodeIdentifier" : "LiveAudioMeterCoordinatorTests/testSilentCurrentLoudnessRemainsValidAfterMaximaClear()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterCoordinatorTests/testSilentCurrentLoudnessRemainsValidAfterMaximaClear",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,02s",
+                  "durationInSeconds" : 0.020208001136779785,
+                  "name" : "testSnapshotHandoffCoalescesAfterDSPWithoutGrowingPresentationQueue()",
+                  "nodeIdentifier" : "LiveAudioMeterCoordinatorTests/testSnapshotHandoffCoalescesAfterDSPWithoutGrowingPresentationQueue()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterCoordinatorTests/testSnapshotHandoffCoalescesAfterDSPWithoutGrowingPresentationQueue",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,11s",
+                  "durationInSeconds" : 0.10934698581695557,
+                  "name" : "testStartupCanPublishFirstPCMThenEstablishSynchronization()",
+                  "nodeIdentifier" : "LiveAudioMeterCoordinatorTests/testStartupCanPublishFirstPCMThenEstablishSynchronization()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterCoordinatorTests/testStartupCanPublishFirstPCMThenEstablishSynchronization",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,11s",
+                  "durationInSeconds" : 0.1084359884262085,
+                  "name" : "testStartupRejectsInvalidPlayingClockBeforeFirstPCM()",
+                  "nodeIdentifier" : "LiveAudioMeterCoordinatorTests/testStartupRejectsInvalidPlayingClockBeforeFirstPCM()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterCoordinatorTests/testStartupRejectsInvalidPlayingClockBeforeFirstPCM",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,11s",
+                  "durationInSeconds" : 0.10987305641174316,
+                  "name" : "testStartupWithoutPCMUsesBoundedCatchUpAndCancelsStalledWorker()",
+                  "nodeIdentifier" : "LiveAudioMeterCoordinatorTests/testStartupWithoutPCMUsesBoundedCatchUpAndCancelsStalledWorker()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterCoordinatorTests/testStartupWithoutPCMUsesBoundedCatchUpAndCancelsStalledWorker",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,014s",
+                  "durationInSeconds" : 0.014461994171142578,
+                  "name" : "testTypedSeekRestartsWhileTrackReplacementRequiresNewIdentity()",
+                  "nodeIdentifier" : "LiveAudioMeterCoordinatorTests/testTypedSeekRestartsWhileTrackReplacementRequiresNewIdentity()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterCoordinatorTests/testTypedSeekRestartsWhileTrackReplacementRequiresNewIdentity",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,014s",
+                  "durationInSeconds" : 0.014315962791442871,
+                  "name" : "testUnsupportedSpeedInvalidatesOnceAndRestartsAtRestoredClock()",
+                  "nodeIdentifier" : "LiveAudioMeterCoordinatorTests/testUnsupportedSpeedInvalidatesOnceAndRestartsAtRestoredClock()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterCoordinatorTests/testUnsupportedSpeedInvalidatesOnceAndRestartsAtRestoredClock",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,027s",
+                  "durationInSeconds" : 0.027460932731628418,
+                  "name" : "testValidPausedAndBufferingClocksPreserveReadingsUntilContiguousResume()",
+                  "nodeIdentifier" : "LiveAudioMeterCoordinatorTests/testValidPausedAndBufferingClocksPreserveReadingsUntilContiguousResume()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterCoordinatorTests/testValidPausedAndBufferingClocksPreserveReadingsUntilContiguousResume",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,0085s",
+                  "durationInSeconds" : 0.008491992950439453,
+                  "name" : "testWorkerGateTracksPlaybackClockAndCancelsWithGeneration()",
+                  "nodeIdentifier" : "LiveAudioMeterCoordinatorTests/testWorkerGateTracksPlaybackClockAndCancelsWithGeneration()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterCoordinatorTests/testWorkerGateTracksPlaybackClockAndCancelsWithGeneration",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                }
+              ],
+              "name" : "LiveAudioMeterCoordinatorTests",
+              "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterCoordinatorTests",
+              "nodeType" : "Test Suite",
+              "result" : "Passed"
+            }
+          ],
+          "name" : "Aagedal Media Player Tests",
+          "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests",
+          "nodeType" : "Unit test bundle",
+          "result" : "Passed"
+        }
+      ],
+      "name" : "Aagedal Media Player",
+      "nodeType" : "Test Plan",
+      "result" : "Passed"
+    }
+  ],
+  "testPlanConfigurations" : [
+    {
+      "configurationId" : "1",
+      "configurationName" : "Test Scheme Action"
+    }
+  ]
+}

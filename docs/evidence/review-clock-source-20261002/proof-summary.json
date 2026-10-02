@@ -1,0 +1,24 @@
+{
+  "baselineCommit": "e90b74ea77edaf462acc795f7b6be7a9565ee434",
+  "focusedTests": 73,
+  "focusedPassed": 73,
+  "focusedSkipped": 0,
+  "focusedRuntimeWarnings": 0,
+  "requiredIdentities": [
+    "CompareReviewTextCommitTests/testExplicitRangeApplyDoesNotReplayUntouchedOrRetiredRowEndpointAfterMerge()",
+    "CompareReviewTextCommitTests/testExplicitRangeApplyRestoresEarlierEndpointAgainstCurrentSameSidecarMerge()",
+    "CompareReviewTextCommitTests/testExplicitRangeApplyRetainsUnavailableAndRejectedDraftUntilAccepted()",
+    "CompareReviewTextCommitTests/testExplicitRangeApplyPreservesInvalidAndErasedEndpointDrafts()",
+    "LiveAudioMeterCoordinatorTests/testPausedClockLossClearsReadingsAndCancelsSuspendedWorker()",
+    "LiveAudioMeterCoordinatorTests/testBufferingClockLossClearsReadingsAndCancelsSuspendedWorker()",
+    "LiveAudioMeterCoordinatorTests/testValidPausedAndBufferingClocksPreserveReadingsUntilContiguousResume()"
+  ],
+  "baselineMeterTests": 2,
+  "baselineMeterFailures": 2,
+  "baselineMeterSourceSHA256": "4f9e9513268da495f4cccb46f41f4d83e05a20b987affb92b91d301941e2e6ab",
+  "fixedMeterSourceSHA256": "abfe459985ce2f3b5c44bb16e13f9a60ce15f5403e91d5903fdb010bb779f554",
+  "premierePythonTests": 37,
+  "scriptValidators": "passed",
+  "preflightChecks": 61,
+  "canonicalVerification": "pending"
+}

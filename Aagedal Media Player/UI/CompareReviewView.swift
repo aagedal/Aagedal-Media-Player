@@ -214,13 +214,29 @@ struct CompareReviewDraftState {
     mutating func commitRangeOnDeparture(
         note: CompareReviewNote, canEdit: Bool, update: (Int64) -> Bool
     ) {
-        guard canEdit, let draft = rangeDrafts[note.id],
+        guard canEdit,
               CompareReviewRangeFocusLossPolicy.canHandlePassively(
                 noteID: note.id, correctionRequest: correctionRequest
               ) else { return }
+        commitRangeEnd(note: note, canEdit: canEdit, update: update)
+    }
+
+    /// Apply and Return must use the live draft and current saved endpoint,
+    /// including when their row predates another window's same-sidecar save.
+    /// An untouched field has no input to submit and must not replay that row's
+    /// old saved endpoint over the merged finding.
+    mutating func commitRangeEnd(
+        note: CompareReviewNote, canEdit: Bool, update: (Int64) -> Bool
+    ) {
+        guard let draft = rangeDrafts[note.id] else { return }
         let entered = draft.trimmingCharacters(in: .whitespacesAndNewlines)
         if entered == (note.primaryEndFrame.map(String.init) ?? "") {
             finishRangeEndCommit(noteID: note.id)
+            return
+        }
+        guard canEdit else {
+            recordFieldValidationError("Review notes cannot be edited right now. Retry loading the review before continuing.",
+                note: note, field: .rangeEnd, canEdit: canEdit)
             return
         }
         guard !entered.isEmpty else {
@@ -702,6 +718,12 @@ struct CompareReviewView: View {
                 drafts.finishRangeEndCommit(noteID: note.id)
                 return true
             },
+            onRangeCommit: {
+                guard let currentNote = compareSession.reviewNotes.first(where: { $0.id == note.id }) else { return }
+                drafts.commitRangeEnd(note: currentNote, canEdit: compareSession.canEditReviewNotes) {
+                    compareSession.updateReviewRange(id: note.id, endFrame: $0)
+                }
+            },
             onRangeDeparture: {
                 guard let currentNote = compareSession.reviewNotes.first(where: { $0.id == note.id }) else { return }
                 drafts.commitRangeOnDeparture(note: currentNote, canEdit: compareSession.canEditReviewNotes) {
@@ -1011,6 +1033,7 @@ private struct CompareReviewNoteRow: View {
     let onDelete: () -> Void
     let onClassification: (CompareReviewSeverity?, CompareReviewCategory?, CompareReviewStatus?) -> Void
     let onRange: (Int64?) -> Bool
+    let onRangeCommit: () -> Void
     let onRangeDeparture: () -> Void
     let onCurrentEnd: () -> Bool
     let onSeekEnd: () -> Void
@@ -1046,6 +1069,7 @@ private struct CompareReviewNoteRow: View {
         onDelete: @escaping () -> Void,
         onClassification: @escaping (CompareReviewSeverity?, CompareReviewCategory?, CompareReviewStatus?) -> Void,
         onRange: @escaping (Int64?) -> Bool,
+        onRangeCommit: @escaping () -> Void,
         onRangeDeparture: @escaping () -> Void,
         onCurrentEnd: @escaping () -> Bool,
         onSeekEnd: @escaping () -> Void
@@ -1063,6 +1087,7 @@ private struct CompareReviewNoteRow: View {
         self.onDelete = onDelete
         self.onClassification = onClassification
         self.onRange = onRange
+        self.onRangeCommit = onRangeCommit
         self.onRangeDeparture = onRangeDeparture
         self.onCurrentEnd = onCurrentEnd
         self.onSeekEnd = onSeekEnd
@@ -1287,17 +1312,8 @@ private struct CompareReviewNoteRow: View {
     }
 
     private func applyRange() {
-        guard let end = Int64(endFrameDraft.trimmingCharacters(in: .whitespacesAndNewlines)) else {
-            rangeActionError = "Enter a whole-number end frame."
-            isEndFrameFocused = true
-            return
-        }
-        guard onRange(end) else {
-            rangeActionError = "End frame must be from the note's start through the last media frame."
-            isEndFrameFocused = true
-            return
-        }
-        rangeActionError = nil
+        guard !isDeleting else { return }
+        onRangeCommit()
     }
 
     private func commitOnFocusLoss() {

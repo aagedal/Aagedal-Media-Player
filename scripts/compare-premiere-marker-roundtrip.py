@@ -58,6 +58,15 @@ def timecode(element, expected_rate):
         raise ValueError("Invalid source timecode")
     if display == "DF" and expected_rate not in (Fraction(30000, 1001), Fraction(60000, 1001)):
         raise ValueError("DF requires 30000/1001 or 60000/1001")
+    # This carrier addresses complete frames on the primary source timecode.
+    # XMEML defaults an omitted field to 0 and source to "source". Ignoring
+    # explicit overrides could conceal half-frame timing or an auxiliary clock.
+    fields = nodes[0].findall("field")
+    sources = nodes[0].findall("source")
+    if len(fields) > 1 or (fields and integer(nodes[0], "field") != 0):
+        raise ValueError("Unsupported or ambiguous timecode field offset")
+    if len(sources) > 1 or (sources and text(nodes[0], "source") != "source"):
+        raise ValueError("Unsupported or ambiguous auxiliary timecode source")
     labels = nodes[0].findall("string")
     if len(labels) > 1:
         raise ValueError("Ambiguous timecode string")
@@ -139,6 +148,23 @@ def require_enabled(element):
         raise ValueError(f"Review {element.tag} must be enabled with an unambiguous TRUE value")
 
 
+def require_primary_video_source(clip):
+    # A file path alone cannot establish which connected media track is used.
+    # Accept the carrier's implicit first video track or its explicit encoding;
+    # other streams and ambiguous selectors fall outside this review scope.
+    selectors = clip.findall("sourcetrack")
+    if len(selectors) > 1:
+        raise ValueError("Ambiguous source-A media track selector")
+    if not selectors:
+        return
+    selector = selectors[0]
+    if text(selector, "mediatype") != "video":
+        raise ValueError("Source-A clip must connect to primary video media")
+    indices = selector.findall("trackindex")
+    if len(indices) > 1 or (indices and integer(selector, "trackindex") != 1):
+        raise ValueError("Unsupported or ambiguous source-A video track index")
+
+
 def read_export(path, sequence_name=None):
     data = path.read_bytes()
     # XML may be UTF-16 or UTF-32. Strip NUL padding only for this ASCII
@@ -168,6 +194,7 @@ def read_export(path, sequence_name=None):
     require_enabled(tracks[0])
     clip = clips[0]
     require_enabled(clip)
+    require_primary_video_source(clip)
     placement = {p: integer(clip, p) for p in ("start", "end", "in", "out", "duration")}
     media_duration = placement["duration"]
     if media_duration <= 0 or media_duration > duration or placement != dict(

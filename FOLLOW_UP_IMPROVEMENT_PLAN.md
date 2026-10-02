@@ -4699,6 +4699,48 @@ Integrated committed-source verification follows separately.
   `docs/evidence/review-meter-premiere-candidate-20261002/`.
 - [ ] Complete native/editor/accessibility/dependency/hardware/distribution gates.
 
+## Phase 228 — Apply Review ranges against the current finding
+
+- [x] Resolve explicit Apply/Return through the live draft owner and current
+  controller note, preserving same-sidecar merges when an old row has no typed
+  input left to submit.
+- [x] Share range parsing with passive departure while retaining explicit
+  correction intent, unavailable/rejected retry and Clear range guidance.
+- [x] Add four regressions covering untouched/retired input, intentional earlier
+  endpoints, retries and invalid/erased endpoints.
+- [ ] Complete native keyboard, Full Keyboard Access and spoken VoiceOver checks.
+
+## Phase 229 — Reject lost clocks during meter suspension
+
+- [x] Validate source clocks before paused/buffering returns; invalid clocks
+  clear readings, invalidate the generation and cancel the suspended decoder.
+- [x] Preserve decoder rejection precedence, valid contiguous pause/buffering
+  readings and held maxima; recovery requires a fresh explicit retry.
+- [x] Add three regressions covering startup/established PCM, non-finite,
+  negative and overflow-scaled clocks, valid resume and queued-clock rejection.
+
+## Phase 230 — Validate Premiere connected source and clock selectors
+
+- [x] Reject unsupported/ambiguous source-track selections and timecode field
+  or auxiliary-clock overrides instead of treating unchanged URLs/frame numbers
+  as exact source identity.
+- [x] Accept explicit defaults equivalent to omitted selectors; all 37 Python
+  checks pass, including the five retained native receipts without changed results.
+- [x] Retain three false exact-match reproductions from the preceding comparator.
+- [ ] Complete fresh native source-selection/range/rate/conform acceptance.
+
+## Phase 231 — Integrate the range, clock and source-selection continuation
+
+- [x] Require all seven new app identities and at least 802 aggregate tests in
+  canonical candidate verification and release consumption.
+- [x] Pass all 73 focused optimized Release Review/meter checks with no skips or
+  runtime warnings; reproduce both meter failures on the preceding implementation.
+  Full script validators and all 61 source preflight checks pass. Retain
+  [focused receipts](docs/evidence/review-clock-source-20261002/README.md).
+- [ ] Complete clean-commit canonical verification and retain integrated results.
+- [ ] Complete unchanged native/editor/accessibility/dependency/hardware/
+  distribution acceptance gates.
+
 ## Remaining work after this continuation
 
 The user’s 2026-10-01 scope decision makes Avid native compatibility optional

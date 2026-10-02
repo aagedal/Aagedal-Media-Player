@@ -102,7 +102,7 @@ xcrun xcresulttool get test-results tests \
 python3 scripts/validate-release-xcresult.py \
     "$artifact_dir/test-summary.json" \
     "$artifact_dir/test-details.json" \
-    --minimum-tests 795 \
+    --minimum-tests 802 \
     --require-test "CompareReviewTextCommitTests/testOrdinaryTextValidationRevealsFindingHiddenByFilterWithoutSavingDrafts()" \
     --require-test "CompareReviewTextCommitTests/testRetainedRangeCorrectionRevealsOnlyExistingEditableHiddenFinding()" \
     --require-test "LiveAudioMeterCoordinatorTests/testMalformedCurrentLoudnessFailsGenerationAndCancelsWorker()" \
@@ -142,6 +142,13 @@ python3 scripts/validate-release-xcresult.py \
     --require-test "LiveAudioMeterWindowControllerTests/testCloseCallbackCannotReopenRetiredPanelController()" \
     --require-test "CompareReviewReportExporterTests/testPremierePreservesAuthoredWhitespaceScalarsInParsedMarkerComments()" \
     --require-test "CompareReviewReportExporterTests/testPremierePreservesCarriageReturnsInSourceAndSequenceNames()" \
+    --require-test "CompareReviewTextCommitTests/testExplicitRangeApplyDoesNotReplayUntouchedOrRetiredRowEndpointAfterMerge()" \
+    --require-test "CompareReviewTextCommitTests/testExplicitRangeApplyRestoresEarlierEndpointAgainstCurrentSameSidecarMerge()" \
+    --require-test "CompareReviewTextCommitTests/testExplicitRangeApplyRetainsUnavailableAndRejectedDraftUntilAccepted()" \
+    --require-test "CompareReviewTextCommitTests/testExplicitRangeApplyPreservesInvalidAndErasedEndpointDrafts()" \
+    --require-test "LiveAudioMeterCoordinatorTests/testPausedClockLossClearsReadingsAndCancelsSuspendedWorker()" \
+    --require-test "LiveAudioMeterCoordinatorTests/testBufferingClockLossClearsReadingsAndCancelsSuspendedWorker()" \
+    --require-test "LiveAudioMeterCoordinatorTests/testValidPausedAndBufferingClocksPreserveReadingsUntilContiguousResume()" \
     --require-test "LiveAudioMeterDecoderTests/testBundledDecoderPreservesContiguousDTSInMillisecondMatroskaContainer()" \
     2>&1 | tee "$artifact_dir/test-evidence-validation.log"
 

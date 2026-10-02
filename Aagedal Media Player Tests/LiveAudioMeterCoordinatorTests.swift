@@ -260,6 +260,100 @@ final class LiveAudioMeterCoordinatorTests: XCTestCase {
         coordinator.close()
     }
 
+    func testPausedClockLossClearsReadingsAndCancelsSuspendedWorker() async throws {
+        try await assertSuspendedClockLoss(buffering: false)
+    }
+
+    func testBufferingClockLossClearsReadingsAndCancelsSuspendedWorker() async throws {
+        try await assertSuspendedClockLoss(buffering: true)
+    }
+
+    func testValidPausedAndBufferingClocksPreserveReadingsUntilContiguousResume() async throws {
+        for buffering in [false, true] {
+            let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
+            let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
+            coordinator.start(try request(stream: 0, startFrame: 0))
+            await decoder.waitUntilAttached(stream: 0)
+            coordinator.updatePlaybackClock(playback(
+                time: 0, playing: buffering, phase: buffering ? .buffering : .ready
+            ))
+            XCTAssertEqual(coordinator.status, buffering ? .buffering(frame: 0) : .paused(frame: 0))
+
+            coordinator.updatePlaybackClock(playback(time: 0, playing: true))
+            decoder.emit(snapshot(endFrame: 2_400, peak: -3), stream: 0)
+            await eventually { coordinator.snapshot?.endFrame == 2_400 }
+            let generation = coordinator.generation
+            let reading = coordinator.reducedSnapshot
+            coordinator.updatePlaybackClock(playback(
+                time: 0.05, playing: buffering, phase: buffering ? .buffering : .ready
+            ))
+
+            // A callback already in flight may finish after suspension. Its
+            // reading stays hidden until the contiguous source clock resumes.
+            decoder.emit(snapshot(endFrame: 4_800, peak: -12), stream: 0)
+            await Task.yield()
+            XCTAssertEqual(coordinator.generation, generation)
+            XCTAssertEqual(coordinator.reducedSnapshot, reading)
+            XCTAssertEqual(coordinator.status, buffering ? .buffering(frame: 2_400) : .paused(frame: 2_400))
+            XCTAssertTrue(decoder.isActive(stream: 0))
+
+            coordinator.updatePlaybackClock(playback(time: 0.1, playing: true))
+            XCTAssertEqual(coordinator.generation, generation)
+            XCTAssertEqual(coordinator.snapshot?.endFrame, 4_800)
+            XCTAssertEqual(coordinator.reducedSnapshot?.samplePeaks[0].maximum, -3)
+            XCTAssertEqual(coordinator.clockDrift, 0)
+            coordinator.close()
+            await decoder.waitUntilCancelled(stream: 0)
+        }
+    }
+
+    private func assertSuspendedClockLoss(buffering: Bool) async throws {
+        for hasPCM in [false, true] {
+            for invalidTime in [Double.nan, .infinity, -.infinity, -0.01, .greatestFiniteMagnitude] {
+                let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
+                let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
+                coordinator.start(try request(stream: 0, startFrame: 0))
+                await decoder.waitUntilAttached(stream: 0)
+                if hasPCM {
+                    decoder.emit(snapshot(endFrame: 2_400), stream: 0)
+                    await eventually { coordinator.snapshot?.endFrame == 2_400 }
+                }
+                coordinator.updatePlaybackClock(playback(
+                    time: hasPCM ? 0.05 : 0, playing: buffering,
+                    phase: buffering ? .buffering : .ready
+                ))
+                let suspendedGeneration = coordinator.generation
+
+                coordinator.updatePlaybackClock(playback(
+                    time: invalidTime, playing: buffering,
+                    phase: buffering ? .buffering : .ready
+                ))
+
+                XCTAssertEqual(coordinator.status, .unavailable(
+                    reason: "The playback clock is unavailable.",
+                    diagnostic: "Retry after the player reports a finite source position."
+                ))
+                XCTAssertGreaterThan(coordinator.generation, suspendedGeneration)
+                XCTAssertNil(coordinator.snapshot)
+                XCTAssertNil(coordinator.reducedSnapshot)
+                XCTAssertNil(coordinator.clockDrift)
+                await decoder.waitUntilCancelled(stream: 0)
+                XCTAssertEqual(decoder.activeCount, 0)
+
+                // Queued clocks must not resurrect readings from the rejected
+                // segment. Explicit recovery creates a fresh current segment.
+                let failedGeneration = coordinator.generation
+                coordinator.updatePlaybackClock(playback(time: 0.1, playing: true))
+                XCTAssertEqual(coordinator.generation, failedGeneration)
+                XCTAssertNil(coordinator.snapshot)
+                XCTAssertTrue(coordinator.retry(at: 0.1))
+                await decoder.waitUntilAttached(stream: 0, occurrence: 2)
+                XCTAssertEqual(decoder.request(stream: 0, occurrence: 2)?.startSourceFrame, 4_800)
+                coordinator.close()
+            }
+        }
+    }
+
     func testInitialClockLagCanCatchUpBeforeSteadyStateDriftFails() async throws {
         let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
         let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
@@ -816,10 +910,12 @@ final class LiveAudioMeterCoordinatorTests: XCTestCase {
         )
     }
 
-    private func playback(time: TimeInterval, playing: Bool) -> LiveAudioMeterPlaybackSnapshot {
+    private func playback(
+        time: TimeInterval, playing: Bool, phase: PlaybackPhase = .ready
+    ) -> LiveAudioMeterPlaybackSnapshot {
         LiveAudioMeterPlaybackSnapshot(
             time: time,
-            phase: .ready,
+            phase: phase,
             isPlaying: playing,
             rate: 1,
             preparationID: 1
