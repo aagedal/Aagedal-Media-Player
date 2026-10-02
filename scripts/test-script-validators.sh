@@ -44,6 +44,7 @@ python_tests=(
     scripts/test-live-audio-meter-profile-validation.py
     scripts/test-mpv-coreaudio-candidate.py
     scripts/test-mpv-coreaudio-clean-candidate.py
+    scripts/test-mpv-coreaudio-from-stage.py
     scripts/test-mpv-coreaudio-publication.py
     scripts/test-mpv-coreaudio-reconstruction.py
     scripts/test-metadata-candidate-validation.py

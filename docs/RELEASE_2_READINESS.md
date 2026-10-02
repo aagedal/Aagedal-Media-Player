@@ -3,6 +3,16 @@
 Assessment updated: 2026-10-02. This assessment reflects the
 [product roadmap](../PRODUCT_ROADMAP.md) and its recorded scope decisions.
 
+The user deferred the M1-specific tests on 2026-10-02 and requested basic
+performance checks on this M5 Pro/64-GB machine. For the current editor beta,
+use measured current-machine playback/drift/resource results. The named M1/8-GB
+gate remains deferred; hypothetical performance scaling is not acceptance.
+
+The user's 2026-10-02 scope decision requires verified MPV source-pixel
+inspection before the editor beta. Automatic time-localized content-mismatch
+detection moves to a later release; existing manual Review findings, metadata
+mismatch summaries and missing-counterpart intervals remain available.
+
 The native Review continuation exposed correction focus overriding deliberate
 New Note/Filter navigation. A shared focus owner, passive validation identity
 and explicit navigation suspension preserve rejected input while allowing those

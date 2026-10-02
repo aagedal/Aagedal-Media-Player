@@ -1,0 +1,42 @@
+{
+  "coreaudio-publication-stage.tar.gz": {
+    "sha256": "1c8bab3efa18fc59dc48296964ecf4468ad9c843fdd208da4f62bc71fd466b95",
+    "sizeBytes": 447694121
+  },
+  "publication.json": {
+    "sha256": "3eb8f8dd20ce2de6802b7d080e6df30a69ca00b6706dc408823291576b96616c",
+    "sizeBytes": 40120
+  },
+  "Libavcodec-GPL.xcframework.zip": {
+    "sha256": "0d4795767f7129cae3f18d83a837668eaa416e9bf484ba9dc177eab5cd9b07a4",
+    "sizeBytes": 9866913
+  },
+  "Libavdevice-GPL.xcframework.zip": {
+    "sha256": "70959344d77383440ad4d748a7584035c182dc96b17c5873f4cc219c25e823e9",
+    "sizeBytes": 17434
+  },
+  "Libavfilter-GPL.xcframework.zip": {
+    "sha256": "6f5a33b0fc1822f355c7b6297e1a42780664fce52d20af0ed90aff4897143be6",
+    "sizeBytes": 934506
+  },
+  "Libavformat-GPL.xcframework.zip": {
+    "sha256": "b9b831c6d4b7c476a49d6300126a23ce5e24d379bf2391af1162cc97e75b2991",
+    "sizeBytes": 2158399
+  },
+  "Libavutil-GPL.xcframework.zip": {
+    "sha256": "2738af49700989f6d95a039898db8f198a53a8aa6bef20dea898fa0046e879e6",
+    "sizeBytes": 1173717
+  },
+  "Libmpv-GPL.xcframework.zip": {
+    "sha256": "8f2b280d22d70b621e360fe28b53da217585fecf3dc8d79a9cec44e406d45218",
+    "sizeBytes": 5813428
+  },
+  "Libswresample-GPL.xcframework.zip": {
+    "sha256": "49048a0056832d3c0cc3ee5ba4532ca1fdb4c6a420d6704ad58df2d0d4bd76c3",
+    "sizeBytes": 125347
+  },
+  "Libswscale-GPL.xcframework.zip": {
+    "sha256": "5703530e7271baa7f1a1662ebf113bb15ac5173dd7f822e285fe0d8a63e21bae",
+    "sizeBytes": 1121673
+  }
+}

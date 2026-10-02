@@ -1,10 +1,22 @@
 # Aagedal Media Player Product Roadmap
 
-Last updated: 2026-10-01
+Last updated: 2026-10-02
 
 See [2.0 release readiness](docs/RELEASE_2_READINESS.md) for the prioritized
 remaining release gates and the threshold for calling a candidate close to 2.0.
 This assessment does not change the milestone scope below.
+
+Performance acceptance update (2026-10-02): the user deferred M1-specific
+testing for now and requested basic checks on the available M5 Pro/64-GB Mac.
+Current-machine measurements replace the M1 execution requirement for this
+editor-beta pass; the oldest-hardware qualification remains deferred and must
+not be inferred from a hypothetical scaled score. See
+[performance run sheet](docs/COMPARE_MODE_PERFORMANCE.md).
+
+Editor-beta scope decision (2026-10-02): the user requires verified MPV
+source-pixel inspection before beta. Automatic time-localized content-mismatch
+detection moves to a later release; manual Review findings, metadata mismatch
+summaries and known missing-counterpart intervals remain in scope.
 
 ## Product direction
 
@@ -313,7 +325,8 @@ confidence as the picture.
   hover acceptance and release-floor profiling remain in
   `docs/TIMELINE_NAVIGATION.md`.
 - [x] Add visible chapter, trim, and comparison-overlap markers.
-- [ ] Add mismatch markers to the timeline. The comparison mismatch summary
+- [ ] Later: add automatic content-mismatch markers to the timeline (deferred
+  from the editor beta by the user's 2026-10-02 decision). The comparison mismatch summary
   already exists. Known durations and the active alignment now mark source-A
   intervals without a playable B frame in amber. This is a time-localized
   missing-counterpart finding; content differences still need a defined

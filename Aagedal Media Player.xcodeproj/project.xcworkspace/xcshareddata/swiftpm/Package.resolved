@@ -6,8 +6,7 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/aagedal/MPVKit",
       "state" : {
-        "branch" : "main",
-        "revision" : "230c3174f1515898f24599147ad61c2a277d0dc2"
+        "revision" : "1d44b9a0aa9e8faa5b8bf222173f6cc2930ed233"
       }
     },
     {
@@ -24,8 +23,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/aagedal/SwiftMediaMetadata",
       "state" : {
-        "revision" : "8662054299a3e13c49c65f74c564360559d1bf7f",
-        "version" : "3.0.1"
+        "revision" : "9e8e912deb8d941da66a4b76854a90e3e9f01e3f",
+        "version" : "3.0.2"
       }
     }
   ],
