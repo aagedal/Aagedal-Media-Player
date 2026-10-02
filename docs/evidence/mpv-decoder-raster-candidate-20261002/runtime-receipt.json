@@ -1,0 +1,78 @@
+{
+  "runs": [
+    {
+      "mode": "enabled",
+      "arguments": [
+        "/private/tmp/aagedal-decoder-raster-runtime-20261002/harness",
+        "/private/tmp/aagedal-decoder-raster-runtime-20261002/numbered-grid.mkv"
+      ],
+      "exitCode": 0,
+      "results": "{\"capture\":\"passed\",\"expectedPTS\":0.000000000,\"pts\":0.000000000,\"freshness\":true,\"pixelMismatches\":0}\n{\"available\":true}\n{\"playingPropertyRejected\":true}\n{\"seekPropertyRejectedImmediately\":true}\n{\"capture\":\"passed\",\"expectedPTS\":1.000000000,\"pts\":1.000000000,\"freshness\":true,\"pixelMismatches\":0}\n{\"capture\":\"passed\",\"expectedPTS\":1.200000000,\"pts\":1.200000000,\"freshness\":true,\"pixelMismatches\":0}\n{\"frameStepQualified\":true}\n{\"cropPropertyRejected\":true}\n{\"capture\":\"passed\",\"expectedPTS\":1.200000000,\"pts\":1.200000000,\"freshness\":true,\"pixelMismatches\":0}\n{\"aspectOverridePropertyRejected\":true}\n{\"capture\":\"passed\",\"expectedPTS\":1.200000000,\"pts\":1.200000000,\"freshness\":true,\"pixelMismatches\":0}\n{\"deinterlacePropertyRejected\":true}\n{\"capture\":\"passed\",\"expectedPTS\":1.200000000,\"pts\":1.200000000,\"freshness\":true,\"pixelMismatches\":0}\n{\"rotateOverridePropertyRejected\":true}\n{\"capture\":\"passed\",\"expectedPTS\":1.200000000,\"pts\":1.200000000,\"freshness\":true,\"pixelMismatches\":0}\n{\"filterPropertyRejected\":true}\n"
+    },
+    {
+      "mode": "queue",
+      "arguments": [
+        "/private/tmp/aagedal-decoder-raster-runtime-20261002/harness",
+        "/private/tmp/aagedal-decoder-raster-runtime-20261002/numbered-grid.mkv",
+        "queue"
+      ],
+      "exitCode": 0,
+      "results": "{\"capture\":\"passed\",\"expectedPTS\":0.000000000,\"pts\":0.000000000,\"freshness\":true,\"pixelMismatches\":0}\n{\"available\":true}\n{\"playingPropertyRejected\":true}\n{\"seekPropertyRejectedImmediately\":true}\n{\"capture\":\"passed\",\"expectedPTS\":1.000000000,\"pts\":1.000000000,\"freshness\":true,\"pixelMismatches\":0}\n{\"capture\":\"passed\",\"expectedPTS\":1.200000000,\"pts\":1.200000000,\"freshness\":true,\"pixelMismatches\":0}\n{\"frameStepQualified\":true}\n{\"cropPropertyRejected\":true}\n{\"capture\":\"passed\",\"expectedPTS\":1.200000000,\"pts\":1.200000000,\"freshness\":true,\"pixelMismatches\":0}\n{\"aspectOverridePropertyRejected\":true}\n{\"capture\":\"passed\",\"expectedPTS\":1.200000000,\"pts\":1.200000000,\"freshness\":true,\"pixelMismatches\":0}\n{\"deinterlacePropertyRejected\":true}\n{\"capture\":\"passed\",\"expectedPTS\":1.200000000,\"pts\":1.200000000,\"freshness\":true,\"pixelMismatches\":0}\n{\"rotateOverridePropertyRejected\":true}\n{\"capture\":\"passed\",\"expectedPTS\":1.200000000,\"pts\":1.200000000,\"freshness\":true,\"pixelMismatches\":0}\n{\"filterPropertyRejected\":true}\n"
+    },
+    {
+      "mode": "default",
+      "arguments": [
+        "/private/tmp/aagedal-decoder-raster-runtime-20261002/harness",
+        "/private/tmp/aagedal-decoder-raster-runtime-20261002/numbered-grid.mkv",
+        "default"
+      ],
+      "exitCode": 0,
+      "results": "{\"available\":false}\n"
+    },
+    {
+      "mode": "no",
+      "arguments": [
+        "/private/tmp/aagedal-decoder-raster-runtime-20261002/harness",
+        "/private/tmp/aagedal-decoder-raster-runtime-20261002/numbered-grid.mkv",
+        "no"
+      ],
+      "exitCode": 0,
+      "results": "{\"available\":false}\n"
+    },
+    {
+      "mode": "square-rotated.mp4",
+      "arguments": [
+        "/private/tmp/aagedal-decoder-raster-runtime-20261002/harness",
+        "/private/tmp/aagedal-decoder-raster-runtime-20261002/square-rotated.mp4",
+        "reject"
+      ],
+      "exitCode": 0,
+      "results": "{\"available\":false}\n"
+    },
+    {
+      "mode": "anamorphic.mkv",
+      "arguments": [
+        "/private/tmp/aagedal-decoder-raster-runtime-20261002/harness",
+        "/private/tmp/aagedal-decoder-raster-runtime-20261002/anamorphic.mkv",
+        "reject"
+      ],
+      "exitCode": 0,
+      "results": "{\"available\":false}\n"
+    }
+  ],
+  "sha256": {
+    "square-rotated.mp4": "19c36065d11f1dc096c83a5ece68346b6fd9856f2b80dc362d4ff51e033cadfc",
+    "anamorphic.mkv": "ffcdf69b718b97c4aaed73f9b6adffe61324f0a2edfa78c409742d1c437f5b5c",
+    "provider-qualified-candidate.patch": "df0c4f2238bed598bdd4bf7997d9562d04ad93fad3578aeeb7db80bd18b2d3e8",
+    "harness.c": "06b0e35914b331b960324a80d68ca42e2e438a65693de9eeac83bc661196e81a",
+    "harness": "885ed6afce9317ce0f042422c24d3f8935e56af8c30b23fd76783a8ccef65817",
+    "harness.o": "1ebe0e9234c7370a3bdb6a80b4e784f7884bcef1d5bd26813d8614e72c7530d3",
+    "link-command.txt": "86d2c9299507a0e9c9b27e77f323e8451917804488ca0a6d8f052c92df0ca8f3",
+    "harness-link-command.json": "4cb07fa13fceea05045b19c41285fa3d1d9a4b3f0a30b6d01e5fb72bc917fa6c",
+    "numbered-grid.mkv": "b23452050eb8cba62255a8a35eece9c30192a45587b2864fd462c9f38c0e1cd8",
+    "numbered-grid.rgb": "8ac5ced2a84a5e2c3f77f742e69cd15d54f59abc99e15d72ff4ac922cfdfd930",
+    "generate-grid.py": "072a75a92246fe63ed60fd8e0d6c103c43091a08c97561d2ca5e09f75f286843",
+    "syntax-qualified.json": "6224395aab1f38d0354efed0f439d17df720a2f19615a9c43610b7789d95e230"
+  },
+  "scope": "isolated arm64 native libmpv object-linked harness; no published package or app integration; no hardware/rotated/reflected/PAR positive qualification"
+}

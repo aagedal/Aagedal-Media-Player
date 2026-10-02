@@ -14,8 +14,14 @@ no retained raster references. The command `aagedal-decoder-raster` has no
 arguments. It returns a node map only for paused playback with an exact,
 unambiguous decoder-frame PTS match to `MPContext.video_pts`.
 
-The decoder wrapper retains references after PTS correction and before image
-parameter overrides, user filters, output conversion, or display rendering.
+The decoder wrapper retains the decoder grid after PTS correction and before
+image parameter assignment, user filters, output conversion, or display rendering.
+When decoder PAR is unspecified, the captured copy accepts square-pixel geometry
+only when this same frame's resolved default/container parameters establish a
+positive 1:1 ratio. Parameter overrides are rejected at both retention and
+retrieval, so an overridden frame cannot supply this geometry proof. Resolved
+container rotation, pixel aspect, and crop must also be unrotated, square, and
+full-raster at both boundaries.
 Four slots hold software images of at most 16 MiB according to mpv's approximate
 image byte-size estimator. This bounds the estimated retained image payload to
 64 MiB; referenced buffer allocation overhead and pooling can add memory beyond
@@ -60,9 +66,30 @@ python3 scripts/verify-mpv-decoder-raster-candidate.py \
   --report /tmp/decoder-raster-verification.json
 ```
 
-This establishes patch applicability and C syntax only. It does not establish
-linked command availability, raster accuracy, presentation correlation, memory
-ownership under load, or runtime safety. Before enabling it in an app package:
+The updated patch also compiled and linked in an isolated arm64 native libmpv
+client using copies of the retained build objects. A generated lossless FFV1
+fixture contains ten independently defined RGB grids, each with a unique frame
+color offset. The client verified all 256 BGRA pixels exactly at PTS 0, after an
+accurate seek to PTS 1, and after frame-step to PTS 1.2. It verified immediate
+freshness revocation on resume and queued seek; crop, aspect override,
+deinterlace, rotation override, and user filter rejection; and unavailable
+responses with the option omitted or explicitly disabled. Genuine generated
+container rotation (90 degrees on a square frame) and 2:1 sample-aspect fixtures
+also return unavailable; the generator independently verifies their metadata.
+The harness fails on any protocol, expected PTS, pixel, or freshness mismatch
+and checks every API mutation. Both default decoder
+queue configuration and disabled decoder queue passed this bounded fixture run.
+The small ring can still evict a presented frame under other readahead workloads;
+this remains an unavailable response rather than a substitute frame.
+
+Evidence, source harness, fixture generator, source/patch/compiler/link identities,
+and results are retained in
+[evidence/mpv-decoder-raster-candidate-20261002](evidence/mpv-decoder-raster-candidate-20261002).
+No binaries were published or added to the app package. These checks establish
+this bounded arm64 native case; they do not establish x86_64 runtime behavior,
+app integration, arbitrary media presentation correlation, high-depth/HDR color,
+hardware transfer, transform support, or memory ownership under sustained load.
+Before enabling it in an app package:
 
 1. Rebuild both architecture slices through the retained reconstruction workflow;
    retain source, patch, commands, linked binary identities, and corresponding

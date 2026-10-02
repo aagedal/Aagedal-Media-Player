@@ -1,0 +1,16 @@
+{"capture":"passed","expectedPTS":0.000000000,"pts":0.000000000,"freshness":true,"pixelMismatches":0}
+{"available":true}
+{"playingPropertyRejected":true}
+{"seekPropertyRejectedImmediately":true}
+{"capture":"passed","expectedPTS":1.000000000,"pts":1.000000000,"freshness":true,"pixelMismatches":0}
+{"capture":"passed","expectedPTS":1.200000000,"pts":1.200000000,"freshness":true,"pixelMismatches":0}
+{"frameStepQualified":true}
+{"cropPropertyRejected":true}
+{"capture":"passed","expectedPTS":1.200000000,"pts":1.200000000,"freshness":true,"pixelMismatches":0}
+{"aspectOverridePropertyRejected":true}
+{"capture":"passed","expectedPTS":1.200000000,"pts":1.200000000,"freshness":true,"pixelMismatches":0}
+{"deinterlacePropertyRejected":true}
+{"capture":"passed","expectedPTS":1.200000000,"pts":1.200000000,"freshness":true,"pixelMismatches":0}
+{"rotateOverridePropertyRejected":true}
+{"capture":"passed","expectedPTS":1.200000000,"pts":1.200000000,"freshness":true,"pixelMismatches":0}
+{"filterPropertyRejected":true}

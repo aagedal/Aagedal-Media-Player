@@ -4757,7 +4757,15 @@ Integrated committed-source verification follows separately.
   six C syntax checks pass; linking/runtime proof remains separate.
 - [x] Require eight additional loupe/provider regressions and at least 826
   aggregate tests in both candidate verification and release consumption.
-- [ ] Link and qualify the provider, extend hardware/PAR/orientation coverage,
+- [x] Canonical verification at `d18b349` passes: 817 tests plus nine named
+  opt-in skips, all eight new identities, both isolated transport directions,
+  static analysis, 61 preflight checks and clean source/package/power identity.
+  See [retained evidence](docs/evidence/mpv-decoder-consumer-candidate-20261002/README.md).
+- [x] Link and exercise the restricted arm64 provider with independent numbered
+  RGB grids, pause/seek/frame-step freshness, option-off rejection and default
+  decoder queuing. Retain exact pixel/PTS and unsupported-state checks in
+  [provider evidence](docs/evidence/mpv-decoder-raster-candidate-20261002/README.md).
+- [ ] Complete broader provider qualification, extend hardware/PAR/orientation coverage,
   publish/re-pin and explicitly activate it only after runtime acceptance.
   The MPV 1:1 beta gate remains open. See
   [provider engineering](docs/MPV_DECODER_RASTER_PROVIDER.md) and

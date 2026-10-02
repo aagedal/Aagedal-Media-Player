@@ -76,11 +76,20 @@ checkout now builds with the original manifest, Benchmark, lockfile and CLI:
 1,674 library tests pass with 21 named opt-in skips, and all 50 opted-in CLI
 tests pass without skips. See [upstream preparation receipts](evidence/bounded-mxf-upstream-preparation-20261002/README.md).
 
+Canonical verification of the guarded consumer passes at clean implementation
+commit `d18b349b34cafb848e08061aeebc0a0d0643b386`: 817 passes, nine named
+opt-in skips (826 total), all eight new required identities, both isolated
+transport directions, static analysis, all 61 preflight checks and final
+source/package/cache/power identity. See [consumer receipts](evidence/mpv-decoder-consumer-candidate-20261002/README.md).
+Later provider or documentation commits require matching-HEAD verification before
+release consumption.
+
 The next source-pixel continuation supplies a guarded app consumer and a
 restricted opt-in upstream decoder-raster patch. The shipping pin has no provider
-and stays preview-only. The candidate is not release acceptance: linked runtime
-proof, hardware/PAR/rotation/reflection support, publication and activation remain
-engineering work. See [provider status](MPV_DECODER_RASTER_PROVIDER.md) and the
+and stays preview-only. Restricted arm64 native pixel/PTS and rejection checks
+now pass, including default decoder queuing, but this is not general release
+acceptance. Broader runtime/ownership qualification, hardware/PAR/rotation/
+reflection support, publication and activation remain engineering work. See [provider status](MPV_DECODER_RASTER_PROVIDER.md) and the
 [manual completion checklist](RELEASE_2_MANUAL_COMPLETION.md).
 
 Current delivery status and order:

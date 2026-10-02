@@ -1,5 +1,5 @@
 diff --git a/filters/f_decoder_wrapper.c b/filters/f_decoder_wrapper.c
-index 5e2e8d7..527f664 100644
+index 5e2e8d7..d259467 100644
 --- a/filters/f_decoder_wrapper.c
 +++ b/filters/f_decoder_wrapper.c
 @@ -97,6 +97,7 @@ struct dec_wrapper_opts {
@@ -37,14 +37,23 @@ index 5e2e8d7..527f664 100644
      p->pts_reset = false;
      p->attempt_framedrops = 0;
      p->dropped_frames = 0;
-@@ -845,6 +852,22 @@ static void process_output_frame(struct priv *p, struct mp_frame frame)
- 
-         correct_video_pts(p, mpi);
+@@ -850,6 +857,38 @@ static void process_output_frame(struct priv *p, struct mp_frame frame)
+                 mp_image_params_static_equal(&p->last_format, &mpi->params));
+         }
  
 +        // Capture the decoder grid before parameter overrides or any vf.
 +        // Skip hardware surfaces and large rasters: four refs are <=64 MiB
 +        // for accepted software rasters.
-+        if (p->opts->aagedal_decoder_raster && mpi->w > 0 && mpi->h > 0 && mpi->w <= 4096 && mpi->h <= 4096 &&
++        if (p->opts->aagedal_decoder_raster &&
++            p->fixed_format.rotate == 0 &&
++            p->fixed_format.p_w > 0 &&
++            p->fixed_format.p_w == p->fixed_format.p_h &&
++            p->fixed_format.crop.x0 == 0 && p->fixed_format.crop.y0 == 0 &&
++            p->fixed_format.crop.x1 == mpi->w &&
++            p->fixed_format.crop.y1 == mpi->h &&
++            p->opts->video_rotate == 0 && p->opts->movie_aspect == -2 &&
++            p->opts->aspect_method == 2 && p->opts->correct_pts &&
++            p->opts->fps_override == 0 && p->play_dir == 1 && mpi->w > 0 && mpi->h > 0 && mpi->w <= 4096 && mpi->h <= 4096 &&
 +            (int64_t)mpi->w * mpi->h <= 4194304 &&
 +            !IMGFMT_IS_HWACCEL(mpi->imgfmt) &&
 +            mp_image_approx_byte_size(mpi) > 0 &&
@@ -54,13 +63,20 @@ index 5e2e8d7..527f664 100644
 +            for (int n = 3; n > 0; n--)
 +                p->source_rasters[n] = p->source_rasters[n - 1];
 +            p->source_rasters[0] = mp_image_new_ref(mpi);
++            // Resolve unspecified decoder PAR only using this frame's
++            // established default/container square-pixel geometry.
++            if (p->source_rasters[0] && mpi->params.p_w == 0 &&
++                p->fixed_format.p_w > 0 &&
++                p->fixed_format.p_w == p->fixed_format.p_h)
++                p->source_rasters[0]->params.p_w =
++                    p->source_rasters[0]->params.p_h = 1;
 +            mp_mutex_unlock(&p->cache_lock);
 +        }
 +
-         if (!mp_image_params_equal(&p->last_format, &mpi->params)) {
-             fix_image_params(p, &mpi->params,
-                 mp_image_params_static_equal(&p->last_format, &mpi->params));
-@@ -1171,6 +1194,8 @@ static void public_f_destroy(struct mp_filter *f)
+         mpi->params = p->fixed_format;
+         mpi->nominal_fps = p->fps;
+     } else if (frame.type == MP_FRAME_AUDIO) {
+@@ -1171,6 +1210,8 @@ static void public_f_destroy(struct mp_filter *f)
  
      talloc_free(p->dec_root_filter);
      talloc_free(p->queue);
@@ -69,7 +85,7 @@ index 5e2e8d7..527f664 100644
      mp_mutex_destroy(&p->cache_lock);
  }
  
-@@ -1352,3 +1377,33 @@ void lavc_process(struct mp_filter *f, struct lavc_state *state,
+@@ -1352,3 +1393,39 @@ void lavc_process(struct mp_filter *f, struct lavc_state *state,
          mp_filter_internal_mark_progress(f);
      }
  }
@@ -84,6 +100,12 @@ index 5e2e8d7..527f664 100644
 +    int matches = 0;
 +    thread_lock(p);
 +    bool allowed = p->opts->aagedal_decoder_raster &&
++        p->fixed_format.rotate == 0 &&
++        p->fixed_format.p_w > 0 &&
++        p->fixed_format.p_w == p->fixed_format.p_h &&
++        p->fixed_format.crop.x0 == 0 && p->fixed_format.crop.y0 == 0 &&
++        p->fixed_format.crop.x1 == p->fixed_format.w &&
++        p->fixed_format.crop.y1 == p->fixed_format.h &&
 +        p->opts->video_rotate == 0 && p->opts->movie_aspect == -2 &&
 +        p->opts->aspect_method == 2 && p->opts->correct_pts &&
 +        p->opts->fps_override == 0 && p->play_dir == 1;
