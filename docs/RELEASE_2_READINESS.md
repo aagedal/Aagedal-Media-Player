@@ -12,8 +12,13 @@ clock-loss regressions fail against the preceding meter implementation. The
 complete script-validator suite and all 61 preflight checks pass. Candidate and
 release consumption now require all seven new app identities and 802 aggregate
 tests. See [focused receipts](evidence/review-clock-source-20261002/README.md).
-Clean-commit canonical verification remains pending for this new continuation;
-no new native acceptance or dependency repin is inferred.
+Canonical optimized Release verification passes at clean implementation commit
+`744444969bb6d7cbbf9a4b554d874f44388452e1`: 793 passes, nine named opt-in skips
+(802 total), all seven new identities, both isolated transport directions, static
+analysis, all 61 preflight checks and final source/package/cache/no-sleep identity.
+See [integrated receipts](evidence/review-clock-source-candidate-20261002/README.md).
+Later documentation retention does not replace matching-HEAD release consumption.
+No new native acceptance or dependency repin is inferred.
 
 The October 2 continuation fixes Review Return discarding a draft after a
 same-sidecar merge, terminal live-meter panel reopening, and Premiere carrier

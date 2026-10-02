@@ -4737,7 +4737,12 @@ Integrated committed-source verification follows separately.
   runtime warnings; reproduce both meter failures on the preceding implementation.
   Full script validators and all 61 source preflight checks pass. Retain
   [focused receipts](docs/evidence/review-clock-source-20261002/README.md).
-- [ ] Complete clean-commit canonical verification and retain integrated results.
+- [x] Pass canonical optimized Release verification at clean implementation
+  commit `744444969bb6d7cbbf9a4b554d874f44388452e1`: 793 passes, nine named opt-in skips
+  (802 total), all seven new exact identities and both isolated transport directions.
+  Static analysis, 61 preflight checks, full script validators and final source/
+  package/cache/no-sleep identity pass. Retain
+  [integrated receipts](docs/evidence/review-clock-source-candidate-20261002/README.md).
 - [ ] Complete unchanged native/editor/accessibility/dependency/hardware/
   distribution acceptance gates.
 
