@@ -216,7 +216,7 @@ struct CompareReviewDraftState {
     /// That request also arbitrates focus-loss validation during the handoff.
     mutating func updateNoteTextDraft(_ text: String, noteID: UUID) {
         guard noteDrafts[noteID] != text else { return }
-        isCorrectionFocusSuspended = false
+        resumeCorrectionFocusForEdit(noteID: noteID, field: .text)
         noteDrafts[noteID] = text
         noteActionErrors[noteID] = nil
         if correctionRequest?.noteID == noteID, correctionRequest?.field == .text {
@@ -228,7 +228,7 @@ struct CompareReviewDraftState {
         // A field may echo its unchanged value during a focus handoff. That
         // callback must not erase the error or resume correction restoration.
         guard rangeDrafts[noteID] != text else { return }
-        isCorrectionFocusSuspended = false
+        resumeCorrectionFocusForEdit(noteID: noteID, field: .rangeEnd)
         rangeDrafts[noteID] = text
         // Clear the previous input error in this same owner mutation. A row's
         // deferred onChange can run after validation of this new draft and
@@ -237,6 +237,17 @@ struct CompareReviewDraftState {
         if correctionRequest?.noteID == noteID, correctionRequest?.field == .rangeEnd {
             clearActionNotice()
         }
+    }
+
+    /// Editing another field after explicit navigation must not wake the
+    /// selected correction's mounted task and pull focus away from that edit.
+    /// Returning to the owning field resumes its ordinary validation feedback.
+    private mutating func resumeCorrectionFocusForEdit(
+        noteID: UUID, field: CompareReviewCorrectionRequest.Field
+    ) {
+        if let correctionRequest,
+           correctionRequest.noteID != noteID || correctionRequest.field != field { return }
+        isCorrectionFocusSuspended = false
     }
 
     mutating func finishNoteTextCommit(noteID: UUID) {

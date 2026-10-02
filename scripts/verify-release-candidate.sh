@@ -102,7 +102,7 @@ xcrun xcresulttool get test-results tests \
 python3 scripts/validate-release-xcresult.py \
     "$artifact_dir/test-summary.json" \
     "$artifact_dir/test-details.json" \
-    --minimum-tests 817 \
+    --minimum-tests 818 \
     --require-test "CompareReviewTextCommitTests/testOrdinaryTextValidationRevealsFindingHiddenByFilterWithoutSavingDrafts()" \
     --require-test "CompareReviewTextCommitTests/testRetainedRangeCorrectionRevealsOnlyExistingEditableHiddenFinding()" \
     --require-test "LiveAudioMeterCoordinatorTests/testMalformedCurrentLoudnessFailsGenerationAndCancelsWorker()" \
@@ -164,6 +164,7 @@ python3 scripts/validate-release-xcresult.py \
     --require-test "CompareReviewTextCommitTests/testExplicitNavigationBeforeInitialBlurPreservesErrorAndAllowsLaterCorrection()" \
     --require-test "CompareReviewTextCommitTests/testUnchangedFieldCallbacksPreserveCorrectionDuringExplicitNavigation()" \
     --require-test "CompareReviewTextCommitTests/testOpeningReviewRespectsRetainedCorrectionUnlessNavigationOverridesIt()" \
+    --require-test "CompareReviewTextCommitTests/testEditingOtherFieldsPreservesExplicitNavigationSuspension()" \
     --require-test "LiveAudioMeterDecoderTests/testBundledDecoderPreservesContiguousDTSInMillisecondMatroskaContainer()" \
     2>&1 | tee "$artifact_dir/test-evidence-validation.log"
 

@@ -4752,9 +4752,10 @@ Integrated committed-source verification follows separately.
 
 - [x] Use one shared Review field focus owner; keep invalid drafts/errors while
   explicit New Note and Filter navigation proceeds. Passive repeated validation
-  does not reacquire correction focus; explicit retries still do.
+  does not reacquire correction focus; explicit retries still do. Editing another field keeps that navigation
+  suspension until the correction-owning field is edited or an action retries.
 - [x] Preserve unchanged field callbacks and ordinary Review reopening. Require
-  all seven regressions and at least 817 aggregate tests for release consumption.
+  all eight regressions and at least 818 aggregate tests for release consumption.
 - [x] Prepare a local upstream bounded-MXF commit with independently restorable
   Git bundle and exact source receipt; keep shipping dependency pins unchanged.
 - [ ] Complete the prioritized dependency, full native/editor/accessibility,

@@ -1,0 +1,26 @@
+{
+  "scope": "Final owner-only restoration native subset; disclosure AX click and one unsuccessful next-field AX click followed by successful Tab traversal; no full keyboard/VoiceOver acceptance",
+  "appSHA256": "2b1b593466bff1a13eed5b0136277a7d29a4b776e8dfb1b9e8650414c43c458a",
+  "observations": [
+    {
+      "action": "Invalid range -1 Return",
+      "result": "range error and saved end25 retained"
+    },
+    {
+      "action": "Cmd-Option-N, Tab twice, replace companion text",
+      "result": "companion note-text field focused; full typed text preserved; range stays -1"
+    },
+    {
+      "action": "Tab twice and replace next finding text",
+      "result": "different finding text field focused; full draft Native other finding draft preserved; selected range/error remain"
+    },
+    {
+      "action": "Cmd-Option-E",
+      "result": "blocks export and selects -1 again, preserving both changed text drafts"
+    }
+  ],
+  "limitations": [
+    "Draft focus tested; these text drafts were deliberately not persisted through the invalid range",
+    "Full real two-window and spoken accessibility remain open"
+  ]
+}

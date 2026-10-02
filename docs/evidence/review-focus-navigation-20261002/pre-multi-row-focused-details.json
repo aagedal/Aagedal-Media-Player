@@ -18,8 +18,8 @@
             {
               "children" : [
                 {
-                  "duration" : "0,00076s",
-                  "durationInSeconds" : 0.0007559061050415039,
+                  "duration" : "0,00089s",
+                  "durationInSeconds" : 0.000885009765625,
                   "name" : "testAcceptedDeletePreservesAnotherFindingsCorrectionAndDrafts()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testAcceptedDeletePreservesAnotherFindingsCorrectionAndDrafts()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testAcceptedDeletePreservesAnotherFindingsCorrectionAndDrafts",
@@ -27,8 +27,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,00048s",
-                  "durationInSeconds" : 0.00047600269317626953,
+                  "duration" : "0,00039s",
+                  "durationInSeconds" : 0.0003859996795654297,
                   "name" : "testAcceptedEditUsesTrimmedText()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testAcceptedEditUsesTrimmedText()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testAcceptedEditUsesTrimmedText",
@@ -36,8 +36,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,00037s",
-                  "durationInSeconds" : 0.000370025634765625,
+                  "duration" : "0,00043s",
+                  "durationInSeconds" : 0.0004260540008544922,
                   "name" : "testAcceptedRangeDraftDoesNotOverrideSameSidecarMergedEndpoint()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testAcceptedRangeDraftDoesNotOverrideSameSidecarMergedEndpoint()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testAcceptedRangeDraftDoesNotOverrideSameSidecarMergedEndpoint",
@@ -45,8 +45,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,0027s",
-                  "durationInSeconds" : 0.00268399715423584,
+                  "duration" : "0,00034s",
+                  "durationInSeconds" : 0.00034105777740478516,
                   "name" : "testCurrentRangeActionReplacesInvalidDraftEvenWhenSavedEndpointIsUnchanged()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testCurrentRangeActionReplacesInvalidDraftEvenWhenSavedEndpointIsUnchanged()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testCurrentRangeActionReplacesInvalidDraftEvenWhenSavedEndpointIsUnchanged",
@@ -54,8 +54,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,00043s",
-                  "durationInSeconds" : 0.00042891502380371094,
+                  "duration" : "0,00054s",
+                  "durationInSeconds" : 0.0005419254302978516,
                   "name" : "testCurrentRangeActionRetainsFailedInputAndUnrelatedTextCorrection()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testCurrentRangeActionRetainsFailedInputAndUnrelatedTextCorrection()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testCurrentRangeActionRetainsFailedInputAndUnrelatedTextCorrection",
@@ -63,8 +63,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,00035s",
-                  "durationInSeconds" : 0.00035202503204345703,
+                  "duration" : "0,00044s",
+                  "durationInSeconds" : 0.0004429817199707031,
                   "name" : "testDisabledTextBlurPreservesDraftErrorAndCorrection()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testDisabledTextBlurPreservesDraftErrorAndCorrection()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testDisabledTextBlurPreservesDraftErrorAndCorrection",
@@ -72,17 +72,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,00032s",
-                  "durationInSeconds" : 0.00031697750091552734,
-                  "name" : "testEditingOtherFieldsPreservesExplicitNavigationSuspension()",
-                  "nodeIdentifier" : "CompareReviewTextCommitTests/testEditingOtherFieldsPreservesExplicitNavigationSuspension()",
-                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testEditingOtherFieldsPreservesExplicitNavigationSuspension",
-                  "nodeType" : "Test Case",
-                  "result" : "Passed"
-                },
-                {
-                  "duration" : "0,00043s",
-                  "durationInSeconds" : 0.0004329681396484375,
+                  "duration" : "0,00042s",
+                  "durationInSeconds" : 0.0004159212112426758,
                   "name" : "testEditingRangePreservesTextCorrectionAndItsFocusPriority()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testEditingRangePreservesTextCorrectionAndItsFocusPriority()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testEditingRangePreservesTextCorrectionAndItsFocusPriority",
@@ -90,8 +81,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,0012s",
-                  "durationInSeconds" : 0.001192927360534668,
+                  "duration" : "0,00046s",
+                  "durationInSeconds" : 0.00045800209045410156,
                   "name" : "testEditingTextPreservesRangeCorrectionUntilRangeIsEdited()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testEditingTextPreservesRangeCorrectionUntilRangeIsEdited()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testEditingTextPreservesRangeCorrectionUntilRangeIsEdited",
@@ -99,8 +90,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,00034s",
-                  "durationInSeconds" : 0.0003390312194824219,
+                  "duration" : "0,007s",
+                  "durationInSeconds" : 0.007031083106994629,
                   "name" : "testEmptyAndUnchangedEditsDoNotMutateNote()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testEmptyAndUnchangedEditsDoNotMutateNote()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testEmptyAndUnchangedEditsDoNotMutateNote",
@@ -108,8 +99,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,00046s",
-                  "durationInSeconds" : 0.0004620552062988281,
+                  "duration" : "0,00051s",
+                  "durationInSeconds" : 0.0005060434341430664,
                   "name" : "testErasedSavedRangeDepartureExplainsExplicitClearWithoutChangingEndpoint()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testErasedSavedRangeDepartureExplainsExplicitClearWithoutChangingEndpoint()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testErasedSavedRangeDepartureExplainsExplicitClearWithoutChangingEndpoint",
@@ -117,8 +108,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,005s",
-                  "durationInSeconds" : 0.004972100257873535,
+                  "duration" : "0,0005s",
+                  "durationInSeconds" : 0.0004971027374267578,
                   "name" : "testExplicitActionRetriesResumeCorrectionFocusAfterNavigation()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testExplicitActionRetriesResumeCorrectionFocusAfterNavigation()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testExplicitActionRetriesResumeCorrectionFocusAfterNavigation",
@@ -126,8 +117,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,00038s",
-                  "durationInSeconds" : 0.00037789344787597656,
+                  "duration" : "0,0011s",
+                  "durationInSeconds" : 0.0010811090469360352,
                   "name" : "testExplicitNavigationBeforeInitialBlurPreservesErrorAndAllowsLaterCorrection()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testExplicitNavigationBeforeInitialBlurPreservesErrorAndAllowsLaterCorrection()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testExplicitNavigationBeforeInitialBlurPreservesErrorAndAllowsLaterCorrection",
@@ -135,8 +126,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,00035s",
-                  "durationInSeconds" : 0.0003509521484375,
+                  "duration" : "0,00043s",
+                  "durationInSeconds" : 0.00043201446533203125,
                   "name" : "testExplicitNavigationPreservesInvalidDraftWithoutRowRestoration()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testExplicitNavigationPreservesInvalidDraftWithoutRowRestoration()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testExplicitNavigationPreservesInvalidDraftWithoutRowRestoration",
@@ -144,8 +135,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,0014s",
-                  "durationInSeconds" : 0.0013669729232788086,
+                  "duration" : "0,00047s",
+                  "durationInSeconds" : 0.00047397613525390625,
                   "name" : "testExplicitRangeApplyDoesNotReplayUntouchedOrRetiredRowEndpointAfterMerge()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testExplicitRangeApplyDoesNotReplayUntouchedOrRetiredRowEndpointAfterMerge()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testExplicitRangeApplyDoesNotReplayUntouchedOrRetiredRowEndpointAfterMerge",
@@ -153,8 +144,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,0004s",
-                  "durationInSeconds" : 0.0004030466079711914,
+                  "duration" : "0,00046s",
+                  "durationInSeconds" : 0.0004559755325317383,
                   "name" : "testExplicitRangeApplyPreservesInvalidAndErasedEndpointDrafts()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testExplicitRangeApplyPreservesInvalidAndErasedEndpointDrafts()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testExplicitRangeApplyPreservesInvalidAndErasedEndpointDrafts",
@@ -162,8 +153,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,00045s",
-                  "durationInSeconds" : 0.00045299530029296875,
+                  "duration" : "0,00039s",
+                  "durationInSeconds" : 0.0003910064697265625,
                   "name" : "testExplicitRangeApplyRestoresEarlierEndpointAgainstCurrentSameSidecarMerge()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testExplicitRangeApplyRestoresEarlierEndpointAgainstCurrentSameSidecarMerge()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testExplicitRangeApplyRestoresEarlierEndpointAgainstCurrentSameSidecarMerge",
@@ -171,8 +162,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,00046s",
-                  "durationInSeconds" : 0.00045692920684814453,
+                  "duration" : "0,00042s",
+                  "durationInSeconds" : 0.0004189014434814453,
                   "name" : "testExplicitRangeApplyRetainsUnavailableAndRejectedDraftUntilAccepted()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testExplicitRangeApplyRetainsUnavailableAndRejectedDraftUntilAccepted()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testExplicitRangeApplyRetainsUnavailableAndRejectedDraftUntilAccepted",
@@ -180,8 +171,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,00044s",
-                  "durationInSeconds" : 0.0004360675811767578,
+                  "duration" : "0,00042s",
+                  "durationInSeconds" : 0.0004159212112426758,
                   "name" : "testExplicitTextReturnCommitsEarlierSavedTextAgainstCurrentSameSidecarMerge()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testExplicitTextReturnCommitsEarlierSavedTextAgainstCurrentSameSidecarMerge()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testExplicitTextReturnCommitsEarlierSavedTextAgainstCurrentSameSidecarMerge",
@@ -189,8 +180,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,00038s",
-                  "durationInSeconds" : 0.0003770589828491211,
+                  "duration" : "0,00035s",
+                  "durationInSeconds" : 0.0003489255905151367,
                   "name" : "testExplicitTextReturnRetainsSameSidecarDraftUntilLiveUpdateAcceptsIt()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testExplicitTextReturnRetainsSameSidecarDraftUntilLiveUpdateAcceptsIt()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testExplicitTextReturnRetainsSameSidecarDraftUntilLiveUpdateAcceptsIt",
@@ -198,8 +189,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,00035s",
-                  "durationInSeconds" : 0.00034999847412109375,
+                  "duration" : "0,00047s",
+                  "durationInSeconds" : 0.0004680156707763672,
                   "name" : "testExplicitTextReturnRetiresMergedOrAbsentDraftWithoutRewritingSavedText()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testExplicitTextReturnRetiresMergedOrAbsentDraftWithoutRewritingSavedText()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testExplicitTextReturnRetiresMergedOrAbsentDraftWithoutRewritingSavedText",
@@ -207,8 +198,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,00036s",
-                  "durationInSeconds" : 0.00036394596099853516,
+                  "duration" : "0,00043s",
+                  "durationInSeconds" : 0.00042808055877685547,
                   "name" : "testMergedDeletionPreservesSurvivingCorrectionAndUnaddedNote()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testMergedDeletionPreservesSurvivingCorrectionAndUnaddedNote()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testMergedDeletionPreservesSurvivingCorrectionAndUnaddedNote",
@@ -216,8 +207,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,00063s",
-                  "durationInSeconds" : 0.0006319284439086914,
+                  "duration" : "0,00036s",
+                  "durationInSeconds" : 0.00036203861236572266,
                   "name" : "testMergedDeletionRetiresRemovedCorrectionAndResumesSurvivingDraftCommits()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testMergedDeletionRetiresRemovedCorrectionAndResumesSurvivingDraftCommits()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testMergedDeletionRetiresRemovedCorrectionAndResumesSurvivingDraftCommits",
@@ -225,8 +216,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,00038s",
-                  "durationInSeconds" : 0.0003770589828491211,
+                  "duration" : "0,00036s",
+                  "durationInSeconds" : 0.0003590583801269531,
                   "name" : "testNewerRangeDraftAfterCurrentFrameActionCommitsAgainstCurrentSavedEndpoint()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testNewerRangeDraftAfterCurrentFrameActionCommitsAgainstCurrentSavedEndpoint()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testNewerRangeDraftAfterCurrentFrameActionCommitsAgainstCurrentSavedEndpoint",
@@ -234,8 +225,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,00037s",
-                  "durationInSeconds" : 0.00037097930908203125,
+                  "duration" : "0,00047s",
+                  "durationInSeconds" : 0.0004709959030151367,
                   "name" : "testOpeningReviewRespectsRetainedCorrectionUnlessNavigationOverridesIt()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testOpeningReviewRespectsRetainedCorrectionUnlessNavigationOverridesIt()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testOpeningReviewRespectsRetainedCorrectionUnlessNavigationOverridesIt",
@@ -244,7 +235,7 @@
                 },
                 {
                   "duration" : "0,00034s",
-                  "durationInSeconds" : 0.0003370046615600586,
+                  "durationInSeconds" : 0.0003399848937988281,
                   "name" : "testOrdinaryEmptyTextValidationOwnsFocusThroughCompetingRangeBlur()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testOrdinaryEmptyTextValidationOwnsFocusThroughCompetingRangeBlur()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testOrdinaryEmptyTextValidationOwnsFocusThroughCompetingRangeBlur",
@@ -253,7 +244,7 @@
                 },
                 {
                   "duration" : "0,00041s",
-                  "durationInSeconds" : 0.00040793418884277344,
+                  "durationInSeconds" : 0.0004099607467651367,
                   "name" : "testOrdinaryRangeValidationDefersPassiveFieldsAndExplicitFailureCanReplaceIt()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testOrdinaryRangeValidationDefersPassiveFieldsAndExplicitFailureCanReplaceIt()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testOrdinaryRangeValidationDefersPassiveFieldsAndExplicitFailureCanReplaceIt",
@@ -261,8 +252,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,00035s",
-                  "durationInSeconds" : 0.0003529787063598633,
+                  "duration" : "0,00042s",
+                  "durationInSeconds" : 0.0004169940948486328,
                   "name" : "testOrdinaryTextValidationRevealsFindingHiddenByFilterWithoutSavingDrafts()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testOrdinaryTextValidationRevealsFindingHiddenByFilterWithoutSavingDrafts()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testOrdinaryTextValidationRevealsFindingHiddenByFilterWithoutSavingDrafts",
@@ -270,8 +261,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,00043s",
-                  "durationInSeconds" : 0.00042998790740966797,
+                  "duration" : "0,00034s",
+                  "durationInSeconds" : 0.00034296512603759766,
                   "name" : "testPassiveRangeBlurUsesTextCorrectionSelectedAfterRowRender()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testPassiveRangeBlurUsesTextCorrectionSelectedAfterRowRender()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testPassiveRangeBlurUsesTextCorrectionSelectedAfterRowRender",
@@ -279,8 +270,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,00047s",
-                  "durationInSeconds" : 0.00046896934509277344,
+                  "duration" : "0,00038s",
+                  "durationInSeconds" : 0.00037801265716552734,
                   "name" : "testPassiveTextDepartureRetainsFailuresAndCommitsOnceAfterRetry()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testPassiveTextDepartureRetainsFailuresAndCommitsOnceAfterRetry()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testPassiveTextDepartureRetainsFailuresAndCommitsOnceAfterRetry",
@@ -288,8 +279,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,00034s",
-                  "durationInSeconds" : 0.0003380775451660156,
+                  "duration" : "0,0004s",
+                  "durationInSeconds" : 0.0004030466079711914,
                   "name" : "testPassiveTextDepartureUsesCorrectionSelectedAfterRowRender()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testPassiveTextDepartureUsesCorrectionSelectedAfterRowRender()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testPassiveTextDepartureUsesCorrectionSelectedAfterRowRender",
@@ -297,8 +288,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,00041s",
-                  "durationInSeconds" : 0.0004100799560546875,
+                  "duration" : "0,00044s",
+                  "durationInSeconds" : 0.00044405460357666016,
                   "name" : "testRangeCorrectionDefersOtherFindingRangeBlurAndPassiveFocus()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testRangeCorrectionDefersOtherFindingRangeBlurAndPassiveFocus()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testRangeCorrectionDefersOtherFindingRangeBlurAndPassiveFocus",
@@ -306,8 +297,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,00036s",
-                  "durationInSeconds" : 0.0003590583801269531,
+                  "duration" : "0,00034s",
+                  "durationInSeconds" : 0.0003370046615600586,
                   "name" : "testRangeCorrectionDefersSameAndOtherFindingTextBlurUntilCorrected()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testRangeCorrectionDefersSameAndOtherFindingTextBlurUntilCorrected()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testRangeCorrectionDefersSameAndOtherFindingTextBlurUntilCorrected",
@@ -316,7 +307,7 @@
                 },
                 {
                   "duration" : "0,00039s",
-                  "durationInSeconds" : 0.00039207935333251953,
+                  "durationInSeconds" : 0.00039005279541015625,
                   "name" : "testRangeDepartureRespectsLiveTextCorrectionUnavailableEditingAndExplicitClear()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testRangeDepartureRespectsLiveTextCorrectionUnavailableEditingAndExplicitClear()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testRangeDepartureRespectsLiveTextCorrectionUnavailableEditingAndExplicitClear",
@@ -324,8 +315,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,00038s",
-                  "durationInSeconds" : 0.00038301944732666016,
+                  "duration" : "0,00046s",
+                  "durationInSeconds" : 0.0004630088806152344,
                   "name" : "testRangeDepartureRetainsInvalidEndpointAndRevealsHiddenFinding()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testRangeDepartureRetainsInvalidEndpointAndRevealsHiddenFinding()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testRangeDepartureRetainsInvalidEndpointAndRevealsHiddenFinding",
@@ -333,8 +324,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,00035s",
-                  "durationInSeconds" : 0.0003529787063598633,
+                  "duration" : "0,00041s",
+                  "durationInSeconds" : 0.00041294097900390625,
                   "name" : "testRangeDepartureSavesPendingEndpointWhenFocusCallbackDoesNotRun()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testRangeDepartureSavesPendingEndpointWhenFocusCallbackDoesNotRun()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testRangeDepartureSavesPendingEndpointWhenFocusCallbackDoesNotRun",
@@ -342,8 +333,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,00042s",
-                  "durationInSeconds" : 0.0004169940948486328,
+                  "duration" : "0,00033s",
+                  "durationInSeconds" : 0.00033402442932128906,
                   "name" : "testRangeDraftEditClearsOnlyItsOwnErrorDuringAnotherCorrection()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testRangeDraftEditClearsOnlyItsOwnErrorDuringAnotherCorrection()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testRangeDraftEditClearsOnlyItsOwnErrorDuringAnotherCorrection",
@@ -352,7 +343,7 @@
                 },
                 {
                   "duration" : "0,00036s",
-                  "durationInSeconds" : 0.0003579854965209961,
+                  "durationInSeconds" : 0.00035893917083740234,
                   "name" : "testRangeDraftEditClearsPreviousErrorBeforeNewValidation()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testRangeDraftEditClearsPreviousErrorBeforeNewValidation()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testRangeDraftEditClearsPreviousErrorBeforeNewValidation",
@@ -360,8 +351,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,00036s",
-                  "durationInSeconds" : 0.0003590583801269531,
+                  "duration" : "0,00039s",
+                  "durationInSeconds" : 0.0003910064697265625,
                   "name" : "testRangeFocusLossKeepsNormalChangedDraftValidation()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testRangeFocusLossKeepsNormalChangedDraftValidation()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testRangeFocusLossKeepsNormalChangedDraftValidation",
@@ -369,8 +360,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,00033s",
-                  "durationInSeconds" : 0.00032508373260498047,
+                  "duration" : "0,00031s",
+                  "durationInSeconds" : 0.00030791759490966797,
                   "name" : "testReconciliationPreservesWindowLevelUnavailableActionNotice()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testReconciliationPreservesWindowLevelUnavailableActionNotice()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testReconciliationPreservesWindowLevelUnavailableActionNotice",
@@ -378,8 +369,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,00033s",
-                  "durationInSeconds" : 0.00033402442932128906,
+                  "duration" : "0,00038s",
+                  "durationInSeconds" : 0.0003839731216430664,
                   "name" : "testRejectedAndUnavailableEditsRemainUnaccepted()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testRejectedAndUnavailableEditsRemainUnaccepted()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testRejectedAndUnavailableEditsRemainUnaccepted",
@@ -387,8 +378,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,00035s",
-                  "durationInSeconds" : 0.0003509521484375,
+                  "duration" : "0,00032s",
+                  "durationInSeconds" : 0.0003160238265991211,
                   "name" : "testRepeatedBlockedActionRevealsSameCorrectionWithoutDiscardingDrafts()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testRepeatedBlockedActionRevealsSameCorrectionWithoutDiscardingDrafts()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testRepeatedBlockedActionRevealsSameCorrectionWithoutDiscardingDrafts",
@@ -396,8 +387,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,00036s",
-                  "durationInSeconds" : 0.00036394596099853516,
+                  "duration" : "0,00035s",
+                  "durationInSeconds" : 0.0003510713577270508,
                   "name" : "testRepeatedEmptyTextDepartureDoesNotReacquireCorrectionFocus()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testRepeatedEmptyTextDepartureDoesNotReacquireCorrectionFocus()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testRepeatedEmptyTextDepartureDoesNotReacquireCorrectionFocus",
@@ -405,8 +396,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,00042s",
-                  "durationInSeconds" : 0.0004159212112426758,
+                  "duration" : "0,00032s",
+                  "durationInSeconds" : 0.00031697750091552734,
                   "name" : "testRepeatedInvalidRangeDepartureDoesNotReacquireCorrectionFocus()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testRepeatedInvalidRangeDepartureDoesNotReacquireCorrectionFocus()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testRepeatedInvalidRangeDepartureDoesNotReacquireCorrectionFocus",
@@ -414,8 +405,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,00036s",
-                  "durationInSeconds" : 0.0003609657287597656,
+                  "duration" : "0,00037s",
+                  "durationInSeconds" : 0.00037097930908203125,
                   "name" : "testRetainedCorrectionWaitsForEditableRowAndResumesSelectedField()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testRetainedCorrectionWaitsForEditableRowAndResumesSelectedField()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testRetainedCorrectionWaitsForEditableRowAndResumesSelectedField",
@@ -423,8 +414,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,00051s",
-                  "durationInSeconds" : 0.0005059242248535156,
+                  "duration" : "0,0004s",
+                  "durationInSeconds" : 0.00039505958557128906,
                   "name" : "testRetainedRangeCorrectionRevealsOnlyExistingEditableHiddenFinding()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testRetainedRangeCorrectionRevealsOnlyExistingEditableHiddenFinding()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testRetainedRangeCorrectionRevealsOnlyExistingEditableHiddenFinding",
@@ -432,8 +423,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,00032s",
-                  "durationInSeconds" : 0.0003230571746826172,
+                  "duration" : "0,00033s",
+                  "durationInSeconds" : 0.00032806396484375,
                   "name" : "testSuccessfulTextCommitPreservesASeparateRangeCorrection()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testSuccessfulTextCommitPreservesASeparateRangeCorrection()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testSuccessfulTextCommitPreservesASeparateRangeCorrection",
@@ -441,8 +432,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,00052s",
-                  "durationInSeconds" : 0.0005240440368652344,
+                  "duration" : "0,00029s",
+                  "durationInSeconds" : 0.0002930164337158203,
                   "name" : "testTemporaryUnavailableReviewPreservesDraftsUntilLoadedNotesCanReconcile()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testTemporaryUnavailableReviewPreservesDraftsUntilLoadedNotesCanReconcile()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testTemporaryUnavailableReviewPreservesDraftsUntilLoadedNotesCanReconcile",
@@ -450,8 +441,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,00034s",
-                  "durationInSeconds" : 0.00034296512603759766,
+                  "duration" : "0,00037s",
+                  "durationInSeconds" : 0.0003669261932373047,
                   "name" : "testTextCorrectionDefersOtherFindingTextBlurWithoutDroppingDrafts()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testTextCorrectionDefersOtherFindingTextBlurWithoutDroppingDrafts()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testTextCorrectionDefersOtherFindingTextBlurWithoutDroppingDrafts",
@@ -459,8 +450,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,00039s",
-                  "durationInSeconds" : 0.0003910064697265625,
+                  "duration" : "0,00033s",
+                  "durationInSeconds" : 0.0003260374069213867,
                   "name" : "testTextCorrectionDoesNotCommitOrRefocusAnUnrelatedRangeDraft()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testTextCorrectionDoesNotCommitOrRefocusAnUnrelatedRangeDraft()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testTextCorrectionDoesNotCommitOrRefocusAnUnrelatedRangeDraft",
@@ -468,8 +459,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,00033s",
-                  "durationInSeconds" : 0.00033104419708251953,
+                  "duration" : "0,00031s",
+                  "durationInSeconds" : 0.0003139972686767578,
                   "name" : "testUnavailableFieldValidationRetainsInputWithoutRequestingDisabledFocus()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testUnavailableFieldValidationRetainsInputWithoutRequestingDisabledFocus()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testUnavailableFieldValidationRetainsInputWithoutRequestingDisabledFocus",
@@ -477,8 +468,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,00038s",
-                  "durationInSeconds" : 0.0003789663314819336,
+                  "duration" : "0,00032s",
+                  "durationInSeconds" : 0.00031697750091552734,
                   "name" : "testUnavailableTextErrorDefersFallbackFocusUntilLoadingCompletes()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testUnavailableTextErrorDefersFallbackFocusUntilLoadingCompletes()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testUnavailableTextErrorDefersFallbackFocusUntilLoadingCompletes",
@@ -486,8 +477,8 @@
                   "result" : "Passed"
                 },
                 {
-                  "duration" : "0,00034s",
-                  "durationInSeconds" : 0.0003370046615600586,
+                  "duration" : "0,00032s",
+                  "durationInSeconds" : 0.0003230571746826172,
                   "name" : "testUnchangedFieldCallbacksPreserveCorrectionDuringExplicitNavigation()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testUnchangedFieldCallbacksPreserveCorrectionDuringExplicitNavigation()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testUnchangedFieldCallbacksPreserveCorrectionDuringExplicitNavigation",
@@ -496,7 +487,7 @@
                 },
                 {
                   "duration" : "0,00034s",
-                  "durationInSeconds" : 0.0003380775451660156,
+                  "durationInSeconds" : 0.00034499168395996094,
                   "name" : "testUncommittedRangeDraftSurvivesSameSidecarMergeIncludingEarlierSavedValue()",
                   "nodeIdentifier" : "CompareReviewTextCommitTests/testUncommittedRangeDraftSurvivesSameSidecarMergeIncludingEarlierSavedValue()",
                   "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareReviewTextCommitTests/testUncommittedRangeDraftSurvivesSameSidecarMergeIncludingEarlierSavedValue",

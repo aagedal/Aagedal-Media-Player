@@ -7,6 +7,62 @@ import XCTest
 
 final class CompareReviewTextCommitTests: XCTestCase {
     @MainActor
+    func testEditingOtherFieldsPreservesExplicitNavigationSuspension() throws {
+        let selectedID = UUID()
+        let otherID = UUID()
+        for field in [CompareReviewCorrectionRequest.Field.text, .rangeEnd] {
+            var drafts = CompareReviewDraftState()
+            drafts.updateNoteTextDraft("", noteID: selectedID)
+            drafts.updateRangeEndDraft("-1", noteID: selectedID)
+            drafts.blockAction(noteID: selectedID, field: field,
+                error: "Correct the selected field", notice: "Selected finding needs attention")
+            let correction = try XCTUnwrap(drafts.correctionRequest)
+            drafts.allowExplicitNavigation()
+
+            // Editing either field of another finding, or the companion
+            // field of this finding, must not restart the selected field's
+            // mounted focus task after explicit new-note/filter navigation.
+            drafts.updateNoteTextDraft("Edit another finding", noteID: otherID)
+            XCTAssertTrue(drafts.isCorrectionFocusSuspended)
+            drafts.updateRangeEndDraft("35", noteID: otherID)
+            XCTAssertTrue(drafts.isCorrectionFocusSuspended)
+            switch field {
+            case .text: drafts.updateRangeEndDraft("45", noteID: selectedID)
+            case .rangeEnd: drafts.updateNoteTextDraft("Edit companion text", noteID: selectedID)
+            }
+            XCTAssertTrue(drafts.isCorrectionFocusSuspended)
+            XCTAssertEqual(drafts.correctionRequest, correction)
+            XCTAssertEqual(drafts.rangeActionNotice, "Selected finding needs attention")
+            switch field {
+            case .text:
+                XCTAssertEqual(drafts.noteDrafts[selectedID], "")
+                XCTAssertEqual(drafts.noteActionErrors[selectedID], "Correct the selected field")
+                drafts.updateNoteTextDraft("Correct the owning text", noteID: selectedID)
+                XCTAssertEqual(drafts.noteDrafts[selectedID], "Correct the owning text")
+                XCTAssertNil(drafts.noteActionErrors[selectedID])
+            case .rangeEnd:
+                XCTAssertEqual(drafts.rangeDrafts[selectedID], "-1")
+                XCTAssertEqual(drafts.rangeActionErrors[selectedID], "Correct the selected field")
+                drafts.updateRangeEndDraft("25", noteID: selectedID)
+                XCTAssertEqual(drafts.rangeDrafts[selectedID], "25")
+                XCTAssertNil(drafts.rangeActionErrors[selectedID])
+            }
+            XCTAssertFalse(drafts.isCorrectionFocusSuspended)
+            XCTAssertNil(drafts.correctionRequest)
+            XCTAssertNil(drafts.rangeActionNotice)
+
+            // Without a selected correction, any changed field resumes
+            // ordinary validation feedback after leaving navigation fields.
+            drafts.allowExplicitNavigation()
+            switch field {
+            case .text: drafts.updateNoteTextDraft("Another text edit", noteID: otherID)
+            case .rangeEnd: drafts.updateRangeEndDraft("36", noteID: otherID)
+            }
+            XCTAssertFalse(drafts.isCorrectionFocusSuspended)
+        }
+    }
+
+    @MainActor
     func testOpeningReviewRespectsRetainedCorrectionUnlessNavigationOverridesIt() {
         let note = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
             secondaryFrame: 10, secondaryTime: 1, text: "Finding", primaryEndFrame: 20)

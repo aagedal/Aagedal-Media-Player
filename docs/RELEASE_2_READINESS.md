@@ -6,9 +6,10 @@ Assessment updated: 2026-10-02. This assessment reflects the
 The native Review continuation exposed correction focus overriding deliberate
 New Note/Filter navigation. A shared focus owner, passive validation identity
 and explicit navigation suspension preserve rejected input while allowing those
-commands to proceed. Opening Review restores retained correction focus; report
+commands to proceed. Editing another field keeps that navigation
+  suspension until the correction-owning field is edited or an action retries. Opening Review restores retained correction focus; report
 preflight owns the correction destination after revealing filtered findings.
-Candidate/release consumption requires seven additional regressions and 817
+Candidate/release consumption requires eight additional regressions and 818
 aggregate tests. Focused and final native results are recorded in
 [focus receipts](evidence/review-focus-navigation-20261002/README.md).
 The earlier merged-deletion/media-baseline batch passed clean canonical

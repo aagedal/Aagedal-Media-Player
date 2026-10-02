@@ -10,10 +10,13 @@ ownership; ordinary reopening selects a retained live correction. Stable panel
 correction reveal selects the destination; mounted-field restoration completes
 the handoff after filters recreate lazy rows.
 
-Seven additional regressions bring the focused optimized Release suite to 53;
+Owner-only draft editing resumption keeps explicit navigation suspension when
+editing another finding or the companion field in the selected finding. Its
+regression covers both correction fields, owning edits and no-owner behavior.
+Eight additional regressions bring the focused optimized Release suite to 54;
 all pass with zero failures/skips. No runtime warning is recorded. An existing
 weak-variable compiler warning in ProgrammeLoudnessControllerTests is retained.
-Candidate/release consumption requires those exact identities and 817 aggregate
+Candidate/release consumption requires those exact identities and 818 aggregate
 tests. The retained intermediate native failure demonstrates why passing draft
 policy tests alone did not prove actual keyboard focus.
 
@@ -36,3 +39,11 @@ keyboard traversal, spoken VoiceOver, real two-window merge, dependency repin,
 hardware or distribution acceptance is inferred. Focused xcresult/build products
 remain in temporary storage; durable detailed receipts and compressed logs are
 retained here. Canonical implementation evidence is retained separately.
+
+The final owner-only native follow-up keeps focus for companion-text and
+different-finding edits while the invalid range/error remain. Explicit Export
+selects the invalid range again without discarding either text draft. These are
+focus/draft observations, not persistence claims for those unsaved text edits.
+See [multi-field observation](native-multi-field-observation.json). The first
+canonical attempt at `2478338` was interrupted deliberately (exit130) after this
+additional path was identified; it supplies no accepted candidate evidence.

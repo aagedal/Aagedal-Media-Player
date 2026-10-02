@@ -1,0 +1,6 @@
+{
+  "implementationCommit": "24783386df08458ef7b0e5060a8ab68d702493f6",
+  "result": "Interrupted by root with Ctrl-C exit130; no canonical acceptance",
+  "reason": "Read-only review identified another-row edits globally resuming a suspended correction; additional fix/regression before final verification",
+  "outputPath": "/private/tmp/aagedal-review-focus-canonical-20261002"
+}

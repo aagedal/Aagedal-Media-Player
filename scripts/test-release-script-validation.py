@@ -330,7 +330,7 @@ python3() { echo remote-validation >> "$TRACE"; }
         self.assertLess(summary, details)
         self.assertLess(details, validation)
         self.assertLess(validation, analysis)
-        self.assertIn('--minimum-tests 817', source)
+        self.assertIn('--minimum-tests 818', source)
         self.assertIn('-parallel-testing-enabled NO', source)
         self.assertEqual(source.count('-skip-testing:'), 2)
         focused = source.index('echo "==> Focused mixed-backend transport repeat"')
@@ -340,7 +340,7 @@ python3() { echo remote-validation >> "$TRACE"; }
         self.assertLess(focused_validation, analysis)
         self.assertIn('testAVFoundationPrimaryAndMPVSecondaryShareTransport', source)
         self.assertIn('testMPVPrimaryAndAVFoundationSecondaryShareTransport', source)
-        self.assertEqual(source.count('--require-test'), 64)
+        self.assertEqual(source.count('--require-test'), 65)
         for name in ('testPassiveTextDepartureUsesCorrectionSelectedAfterRowRender',
                      'testPassiveTextDepartureRetainsFailuresAndCommitsOnceAfterRetry',
                      'testPassiveRangeBlurUsesTextCorrectionSelectedAfterRowRender'):
@@ -388,6 +388,7 @@ python3() { echo remote-validation >> "$TRACE"; }
             ('CompareReviewTextCommitTests', 'testExplicitNavigationBeforeInitialBlurPreservesErrorAndAllowsLaterCorrection'),
             ('CompareReviewTextCommitTests', 'testUnchangedFieldCallbacksPreserveCorrectionDuringExplicitNavigation'),
             ('CompareReviewTextCommitTests', 'testOpeningReviewRespectsRetainedCorrectionUnlessNavigationOverridesIt'),
+            ('CompareReviewTextCommitTests', 'testEditingOtherFieldsPreservesExplicitNavigationSuspension'),
         ):
             self.assertIn(f'--require-test "{class_name}/{name}()"', source)
         self.assertIn('os.path.realpath', source)
@@ -439,8 +440,8 @@ python3() { echo remote-validation >> "$TRACE"; }
         self.assertLess(package_match, result_validation)
         self.assertLess(result_validation, preflight)
         self.assertLess(result_validation, archive)
-        self.assertIn('--minimum-tests 817', self.source)
-        self.assertEqual(self.source.count('--require-test'), 64)
+        self.assertIn('--minimum-tests 818', self.source)
+        self.assertEqual(self.source.count('--require-test'), 65)
         for name in ('testPassiveTextDepartureUsesCorrectionSelectedAfterRowRender',
                      'testPassiveTextDepartureRetainsFailuresAndCommitsOnceAfterRetry',
                      'testPassiveRangeBlurUsesTextCorrectionSelectedAfterRowRender'):
@@ -488,6 +489,7 @@ python3() { echo remote-validation >> "$TRACE"; }
             ('CompareReviewTextCommitTests', 'testExplicitNavigationBeforeInitialBlurPreservesErrorAndAllowsLaterCorrection'),
             ('CompareReviewTextCommitTests', 'testUnchangedFieldCallbacksPreserveCorrectionDuringExplicitNavigation'),
             ('CompareReviewTextCommitTests', 'testOpeningReviewRespectsRetainedCorrectionUnlessNavigationOverridesIt'),
+            ('CompareReviewTextCommitTests', 'testEditingOtherFieldsPreservesExplicitNavigationSuspension'),
         ):
             self.assertIn(f'--require-test "{class_name}/{name}()"', self.source)
 

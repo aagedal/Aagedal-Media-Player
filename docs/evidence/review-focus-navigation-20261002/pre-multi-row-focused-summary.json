@@ -12,7 +12,7 @@
       },
       "expectedFailures" : 0,
       "failedTests" : 0,
-      "passedTests" : 54,
+      "passedTests" : 53,
       "skippedTests" : 0,
       "testPlanConfiguration" : {
         "configurationId" : "1",
@@ -23,14 +23,14 @@
   "environmentDescription" : "Aagedal Media Player · Built with macOS 27.0.1",
   "expectedFailures" : 0,
   "failedTests" : 0,
-  "finishTime" : 1790956929.394,
-  "passedTests" : 54,
+  "finishTime" : 1790956507.683,
+  "passedTests" : 53,
   "result" : "Passed",
   "runtimeWarnings" : [
 
   ],
   "skippedTests" : 0,
-  "startTime" : 1790956865.541,
+  "startTime" : 1790956449.133,
   "statistics" : [
 
   ],
@@ -41,5 +41,5 @@
   "topInsights" : [
 
   ],
-  "totalTestCount" : 54
+  "totalTestCount" : 53
 }
