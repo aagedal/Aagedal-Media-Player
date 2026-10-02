@@ -182,7 +182,7 @@ if [[ "$EVIDENCE_STATUS" != "passed" \
     exit 2
 fi
 python3 scripts/validate-release-xcresult.py \
-    "$CANDIDATE_SUMMARY" "$CANDIDATE_DETAILS" --minimum-tests 802 \
+    "$CANDIDATE_SUMMARY" "$CANDIDATE_DETAILS" --minimum-tests 806 \
     --require-test "CompareReviewTextCommitTests/testOrdinaryTextValidationRevealsFindingHiddenByFilterWithoutSavingDrafts()" \
     --require-test "CompareReviewTextCommitTests/testRetainedRangeCorrectionRevealsOnlyExistingEditableHiddenFinding()" \
     --require-test "LiveAudioMeterCoordinatorTests/testMalformedCurrentLoudnessFailsGenerationAndCancelsWorker()" \
@@ -229,6 +229,10 @@ python3 scripts/validate-release-xcresult.py \
     --require-test "LiveAudioMeterCoordinatorTests/testPausedClockLossClearsReadingsAndCancelsSuspendedWorker()" \
     --require-test "LiveAudioMeterCoordinatorTests/testBufferingClockLossClearsReadingsAndCancelsSuspendedWorker()" \
     --require-test "LiveAudioMeterCoordinatorTests/testValidPausedAndBufferingClocksPreserveReadingsUntilContiguousResume()" \
+    --require-test "CompareReviewTextCommitTests/testAcceptedDeletePreservesAnotherFindingsCorrectionAndDrafts()" \
+    --require-test "CompareReviewTimebaseMigrationControllerTests/testQueuedDeleteRetainsDraftsDuringSaveActionThenRetiresOnlyAcceptedFinding()" \
+    --require-test "LiveAudioMeterCoordinatorTests/testInvalidPlaybackEOFClockClearsReadingsAndCancelsWorker()" \
+    --require-test "LiveAudioMeterCoordinatorTests/testClockLossDuringPlaybackEOFDrainClearsReadingsAndCancelsWorker()" \
     --require-test "LiveAudioMeterDecoderTests/testBundledDecoderPreservesContiguousDTSInMillisecondMatroskaContainer()"
 python3 scripts/validate-release-xcresult.py \
     "$CANDIDATE_MIXED_SUMMARY" "$CANDIDATE_MIXED_DETAILS" --minimum-tests 2 \

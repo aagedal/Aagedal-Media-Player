@@ -207,6 +207,10 @@ final class LiveAudioMeterCoordinator: ObservableObject {
         if case .ended = status {
             return
         }
+        // Playback EOF permits the decoder to drain; it does not qualify an
+        // invalid source clock. The admission gate ignores invalid updates,
+        // so retaining one here could strand that drain behind an old budget.
+        guard validatePlaybackClock(playback) else { return }
         if hasReachedPlaybackEOF {
             workerGate?.update(playbackTime: playback.time)
             isTransportSuspended = false
@@ -221,22 +225,6 @@ final class LiveAudioMeterCoordinator: ObservableObject {
         if isWaitingForSupportedSpeed, let request,
            let repositioned = try? request.repositioned(at: playback.time) {
             begin(repositioned, cause: .speedRestored)
-        }
-        if let handoff, let request {
-            // Pause and buffering preserve a continuous source segment only
-            // while its source clock remains valid. Check before those early
-            // returns: the admission gate ignores invalid times, which would
-            // otherwise leave stale readings and a suspended worker alive.
-            if let rejection = handoff.rejection {
-                fail(rejection, handoff: handoff, generation: generation)
-                return
-            }
-            let sourceFrame = playback.time * Double(request.format.sampleRate)
-            guard playback.time.isFinite, playback.time >= 0,
-                  sourceFrame.isFinite, sourceFrame < Double(Int64.max) else {
-                invalidateForInvalidPlaybackClock()
-                return
-            }
         }
         if playback.phase == .buffering {
             workerGate?.update(playbackTime: playback.time)
@@ -351,6 +339,21 @@ final class LiveAudioMeterCoordinator: ObservableObject {
         )
     }
 
+    private func validatePlaybackClock(_ playback: LiveAudioMeterPlaybackSnapshot) -> Bool {
+        guard let handoff, let request else { return true }
+        if let rejection = handoff.rejection {
+            fail(rejection, handoff: handoff, generation: generation)
+            return false
+        }
+        let sourceFrame = playback.time * Double(request.format.sampleRate)
+        guard playback.time.isFinite, playback.time >= 0,
+              sourceFrame.isFinite, sourceFrame < Double(Int64.max) else {
+            invalidateForInvalidPlaybackClock()
+            return false
+        }
+        return true
+    }
+
     /// Applies the typed transport boundary. Source and track replacements
     /// deliberately require the window session to supply a newly resolved
     /// request; reusing the old stream identity would be unsafe.
@@ -371,6 +374,7 @@ final class LiveAudioMeterCoordinator: ObservableObject {
                 clearRequest: false
             )
         case .ended(let playback):
+            guard validatePlaybackClock(playback) else { return }
             // The paced source decoder owns FIR-tail drainage and publishes
             // the authoritative final endpoint. Playback normally reports
             // `isPlaying == false` here, which must not suspend that drainage.

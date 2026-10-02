@@ -1,0 +1,82 @@
+{
+  "devices" : [
+    {
+      "architecture" : "arm64",
+      "deviceId" : "00006050-001C293C22F9401C",
+      "deviceName" : "My Mac",
+      "modelName" : "MacBook Pro",
+      "osBuildNumber" : "26A434",
+      "osVersion" : "27.0.1",
+      "platform" : "macOS"
+    }
+  ],
+  "testNodes" : [
+    {
+      "children" : [
+        {
+          "children" : [
+            {
+              "children" : [
+                {
+                  "children" : [
+                    {
+                      "name" : "failed - Expected EOF clock loss to invalidate the draining worker",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 676
+                      }
+                    }
+                  ],
+                  "duration" : "0,19s",
+                  "durationInSeconds" : 0.1923069953918457,
+                  "name" : "testClockLossDuringPlaybackEOFDrainClearsReadingsAndCancelsWorker()",
+                  "nodeIdentifier" : "LiveAudioMeterCoordinatorTests/testClockLossDuringPlaybackEOFDrainClearsReadingsAndCancelsWorker()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterCoordinatorTests/testClockLossDuringPlaybackEOFDrainClearsReadingsAndCancelsWorker",
+                  "nodeType" : "Test Case",
+                  "result" : "Failed"
+                },
+                {
+                  "children" : [
+                    {
+                      "name" : "failed - Expected EOF clock loss to invalidate the draining worker",
+                      "nodeType" : "Failure Message",
+                      "sourceLocation" : {
+                        "filePath" : "/Users/truls.aagedal/Developer/Aagedal-Media-Player/Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift",
+                        "lineNumber" : 676
+                      }
+                    }
+                  ],
+                  "duration" : "0,014s",
+                  "durationInSeconds" : 0.01361095905303955,
+                  "name" : "testInvalidPlaybackEOFClockClearsReadingsAndCancelsWorker()",
+                  "nodeIdentifier" : "LiveAudioMeterCoordinatorTests/testInvalidPlaybackEOFClockClearsReadingsAndCancelsWorker()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterCoordinatorTests/testInvalidPlaybackEOFClockClearsReadingsAndCancelsWorker",
+                  "nodeType" : "Test Case",
+                  "result" : "Failed"
+                }
+              ],
+              "name" : "LiveAudioMeterCoordinatorTests",
+              "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveAudioMeterCoordinatorTests",
+              "nodeType" : "Test Suite",
+              "result" : "Failed"
+            }
+          ],
+          "name" : "Aagedal Media Player Tests",
+          "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests",
+          "nodeType" : "Unit test bundle",
+          "result" : "Failed"
+        }
+      ],
+      "name" : "Aagedal Media Player",
+      "nodeType" : "Test Plan",
+      "result" : "Failed"
+    }
+  ],
+  "testPlanConfigurations" : [
+    {
+      "configurationId" : "1",
+      "configurationName" : "Test Scheme Action"
+    }
+  ]
+}

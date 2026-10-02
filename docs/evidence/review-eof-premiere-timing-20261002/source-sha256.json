@@ -1,0 +1,15 @@
+{
+  "Aagedal Media Player Tests/CompareReviewTextCommitTests.swift": "3991a7aec149b4b2baec888060fbd5da1de81d3dac4c720d81702a1fc3bcf910",
+  "Aagedal Media Player Tests/CompareReviewTimebaseMigrationControllerTests.swift": "a266c93c5a12465bb9e158b101ef840c8c79ff173dc9b7e62beb1d97a322df0a",
+  "Aagedal Media Player Tests/LiveAudioMeterCoordinatorTests.swift": "b280af04e7a30f8fa4bd83c22aae29d740bd254e75ed58f427f2f47026489967",
+  "Aagedal Media Player/Logic/CompareSessionController.swift": "32e49a1184fbdf09f975bd0323fa3f6bb4616d72db3a6ecdf41e69070bfac449",
+  "Aagedal Media Player/Logic/LiveAudioMeterCoordinator.swift": "beb9df65e75582b5f62ca55bb01502ed2d681e05397b60bf27e3eb82fc9cbbc6",
+  "Aagedal Media Player/UI/CompareReviewView.swift": "5e598315c4ac495606d72594eac5ef81127df3c1a1c517c8518753fa2499bde9",
+  "CHANGELOG.md": "dc6dcf4d2d01b4a2aabe637f8282aabc68057520db3a84109c5bb1ec775aef7c",
+  "docs/RELEASE_2_READINESS.md": "5dad31e97a163b8a13c284d110d7dee5a305fa893a12cb12270aed778178e839",
+  "scripts/compare-premiere-marker-roundtrip.py": "0a3c48298a8b2ff78416c533eb2a596a988b159b08bccbe989bb84251783056b",
+  "scripts/release.sh": "a164471820181deeacdf368e73301ab5b289fdc30dba77fbfdf0b0f866d24c1e",
+  "scripts/test-premiere-marker-roundtrip.py": "508d3064f6583ed79e66ed3bda924e9612af8681b494b926f7843976bd0355db",
+  "scripts/test-release-script-validation.py": "43d8e920aad90809019077a674147806d29cb0329399e79b4f826031687b306d",
+  "scripts/verify-release-candidate.sh": "7892ed69c0173762eb2f9841465fc14516b11773e13c79096301628075f60365"
+}

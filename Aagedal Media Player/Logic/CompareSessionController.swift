@@ -1564,16 +1564,19 @@ final class CompareSessionController: ObservableObject {
         return true
     }
 
-    func deleteReviewNote(id: UUID) {
+    @discardableResult
+    func deleteReviewNote(id: UUID) -> Bool {
         guard canEditReviewNotes,
               let primaryURL = primaryAudioController?.mediaItem?.url,
-              let secondaryURL else { return }
+              let secondaryURL,
+              reviewNotes.contains(where: { $0.id == id }) else { return false }
         reviewNotes.removeAll { $0.id == id }
         persistReviewMutation(
             .delete(id),
             primaryURL: primaryURL,
             secondaryURL: secondaryURL
         )
+        return true
     }
 
     func seekToReviewNote(_ note: CompareReviewNote, primary: PlayerController) {

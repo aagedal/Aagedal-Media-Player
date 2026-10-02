@@ -7,6 +7,56 @@ import XCTest
 
 @MainActor
 final class CompareReviewTimebaseMigrationControllerTests: XCTestCase {
+    func testQueuedDeleteRetainsDraftsDuringSaveActionThenRetiresOnlyAcceptedFinding() async throws {
+        let f = try ReviewTimebaseMigrationFixture()
+        defer { f.remove() }
+        let store = DelayedMigrationControllerStore(document: f.document,
+            holdPreview: false, holdNoteSave: true, holdOnlyFirstNoteSave: true)
+        let (session, primary) = await makeSession(f, store: store)
+        defer { session.stop(); primary.teardown() }
+        let noteID = f.document.notes[0].id
+        var drafts = CompareReviewDraftState()
+        drafts.updateNoteTextDraft("Unsaved correction", noteID: noteID)
+        drafts.updateRangeEndDraft("invalid end", noteID: noteID)
+        drafts.blockAction(noteID: noteID, field: .rangeEnd,
+            error: "Invalid range", notice: "Correct this range")
+        let correction = drafts.correctionRequest
+
+        XCTAssertTrue(session.updateReviewNote(id: noteID, text: "Pending saved finding"))
+        await assertEventuallyAsync { await store.noteSaveCount == 1 }
+        let saveAction = session.performReviewActionAfterSaving(primary: primary) { _, _ in }
+        await assertEventually { session.isReviewActionPending }
+        XCTAssertFalse(session.canEditReviewNotes)
+
+        // A delete callback queued by the previously editable row must not
+        // erase its input when the controller rejects it during the save.
+        XCTAssertFalse(drafts.deleteNote(noteID: noteID) { session.deleteReviewNote(id: noteID) })
+        XCTAssertEqual(session.reviewNotes.map(\.id), [noteID])
+        XCTAssertEqual(drafts.noteDrafts[noteID], "Unsaved correction")
+        XCTAssertEqual(drafts.rangeDrafts[noteID], "invalid end")
+        XCTAssertEqual(drafts.rangeActionErrors[noteID], "Invalid range")
+        XCTAssertEqual(drafts.correctionRequest, correction)
+        let blockedSaveCount = await store.noteSaveCount
+        XCTAssertEqual(blockedSaveCount, 1)
+
+        await store.complete()
+        await saveAction.value
+        XCTAssertTrue(session.canEditReviewNotes)
+        let otherID = UUID()
+        drafts.updateNoteTextDraft("Keep other input", noteID: otherID)
+        XCTAssertTrue(drafts.deleteNote(noteID: noteID) { session.deleteReviewNote(id: noteID) })
+        XCTAssertTrue(session.reviewNotes.isEmpty)
+        XCTAssertNil(drafts.noteDrafts[noteID])
+        XCTAssertNil(drafts.rangeDrafts[noteID])
+        XCTAssertNil(drafts.rangeActionErrors[noteID])
+        XCTAssertNil(drafts.correctionRequest)
+        XCTAssertEqual(drafts.noteDrafts[otherID], "Keep other input")
+        XCTAssertFalse(session.deleteReviewNote(id: noteID), "An absent finding is not an accepted deletion")
+        await assertEventuallyAsync { await store.noteSaveCount == 2 }
+        let saved = try await store.load(from: f.source, primaryURL: f.primary, secondaryURL: f.secondary)
+        XCTAssertTrue(saved?.notes.isEmpty == true)
+    }
+
     func testStopPreventsEarlierQueuedReviewWritesFromStarting() async throws {
         try await verifyQueuedWritesAreInvalidated(replaceComparison: false)
     }

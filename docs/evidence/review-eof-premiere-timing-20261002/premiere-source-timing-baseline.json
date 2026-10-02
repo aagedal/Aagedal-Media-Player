@@ -1,0 +1,42 @@
+[
+  {
+    "field": "stillframe",
+    "value": "TRUE",
+    "status": "exact-match"
+  },
+  {
+    "field": "stillframeoffset",
+    "value": "7",
+    "status": "exact-match"
+  },
+  {
+    "field": "subframeoffset",
+    "value": "0.5",
+    "status": "exact-match"
+  },
+  {
+    "field": "mixedratesoffset",
+    "value": "1",
+    "status": "exact-match"
+  },
+  {
+    "field": "mediadelay",
+    "value": "1",
+    "status": "exact-match"
+  },
+  {
+    "field": "pproTicksIn",
+    "value": "1",
+    "status": "exact-match"
+  },
+  {
+    "field": "pproTicksOut",
+    "value": "1",
+    "status": "exact-match"
+  },
+  {
+    "field": "multiclip",
+    "value": null,
+    "status": "exact-match"
+  }
+]

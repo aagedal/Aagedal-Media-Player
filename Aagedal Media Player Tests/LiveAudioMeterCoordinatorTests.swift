@@ -637,6 +637,65 @@ final class LiveAudioMeterCoordinatorTests: XCTestCase {
         await capacityTask.value
     }
 
+    func testInvalidPlaybackEOFClockClearsReadingsAndCancelsWorker() async throws {
+        try await assertEOFClockLoss(afterValidEOF: false)
+    }
+
+    func testClockLossDuringPlaybackEOFDrainClearsReadingsAndCancelsWorker() async throws {
+        try await assertEOFClockLoss(afterValidEOF: true)
+    }
+
+    private func assertEOFClockLoss(afterValidEOF: Bool) async throws {
+        for invalidTime in [Double.nan, .infinity, -.infinity, -0.01, .greatestFiniteMagnitude] {
+            let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
+            let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
+            coordinator.start(try request(stream: 0, startFrame: 0))
+            await decoder.waitUntilAttached(stream: 0)
+            decoder.emit(snapshot(endFrame: 144_000), stream: 0)
+            await eventually { coordinator.status == .active(frame: 144_000) }
+            let gate = try XCTUnwrap(decoder.gate(stream: 0))
+            if afterValidEOF {
+                coordinator.handlePlaybackEvent(.ended(playback(time: 3, playing: false)))
+            } else {
+                coordinator.pause()
+            }
+            let generation = coordinator.generation
+
+            if afterValidEOF {
+                coordinator.handlePlaybackEvent(.transport(playback(
+                    time: invalidTime, playing: false, phase: .buffering
+                )))
+            } else {
+                coordinator.handlePlaybackEvent(.ended(playback(
+                    time: invalidTime, playing: false
+                )))
+            }
+
+            guard case .unavailable(let reason, let diagnostic) = coordinator.status else {
+                coordinator.close()
+                return XCTFail("Expected EOF clock loss to invalidate the draining worker")
+            }
+            XCTAssertEqual(reason, "The playback clock is unavailable.")
+            XCTAssertEqual(diagnostic, "Retry after the player reports a finite source position.")
+            XCTAssertGreaterThan(coordinator.generation, generation)
+            XCTAssertNil(coordinator.snapshot)
+            XCTAssertNil(coordinator.reducedSnapshot)
+            XCTAssertNil(coordinator.provenance)
+            await decoder.waitUntilCancelled(stream: 0)
+            XCTAssertEqual(decoder.activeCount, 0)
+            XCTAssertThrowsError(try gate.waitForByteCapacity(
+                processedEndFrame: 144_000,
+                pendingByteCount: 0,
+                bytesPerFrame: 2 * MemoryLayout<Float>.size
+            )) { XCTAssertTrue($0 is CancellationError) }
+            // Trailing valid EOF observations must not revive invalidated PCM.
+            coordinator.handlePlaybackEvent(.ended(playback(time: 3, playing: false)))
+            XCTAssertNil(coordinator.snapshot)
+            XCTAssertEqual(coordinator.generation, generation + 1)
+            coordinator.close()
+        }
+    }
+
     func testDecoderEOFFreezesFinalReadingWhileContainerClockContinues() async throws {
         let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
         let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)

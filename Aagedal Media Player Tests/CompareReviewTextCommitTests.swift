@@ -7,6 +7,27 @@ import XCTest
 
 final class CompareReviewTextCommitTests: XCTestCase {
     @MainActor
+    func testAcceptedDeletePreservesAnotherFindingsCorrectionAndDrafts() {
+        let deletedID = UUID()
+        let otherID = UUID()
+        var drafts = CompareReviewDraftState()
+        drafts.updateNoteTextDraft("Delete this input", noteID: deletedID)
+        drafts.updateRangeEndDraft("30", noteID: deletedID)
+        drafts.updateNoteTextDraft("", noteID: otherID)
+        drafts.blockAction(noteID: otherID, field: .text,
+            error: "Enter note text", notice: "Correct the other finding")
+        let correction = drafts.correctionRequest
+
+        XCTAssertTrue(drafts.deleteNote(noteID: deletedID) { true })
+        XCTAssertNil(drafts.noteDrafts[deletedID])
+        XCTAssertNil(drafts.rangeDrafts[deletedID])
+        XCTAssertEqual(drafts.noteDrafts[otherID], "")
+        XCTAssertEqual(drafts.noteActionErrors[otherID], "Enter note text")
+        XCTAssertEqual(drafts.correctionRequest, correction)
+        XCTAssertEqual(drafts.rangeActionNotice, "Correct the other finding")
+    }
+
+    @MainActor
     func testExplicitRangeApplyDoesNotReplayUntouchedOrRetiredRowEndpointAfterMerge() {
         let rendered = CompareReviewNote(primaryFrame: 10, primaryTime: 1,
             secondaryFrame: 10, secondaryTime: 1, text: "Finding", primaryEndFrame: 20)

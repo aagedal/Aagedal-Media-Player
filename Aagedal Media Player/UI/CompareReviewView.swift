@@ -80,6 +80,26 @@ struct CompareReviewDraftState {
     var rangeActionNoticeNoteID: UUID?
     var correctionRequest: CompareReviewCorrectionRequest?
 
+    mutating func updateNewNoteDraft(_ text: String) {
+        newNoteDraft = text
+        // Retire feedback with the input itself. A deferred onChange can run
+        // after export preflight and erase its newer Add-or-clear guidance.
+        newNoteActionError = nil
+    }
+
+    /// A queued delete can arrive after saving or loading disabled editing.
+    /// Retire input only when the controller accepts the deletion.
+    @discardableResult
+    mutating func deleteNote(noteID: UUID, action: () -> Bool) -> Bool {
+        guard action() else { return false }
+        noteDrafts[noteID] = nil
+        noteActionErrors[noteID] = nil
+        rangeDrafts[noteID] = nil
+        rangeActionErrors[noteID] = nil
+        if rangeActionNoticeNoteID == noteID { clearActionNotice() }
+        return true
+    }
+
     mutating func blockAction(
         noteID: UUID, field: CompareReviewCorrectionRequest.Field,
         error: String, notice: String
@@ -353,13 +373,13 @@ struct CompareReviewView: View {
             }
 
             HStack(spacing: 8) {
-                TextField("Note at current frame", text: $drafts.newNoteDraft)
+                TextField("Note at current frame", text: Binding(
+                    get: { drafts.newNoteDraft },
+                    set: { drafts.updateNewNoteDraft($0) }
+                ))
                     .textFieldStyle(.roundedBorder)
                     .focused($focusedField, equals: .newNote)
                     .accessibilityIdentifier("compare-review-new-note")
-                    .onChange(of: drafts.newNoteDraft) { _, _ in
-                        drafts.newNoteActionError = nil
-                    }
                     .onSubmit {
                         if canAddNote { addNote() }
                     }
@@ -699,14 +719,9 @@ struct CompareReviewView: View {
                 }
             },
             onDelete: {
-                drafts.noteDrafts[note.id] = nil
-                drafts.noteActionErrors[note.id] = nil
-                drafts.rangeDrafts[note.id] = nil
-                drafts.rangeActionErrors[note.id] = nil
-                if drafts.rangeActionNoticeNoteID == note.id {
-                    drafts.clearActionNotice()
+                drafts.deleteNote(noteID: note.id) {
+                    compareSession.deleteReviewNote(id: note.id)
                 }
-                compareSession.deleteReviewNote(id: note.id)
             },
             onClassification: { severity, category, status in
                 compareSession.updateReviewClassification(
@@ -893,7 +908,7 @@ struct CompareReviewView: View {
 
     private func addNote() {
         if compareSession.addReviewNote(drafts.newNoteDraft, primary: primaryController) {
-            drafts.newNoteDraft = ""
+            drafts.updateNewNoteDraft("")
         }
         focusedField = .newNote
     }
@@ -1030,7 +1045,7 @@ private struct CompareReviewNoteRow: View {
     let onSeek: () -> Void
     let onTextCommit: () -> Void
     let onTextDeparture: () -> Void
-    let onDelete: () -> Void
+    let onDelete: () -> Bool
     let onClassification: (CompareReviewSeverity?, CompareReviewCategory?, CompareReviewStatus?) -> Void
     let onRange: (Int64?) -> Bool
     let onRangeCommit: () -> Void
@@ -1066,7 +1081,7 @@ private struct CompareReviewNoteRow: View {
         onSeek: @escaping () -> Void,
         onTextCommit: @escaping () -> Void,
         onTextDeparture: @escaping () -> Void,
-        onDelete: @escaping () -> Void,
+        onDelete: @escaping () -> Bool,
         onClassification: @escaping (CompareReviewSeverity?, CompareReviewCategory?, CompareReviewStatus?) -> Void,
         onRange: @escaping (Int64?) -> Bool,
         onRangeCommit: @escaping () -> Void,
@@ -1127,8 +1142,7 @@ private struct CompareReviewNoteRow: View {
                         if wasFocused && !focused { commitOnFocusLoss() }
                     }
                 Button(role: .destructive) {
-                    isDeleting = true
-                    onDelete()
+                    isDeleting = onDelete()
                 } label: {
                     Image(systemName: "trash")
                 }

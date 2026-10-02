@@ -5,6 +5,9 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Changed
+- Review preserves unsaved text, ranges and correction focus when a queued deletion is rejected during saving or loading. New-note edits retain current export guidance.
+- Live meters clear readings and cancel decoding when the playback clock becomes invalid at end of file or during final drainage.
+- Premiere round-trip validation rejects freeze frames, source slips, multiclips and conflicting native tick endpoints.
 - Review Return commits against the current saved finding after a concurrent sidecar merge, preserving rejected drafts for correction.
 - Closed live-meter panel controllers reject queued and reentrant reopening, preventing unusable orphan panels.
 - Premiere XML preserves authored carriage returns, CRLF, tabs and line feeds before import; independent round-trip validation rejects nested scalar content that could conceal changed marker text.

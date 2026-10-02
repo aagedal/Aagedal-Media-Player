@@ -404,6 +404,89 @@ class RoundTripTests(unittest.TestCase):
             with self.subTest(field=field), self.assertRaisesRegex(ValueError, "Nested content in scalar"):
                 self.compare(mutate)
 
+    def test_still_frame_source_cannot_pass_unchanged_path_and_frame_placement(self):
+        for path in (".//clipitem", ".//file/media/video"):
+            for values in (("TRUE",), ("false",), (None,), ("FALSE", "FALSE"), ("FALSE", "TRUE")):
+                def mutate(root):
+                    for value in values:
+                        ET.SubElement(root.find(path), "stillframe").text = value
+                with self.subTest(path=path, values=values), self.assertRaisesRegex(ValueError, "must not be a still frame"):
+                    self.compare(mutate)
+        def moving(root):
+            for path in (".//clipitem", ".//file/media/video"):
+                ET.SubElement(root.find(path), "stillframe").text = "FALSE"
+        self.assertEqual(self.compare(moving)["status"], "exact-match")
+
+    def test_source_frame_offsets_and_multiclip_cannot_pass_unchanged_placement(self):
+        for field in ("stillframeoffset", "mixedratesoffset", "mediadelay"):
+            for values in (("1",), ("-1",), (None,), ("0", "0"), ("0", "1")):
+                def mutate(root):
+                    for value in values:
+                        ET.SubElement(root.find(".//clipitem"), field).text = value
+                with self.subTest(field=field, values=values), self.assertRaises(ValueError):
+                    self.compare(mutate)
+        with self.assertRaisesRegex(ValueError, "multiclip"):
+            self.compare(lambda root: ET.SubElement(root.find(".//clipitem"), "multiclip"))
+
+    def test_subframe_source_slips_cannot_pass_unchanged_integer_placement(self):
+        for values in (("0.5",), ("-0.0001",), ("1",), (None,), ("garbage",), ("0", "0")):
+            def mutate(root):
+                for value in values:
+                    ET.SubElement(root.find(".//clipitem"), "subframeoffset").text = value
+            with self.subTest(values=values), self.assertRaises(ValueError):
+                self.compare(mutate)
+
+    def test_explicit_zero_source_offsets_match_continuous_untrimmed_carrier(self):
+        for subframe in ("0", "0.0", "-0.000"):
+            def mutate(root):
+                clip = root.find(".//clipitem")
+                for field in ("stillframeoffset", "mixedratesoffset", "mediadelay"):
+                    ET.SubElement(clip, field).text = "0"
+                ET.SubElement(clip, "subframeoffset").text = subframe
+            with self.subTest(subframe=subframe):
+                self.assertEqual(self.compare(mutate)["status"], "exact-match")
+
+    def test_native_premiere_tick_endpoints_must_match_frame_endpoints_exactly(self):
+        # Native retained receipts encode pproTicksIn/Out in addition to frames.
+        # Test integer, fractional and DF clocks without rounding through float.
+        for base, ntsc, df in ((24, False, False), (24, True, False), (30, True, True), (60, True, True)):
+            original = fixture(base, ntsc, df)
+            returned = copy.deepcopy(original)
+            fps = premiere.rate(returned.find(".//clipitem"))
+            expected = premiere.Fraction(20000 * 254016000000, fps)
+            self.assertEqual(expected.denominator, 1)
+            ET.SubElement(returned.find(".//clipitem"), "pproTicksIn").text = "0"
+            ET.SubElement(returned.find(".//clipitem"), "pproTicksOut").text = str(expected.numerator)
+            ET.ElementTree(original).write(self.before)
+            ET.ElementTree(returned).write(self.after)
+            with self.subTest(base=base, ntsc=ntsc):
+                self.assertEqual(premiere.compare(self.before, self.after)["status"], "exact-match")
+            for field in ("pproTicksIn", "pproTicksOut"):
+                node = returned.find(f".//clipitem/{field}")
+                old_value = node.text
+                for value in (str(int(old_value) + 1), "-1", "1.5", None):
+                    node.text = value
+                    ET.ElementTree(returned).write(self.after)
+                    with self.subTest(base=base, field=field, value=value), self.assertRaises(ValueError):
+                        premiere.compare(self.before, self.after)
+                node.text = old_value
+                duplicate = ET.SubElement(returned.find(".//clipitem"), field)
+                duplicate.text = old_value
+                ET.ElementTree(returned).write(self.after)
+                with self.subTest(base=base, field=field), self.assertRaisesRegex(ValueError, "ambiguous Premiere"):
+                    premiere.compare(self.before, self.after)
+                returned.find(".//clipitem").remove(duplicate)
+
+    def test_nested_source_timing_scalar_content_rejected(self):
+        for field, value in (("stillframe", "FALSE"), ("stillframeoffset", "0"), ("mixedratesoffset", "0"),
+                             ("mediadelay", "0"), ("subframeoffset", "0.0"), ("pproTicksIn", "0")):
+            def mutate(root):
+                node = ET.SubElement(root.find(".//clipitem"), field)
+                node.text = value
+                ET.SubElement(node, "unexpected").text = "concealed source change"
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError, "Nested content in scalar"):
+                self.compare(mutate)
+
     def test_changed_clip_pixel_aspect_cannot_pass_unchanged_file_and_sequence(self):
         result = self.compare(lambda root: setattr(
             ET.SubElement(root.find(".//clipitem"), "pixelaspectratio"), "text", "NTSC-601"))

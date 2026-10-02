@@ -1,0 +1,50 @@
+[
+  {
+    "field": "stillframe",
+    "value": "TRUE",
+    "status": "invalid",
+    "error": "Source-A video must not be a still frame"
+  },
+  {
+    "field": "stillframeoffset",
+    "value": "7",
+    "status": "invalid",
+    "error": "Unsupported or ambiguous source-A stillframeoffset"
+  },
+  {
+    "field": "subframeoffset",
+    "value": "0.5",
+    "status": "invalid",
+    "error": "Unsupported source-A subframeoffset"
+  },
+  {
+    "field": "mixedratesoffset",
+    "value": "1",
+    "status": "invalid",
+    "error": "Unsupported or ambiguous source-A mixedratesoffset"
+  },
+  {
+    "field": "mediadelay",
+    "value": "1",
+    "status": "invalid",
+    "error": "Unsupported or ambiguous source-A mediadelay"
+  },
+  {
+    "field": "pproTicksIn",
+    "value": "1",
+    "status": "invalid",
+    "error": "Contradicting or ambiguous Premiere pproTicksIn"
+  },
+  {
+    "field": "pproTicksOut",
+    "value": "1",
+    "status": "invalid",
+    "error": "Contradicting or ambiguous Premiere pproTicksOut"
+  },
+  {
+    "field": "multiclip",
+    "value": null,
+    "status": "invalid",
+    "error": "Unsupported multiclip source-A clip"
+  }
+]

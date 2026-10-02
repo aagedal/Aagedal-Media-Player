@@ -3,6 +3,18 @@
 Assessment updated: 2026-10-02. This assessment reflects the
 [product roadmap](../PRODUCT_ROADMAP.md) and its recorded scope decisions.
 
+The October 2 EOF/deletion continuation preserves unsaved Review input when
+queued deletion is rejected, validates meter clocks during playback EOF drainage,
+and rejects Premiere freeze/slip/multiclip/native-tick contradictions. All 94
+focused optimized Release checks pass with no skips or runtime warnings, all 43
+Premiere checks pass, and both meter regressions reproduce the preceding defect.
+The native file-picker attempt is inconclusive; no new keyboard or spoken
+accessibility acceptance is claimed. Candidate/release consumption now requires
+all four new identities and 806 aggregate tests. See
+[focused receipts](evidence/review-eof-premiere-timing-20261002/README.md).
+Canonical committed-source verification follows separately; dependency, native,
+hardware and distribution gates remain open.
+
 The latest October 2 continuation moves explicit Review range Apply/Return to
 current draft ownership, cancels invalid paused/buffering meter clocks, and
 rejects Premiere source-track/timecode selectors that previously produced false

@@ -165,6 +165,43 @@ def require_primary_video_source(clip):
         raise ValueError("Unsupported or ambiguous source-A video track index")
 
 
+def require_continuous_source_video(clip):
+    # Unchanged integer in/out positions do not establish continuous source
+    # playback if XMEML selects a freeze frame, a slipped source or a multiclip.
+    # See Apple's FCP7 Elements Catalog: stillframe(offset), subframeoffset,
+    # mixedratesoffset and mediadelay all change source interpretation.
+    if clip.find("multiclip") is not None:
+        raise ValueError("Unsupported multiclip source-A clip")
+    require_moving_video(clip)
+    for name in ("stillframeoffset", "mixedratesoffset", "mediadelay"):
+        nodes = clip.findall(name)
+        if len(nodes) > 1 or (nodes and integer(clip, name) != 0):
+            raise ValueError(f"Unsupported or ambiguous source-A {name}")
+    offsets = clip.findall("subframeoffset")
+    if len(offsets) > 1:
+        raise ValueError("Ambiguous source-A subframeoffset")
+    if offsets:
+        value = scalar_text(offsets[0], "subframeoffset")
+        if not re.fullmatch(r"-?\d+(?:\.\d+)?", value) or Fraction(value) != 0:
+            raise ValueError("Unsupported source-A subframeoffset")
+
+
+def require_moving_video(element):
+    nodes = element.findall("stillframe")
+    if len(nodes) > 1 or (nodes and scalar_text(nodes[0], "stillframe", allow_empty=True) != "FALSE"):
+        raise ValueError("Source-A video must not be a still frame")
+
+
+def require_consistent_premiere_ticks(clip, fps, placement):
+    # Native Premiere receipts encode source in/out a second time in ticks.
+    # Adobe defines 254016000000 ticks per second; contradicting these native
+    # endpoints cannot prove an unchanged source even if frame fields match.
+    for name, frame_name in (("pproTicksIn", "in"), ("pproTicksOut", "out")):
+        nodes = clip.findall(name)
+        if len(nodes) > 1 or (nodes and integer(clip, name) != Fraction(placement[frame_name] * 254016000000, fps)):
+            raise ValueError(f"Contradicting or ambiguous Premiere {name}")
+
+
 def read_export(path, sequence_name=None):
     data = path.read_bytes()
     # XML may be UTF-16 or UTF-32. Strip NUL padding only for this ASCII
@@ -195,6 +232,7 @@ def read_export(path, sequence_name=None):
     clip = clips[0]
     require_enabled(clip)
     require_primary_video_source(clip)
+    require_continuous_source_video(clip)
     placement = {p: integer(clip, p) for p in ("start", "end", "in", "out", "duration")}
     media_duration = placement["duration"]
     if media_duration <= 0 or media_duration > duration or placement != dict(
@@ -202,6 +240,7 @@ def read_export(path, sequence_name=None):
         raise ValueError("Review source-A clip must be full, untrimmed and start at sequence frame zero")
     if rate(clip) != fps or clip.find("sequence") is not None or clip.find("filter") is not None:
         raise ValueError("Unsupported nested, filtered or retimed source-A clip")
+    require_consistent_premiere_ticks(clip, fps, placement)
     file_nodes = clip.findall("file")
     if len(file_nodes) != 1:
         raise ValueError("Expected one source-A file reference")
@@ -213,6 +252,8 @@ def read_export(path, sequence_name=None):
         media = definitions[0]
     if rate(media) != fps or integer(media, "duration") != media_duration:
         raise ValueError("Source-A media rate/duration differs from its untrimmed clip")
+    for video in media.findall("media/video"):
+        require_moving_video(video)
     seq_format = sequence.findall("media/video/format/samplecharacteristics")
     file_format = media.findall("media/video/samplecharacteristics")
     if len(seq_format) > 1 or len(file_format) > 1:
