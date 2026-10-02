@@ -4756,6 +4756,11 @@ Integrated committed-source verification follows separately.
   suspension until the correction-owning field is edited or an action retries.
 - [x] Preserve unchanged field callbacks and ordinary Review reopening. Require
   all eight regressions and at least 818 aggregate tests for release consumption.
+- [x] Pass clean canonical verification at `a4971ab`: 809 passes plus nine
+  named opt-in skips (818 total), both transport directions, static analysis,
+  all 61 preflight checks and source/package/cache/power identity. Retain
+  native correction/export/reopen/multi-field and simulated external-client
+  merge receipts; actual two-window and full spoken accessibility remain open.
 - [x] Prepare a local upstream bounded-MXF commit with independently restorable
   Git bundle and exact source receipt; keep shipping dependency pins unchanged.
 - [ ] Complete the prioritized dependency, full native/editor/accessibility,

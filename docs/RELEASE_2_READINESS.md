@@ -12,6 +12,17 @@ preflight owns the correction destination after revealing filtered findings.
 Candidate/release consumption requires eight additional regressions and 818
 aggregate tests. Focused and final native results are recorded in
 [focus receipts](evidence/review-focus-navigation-20261002/README.md).
+Final clean canonical verification passes at implementation commit
+`a4971ab812af1d87ef5bc9e930a67b11ec60d045`: 809 passes, nine named opt-in
+skips (818 total), all eight focus identities, both isolated transport directions,
+static analysis, all 61 preflight checks and final source/package/cache/no-sleep
+identity. See [integrated receipts](evidence/review-navigation-candidate-20261002/README.md).
+Later documentation retention does not replace matching-HEAD release consumption.
+Native focused-build observations include correction navigation, filtered export,
+reopening, companion/other-finding edits and simulated external-client deletion
+merged through production save; real two-window and complete spoken keyboard
+acceptance remain open.
+
 The earlier merged-deletion/media-baseline batch passed clean canonical
 verification at `316e1bfdb6de7f1f5a7d697a09e259f7185357d3`: 801 passes,
 nine named opt-in skips, both isolated transport directions and all 61 preflight
