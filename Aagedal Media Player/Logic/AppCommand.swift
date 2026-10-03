@@ -36,6 +36,7 @@ enum AppCommand {
     case copyTimecode
     case pasteTimecode
     case reloadPlayer
+    case reloadPlayerSurface(targetWindow: NSWindow)
     case toggleScopes
     case toggleScopeParade
     case toggleAudioWaveform

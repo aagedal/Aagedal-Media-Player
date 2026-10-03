@@ -565,9 +565,15 @@ private struct TimecodeAndSyncHandlers: ViewModifier {
                 }
             }
             .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
-                guard let command = notification.appCommand,
-                      case .reloadPlayer = command else { return }
-                guard WindowManager.shared.isActiveWindow(nsWindow), isMediaLoaded else { return }
+                guard let command = notification.appCommand, isMediaLoaded else { return }
+                switch command {
+                case .reloadPlayer:
+                    guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
+                case .reloadPlayerSurface(let targetWindow):
+                    guard targetWindow === nsWindow else { return }
+                default:
+                    return
+                }
                 compareSession.reload(primary: controller)
             }
             .onReceive(NotificationCenter.default.publisher(for: NSApplication.didResignActiveNotification)) { _ in
