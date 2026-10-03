@@ -4771,6 +4771,25 @@ Integrated committed-source verification follows separately.
   [provider engineering](docs/MPV_DECODER_RASTER_PROVIDER.md) and
   [manual completion](docs/RELEASE_2_MANUAL_COMPLETION.md).
 
+## Phase 233 — Comparison clock sampling and bounded decoder proof
+
+- [x] Bracket B’s playback-clock read with A reads after transport updates;
+  preserve decoder-read uncertainty and reject nonfinite derived drift.
+- [x] Require BGRA and bounded geometry/stride/exact byte size before copying
+  decoder-raster responses; preserve valid padded rows.
+- [x] Add five clock/protocol regressions and require the seven newly added
+  merged audio/surface regressions plus the renamed resize case. Candidate and
+  release requirements match and refer to existing test methods; floor is 838.
+- [x] Pass clean canonical verification at `179aaae`: 829 passes, nine named
+  opt-in skips, both isolated transport directions, static analysis, all 61
+  preflight checks and source/package/cache/power identity. Retain the first
+  rejected off-by-one floor and final
+  [receipts](docs/evidence/clock-raster-candidate-20261003/README.md).
+- [ ] Repeat measured UHD mixed-backend drift/visual alignment, audible mono
+  programme/device routing, resizing/fullscreen and remaining native acceptance.
+  The shipping MPV source-pixel provider gate remains open; see
+  [manual completion](docs/RELEASE_2_MANUAL_COMPLETION.md).
+
 ## Remaining work after this continuation
 
 ### October 2 native Review focus continuation

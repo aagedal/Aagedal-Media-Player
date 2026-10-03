@@ -13,6 +13,13 @@ inspection before the editor beta. Automatic time-localized content-mismatch
 detection moves to a later release; existing manual Review findings, metadata
 mismatch summaries and missing-counterpart intervals remain available.
 
+Canonical verification of the October 3 engineering batch passes at
+`179aaaea442968f7fe4f0bad2167d1ec5701ace0`: 829 Release passes, nine named
+opt-in skips (838 total), both isolated transport directions, static analysis,
+all 61 preflight checks and final source/package/cache/no-sleep identity. See
+[clock/raster candidate receipts](evidence/clock-raster-candidate-20261003/README.md).
+Later documentation retention does not replace matching-HEAD release consumption.
+
 The October 3 continuation corrects comparison clock sampling to read A/B/A
 around the secondary decoder after transport updates, preserving read uncertainty
 when deciding drift corrections. The guarded decoder-raster consumer now checks
