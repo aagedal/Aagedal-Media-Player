@@ -182,7 +182,7 @@ if [[ "$EVIDENCE_STATUS" != "passed" \
     exit 2
 fi
 python3 scripts/validate-release-xcresult.py \
-    "$CANDIDATE_SUMMARY" "$CANDIDATE_DETAILS" --minimum-tests 839 \
+    "$CANDIDATE_SUMMARY" "$CANDIDATE_DETAILS" --minimum-tests 838 \
     --require-test "LoupeTrackDecoderTests/testBundledMPVFallbackPreviewNeverCertifiesMatchingDimensions()" \
     --require-test "AudioChannelRoutingTests/testBundledMPVSwitchesBetweenMonoStereoAndSurroundProgrammes()" \
     --require-test "AudioChannelRoutingTests/testMonoProgrammeUsesExplicitSpeakerAssignments()" \

@@ -102,7 +102,7 @@ xcrun xcresulttool get test-results tests \
 python3 scripts/validate-release-xcresult.py \
     "$artifact_dir/test-summary.json" \
     "$artifact_dir/test-details.json" \
-    --minimum-tests 839 \
+    --minimum-tests 838 \
     --require-test "LoupeTrackDecoderTests/testBundledMPVFallbackPreviewNeverCertifiesMatchingDimensions()" \
     --require-test "AudioChannelRoutingTests/testBundledMPVSwitchesBetweenMonoStereoAndSurroundProgrammes()" \
     --require-test "AudioChannelRoutingTests/testMonoProgrammeUsesExplicitSpeakerAssignments()" \

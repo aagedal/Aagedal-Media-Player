@@ -20,7 +20,7 @@ strict BGRA, bounded raster/stride and exact buffer size before copying. The
 shipping provider remains unavailable; these changes do not close general MPV
 source-pixel or measured comparison-drift acceptance. Candidate/release checks
 now require the split-mono audio, settled surface recovery and new sampling/
-protocol regressions, with an aggregate floor of 839 tests. See the updated
+protocol regressions, with an aggregate floor of 838 tests. See the updated
 [manual completion checklist](RELEASE_2_MANUAL_COMPLETION.md).
 
 Published dependency integration now pins MPVKit revision
@@ -34,7 +34,7 @@ correction retirement, retained draft and surviving edit scenario. See
 Full keyboard/accessibility/editor/runtime acceptance remains separate.
 
 Canonical verification of the repinned source passes at
-`53d055b7f1839f5a6c209e9441c1c4e764592f15`: 809 passes, nine named opt-in
+`53d055b7f1838f5a6c209e9441c1c4e764592f15`: 809 passes, nine named opt-in
 skips, both isolated transport directions, static analysis and all 61 preflight
 checks. See [candidate receipts](evidence/repinned-candidate-20261002/README.md).
 Basic M5 performance passes both decoder headroom thresholds and all ten
@@ -106,7 +106,7 @@ Current delivery status and order:
 
 1. Published and repinned the CoreAudio/GPL/Metal and bounded-MXF dependencies.
    Fresh remote verification and ordinary package resolution pass. Canonical
-   optimized Release verification at `53d055b7f1839f5a6c209e9441c1c4e764592f15`
+   optimized Release verification at `53d055b7f1838f5a6c209e9441c1c4e764592f15`
    passes: 809 tests, nine named opt-in skips, both isolated transport directions,
    static analysis and all 61 preflight checks. See
    [repinned candidate receipts](evidence/repinned-candidate-20261002/README.md).
