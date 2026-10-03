@@ -127,6 +127,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         }
 
         isInitialized = false
+        monoProgrammeGraph = ""
         metalLayer = nil
 
         // Release the Unmanaged self-retain so deinit can run.
@@ -516,15 +517,35 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
     var outputAudioChannelCount: Int { getInt("audio-out-params/channel-count") }
     var audioOutputDriver: String? { getString("current-ao") }
 
+    private var monoProgrammeGraph = ""
+
+    @discardableResult
+    func setMonoProgramme(_ programme: MonoPlaybackProgramme?) -> Bool {
+        let graph = programme?.mpvFilterGraph ?? ""
+        guard graph != monoProgrammeGraph else { return true }
+        guard setProgrammeGraph(isAudioTrackDisabled ? "" : graph) else { return false }
+        monoProgrammeGraph = graph
+        return true
+    }
+
+    private func setProgrammeGraph(_ graph: String) -> Bool {
+        guard let mpv else { return false }
+        let result = mpv_set_property_string(mpv, "lavfi-complex", graph)
+        checkError(result, context: "Mono programme")
+        return result >= 0
+    }
+
     func disableAudioTrack() {
         // mpv represents the disabled audio selection as track id -2.
         isAudioTrackDisabled = true
+        if !monoProgrammeGraph.isEmpty { _ = setProgrammeGraph("") }
         guard mpv != nil else { return }
         currentAudioTrackIndex = -2
     }
 
     func enableAudioTrackSelection() {
         isAudioTrackDisabled = false
+        if !monoProgrammeGraph.isEmpty { _ = setProgrammeGraph(monoProgrammeGraph) }
     }
 
     func setAudioChannelRouting(_ routing: AudioChannelRouting) {

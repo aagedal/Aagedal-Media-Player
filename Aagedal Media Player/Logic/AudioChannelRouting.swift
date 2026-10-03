@@ -217,3 +217,57 @@ nonisolated struct CompareAudioLayoutSummary: Equatable, Sendable {
         return "\(count) ch · \(trimmed.isEmpty ? "Layout unspecified" : trimmed)"
     }
 }
+
+/// Speaker-ordered mono tracks, joined without summing or changing their gain.
+nonisolated struct MonoPlaybackProgramme: Equatable, Sendable {
+    enum Layout: String, CaseIterable, Sendable {
+        case stereo = "Stereo"
+        case surround = "5.1"
+
+        var ffmpegLayout: String { self == .stereo ? "stereo" : "5.1" }
+        var speakers: [String] {
+            self == .stereo ? ["FL", "FR"] : ["FL", "FR", "FC", "LFE", "BL", "BR"]
+        }
+        var labels: [String] {
+            AudioChannelLabels.names(count: speakers.count, layout: ffmpegLayout)
+        }
+    }
+
+    let layout: Layout
+    let trackIDs: [Int]
+
+    init?(layout: Layout, trackIDs: [Int]) {
+        guard trackIDs.count == layout.speakers.count,
+              Set(trackIDs).count == trackIDs.count,
+              trackIDs.allSatisfy({ $0 > 0 }) else { return nil }
+        self.layout = layout
+        self.trackIDs = trackIDs
+    }
+
+    var mpvFilterGraph: String {
+        // The shipped FFmpeg build includes pan and amix, but not join/amerge.
+        // Each mono source occupies exactly one speaker, so this unnormalized
+        // mix combines disjoint channels without attenuation or summing sources
+        // into the same speaker.
+        let routes = trackIDs.enumerated().map { source, trackID in
+            let channels = layout.speakers.enumerated().map { speaker, role in
+                "\(role)=" + (speaker == source ? "c0" : "0*c0")
+            }.joined(separator: "|")
+            return "[aid\(trackID)]pan=\(layout.ffmpegLayout)|\(channels)[mono\(source)]"
+        }
+        let inputs = trackIDs.indices.map { "[mono\($0)]" }.joined()
+        return routes.joined(separator: ";") + ";" + inputs
+            + "amix=inputs=\(trackIDs.count):normalize=0:dropout_transition=0[ao]"
+    }
+
+    /// Swapping an assigned track preserves one distinct track per speaker.
+    func assigning(trackID: Int, to speaker: Int) -> Self? {
+        guard trackIDs.indices.contains(speaker) else { return nil }
+        var ids = trackIDs
+        if let oldSpeaker = ids.firstIndex(of: trackID) {
+            ids[oldSpeaker] = ids[speaker]
+        }
+        ids[speaker] = trackID
+        return Self(layout: layout, trackIDs: ids)
+    }
+}

@@ -3,10 +3,87 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import AudioToolbox
+import Libmpv
 import XCTest
 @testable import Aagedal_Media_Player
 
 final class AudioChannelRoutingTests: XCTestCase {
+    @MainActor
+    func testBundledMPVSwitchesBetweenMonoStereoAndSurroundProgrammes() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let file = directory.appendingPathComponent("eight-mono.mkv")
+        var arguments = ["-v", "error", "-y"]
+        for track in 0..<8 {
+            arguments += ["-f", "lavfi", "-i", "sine=frequency=\(300 + track * 100):sample_rate=48000:duration=4"]
+        }
+        for track in 0..<8 { arguments += ["-map", "\(track):a"] }
+        try await FFmpegService.run(arguments: arguments + ["-c:a", "pcm_s16le", file.path])
+
+        let handle = try XCTUnwrap(mpv_create())
+        defer { mpv_terminate_destroy(handle) }
+        for (name, value) in [("vo", "null"), ("ao", "null"), ("pause", "no"), ("loop-file", "inf"), ("audio-channels", "auto")] {
+            XCTAssertGreaterThanOrEqual(mpv_set_option_string(handle, name, value), 0)
+        }
+        XCTAssertGreaterThanOrEqual(mpv_request_log_messages(handle, "warn"), 0)
+        XCTAssertGreaterThanOrEqual(mpv_initialize(handle), 0)
+        XCTAssertGreaterThanOrEqual(mpv_command_string(handle, "loadfile \"\(file.path)\""), 0)
+
+        func property(_ name: String) -> String? {
+            guard let value = mpv_get_property_string(handle, name) else { return nil }
+            defer { mpv_free(value) }
+            return String(cString: value)
+        }
+        var decoderMessages: [String] = []
+        func waitFor(_ name: String, _ expected: String) async throws {
+            let deadline = ContinuousClock.now + .seconds(5)
+            while ContinuousClock.now < deadline {
+                while let event = mpv_wait_event(handle, 0), event.pointee.event_id != MPV_EVENT_NONE {
+                    if event.pointee.event_id == MPV_EVENT_LOG_MESSAGE, let data = event.pointee.data {
+                        let message = data.assumingMemoryBound(to: mpv_event_log_message.self).pointee
+                        decoderMessages.append(String(cString: message.text))
+                    }
+                }
+                if property(name) == expected { return }
+                try await Task.sleep(for: .milliseconds(20))
+            }
+            XCTFail("Expected \(name)=\(expected), got \(property(name) ?? "nil"): \(decoderMessages.joined())")
+        }
+        try await waitFor("track-list/count", "8")
+        for (layout, ids) in [
+            (MonoPlaybackProgramme.Layout.stereo, [1, 2]),
+            (.surround, [1, 2, 3, 4, 5, 6]),
+            (.stereo, [7, 8]),
+        ] {
+            let programme = try XCTUnwrap(MonoPlaybackProgramme(layout: layout, trackIDs: ids))
+            XCTAssertGreaterThanOrEqual(mpv_set_property_string(handle, "lavfi-complex", programme.mpvFilterGraph), 0)
+            try await waitFor("audio-out-params/channel-count", String(ids.count))
+            XCTAssertEqual(property("audio-out-params/channels"), layout.ffmpegLayout)
+        }
+        XCTAssertGreaterThanOrEqual(mpv_set_property_string(handle, "lavfi-complex", ""), 0)
+        XCTAssertGreaterThanOrEqual(mpv_set_property_string(handle, "aid", "1"), 0)
+        try await waitFor("audio-out-params/channel-count", "1")
+    }
+
+    func testMonoProgrammeUsesExplicitSpeakerAssignments() {
+        let stereo = MonoPlaybackProgramme(layout: .stereo, trackIDs: [2, 4])!
+        XCTAssertEqual(stereo.mpvFilterGraph, "[aid2]pan=stereo|FL=c0|FR=0*c0[mono0];[aid4]pan=stereo|FL=0*c0|FR=c0[mono1];[mono0][mono1]amix=inputs=2:normalize=0:dropout_transition=0[ao]")
+        let surround = MonoPlaybackProgramme(layout: .surround, trackIDs: [1, 2, 3, 4, 5, 6])!
+        XCTAssertTrue(surround.mpvFilterGraph.contains("[aid4]pan=5.1|FL=0*c0|FR=0*c0|FC=0*c0|LFE=c0|BL=0*c0|BR=0*c0[mono3]"))
+        XCTAssertTrue(surround.mpvFilterGraph.hasSuffix("amix=inputs=6:normalize=0:dropout_transition=0[ao]"))
+        XCTAssertNil(MonoPlaybackProgramme(layout: .stereo, trackIDs: [1, 1]))
+        XCTAssertNil(MonoPlaybackProgramme(layout: .surround, trackIDs: [1, 2]))
+        XCTAssertNil(MonoPlaybackProgramme(layout: .stereo, trackIDs: [-2, 1]))
+    }
+
+    func testMonoSpeakerReassignmentSwapsExistingTrack() {
+        let programme = MonoPlaybackProgramme(layout: .stereo, trackIDs: [1, 2])!
+        XCTAssertEqual(programme.assigning(trackID: 2, to: 0)?.trackIDs, [2, 1])
+        XCTAssertEqual(programme.assigning(trackID: 8, to: 1)?.trackIDs, [1, 8])
+        XCTAssertNil(programme.assigning(trackID: 3, to: 2))
+    }
+
     func testInvalidChannelIndexesAreDiscarded() {
         let routing = AudioChannelRouting(
             channelCount: 2,
