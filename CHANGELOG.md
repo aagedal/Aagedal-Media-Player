@@ -5,6 +5,7 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Changed
+- Video scaling recovers after incremental and programmatic window resizing or native surface replacement, with one settled reload directed to the affected player window.
 - Loupe capture has a guarded decoder-raster consumer and rejects stale or failed capture proof; the published MPV dependency remains display-preview-only until the new provider is validated and integrated.
 - Review uses one keyboard focus owner, preserving invalid drafts while New Note and Filter navigation proceeds; explicit actions reveal and focus the required correction.
 - Review retires corrections for findings deleted by another window's sidecar merge, allowing edits to surviving findings while preserving drafts during reload.

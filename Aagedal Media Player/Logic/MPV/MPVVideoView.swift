@@ -32,23 +32,16 @@ final class MPVViewController: NSViewController {
     nonisolated(unsafe) private var didEndLiveResizeObserver: NSObjectProtocol?
     private weak var observedWindow: NSWindow?
 
-    /// Tracks the drawableSize we last observed in a viewDidLayout pass,
-    /// for diagnostic correlation in the `scaling` log.
-    private var lastNudgedDrawableSize: CGSize = .zero
-
-    /// One-shot guard for the viewDidLayout-based auto Force Reload.
-    /// When mpv attaches to a layer whose drawableSize is small (e.g.
-    /// the layer hasn't been laid out into its final container yet —
-    /// the common case when a file drops into a small/empty window),
-    /// mpv's vo locks its dst rect to that small size. A subsequent
-    /// viewDidLayout that grows the surface to its real size leaves
-    /// mpv rendering 540×304-worth of pixels into a 1920×1080 swapchain
-    /// — video collapses to the top-left at the pixelated initial size.
-    /// We catch this by Force Reloading on the first ≥1.5× growth in
-    /// viewDidLayout, but only once per MPVViewController instance —
-    /// otherwise the reload itself (which recreates the view controller
-    /// via SwiftUI's preparationID-based .id()) could re-enter and loop.
-    private var hasAutoReloadedForLayoutJump = false
+    // Compare with the size MPV initialized against, rather than the preceding
+    // layout tick: small incremental or programmatic resizes can also strand
+    // its destination rectangle. Coalesce changes until the surface settles.
+    private var attachedDrawableSize: CGSize = .zero
+    private var pendingDrawableSize: CGSize?
+    private var forcesPendingSurfaceReload = false
+    private var hasRequestedSurfaceReload = false
+    private var requiresReloadForReplacedDrawable = false
+    private var isTransitioningFullScreen = false
+    private var isDisappearing = false
     private let layoutReload = DeferredMainActorTask()
 
     init(player: MPVPlayer, managesSurfaceReloads: Bool, surfaceSize: CGSize) {
@@ -64,7 +57,11 @@ final class MPVViewController: NSViewController {
 
     func setManagesSurfaceReloads(_ managesSurfaceReloads: Bool) {
         self.managesSurfaceReloads = managesSurfaceReloads
-        if !managesSurfaceReloads { layoutReload.cancel() }
+        if !managesSurfaceReloads {
+            layoutReload.cancel()
+            pendingDrawableSize = nil
+            forcesPendingSurfaceReload = false
+        }
     }
 
     /// SwiftUI can update a composited comparison surface without delivering
@@ -76,7 +73,6 @@ final class MPVViewController: NSViewController {
         let proposalChanged = surfaceSize != size
         surfaceSize = size
         guard isViewLoaded else { return }
-        let oldDrawableSize = metalLayer.drawableSize
         // AppKit can align a fractional SwiftUI proposal to different native
         // bounds. Reapplying that same proposal on each playback update would
         // alternate the drawable size with viewDidLayout and rebuild MPV's
@@ -90,7 +86,7 @@ final class MPVViewController: NSViewController {
             width: view.bounds.width * metalLayer.contentsScale,
             height: view.bounds.height * metalLayer.contentsScale
         )
-        handleDrawableGrowth(from: oldDrawableSize, to: metalLayer.drawableSize)
+        scheduleReloadForDrawableChange()
         attachDrawableIfSized()
     }
 
@@ -98,8 +94,10 @@ final class MPVViewController: NSViewController {
         guard !hasAttachedDrawable,
               surfaceSize.width.isFinite, surfaceSize.height.isFinite,
               surfaceSize.width > 1, surfaceSize.height > 1 else { return }
+        attachedDrawableSize = metalLayer.drawableSize
         hasAttachedDrawable = true
-        player.attachDrawable(metalLayer)
+        requiresReloadForReplacedDrawable = player.attachDrawable(metalLayer)
+        scheduleReloadForDrawableChange()
     }
 
     deinit {
@@ -159,11 +157,16 @@ final class MPVViewController: NSViewController {
 
     override func viewWillAppear() {
         super.viewWillAppear()
+        isDisappearing = false
         installWindowObservers(on: view.window)
+        scheduleReloadForDrawableChange()
     }
 
     override func viewWillDisappear() {
+        isDisappearing = true
         layoutReload.cancel()
+        pendingDrawableSize = nil
+        forcesPendingSurfaceReload = false
         super.viewWillDisappear()
     }
 
@@ -197,31 +200,37 @@ final class MPVViewController: NSViewController {
             metalLayer.drawableSize = newDrawableSize
             scalingLogger.info("viewDidLayout: bounds=\(String(describing: self.view.bounds)) scale=\(scale) oldDrawable=\(String(describing: oldDrawableSize)) newDrawable=\(String(describing: newDrawableSize)) fullscreen=\(isFullScreen)")
 
-            lastNudgedDrawableSize = newDrawableSize
-
-            handleDrawableGrowth(from: oldDrawableSize, to: newDrawableSize)
+            scheduleReloadForDrawableChange()
         } else {
             scalingLogger.debug("viewDidLayout: bounds=\(String(describing: self.view.bounds)) skipped (newDrawable=\(String(describing: newDrawableSize)) <=1)")
         }
     }
 
-    /// Both AppKit layout and explicit SwiftUI sizing share the same one-shot
-    /// decision. The explicit path must supply the drawable size from before
-    /// mutation, otherwise a later layout observes equal sizes and misses it.
-    private func handleDrawableGrowth(from old: CGSize, to new: CGSize) {
+    private func scheduleReloadForDrawableChange(force: Bool = false) {
         guard managesSurfaceReloads, hasAttachedDrawable,
-              !hasAutoReloadedForLayoutJump,
-              let window = view.window,
-              !window.styleMask.contains(.fullScreen),
-              shouldAutoReloadForLayoutJump(from: old, to: new) else { return }
-        hasAutoReloadedForLayoutJump = true
-        // Explicit sizing runs inside updateNSViewController. Post on the next
-        // main-actor turn so reload cannot publish state during SwiftUI's update.
-        layoutReload.schedule { [weak self, weak window] in
-            guard let self, let window, self.view.window === window else { return }
-            self.requestReloadForSurfaceChange(
-                reason: "drawableSize jumped \(Int(old.width))x\(Int(old.height)) → \(Int(new.width))x\(Int(new.height))"
-            )
+              !hasRequestedSurfaceReload, !isTransitioningFullScreen, !isDisappearing,
+              let window = view.window else { return }
+        let size = metalLayer.drawableSize
+        guard force || forcesPendingSurfaceReload || requiresReloadForReplacedDrawable
+                || abs(size.width - attachedDrawableSize.width) > 1
+                || abs(size.height - attachedDrawableSize.height) > 1 else {
+            layoutReload.cancel()
+            pendingDrawableSize = nil
+            return
+        }
+        // Playback updates often repeat the same settled proposal. They must
+        // not keep postponing a pending repair indefinitely.
+        guard force || pendingDrawableSize != size else { return }
+        pendingDrawableSize = size
+        forcesPendingSurfaceReload = forcesPendingSurfaceReload || force
+        layoutReload.schedule(after: .milliseconds(150)) { [weak self, weak window] in
+            guard let self, let window, self.view.window === window,
+                  self.managesSurfaceReloads, !self.isTransitioningFullScreen, !self.isDisappearing,
+                  !self.view.inLiveResize, !self.hasRequestedSurfaceReload else { return }
+            self.hasRequestedSurfaceReload = true
+            self.pendingDrawableSize = nil
+            self.forcesPendingSurfaceReload = false
+            self.requestReloadForSurfaceChange(reason: "settled drawable size changed")
         }
     }
 
@@ -246,7 +255,7 @@ final class MPVViewController: NSViewController {
             didEndLiveResizeObserver = nil
             observedWindow = window
         }
-        guard let window else { return }
+        guard let window, willEnterFullScreenObserver == nil else { return }
 
         willEnterFullScreenObserver = NotificationCenter.default.addObserver(
             forName: NSWindow.willEnterFullScreenNotification,
@@ -254,6 +263,8 @@ final class MPVViewController: NSViewController {
         ) { [weak self] _ in
             MainActor.assumeIsolated {
                 guard let self else { return }
+                self.isTransitioningFullScreen = true
+                self.layoutReload.cancel()
                 scalingLogger.info("willEnterFullScreen: bounds=\(String(describing: self.view.bounds)) drawable=\(String(describing: self.metalLayer.drawableSize))")
             }
         }
@@ -264,8 +275,9 @@ final class MPVViewController: NSViewController {
             MainActor.assumeIsolated {
                 guard let self else { return }
                 scalingLogger.info("didEnterFullScreen: bounds=\(String(describing: self.view.bounds)) drawable=\(String(describing: self.metalLayer.drawableSize))")
-                self.lastNudgedDrawableSize = self.metalLayer.drawableSize
-                self.requestReloadForSurfaceChange(reason: "didEnterFullScreen")
+                self.isTransitioningFullScreen = false
+                self.viewDidLayout()
+                self.scheduleReloadForDrawableChange(force: true)
             }
         }
         willExitFullScreenObserver = NotificationCenter.default.addObserver(
@@ -274,6 +286,8 @@ final class MPVViewController: NSViewController {
         ) { [weak self] _ in
             MainActor.assumeIsolated {
                 guard let self else { return }
+                self.isTransitioningFullScreen = true
+                self.layoutReload.cancel()
                 scalingLogger.info("willExitFullScreen: bounds=\(String(describing: self.view.bounds)) drawable=\(String(describing: self.metalLayer.drawableSize))")
             }
         }
@@ -284,17 +298,13 @@ final class MPVViewController: NSViewController {
             MainActor.assumeIsolated {
                 guard let self else { return }
                 scalingLogger.info("didExitFullScreen: bounds=\(String(describing: self.view.bounds)) drawable=\(String(describing: self.metalLayer.drawableSize))")
-                self.lastNudgedDrawableSize = self.metalLayer.drawableSize
-                self.requestReloadForSurfaceChange(reason: "didExitFullScreen")
+                self.isTransitioningFullScreen = false
+                self.viewDidLayout()
+                self.scheduleReloadForDrawableChange(force: true)
             }
         }
-        // User-driven window resize: viewDidLayout updates drawableSize on
-        // every tick, but the per-tick growth is well under the 1.5×
-        // auto-reload threshold, so mpv's vo ends a drag with its dst rect
-        // stranded at the pre-drag size — small videos collapse to the
-        // top-left, large videos zoom into the upper-left quadrant. Fire
-        // a Force Reload once the live-resize session ends; this fires
-        // after the user releases the resize handle, not per drag tick.
+        // Wait until the user releases the resize handle. The deferred path
+        // also covers programmatic resizes, which do not emit this notification.
         didEndLiveResizeObserver = NotificationCenter.default.addObserver(
             forName: NSWindow.didEndLiveResizeNotification,
             object: window, queue: .main
@@ -302,14 +312,15 @@ final class MPVViewController: NSViewController {
             MainActor.assumeIsolated {
                 guard let self else { return }
                 scalingLogger.info("didEndLiveResize: bounds=\(String(describing: self.view.bounds)) drawable=\(String(describing: self.metalLayer.drawableSize))")
-                self.lastNudgedDrawableSize = self.metalLayer.drawableSize
-                self.requestReloadForSurfaceChange(reason: "didEndLiveResize")
+                self.viewDidLayout()
+                self.scheduleReloadForDrawableChange(force: true)
             }
         }
     }
 
-    /// Trigger a Force Reload via the same `.reloadPlayer` command
-    /// the menu uses. ContentView's handler calls
+    /// Target the owning window's Force Reload path. Geometry recovery must
+    /// work even when another player or an auxiliary panel is key.
+    /// ContentView's handler calls
     /// `PlayerController.preparePlayback(startTime:resetAudioSelection:)`,
     /// which destroys+recreates the mpv context — the only thing we've
     /// found that reliably re-inits mpv's vo at the *current* layer
@@ -325,26 +336,12 @@ final class MPVViewController: NSViewController {
     /// observably clears the stale state. Heavier than ideal, but it
     /// matches the user's known-working manual workaround.
     private func requestReloadForSurfaceChange(reason: String) {
-        guard managesSurfaceReloads else {
+        guard managesSurfaceReloads, let window = view.window else {
             scalingLogger.info("requestReloadForSurfaceChange: \(reason) — paired surface owns reload")
             return
         }
-        scalingLogger.info("requestReloadForSurfaceChange: \(reason) — posting .reloadPlayer to recreate mpv at current surface size")
-        NotificationCenter.default.post(.reloadPlayer)
-    }
-
-    /// Returns true if the drawableSize grew ≥1.5× in either dimension,
-    /// indicating the layer was likely pre-layout when mpv attached and
-    /// has now settled to its real size. User-driven window-drag layout
-    /// passes are well under this threshold (~2-4% per tick), so this
-    /// is safe to act on without spamming reloads during resize.
-    /// Shrinkage isn't checked: shrinking the surface doesn't strand
-    /// mpv's dst rect — that's a growth-only bug.
-    private func shouldAutoReloadForLayoutJump(from old: CGSize, to new: CGSize) -> Bool {
-        guard old.width > 0, old.height > 0 else { return false }
-        let widthGrowth = new.width / old.width
-        let heightGrowth = new.height / old.height
-        return widthGrowth >= 1.5 || heightGrowth >= 1.5
+        scalingLogger.info("requestReloadForSurfaceChange: \(reason) — posting targeted surface reload to recreate mpv at current surface size")
+        NotificationCenter.default.post(.reloadPlayerSurface(targetWindow: window))
     }
 }
 

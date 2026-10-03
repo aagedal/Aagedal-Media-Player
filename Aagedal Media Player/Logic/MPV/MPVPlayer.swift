@@ -139,7 +139,12 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
 
     // MARK: - Metal Layer Binding
 
-    func attachDrawable(_ layer: MPVMetalLayer) {
+    /// Returns true when an existing context still owns a different layer.
+    /// `wid` is fixed during setup; assigning a replacement here cannot rebind
+    /// an initialized VO. Keep its old layer alive until the owner reloads.
+    @discardableResult
+    func attachDrawable(_ layer: MPVMetalLayer) -> Bool {
+        if mpv != nil, metalLayer !== layer { return true }
         metalLayer = layer
         setupMPV()
 
@@ -151,6 +156,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
             pendingAutostart = false
             load(url: url, startTime: startTime, autostart: autostart)
         }
+        return false
     }
 
     private func setupMPV() {
