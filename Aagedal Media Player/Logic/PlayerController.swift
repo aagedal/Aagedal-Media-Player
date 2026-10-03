@@ -85,6 +85,55 @@ final class PlayerController: ObservableObject {
     var chapterOptions: [ChapterOption] { trackSelection.chapterOptions }
     var selectedAudioTrackOrderIndex: Int { trackSelection.selectedAudioTrackOrderIndex }
     var selectedSubtitleTrackOrderIndex: Int { trackSelection.selectedSubtitleTrackOrderIndex }
+    @Published private(set) var monoPlaybackProgramme: MonoPlaybackProgramme?
+    @Published private(set) var monoPlaybackError: String?
+    private var programmeChannelRouting = AudioChannelRouting()
+
+    var monoPlaybackTrackOptions: [AudioTrackOption] {
+        guard useMPV, let streams = mediaItem?.metadata?.audioStreams else { return [] }
+        return audioTrackOptions.filter { option in
+            streams.indices.contains(option.audioStreamOrderIndex)
+                && streams[option.audioStreamOrderIndex].channels == 1
+        }
+    }
+
+    func selectMonoPlaybackLayout(_ layout: MonoPlaybackProgramme.Layout) {
+        let ids = monoPlaybackTrackOptions.prefix(layout.speakers.count).map(\.id)
+        guard let programme = MonoPlaybackProgramme(layout: layout, trackIDs: ids) else { return }
+        applyMonoPlaybackProgramme(programme)
+    }
+
+    func assignMonoPlaybackTrack(_ trackID: Int, to speaker: Int) {
+        guard monoPlaybackTrackOptions.contains(where: { $0.id == trackID }),
+              let programme = monoPlaybackProgramme?.assigning(trackID: trackID, to: speaker) else { return }
+        applyMonoPlaybackProgramme(programme)
+    }
+
+    private func applyMonoPlaybackProgramme(_ programme: MonoPlaybackProgramme) {
+        guard useMPV, mpvPlayer?.setMonoProgramme(programme) == true else {
+            monoPlaybackError = "Could not apply the mono track speaker assignments."
+            return
+        }
+        monoPlaybackError = nil
+        monoPlaybackProgramme = programme
+        programmeChannelRouting = AudioChannelRouting(channelCount: programme.trackIDs.count)
+        updateEffectiveAudioChannelRouting()
+        publishLiveAudioMeterDiscontinuity(.audioTrackReplacement)
+    }
+
+    private func clearMonoPlaybackProgramme() {
+        guard monoPlaybackProgramme != nil else { return }
+        mpvPlayer?.setMonoProgramme(nil)
+        if audioTrackOptions.indices.contains(selectedAudioTrackOrderIndex) {
+            mpvPlayer?.currentAudioTrackIndex = Int32(audioTrackOptions[selectedAudioTrackOrderIndex].id)
+        }
+        monoPlaybackProgramme = nil
+        monoPlaybackError = nil
+        programmeChannelRouting = AudioChannelRouting()
+        updateEffectiveAudioChannelRouting()
+        publishLiveAudioMeterDiscontinuity(.audioTrackReplacement)
+    }
+
     @Published private(set) var audioChannelRouting = AudioChannelRouting()
     private var audioChannelRoutingByTrackID: [Int: AudioChannelRouting] = [:]
     private var sessionAudioChannelRouting: AudioChannelRouting?
@@ -103,11 +152,12 @@ final class PlayerController: ObservableObject {
     }
 
     var selectedAudioChannelCount: Int {
-        max(0, selectedAudioStream?.channels ?? 0)
+        monoPlaybackProgramme?.trackIDs.count ?? max(0, selectedAudioStream?.channels ?? 0)
     }
 
     var selectedAudioChannelLabels: [String] {
-        AudioChannelLabels.names(
+        if let programme = monoPlaybackProgramme { return programme.layout.labels }
+        return AudioChannelLabels.names(
             count: selectedAudioChannelCount,
             layout: selectedAudioStream?.channelLayout
         )
@@ -1403,7 +1453,7 @@ final class PlayerController: ObservableObject {
     }
 
     func selectAudioTrack(at position: Int) {
-        guard position != selectedAudioTrackOrderIndex else { return }
+        guard position != selectedAudioTrackOrderIndex || monoPlaybackProgramme != nil else { return }
 
         let myPrepID = preparationID
         let wasPlaying = (player?.rate ?? 0) != 0 || (mpvPlayer?.isPlaying ?? false)
@@ -1423,7 +1473,10 @@ final class PlayerController: ObservableObject {
     }
 
     func selectAudioTrackAndWait(at position: Int) async -> Bool {
-        guard position != selectedAudioTrackOrderIndex else { return false }
+        guard audioTrackOptions.indices.contains(position) else { return false }
+        let wasGrouped = monoPlaybackProgramme != nil
+        clearMonoPlaybackProgramme()
+        if position == selectedAudioTrackOrderIndex { return wasGrouped }
         let myPrepID = preparationID
         let changed = await trackSelection.selectAudioTrack(
             at: position,
@@ -1468,26 +1521,30 @@ final class PlayerController: ObservableObject {
     func toggleAudioChannelMute(_ channel: Int) {
         guard let trackID = selectedAudioTrackID else { return }
         let routing = userAudioChannelRouting().togglingMute(for: channel)
-        audioChannelRoutingByTrackID[trackID] = routing
+        if monoPlaybackProgramme != nil { programmeChannelRouting = routing }
+        else { audioChannelRoutingByTrackID[trackID] = routing }
         updateEffectiveAudioChannelRouting()
     }
 
     func toggleAudioChannelSolo(_ channel: Int) {
         guard let trackID = selectedAudioTrackID else { return }
         let routing = userAudioChannelRouting().togglingSolo(for: channel)
-        audioChannelRoutingByTrackID[trackID] = routing
+        if monoPlaybackProgramme != nil { programmeChannelRouting = routing }
+        else { audioChannelRoutingByTrackID[trackID] = routing }
         updateEffectiveAudioChannelRouting()
     }
 
     func clearAudioChannelRouting() {
         guard let trackID = selectedAudioTrackID else { return }
-        audioChannelRoutingByTrackID[trackID] = nil
+        if monoPlaybackProgramme != nil { programmeChannelRouting = AudioChannelRouting(channelCount: selectedAudioChannelCount) }
+        else { audioChannelRoutingByTrackID[trackID] = nil }
         updateEffectiveAudioChannelRouting()
     }
 
     /// Compare Mode uses a temporary override so inspecting matching A/B
     /// channels never destroys the user's ordinary per-track monitoring state.
     func setSessionAudioChannelRouting(_ routing: AudioChannelRouting?) {
+        clearMonoPlaybackProgramme()
         sessionAudioChannelRouting = routing.map {
             AudioChannelRouting(
                 channelCount: selectedAudioChannelCount,
@@ -1504,6 +1561,7 @@ final class PlayerController: ObservableObject {
     }
 
     private func userAudioChannelRouting() -> AudioChannelRouting {
+        if monoPlaybackProgramme != nil { return programmeChannelRouting }
         guard let trackID = selectedAudioTrackID else {
             return AudioChannelRouting(channelCount: selectedAudioChannelCount)
         }
@@ -1712,6 +1770,9 @@ final class PlayerController: ObservableObject {
             sessionAudioChannelRouting = nil
             audioChannelRouting = AudioChannelRouting()
         }
+        monoPlaybackProgramme = nil
+        monoPlaybackError = nil
+        programmeChannelRouting = AudioChannelRouting()
         trackSelection.reset(preservingSelections: !resetAudioSelection)
         liveAudioMeterSourceRevision &+= 1
     }

@@ -1164,23 +1164,65 @@ private struct AudioTrackPicker: View {
     }
 
     private var selectedTitle: String {
-        controller.audioTrackOptions.first {
+        if let programme = controller.monoPlaybackProgramme {
+            let assignments = programme.layout.labels.enumerated().map { speaker, name in
+                name + ": " + trackNumber(for: programme.trackIDs[speaker])
+            }
+            return "Combined " + programme.layout.rawValue + " · " + assignments.joined(separator: ", ")
+        }
+        return controller.audioTrackOptions.first {
             $0.position == controller.selectedAudioTrackOrderIndex
         }?.title ?? "Default"
     }
 
     var body: some View {
         Menu {
+            if controller.monoPlaybackProgramme != nil {
+                Text(selectedTitle)
+                Divider()
+            }
             ForEach(controller.audioTrackOptions) { option in
-                Button(action: { onSelect(option.position) }) {
-                    HStack {
-                        Text(option.title)
-                        if option.position == controller.selectedAudioTrackOrderIndex {
-                            Image(systemName: "checkmark")
+                Toggle(trackTitle(option), isOn: Binding(
+                    get: { isTrackSelected(option) },
+                    set: { selected in
+                        // Clicking a combined source returns to that single track.
+                        if selected || controller.monoPlaybackProgramme != nil {
+                            onSelect(option.position)
                         }
+                    }
+                ))
+            }
+            if showsChannelControls, controller.monoPlaybackTrackOptions.count >= 2 {
+                Divider()
+                Menu("Combine Mono Tracks") {
+                    ForEach(MonoPlaybackProgramme.Layout.allCases, id: \.self) { layout in
+                        Toggle("Monitor as " + layout.rawValue, isOn: Binding(
+                            get: { controller.monoPlaybackProgramme?.layout == layout },
+                            set: { selected in
+                                if selected { controller.selectMonoPlaybackLayout(layout) }
+                            }
+                        ))
+                        .disabled(controller.monoPlaybackTrackOptions.count < layout.speakers.count)
+                    }
+                    if let programme = controller.monoPlaybackProgramme {
+                        Divider()
+                        ForEach(Array(programme.layout.labels.enumerated()), id: \.offset) { speaker, label in
+                            Menu(label + ": " + trackNumber(for: programme.trackIDs[speaker])) {
+                                ForEach(controller.monoPlaybackTrackOptions) { option in
+                                    Toggle(option.title, isOn: Binding(
+                                        get: { controller.monoPlaybackProgramme?.trackIDs[speaker] == option.id },
+                                        set: { selected in
+                                            if selected { controller.assignMonoPlaybackTrack(option.id, to: speaker) }
+                                        }
+                                    ))
+                                }
+                            }
+                        }
+                        Text("Select a single track above to stop combining.")
                     }
                 }
             }
+            if let error = controller.monoPlaybackError { Text(error) }
             if showsWaveformOption, controller.isMultiMonoFile {
                 Divider()
                 Button(action: { controller.showAllMonoWaveforms.toggle() }) {
@@ -1239,14 +1281,42 @@ private struct AudioTrackPicker: View {
                 }
             }
         } label: {
-            Image(systemName: "speaker.wave.2")
+            Image(systemName: controller.monoPlaybackProgramme == nil ? "speaker.wave.2" : "speaker.wave.2.fill")
                 .font(.system(size: 14))
+                .foregroundStyle(controller.monoPlaybackProgramme == nil ? Color.primary : Color.accentColor)
                 .frame(width: 28, height: 28)
+                .overlay(alignment: .bottomTrailing) {
+                    if let programme = controller.monoPlaybackProgramme {
+                        Text(String(programme.trackIDs.count))
+                            .font(.system(size: 8, weight: .bold))
+                            .foregroundStyle(.white)
+                            .frame(width: 12, height: 12)
+                            .background(Color.accentColor, in: Circle())
+                    }
+                }
         }
         .menuStyle(.borderlessButton)
-        .help(label)
+        .help(label + ": " + selectedTitle)
         .accessibilityLabel(label)
         .accessibilityValue(monitoringAccessibilityValue)
+    }
+
+    private func trackNumber(for trackID: Int) -> String {
+        guard let option = controller.audioTrackOptions.first(where: { $0.id == trackID }) else { return "Unknown track" }
+        return "#\(option.audioStreamOrderIndex)"
+    }
+
+    private func isTrackSelected(_ option: PlayerController.AudioTrackOption) -> Bool {
+        if let programme = controller.monoPlaybackProgramme {
+            return programme.trackIDs.contains(option.id)
+        }
+        return option.position == controller.selectedAudioTrackOrderIndex
+    }
+
+    private func trackTitle(_ option: PlayerController.AudioTrackOption) -> String {
+        guard let programme = controller.monoPlaybackProgramme,
+              let speaker = programme.trackIDs.firstIndex(of: option.id) else { return option.title }
+        return option.title + " (" + programme.layout.labels[speaker] + ")"
     }
 
     private var monitoringAccessibilityValue: String {

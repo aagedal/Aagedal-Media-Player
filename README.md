@@ -244,6 +244,12 @@ Real-time waveform, waveform RGBY parade and vectorscope overlays for monitoring
 ![SCR-20260309-ucop](https://github.com/user-attachments/assets/9fc2e4fb-8407-4b87-b71e-eb6d47ee383b)
 
 
+### Combine mono tracks for playback
+
+In normal playback, open the audio menu and choose **Combine Mono Tracks → Monitor as Stereo** or **Monitor as 5.1**. The first two or six mono tracks are initially assigned in speaker order; use the speaker submenus to choose different tracks or swap their assignments. Unassigned tracks are excluded. Select any single track in the audio menu to return to ordinary playback, including an existing stereo or surround track.
+
+Combining tracks uses the MPV backend and is unavailable for ProRes RAW playback through AVFoundation. Channel solo and mute work on the combined programme. Live meters require a single track; waveforms continue to show source tracks.
+
 ### Audio waveform
 Preview multichannel audio tracks as waveforms, with one waveform per channel. Toggle with Command + Shift + A. Supports multi track files. Changing the audio output track will update the preview to the audio channels from the selected audio track. Navigate by clicking on a point in the audio waveform to jump to that location in the video. By default the audio waveform is overlayed over the video, but can also be opened in a separate window.
 ![SCR-20260309-uczb](https://github.com/user-attachments/assets/55a05fce-6dd8-4fde-9c66-2b4ef312fd20)

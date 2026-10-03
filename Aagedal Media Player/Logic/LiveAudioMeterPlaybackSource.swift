@@ -9,6 +9,7 @@ import Foundation
 /// by FFmpeg's `0:a:N`, never a toolbar row or container-wide stream number.
 nonisolated struct LiveAudioMeterPlaybackSource: Equatable, Sendable {
     enum Failure: Error, Equatable, LocalizedError {
+        case groupedMonoPlayback
         case noMedia
         case noSelectedAudioTrack
         case missingSampleRate
@@ -19,6 +20,8 @@ nonisolated struct LiveAudioMeterPlaybackSource: Equatable, Sendable {
 
         var errorDescription: String? {
             switch self {
+            case .groupedMonoPlayback:
+                "Live meters do not yet support combined mono playback. Select a single track to use live meters."
             case .noMedia:
                 "Load a media file before opening live audio meters."
             case .noSelectedAudioTrack:
@@ -129,6 +132,7 @@ extension PlayerController {
     /// Resolves the selected toolbar row to FFmpeg's audio-only stream order.
     /// The row position and a container-wide metadata index are not safe here.
     func liveAudioMeterSource(id: String, label: String) throws -> LiveAudioMeterPlaybackSource {
+        guard monoPlaybackProgramme == nil else { throw LiveAudioMeterPlaybackSource.Failure.groupedMonoPlayback }
         guard let item = mediaItem else { throw LiveAudioMeterPlaybackSource.Failure.noMedia }
         guard audioTrackOptions.indices.contains(selectedAudioTrackOrderIndex),
               let stream = selectedAudioStream else {
