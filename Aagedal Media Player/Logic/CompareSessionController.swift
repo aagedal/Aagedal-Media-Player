@@ -334,6 +334,41 @@ nonisolated struct CompareTimelineMapping: Equatable, Sendable {
     }
 }
 
+/// A clock comparison taken around B's read, excluding transport work from
+/// the observation. Decoder property reads can block while rendering; the
+/// bracket bounds how much apparent drift could be read latency alone.
+nonisolated struct CompareDriftSample: Equatable, Sendable {
+    let primaryTime: TimeInterval
+    let actualSecondaryTime: TimeInterval
+    let expectedSecondaryTime: TimeInterval
+    let signedDrift: TimeInterval
+    let effectiveDrift: TimeInterval
+
+    init?(
+        readPrimary: () -> TimeInterval,
+        readSecondary: () -> TimeInterval,
+        mapSecondaryTime: (TimeInterval) -> TimeInterval
+    ) {
+        let primaryBefore = readPrimary()
+        let secondaryTime = readSecondary()
+        let primaryAfter = readPrimary()
+        guard primaryBefore.isFinite, primaryAfter.isFinite,
+              secondaryTime.isFinite else { return nil }
+        let primaryTime = primaryBefore / 2 + primaryAfter / 2
+        let expected = mapSecondaryTime(primaryTime)
+        guard expected.isFinite else { return nil }
+        let signedDrift = secondaryTime - expected
+        let uncertainty = abs(primaryAfter / 2 - primaryBefore / 2)
+        guard primaryTime.isFinite, signedDrift.isFinite,
+              uncertainty.isFinite else { return nil }
+        self.primaryTime = primaryTime
+        actualSecondaryTime = secondaryTime
+        expectedSecondaryTime = expected
+        self.signedDrift = signedDrift
+        effectiveDrift = max(0, abs(signedDrift) - uncertainty)
+    }
+}
+
 /// Decides when the secondary decoder must be re-synchronized with the
 /// primary backend clock. The tolerance is one primary frame plus a small
 /// clock-comparison margin; a short cooldown prevents a decoder with an
@@ -2261,9 +2296,7 @@ final class CompareSessionController: ObservableObject {
                 guard !Task.isCancelled,
                       primary.isPlaying else { continue }
 
-                let primaryBefore = primary.playbackTimeSnapshot()
-                let primaryAfter = primary.playbackTimeSnapshot()
-                let primaryTime = (primaryBefore + primaryAfter) / 2
+                let primaryTime = primary.playbackTimeSnapshot()
                 let didWrapForward = policy.didWrapForward(
                     previousPrimaryTime: previousPrimaryTime,
                     currentPrimaryTime: primaryTime,
@@ -2316,18 +2349,19 @@ final class CompareSessionController: ObservableObject {
                     continue
                 }
 
-                let actual = self.secondaryController.playbackTimeSnapshot()
-                let expected = self.mappedSecondaryTime(for: primaryTime)
-                let readUncertainty = abs(primaryAfter - primaryBefore) / 2
-                let sampleTime = ProcessInfo.processInfo.systemUptime
-                guard sampleTime - monitoringStartTime >=
+                guard ProcessInfo.processInfo.systemUptime - monitoringStartTime >=
                         CompareDriftPolicy.monitoringWarmup else { continue }
-                guard let signedDrift = policy.signedDrift(
-                    actualSecondaryTime: actual,
-                    expectedSecondaryTime: expected
+                // Take all three clock reads after transport updates. Reading
+                // A twice before reading B compares different instants and
+                // fails to account for a slow decoder-property read.
+                guard let sample = CompareDriftSample(
+                    readPrimary: { primary.playbackTimeSnapshot() },
+                    readSecondary: { self.secondaryController.playbackTimeSnapshot() },
+                    mapSecondaryTime: { self.mappedSecondaryTime(for: $0) }
                 ) else { continue }
-
-                let absoluteDrift = max(0, abs(signedDrift) - readUncertainty)
+                let sampleTime = ProcessInfo.processInfo.systemUptime
+                let signedDrift = sample.signedDrift
+                let absoluteDrift = sample.effectiveDrift
                 let baseRate = max(0.1, abs(primary.currentPlaybackSpeed))
                 if absoluteDrift <= policy.frameDuration / 2 {
                     if isRateNudged {
@@ -2419,8 +2453,8 @@ final class CompareSessionController: ObservableObject {
                 guard let excursionStart = outOfToleranceSince else { continue }
                 guard sampleTime - excursionStart >= CompareDriftPolicy.correctionCooldown,
                       var target = policy.correctionTarget(
-                        actualSecondaryTime: actual,
-                        expectedSecondaryTime: expected,
+                        actualSecondaryTime: sample.actualSecondaryTime,
+                        expectedSecondaryTime: sample.expectedSecondaryTime,
                         timeSinceLastCorrection: sampleTime - lastCorrectionTime
                       ) else { continue }
 
@@ -2436,7 +2470,7 @@ final class CompareSessionController: ObservableObject {
                         max(policy.frameDuration, absoluteDrift)
                     )
                     target = self.mappedSecondaryTime(
-                        for: primaryTime + seekLead * Double(primary.currentPlaybackSpeed)
+                        for: sample.primaryTime + seekLead * Double(primary.currentPlaybackSpeed)
                     )
                 }
 

@@ -95,6 +95,76 @@ final class CompareTimelineMappingTests: XCTestCase {
         }
     }
 
+    func testDriftSampleBracketsSecondaryReadAndRemovesClockReadLatency() throws {
+        var reads: [String] = []
+        var primaryReads = 0
+        let sample = try XCTUnwrap(CompareDriftSample(
+            readPrimary: {
+                reads.append("A")
+                primaryReads += 1
+                return primaryReads == 1 ? 10 : 10.2
+            },
+            readSecondary: {
+                reads.append("B")
+                // B and A are synchronized, but the decoder read finishes
+                // 200 ms after the first A observation under rendering load.
+                return 10.2
+            },
+            mapSecondaryTime: { $0 }
+        ))
+        XCTAssertEqual(reads, ["A", "B", "A"])
+        XCTAssertEqual(sample.primaryTime, 10.1, accuracy: 0.000_001)
+        XCTAssertEqual(sample.signedDrift, 0.1, accuracy: 0.000_001)
+        XCTAssertEqual(sample.effectiveDrift, 0, accuracy: 0.000_001)
+    }
+
+    func testDriftSampleRetainsRealDriftWithManualAlignmentAndReverseClock() throws {
+        let mapping = CompareTimelineMapping(
+            primaryStartSeconds: nil, secondaryStartSeconds: nil,
+            secondaryDuration: 30, manualOffset: 2
+        )
+        for (before, after) in [(10.0, 10.02), (10.02, 10.0)] {
+            for direction in [-1.0, 1.0] {
+                var primaryReads = 0
+                let sample = try XCTUnwrap(CompareDriftSample(
+                    readPrimary: {
+                        primaryReads += 1
+                        return primaryReads == 1 ? before : after
+                    },
+                    readSecondary: { 12.01 + direction * 0.1 },
+                    mapSecondaryTime: { mapping.secondaryTime(forPrimaryTime: $0) }
+                ))
+                XCTAssertEqual(sample.expectedSecondaryTime, 12.01, accuracy: 0.000_001)
+                XCTAssertEqual(sample.signedDrift, direction * 0.1, accuracy: 0.000_001)
+                XCTAssertEqual(sample.effectiveDrift, 0.09, accuracy: 0.000_001)
+                XCTAssertGreaterThan(sample.effectiveDrift,
+                                     CompareDriftPolicy(primaryFrameRate: 24).correctionThreshold)
+            }
+        }
+    }
+
+    func testDriftSampleRejectsNonFiniteClockReadsAndMappedTimes() {
+        for invalid in [Double.nan, .infinity, -.infinity] {
+            for invalidRead in 0..<4 {
+                var primaryReads = 0
+                let sample = CompareDriftSample(
+                    readPrimary: {
+                        defer { primaryReads += 1 }
+                        return primaryReads == invalidRead ? invalid : 10
+                    },
+                    readSecondary: { invalidRead == 2 ? invalid : 10 },
+                    mapSecondaryTime: { invalidRead == 3 ? invalid : $0 }
+                )
+                XCTAssertNil(sample, "invalid read: \(invalidRead), value: \(invalid)")
+            }
+        }
+        XCTAssertNil(CompareDriftSample(
+            readPrimary: { Double.greatestFiniteMagnitude },
+            readSecondary: { -Double.greatestFiniteMagnitude },
+            mapSecondaryTime: { $0 }
+        ), "Finite inputs must not produce an infinite drift correction.")
+    }
+
     func testDriftPolicyPreservesSignedDirectionAndRejectsNonFiniteSamples() {
         let policy = CompareDriftPolicy(primaryFrameRate: 25)
 

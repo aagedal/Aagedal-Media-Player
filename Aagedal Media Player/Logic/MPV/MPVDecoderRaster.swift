@@ -41,11 +41,25 @@ nonisolated struct MPVDecoderRaster: Sendable {
               flag("presented-frame") == true,
               integer("track-id") == trackBefore,
               let width = integer("coded-w"), let height = integer("coded-h"),
-              width > 0, height > 0,
+              width > 0, height > 0, width <= 4096, height <= 4096,
+              width * height <= 4_194_304,
               let rotation = integer("rotation"), [0, 90, 180, 270].contains(rotation),
               let mirrored = flag("mirrored"),
               let pts = fields["pts"], pts.format == MPV_FORMAT_DOUBLE,
               pts.u.double_.isFinite, pts.u.double_ >= 0,
+              let format = fields["format"], format.format == MPV_FORMAT_STRING,
+              let formatName = format.u.string, String(cString: formatName) == "bgra",
+              let rasterWidth = integer("w"), let rasterHeight = integer("h"),
+              let stride = integer("stride"),
+              rasterWidth > 0, rasterWidth <= 4096,
+              rasterHeight > 0, rasterHeight <= 4096,
+              rasterWidth * rasterHeight <= 4_194_304,
+              stride >= rasterWidth * 4,
+              // Bound before the shared screenshot parser copies provider data.
+              // Leave room for mpv's row alignment above the 16 MiB pixel limit.
+              stride <= (64 * 1024 * 1024) / rasterHeight,
+              let data = fields["data"], data.format == MPV_FORMAT_BYTE_ARRAY,
+              let bytes = data.u.ba, bytes.pointee.size == stride * rasterHeight,
               let pixels = MPVPlayer.rawScreenshot(from: node, playbackTime: pts.u.double_,
                                                   playbackTimeUncertainty: 0) else { return nil }
         let swapsAxes = rotation == 90 || rotation == 270

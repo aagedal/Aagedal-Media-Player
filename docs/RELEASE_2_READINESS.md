@@ -1,6 +1,6 @@
 # 2.0 release readiness
 
-Assessment updated: 2026-10-02. This assessment reflects the
+Assessment updated: 2026-10-03. This assessment reflects the
 [product roadmap](../PRODUCT_ROADMAP.md) and its recorded scope decisions.
 
 The user deferred the M1-specific tests on 2026-10-02 and requested basic
@@ -12,6 +12,16 @@ The user's 2026-10-02 scope decision requires verified MPV source-pixel
 inspection before the editor beta. Automatic time-localized content-mismatch
 detection moves to a later release; existing manual Review findings, metadata
 mismatch summaries and missing-counterpart intervals remain available.
+
+The October 3 continuation corrects comparison clock sampling to read A/B/A
+around the secondary decoder after transport updates, preserving read uncertainty
+when deciding drift corrections. The guarded decoder-raster consumer now checks
+strict BGRA, bounded raster/stride and exact buffer size before copying. The
+shipping provider remains unavailable; these changes do not close general MPV
+source-pixel or measured comparison-drift acceptance. Candidate/release checks
+now require the split-mono audio, settled surface recovery and new sampling/
+protocol regressions, with an aggregate floor of 839 tests. See the updated
+[manual completion checklist](RELEASE_2_MANUAL_COMPLETION.md).
 
 Published dependency integration now pins MPVKit revision
 `1d44b9a0aa9e8faa5b8bf222173f6cc2930ed233` and exact SwiftMediaMetadata 3.0.2
