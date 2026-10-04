@@ -5,9 +5,10 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Changed
+- Moving the pointer into the right-edge hide zone hides playback and toolbar controls even when a button or slider retains focus; active text editing and popovers stay visible, and Tab restores keyboard access.
 - Comparison drift checks bracket the secondary clock with primary reads, accounting for decoder-read latency before adjusting playback.
 - Guarded MPV decoder-raster capture rejects unsupported formats, oversized geometry and malformed buffers before copying pixels.
-- Candidate and release verification require the recent audio-routing, surface recovery, clock sampling and decoder-raster regressions, with at least 838 aggregate tests.
+- Candidate and release verification require the recent audio-routing, surface recovery, clock sampling and decoder-raster regressions, with at least 839 aggregate tests.
 - Video scaling recovers after incremental and programmatic window resizing or native surface replacement, with one settled reload directed to the affected player window.
 - Loupe capture has a guarded decoder-raster consumer and rejects stale or failed capture proof; the published MPV dependency remains display-preview-only until the new provider is validated and integrated.
 - Review uses one keyboard focus owner, preserving invalid drafts while New Note and Filter navigation proceeds; explicit actions reveal and focus the required correction.

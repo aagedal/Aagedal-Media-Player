@@ -4790,6 +4790,20 @@ Integrated committed-source verification follows separately.
   The shipping MPV source-pixel provider gate remains open; see
   [manual completion](docs/RELEASE_2_MANUAL_COMPLETION.md).
 
+## Phase 234 — Restore explicit pointer hiding after control focus
+
+- [x] Separate active text/popover editing from ordinary toolbar/playback focus.
+  Explicit right-edge pointer hiding overrides lingering button/slider focus;
+  automatic hiding still preserves keyboard interactions.
+- [x] Retain active-editing protection and Tab restoration. Pass all 14 focused
+  optimized Release overlay/command tests and 19 release-script checks.
+- [x] Require both hide-zone identities and 839 aggregate tests for subsequent
+  canonical verification/release consumption. Retain
+  [focused receipts](docs/evidence/pointer-hide-focus-20261004/README.md).
+- [ ] Repeat the native pointer/keyboard hide-zone workflow described in
+  [manual completion](docs/RELEASE_2_MANUAL_COMPLETION.md). Full candidate
+  verification must be repeated at the final committed source.
+
 ## Remaining work after this continuation
 
 ### October 2 native Review focus continuation

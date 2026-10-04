@@ -1,6 +1,6 @@
 # 2.0 release readiness
 
-Assessment updated: 2026-10-03. This assessment reflects the
+Assessment updated: 2026-10-04. This assessment reflects the
 [product roadmap](../PRODUCT_ROADMAP.md) and its recorded scope decisions.
 
 The user deferred the M1-specific tests on 2026-10-02 and requested basic
@@ -12,6 +12,15 @@ The user's 2026-10-02 scope decision requires verified MPV source-pixel
 inspection before the editor beta. Automatic time-localized content-mismatch
 detection moves to a later release; existing manual Review findings, metadata
 mismatch summaries and missing-counterpart intervals remain available.
+
+The October 4 pointer-hide correction lets explicit right-edge movement hide
+controls despite retained button/slider focus, while active text/popover editing
+and automatic keyboard-focus protection remain intact. All 14 focused Release
+overlay/command tests pass without skips or runtime warnings, and all 19 release
+script checks pass. Subsequent candidate/release verification requires both
+hide-zone identities and 839 aggregate tests. Native pointer acceptance and a
+fresh full canonical run remain separate; see
+[focused receipts](evidence/pointer-hide-focus-20261004/README.md).
 
 Canonical verification of the October 3 engineering batch passes at
 `179aaaea442968f7fe4f0bad2167d1ec5701ace0`: 829 Release passes, nine named

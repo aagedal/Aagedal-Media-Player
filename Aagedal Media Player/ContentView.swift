@@ -69,9 +69,13 @@ struct ContentView: View {
     private var nsWindow: NSWindow? { windowCoordinator.window }
     private var showOverlay: Bool { overlayController.isVisible }
     private var isControlInteractionActive: Bool {
+        isPlaybackControlsFocused || isToolbarControlFocused || isControlEditingActive
+    }
+
+    /// Explicit pointer hiding can override lingering button/slider focus,
+    /// while text editing and popovers still need their controls visible.
+    private var isControlEditingActive: Bool {
         isEditingTimecode
-            || isPlaybackControlsFocused
-            || isToolbarControlFocused
             || showLoupeControls
             || showReviewNotes
             || showComparisonControls
@@ -1176,7 +1180,8 @@ struct ContentView: View {
                     overlayController.setRightEdgeHovered(
                         hovering,
                         isPlaying: { controller.isPlaying },
-                        isControlInteractionActive: { isControlInteractionActive }
+                        isControlInteractionActive: { isControlInteractionActive },
+                        isEditingControls: { isControlEditingActive }
                     )
                 }
 

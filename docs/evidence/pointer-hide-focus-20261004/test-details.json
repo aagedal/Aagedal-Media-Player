@@ -1,0 +1,178 @@
+{
+  "devices" : [
+    {
+      "architecture" : "arm64",
+      "deviceId" : "00006050-001C293C22F9401C",
+      "deviceName" : "My Mac",
+      "modelName" : "MacBook Pro",
+      "osBuildNumber" : "26A434",
+      "osVersion" : "27.0.1",
+      "platform" : "macOS"
+    }
+  ],
+  "testNodes" : [
+    {
+      "children" : [
+        {
+          "children" : [
+            {
+              "children" : [
+                {
+                  "duration" : "0,035s",
+                  "durationInSeconds" : 0.03544199466705322,
+                  "name" : "testControlHoverPreventsScheduledHide()",
+                  "nodeIdentifier" : "PlayerOverlayControllerTests/testControlHoverPreventsScheduledHide()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/PlayerOverlayControllerTests/testControlHoverPreventsScheduledHide",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,033s",
+                  "durationInSeconds" : 0.03259992599487305,
+                  "name" : "testFocusedControlPreventsScheduledHide()",
+                  "nodeIdentifier" : "PlayerOverlayControllerTests/testFocusedControlPreventsScheduledHide()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/PlayerOverlayControllerTests/testFocusedControlPreventsScheduledHide",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,032s",
+                  "durationInSeconds" : 0.03152894973754883,
+                  "name" : "testKeyboardNavigationRevealsOverlayAndCancelsPendingHide()",
+                  "nodeIdentifier" : "PlayerOverlayControllerTests/testKeyboardNavigationRevealsOverlayAndCancelsPendingHide()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/PlayerOverlayControllerTests/testKeyboardNavigationRevealsOverlayAndCancelsPendingHide",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,00041s",
+                  "durationInSeconds" : 0.0004119873046875,
+                  "name" : "testRightEdgeDoesNotHideActiveEditing()",
+                  "nodeIdentifier" : "PlayerOverlayControllerTests/testRightEdgeDoesNotHideActiveEditing()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/PlayerOverlayControllerTests/testRightEdgeDoesNotHideActiveEditing",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,00046s",
+                  "durationInSeconds" : 0.0004559755325317383,
+                  "name" : "testRightEdgeHidesFocusedControlsAndKeyboardNavigationRestoresThem()",
+                  "nodeIdentifier" : "PlayerOverlayControllerTests/testRightEdgeHidesFocusedControlsAndKeyboardNavigationRestoresThem()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/PlayerOverlayControllerTests/testRightEdgeHidesFocusedControlsAndKeyboardNavigationRestoresThem",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,00049s",
+                  "durationInSeconds" : 0.00048601627349853516,
+                  "name" : "testRightEdgeHoverHidesAndLeavingRevealsOverlay()",
+                  "nodeIdentifier" : "PlayerOverlayControllerTests/testRightEdgeHoverHidesAndLeavingRevealsOverlay()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/PlayerOverlayControllerTests/testRightEdgeHoverHidesAndLeavingRevealsOverlay",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,031s",
+                  "durationInSeconds" : 0.031160950660705566,
+                  "name" : "testScheduledHideDismissesOverlayDuringPlayback()",
+                  "nodeIdentifier" : "PlayerOverlayControllerTests/testScheduledHideDismissesOverlayDuringPlayback()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/PlayerOverlayControllerTests/testScheduledHideDismissesOverlayDuringPlayback",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,033s",
+                  "durationInSeconds" : 0.03303992748260498,
+                  "name" : "testScheduledHideUsesLatestPlaybackState()",
+                  "nodeIdentifier" : "PlayerOverlayControllerTests/testScheduledHideUsesLatestPlaybackState()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/PlayerOverlayControllerTests/testScheduledHideUsesLatestPlaybackState",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                }
+              ],
+              "name" : "PlayerOverlayControllerTests",
+              "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/PlayerOverlayControllerTests",
+              "nodeType" : "Test Suite",
+              "result" : "Passed"
+            },
+            {
+              "children" : [
+                {
+                  "duration" : "0,00051s",
+                  "durationInSeconds" : 0.0005079507827758789,
+                  "name" : "testCompareReviewFocusRetainsTypedTarget()",
+                  "nodeIdentifier" : "AppCommandTests/testCompareReviewFocusRetainsTypedTarget()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/AppCommandTests/testCompareReviewFocusRetainsTypedTarget",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,00042s",
+                  "durationInSeconds" : 0.00042498111724853516,
+                  "name" : "testCompareReviewNavigationRetainsTypedDirection()",
+                  "nodeIdentifier" : "AppCommandTests/testCompareReviewNavigationRetainsTypedDirection()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/AppCommandTests/testCompareReviewNavigationRetainsTypedDirection",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,00044s",
+                  "durationInSeconds" : 0.0004400014877319336,
+                  "name" : "testLiveMeterUsesTypedCommandChannel()",
+                  "nodeIdentifier" : "AppCommandTests/testLiveMeterUsesTypedCommandChannel()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/AppCommandTests/testLiveMeterUsesTypedCommandChannel",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,0031s",
+                  "durationInSeconds" : 0.0031299591064453125,
+                  "name" : "testOpenFileRetainsTypedWindowTarget()",
+                  "nodeIdentifier" : "AppCommandTests/testOpenFileRetainsTypedWindowTarget()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/AppCommandTests/testOpenFileRetainsTypedWindowTarget",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,00044s",
+                  "durationInSeconds" : 0.00044405460357666016,
+                  "name" : "testTypedPayloadRoundTripsThroughCommandChannel()",
+                  "nodeIdentifier" : "AppCommandTests/testTypedPayloadRoundTripsThroughCommandChannel()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/AppCommandTests/testTypedPayloadRoundTripsThroughCommandChannel",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0,00036s",
+                  "durationInSeconds" : 0.00035500526428222656,
+                  "name" : "testUnrelatedNotificationIsNotAnAppCommand()",
+                  "nodeIdentifier" : "AppCommandTests/testUnrelatedNotificationIsNotAnAppCommand()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/AppCommandTests/testUnrelatedNotificationIsNotAnAppCommand",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                }
+              ],
+              "name" : "AppCommandTests",
+              "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/AppCommandTests",
+              "nodeType" : "Test Suite",
+              "result" : "Passed"
+            }
+          ],
+          "name" : "Aagedal Media Player Tests",
+          "nodeIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests",
+          "nodeType" : "Unit test bundle",
+          "result" : "Passed"
+        }
+      ],
+      "name" : "Aagedal Media Player",
+      "nodeType" : "Test Plan",
+      "result" : "Passed"
+    }
+  ],
+  "testPlanConfigurations" : [
+    {
+      "configurationId" : "1",
+      "configurationName" : "Test Scheme Action"
+    }
+  ]
+}

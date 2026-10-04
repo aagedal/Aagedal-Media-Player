@@ -182,7 +182,7 @@ if [[ "$EVIDENCE_STATUS" != "passed" \
     exit 2
 fi
 python3 scripts/validate-release-xcresult.py \
-    "$CANDIDATE_SUMMARY" "$CANDIDATE_DETAILS" --minimum-tests 838 \
+    "$CANDIDATE_SUMMARY" "$CANDIDATE_DETAILS" --minimum-tests 839 \
     --require-test "LoupeTrackDecoderTests/testBundledMPVFallbackPreviewNeverCertifiesMatchingDimensions()" \
     --require-test "AudioChannelRoutingTests/testBundledMPVSwitchesBetweenMonoStereoAndSurroundProgrammes()" \
     --require-test "AudioChannelRoutingTests/testMonoProgrammeUsesExplicitSpeakerAssignments()" \
@@ -197,6 +197,8 @@ python3 scripts/validate-release-xcresult.py \
     --require-test "CompareTimelineMappingTests/testDriftSampleBracketsSecondaryReadAndRemovesClockReadLatency()" \
     --require-test "CompareTimelineMappingTests/testDriftSampleRetainsRealDriftWithManualAlignmentAndReverseClock()" \
     --require-test "CompareTimelineMappingTests/testDriftSampleRejectsNonFiniteClockReadsAndMappedTimes()" \
+    --require-test "PlayerOverlayControllerTests/testRightEdgeHidesFocusedControlsAndKeyboardNavigationRestoresThem()" \
+    --require-test "PlayerOverlayControllerTests/testRightEdgeDoesNotHideActiveEditing()" \
     --require-test "MPVDecoderRasterTests/testCapabilityRequiresExactCommandName()" \
     --require-test "MPVDecoderRasterTests/testAcceptsOnlyVersionedPresentedDecoderProofAndCopiesPixels()" \
     --require-test "MPVDecoderRasterTests/testRejectsMissingMistypedDuplicateAndNegativeProofFields()" \
