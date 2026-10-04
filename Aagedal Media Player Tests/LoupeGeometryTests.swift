@@ -190,7 +190,7 @@ final class LoupeGeometryTests: XCTestCase {
             CGSize(width: 300, height: 500),
             CGSize(width: 600, height: 600)
         ] {
-            for (mode, factor) in [(LoupeMagnification.twoTimes, 2.0), (.fourTimes, 4.0), (.eightTimes, 8.0)] {
+            for (mode, factor) in [(LoupeMagnification.twoTimes, 2.0), (.fourTimes, 4.0), (.eightTimes, 8.0), (.sixteenTimes, 16.0)] {
                 let frame = placement(picture: picture, mode: mode)
                 XCTAssertEqual(frame.width, picture.width * factor)
                 XCTAssertEqual(frame.height, picture.height * factor)

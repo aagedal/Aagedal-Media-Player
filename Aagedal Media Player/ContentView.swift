@@ -198,24 +198,14 @@ struct ContentView: View {
                         secondaryCapture: loupeSecondaryCapture,
                         isComparing: compareSession.isActive,
                         geometry: geometry,
-                        mode: compareSession.viewMode
-                    )
-                }
-            }
-            .onGeometryChange(for: CGSize.self) { $0.size } action: { _ in
-                if isInspectorSurfaceReloadPending { scheduleInspectorSurfaceReload() }
-            }
-            .onContinuousHover { phase in
-                if case .active(let location) = phase {
-                    loupe.follow(
-                        location,
-                        geometry: geometry,
-                        isComparing: compareSession.isActive,
                         mode: compareSession.viewMode,
                         wipePosition: compareSession.wipePosition,
                         overlayBlend: compareSession.overlayBlend
                     )
                 }
+            }
+            .onGeometryChange(for: CGSize.self) { $0.size } action: { _ in
+                if isInspectorSurfaceReloadPending { scheduleInspectorSurfaceReload() }
             }
         }
         .onChange(of: controller.mediaItem?.url) { _, _ in

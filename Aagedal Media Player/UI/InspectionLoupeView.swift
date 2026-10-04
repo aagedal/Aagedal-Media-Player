@@ -9,10 +9,17 @@ import Combine
 final class InspectionLoupeState: ObservableObject {
     @Published var isEnabled = false
     @Published var isPinned = false
+    @Published var usesNearestNeighbor = true
     @Published private(set) var magnification: LoupeMagnification = .twoTimes
     @Published var normalizedPoint = CGPoint(x: 0.5, y: 0.5)
     @Published var pointer: CGPoint?
     @Published private(set) var overlayPosition: CGPoint?
+
+    var canCenter: Bool {
+        normalizedPoint != CGPoint(x: 0.5, y: 0.5)
+            || pointer != nil
+            || overlayPosition != nil
+    }
 
     func follow(_ location: CGPoint, pictureRect: CGRect) {
         guard isEnabled, !isPinned,
@@ -65,6 +72,18 @@ final class InspectionLoupeState: ObservableObject {
         overlayPosition = nil
     }
 
+    func moveTarget(to location: CGPoint, pictureRect: CGRect) {
+        guard isEnabled, pictureRect.width > 0, pictureRect.height > 0,
+              location.x.isFinite, location.y.isFinite else { return }
+        let location = CGPoint(
+            x: min(max(location.x, pictureRect.minX), pictureRect.maxX),
+            y: min(max(location.y, pictureRect.minY), pictureRect.maxY)
+        )
+        guard let point = LoupeGeometry.normalizedPoint(location: location, in: pictureRect) else { return }
+        isPinned = true
+        normalizedPoint = point
+    }
+
     func close() {
         isEnabled = false
         isPinned = false
@@ -104,7 +123,6 @@ struct InspectionLoupeControl: View {
         .help("Inspection loupe controls (Command-Shift-M)")
         .accessibilityLabel("Inspection loupe")
         .accessibilityValue(state.isEnabled ? "Shown" : "Hidden")
-        .accessibilityHint(nativePixelAvailability.explanation)
         .accessibilityAddTraits(state.isEnabled ? .isSelected : [])
         .popover(isPresented: $isPresented) {
             VStack(alignment: .leading, spacing: 12) {
@@ -118,33 +136,20 @@ struct InspectionLoupeControl: View {
                         )
                     }
                 )) {
-                    ForEach(LoupeMagnification.allCases) { value in
+                    ForEach(LoupeMagnification.allCases.filter { $0 != .nativePixels }) { value in
                         Text(value.label).tag(value)
-                            .disabled(value == .nativePixels && !nativePixelAvailability.isAvailable)
-                            .help(value == .nativePixels ? nativePixelAvailability.explanation : value.label)
                     }
                 }
-                .accessibilityHint(nativePixelAvailability.explanation)
-                Toggle("Pin picture position", isOn: $state.isPinned)
-                Slider(value: coordinate(\.x), in: 0...1) {
-                    Text("Horizontal picture position")
-                }
-                .accessibilityValue("\(Int(state.normalizedPoint.x * 100)) percent")
-                Slider(value: coordinate(\.y), in: 0...1) {
-                    Text("Vertical picture position")
-                }
-                .accessibilityValue("\(Int(state.normalizedPoint.y * 100)) percent")
-                Button("Center and pin") { state.reset() }
-                if state.overlayPosition != nil {
-                    Button("Reset loupe placement") { state.resetOverlayPosition() }
-                }
-                Text("Move over the picture to inspect it. Pin the picture position, then drag the loupe to place it elsewhere. Compare Mode shows the same picture coordinate in A and B.")
+                Toggle("Nearest-neighbor scaling", isOn: $state.usesNearestNeighbor)
+                    .help("Keep pixel edges sharp when enlarging. Turn off for smooth scaling.")
+                Button("Center") { state.reset() }
+                    .disabled(!state.canCenter)
+                Text("Drag the target frame to move the inspected position. Drag the loupe to place it elsewhere. Compare Mode shows the same picture coordinate in A and B.")
                     .font(.caption)
                 Text("Display-space preview • up to 10 fps. Captures may differ from the live HDR display and are not pixel-value measurements or frame-locked A/B samples.")
                     .font(.caption).foregroundStyle(.secondary)
-                Text(nativePixelAvailability.explanation)
+                Text("2×, 4×, 8× and 16× enlarge the displayed picture. Nearest-neighbor scaling keeps captured pixel edges sharp.")
                     .font(.caption).foregroundStyle(.secondary)
-                    .accessibilityLabel("1:1 source pixels. \(nativePixelAvailability.explanation)")
             }
             .padding(16)
             .frame(width: 320)
@@ -152,15 +157,6 @@ struct InspectionLoupeControl: View {
 
     }
 
-    private func coordinate(_ keyPath: WritableKeyPath<CGPoint, CGFloat>) -> Binding<Double> {
-        Binding(
-            get: { Double(state.normalizedPoint[keyPath: keyPath]) },
-            set: {
-                state.isPinned = true
-                state.normalizedPoint[keyPath: keyPath] = CGFloat($0)
-            }
-        )
-    }
 }
 
 struct InspectionLoupeOverlay: View {
@@ -172,7 +168,10 @@ struct InspectionLoupeOverlay: View {
     let isComparing: Bool
     let geometry: CompareDisplayGeometry
     let mode: CompareViewMode
+    var wipePosition: Double = 0.5
+    var overlayBlend: Double = 0.5
     @State private var dragOrigin: CGPoint?
+    @State private var targetDragOrigin: CGPoint?
     var body: some View {
         let count: CGFloat = isComparing ? 2 : 1
         let width = min(180, max(64, (geometry.canvasSize.width - 24) / count))
@@ -189,57 +188,131 @@ struct InspectionLoupeOverlay: View {
             pointer: state.pointer
         )
 
-        HStack(spacing: 6) {
-            lens(image: primaryCapture.image, source: isComparing ? "A" : "Picture", size: lensSize, pictureRect: pictureRect(for: .primary))
-            if isComparing {
-                lens(image: secondaryCapture.image, source: "B", size: lensSize, pictureRect: pictureRect(for: .secondary))
+        ZStack(alignment: .topLeading) {
+            if isComparing && mode == .sideBySide {
+                target(for: .primary)
+                target(for: .secondary)
+            } else {
+                target(for: targetSource)
             }
-        }
-        .contentShape(Rectangle())
-        .gesture(
-            DragGesture(minimumDistance: 3)
-                .onChanged { value in
-                    let origin = dragOrigin ?? center
-                    if dragOrigin == nil { dragOrigin = origin }
-                    state.moveOverlay(
-                        to: CGPoint(
-                            x: origin.x + value.translation.width,
-                            y: origin.y + value.translation.height
-                        ),
-                        canvasSize: geometry.canvasSize, overlaySize: overlaySize
-                    )
+
+            HStack(spacing: 6) {
+                lens(image: primaryCapture.image, source: isComparing ? "A" : "Picture", size: lensSize, pictureRect: pictureRect(for: .primary))
+                if isComparing {
+                    lens(image: secondaryCapture.image, source: "B", size: lensSize, pictureRect: pictureRect(for: .secondary))
                 }
-                .onEnded { _ in dragOrigin = nil }
-        )
-        .focusable()
-        .onMoveCommand { direction in
-            let step: CGFloat = 12
-            let delta: CGSize
-            switch direction {
-            case .left: delta = CGSize(width: -step, height: 0)
-            case .right: delta = CGSize(width: step, height: 0)
-            case .up: delta = CGSize(width: 0, height: -step)
-            case .down: delta = CGSize(width: 0, height: step)
-            @unknown default: return
             }
-            state.moveOverlay(
-                to: CGPoint(x: center.x + delta.width, y: center.y + delta.height),
-                canvasSize: geometry.canvasSize, overlaySize: overlaySize
+            .contentShape(Rectangle())
+            .gesture(
+                // The lens moves during the gesture, so its local coordinate space
+                // would feed that movement back into the next translation sample.
+                DragGesture(minimumDistance: 3, coordinateSpace: .global)
+                    .onChanged { value in
+                        let origin = dragOrigin ?? center
+                        if dragOrigin == nil { dragOrigin = origin }
+                        state.moveOverlay(
+                            to: CGPoint(
+                                x: origin.x + value.translation.width,
+                                y: origin.y + value.translation.height
+                            ),
+                            canvasSize: geometry.canvasSize, overlaySize: overlaySize
+                        )
+                    }
+                    .onEnded { _ in dragOrigin = nil }
             )
+            .focusable()
+            .onMoveCommand { direction in
+                let step: CGFloat = 12
+                let delta: CGSize
+                switch direction {
+                case .left: delta = CGSize(width: -step, height: 0)
+                case .right: delta = CGSize(width: step, height: 0)
+                case .up: delta = CGSize(width: 0, height: -step)
+                case .down: delta = CGSize(width: 0, height: step)
+                @unknown default: return
+                }
+                state.moveOverlay(
+                    to: CGPoint(x: center.x + delta.width, y: center.y + delta.height),
+                    canvasSize: geometry.canvasSize, overlaySize: overlaySize
+                )
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("\(isComparing ? "A and B" : "Picture") loupe, \(state.magnification.label)")
+            .accessibilityHint("Drag to move. Focus and use arrow keys to move by small steps.")
+            .position(center)
+            .onAppear { refreshCaptures() }
+            .onChange(of: primary.preparationID) { _, _ in refreshCaptures() }
+            .onChange(of: secondary.preparationID) { _, _ in refreshCaptures() }
+            .onChange(of: isComparing) { _, _ in refreshCaptures() }
+            .onDisappear {
+                dragOrigin = nil
+                targetDragOrigin = nil
+                primaryCapture.stop()
+                secondaryCapture.stop()
+            }
         }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(isComparing ? "A and B" : "Picture") loupe, \(state.magnification.label), \(state.isPinned ? "pinned" : "following pointer")")
-        .accessibilityHint("Drag to move. Focus and use arrow keys to move by small steps.")
-        .position(center)
-        .onAppear { refreshCaptures() }
-        .onChange(of: primary.preparationID) { _, _ in refreshCaptures() }
-        .onChange(of: secondary.preparationID) { _, _ in refreshCaptures() }
-        .onChange(of: isComparing) { _, _ in refreshCaptures() }
-        .onDisappear {
-            dragOrigin = nil
-            primaryCapture.stop()
-            secondaryCapture.stop()
+        .frame(width: geometry.canvasSize.width, height: geometry.canvasSize.height)
+        .coordinateSpace(name: "inspectionLoupeCanvas")
+    }
+
+    private var targetSource: CompareSource {
+        guard isComparing else { return .primary }
+        if mode == .secondary || (mode == .overlay && overlayBlend == 1) {
+            return .secondary
         }
+        if mode.isWipe, let pointer = state.pointer,
+           geometry.secondaryClipRect(for: mode, wipePosition: wipePosition).contains(pointer) {
+            return .secondary
+        }
+        return .primary
+    }
+
+    private func target(for source: CompareSource) -> some View {
+        let rect = pictureRect(for: source)
+        let center = CGPoint(
+            x: rect.minX + state.normalizedPoint.x * rect.width,
+            y: rect.minY + state.normalizedPoint.y * rect.height
+        )
+        return RoundedRectangle(cornerRadius: 3)
+            .strokeBorder(.orange, lineWidth: 2)
+            .background(.black.opacity(0.12))
+            .overlay {
+                Image(systemName: "plus")
+                    .font(.system(size: 12, weight: .light))
+                    .foregroundStyle(.orange)
+                    .allowsHitTesting(false)
+            }
+            .frame(width: 36, height: 36)
+            .contentShape(Rectangle())
+            .gesture(
+                DragGesture(minimumDistance: 0, coordinateSpace: .named("inspectionLoupeCanvas"))
+                    .onChanged { value in
+                        let origin = targetDragOrigin ?? center
+                        if targetDragOrigin == nil { targetDragOrigin = origin }
+                        state.moveTarget(
+                            to: CGPoint(x: origin.x + value.translation.width,
+                                        y: origin.y + value.translation.height),
+                            pictureRect: rect
+                        )
+                    }
+                    .onEnded { _ in targetDragOrigin = nil }
+            )
+            .focusable()
+            .onMoveCommand { direction in
+                var location = center
+                switch direction {
+                case .left: location.x -= 4
+                case .right: location.x += 4
+                case .up: location.y -= 4
+                case .down: location.y += 4
+                @unknown default: return
+                }
+                state.moveTarget(to: location, pictureRect: rect)
+            }
+            .help("Drag to move the loupe target")
+            .accessibilityLabel("\(isComparing ? (source == .primary ? "A" : "B") : "Picture") loupe target")
+            .accessibilityHint("Drag to move the inspected position. Use arrow keys for small steps.")
+            .position(center)
     }
 
     private func refreshCaptures() {
@@ -258,7 +331,8 @@ struct InspectionLoupeOverlay: View {
     private func lens(image: CGImage?, source: String, size: CGSize, pictureRect: CGRect) -> some View {
         InspectionLoupeLens(
             image: image, source: source, size: size, pictureSize: pictureRect.size,
-            normalizedPoint: state.normalizedPoint, magnification: state.magnification
+            normalizedPoint: state.normalizedPoint, magnification: state.magnification,
+            usesNearestNeighbor: state.usesNearestNeighbor
         )
     }
 }
@@ -271,6 +345,7 @@ struct InspectionLoupeLens: View {
     let pictureSize: CGSize
     let normalizedPoint: CGPoint
     let magnification: LoupeMagnification
+    var usesNearestNeighbor = true
     @Environment(\.displayScale) private var displayScale
 
     var body: some View {
@@ -288,7 +363,7 @@ struct InspectionLoupeLens: View {
                     )
                     Image(decorative: image, scale: 1)
                         .resizable()
-                        .interpolation(.none)
+                        .interpolation(usesNearestNeighbor ? .none : .high)
                         .frame(width: placement.width, height: placement.height)
                         .offset(x: placement.minX, y: placement.minY)
                 } else {

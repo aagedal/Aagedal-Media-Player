@@ -8,6 +8,7 @@ nonisolated enum LoupeMagnification: String, CaseIterable, Identifiable, Sendabl
     case twoTimes
     case fourTimes
     case eightTimes
+    case sixteenTimes
     case nativePixels
 
     var id: Self { self }
@@ -17,6 +18,7 @@ nonisolated enum LoupeMagnification: String, CaseIterable, Identifiable, Sendabl
         case .twoTimes: "2×"
         case .fourTimes: "4×"
         case .eightTimes: "8×"
+        case .sixteenTimes: "16×"
         case .nativePixels: "Native pixels"
         }
     }
@@ -26,6 +28,7 @@ nonisolated enum LoupeMagnification: String, CaseIterable, Identifiable, Sendabl
         case .twoTimes: 2
         case .fourTimes: 4
         case .eightTimes: 8
+        case .sixteenTimes: 16
         case .nativePixels: nil
         }
     }

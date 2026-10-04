@@ -139,6 +139,33 @@ final class InspectionLoupeStateTests: XCTestCase {
         XCTAssertNil(state.overlayPosition)
     }
 
+    func testCenterAndPinIsAvailableOnlyWhenPlacementHasChanged() {
+        let state = InspectionLoupeState()
+        state.isEnabled = true
+        XCTAssertFalse(state.canCenter)
+        state.isPinned = true
+        XCTAssertFalse(state.canCenter)
+
+        state.moveTarget(to: CGPoint(x: 700, y: 160), pictureRect: picture)
+        XCTAssertTrue(state.canCenter)
+        state.reset()
+        XCTAssertFalse(state.canCenter)
+
+        state.moveOverlay(to: CGPoint(x: 200, y: 200),
+                          canvasSize: CGSize(width: 500, height: 400),
+                          overlaySize: CGSize(width: 180, height: 166))
+        XCTAssertTrue(state.canCenter)
+        state.reset()
+        XCTAssertFalse(state.canCenter)
+
+        // Hover can change floating placement even at the picture's center.
+        state.isPinned = false
+        state.follow(CGPoint(x: picture.midX, y: picture.midY), pictureRect: picture)
+        XCTAssertTrue(state.canCenter)
+        state.close()
+        XCTAssertFalse(state.canCenter)
+    }
+
     func testDraggingLoupePinsInspectedPointAndKeepsOverlayInsideCanvas() {
         let state = InspectionLoupeState()
         state.isEnabled = true
@@ -182,6 +209,43 @@ final class InspectionLoupeStateTests: XCTestCase {
         state.isEnabled = true
         state.follow(CGPoint(x: 700, y: 160), pictureRect: picture)
         XCTAssertEqual(state.normalizedPoint, CGPoint(x: 0.75, y: 0.25))
+    }
+
+    func testMovingTargetPinsPictureWithoutMovingFloatingLoupe() {
+        let state = InspectionLoupeState()
+        state.isEnabled = true
+        state.follow(CGPoint(x: 300, y: 360), pictureRect: picture)
+        let pointer = state.pointer
+
+        state.moveTarget(to: CGPoint(x: 700, y: 160), pictureRect: picture)
+        state.follow(CGPoint(x: 500, y: 260), pictureRect: picture)
+
+        XCTAssertTrue(state.isPinned)
+        XCTAssertEqual(state.normalizedPoint, CGPoint(x: 0.75, y: 0.25))
+        XCTAssertEqual(state.pointer, pointer)
+        XCTAssertNil(state.overlayPosition)
+
+        state.moveOverlay(to: CGPoint(x: 200, y: 200),
+                          canvasSize: CGSize(width: 500, height: 400),
+                          overlaySize: CGSize(width: 180, height: 166))
+        let overlayPosition = state.overlayPosition
+        state.moveTarget(to: CGPoint(x: -100, y: 900), pictureRect: picture)
+
+        XCTAssertEqual(state.normalizedPoint, CGPoint(x: 0, y: 1))
+        XCTAssertEqual(state.overlayPosition, overlayPosition)
+    }
+
+    func testDisabledTargetCannotMoveAndInvalidDragIsIgnored() {
+        let state = InspectionLoupeState()
+        state.moveTarget(to: CGPoint(x: 700, y: 160), pictureRect: picture)
+        XCTAssertEqual(state.normalizedPoint, CGPoint(x: 0.5, y: 0.5))
+        XCTAssertFalse(state.isPinned)
+
+        state.isEnabled = true
+        state.moveTarget(to: CGPoint(x: CGFloat.nan, y: 160), pictureRect: picture)
+        state.moveTarget(to: CGPoint(x: 700, y: 160), pictureRect: .zero)
+        XCTAssertEqual(state.normalizedPoint, CGPoint(x: 0.5, y: 0.5))
+        XCTAssertFalse(state.isPinned)
     }
 
     func testNativePixelSelectionFallsBackWhenVerificationIsInvalidated() {
