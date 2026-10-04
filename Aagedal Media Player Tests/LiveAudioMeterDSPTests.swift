@@ -43,10 +43,33 @@ final class LiveAudioMeterDSPTests: XCTestCase {
             let last = try XCTUnwrap(readings.last)
             XCTAssertEqual(try XCTUnwrap(last.momentaryLUFS), -23, accuracy: 0.1)
             XCTAssertEqual(try XCTUnwrap(last.shortTermLUFS), -23, accuracy: 0.1)
+            XCTAssertEqual(try XCTUnwrap(last.integratedLUFS), -23, accuracy: 0.1)
             XCTAssertEqual(last.maximumSamplePeakDBFS[0], -23, accuracy: 0.01)
             XCTAssertEqual(last.maximumTruePeakDBTP[0], -23, accuracy: 0.2)
             XCTAssertEqual(last.maximumTruePeakDBTP[0], last.maximumTruePeakDBTP[1])
         }
+    }
+
+    func testIntegratedLoudnessGatesSilenceAndResetsWithSegment() throws {
+        let rate = 48_000
+        var meter = try LiveAudioMeterDSP(format: .init(sampleRate: rate, layout: .stereo))
+        _ = try feed(&meter, frames: rate * 3) { frame, _ in
+            Float(pow(10, -23.0 / 20) * sin(2 * .pi * 1_000 * Double(frame) / Double(rate)))
+        }
+        let before = try XCTUnwrap(meter.finish()?.integratedLUFS)
+        var silent = try LiveAudioMeterDSP(format: meter.format)
+        let silence = try feed(&silent, frames: rate) { _, _ in 0 }
+        XCTAssertEqual(silence.last?.integratedLUFS, -.infinity)
+        XCTAssertEqual(before, -23, accuracy: 0.1)
+        var continued = try LiveAudioMeterDSP(format: meter.format)
+        _ = try feed(&continued, frames: rate * 3) { frame, _ in
+            Float(pow(10, -23.0 / 20) * sin(2 * .pi * 1_000 * Double(frame) / Double(rate)))
+        }
+        let after = try feed(&continued, frames: rate * 4) { _, _ in 0 }
+        XCTAssertEqual(try XCTUnwrap(after.last?.integratedLUFS), before, accuracy: 0.3)
+        var reset = try LiveAudioMeterDSP(format: meter.format)
+        let warming = try feed(&reset, frames: rate / 4) { _, _ in 0 }
+        XCTAssertNil(warming.last?.integratedLUFS)
     }
 
     func testUngatedWindowsTrackLevelChangeWithoutWallClockDecay() throws {

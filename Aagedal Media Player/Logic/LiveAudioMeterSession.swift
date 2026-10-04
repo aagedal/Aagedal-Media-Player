@@ -17,6 +17,9 @@ final class LiveAudioMeterSession: ObservableObject {
     @Published private(set) var selectedSourceID = primarySourceID
     @Published private(set) var sourceOptions: [LiveAudioMeterSourceOption] = []
 
+    @Published private(set) var measuredTrack = -1
+    @Published private(set) var programmeMapping: ProgrammeLoudnessMapping?
+
     let coordinator: LiveAudioMeterCoordinator
 
     private let primary: PlayerController
@@ -75,6 +78,8 @@ final class LiveAudioMeterSession: ObservableObject {
         guard !isClosed, id != selectedSourceID,
               sourceOptions.contains(where: { $0.id == id }) else { return }
         selectedSourceID = id
+        measuredTrack = -1
+        programmeMapping = nil
         sourceFailure = nil
         awaitsSourceReadiness = false
         selectedSource = nil
@@ -85,6 +90,55 @@ final class LiveAudioMeterSession: ObservableObject {
         ))
         bindSelectedPlayer()
         reconcileSelectedSource()
+    }
+
+    func selectTrack(_ index: Int) {
+        guard !isClosed, !(awaitsSourceReadiness && sourceFailure == nil) else { return }
+        measuredTrack = index
+        if index == -2 || index == -3 {
+            let layout: ProgrammeLoudnessLayout = index == -2 ? .stereo : .surround5Point1
+            let mono = trackOptions.filter(\.isMono).map(\.id)
+            programmeMapping = .init(layout: layout, audioStreamIndices: layout.channelRoles.indices.map {
+                mono.indices.contains($0) ? mono[$0] : -1
+            })
+        } else { programmeMapping = nil }
+        selectedSource = nil
+        reconcileSelectedSource()
+    }
+
+    func assignTrack(_ stream: Int, toChannel channel: Int) {
+        guard !isClosed, !(awaitsSourceReadiness && sourceFailure == nil),
+              let mapping = programmeMapping, mapping.audioStreamIndices.indices.contains(channel) else { return }
+        var indices = mapping.audioStreamIndices
+        indices[channel] = stream
+        programmeMapping = .init(layout: mapping.layout, audioStreamIndices: indices)
+        selectedSource = nil
+        reconcileSelectedSource()
+    }
+
+    private var trackOptions: [LiveAudioMeterTrackOption] {
+        let streams = selectedPlayer?.mediaItem?.metadata?.audioStreams ?? []
+        return (selectedPlayer?.audioTrackOptions ?? []).map { option in
+            .init(id: option.audioStreamOrderIndex, title: option.title,
+                  isMono: streams.indices.contains(option.audioStreamOrderIndex) && streams[option.audioStreamOrderIndex].channels == 1)
+        }
+    }
+
+    private func resolveMeasuredSource(_ player: PlayerController) throws -> LiveAudioMeterPlaybackSource {
+        let label = selectedSourceID == Self.primarySourceID ? "Source A" : "Source B"
+        if measuredTrack == -1 { return try player.liveAudioMeterSource(id: selectedSourceID, label: label) }
+        guard let item = player.mediaItem else { throw LiveAudioMeterPlaybackSource.Failure.noMedia }
+        let streams = item.metadata?.audioStreams ?? []
+        if let mapping = programmeMapping {
+            return try .init(id: selectedSourceID, label: label, url: item.url,
+                             mapping: mapping, streams: streams, duration: item.durationSeconds)
+        }
+        guard streams.indices.contains(measuredTrack), let option = trackOptions.first(where: { $0.id == measuredTrack }) else {
+            throw LiveAudioMeterPlaybackSource.Failure.noSelectedAudioTrack
+        }
+        return try .init(id: selectedSourceID, label: label, url: item.url,
+                         audioStreamOrderIndex: measuredTrack, stream: streams[measuredTrack],
+                         trackLabel: option.title, duration: item.durationSeconds)
     }
 
     func selectPreset(_ preset: LiveAudioMeterReference.Preset) {
@@ -173,7 +227,10 @@ final class LiveAudioMeterSession: ObservableObject {
             loudness: loudness,
             reference: reference,
             provenance: presentationProvenance,
-            diagnostics: presentationDiagnostics
+            diagnostics: presentationDiagnostics,
+            measuredTrack: measuredTrack, trackOptions: trackOptions, programmeMapping: programmeMapping,
+            integratedLUFS: coordinator.snapshot?.integratedLUFS,
+            loudnessHistory: coordinator.loudnessHistory
         )
     }
 
@@ -185,6 +242,8 @@ final class LiveAudioMeterSession: ObservableObject {
         if selectedSourceID == Self.secondarySourceID,
            !sourceOptions.contains(where: { $0.id == Self.secondarySourceID }) {
             selectedSourceID = Self.primarySourceID
+            measuredTrack = -1
+            programmeMapping = nil
             selectedSource = nil
             sourceFailure = nil
             awaitsSourceReadiness = false
@@ -241,6 +300,8 @@ final class LiveAudioMeterSession: ObservableObject {
     private func handle(_ event: LiveAudioMeterPlaybackEvent, from player: PlayerController) {
         switch event {
         case .discontinuity(.sourceReplacement, _):
+            measuredTrack = -1
+            programmeMapping = nil
             selectedSource = nil
             sourceFailure = nil
             awaitsSourceReadiness = true
@@ -267,10 +328,7 @@ final class LiveAudioMeterSession: ObservableObject {
             return
         }
         do {
-            let source = try player.liveAudioMeterSource(
-                id: selectedSourceID,
-                label: selectedSourceID == Self.primarySourceID ? "Source A" : "Source B"
-            )
+            let source = try resolveMeasuredSource(player)
             if source == selectedSource, !awaitsSourceReadiness, !initial { return }
             let snapshot = player.liveAudioMeterPlaybackSnapshot()
             let request = try source.request(at: playbackTime ?? snapshot.time)
@@ -362,6 +420,10 @@ final class LiveAudioMeterSession: ObservableObject {
 
     private var presentationDiagnostics: [LiveAudioMeterDiagnostic] {
         var diagnostics: [LiveAudioMeterDiagnostic] = []
+        if coordinator.restartCause == .clockRecovery {
+            diagnostics.append(.init(id: "clock-recovery", label: "Playback synchronization",
+                detail: "The decoder fell behind; measurement restarted at the current playback position. Integrated loudness and graph history cover the new segment."))
+        }
         if let drift = coordinator.clockDrift {
             diagnostics.append(.init(
                 id: "clock-drift", label: "Playback alignment",

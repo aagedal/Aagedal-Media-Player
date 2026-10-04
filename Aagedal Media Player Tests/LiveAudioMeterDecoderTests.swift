@@ -17,8 +17,6 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
         XCTAssertEqual(arguments, [
             "-hide_banner", "-nostdin", "-nostats", "-loglevel", "error",
             "-ss", "0.000000000", "-accurate_seek",
-            "-readrate", "1", "-readrate_catchup", "1",
-            "-readrate_initial_burst", "0.002000000",
             "-drc_scale", "0", "-target_level", "0",
             "-f", "wav", "-i", "/tmp/live-meter-source.wav",
             "-map", "0:a:2", "-vn", "-sn", "-dn", "-map_metadata", "-1",
@@ -27,8 +25,7 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
             "[f=f32le]pipe:1|[f=framecrc]pipe:2",
         ])
         let inputIndex = try XCTUnwrap(arguments.firstIndex(of: "-i"))
-        XCTAssertLessThan(try XCTUnwrap(arguments.firstIndex(of: "-readrate")), inputIndex)
-        XCTAssertLessThan(try XCTUnwrap(arguments.firstIndex(of: "-readrate_catchup")), inputIndex)
+        XCTAssertFalse(arguments.contains("-readrate"))
         let filterIndex = try XCTUnwrap(arguments.firstIndex(of: "-af"))
         XCTAssertFalse(arguments[filterIndex + 1].contains("volume"))
         XCTAssertFalse(arguments[filterIndex + 1].contains("pan"))
@@ -46,8 +43,6 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
         XCTAssertEqual(seekIndexes.count, 1)
         XCTAssertEqual(arguments[seekIndexes[0] + 1], "122.000000000")
         XCTAssertLessThan(seekIndexes[0], inputIndex)
-        let burstIndex = try XCTUnwrap(arguments.firstIndex(of: "-readrate_initial_burst"))
-        XCTAssertEqual(arguments[burstIndex + 1], "1.000000000")
         let filterIndex = try XCTUnwrap(arguments.firstIndex(of: "-af"))
         XCTAssertEqual(
             arguments[filterIndex + 1],
@@ -132,7 +127,7 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
         XCTAssertEqual(received.values.last?.endFrame, 384)
     }
 
-    func testTimestampedProcessorRejectsRetainedDTSCumulativeTimestampOverlap() throws {
+    func testTimestampedProcessorAllowsBoundedDTSRoundingButRejectsCumulativeDrift() throws {
         let request = try makeRequest(layout: .surround5Point1)
         let received = SnapshotBox()
         let processor = try LiveAudioMeterTimestampedStreamProcessor(request: request) {
@@ -145,19 +140,23 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
         // Timestamp sequence independently retained from the local DTS-HD MA
         // source. Synthetic PCM keeps this regression redistributable; every
         // packet has its own valid checksum and its declared 512 source frames.
-        // Each adjacent overlap is at most 16 frames, but the eighth packet is
-        // 56 frames behind the cumulative clock anchored at the initial PTS.
+        // The eighth packet is 56 frames behind the initial PCM clock, within
+        // the 2-ms bound. A synthetic ninth packet exceeds that absolute bound.
         for pts in [Int64(144), 648, 1_160, 1_656, 2_168, 2_664, 3_176] {
             XCTAssertNil(processor.consumeTimingLine(frameCRCLine(
                 pts: pts, frames: 512, data: packet
             )))
             try processor.consumePCM(packet)
         }
+        XCTAssertNil(processor.consumeTimingLine(frameCRCLine(
+            pts: 3_672, frames: 512, data: packet
+        )))
+        try processor.consumePCM(packet)
         let failure = LiveAudioMeterDecoder.Failure.timestampDiscontinuity(
-            expectedFrame: 3_728, actualFrame: 3_672
+            expectedFrame: 4_240, actualFrame: 4_128
         )
         XCTAssertEqual(processor.consumeTimingLine(frameCRCLine(
-            pts: 3_672, frames: 512, data: packet
+            pts: 4_128, frames: 512, data: packet
         )), failure)
         XCTAssertThrowsError(try processor.consumePCM(packet)) { error in
             XCTAssertEqual(error as? LiveAudioMeterDecoder.Failure, failure)
@@ -184,8 +183,8 @@ final class LiveAudioMeterDecoderTests: XCTestCase {
         let packet = bytes([Float](repeating: 0, count: 1_024 * 2))
         XCTAssertNil(gap.consumeTimingLine(frameCRCLine(pts: 0, frames: 1_024, data: packet)))
         XCTAssertEqual(
-            gap.consumeTimingLine(frameCRCLine(pts: 1_073, frames: 1_024, data: packet)),
-            .timestampDiscontinuity(expectedFrame: 1_024, actualFrame: 1_073)
+            gap.consumeTimingLine(frameCRCLine(pts: 1_121, frames: 1_024, data: packet)),
+            .timestampDiscontinuity(expectedFrame: 1_024, actualFrame: 1_121)
         )
 
         let checksum = try LiveAudioMeterTimestampedStreamProcessor(request: request) { _ in }

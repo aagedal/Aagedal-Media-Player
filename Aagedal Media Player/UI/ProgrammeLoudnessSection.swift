@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import SwiftUI
+import Charts
 
 struct ProgrammeLoudnessSection: View {
     let item: MediaItem
@@ -81,6 +82,7 @@ struct ProgrammeLoudnessSection: View {
                 measurement("Programme Integrated Loudness", value: result.loudness.integratedLoudness, unit: "LUFS")
                 measurement("Programme Loudness Range", value: result.loudness.loudnessRange, unit: "LU")
                 measurement("Programme True Peak", value: result.loudness.truePeak, unit: "dBTP")
+                OfflineLoudnessChart(result: result.loudness)
             }
             if controller.isAnalyzing {
                 HStack {
@@ -139,5 +141,37 @@ struct ProgrammeLoudnessSection: View {
         let name = stream.title?.trimmingCharacters(in: .whitespacesAndNewlines)
         if let name, !name.isEmpty { return "Track \(index + 1): \(name)" }
         return "Track \(index + 1)"
+    }
+}
+
+struct OfflineLoudnessChart: View {
+    let result: FFmpegService.LUFSResult
+
+    var body: some View {
+        if let samples = result.samples, !samples.isEmpty {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Loudness over time").font(.caption).foregroundStyle(.secondary)
+                Chart {
+                    ForEach(Array(samples.enumerated()), id: \.offset) { _, sample in
+                        if let value = sample.momentary {
+                            LineMark(x: .value("Time", sample.seconds), y: .value("LUFS", value),
+                                     series: .value("Window", "Momentary"))
+                                .foregroundStyle(by: .value("Window", "Momentary"))
+                        }
+                        if let value = sample.shortTerm {
+                            LineMark(x: .value("Time", sample.seconds), y: .value("LUFS", value),
+                                     series: .value("Window", "Short-term"))
+                                .foregroundStyle(by: .value("Window", "Short-term"))
+                        }
+                    }
+                }
+                .chartYScale(domain: -70 ... 0)
+                .chartXAxisLabel("Source time (seconds)")
+                .chartYAxisLabel("LUFS")
+                .frame(height: 180)
+                .accessibilityLabel("Offline momentary and short-term loudness over source time")
+                .accessibilityIdentifier("offline-loudness-history")
+            }
+        }
     }
 }

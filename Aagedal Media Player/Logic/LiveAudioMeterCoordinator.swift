@@ -80,6 +80,7 @@ nonisolated struct LiveAudioMeterReducedSnapshot: Equatable, Sendable {
 final class LiveAudioMeterCoordinator: ObservableObject {
     nonisolated enum RestartCause: Equatable, Sendable {
         case initial, retry, manualReset, seek, loopWrap, geometryReload, speedRestored, sourceReplacement
+        case clockRecovery
         case resumeAfterSuspension
     }
 
@@ -94,6 +95,8 @@ final class LiveAudioMeterCoordinator: ObservableObject {
     @Published private(set) var publishedSnapshotCount = 0
     @Published private(set) var clockDrift: TimeInterval?
     private(set) var clockFailureContext: LiveAudioMeterClockFailureContext?
+
+    private(set) var loudnessHistory: [LiveAudioMeterHistoryPoint] = []
 
     private let decodeOperation: LiveAudioMeterDecodeOperation
     private var request: LiveAudioMeterDecodeRequest?
@@ -113,6 +116,7 @@ final class LiveAudioMeterCoordinator: ObservableObject {
     /// tail. Decoder EOF can also precede the container's visual EOF, in which
     /// case the final reading remains frozen instead of becoming clock drift.
     private var hasReachedPlaybackEOF = false
+    private var clockRecoveryTimes: [TimeInterval] = []
 
     init(decodeOperation: @escaping LiveAudioMeterDecodeOperation = { request, control, gate, onSnapshot in
         try await LiveAudioMeterDecoder.decode(
@@ -302,6 +306,17 @@ final class LiveAudioMeterCoordinator: ObservableObject {
                 )
                 return
             }
+            // A brief worker stall must not require a manual Retry. Restart
+            // without exposing stale readings, but stop after repeated failures.
+            clockRecoveryTimes.removeAll { playback.time - $0 > 60 || playback.time < $0 }
+            if hasEstablishedClockSync, drift < 0, drift >= -1,
+               clockRecoveryTimes.count < 3,
+               let repositioned = try? request.repositioned(at: playback.time) {
+                clockRecoveryTimes.append(playback.time)
+                begin(repositioned, cause: .clockRecovery)
+                updatePlaybackClock(playback)
+                return
+            }
             let failureContext = LiveAudioMeterClockFailureContext(
                 generation: generation,
                 requestStartFrame: request.startSourceFrame,
@@ -447,10 +462,12 @@ final class LiveAudioMeterCoordinator: ObservableObject {
     private func begin(_ newRequest: LiveAudioMeterDecodeRequest, cause: RestartCause) {
         guard !isClosed else { return }
         invalidateWorker()
+        if cause != .clockRecovery { clockRecoveryTimes = [] }
         generation &+= 1
         let ownedGeneration = generation
         request = newRequest
         restartCause = cause
+        loudnessHistory = []
         snapshot = nil
         reducedSnapshot = nil
         provenance = nil
@@ -569,6 +586,7 @@ final class LiveAudioMeterCoordinator: ObservableObject {
         workerGate?.cancel()
         self.workerGate = nil
         self.handoff = nil
+        loudnessHistory = []
         snapshot = nil
         reducedSnapshot = nil
         provenance = nil
@@ -594,6 +612,7 @@ final class LiveAudioMeterCoordinator: ObservableObject {
         workerGate?.cancel()
         self.workerGate = nil
         self.handoff = nil
+        loudnessHistory = []
         snapshot = nil
         reducedSnapshot = nil
         provenance = nil
@@ -605,6 +624,16 @@ final class LiveAudioMeterCoordinator: ObservableObject {
     }
 
     private func publish(_ next: LiveAudioMeterReducedSnapshot) {
+        if let frame = next.measurement.loudnessEndFrame,
+           loudnessHistory.last?.frame != frame, let request {
+            loudnessHistory.append(.init(
+                frame: frame, time: Double(frame) / Double(request.format.sampleRate),
+                momentary: next.measurement.momentaryLUFS,
+                shortTerm: next.measurement.shortTermLUFS
+            ))
+            let cutoff = Double(frame) / Double(request.format.sampleRate) - 60
+            loudnessHistory.removeAll { $0.time < cutoff }
+        }
         snapshot = next.measurement
         reducedSnapshot = next
         publishedSnapshotCount += 1
@@ -636,6 +665,7 @@ final class LiveAudioMeterCoordinator: ObservableObject {
     ) {
         invalidateWorker()
         generation &+= 1
+        loudnessHistory = []
         snapshot = nil
         reducedSnapshot = nil
         provenance = nil
@@ -717,6 +747,8 @@ private extension LiveAudioMeterDecodeRequest {
         url == other.url
             && audioStreamOrderIndex == other.audioStreamOrderIndex
             && format == other.format
+            && programmeMapping == other.programmeMapping
+            && sourceDuration == other.sourceDuration
     }
 
     func repositioned(at playbackTime: TimeInterval) throws -> Self {
@@ -733,7 +765,8 @@ private extension LiveAudioMeterDecodeRequest {
             audioStreamOrderIndex: audioStreamOrderIndex,
             format: format,
             startSourceFrame: frame,
-            startSourceTime: Double(frame) / Double(format.sampleRate)
+            startSourceTime: Double(frame) / Double(format.sampleRate),
+            programmeMapping: programmeMapping, sourceDuration: sourceDuration
         )
     }
 }

@@ -92,6 +92,38 @@ final class ProgrammeLoudnessTests: XCTestCase {
                        "All independent demuxers belong to one monitored FFmpeg process.")
     }
 
+    func testLiveGroupedMonoMeasuresAssignedTracksAndPreservesSeek() async throws {
+        guard FFmpegService.ffmpegPath != nil else { throw XCTSkip("Bundled ffmpeg is required") }
+        let url = try await monoContainer(gains: [0.5, 0.25, 1, 0], includeVideo: true)
+        let mapping = ProgrammeLoudnessMapping(layout: .stereo, audioStreamIndices: [1, 0])
+        let source = try LiveAudioMeterPlaybackSource(id: "A", label: "Source A", url: url,
+            mapping: mapping, streams: streams(4), duration: 4)
+        let request = try source.request(at: 1.25)
+        let result = try await LiveAudioMeterDecoder.decode(request) { _ in }
+        XCTAssertEqual(result.finalSnapshot?.endFrame, 192_000)
+        XCTAssertEqual(result.provenance.timestampFrameCount, 132_000)
+        XCTAssertEqual(try XCTUnwrap(result.finalSnapshot?.maximumSamplePeakDBFS.first), -35.04, accuracy: 0.1)
+        XCTAssertEqual(try XCTUnwrap(result.finalSnapshot?.maximumSamplePeakDBFS.last), -29.02, accuracy: 0.1)
+        XCTAssertEqual(result.provenance.request.programmeMapping, mapping)
+        XCTAssertEqual(source.channelLabels, ["FL", "FR"])
+        XCTAssertThrowsError(try LiveAudioMeterPlaybackSource(id: "A", label: "Source A", url: url,
+            mapping: .init(layout: .stereo, audioStreamIndices: [0, 0]), streams: streams(4), duration: 4))
+    }
+
+    func testLiveGroupedSurroundUsesExplicitSpeakerRoles() async throws {
+        guard FFmpegService.ffmpegPath != nil else { throw XCTSkip("Bundled ffmpeg is required") }
+        let url = try await monoContainer(gains: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6])
+        let mapping = ProgrammeLoudnessMapping(layout: .surround5Point1, audioStreamIndices: [0, 1, 2, 3, 4, 5])
+        let source = try LiveAudioMeterPlaybackSource(id: "A", label: "Source A", url: url,
+            mapping: mapping, streams: streams(6), duration: 4)
+        let result = try await LiveAudioMeterDecoder.decode(source.request(at: 2)) { _ in }
+        XCTAssertEqual(result.finalSnapshot?.endFrame, 192_000)
+        XCTAssertEqual(result.finalSnapshot?.samplePeakDBFS.count, 6)
+        XCTAssertEqual(source.channelLabels, ["FL", "FR", "FC", "LFE", "SL", "SR"])
+        XCTAssertGreaterThan(try XCTUnwrap(result.finalSnapshot?.samplePeakDBFS.first), -50)
+        XCTAssertNotNil(result.finalSnapshot?.integratedLUFS)
+    }
+
     func testStereoInEightMonoTracksMatchesIndependentStereoIncludingOppositePolarity() async throws {
         for trailingGain in [0.0, 10.0] {
             let gains = [1.0, -1.0] + [Double](repeating: trailingGain, count: 6)

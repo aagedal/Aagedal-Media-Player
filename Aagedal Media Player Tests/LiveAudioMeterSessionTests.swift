@@ -42,6 +42,43 @@ final class LiveAudioMeterSessionTests: XCTestCase {
         await eventually { await recorder.cancellationCountValue() == 2 }
     }
 
+    func testIndependentTrackAndMonoGroupingLeavePlaybackSelectionUnchanged() async throws {
+        let player = PlayerController()
+        player.mediaItem = mediaItem(url: URL(fileURLWithPath: "/tmp/mono-tracks.mov"), audioStreams: [
+            audioStream(index: 10, title: "Left", channels: 1, layout: "mono"),
+            audioStream(index: 20, title: "Right", channels: 1, layout: "mono", isDefault: false),
+            audioStream(index: 30, title: "Alternate", channels: 1, layout: "mono", isDefault: false)
+        ])
+        player.refreshAudioTrackOptions(playerItem: nil)
+        await eventually { player.liveAudioMeterSourceRevision > 0 }
+        let recorder = MeterDecodeRecorder()
+        let coordinator = LiveAudioMeterCoordinator(decodeOperation: recorder.decode)
+        let session = LiveAudioMeterSession(primary: player, comparison: CompareSessionController(),
+            defaults: isolatedDefaults(), coordinator: coordinator)
+        session.start()
+        await eventually { await recorder.requestCountValue() == 1 }
+        let playbackTrack = player.selectedAudioTrackOrderIndex
+        session.selectTrack(2)
+        await eventually { await recorder.requestCountValue() == 2 }
+        let alternate = await recorder.lastRequest()
+        XCTAssertEqual(alternate?.audioStreamOrderIndex, 2)
+        XCTAssertEqual(player.selectedAudioTrackOrderIndex, playbackTrack)
+        session.selectTrack(-2)
+        await eventually { await recorder.requestCountValue() == 3 }
+        let grouped = await recorder.lastRequest()
+        XCTAssertEqual(grouped?.programmeMapping?.audioStreamIndices, [0, 1])
+        XCTAssertEqual(grouped?.format.layout, .stereo)
+        session.assignTrack(2, toChannel: 1)
+        await eventually { await recorder.requestCountValue() == 4 }
+        let reassigned = await recorder.lastRequest()
+        XCTAssertEqual(reassigned?.programmeMapping?.audioStreamIndices, [0, 2])
+        XCTAssertEqual(player.selectedAudioTrackOrderIndex, playbackTrack)
+        session.assignTrack(0, toChannel: 1)
+        guard case .unavailable = session.viewState.status else { return XCTFail("Duplicate speaker tracks must be rejected") }
+        XCTAssertFalse(session.viewState.canRetry)
+        session.close()
+    }
+
     func testSourceReplacementWaitsForTrackReadinessBeforeStartingNewIdentity() async throws {
         let player = PlayerController()
         let firstURL = URL(fileURLWithPath: "/tmp/first.mov")
@@ -63,6 +100,7 @@ final class LiveAudioMeterSessionTests: XCTestCase {
 
         player.mediaItem = mediaItem(url: secondURL)
         player.publishLiveAudioMeterDiscontinuity(.sourceReplacement)
+        session.selectTrack(0)
         session.retry()
         session.reset()
         try await Task.sleep(for: .milliseconds(30))

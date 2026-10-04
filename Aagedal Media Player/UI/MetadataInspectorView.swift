@@ -555,6 +555,7 @@ struct MetadataInspectorView: View {
                     .textSelection(.enabled)
             }
             .accessibilityElement(children: .combine)
+            OfflineLoudnessChart(result: result)
         } else if lufsAnalyzing.contains(streamIndex) {
             HStack(spacing: 6) {
                 ProgressView()

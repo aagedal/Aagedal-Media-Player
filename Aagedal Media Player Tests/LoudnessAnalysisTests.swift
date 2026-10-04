@@ -8,6 +8,20 @@ import XCTest
 
 @MainActor
 final class LoudnessAnalysisTests: XCTestCase {
+    func testOfflineGraphParsesWarmupAndBoundsFullDurationHistory() {
+        let history = OfflineLoudnessHistory()
+        history.consume("[ebur128] t: 0.099 M: -120.7 S: -120.7 I: -70.0")
+        XCTAssertNil(history.samples.first?.momentary)
+        for index in 4...10_000 {
+            history.consume("[ebur128] t: \(Double(index) / 10) M: -23.0 S: -24.0 I: -23.0")
+        }
+        XCTAssertLessThanOrEqual(history.samples.count, 4_096)
+        XCTAssertEqual(history.samples.first?.seconds, 0.099)
+        XCTAssertGreaterThan(history.samples.last?.seconds ?? 0, 999)
+        XCTAssertEqual(history.samples.last?.momentary, -23)
+        XCTAssertEqual(history.samples.last?.shortTerm, -24)
+    }
+
     // Independently synthesize the specified PCM; FFmpeg is only the meter under test.
     // EBU Tech 3341 (2023), Table 1: https://tech.ebu.ch/docs/tech/tech3341.pdf
     func testEBUAbsoluteStereoCalibrationReferences() async throws {
@@ -21,6 +35,8 @@ final class LoudnessAnalysisTests: XCTestCase {
                 let result = try await FFmpegService.analyzeLUFS(url: url, audioStreamIndex: 0)
                 XCTAssertEqual(result.integratedLoudness, level, accuracy: 0.1, "EBU cases 1 and 2 at \(sampleRate) Hz")
                 XCTAssertEqual(result.truePeak, level, accuracy: 0.1)
+                XCTAssertGreaterThan(result.samples?.count ?? 0, 100)
+                XCTAssertEqual(try XCTUnwrap(result.samples?.last?.momentary), level, accuracy: 0.1)
             }
         }
     }

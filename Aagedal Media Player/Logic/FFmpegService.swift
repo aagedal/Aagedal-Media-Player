@@ -165,10 +165,17 @@ enum FFmpegService {
         case bs1770Conventional7Point1RearChannels
     }
 
+    nonisolated struct LoudnessSample: Sendable, Codable, Equatable {
+        let seconds: Double
+        let momentary: Double?
+        let shortTerm: Double?
+    }
+
     struct LUFSResult: Sendable, Codable {
         let integratedLoudness: Double
         let loudnessRange: Double
         let truePeak: Double
+        var samples: [LoudnessSample]? = nil
         var analysisRange: LoudnessRange? = nil
         // Optional so previously exported results decode as uncorrected.
         var weightingCorrection: LoudnessWeightingCorrection? = nil
@@ -262,9 +269,11 @@ enum FFmpegService {
     private static func analyzeLoudness(arguments: [String], range: LoudnessRange?) async throws -> LUFSResult {
         guard let path = ffmpegPath else { throw FFmpegError.ffmpegMissing }
         let result: SubprocessResult
+        let history = OfflineLoudnessHistory()
         do {
             result = try await SubprocessService.run(
-                executableURL: URL(fileURLWithPath: path), arguments: arguments
+                executableURL: URL(fileURLWithPath: path), arguments: arguments,
+                onStandardErrorLine: { history.consume($0) }
             )
         } catch is CancellationError {
             throw FFmpegError.cancelled
@@ -282,6 +291,9 @@ enum FFmpegService {
         guard hasSamples else { throw FFmpegError.loudnessNoSamples }
         guard var parsed = parseLUFSOutput(output) else {
             throw FFmpegError.processFailed("Could not parse LUFS output")
+        }
+        parsed.samples = history.samples.map {
+            .init(seconds: $0.seconds + (range?.start ?? 0), momentary: $0.momentary, shortTerm: $0.shortTerm)
         }
         parsed.analysisRange = range
         return parsed
@@ -366,4 +378,38 @@ enum FFmpegService {
         return Double(s.trimmingCharacters(in: .whitespaces))
     }
 
+}
+
+/// Retains a bounded full-interval graph while stderr's summary tail stays small.
+nonisolated final class OfflineLoudnessHistory: @unchecked Sendable {
+    private let lock = NSLock()
+    private var retained: [FFmpegService.LoudnessSample] = []
+    private var interval = 0.1
+    private var nextTime = 0.0
+
+    var samples: [FFmpegService.LoudnessSample] { lock.withLock { retained } }
+
+    func consume(_ line: String) {
+        guard let time = Self.number("t:", line), time.isFinite, time >= 0,
+              let momentary = Self.number("M:", line),
+              let shortTerm = Self.number("S:", line) else { return }
+        lock.withLock {
+            guard time + 0.00001 >= nextTime else { return }
+            retained.append(.init(seconds: time,
+                momentary: time >= 0.399 && momentary.isFinite ? momentary : nil,
+                shortTerm: time >= 2.999 && shortTerm.isFinite ? shortTerm : nil))
+            nextTime = time + interval
+            if retained.count > 4_096 {
+                retained = retained.enumerated().compactMap { $0.offset.isMultiple(of: 2) ? $0.element : nil }
+                interval *= 2
+                nextTime = time + interval
+            }
+        }
+    }
+
+    private static func number(_ key: String, _ line: String) -> Double? {
+        guard let range = line.range(of: key) else { return nil }
+        let token = line[range.upperBound...].drop(while: { $0.isWhitespace }).prefix(while: { !$0.isWhitespace })
+        return Double(token)
+    }
 }

@@ -79,6 +79,7 @@ nonisolated struct LiveAudioMeterSnapshot: Equatable, Sendable {
     /// older revisions without discarding their current readings/ballistics.
     let maximaResetRevision: UInt64
     let isFinal: Bool
+    var integratedLUFS: Double? = nil
 
     func applyingMaximaResetRevision(_ revision: UInt64) -> Self {
         Self(
@@ -90,7 +91,7 @@ nonisolated struct LiveAudioMeterSnapshot: Equatable, Sendable {
             maximumTruePeakDBTP: maximumTruePeakDBTP,
             maximumMomentaryLUFS: maximumMomentaryLUFS,
             maximumShortTermLUFS: maximumShortTermLUFS,
-            maximaResetRevision: revision, isFinal: isFinal
+            maximaResetRevision: revision, isFinal: isFinal, integratedLUFS: integratedLUFS
         )
     }
 }
@@ -124,6 +125,10 @@ nonisolated struct LiveAudioMeterDSP: Sendable {
     private var energyIndex = 0
     private var energyCount = 0
     private var completedBuckets: Int64 = 0
+    // Bounded 0.01-LU energy histogram of overlapping 400-ms blocks.
+    private var integratedCounts = [Int64](repeating: 0, count: 12_001)
+    private var integratedEnergies = [Double](repeating: 0, count: 12_001)
+    private var integrated: Double?
     private var momentary: Double?
     private var shortTerm: Double?
     private var loudnessEndFrame: Int64?
@@ -146,8 +151,9 @@ nonisolated struct LiveAudioMeterDSP: Sendable {
         lastPublishedTruePeaks = bucketSamplePeaks
     }
 
-    /// Only fixed filter state and sixty 50-ms energy sums are retained; no
-    /// per-sample history grows with file duration. At most five snapshots return.
+    /// Fixed filter state, sixty 50-ms energy sums and a bounded integrated
+    /// histogram are retained. No per-sample history grows with file duration.
+    /// At most five snapshots return.
     /// Any rejected block invalidates this segment, rather than hiding a gap.
     mutating func process(_ pcm: [Float], startFrame: Int64) throws -> [LiveAudioMeterSnapshot] {
         guard failure == nil else { throw Failure.invalidated }
@@ -184,6 +190,7 @@ nonisolated struct LiveAudioMeterDSP: Sendable {
                 if completedBuckets.isMultiple(of: 2), weights != nil {
                     if energyCount >= 8 {
                         momentary = loudness(windowBuckets: 8)
+                        accumulateIntegrated(momentary!)
                         loudnessEndFrame = nextFrame
                     }
                     if energyCount >= 60 { shortTerm = loudness(windowBuckets: 60) }
@@ -259,6 +266,21 @@ nonisolated struct LiveAudioMeterDSP: Sendable {
         return power > 0 ? -0.691 + 10 * log10(power / Double(windowBuckets)) : -.infinity
     }
 
+    private mutating func accumulateIntegrated(_ level: Double) {
+        guard level >= -70 else { integrated = integrated ?? -.infinity; return }
+        let power = pow(10, (level + 0.691) / 10)
+        let index = min(12_000, max(0, Int(((level + 70) * 100).rounded())))
+        integratedCounts[index] += 1
+        integratedEnergies[index] += power
+        let count = integratedCounts.reduce(0, +)
+        let energy = integratedEnergies.reduce(0, +)
+        let relativeGate = -0.691 + 10 * log10(energy / Double(count)) - 10
+        let first = min(12_000, max(0, Int(ceil((max(-70, relativeGate) + 70) * 100))))
+        let gatedCount = integratedCounts[first...].reduce(0, +)
+        let gatedEnergy = integratedEnergies[first...].reduce(0, +)
+        integrated = gatedCount > 0 ? -0.691 + 10 * log10(gatedEnergy / Double(gatedCount)) : -.infinity
+    }
+
     private func snapshot(isFinal: Bool) -> LiveAudioMeterSnapshot {
         LiveAudioMeterSnapshot(endFrame: nextFrame, segmentStartFrame: segmentStartFrame,
             samplePeakDBFS: bucketSamplePeaks.map(Self.decibels),
@@ -266,7 +288,7 @@ nonisolated struct LiveAudioMeterDSP: Sendable {
             shortTermLUFS: shortTerm, loudnessEndFrame: loudnessEndFrame, maximumSamplePeakDBFS: maximumSamplePeaks.map(Self.decibels),
             maximumTruePeakDBTP: maximumTruePeaks.map(Self.decibels),
             maximumMomentaryLUFS: maximumMomentary, maximumShortTermLUFS: maximumShortTerm,
-            maximaResetRevision: 0, isFinal: isFinal)
+            maximaResetRevision: 0, isFinal: isFinal, integratedLUFS: integrated)
     }
 
     private static func decibels(_ amplitude: Double) -> Double {

@@ -4,7 +4,7 @@
 
 import Foundation
 
-enum ProgrammeLoudnessLayout: String, CaseIterable, Codable, Sendable {
+nonisolated enum ProgrammeLoudnessLayout: String, CaseIterable, Codable, Sendable {
     case stereo
     case surround5Point1
 
@@ -50,7 +50,7 @@ enum ProgrammeLoudnessError: Error, LocalizedError, Equatable {
     }
 }
 
-struct ProgrammeLoudnessMapping: Codable, Equatable, Sendable {
+nonisolated struct ProgrammeLoudnessMapping: Codable, Equatable, Sendable {
     let layout: ProgrammeLoudnessLayout
     /// Zero-based audio stream ordinals, in layout.channelRoles order.
     /// These are not the container's absolute stream indices.
