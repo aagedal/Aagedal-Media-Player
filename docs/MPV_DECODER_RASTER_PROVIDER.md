@@ -51,6 +51,14 @@ when eligibility fails. The app checks it together with paused state and track
 identity before displaying cached source-pixel proof. Seek/reset invalidates the
 decoder cache. No stock screenshot command provides this protocol.
 
+The October 3 consumer continuation enforces strict BGRA and this candidate’s
+axis/pixel bounds before copying. It requires an exact `stride × h` buffer size
+and bounds the copied payload to 64 MiB to allow aligned rows; this consumer
+ceiling does not enlarge the provider’s 16 MiB retained-image estimator limit.
+Malformed payload rejection and valid padded-row checks pass. See
+[consumer receipts](evidence/clock-raster-candidate-20261003/README.md). This
+validation does not establish the provider’s frame provenance or activate it.
+
 ## Verification and remaining engineering
 
 On 2026-10-02, the patch applied successfully to the clean retained CoreAudio

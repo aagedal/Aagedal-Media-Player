@@ -1,6 +1,6 @@
 # 2.0 release readiness
 
-Assessment updated: 2026-10-02. This assessment reflects the
+Assessment updated: 2026-10-04. This assessment reflects the
 [product roadmap](../PRODUCT_ROADMAP.md) and its recorded scope decisions.
 
 The user deferred the M1-specific tests on 2026-10-02 and requested basic
@@ -13,6 +13,32 @@ inspection before the editor beta. Automatic time-localized content-mismatch
 detection moves to a later release; existing manual Review findings, metadata
 mismatch summaries and missing-counterpart intervals remain available.
 
+The October 4 pointer-hide correction lets explicit right-edge movement hide
+controls despite retained button/slider focus, while active text/popover editing
+and automatic keyboard-focus protection remain intact. All 14 focused Release
+overlay/command tests pass without skips or runtime warnings, and all 19 release
+script checks pass. Subsequent candidate/release verification requires both
+hide-zone identities and 839 aggregate tests. Native pointer acceptance and a
+fresh full canonical run remain separate; see
+[focused receipts](evidence/pointer-hide-focus-20261004/README.md).
+
+Canonical verification of the October 3 engineering batch passes at
+`179aaaea442968f7fe4f0bad2167d1ec5701ace0`: 829 Release passes, nine named
+opt-in skips (838 total), both isolated transport directions, static analysis,
+all 61 preflight checks and final source/package/cache/no-sleep identity. See
+[clock/raster candidate receipts](evidence/clock-raster-candidate-20261003/README.md).
+Later documentation retention does not replace matching-HEAD release consumption.
+
+The October 3 continuation corrects comparison clock sampling to read A/B/A
+around the secondary decoder after transport updates, preserving read uncertainty
+when deciding drift corrections. The guarded decoder-raster consumer now checks
+strict BGRA, bounded raster/stride and exact buffer size before copying. The
+shipping provider remains unavailable; these changes do not close general MPV
+source-pixel or measured comparison-drift acceptance. Candidate/release checks
+now require the split-mono audio, settled surface recovery and new sampling/
+protocol regressions, with an aggregate floor of 838 tests. See the updated
+[manual completion checklist](RELEASE_2_MANUAL_COMPLETION.md).
+
 Published dependency integration now pins MPVKit revision
 `1d44b9a0aa9e8faa5b8bf222173f6cc2930ed233` and exact SwiftMediaMetadata 3.0.2
 `9e8e912deb8d941da66a4b76854a90e3e9f01e3f`. All 49 binary/input URLs and the
@@ -24,7 +50,7 @@ correction retirement, retained draft and surviving edit scenario. See
 Full keyboard/accessibility/editor/runtime acceptance remains separate.
 
 Canonical verification of the repinned source passes at
-`53d055b7f1839f5a6c209e9441c1c4e764592f15`: 809 passes, nine named opt-in
+`53d055b7f1838f5a6c209e9441c1c4e764592f15`: 809 passes, nine named opt-in
 skips, both isolated transport directions, static analysis and all 61 preflight
 checks. See [candidate receipts](evidence/repinned-candidate-20261002/README.md).
 Basic M5 performance passes both decoder headroom thresholds and all ten
@@ -96,7 +122,7 @@ Current delivery status and order:
 
 1. Published and repinned the CoreAudio/GPL/Metal and bounded-MXF dependencies.
    Fresh remote verification and ordinary package resolution pass. Canonical
-   optimized Release verification at `53d055b7f1839f5a6c209e9441c1c4e764592f15`
+   optimized Release verification at `53d055b7f1838f5a6c209e9441c1c4e764592f15`
    passes: 809 tests, nine named opt-in skips, both isolated transport directions,
    static analysis and all 61 preflight checks. See
    [repinned candidate receipts](evidence/repinned-candidate-20261002/README.md).

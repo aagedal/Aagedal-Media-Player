@@ -1,0 +1,8 @@
+sourceCommit=4c7e0ef8744aeb7979c9fa0123d360dd3b5a7702
+packageResolvedSHA256=91ff8b51c0b73b91f653360fc8f1252944f6a5eaf513ea83c9c08871fe525d05
+packageCache=/private/tmp/aagedal-2-continuation-packages-20261002
+startedAt=2026-10-03T16:30:50Z
+powerStartedAtLocal=2026-10-03 18:30:50
+host=macOS 27.0.1 (26A434)
+Xcode 27.0
+Build version 27A266a

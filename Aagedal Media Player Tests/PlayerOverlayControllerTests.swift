@@ -18,7 +18,8 @@ final class PlayerOverlayControllerTests: XCTestCase {
         controller.setRightEdgeHovered(
             true,
             isPlaying: { false },
-            isControlInteractionActive: { false }
+            isControlInteractionActive: { false },
+            isEditingControls: { false }
         )
         XCTAssertFalse(controller.isVisible)
         XCTAssertTrue(controller.isRightEdgeHovered)
@@ -26,7 +27,8 @@ final class PlayerOverlayControllerTests: XCTestCase {
         controller.setRightEdgeHovered(
             false,
             isPlaying: { false },
-            isControlInteractionActive: { false }
+            isControlInteractionActive: { false },
+            isEditingControls: { false }
         )
         XCTAssertTrue(controller.isVisible)
         XCTAssertFalse(controller.isRightEdgeHovered)
@@ -98,15 +100,43 @@ final class PlayerOverlayControllerTests: XCTestCase {
         XCTAssertTrue(controller.isVisible)
     }
 
-    func testRightEdgeDoesNotHideFocusedControl() {
+    func testRightEdgeDoesNotHideActiveEditing() {
         let controller = PlayerOverlayController()
 
         controller.setRightEdgeHovered(
             true,
             isPlaying: { true },
-            isControlInteractionActive: { true }
+            isControlInteractionActive: { true },
+            isEditingControls: { true }
         )
 
         XCTAssertTrue(controller.isVisible)
+    }
+
+    func testRightEdgeHidesFocusedControlsAndKeyboardNavigationRestoresThem() {
+        for playing in [false, true] {
+            let controller = PlayerOverlayController()
+            controller.setControlsHovered(true)
+            controller.setRightEdgeHovered(
+                true,
+                isPlaying: { playing },
+                isControlInteractionActive: { true },
+                isEditingControls: { false }
+            )
+            XCTAssertFalse(controller.isVisible)
+            XCTAssertTrue(controller.isRightEdgeHovered)
+
+            controller.revealForKeyboardNavigation()
+            XCTAssertTrue(controller.isVisible)
+
+            controller.setRightEdgeHovered(
+                false,
+                isPlaying: { playing },
+                isControlInteractionActive: { true },
+                isEditingControls: { false }
+            )
+            XCTAssertTrue(controller.isVisible)
+            XCTAssertFalse(controller.isRightEdgeHovered)
+        }
     }
 }

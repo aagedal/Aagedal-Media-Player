@@ -10,6 +10,7 @@ import hashlib
 import os
 from pathlib import Path
 import plistlib
+import re
 import stat
 import subprocess
 import sys
@@ -330,7 +331,7 @@ python3() { echo remote-validation >> "$TRACE"; }
         self.assertLess(summary, details)
         self.assertLess(details, validation)
         self.assertLess(validation, analysis)
-        self.assertIn('--minimum-tests 826', source)
+        self.assertIn('--minimum-tests 839', source)
         self.assertIn('-parallel-testing-enabled NO', source)
         self.assertEqual(source.count('-skip-testing:'), 2)
         focused = source.index('echo "==> Focused mixed-backend transport repeat"')
@@ -340,12 +341,27 @@ python3() { echo remote-validation >> "$TRACE"; }
         self.assertLess(focused_validation, analysis)
         self.assertIn('testAVFoundationPrimaryAndMPVSecondaryShareTransport', source)
         self.assertIn('testMPVPrimaryAndAVFoundationSecondaryShareTransport', source)
-        self.assertEqual(source.count('--require-test'), 73)
+        self.assertEqual(source.count('--require-test'), 88)
         for name in ('testPassiveTextDepartureUsesCorrectionSelectedAfterRowRender',
                      'testPassiveTextDepartureRetainsFailuresAndCommitsOnceAfterRetry',
                      'testPassiveRangeBlurUsesTextCorrectionSelectedAfterRowRender'):
             self.assertIn(f'--require-test "CompareReviewTextCommitTests/{name}()"', source)
         for class_name, name in (
+            ('AudioChannelRoutingTests', 'testBundledMPVSwitchesBetweenMonoStereoAndSurroundProgrammes'),
+            ('AudioChannelRoutingTests', 'testMonoProgrammeUsesExplicitSpeakerAssignments'),
+            ('AudioChannelRoutingTests', 'testMonoSpeakerReassignmentSwapsExistingTrack'),
+            ('CompareLiveBackendTests', 'testIncrementalMPVSurfaceGrowthDefersOneTargetedReloadAndRespectsPairedOwnership'),
+            ('CompareLiveBackendTests', 'testAppKitSurfaceShrinkRequestsRecoveryAndCancelledLayoutDoesNotReload'),
+            ('CompareLiveBackendTests', 'testFullscreenRecoverySurvivesUnchangedPlaybackProposals'),
+            ('CompareLiveBackendTests', 'testReplacementMPVSurfaceRequestsReloadEvenAtIdenticalSize'),
+            ('CompareLiveBackendTests', 'testProgrammaticWindowResizeReloadsPausedProductionPlayerOnceAtSettledSize'),
+            ('MPVDecoderRasterTests', 'testRejectsUnsupportedPixelFormatsAndMalformedBuffersBeforeCopying'),
+            ('MPVDecoderRasterTests', 'testRejectsProviderGeometryBeyondBoundedProtocolBeforeCopying'),
+            ('CompareTimelineMappingTests', 'testDriftSampleBracketsSecondaryReadAndRemovesClockReadLatency'),
+            ('CompareTimelineMappingTests', 'testDriftSampleRetainsRealDriftWithManualAlignmentAndReverseClock'),
+            ('CompareTimelineMappingTests', 'testDriftSampleRejectsNonFiniteClockReadsAndMappedTimes'),
+            ('PlayerOverlayControllerTests', 'testRightEdgeHidesFocusedControlsAndKeyboardNavigationRestoresThem'),
+            ('PlayerOverlayControllerTests', 'testRightEdgeDoesNotHideActiveEditing'),
             ('MPVDecoderRasterTests', 'testCapabilityRequiresExactCommandName'),
             ('LoupeTrackDecoderTests', 'testBundledMPVFallbackPreviewNeverCertifiesMatchingDimensions'),
             ('MPVDecoderRasterTests', 'testAcceptsOnlyVersionedPresentedDecoderProofAndCopiesPixels'),
@@ -405,6 +421,19 @@ python3() { echo remote-validation >> "$TRACE"; }
         self.assertIn('Package.resolved changed during candidate verification', source)
         self.assertIn('checkout changed during candidate verification', source)
 
+    def test_candidate_and_release_require_the_same_existing_regressions(self) -> None:
+        pattern = r'--require-test "([^"\n]+)"'
+        candidate = re.findall(pattern, VERIFY_SCRIPT.read_text())
+        release = re.findall(pattern, self.source)
+        self.assertEqual(len(candidate), len(set(candidate)), "duplicate candidate regression")
+        self.assertEqual(len(release), len(set(release)), "duplicate release regression")
+        self.assertEqual(set(candidate), set(release))
+        tests_directory = SCRIPT.parent.parent / "Aagedal Media Player Tests"
+        for identity in candidate:
+            class_name, method = identity.removesuffix("()").split("/")
+            source = (tests_directory / f"{class_name}.swift").read_text()
+            self.assertRegex(source, rf"func\s+{re.escape(method)}\s*\(", identity)
+
     def test_release_version_is_bound_to_committed_project_metadata(self) -> None:
         settings = self.source.index('BUILD_SETTINGS=$(xcodebuild')
         project_version = self.source.index('PROJECT_MARKETING_VERSION=')
@@ -448,13 +477,28 @@ python3() { echo remote-validation >> "$TRACE"; }
         self.assertLess(package_match, result_validation)
         self.assertLess(result_validation, preflight)
         self.assertLess(result_validation, archive)
-        self.assertIn('--minimum-tests 826', self.source)
-        self.assertEqual(self.source.count('--require-test'), 73)
+        self.assertIn('--minimum-tests 839', self.source)
+        self.assertEqual(self.source.count('--require-test'), 88)
         for name in ('testPassiveTextDepartureUsesCorrectionSelectedAfterRowRender',
                      'testPassiveTextDepartureRetainsFailuresAndCommitsOnceAfterRetry',
                      'testPassiveRangeBlurUsesTextCorrectionSelectedAfterRowRender'):
             self.assertIn(f'--require-test "CompareReviewTextCommitTests/{name}()"', self.source)
         for class_name, name in (
+            ('AudioChannelRoutingTests', 'testBundledMPVSwitchesBetweenMonoStereoAndSurroundProgrammes'),
+            ('AudioChannelRoutingTests', 'testMonoProgrammeUsesExplicitSpeakerAssignments'),
+            ('AudioChannelRoutingTests', 'testMonoSpeakerReassignmentSwapsExistingTrack'),
+            ('CompareLiveBackendTests', 'testIncrementalMPVSurfaceGrowthDefersOneTargetedReloadAndRespectsPairedOwnership'),
+            ('CompareLiveBackendTests', 'testAppKitSurfaceShrinkRequestsRecoveryAndCancelledLayoutDoesNotReload'),
+            ('CompareLiveBackendTests', 'testFullscreenRecoverySurvivesUnchangedPlaybackProposals'),
+            ('CompareLiveBackendTests', 'testReplacementMPVSurfaceRequestsReloadEvenAtIdenticalSize'),
+            ('CompareLiveBackendTests', 'testProgrammaticWindowResizeReloadsPausedProductionPlayerOnceAtSettledSize'),
+            ('MPVDecoderRasterTests', 'testRejectsUnsupportedPixelFormatsAndMalformedBuffersBeforeCopying'),
+            ('MPVDecoderRasterTests', 'testRejectsProviderGeometryBeyondBoundedProtocolBeforeCopying'),
+            ('CompareTimelineMappingTests', 'testDriftSampleBracketsSecondaryReadAndRemovesClockReadLatency'),
+            ('CompareTimelineMappingTests', 'testDriftSampleRetainsRealDriftWithManualAlignmentAndReverseClock'),
+            ('CompareTimelineMappingTests', 'testDriftSampleRejectsNonFiniteClockReadsAndMappedTimes'),
+            ('PlayerOverlayControllerTests', 'testRightEdgeHidesFocusedControlsAndKeyboardNavigationRestoresThem'),
+            ('PlayerOverlayControllerTests', 'testRightEdgeDoesNotHideActiveEditing'),
             ('MPVDecoderRasterTests', 'testCapabilityRequiresExactCommandName'),
             ('LoupeTrackDecoderTests', 'testBundledMPVFallbackPreviewNeverCertifiesMatchingDimensions'),
             ('MPVDecoderRasterTests', 'testAcceptsOnlyVersionedPresentedDecoderProofAndCopiesPixels'),

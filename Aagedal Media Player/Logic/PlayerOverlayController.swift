@@ -99,12 +99,15 @@ final class PlayerOverlayController: ObservableObject {
     func setRightEdgeHovered(
         _ hovered: Bool,
         isPlaying: @escaping @MainActor () -> Bool,
-        isControlInteractionActive: @escaping @MainActor () -> Bool
+        isControlInteractionActive: @escaping @MainActor () -> Bool,
+        isEditingControls: @escaping @MainActor () -> Bool
     ) {
         isRightEdgeHovered = hovered
         if hovered {
             cancelScheduledHide()
-            if !isControlInteractionActive() {
+            // Moving into the hide zone is explicit pointer intent. Ordinary
+            // control focus can linger after a click and must not veto it.
+            if !isEditingControls() {
                 hide()
             }
         } else {
