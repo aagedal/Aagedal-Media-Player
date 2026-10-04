@@ -42,10 +42,23 @@ separate one-time timecode alignment command.
 
 Choose **Live Audio Meter** from the View menu, press **Command-Shift-L**, or use
 the waveform-meter toolbar button. The per-player panel can meter source A or B
-independently of the audible comparison source and shows sample peak, true peak,
-Momentary and Short-term readings with EBU, ATSC or custom reference guides.
+independently of the audible comparison source. Select any audio track, or assign
+mono tracks to stereo or 5.1 speakers, without changing audible playback. Grouped
+live tracks require the same supported sample rate. The panel shows sample peak, true peak,
+Momentary, Short-term and integrated LUFS readings with EBU, ATSC or custom
+reference guides. A graph shows the latest 60 seconds of Momentary and Short-term
+loudness. Integrated loudness uses absolute and relative gating with a bounded
+0.01-LU histogram and covers the current measurement segment. **Reset Meters**
+clears all readings, maxima and graph history at the current playback position;
+seeking or changing the source also begins a new segment. Brief decoder lag
+automatically starts a fresh segment at the current playback position, with at
+most three recovery attempts per minute.
 These guides do not by themselves establish programme compliance; live-path
 compressed-source and release-floor acceptance remain in progress.
+
+Offline LUFS analysis in the inspector also graphs Momentary and Short-term
+loudness across the whole analyzed file or In–Out range, for individual tracks
+and grouped mono programmes. Long analyses use a bounded, downsampled graph.
 
 ## Roadmap
 

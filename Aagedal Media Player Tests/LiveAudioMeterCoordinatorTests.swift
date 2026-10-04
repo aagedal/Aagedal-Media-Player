@@ -238,8 +238,32 @@ final class LiveAudioMeterCoordinatorTests: XCTestCase {
         XCTAssertEqual(coordinator.clockDrift, 0)
 
         coordinator.updatePlaybackClock(playback(time: 0.76, playing: true))
-        XCTAssertTrue(try XCTUnwrap(coordinator.clockFailureContext).hadEstablishedSynchronization)
-        await decoder.waitUntilCancelled(stream: 0)
+        XCTAssertEqual(coordinator.restartCause, .clockRecovery)
+        XCTAssertNil(coordinator.snapshot)
+        await decoder.waitUntilAttached(stream: 0, occurrence: 2)
+        coordinator.close()
+    }
+
+    func testAutomaticClockRecoveryStopsAfterThreeRestarts() async throws {
+        let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
+        let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
+        coordinator.start(try request(stream: 0, startFrame: 0))
+        for attempt in 0...3 {
+            await decoder.waitUntilAttached(stream: 0, occurrence: attempt + 1)
+            let start = Int64(attempt) * 17_280
+            decoder.emit(snapshot(endFrame: start + 4_800, segmentStart: start), stream: 0)
+            await eventually { coordinator.snapshot?.endFrame == start + 4_800 }
+            coordinator.updatePlaybackClock(playback(time: Double(start + 4_800) / 48_000, playing: true))
+            coordinator.updatePlaybackClock(playback(time: Double(start + 4_800) / 48_000 + 0.26, playing: true))
+            if attempt < 3 {
+                XCTAssertEqual(coordinator.restartCause, .clockRecovery)
+                XCTAssertNil(coordinator.snapshot)
+                await decoder.waitUntilCancelled(stream: 0)
+            } else {
+                guard case .unavailable = coordinator.status else { return XCTFail("Repeated stalls must stop recovery") }
+                XCTAssertNotNil(coordinator.clockFailureContext)
+            }
+        }
         coordinator.close()
     }
 
@@ -354,7 +378,7 @@ final class LiveAudioMeterCoordinatorTests: XCTestCase {
         }
     }
 
-    func testInitialClockLagCanCatchUpBeforeSteadyStateDriftFails() async throws {
+    func testInitialClockLagCatchesUpAndSteadyStateLagRestartsAtCurrentPosition() async throws {
         let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
         let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
         coordinator.start(try request(stream: 0, startFrame: 0))
@@ -376,13 +400,12 @@ final class LiveAudioMeterCoordinatorTests: XCTestCase {
 
         coordinator.updatePlaybackClock(playback(time: 0.56, playing: true))
 
-        guard case .unavailable(let reason, let diagnostic) = coordinator.status else {
-            return XCTFail("Expected excessive lag after synchronization to invalidate the segment")
-        }
-        XCTAssertEqual(reason, "Live meters lost synchronization with playback.")
-        XCTAssertTrue(diagnostic?.contains("-260.0 ms") == true)
+        XCTAssertEqual(coordinator.restartCause, .clockRecovery)
         XCTAssertNil(coordinator.snapshot)
-        await decoder.waitUntilCancelled(stream: 0)
+        await decoder.waitUntilAttached(stream: 0, occurrence: 2)
+        XCTAssertEqual(decoder.request(stream: 0, occurrence: 2)?.startSourceFrame, 26_880)
+        coordinator.close()
+
     }
 
     func testPlaybackClockAssessesNewestReducedSnapshotBeforeScheduledPresentationDrain() async throws {
@@ -451,21 +474,21 @@ final class LiveAudioMeterCoordinatorTests: XCTestCase {
         coordinator.updatePlaybackClock(playback(time: 133.95, playing: true))
         let publicationCount = coordinator.publishedSnapshotCount
 
-        coordinator.updatePlaybackClock(playback(time: 134.20, playing: true))
+        coordinator.updatePlaybackClock(playback(time: 135.20, playing: true))
 
         let failure = try XCTUnwrap(coordinator.clockFailureContext)
         XCTAssertEqual(failure.generation, generation)
         XCTAssertEqual(failure.requestStartFrame, 6_424_320)
         XCTAssertEqual(failure.decodedEndFrame, 6_429_120)
-        XCTAssertEqual(failure.playbackTime, 134.20)
-        XCTAssertEqual(failure.drift, -0.26, accuracy: 0.000_001)
+        XCTAssertEqual(failure.playbackTime, 135.20)
+        XCTAssertEqual(failure.drift, -1.26, accuracy: 0.000_001)
         XCTAssertEqual(failure.publishedSnapshotCount, publicationCount)
         XCTAssertTrue(failure.hadEstablishedSynchronization)
         XCTAssertFalse(failure.wasSuspendedAhead)
-        // 134.20's binary representation lies just below the exact source
+        // 135.20's binary representation lies just below the exact source
         // frame. The existing gate floors it before adding the 12,000-frame
         // allowance, so diagnostic retention must preserve that strict bound.
-        XCTAssertEqual(failure.permittedEndFrame, 6_453_599)
+        XCTAssertEqual(failure.permittedEndFrame, 6_501_599)
         XCTAssertNil(coordinator.snapshot)
         XCTAssertNil(coordinator.reducedSnapshot)
         XCTAssertNil(coordinator.clockDrift)
@@ -476,7 +499,7 @@ final class LiveAudioMeterCoordinatorTests: XCTestCase {
         decoder.emit(snapshot(endFrame: 6_436_320, segmentStart: 6_424_320), stream: 0)
         await Task.yield()
         XCTAssertEqual(coordinator.clockFailureContext, failure)
-        XCTAssertTrue(coordinator.retry(at: 134.20))
+        XCTAssertTrue(coordinator.retry(at: 135.20))
         XCTAssertNil(coordinator.clockFailureContext)
         coordinator.close()
     }

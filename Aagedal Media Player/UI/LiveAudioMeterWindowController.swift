@@ -19,6 +19,8 @@ private struct LiveAudioMeterContainerView: View {
             preferences: session.preferences,
             actions: .init(
                 selectSource: session.selectSource,
+                selectTrack: session.selectTrack,
+                assignTrack: session.assignTrack,
                 selectPreset: session.selectPreset,
                 setCustomLoudnessTarget: session.setCustomLoudnessTarget,
                 setCustomTruePeakCeiling: session.setCustomTruePeakCeiling,

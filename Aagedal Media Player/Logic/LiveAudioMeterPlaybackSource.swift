@@ -9,6 +9,7 @@ import Foundation
 /// by FFmpeg's `0:a:N`, never a toolbar row or container-wide stream number.
 nonisolated struct LiveAudioMeterPlaybackSource: Equatable, Sendable {
     enum Failure: Error, Equatable, LocalizedError {
+        case mixedSampleRates
         case groupedMonoPlayback
         case noMedia
         case noSelectedAudioTrack
@@ -20,6 +21,8 @@ nonisolated struct LiveAudioMeterPlaybackSource: Equatable, Sendable {
 
         var errorDescription: String? {
             switch self {
+            case .mixedSampleRates:
+                "Grouped live meters require mono tracks with the same supported sample rate."
             case .groupedMonoPlayback:
                 "Live meters do not yet support combined mono playback. Select a single track to use live meters."
             case .noMedia:
@@ -49,6 +52,7 @@ nonisolated struct LiveAudioMeterPlaybackSource: Equatable, Sendable {
     let format: LiveAudioMeterFormat
     let declaredChannelLayout: String?
     let channelLabels: [String]
+    var programmeMapping: ProgrammeLoudnessMapping? = nil
     let duration: TimeInterval
 
     init(
@@ -87,6 +91,26 @@ nonisolated struct LiveAudioMeterPlaybackSource: Equatable, Sendable {
         }
     }
 
+    init(id: String, label: String, url: URL, mapping: ProgrammeLoudnessMapping,
+         streams: [MediaMetadata.AudioStream], duration: TimeInterval) throws {
+        try mapping.validate(audioStreams: streams)
+        let rates = Set(mapping.audioStreamIndices.compactMap { streams[$0].sampleRate })
+        guard rates.count == 1, let rate = rates.first,
+              [44_100, 48_000, 96_000].contains(rate) else { throw Failure.mixedSampleRates }
+        guard duration.isFinite, duration > 0 else { throw ProgrammeLoudnessError.durationRequired }
+        self.id = id
+        self.label = label
+        self.url = url
+        self.audioStreamOrderIndex = mapping.audioStreamIndices[0]
+        self.metadataStreamIndex = nil
+        self.trackLabel = "\(mapping.layout.displayName) · mono tracks " + mapping.audioStreamIndices.map { String($0 + 1) }.joined(separator: ", ")
+        self.format = try .init(sampleRate: rate, layout: mapping.layout == .stereo ? .stereo : .surround5Point1)
+        self.declaredChannelLayout = mapping.layout.ffmpegLayout
+        self.channelLabels = mapping.layout.channelRoles
+        self.duration = duration
+        self.programmeMapping = mapping
+    }
+
     func request(at playbackTime: TimeInterval) throws -> LiveAudioMeterDecodeRequest {
         guard playbackTime.isFinite else { throw Failure.invalidPlaybackTime }
         let boundedTime = min(max(0, playbackTime), duration > 0 ? duration : .greatestFiniteMagnitude)
@@ -101,7 +125,8 @@ nonisolated struct LiveAudioMeterPlaybackSource: Equatable, Sendable {
             audioStreamOrderIndex: audioStreamOrderIndex,
             format: format,
             startSourceFrame: startFrame,
-            startSourceTime: exactTime
+            startSourceTime: exactTime,
+            programmeMapping: programmeMapping, sourceDuration: programmeMapping == nil ? nil : duration
         )
     }
 

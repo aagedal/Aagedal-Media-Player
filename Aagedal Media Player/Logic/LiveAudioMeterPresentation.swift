@@ -230,6 +230,11 @@ nonisolated struct LiveAudioMeterViewState: Equatable, Sendable {
     let reference: LiveAudioMeterReference
     let provenance: LiveAudioMeterProvenance?
     let diagnostics: [LiveAudioMeterDiagnostic]
+    var measuredTrack = -1
+    var trackOptions: [LiveAudioMeterTrackOption] = []
+    var programmeMapping: ProgrammeLoudnessMapping? = nil
+    var integratedLUFS: Double? = nil
+    var loudnessHistory: [LiveAudioMeterHistoryPoint] = []
 
     var truePeakAssessment: LiveAudioMeterTruePeakAssessment {
         guard let ceiling = reference.truePeakCeiling else { return .noCeiling }
@@ -242,4 +247,18 @@ nonisolated struct LiveAudioMeterViewState: Equatable, Sendable {
             ? .exceeded(maximum: maximum, ceiling: ceiling, comparison: comparison)
             : .withinGuide(maximum: maximum, ceiling: ceiling, comparison: comparison)
     }
+}
+
+nonisolated struct LiveAudioMeterHistoryPoint: Equatable, Sendable, Identifiable {
+    var id: Int64 { frame }
+    let frame: Int64
+    let time: Double
+    let momentary: Double?
+    let shortTerm: Double?
+}
+
+nonisolated struct LiveAudioMeterTrackOption: Equatable, Sendable, Identifiable {
+    let id: Int
+    let title: String
+    let isMono: Bool
 }

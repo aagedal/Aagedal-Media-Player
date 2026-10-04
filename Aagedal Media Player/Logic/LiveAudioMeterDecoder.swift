@@ -12,13 +12,17 @@ nonisolated struct LiveAudioMeterDecodeRequest: Equatable, Sendable {
     let format: LiveAudioMeterFormat
     let startSourceFrame: Int64
     let startSourceTime: TimeInterval
+    let programmeMapping: ProgrammeLoudnessMapping?
+    let sourceDuration: TimeInterval?
 
     init(
         url: URL,
         audioStreamOrderIndex: Int,
         format: LiveAudioMeterFormat,
         startSourceFrame: Int64,
-        startSourceTime: TimeInterval
+        startSourceTime: TimeInterval,
+        programmeMapping: ProgrammeLoudnessMapping? = nil,
+        sourceDuration: TimeInterval? = nil
     ) throws {
         guard audioStreamOrderIndex >= 0 else {
             throw LiveAudioMeterDecoder.Failure.invalidAudioStreamOrderIndex(audioStreamOrderIndex)
@@ -31,11 +35,23 @@ nonisolated struct LiveAudioMeterDecodeRequest: Equatable, Sendable {
         guard abs(frameTime - startSourceTime) <= halfFrame else {
             throw LiveAudioMeterDecoder.Failure.inconsistentStartPosition
         }
+        if let mapping = programmeMapping {
+            guard mapping.audioStreamIndices.count == mapping.layout.channelRoles.count,
+                  mapping.audioStreamIndices.allSatisfy({ $0 >= 0 }),
+                  Set(mapping.audioStreamIndices).count == mapping.audioStreamIndices.count,
+                  format.layout == (mapping.layout == .stereo ? .stereo : .surround5Point1),
+                  let duration = sourceDuration, duration.isFinite, duration > 0,
+                  duration * Double(format.sampleRate) < Double(Int64.max) else {
+                throw ProgrammeLoudnessError.incompleteMapping
+            }
+        }
         self.url = url
         self.audioStreamOrderIndex = audioStreamOrderIndex
         self.format = format
         self.startSourceFrame = startSourceFrame
         self.startSourceTime = startSourceTime
+        self.programmeMapping = programmeMapping
+        self.sourceDuration = sourceDuration
     }
 }
 
@@ -365,12 +381,11 @@ nonisolated final class LiveAudioMeterTimestampedStreamProcessor: @unchecked Sen
         // FFmpeg expresses the decoded packets in 1/sampleRate units. Independent
         // packet rounding can then move a timestamp by a few source frames (for
         // example 128 followed by 120) although the checksummed PCM is complete.
-        // Admit at most one millisecond relative to the segment's cumulative
-        // PCM clock, never relative to the previous packet's rounded PTS. Small
-        // successive overlaps must not accumulate into an accepted source-time
-        // shift. A coarse container time base alone does not qualify larger
-        // deviations as rounding.
-        maximumTimestampJitterFrames = Int64(max(1, request.format.sampleRate / 1_000))
+        // Allow two milliseconds against the cumulative PCM clock: DTS in
+        // millisecond Matroska timestamps can include both packet rounding and
+        // an initial timestamp offset, then catch up on a later packet. Keep
+        // this bound absolute so successive overlaps cannot accumulate.
+        maximumTimestampJitterFrames = Int64(max(1, request.format.sampleRate / 500))
         maximumUnmatchedByteCount = request.format.sampleRate / 4 * bytesPerFrame
         pendingPCM.reserveCapacity(maximumUnmatchedByteCount)
     }
@@ -809,25 +824,42 @@ nonisolated enum LiveAudioMeterDecoder {
         // edit-list accuracy at the requested sample boundary. Input seeking
         // gets close; output seeking trims at most one decoded second exactly.
         let decoderPrerollFrames = min(request.startSourceFrame, Int64(request.format.sampleRate))
-        let decoderPreroll = Double(decoderPrerollFrames) / Double(request.format.sampleRate)
         let inputSeekFrames = request.startSourceFrame - decoderPrerollFrames
         let inputSeekTime = Double(inputSeekFrames) / Double(request.format.sampleRate)
         var arguments = [
             "-hide_banner", "-nostdin", "-nostats", "-loglevel", "error",
             "-ss", sourceTimeArgument(inputSeekTime), "-accurate_seek",
-            // Keep decoded source time aligned with forward 1x playback. Capping
-            // catch-up at the requested rate prevents a temporarily stalled
-            // reader from racing ahead after it resumes.
-            "-readrate", "1", "-readrate_catchup", "1",
         ]
-        if decoderPreroll > 0 {
-            // Burst only the bounded preroll so readings begin without adding
-            // a seek-dependent delay; decoded output remains paced at 1x.
-            arguments += ["-readrate_initial_burst", sourceTimeArgument(decoderPreroll)]
-        }
+        // The playback admission gate owns pacing and bounded lookahead.
+        // A second wall-clock readrate limiter prevents recovery from startup
+        // and scheduling delays, causing persistent decoder lag.
         // Native AC-3 DRC and xHE-AAC target normalization are explicitly
         // disabled. Other decoders report these private options as unused.
         arguments += ["-drc_scale", "0", "-target_level", "0"]
+        if let mapping = request.programmeMapping, let duration = request.sourceDuration {
+            let remaining = max(0, duration - inputSeekTime)
+            let inputOptions = arguments
+            arguments = ["-hide_banner", "-nostdin", "-nostats", "-loglevel", "error"]
+            for _ in mapping.audioStreamIndices {
+                arguments += Array(inputOptions.dropFirst(5)) + inputAudioArguments + ["-i", source]
+            }
+            var chains = mapping.audioStreamIndices.enumerated().map { channel, stream in
+                "[\(channel):a:\(stream)]aresample=\(request.format.sampleRate):async=1:first_pts=0," +
+                "apad=whole_dur=\(remaining + 1),atrim=start_pts=\(decoderPrerollFrames):end=\(remaining + 1)," +
+                "asetpts=PTS-STARTPTS[channel\(channel)]"
+            }
+            let inputs = mapping.audioStreamIndices.indices.map { "[channel\($0)]" }.joined()
+            let roles = mapping.layout.channelRoles.enumerated().map { "\($0.offset).0-\($0.element)" }.joined(separator: "|")
+            // Join can end on its input packet grid. Give each branch one
+            // padded packet margin, then trim the joined output at the exact
+            // source endpoint so valid tail samples are not lost.
+            let outputFrames = max(0, Int64((duration * Double(request.format.sampleRate)).rounded()) - request.startSourceFrame)
+            chains.append(inputs + "join=inputs=\(mapping.audioStreamIndices.count):channel_layout=\(mapping.layout.ffmpegLayout):map=\(roles),atrim=end_sample=\(outputFrames)[meter]")
+            arguments += ["-filter_complex", chains.joined(separator: ";"), "-map", "[meter]",
+                          "-vn", "-sn", "-dn", "-map_metadata", "-1", "-c:a", "pcm_f32le", "-f", "tee",
+                          "[f=f32le]pipe:1|[f=framecrc]pipe:2"]
+            return arguments
+        }
         arguments += inputAudioArguments + ["-i", source]
         let timestampFilter = [
             "asettb=expr=1/sr",

@@ -3,12 +3,15 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import SwiftUI
+import Charts
 
 /// Presentation-only live source meter. The owner supplies immutable snapshots
 /// and actions; this view does not own playback, decoding, or DSP work.
 struct LiveAudioMeterView: View {
     struct Actions {
         var selectSource: @MainActor @Sendable (String) -> Void = { _ in }
+        var selectTrack: @MainActor @Sendable (Int) -> Void = { _ in }
+        var assignTrack: @MainActor @Sendable (Int, Int) -> Void = { _, _ in }
         var selectPreset: @MainActor @Sendable (LiveAudioMeterReference.Preset) -> Void = { _ in }
         var setCustomLoudnessTarget: @MainActor @Sendable (Double) -> Void = { _ in }
         var setCustomTruePeakCeiling: @MainActor @Sendable (Double?) -> Void = { _ in }
@@ -78,6 +81,42 @@ struct LiveAudioMeterView: View {
                 .labelsHidden()
                 .accessibilityHint("Selects the independently measured A or B source. It does not change audible monitoring.")
                 .accessibilityIdentifier("live-audio-meter-source")
+            }
+
+            GridRow {
+                Text("Audio tracks").foregroundStyle(.secondary)
+                Picker("Meter audio tracks", selection: Binding(get: { state.measuredTrack }, set: actions.selectTrack)) {
+                    Text("Follow playback track").tag(-1)
+                    ForEach(state.trackOptions) { track in Text(track.title).tag(track.id) }
+                    if state.trackOptions.filter(\.isMono).count >= 2 {
+                        Text("Group mono tracks · Stereo").tag(-2)
+                        if state.trackOptions.filter(\.isMono).count >= 6 {
+                            Text("Group mono tracks · 5.1").tag(-3)
+                        }
+                    }
+                }
+                .labelsHidden()
+                .accessibilityIdentifier("live-audio-meter-tracks")
+            }
+            if let mapping = state.programmeMapping {
+                ForEach(Array(mapping.layout.channelRoles.enumerated()), id: \.offset) { channel, role in
+                    GridRow {
+                        Text(role).foregroundStyle(.secondary)
+                        Picker("\(role) mono track", selection: Binding(
+                            get: { mapping.audioStreamIndices[channel] },
+                            set: { actions.assignTrack($0, channel) }
+                        )) {
+                            Text("Choose mono track").tag(-1)
+                            ForEach(state.trackOptions.filter(\.isMono)) { track in Text(track.title).tag(track.id) }
+                        }
+                        .labelsHidden()
+                    }
+                }
+                GridRow {
+                    Text("Speaker mapping").foregroundStyle(.secondary)
+                    Text("Confirm track assignments. Grouped channels are aligned to source timestamps; missing time is silence.")
+                        .font(.caption).fixedSize(horizontal: false, vertical: true)
+                }
             }
 
             GridRow {
@@ -220,6 +259,37 @@ struct LiveAudioMeterView: View {
                 unit: state.reference.loudnessUnit,
                 identifier: "live-audio-meter-short-term"
             )
+            HStack {
+                Text("Integrated (since reset)").font(.subheadline.bold())
+                Spacer()
+                Text(MeterText.reading(state.integratedLUFS, unit: "LUFS"))
+                    .font(.system(.title3, design: .monospaced).bold())
+            }
+            if !state.loudnessHistory.isEmpty {
+                Chart {
+                    RuleMark(y: .value("Reference", state.reference.loudnessTarget))
+                        .foregroundStyle(.secondary).lineStyle(StrokeStyle(dash: [4, 4]))
+                    ForEach(state.loudnessHistory) { point in
+                        if let value = point.momentary, value.isFinite {
+                            LineMark(x: .value("Source time (s)", point.time), y: .value("LUFS", value),
+                                     series: .value("Reading", "Momentary"))
+                                .foregroundStyle(by: .value("Reading", "Momentary"))
+                        }
+                        if let value = point.shortTerm, value.isFinite {
+                            LineMark(x: .value("Source time (s)", point.time), y: .value("LUFS", value),
+                                     series: .value("Reading", "Short-term"))
+                                .foregroundStyle(by: .value("Reading", "Short-term"))
+                        }
+                    }
+                }
+                .chartYScale(domain: -70 ... 0)
+                .chartXAxisLabel("Source time (seconds) · last 60 seconds")
+                .chartYAxisLabel("LUFS")
+                .frame(height: 180)
+                .accessibilityIdentifier("live-audio-meter-history")
+            }
+            Text("Integrated loudness covers audio measured since this segment began; seek or reset starts a new segment.")
+                .font(.caption).foregroundStyle(.secondary)
             Text("The line is a programme reference, not a Momentary or Short-term pass region.")
                 .font(.caption).foregroundStyle(.secondary)
             if state.reference.dialogueAssessmentUnavailable {
@@ -283,13 +353,9 @@ struct LiveAudioMeterView: View {
 
     private var actionBar: some View {
         HStack {
-            Button("Clear Maxima", action: actions.clearMaxima)
-                .disabled(state.channels.isEmpty)
-                .accessibilityHint("Clears peak and loudness maxima and threshold latches without resetting meter windows.")
-                .accessibilityIdentifier("live-audio-meter-clear-maxima")
             Button("Reset Meters", action: actions.resetMeters)
                 .disabled(state.channels.isEmpty)
-                .accessibilityHint("Starts a new measurement segment and clears meter filters, windows, bars, maxima, and latches.")
+                .accessibilityHint("Starts a new measurement segment and clears meter filters, windows, bars, maxima, integrated loudness, and graph history.")
                 .accessibilityIdentifier("live-audio-meter-reset")
             if case .unavailable = state.status, state.canRetry {
                 Button("Retry", action: actions.retry)
