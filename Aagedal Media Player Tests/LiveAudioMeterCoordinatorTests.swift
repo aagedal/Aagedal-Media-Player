@@ -817,6 +817,31 @@ final class LiveAudioMeterCoordinatorTests: XCTestCase {
         }
     }
 
+    func testMalformedIntegratedLoudnessFailsGenerationAndCancelsWorker() async throws {
+        for invalidLevel in [Double.nan, Double.infinity] {
+            let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
+            let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
+            coordinator.start(try request(stream: 0, startFrame: 0))
+            await decoder.waitUntilAttached(stream: 0)
+            decoder.emit(snapshot(endFrame: 144_000), stream: 0)
+            await eventually { coordinator.status == .active(frame: 144_000) }
+
+            var malformed = snapshot(endFrame: 146_400)
+            malformed.integratedLUFS = invalidLevel
+            decoder.emit(malformed, stream: 0)
+
+            await eventually {
+                guard case .unavailable(_, let diagnostic) = coordinator.status else { return false }
+                return diagnostic?.contains("malformed or non-finite level") == true
+            }
+            XCTAssertNil(coordinator.snapshot)
+            XCTAssertNil(coordinator.reducedSnapshot)
+            await decoder.waitUntilCancelled(stream: 0)
+            XCTAssertEqual(decoder.activeCount, 0)
+            coordinator.close()
+        }
+    }
+
     func testSilentCurrentLoudnessRemainsValidAfterMaximaClear() async throws {
         let decoder = ControlledLiveMeterDecoder(honorCancellation: true)
         let coordinator = LiveAudioMeterCoordinator(decodeOperation: decoder.decode)
@@ -826,15 +851,18 @@ final class LiveAudioMeterCoordinatorTests: XCTestCase {
         await eventually { coordinator.status == .active(frame: 144_000) }
         coordinator.clearMaxima()
 
-        decoder.emit(snapshot(
+        var silent = snapshot(
             endFrame: 146_400, peak: -.infinity,
             loudness: (-.infinity, -.infinity)
-        ), stream: 0)
+        )
+        silent.integratedLUFS = -.infinity
+        decoder.emit(silent, stream: 0)
         await eventually { coordinator.snapshot?.endFrame == 146_400 }
 
         XCTAssertEqual(coordinator.status, .active(frame: 146_400))
         XCTAssertEqual(coordinator.reducedSnapshot?.loudness.momentary, -.infinity)
         XCTAssertEqual(coordinator.reducedSnapshot?.loudness.shortTerm, -.infinity)
+        XCTAssertEqual(coordinator.snapshot?.integratedLUFS, -.infinity)
         XCTAssertNil(coordinator.reducedSnapshot?.loudness.maximumMomentary)
         XCTAssertNil(coordinator.reducedSnapshot?.loudness.maximumShortTerm)
         XCTAssertTrue(decoder.isActive(stream: 0))

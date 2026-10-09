@@ -1,6 +1,6 @@
 # 2.0 release readiness
 
-Assessment updated: 2026-10-04. This assessment reflects the
+Assessment updated: 2026-10-09. This assessment reflects the
 [product roadmap](../PRODUCT_ROADMAP.md) and its recorded scope decisions.
 
 The user deferred the M1-specific tests on 2026-10-02 and requested basic
@@ -12,6 +12,16 @@ The user's 2026-10-02 scope decision requires verified MPV source-pixel
 inspection before the editor beta. Automatic time-localized content-mismatch
 detection moves to a later release; existing manual Review findings, metadata
 mismatch summaries and missing-counterpart intervals remain available.
+
+The October 9 continuation validates the newly added integrated live loudness
+at the snapshot boundary: NaN and positive infinity cancel the worker and clear
+readings; negative-infinite silence remains valid. Candidate and release checks
+now require twelve recent loupe/meter/graph/grouping regression identities and
+849 aggregate tests. All 142 focused optimized Release tests pass without
+skips or runtime warnings; script validators and all 61 preflight checks pass.
+See [focused receipts](evidence/integrated-loudness-release-gates-20261009/README.md).
+Matching-HEAD canonical verification, native meter/device
+soak and the shipping MPV source-pixel provider remain open.
 
 The October 4 pointer-hide correction lets explicit right-edge movement hide
 controls despite retained button/slider focus, while active text/popover editing
