@@ -14,12 +14,14 @@ final class PlayerWindowCoordinator: ObservableObject {
     let id: UUID
 
     @Published private(set) var window: NSWindow?
-    @Published private(set) var isOpeningFile = false
+    @Published private(set) var openingURL: URL?
+    var isOpeningFile: Bool { openingURL != nil }
     @Published private(set) var canOpenPreviousFile = false
     @Published private(set) var canOpenNextFile = false
 
     private var fileOpenTask: Task<Void, Never>?
     private var fileOpenGeneration = 0
+    private let mediaItemLoader: @Sendable (URL) async -> MediaItem
     private let metadataLoader: @Sendable (URL) async throws -> MediaMetadata
     private let noteRecentDocument: @MainActor (URL) -> Void
     private var folderNavigationTask: Task<Void, Never>?
@@ -37,6 +39,9 @@ final class PlayerWindowCoordinator: ObservableObject {
 
     init(
         id: UUID = UUID(),
+        mediaItemLoader: @escaping @Sendable (URL) async -> MediaItem = {
+            PlayerWindowCoordinator.makeMediaItem(for: $0)
+        },
         metadataLoader: @escaping @Sendable (URL) async throws -> MediaMetadata = {
             try await MetadataService.shared.metadata(for: $0)
         },
@@ -45,6 +50,7 @@ final class PlayerWindowCoordinator: ObservableObject {
         }
     ) {
         self.id = id
+        self.mediaItemLoader = mediaItemLoader
         self.metadataLoader = metadataLoader
         self.noteRecentDocument = noteRecentDocument
     }
@@ -167,17 +173,18 @@ final class PlayerWindowCoordinator: ObservableObject {
         fileOpenTask?.cancel()
         fileOpenGeneration &+= 1
         let generation = fileOpenGeneration
-        isOpeningFile = true
+        openingURL = url
         refreshFolderNavigation(for: url)
 
-        var item = Self.makeMediaItem(for: url)
         WindowManager.shared.markHasMedia(id: id)
-        (window ?? NSApp.keyWindow)?.title = item.name
+        (window ?? NSApp.keyWindow)?.title = url.deletingPathExtension().lastPathComponent
 
         fileOpenTask = Task { @MainActor in
             defer {
-                if fileOpenGeneration == generation { isOpeningFile = false }
+                if fileOpenGeneration == generation { openingURL = nil }
             }
+            var item = await mediaItemLoader(url)
+            guard !Task.isCancelled, fileOpenGeneration == generation else { return }
             let loader = metadataLoader
             let preloadedMetadata = await AsyncDeadline.value(within: .milliseconds(500)) {
                 try? await loader(url)
@@ -190,7 +197,7 @@ final class PlayerWindowCoordinator: ObservableObject {
             }
 
             controller.loadMedia(item)
-            isOpeningFile = false
+            openingURL = nil
 
             if preloadedMetadata != nil {
                 // updateMetadata runs the HDR transfer-function pass and
@@ -257,7 +264,7 @@ final class PlayerWindowCoordinator: ObservableObject {
         fileOpenTask?.cancel()
         fileOpenTask = nil
         fileOpenGeneration &+= 1
-        isOpeningFile = false
+        openingURL = nil
         folderNavigationTask?.cancel()
         folderNavigationTask = nil
         cancelDroppedURLLoads()
