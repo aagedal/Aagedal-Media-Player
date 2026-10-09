@@ -5,6 +5,9 @@ All notable changes to Aagedal Media Player.
 ## [1.6.1] — Unreleased
 
 ### Changed
+- Timeline scrubbing keeps one MPV seek in flight and only the newest waiting target, with a precise seek on release.
+- Network-file opening avoids UI-thread file-size, header and folder-navigation reachability reads, and shows loading feedback immediately.
+- New player windows start at 100% volume instead of restoring the last saved volume level.
 - Moving the pointer into the right-edge hide zone hides playback and toolbar controls even when a button or slider retains focus; active text editing and popovers stay visible, and Tab restores keyboard access.
 - Comparison drift checks bracket the secondary clock with primary reads, accounting for decoder-read latency before adjusting playback.
 - Guarded MPV decoder-raster capture rejects unsupported formats, oversized geometry and malformed buffers before copying pixels.

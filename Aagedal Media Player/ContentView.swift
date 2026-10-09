@@ -192,6 +192,7 @@ struct ContentView: View {
                 if let url = windowCoordinator.openingURL {
                     Color.black
                     PlaybackLoadingOverlay(label: "Loading file…", filename: url.lastPathComponent)
+                        .accessibilityIdentifier("file-opening-progress")
                 }
 
                 if loupe.isEnabled, controller.mediaItem?.presentationKind != .audioOnly, isMediaLoaded {

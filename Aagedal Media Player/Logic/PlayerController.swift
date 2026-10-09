@@ -46,7 +46,6 @@ final class PlayerController: ObservableObject {
                 return
             }
             backendAdapter?.volume = volume
-            UserDefaults.standard.set(volume, for: AppSettings.playbackVolume)
         }
     }
     @Published var isMuted: Bool = false {
@@ -192,10 +191,8 @@ final class PlayerController: ObservableObject {
     // Interactive scrubbing. Pointer events can arrive much faster than a
     // decoder can complete seeks, so keep only the newest requested position.
     private var pendingScrubTime: TimeInterval?
-    private var mpvScrubThrottleTask: Task<Void, Never>?
     private var avPlayerScrubSeekInProgress = false
     private var scrubGeneration = 0
-    private static let mpvScrubIntervalNanoseconds: UInt64 = 33_333_333
 
     /// Effective video frame rate (falls back to 30 if metadata is unavailable).
     private var effectiveFPS: Double {
@@ -317,8 +314,7 @@ final class PlayerController: ObservableObject {
             await PlayerController.isProResRAWFile(url: url, metadata: metadata)
         }
         let defaults = UserDefaults.standard
-        volume = defaults.value(for: AppSettings.playbackVolume)
-            .clamped(to: 0...100, default: AppSettings.playbackVolume.defaultValue)
+        // Volume starts at unity gain for each player session.
         isMuted = defaults.value(for: AppSettings.playbackMuted)
         mediaOperationsCancellable = mediaOperations.objectWillChange.sink { [weak self] in
             self?.objectWillChange.send()
@@ -378,6 +374,7 @@ final class PlayerController: ObservableObject {
     func updateMetadata(_ item: MediaItem) {
         guard mediaItem?.url == item.url else { return }
         mediaItem?.metadata = item.metadata
+        mediaItem?.size = item.size
         mediaItem?.durationSeconds = item.durationSeconds
         mediaItem?.hasVideoStream = item.hasVideoStream
 
@@ -1315,11 +1312,10 @@ final class PlayerController: ObservableObject {
 
         currentPlaybackTime = time
         liveAudioMeterPlaybackSubject.send(.scrubbing(liveAudioMeterPlaybackSnapshot()))
-        pendingScrubTime = time
-
         if useMPV {
-            issuePendingMPVScrubSeek()
+            mpvPlayer?.seekForScrubbing(to: time)
         } else {
+            pendingScrubTime = time
             issuePendingAVPlayerScrubSeek()
         }
     }
@@ -1344,27 +1340,6 @@ final class PlayerController: ObservableObject {
         publishLiveAudioMeterDiscontinuity(discontinuity, at: time)
 
         backendAdapter?.seek(to: time)
-    }
-
-    private func issuePendingMPVScrubSeek() {
-        guard mpvScrubThrottleTask == nil,
-              let time = pendingScrubTime,
-              let mpv = mpvPlayer else { return }
-
-        pendingScrubTime = nil
-        mpv.seekForScrubbing(to: time)
-
-        mpvScrubThrottleTask = Task { @MainActor [weak self] in
-            do {
-                try await Task.sleep(nanoseconds: Self.mpvScrubIntervalNanoseconds)
-            } catch {
-                return
-            }
-
-            guard let self, !Task.isCancelled else { return }
-            self.mpvScrubThrottleTask = nil
-            self.issuePendingMPVScrubSeek()
-        }
     }
 
     /// AVFoundation recommends serializing rapid seek requests and "chasing"
@@ -1400,8 +1375,7 @@ final class PlayerController: ObservableObject {
     private func cancelPendingScrubSeeks() {
         scrubGeneration &+= 1
         pendingScrubTime = nil
-        mpvScrubThrottleTask?.cancel()
-        mpvScrubThrottleTask = nil
+        mpvPlayer?.cancelPendingScrubSeeks()
 
         if avPlayerScrubSeekInProgress {
             player?.currentItem?.cancelPendingSeeks()
