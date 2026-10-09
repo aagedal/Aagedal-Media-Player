@@ -883,6 +883,14 @@ final class CompareLiveBackendTests: XCTestCase {
         defer { heartbeat.cancel() }
         let itemArrived = await waitUntil({ controller.mediaItem != nil }, timeout: .seconds(20))
         XCTAssertTrue(itemArrived)
+        // Normal backend selection can probe cold network media before MPV is
+        // constructed. Allow the same startup budget used for readiness before
+        // attaching a surface; the generic helper assumes a preselected backend.
+        guard await waitUntil({ controller.useMPV || controller.player != nil },
+                              timeout: .seconds(40)) else {
+            XCTFail("Network-file backend selection did not finish.")
+            return
+        }
         try await attachRenderSurface(to: controller)
         let ready = await waitUntil({ controller.isReady }, timeout: .seconds(40))
         XCTAssertTrue(ready, "Network-file playback did not become ready.")
