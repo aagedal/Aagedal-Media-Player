@@ -26,6 +26,62 @@
         -->
 
         <item>
+            <title>Version 2.0.0</title>
+            <pubDate>Sat, 10 Oct 2026 00:01:58 +0200</pubDate>
+            <sparkle:version>164</sparkle:version>
+            <sparkle:shortVersionString>2.0.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <enclosure
+                url="https://github.com/aagedal/Aagedal-Media-Player/releases/download/2.0.0/Aagedal_Media_Player_2-0-0.zip"
+                length="45458094"
+                type="application/octet-stream"
+                sparkle:edSignature="i7svbmAGh7O0qXLoU+pY1cxrOFlLKHSd6ZEpOHBKK3cAGyJvIZGrRiF5HoPbozTd237mVK6S5olE5wfocugJCA==" />
+            <description><![CDATA[
+<p>Version 2.0 brings reference-versus-encode comparison, structured review, picture inspection and expanded audio analysis into one local media player.</p>
+<h3>Added</h3>
+<ul>
+<li>Compare two files with shared playback, frame stepping and scrubbing; align by source timecode, relative start or a manual offset.</li>
+<li>Inspect A/B, wipe, overlay and display-difference views, with technical mismatch summaries, overlap guidance and annotated comparison stills.</li>
+<li>Record review findings with severity, category, status and inclusive frame ranges. Search and navigate notes, retain them in sidecars, and relink moved media.</li>
+<li>Export review reports as CSV or annotated PDF, plus marker interchange for supported Resolve, Final Cut Pro and Premiere Pro workflows.</li>
+<li>Inspect detail with a movable, pinnable loupe and paired A/B previews, adjustable magnification and picture-position controls.</li>
+<li>Zoom the timeline up to 64×, pan through its overview, and inspect hover thumbnails and chapter markers.</li>
+<li>Open a per-player Live Audio Meter for A or B, with sample peak, true peak, Momentary, Short-term and integrated loudness, reference guides and a 60-second loudness graph.</li>
+<li>Measure individual audio tracks or explicitly assigned split-mono stereo/5.1 programmes without changing audible playback selection.</li>
+<li>Analyze whole-file or In–Out loudness offline, with loudness range, true peak, bounded graphs and copied measurement provenance.</li>
+<li>Read Broadcast WAVE and iXML recording metadata, including RF64/BW64, supported RIFX files and UTF-8/16/32 recording labels.</li>
+<li>Navigate comparison setup, review and report export directly from menus and keyboard shortcuts.</li>
+</ul>
+<h3>Changed</h3>
+<ul>
+<li>Large-file MPV scrubbing coalesces seek requests and performs a precise final seek when dragging ends.</li>
+<li>File opening displays loading feedback and performs potentially slow container checks asynchronously, keeping network-file opening and folder navigation responsive.</li>
+<li>New player windows start at 100% volume. Mono tracks can be assigned explicitly for stereo or surround playback.</li>
+<li>Live meters reset on source discontinuities, recover from brief clock lag with bounded retries, and cancel stalled or retired decoding.</li>
+<li>Playback controls hide in the right-edge pointer zone and return through keyboard navigation; active editing and popovers remain visible.</li>
+<li>Updated pinned playback and metadata dependencies improve CoreAudio playback and bound large-container metadata memory use.</li>
+<li>Release verification checks the exact source and dependency pins, optimized tests, static analysis, signing, notarization and downloadable artifact identity.</li>
+</ul>
+<h3>Fixed</h3>
+<ul>
+<li>Corrected SMPTE drop-frame calculations, precise mapped frame seeks and comparison clock sampling.</li>
+<li>Preserved playback position and pause intent through inspector changes, source reloads, window resizing and surface recovery.</li>
+<li>Protected review drafts and correction focus during filtering, concurrent sidecar updates, deletion, relinking, migration and save failures.</li>
+<li>Preserved supported marker timing, source identity, field order and authored text in editor exports, with explicit errors for unrepresentable cases.</li>
+<li>Bounded waveform, thumbnail, scope and long-file audio analysis work; rejected malformed buffers and stale asynchronous results.</li>
+<li>Made screenshot and trim output atomic and collision-safe, with cancellation and actionable completion or failure feedback.</li>
+</ul>
+<h3>Compatibility and limitations</h3>
+<ul>
+<li>Requires macOS 15 or later on Apple Silicon.</li>
+<li>MPV loupe captures remain display-space previews; verified native-pixel inspection is available only for eligible AVFoundation captures. HDR previews can differ from the live display.</li>
+<li>Editor marker formats have geometry, timing and text-formatting limits. Follow the export guidance; CSV/PDF retain findings that cannot be represented faithfully in a chosen editor format.</li>
+<li>Live loudness covers the current measurement segment. Seeking, source changes, reset or clock recovery begins a new segment; the displayed reference guides alone do not establish programme compliance.</li>
+</ul>
+            ]]></description>
+        </item>
+
+        <item>
             <title>Version 1.6.0</title>
             <pubDate>Mon, 25 May 2026 11:44:09 +0200</pubDate>
             <sparkle:version>161</sparkle:version>
