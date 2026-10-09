@@ -905,6 +905,7 @@ nonisolated private struct SnapshotReducer: Sendable {
               snapshot.maximumTruePeakDBTP.allSatisfy(LiveAudioPeakDisplay.isValidLevel),
               snapshot.momentaryLUFS.map(LiveAudioPeakDisplay.isValidLevel) ?? true,
               snapshot.shortTermLUFS.map(LiveAudioPeakDisplay.isValidLevel) ?? true,
+              snapshot.integratedLUFS.map(LiveAudioPeakDisplay.isValidLevel) ?? true,
               snapshot.maximumMomentaryLUFS.map(LiveAudioPeakDisplay.isValidLevel) ?? true,
               snapshot.maximumShortTermLUFS.map(LiveAudioPeakDisplay.isValidLevel) ?? true else {
             throw LiveAudioMeterDisplayError.invalidLevel

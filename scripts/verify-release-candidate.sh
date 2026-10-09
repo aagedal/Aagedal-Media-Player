@@ -102,7 +102,7 @@ xcrun xcresulttool get test-results tests \
 python3 scripts/validate-release-xcresult.py \
     "$artifact_dir/test-summary.json" \
     "$artifact_dir/test-details.json" \
-    --minimum-tests 839 \
+    --minimum-tests 849 \
     --require-test "LoupeTrackDecoderTests/testBundledMPVFallbackPreviewNeverCertifiesMatchingDimensions()" \
     --require-test "AudioChannelRoutingTests/testBundledMPVSwitchesBetweenMonoStereoAndSurroundProgrammes()" \
     --require-test "AudioChannelRoutingTests/testMonoProgrammeUsesExplicitSpeakerAssignments()" \
@@ -119,6 +119,18 @@ python3 scripts/validate-release-xcresult.py \
     --require-test "CompareTimelineMappingTests/testDriftSampleRejectsNonFiniteClockReadsAndMappedTimes()" \
     --require-test "PlayerOverlayControllerTests/testRightEdgeHidesFocusedControlsAndKeyboardNavigationRestoresThem()" \
     --require-test "PlayerOverlayControllerTests/testRightEdgeDoesNotHideActiveEditing()" \
+    --require-test "InspectionLoupeStateTests/testCenterAndPinIsAvailableOnlyWhenPlacementHasChanged()" \
+    --require-test "InspectionLoupeStateTests/testMovingTargetPinsPictureWithoutMovingFloatingLoupe()" \
+    --require-test "InspectionLoupeStateTests/testDisabledTargetCannotMoveAndInvalidDragIsIgnored()" \
+    --require-test "LiveAudioMeterCoordinatorTests/testAutomaticClockRecoveryStopsAfterThreeRestarts()" \
+    --require-test "LiveAudioMeterCoordinatorTests/testInitialClockLagCatchesUpAndSteadyStateLagRestartsAtCurrentPosition()" \
+    --require-test "LiveAudioMeterDSPTests/testIntegratedLoudnessGatesSilenceAndResetsWithSegment()" \
+    --require-test "LiveAudioMeterDecoderTests/testTimestampedProcessorAllowsBoundedDTSRoundingButRejectsCumulativeDrift()" \
+    --require-test "LiveAudioMeterSessionTests/testIndependentTrackAndMonoGroupingLeavePlaybackSelectionUnchanged()" \
+    --require-test "LoudnessAnalysisTests/testOfflineGraphParsesWarmupAndBoundsFullDurationHistory()" \
+    --require-test "ProgrammeLoudnessTests/testLiveGroupedMonoMeasuresAssignedTracksAndPreservesSeek()" \
+    --require-test "ProgrammeLoudnessTests/testLiveGroupedSurroundUsesExplicitSpeakerRoles()" \
+    --require-test "LiveAudioMeterCoordinatorTests/testMalformedIntegratedLoudnessFailsGenerationAndCancelsWorker()" \
     --require-test "MPVDecoderRasterTests/testCapabilityRequiresExactCommandName()" \
     --require-test "MPVDecoderRasterTests/testAcceptsOnlyVersionedPresentedDecoderProofAndCopiesPixels()" \
     --require-test "MPVDecoderRasterTests/testRejectsMissingMistypedDuplicateAndNegativeProofFields()" \

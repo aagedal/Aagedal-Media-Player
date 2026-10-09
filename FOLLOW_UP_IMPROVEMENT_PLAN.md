@@ -4804,6 +4804,24 @@ Integrated committed-source verification follows separately.
   [manual completion](docs/RELEASE_2_MANUAL_COMPLETION.md). Full candidate
   verification must be repeated at the final committed source.
 
+## Phase 235 — Validate integrated live loudness and require current regressions
+
+- [x] Reject NaN and positive-infinite integrated loudness before publishing
+  snapshots, cancel the invalid worker, and clear its readings. Preserve
+  negative-infinite silence and the existing optional warmup value.
+- [x] Add a generation/cancellation regression and extend the silent-reading
+  case to include integrated loudness.
+- [x] Bring canonical and release evidence requirements up to date with the
+  recent loupe placement, automatic clock recovery, DTS tolerance, integrated
+  DSP, loudness graph and independent/grouped-track tests. Require all twelve
+  identities and at least 849 aggregate tests.
+- [x] Pass all 142 focused optimized Release tests with zero skips or runtime
+  warnings, the complete script-validator suite and all 61 preflight checks.
+  Retain [focused receipts](docs/evidence/integrated-loudness-release-gates-20261009/README.md).
+- [ ] Complete matching-HEAD canonical verification and the outstanding native
+  routing/accuracy/device/EOF and sustained-soak acceptance. The shipping MPV
+  source-pixel provider remains unavailable.
+
 ## Remaining work after this continuation
 
 ### October 2 native Review focus continuation
