@@ -102,7 +102,15 @@ xcrun xcresulttool get test-results tests \
 python3 scripts/validate-release-xcresult.py \
     "$artifact_dir/test-summary.json" \
     "$artifact_dir/test-details.json" \
-    --minimum-tests 849 \
+    --minimum-tests 862 \
+    --require-test "MPVSeekSchedulerTests/testDragWaitsForDecodedFrameAndKeepsOnlyLatestTarget()" \
+    --require-test "MPVSeekSchedulerTests/testReleaseReplacesPendingPreviewWithPreciseTarget()" \
+    --require-test "MPVSeekSchedulerTests/testFailedCommandAllowsLatestRequestAndResetRejectsOldReplies()" \
+    --require-test "MPVMediaLoadingTests/testSlowHeaderReadLeavesMainActorResponsiveAndReplacementRejectsOldResult()" \
+    --require-test "MPVMediaLoadingTests/testDestroyRejectsHeaderReadThatFinishesAfterClose()" \
+    --require-test "PlayerWindowCoordinatorTests/testMakeMediaItemUsesFilenameWithoutReadingFileAttributes()" \
+    --require-test "PlaybackVolumeTests/testNewPlayerStartsAtFullVolumeDespiteLegacySavedLevel()" \
+    --require-test "CompareLiveBackendTests/testMPVBurstScrubbingLandsPreciselyAndDoesNotReplayOldTargets()" \
     --require-test "LoupeTrackDecoderTests/testBundledMPVFallbackPreviewNeverCertifiesMatchingDimensions()" \
     --require-test "AudioChannelRoutingTests/testBundledMPVSwitchesBetweenMonoStereoAndSurroundProgrammes()" \
     --require-test "AudioChannelRoutingTests/testMonoProgrammeUsesExplicitSpeakerAssignments()" \

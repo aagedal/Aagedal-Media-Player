@@ -66,6 +66,15 @@ class ReleaseXCResultValidationTests(unittest.TestCase):
         )
         self.assertEqual(self.validate(), (662, 1))
 
+    def test_network_open_profile_is_an_allowlisted_external_input(self) -> None:
+        self.skipped_case["nodeIdentifier"] = (
+            "CompareLiveBackendTests/testNetworkFileOpeningRemainsResponsive()"
+        )
+        self.assertEqual(self.validate(), (662, 1))
+        self.skipped_case["children"] = []
+        with self.assertRaisesRegex(ValueError, "no descriptive skip reason"):
+            self.validate()
+
     def test_accepts_no_skips_when_optional_inputs_are_supplied(self) -> None:
         self.summary["passedTests"] = 662
         self.summary["skippedTests"] = 0

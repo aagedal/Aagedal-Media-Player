@@ -182,7 +182,15 @@ if [[ "$EVIDENCE_STATUS" != "passed" \
     exit 2
 fi
 python3 scripts/validate-release-xcresult.py \
-    "$CANDIDATE_SUMMARY" "$CANDIDATE_DETAILS" --minimum-tests 849 \
+    "$CANDIDATE_SUMMARY" "$CANDIDATE_DETAILS" --minimum-tests 862 \
+    --require-test "MPVSeekSchedulerTests/testDragWaitsForDecodedFrameAndKeepsOnlyLatestTarget()" \
+    --require-test "MPVSeekSchedulerTests/testReleaseReplacesPendingPreviewWithPreciseTarget()" \
+    --require-test "MPVSeekSchedulerTests/testFailedCommandAllowsLatestRequestAndResetRejectsOldReplies()" \
+    --require-test "MPVMediaLoadingTests/testSlowHeaderReadLeavesMainActorResponsiveAndReplacementRejectsOldResult()" \
+    --require-test "MPVMediaLoadingTests/testDestroyRejectsHeaderReadThatFinishesAfterClose()" \
+    --require-test "PlayerWindowCoordinatorTests/testMakeMediaItemUsesFilenameWithoutReadingFileAttributes()" \
+    --require-test "PlaybackVolumeTests/testNewPlayerStartsAtFullVolumeDespiteLegacySavedLevel()" \
+    --require-test "CompareLiveBackendTests/testMPVBurstScrubbingLandsPreciselyAndDoesNotReplayOldTargets()" \
     --require-test "LoupeTrackDecoderTests/testBundledMPVFallbackPreviewNeverCertifiesMatchingDimensions()" \
     --require-test "AudioChannelRoutingTests/testBundledMPVSwitchesBetweenMonoStereoAndSurroundProgrammes()" \
     --require-test "AudioChannelRoutingTests/testMonoProgrammeUsesExplicitSpeakerAssignments()" \

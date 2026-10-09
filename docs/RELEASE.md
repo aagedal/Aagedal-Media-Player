@@ -103,6 +103,11 @@ the documented full FFmpeg encoder build, rather than the bundled image-only bin
 The destructive disk-image check, external-reference checks, fixture generation,
 and production profilers—including representative live-audio-meter acceptance—
 remain explicit opt-ins rather than ordinary candidate verifier work.
+The real network-opening regression is also opt-in: supply
+`NETWORK_OPEN_PROFILE_FILE` in the XCTest runner environment to exercise a
+mounted network media file. Its descriptive skip is allowed in ordinary runs;
+retain a separate real-network result when qualifying opening responsiveness.
+
 Opt-in reference, performance, and destructive-filesystem tests report named
 skips unless their documented harness supplies the required inputs. A passing
 ordinary suite therefore does not claim those acceptance gates ran.

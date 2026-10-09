@@ -1,0 +1,278 @@
+# 2.0 engineering change history
+
+Detailed unreleased entries retained when preparing the consolidated 2.0.0 release.
+See [the release notes](../CHANGELOG.md) for the user-facing summary.
+
+## Consolidated changes since 1.6.0
+
+### Changed
+- Timeline scrubbing keeps one MPV seek in flight and only the newest waiting target, with a precise seek on release.
+- Network-file opening avoids UI-thread file-size, header and folder-navigation reachability reads, and shows loading feedback immediately.
+- New player windows start at 100% volume instead of restoring the last saved volume level.
+- Moving the pointer into the right-edge hide zone hides playback and toolbar controls even when a button or slider retains focus; active text editing and popovers stay visible, and Tab restores keyboard access.
+- Comparison drift checks bracket the secondary clock with primary reads, accounting for decoder-read latency before adjusting playback.
+- Guarded MPV decoder-raster capture rejects unsupported formats, oversized geometry and malformed buffers before copying pixels.
+- Candidate and release verification require the recent audio-routing, surface recovery, clock sampling and decoder-raster regressions, with at least 839 aggregate tests.
+- Video scaling recovers after incremental and programmatic window resizing or native surface replacement, with one settled reload directed to the affected player window.
+- Loupe capture has a guarded decoder-raster consumer and rejects stale or failed capture proof; the published MPV dependency remains display-preview-only until the new provider is validated and integrated.
+- Review uses one keyboard focus owner, preserving invalid drafts while New Note and Filter navigation proceeds; explicit actions reveal and focus the required correction.
+- Review retires corrections for findings deleted by another window's sidecar merge, allowing edits to surviving findings while preserving drafts during reload.
+- Premiere round-trip checks can consume a captured pre-import media receipt to detect source files replaced at an unchanged path.
+- Review preserves unsaved text, ranges and correction focus when a queued deletion is rejected during saving or loading. New-note edits retain current export guidance.
+- Live meters clear readings and cancel decoding when the playback clock becomes invalid at end of file or during final drainage.
+- Premiere round-trip validation rejects freeze frames, source slips, multiclips and conflicting native tick endpoints.
+- Review Return commits against the current saved finding after a concurrent sidecar merge, preserving rejected drafts for correction.
+- Closed live-meter panel controllers reject queued and reentrant reopening, preventing unusable orphan panels.
+- Premiere XML preserves authored carriage returns, CRLF, tabs and line feeds before import; independent round-trip validation rejects nested scalar content that could conceal changed marker text.
+- Review preserves newer range input through delayed callbacks and retires accepted drafts so concurrent sidecar merges remain authoritative.
+- Closed live meters ignore queued transport events and speed suspension, preserving teardown state.
+- Premiere grouped findings use a native-verified visible separator; export guidance explains note-formatting changes. Round-trip validation accepts Premiere’s consistent drop-frame separators and detects clip pixel-aspect overrides.
+- Live-meter timestamp failures and cancellation release decoder callbacks blocked by playback pacing, preserving the original error instead of hanging shutdown.
+- Review immediately explains how to clear a saved range when its endpoint is erased and the field is left, preserving the saved endpoint and draft.
+- Premiere XML retains known progressive or interlaced field order for source and sequence; mixed scan order requires CSV/PDF. Round-trip checks detect changed field order and clip overrides.
+- Passive Review blur/removal callbacks use current correction ownership, preserving unrelated drafts and avoiding duplicate text saves.
+- Premiere round-trip validation rejects disabled or ambiguous source-A playback and encoded DTD/entity declarations.
+- Release publication retains the original packaged ZIP hash through signing, upload and update-feed preparation, rejecting same-size artifact replacements.
+- Review saves pending range edits when filtering, closing the panel, or collapsing a range removes its field, while preserving correction focus and rejected drafts.
+- Explicit Review range Apply and Return preserve newer same-sidecar endpoints when a queued row action has no typed draft left, and retain rejected input for correction and retry.
+- Live audio meters clear readings and cancel suspended decoding when a paused or buffering source clock becomes invalid; valid contiguous suspension preserves readings and held maxima.
+- Premiere round-trip validation rejects unsupported source-track, auxiliary timecode and field-offset overrides that unchanged media paths and frame numbers previously concealed.
+- Candidate verification and release consumption require the Premiere, Review and meter lifecycle regressions and at least 826 aggregate tests, alongside both isolated mixed-backend transport checks.
+- Live meters enforce bounded startup even before the first PCM snapshot arrives, clearing stalled work with retained diagnostics.
+- PDF review reports identify source and relative timecodes explicitly and preserve complete values after relinking.
+- Dependency reconstruction audits reject undeclared sources, stale build caches, redirected directories and nonregular inputs.
+- Technical comparison labels safely retain extreme finite metadata values and large duration hours.
+- Review defers correction focus and passive draft commits while editing is unavailable, then restores the selected field when editing resumes.
+- PDF review reports preserve full source URLs and each finding’s stored rational frame coordinates, with pagination for long paths.
+- GPL dependency publication validation binds upstream source origins/revisions, and reconstructed workspaces can be independently audited against the pinned payload.
+- Ordinary Review field validation owns correction focus, preventing unrelated text or range callbacks from displacing the selected field.
+- Programme loudness profiles stay awake and retain partial results and power diagnostics on failed or sleep-interrupted measurements.
+- Repeated metadata profile validation clears stale passing receipts for malformed arguments and rejects lifetime peaks below observed resident-memory samples.
+- Passive Review range callbacks preserve the finding and field selected by action correction, preventing unrelated range edits from saving or stealing focus.
+- Production live-meter profiles own a temporary awake assertion and retain interval power evidence on failed tests.
+- CoreAudio candidate builds can select a verified installed Metal compiler directly and bind provenance to the retained builder snapshot.
+- Live meters assess the newest queued DSP endpoint before playback synchronization checks and preserve specific malformed-source failures.
+- Passive Review text blur and error focus preserve the finding and field selected by correction preflight.
+- Live-meter diagnostics retain rejected source/clock endpoints after clearing readings and cancelling the worker.
+- Comparison Pause remains authoritative through delayed decoder observations, alignment, seek, reload and readiness; explicit Play or shuttle resumes both sources.
+- Clean dependency candidates explicitly target MPVKit-GPL and reject missing Metal tooling or lost shipping codec/backend features.
+- Review draft edits preserve corrections for other fields and findings, keeping range validation from displacing the selected text correction.
+- Review clamps exact clip-end timing to its last playable frame at fractional rates and safely bounds extreme frame metadata.
+- Release preparation rechecks source and package identity before building and publishing, stopping if the checkout changes during archive, export or notarization.
+- Live-meter profiling supports requested observations up to 30 minutes with scaled test deadlines and sustained source-progress checks.
+- Isolated CoreAudio candidate rebuilds validate archive member paths and architecture flags, contain framework links and verify cached inputs remain unchanged.
+- Review keeps correction focus on empty note text while preserving unrelated range drafts, and clears accepted text correction state without dropping range errors.
+- MPV screenshot capture validates node types, raster bounds and buffer sizes before reading or copying pixels.
+- Review's End at current frame action clears an invalid range draft even when the chosen endpoint is already saved, allowing reports to proceed after correction.
+- Live-meter profiles retain Release native-output logs and failed-test diagnostics, reject audio-output initialization errors, and remove stale passing summaries.
+- Metadata fixture validation now pins a recovered authentic Sony ARW, supports current SwiftPM suite naming, and diagnoses JXL behavior against an exact dependency release.
+- Candidate verification temporarily keeps the Mac awake, rejects sleep-interrupted evidence, and bounds each isolated transport test to 120 seconds.
+- AVFoundation loupe capture follows the enabled video track and clears stale raster proof after track or composition changes; composed and ambiguous output remains a display preview.
+- Live-meter profile validation rejects mismatched sample-rate timestamp provenance and impossible snapshot timing.
+- Review keeps an edited note draft when its update is rejected, and report actions stop with visible feedback if pending edits cannot be applied.
+- Review drafts now survive a playback or comparison geometry reload of the same sources; replacing a source or changing the active notes copy still clears them.
+- Review keeps new-note, edited-text, and range drafts when its popover closes; a later keyboard export reopens Review to validate unfinished edits and asks for an unsubmitted new note to be added or cleared.
+- Review actions now bring the finding that needs correction into view, including when clearing a filter reveals it in a long note list.
+- Review actions now stop on an empty edited note, show a finding-specific error, and return focus to its text field instead of exporting the previous saved text.
+- Review actions validate all pending range ends before saving any of them, avoiding partial range edits when a later field is invalid.
+- Review range ends commit when the end-frame field loses focus, so keyboard and pointer navigation retain valid edits without requiring Apply.
+- Metadata fixture validation checks supplied files against documented SHA-256 identities before running compatibility tests.
+- Automated Homebrew publication requires a tracked cask inside the tap checkout and rechecks that path after pulling.
+- The inspection loupe can be dragged to a new canvas position while its inspected picture coordinate stays pinned; keyboard arrows and a reset control also move or restore its placement.
+- Review-note controls announce each note's position in the filtered list and source-A frame, so controls for multiple findings at one frame have distinct spoken labels.
+- Native-pixel loupe availability now requires the captured AVFoundation raster to belong to the currently active player item and preparation.
+- Metadata container-edge validation checks the independent error behavior of frame, gyroscope, and accelerometer RTMD readers against both the 3.0.0 baseline and integrated 3.0.1 dependency.
+
+### Added
+- Premiere Pro sequence-marker export using legacy Final Cut Pro 7 XML, with exact timebases, source provenance, inclusive ranges and grouped findings at the same frame. Native editor compatibility remains under validation.
+- An independent Premiere XML round-trip comparator that checks timing, note content, source identity and geometry; passing file checks alone does not establish native editor acceptance.
+- Independently qualified lossless DTS-HD MA preparation and a passing six-channel production live-meter observation, with original-container timing limitations retained.
+- Clean eight-hour production split-mono programme profiling, with consistent whole-file and early/late Stereo and 5.1 measurements and retained memory/power evidence.
+- Offline reconstruction of verified GPL dependency source commits and exact cached inputs, with explicit environment and compilation prerequisites.
+- DTS timestamp qualification with retained source/decoder evidence and contiguous six-channel DTS regression coverage.
+- Opt-in repeated production metadata imports with complete shared-cache/revisit parity, resident-memory and descriptor budgets, and fresh-host evidence.
+- Local GPL dependency publication preparation with verifiable committed source archives, exact input/artifact checksums and a complete macOS SwiftPM package.
+- A clean macOS CoreAudio dependency candidate builder that recompiles every MPV/FFmpeg object for arm64 and x86_64 and verifies source, auxiliary-input and universal-artifact provenance.
+- An opt-in isolated CoreAudio dependency rebuild tool with source, compiler and archive provenance, validated against local production-path mono/stereo and authentic Sony playback profiles.
+- Per-channel authentic ITU live sample/true-peak comparisons against an independent PCM reference, with exact EOF and filter-tail provenance.
+- Independent momentary/short-term loudness comparisons for the live decoder/DSP against original ITU programmes, with exact source-frame endpoints and retained reference readings.
+- File → Add Comparison File and Cmd–Option–O for keyboard comparison setup without changing macOS keyboard-navigation preferences.
+- Review → Export Review menu access to every report/marker format, plus Cmd–Option–E for CSV, with pending note edits saved before export.
+- Final Cut marker export guidance explaining native round-trip tab/line-break loss, textual ranges and grouped findings, backed by a second native import/export check.
+- An opt-in representative live-audio-meter profiler that retains exact input
+  identity, production-backend and selected-stream provenance, paced source progress,
+  clock/ahead bounds, routing invariance, app/child memory, cancellation, and
+  authoritative EOF evidence for explicit external media.
+- Direct Review menu shortcuts that open Comparison Review with either the new-note draft or note filter focused.
+- A per-player Live Audio Meter panel for source A or B, with current-clock start/retry/reset, late-metadata readiness, persisted reference controls, keyboard/menu access, and teardown with its owning playback window.
+- Opt-in production-path metadata memory profiling that starts before the first uncached load, records sampled and lifetime peak RSS, verifies cache parity, and validates one fresh XCTest host per long-file input.
+- Typed live-meter source identity and request construction for selected A/B tracks, with exact FFmpeg audio-stream order, source-sample start positions, explicit supported speaker maps and actionable format errors.
+- Source-rate-paced live-meter decoding with bounded precise-seek preroll, exact generated AAC/ALAC/AC-3 seek-interval and gain checks, a hard 250 ms playback-clock admission bound, and same-generation process suspension across pause and buffering. Every raw PCM packet is verified against FFmpeg's same-process timestamp, size and checksum; up to one millisecond of container timestamp quantization is normalized while material gaps fail closed.
+- Generation-safe live-meter lifecycle ownership with stale-result rejection, bounded post-DSP presentation coalescing, clean discontinuity resets, retry/EOF handling and cancellation on source or window teardown.
+- Bounded live source-audio decoding through the bundled FFmpeg, with explicit stream identity, disabled decoder gain processing, fixed Float32 buffering, actionable failures and versioned provenance.
+- Reusable accessible live-meter presentation and persisted EBU, ATSC and custom reference guides, with exact threshold wording, A/B source choice and expandable provenance diagnostics.
+- Production split-mono programme loudness profiling with per-layout/range readings, separate process-memory measurements and rejection of sleep-interrupted timing evidence.
+- Live-audio-meter calculation/display foundation with bounded source PCM, sample/true peaks, rolling Momentary/Short-term loudness and source-time ballistics.
+- Programme loudness analysis for stereo or 5.1 stored as separate mono tracks, with explicit speaker mapping, whole-file/In–Out scope, cancellation and JSON provenance. Unassigned spare tracks are excluded.
+- Bounded Broadcast WAVE metadata in classic RIFX files, with container-endian version/loudness fields and exact low/high-word sample references.
+- Bounded iXML recording labels and track metadata in classic big-endian RIFX files, with independent XML encoding validation.
+- Optional bounded APFS disk-full integration checks for review save/delete preservation and retry, alongside HFS+ coverage.
+- Bounded UTF-32LE/BE iXML recording labels and track metadata, with strict Unicode validation and preserved parsing limits.
+- Explicit migration of historical rounded review timebases into a new sidecar, with preview, retained frame coordinates, and deliberate copy reopening.
+- Bounded UTF-16 iXML recording metadata and optional recording track names with explicit source-channel and file-interleave indexes.
+- Bounded iXML recording labels in WAVE metadata and the inspector, including project, scene, take, sound roll, circled take, note, and file UID.
+- Independent BS.1770-5 true-peak comparisons for the original ITU mono, stereo, and 5.1 programme references.
+- Bounded classic big-endian RIFX metadata, with verified PCM/float decoding for offline loudness and waveforms.
+- Independent PCM programme LRA comparisons alongside the original ITU integrated-loudness checks, with retained algorithm/source provenance.
+- Bounded Broadcast WAVE tags in the inspector and copied JSON, including exact sample references, recording identity, coding history, and separately labeled embedded loudness.
+- Optional official ITU eight-channel loudness verification with pinned originals and lossless speaker-order preparation for the conventional 7.1 analysis path.
+- Reproducible optional loudness checks against original ITU mono, stereo, and 5.1 programme references, with pinned input hashes and retained measurement evidence.
+- Bounded RF64/BW64 PCM and floating-point metadata reading for recordings beyond 4 GiB, with validated 64-bit chunk lengths and explicit speaker layouts.
+- Reproducible multichannel loudness profiling for whole-file and early/late ranges, with separately sampled app and FFmpeg memory and validated result artifacts.
+- Offline integrated loudness, loudness range, and true-peak analysis over selected In–Out points, with per-stream cancellation and measured-range provenance in copied metadata.
+- Reproducible production timeline-thumbnail profiling with long-file seek latency, cache bounds, and sampled resident-memory measurements.
+- Lazy timeline hover thumbnails with a bounded cache and cancellation on media replacement or dismissal.
+- Per-window timeline zoom up to 64×, with a full-duration overview for panning and a one-action return to Fit.
+- Deliberate comparison-review relinking after media moves, with an explicit A/B mapping preview, preserved findings, and protection against destination overwrites.
+- Review-note severity, category, and status with searchable classifications and inclusive frame ranges, timeline bands, and CSV/PDF/editor export support.
+- Schema 2 review sidecars that read legacy single-frame notes and protect structured findings from older app versions.
+- Comparison stills record the inspection view selected at export time and identify their fixed side-by-side layout.
+- Production-resolution paired-loupe profiling with simultaneous scopes, fresh-pixel cadence, capture-gap, responsiveness, and teardown checks.
+- Opt-in reflected UHD/HDR comparison profiling with verified source transforms and safe fixture reuse.
+- Selected-track A/B audio layout details, numbered channel labels, unmatched speaker roles, and explicit positional matching for unknown layouts.
+- A pointer-following 2×/4×/8× inspection loupe with pinning, keyboard-accessible picture positioning, and paired A/B display previews.
+- Manual comparison alignment in signed seconds or source-A frames, one-frame nudges, and automatic-alignment reset.
+- Chapter markers on the playback timeline with current-chapter accessibility feedback.
+- A visible multi-window transport-sync indicator and explicit transport versus one-shot alignment commands.
+- Drop-frame-correct SMPTE timecode handling and regression coverage for supported frame rates.
+- Collision-safe, atomic screenshot and trim output with visible completion and failure actions.
+- Cancellation-aware ffmpeg execution, bounded scope scheduling, and generated media fixtures.
+- A reproducible optimized scope-performance matrix covering all resolution and update-rate settings.
+- Consistent volume, mute, buffering, playback-error, keyboard, and accessibility behavior across playback backends.
+- Previous/next keyboard navigation across supported media files in the current folder.
+- Release preflight validation for version/build ordering, changelog and appcast metadata, Sparkle signatures and URLs, exported app signing, and bundled ffmpeg provenance.
+- Reproducible 1, 8, and 24-hour multichannel audio-waveform performance profiling.
+- Real-decoder Compare Mode fixtures for mixed-codec relative alignment and disjoint source-timecode ranges.
+- Mixed-backend Compare Mode validation for paired stepping, scrubbing, forward shuttle, supported frame rates, rotated anamorphic geometry, and SDR/HDR metadata.
+- Production-resolution Compare Mode profiling for the real hosted compositor,
+  including sustained visual-control cadence and main-actor delay measurements.
+- Mixed-backend live-scope profiling across A, B, and display-difference sources,
+  plus production-size safe-area and aspect-ratio guide sweeps.
+- A frame-accurate source-B offset readout and playable A/B overlap interval on
+  the comparison timeline.
+- Deterministic source-derived Compare Mode demo fixtures and a concise release
+  recording run sheet.
+
+### Changed
+- Update SwiftMediaMetadata to 3.0.1, whose Sony RTMD discovery skips top-level
+  media payloads instead of copying them into memory. Production-path profiling
+  now shows only a few MiB of fresh-process lifetime-peak variation, without
+  scaling to the 290 MB and 2.32 GB sparse-payload regression containers.
+- Defer and coalesce playback-window publication until after SwiftUI's view
+  update, eliminating the test-host startup warning while preserving replacement
+  window registration.
+- Give asynchronous live-meter coordinator test probes a real monotonic deadline
+  instead of a scheduler-yield count, preventing false failures under full-suite load.
+- Require live-meter decoder timestamps to confirm the decoded channel layout before applying speaker-weighted loudness, keep explicit nonstandard layouts on numbered peak-only meters, and expose stable frequently-updated accessibility identities for native meter acceptance.
+- Reconcile every detailed XCTest result with candidate summary counts, require exactly the two isolated mixed-backend transport checks, verify uploaded release-asset size and GitHub SHA-256, reject prereleases from the stable appcast, and fail closed on dirty or ambiguous Homebrew cask updates.
+- Candidate verification now rejects unexpected or unexplained XCTest skips, runtime warnings, expected failures, missing test coverage, and source/package changes during the run; historically order-sensitive mixed-backend transport cases run in a separate validated host.
+- Releases now require canonical evidence for the exact commit and resolved packages, require requested versions to match committed project metadata, and verify the published GitHub commit, draft state, and ZIP asset before changing the appcast.
+- Expose stable comparison-review accessibility identities, full active-sidecar paths, and dynamic loading/export/error status semantics for native keyboard and assistive-technology verification.
+- Expose native-pixel loupe placement only for dimension-verified AVFoundation captures, fall back safely when verification is lost, and keep MPV/mixed sources explicitly in display-space modes.
+- Prevent live-meter Retry/Reset from reviving a stale file or audio stream during replacement, and give every multichannel peak row a distinct channel-aware accessibility label.
+- Candidate verification now runs the self-contained script-validator and syntax checks before Xcode, retaining their combined evidence while leaving external-reference, destructive-filesystem, and production-profile acceptance opt-in; releases refuse dirty checkouts and target the exact printed source commit.
+- Keep paired Compare playback inside the sustained-validation fixture range and repeat exact alignment after both backends acknowledge Pause, avoiding false EOF failures and one-frame paused drift across mixed backends.
+- Candidate verification now records exact source/package provenance, runs the optimized Release suite with explicit optional-test skips, analyzes the same resolved dependency set, and retains logs/results; release archives refuse package versions outside `Package.resolved`.
+- Verify the exact final distribution ZIP by re-extracting it and repeating app preflight, notarization-ticket, and Gatekeeper checks before signing or publishing update metadata.
+- Apply continuous MPV volume-slider updates asynchronously so playback work cannot stall pointer tracking or make the audible response trail the control.
+- Add explicit Retry Save for failed review-note writes, flush current text drafts before retrying, and prevent reload from discarding unsaved changes.
+- Preserve pending review-note edits before switching copies, migrating timebases or exporting, and keep the original review active if source timing changes during migration saving.
+- Preserve exact broadcast frame rates from decimal metadata so drop-frame review timecodes and editor-marker exports use the correct rational timebase. Existing reviews retain their stored rates and are never silently retimed.
+- Comparison controls collapse into a scrollable popover when the toolbar is too narrow, keeping review, exit, loupe, and inspector actions visible.
+- Apply standards-based rear-speaker weighting to explicitly identified conventional 7.1 loudness analysis while preserving source samples and true peaks; retain qualification for unknown or uncorrected layouts.
+- Review-note accessibility labels identify seek, classification, inclusive-range, note-text, and deletion controls with source-A frame context; range actions adapt to available width and relink paths expose their full values.
+- Timeline zoom starts in the timeline context menu; its extra controls appear only while zoomed and disappear on Fit.
+- Volume now uses a continuous slider without tick marks, applies tracking changes directly to playback, and uses matching linear-amplitude percentages on MPV and AVPlayer.
+- Preserve AppKit-aligned MPV surface dimensions across unchanged SwiftUI updates, avoiding repeated one-pixel swapchain reallocations during playback.
+- Keep source A visible when entering Compare Mode, replacing B, or returning to single-source playback by retaining its native video surface.
+- Editor-marker reports preserve full A/B source URLs, stored rational rates, and explicit source/relative B timecodes; oversized Avid notes fail visibly instead of being truncated.
+- Timeline thumbnails invalidate cached images when a source URL changes and safely clamp extreme requested timestamps.
+- Preserve recorded review timecodes after relinking; omit unavailable annotated stills with an explanation and reject ambiguous midnight-wrapping Resolve EDL markers.
+- CSV review reports now append exact stored A/B rational frame rates and full source URLs, preserving existing column positions.
+- Split playback backends, track selection, media operations, window opening, overlays, settings, and command routing into focused components.
+- Extract the update settings pane and publish typed update-check outcomes with retry guidance.
+- Update the bundled ffmpeg executable to 9.0.1 with Developer ID signing, Hardened Runtime, and secure-timestamp preflight validation.
+- Update SwiftMediaMetadata to 3.0.0 and use its renamed package product and importable module.
+- Keep Main Thread Checker and Thread Performance Checker enabled while retaining the required MoltenVK Metal API Validation exception.
+- Document and validate the intentional Apple-Silicon-only release architecture and security entitlements.
+- Make Compare Mode performance profiling serial, optimized, frame-rate-aware,
+  production-render-sized, and isolated from ordinary test runs.
+- Make Compare Mode profiler cleanup non-interactive for read-only package
+  checkout files.
+- Make Compare Mode profiling reusable and auditable with validated fixture and
+  build caches, retained artifacts, machine/power provenance, and rejection of
+  skipped or metric-free runs.
+- Keep paired playback synchronized through active timeline scrubbing and
+  primary-file loop boundaries across all backend combinations.
+
+### Fixed
+- Malformed live-meter channel-layout counts whose sum exceeds the host integer now fail decoder qualification instead of crashing.
+- Review-note navigation now uses layout-independent Cmd–Control–Left/Right, with the local playback key monitor allowing these menu shortcuts through instead of stepping a frame.
+- Trim I/O/X shortcuts now leave Command/Control combinations to menu handling, preventing Cmd–Option–O from clearing the Out point instead of opening comparison setup.
+- Final Cut Pro marker export now rejects source A combining quarter-turn rotation
+  and non-square pixels, with a CSV/PDF fallback, because native Final Cut rendering
+  adds incorrect padding for this geometry.
+- Let a newly started live-meter decoder catch up from bounded FFmpeg startup
+  latency before enforcing the steady-state 250 ms freshness limit, while
+  retaining fail-closed behavior after synchronization.
+- Preserve a single already-trimmed AAC priming packet as explicit,
+  timestamp-authorized source silence while continuing to reject genuine
+  initial delays and midstream timestamp gaps.
+- Reject malformed HDR scope buffers, non-finite pixels, invalid output sizes and out-of-range peak scales instead of risking a crash or publishing an unusable graticule.
+- Replace same-file waveform work when stream layout, labels, ordering or duration changes, and reject non-finite durations before rendering.
+- Prevent returning from an unsupported playback speed from restarting a retained pre-replacement live-meter source or audio track.
+- Keep live-meter EOF drainage authoritative across trailing pause or buffering events, and preserve a selected audio stream's final readings when its containing video continues.
+- Clearing live-meter maxima now resets worker-side DSP maxima in order, so stale in-flight or exact-EOF snapshots cannot restore readings from before the clear.
+- Complete subprocess pipe draining on a utility queue to avoid priority inversion while retaining timestamp-side-channel ordering at child-process exit.
+- Long-range programme loudness analysis now preserves every assigned channel using independent input contexts, correcting silent channel loss and reducing excessive shared-input buffering.
+- Programme loudness analysis now cancels when its owning controller is released, including teardown outside inspector visibility callbacks.
+- Header-verified WAVE demuxer selection prevents valid floating-point WAVE inputs being misidentified during offline loudness and waveform processing.
+- Comparison reloads honor an explicit pause, reject superseded decoder resumes, and resume both sources after asynchronous backend readiness.
+- Overlapping inspector refreshes retain the requested playback position and playing intent instead of restarting from a temporary zero decoder clock.
+- A primary-source reload timeout reports the primary failure while preserving a ready comparison source.
+- Playback failure messages wrap beside a narrow metadata inspector, with adaptive action layout and scrolling in short windows.
+- Playback canvases respect inspector width, and recovery actions remain clear of the measured toolbar and transport controls.
+- Inspector transitions refresh MPV's drawing size after layout settles; single-source reloads preserve playing/paused intent and suppress stale resume work.
+- Prevent queued comparison-note saves from beginning after comparison mode closes or its source pair changes.
+- Focused comparison toolbar controls receive Space and arrow keys without triggering playback; compact settings scroll to keyboard-focused controls and show focus rings.
+- RIFX playback and trim export fail with conversion guidance while their decoder paths misinterpret big-endian sample bytes.
+- Restore PCM and floating-point RIFF WAVE metadata and loudness access using bounded header reads and explicit surround speaker masks.
+- Reject empty loudness selections instead of displaying FFmpeg’s default summary as a measured peak.
+- Expose channel solo/mute checked states and stream-specific loudness controls to accessibility clients.
+- Reject editor-marker exports with incompatible stored frame rates and keep mixed-rate review findings from reusing the wrong annotated PDF still.
+- MPV comparison pictures now initialize and resize to their fitted panes instead of retaining a small bootstrap surface after window growth.
+- Keep pinned inspection loupes inside the picture canvas when the window shrinks.
+- Explicitly nonisolated comparison-guide geometry avoids a Swift `Shape` conformance error under main-actor default isolation.
+- Prevent AVFoundation loupe freezes under UHD/HDR load by acquiring the current pixel buffer before asynchronous metadata and image conversion.
+- Loupe pointer registration when a comparison overlay shows 100% B with an aspect ratio different from A.
+- Preserve reflected QuickTime display transforms in MPV playback and decoder captures, including rotated mirrors, using a reflection-only VideoToolbox copyback/filter path.
+- Prevent AVFoundation seeks from truncating a mapped frame boundary to the preceding frame because of floating-point rounding.
+- Prevented superseded scope frames and media-operation tasks from publishing stale results, and stopped screenshots or exports from surviving their owning player window.
+- Kept sorted AVFoundation audio-track labels and backend selections aligned when display order differs from source stream order.
+- Prevented superseded audio/chapter discovery and track-selection work from affecting a replacement file.
+- Prevented queued playback observers and asynchronous AVFoundation readiness work from affecting a replacement file.
+- Prevented queued MPV publisher updates from changing playback, geometry, HDR, or reverse state after the backend is replaced.
+- Forwarded backend preparation, load, and end-file errors into actionable UI states.
+- Kept playback controls and their keyboard focus rings visible in narrow player windows.
+- Bounded long-recording waveform memory by streaming PCM directly into fixed-size accumulators.
+- Restored bundled audio-decoder and EBU R128 capabilities required by waveform and LUFS analysis.
+- Kept update status truthful after failures and recorded every successful manual or automatic fallback check.
+- Prevented a Compare Mode readiness timeout from replacing a specific source-B decoder failure, and covered stale secondary metadata completions during rapid replacement and teardown.
+- Prevented live scopes from starving when frame capture outpaces waveform and
+  vectorscope computation.
+- Prevented late Compare Mode readiness and review-save completions from
+  reviving failed or stopped state, and added a visible cancel action while B
+  metadata is loading.
+- Kept an AVFoundation secondary within the one-frame recovery budget under
+  sustained UHD/HDR load by compensating its exact asynchronous seek latency.
+
