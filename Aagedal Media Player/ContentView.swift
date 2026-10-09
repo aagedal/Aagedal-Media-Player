@@ -189,6 +189,11 @@ struct ContentView: View {
                     DropZoneView(isDropTargeted: isDropTargeted, onOpenFile: openFilePanel)
                 }
 
+                if let url = windowCoordinator.openingURL {
+                    Color.black
+                    PlaybackLoadingOverlay(label: "Loading file…", filename: url.lastPathComponent)
+                }
+
                 if loupe.isEnabled, controller.mediaItem?.presentationKind != .audioOnly, isMediaLoaded {
                     InspectionLoupeOverlay(
                         state: loupe,

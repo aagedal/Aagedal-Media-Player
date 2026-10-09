@@ -16,7 +16,9 @@ final class PlayerWindowCoordinator: ObservableObject {
     @Published private(set) var window: NSWindow?
     @Published private(set) var canOpenPreviousFile = false
     @Published private(set) var canOpenNextFile = false
+    @Published private(set) var openingURL: URL?
 
+    private let mediaItemLoader: @Sendable (URL) async -> MediaItem
     private var fileOpenTask: Task<Void, Never>?
     private var folderNavigationTask: Task<Void, Never>?
     private var windowWillCloseObserver: NSObjectProtocol?
@@ -31,8 +33,16 @@ final class PlayerWindowCoordinator: ObservableObject {
         category: "PlayerWindowCoordinator"
     )
 
-    init(id: UUID = UUID()) {
+    init(
+        id: UUID = UUID(),
+        mediaItemLoader: @escaping @Sendable (URL) async -> MediaItem = { url in
+            await Task.detached(priority: .userInitiated) {
+                PlayerWindowCoordinator.makeMediaItem(for: url)
+            }.value
+        }
+    ) {
         self.id = id
+        self.mediaItemLoader = mediaItemLoader
     }
 
     /// Accepts an AppKit window that SwiftUI created for this player scene.
@@ -151,13 +161,17 @@ final class PlayerWindowCoordinator: ObservableObject {
     ) {
         logger.info("Opening file: \(url.lastPathComponent)")
         fileOpenTask?.cancel()
+        openingURL = url
         refreshFolderNavigation(for: url)
 
-        var item = Self.makeMediaItem(for: url)
         WindowManager.shared.markHasMedia(id: id)
-        (window ?? NSApp.keyWindow)?.title = item.name
+        (window ?? NSApp.keyWindow)?.title = url.deletingPathExtension().lastPathComponent
 
         fileOpenTask = Task { @MainActor in
+            // Network filesystem attributes can block for seconds. Keep the
+            // main actor free to display and animate the loading overlay.
+            var item = await mediaItemLoader(url)
+            guard !Task.isCancelled else { return }
             let preloadedMetadata = await Self.loadMetadataWithTimeout(
                 url: url,
                 timeout: .milliseconds(500)
@@ -170,6 +184,8 @@ final class PlayerWindowCoordinator: ObservableObject {
             }
 
             controller.loadMedia(item)
+            // PlayerView's preparing/buffering overlay takes over from here.
+            openingURL = nil
 
             if preloadedMetadata != nil {
                 // updateMetadata runs the HDR transfer-function pass and
@@ -235,6 +251,7 @@ final class PlayerWindowCoordinator: ObservableObject {
         windowCloseHandler = nil
         fileOpenTask?.cancel()
         fileOpenTask = nil
+        openingURL = nil
         folderNavigationTask?.cancel()
         folderNavigationTask = nil
         cancelDroppedURLLoads()
