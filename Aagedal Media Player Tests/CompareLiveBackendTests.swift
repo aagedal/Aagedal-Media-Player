@@ -854,6 +854,90 @@ final class CompareLiveBackendTests: XCTestCase {
         }
     }
 
+    func testNetworkFileOpeningRemainsResponsive() async throws {
+        guard let path = ProcessInfo.processInfo.environment["NETWORK_OPEN_PROFILE_FILE"] else {
+            throw XCTSkip("Set NETWORK_OPEN_PROFILE_FILE to run the real network-storage opening check.")
+        }
+        let controller = PlayerController()
+        let coordinator = PlayerWindowCoordinator()
+        defer { coordinator.tearDown(); controller.teardown() }
+        let clock = ContinuousClock()
+        let beforeOpen = clock.now
+        coordinator.openFile(
+            URL(fileURLWithPath: path), controller: controller,
+            onTimecodeModeChange: { _ in }, onMetadataLoaded: { }
+        )
+        let openCallDuration = durationSeconds(from: beforeOpen, to: clock.now)
+        XCTAssertLessThan(openCallDuration, 0.5, "Opening must return before network attributes/header reads finish.")
+        XCTAssertTrue(coordinator.isOpeningFile)
+
+        var maximumMainActorDelay = 0.0
+        let heartbeat = Task { @MainActor in
+            while !Task.isCancelled {
+                let before = clock.now
+                try? await Task.sleep(for: .milliseconds(20))
+                maximumMainActorDelay = max(maximumMainActorDelay,
+                    durationSeconds(from: before, to: clock.now) - 0.02)
+            }
+        }
+        defer { heartbeat.cancel() }
+        let itemArrived = await waitUntil({ controller.mediaItem != nil }, timeout: .seconds(20))
+        XCTAssertTrue(itemArrived)
+        try await attachRenderSurface(to: controller)
+        let ready = await waitUntil({ controller.isReady }, timeout: .seconds(40))
+        XCTAssertTrue(ready, "Network-file playback did not become ready.")
+        XCTAssertFalse(coordinator.isOpeningFile)
+        XCTAssertLessThan(maximumMainActorDelay, 1, "The UI stalled during network-file preparation.")
+        controller.play()
+        let clockAdvanced = await waitUntil({ controller.playbackTimeSnapshot() > 0.25 })
+        XCTAssertTrue(clockAdvanced)
+        print("NETWORK_OPEN_PROFILE openCall=\(openCallDuration)s maxMainActorDelay=\(maximumMainActorDelay)s")
+    }
+
+    func testMPVBurstScrubbingLandsPreciselyAndDoesNotReplayOldTargets() async throws {
+        let profilePath = ProcessInfo.processInfo.environment["SCRUB_PROFILE_FILE"]
+        let url: URL
+        if let profilePath {
+            url = URL(fileURLWithPath: profilePath)
+        } else {
+            url = try fixtureDirectory(requiredFiles: ["compare/relative-a.mov"])
+                .appending(path: "compare/relative-a.mov")
+        }
+        let controller = makeController(forcedBackend: .mpv)
+        defer { controller.teardown() }
+        try await loadPrimary(controller, url: url)
+        try await attachRenderSurface(to: controller)
+        let ready = await waitUntil { controller.isReady }
+        XCTAssertTrue(ready)
+        controller.pause()
+        let paused = await waitUntil { !controller.isPlaying }
+        XCTAssertTrue(paused)
+
+        let offset = profilePath == nil ? 0.0 : 600.0
+        for target in stride(from: offset + 0.5, through: offset + 5, by: 0.01) {
+            controller.scrub(to: target)
+        }
+        let finalTarget = offset + 2.25
+        controller.endScrubbing(at: finalTarget)
+        let landed = await waitUntil(tolerance: 1.0 / 24) {
+            controller.playbackTimeSnapshot() - finalTarget
+        }
+        XCTAssertTrue(landed, "The final precise seek must replace all waiting previews.")
+        try await Task.sleep(for: .milliseconds(300))
+        XCTAssertEqual(controller.playbackTimeSnapshot(), finalTarget, accuracy: 1.0 / 24)
+        XCTAssertFalse(controller.isPlaying)
+
+        // Repeated seeks to the same position must still release the scheduler.
+        controller.scrub(to: finalTarget)
+        try await Task.sleep(for: .milliseconds(100))
+        controller.scrub(to: finalTarget)
+        controller.endScrubbing(at: offset + 3.5)
+        let nextGestureLanded = await waitUntil(tolerance: 1.0 / 24) {
+            controller.playbackTimeSnapshot() - (offset + 3.5)
+        }
+        XCTAssertTrue(nextGestureLanded, "A same-position seek must not stall the next gesture.")
+    }
+
     func testMPVPairAlignsBySourceTimecodeAndSharesTransport() async throws {
         try await exercisePair(primaryBackend: .mpv, secondaryBackend: .mpv)
     }

@@ -1,11 +1,28 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 @testable import Aagedal_Media_Player
 import AppKit
+import Foundation
 import SwiftUI
 import XCTest
 
 @MainActor
 final class PlaybackVolumeTests: XCTestCase {
+    func testNewPlayerStartsAtFullVolumeDespiteLegacySavedLevel() {
+        let defaults = UserDefaults.standard
+        let previous = defaults.object(forKey: AppSettings.playbackVolume.key)
+        defer {
+            if let previous { defaults.set(previous, forKey: AppSettings.playbackVolume.key) }
+            else { defaults.removeObject(forKey: AppSettings.playbackVolume.key) }
+        }
+        defaults.set(25.0, for: AppSettings.playbackVolume)
+        let first = PlayerController()
+        XCTAssertEqual(first.volume, 100)
+        first.volume = 40
+        XCTAssertEqual(first.volume, 40)
+        XCTAssertEqual(PlayerController().volume, 100)
+        XCTAssertEqual(defaults.value(for: AppSettings.playbackVolume), 25)
+    }
+
     func testMPVCubicGainMatchesLinearAVPlayerAmplitude() {
         for percent in [0.0, 1, 10, 25, 50, 75, 100] {
             let mpv = PlaybackVolume.mpvValue(for: percent)

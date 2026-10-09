@@ -9,6 +9,37 @@ import XCTest
 
 @MainActor
 final class PlayerWindowCoordinatorTests: XCTestCase {
+    func testOpeningProgressAppearsBeforeSlowMetadataAndSurvivesReplacement() async throws {
+        let coordinator = PlayerWindowCoordinator(
+            metadataLoader: { _ in
+                try await Task.sleep(for: .seconds(2))
+                throw CancellationError()
+            },
+            noteRecentDocument: { _ in }
+        )
+        let controller = PlayerController()
+        defer { coordinator.tearDown(); controller.teardown() }
+        coordinator.openFile(
+            URL(fileURLWithPath: "/tmp/slow-first.mkv"), controller: controller,
+            onTimecodeModeChange: { _ in }, onMetadataLoaded: { }
+        )
+        XCTAssertTrue(coordinator.isOpeningFile)
+        XCTAssertNil(controller.mediaItem)
+        let heartbeat = expectation(description: "UI can update while metadata waits")
+        Task { @MainActor in heartbeat.fulfill() }
+        await fulfillment(of: [heartbeat], timeout: 0.25)
+        coordinator.openFile(
+            URL(fileURLWithPath: "/tmp/slow-replacement.mkv"), controller: controller,
+            onTimecodeModeChange: { _ in }, onMetadataLoaded: { }
+        )
+        try await Task.sleep(for: .milliseconds(50))
+        XCTAssertTrue(coordinator.isOpeningFile, "Cancelled opening must not hide its replacement's spinner.")
+        coordinator.tearDown()
+        XCTAssertFalse(coordinator.isOpeningFile)
+        try await Task.sleep(for: .milliseconds(50))
+        XCTAssertNil(controller.mediaItem, "A closed window must reject delayed file-opening work.")
+    }
+
     func testWindowConfiguratorDefersAndCoalescesRepeatedAvailability() async {
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 711, height: 400),
@@ -85,7 +116,7 @@ final class PlayerWindowCoordinatorTests: XCTestCase {
         XCTAssertTrue(deliveredWindows.last.map { $0 === replacementWindow } ?? false)
     }
 
-    func testMakeMediaItemUsesFilenameAndFileSize() throws {
+    func testMakeMediaItemUsesFilenameWithoutReadingFileAttributes() throws {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
         try FileManager.default.createDirectory(
@@ -102,7 +133,7 @@ final class PlayerWindowCoordinatorTests: XCTestCase {
 
         XCTAssertEqual(item.url, url)
         XCTAssertEqual(item.name, "Opening Shot")
-        XCTAssertEqual(item.size, 37)
+        XCTAssertEqual(item.size, 0)
     }
 
     func testDroppedURLResultsPreservesProviderOrder() {

@@ -14,10 +14,14 @@ final class PlayerWindowCoordinator: ObservableObject {
     let id: UUID
 
     @Published private(set) var window: NSWindow?
+    @Published private(set) var isOpeningFile = false
     @Published private(set) var canOpenPreviousFile = false
     @Published private(set) var canOpenNextFile = false
 
     private var fileOpenTask: Task<Void, Never>?
+    private var fileOpenGeneration = 0
+    private let metadataLoader: @Sendable (URL) async throws -> MediaMetadata
+    private let noteRecentDocument: @MainActor (URL) -> Void
     private var folderNavigationTask: Task<Void, Never>?
     private var windowWillCloseObserver: NSObjectProtocol?
     private var windowCloseHandler: (() -> Void)?
@@ -31,8 +35,18 @@ final class PlayerWindowCoordinator: ObservableObject {
         category: "PlayerWindowCoordinator"
     )
 
-    init(id: UUID = UUID()) {
+    init(
+        id: UUID = UUID(),
+        metadataLoader: @escaping @Sendable (URL) async throws -> MediaMetadata = {
+            try await MetadataService.shared.metadata(for: $0)
+        },
+        noteRecentDocument: @escaping @MainActor (URL) -> Void = {
+            NSDocumentController.shared.noteNewRecentDocumentURL($0)
+        }
+    ) {
         self.id = id
+        self.metadataLoader = metadataLoader
+        self.noteRecentDocument = noteRecentDocument
     }
 
     /// Accepts an AppKit window that SwiftUI created for this player scene.
@@ -151,6 +165,9 @@ final class PlayerWindowCoordinator: ObservableObject {
     ) {
         logger.info("Opening file: \(url.lastPathComponent)")
         fileOpenTask?.cancel()
+        fileOpenGeneration &+= 1
+        let generation = fileOpenGeneration
+        isOpeningFile = true
         refreshFolderNavigation(for: url)
 
         var item = Self.makeMediaItem(for: url)
@@ -158,11 +175,14 @@ final class PlayerWindowCoordinator: ObservableObject {
         (window ?? NSApp.keyWindow)?.title = item.name
 
         fileOpenTask = Task { @MainActor in
-            let preloadedMetadata = await Self.loadMetadataWithTimeout(
-                url: url,
-                timeout: .milliseconds(500)
-            )
-            guard !Task.isCancelled else { return }
+            defer {
+                if fileOpenGeneration == generation { isOpeningFile = false }
+            }
+            let loader = metadataLoader
+            let preloadedMetadata = await AsyncDeadline.value(within: .milliseconds(500)) {
+                try? await loader(url)
+            }
+            guard !Task.isCancelled, fileOpenGeneration == generation else { return }
 
             if let metadata = preloadedMetadata {
                 Self.apply(metadata, to: &item)
@@ -170,6 +190,7 @@ final class PlayerWindowCoordinator: ObservableObject {
             }
 
             controller.loadMedia(item)
+            isOpeningFile = false
 
             if preloadedMetadata != nil {
                 // updateMetadata runs the HDR transfer-function pass and
@@ -180,7 +201,7 @@ final class PlayerWindowCoordinator: ObservableObject {
             } else {
                 logger.info("Metadata fetch exceeded preload timeout for \(url.lastPathComponent), continuing without preload")
                 do {
-                    let metadata = try await MetadataService.shared.metadata(for: url)
+                    let metadata = try await metadataLoader(url)
                     guard !Task.isCancelled else { return }
                     Self.apply(metadata, to: &item)
                     controller.updateMetadata(item)
@@ -193,7 +214,7 @@ final class PlayerWindowCoordinator: ObservableObject {
             }
         }
 
-        NSDocumentController.shared.noteNewRecentDocumentURL(url)
+        noteRecentDocument(url)
     }
 
     func previousMediaURL() -> URL? {
@@ -235,6 +256,8 @@ final class PlayerWindowCoordinator: ObservableObject {
         windowCloseHandler = nil
         fileOpenTask?.cancel()
         fileOpenTask = nil
+        fileOpenGeneration &+= 1
+        isOpeningFile = false
         folderNavigationTask?.cancel()
         folderNavigationTask = nil
         cancelDroppedURLLoads()
@@ -302,16 +325,13 @@ final class PlayerWindowCoordinator: ObservableObject {
             .sorted(by: compareMediaFilenames)
     }
 
-    nonisolated static func makeMediaItem(
-        for url: URL,
-        fileManager: FileManager = .default
-    ) -> MediaItem {
-        let attributes = try? fileManager.attributesOfItem(atPath: url.path)
-        let fileSize = attributes?[.size] as? Int64 ?? 0
+    /// A URL-only placeholder: file attributes can block for seconds on a
+    /// network mount. Metadata supplies the size after its background read.
+    nonisolated static func makeMediaItem(for url: URL) -> MediaItem {
         return MediaItem(
             url: url,
             name: url.deletingPathExtension().lastPathComponent,
-            size: fileSize
+            size: 0
         )
     }
 
@@ -344,10 +364,10 @@ final class PlayerWindowCoordinator: ObservableObject {
 
     func applyFolderNavigation(currentURL: URL, siblingURLs: [URL]) {
         siblingMediaURLs = siblingURLs
-        let standardizedCurrentURL = currentURL.standardizedFileURL
-        siblingMediaIndex = siblingMediaURLs.firstIndex {
-            $0.standardizedFileURL == standardizedCurrentURL
-        }
+        // Directory enumeration returns siblings in this same directory. URL
+        // equality is lexical; standardizedFileURL performs reachability I/O
+        // and can block the main actor on every file in a network directory.
+        siblingMediaIndex = siblingMediaURLs.firstIndex(of: currentURL)
         updateFolderNavigationAvailability()
     }
 
@@ -378,20 +398,9 @@ final class PlayerWindowCoordinator: ObservableObject {
 
     private static func apply(_ metadata: MediaMetadata, to item: inout MediaItem) {
         item.metadata = metadata
+        item.size = metadata.sizeBytes ?? item.size
         item.durationSeconds = metadata.duration ?? 0
         item.hasVideoStream = !metadata.videoStreams.isEmpty
-    }
-
-    /// The underlying SwiftMediaMetadata read is not cancellable. AsyncDeadline
-    /// stops this caller waiting while allowing the operation to finish and
-    /// populate MetadataService's cache for the follow-up request in openFile.
-    private static func loadMetadataWithTimeout(
-        url: URL,
-        timeout: Duration
-    ) async -> MediaMetadata? {
-        await AsyncDeadline.value(within: timeout) {
-            try? await MetadataService.shared.metadata(for: url)
-        }
     }
 
     nonisolated static let supportedMediaTypes: [UTType] = [

@@ -28,6 +28,7 @@ nonisolated enum AppSettings {
     static let openAtSourceResolution = AppSetting(key: "openAtSourceResolution", defaultValue: true)
     static let clampWindowToScreen = AppSetting(key: "clampWindowToScreen", defaultValue: true)
     static let centerWindowAfterResize = AppSetting(key: "centerWindowAfterResize", defaultValue: true)
+    // Legacy storage key retained for compatibility; new players start at 100%.
     static let playbackVolume = AppSetting(key: "playbackVolume", defaultValue: 100.0)
     static let playbackMuted = AppSetting(key: "playbackMuted", defaultValue: false)
 

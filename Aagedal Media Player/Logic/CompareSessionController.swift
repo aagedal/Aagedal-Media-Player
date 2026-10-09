@@ -642,6 +642,7 @@ final class CompareSessionController: ObservableObject {
                 let metadata = try await self.metadataLoader(url)
                 guard !Task.isCancelled, self.loadGeneration.isCurrent(generation) else { return }
                 item.metadata = metadata
+                item.size = metadata.sizeBytes ?? item.size
                 item.durationSeconds = metadata.duration ?? 0
                 item.hasVideoStream = !metadata.videoStreams.isEmpty
             } catch {

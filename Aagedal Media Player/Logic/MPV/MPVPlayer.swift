@@ -29,6 +29,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
     private nonisolated(unsafe) var mpv: OpaquePointer?
     private var metalLayer: MPVMetalLayer?
     private let queue = DispatchQueue(label: "com.aagedal.mpv", qos: .userInitiated)
+    private nonisolated(unsafe) var seekScheduler = MPVSeekScheduler()
 
     // Published properties for playback state
     @Published var isPlaying = false
@@ -78,6 +79,12 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
     private var pendingURL: URL?
     private var pendingStartTime: Double = 0
     private var pendingAutostart: Bool = false
+    private var mediaLoadTask: Task<Void, Never>?
+    private var mediaLoadGeneration: UInt64 = 0
+    private var rifxDetector: @Sendable (URL) -> Bool = {
+        (try? RIFXAudioDecoding.isRIFX($0)) == true
+    }
+    private nonisolated static let loadCommandMask: UInt64 = 1 << 63
     private var shouldLoop = false
     private var isAudioTrackDisabled = false
     private var audioChannelRouting = AudioChannelRouting()
@@ -89,6 +96,11 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
 
     override init() {
         super.init()
+    }
+
+    convenience init(rifxDetector: @escaping @Sendable (URL) -> Bool) {
+        self.init()
+        self.rifxDetector = rifxDetector
     }
 
     convenience init(correctsReflection: Bool) {
@@ -114,6 +126,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
     /// this object can be deallocated.  Must be called before dropping the
     /// last external strong reference.
     func destroy() {
+        cancelPendingMediaLoad()
         guard mpv != nil else { return }
 
         // Disable the wakeup callback first so no new readEvents() calls
@@ -122,6 +135,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
 
         queue.sync {
             guard self.mpv != nil else { return }
+            self.seekScheduler.reset()
             mpv_terminate_destroy(self.mpv)
             self.mpv = nil
         }
@@ -148,14 +162,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         metalLayer = layer
         setupMPV()
 
-        if let url = pendingURL {
-            let startTime = pendingStartTime
-            let autostart = pendingAutostart
-            pendingURL = nil
-            pendingStartTime = 0
-            pendingAutostart = false
-            load(url: url, startTime: startTime, autostart: autostart)
-        }
+        loadValidatedPendingMedia()
         return false
     }
 
@@ -285,47 +292,65 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
     // MARK: - Playback Control
 
     func load(url: URL, startTime: Double = 0, autostart: Bool = false) {
-        // libmpv's demuxer labels RIFX sample data as little-endian PCM. Its
-        // decoder preference option cannot override a mismatched codec ID.
-        if (try? RIFXAudioDecoding.isRIFX(url)) == true {
-            if mpv != nil { command("stop") }
-            pendingURL = nil
-            isFileLoaded = false
-            isPlaying = false
-            isBusy = false
-            errorStage = .loading
-            error = RIFXAudioDecoding.playbackUnavailable
-            return
-        }
-        guard mpv != nil else {
-            logger.info("MPV not initialized yet, storing pending load for: \(url.lastPathComponent)")
-            pendingURL = url
-            pendingStartTime = startTime
-            pendingAutostart = autostart
-            return
-        }
-
+        cancelPendingMediaLoad()
+        queue.sync { seekScheduler.reset() }
+        let generation = mediaLoadGeneration
+        pendingURL = url
+        pendingStartTime = startTime
+        pendingAutostart = autostart
         isFileLoaded = false
         error = nil
         errorStage = .loading
 
-        logger.info("Loading file: \(url.lastPathComponent), startTime: \(startTime), autostart: \(autostart)")
+        // Even a 12-byte signature read can take seconds on sleeping/network
+        // disks. Keep it off the main actor, including before a drawable exists.
+        let detector = rifxDetector
+        mediaLoadTask = Task { @MainActor [weak self] in
+            let isRIFX = await Task.detached(priority: .userInitiated) {
+                detector(url)
+            }.value
+            guard let self, !Task.isCancelled,
+                  self.mediaLoadGeneration == generation else { return }
+            self.mediaLoadTask = nil
+            if isRIFX {
+                if self.mpv != nil { self.commandAsync("stop") }
+                self.pendingURL = nil
+                self.isPlaying = false
+                self.isBusy = false
+                self.error = RIFXAudioDecoding.playbackUnavailable
+                return
+            }
+            self.loadValidatedPendingMedia()
+        }
+    }
 
+    private func cancelPendingMediaLoad() {
+        mediaLoadGeneration &+= 1
+        mediaLoadTask?.cancel()
+        mediaLoadTask = nil
+        pendingURL = nil
+    }
+
+    /// Called after both the signature check and drawable setup have finished,
+    /// in either order. Attaching the drawable never repeats the disk read.
+    private func loadValidatedPendingMedia() {
+        guard mediaLoadTask == nil, mpv != nil, let url = pendingURL else { return }
+        let startTime = pendingStartTime
+        let autostart = pendingAutostart
+        pendingURL = nil
+        pendingStartTime = 0
+        pendingAutostart = false
         startPaused = !autostart
         pendingSeekAfterLoad = startTime
+        logger.info("Loading file: \(url.lastPathComponent), startTime: \(startTime), autostart: \(autostart)")
 
+        // Do not synchronously wait on the playback core while it opens a
+        // network file. The argv form preserves paths containing whitespace.
+        setFlagAsync(MPVProperty.pause, !autostart)
         let path = url.isFileURL ? url.path : url.absoluteString
-
-        // Use argv-form to avoid string-parsing pitfalls with paths that contain
-        // quotes, backslashes, or whitespace.
-        if !command("loadfile", args: [path, "replace"]) {
-            errorStage = .loading
+        let requestID = Self.loadCommandMask | mediaLoadGeneration
+        if !commandAsync("loadfile", args: [path, "replace"], requestID: requestID) {
             error = "mpv rejected the request to load this file."
-            return
-        }
-
-        if !autostart {
-            setFlag(MPVProperty.pause, true)
         }
     }
 
@@ -353,6 +378,8 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
     }
 
     func stop() {
+        cancelPendingMediaLoad()
+        queue.sync { seekScheduler.reset() }
         command("stop")
         isPlaying = false
         timePos = 0
@@ -361,6 +388,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
     }
 
     func seek(to time: TimeInterval) {
+        guard time.isFinite else { return }
         var seekTime = time
         if duration > 0 {
             let maxSeekTime = max(0, duration - 0.05)
@@ -368,12 +396,13 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         }
         seekTime = max(0, seekTime)
 
-        command("seek", args: [String(seekTime), "absolute"])
+        enqueueSeek(to: seekTime, exact: true)
     }
 
     /// Fast, keyframe-aligned seek for interactive timeline scrubbing.
     /// A precise seek is issued when the gesture ends.
     func seekForScrubbing(to time: TimeInterval) {
+        guard time.isFinite else { return }
         var seekTime = time
         if duration > 0 {
             let maxSeekTime = max(0, duration - 0.05)
@@ -381,7 +410,42 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         }
         seekTime = max(0, seekTime)
 
-        command("seek", args: [String(seekTime), "absolute+keyframes"])
+        enqueueSeek(to: seekTime, exact: false)
+    }
+
+    /// Discard obsolete drag targets without interrupting a decoder that is
+    /// already working. A final precise seek replaces the pending preview.
+    func cancelPendingScrubSeeks() {
+        queue.async { [weak self] in self?.seekScheduler.cancelPendingPreview() }
+    }
+
+    private func enqueueSeek(to time: Double, exact: Bool) {
+        guard time.isFinite else { return }
+        queue.async { [weak self] in
+            guard let self, self.mpv != nil else { return }
+            if let submission = self.seekScheduler.request(.init(time: time, exact: exact)) {
+                self.submitSeekLocked(submission)
+            }
+        }
+    }
+
+    /// All scheduler state and submissions share the event/teardown queue.
+    private nonisolated func submitSeekLocked(_ submission: MPVSeekScheduler.Submission) {
+        guard let mpv else { return }
+        let args = ["seek", String(submission.request.time),
+                    submission.request.exact ? "absolute+exact" : "absolute+keyframes"]
+        var cargs = args.map { strdup($0).map { UnsafePointer<CChar>($0) } }
+        cargs.append(nil)
+        defer { for ptr in cargs { if let ptr { free(UnsafeMutablePointer(mutating: ptr)) } } }
+        // libmpv copies argv before returning. Completion arrives separately;
+        // neither accepting the command nor dispatching it blocks the UI.
+        let status = mpv_command_async(mpv, submission.id, &cargs)
+        if status < 0 {
+            logger.warning("Could not enqueue MPV seek: \(String(cString: mpv_error_string(status)))")
+            if let next = seekScheduler.commandReplied(id: submission.id, succeeded: false) {
+                submitSeekLocked(next)
+            }
+        }
     }
 
     func seekRelative(_ time: TimeInterval) {
@@ -773,6 +837,37 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
                         }
                     }
 
+                case MPV_EVENT_SEEK:
+                    self.seekScheduler.seekStarted()
+
+                case MPV_EVENT_PLAYBACK_RESTART:
+                    if let next = self.seekScheduler.playbackRestarted() {
+                        self.submitSeekLocked(next)
+                    }
+
+                case MPV_EVENT_COMMAND_REPLY:
+                    if pointee.reply_userdata & Self.loadCommandMask != 0 {
+                        let generation = pointee.reply_userdata & ~Self.loadCommandMask
+                        let status = pointee.error
+                        if status < 0 {
+                            let message = String(cString: mpv_error_string(status))
+                            DispatchQueue.main.async {
+                                guard self.mediaLoadGeneration == generation else { return }
+                                self.errorStage = .loading
+                                self.error = "mpv could not load this file: \(message)"
+                            }
+                        }
+                        break
+                    }
+                    if pointee.error < 0 {
+                        self.logger.warning("Asynchronous MPV command failed: \(String(cString: mpv_error_string(pointee.error)))")
+                    }
+                    if let next = self.seekScheduler.commandReplied(
+                        id: pointee.reply_userdata, succeeded: pointee.error >= 0
+                    ) {
+                        self.submitSeekLocked(next)
+                    }
+
                 case MPV_EVENT_SET_PROPERTY_REPLY:
                     if pointee.error < 0 {
                         let message = String(cString: mpv_error_string(pointee.error))
@@ -794,6 +889,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
                     }
 
                 case MPV_EVENT_END_FILE:
+                    self.seekScheduler.reset()
                     if let dataPtr = OpaquePointer(pointee.data) {
                         let endFile = UnsafePointer<mpv_event_end_file>(dataPtr).pointee
                         if endFile.reason == MPV_END_FILE_REASON_ERROR {
@@ -1099,6 +1195,25 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
             return false
         }
         return true
+    }
+
+    @discardableResult
+    private func commandAsync(_ name: String, args: [String] = [], requestID: UInt64 = 0) -> Bool {
+        guard let mpv else { return false }
+        var cargs = ([name] + args).map { strdup($0).map { UnsafePointer<CChar>($0) } }
+        cargs.append(nil)
+        defer { for ptr in cargs { if let ptr { free(UnsafeMutablePointer(mutating: ptr)) } } }
+        let status = mpv_command_async(mpv, requestID, &cargs)
+        if status < 0 {
+            logger.warning("Could not enqueue MPV command '\(name)': \(String(cString: mpv_error_string(status)))")
+        }
+        return status >= 0
+    }
+
+    private func setFlagAsync(_ name: String, _ value: Bool) {
+        guard let mpv else { return }
+        var data: Int32 = value ? 1 : 0
+        checkError(mpv_set_property_async(mpv, 0, name, MPV_FORMAT_FLAG, &data), context: name)
     }
 
     private func getDouble(_ name: String) -> Double {

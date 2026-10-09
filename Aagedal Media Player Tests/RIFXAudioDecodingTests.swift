@@ -94,11 +94,14 @@ final class RIFXAudioDecodingTests: XCTestCase {
         XCTAssertEqual(try RIFXAudioDecoding.ffmpegInputArguments(for: URL(string: "https://example.com/audio.wav")!), [])
     }
 
-    func testPlaybackAndTrimReportActionableErrorWithoutMetadata() throws {
+    func testPlaybackAndTrimReportActionableErrorWithoutMetadata() async throws {
         let url = try writeWave(tag: 1, bits: 16, frames: 2) { _ in 0.25 }
         defer { try? FileManager.default.removeItem(at: url) }
         let player = MPVPlayer()
         player.load(url: url, autostart: true)
+        for _ in 0..<100 where player.error == nil {
+            try await Task.sleep(for: .milliseconds(10))
+        }
         XCTAssertEqual(player.error, RIFXAudioDecoding.playbackUnavailable)
         XCTAssertFalse(player.isFileLoaded)
         XCTAssertFalse(player.isPlaying)

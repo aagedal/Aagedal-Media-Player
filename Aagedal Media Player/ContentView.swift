@@ -189,6 +189,18 @@ struct ContentView: View {
                     DropZoneView(isDropTargeted: isDropTargeted, onOpenFile: openFilePanel)
                 }
 
+                if windowCoordinator.isOpeningFile {
+                    VStack(spacing: 12) {
+                        ProgressView().progressViewStyle(.circular)
+                        Text("Opening file…")
+                            .foregroundStyle(.white.opacity(0.8))
+                    }
+                    .padding(18)
+                    .background(.black.opacity(0.8), in: RoundedRectangle(cornerRadius: 12))
+                    .accessibilityIdentifier("file-opening-progress")
+                    .allowsHitTesting(false)
+                }
+
                 if loupe.isEnabled, controller.mediaItem?.presentationKind != .audioOnly, isMediaLoaded {
                     InspectionLoupeOverlay(
                         state: loupe,
