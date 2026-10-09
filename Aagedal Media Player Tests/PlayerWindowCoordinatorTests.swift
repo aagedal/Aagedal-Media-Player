@@ -3,12 +3,74 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import AppKit
+import Combine
 import Foundation
 import XCTest
 @testable import Aagedal_Media_Player
 
 @MainActor
 final class PlayerWindowCoordinatorTests: XCTestCase {
+    func testOpeningIndicatorHandsOffToPlaybackPreparation() async {
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("\(UUID().uuidString).mkv")
+        let coordinator = PlayerWindowCoordinator()
+        let controller = PlayerController()
+        let loaded = expectation(description: "Media handed to playback controller")
+        let observation = controller.$mediaItem.compactMap { $0 }.prefix(1).sink { item in
+            XCTAssertEqual(item.url, url)
+            loaded.fulfill()
+        }
+        defer {
+            observation.cancel()
+            coordinator.tearDown()
+            controller.teardown()
+        }
+
+        coordinator.openFile(url, controller: controller,
+            onTimecodeModeChange: { _ in }, onMetadataLoaded: {})
+        XCTAssertEqual(coordinator.openingURL, url)
+        await fulfillment(of: [loaded], timeout: 3)
+        XCTAssertNil(coordinator.openingURL)
+        XCTAssertNotEqual(controller.playbackPhase, .idle)
+    }
+
+    func testOpeningIndicatorSurvivesSupersededSlowFileAndClearsOnTeardown() async {
+        let first = URL(fileURLWithPath: "/network/first.mkv")
+        let second = URL(fileURLWithPath: "/network/second.mkv")
+        let firstStarted = expectation(description: "First file read started")
+        let secondStarted = expectation(description: "Second file read started")
+        let reads = SuspendedMediaItemReads()
+        let coordinator = PlayerWindowCoordinator(mediaItemLoader: { url in
+            await reads.load(url) {
+                (url == first ? firstStarted : secondStarted).fulfill()
+            }
+        })
+        let controller = PlayerController()
+
+        coordinator.openFile(first, controller: controller,
+            onTimecodeModeChange: { _ in }, onMetadataLoaded: {})
+        XCTAssertEqual(coordinator.openingURL, first)
+        XCTAssertNil(controller.mediaItem)
+        await fulfillment(of: [firstStarted], timeout: 1)
+
+        coordinator.openFile(second, controller: controller,
+            onTimecodeModeChange: { _ in }, onMetadataLoaded: {})
+        XCTAssertEqual(coordinator.openingURL, second)
+        await fulfillment(of: [secondStarted], timeout: 1)
+        await reads.finish(first)
+        // Let the cancelled request resume on the main actor.
+        for _ in 0..<10 { await Task.yield() }
+        XCTAssertEqual(coordinator.openingURL, second)
+        XCTAssertNil(controller.mediaItem)
+
+        coordinator.tearDown()
+        XCTAssertNil(coordinator.openingURL)
+        await reads.finish(second)
+        for _ in 0..<10 { await Task.yield() }
+        XCTAssertNil(coordinator.openingURL)
+        XCTAssertNil(controller.mediaItem)
+    }
+
     func testWindowConfiguratorDefersAndCoalescesRepeatedAvailability() async {
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 711, height: 400),
@@ -192,5 +254,22 @@ final class PlayerWindowCoordinatorTests: XCTestCase {
             withIntermediateDirectories: true
         )
         return directory
+    }
+}
+
+private actor SuspendedMediaItemReads {
+    private var continuations: [URL: CheckedContinuation<MediaItem, Never>] = [:]
+
+    func load(_ url: URL, onStarted: @Sendable () -> Void) async -> MediaItem {
+        await withCheckedContinuation { continuation in
+            continuations[url] = continuation
+            onStarted()
+        }
+    }
+
+    func finish(_ url: URL) {
+        continuations.removeValue(forKey: url)?.resume(returning: MediaItem(
+            url: url, name: url.deletingPathExtension().lastPathComponent, size: 0
+        ))
     }
 }

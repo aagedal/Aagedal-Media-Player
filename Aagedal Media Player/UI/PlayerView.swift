@@ -120,10 +120,10 @@ struct PlayerView: View {
             EmptyView()
 
         case .preparing:
-            stateProgressOverlay(label: "Preparing playback…")
+            PlaybackLoadingOverlay(label: "Loading file…", filename: item.url.lastPathComponent)
 
         case .buffering:
-            stateProgressOverlay(label: "Buffering…")
+            PlaybackLoadingOverlay(label: "Buffering…")
 
         case .failed(let failure):
             GeometryReader { geometry in
@@ -180,16 +180,6 @@ struct PlayerView: View {
             copyDiagnostics(failure)
         }
         .buttonStyle(.bordered)
-    }
-
-    private func stateProgressOverlay(label: String) -> some View {
-        VStack(spacing: 12) {
-            ProgressView().progressViewStyle(.circular)
-            Text(label)
-                .foregroundColor(.white.opacity(0.8))
-        }
-        .padding(18)
-        .background(.black.opacity(0.68), in: RoundedRectangle(cornerRadius: 12))
     }
 
     private func revealFailedFile(_ failure: PlaybackFailure) {
@@ -449,6 +439,37 @@ struct PlayerView: View {
 }
 
 // MARK: - AVPlayer Container
+
+struct PlaybackLoadingOverlay: View {
+    let label: String
+    var filename: String? = nil
+
+    var body: some View {
+        VStack(spacing: 12) {
+            ProgressView()
+                .progressViewStyle(.circular)
+                .controlSize(.large)
+                .tint(.white)
+            Text(label)
+                .font(.headline)
+                .foregroundStyle(.white)
+            if let filename {
+                Text(filename)
+                    .font(.footnote)
+                    .foregroundStyle(.white.opacity(0.8))
+                    .lineLimit(2)
+                    .truncationMode(.middle)
+                    .multilineTextAlignment(.center)
+            }
+        }
+        .padding(24)
+        .frame(maxWidth: 360)
+        .background(.black.opacity(0.68), in: RoundedRectangle(cornerRadius: 12))
+        .padding(24)
+        .allowsHitTesting(false)
+        .accessibilityElement(children: .combine)
+    }
+}
 
 private struct PlayerContainerView: NSViewRepresentable {
     typealias NSViewType = AVPlayerView
