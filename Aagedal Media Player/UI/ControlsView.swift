@@ -648,8 +648,10 @@ struct ControlsView: View {
                     }
                     .onEnded { value in
                         guard width > 0, viewport.span > 0 else { return }
-                        let isPrecision = NSEvent.modifierFlags.contains(.option)
-                        if isPrecision && wasPrecision {
+                        // Finish using the last drag update's mode. Option may
+                        // already be released when this callback is processed,
+                        // but the precision offset still belongs to this drag.
+                        if wasPrecision {
                             let delta = (value.location.x - precisionAnchorX) / width
                             let fraction = max(0, min(1, precisionAnchorFraction + delta / precisionScrubFactor))
                             dragTime = viewport.time(at: Double(fraction))
