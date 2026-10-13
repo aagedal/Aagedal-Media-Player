@@ -2,6 +2,20 @@
 
 All notable changes to Aagedal Media Player.
 
+## [2.0.1] — 2026-10-13
+
+### Added
+- Open recent files directly from the empty player window, with guidance for starting a reference-versus-encode comparison.
+
+### Changed
+- Updated the bundled FFmpeg to the signed and notarized 9.0.2 full Apple Silicon build.
+- Limit comparison review sidecars to 64 MiB when loading and saving, with clear errors that preserve existing files.
+
+### Fixed
+- Refresh cached metadata when media changes or is replaced at the same path, and prevent older reads from overwriting a replacement's cache entry.
+- Reject non-finite or overflowing metadata calculations instead of crashing while estimating frame counts, display widths, or parsing ratios.
+- Reject non-regular comparison review files without waiting for a named-pipe writer.
+
 ## [2.0.0] — 2026-10-09
 
 Version 2.0 brings reference-versus-encode comparison, structured review, picture inspection and expanded audio analysis into one local media player.

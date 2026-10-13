@@ -21,12 +21,12 @@ struct MediaMetadata: Equatable, Sendable, Codable {
         /// `5760:3240` → `16:9`. Useful for display where the colloquial ratio
         /// is more readable than the raw pixel grid.
         nonisolated var reducedStringValue: String {
-            let n = abs(numerator)
-            let d = abs(denominator)
+            let n = numerator.magnitude
+            let d = denominator.magnitude
             guard n > 0, d > 0 else { return stringValue }
             var a = n, b = d
             while b != 0 { (a, b) = (b, a % b) }
-            let g = a
+            guard let g = Int(exactly: a) else { return stringValue }
             return "\(numerator / g):\(denominator / g)"
         }
 
@@ -47,7 +47,8 @@ struct MediaMetadata: Equatable, Sendable, Codable {
             }
 
             if let value = Double(trimmed) {
-                let scaledNumerator = Int((value * 10_000).rounded())
+                guard value.isFinite,
+                      let scaledNumerator = Int(exactly: (value * 10_000).rounded()) else { return nil }
                 self.numerator = scaledNumerator
                 self.denominator = 10_000
                 self.stringValue = String(format: value >= 10 ? "%.2f" : "%.4f", value)

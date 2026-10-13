@@ -186,7 +186,8 @@ struct ContentView: View {
                             bottom: playbackControlsHeight, trailing: 0)
                     )
                 } else {
-                    DropZoneView(isDropTargeted: isDropTargeted, onOpenFile: openFilePanel)
+                    DropZoneView(isDropTargeted: isDropTargeted, onOpenFile: openFilePanel,
+                        onOpenRecentFile: openFile(url:))
                 }
 
                 if let url = windowCoordinator.openingURL {

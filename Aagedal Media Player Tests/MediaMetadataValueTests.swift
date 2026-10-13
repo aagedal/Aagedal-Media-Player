@@ -28,6 +28,13 @@ final class MediaMetadataValueTests: XCTestCase {
         XCTAssertNil(MediaMetadata.Ratio(numerator: 1, denominator: 0))
         XCTAssertNil(MediaMetadata.Ratio(ratioString: "16:0"))
         XCTAssertNil(MediaMetadata.Ratio(ratioString: "not-a-ratio"))
+        for text in ["nan", "inf", "-inf", "1e100", "1e309"] {
+            XCTAssertNil(MediaMetadata.Ratio(ratioString: text), text)
+        }
+        XCTAssertEqual(MediaMetadata.Ratio(numerator: Int.min, denominator: 1)?.reducedStringValue,
+                       "\(Int.min):1")
+        XCTAssertEqual(MediaMetadata.Ratio(numerator: Int.min, denominator: Int.min)?.reducedStringValue,
+                       "\(Int.min):\(Int.min)")
     }
 
     @MainActor

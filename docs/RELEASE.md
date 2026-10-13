@@ -180,6 +180,18 @@ spctl --assess --type execute --verbose=2 "build/distribution-check/Aagedal Medi
 
 ## Updating ffmpeg
 
+The bundled FFmpeg is the 9.0.2 full arm64 build supplied on 2026-10-13 in
+`ffmpeg-9.0.2-full-signed.zip` from the local `ffmpeg-apple-silicon` build
+worktree `t3-8b3606d8`. Its SHA-256 is
+`ec3d81944809bf5d0173edb77b8dbf8eaeabf2388289812ce87b3f90fbe410c6`.
+The extracted binary passes strict Developer ID verification for
+Truls Aagedal (`3R5QGG9DW6`), Hardened Runtime, secure timestamp, and the
+notarized-code requirement. The supplied notarization receipt records
+accepted submission `d801a829-9a76-492e-9712-bad727ef8358`; its FFmpeg code hash
+is `e57dfafe46e4a3cece0514eb1d3a903e63e9fa73`.
+Run Developer ID checks with access to macOS signing services: the restricted
+filesystem sandbox can report an unavailable authority and an invalid signature.
+
 Treat `checksums/ffmpeg.sha256` as a reviewed provenance record. When
 intentionally replacing ffmpeg, confirm that it is a thin arm64 Mach-O
 executable, review its origin and capabilities, then sign the repository copy

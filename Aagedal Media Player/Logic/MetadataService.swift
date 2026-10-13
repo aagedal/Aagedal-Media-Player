@@ -5,6 +5,7 @@
 // Metadata extraction service using SwiftMediaMetadata.
 
 import AVFoundation
+import Darwin
 import Foundation
 import OSLog
 import SwiftMediaMetadata
@@ -18,36 +19,81 @@ actor MetadataService {
 
     private let logger = Logger(subsystem: "com.aagedal.MediaPlayer", category: "MetadataService")
     private let cache = NSCache<NSURL, CachedMetadata>()
-    private var inFlightRequests: [URL: Task<MediaMetadata, Error>] = [:]
+    private struct FileIdentity: Equatable, Sendable {
+        let device: Int32
+        let inode: UInt64
+        let size: Int64
+        let modifiedSeconds: Int
+        let modifiedNanoseconds: Int
+        let changedSeconds: Int
+        let changedNanoseconds: Int
+
+        nonisolated static func read(_ url: URL) -> FileIdentity? {
+            var attributes = stat()
+            guard url.isFileURL, stat(url.path, &attributes) == 0 else { return nil }
+            return FileIdentity(device: attributes.st_dev, inode: attributes.st_ino,
+                size: attributes.st_size, modifiedSeconds: attributes.st_mtimespec.tv_sec,
+                modifiedNanoseconds: attributes.st_mtimespec.tv_nsec,
+                changedSeconds: attributes.st_ctimespec.tv_sec,
+                changedNanoseconds: attributes.st_ctimespec.tv_nsec)
+        }
+    }
+
+    private struct Request {
+        let id: UUID
+        let identity: FileIdentity?
+        let task: Task<MediaMetadata, Error>
+    }
+    private var inFlightRequests: [URL: Request] = [:]
+    private let loader: (@Sendable (URL) async throws -> MediaMetadata)?
+
+    init(loader: (@Sendable (URL) async throws -> MediaMetadata)? = nil) {
+        self.loader = loader
+    }
 
     private final class CachedMetadata: NSObject {
         let metadata: MediaMetadata
-        init(metadata: MediaMetadata) {
+        let identity: FileIdentity
+        init(metadata: MediaMetadata, identity: FileIdentity) {
             self.metadata = metadata
+            self.identity = identity
         }
     }
 
     func metadata(for url: URL) async throws -> MediaMetadata {
-        if let cached = cache.object(forKey: url as NSURL) {
+        // Even stat can block on a network mount. Keep freshness checks off
+        // the service actor so unrelated media requests can keep progressing.
+        let identity = await Task.detached { FileIdentity.read(url) }.value
+        if let identity, let cached = cache.object(forKey: url as NSURL), cached.identity == identity {
             return cached.metadata
         }
+        cache.removeObject(forKey: url as NSURL)
 
-        if let inFlight = inFlightRequests[url] {
-            return try await inFlight.value
+        if let inFlight = inFlightRequests[url], inFlight.identity == identity {
+            return try await inFlight.task.value
         }
 
         let request = Task {
-            try await loadMetadata(for: url)
+            if let loader { return try await loader(url) }
+            return try await loadMetadata(for: url)
         }
-        inFlightRequests[url] = request
+        let requestID = UUID()
+        inFlightRequests[url] = Request(id: requestID, identity: identity, task: request)
 
         do {
             let metadata = try await request.value
-            inFlightRequests[url] = nil
-            cache.setObject(CachedMetadata(metadata: metadata), forKey: url as NSURL)
+            let finalIdentity = await Task.detached { FileIdentity.read(url) }.value
+            // An older parser must never remove or cache over a replacement
+            // request. Files changed during parsing are not cached either.
+            if inFlightRequests[url]?.id == requestID {
+                inFlightRequests[url] = nil
+                if let identity, finalIdentity == identity {
+                    cache.setObject(CachedMetadata(metadata: metadata, identity: identity), forKey: url as NSURL)
+                }
+            }
             return metadata
         } catch {
-            inFlightRequests[url] = nil
+            if inFlightRequests[url]?.id == requestID { inFlightRequests[url] = nil }
             throw error
         }
     }
@@ -111,7 +157,7 @@ actor MetadataService {
 
 // MARK: - Mapper
 
-private enum MetadataMapper {
+enum MetadataMapper {
     nonisolated static func makeMediaMetadata(from video: VideoMetadata) -> MediaMetadata {
         let videoStreams = video.videoStreams
             .filter { $0.isAttachedPic != true }
@@ -137,8 +183,8 @@ private enum MetadataMapper {
             if let duration = video.duration,
                let stream = video.videoStreams.first,
                let fps = stream.avgFrameRate ?? stream.frameRate ?? stream.rFrameRate,
-               fps > 0 {
-                return Int((duration * fps).rounded())
+               duration.isFinite, duration >= 0, fps.isFinite, fps > 0 {
+                return Int(exactly: (duration * fps).rounded())
             }
             return nil
         }()
@@ -197,7 +243,8 @@ private enum MetadataMapper {
                       par.0 > 0, par.1 > 0, par.0 != par.1,
                       let codedW = stream.width, let codedH = stream.height,
                       codedW > 0, codedH > 0 {
-                let displayW = Int((Double(codedW) * Double(par.0) / Double(par.1)).rounded())
+                guard let displayW = Int(exactly: (Double(codedW) * Double(par.0) / Double(par.1)).rounded()),
+                      displayW > 0 else { return nil }
                 baseDims = (displayW, codedH)
             } else if let codedW = stream.width, let codedH = stream.height,
                       codedW > 0, codedH > 0 {
@@ -222,7 +269,7 @@ private enum MetadataMapper {
 
         let frameRate: MediaMetadata.FrameRate? = {
             let fps = stream.avgFrameRate ?? stream.frameRate ?? stream.rFrameRate
-            guard let value = fps, value > 0 else { return nil }
+            guard let value = fps, value.isFinite, value > 0 else { return nil }
             return MediaMetadata.FrameRate(frameRateString: String(value))
         }()
 

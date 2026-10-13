@@ -55,6 +55,11 @@ A missing sidecar starts an empty review; the first edit creates the file.
 The source A folder must be writable to save notes. The Review popover displays
 the sidecar filename and reports load/save errors.
 
+Sidecars must be regular files and at most 64 MiB. Reads check the opened file's
+size and enforce the same limit while reading, including if a file grows after
+opening. Writes exceeding that limit fail before replacing the existing review.
+Rejected files are preserved.
+
 ## JSON fields
 
 The document is UTF-8 JSON. The writer pretty-prints and sorts object keys.
