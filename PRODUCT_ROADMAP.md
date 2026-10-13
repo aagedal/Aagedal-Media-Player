@@ -1,10 +1,11 @@
 # Aagedal Media Player Product Roadmap
 
-Last updated: 2026-10-02
+Last updated: 2026-10-13
 
-See [2.0 release readiness](docs/RELEASE_2_READINESS.md) for the prioritized
-remaining release gates and the threshold for calling a candidate close to 2.0.
-This assessment does not change the milestone scope below.
+Version 2.0 has shipped and was accepted by the maintainer's hands-on testing.
+See [2.0 release readiness](docs/RELEASE_2_READINESS.md) for historical engineering
+evidence. Earlier unchecked acceptance items and beta scope decisions below
+describe the pre-release plan; further improvements belong to subsequent releases.
 
 Performance acceptance update (2026-10-02): the user deferred M1-specific
 testing for now and requested basic checks on the available M5 Pro/64-GB Mac.

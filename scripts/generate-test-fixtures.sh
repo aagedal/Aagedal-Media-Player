@@ -16,11 +16,11 @@ if [[ -z "$ffmpeg_binary" || ! -x "$ffmpeg_binary" ]]; then
     exit 1
 fi
 
-encoder_list="$($ffmpeg_binary -hide_banner -encoders 2>/dev/null)"
+encoder_list="$("$ffmpeg_binary" -hide_banner -encoders 2>/dev/null)"
 for required_encoder in libx264 libx265 alac; do
     if ! grep -q " $required_encoder " <<< "$encoder_list"; then
         echo "The selected ffmpeg does not include $required_encoder: $ffmpeg_binary" >&2
-        echo "The app's bundled image-only ffmpeg cannot generate the media fixtures." >&2
+        echo "Use a full ffmpeg build that includes all required fixture encoders." >&2
         exit 1
     fi
 done

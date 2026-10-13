@@ -1,5 +1,11 @@
 # 2.0 release readiness
 
+Release status updated: 2026-10-13. Version 2.0 has shipped. The maintainer
+accepted the release based on hands-on testing and considers the beta acceptance
+gaps closed for that release. The assessment below is retained as historical
+engineering evidence, not as outstanding 2.0 release gates. Further hardening,
+broader qualification, and usability work belong to subsequent releases.
+
 Assessment updated: 2026-10-09. This assessment reflects the
 [product roadmap](../PRODUCT_ROADMAP.md) and its recorded scope decisions.
 

@@ -165,6 +165,59 @@ final class CompareReviewTimelineTests: XCTestCase {
 }
 
 final class CompareReviewSidecarStoreTests: XCTestCase {
+    func testOversizedSidecarIsRejectedBeforeDecodeAndPreserved() async throws {
+        let fixture = try makeFixture()
+        defer { try? FileManager.default.removeItem(at: fixture.directory) }
+        XCTAssertTrue(FileManager.default.createFile(atPath: fixture.sidecar.path, contents: nil))
+        let handle = try FileHandle(forWritingTo: fixture.sidecar)
+        let size = UInt64(CompareReviewSidecarStore.maximumDocumentBytes + 1)
+        try handle.truncate(atOffset: size)
+        try handle.close()
+        do {
+            _ = try await CompareReviewSidecarStore().previewRelink(from: fixture.sidecar)
+            XCTFail("Oversized sidecar must be rejected")
+        } catch let error as CompareReviewSidecarError {
+            guard case .fileTooLarge = error else { return XCTFail("Unexpected error: \(error)") }
+        }
+        let attributes = try FileManager.default.attributesOfItem(atPath: fixture.sidecar.path)
+        XCTAssertEqual((attributes[.size] as? NSNumber)?.uint64Value, size)
+    }
+
+    func testNonRegularSidecarIsRejected() async throws {
+        let fixture = try makeFixture()
+        defer { try? FileManager.default.removeItem(at: fixture.directory) }
+        do {
+            _ = try await CompareReviewSidecarStore().previewRelink(from: fixture.directory)
+            XCTFail("Directories must be rejected")
+        } catch let error as CompareReviewSidecarError {
+            guard case .notRegularFile = error else { return XCTFail("Unexpected error: \(error)") }
+        }
+    }
+
+    func testFIFOSidecarIsRejectedWithoutWaitingForWriter() async throws {
+        let fixture = try makeFixture()
+        defer { try? FileManager.default.removeItem(at: fixture.directory) }
+        XCTAssertEqual(mkfifo(fixture.sidecar.path, 0o600), 0)
+        do {
+            _ = try await CompareReviewSidecarStore().previewRelink(from: fixture.sidecar)
+            XCTFail("Named pipes must be rejected")
+        } catch let error as CompareReviewSidecarError {
+            guard case .notRegularFile = error else { return XCTFail("Unexpected error: \(error)") }
+        }
+    }
+
+    func testRegularSidecarSymlinkStillLoads() async throws {
+        let fixture = try makeFixture()
+        defer { try? FileManager.default.removeItem(at: fixture.directory) }
+        let store = CompareReviewSidecarStore()
+        let document = CompareReviewDocument(primaryURL: fixture.primary, secondaryURL: fixture.secondary, notes: [])
+        try await store.save(document, to: fixture.sidecar, revision: 1)
+        let link = fixture.directory.appendingPathComponent("review-link.json")
+        try FileManager.default.createSymbolicLink(at: link, withDestinationURL: fixture.sidecar)
+        let loaded = try await store.previewRelink(from: link)
+        XCTAssertEqual(loaded, document)
+    }
+
     func testPairSpecificSidecarURLIsAdjacentToPrimary() {
         let primary = URL(fileURLWithPath: "/Volumes/QC/Master.mov")
         let first = URL(fileURLWithPath: "/Volumes/QC/Encode.mov")

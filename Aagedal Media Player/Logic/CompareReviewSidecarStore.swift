@@ -13,6 +13,8 @@ nonisolated enum CompareReviewSidecarError: Error, LocalizedError {
     case relinkDestinationExists
     case relinkSourceUnavailable(String)
     case relinkUnavailable
+    case fileTooLarge(Int)
+    case notRegularFile
 
     var errorDescription: String? {
         switch self {
@@ -30,6 +32,10 @@ nonisolated enum CompareReviewSidecarError: Error, LocalizedError {
             "The replacement source is not a readable regular file: \(path)"
         case .relinkUnavailable:
             "Relinking is unavailable for this review store."
+        case .fileTooLarge(let limit):
+            "The comparison notes exceed the supported size of \(limit / 1_024 / 1_024) MiB."
+        case .notRegularFile:
+            "The comparison notes must be a regular file."
         }
     }
 }
@@ -98,6 +104,7 @@ nonisolated extension CompareReviewSidecarStoring {
 /// revision. Source media is never opened for writing.
 actor CompareReviewSidecarStore: CompareReviewSidecarStoring {
     static let shared = CompareReviewSidecarStore()
+    static let maximumDocumentBytes = 64 * 1_024 * 1_024
 
     // TimecodeRate.init(frameRate:) represents non-broadcast fractional rates
     // with this denominator before reducing the fraction. Reserve that export
@@ -146,7 +153,39 @@ actor CompareReviewSidecarStore: CompareReviewSidecarStoring {
 
     private func readDocument(from url: URL) throws -> CompareReviewDocument {
         try Task.checkCancellation()
-        let data = try Data(contentsOf: url)
+        // Nonblocking open prevents a mistakenly selected FIFO from hanging
+        // the shared review store. Stat the opened file, not its pathname.
+        let descriptor = url.withUnsafeFileSystemRepresentation { path in
+            guard let path else { errno = EINVAL; return Int32(-1) }
+            return open(path, O_RDONLY | O_NONBLOCK | O_CLOEXEC)
+        }
+        guard descriptor >= 0 else {
+            throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO)
+        }
+        let handle = FileHandle(fileDescriptor: descriptor, closeOnDealloc: true)
+        defer { try? handle.close() }
+        var attributes = stat()
+        guard fstat(descriptor, &attributes) == 0 else {
+            throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO)
+        }
+        guard attributes.st_mode & S_IFMT == S_IFREG else {
+            throw CompareReviewSidecarError.notRegularFile
+        }
+        if attributes.st_size > Self.maximumDocumentBytes {
+            throw CompareReviewSidecarError.fileTooLarge(Self.maximumDocumentBytes)
+        }
+        var data = Data()
+        // Check the actual bytes too: the file may grow after its stat check.
+        while true {
+            try Task.checkCancellation()
+            let chunk = try handle.read(upToCount: min(64 * 1_024, Self.maximumDocumentBytes - data.count + 1)) ?? Data()
+            if chunk.isEmpty { break }
+            guard chunk.count <= Self.maximumDocumentBytes - data.count else {
+                throw CompareReviewSidecarError.fileTooLarge(Self.maximumDocumentBytes)
+            }
+            data.append(chunk)
+        }
+        try Task.checkCancellation()
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .millisecondsSince1970
         let document = try decoder.decode(CompareReviewDocument.self, from: data)
@@ -318,6 +357,9 @@ actor CompareReviewSidecarStore: CompareReviewSidecarStoring {
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         encoder.dateEncodingStrategy = .millisecondsSince1970
         let data = try encoder.encode(document)
+        guard data.count <= Self.maximumDocumentBytes else {
+            throw CompareReviewSidecarError.fileTooLarge(Self.maximumDocumentBytes)
+        }
         try writeData(data, url)
     }
 
