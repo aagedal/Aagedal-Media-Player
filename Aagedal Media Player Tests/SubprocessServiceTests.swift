@@ -187,6 +187,87 @@ final class SubprocessServiceTests: XCTestCase {
         }
     }
 
+    func testResumeCannotOvertakeSuspendSignal() async throws {
+        try await assertResumeFollowsStop(duringAttachment: false)
+    }
+
+    func testResumeCannotOvertakeSuspendedAttachmentSignal() async throws {
+        try await assertResumeFollowsStop(duringAttachment: true)
+    }
+
+    private func assertResumeFollowsStop(duringAttachment: Bool) async throws {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/sleep")
+        process.arguments = ["10"]
+        let exited = expectation(description: "Fixture process exited")
+        process.terminationHandler = { _ in exited.fulfill() }
+        try process.run()
+        defer { if process.isRunning { process.terminate() } }
+
+        let stopEntered = expectation(description: "STOP delivery entered")
+        let stopFinished = expectation(description: "STOP delivery finished")
+        let resumeStarted = expectation(description: "Resume requested")
+        let resumeFinished = expectation(description: "Resume finished")
+        let releaseStop = DispatchSemaphore(value: 0)
+        let signals = SignalRecorder()
+        let handle = SubprocessHandle { _, signal in
+            if signal == SIGSTOP {
+                stopEntered.fulfill()
+                // Deliberately delay signal delivery after the state change.
+                // Resume must wait even though it arrives on another queue.
+                _ = releaseStop.wait(timeout: .now() + 2)
+            }
+            signals.append(signal)
+        }
+        defer { releaseStop.signal() }
+        if duringAttachment { handle.suspend() }
+        else { handle.attach(process) }
+        DispatchQueue.global().async {
+            if duringAttachment { handle.attach(process) }
+            else { handle.suspend() }
+            stopFinished.fulfill()
+        }
+        await fulfillment(of: [stopEntered], timeout: 1)
+        DispatchQueue.global().async {
+            resumeStarted.fulfill()
+            handle.resume()
+            resumeFinished.fulfill()
+        }
+        await fulfillment(of: [resumeStarted], timeout: 1)
+        try await Task.sleep(for: .milliseconds(50))
+        XCTAssertTrue(signals.values.isEmpty, "CONT must not be delivered ahead of the pending STOP")
+        releaseStop.signal()
+        await fulfillment(of: [stopFinished, resumeFinished], timeout: 1)
+        XCTAssertEqual(signals.values, [SIGSTOP, SIGCONT])
+        handle.detach(process)
+        process.terminate()
+        await fulfillment(of: [exited], timeout: 1)
+    }
+
+    func testCancellationRejectsLaterTransportSignalsAndDetachmentClearsProcess() async throws {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/sleep")
+        process.arguments = ["10"]
+        let exited = expectation(description: "Fixture process exited")
+        process.terminationHandler = { _ in exited.fulfill() }
+        try process.run()
+        defer { if process.isRunning { process.terminate() } }
+        let signals = SignalRecorder()
+        let handle = SubprocessHandle { _, signal in signals.append(signal) }
+        handle.suspend()
+        handle.attach(process)
+        handle.cancel()
+        handle.resume()
+        handle.suspend()
+        XCTAssertTrue(handle.isCancelled)
+        XCTAssertEqual(signals.values, [SIGSTOP, SIGKILL])
+        handle.detach(process)
+        handle.cancel()
+        XCTAssertEqual(signals.values, [SIGSTOP, SIGKILL], "Detached processes must receive no further signals")
+        process.terminate()
+        await fulfillment(of: [exited], timeout: 1)
+    }
+
     func testSuspendAndResumePreserveTheAttachedProcess() async throws {
         let handle = SubprocessHandle()
         let received = LineRecorder()
@@ -314,4 +395,17 @@ private final class CrossPipeRecorder: Sendable {
     nonisolated var errorLine: String? { condition.withLock { errorStorage } }
     nonisolated var outputWaitedForErrorLine: Bool { condition.withLock { waited } }
     nonisolated var outputWasReleasedByErrorLine: Bool { condition.withLock { released } }
+}
+
+private final class SignalRecorder: Sendable {
+    private let lock = NSLock()
+    private nonisolated(unsafe) var storage: [Int32] = []
+
+    nonisolated func append(_ signal: Int32) {
+        lock.withLock { storage.append(signal) }
+    }
+
+    nonisolated var values: [Int32] {
+        lock.withLock { storage }
+    }
 }

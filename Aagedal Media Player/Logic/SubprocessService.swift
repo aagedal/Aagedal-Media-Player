@@ -13,22 +13,27 @@ final class SubprocessHandle: Sendable {
     private nonisolated(unsafe) var cancelled = false
     private nonisolated(unsafe) var suspended = false
 
-    nonisolated init() {}
+    private let sendSignal: @Sendable (Int32, Int32) -> Void
+
+    /// Synchronous signal delivery; an injected sender must not reenter this handle.
+    nonisolated init(
+        sendSignal: @escaping @Sendable (Int32, Int32) -> Void = { pid, signal in
+            kill(pid, signal)
+        }
+    ) {
+        self.sendSignal = sendSignal
+    }
 
     nonisolated var isCancelled: Bool {
         lock.withLock { cancelled }
     }
 
     nonisolated func attach(_ process: Process) {
-        let signal = lock.withLock {
-            guard process.isRunning else { return Int32(0) }
+        lock.withLock {
+            guard process.isRunning else { return }
             self.process = process
-            if cancelled { return SIGKILL }
-            if suspended { return SIGSTOP }
-            return Int32(0)
-        }
-        if signal != 0, process.isRunning {
-            kill(process.processIdentifier, signal)
+            if cancelled { signalAttachedProcess(SIGKILL) }
+            else if suspended { signalAttachedProcess(SIGSTOP) }
         }
     }
 
@@ -41,12 +46,9 @@ final class SubprocessHandle: Sendable {
     }
 
     nonisolated func cancel() {
-        let attachedProcess = lock.withLock {
+        lock.withLock {
             cancelled = true
-            return process
-        }
-        if let attachedProcess, attachedProcess.isRunning {
-            kill(attachedProcess.processIdentifier, SIGKILL)
+            signalAttachedProcess(SIGKILL)
         }
     }
 
@@ -54,25 +56,28 @@ final class SubprocessHandle: Sendable {
     /// A request made before process attachment is remembered, matching the
     /// existing cancellation-before-attachment guarantee.
     nonisolated func suspend() {
-        let attachedProcess: Process? = lock.withLock {
-            guard !cancelled else { return nil }
+        lock.withLock {
+            guard !cancelled else { return }
             suspended = true
-            return process
-        }
-        if let attachedProcess, attachedProcess.isRunning {
-            kill(attachedProcess.processIdentifier, SIGSTOP)
+            signalAttachedProcess(SIGSTOP)
         }
     }
 
     nonisolated func resume() {
-        let attachedProcess: Process? = lock.withLock {
-            guard !cancelled else { return nil }
+        lock.withLock {
+            guard !cancelled else { return }
             suspended = false
-            return process
+            signalAttachedProcess(SIGCONT)
         }
-        if let attachedProcess, attachedProcess.isRunning {
-            kill(attachedProcess.processIdentifier, SIGCONT)
-        }
+    }
+
+    /// Caller holds the state lock through signal delivery. Sending outside
+    /// it can reorder STOP/CONT during attachment or rapid transport changes,
+    /// leaving a resumed decoder stopped. Detachment uses the same lock so a
+    /// queued signal cannot retain an obsolete process after it is detached.
+    nonisolated private func signalAttachedProcess(_ signal: Int32) {
+        guard let process, process.isRunning else { return }
+        sendSignal(process.processIdentifier, signal)
     }
 }
 
