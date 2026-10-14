@@ -87,3 +87,8 @@ for arm64 and passes [the hosted test](handoff/restored-hosted-summary.json).
 fixture cases ran through that fresh build. The script suite including six
 restoration/isolation tests passes. This development artifact is separate from
 a shipping MPVKit publication or app package repin.
+
+The [published release receipt](handoff/published-release.json) reports the
+repository-pinned asset size and SHA256. The default public download-and-restore
+command also succeeds without GitHub credentials or the original package cache;
+its log is retained in `handoff/public-download-restore.log.gz`.
