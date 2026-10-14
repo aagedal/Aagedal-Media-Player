@@ -1,0 +1,5 @@
+MPV_LIVE_LOUPE_CASE: uhd-h264-hardware, mainFPS=59.39288128779337, loupeFPS=59.070093889490146, maximumClockDrift=0.03333333333333366, target=bt.709/bt.1886, hwdec=videotoolbox
+MPV_LIVE_LOUPE_CASE: pq-hevc-software, mainFPS=59.36683566544498, loupeFPS=59.04242672738244, maximumClockDrift=0.03333333333333366, target=bt.2020/pq, hwdec=videotoolbox
+MPV_LIVE_LOUPE_CASE: pq-hevc-hardware, mainFPS=59.40427360464225, loupeFPS=59.40427360464225, maximumClockDrift=0.01666666666666705, target=bt.2020/pq, hwdec=videotoolbox
+MPV_LIVE_LOUPE_CASE: hlg-hevc-hardware, mainFPS=59.594945464015375, loupeFPS=59.27105989084138, maximumClockDrift=0.01666666666666705, target=bt.2020/pq, hwdec=videotoolbox
+MPV_LIVE_LOUPE_ACCEPTANCE: 4 cases

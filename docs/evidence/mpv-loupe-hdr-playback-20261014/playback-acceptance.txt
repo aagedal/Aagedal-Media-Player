@@ -1,0 +1,9 @@
+MPV_LOUPE_PLAYBACK_CASE: uhd-h264-hardware, updates=62, distinctFrames=62, seconds=3.0150511667015962, fps=20.563498452275596, wrongColorFrames=0
+MPV_LOUPE_BACKEND_CADENCE: uhd-h264-hardware, fps=23.396524094615252
+MPV_LOUPE_PLAYBACK_CASE: pq-hevc-software, updates=62, distinctFrames=62, seconds=3.0425724167143926, fps=20.377493616718066, wrongColorFrames=0
+MPV_LOUPE_BACKEND_CADENCE: pq-hevc-software, fps=19.947068790170242
+MPV_LOUPE_PLAYBACK_CASE: pq-hevc-hardware, updates=60, distinctFrames=60, seconds=3.0013767083291896, fps=19.9908261543753, wrongColorFrames=0
+MPV_LOUPE_BACKEND_CADENCE: pq-hevc-hardware, fps=19.83833082884095
+MPV_LOUPE_PLAYBACK_CASE: hlg-hevc-hardware, updates=60, distinctFrames=60, seconds=3.0018442916916683, fps=19.987712276104574, wrongColorFrames=0
+MPV_LOUPE_BACKEND_CADENCE: hlg-hevc-hardware, fps=20.005606570846936
+MPV_LOUPE_PLAYBACK_ACCEPTANCE: 4 cases

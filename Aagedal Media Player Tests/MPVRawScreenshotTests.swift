@@ -3,11 +3,29 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import Foundation
+import CoreGraphics
 import Libmpv
 import XCTest
 @testable import Aagedal_Media_Player
 
 final class MPVRawScreenshotTests: XCTestCase {
+    func testLoupePreviewTagsOnlyKnownHDRTargets() throws {
+        XCTAssertEqual(MPVPlayer.loupeHDRColorEncoding(primaries: "bt.2020", transfer: "pq"), .bt2020PQ)
+        XCTAssertEqual(MPVPlayer.loupeHDRColorEncoding(primaries: "bt.2020", transfer: "hlg"), .bt2020HLG)
+        for (primaries, transfer) in [("bt.709", "pq"), ("bt.2020", "srgb"), (nil, "pq"), ("bt.2020", nil)] {
+            XCTAssertNil(MPVPlayer.loupeHDRColorEncoding(primaries: primaries, transfer: transfer))
+        }
+        let pixels = MPVPlayer.RawScreenshot(data: Data(repeating: 255, count: 16), width: 2, height: 1,
+            stride: 16, format: "rgba64", playbackTime: nil, playbackTimeUncertainty: nil)
+        for (encoding, name) in [(MPVDecoderRaster.ColorEncoding.bt2020PQ, CGColorSpace.itur_2100_PQ),
+                                 (.bt2020HLG, CGColorSpace.itur_2100_HLG)] {
+            let image = try XCTUnwrap(LoupeFrameCapture.image(from: MPVPlayer.LoupePreview(
+                pixels: pixels, colorEncoding: encoding)))
+            XCTAssertEqual(image.bitsPerComponent, 16)
+            XCTAssertEqual(image.colorSpace?.name, name)
+        }
+    }
+
     func testCopiesValidatedRasterBeforeMPVNodeIsFreed() throws {
         let expected = Data([0, 0, 255, 0, 0, 255, 0, 0, 99, 99, 99, 99])
         let raw = try XCTUnwrap(withScreenshotNode(bytes: expected) { parse($0) })

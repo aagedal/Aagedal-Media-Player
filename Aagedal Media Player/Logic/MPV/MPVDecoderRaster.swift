@@ -127,6 +127,9 @@ nonisolated struct MPVDecoderRaster: Sendable {
               rasterWidth > 0, rasterWidth <= 4096,
               rasterHeight > 0, rasterHeight <= 4096,
               rasterWidth * rasterHeight <= pixelLimit,
+              // Reject inconsistent orientation before copying a potentially 72 MiB payload.
+              rasterWidth == ((rotation == 90 || rotation == 270) ? height : width),
+              rasterHeight == ((rotation == 90 || rotation == 270) ? width : height),
               stride >= rasterWidth * bytesPerPixel,
               // Bound before the shared screenshot parser copies provider data.
               // Protocol 2 allows a DCI UHD RGBA16 raster and aligned rows.
@@ -135,9 +138,6 @@ nonisolated struct MPVDecoderRaster: Sendable {
               let bytes = data.u.ba, bytes.pointee.size == stride * rasterHeight,
               let pixels = MPVPlayer.rawScreenshot(from: node, playbackTime: pts.u.double_,
                                                   playbackTimeUncertainty: 0) else { return nil }
-        let swapsAxes = rotation == 90 || rotation == 270
-        guard Int64(pixels.width) == (swapsAxes ? height : width),
-              Int64(pixels.height) == (swapsAxes ? width : height) else { return nil }
         return Self(pixels: pixels, trackID: trackBefore, rotation: Int(rotation), mirrored: mirrored,
                     hardwareTransferred: hardware, sourceBitDepth: Int(depth), colorEncoding: encoding)
     }

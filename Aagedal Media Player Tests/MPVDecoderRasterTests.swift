@@ -80,6 +80,21 @@ final class MPVDecoderRasterTests: XCTestCase {
         XCTAssertNil(withNode(rasterWidth: 4096, rasterHeight: 1025) { MPVDecoderRaster.parse($0, trackBefore: 1, trackAfter: 1) })
     }
 
+    func testRejectsInconsistentOrientedGeometryBeforeReadingPayload() {
+        // A deliberately unreadable pointer proves geometry rejection happens
+        // before the shared parser can copy a large provider buffer.
+        withNode(rotation: 90) { node in
+            let fields = node.u.list!.pointee
+            for index in 0..<Int(fields.num) where String(cString: fields.keys![index]!) == "data" {
+                let bytes = fields.values![index].u.ba!
+                let original = bytes.pointee.data
+                bytes.pointee.data = UnsafeMutableRawPointer(bitPattern: 1)
+                defer { bytes.pointee.data = original }
+                XCTAssertNil(MPVDecoderRaster.parse(node, trackBefore: 1, trackAfter: 1))
+            }
+        }
+    }
+
     func testDisplayScreenshotCannotBecomeDecoderProof() {
         XCTAssertNil(withNode(omit: "protocol") { MPVDecoderRaster.parse($0, trackBefore: 1, trackAfter: 1) })
         var node = mpv_node()

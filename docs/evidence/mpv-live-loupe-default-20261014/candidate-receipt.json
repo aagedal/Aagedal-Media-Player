@@ -1,0 +1,18 @@
+{
+  "date": "2026-10-14",
+  "architecture": "arm64",
+  "signatureVerification": "codesign --verify --deep --strict passed",
+  "passedTests": 28,
+  "failedTests": 0,
+  "skippedTests": 0,
+  "liveLoupeEnvironmentFlag": false,
+  "nativeProviderEnabledInTests": true,
+  "nativeProviderDefaultEnabled": false,
+  "shippingPinsChanged": false,
+  "sha256": {
+    "Aagedal Media Player/UI/InspectionLoupeView.swift": "5b0b1cc8442b0073310594f44df23475e856fe5d928e649d11f1691662a5f385",
+    "Aagedal Media Player Tests/LiveLoupeSessionTests.swift": "fb441d817846dd1b14a8836dc1391f9a62214b97f7a5920b7ae08680619b8024",
+    "Aagedal Media Player Tests/CompareLiveBackendTests.swift": "49e7e872e68ccaf077968ccd610e5bab3eb3323b7f35211d224d3332a28da172",
+    "build/default-live-loupe-candidate-20261014/Aagedal Media Player.app/Contents/MacOS/Aagedal Media Player": "6a74f2f561cba3ad9a47d62e23764a2db311c9b6e2cb6051763e8497c5d9079a"
+  }
+}

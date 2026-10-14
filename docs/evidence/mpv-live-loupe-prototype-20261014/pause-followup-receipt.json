@@ -1,0 +1,19 @@
+{
+  "date": "2026-10-14",
+  "architecture": "arm64",
+  "result": "/private/tmp/aagedal-live-loupe-pause-final.xcresult",
+  "testSource": "Aagedal Media Player Tests/LiveLoupeSessionTests.swift",
+  "testSourceSHA256": "88aa5ad77f8c34eed981afcdd74708787cb934a0d6dd69e1e2592f217d140751",
+  "passedTests": 7,
+  "failedTests": 0,
+  "nativeProviderEnabled": true,
+  "productionChanges": false,
+  "checks": [
+    "No background capture once live playback is ready",
+    "Pause restores captured primary frame while live mode remains enabled",
+    "Native paused capture matches the primary presented raster PTS and track",
+    "Paused seek settles MPV at target and replaces the captured image with a verified primary raster",
+    "Resume returns to the live viewer",
+    "Disabling live mode restores capture"
+  ]
+}

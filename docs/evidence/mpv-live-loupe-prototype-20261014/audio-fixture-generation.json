@@ -1,0 +1,29 @@
+{
+  "command": [
+    "ffmpeg",
+    "-hide_banner",
+    "-loglevel",
+    "error",
+    "-i",
+    "/private/tmp/aagedal-loupe-playback-60fps/pq-tagged.mp4",
+    "-f",
+    "lavfi",
+    "-i",
+    "anullsrc=r=48000:cl=stereo",
+    "-map",
+    "0:v:0",
+    "-map",
+    "1:a:0",
+    "-t",
+    "6",
+    "-c:v",
+    "copy",
+    "-c:a",
+    "aac",
+    "-b:a",
+    "128k",
+    "/private/tmp/aagedal-loupe-playback-60fps/pq-tagged-silent-audio.mp4"
+  ],
+  "sha256": "b4302fc03605cd57341ade680aa426bfe70116866e3eb013e0de6672f958127e",
+  "purpose": "Audio-clock-driven primary with silent AAC; video bitstream copied unchanged."
+}
