@@ -1,0 +1,6 @@
+{
+  "scripts/restore-mpv-decoder-raster-candidate.py": "102b050ab8e5a981a7605a413dfcc5f0f51d398071a93f3e31d44e35c3ccd40d",
+  "scripts/validate-restored-mpv-decoder-raster.py": "e052f166446a524f699b814ccf9e35958f1943dfe82809442fe60a576a33d1ff",
+  "scripts/test-mpv-decoder-raster-handoff.py": "1b8c2ec44d6953450c87f4700d15dc37523337825d3ee14de1bf61d6f86d19a9",
+  "docs/mpv-decoder-raster-handoff.json": "0d1cf95650c0fc56f761e554fe1c3622ed833fe7dfd281a35459a46b0a89fd2d"
+}

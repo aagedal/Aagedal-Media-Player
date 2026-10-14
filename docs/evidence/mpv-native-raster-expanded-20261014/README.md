@@ -73,3 +73,17 @@ Homebrew libraries are retained in `native-stderr.json.gz` and the runtime log.
 This accepts the bounded generated cases on this Apple Silicon host; it does
 not establish physical-display HDR calibration, arbitrary-media correlation,
 sustained memory/sanitizer acceptance, or a publishable dependency package.
+
+## Reusable continuation artifact
+
+The [handoff](../../MPV_NATIVE_RASTER_HANDOFF.md) restores a repository-pinned
+development bundle instead of depending on the original temporary build.
+[Restoration receipts](handoff/restoration.json) and
+[replayed native cases](handoff/restored-runtime-verification.json) establish
+31/31 passes at a new path without MPVKit compilation. A fresh SourcePackages
+cache resolves only Sparkle and SwiftMediaMetadata; the restored app builds
+for arm64 and passes [the hosted test](handoff/restored-hosted-summary.json).
+[Acceptance markers](handoff/restored-hosted-acceptance.txt) establish all 20
+fixture cases ran through that fresh build. The script suite including six
+restoration/isolation tests passes. This development artifact is separate from
+a shipping MPVKit publication or app package repin.

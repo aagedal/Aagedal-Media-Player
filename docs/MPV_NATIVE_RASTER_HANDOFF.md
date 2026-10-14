@@ -6,6 +6,8 @@ The [committed descriptor](mpv-decoder-raster-handoff.json) pins its URL, size,
 archive SHA256 and inventory SHA256. It remains available when the original
 `/private/tmp` build, this worktree, or the original package cache is gone.
 This is an opt-in dependency artifact, not an app update or shipping package repin.
+The restore path was verified at a new location: 31 native cases passed, and a
+fresh-cache app build passed all 20 hosted fixture cases without MPVKit compilation.
 
 ## Restore and build the current app sources
 
