@@ -1,0 +1,64 @@
+{
+  "scope": "arm64 Release secondary-player loupe prototype; MPVKit binaries, shipping pins and native provider default-off gate unchanged",
+  "architecture": "arm64",
+  "codeSignatureVerified": true,
+  "testCounts": {
+    "regressions": 104,
+    "live-uhd": 1,
+    "native": 1,
+    "resize": 1
+  },
+  "liveViewerCriteria": {
+    "minimumUHD60PresentedFPS": 45,
+    "maximumEffectiveClockDriftSeconds": 0.1,
+    "requireVideoToolboxFollower": true,
+    "requireMatchingMainAndFollowerOutputTransferAndPrimaries": true
+  },
+  "measurements": [
+    {
+      "name": "uhd-h264-hardware",
+      "mainPresentedFPS": 59.39288128779337,
+      "loupePresentedFPS": 59.070093889490146,
+      "maximumEffectiveClockDriftSeconds": 0.03333333333333366,
+      "matchingTargetColor": "bt.709/bt.1886",
+      "followerHardwareDecoder": "videotoolbox"
+    },
+    {
+      "name": "pq-hevc-software",
+      "mainPresentedFPS": 59.36683566544498,
+      "loupePresentedFPS": 59.04242672738244,
+      "maximumEffectiveClockDriftSeconds": 0.03333333333333366,
+      "matchingTargetColor": "bt.2020/pq",
+      "followerHardwareDecoder": "videotoolbox"
+    },
+    {
+      "name": "pq-hevc-hardware",
+      "mainPresentedFPS": 59.40427360464225,
+      "loupePresentedFPS": 59.40427360464225,
+      "maximumEffectiveClockDriftSeconds": 0.01666666666666705,
+      "matchingTargetColor": "bt.2020/pq",
+      "followerHardwareDecoder": "videotoolbox"
+    },
+    {
+      "name": "hlg-hevc-hardware",
+      "mainPresentedFPS": 59.594945464015375,
+      "loupePresentedFPS": 59.27105989084138,
+      "maximumEffectiveClockDriftSeconds": 0.01666666666666705,
+      "matchingTargetColor": "bt.2020/pq",
+      "followerHardwareDecoder": "videotoolbox"
+    }
+  ],
+  "sha256": {
+    "Aagedal Media Player/Logic/LiveLoupeSession.swift": "a52fd9c754a2b9177898df8a5c472a4068fc2ef6544de86f6d22119d7a14d9d2",
+    "Aagedal Media Player/UI/LiveLoupeVideoSurface.swift": "d2ef8835d0de6d003cfbe4a4d59e4e292e36f9df5076cb1ca642f02055ce122f",
+    "Aagedal Media Player/UI/InspectionLoupeView.swift": "52ce7140a73073a73932ef16eef5520d9e5759f46ba7686460c1a9848743a1d5",
+    "Aagedal Media Player/Logic/MPV/MPVPlayer.swift": "841e29b822d9e4617a75fcb45200b043fd32f213c69366162d27a1de42708892",
+    "Aagedal Media Player/Logic/LoupeFrameCapture.swift": "0fad0f493bdae72c4775d7943afdf20dc28219f9934f1a54992ea9b6ac84519d",
+    "Aagedal Media Player Tests/LiveLoupeSessionTests.swift": "2c3944b43527bdecd57eb32eeb66c5962a6b88d84f75bbe48c2cb7e935042602",
+    "scripts/validate-mpv-native-app.py": "e690602ad688b448c611be0654f63f56d613323aa6e4d9cf8cec348abb7c1f3f",
+    "build/live-video-loupe-candidate-20261014/Aagedal Media Player.app/Contents/MacOS/Aagedal Media Player": "df1cf145923a00526ce37d964af6cfe053f3e64510a32efc7d70ddb43afc2313",
+    "build/live-video-loupe-candidate-20261014/Aagedal Media Player.app/Contents/PlugIns/Aagedal Media Player Tests.xctest/Contents/MacOS/Aagedal Media Player Tests": "3d900309eed44539c3e74ff204ac8da28f1af0a0e9884367284e77ac5eb03c7c"
+  },
+  "buildProject": "/private/tmp/aagedal-live-loupe-20261014-app/Aagedal Media Player.xcodeproj",
+  "xctestrun": "/private/tmp/aagedal-native-session-20261014-derived/Build/Products/Aagedal Media Player_Aagedal Media Player_macosx27.0-arm64.xctestrun"
+}

@@ -38,12 +38,13 @@ nonisolated struct LoupeCaptureGate {
 @MainActor
 final class LoupeFrameCapture: ObservableObject {
     @Published private(set) var image: CGImage?
+    private(set) var captureRequestCount: UInt64 = 0
 
     private weak var controller: PlayerController?
     private var timer: Timer?
     private var observation: AnyCancellable?
     private var gate = LoupeCaptureGate()
-    private var lastCaptureStartedAt: TimeInterval = -.infinity
+    static let previewFrameInterval: TimeInterval = 1.0 / 60.0
     private var source: SourceIdentity?
     private var verifiedAVRasterSource: SourceIdentity?
     private var verifiedMPVRasterSource: SourceIdentity?
@@ -98,8 +99,16 @@ final class LoupeFrameCapture: ObservableObject {
             Task { @MainActor [weak self] in self?.refreshSource() }
         }
         refreshSource()
+        capture()
+    }
+
+    /// Schedule from completion rather than polling at fixed ticks. A capture
+    /// taking just over one tick must not halve the preview's refresh rate.
+    private func scheduleCapture(after delay: TimeInterval? = nil) {
+        guard gate.isRunning else { return }
+        timer?.invalidate()
         let generation = gate.generation
-        timer = Timer(timeInterval: 0.1, repeats: true) { [weak self] _ in
+        timer = Timer(timeInterval: max(0.001, delay ?? Self.previewFrameInterval), repeats: false) { [weak self] _ in
             Task { @MainActor [weak self] in
                 guard let self, self.gate.generation == generation else { return }
                 self.capture()
@@ -107,7 +116,6 @@ final class LoupeFrameCapture: ObservableObject {
         }
         // Keep previews refreshing while AppKit tracks scrubbing or slider drags.
         if let timer { RunLoop.main.add(timer, forMode: .common) }
-        capture()
     }
 
     func stop() {
@@ -127,6 +135,12 @@ final class LoupeFrameCapture: ObservableObject {
     private func currentSource() -> SourceIdentity? {
         guard let controller, controller.isReady else { return nil }
         if controller.useMPV, let mpv = controller.mpvPlayer {
+            // Do not make the main actor wait behind a GPU screenshot merely
+            // to re-read the same track. Completion checks the live track after
+            // releasing the capture slot, before publishing any result.
+            if (gate.inFlight != nil || controller.isPlaying), let source,
+               source.preparationID == controller.preparationID,
+               source.backend == ObjectIdentifier(mpv) { return source }
             return SourceIdentity(preparationID: controller.preparationID, backend: ObjectIdentifier(mpv),
                                   enabledVideoTracks: [], videoComposition: nil,
                                   mpvVideoTrackID: mpv.canInspectDecoderRaster ? mpv.loupeVideoTrackID() : nil)
@@ -191,19 +205,25 @@ final class LoupeFrameCapture: ObservableObject {
     }
 
     private func capture() {
+        guard gate.isRunning, gate.inFlight == nil else { return }
         refreshSource()
         // Paused UHD/HDR frames can exceed 64 MiB. Keep the verified image
         // while its presentation proof is current instead of downloading and
-        // converting the same hardware surface ten times per second.
-        if let controller, controller.useMPV, hasVerifiedSourceRaster(for: controller) { return }
-        let now = ProcessInfo.processInfo.systemUptime
-        guard now - lastCaptureStartedAt >= 0.1,
-              let controller, let source, let token = gate.begin() else { return }
-        lastCaptureStartedAt = now
+        // converting the same hardware surface on every preview tick.
+        if let controller, controller.useMPV, hasVerifiedSourceRaster(for: controller) {
+            scheduleCapture()
+            return
+        }
+        guard let controller, let source, let token = gate.begin() else {
+            scheduleCapture()
+            return
+        }
+        let startedAt = ProcessInfo.processInfo.systemUptime
+        captureRequestCount &+= 1
         let request: Request
         let isAVRaster: Bool
         if controller.useMPV, let mpv = controller.mpvPlayer {
-            request = .mpv(mpv, canVerify: mpv.canInspectDecoderRaster)
+            request = .mpv(mpv, canVerify: !controller.isPlaying && mpv.canInspectDecoderRaster)
             isAVRaster = false
         } else if let item = attachedItem, let output, let player = controller.player {
             // Acquire the frame while its playback timestamp is current. At
@@ -213,6 +233,7 @@ final class LoupeFrameCapture: ObservableObject {
                 forItemTime: player.currentTime(), itemTimeForDisplay: nil
             ) else {
                 _ = gate.complete(token)
+                scheduleCapture()
                 return
             }
             let track = Self.sourceVideoTrack(in: item)
@@ -224,14 +245,18 @@ final class LoupeFrameCapture: ObservableObject {
             isAVRaster = true
         } else {
             _ = gate.complete(token)
+            scheduleCapture()
             return
         }
         Task { [weak self] in
-            let result = await Task.detached(priority: .utility) {
+            let result = await Task.detached(priority: .userInitiated) {
                 await Self.makeImage(request)
             }.value
             guard let self else { return }
             let canPublish = self.gate.complete(token)
+            defer {
+                self.scheduleCapture(after: Self.previewFrameInterval - (ProcessInfo.processInfo.systemUptime - startedAt))
+            }
             guard canPublish, self.source == source, self.currentSource() == source else { return }
             if let result {
                 self.verifiedAVRasterSource = isAVRaster && result.preservesSourcePixels ? source : nil
@@ -269,8 +294,7 @@ final class LoupeFrameCapture: ObservableObject {
             if canVerify, let raster = mpv.decoderRaster(), let image = image(from: raster) {
                 return CapturedImage(image: image, preservesSourcePixels: true, pts: raster.pixels.playbackTime)
             }
-            guard let raw = mpv.screenshotRaw() else { return nil }
-            guard let image = image(from: raw) else { return nil }
+            guard let preview = mpv.loupePreview(), let image = image(from: preview) else { return nil }
             return CapturedImage(image: image, preservesSourcePixels: false)
         case .av(let track, let buffer, let canVerify):
             // A composition has already applied its own geometry to the output;
@@ -358,6 +382,11 @@ final class LoupeFrameCapture: ObservableObject {
 
     nonisolated static func image(from raw: MPVPlayer.RawScreenshot) -> CGImage? {
         image(from: raw, colorSpace: CGColorSpaceCreateDeviceRGB())
+    }
+
+    nonisolated static func image(from preview: MPVPlayer.LoupePreview) -> CGImage? {
+        guard let colorSpace = preview.colorEncoding.colorSpace else { return nil }
+        return image(from: preview.pixels, colorSpace: colorSpace)
     }
 
     private nonisolated static func image(from raw: MPVPlayer.RawScreenshot, colorSpace: CGColorSpace) -> CGImage? {

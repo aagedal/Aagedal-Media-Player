@@ -1,0 +1,72 @@
+{
+  "scope": "arm64 Release HDR/playback loupe development candidate; restored MPVKit binaries, shipping pins and default-off provider gate unchanged",
+  "architecture": "arm64",
+  "codeSignatureVerified": true,
+  "sha256": {
+    "Aagedal Media Player/Logic/MPV/MPVPlayer.swift": "c0bd7323b487627cf20b91b2c8ea911188ddc09b2ffc6687d4655d2e927176e2",
+    "Aagedal Media Player/Logic/MPV/MPVDecoderRaster.swift": "4da869bdfcb827b69f1e7f2edc9c670b8191904f3f6bce24aaa8fa539295662f",
+    "Aagedal Media Player/Logic/LoupeFrameCapture.swift": "73fc4ca8039c1ccfc61874edeb3f2bfe6f8dc2cedeffa1e7bd07c5bf8b3e54d9",
+    "Aagedal Media Player/UI/InspectionLoupeView.swift": "590d2e1dbf83a417bed35db98bc9988677ab1e6a3acdc8ef6121c79894d489bc",
+    "Aagedal Media Player Tests/MPVRawScreenshotTests.swift": "07916dcaca3489cf445de3d918e42e41e298f09af2a5dd9cde91b703860dc258",
+    "Aagedal Media Player Tests/LoupeTrackDecoderTests.swift": "9717f9a133876a22c8d4365f4d7a7a58c6eaf9f677a4c314a1ce19d5630c59f3",
+    "Aagedal Media Player Tests/MPVDecoderRasterTests.swift": "e2163e93662e1fc94ad2c5d1d7cbe7b4a05a575666aaa7eb182c2cd43c6ad485",
+    "scripts/validate-mpv-native-app.py": "e46fd9a1c6d9f2c2771cd18a83b450d62bc9b537c9cfa51bcb74848670d635e8",
+    "build/loupe-hdr-playback-candidate-20261014/Aagedal Media Player.app/Contents/MacOS/Aagedal Media Player": "09dff4c566f8f9d62a0502ee3b983597493f2af175d72f7bd78d1e67f10a1681",
+    "build/loupe-hdr-playback-candidate-20261014/Aagedal Media Player.app/Contents/PlugIns/Aagedal Media Player Tests.xctest/Contents/MacOS/Aagedal Media Player Tests": "ad094162984978585e8b02e9bcac1874818bc5c1482f06f8e777359fd579c584"
+  },
+  "playbackMeasurements": [
+    {
+      "name": "uhd-h264-hardware",
+      "updates": 62,
+      "distinctFrames": 62,
+      "seconds": 3.0150511667015962,
+      "updatesPerSecond": 20.563498452275596,
+      "wrongColorFrames": 0,
+      "backendCapturesPerSecond": 23.396524094615252
+    },
+    {
+      "name": "pq-hevc-software",
+      "updates": 62,
+      "distinctFrames": 62,
+      "seconds": 3.0425724167143926,
+      "updatesPerSecond": 20.377493616718066,
+      "wrongColorFrames": 0,
+      "backendCapturesPerSecond": 19.947068790170242
+    },
+    {
+      "name": "pq-hevc-hardware",
+      "updates": 60,
+      "distinctFrames": 60,
+      "seconds": 3.0013767083291896,
+      "updatesPerSecond": 19.9908261543753,
+      "wrongColorFrames": 0,
+      "backendCapturesPerSecond": 19.83833082884095
+    },
+    {
+      "name": "hlg-hevc-hardware",
+      "updates": 60,
+      "distinctFrames": 60,
+      "seconds": 3.0018442916916683,
+      "updatesPerSecond": 19.987712276104574,
+      "wrongColorFrames": 0,
+      "backendCapturesPerSecond": 20.005606570846936
+    }
+  ],
+  "playbackCriteria": {
+    "minimumExclusiveUpdatesPerSecond": 10,
+    "minimumBackendThroughputRatio": 0.8,
+    "schedulerTargetHz": 60,
+    "minimumDistinctFrameRatioFor60fpsInput": 0.9
+  },
+  "stressCycleEndPhysicalFootprintBytes": [
+    1399671088,
+    1598720592,
+    1315457544,
+    1280313768,
+    1261882080,
+    1114688224
+  ],
+  "postWarmupGrowthLimitBytes": 268435456,
+  "buildProject": "/private/tmp/aagedal-loupe-playback-20261014-app/Aagedal Media Player.xcodeproj",
+  "xctestrun": "/private/tmp/aagedal-native-session-20261014-derived/Build/Products/Aagedal Media Player_Aagedal Media Player_macosx27.0-arm64.xctestrun"
+}

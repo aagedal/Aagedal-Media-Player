@@ -1,0 +1,2 @@
+MPV_LIVE_LOUPE_CASE: landscape, mainFPS=23.125599251388202, loupeFPS=23.446788129879703, maximumClockDrift=0.041666666666666664, target=bt.709/bt.1886, hwdec=videotoolbox
+MPV_LIVE_LOUPE_ACCEPTANCE: 1 cases

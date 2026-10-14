@@ -1,0 +1,7 @@
+MPV_NATIVE_STRESS_CYCLE: 1, physicalFootprintBytes=1084345152
+MPV_NATIVE_STRESS_CYCLE: 2, physicalFootprintBytes=854838032
+MPV_NATIVE_STRESS_CYCLE: 3, physicalFootprintBytes=804195016
+MPV_NATIVE_STRESS_CYCLE: 4, physicalFootprintBytes=827067128
+MPV_NATIVE_STRESS_CYCLE: 5, physicalFootprintBytes=888802016
+MPV_NATIVE_STRESS_CYCLE: 6, physicalFootprintBytes=494537464
+MPV_NATIVE_STRESS_ACCEPTANCE: 6 cycles, 60 UHD/HDR lifecycles, baselineBytes=1084345152, peakBytes=888802016, growthLimitBytes=268435456

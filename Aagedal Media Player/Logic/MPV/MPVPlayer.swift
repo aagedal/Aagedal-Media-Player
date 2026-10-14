@@ -70,6 +70,36 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
     let backwardPlaybackFailed = PassthroughSubject<Void, Never>()
 
     private var correctsReflection = false
+    private var isLiveLoupePlayer = false
+    private var liveLoupeViewport: LoupeVideoViewport?
+    private var liveLoupeNearest = true
+
+    /// An independent, silent decoder. It does not retain the experimental
+    /// native-raster cache; paused inspection belongs to the primary player.
+    func makeLiveLoupePlayer() -> MPVPlayer {
+        let player = MPVPlayer(correctsReflection: correctsReflection)
+        player.isLiveLoupePlayer = true
+        player.disableAudioTrack()
+        player.isMuted = true
+        player.volume = 0
+        return player
+    }
+
+    func configureLiveLoupe(viewport: LoupeVideoViewport, nearest: Bool, force: Bool = false) {
+        guard force || viewport != liveLoupeViewport || nearest != liveLoupeNearest else { return }
+        liveLoupeViewport = viewport
+        liveLoupeNearest = nearest
+        applyLiveLoupeViewport()
+    }
+
+    private func applyLiveLoupeViewport() {
+        guard isLiveLoupePlayer, mpv != nil, let viewport = liveLoupeViewport else { return }
+        setDoubleAsync("video-zoom", viewport.zoom)
+        setDoubleAsync("video-pan-x", viewport.panX)
+        setDoubleAsync("video-pan-y", viewport.panY)
+        commandAsync("set", args: ["scale", liveLoupeNearest ? "nearest" : "bilinear"])
+        commandAsync("set", args: ["dscale", liveLoupeNearest ? "nearest" : "bilinear"])
+    }
 
     private var supportsDecoderRasterCapture = false
     private var supportsDecoderRasterTransforms = false
@@ -203,7 +233,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         }
 
         let profilesNativeAudio = ProcessInfo.processInfo.environment["LIVE_AUDIO_METER_PROFILE_INPUTS"] != nil
-        let usesDecoderRasterCandidate = enablesDecoderRasterCandidate &&
+        let usesDecoderRasterCandidate = !isLiveLoupePlayer && enablesDecoderRasterCandidate &&
             mpv_set_option_string(mpv, "aagedal-decoder-raster", "yes") >= 0
         // Warning events are also control signals: disabling them in Release
         // prevents the native reverse-playback fallback from ever firing.
@@ -245,6 +275,11 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         checkError(mpv_set_option_string(mpv, "keep-open", "yes"), context: "keep-open")
         checkError(mpv_set_option_string(mpv, "deinterlace", usesDecoderRasterCandidate ? "no" : "auto"), context: "deinterlace")
         checkError(mpv_set_option_string(mpv, "screenshot-high-bit-depth", "yes"), context: "screenshot-high-bit-depth")
+        // Raw scopes use sRGB; the loupe temporarily opts into the PNG target's
+        // native color space for HDR. Neither path invokes an image encoder.
+        checkError(mpv_set_option_string(mpv, "screenshot-format", "png"), context: "screenshot-format")
+        checkError(mpv_set_option_string(mpv, "screenshot-tag-colorspace", "no"), context: "screenshot-tag-colorspace")
+        checkError(mpv_set_option_string(mpv, "screenshot-sw", "no"), context: "screenshot-sw")
 
         checkError(mpv_set_option_string(mpv, "input-default-bindings", "no"), context: "input-default-bindings")
         checkError(mpv_set_option_string(mpv, "input-vo-keyboard", "no"), context: "input-vo-keyboard")
@@ -308,6 +343,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         mpv_set_wakeup_callback(mpv, mpvWakeupCallback, wakeupContext)
 
         isInitialized = true
+        applyLiveLoupeViewport()
         logger.info("MPV initialized successfully")
     }
 
@@ -508,6 +544,31 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         queue.sync {
             guard let mpv else { return nil }
             return doublePropertyLocked(MPVProperty.timePos, context: mpv)
+        }
+    }
+
+    nonisolated struct VideoOutputSnapshot: Sendable {
+        let hardwareDecoder: String?
+        let targetPrimaries: String?
+        let targetTransfer: String?
+        let droppedFrames: Int64?
+    }
+
+    /// Lightweight diagnostics for the live-viewer prototype; no pixel readback.
+    nonisolated func videoOutputSnapshot() -> VideoOutputSnapshot? {
+        queue.sync {
+            guard let context = mpv else { return nil }
+            func string(_ name: String) -> String? {
+                guard let value = mpv_get_property_string(context, name) else { return nil }
+                defer { mpv_free(value) }
+                return String(cString: value)
+            }
+            var drops: Int64 = 0
+            let status = mpv_get_property(context, "frame-drop-count", MPV_FORMAT_INT64, &drops)
+            return VideoOutputSnapshot(hardwareDecoder: string("hwdec-current"),
+                targetPrimaries: string("video-target-params/primaries"),
+                targetTransfer: string("video-target-params/gamma"),
+                droppedFrames: status >= 0 ? drops : nil)
         }
     }
 
@@ -975,8 +1036,56 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
     /// teardown could free the mpv context mid-command — a use-after-free.
     /// Inside the queue the screenshot either completes before the context is
     /// torn down or observes `mpv == nil` and bails.
-    nonisolated func screenshotRaw() -> RawScreenshot? {
-        queue.sync { screenshotRawLocked() }
+    nonisolated func screenshotRaw(scaledToWindow: Bool = false) -> RawScreenshot? {
+        queue.sync { screenshotRawLocked(flags: scaledToWindow ? "scaled" : "video") }
+    }
+
+    nonisolated struct LoupePreview: Sendable {
+        let pixels: RawScreenshot
+        let colorEncoding: MPVDecoderRaster.ColorEncoding
+    }
+
+    /// A display preview, never decoder-raster proof. Keep scope screenshots on
+    /// their existing SDR path. gpu-next's ordinary JPEG-target screenshot is
+    /// tone-mapped to sRGB even when screenshot-high-bit-depth is enabled.
+    /// PNG's flexible color target plus an explicit RGBA16 request retains HDR
+    /// code values; the raw command does not run a PNG encoder.
+    nonisolated func loupePreview() -> LoupePreview? {
+        queue.sync {
+            guard let context = mpv else { return nil }
+            func string(_ name: String) -> String? {
+                guard let value = mpv_get_property_string(context, name) else { return nil }
+                defer { mpv_free(value) }
+                return String(cString: value)
+            }
+            func hdrEncoding() -> MPVDecoderRaster.ColorEncoding? {
+                Self.loupeHDRColorEncoding(primaries: string("video-out-params/primaries"),
+                                          transfer: string("video-out-params/gamma"))
+            }
+            guard let encoding = hdrEncoding() else {
+                return screenshotRawLocked().map { LoupePreview(pixels: $0, colorEncoding: .sRGB) }
+            }
+            // This option affects the renderer's screenshot target, not the
+            // video surface. Restore it before releasing the queue so
+            // another consumer cannot inherit the loupe's HDR capture settings.
+            guard let previous = string("screenshot-tag-colorspace") else { return nil }
+            defer { mpv_set_property_string(context, "screenshot-tag-colorspace", previous) }
+            guard mpv_set_property_string(context, "screenshot-tag-colorspace", "yes") >= 0 else { return nil }
+            guard let pixels = screenshotRawLocked(format: "rgba64"), pixels.format == "rgba64",
+                  hdrEncoding() == encoding else { return nil }
+            return LoupePreview(pixels: pixels, colorEncoding: encoding)
+        }
+    }
+
+    nonisolated static func loupeHDRColorEncoding(
+        primaries: String?, transfer: String?
+    ) -> MPVDecoderRaster.ColorEncoding? {
+        guard primaries == "bt.2020" else { return nil }
+        switch transfer {
+        case "pq": return .bt2020PQ
+        case "hlg": return .bt2020HLG
+        default: return nil
+        }
     }
 
     /// A missing private provider command leaves shipping binaries on display
@@ -1058,13 +1167,14 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
     }
 
     /// Must run on `queue`. Touches the mpv context directly.
-    private nonisolated func screenshotRawLocked() -> RawScreenshot? {
+    private nonisolated func screenshotRawLocked(format: String = "bgr0", flags: String = "video") -> RawScreenshot? {
         guard let mpvCtx = mpv else { return nil }
         let timeBeforeCapture = doublePropertyLocked(MPVProperty.timePos, context: mpvCtx)
 
         let cmdStr = strdup("screenshot-raw")
-        let flagStr = strdup("video")
-        defer { free(cmdStr); free(flagStr) }
+        let flagStr = strdup(flags)
+        let formatStr = strdup(format)
+        defer { free(cmdStr); free(flagStr); free(formatStr) }
 
         var argNode0 = mpv_node()
         argNode0.format = MPV_FORMAT_STRING
@@ -1074,12 +1184,16 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         argNode1.format = MPV_FORMAT_STRING
         argNode1.u.string = flagStr
 
-        var argValues = [argNode0, argNode1]
+        var argNode2 = mpv_node()
+        argNode2.format = MPV_FORMAT_STRING
+        argNode2.u.string = formatStr
+
+        var argValues = [argNode0, argNode1, argNode2]
         var result = mpv_node()
 
         let err = argValues.withUnsafeMutableBufferPointer { buf -> Int32 in
             var list = mpv_node_list()
-            list.num = 2
+            list.num = 3
             list.values = buf.baseAddress
             list.keys = nil
 

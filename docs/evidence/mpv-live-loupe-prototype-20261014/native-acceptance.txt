@@ -1,0 +1,1 @@
+MPV_EXTENDED_NATIVE_APP_ACCEPTANCE: 20 cases verified with seek, cached-image reuse, and resume revocation

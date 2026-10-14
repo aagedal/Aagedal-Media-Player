@@ -5,6 +5,8 @@
 import AppKit
 import AVFoundation
 import XCTest
+import Darwin.Mach
+import Combine
 @testable import Aagedal_Media_Player
 
 @MainActor
@@ -155,6 +157,10 @@ final class LoupeTrackDecoderTests: XCTestCase {
         let requiresProvider = environment["AAGEDAL_MPV_DECODER_RASTER_CANDIDATE"] == "1"
         if let cases = environment["MPV_DECODER_RASTER_CASES"] {
             XCTAssertTrue(requiresProvider, "Extended validation must explicitly enable the candidate")
+            if environment["MPV_DECODER_RASTER_PLAYBACK_VALIDATION"] == "1" {
+                try await validatePlaybackNativeCases(URL(fileURLWithPath: cases))
+                return
+            }
             try await validateExtendedNativeCases(URL(fileURLWithPath: cases))
             return
         }
@@ -217,12 +223,16 @@ final class LoupeTrackDecoderTests: XCTestCase {
         let width: Int, height: Int, depth: Int, rotation: Int
         let mirrored: Bool, transfer: String, primaries: String, hardwareDecoder: String
         let bytesPerPixel: Int, tolerance: Int, seekPTS: Double, reject: Bool
+        let sourceMetadata: NativeSourceMetadata?
     }
 
-    private func validateExtendedNativeCases(_ manifestURL: URL) async throws {
+    private struct NativeSourceMetadata: Decodable { let r_frame_rate: String? }
+
+    private func validatePlaybackNativeCases(_ manifestURL: URL) async throws {
         let manifest = try JSONDecoder().decode(NativeCaseManifest.self, from: Data(contentsOf: manifestURL))
-        let cases = manifest.cases.filter { !$0.reject }
-        XCTAssertGreaterThan(cases.count, 10)
+        let names = ["uhd-h264-hardware", "pq-hevc-hardware", "hlg-hevc-hardware", "pq-hevc-software"]
+        let cases = manifest.cases.filter { names.contains($0.name) }
+        XCTAssertEqual(cases.count, names.count)
         for testCase in cases {
             let previousHWDec = ProcessInfo.processInfo.environment["AAGEDAL_MPV_DECODER_RASTER_HWDEC"]
             setenv("AAGEDAL_MPV_DECODER_RASTER_HWDEC", testCase.hardwareDecoder, 1)
@@ -232,12 +242,12 @@ final class LoupeTrackDecoderTests: XCTestCase {
             }
             let controller = PlayerController(proResRAWDetector: { _, _ in false })
             let capture = LoupeFrameCapture()
-            defer { capture.stop(); controller.teardown() }
+            defer { capture.stop(); controller.teardown(); retainedSurfaces.removeAll() }
             controller.loadMedia(PlayerWindowCoordinator.makeMediaItem(for: URL(fileURLWithPath: testCase.input)))
             let constructed = await waitUntil { controller.useMPV && controller.mpvPlayer != nil }
-            XCTAssertTrue(constructed, testCase.name)
+            XCTAssertTrue(constructed)
             let mpv = try XCTUnwrap(controller.mpvPlayer)
-            let view = NSView(frame: CGRect(x: 0, y: 0, width: 640, height: 360))
+            let view = NSView(frame: CGRect(x: 0, y: 0, width: 1280, height: 720))
             let layer = MPVMetalLayer()
             layer.frame = view.bounds
             layer.drawableSize = view.bounds.size
@@ -246,37 +256,199 @@ final class LoupeTrackDecoderTests: XCTestCase {
             retainedSurfaces.append(view)
             mpv.attachDrawable(layer)
             let ready = await waitUntil { controller.isReady }
-            XCTAssertTrue(ready, testCase.name)
+            XCTAssertTrue(ready)
             controller.pause()
-            XCTAssertTrue(mpv.canInspectDecoderRaster, testCase.name)
             capture.start(controller: controller)
             let verified = await waitUntil { capture.hasVerifiedSourceRaster(for: controller) }
-            XCTAssertTrue(verified, testCase.name)
-            let firstResult = await Task.detached { mpv.decoderRaster() }.value
-            let first = try XCTUnwrap(firstResult)
-            let references = try XCTUnwrap(testCase.references)
-            try assertExtendedRaster(first, image: XCTUnwrap(capture.image), testCase: testCase,
-                                     reference: references[0], expectedPTS: 0)
-            let firstImage = try XCTUnwrap(capture.image)
-            try await Task.sleep(for: .milliseconds(250))
-            XCTAssertTrue(capture.image === firstImage, "An unchanged verified frame must reuse its large cached image")
-            mpv.seek(to: testCase.seekPTS)
-            let sought = await waitUntil {
-                capture.hasVerifiedSourceRaster(for: controller) &&
-                    mpv.isDecoderRasterCurrent(pts: testCase.seekPTS, trackID: first.trackID)
+            XCTAssertTrue(verified)
+            if testCase.depth > 8 {
+                // Check the preview itself against independent reference pixels,
+                // before relying on its tags during continuous playback.
+                let previewResult = await Task.detached { mpv.loupePreview() }.value
+                let preview = try XCTUnwrap(previewResult)
+                XCTAssertEqual(preview.colorEncoding,
+                    MPVDecoderRaster.ColorEncoding(primaries: testCase.primaries, transfer: testCase.transfer))
+                try assertExtendedImage(preview.pixels, image: XCTUnwrap(LoupeFrameCapture.image(from: preview)),
+                    testCase: testCase, reference: XCTUnwrap(testCase.references?.first))
             }
-            XCTAssertTrue(sought, testCase.name)
-            let secondResult = await Task.detached { mpv.decoderRaster() }.value
-            let second = try XCTUnwrap(secondResult)
-            try assertExtendedRaster(second, image: XCTUnwrap(capture.image), testCase: testCase,
-                                     reference: references[1], expectedPTS: testCase.seekPTS)
+            controller.updateLoopPlayback(true)
             controller.play()
             let playing = await waitUntil { controller.isPlaying }
-            XCTAssertTrue(playing, testCase.name)
-            XCTAssertFalse(capture.hasVerifiedSourceRaster(for: controller), testCase.name)
-            print("MPV_EXTENDED_NATIVE_CASE_ACCEPTANCE: \(testCase.name), hardwareTransfer=\(second.hardwareTransferred), bits=\(second.sourceBitDepth)")
+            XCTAssertTrue(playing)
+            let start = ProcessInfo.processInfo.systemUptime + 0.5
+            var timestamps: [TimeInterval] = []
+            var wrongColorFrames = 0
+            var distinctFrames = 0
+            var previousSample: UInt16?
+            let observation = capture.$image.sink { image in
+                guard ProcessInfo.processInfo.systemUptime >= start, let image else { return }
+                timestamps.append(ProcessInfo.processInfo.systemUptime)
+                let expected = testCase.transfer == "pq" ? CGColorSpace.itur_2100_PQ
+                    : testCase.transfer == "hlg" ? CGColorSpace.itur_2100_HLG : CGColorSpace.sRGB
+                if image.colorSpace?.name != expected || image.bitsPerComponent != (testCase.depth > 8 ? 16 : 8) {
+                    wrongColorFrames += 1
+                }
+                if let data = image.dataProvider?.data, let bytes = CFDataGetBytePtr(data) {
+                    let offset = image.height / 2 * image.bytesPerRow + image.width / 2 * (image.bitsPerPixel / 8)
+                    if offset + 1 < CFDataGetLength(data) {
+                        let sample = UInt16(bytes[offset]) | UInt16(bytes[offset + 1]) << 8
+                        if sample != previousSample { distinctFrames += 1 }
+                        previousSample = sample
+                    }
+                }
+            }
+            try await Task.sleep(for: .seconds(3.5))
+            observation.cancel()
+            let elapsed = ProcessInfo.processInfo.systemUptime - start
+            let fps = Double(timestamps.count) / elapsed
+            XCTAssertEqual(wrongColorFrames, 0, testCase.name)
+            if testCase.sourceMetadata?.r_frame_rate == "60/1" {
+                XCTAssertGreaterThanOrEqual(Double(distinctFrames), Double(timestamps.count) * 0.9,
+                    "Moving 60 fps input must produce fresh frames, not repeated copies")
+            }
+            XCTAssertFalse(capture.hasVerifiedSourceRaster(for: controller))
+            print("MPV_LOUPE_PLAYBACK_CASE: \(testCase.name), updates=\(timestamps.count), distinctFrames=\(distinctFrames), seconds=\(elapsed), fps=\(fps), wrongColorFrames=\(wrongColorFrames)")
+            capture.stop()
+            try await Task.sleep(for: .milliseconds(200))
+            let backendRate = await Task.detached {
+                let began = ProcessInfo.processInfo.systemUptime
+                var count = 0
+                for _ in 0..<20 { if mpv.loupePreview() != nil { count += 1 } }
+                return Double(count) / (ProcessInfo.processInfo.systemUptime - began)
+            }.value
+            // UHD GPU readback can itself take longer than a refresh period.
+            // Require the app to use the available backend capacity rather than
+            // asserting an absolute rate the backend cannot sustain on a host.
+            XCTAssertGreaterThan(fps, 10, "Playback must exceed the old fixed 10 fps cap")
+            XCTAssertGreaterThanOrEqual(fps, min(60, backendRate) * 0.8,
+                "The scheduler must deliver at least 80% of available capture throughput")
+            print("MPV_LOUPE_BACKEND_CADENCE: \(testCase.name), fps=\(backendRate)")
+            controller.pause()
+            capture.start(controller: controller)
+            let reverified = await waitUntil { capture.hasVerifiedSourceRaster(for: controller) }
+            XCTAssertTrue(reverified, "Pausing must restore native raster proof: \(testCase.name)")
         }
-        print("MPV_EXTENDED_NATIVE_APP_ACCEPTANCE: \(cases.count) cases verified with seek, cached-image reuse, and resume revocation")
+        print("MPV_LOUPE_PLAYBACK_ACCEPTANCE: \(cases.count) cases")
+    }
+
+    private func validateExtendedNativeCases(_ manifestURL: URL) async throws {
+        let manifest = try JSONDecoder().decode(NativeCaseManifest.self, from: Data(contentsOf: manifestURL))
+        let stress = ProcessInfo.processInfo.environment["MPV_DECODER_RASTER_STRESS_CYCLES"]
+        let cycles = stress.flatMap(Int.init) ?? 1
+        guard (1...100).contains(cycles), stress == nil || cycles >= 3 else {
+            return XCTFail("Stress cycles must be an integer from 3 through 100")
+        }
+        let cases = manifest.cases.filter { !$0.reject && (stress == nil || $0.width >= 3840) }
+        XCTAssertGreaterThanOrEqual(cases.count, stress == nil ? 20 : 10)
+        var footprints: [UInt64] = []
+        for cycle in 0..<cycles {
+            for testCase in cases {
+                try await validateExtendedNativeCase(testCase, stress: stress != nil)
+            }
+            // Let teardown callbacks and GPU resources retire before measuring.
+            try await Task.sleep(for: .milliseconds(500))
+            if stress != nil {
+                let footprint = try physicalFootprint()
+                footprints.append(footprint)
+                print("MPV_NATIVE_STRESS_CYCLE: \(cycle + 1), physicalFootprintBytes=\(footprint)")
+            }
+        }
+        if stress != nil {
+            // The first complete cycle warms all decoder/Metal pools. Bound
+            // subsequent growth separately from the provider's image-cache budget.
+            let baseline = try XCTUnwrap(footprints.first)
+            let peak = try XCTUnwrap(footprints.dropFirst().max())
+            XCTAssertLessThanOrEqual(peak, baseline + 256 * 1024 * 1024,
+                                    "Post-warmup footprint growth exceeded 256 MiB")
+            print("MPV_NATIVE_STRESS_ACCEPTANCE: \(cycles) cycles, \(cycles * cases.count) UHD/HDR lifecycles, baselineBytes=\(baseline), peakBytes=\(peak), growthLimitBytes=268435456")
+        } else {
+            print("MPV_EXTENDED_NATIVE_APP_ACCEPTANCE: \(cases.count) cases verified with seek, cached-image reuse, and resume revocation")
+        }
+    }
+
+    private func physicalFootprint() throws -> UInt64 {
+        var info = task_vm_info_data_t()
+        var count = mach_msg_type_number_t(MemoryLayout<task_vm_info_data_t>.size / MemoryLayout<integer_t>.size)
+        let status = withUnsafeMutablePointer(to: &info) {
+            $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
+                task_info(mach_task_self_, task_flavor_t(TASK_VM_INFO), $0, &count)
+            }
+        }
+        XCTAssertEqual(status, KERN_SUCCESS)
+        guard status == KERN_SUCCESS else { throw NSError(domain: NSMachErrorDomain, code: Int(status)) }
+        return info.phys_footprint
+    }
+
+    private func validateExtendedNativeCase(_ testCase: NativeCase, stress: Bool) async throws {
+        let previousHWDec = ProcessInfo.processInfo.environment["AAGEDAL_MPV_DECODER_RASTER_HWDEC"]
+        setenv("AAGEDAL_MPV_DECODER_RASTER_HWDEC", testCase.hardwareDecoder, 1)
+        defer {
+            if let previousHWDec { setenv("AAGEDAL_MPV_DECODER_RASTER_HWDEC", previousHWDec, 1) }
+            else { unsetenv("AAGEDAL_MPV_DECODER_RASTER_HWDEC") }
+        }
+        let controller = PlayerController(proResRAWDetector: { _, _ in false })
+        let capture = LoupeFrameCapture()
+        defer {
+            capture.stop()
+            controller.teardown()
+            retainedSurfaces.removeAll()
+        }
+        controller.loadMedia(PlayerWindowCoordinator.makeMediaItem(for: URL(fileURLWithPath: testCase.input)))
+        let constructed = await waitUntil { controller.useMPV && controller.mpvPlayer != nil }
+        XCTAssertTrue(constructed, testCase.name)
+        let mpv = try XCTUnwrap(controller.mpvPlayer)
+        let view = NSView(frame: CGRect(x: 0, y: 0, width: 640, height: 360))
+        let layer = MPVMetalLayer()
+        layer.frame = view.bounds
+        layer.drawableSize = view.bounds.size
+        view.layer = layer
+        view.wantsLayer = true
+        retainedSurfaces.append(view)
+        mpv.attachDrawable(layer)
+        let ready = await waitUntil { controller.isReady }
+        XCTAssertTrue(ready, testCase.name)
+        controller.pause()
+        XCTAssertTrue(mpv.canInspectDecoderRaster, testCase.name)
+        capture.start(controller: controller)
+        let verified = await waitUntil { capture.hasVerifiedSourceRaster(for: controller) }
+        XCTAssertTrue(verified, testCase.name)
+        let firstResult = await Task.detached { mpv.decoderRaster() }.value
+        let first = try XCTUnwrap(firstResult)
+        let references = try XCTUnwrap(testCase.references)
+        try assertExtendedRaster(first, image: XCTUnwrap(capture.image), testCase: testCase,
+                                 reference: references[0], expectedPTS: 0)
+        let firstImage = try XCTUnwrap(capture.image)
+        try await Task.sleep(for: .milliseconds(250))
+        XCTAssertTrue(capture.image === firstImage, "An unchanged verified frame must reuse its large cached image")
+        mpv.seek(to: testCase.seekPTS)
+        let sought = await waitUntil {
+            capture.hasVerifiedSourceRaster(for: controller) &&
+                mpv.isDecoderRasterCurrent(pts: testCase.seekPTS, trackID: first.trackID)
+        }
+        XCTAssertTrue(sought, testCase.name)
+        let secondResult = await Task.detached { mpv.decoderRaster() }.value
+        let second = try XCTUnwrap(secondResult)
+        try assertExtendedRaster(second, image: XCTUnwrap(capture.image), testCase: testCase,
+                                 reference: references[1], expectedPTS: testCase.seekPTS)
+        if stress {
+            // Drop both the displayed image and its proof, including when
+            // reopening immediately while an older capture may be pending.
+            for _ in 0..<3 {
+                capture.stop()
+                XCTAssertNil(capture.image, testCase.name)
+                XCTAssertFalse(capture.hasVerifiedSourceRaster(for: controller), testCase.name)
+                capture.start(controller: controller)
+                capture.stop()
+                capture.start(controller: controller)
+                let reopened = await waitUntil { capture.hasVerifiedSourceRaster(for: controller) }
+                XCTAssertTrue(reopened, testCase.name)
+            }
+        }
+        controller.play()
+        let playing = await waitUntil { controller.isPlaying }
+        XCTAssertTrue(playing, testCase.name)
+        XCTAssertFalse(capture.hasVerifiedSourceRaster(for: controller), testCase.name)
+        print("MPV_EXTENDED_NATIVE_CASE_ACCEPTANCE: \(testCase.name), hardwareTransfer=\(second.hardwareTransferred), bits=\(second.sourceBitDepth)")
     }
 
     private func assertExtendedRaster(_ raster: MPVDecoderRaster, image: CGImage, testCase: NativeCase,
@@ -289,6 +461,11 @@ final class LoupeTrackDecoderTests: XCTestCase {
         XCTAssertEqual(raster.hardwareTransferred, testCase.hardwareDecoder != "no", testCase.name)
         XCTAssertEqual(raster.colorEncoding, MPVDecoderRaster.ColorEncoding(primaries: testCase.primaries, transfer: testCase.transfer))
         XCTAssertEqual(try XCTUnwrap(raster.pixels.playbackTime), expectedPTS, accuracy: 0.000_001)
+        try assertExtendedImage(raster.pixels, image: image, testCase: testCase, reference: reference)
+    }
+
+    private func assertExtendedImage(_ pixels: MPVPlayer.RawScreenshot, image: CGImage,
+                                     testCase: NativeCase, reference: String) throws {
         XCTAssertEqual(image.width, testCase.width)
         XCTAssertEqual(image.height, testCase.height)
         XCTAssertEqual(image.bitsPerComponent, testCase.bytesPerPixel == 8 ? 16 : 8)
@@ -300,10 +477,10 @@ final class LoupeTrackDecoderTests: XCTestCase {
                       (0,testCase.height-1), (testCase.width-1,testCase.height-1),
                       (testCase.width/4,testCase.height/4), (testCase.width*3/4,testCase.height*3/4)]
         let componentSize = testCase.bytesPerPixel == 8 ? 2 : 1
-        for data in [raster.pixels.data, captured] {
+        for data in [pixels.data, captured] {
             for (x,y) in points {
                 for component in 0..<4 {
-                    let a = y * raster.pixels.stride + x * testCase.bytesPerPixel + component * componentSize
+                    let a = y * pixels.stride + x * testCase.bytesPerPixel + component * componentSize
                     let e = (y * testCase.width + x) * testCase.bytesPerPixel + component * componentSize
                     guard a + componentSize <= data.count, e + componentSize <= expected.count else {
                         return XCTFail("Truncated native/reference raster: \(testCase.name)")

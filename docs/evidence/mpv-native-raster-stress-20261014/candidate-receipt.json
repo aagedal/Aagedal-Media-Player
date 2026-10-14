@@ -1,0 +1,25 @@
+{
+  "scope": "arm64 Release development app; unchanged restored protocol-2 MPVKit bundle, shipping pins and default-off gate",
+  "architecture": "arm64",
+  "codeSignatureVerified": true,
+  "sha256": {
+    "Aagedal Media Player/Logic/MPV/MPVDecoderRaster.swift": "4da869bdfcb827b69f1e7f2edc9c670b8191904f3f6bce24aaa8fa539295662f",
+    "Aagedal Media Player Tests/MPVDecoderRasterTests.swift": "e2163e93662e1fc94ad2c5d1d7cbe7b4a05a575666aaa7eb182c2cd43c6ad485",
+    "Aagedal Media Player Tests/LoupeTrackDecoderTests.swift": "a02c31bd8172f76a2d612cd17cc78be55e4b80af219209a31484d356c108fa82",
+    "scripts/validate-mpv-native-app.py": "94cb046b0bc665b431916868e1bbdcfdf62c0364693bc26804c63b0c7595ad6a",
+    "build/native-raster-candidate-20261014/Aagedal Media Player.app/Contents/MacOS/Aagedal Media Player": "cf699be59da649b2ab05b811b647fa3d5532ea98ff3f50d426fbbc9e439a8d2e",
+    "build/native-raster-candidate-20261014/Aagedal Media Player.app/Contents/PlugIns/Aagedal Media Player Tests.xctest/Contents/MacOS/Aagedal Media Player Tests": "2d56c0841f7b7ea9aa6ee4e1a8c45246a636e3e0248a2e5305d9bc54e28d6607"
+  },
+  "restoredBundle": "/private/tmp/aagedal-native-raster-20261014/published-restoration",
+  "buildLog": "build.log.gz",
+  "xctestrun": "/private/tmp/aagedal-native-session-20261014-derived/Build/Products/Aagedal Media Player_Aagedal Media Player_macosx27.0-arm64.xctestrun",
+  "cycleEndPhysicalFootprintBytes": [
+    1084345152,
+    854838032,
+    804195016,
+    827067128,
+    888802016,
+    494537464
+  ],
+  "postWarmupGrowthLimitBytes": 268435456
+}

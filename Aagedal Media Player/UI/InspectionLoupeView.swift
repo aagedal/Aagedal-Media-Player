@@ -10,6 +10,7 @@ final class InspectionLoupeState: ObservableObject {
     @Published var isEnabled = false
     @Published var isPinned = false
     @Published var usesNearestNeighbor = true
+    @Published var usesLiveVideo = true
     @Published private(set) var magnification: LoupeMagnification = .twoTimes
     @Published var normalizedPoint = CGPoint(x: 0.5, y: 0.5)
     @Published var pointer: CGPoint?
@@ -142,11 +143,13 @@ struct InspectionLoupeControl: View {
                 }
                 Toggle("Nearest-neighbor scaling", isOn: $state.usesNearestNeighbor)
                     .help("Keep pixel edges sharp when enlarging. Turn off for smooth scaling.")
+                Toggle("Live video during playback", isOn: $state.usesLiveVideo)
+                    .help("Show smooth live video during forward MPV playback. Pausing shows the main player's captured frame. Turn off to use captured previews during playback too.")
                 Button("Center") { state.reset() }
                     .disabled(!state.canCenter)
                 Text("Drag the target frame to move the inspected position. Drag the loupe to place it elsewhere. Compare Mode shows the same picture coordinate in A and B.")
                     .font(.caption)
-                Text("Display-space preview • up to 10 fps. Captures may differ from the live HDR display and are not pixel-value measurements or frame-locked A/B samples.")
+                Text("Display-space preview • up to 60 fps. Playback previews are not pixel-value measurements or frame-locked A/B samples.")
                     .font(.caption).foregroundStyle(.secondary)
                 Text("2×, 4×, 8× and 16× enlarge the displayed picture. Nearest-neighbor scaling keeps captured pixel edges sharp.")
                     .font(.caption).foregroundStyle(.secondary)
@@ -172,6 +175,8 @@ struct InspectionLoupeOverlay: View {
     var overlayBlend: Double = 0.5
     @State private var dragOrigin: CGPoint?
     @State private var targetDragOrigin: CGPoint?
+    @StateObject private var primaryLiveLoupe = LiveLoupeSession()
+    @StateObject private var secondaryLiveLoupe = LiveLoupeSession()
     var body: some View {
         let count: CGFloat = isComparing ? 2 : 1
         let width = min(180, max(64, (geometry.canvasSize.width - 24) / count))
@@ -197,9 +202,11 @@ struct InspectionLoupeOverlay: View {
             }
 
             HStack(spacing: 6) {
-                lens(image: primaryCapture.image, source: isComparing ? "A" : "Picture", size: lensSize, pictureRect: pictureRect(for: .primary))
+                lens(controller: primary, capture: primaryCapture, live: primaryLiveLoupe,
+                     source: isComparing ? "A" : "Picture", size: lensSize, pictureRect: pictureRect(for: .primary))
                 if isComparing {
-                    lens(image: secondaryCapture.image, source: "B", size: lensSize, pictureRect: pictureRect(for: .secondary))
+                    lens(controller: secondary, capture: secondaryCapture, live: secondaryLiveLoupe,
+                         source: "B", size: lensSize, pictureRect: pictureRect(for: .secondary))
                 }
             }
             .contentShape(Rectangle())
@@ -244,11 +251,25 @@ struct InspectionLoupeOverlay: View {
             .onChange(of: primary.preparationID) { _, _ in refreshCaptures() }
             .onChange(of: secondary.preparationID) { _, _ in refreshCaptures() }
             .onChange(of: isComparing) { _, _ in refreshCaptures() }
+            .onChange(of: state.usesLiveVideo) { _, _ in refreshCaptures() }
+            .onChange(of: state.magnification) { _, _ in refreshCaptures() }
+            .onChange(of: primary.isPlaying) { _, _ in refreshCaptures() }
+            .onChange(of: secondary.isPlaying) { _, _ in refreshCaptures() }
+            .onChange(of: primary.useMPV) { _, _ in refreshCaptures() }
+            .onChange(of: secondary.useMPV) { _, _ in refreshCaptures() }
+            .onChange(of: primary.isReady) { _, _ in refreshCaptures() }
+            .onChange(of: secondary.isReady) { _, _ in refreshCaptures() }
+            .onChange(of: primary.isReversing) { _, _ in refreshCaptures() }
+            .onChange(of: secondary.isReversing) { _, _ in refreshCaptures() }
+            .onChange(of: primaryLiveLoupe.isReady) { _, _ in refreshCaptures() }
+            .onChange(of: secondaryLiveLoupe.isReady) { _, _ in refreshCaptures() }
             .onDisappear {
                 dragOrigin = nil
                 targetDragOrigin = nil
                 primaryCapture.stop()
                 secondaryCapture.stop()
+                primaryLiveLoupe.stop()
+                secondaryLiveLoupe.stop()
             }
         }
         .frame(width: geometry.canvasSize.width, height: geometry.canvasSize.height)
@@ -316,9 +337,21 @@ struct InspectionLoupeOverlay: View {
     }
 
     private func refreshCaptures() {
-        primaryCapture.start(controller: primary)
-        if isComparing { secondaryCapture.start(controller: secondary) }
-        else { secondaryCapture.stop() }
+        refreshCapture(controller: primary, capture: primaryCapture, live: primaryLiveLoupe)
+        if isComparing { refreshCapture(controller: secondary, capture: secondaryCapture, live: secondaryLiveLoupe) }
+        else { secondaryCapture.stop(); secondaryLiveLoupe.stop() }
+    }
+
+    private func usesLivePlayback(_ controller: PlayerController, live: LiveLoupeSession) -> Bool {
+        state.usesLiveVideo && state.magnification.factor != nil
+            && LiveLoupeSession.supportsPlayback(controller) && live.isReady(for: controller)
+    }
+
+    private func refreshCapture(controller: PlayerController, capture: LoupeFrameCapture, live: LiveLoupeSession) {
+        if state.usesLiveVideo && controller.useMPV { live.start(controller: controller) }
+        else { live.stop() }
+        if usesLivePlayback(controller, live: live) { capture.stop() }
+        else { capture.start(controller: controller) }
     }
 
     private func pictureRect(for source: CompareSource) -> CGRect {
@@ -328,11 +361,14 @@ struct InspectionLoupeOverlay: View {
         )
     }
 
-    private func lens(image: CGImage?, source: String, size: CGSize, pictureRect: CGRect) -> some View {
+    private func lens(controller: PlayerController, capture: LoupeFrameCapture, live: LiveLoupeSession,
+                      source: String, size: CGSize, pictureRect: CGRect) -> some View {
         InspectionLoupeLens(
-            image: image, source: source, size: size, pictureSize: pictureRect.size,
+            image: capture.image, source: source, size: size, pictureSize: pictureRect.size,
             normalizedPoint: state.normalizedPoint, magnification: state.magnification,
-            usesNearestNeighbor: state.usesNearestNeighbor
+            usesNearestNeighbor: state.usesNearestNeighbor,
+            liveSession: state.usesLiveVideo && controller.useMPV ? live : nil,
+            liveIsVisible: usesLivePlayback(controller, live: live)
         )
     }
 }
@@ -346,6 +382,8 @@ struct InspectionLoupeLens: View {
     let normalizedPoint: CGPoint
     let magnification: LoupeMagnification
     var usesNearestNeighbor = true
+    var liveSession: LiveLoupeSession? = nil
+    var liveIsVisible = false
     @Environment(\.displayScale) private var displayScale
 
     var body: some View {
@@ -372,6 +410,15 @@ struct InspectionLoupeLens: View {
                         .font(.caption2).foregroundStyle(.white)
                         .frame(width: size.width, height: size.height)
                 }
+                if let liveSession {
+                    LiveLoupeVideoSurface(session: liveSession, size: size,
+                        viewport: LoupeVideoViewport(pictureSize: pictureSize, lensSize: size,
+                            normalizedPoint: normalizedPoint, magnification: magnification),
+                        nearest: usesNearestNeighbor)
+                        .frame(width: size.width, height: size.height)
+                        .opacity(liveIsVisible ? 1 : 0)
+                        .allowsHitTesting(false)
+                }
                 Image(systemName: "plus")
                     .font(.system(size: 12, weight: .light))
                     .foregroundStyle(.white.opacity(0.7))
@@ -380,7 +427,7 @@ struct InspectionLoupeLens: View {
             }
             .frame(width: size.width, height: size.height, alignment: .topLeading)
             .clipped()
-            Text("\(source) · \(magnification.label) · \(magnification == .nativePixels ? "Verified decoded raster" : "Display preview")")
+            Text("\(source) · \(magnification.label) · \(liveIsVisible ? "Live video" : magnification == .nativePixels ? "Verified decoded raster" : "Display preview")")
                 .font(.caption2).foregroundStyle(.white)
                 .frame(width: size.width, height: 26)
                 .background(.black.opacity(0.85))

@@ -87,6 +87,75 @@ A passing test without that marker can be the stock preview-only branch and
 does not establish native integration. To manually launch the built app, set
 `AAGEDAL_MPV_DECODER_RASTER_CANDIDATE=1` in its process environment before launch.
 
+The hosted runner configures a temporary copy of the xctestrun, disables parallel
+testing, and requires both a successful XCTest exit and the acceptance marker:
+
+```sh
+python3 scripts/validate-mpv-native-app.py PATH_TO_XCTESTRUN \
+  /private/tmp/aagedal-native-app/native-fixtures.json \
+  /private/tmp/aagedal-native-hosted-next
+
+python3 scripts/validate-mpv-native-app.py PATH_TO_XCTESTRUN \
+  /private/tmp/aagedal-native-app/native-fixtures.json \
+  /private/tmp/aagedal-native-stress-next --stress-cycles 6
+
+python3 scripts/validate-mpv-native-app.py PATH_TO_XCTESTRUN \
+  /private/tmp/aagedal-native-app/native-fixtures.json \
+  /private/tmp/aagedal-loupe-playback-next --playback
+```
+
+Stress mode repeats all ten positive UHD/DCI/HDR cases with software and actual
+VideoToolbox decoding. Each lifecycle checks independently decoded sample pixels,
+seek freshness, paused-image reuse, three rapid loupe close/reopen sequences,
+and resume revocation, followed by complete capture/controller teardown.
+It measures `TASK_VM_INFO.phys_footprint` after each cycle and bounds subsequent
+cycle-end samples to 256 MiB above the first complete warmup cycle. This is a
+process growth check, not a total-memory ceiling, a peak-allocation measurement,
+or sanitizer coverage of MPVKit. `--stress-cycles` accepts 3 through 100.
+Look for `MPV_NATIVE_STRESS_ACCEPTANCE` and the per-cycle byte measurements.
+
+Playback mode checks UHD SDR, PQ, and HLG previews with software/VideoToolbox
+decoding, independent first-frame pixels for HDR, live color-space/depth tags,
+and return to native inspection on pause. It measures delivered updates against
+the screenshot backend alone: require more than the old 10 fps cap and at least
+80% of backend throughput (capped at the 60 Hz scheduler target). The retained
+fixtures are 2 fps, so they do not establish high-motion cadence. The subsequent
+[playback evidence](evidence/mpv-loupe-hdr-playback-20261014/README.md) includes a
+separate 3840×2160, 60 fps workload with changing luma, verified stream metadata,
+independent decoded references, and a fresh-frame check. `--playback` and
+`--stress-cycles` are separate runs.
+
+## Default live secondary viewer
+
+**Live video during playback** is enabled by default in the loupe controls.
+It can be switched off without restarting to use captured previews instead.
+No live-loupe environment flag is required. Forward MPV playback uses a silent second decoder
+and a lens-sized Metal surface with GPU zoom/pan. Once ready, the ordinary loupe
+capture stops; pausing restores the captured/native-raster path. Reverse and AV
+playback retain capture. The second decoder never enables the native-raster
+cache, even when the main candidate provider is enabled.
+
+The [default-on candidate](evidence/mpv-live-loupe-default-20261014/README.md)
+passes 28 loupe/rendering/fallback tests. Its arm64 app is available locally at
+`build/default-live-loupe-candidate-20261014/Aagedal Media Player.app`.
+
+Use a UHD 60 fps workload manifest for its presented-frame/clock acceptance:
+
+```sh
+python3 scripts/validate-mpv-native-app.py PATH_TO_XCTESTRUN \
+  /private/tmp/aagedal-loupe-playback-60fps/live-viewer-fixtures.json \
+  /private/tmp/aagedal-live-viewer-next --live-viewer
+```
+
+The [prototype evidence](evidence/mpv-live-loupe-prototype-20261014/README.md)
+records matching SDR/HDR output, VideoToolbox use, actual Metal presentations,
+clock drift, crop pixels, lifecycle, and suppression of background screenshots.
+This is independent-player synchronization, not frame lock. It adds one decoder
+per MPV source while the loupe is open and live video is enabled.
+Further qualification is needed for long-duration loads and simultaneous UHD
+comparison viewers. Shipping pins and the native provider's default-off gate
+remain unchanged.
+
 ## Accepted state and next work
 
 [Acceptance evidence](evidence/mpv-native-raster-expanded-20261014/README.md)
@@ -102,6 +171,12 @@ includes sustained UHD/HDR memory and sanitizer checks, broader media/presentati
 workloads, and physical HDR display qualification. Publishing a shipping provider
 package and repinning the app remain separate work. The reusable development
 bundle does not enable the default-off feature in ordinary builds.
+
+[The subsequent app lifecycle run](evidence/mpv-native-raster-stress-20261014/README.md)
+adds 66 passing consumer/loupe tests, all 20 hosted fixtures, and six repeated
+UHD/HDR cycles (60 lifecycles, 180 rapid reopen sequences). Cycle-end physical
+footprint stays below the first warmup cycle. Peak memory, long-duration load,
+sanitizers, and physical HDR display qualification remain open.
 
 App changes and rerunning these fixtures do **not** require a dependency rebuild.
 Changing the provider C patch, FFmpeg configuration, or MPVKit internals does:

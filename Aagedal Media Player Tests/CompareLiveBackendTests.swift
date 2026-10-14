@@ -2253,6 +2253,9 @@ final class CompareLiveBackendTests: XCTestCase {
         let secondary = makeController(forcedBackend: secondaryBackend)
         let session = CompareSessionController(secondaryController: secondary)
         let state = InspectionLoupeState()
+        // This profile measures fresh captured pixels alongside scopes. Keep
+        // exercising the capture fallback now that MPV live video is the default.
+        state.usesLiveVideo = false
         let scopeProbe = ScopeRenderProbe()
         let primaryLoupe = LoupeFrameCapture()
         let secondaryLoupe = LoupeFrameCapture()
