@@ -183,10 +183,28 @@ struct SettingsView: View {
         case .original:
             return sourceURL.deletingLastPathComponent()
         case .custom:
-            return resolveBookmark(setting: bookmarkSetting) ?? desktopURL()
+            return resolveBookmark(setting: bookmarkSetting)
         case .ask:
             return nil
         }
+    }
+
+    static var screenshotDirectoryRecoveryMessage: String? {
+        directoryRecoveryMessage(modeSetting: AppSettings.screenshotLocationMode,
+                                 bookmarkSetting: AppSettings.screenshotSaveDirectory)
+    }
+
+    static var trimDirectoryRecoveryMessage: String? {
+        directoryRecoveryMessage(modeSetting: AppSettings.trimLocationMode,
+                                 bookmarkSetting: AppSettings.trimSaveDirectory)
+    }
+
+    private static func directoryRecoveryMessage(
+        modeSetting: AppSetting<String>, bookmarkSetting: AppSetting<Data?>
+    ) -> String? {
+        guard SaveLocationMode(rawValue: UserDefaults.standard.value(for: modeSetting)) == .custom,
+              resolveBookmark(setting: bookmarkSetting) == nil else { return nil }
+        return "Your saved export folder is unavailable. Choose a destination for this export. You can update the saved folder in Settings."
     }
 
     static func resolveBookmark(setting: AppSetting<Data?>) -> URL? {
@@ -217,9 +235,6 @@ struct SettingsView: View {
         return url
     }
 
-    private static func desktopURL() -> URL {
-        FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Desktop")
-    }
 }
 
 // MARK: - General Settings

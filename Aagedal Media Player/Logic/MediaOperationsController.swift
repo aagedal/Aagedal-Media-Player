@@ -139,15 +139,16 @@ final class MediaOperationsController: ObservableObject {
         let output: CoordinatedOutput
         let resolvedDir = SettingsView.resolvedScreenshotDirectory(sourceURL: primaryItem.url)
 
+        let scopedDirectory = resolvedDir.flatMap { $0.startAccessingSecurityScopedResource() ? $0 : nil }
+        defer { scopedDirectory?.stopAccessingSecurityScopedResource() }
+
         if let dir = resolvedDir {
-            let needsSecurityScope = dir != primaryItem.url.deletingLastPathComponent()
-            if needsSecurityScope { _ = dir.startAccessingSecurityScopedResource() }
-            defer { if needsSecurityScope { dir.stopAccessingSecurityScopedResource() } }
             output = OutputCoordinator.automatic(directory: dir, preferredFilename: outputName)
         } else {
             let chosenURL: URL? = await withCheckedContinuation { continuation in
                 let panel = NSSavePanel()
                 screenshotSavePanel = panel
+                panel.message = SettingsView.screenshotDirectoryRecoveryMessage ?? ""
                 panel.nameFieldStringValue = outputName
                 panel.allowedContentTypes = [.png]
                 panel.canCreateDirectories = true
@@ -183,12 +184,16 @@ final class MediaOperationsController: ObservableObject {
             try Task.checkCancellation()
             guard taskOwner.isCurrent(.screenshot, token: token) else { return }
 
-            let rendered = try ComparisonStillRenderer.render(
-                primaryImage: primaryImage,
-                secondaryImage: secondaryImage,
-                details: details
-            )
-            try ComparisonStillRenderer.writePNG(rendered, to: output.temporaryURL)
+            // Keep raster composition, compression, and disk I/O off the UI actor.
+            // Await completion before discarding the temporary file on cancellation.
+            try await Task.detached(priority: .userInitiated) {
+                let rendered = try ComparisonStillRenderer.render(
+                    primaryImage: primaryImage,
+                    secondaryImage: secondaryImage,
+                    details: details
+                )
+                try ComparisonStillRenderer.writePNG(rendered, to: output.temporaryURL)
+            }.value
             guard taskOwner.isCurrent(.screenshot, token: token), !Task.isCancelled else { return }
 
             let outputURL = try output.commit()
@@ -231,15 +236,16 @@ final class MediaOperationsController: ObservableObject {
         let output: CoordinatedOutput
         let resolvedDir = SettingsView.resolvedScreenshotDirectory(sourceURL: item.url)
 
+        let scopedDirectory = resolvedDir.flatMap { $0.startAccessingSecurityScopedResource() ? $0 : nil }
+        defer { scopedDirectory?.stopAccessingSecurityScopedResource() }
+
         if let dir = resolvedDir {
-            let needsSecurityScope = dir != item.url.deletingLastPathComponent()
-            if needsSecurityScope { _ = dir.startAccessingSecurityScopedResource() }
-            defer { if needsSecurityScope { dir.stopAccessingSecurityScopedResource() } }
             output = OutputCoordinator.automatic(directory: dir, preferredFilename: outputName)
         } else {
             let chosenURL: URL? = await withCheckedContinuation { continuation in
                 let panel = NSSavePanel()
                 screenshotSavePanel = panel
+                panel.message = SettingsView.screenshotDirectoryRecoveryMessage ?? ""
                 panel.nameFieldStringValue = outputName
                 panel.allowedContentTypes = [.init(filenameExtension: format.fileExtension) ?? .image]
                 panel.canCreateDirectories = true
@@ -356,15 +362,16 @@ final class MediaOperationsController: ObservableObject {
         let output: CoordinatedOutput
         let resolvedDir = SettingsView.resolvedTrimDirectory(sourceURL: item.url)
 
+        let scopedDirectory = resolvedDir.flatMap { $0.startAccessingSecurityScopedResource() ? $0 : nil }
+        defer { scopedDirectory?.stopAccessingSecurityScopedResource() }
+
         if let dir = resolvedDir {
-            let needsSecurityScope = dir != item.url.deletingLastPathComponent()
-            if needsSecurityScope { _ = dir.startAccessingSecurityScopedResource() }
-            defer { if needsSecurityScope { dir.stopAccessingSecurityScopedResource() } }
             output = OutputCoordinator.automatic(directory: dir, preferredFilename: defaultName)
         } else {
             let chosenURL: URL? = await withCheckedContinuation { continuation in
                 let panel = NSSavePanel()
                 trimExportSavePanel = panel
+                panel.message = SettingsView.trimDirectoryRecoveryMessage ?? ""
                 panel.nameFieldStringValue = defaultName
                 panel.allowedContentTypes = [UTType(filenameExtension: outputExtension) ?? .movie]
                 panel.canCreateDirectories = true

@@ -12,6 +12,9 @@ struct MetadataInspectorView: View {
     let useMPV: Bool
     let trimIn: Double?
     let trimOut: Double?
+    var isLoadingMetadata = false
+    var metadataError: String?
+    var onRetryMetadata: (() -> Void)?
     @Binding var isPresented: Bool
     @State private var showCopiedConfirmation = false
     @State private var copiedConfirmationTask = DeferredMainActorTask()
@@ -186,7 +189,22 @@ struct MetadataInspectorView: View {
                     metadataRow("Engine", value: useMPV ? "mpv" : "Apple AVFoundation")
                 }
             } else {
-                ContentUnavailableView("No Metadata", systemImage: "doc.questionmark", description: Text("Metadata not available for this file."))
+                if isLoadingMetadata {
+                    ProgressView("Reading metadata…")
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                } else {
+                    ContentUnavailableView {
+                        Label("Metadata Unavailable", systemImage: "doc.questionmark")
+                    } description: {
+                        Text(metadataError ?? "Metadata not available for this file.")
+                    } actions: {
+                        if let onRetryMetadata {
+                            Button("Retry", action: onRetryMetadata)
+                                .accessibilityLabel("Retry reading metadata")
+                        }
+                    }
+                }
             }
         }
         .listStyle(.sidebar)

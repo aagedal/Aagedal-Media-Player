@@ -18,6 +18,7 @@ final class ExportCommandBuilderTests: XCTestCase {
             "-ss", "1.25",
             "-i", "/tmp/source clip.mov",
             "-t", "2.5",
+            "-map", "0",
             "-c", "copy",
             "-avoid_negative_ts", "make_zero",
             "-n", "/tmp/output clip.tmp",
