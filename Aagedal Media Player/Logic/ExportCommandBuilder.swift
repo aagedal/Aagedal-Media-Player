@@ -247,7 +247,9 @@ nonisolated enum TrimExportCommandBuilder {
     private static func formatArguments(for request: TrimExportCommandRequest) -> [String] {
         switch request.format {
         case .copy:
-            return ["-c", "copy", "-avoid_negative_ts", "make_zero"]
+            // Preserve every source stream, including additional audio tracks,
+            // subtitles, timecode/data tracks, and attachments.
+            return ["-map", "0", "-c", "copy", "-avoid_negative_ts", "make_zero"]
 
         case .gif:
             let fps = Int(normalized(request.gifFrameRate, range: 5...30, defaultValue: 15))

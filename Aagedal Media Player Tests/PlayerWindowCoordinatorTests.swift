@@ -10,6 +10,45 @@ import XCTest
 
 @MainActor
 final class PlayerWindowCoordinatorTests: XCTestCase {
+    func testMetadataFailureCanRetryWithoutReplacingMediaOrTrimPoints() async throws {
+        let metadata = MediaMetadata(
+            duration: 10, formatName: "mov", containerLongName: nil, sizeBytes: 100,
+            bitRate: nil, timecode: nil, comment: nil, encoder: nil, frameCount: nil,
+            videoStreams: [], audioStreams: [], subtitleStreams: [], chapters: []
+        )
+        let reader = RecoverableMetadataReader(metadata: metadata)
+        let coordinator = PlayerWindowCoordinator(
+            metadataLoader: { _ in try await reader.read() }, noteRecentDocument: { _ in }
+        )
+        let controller = PlayerController()
+        defer { coordinator.tearDown(); controller.teardown() }
+        let failed = expectation(description: "Metadata failure is visible")
+        let observation = coordinator.$metadataError.compactMap { $0 }.prefix(1).sink { message in
+            XCTAssertTrue(message.contains("Test metadata failure"))
+            failed.fulfill()
+        }
+        defer { observation.cancel() }
+        coordinator.openFile(URL(fileURLWithPath: "/tmp/retry-metadata.mov"), controller: controller,
+                             onTimecodeModeChange: { _ in }, onMetadataLoaded: {})
+        await fulfillment(of: [failed], timeout: 3)
+        // Published values notify before assignment completes.
+        await Task.yield()
+        let originalID = try XCTUnwrap(controller.mediaItem?.id)
+        controller.setTrimIn()
+        let trimIn = controller.trimIn
+        await reader.recover()
+        let recovered = expectation(description: "Retry applies metadata")
+        coordinator.retryMetadata(controller: controller, onTimecodeModeChange: { _ in },
+                                  onMetadataLoaded: { recovered.fulfill() })
+        XCTAssertTrue(coordinator.isLoadingMetadata)
+        XCTAssertNil(coordinator.metadataError)
+        await fulfillment(of: [recovered], timeout: 3)
+        XCTAssertEqual(controller.mediaItem?.id, originalID)
+        XCTAssertEqual(controller.mediaItem?.metadata, metadata)
+        XCTAssertEqual(controller.trimIn, trimIn)
+        XCTAssertFalse(coordinator.isLoadingMetadata)
+    }
+
     func testOpeningProgressAppearsBeforeSlowMetadataAndSurvivesReplacement() async throws {
         let coordinator = PlayerWindowCoordinator(
             metadataLoader: { _ in
@@ -302,5 +341,17 @@ private actor SuspendedMediaItemReads {
         continuations.removeValue(forKey: url)?.resume(returning: MediaItem(
             url: url, name: url.deletingPathExtension().lastPathComponent, size: 0
         ))
+    }
+}
+
+private actor RecoverableMetadataReader {
+    let metadata: MediaMetadata
+    private var recovered = false
+
+    init(metadata: MediaMetadata) { self.metadata = metadata }
+    func recover() { recovered = true }
+    func read() throws -> MediaMetadata {
+        guard recovered else { throw MetadataError.readFailed("Test metadata failure") }
+        return metadata
     }
 }

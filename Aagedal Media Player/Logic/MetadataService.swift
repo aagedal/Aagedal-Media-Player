@@ -10,8 +10,14 @@ import Foundation
 import OSLog
 import SwiftMediaMetadata
 
-enum MetadataError: Error {
+enum MetadataError: Error, LocalizedError {
     case readFailed(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .readFailed(let reason): return "Could not read metadata: \(reason)"
+        }
+    }
 }
 
 actor MetadataService {

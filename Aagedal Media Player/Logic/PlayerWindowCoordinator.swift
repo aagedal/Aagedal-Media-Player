@@ -19,6 +19,10 @@ final class PlayerWindowCoordinator: ObservableObject {
     @Published private(set) var canOpenPreviousFile = false
     @Published private(set) var canOpenNextFile = false
 
+    @Published private(set) var isLoadingMetadata = false
+    @Published private(set) var metadataError: String?
+    private var metadataRetryTask: Task<Void, Never>?
+
     private var fileOpenTask: Task<Void, Never>?
     private var fileOpenGeneration = 0
     private let mediaItemLoader: @Sendable (URL) async -> MediaItem
@@ -171,6 +175,10 @@ final class PlayerWindowCoordinator: ObservableObject {
     ) {
         logger.info("Opening file: \(url.lastPathComponent)")
         fileOpenTask?.cancel()
+        metadataRetryTask?.cancel()
+        metadataRetryTask = nil
+        metadataError = nil
+        isLoadingMetadata = true
         fileOpenGeneration &+= 1
         let generation = fileOpenGeneration
         openingURL = url
@@ -181,7 +189,10 @@ final class PlayerWindowCoordinator: ObservableObject {
 
         fileOpenTask = Task { @MainActor in
             defer {
-                if fileOpenGeneration == generation { openingURL = nil }
+                if fileOpenGeneration == generation {
+                    openingURL = nil
+                    isLoadingMetadata = false
+                }
             }
             var item = await mediaItemLoader(url)
             guard !Task.isCancelled, fileOpenGeneration == generation else { return }
@@ -215,13 +226,44 @@ final class PlayerWindowCoordinator: ObservableObject {
                     onTimecodeModeChange(metadata.timecode != nil ? .source : .relative)
                     onMetadataLoaded()
                 } catch {
-                    guard !Task.isCancelled else { return }
+                    guard !Task.isCancelled, fileOpenGeneration == generation else { return }
+                    metadataError = error.localizedDescription
                     logger.warning("Failed to load metadata: \(error.localizedDescription)")
                 }
             }
         }
 
         noteRecentDocument(url)
+    }
+
+    /// Retry inspection without reloading media or disturbing playback/trim state.
+    func retryMetadata(
+        controller: PlayerController,
+        onTimecodeModeChange: @escaping (TimecodeDisplayMode) -> Void,
+        onMetadataLoaded: @escaping () -> Void
+    ) {
+        guard !isLoadingMetadata, let item = controller.mediaItem,
+              item.metadata == nil else { return }
+        let generation = fileOpenGeneration
+        isLoadingMetadata = true
+        metadataError = nil
+        metadataRetryTask = Task { @MainActor in
+            defer {
+                if fileOpenGeneration == generation { isLoadingMetadata = false }
+            }
+            do {
+                let metadata = try await metadataLoader(item.url)
+                guard !Task.isCancelled, fileOpenGeneration == generation,
+                      var current = controller.mediaItem, current.id == item.id else { return }
+                Self.apply(metadata, to: &current)
+                controller.updateMetadata(current)
+                onTimecodeModeChange(metadata.timecode != nil ? .source : .relative)
+                onMetadataLoaded()
+            } catch {
+                guard !Task.isCancelled, fileOpenGeneration == generation else { return }
+                metadataError = error.localizedDescription
+            }
+        }
     }
 
     func previousMediaURL() -> URL? {
@@ -263,6 +305,10 @@ final class PlayerWindowCoordinator: ObservableObject {
         windowCloseHandler = nil
         fileOpenTask?.cancel()
         fileOpenTask = nil
+        metadataRetryTask?.cancel()
+        metadataRetryTask = nil
+        metadataError = nil
+        isLoadingMetadata = false
         fileOpenGeneration &+= 1
         openingURL = nil
         folderNavigationTask?.cancel()

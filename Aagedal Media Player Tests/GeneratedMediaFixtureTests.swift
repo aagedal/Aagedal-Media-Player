@@ -9,6 +9,34 @@ import XCTest
 
 final class GeneratedMediaFixtureTests: XCTestCase {
     @MainActor
+    func testLosslessTrimPreservesAllAudioTracks() async throws {
+        guard FFmpegService.ffmpegPath != nil else { throw XCTSkip("Bundled ffmpeg is required") }
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let source = directory.appendingPathComponent("two-tracks.mov")
+        let output = directory.appendingPathComponent("trimmed.mov")
+        try await FFmpegService.run(arguments: [
+            "-hide_banner", "-loglevel", "error",
+            "-f", "lavfi", "-i", "sine=frequency=440:duration=2",
+            "-f", "lavfi", "-i", "sine=frequency=880:duration=2",
+            "-map", "0:a", "-map", "1:a", "-c:a", "pcm_s16le", "-n", source.path,
+        ])
+        let arguments = TrimExportCommandBuilder.arguments(for: TrimExportCommandRequest(
+            sourceURL: source, destinationURL: output, inPoint: 0.25, outPoint: 1.25,
+            format: .copy, width: 0, gifFrameRate: 15, avifQuality: 28,
+            avifSpeed: 4, h264Quality: 65, h265Quality: 65
+        ))
+        try await FFmpegService.run(arguments: arguments)
+        let before = try await MetadataService.shared.metadata(for: source)
+        let after = try await MetadataService.shared.metadata(for: output)
+        XCTAssertEqual(before.audioStreams.count, 2)
+        XCTAssertEqual(after.audioStreams.count, 2)
+        XCTAssertEqual(after.audioStreams.map(\.codec), before.audioStreams.map(\.codec))
+        XCTAssertEqual(after.duration ?? 0, 1, accuracy: 0.1)
+    }
+
+    @MainActor
     func testCommonFrameRates() async throws {
         let directory = try fixtureDirectory()
         let expectedRates: [(String, Int, Int)] = [

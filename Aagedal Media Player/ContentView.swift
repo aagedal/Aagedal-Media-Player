@@ -396,7 +396,20 @@ struct ContentView: View {
         }
         .inspector(isPresented: $showInspector) {
             if let item = controller.mediaItem {
-                MetadataInspectorView(item: item, useMPV: controller.useMPV, trimIn: controller.trimIn, trimOut: controller.trimOut, isPresented: $showInspector)
+                MetadataInspectorView(
+                    item: item, useMPV: controller.useMPV,
+                    trimIn: controller.trimIn, trimOut: controller.trimOut,
+                    isLoadingMetadata: windowCoordinator.isLoadingMetadata,
+                    metadataError: windowCoordinator.metadataError,
+                    onRetryMetadata: {
+                        windowCoordinator.retryMetadata(
+                            controller: controller,
+                            onTimecodeModeChange: { timecodeMode = $0 },
+                            onMetadataLoaded: metadataDidLoad
+                        )
+                    },
+                    isPresented: $showInspector
+                )
             }
         }
         .onDrop(of: [.fileURL], isTargeted: $isDropTargeted) { providers in
