@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import Foundation
+import CoreGraphics
 import Libmpv
 import XCTest
 @testable import Aagedal_Media_Player
@@ -33,7 +34,7 @@ final class MPVDecoderRasterTests: XCTestCase {
         for key in ["pixel-preserving", "presented-frame"] {
             XCTAssertNil(withNode(falseFlag: key) { MPVDecoderRaster.parse($0, trackBefore: 1, trackAfter: 1) }, key)
         }
-        XCTAssertNil(withNode(protocolVersion: 2) { MPVDecoderRaster.parse($0, trackBefore: 1, trackAfter: 1) })
+        XCTAssertNil(withNode(protocolVersion: 3) { MPVDecoderRaster.parse($0, trackBefore: 1, trackAfter: 1) })
     }
 
     func testRejectsChangedUnselectedAndUnknownTrack() {
@@ -112,6 +113,92 @@ final class MPVDecoderRasterTests: XCTestCase {
         }
     }
 
+    func testProtocol2RequiresColorAndTransferProofAndRejectsQuantizedHDR() throws {
+        for key in ["primaries", "transfer", "source-bit-depth", "hardware-transfer"] {
+            for mutation in 0..<3 {
+                XCTAssertNil(withNode(omit: mutation == 0 ? key : nil,
+                    wrongType: mutation == 1 ? key : nil, duplicate: mutation == 2 ? key : nil,
+                    protocolVersion: 2, pixelFormat: "rgba64", stride: 16, backingByteCount: 16,
+                    primaries: "bt2020", transfer: "pq", depth: 10, hardware: 1) {
+                        MPVDecoderRaster.parse($0, trackBefore: 1, trackAfter: 1)
+                    }, "\(key), mutation \(mutation)")
+            }
+        }
+        for (primaries, transfer, depth, hardware) in [("bt709", "pq", 10, 1), ("bt2020", "srgb", 10, 1),
+                                                       ("unknown", "pq", 10, 1), ("bt2020", "pq", 17, 1),
+                                                       ("bt2020", "pq", 10, 2)] {
+            XCTAssertNil(withNode(protocolVersion: 2, pixelFormat: "rgba64", stride: 16,
+                                  backingByteCount: 16, primaries: primaries, transfer: transfer,
+                                  depth: Int64(depth), hardware: Int32(hardware)) {
+                MPVDecoderRaster.parse($0, trackBefore: 1, trackAfter: 1)
+            })
+        }
+        XCTAssertNil(withNode(protocolVersion: 2, primaries: "bt2020", transfer: "pq", depth: 10, hardware: 0) {
+            MPVDecoderRaster.parse($0, trackBefore: 1, trackAfter: 1)
+        }, "An 8-bit HDR payload must not replace the required RGBA16 encoding")
+    }
+
+    func testProtocol2AcceptsBoundedUHDButKeepsLegacyBounds() throws {
+        let raster = try XCTUnwrap(withNode(protocolVersion: 2, codedWidth: 3840,
+            stride: 3840 * 4, codedHeight: 2160, rasterWidth: 3840, rasterHeight: 2160,
+            backingByteCount: 3840 * 2160 * 4, primaries: "bt709", transfer: "srgb", depth: 8, hardware: 1) {
+                MPVDecoderRaster.parse($0, trackBefore: 1, trackAfter: 1)
+            })
+        XCTAssertEqual(raster.pixels.width, 3840)
+        XCTAssertEqual(raster.pixels.height, 2160)
+        XCTAssertTrue(raster.hardwareTransferred)
+        XCTAssertEqual(raster.colorEncoding, .sRGB)
+        XCTAssertNil(withNode(protocolVersion: 2, codedWidth: 3072, stride: 3072 * 4,
+            codedHeight: 3072, rasterWidth: 3072, rasterHeight: 3072,
+            primaries: "bt709", transfer: "srgb", depth: 8, hardware: 0) {
+                MPVDecoderRaster.parse($0, trackBefore: 1, trackAfter: 1)
+            })
+        XCTAssertNil(withNode(protocolVersion: 1, codedWidth: 3840, codedHeight: 2160) {
+            MPVDecoderRaster.parse($0, trackBefore: 1, trackAfter: 1)
+        })
+    }
+
+    func testProtocol2CarriesOrientedHighDepthHDRIntoTaggedCGImage() throws {
+        for (transfer, encoding, name) in [("pq", MPVDecoderRaster.ColorEncoding.bt2020PQ, CGColorSpace.itur_2100_PQ),
+                                            ("hlg", .bt2020HLG, CGColorSpace.itur_2100_HLG)] {
+            let raster = try XCTUnwrap(withNode(protocolVersion: 2, rotation: 90, pixelFormat: "rgba64",
+                stride: 8, rasterWidth: 1, rasterHeight: 2, backingByteCount: 16,
+                primaries: "bt2020", transfer: transfer, depth: 10, hardware: 1, mirrored: 1) {
+                    MPVDecoderRaster.parse($0, trackBefore: 1, trackAfter: 1)
+                })
+            XCTAssertEqual(raster.colorEncoding, encoding)
+            XCTAssertEqual(raster.sourceBitDepth, 10)
+            XCTAssertTrue(raster.mirrored)
+            let image = try XCTUnwrap(LoupeFrameCapture.image(from: raster))
+            XCTAssertEqual(image.bitsPerComponent, 16)
+            XCTAssertEqual(image.colorSpace?.name, name)
+            XCTAssertEqual(image.width, 1)
+            XCTAssertEqual(image.height, 2)
+        }
+    }
+
+    func testPQColorConversionRetainsHighlightsAboveSDRWhite() throws {
+        let words: [UInt16] = [58982, 58982, 58982, 65535, 32768, 32768, 32768, 65535]
+        let data = words.withUnsafeBytes { Data($0) }
+        let raw = MPVPlayer.RawScreenshot(data: data, width: 2, height: 1, stride: 16,
+                                          format: "rgba64", playbackTime: 0, playbackTimeUncertainty: 0)
+        let raster = MPVDecoderRaster(pixels: raw, trackID: 1, rotation: 0, mirrored: false,
+                                     sourceBitDepth: 10, colorEncoding: .bt2020PQ)
+        let image = try XCTUnwrap(LoupeFrameCapture.image(from: raster))
+        let colorSpace = try XCTUnwrap(CGColorSpace(name: CGColorSpace.extendedLinearITUR_2020))
+        var values = [Float](repeating: 0, count: 8)
+        try values.withUnsafeMutableBytes { buffer in
+            let context = try XCTUnwrap(CGContext(data: buffer.baseAddress, width: 2, height: 1,
+                bitsPerComponent: 32, bytesPerRow: 32, space: colorSpace,
+                bitmapInfo: CGBitmapInfo.floatComponents.rawValue | CGBitmapInfo.byteOrder32Little.rawValue |
+                    CGImageAlphaInfo.noneSkipLast.rawValue))
+            context.draw(image, in: CGRect(x: 0, y: 0, width: 2, height: 1))
+        }
+        XCTAssertTrue(values[0].isFinite)
+        XCTAssertGreaterThan(values[0], 1, "PQ highlights must survive color conversion into extended linear RGB")
+        XCTAssertGreaterThan(values[0], values[4])
+    }
+
     private func withNode<T>(omit: String? = nil, wrongType: String? = nil,
                              duplicate: String? = nil, falseFlag: String? = nil,
                              protocolVersion: Int64 = 1, codedWidth: Int64 = 2,
@@ -120,16 +207,25 @@ final class MPVDecoderRasterTests: XCTestCase {
                              nullData: Bool = false, stride: Int64 = 8,
                              codedHeight: Int64 = 1, rasterWidth: Int64 = 2,
                              rasterHeight: Int64 = 1, backingByteCount: Int? = nil,
+                             primaries: String? = nil, transfer: String? = nil,
+                             depth: Int64? = nil, hardware: Int32? = nil, mirrored: Int32 = 0,
                              _ body: (mpv_node) -> T) -> T {
         let bytes = backingByteCount.map { Data(repeating: 0, count: $0) } ?? Data([0, 0, 255, 0, 0, 255, 0, 0])
         let format = strdup(pixelFormat)!
-        defer { free(format) }
+        let primariesText = primaries.flatMap { strdup($0) }
+        let transferText = transfer.flatMap { strdup($0) }
+        defer { free(format); free(primariesText); free(transferText) }
         return bytes.withUnsafeBytes { buffer in
             var byteArray = mpv_byte_array(data: nullData ? nil : UnsafeMutableRawPointer(mutating: buffer.baseAddress), size: reportedByteCount ?? bytes.count)
             return withUnsafeMutablePointer(to: &byteArray) { array in
-                let integers: [String: Int64] = ["w": rasterWidth, "h": rasterHeight, "stride": stride, "protocol": protocolVersion,
+                var integers: [String: Int64] = ["w": rasterWidth, "h": rasterHeight, "stride": stride, "protocol": protocolVersion,
                                                "coded-w": codedWidth, "coded-h": codedHeight, "rotation": rotation, "track-id": 1]
-                var names = (Array(integers.keys) + ["pixel-preserving", "presented-frame", "mirrored", "pts", "format", "data"]).filter { $0 != omit }
+                if let depth { integers["source-bit-depth"] = depth }
+                var extra: [String] = []
+                if primariesText != nil { extra.append("primaries") }
+                if transferText != nil { extra.append("transfer") }
+                if hardware != nil { extra.append("hardware-transfer") }
+                var names = (Array(integers.keys) + ["pixel-preserving", "presented-frame", "mirrored", "pts", "format", "data"] + extra).filter { $0 != omit }
                 if let duplicate { names.append(duplicate) }
                 var keys = names.map { strdup($0) }
                 defer { keys.forEach { free($0) } }
@@ -141,10 +237,13 @@ final class MPVDecoderRasterTests: XCTestCase {
                         node.format = MPV_FORMAT_DOUBLE; node.u.double_ = pts
                     } else if name == "format" {
                         node.format = MPV_FORMAT_STRING; node.u.string = format
+                    } else if name == "primaries" || name == "transfer" {
+                        node.format = MPV_FORMAT_STRING; node.u.string = name == "primaries" ? primariesText : transferText
                     } else if name == "data" {
                         node.format = MPV_FORMAT_BYTE_ARRAY; node.u.ba = array
                     } else {
-                        node.format = MPV_FORMAT_FLAG; node.u.flag = name == "mirrored" || name == falseFlag ? 0 : 1
+                        node.format = MPV_FORMAT_FLAG
+                        node.u.flag = name == "mirrored" ? mirrored : (name == "hardware-transfer" ? hardware! : (name == falseFlag ? 0 : 1))
                     }
                     if name == wrongType { node.format = MPV_FORMAT_NONE }
                     return node

@@ -1,0 +1,739 @@
+{
+  "schemaVersion": 1,
+  "buildSucceeded": true,
+  "architectures": [
+    "arm64"
+  ],
+  "publicationSHA256": "3eb8f8dd20ce2de6802b7d080e6df30a69ca00b6706dc408823291576b96616c",
+  "newEnvironment": {
+    "tools": {
+      "python3": {
+        "path": "/opt/homebrew/bin/python3",
+        "resolvedPath": "/opt/homebrew/Cellar/python@3.15/3.15.0/Frameworks/Python.framework/Versions/3.15/bin/python3.15",
+        "sha256": "15c72833c1ffc09bc4e05d1e1866784d126721ad548d9c4d8f943641262535cb"
+      },
+      "swift": {
+        "path": "/usr/bin/swift",
+        "resolvedPath": "/usr/bin/swift",
+        "sha256": "34129c71a01a74f7f3b2443521519b2e5447553fa187f5fcafaaf8c42cc192e2"
+      },
+      "git": {
+        "path": "/opt/homebrew/bin/git",
+        "resolvedPath": "/opt/homebrew/Cellar/git/2.56.0_1/bin/git",
+        "sha256": "40163333061f7223ecb604ed0f12988cfc8096d57ca8b1db006d410d4aeb700e"
+      },
+      "clang": {
+        "path": "/usr/bin/clang",
+        "resolvedPath": "/usr/bin/clang",
+        "sha256": "34129c71a01a74f7f3b2443521519b2e5447553fa187f5fcafaaf8c42cc192e2"
+      },
+      "clang++": {
+        "path": "/usr/bin/clang++",
+        "resolvedPath": "/usr/bin/clang++",
+        "sha256": "34129c71a01a74f7f3b2443521519b2e5447553fa187f5fcafaaf8c42cc192e2"
+      },
+      "xcodebuild": {
+        "path": "/usr/bin/xcodebuild",
+        "resolvedPath": "/usr/bin/xcodebuild",
+        "sha256": "7d9561a7f8e3c5d70a571422a4522de986c003879dab3bf7562963b6cdc3e658"
+      },
+      "xcrun": {
+        "path": "/usr/bin/xcrun",
+        "resolvedPath": "/usr/bin/xcrun",
+        "sha256": "bbe7671518a3905f9d3fce54312fbc77c2876b0d62aca74a0688fa869d31a8a9"
+      },
+      "meson": {
+        "path": "/opt/homebrew/bin/meson",
+        "resolvedPath": "/opt/homebrew/Cellar/meson/1.12.1/bin/meson",
+        "sha256": "0a0a2edc05d1a8ae7c84885f00dc5746ee1a57cc2c746e2b05a3b7dfbca2ed7d"
+      },
+      "ninja": {
+        "path": "/opt/homebrew/bin/ninja",
+        "resolvedPath": "/opt/homebrew/Cellar/ninja/1.13.2/bin/ninja",
+        "sha256": "48761628046784f59bd789f5a72b88da99205c5849e5d19ae4d317854ae09e83"
+      },
+      "pkg-config": {
+        "path": "/opt/homebrew/bin/pkg-config",
+        "resolvedPath": "/opt/homebrew/Cellar/pkgconf/3.0.8/bin/pkgconf",
+        "sha256": "8bd30a189b9cfe3c3ce64ce30649d054ec26341127615d5536040c9e36bbd3a1"
+      },
+      "nasm": {
+        "path": "/opt/homebrew/bin/nasm",
+        "resolvedPath": "/opt/homebrew/Cellar/nasm/3.02/bin/nasm",
+        "sha256": "4a35962ae78b3051bf568da70e3de7ecb8e99cb7925741eefb08d7f17cd1822b"
+      },
+      "sdl2-config": {
+        "path": "/opt/homebrew/bin/sdl2-config",
+        "resolvedPath": "/opt/homebrew/Cellar/sdl2-compat/2.32.74/bin/sdl2-config",
+        "sha256": "04933216748fc292cdc69e529392192a73848fe07f5025c5ebbd07abbfdaa2d9"
+      },
+      "make": {
+        "path": "/usr/bin/make",
+        "resolvedPath": "/usr/bin/make",
+        "sha256": "34129c71a01a74f7f3b2443521519b2e5447553fa187f5fcafaaf8c42cc192e2"
+      },
+      "libtool": {
+        "path": "/usr/bin/libtool",
+        "resolvedPath": "/usr/bin/libtool",
+        "sha256": "34129c71a01a74f7f3b2443521519b2e5447553fa187f5fcafaaf8c42cc192e2"
+      },
+      "lipo": {
+        "path": "/usr/bin/lipo",
+        "resolvedPath": "/usr/bin/lipo",
+        "sha256": "34129c71a01a74f7f3b2443521519b2e5447553fa187f5fcafaaf8c42cc192e2"
+      },
+      "otool": {
+        "path": "/usr/bin/otool",
+        "resolvedPath": "/usr/bin/otool",
+        "sha256": "34129c71a01a74f7f3b2443521519b2e5447553fa187f5fcafaaf8c42cc192e2"
+      },
+      "zip": {
+        "path": "/usr/bin/zip",
+        "resolvedPath": "/usr/bin/zip",
+        "sha256": "aab14c5dba5af0f2fd94f7c2863edd069aae7d96051953b4a890bd610141c20b"
+      },
+      "unzip": {
+        "path": "/usr/bin/unzip",
+        "resolvedPath": "/usr/bin/unzip",
+        "sha256": "a4abf0d63b26d8e7067b8d4a3674a3f3c0d7c0b3a6e68fba04540a405f618bb7"
+      },
+      "selected-clang": {
+        "path": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang",
+        "resolvedPath": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang",
+        "sha256": "5922f5f7843fee699497c45cc98134b6686e0a5e2fa8a5866ab74c5482fa87a5"
+      },
+      "selected-clang++": {
+        "path": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang",
+        "resolvedPath": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang",
+        "sha256": "5922f5f7843fee699497c45cc98134b6686e0a5e2fa8a5866ab74c5482fa87a5"
+      },
+      "selected-swift": {
+        "path": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-frontend",
+        "resolvedPath": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-frontend",
+        "sha256": "84b410d8143298f90ab0b721d488dab90e2fdbf23577ae6186162832a1155cb7"
+      },
+      "selected-ld": {
+        "path": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld",
+        "resolvedPath": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld",
+        "sha256": "4a255704671030b367319b5bd4d3ed78f9571c8f3f0ef96bf86d183c29bb1138"
+      },
+      "selected-ar": {
+        "path": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ar",
+        "resolvedPath": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ar",
+        "sha256": "d53f80ea3d161f8195051079618459cca9e6eed8981aa1d5b9c9d27853fe8183"
+      }
+    },
+    "sdk": {
+      "path": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk",
+      "entryCount": 49749,
+      "manifestSHA256": "f999a18365fb0ea85971ffc1c17dfb9ca99f4415d0d1e511da2d8a325f121289"
+    },
+    "pkgConfigDirectories": [
+      {
+        "path": "/opt/homebrew/lib/pkgconfig",
+        "entryCount": 920,
+        "manifestSHA256": "cda995de60227baa18dfaf7fc1cf342fc160ee82ffa8ccd7d9260f37c5092880"
+      },
+      {
+        "path": "/opt/homebrew/Cellar/xorgproto/2026.1/share/pkgconfig",
+        "entryCount": 29,
+        "manifestSHA256": "6d78a4063f069239918929822732d8039cdff24168a4ff552a3dd815fb624d8a"
+      },
+      {
+        "path": "/opt/homebrew/Library/Homebrew/os/mac/pkgconfig/27",
+        "entryCount": 13,
+        "manifestSHA256": "0781a0963d41a984315ba59c6a9066508cafd3b8c6fcf683e747fa38c4d81aa5"
+      }
+    ],
+    "externalHeaders": [
+      {
+        "path": "/opt/homebrew/include",
+        "entryCount": 3771,
+        "manifestSHA256": "e712402e13ae957834c035929cbacdc0c5498ba83f2ef66975f2d22e68bfbaeb"
+      }
+    ],
+    "xcodeVersion": "Xcode 27.0\nBuild version 27A266a",
+    "compilerVersion": "Apple clang version 21.0.0 (clang-2100.3.34.2)\nTarget: arm64-apple-darwin27.0.0\nThread model: posix\nInstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin",
+    "swiftVersion": "Apple Swift version 6.4 (swiftlang-6.4.0.34.1 clang-2100.3.34.1)\nTarget: arm64-apple-macosx27.0.0",
+    "mesonVersion": "1.12.1",
+    "ninjaVersion": "1.13.2"
+  },
+  "recipeAdaptations": {
+    "before": {
+      "Sources/BuildScripts/XCFrameworkBuild/base.swift": "6c4f15602054b8262d32ea10becb623e36245ccd6bb49452b67ef5abde5488c3",
+      "Sources/BuildScripts/XCFrameworkBuild/main.swift": "2810dabb68a6705d686b0fbf2d33597aa59661a8f6c2974e7431382bf3869bf1"
+    },
+    "after": {
+      "Sources/BuildScripts/XCFrameworkBuild/base.swift": "ff4522325ea484258704ca9876b2c821174dc6feb33aa8f487da6da298268a9e",
+      "Sources/BuildScripts/XCFrameworkBuild/main.swift": "7a6ece51aae426baf92ed97dfe297904d63c88033aa6b34bda4f417a04a6c3b7"
+    },
+    "policy": "Explicit PATH/pkg-config inputs; no tool installation or network; configuration checked against retained build."
+  },
+  "shippingPrerequisites": {
+    "metalToolchain": {
+      "root": "/private/var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v27.1.266.1.jWL5ac/Metal.xctoolchain",
+      "tools": {
+        "metal": {
+          "path": "/private/var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v27.1.266.1.jWL5ac/Metal.xctoolchain/usr/bin/metal",
+          "sha256": "ac3dcce4f331e301def076a2280c973c978f72e6622f8576eb3f7c34d1486dd6",
+          "implementation": {
+            "entryPath": "/private/var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v27.1.266.1.jWL5ac/Metal.xctoolchain/usr/metal/current/bin/metal",
+            "path": "/private/var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v27.1.266.1.jWL5ac/Metal.xctoolchain/usr/metal/32023/bin/metal",
+            "sha256": "ca689c7ff76b21271ab8dabfd7fa4c1b1cad9008643f80275cc9f2fdad722941"
+          }
+        },
+        "metallib": {
+          "path": "/private/var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v27.1.266.1.jWL5ac/Metal.xctoolchain/usr/bin/metallib",
+          "sha256": "08555936a88a025585ae6415ebe8b27e6092670868d92f9677cdcfa9730c340d",
+          "implementation": {
+            "entryPath": "/private/var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v27.1.266.1.jWL5ac/Metal.xctoolchain/usr/metal/current/bin/metallib",
+            "path": "/private/var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v27.1.266.1.jWL5ac/Metal.xctoolchain/usr/metal/32023/bin/air-lld",
+            "sha256": "97eb7f0cb637d7dc886b79429f7683b0fa2730ddf2ef44a9ac4b129e8a26c7dd"
+          }
+        }
+      },
+      "version": "Apple metal version 32023.921 (metalfe-32023.921.6)\nTarget: air64-apple-darwin27.0.0\nThread model: posix\nInstalledDir: /private/var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v27.1.266.1.jWL5ac/Metal.xctoolchain/usr/metal/current/bin",
+      "kernelProbe": {
+        "airSHA256": "b193d579e8a039c79df5d6b9a5442825e224731909dd486b1a929c190e945d7c",
+        "metallibSHA256": "4274ffc6131dc8f309ed3f4e374b89101d4b17ec90151f2f0bfb30411a38b806"
+      }
+    }
+  },
+  "sourceInputs": {
+    "libmpv-v0.41.0": {
+      "candidateRevision": "c9b6c939ba5e8a36a5b5ee24f5198d70616d3537",
+      "candidateTree": "e970bc0ed3a389505690d55ad1883ce7b4c4b19b"
+    },
+    "FFmpeg-n8.1.2": {
+      "candidateRevision": "c7aba78212570ed0bd693a441d917d86f2744ad6",
+      "candidateTree": "9b3a672a066ef0655b6cf42bf967e57f1d832c88"
+    }
+  },
+  "prebuiltAuxiliaryInputs": [
+    {
+      "buildOnly": false,
+      "publicationPath": "inputs/openssl-3.3.5/openssl.zip",
+      "recipeURL": "https://github.com/mpvkit/openssl-build/releases/download/3.3.5/openssl-all.zip",
+      "relativePath": "dist/openssl-3.3.5/openssl.zip",
+      "remoteAuthenticated": false,
+      "sha256": "8bc37424aa98fdeac17fd00fbeea7b784a39f1f800cc7f9e0c948d3b169c6f2f",
+      "sizeBytes": 44619276,
+      "path": "/private/tmp/aagedal-native-raster-20261014/stage/inputs/openssl-3.3.5/openssl.zip"
+    },
+    {
+      "buildOnly": false,
+      "publicationPath": "inputs/gnutls-3.8.11/gnutls.zip",
+      "recipeURL": "https://github.com/mpvkit/gnutls-build/releases/download/3.8.11/gnutls-all.zip",
+      "relativePath": "dist/gnutls-3.8.11/gnutls.zip",
+      "remoteAuthenticated": false,
+      "sha256": "6e125d9d7be4e09e112950703b0563324f5a05e546782e542b353db360f59b59",
+      "sizeBytes": 18982019,
+      "path": "/private/tmp/aagedal-native-raster-20261014/stage/inputs/gnutls-3.8.11/gnutls.zip"
+    },
+    {
+      "buildOnly": false,
+      "publicationPath": "inputs/nettle-3.8.11/nettle.zip",
+      "recipeURL": "https://github.com/mpvkit/gnutls-build/releases/download/3.8.11/nettle-all.zip",
+      "relativePath": "dist/nettle-3.8.11/nettle.zip",
+      "remoteAuthenticated": false,
+      "sha256": "7c1606e5acdc0be563f5a6bb19cd2fe3e1e93b30154ac22fc2f80bffcf3151c2",
+      "sizeBytes": 8504154,
+      "path": "/private/tmp/aagedal-native-raster-20261014/stage/inputs/nettle-3.8.11/nettle.zip"
+    },
+    {
+      "buildOnly": false,
+      "publicationPath": "inputs/gmp-3.8.11/gmp.zip",
+      "recipeURL": "https://github.com/mpvkit/gnutls-build/releases/download/3.8.11/gmp-all.zip",
+      "relativePath": "dist/gmp-3.8.11/gmp.zip",
+      "remoteAuthenticated": false,
+      "sha256": "cef5c3ff12260528a5971d2bd7bb3bc31ae85fac1235c06eff3de96c28c38aa2",
+      "sizeBytes": 4588994,
+      "path": "/private/tmp/aagedal-native-raster-20261014/stage/inputs/gmp-3.8.11/gmp.zip"
+    },
+    {
+      "buildOnly": false,
+      "publicationPath": "inputs/libass-0.17.5/libass.zip",
+      "recipeURL": "https://github.com/mpvkit/libass-build/releases/download/0.17.5/libass-all.zip",
+      "relativePath": "dist/libass-0.17.5/libass.zip",
+      "remoteAuthenticated": false,
+      "sha256": "d5e4b6046d0a4198fb97083816348b2229071749de8c429747a9558c325a1d3a",
+      "sizeBytes": 1775040,
+      "path": "/private/tmp/aagedal-native-raster-20261014/stage/inputs/libass-0.17.5/libass.zip"
+    },
+    {
+      "buildOnly": false,
+      "publicationPath": "inputs/libunibreak-0.17.5/libunibreak.zip",
+      "recipeURL": "https://github.com/mpvkit/libass-build/releases/download/0.17.5/libunibreak-all.zip",
+      "relativePath": "dist/libunibreak-0.17.5/libunibreak.zip",
+      "remoteAuthenticated": false,
+      "sha256": "a7a9c0afa36e2301eec583e5575c30c1609357045d718565d06faf93abc56617",
+      "sizeBytes": 754560,
+      "path": "/private/tmp/aagedal-native-raster-20261014/stage/inputs/libunibreak-0.17.5/libunibreak.zip"
+    },
+    {
+      "buildOnly": false,
+      "publicationPath": "inputs/libfreetype-0.17.5/libfreetype.zip",
+      "recipeURL": "https://github.com/mpvkit/libass-build/releases/download/0.17.5/libfreetype-all.zip",
+      "relativePath": "dist/libfreetype-0.17.5/libfreetype.zip",
+      "remoteAuthenticated": false,
+      "sha256": "d5fb41dd3d66c6e433b389a398571b51b8d65f3f9e81f10ee61d5434a647749e",
+      "sizeBytes": 5891891,
+      "path": "/private/tmp/aagedal-native-raster-20261014/stage/inputs/libfreetype-0.17.5/libfreetype.zip"
+    },
+    {
+      "buildOnly": false,
+      "publicationPath": "inputs/libfribidi-0.17.5/libfribidi.zip",
+      "recipeURL": "https://github.com/mpvkit/libass-build/releases/download/0.17.5/libfribidi-all.zip",
+      "relativePath": "dist/libfribidi-0.17.5/libfribidi.zip",
+      "remoteAuthenticated": false,
+      "sha256": "7ae8cf8c8b16a8b4ebc004f3368044d9baf8454398d18d9e8bc37964b04a2fe6",
+      "sizeBytes": 393673,
+      "path": "/private/tmp/aagedal-native-raster-20261014/stage/inputs/libfribidi-0.17.5/libfribidi.zip"
+    },
+    {
+      "buildOnly": false,
+      "publicationPath": "inputs/libharfbuzz-0.17.5/libharfbuzz.zip",
+      "recipeURL": "https://github.com/mpvkit/libass-build/releases/download/0.17.5/libharfbuzz-all.zip",
+      "relativePath": "dist/libharfbuzz-0.17.5/libharfbuzz.zip",
+      "remoteAuthenticated": false,
+      "sha256": "ff67179fb84a9a0f34b2ba276c4028823fecd90315cf18496be400cdfc768a3e",
+      "sizeBytes": 34473455,
+      "path": "/private/tmp/aagedal-native-raster-20261014/stage/inputs/libharfbuzz-0.17.5/libharfbuzz.zip"
+    },
+    {
+      "buildOnly": false,
+      "publicationPath": "inputs/libsmbclient-4.15.13-2512/libsmbclient.zip",
+      "recipeURL": "https://github.com/mpvkit/libsmbclient-build/releases/download/4.15.13-2512/libsmbclient-all.zip",
+      "relativePath": "dist/libsmbclient-4.15.13-2512/libsmbclient.zip",
+      "remoteAuthenticated": false,
+      "sha256": "6861f0b0e45abd3248a8160d1c0b4ede66eef5163f04598830883a951607cef9",
+      "sizeBytes": 97090982,
+      "path": "/private/tmp/aagedal-native-raster-20261014/stage/inputs/libsmbclient-4.15.13-2512/libsmbclient.zip"
+    },
+    {
+      "buildOnly": false,
+      "publicationPath": "inputs/libdav1d-1.5.3/libdav1d.zip",
+      "recipeURL": "https://github.com/mpvkit/libdav1d-build/releases/download/1.5.3/libdav1d-all.zip",
+      "relativePath": "dist/libdav1d-1.5.3/libdav1d.zip",
+      "remoteAuthenticated": false,
+      "sha256": "5d9ca131372bc9513100dbc43a59582ad1cf7acf6136ad4e6fecd63dc0075d82",
+      "sizeBytes": 5200983,
+      "path": "/private/tmp/aagedal-native-raster-20261014/stage/inputs/libdav1d-1.5.3/libdav1d.zip"
+    },
+    {
+      "buildOnly": false,
+      "publicationPath": "inputs/lcms2-2.17.0/lcms2.zip",
+      "recipeURL": "https://github.com/mpvkit/lcms2-build/releases/download/2.17.0/lcms2-all.zip",
+      "relativePath": "dist/lcms2-2.17.0/lcms2.zip",
+      "remoteAuthenticated": false,
+      "sha256": "8c118b2c04e2440ecf25ffebfa7952ebb09aba83a71378e3b9ed45dae3a6115a",
+      "sizeBytes": 3007879,
+      "path": "/private/tmp/aagedal-native-raster-20261014/stage/inputs/lcms2-2.17.0/lcms2.zip"
+    },
+    {
+      "buildOnly": false,
+      "publicationPath": "inputs/libplacebo-7.360.1/libplacebo.zip",
+      "recipeURL": "https://github.com/mpvkit/libplacebo-build/releases/download/7.360.1/libplacebo-all.zip",
+      "relativePath": "dist/libplacebo-7.360.1/libplacebo.zip",
+      "remoteAuthenticated": false,
+      "sha256": "cdb8a07563bca119ca909ab4a3503825c27678736cdab294338b0a7dbe2cf35c",
+      "sizeBytes": 8692592,
+      "path": "/private/tmp/aagedal-native-raster-20261014/stage/inputs/libplacebo-7.360.1/libplacebo.zip"
+    },
+    {
+      "buildOnly": false,
+      "publicationPath": "inputs/libdovi-3.3.2/libdovi.zip",
+      "recipeURL": "https://github.com/mpvkit/libdovi-build/releases/download/3.3.2/libdovi-all.zip",
+      "relativePath": "dist/libdovi-3.3.2/libdovi.zip",
+      "remoteAuthenticated": false,
+      "sha256": "81b85386016a012391c473674ef96e4e494fa76aef2f7b6c102a335e844644f8",
+      "sizeBytes": 11413568,
+      "path": "/private/tmp/aagedal-native-raster-20261014/stage/inputs/libdovi-3.3.2/libdovi.zip"
+    },
+    {
+      "buildOnly": false,
+      "publicationPath": "inputs/vulkan-1.4.2/vulkan.zip",
+      "recipeURL": "https://github.com/mpvkit/moltenvk-build/releases/download/1.4.2/MoltenVK-all.zip",
+      "relativePath": "dist/vulkan-1.4.2/vulkan.zip",
+      "remoteAuthenticated": false,
+      "sha256": "551bf9ee4e6fe1f9a148a6aef8eff5e5e6e0c0be9dedda2405812023d4a38c60",
+      "sizeBytes": 28826665,
+      "path": "/private/tmp/aagedal-native-raster-20261014/stage/inputs/vulkan-1.4.2/vulkan.zip"
+    },
+    {
+      "buildOnly": false,
+      "publicationPath": "inputs/libshaderc-2025.5.0/libshaderc.zip",
+      "recipeURL": "https://github.com/mpvkit/libshaderc-build/releases/download/2025.5.0/libshaderc-all.zip",
+      "relativePath": "dist/libshaderc-2025.5.0/libshaderc.zip",
+      "remoteAuthenticated": false,
+      "sha256": "1079da73a292e5b2cea6a02fa2208c4935ead79a98043f81708424510e0ab53f",
+      "sizeBytes": 122917658,
+      "path": "/private/tmp/aagedal-native-raster-20261014/stage/inputs/libshaderc-2025.5.0/libshaderc.zip"
+    },
+    {
+      "buildOnly": false,
+      "publicationPath": "inputs/libuchardet-0.0.8/libuchardet.zip",
+      "recipeURL": "https://github.com/mpvkit/libuchardet-build/releases/download/0.0.8/libuchardet-all.zip",
+      "relativePath": "dist/libuchardet-0.0.8/libuchardet.zip",
+      "remoteAuthenticated": false,
+      "sha256": "21407ffd33ce5550f7adf0759c268ac3c8022a90f80b2a9a25e8273fd27814bb",
+      "sizeBytes": 1240404,
+      "path": "/private/tmp/aagedal-native-raster-20261014/stage/inputs/libuchardet-0.0.8/libuchardet.zip"
+    },
+    {
+      "buildOnly": false,
+      "publicationPath": "inputs/libbluray-1.4.0/libbluray.zip",
+      "recipeURL": "https://github.com/mpvkit/libbluray-build/releases/download/1.4.0/libbluray-all.zip",
+      "relativePath": "dist/libbluray-1.4.0/libbluray.zip",
+      "remoteAuthenticated": false,
+      "sha256": "c0302f43258ba41d9661dea0be4a7c9c1dd59d30d284ecfbf7319157c8e8a8de",
+      "sizeBytes": 2625844,
+      "path": "/private/tmp/aagedal-native-raster-20261014/stage/inputs/libbluray-1.4.0/libbluray.zip"
+    },
+    {
+      "buildOnly": true,
+      "publicationPath": "inputs/libluajit-2.1.0-fix/libluajit.zip",
+      "recipeURL": "https://github.com/mpvkit/libluajit-build/releases/download/2.1.0-fix/libluajit-all.zip",
+      "relativePath": "dist/libluajit-2.1.0-fix/libluajit.zip",
+      "remoteAuthenticated": false,
+      "sha256": "15a2b0d2b013074cefcfacfcb9df4ea7e5624e76decdb7c3b0556c3068a2816b",
+      "sizeBytes": 2605652,
+      "path": "/private/tmp/aagedal-native-raster-20261014/stage/inputs/libluajit-2.1.0-fix/libluajit.zip"
+    },
+    {
+      "buildOnly": false,
+      "publicationPath": "inputs/libuavs3d-1.2.1-fix/libuavs3d.zip",
+      "recipeURL": "https://github.com/mpvkit/libuavs3d-build/releases/download/1.2.1-fix/libuavs3d-all.zip",
+      "relativePath": "dist/libuavs3d-1.2.1-fix/libuavs3d.zip",
+      "remoteAuthenticated": false,
+      "sha256": "8644c7a8182679dbe762b522356606220bb6d2196a5ec65511eda42ef48b3e7a",
+      "sizeBytes": 4580333,
+      "path": "/private/tmp/aagedal-native-raster-20261014/stage/inputs/libuavs3d-1.2.1-fix/libuavs3d.zip"
+    }
+  ],
+  "candidateMPVKitRevision": "8a8305271f13a9fdc577ba0c65ab4cd79c0fc827",
+  "originalEnvironmentGaps": [
+    "Swift/Python/Git/pkg-config/nasm/SDL2 versions and executable hashes",
+    "SDK content and external header identities",
+    "Complete inherited environment and configure autodetection inputs"
+  ],
+  "byteIdenticalRebuildDemonstrated": false,
+  "decoderRasterCandidate": {
+    "retainedRevision": "50fd4f2fb9e4bed909cef5c9648a1bd33aaef72f",
+    "candidateRevision": "c9b6c939ba5e8a36a5b5ee24f5198d70616d3537",
+    "candidateTree": "e970bc0ed3a389505690d55ad1883ce7b4c4b19b",
+    "patch": {
+      "sha256": "ae950e126c51d76a7affa150c6027e60f9d393abb84b0a4f9ebe620008e0537f",
+      "sizeBytes": 26320
+    },
+    "sourceArchive": {
+      "sha256": "40ea66c646a1f6a524fbea70edba51cc6cd7e6f6cd978ca133676d9de93745c7",
+      "sizeBytes": 7269818
+    },
+    "commitObject": {
+      "sha256": "8e3b15d3e5627148df06f740782915e653e2d85deb0ed529bc15f2654c986ce7",
+      "sizeBytes": 318
+    },
+    "scope": "Restricted opt-in provider; runtime and app acceptance remain separate."
+  },
+  "buildEnvironment": {
+    "HOME": "/Users/truls.aagedal",
+    "CLANG_MODULE_CACHE_PATH": "/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/clang-cache",
+    "SWIFT_MODULECACHE_PATH": "/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/swift-cache",
+    "TMPDIR": "/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/temporary",
+    "PATH": "/opt/homebrew/bin:/usr/bin:/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin",
+    "DEVELOPER_DIR": "/Applications/Xcode.app/Contents/Developer",
+    "LC_ALL": "C"
+  },
+  "buildCommand": [
+    "/usr/bin/sandbox-exec",
+    "-p",
+    "(version 1) (allow default) (deny network*)",
+    "swift",
+    "run",
+    "--disable-sandbox",
+    "--build-path",
+    "/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/swift-build",
+    "--cache-path",
+    "/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/swift-package-cache",
+    "--config-path",
+    "/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/swift-package-config",
+    "--security-path",
+    "/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/swift-package-security",
+    "--package-path",
+    "/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/Sources/BuildScripts",
+    "-Xswiftc",
+    "-module-cache-path",
+    "-Xswiftc",
+    "/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/swift-cache",
+    "build",
+    "enable-gpl",
+    "platform=macos",
+    "version=local-coreaudio-gpl-candidate"
+  ],
+  "artifacts": {
+    "dist/release/FFmpeg-all.zip": {
+      "sha256": "4213453d3d7f4da355bf9889120ee5c92c2cf2e7bfef53828d7d5b22831a240d",
+      "sizeBytes": 8131395
+    },
+    "dist/release/Libavcodec.xcframework.zip": {
+      "sha256": "f519ea89d2477c9f5ccd42570adf5247868cdf1baca668d5ce18c1cf2c468372",
+      "sizeBytes": 5101497
+    },
+    "dist/release/Libavdevice.xcframework.zip": {
+      "sha256": "c4b140fde86d91358060a873e784b6ead06fd9ff8b707cc39c4e588f819bf933",
+      "sizeBytes": 15133
+    },
+    "dist/release/Libavfilter.xcframework.zip": {
+      "sha256": "1ee78fd23906c9f168d80b3f1e15f444fbb67ea5a8161185758bbdf639da85aa",
+      "sizeBytes": 489333
+    },
+    "dist/release/Libavformat.xcframework.zip": {
+      "sha256": "1d8ba89e75e3fade21353f6c82d9f6b4c0f217668bdb7608de85b92bf0e1c50d",
+      "sizeBytes": 1166634
+    },
+    "dist/release/Libavutil.xcframework.zip": {
+      "sha256": "f5a85c80f8cf4dd37306753a1e8e0cea6394113ec5abb3850d807b57eda96491",
+      "sizeBytes": 749290
+    },
+    "dist/release/Libmpv.xcframework.zip": {
+      "sha256": "c1f258a47d0188c9c27d70ed5a175e8b6a8dd57a326df6c0507dbfbb92420111",
+      "sizeBytes": 2978820
+    },
+    "dist/release/Libswresample.xcframework.zip": {
+      "sha256": "ef2240109a177017eb67016bbc1617fecfdf81c9a795962bce312d6955b49a29",
+      "sizeBytes": 70394
+    },
+    "dist/release/Libswscale.xcframework.zip": {
+      "sha256": "a70cc13354be16fc4d34963435f9e1058f5df388eda4eb1d7649c21c63af7a8e",
+      "sizeBytes": 578486
+    },
+    "dist/release/libmpv-all.zip": {
+      "sha256": "8c2c561f25ab252e4c183770eda6cefead0c3921841284974c646f513ffff49b",
+      "sizeBytes": 2976217
+    }
+  },
+  "verification": {
+    "sourceInputs": {
+      "libmpv-v0.41.0": {
+        "revision": "c9b6c939ba5e8a36a5b5ee24f5198d70616d3537",
+        "tree": "e970bc0ed3a389505690d55ad1883ce7b4c4b19b",
+        "status": ""
+      },
+      "FFmpeg-n8.1.2": {
+        "revision": "c7aba78212570ed0bd693a441d917d86f2744ad6",
+        "tree": "9b3a672a066ef0655b6cf42bf967e57f1d832c88",
+        "status": ""
+      }
+    },
+    "copiedAuxiliaryZIPsMatch": true,
+    "xcframeworks": {
+      "Libmpv": {
+        "architectures": [
+          "arm64"
+        ],
+        "binarySHA256": "ae9620c87bf3b35f01dee2ede9220c3e0f5c3084dd9fe488cd9f60eb12cb4618",
+        "zipSHA256": "c1f258a47d0188c9c27d70ed5a175e8b6a8dd57a326df6c0507dbfbb92420111",
+        "libraryIdentifier": "macos-arm64"
+      },
+      "Libavcodec": {
+        "architectures": [
+          "arm64"
+        ],
+        "binarySHA256": "2ccc311c595382c616081dbb4d290efb0e16fc4f5a07c74f9f36423801599ac2",
+        "zipSHA256": "f519ea89d2477c9f5ccd42570adf5247868cdf1baca668d5ce18c1cf2c468372",
+        "libraryIdentifier": "macos-arm64"
+      },
+      "Libavdevice": {
+        "architectures": [
+          "arm64"
+        ],
+        "binarySHA256": "4058327ff1bac87ff4632b8fb100c6386e7a3fcdc20e489fc0d72bd07fce6da6",
+        "zipSHA256": "c4b140fde86d91358060a873e784b6ead06fd9ff8b707cc39c4e588f819bf933",
+        "libraryIdentifier": "macos-arm64"
+      },
+      "Libavfilter": {
+        "architectures": [
+          "arm64"
+        ],
+        "binarySHA256": "f54972b28677894ddbbcffe3a35c5ad8107897481d9de244b4fc20908ded46ae",
+        "zipSHA256": "1ee78fd23906c9f168d80b3f1e15f444fbb67ea5a8161185758bbdf639da85aa",
+        "libraryIdentifier": "macos-arm64"
+      },
+      "Libavformat": {
+        "architectures": [
+          "arm64"
+        ],
+        "binarySHA256": "735d4a4dc8c76eee830c30616a81f973d5159f099f93b1cb19bb962e0ae72d30",
+        "zipSHA256": "1d8ba89e75e3fade21353f6c82d9f6b4c0f217668bdb7608de85b92bf0e1c50d",
+        "libraryIdentifier": "macos-arm64"
+      },
+      "Libavutil": {
+        "architectures": [
+          "arm64"
+        ],
+        "binarySHA256": "0b913d296be0454933477da019e459f63a7587c869bca6f2b654e4f40ab3206c",
+        "zipSHA256": "f5a85c80f8cf4dd37306753a1e8e0cea6394113ec5abb3850d807b57eda96491",
+        "libraryIdentifier": "macos-arm64"
+      },
+      "Libswresample": {
+        "architectures": [
+          "arm64"
+        ],
+        "binarySHA256": "098cd3f2b94c2b9ef77ccd5cc8fe3ea84a070c8fd80f85869475db991de4e473",
+        "zipSHA256": "ef2240109a177017eb67016bbc1617fecfdf81c9a795962bce312d6955b49a29",
+        "libraryIdentifier": "macos-arm64"
+      },
+      "Libswscale": {
+        "architectures": [
+          "arm64"
+        ],
+        "binarySHA256": "797f395ee5c13bbd4b1a480fc99b97e079a07be8e74bea8d32bf162cbc516187",
+        "zipSHA256": "a70cc13354be16fc4d34963435f9e1058f5df388eda4eb1d7649c21c63af7a8e",
+        "libraryIdentifier": "macos-arm64"
+      }
+    },
+    "freshObjects": {
+      "libmpv": {
+        "arm64": {
+          "objectCount": 221,
+          "objectManifestSHA256": "00615d9120b774f1587368131a17d4cdb7ba68fb1df0f9423b279c715c1c8194",
+          "staticArchives": {
+            "dist/libmpv/macos/thin/arm64/lib/libmpv.a": "691146c2e4bc37015013fb4f3bcac60c967749a97075bcb414c4c08b8405fdf9"
+          },
+          "compileDatabaseSHA256": "a80b269cd36e25401bc040e3973ce5f15be611f33df15ec24010e1159fdc6e18",
+          "coreaudioObjects": {
+            "ao_coreaudio.c": {
+              "objectSHA256": "723ab3daf11d070fc6e0e5c92561eeebc87504d66f16d3eb599372e951f187ba",
+              "sourceSHA256": "2ab5a2553d60b8a75d2e9bd3b3090cadee4e350cb870c7c114fa3a6701d0088a"
+            },
+            "ao_coreaudio_chmap.c": {
+              "objectSHA256": "924070e402339b07092abc9811d5c62acab7608fa36f8c4d4badc003e1b5fd16",
+              "sourceSHA256": "b552e1d4207f8d4e1dbc1a39a437595e36402285115c41fec7e7b5afe84b5117"
+            }
+          },
+          "decoderRasterObjects": {
+            "filters/f_decoder_wrapper.c": {
+              "objectSHA256": "e5423ebd47616e132c5f62e1d320d086a50dd953d91d03e3bfb542c86b0a5002",
+              "sourceSHA256": "7027c0775b2003e8c5998827c3cf176d9266b74a5262dfaf4122386647035da0",
+              "command": "/usr/bin/clang -Ilibmpv.a.p -I. -I../../../../libmpv-v0.41.0 -I../../../../libmpv-v0.41.0/include -Icommon -Ietc -Iplayer/javascript -Iplayer/lua -Isub -ITOOLS/osxbundle -Iosdep/mac -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libass/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libfreetype/macos/thin/arm64/include/freetype2 -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libfribidi/macos/thin/arm64/include/fribidi -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libharfbuzz/macos/thin/arm64/include/harfbuzz -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libunibreak/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/FFmpeg/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libplacebo/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libshaderc/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/vulkan/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/lcms2/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libdovi/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libbluray/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libuchardet/macos/thin/arm64/include/uchardet -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/gmp/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libsmbclient/macos/thin/arm64/include -fvisibility=hidden -fdiagnostics-color=always -Wall -Winvalid-pch -Wextra -std=c11 -O3 -D_FILE_OFFSET_BITS=64 -Wdisabled-optimization -Wempty-body -Wformat -Wimplicit-fallthrough -Woverflow -Wparentheses -Wpointer-arith -Wshadow -Wundef -Wvla -Wno-cast-function-type -Wno-format-zero-length -Wno-missing-field-initializers -Wno-sign-compare -Wno-switch -Wno-unused-parameter -fno-math-errno -fno-signed-zeros -fno-trapping-math -Werror=format-security -D_GNU_SOURCE -Wmissing-prototypes -Wstrict-prototypes -Werror=implicit-function-declaration -Wno-pointer-sign -DWINICONV_CONST= -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk -target arm64-apple-macos12.0 -mmacosx-version-min=12.0 -DPL_HAVE_PTHREAD -DPL_STATIC -MD -MQ libmpv.a.p/filters_f_decoder_wrapper.c.o -MF libmpv.a.p/filters_f_decoder_wrapper.c.o.d -o libmpv.a.p/filters_f_decoder_wrapper.c.o -c ../../../../libmpv-v0.41.0/filters/f_decoder_wrapper.c"
+            },
+            "player/command.c": {
+              "objectSHA256": "b2026a691650419cc00d2f09ef46acee11820a47c7ad920c45ca74d885740022",
+              "sourceSHA256": "65b2c674884298bfe85acbc607511b240a01858511cd7bf41c1537806cb7da58",
+              "command": "/usr/bin/clang -Ilibmpv.a.p -I. -I../../../../libmpv-v0.41.0 -I../../../../libmpv-v0.41.0/include -Icommon -Ietc -Iplayer/javascript -Iplayer/lua -Isub -ITOOLS/osxbundle -Iosdep/mac -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libass/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libfreetype/macos/thin/arm64/include/freetype2 -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libfribidi/macos/thin/arm64/include/fribidi -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libharfbuzz/macos/thin/arm64/include/harfbuzz -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libunibreak/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/FFmpeg/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libplacebo/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libshaderc/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/vulkan/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/lcms2/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libdovi/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libbluray/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libuchardet/macos/thin/arm64/include/uchardet -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/gmp/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libsmbclient/macos/thin/arm64/include -fvisibility=hidden -fdiagnostics-color=always -Wall -Winvalid-pch -Wextra -std=c11 -O3 -D_FILE_OFFSET_BITS=64 -Wdisabled-optimization -Wempty-body -Wformat -Wimplicit-fallthrough -Woverflow -Wparentheses -Wpointer-arith -Wshadow -Wundef -Wvla -Wno-cast-function-type -Wno-format-zero-length -Wno-missing-field-initializers -Wno-sign-compare -Wno-switch -Wno-unused-parameter -fno-math-errno -fno-signed-zeros -fno-trapping-math -Werror=format-security -D_GNU_SOURCE -Wmissing-prototypes -Wstrict-prototypes -Werror=implicit-function-declaration -Wno-pointer-sign -DWINICONV_CONST= -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk -target arm64-apple-macos12.0 -mmacosx-version-min=12.0 -DPL_HAVE_PTHREAD -DPL_STATIC -MD -MQ libmpv.a.p/player_command.c.o -MF libmpv.a.p/player_command.c.o.d -o libmpv.a.p/player_command.c.o -c ../../../../libmpv-v0.41.0/player/command.c"
+            },
+            "player/screenshot.c": {
+              "objectSHA256": "b1e1715d97be68c3d74aba133d904fbf55abe5d7ec381eec59048378cc7726f9",
+              "sourceSHA256": "c4725c3db5a930c153f4d07b4f9b8110ef5e0d588af2e9b1e6a5a1312844a4b9",
+              "command": "/usr/bin/clang -Ilibmpv.a.p -I. -I../../../../libmpv-v0.41.0 -I../../../../libmpv-v0.41.0/include -Icommon -Ietc -Iplayer/javascript -Iplayer/lua -Isub -ITOOLS/osxbundle -Iosdep/mac -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libass/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libfreetype/macos/thin/arm64/include/freetype2 -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libfribidi/macos/thin/arm64/include/fribidi -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libharfbuzz/macos/thin/arm64/include/harfbuzz -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libunibreak/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/FFmpeg/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libplacebo/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libshaderc/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/vulkan/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/lcms2/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libdovi/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libbluray/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libuchardet/macos/thin/arm64/include/uchardet -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/gmp/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libsmbclient/macos/thin/arm64/include -fvisibility=hidden -fdiagnostics-color=always -Wall -Winvalid-pch -Wextra -std=c11 -O3 -D_FILE_OFFSET_BITS=64 -Wdisabled-optimization -Wempty-body -Wformat -Wimplicit-fallthrough -Woverflow -Wparentheses -Wpointer-arith -Wshadow -Wundef -Wvla -Wno-cast-function-type -Wno-format-zero-length -Wno-missing-field-initializers -Wno-sign-compare -Wno-switch -Wno-unused-parameter -fno-math-errno -fno-signed-zeros -fno-trapping-math -Werror=format-security -D_GNU_SOURCE -Wmissing-prototypes -Wstrict-prototypes -Werror=implicit-function-declaration -Wno-pointer-sign -DWINICONV_CONST= -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk -target arm64-apple-macos12.0 -mmacosx-version-min=12.0 -DPL_HAVE_PTHREAD -DPL_STATIC -MD -MQ libmpv.a.p/player_screenshot.c.o -MF libmpv.a.p/player_screenshot.c.o.d -o libmpv.a.p/player_screenshot.c.o -c ../../../../libmpv-v0.41.0/player/screenshot.c"
+            },
+            "common/av_common.c": {
+              "objectSHA256": "f131f0b63688a87c622784e76983aba9bbca93ec049978b090fe2912dc5b2624",
+              "sourceSHA256": "672afdf0437b21147d25737207bf030573e111ea95c65189cae00f8f4784101e",
+              "command": "/usr/bin/clang -Ilibmpv.a.p -I. -I../../../../libmpv-v0.41.0 -I../../../../libmpv-v0.41.0/include -Icommon -Ietc -Iplayer/javascript -Iplayer/lua -Isub -ITOOLS/osxbundle -Iosdep/mac -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libass/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libfreetype/macos/thin/arm64/include/freetype2 -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libfribidi/macos/thin/arm64/include/fribidi -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libharfbuzz/macos/thin/arm64/include/harfbuzz -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libunibreak/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/FFmpeg/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libplacebo/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libshaderc/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/vulkan/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/lcms2/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libdovi/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libbluray/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libuchardet/macos/thin/arm64/include/uchardet -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/gmp/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libsmbclient/macos/thin/arm64/include -fvisibility=hidden -fdiagnostics-color=always -Wall -Winvalid-pch -Wextra -std=c11 -O3 -D_FILE_OFFSET_BITS=64 -Wdisabled-optimization -Wempty-body -Wformat -Wimplicit-fallthrough -Woverflow -Wparentheses -Wpointer-arith -Wshadow -Wundef -Wvla -Wno-cast-function-type -Wno-format-zero-length -Wno-missing-field-initializers -Wno-sign-compare -Wno-switch -Wno-unused-parameter -fno-math-errno -fno-signed-zeros -fno-trapping-math -Werror=format-security -D_GNU_SOURCE -Wmissing-prototypes -Wstrict-prototypes -Werror=implicit-function-declaration -Wno-pointer-sign -DWINICONV_CONST= -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk -target arm64-apple-macos12.0 -mmacosx-version-min=12.0 -DPL_HAVE_PTHREAD -DPL_STATIC -MD -MQ libmpv.a.p/common_av_common.c.o -MF libmpv.a.p/common_av_common.c.o.d -o libmpv.a.p/common_av_common.c.o -c ../../../../libmpv-v0.41.0/common/av_common.c"
+            },
+            "demux/demux_lavf.c": {
+              "objectSHA256": "46d43116bdb1ac622851d35e74406e9ecf07d284a657f503ce1abd004967baa1",
+              "sourceSHA256": "815d2095d9e55824d70ba45f285d03dd00e2f0ae46750f322bd2297d28cbef6a",
+              "command": "/usr/bin/clang -Ilibmpv.a.p -I. -I../../../../libmpv-v0.41.0 -I../../../../libmpv-v0.41.0/include -Icommon -Ietc -Iplayer/javascript -Iplayer/lua -Isub -ITOOLS/osxbundle -Iosdep/mac -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libass/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libfreetype/macos/thin/arm64/include/freetype2 -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libfribidi/macos/thin/arm64/include/fribidi -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libharfbuzz/macos/thin/arm64/include/harfbuzz -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libunibreak/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/FFmpeg/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libplacebo/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libshaderc/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/vulkan/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/lcms2/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libdovi/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libbluray/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libuchardet/macos/thin/arm64/include/uchardet -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/gmp/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libsmbclient/macos/thin/arm64/include -fvisibility=hidden -fdiagnostics-color=always -Wall -Winvalid-pch -Wextra -std=c11 -O3 -D_FILE_OFFSET_BITS=64 -Wdisabled-optimization -Wempty-body -Wformat -Wimplicit-fallthrough -Woverflow -Wparentheses -Wpointer-arith -Wshadow -Wundef -Wvla -Wno-cast-function-type -Wno-format-zero-length -Wno-missing-field-initializers -Wno-sign-compare -Wno-switch -Wno-unused-parameter -fno-math-errno -fno-signed-zeros -fno-trapping-math -Werror=format-security -D_GNU_SOURCE -Wmissing-prototypes -Wstrict-prototypes -Werror=implicit-function-declaration -Wno-pointer-sign -DWINICONV_CONST= -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk -target arm64-apple-macos12.0 -mmacosx-version-min=12.0 -DPL_HAVE_PTHREAD -DPL_STATIC -MD -MQ libmpv.a.p/demux_demux_lavf.c.o -MF libmpv.a.p/demux_demux_lavf.c.o.d -o libmpv.a.p/demux_demux_lavf.c.o -c ../../../../libmpv-v0.41.0/demux/demux_lavf.c"
+            },
+            "video/mp_image.c": {
+              "objectSHA256": "322ab216b38691416a349971f2b86b5ddcb3259db94cb49ab73ebadb013b9981",
+              "sourceSHA256": "075051bd4091b12fcee548d969d203d5e4d497ab91ae2aa36d9b2c3617ba79b1",
+              "command": "/usr/bin/clang -Ilibmpv.a.p -I. -I../../../../libmpv-v0.41.0 -I../../../../libmpv-v0.41.0/include -Icommon -Ietc -Iplayer/javascript -Iplayer/lua -Isub -ITOOLS/osxbundle -Iosdep/mac -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libass/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libfreetype/macos/thin/arm64/include/freetype2 -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libfribidi/macos/thin/arm64/include/fribidi -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libharfbuzz/macos/thin/arm64/include/harfbuzz -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libunibreak/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/FFmpeg/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libplacebo/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libshaderc/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/vulkan/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/lcms2/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libdovi/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libbluray/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libuchardet/macos/thin/arm64/include/uchardet -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/gmp/macos/thin/arm64/include -I/private/tmp/aagedal-native-raster-20261014/build-arm64-v7/MPVKit/dist/libsmbclient/macos/thin/arm64/include -fvisibility=hidden -fdiagnostics-color=always -Wall -Winvalid-pch -Wextra -std=c11 -O3 -D_FILE_OFFSET_BITS=64 -Wdisabled-optimization -Wempty-body -Wformat -Wimplicit-fallthrough -Woverflow -Wparentheses -Wpointer-arith -Wshadow -Wundef -Wvla -Wno-cast-function-type -Wno-format-zero-length -Wno-missing-field-initializers -Wno-sign-compare -Wno-switch -Wno-unused-parameter -fno-math-errno -fno-signed-zeros -fno-trapping-math -Werror=format-security -D_GNU_SOURCE -Wmissing-prototypes -Wstrict-prototypes -Werror=implicit-function-declaration -Wno-pointer-sign -DWINICONV_CONST= -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk -target arm64-apple-macos12.0 -mmacosx-version-min=12.0 -DPL_HAVE_PTHREAD -DPL_STATIC -MD -MQ libmpv.a.p/video_mp_image.c.o -MF libmpv.a.p/video_mp_image.c.o.d -o libmpv.a.p/video_mp_image.c.o -c ../../../../libmpv-v0.41.0/video/mp_image.c"
+            }
+          }
+        }
+      },
+      "FFmpeg": {
+        "arm64": {
+          "objectCount": 1122,
+          "objectManifestSHA256": "c9ece236772925bd4e84d1118c15b1a523e637f124011fc83a057a2a878096f4",
+          "staticArchives": {
+            "dist/FFmpeg/macos/thin/arm64/lib/libavcodec.a": "d3cf1c5f8cfbeffc66d6f44fe19603a10a61fdb34226d687a71f3e5d0931f1f0",
+            "dist/FFmpeg/macos/thin/arm64/lib/libavdevice.a": "fc25dc3acdfe31afd53bfb0a4bd5e26c199559036f6753c52f8fa1eafd6b2a33",
+            "dist/FFmpeg/macos/thin/arm64/lib/libavfilter.a": "0305b89262e45d7a3eecf2da24cef0f0c68e12e692793d16e5f8385bab967887",
+            "dist/FFmpeg/macos/thin/arm64/lib/libavformat.a": "26973c08a02d6413d0896d9d8c25f86496efa90a353dd930d0f10f98ebf8e41a",
+            "dist/FFmpeg/macos/thin/arm64/lib/libavutil.a": "7146ba574825014c9916e285ccedd0e2cc8913888b34918ba923f59e86cae9de",
+            "dist/FFmpeg/macos/thin/arm64/lib/libswresample.a": "9b5df4265c8fb44262acb2aed43f24f73ab0841462a11d24e78d8a4a064ffb65",
+            "dist/FFmpeg/macos/thin/arm64/lib/libswscale.a": "0440d0ad3a843dfc7febc5f596da1a591068c263f851c32d98af87d94683c93c"
+          }
+        }
+      }
+    },
+    "shippingFeatureParity": {
+      "product": "MPVKit-GPL",
+      "architectures": {
+        "arm64": {
+          "libmpv/config.h": {
+            "headerSHA256": "996e889b3dec65e0e317e9303a82a52193f4123c1553d36c5470aaf338496899",
+            "requiredFeatures": {
+              "HAVE_GPL": 1,
+              "HAVE_COREAUDIO": 1,
+              "HAVE_AVFOUNDATION": 1,
+              "HAVE_COCOA": 1,
+              "HAVE_FFMPEG": 1,
+              "HAVE_GL": 1,
+              "HAVE_GL_COCOA": 1,
+              "HAVE_LIBASS": 1,
+              "HAVE_LIBBLURAY": 1,
+              "HAVE_MOLTENVK": 1,
+              "HAVE_SWIFT": 1,
+              "HAVE_VIDEOTOOLBOX_GL": 1,
+              "HAVE_VIDEOTOOLBOX_PL": 1,
+              "HAVE_VULKAN": 1,
+              "HAVE_LUA": 0
+            },
+            "booleanConfigurationSHA256": "e5ee614230a8b5931860a2498d43ddbfc693b3e8ba8a063aaf6403367767315b"
+          },
+          "FFmpeg/config.h": {
+            "headerSHA256": "a6075a651b6a3caa8d6da84a371f85d7d7c8187f738cecc9310b73117984e58f",
+            "requiredFeatures": {
+              "CONFIG_GPL": 1,
+              "CONFIG_GPLV3": 1,
+              "CONFIG_LIBSMBCLIENT": 1,
+              "CONFIG_METAL": 1,
+              "CONFIG_LIBASS": 1,
+              "CONFIG_LIBDAV1D": 1,
+              "CONFIG_LIBPLACEBO": 1,
+              "CONFIG_LIBUAVS3D": 1,
+              "CONFIG_VIDEOTOOLBOX": 1,
+              "CONFIG_VULKAN": 1,
+              "CONFIG_LGPLV3": 0
+            },
+            "booleanConfigurationSHA256": "c0ddf814b82637f130cea41dd662654e20f16cb3c153cd06d7fc25dbf9c51e80"
+          },
+          "FFmpeg/config_components.h": {
+            "headerSHA256": "0b501a48f37e4e5c4b641e0fc661aa9c5fae256ed4e7b729d9cccc0a18f47d98",
+            "requiredFeatures": {
+              "CONFIG_LIBSMBCLIENT_PROTOCOL": 1,
+              "CONFIG_DELOGO_FILTER": 1,
+              "CONFIG_PAN_FILTER": 1,
+              "CONFIG_ARESAMPLE_FILTER": 1,
+              "CONFIG_ASS_FILTER": 1,
+              "CONFIG_SUBTITLES_FILTER": 1,
+              "CONFIG_LIBPLACEBO_FILTER": 1,
+              "CONFIG_LIBDAV1D_DECODER": 1,
+              "CONFIG_LIBUAVS3D_DECODER": 1,
+              "CONFIG_ADPCM_CIRCUS_DECODER": 1,
+              "CONFIG_ADPCM_IMA_ESCAPE_DECODER": 1,
+              "CONFIG_ADPCM_IMA_HVQM2_DECODER": 1,
+              "CONFIG_ADPCM_IMA_HVQM4_DECODER": 1,
+              "CONFIG_ADPCM_IMA_MAGIX_DECODER": 1,
+              "CONFIG_ADPCM_IMA_PDA_DECODER": 1,
+              "CONFIG_ADPCM_N64_DECODER": 1,
+              "CONFIG_ADPCM_PSXC_DECODER": 1,
+              "CONFIG_AHX_PARSER": 1,
+              "CONFIG_AHX_TO_MP2_BSF": 1
+            },
+            "booleanConfigurationSHA256": "4517449b578c76890504263546579ca56b9764bfa1c689dc438fe876e918204d"
+          }
+        }
+      },
+      "mismatches": [],
+      "passed": true
+    }
+  },
+  "configurationDifferences": []
+}

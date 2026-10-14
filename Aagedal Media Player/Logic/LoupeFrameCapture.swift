@@ -192,6 +192,10 @@ final class LoupeFrameCapture: ObservableObject {
 
     private func capture() {
         refreshSource()
+        // Paused UHD/HDR frames can exceed 64 MiB. Keep the verified image
+        // while its presentation proof is current instead of downloading and
+        // converting the same hardware surface ten times per second.
+        if let controller, controller.useMPV, hasVerifiedSourceRaster(for: controller) { return }
         let now = ProcessInfo.processInfo.systemUptime
         guard now - lastCaptureStartedAt >= 0.1,
               let controller, let source, let token = gate.begin() else { return }
@@ -262,7 +266,7 @@ final class LoupeFrameCapture: ObservableObject {
     private nonisolated static func makeImage(_ request: Request) async -> CapturedImage? {
         switch request {
         case .mpv(let mpv, let canVerify):
-            if canVerify, let raster = mpv.decoderRaster(), let image = image(from: raster.pixels) {
+            if canVerify, let raster = mpv.decoderRaster(), let image = image(from: raster) {
                 return CapturedImage(image: image, preservesSourcePixels: true, pts: raster.pixels.playbackTime)
             }
             guard let raw = mpv.screenshotRaw() else { return nil }
@@ -344,7 +348,19 @@ final class LoupeFrameCapture: ObservableObject {
 
     /// MPV's video screenshot already passes through its display conversion
     /// (including pixel aspect and GPU rotation). Do not rotate it a second time.
+    nonisolated static func image(from raster: MPVDecoderRaster) -> CGImage? {
+        if let encoding = raster.colorEncoding {
+            guard let colorSpace = encoding.colorSpace else { return nil }
+            return image(from: raster.pixels, colorSpace: colorSpace)
+        }
+        return image(from: raster.pixels)
+    }
+
     nonisolated static func image(from raw: MPVPlayer.RawScreenshot) -> CGImage? {
+        image(from: raw, colorSpace: CGColorSpaceCreateDeviceRGB())
+    }
+
+    private nonisolated static func image(from raw: MPVPlayer.RawScreenshot, colorSpace: CGColorSpace) -> CGImage? {
         let bits: Int
         let info: CGBitmapInfo
         switch raw.format {
@@ -368,7 +384,7 @@ final class LoupeFrameCapture: ObservableObject {
               let provider = CGDataProvider(data: raw.data as CFData) else { return nil }
         return CGImage(width: raw.width, height: raw.height,
                        bitsPerComponent: bits, bitsPerPixel: bits * 4,
-                       bytesPerRow: raw.stride, space: CGColorSpaceCreateDeviceRGB(),
+                       bytesPerRow: raw.stride, space: colorSpace,
                        bitmapInfo: info, provider: provider, decode: nil,
                        shouldInterpolate: false, intent: .defaultIntent)
     }

@@ -1,0 +1,16 @@
+{
+  "/private/tmp/aagedal-native-raster-20261014/arm64-app-candidate/DerivedData/Build/Products/Release/Aagedal Media Player.app/Contents/MacOS/Aagedal Media Player": {
+    "sha256": "b3b1a3951b90b9f638ff4270b642ed3ecec3df3910612f9044949c203e76ff60",
+    "sizeBytes": 81355120,
+    "architectures": [
+      "arm64"
+    ]
+  },
+  "/private/tmp/aagedal-native-raster-20261014/arm64-app-candidate/DerivedData/Build/Products/Release/Aagedal Media Player.app/Contents/PlugIns/Aagedal Media Player Tests.xctest/Contents/MacOS/Aagedal Media Player Tests": {
+    "sha256": "618f30ff07042afa3996ccdf45423911c537559bd2bfe21649977e6eda35ecb7",
+    "sizeBytes": 20281328,
+    "architectures": [
+      "arm64"
+    ]
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "archive": {
+    "schemaVersion": 1,
+    "architectures": [
+      "arm64"
+    ],
+    "url": "https://github.com/aagedal/Aagedal-Media-Player/releases/download/mpvkit-decoder-raster-arm64-20261014/mpvkit-decoder-raster-arm64-20261014.tar.gz",
+    "sha256": "26e183979c7111fc236f379ef9dfeb4cd59e93408a6abaec00d1ac5006a5d52d",
+    "sizeBytes": 878258148,
+    "scope": "Opt-in development dependency; not a shipping app release.",
+    "evidence": "docs/evidence/mpv-native-raster-expanded-20261014/README.md",
+    "inventorySHA256": "8fdb31ad78d52e176ee91d1eeffba0b02bede73346eeb944f24e7ea41249be78"
+  },
+  "restoredPath": "/private/tmp/aagedal-native-raster-20261014/restored-handoff",
+  "originalBuildNeeded": false,
+  "packageCacheNeeded": false,
+  "nativeCasesPassed": 31
+}

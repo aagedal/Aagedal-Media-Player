@@ -27,6 +27,10 @@ The shared scheme includes the `Aagedal Media Player Tests` XCTest target. No Gi
 
 **Important:** Metal API Validation must be OFF in the Xcode scheme's Run diagnostics. MoltenVK has a known race condition that causes crashes with validation enabled (KhronosGroup/MoltenVK#2226).
 
+## Native-pixel MPVKit continuation
+
+Restore the validated arm64 candidate using [the handoff](docs/MPV_NATIVE_RASTER_HANDOFF.md) instead of rebuilding MPVKit. The repository-pinned development bundle includes binaries, fixtures, native test clients, retained sources and acceptance receipts. Shipping dependency pins remain unchanged.
+
 ## Dependencies
 
 Swift Package dependencies (all remote, resolved via SPM):

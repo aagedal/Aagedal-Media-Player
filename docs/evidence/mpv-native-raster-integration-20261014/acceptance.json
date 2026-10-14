@@ -1,0 +1,102 @@
+{
+  "scope": "Restricted local development provider; no shipping repin or publication.",
+  "sourceCommit": "a3e4c69bd7123e0e75c669edde025560d5d49474",
+  "activePatchSHA256": "cec19182aa9a462d5a3458c07bf263aebc3f98f21c908b5edb0e4ea31443b569",
+  "consumedPatchSHA256": "3d9e650f2a091cba8f7c7a1397072847368b4ec9888575ca7366ebb87139dd9c",
+  "activePatchBuiltSourceIdentity": {
+    "filters/f_decoder_wrapper.c": "7bb85a0d8eeb63b018f083dfb34d605b042d857a196c556c0e0ad6e120e21838",
+    "filters/f_decoder_wrapper.h": "1468bc0f902d129d3800e6f2642aea02ece0ebb4bbf12d9c1dfc4e1a1b24d355",
+    "player/command.c": "7f3c45a7bd0ba72da1f52d084a56e6a9e6c31d3ca371473ec904a3107a69ff86",
+    "player/screenshot.c": "7244b78ec26e5ecd3e3e8e71d804d9fcda54698fd73d3c46285e84cfdf9082df",
+    "player/screenshot.h": "e25686767adc612a8a3b8800266a0a0bf0675001ac0c0e3ec07a997fb6dd4a08"
+  },
+  "patchFormattingNote": "The active patch has normalized blank context lines; its resulting five source files match the rebuilt provider exactly.",
+  "appExecutableSHA256": "c37f4725fcc6d86e5e20d7669468c099b32820113afeabfcfd1f5d9ce9d850a5",
+  "testRunSHA256": "cc53a29cbab268e6a1bccb6aab11f0fb5bc6450ea64915ced1c020866cd60e70",
+  "testEnvironment": {
+    "AAGEDAL_MPV_DECODER_RASTER_CANDIDATE": "1",
+    "MPV_DECODER_RASTER_FIXTURE": "/private/tmp/aagedal-native-raster-20261014/runtime-final/numbered-grid.mkv"
+  },
+  "acceptanceMarker": "MPV_NATIVE_RASTER_APP_ACCEPTANCE: 512 numbered pixels verified; proof revoked on resume",
+  "nativeRuntimePassed": true,
+  "appResult": {
+    "devicesAndConfigurations": [
+      {
+        "device": {
+          "architecture": "arm64e",
+          "deviceId": "00006050-001C293C22F9401C",
+          "deviceName": "My Mac",
+          "modelName": "MacBook Pro",
+          "osBuildNumber": "26A434",
+          "osVersion": "27.0.1",
+          "platform": "macOS"
+        },
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "passedTests": 1,
+        "skippedTests": 0,
+        "testPlanConfiguration": {
+          "configurationId": "1",
+          "configurationName": "Test Scheme Action"
+        }
+      }
+    ],
+    "environmentDescription": "Aagedal Media Player \u00b7 Built with macOS 27.0.1",
+    "expectedFailures": 0,
+    "failedTests": 0,
+    "finishTime": 1791986571.522,
+    "passedTests": 1,
+    "result": "Passed",
+    "runtimeWarnings": [],
+    "skippedTests": 0,
+    "startTime": 1791986568.897,
+    "statistics": [],
+    "testFailures": [],
+    "title": "Test - Aagedal Media Player",
+    "topInsights": [],
+    "totalTestCount": 1
+  },
+  "shippingFallbackResult": {
+    "devicesAndConfigurations": [
+      {
+        "device": {
+          "architecture": "arm64",
+          "deviceId": "00006050-001C293C22F9401C",
+          "deviceName": "My Mac",
+          "modelName": "MacBook Pro",
+          "osBuildNumber": "26A434",
+          "osVersion": "27.0.1",
+          "platform": "macOS"
+        },
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "passedTests": 38,
+        "skippedTests": 0,
+        "testPlanConfiguration": {
+          "configurationId": "1",
+          "configurationName": "Test Scheme Action"
+        }
+      }
+    ],
+    "environmentDescription": "Aagedal Media Player \u00b7 Built with macOS 27.0.1",
+    "expectedFailures": 0,
+    "failedTests": 0,
+    "finishTime": 1791981736.851,
+    "passedTests": 38,
+    "result": "Passed",
+    "runtimeWarnings": [],
+    "skippedTests": 0,
+    "startTime": 1791981664.329,
+    "statistics": [],
+    "testFailures": [],
+    "title": "Test - Aagedal Media Player",
+    "topInsights": [
+      {
+        "category": "Longest Test Runs",
+        "impact": "41% of duration",
+        "text": "1 longest test run with outlier durations exceeding 0.60s (three standard deviations)"
+      }
+    ],
+    "totalTestCount": 38
+  }
+}

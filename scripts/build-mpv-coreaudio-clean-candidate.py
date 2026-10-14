@@ -184,9 +184,9 @@ def shipping_prerequisites(mpvkit, metal_toolchain=None):
                                    'output': probe.stdout.strip(), 'exitCode': probe.returncode}}
 
 
-def shipping_configuration(output, require_shipping):
+def shipping_configuration(output, require_shipping, architectures=("arm64", "x86_64")):
     result = {'product': SHIPPING_PRODUCT, 'architectures': {}, 'mismatches': []}
-    for arch in ('arm64', 'x86_64'):
+    for arch in architectures:
         actual = {}
         for identity, expected in SHIPPING_FLAGS.items():
             library, header = identity.split('/')
@@ -212,6 +212,9 @@ def shipping_configuration(output, require_shipping):
 
 def verify_build(output, receipt, require_shipping=True):
     """Verify immutable source, reconstructed inputs and actual output slices."""
+    architectures = receipt.get('architectures', ['arm64', 'x86_64'])
+    if architectures not in (['arm64'], ['arm64', 'x86_64']):
+        raise ValueError('unsupported build architecture declaration')
     checkout = output / 'MPVKit'
     metal_identity = receipt.get('shippingPrerequisites', {}).get('metalToolchain')
     if metal_identity:
@@ -253,8 +256,8 @@ def verify_build(output, receipt, require_shipping=True):
         with zipfile.ZipFile(archive) as file:
             info = plistlib.loads(file.read(name + '.xcframework/Info.plist'))
             slices = info['AvailableLibraries']
-            if len(slices) != 1 or slices[0]['SupportedPlatform'] != 'macos' or set(slices[0]['SupportedArchitectures']) != {'arm64', 'x86_64'}:
-                raise ValueError(f'expected universal macOS XCFramework: {name}')
+            if len(slices) != 1 or slices[0]['SupportedPlatform'] != 'macos' or set(slices[0]['SupportedArchitectures']) != set(architectures):
+                raise ValueError(f'expected declared macOS XCFramework: {name}')
             binary_path = '/'.join([name + '.xcframework', slices[0]['LibraryIdentifier'],
                                     slices[0]['LibraryPath'], 'Versions/A', name])
             payload = file.read(binary_path)
@@ -263,7 +266,7 @@ def verify_build(output, receipt, require_shipping=True):
             binary = Path(temporary) / name
             binary.write_bytes(payload)
             archs = capture(['/usr/bin/lipo', '-archs', binary]).split()
-        if set(archs) != {'arm64', 'x86_64'}:
+        if set(archs) != set(architectures):
             raise ValueError(f'actual framework architecture mismatch: {name}')
         checksum = (checkout / 'dist/release' / (name + '.xcframework.checksum.txt')).read_text().strip()
         if sha(archive) != checksum:
@@ -272,7 +275,7 @@ def verify_build(output, receipt, require_shipping=True):
                                        'zipSHA256': checksum, 'libraryIdentifier': slices[0]['LibraryIdentifier']}
     for library in ['libmpv', 'FFmpeg']:
         result['freshObjects'][library] = {}
-        for arch in ['arm64', 'x86_64']:
+        for arch in architectures:
             scratch = checkout / 'dist' / library / 'macos/scratch' / arch
             objects = sorted(scratch.rglob('*.o'))
             if not objects:
@@ -299,7 +302,21 @@ def verify_build(output, receipt, require_shipping=True):
                         raise ValueError('CoreAudio compile command used a different source tree')
                     patched_objects[file] = {'objectSHA256': sha(scratch / entry['output']), 'sourceSHA256': sha(source)}
                 result['freshObjects'][library][arch]['coreaudioObjects'] = patched_objects
-    result['shippingFeatureParity'] = shipping_configuration(output, require_shipping)
+                if receipt.get('decoderRasterCandidate'):
+                    provider_objects = {}
+                    for relative in ['filters/f_decoder_wrapper.c', 'player/command.c', 'player/screenshot.c',
+                                     'common/av_common.c', 'demux/demux_lavf.c', 'video/mp_image.c']:
+                        matches = [entry for entry in entries if Path(entry['file']).name == Path(relative).name]
+                        if len(matches) != 1:
+                            raise ValueError(f'missing fresh decoder-raster command: {arch}/{relative}')
+                        entry = matches[0]
+                        source = (Path(entry['directory']) / entry['file']).resolve()
+                        if source != (checkout / 'dist/libmpv-v0.41.0' / relative).resolve():
+                            raise ValueError('decoder-raster compile command used a different source tree')
+                        provider_objects[relative] = {'objectSHA256': sha(scratch / entry['output']),
+                                                      'sourceSHA256': sha(source), 'command': entry['command']}
+                    result['freshObjects'][library][arch]['decoderRasterObjects'] = provider_objects
+    result['shippingFeatureParity'] = shipping_configuration(output, require_shipping, architectures)
     recorded_verification = receipt.get('verification', {})
     for identity in ('xcframeworks', 'freshObjects'):
         if identity in recorded_verification and result[identity] != recorded_verification[identity]:

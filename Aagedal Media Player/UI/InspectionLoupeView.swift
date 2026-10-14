@@ -362,6 +362,7 @@ struct InspectionLoupeLens: View {
                         displayScale: displayScale
                     )
                     Image(decorative: image, scale: 1)
+                        .allowedDynamicRange(.high)
                         .resizable()
                         .interpolation(usesNearestNeighbor ? .none : .high)
                         .frame(width: placement.width, height: placement.height)

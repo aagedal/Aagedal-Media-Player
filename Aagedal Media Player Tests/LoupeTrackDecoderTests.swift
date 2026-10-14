@@ -150,6 +150,188 @@ final class LoupeTrackDecoderTests: XCTestCase {
         XCTAssertFalse(capture.hasVerifiedSourceRaster(for: controller))
     }
 
+    func testMPVNativeRasterOptInUsesCurrentDecoderFrameAndRevokesOnResume() async throws {
+        let environment = ProcessInfo.processInfo.environment
+        let requiresProvider = environment["AAGEDAL_MPV_DECODER_RASTER_CANDIDATE"] == "1"
+        if let cases = environment["MPV_DECODER_RASTER_CASES"] {
+            XCTAssertTrue(requiresProvider, "Extended validation must explicitly enable the candidate")
+            try await validateExtendedNativeCases(URL(fileURLWithPath: cases))
+            return
+        }
+        let url: URL
+        if requiresProvider {
+            url = URL(fileURLWithPath: try XCTUnwrap(environment["MPV_DECODER_RASTER_FIXTURE"],
+                "Candidate acceptance requires the independently numbered RGB-grid fixture"))
+        } else {
+            url = try fixture("landscape")
+        }
+        let controller = PlayerController(proResRAWDetector: { _, _ in false })
+        let capture = LoupeFrameCapture()
+        defer { capture.stop(); controller.teardown() }
+        controller.loadMedia(PlayerWindowCoordinator.makeMediaItem(for: url))
+        let constructed = await waitUntil { controller.useMPV && controller.mpvPlayer != nil }
+        XCTAssertTrue(constructed)
+        let mpv = try XCTUnwrap(controller.mpvPlayer)
+        let view = NSView(frame: CGRect(x: 0, y: 0, width: 320, height: 180))
+        let layer = MPVMetalLayer()
+        layer.frame = view.bounds
+        layer.drawableSize = view.bounds.size
+        view.layer = layer
+        view.wantsLayer = true
+        retainedSurfaces.append(view)
+        mpv.attachDrawable(layer)
+        let ready = await waitUntil { controller.isReady }
+        XCTAssertTrue(ready)
+        controller.pause()
+        XCTAssertEqual(mpv.canInspectDecoderRaster, requiresProvider,
+                       "Candidate acceptance must fail if the rebuilt provider is missing")
+        capture.start(controller: controller)
+        if !requiresProvider {
+            let preview = await waitUntil { capture.image != nil }
+            XCTAssertTrue(preview)
+            XCTAssertNil(mpv.decoderRaster())
+            XCTAssertFalse(capture.hasVerifiedSourceRaster(for: controller))
+            return
+        }
+        let verified = await waitUntil { capture.hasVerifiedSourceRaster(for: controller) }
+        XCTAssertTrue(verified, "The actual app capture must certify the paused decoder frame")
+        try assertNumberedGrid(try XCTUnwrap(mpv.decoderRaster()), expectedFrame: 0)
+        mpv.seek(to: 1)
+        let sought = await waitUntil {
+            capture.hasVerifiedSourceRaster(for: controller) && mpv.decoderRaster()?.pixels.playbackTime == 1
+        }
+        XCTAssertTrue(sought)
+        try assertNumberedGrid(try XCTUnwrap(mpv.decoderRaster()), expectedFrame: 5)
+        controller.play()
+        let playing = await waitUntil { controller.isPlaying }
+        XCTAssertTrue(playing)
+        XCTAssertFalse(capture.hasVerifiedSourceRaster(for: controller))
+        XCTAssertNil(mpv.decoderRaster())
+        print("MPV_NATIVE_RASTER_APP_ACCEPTANCE: 512 numbered pixels verified; proof revoked on resume")
+    }
+
+    private struct NativeCaseManifest: Decodable { let cases: [NativeCase] }
+    private struct NativeCase: Decodable {
+        let name: String, input: String
+        let references: [String]?
+        let width: Int, height: Int, depth: Int, rotation: Int
+        let mirrored: Bool, transfer: String, primaries: String, hardwareDecoder: String
+        let bytesPerPixel: Int, tolerance: Int, seekPTS: Double, reject: Bool
+    }
+
+    private func validateExtendedNativeCases(_ manifestURL: URL) async throws {
+        let manifest = try JSONDecoder().decode(NativeCaseManifest.self, from: Data(contentsOf: manifestURL))
+        let cases = manifest.cases.filter { !$0.reject }
+        XCTAssertGreaterThan(cases.count, 10)
+        for testCase in cases {
+            let previousHWDec = ProcessInfo.processInfo.environment["AAGEDAL_MPV_DECODER_RASTER_HWDEC"]
+            setenv("AAGEDAL_MPV_DECODER_RASTER_HWDEC", testCase.hardwareDecoder, 1)
+            defer {
+                if let previousHWDec { setenv("AAGEDAL_MPV_DECODER_RASTER_HWDEC", previousHWDec, 1) }
+                else { unsetenv("AAGEDAL_MPV_DECODER_RASTER_HWDEC") }
+            }
+            let controller = PlayerController(proResRAWDetector: { _, _ in false })
+            let capture = LoupeFrameCapture()
+            defer { capture.stop(); controller.teardown() }
+            controller.loadMedia(PlayerWindowCoordinator.makeMediaItem(for: URL(fileURLWithPath: testCase.input)))
+            let constructed = await waitUntil { controller.useMPV && controller.mpvPlayer != nil }
+            XCTAssertTrue(constructed, testCase.name)
+            let mpv = try XCTUnwrap(controller.mpvPlayer)
+            let view = NSView(frame: CGRect(x: 0, y: 0, width: 640, height: 360))
+            let layer = MPVMetalLayer()
+            layer.frame = view.bounds
+            layer.drawableSize = view.bounds.size
+            view.layer = layer
+            view.wantsLayer = true
+            retainedSurfaces.append(view)
+            mpv.attachDrawable(layer)
+            let ready = await waitUntil { controller.isReady }
+            XCTAssertTrue(ready, testCase.name)
+            controller.pause()
+            XCTAssertTrue(mpv.canInspectDecoderRaster, testCase.name)
+            capture.start(controller: controller)
+            let verified = await waitUntil { capture.hasVerifiedSourceRaster(for: controller) }
+            XCTAssertTrue(verified, testCase.name)
+            let firstResult = await Task.detached { mpv.decoderRaster() }.value
+            let first = try XCTUnwrap(firstResult)
+            let references = try XCTUnwrap(testCase.references)
+            try assertExtendedRaster(first, image: XCTUnwrap(capture.image), testCase: testCase,
+                                     reference: references[0], expectedPTS: 0)
+            let firstImage = try XCTUnwrap(capture.image)
+            try await Task.sleep(for: .milliseconds(250))
+            XCTAssertTrue(capture.image === firstImage, "An unchanged verified frame must reuse its large cached image")
+            mpv.seek(to: testCase.seekPTS)
+            let sought = await waitUntil {
+                capture.hasVerifiedSourceRaster(for: controller) &&
+                    mpv.isDecoderRasterCurrent(pts: testCase.seekPTS, trackID: first.trackID)
+            }
+            XCTAssertTrue(sought, testCase.name)
+            let secondResult = await Task.detached { mpv.decoderRaster() }.value
+            let second = try XCTUnwrap(secondResult)
+            try assertExtendedRaster(second, image: XCTUnwrap(capture.image), testCase: testCase,
+                                     reference: references[1], expectedPTS: testCase.seekPTS)
+            controller.play()
+            let playing = await waitUntil { controller.isPlaying }
+            XCTAssertTrue(playing, testCase.name)
+            XCTAssertFalse(capture.hasVerifiedSourceRaster(for: controller), testCase.name)
+            print("MPV_EXTENDED_NATIVE_CASE_ACCEPTANCE: \(testCase.name), hardwareTransfer=\(second.hardwareTransferred), bits=\(second.sourceBitDepth)")
+        }
+        print("MPV_EXTENDED_NATIVE_APP_ACCEPTANCE: \(cases.count) cases verified with seek, cached-image reuse, and resume revocation")
+    }
+
+    private func assertExtendedRaster(_ raster: MPVDecoderRaster, image: CGImage, testCase: NativeCase,
+                                      reference: String, expectedPTS: Double) throws {
+        XCTAssertEqual(raster.pixels.width, testCase.width, testCase.name)
+        XCTAssertEqual(raster.pixels.height, testCase.height, testCase.name)
+        XCTAssertEqual(raster.sourceBitDepth, testCase.depth, testCase.name)
+        XCTAssertEqual(raster.rotation, testCase.rotation, testCase.name)
+        XCTAssertEqual(raster.mirrored, testCase.mirrored, testCase.name)
+        XCTAssertEqual(raster.hardwareTransferred, testCase.hardwareDecoder != "no", testCase.name)
+        XCTAssertEqual(raster.colorEncoding, MPVDecoderRaster.ColorEncoding(primaries: testCase.primaries, transfer: testCase.transfer))
+        XCTAssertEqual(try XCTUnwrap(raster.pixels.playbackTime), expectedPTS, accuracy: 0.000_001)
+        XCTAssertEqual(image.width, testCase.width)
+        XCTAssertEqual(image.height, testCase.height)
+        XCTAssertEqual(image.bitsPerComponent, testCase.bytesPerPixel == 8 ? 16 : 8)
+        if testCase.transfer == "pq" { XCTAssertEqual(image.colorSpace?.name, CGColorSpace.itur_2100_PQ) }
+        if testCase.transfer == "hlg" { XCTAssertEqual(image.colorSpace?.name, CGColorSpace.itur_2100_HLG) }
+        let expected = try Data(contentsOf: URL(fileURLWithPath: reference))
+        let captured = try XCTUnwrap(image.dataProvider?.data) as Data
+        let points = [(0,0), (testCase.width-1,0), (testCase.width/2,testCase.height/2),
+                      (0,testCase.height-1), (testCase.width-1,testCase.height-1),
+                      (testCase.width/4,testCase.height/4), (testCase.width*3/4,testCase.height*3/4)]
+        let componentSize = testCase.bytesPerPixel == 8 ? 2 : 1
+        for data in [raster.pixels.data, captured] {
+            for (x,y) in points {
+                for component in 0..<4 {
+                    let a = y * raster.pixels.stride + x * testCase.bytesPerPixel + component * componentSize
+                    let e = (y * testCase.width + x) * testCase.bytesPerPixel + component * componentSize
+                    guard a + componentSize <= data.count, e + componentSize <= expected.count else {
+                        return XCTFail("Truncated native/reference raster: \(testCase.name)")
+                    }
+                    let av = Int(data[a]) | (componentSize == 2 ? Int(data[a+1]) << 8 : 0)
+                    let ev = Int(expected[e]) | (componentSize == 2 ? Int(expected[e+1]) << 8 : 0)
+                    XCTAssertLessThanOrEqual(abs(av - ev), testCase.tolerance, "\(testCase.name), \(x),\(y), channel \(component)")
+                }
+            }
+        }
+    }
+
+    private func assertNumberedGrid(_ raster: MPVDecoderRaster, expectedFrame: Int) throws {
+        XCTAssertEqual(raster.pixels.width, 16)
+        XCTAssertEqual(raster.pixels.height, 16)
+        XCTAssertEqual(try XCTUnwrap(raster.pixels.playbackTime), Double(expectedFrame) / 5, accuracy: 0.000_001)
+        let bytes = [UInt8](raster.pixels.data)
+        guard raster.pixels.width == 16, raster.pixels.height == 16,
+              bytes.count >= raster.pixels.stride * 16 else { return XCTFail("Invalid numbered-grid raster") }
+        for y in 0..<16 {
+            for x in 0..<16 {
+                let offset = y * raster.pixels.stride + x * 4
+                XCTAssertEqual(Array(bytes[offset..<(offset + 4)]),
+                               [UInt8((x + y) * 7), UInt8(y * 13), UInt8((x * 13 + expectedFrame * 17) % 256), 255])
+            }
+        }
+    }
+
     private func makeController(url: URL) async throws -> PlayerController {
         let controller = PlayerController(proResRAWDetector: { _, _ in true })
         controller.loadMedia(PlayerWindowCoordinator.makeMediaItem(for: url))

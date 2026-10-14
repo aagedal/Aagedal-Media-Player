@@ -45,6 +45,8 @@ python_tests=(
     scripts/test-mpv-coreaudio-candidate.py
     scripts/test-mpv-coreaudio-clean-candidate.py
     scripts/test-mpv-coreaudio-from-stage.py
+    scripts/test-mpv-decoder-raster-tools.py
+    scripts/test-mpv-decoder-raster-handoff.py
     scripts/test-mpv-coreaudio-publication.py
     scripts/test-mpv-coreaudio-reconstruction.py
     scripts/test-metadata-candidate-validation.py
