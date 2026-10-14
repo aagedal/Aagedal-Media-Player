@@ -30,6 +30,8 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
     private var metalLayer: MPVMetalLayer?
     private let queue = DispatchQueue(label: "com.aagedal.mpv", qos: .userInitiated)
     private nonisolated(unsafe) var seekScheduler = MPVSeekScheduler()
+    private nonisolated(unsafe) var commandQueue = MPVCommandQueue()
+    private var requestedRate: Float = 1
 
     // Published properties for playback state
     @Published var isPlaying = false
@@ -46,7 +48,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
     }
     @Published var isMuted: Bool = false {
         didSet {
-            setFlag(MPVProperty.mute, isMuted)
+            setFlagAsync(MPVProperty.mute, isMuted)
         }
     }
     @Published var isSeekable = false
@@ -136,6 +138,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         queue.sync {
             guard self.mpv != nil else { return }
             self.seekScheduler.reset()
+            self.commandQueue.reset()
             mpv_terminate_destroy(self.mpv)
             self.mpv = nil
         }
@@ -188,14 +191,9 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         }
 
         let profilesNativeAudio = ProcessInfo.processInfo.environment["LIVE_AUDIO_METER_PROFILE_INPUTS"] != nil
-        #if DEBUG
-        let logLevel = "warn"
-        #else
-        // The opt-in native profile must retain AO initialization failures in
-        // Release too. A progressing video clock can hide failed audio output.
-        let logLevel = profilesNativeAudio ? "warn" : "no"
-        #endif
-        let logRequestStatus = mpv_request_log_messages(mpv, logLevel)
+        // Warning events are also control signals: disabling them in Release
+        // prevents the native reverse-playback fallback from ever firing.
+        let logRequestStatus = mpv_request_log_messages(mpv, "warn")
         checkError(logRequestStatus)
         if profilesNativeAudio, logRequestStatus >= 0 {
             print("LIVE_AUDIO_METER_NATIVE_OUTPUT_LOGGING enabled")
@@ -220,12 +218,12 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         // playback on the MPV backend). These are caps, not pre-allocations —
         // mpv only uses what it needs to hold one GOP of decoded frames.
         //
-        // Decoded-frame footprint: 1080p 10-bit ≈ 6 MB/frame, 4K 10-bit
-        // ≈ 25 MB/frame. A 2-second GOP at 24 fps of 4K HDR HEVC is ~1.2 GB
-        // of decoded frames, so anything under 2 GiB silently fails on
-        // Blu-ray-style content. 4 GiB gives headroom for long-GOP 4K HDR
-        // and 4K AV1 without affecting RAM use on simpler files.
-        checkError(mpv_set_option_string(mpv, "video-reversal-buffer", "4GiB"), context: "video-reversal-buffer")
+        // Large GOPs may exceed a smaller machine's budget. Keep the native
+        // failure warning enabled so transport can switch to seek simulation.
+        let reversalBytes = MPVPlaybackPolicy.reversalBufferBytes(
+            physicalMemory: ProcessInfo.processInfo.physicalMemory
+        )
+        checkError(mpv_set_option_string(mpv, "video-reversal-buffer", String(reversalBytes)), context: "video-reversal-buffer")
         checkError(mpv_set_option_string(mpv, "audio-reversal-buffer", "128MiB"), context: "audio-reversal-buffer")
 
         checkError(mpv_set_option_string(mpv, "target-colorspace-hint", "yes"), context: "target-colorspace-hint")
@@ -265,6 +263,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         // These values may have been assigned while load() was still pending,
         // before the drawable existed and mpv had an initialized context.
         setDouble(MPVProperty.volume, PlaybackVolume.mpvValue(for: volume))
+        setDouble(MPVProperty.speed, Double(requestedRate))
         setFlag(MPVProperty.mute, isMuted)
         applyAudioChannelRouting()
         setLooping(shouldLoop)
@@ -291,9 +290,29 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
 
     // MARK: - Playback Control
 
+    /// Keep recovery independent of whether diagnostic console output is enabled.
+    nonisolated func handleLogMessage(prefix: String, level: String, text: String) {
+        #if DEBUG
+        print("[\(prefix)] \(level): \(text)", terminator: "")
+        #else
+        if ProcessInfo.processInfo.environment["LIVE_AUDIO_METER_PROFILE_INPUTS"] != nil {
+            print("[\(prefix)] \(level): \(text)", terminator: "")
+        }
+        #endif
+        logger.warning("MPV [\(prefix)] \(level): \(text)")
+        if text.contains("Backward playback is likely stuck") {
+            DispatchQueue.main.async { [weak self] in
+                self?.backwardPlaybackFailed.send()
+            }
+        }
+    }
+
     func load(url: URL, startTime: Double = 0, autostart: Bool = false) {
         cancelPendingMediaLoad()
-        queue.sync { seekScheduler.reset() }
+        queue.sync {
+            seekScheduler.reset()
+            commandQueue.discardPending()
+        }
         let generation = mediaLoadGeneration
         pendingURL = url
         pendingStartTime = startTime
@@ -355,12 +374,12 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
     }
 
     func play() {
-        setFlag(MPVProperty.pause, false)
+        setFlagAsync(MPVProperty.pause, false)
     }
 
     func pause() {
         startPaused = false
-        setFlag(MPVProperty.pause, true)
+        setFlagAsync(MPVProperty.pause, true)
     }
 
     func togglePause() {
@@ -374,13 +393,13 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
     func setLooping(_ enabled: Bool) {
         shouldLoop = enabled
         guard mpv != nil else { return }
-        command("set", args: ["loop-file", enabled ? "inf" : "no"])
+        commandAsync("set", args: ["loop-file", enabled ? "inf" : "no"])
     }
 
     func stop() {
         cancelPendingMediaLoad()
         queue.sync { seekScheduler.reset() }
-        command("stop")
+        commandAsync("stop")
         isPlaying = false
         timePos = 0
         videoAspectRatio = nil
@@ -431,25 +450,32 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
 
     /// All scheduler state and submissions share the event/teardown queue.
     private nonisolated func submitSeekLocked(_ submission: MPVSeekScheduler.Submission) {
-        guard let mpv else { return }
+        guard mpv != nil else { return }
         let args = ["seek", String(submission.request.time),
                     submission.request.exact ? "absolute+exact" : "absolute+keyframes"]
-        var cargs = args.map { strdup($0).map { UnsafePointer<CChar>($0) } }
-        cargs.append(nil)
-        defer { for ptr in cargs { if let ptr { free(UnsafeMutablePointer(mutating: ptr)) } } }
-        // libmpv copies argv before returning. Completion arrives separately;
-        // neither accepting the command nor dispatching it blocks the UI.
-        let status = mpv_command_async(mpv, submission.id, &cargs)
-        if status < 0 {
-            logger.warning("Could not enqueue MPV seek: \(String(cString: mpv_error_string(status)))")
-            if let next = seekScheduler.commandReplied(id: submission.id, succeeded: false) {
-                submitSeekLocked(next)
+        if let command = commandQueue.enqueue(arguments: args, id: submission.id) {
+            submitCommandLocked(command)
+        }
+        queue.asyncAfter(deadline: .now() + MPVPlaybackPolicy.seekTimeout) { [weak self] in
+            guard let self, let mpv = self.mpv,
+                  self.seekScheduler.expire(id: submission.id) else { return }
+            if let active = self.commandQueue.inFlight {
+                mpv_abort_async_command(mpv, active.id)
+            }
+            self.commandQueue.reset()
+            self.logger.warning("MPV seek timed out; discarded pending targets")
+            DispatchQueue.main.async { [weak self] in
+                guard let self,
+                      self.queue.sync(execute: { self.seekScheduler.lastExpiredID == submission.id }) else { return }
+                self.errorStage = .playback
+                self.error = MPVPlaybackPolicy.seekTimeoutMessage
             }
         }
     }
 
     func seekRelative(_ time: TimeInterval) {
-        command("seek", args: [String(time), "relative"])
+        guard time.isFinite else { return }
+        commandAsync("seek", args: [String(time), "relative"])
     }
 
     /// Reads mpv's playback clock directly, serialized with event handling and
@@ -469,22 +495,19 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
     /// Requires `video-reversal-buffer` (and `audio-reversal-buffer`) to have
     /// been set during initialization.
     func setPlayDirection(_ direction: String) {
-        guard let mpvCtx = mpv else { return }
-        let result = direction.withCString { cstr -> Int32 in
-            var ptr: UnsafePointer<CChar>? = cstr
-            return mpv_set_property(mpvCtx, "play-direction", MPV_FORMAT_STRING, &ptr)
-        }
-        if result < 0 {
-            logger.warning("setPlayDirection(\(direction)) failed: \(String(cString: mpv_error_string(result)))")
-        }
+        commandAsync("set", args: ["play-direction", direction])
     }
 
     var rate: Float {
         get {
-            Float(getDouble(MPVProperty.speed))
+            // Transport reads its latest intent immediately, even while an
+            // earlier async speed command is awaiting the decoder's reply.
+            requestedRate
         }
         set {
-            setDouble(MPVProperty.speed, Double(newValue))
+            guard newValue.isFinite, newValue > 0 else { return }
+            requestedRate = newValue
+            commandAsync("set", args: [MPVProperty.speed, String(newValue)])
         }
     }
 
@@ -826,15 +849,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
                         let prefix = msg.pointee.prefix.map { String(cString: $0) } ?? "mpv"
                         let level = msg.pointee.level.map { String(cString: $0) } ?? "?"
                         let text = msg.pointee.text.map { String(cString: $0) } ?? ""
-                        print("[\(prefix)] \(level): \(text)", terminator: "")
-                        // mpv's backward-playback algorithm prints this exact
-                        // string when it gives up. Signal subscribers so they
-                        // can fall back to a different reverse strategy.
-                        if text.contains("Backward playback is likely stuck") {
-                            DispatchQueue.main.async { [weak self] in
-                                self?.backwardPlaybackFailed.send()
-                            }
-                        }
+                        self.handleLogMessage(prefix: prefix, level: level, text: text)
                     }
 
                 case MPV_EVENT_SEEK:
@@ -846,27 +861,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
                     }
 
                 case MPV_EVENT_COMMAND_REPLY:
-                    if pointee.reply_userdata & Self.loadCommandMask != 0 {
-                        let generation = pointee.reply_userdata & ~Self.loadCommandMask
-                        let status = pointee.error
-                        if status < 0 {
-                            let message = String(cString: mpv_error_string(status))
-                            DispatchQueue.main.async {
-                                guard self.mediaLoadGeneration == generation else { return }
-                                self.errorStage = .loading
-                                self.error = "mpv could not load this file: \(message)"
-                            }
-                        }
-                        break
-                    }
-                    if pointee.error < 0 {
-                        self.logger.warning("Asynchronous MPV command failed: \(String(cString: mpv_error_string(pointee.error)))")
-                    }
-                    if let next = self.seekScheduler.commandReplied(
-                        id: pointee.reply_userdata, succeeded: pointee.error >= 0
-                    ) {
-                        self.submitSeekLocked(next)
-                    }
+                    self.completeCommandLocked(id: pointee.reply_userdata, status: pointee.error)
 
                 case MPV_EVENT_SET_PROPERTY_REPLY:
                     if pointee.error < 0 {
@@ -883,7 +878,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
                             self.pendingSeekAfterLoad = 0
                         }
                         if self.startPaused {
-                            self.setFlag(MPVProperty.pause, true)
+                            self.setFlagAsync(MPVProperty.pause, true)
                             self.startPaused = false
                         }
                     }
@@ -1199,21 +1194,53 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
 
     @discardableResult
     private func commandAsync(_ name: String, args: [String] = [], requestID: UInt64 = 0) -> Bool {
-        guard let mpv else { return false }
-        var cargs = ([name] + args).map { strdup($0).map { UnsafePointer<CChar>($0) } }
+        guard mpv != nil else { return false }
+        queue.async { [weak self] in
+            guard let self, self.mpv != nil else { return }
+            if let command = self.commandQueue.enqueue(arguments: [name] + args, id: requestID) {
+                self.submitCommandLocked(command)
+            }
+        }
+        return true
+    }
+
+    private nonisolated func submitCommandLocked(_ command: MPVCommandQueue.Command) {
+        guard let mpv else { return }
+        var cargs = command.arguments.map { strdup($0).map { UnsafePointer<CChar>($0) } }
         cargs.append(nil)
         defer { for ptr in cargs { if let ptr { free(UnsafeMutablePointer(mutating: ptr)) } } }
-        let status = mpv_command_async(mpv, requestID, &cargs)
+        let status = mpv_command_async(mpv, command.id, &cargs)
         if status < 0 {
-            logger.warning("Could not enqueue MPV command '\(name)': \(String(cString: mpv_error_string(status)))")
+            completeCommandLocked(id: command.id, status: status)
         }
-        return status >= 0
     }
 
     private func setFlagAsync(_ name: String, _ value: Bool) {
-        guard let mpv else { return }
-        var data: Int32 = value ? 1 : 0
-        checkError(mpv_set_property_async(mpv, 0, name, MPV_FORMAT_FLAG, &data), context: name)
+        commandAsync("set", args: [name, value ? "yes" : "no"])
+    }
+
+    private nonisolated func completeCommandLocked(id: UInt64, status: CInt) {
+        if id & Self.loadCommandMask != 0 {
+            let generation = id & ~Self.loadCommandMask
+            if status < 0 {
+                let message = String(cString: mpv_error_string(status))
+                DispatchQueue.main.async { [weak self] in
+                    guard let self, self.mediaLoadGeneration == generation else { return }
+                    self.errorStage = .loading
+                    self.error = "mpv could not load this file: \(message)"
+                }
+            }
+        } else {
+            if status < 0 {
+                logger.warning("Asynchronous MPV command failed: \(String(cString: mpv_error_string(status)))")
+            }
+            if let next = seekScheduler.commandReplied(id: id, succeeded: status >= 0) {
+                submitSeekLocked(next)
+            }
+        }
+        if let next = commandQueue.completed(id: id) {
+            submitCommandLocked(next)
+        }
     }
 
     private func getDouble(_ name: String) -> Double {

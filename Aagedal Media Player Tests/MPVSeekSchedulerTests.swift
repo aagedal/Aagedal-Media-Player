@@ -6,6 +6,43 @@
 import XCTest
 
 final class MPVSeekSchedulerTests: XCTestCase {
+    func testTimeoutDiscardsQueuedTargetsAndAllowsANewUserSeek() throws {
+        var scheduler = MPVSeekScheduler()
+        let stalled = try XCTUnwrap(scheduler.request(.init(time: 10, exact: false)))
+        XCTAssertNil(scheduler.request(.init(time: 20, exact: true)))
+        XCTAssertTrue(scheduler.expire(id: stalled.id))
+        XCTAssertNil(scheduler.inFlight)
+        XCTAssertNil(scheduler.pending)
+        XCTAssertEqual(scheduler.lastExpiredID, stalled.id)
+        // Late replies/restarts cannot revive the expired operation.
+        XCTAssertNil(scheduler.commandReplied(id: stalled.id, succeeded: true))
+        XCTAssertNil(scheduler.playbackRestarted())
+        let retry = try XCTUnwrap(scheduler.request(.init(time: 30, exact: true)))
+        XCTAssertNotEqual(retry.id, stalled.id)
+        XCTAssertNil(scheduler.lastExpiredID)
+        XCTAssertFalse(scheduler.expire(id: stalled.id))
+        XCTAssertEqual(scheduler.inFlight, retry)
+        scheduler.seekStarted()
+        XCTAssertNil(scheduler.commandReplied(id: retry.id, succeeded: true))
+        XCTAssertNil(scheduler.playbackRestarted())
+        XCTAssertNil(scheduler.inFlight)
+    }
+
+    func testOldWatchdogCannotExpireACompletedOrReplacementSeek() throws {
+        var scheduler = MPVSeekScheduler()
+        let first = try XCTUnwrap(scheduler.request(.init(time: 10, exact: true)))
+        scheduler.seekStarted()
+        XCTAssertNil(scheduler.commandReplied(id: first.id, succeeded: true))
+        XCTAssertNil(scheduler.playbackRestarted())
+        XCTAssertFalse(scheduler.expire(id: first.id))
+        let next = try XCTUnwrap(scheduler.request(.init(time: 20, exact: true)))
+        XCTAssertFalse(scheduler.expire(id: first.id))
+        XCTAssertEqual(scheduler.inFlight, next)
+        XCTAssertTrue(scheduler.expire(id: next.id))
+        scheduler.reset()
+        XCTAssertNil(scheduler.lastExpiredID)
+    }
+
     func testDragWaitsForDecodedFrameAndKeepsOnlyLatestTarget() throws {
         var scheduler = MPVSeekScheduler()
         let first = try XCTUnwrap(scheduler.request(.init(time: 10, exact: false)))

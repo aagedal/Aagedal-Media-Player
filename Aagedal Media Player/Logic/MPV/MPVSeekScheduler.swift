@@ -17,6 +17,7 @@ nonisolated struct MPVSeekScheduler {
 
     private(set) var pending: Request?
     private(set) var inFlight: Submission?
+    private(set) var lastExpiredID: UInt64?
     private var nextID: UInt64 = 0
     private var accepted = false
     private var started = false
@@ -57,6 +58,17 @@ nonisolated struct MPVSeekScheduler {
         accepted = false
         started = false
         restarted = false
+        lastExpiredID = nil
+    }
+
+    /// Drop obsolete targets after a stall. A subsequent user seek can start
+    /// fresh; don't automatically pile more work onto a stalled decoder.
+    @discardableResult
+    mutating func expire(id: UInt64) -> Bool {
+        guard inFlight?.id == id else { return false }
+        reset()
+        lastExpiredID = id
+        return true
     }
 
     private mutating func finishIfReady() -> Submission? {
@@ -75,6 +87,7 @@ nonisolated struct MPVSeekScheduler {
         nextID &+= 1
         let submission = Submission(id: nextID, request: request)
         inFlight = submission
+        lastExpiredID = nil
         accepted = false
         started = false
         restarted = false
