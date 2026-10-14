@@ -902,6 +902,35 @@ final class CompareLiveBackendTests: XCTestCase {
         print("NETWORK_OPEN_PROFILE openCall=\(openCallDuration)s maxMainActorDelay=\(maximumMainActorDelay)s")
     }
 
+    func testMPVAsyncPauseRetainsOrderingAcrossReverseAndForwardTransport() async throws {
+        let url = try fixtureDirectory(requiredFiles: ["compare/relative-a.mov"])
+            .appending(path: "compare/relative-a.mov")
+        let controller = makeController(forcedBackend: .mpv)
+        defer { controller.teardown() }
+        try await loadPrimary(controller, url: url)
+        try await attachRenderSurface(to: controller)
+        let ready = await waitUntil { controller.isReady }
+        XCTAssertTrue(ready)
+        controller.pause()
+        controller.seekTo(4)
+        let landed = await waitUntil(tolerance: 1.0 / 24) {
+            controller.playbackTimeSnapshot() - 4
+        }
+        XCTAssertTrue(landed)
+        controller.startReverse()
+        let reversing = await waitUntil { controller.playbackTimeSnapshot() < 3.8 }
+        XCTAssertTrue(reversing, "Pause, backward direction and play must retain ordering.")
+        controller.stopReverse()
+        let paused = await waitUntil { !controller.isPlaying }
+        XCTAssertTrue(paused)
+        let stoppedAt = controller.playbackTimeSnapshot()
+        try await Task.sleep(for: .milliseconds(150))
+        XCTAssertEqual(controller.playbackTimeSnapshot(), stoppedAt, accuracy: 1.0 / 24)
+        controller.play()
+        let forward = await waitUntil { controller.playbackTimeSnapshot() > stoppedAt + 0.2 }
+        XCTAssertTrue(forward, "Returning to forward direction must precede playback.")
+    }
+
     func testMPVBurstScrubbingLandsPreciselyAndDoesNotReplayOldTargets() async throws {
         let profilePath = ProcessInfo.processInfo.environment["SCRUB_PROFILE_FILE"]
         let url: URL
