@@ -1,0 +1,566 @@
+{
+  "architectures": [
+    "arm64"
+  ],
+  "passed": true,
+  "cases": [
+    {
+      "name": "enabled",
+      "command": [
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/native-runtime/arm64/harness",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/native-runtime/numbered-grid.mkv"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "queue",
+      "command": [
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/native-runtime/arm64/harness",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/native-runtime/numbered-grid.mkv",
+        "queue"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "default",
+      "command": [
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/native-runtime/arm64/harness",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/native-runtime/numbered-grid.mkv",
+        "default"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "disabled",
+      "command": [
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/native-runtime/arm64/harness",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/native-runtime/numbered-grid.mkv",
+        "no"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "anamorphic",
+      "command": [
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/native-runtime/arm64/harness",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/native-runtime/anamorphic.mkv",
+        "reject"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "repeat",
+      "command": [
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/native-runtime/arm64/harness",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/native-runtime/numbered-grid.mkv",
+        "repeat"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "duplicate-pts",
+      "command": [
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/native-runtime/arm64/harness",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/native-runtime/duplicate-pts.mkv",
+        "duplicate"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "tracks",
+      "command": [
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/native-runtime/arm64/harness",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/native-runtime/two-tracks.mkv",
+        "tracks"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "orientation-0-0",
+      "command": [
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/native-runtime/arm64/reference",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/orientation-0-0.mp4",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/orientation-0-0-0.raw",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/orientation-0-0-1.raw",
+        "24",
+        "16",
+        "24",
+        "16",
+        "0",
+        "0",
+        "8",
+        "srgb",
+        "bt709",
+        "no",
+        "0",
+        "4",
+        "1"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "orientation-0-1",
+      "command": [
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/native-runtime/arm64/reference",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/orientation-0-1.mp4",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/orientation-0-1-0.raw",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/orientation-0-1-1.raw",
+        "24",
+        "16",
+        "24",
+        "16",
+        "0",
+        "1",
+        "8",
+        "srgb",
+        "bt709",
+        "no",
+        "0",
+        "4",
+        "1"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "orientation-90-0",
+      "command": [
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/native-runtime/arm64/reference",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/orientation-90-0.mp4",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/orientation-90-0-0.raw",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/orientation-90-0-1.raw",
+        "16",
+        "24",
+        "24",
+        "16",
+        "270",
+        "0",
+        "8",
+        "srgb",
+        "bt709",
+        "no",
+        "0",
+        "4",
+        "1"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "orientation-90-1",
+      "command": [
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/native-runtime/arm64/reference",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/orientation-90-1.mp4",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/orientation-90-1-0.raw",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/orientation-90-1-1.raw",
+        "16",
+        "24",
+        "24",
+        "16",
+        "90",
+        "1",
+        "8",
+        "srgb",
+        "bt709",
+        "no",
+        "0",
+        "4",
+        "1"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "orientation-180-0",
+      "command": [
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/native-runtime/arm64/reference",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/orientation-180-0.mp4",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/orientation-180-0-0.raw",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/orientation-180-0-1.raw",
+        "24",
+        "16",
+        "24",
+        "16",
+        "180",
+        "0",
+        "8",
+        "srgb",
+        "bt709",
+        "no",
+        "0",
+        "4",
+        "1"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "orientation-180-1",
+      "command": [
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/native-runtime/arm64/reference",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/orientation-180-1.mp4",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/orientation-180-1-0.raw",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/orientation-180-1-1.raw",
+        "24",
+        "16",
+        "24",
+        "16",
+        "180",
+        "1",
+        "8",
+        "srgb",
+        "bt709",
+        "no",
+        "0",
+        "4",
+        "1"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "orientation-270-0",
+      "command": [
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/native-runtime/arm64/reference",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/orientation-270-0.mp4",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/orientation-270-0-0.raw",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/orientation-270-0-1.raw",
+        "16",
+        "24",
+        "24",
+        "16",
+        "90",
+        "0",
+        "8",
+        "srgb",
+        "bt709",
+        "no",
+        "0",
+        "4",
+        "1"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "orientation-270-1",
+      "command": [
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/native-runtime/arm64/reference",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/orientation-270-1.mp4",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/orientation-270-1-0.raw",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/orientation-270-1-1.raw",
+        "16",
+        "24",
+        "24",
+        "16",
+        "270",
+        "1",
+        "8",
+        "srgb",
+        "bt709",
+        "no",
+        "0",
+        "4",
+        "1"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "scale",
+      "command": [
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/native-runtime/arm64/harness",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/scale.mp4",
+        "reject"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "shear",
+      "command": [
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/native-runtime/arm64/harness",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/shear.mp4",
+        "reject"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "fractional-translation",
+      "command": [
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/native-runtime/arm64/harness",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/fractional-translation.mp4",
+        "reject"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "uhd-3840",
+      "command": [
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/native-runtime/arm64/reference",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/uhd-3840.mkv",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/uhd-3840-0.raw",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/uhd-3840-1.raw",
+        "3840",
+        "2160",
+        "3840",
+        "2160",
+        "0",
+        "0",
+        "8",
+        "srgb",
+        "bt709",
+        "no",
+        "0",
+        "4",
+        "1"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "uhd-h264-software",
+      "command": [
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/native-runtime/arm64/reference",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/uhd-h264.mp4",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/uhd-h264-software-0.raw",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/uhd-h264-software-1.raw",
+        "3840",
+        "2160",
+        "3840",
+        "2160",
+        "0",
+        "0",
+        "8",
+        "bt1886",
+        "bt709",
+        "no",
+        "3",
+        "4",
+        "1"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "uhd-h264-hardware",
+      "command": [
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/native-runtime/arm64/gpu-reference",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/uhd-h264.mp4",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/uhd-h264-hardware-0.raw",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/uhd-h264-hardware-1.raw",
+        "3840",
+        "2160",
+        "3840",
+        "2160",
+        "0",
+        "0",
+        "8",
+        "bt1886",
+        "bt709",
+        "videotoolbox",
+        "3",
+        "4",
+        "1"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "uhd-4096",
+      "command": [
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/native-runtime/arm64/reference",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/uhd-4096.mkv",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/uhd-4096-0.raw",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/uhd-4096-1.raw",
+        "4096",
+        "2160",
+        "4096",
+        "2160",
+        "0",
+        "0",
+        "8",
+        "srgb",
+        "bt709",
+        "no",
+        "0",
+        "4",
+        "1"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "pq-1024",
+      "command": [
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/native-runtime/arm64/reference",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/pq-1024.mkv",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/pq-1024-0.raw",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/pq-1024-1.raw",
+        "1024",
+        "16",
+        "1024",
+        "16",
+        "0",
+        "0",
+        "10",
+        "pq",
+        "bt2020",
+        "no",
+        "256",
+        "8",
+        "1"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "hlg-1024",
+      "command": [
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/native-runtime/arm64/reference",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/hlg-1024.mkv",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/hlg-1024-0.raw",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/hlg-1024-1.raw",
+        "1024",
+        "16",
+        "1024",
+        "16",
+        "0",
+        "0",
+        "10",
+        "hlg",
+        "bt2020",
+        "no",
+        "256",
+        "8",
+        "1"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "pq-3840",
+      "command": [
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/native-runtime/arm64/reference",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/pq-3840.mkv",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/pq-3840-0.raw",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/pq-3840-1.raw",
+        "3840",
+        "2160",
+        "3840",
+        "2160",
+        "0",
+        "0",
+        "10",
+        "pq",
+        "bt2020",
+        "no",
+        "256",
+        "8",
+        "1"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "pq-hevc-software",
+      "command": [
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/native-runtime/arm64/reference",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/pq-hevc.mp4",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/pq-hevc-software-0.raw",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/pq-hevc-software-1.raw",
+        "3840",
+        "2160",
+        "3840",
+        "2160",
+        "0",
+        "0",
+        "10",
+        "pq",
+        "bt2020",
+        "no",
+        "256",
+        "8",
+        "1"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "pq-hevc-hardware",
+      "command": [
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/native-runtime/arm64/gpu-reference",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/pq-hevc.mp4",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/pq-hevc-hardware-0.raw",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/pq-hevc-hardware-1.raw",
+        "3840",
+        "2160",
+        "3840",
+        "2160",
+        "0",
+        "0",
+        "10",
+        "pq",
+        "bt2020",
+        "videotoolbox",
+        "256",
+        "8",
+        "1"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "hlg-3840",
+      "command": [
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/native-runtime/arm64/reference",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/hlg-3840.mkv",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/hlg-3840-0.raw",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/hlg-3840-1.raw",
+        "3840",
+        "2160",
+        "3840",
+        "2160",
+        "0",
+        "0",
+        "10",
+        "hlg",
+        "bt2020",
+        "no",
+        "256",
+        "8",
+        "1"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "hlg-hevc-software",
+      "command": [
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/native-runtime/arm64/reference",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/hlg-hevc.mp4",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/hlg-hevc-software-0.raw",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/hlg-hevc-software-1.raw",
+        "3840",
+        "2160",
+        "3840",
+        "2160",
+        "0",
+        "0",
+        "10",
+        "hlg",
+        "bt2020",
+        "no",
+        "256",
+        "8",
+        "1"
+      ],
+      "exitCode": 0
+    },
+    {
+      "name": "hlg-hevc-hardware",
+      "command": [
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/native-runtime/arm64/gpu-reference",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/hlg-hevc.mp4",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/hlg-hevc-hardware-0.raw",
+        "/private/tmp/aagedal-native-raster-20261014/restored-handoff/fixtures/hlg-hevc-hardware-1.raw",
+        "3840",
+        "2160",
+        "3840",
+        "2160",
+        "0",
+        "0",
+        "10",
+        "hlg",
+        "bt2020",
+        "videotoolbox",
+        "256",
+        "8",
+        "1"
+      ],
+      "exitCode": 0
+    }
+  ]
+}

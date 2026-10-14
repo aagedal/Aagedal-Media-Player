@@ -10,7 +10,7 @@ import subprocess
 import tempfile
 
 UPSTREAM = '41f6a645068483470267271e1d09966ca3b9f413'
-UNITS = {'f_decoder_wrapper.c', 'screenshot.c', 'command.c'}
+UNITS = {'f_decoder_wrapper.c', 'screenshot.c', 'command.c', 'av_common.c', 'demux_lavf.c', 'mp_image.c'}
 
 
 def run(args, **kwargs):

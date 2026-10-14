@@ -72,7 +72,18 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
     private var correctsReflection = false
 
     private var supportsDecoderRasterCapture = false
-    var canInspectDecoderRaster: Bool { supportsDecoderRasterCapture && !correctsReflection }
+    private var supportsDecoderRasterTransforms = false
+    // Candidate validation only. Shipping packages have no private provider;
+    // opt-in keeps the bounded raster cache off by default.
+    private nonisolated let enablesDecoderRasterCandidate =
+        ProcessInfo.processInfo.environment["AAGEDAL_MPV_DECODER_RASTER_CANDIDATE"] == "1"
+    var canInspectDecoderRaster: Bool {
+        supportsDecoderRasterCapture && (!correctsReflection || supportsDecoderRasterTransforms)
+    }
+    private nonisolated var candidateHardwareDecoder: String {
+        let value = ProcessInfo.processInfo.environment["AAGEDAL_MPV_DECODER_RASTER_HWDEC"] ?? "videotoolbox"
+        return ["no", "videotoolbox", "videotoolbox-copy"].contains(value) ? value : "videotoolbox"
+    }
     private var isInitialized = false
     private var startPaused = false
     private nonisolated(unsafe) var wakeupContext: UnsafeMutableRawPointer?
@@ -182,6 +193,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
 
         decoderRasterCapability = nil
         supportsDecoderRasterCapture = false
+        supportsDecoderRasterTransforms = false
         mpv = mpv_create()
         guard mpv != nil else {
             logger.error("Failed to create MPV context")
@@ -191,6 +203,8 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         }
 
         let profilesNativeAudio = ProcessInfo.processInfo.environment["LIVE_AUDIO_METER_PROFILE_INPUTS"] != nil
+        let usesDecoderRasterCandidate = enablesDecoderRasterCandidate &&
+            mpv_set_option_string(mpv, "aagedal-decoder-raster", "yes") >= 0
         // Warning events are also control signals: disabling them in Release
         // prevents the native reverse-playback fallback from ever firing.
         let logRequestStatus = mpv_request_log_messages(mpv, "warn")
@@ -204,7 +218,8 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         checkError(mpv_set_option_string(mpv, "vo", "gpu-next"), context: "vo")
         checkError(mpv_set_option_string(mpv, "gpu-api", "vulkan"), context: "gpu-api")
         checkError(mpv_set_option_string(mpv, "gpu-context", "moltenvk"), context: "gpu-context")
-        checkError(mpv_set_option_string(mpv, "hwdec", correctsReflection ? "videotoolbox-copy" : "videotoolbox"), context: "hwdec")
+        checkError(mpv_set_option_string(mpv, "hwdec", usesDecoderRasterCandidate ? candidateHardwareDecoder :
+            (correctsReflection ? "videotoolbox-copy" : "videotoolbox")), context: "hwdec")
         if correctsReflection {
             // A reflected matrix decomposes into the rotation MPV already
             // applies and a vertical flip in coded-raster coordinates. A video
@@ -228,7 +243,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
 
         checkError(mpv_set_option_string(mpv, "target-colorspace-hint", "yes"), context: "target-colorspace-hint")
         checkError(mpv_set_option_string(mpv, "keep-open", "yes"), context: "keep-open")
-        checkError(mpv_set_option_string(mpv, "deinterlace", "auto"), context: "deinterlace")
+        checkError(mpv_set_option_string(mpv, "deinterlace", usesDecoderRasterCandidate ? "no" : "auto"), context: "deinterlace")
         checkError(mpv_set_option_string(mpv, "screenshot-high-bit-depth", "yes"), context: "screenshot-high-bit-depth")
 
         checkError(mpv_set_option_string(mpv, "input-default-bindings", "no"), context: "input-default-bindings")
@@ -256,7 +271,15 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
 
         var availableCommands = mpv_node()
         let commandStatus = mpv_get_property(mpv, "command-list", MPV_FORMAT_NODE, &availableCommands)
-        supportsDecoderRasterCapture = commandStatus >= 0 && Self.hasDecoderRasterCommand(availableCommands)
+        supportsDecoderRasterCapture = usesDecoderRasterCandidate && commandStatus >= 0 && Self.hasDecoderRasterCommand(availableCommands)
+        var rasterVersion: Int64 = 0
+        supportsDecoderRasterTransforms = supportsDecoderRasterCapture &&
+            mpv_get_property(mpv, "aagedal-decoder-raster-version", MPV_FORMAT_INT64, &rasterVersion) >= 0 && rasterVersion == 2
+        if correctsReflection && supportsDecoderRasterTransforms {
+            // Protocol 2 resolves container/frame reflection inside the decoder.
+            // The old shipping correction would flip that image a second time.
+            checkError(mpv_set_property_string(mpv, "vf", ""), context: "native display reflection")
+        }
         decoderRasterCapability = supportsDecoderRasterCapture
         mpv_free_node_contents(&availableCommands)
 
@@ -958,12 +981,13 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
 
     /// A missing private provider command leaves shipping binaries on display
     /// capture. Probe command-list first to avoid logging unsupported commands
-    /// every time the loupe refreshes. No player options or filters are changed.
+    /// every time the loupe refreshes. Capture never changes options or filters.
     private nonisolated(unsafe) var decoderRasterCapability: Bool?
 
     nonisolated func decoderRaster() -> MPVDecoderRaster? {
         queue.sync { () -> MPVDecoderRaster? in
             guard let context = mpv else { return nil }
+            guard enablesDecoderRasterCandidate else { return nil }
             if decoderRasterCapability == nil {
                 var commands = mpv_node()
                 let status = mpv_get_property(context, "command-list", MPV_FORMAT_NODE, &commands)

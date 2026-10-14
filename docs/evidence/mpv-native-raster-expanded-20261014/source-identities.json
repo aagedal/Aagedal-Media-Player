@@ -1,0 +1,66 @@
+{
+  "Aagedal Media Player/Logic/LoupeFrameCapture.swift": {
+    "sha256": "e080426d538d7fe410c2097db030b7a51c76258bce9df0832d7a64c5db2500be",
+    "sizeBytes": 18650
+  },
+  "Aagedal Media Player/Logic/MPV/MPVDecoderRaster.swift": {
+    "sha256": "0fb7ce4f0ad77331894937bd165bf489601e9343c9d29b80671371621e31ad10",
+    "sizeBytes": 7101
+  },
+  "Aagedal Media Player/Logic/MPV/MPVPlayer.swift": {
+    "sha256": "baed47766fd2ab87439907eaa13640fa5ade27ce7d01531150536958e5b68550",
+    "sizeBytes": 56132
+  },
+  "Aagedal Media Player/UI/InspectionLoupeView.swift": {
+    "sha256": "059363f10f22f249a238db851df561412c347242754176ba6ddadab284fa9f14",
+    "sizeBytes": 17042
+  },
+  "Aagedal Media Player Tests/LoupeTrackDecoderTests.swift": {
+    "sha256": "857bd28b45af30837400e69814f137876f1a09ba6de9fa60cde2df84b3181ef0",
+    "sizeBytes": 22570
+  },
+  "Aagedal Media Player Tests/MPVDecoderRasterTests.swift": {
+    "sha256": "3cb437cb1b2f5aef2bb372606ff768319f0a1dd9772e2836f0e3f60a24c2503c",
+    "sizeBytes": 16154
+  },
+  "docs/dependency-patches/mpv-0.41.0-decoder-raster-candidate.patch": {
+    "sha256": "ae950e126c51d76a7affa150c6027e60f9d393abb84b0a4f9ebe620008e0537f",
+    "sizeBytes": 26320
+  },
+  "scripts/build-mpv-coreaudio-clean-candidate.py": {
+    "sha256": "9a264532c2cab5b1ed1c3a606acbe7bf4f264cf139dd231b0c070715754f477c",
+    "sizeBytes": 33054
+  },
+  "scripts/build-mpv-coreaudio-from-stage.py": {
+    "sha256": "6d9b9fd3900b425da40406877c2ecf0db944ead17a29a71f8a4060161898d761",
+    "sizeBytes": 15747
+  },
+  "scripts/generate-mpv-decoder-raster-extended-fixtures.py": {
+    "sha256": "ad5cc58a0e0cbd4cbb9042e0ce7638e1bfd977fbc5c053c1757453b7fcf74d47",
+    "sizeBytes": 8525
+  },
+  "scripts/mpv-decoder-raster-harness.c": {
+    "sha256": "f5e4b5ef36f9a62b57e2945b9c68d2230ec90a47555d4ff5d7e4734356314b3c",
+    "sizeBytes": 6477
+  },
+  "scripts/mpv-decoder-raster-reference-harness.c": {
+    "sha256": "ee357b5ea407223bb694817c5c9b2e0293ec3b0ee1119e2cf1d6816c281847f5",
+    "sizeBytes": 9450
+  },
+  "scripts/prepare-mpv-decoder-raster-app-candidate.py": {
+    "sha256": "22d18b7802d63b9abb47a4574f8d8d6efea9363606a66f28c8ba6b0af93872ca",
+    "sizeBytes": 6448
+  },
+  "scripts/test-mpv-decoder-raster-tools.py": {
+    "sha256": "08549162511fe5c8f312f5c3fa8dcb040bad071f01feddbf669e180142be83d1",
+    "sizeBytes": 2851
+  },
+  "scripts/validate-mpv-decoder-raster-runtime.py": {
+    "sha256": "9ed819d6ac8cde52e894d37272540e1864a605174fd62a15f47d3a081089048a",
+    "sizeBytes": 11249
+  },
+  "scripts/verify-mpv-decoder-raster-candidate.py": {
+    "sha256": "738e2f296398a121c6841103561718d70f8821136ac96d4a1185a62a6919c17d",
+    "sizeBytes": 4046
+  }
+}

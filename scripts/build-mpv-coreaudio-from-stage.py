@@ -28,6 +28,37 @@ publication = module('publication', 'prepare-mpv-coreaudio-publication.py')
 builder = module('builder', 'build-mpv-coreaudio-clean-candidate.py')
 
 
+def apply_decoder_raster_candidate(checkout, output, expected_source):
+    """Retain the opt-in provider patch and exact modified source snapshot."""
+    source = checkout / 'dist/libmpv-v0.41.0'
+    patch = Path(__file__).resolve().parents[1] / 'docs/dependency-patches/mpv-0.41.0-decoder-raster-candidate.patch'
+    # Reconstructed archives contain exact commit objects and trees, without
+    # upstream history. Bind to the already verified publication snapshot.
+    if (builder.git(source, 'rev-parse', 'HEAD') != expected_source['revision'] or
+            builder.git(source, 'rev-parse', 'HEAD^{tree}') != expected_source['tree']):
+        raise ValueError('decoder-raster input does not match the verified source snapshot')
+    if builder.git(source, 'status', '--porcelain'):
+        raise ValueError('decoder-raster input source must be clean')
+    retained_revision = builder.git(source, 'rev-parse', 'HEAD')
+    evidence = output / 'decoder-raster-source'
+    evidence.mkdir()
+    retained_patch = evidence / patch.name
+    shutil.copyfile(patch, retained_patch)
+    subprocess.run(['git', '-C', str(source), 'apply', '--check', str(retained_patch)], check=True)
+    subprocess.run(['git', '-C', str(source), 'apply', str(retained_patch)], check=True)
+    revision = builder.commit(source, 'Add opt-in paused decoder-raster provider candidate')
+    archive = evidence / 'libmpv-decoder-raster.tar.gz'
+    with archive.open('wb') as stream:
+        subprocess.run(['git', '-C', str(source), 'archive', '--format=tar.gz', revision], stdout=stream, check=True)
+    commit = evidence / 'libmpv-decoder-raster.commit'
+    commit.write_bytes(subprocess.check_output(['git', '-C', str(source), 'cat-file', 'commit', revision]))
+    return {'retainedRevision': retained_revision, 'candidateRevision': revision,
+            'candidateTree': builder.git(source, 'rev-parse', 'HEAD^{tree}'),
+            'patch': publication.identity(retained_patch), 'sourceArchive': publication.identity(archive),
+            'commitObject': publication.identity(commit),
+            'scope': 'Restricted opt-in provider; runtime and app acceptance remain separate.'}
+
+
 def tree_identity(root):
     """Bind regular bytes and link targets, retaining SDK/header symlinks."""
     import hashlib
@@ -57,7 +88,7 @@ def tree_identity(root):
             'manifestSHA256': hashlib.sha256(json.dumps(records, separators=(',', ':')).encode()).hexdigest()}
 
 
-def adapt_recipe(checkout, metal, pkg_config_directories, tool_path):
+def adapt_recipe(checkout, metal, pkg_config_directories, tool_path, apple_silicon_only=False):
     base = checkout / 'Sources/BuildScripts/XCFrameworkBuild/base.swift'
     main = checkout / 'Sources/BuildScripts/XCFrameworkBuild/main.swift'
     before = {str(p.relative_to(checkout)): builder.sha(p) for p in (base, main)}
@@ -85,6 +116,10 @@ def adapt_recipe(checkout, metal, pkg_config_directories, tool_path):
         raise ValueError('unexpected auxiliary download fallback')
     text = text.replace(fragment + '\n            try! Utility.launch(path: "/usr/bin/unzip", arguments: ["-o",outputFileName], currentDirectoryURL: directoryURL)',
                         '            throw NSError(domain: "Offline build requires retained auxiliary ZIP", code: 1)')
+    if apple_silicon_only:
+        start = text.index("        case .macos:\n", text.index("    var architectures: [ArchType]"))
+        end = text.index("        case .maccatalyst:", start)
+        text = text[:start] + "        case .macos:\n            return [.arm64]\n" + text[end:]
     base.write_text(text)
     text = main.read_text()
     text = re.sub(r'Utility.shell\("brew install ([a-z0-9-]+)"\)',
@@ -102,7 +137,8 @@ def adapt_recipe(checkout, metal, pkg_config_directories, tool_path):
 def configuration_differences(stage, verification):
     baseline = json.loads((stage / 'provenance/build-receipt.json').read_text())['verification']['shippingFeatureParity']
     differences = []
-    for arch, headers in baseline['architectures'].items():
+    for arch in verification['shippingFeatureParity']['architectures']:
+        headers = baseline['architectures'][arch]
         for name, identity in headers.items():
             actual = verification['shippingFeatureParity']['architectures'][arch][name]
             if actual['booleanConfigurationSHA256'] != identity['booleanConfigurationSHA256']:
@@ -144,8 +180,11 @@ def build(args):
                             'ninjaVersion': builder.capture(['ninja', '--version'])}
     reconstruction = publication.reconstruct(stage, output, args.expected_publication_sha256)
     checkout = output / 'MPVKit'
-    adaptations = adapt_recipe(checkout, metal, directories, tool_path)
+    source_snapshot = next(s for s in reconstruction['sourceSnapshots'] if s['name'] == 'libmpv-v0.41.0')
+    decoder_raster = apply_decoder_raster_candidate(checkout, output, source_snapshot) if args.decoder_raster_candidate else None
+    adaptations = adapt_recipe(checkout, metal, directories, tool_path, args.apple_silicon_only)
     receipt = {'schemaVersion': 1, 'buildSucceeded': False,
+               'architectures': ['arm64'] if args.apple_silicon_only else ['arm64', 'x86_64'],
                'publicationSHA256': args.expected_publication_sha256,
                'newEnvironment': environment_identity, 'recipeAdaptations': adaptations,
                'shippingPrerequisites': {'metalToolchain': metal},
@@ -156,6 +195,10 @@ def build(args):
                'candidateMPVKitRevision': builder.commit(checkout, 'Make retained GPL recipe portable and prohibit network fallbacks'),
                'originalEnvironmentGaps': reconstruction['environmentDeclaration']['unrecordedOriginalIdentities'],
                'byteIdenticalRebuildDemonstrated': False}
+    if decoder_raster:
+        receipt['decoderRasterCandidate'] = decoder_raster
+        receipt['sourceInputs']['libmpv-v0.41.0'] = {
+            key: decoder_raster[key] for key in ('candidateRevision', 'candidateTree')}
     # ZIPs are already present: unpack explicitly, without cached expanded dirs.
     for entry in receipt['prebuiltAuxiliaryInputs']:
         path = checkout / entry['relativePath']
@@ -197,6 +240,9 @@ def main():
     parser.add_argument('--metal-toolchain', type=Path, required=True)
     parser.add_argument('--pkg-config-directory', type=Path, action='append', default=[])
     parser.add_argument('--external-headers', type=Path, action='append', default=[])
+    parser.add_argument('--apple-silicon-only', action='store_true', help='build and verify only the macOS arm64 slice')
+    parser.add_argument('--decoder-raster-candidate', action='store_true',
+                        help='apply and retain the restricted native-pixel provider patch; does not enable it in the app')
     args = parser.parse_args()
     try:
         build(args)
