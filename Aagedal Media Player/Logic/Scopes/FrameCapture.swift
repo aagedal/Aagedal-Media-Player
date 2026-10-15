@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // Unified frame capture for video scopes — extracts decoded video frames
-// from either AVPlayer (via AVPlayerItemVideoOutput) or MPV (via screenshot-raw).
+// from AVPlayer outputs or MPV native analysis, with screenshot fallback.
 
 import AVFoundation
 import AppKit
@@ -61,6 +61,7 @@ nonisolated struct ScopeFrameSample: Equatable, Sendable {
     let timestampQuality: ScopeFrameTimestampQuality
     let sdrFrame: CGImage?
     let hdrFrame: HDRFrameData?
+    var nativePlots: MPVScopePlots? = nil
 
     static func == (lhs: ScopeFrameSample, rhs: ScopeFrameSample) -> Bool {
         lhs.sequence == rhs.sequence
@@ -149,6 +150,21 @@ final class FrameCapture: ObservableObject {
     // Shared timer
     private var captureTimer: Timer?
     private(set) var isCapturing = false
+
+    /// Display-space difference retains its established capture/color contract.
+    var requiresDisplayFrame = false {
+        didSet {
+            guard oldValue != requiresDisplayFrame else { return }
+            if isCapturing {
+                // The timer carries a generation too. Restart it along with
+                // invalidating in-flight work so future ticks remain eligible.
+                stopCapture(rebuildPipeline: false)
+                startCapture()
+            } else {
+                invalidatePendingCapture()
+            }
+        }
+    }
 
     /// Target downscale width for scope analysis, read from settings.
     private var analysisWidth: Int {
@@ -282,7 +298,9 @@ final class FrameCapture: ObservableObject {
             isCapturing: isCapturing
         ) else { return }
 
-        if transferFunction != .sdr {
+        if mpvPlayer != nil, !requiresDisplayFrame {
+            captureMPVNativeOrFallback()
+        } else if transferFunction != .sdr {
             captureHDRFrame()
         } else if let output = videoOutput, let player {
             captureAVPlayerFrame(output: output, player: player)
@@ -434,7 +452,31 @@ final class FrameCapture: ObservableObject {
         }())
     }
 
-    // MARK: - MPV Frame Capture via screenshot-raw
+    // MARK: - MPV Native Analysis and Capture Fallback
+
+    private func captureMPVNativeOrFallback() {
+        guard mpvCaptureInFlight == nil, let mpv = mpvPlayer else { return }
+        let identity = ScopeCaptureIdentity(generation: captureGeneration.current, player: mpv)
+        mpvCaptureInFlight = identity
+        let width = analysisWidth
+        Task { [weak self] in
+            let plots = await Task.detached(priority: .utility) {
+                mpv.nativeScopePlots(width: width)
+            }.value
+            guard let self, self.mpvCaptureInFlight == identity else { return }
+            self.mpvCaptureInFlight = nil
+            guard self.isCapturing,
+                  identity.matches(generation: self.captureGeneration.current, player: self.mpvPlayer) else { return }
+            if let plots {
+                self.publishSample(sdrFrame: nil, hdrFrame: nil, playbackTime: plots.pts,
+                                   timestampUncertainty: 0, timestampQuality: .exact, nativePlots: plots)
+            } else if self.transferFunction != .sdr {
+                self.captureMPVHDRFrame()
+            } else {
+                self.captureMPVFrame()
+            }
+        }
+    }
 
     private func captureMPVFrame() {
         guard mpvCaptureInFlight == nil, let mpv = mpvPlayer else { return }
@@ -527,7 +569,8 @@ final class FrameCapture: ObservableObject {
         hdrFrame: HDRFrameData?,
         playbackTime: TimeInterval?,
         timestampUncertainty: TimeInterval,
-        timestampQuality: ScopeFrameTimestampQuality
+        timestampQuality: ScopeFrameTimestampQuality,
+        nativePlots: MPVScopePlots? = nil
     ) {
         sampleSequence &+= 1
         let sanitizedTime = playbackTime.flatMap {
@@ -541,7 +584,8 @@ final class FrameCapture: ObservableObject {
                 : .infinity,
             timestampQuality: sanitizedTime == nil ? .unavailable : timestampQuality,
             sdrFrame: sdrFrame,
-            hdrFrame: hdrFrame
+            hdrFrame: hdrFrame,
+            nativePlots: nativePlots
         )
         sampleHistory.append(sample)
         currentSample = sample

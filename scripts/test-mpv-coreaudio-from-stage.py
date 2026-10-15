@@ -47,6 +47,28 @@ class PortableBuildTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, 'must be clean'):
                     portable.apply_decoder_raster_candidate(root / 'MPVKit', output, expected)
 
+    def test_scope_provider_retains_sources_and_rejects_reapplication(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            checkout = root / 'MPVKit'
+            source = checkout / 'dist/libmpv-v0.41.0'
+            (source / 'player').mkdir(parents=True)
+            (source / 'player/command.c').write_text('    { "aagedal-decoder-raster", cmd_aagedal_decoder_raster },\n')
+            (source / 'player/screenshot.c').write_text('/* baseline */\n')
+            (source / 'player/screenshot.h').write_text('/* baseline */\n')
+            subprocess.run(['git', 'init', '-q', str(source)], check=True)
+            portable.builder.commit(source, 'Scope fixture baseline')
+            output = root / 'evidence'
+            output.mkdir()
+            receipt = portable.apply_scopes_candidate(checkout, output)
+            self.assertTrue((output / 'scopes-source/libmpv-scopes.tar.gz').is_file())
+            self.assertIn('scope_math.h', receipt['providerInputs'])
+            self.assertIn('.spawn_thread = true', (source / 'player/command.c').read_text())
+            before = (source / 'player/screenshot.c').read_bytes()
+            with self.assertRaisesRegex(ValueError, 'already patched'):
+                portable.apply_scopes_candidate(checkout, output)
+            self.assertEqual(before, (source / 'player/screenshot.c').read_bytes())
+
     def test_header_symlink_binds_external_content_and_detects_same_size_changes(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

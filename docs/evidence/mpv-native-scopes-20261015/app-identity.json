@@ -1,0 +1,8 @@
+{
+  "architectures": [
+    "arm64"
+  ],
+  "executableSHA256": "009a5ccb05a6c7ab581526f942970ba224edfb56a23ae57d540f5220d913f3f3",
+  "localApp": "build/native-scopes-candidate-20261015/Aagedal Media Player.app",
+  "signatureVerification": "codesign --verify --deep --strict passed"
+}

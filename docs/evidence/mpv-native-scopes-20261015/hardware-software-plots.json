@@ -1,0 +1,56 @@
+[
+  {
+    "case": "sdr",
+    "scope": "waveform",
+    "byteMismatches": 0,
+    "totalBytes": 1166400
+  },
+  {
+    "case": "sdr",
+    "scope": "parade",
+    "byteMismatches": 0,
+    "totalBytes": 1166400
+  },
+  {
+    "case": "sdr",
+    "scope": "vectorscope",
+    "byteMismatches": 0,
+    "totalBytes": 656100
+  },
+  {
+    "case": "pq-tagged",
+    "scope": "waveform",
+    "byteMismatches": 0,
+    "totalBytes": 1166400
+  },
+  {
+    "case": "pq-tagged",
+    "scope": "parade",
+    "byteMismatches": 0,
+    "totalBytes": 1166400
+  },
+  {
+    "case": "pq-tagged",
+    "scope": "vectorscope",
+    "byteMismatches": 0,
+    "totalBytes": 656100
+  },
+  {
+    "case": "hlg-tagged",
+    "scope": "waveform",
+    "byteMismatches": 0,
+    "totalBytes": 1166400
+  },
+  {
+    "case": "hlg-tagged",
+    "scope": "parade",
+    "byteMismatches": 0,
+    "totalBytes": 1166400
+  },
+  {
+    "case": "hlg-tagged",
+    "scope": "vectorscope",
+    "byteMismatches": 0,
+    "totalBytes": 656100
+  }
+]
