@@ -84,6 +84,15 @@ class ReleaseXCResultValidationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "no descriptive skip reason"):
             self.validate()
 
+    def test_comparison_loupe_is_an_allowlisted_explicit_workload(self) -> None:
+        self.skipped_case["nodeIdentifier"] = (
+            "LiveLoupeSessionTests/testComparisonCanvasKeepsPairedLiveLoupesAndRestoresPausedInspection()"
+        )
+        self.assertEqual(self.validate(), (662, 1))
+        self.skipped_case["children"] = []
+        with self.assertRaisesRegex(ValueError, "no descriptive skip reason"):
+            self.validate()
+
     def test_accepts_no_skips_when_optional_inputs_are_supplied(self) -> None:
         self.summary["passedTests"] = 662
         self.summary["skippedTests"] = 0

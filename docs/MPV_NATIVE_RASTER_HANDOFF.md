@@ -182,9 +182,40 @@ This is independent-player synchronization, not frame lock. It adds one decoder
 per MPV source while the loupe is open and live video is enabled.
 The [concurrent soak run](evidence/mpv-live-loupe-soak-20261015/README.md)
 adds three cycles of four 30-second UHD60 workloads with two source/loupe pairs
-and bounded cycle-end memory growth. Longer loads and actual simultaneous UHD
-comparison UI workflows still need qualification. Shipping pins and the native provider's default-off gate
+and bounded cycle-end memory growth. Longer loads still need qualification. The subsequent
+[different-file comparison check](evidence/mpv-comparison-live-loupe-20261015/README.md)
+qualifies short SDR/PQ and PQ/HLG comparison-canvas workflows with paired live
+loupes; sustained comparison UI loads remain open. Shipping pins and the native provider's default-off gate
 remain unchanged.
+
+## Different-file comparison canvas qualification
+
+[The accepted arm64 run](evidence/mpv-comparison-live-loupe-20261015/README.md)
+passes both pairs in all three modes, with at least 58.99 loupe presentations
+per second, 33.34 ms maximum follower drift and all 360 clock samples usable.
+
+The comparison runner mounts the production `ComparePlayerView` and
+`InspectionLoupeOverlay` together with the real comparison controller. It uses
+SDR/PQ and PQ/HLG different-file UHD60 pairs, exercises side-by-side, vertical
+wipe and overlay, and requires both live lenses to present at least 45 fps in
+each three-second measurement. Each lens must follow its own source within
+100 ms with at least 29/30 usable clock samples. Both screenshot workers must
+remain idle during the measurements. Paired pause/seek must restore fresh
+verified native rasters; closing and reopening must release and recreate both
+followers while the comparison sources stay alive.
+
+```sh
+python3 scripts/validate-mpv-native-app.py PATH_TO_XCTESTRUN \
+  /private/tmp/aagedal-loupe-playback-60fps/live-viewer-fixtures.json \
+  /private/tmp/aagedal-comparison-loupe-next --comparison
+```
+
+Require successful XCTest exit and
+`MPV_LIVE_LOUPE_COMPARISON_ACCEPTANCE: 2 pairs, 3 modes, paused seek and reopen`.
+This is a short integration check. Its presentation counters measure the loupe
+surfaces, not the comparison canvas. It does not establish composite pixel
+correctness, A/B frame lock, sustained memory behavior, active scopes,
+producer-authentic media, or physical HDR calibration.
 
 ## Accepted state and next work
 
