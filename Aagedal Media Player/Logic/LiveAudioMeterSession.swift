@@ -21,6 +21,7 @@ final class LiveAudioMeterSession: ObservableObject {
     @Published private(set) var programmeMapping: ProgrammeLoudnessMapping?
 
     let coordinator: LiveAudioMeterCoordinator
+    let nativeProbe = MPVNativeAudioMeterSession()
 
     private let primary: PlayerController
     private let comparison: CompareSessionController
@@ -32,6 +33,7 @@ final class LiveAudioMeterSession: ObservableObject {
     private var hasStarted = false
     private var isClosed = false
     private var coordinatorCancellable: AnyCancellable?
+    private var nativeProbeCancellable: AnyCancellable?
     private var comparisonCancellables: Set<AnyCancellable> = []
     private var playbackCancellable: AnyCancellable?
     private var sourceRevisionCancellable: AnyCancellable?
@@ -49,6 +51,9 @@ final class LiveAudioMeterSession: ObservableObject {
         preferences = LiveAudioMeterPreferences(defaults: defaults)
 
         coordinatorCancellable = coordinator.objectWillChange.sink { [weak self] _ in
+            self?.objectWillChange.send()
+        }
+        nativeProbeCancellable = nativeProbe.objectWillChange.sink { [weak self] _ in
             self?.objectWillChange.send()
         }
         comparison.$secondaryURL
@@ -94,6 +99,7 @@ final class LiveAudioMeterSession: ObservableObject {
 
     func selectTrack(_ index: Int) {
         guard !isClosed, !(awaitsSourceReadiness && sourceFailure == nil) else { return }
+        nativeProbe.reset()
         measuredTrack = index
         if index == -2 || index == -3 {
             let layout: ProgrammeLoudnessLayout = index == -2 ? .stereo : .surround5Point1
@@ -109,6 +115,7 @@ final class LiveAudioMeterSession: ObservableObject {
     func assignTrack(_ stream: Int, toChannel channel: Int) {
         guard !isClosed, !(awaitsSourceReadiness && sourceFailure == nil),
               let mapping = programmeMapping, mapping.audioStreamIndices.indices.contains(channel) else { return }
+        nativeProbe.reset()
         var indices = mapping.audioStreamIndices
         indices[channel] = stream
         programmeMapping = .init(layout: mapping.layout, audioStreamIndices: indices)
@@ -159,10 +166,12 @@ final class LiveAudioMeterSession: ObservableObject {
     }
 
     func clearMaxima() {
+        nativeProbe.reset()
         coordinator.clearMaxima()
     }
 
     func reset() {
+        nativeProbe.reset()
         // Source and track replacement deliberately retain the coordinator's
         // previous request only as diagnostic/recovery context. Never let a
         // user action revive that stale URL or stream while the replacement's
@@ -176,6 +185,7 @@ final class LiveAudioMeterSession: ObservableObject {
     }
 
     func retry() {
+        nativeProbe.reset()
         guard let player = selectedPlayer,
               selectedSource != nil, !awaitsSourceReadiness else { return }
         if coordinator.retry(at: player.playbackTimeSnapshot()) {
@@ -189,6 +199,8 @@ final class LiveAudioMeterSession: ObservableObject {
     func close() {
         guard !isClosed else { return }
         isClosed = true
+        nativeProbe.reset()
+        nativeProbeCancellable = nil
         playbackCancellable = nil
         sourceRevisionCancellable = nil
         comparisonCancellables.removeAll()
@@ -278,6 +290,7 @@ final class LiveAudioMeterSession: ObservableObject {
     }
 
     private func bindSelectedPlayer() {
+        nativeProbe.reset()
         playbackCancellable = nil
         sourceRevisionCancellable = nil
         let player = player(for: selectedSourceID)
@@ -299,6 +312,11 @@ final class LiveAudioMeterSession: ObservableObject {
 
     private func handle(_ event: LiveAudioMeterPlaybackEvent, from player: PlayerController) {
         switch event {
+        case .discontinuity, .scrubbing, .ended:
+            nativeProbe.reset()
+        default: break
+        }
+        switch event {
         case .discontinuity(.sourceReplacement, _):
             measuredTrack = -1
             programmeMapping = nil
@@ -317,6 +335,21 @@ final class LiveAudioMeterSession: ObservableObject {
         default:
             coordinator.handlePlaybackEvent(event)
         }
+        if case .clock(let snapshot) = event {
+            updateNativeProbe(snapshot, player: player)
+        } else if case .transport(let snapshot) = event {
+            updateNativeProbe(snapshot, player: player)
+        }
+    }
+
+    private func updateNativeProbe(_ snapshot: LiveAudioMeterPlaybackSnapshot, player: PlayerController) {
+        nativeProbe.update(
+            player: player.useMPV ? player.mpvPlayer : nil,
+            format: selectedSource?.format,
+            eligible: !awaitsSourceReadiness && selectedSource != nil && measuredTrack == -1
+                && programmeMapping == nil && player.monoPlaybackProgramme == nil
+                && snapshot.phase == .ready && snapshot.isPlaying && snapshot.supportsMeasurement
+        )
     }
 
     private func reconcileSelectedSource(
@@ -330,6 +363,7 @@ final class LiveAudioMeterSession: ObservableObject {
         do {
             let source = try resolveMeasuredSource(player)
             if source == selectedSource, !awaitsSourceReadiness, !initial { return }
+            nativeProbe.reset()
             let snapshot = player.liveAudioMeterPlaybackSnapshot()
             let request = try source.request(at: playbackTime ?? snapshot.time)
             selectedSource = source
@@ -342,6 +376,7 @@ final class LiveAudioMeterSession: ObservableObject {
             }
             coordinator.updatePlaybackClock(snapshot)
         } catch {
+            nativeProbe.reset()
             selectedSource = nil
             sourceFailure = error.localizedDescription
             awaitsSourceReadiness = true

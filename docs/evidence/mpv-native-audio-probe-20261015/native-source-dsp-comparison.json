@@ -1,0 +1,230 @@
+[
+  {
+    "channels" : 1,
+    "filterFrames" : 163170,
+    "nativeM" : "-15.042",
+    "nativeTruePeaks" : [
+      "-12.041199826559248"
+    ],
+    "queryPlaybackTime" : 3.2388126018636623,
+    "rate" : 44100,
+    "referenceM" : "-15.042278018311373",
+    "referenceTruePeaks" : [
+      "-12.033225950076918"
+    ],
+    "samplePeaks" : [
+      "-12.0412"
+    ],
+    "signal" : "mono-44"
+  },
+  {
+    "channels" : 2,
+    "filterFrames" : 182400,
+    "nativeM" : "-11.577",
+    "nativeTruePeaks" : [
+      "-15.545670577048334",
+      "-9.551115329873602"
+    ],
+    "queryPlaybackTime" : 3.311656066894531,
+    "rate" : 48000,
+    "referenceM" : "-11.577223700486467",
+    "referenceTruePeaks" : [
+      "-15.55688088166301",
+      "-9.536247599161086"
+    ],
+    "samplePeaks" : [
+      "-15.563555",
+      "-9.542955"
+    ],
+    "signal" : "stereo-48"
+  },
+  {
+    "channels" : 2,
+    "filterFrames" : 364800,
+    "nativeM" : "-11.594",
+    "nativeTruePeaks" : [
+      "-15.545670577048334",
+      "-9.551115329873602"
+    ],
+    "queryPlaybackTime" : 3.3377645060221353,
+    "rate" : 96000,
+    "referenceM" : "-11.594497917669667",
+    "referenceTruePeaks" : [
+      "-15.55162506345254",
+      "-9.531003240616883"
+    ],
+    "samplePeaks" : [
+      "-15.563555",
+      "-9.542955"
+    ],
+    "signal" : "stereo-96"
+  },
+  {
+    "channels" : 6,
+    "filterFrames" : 177600,
+    "nativeM" : "-5.926",
+    "nativeTruePeaks" : [
+      "-22.974833025618494",
+      "-16.893279250698765",
+      "-13.391724533016182",
+      "-10.87267933741914",
+      "-8.946635677756136",
+      "-7.350854156305515"
+    ],
+    "queryPlaybackTime" : 3.2176318359375,
+    "rate" : 48000,
+    "referenceM" : "-5.925960705146864",
+    "referenceTruePeaks" : [
+      "-22.914408260322045",
+      "-16.895511570538535",
+      "-13.373118611149115",
+      "-10.874931235181357",
+      "-8.936381498766291",
+      "-7.353099528088681"
+    ],
+    "samplePeaks" : [
+      "-22.92097",
+      "-16.902226",
+      "-13.379782",
+      "-10.881626",
+      "-8.943055",
+      "-7.359801"
+    ],
+    "signal" : "surround"
+  },
+  {
+    "channels" : 8,
+    "filterFrames" : 182400,
+    "nativeM" : "-7.532",
+    "nativeTruePeaks" : [
+      "below metadata precision",
+      "below metadata precision",
+      "below metadata precision",
+      "below metadata precision",
+      "-6.020599913279624",
+      "below metadata precision",
+      "below metadata precision",
+      "below metadata precision"
+    ],
+    "queryPlaybackTime" : 3.3349818318684896,
+    "rate" : 48000,
+    "referenceM" : "-9.024443022150194",
+    "referenceTruePeaks" : [
+      "-inf",
+      "-inf",
+      "-inf",
+      "-inf",
+      "-6.013918532507048",
+      "-inf",
+      "-inf",
+      "-inf"
+    ],
+    "samplePeaks" : [
+      "-inf",
+      "-inf",
+      "-inf",
+      "-inf",
+      "-6.0206",
+      "-inf",
+      "-inf",
+      "-inf"
+    ],
+    "signal" : "rear-71"
+  },
+  {
+    "channels" : 6,
+    "filterFrames" : 177600,
+    "nativeM" : "-163.524",
+    "nativeTruePeaks" : [
+      "below metadata precision",
+      "below metadata precision",
+      "below metadata precision",
+      "-6.020599913279624",
+      "below metadata precision",
+      "below metadata precision"
+    ],
+    "queryPlaybackTime" : 3.242655436197917,
+    "rate" : 48000,
+    "referenceM" : "-inf",
+    "referenceTruePeaks" : [
+      "-inf",
+      "-inf",
+      "-inf",
+      "-6.013918532507048",
+      "-inf",
+      "-inf"
+    ],
+    "samplePeaks" : [
+      "-inf",
+      "-inf",
+      "-inf",
+      "-6.0206",
+      "-inf",
+      "-inf"
+    ],
+    "signal" : "lfe"
+  },
+  {
+    "channels" : 2,
+    "filterFrames" : 182400,
+    "nativeM" : "-163.524",
+    "nativeTruePeaks" : [
+      "below metadata precision",
+      "below metadata precision"
+    ],
+    "queryPlaybackTime" : 3.3114970703125,
+    "rate" : 48000,
+    "referenceM" : "-inf",
+    "referenceTruePeaks" : [
+      "-inf",
+      "-inf"
+    ],
+    "samplePeaks" : [
+      "-inf",
+      "-inf"
+    ],
+    "signal" : "silence"
+  },
+  {
+    "channels" : 2,
+    "filterFrames" : 182400,
+    "nativeM" : "-26.014",
+    "nativeTruePeaks" : [
+      "-0.9151498112135024",
+      "-0.9151498112135024"
+    ],
+    "queryPlaybackTime" : 3.3598846842447916,
+    "rate" : 48000,
+    "referenceM" : "-26.014204861713864",
+    "referenceTruePeaks" : [
+      "-0.9088038263600176",
+      "-0.9088038263600176"
+    ],
+    "samplePeaks" : [
+      "-0.915503",
+      "-0.915503"
+    ],
+    "signal" : "transient"
+  },
+  {
+    "channels" : 2,
+    "filterFrames" : 182400,
+    "nativeM" : "-26.014",
+    "nativeTruePeaks" : [
+      "1.176109733518136",
+      "1.176109733518136"
+    ],
+    "queryPlaybackTime" : 3.3134585978190101,
+    "rate" : 48000,
+    "referenceM" : "-26.014204861713864",
+    "referenceTruePeaks" : [
+      "1.1540652833247302",
+      "1.1540652833247302"
+    ],
+    "samplePeaks" : [
+      "-1.938664",
+      "-1.938664"
+    ],
+    "signal" : "intersample"
+  }
+]

@@ -17,6 +17,7 @@ private struct LiveAudioMeterContainerView: View {
         LiveAudioMeterView(
             state: session.viewState,
             preferences: session.preferences,
+            nativeProbe: session.nativeProbe.state,
             actions: .init(
                 selectSource: session.selectSource,
                 selectTrack: session.selectTrack,

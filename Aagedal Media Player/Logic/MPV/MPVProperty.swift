@@ -38,6 +38,7 @@ struct MPVProperty {
     // Audio
     nonisolated static let volume = "volume"
     nonisolated static let mute = "mute"
+    nonisolated static let audioDelay = "audio-delay"
     nonisolated static let aid = "aid"
     nonisolated static let trackListCount = "track-list/count"
 

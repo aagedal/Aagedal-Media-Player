@@ -1,0 +1,21 @@
+{
+  "architectures": [
+    "arm64"
+  ],
+  "appSHA256": "03d79dc00a865c95b491e5f7ab3c3a813c807eb60a9b2345bc9f1048c9a9ea2d",
+  "sourceFiles": {
+    "Aagedal Media Player/ContentView.swift": "14a9b185095f3371c1a04ce7e2ecd58fb1198dd5703ab72a2813af536415c281",
+    "Aagedal Media Player/Logic/AudioSyncOffset.swift": "ce073e01b8800788c88e1879cdb956ba3de55f432ab99616e10460f451897aa3",
+    "Aagedal Media Player/Logic/PlaybackKeyboardFocus.swift": "4b3e8e1499b3afdc39591b09be7020037a14db31348b623000e48afb5c11ad38",
+    "Aagedal Media Player/Logic/PlayerController.swift": "5d517dfa0531bef31e5b66e69c5ea9cef2ca3b5f24d860be7e1867dd966bed56",
+    "Aagedal Media Player/Logic/MPV/MPVPlayer.swift": "e4554baf8c8b1758b637d5f1f94e5cdef9be8cea30d4c76c409b2b496fdb4a67",
+    "Aagedal Media Player/Logic/MPV/MPVProperty.swift": "fccb4dda8e81c745865327608f358bb7e08c86225dda2633eca9bae1ede12f4f",
+    "Aagedal Media Player/UI/PlayerInspectorView.swift": "8b1af341366f041ea0604587a1f47632179aaf637c747e845a7c7d784f7022ff",
+    "Aagedal Media Player/UI/PlaybackInspectorView.swift": "1aa6b632266095957827742a5963ad7491179aaa79f05b03fcfb0446b63ca8e8",
+    "Aagedal Media Player/UI/MetadataInspectorView.swift": "17b52fe6639d766e6bf93de2cf73ca2a3b20a01fa503c89b4b6751a0d90d96f6",
+    "Aagedal Media Player/UI/PlayerView.swift": "30e38635edb5587d68d7039d5ed3aa309ea63d57ba1f3df99b4ab2d932c506ce",
+    "Aagedal Media Player Tests/AudioSyncOffsetTests.swift": "dda8795299581e9a64ee319c4f3cd1ed11346510d8d5c82aec4590bb4287a9e7"
+  },
+  "dependencyReceipt": "../mpv-native-audio-probe-20261015/candidate-receipt.json",
+  "scope": "App-only inspector changes; dependency binaries and shipping pins unchanged."
+}

@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "architectures": ["arm64"],
+  "audioRelease": "aagedal-1.0.0-n8.1.2-audio.1",
+  "audioSourceRevision": "625d93cc3b4037b415d89f622effac02da202dac",
+  "releaseDescriptorSHA256": "7df568d934f0c1d9b85a0d35f79ebd74cd2cdd9ba4efcbfeaab2e805ad294d2a",
+  "scope": "Development overlay: retain validated native-scope libmpv; replace seven FFmpeg targets with verified audio-release arm64 slices. Shipping pins unchanged."
+}
