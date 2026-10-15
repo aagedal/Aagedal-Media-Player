@@ -269,6 +269,186 @@ final class LiveLoupeSessionTests: XCTestCase {
         print("MPV_LIVE_LOUPE_ACCEPTANCE: \(cases.count) cases")
     }
 
+    /// Hosts the production comparison canvas and overlay together, using different
+    /// UHD60 files. Presentation counters belong to the loupe surfaces only.
+    func testComparisonCanvasKeepsPairedLiveLoupesAndRestoresPausedInspection() async throws {
+        guard let path = ProcessInfo.processInfo.environment["LIVE_LOUPE_COMPARISON_CASES"] else {
+            throw XCTSkip("Run validate-mpv-native-app.py --comparison to qualify the UHD60 comparison canvas")
+        }
+        struct Case: Decodable { let name: String, input: String }
+        struct Manifest: Decodable { let cases: [Case] }
+        let manifest = try JSONDecoder().decode(Manifest.self,
+            from: Data(contentsOf: URL(fileURLWithPath: path)))
+        for names in [["uhd-h264-hardware", "pq-hevc-hardware"],
+                      ["pq-hevc-hardware", "hlg-hevc-hardware"]] {
+            let inputs = try names.map { name in
+                try XCTUnwrap(manifest.cases.first { $0.name == name }).input
+            }
+            XCTAssertNotEqual(inputs[0], inputs[1])
+            try await qualifyComparison(inputs: inputs, name: names.joined(separator: "/"))
+        }
+        print("MPV_LIVE_LOUPE_COMPARISON_ACCEPTANCE: 2 pairs, 3 modes, paused seek and reopen")
+    }
+
+    private struct ComparisonHost: View {
+        @ObservedObject var primary: PlayerController
+        @ObservedObject var comparison: CompareSessionController
+        @ObservedObject var state: InspectionLoupeState
+        let primaryCapture: LoupeFrameCapture, secondaryCapture: LoupeFrameCapture
+        let item: MediaItem
+        let waveform = AudioWaveformGenerator()
+
+        var body: some View {
+            ZStack {
+                ComparePlayerView(primaryController: primary, compareSession: comparison,
+                    primaryWaveformGenerator: waveform, primaryItem: item, showsAudioWaveform: false,
+                    isEditingTimecode: .constant(false), isTimelineFocused: .constant(false),
+                    isOverlayControlFocused: false, isTextInputActive: false,
+                    timecodeActivationTrigger: .constant(nil))
+                if state.isEnabled {
+                    InspectionLoupeOverlay(state: state, primary: primary,
+                        secondary: comparison.secondaryController, primaryCapture: primaryCapture,
+                        secondaryCapture: secondaryCapture, isComparing: comparison.isActive,
+                        geometry: CompareDisplayGeometry(canvasSize: CGSize(width: 960, height: 540),
+                            primaryAspectRatio: primary.videoAspectRatio ?? 16.0 / 9,
+                            secondaryAspectRatio: comparison.secondaryController.videoAspectRatio ?? 16.0 / 9),
+                        mode: comparison.viewMode)
+                }
+            }
+        }
+    }
+
+    private func qualifyComparison(inputs: [String], name: String) async throws {
+        let primary = PlayerController(proResRAWDetector: { _, _ in false })
+        let secondary = PlayerController(proResRAWDetector: { _, _ in false })
+        let comparison = CompareSessionController(secondaryController: secondary)
+        let state = InspectionLoupeState()
+        let a = LoupeFrameCapture(), b = LoupeFrameCapture()
+        let window = NSWindow(contentRect: CGRect(x: 40, y: 40, width: 960, height: 540),
+            styleMask: [.titled], backing: .buffered, defer: false)
+        window.isReleasedWhenClosed = false
+        defer {
+            window.contentView = nil
+            a.stop(); b.stop(); comparison.stop(); primary.teardown(); secondary.teardown()
+            window.close()
+        }
+        primary.loadMedia(PlayerWindowCoordinator.makeMediaItem(for: URL(fileURLWithPath: inputs[0])))
+        let constructed = await waitUntil { primary.mpvPlayer != nil }
+        XCTAssertTrue(constructed)
+        let host = NSHostingView(rootView: ComparisonHost(primary: primary, comparison: comparison,
+            state: state, primaryCapture: a, secondaryCapture: b, item: try XCTUnwrap(primary.mediaItem)))
+        window.contentView = host
+        window.orderFront(nil)
+        let primaryReady = await waitUntil { primary.isReady }
+        XCTAssertTrue(primaryReady)
+        comparison.loadSecondary(URL(fileURLWithPath: inputs[1]), alignedWith: primary)
+        let ready = await waitUntil { comparison.isSecondaryReady }
+        XCTAssertTrue(ready, comparison.loadError ?? name)
+        state.isEnabled = true
+        primary.updateLoopPlayback(true)
+        secondary.updateLoopPlayback(true)
+        comparison.play(primary: primary)
+        let live = await waitUntil {
+            let surfaces = self.liveSurfaces(in: host)
+            return surfaces.count == 2 && surfaces.allSatisfy { $0.session?.isReady == true }
+        }
+        XCTAssertTrue(live, name)
+        for mode in [CompareViewMode.sideBySide, .verticalWipe, .overlay] {
+            comparison.viewMode = mode
+            // Geometry changes can replace follower contexts to resize their output.
+            try await Task.sleep(for: .seconds(1))
+            let surfaces = liveSurfaces(in: host)
+            guard surfaces.count == 2 else {
+                return XCTFail("Comparison must mount both live lenses: \(name), \(mode)")
+            }
+            let followers = try surfaces.map { try XCTUnwrap($0.session?.player) }
+            let sources = [try XCTUnwrap(primary.mpvPlayer), try XCTUnwrap(secondary.mpvPlayer)]
+            for index in sources.indices {
+                XCTAssertEqual(sources[index].videoSourceSize, CGSize(width: 3840, height: 2160))
+                XCTAssertEqual(followers[index].videoSourceSize, sources[index].videoSourceSize)
+                let output = try XCTUnwrap(followers[index].videoOutputSnapshot())
+                let sourceOutput = try XCTUnwrap(sources[index].videoOutputSnapshot())
+                XCTAssertEqual(output.hardwareDecoder, "videotoolbox")
+                XCTAssertEqual(sourceOutput.hardwareDecoder, "videotoolbox")
+                XCTAssertTrue(surfaces[index].session?.isReady(for: [primary, secondary][index]) == true)
+                XCTAssertNotNil(sourceOutput.targetTransfer)
+                XCTAssertNotNil(sourceOutput.targetPrimaries)
+                XCTAssertEqual(output.targetTransfer, sourceOutput.targetTransfer)
+                XCTAssertEqual(output.targetPrimaries, sourceOutput.targetPrimaries)
+                XCTAssertTrue(followers[index].isMuted)
+                XCTAssertFalse(followers[index].canInspectDecoderRaster)
+            }
+            let counts = surfaces.map { $0.metalLayer.presentedFrames }
+            let captures = [a.captureRequestCount, b.captureRequestCount]
+            let began = ProcessInfo.processInfo.systemUptime
+            var valid = [0, 0], maxDrift = [0.0, 0.0]
+            for _ in 0..<30 {
+                for index in sources.indices {
+                    if let drift = LiveLoupeClock.sample(
+                        readPrimary: { sources[index].playbackTimeSnapshot() ?? .nan },
+                        readSecondary: { followers[index].playbackTimeSnapshot() ?? .nan },
+                        loopDuration: sources[index].duration)?.effectiveDrift {
+                        valid[index] += 1
+                        maxDrift[index] = max(maxDrift[index], drift)
+                    }
+                }
+                try await Task.sleep(for: .milliseconds(100))
+            }
+            let elapsed = ProcessInfo.processInfo.systemUptime - began
+            for index in surfaces.indices {
+                let fps = Double(surfaces[index].metalLayer.presentedFrames - counts[index]) / elapsed
+                XCTAssertGreaterThanOrEqual(fps, 45, "\(name), \(mode), source=\(index)")
+                XCTAssertGreaterThanOrEqual(valid[index], 29)
+                XCTAssertLessThanOrEqual(maxDrift[index], 0.1)
+                print("MPV_COMPARISON_LOUPE_WINDOW: pair=\(name), mode=\(mode), source=\(index), fps=\(fps), maxDrift=\(maxDrift[index]), validSamples=\(valid[index])/30")
+            }
+            XCTAssertEqual([a.captureRequestCount, b.captureRequestCount], captures,
+                "Paired live playback must suppress both screenshot workers")
+        }
+        comparison.pause(primary: primary)
+        let paused = await waitUntil {
+            !primary.isPlaying && !secondary.isPlaying && a.hasVerifiedSourceRaster(for: primary)
+                && b.hasVerifiedSourceRaster(for: secondary)
+        }
+        XCTAssertTrue(paused, name)
+        let oldA = a.image, oldB = b.image
+        comparison.seek(primary: primary, to: 1)
+        let sought = await waitUntil {
+            abs(primary.playbackTimeSnapshot() - 1) < 0.05
+                && abs(secondary.playbackTimeSnapshot() - 1) < 0.05
+                && a.image !== oldA && b.image !== oldB
+                && a.hasVerifiedSourceRaster(for: primary) && b.hasVerifiedSourceRaster(for: secondary)
+        }
+        XCTAssertTrue(sought, "Both paused lenses must replace their native image after paired seek")
+        comparison.play(primary: primary)
+        let resumed = await waitUntil {
+            let surfaces = self.liveSurfaces(in: host)
+            return a.image == nil && b.image == nil && surfaces.count == 2
+                && surfaces.allSatisfy { $0.session?.isReady == true }
+        }
+        XCTAssertTrue(resumed)
+        let obsolete = liveSurfaces(in: host).compactMap { $0.session?.player }
+        XCTAssertEqual(obsolete.count, 2)
+        state.isEnabled = false
+        let closed = await waitUntil {
+            obsolete.allSatisfy { $0.playbackTimeSnapshot() == nil }
+        }
+        XCTAssertTrue(closed, "Closing the paired overlay must destroy both followers")
+        XCTAssertNotNil(primary.mpvPlayer?.playbackTimeSnapshot())
+        XCTAssertNotNil(secondary.mpvPlayer?.playbackTimeSnapshot())
+        state.isEnabled = true
+        let reopened = await waitUntil {
+            let surfaces = self.liveSurfaces(in: host)
+            return surfaces.count == 2 && surfaces.allSatisfy { $0.session?.isReady == true }
+        }
+        XCTAssertTrue(reopened)
+    }
+
+    private func liveSurfaces(in view: NSView) -> [LiveLoupeVideoSurface.SurfaceView] {
+        if let surface = view as? LiveLoupeVideoSurface.SurfaceView { return [surface] }
+        return view.subviews.flatMap { liveSurfaces(in: $0) }
+    }
+
     /// Opt-in qualification: two independent source/loupe pairs exercise the
     /// four-decoder comparison load without claiming comparison UI acceptance.
     func testSustainedConcurrentViewersKeepCadenceAndBoundMemory() async throws {

@@ -23,6 +23,7 @@ def main():
     parser.add_argument('--live-viewer', action='store_true', help='validate the secondary-player loupe using UHD 60 fps fixtures')
     parser.add_argument('--soak-seconds', type=int, help='with --live-viewer: 10–3600 seconds per concurrent UHD60 workload')
     parser.add_argument('--soak-cycles', type=int, help='with --soak-seconds: 3–100 cycles (default 3)')
+    parser.add_argument('--comparison', action='store_true', help='validate different-file UHD60 comparison canvas and paired loupes')
     args = parser.parse_args()
     if args.soak_seconds is not None:
         if not args.live_viewer or not 10 <= args.soak_seconds <= 3600:
@@ -35,8 +36,8 @@ def main():
         parser.error('--soak-cycles requires --soak-seconds')
     if args.stress_cycles is not None and not 3 <= args.stress_cycles <= 100:
         parser.error('--stress-cycles must be between 3 and 100')
-    if sum([args.playback, args.live_viewer, args.stress_cycles is not None]) > 1:
-        parser.error('--playback, --live-viewer and --stress-cycles must run separately')
+    if sum([args.playback, args.live_viewer, args.stress_cycles is not None, args.comparison]) > 1:
+        parser.error('--playback, --live-viewer, --comparison and --stress-cycles must run separately')
     configuration = plistlib.loads(args.xctestrun.read_bytes())
     # Xcode writes either legacy top-level test targets or format-2 configs.
     targets = [value for value in configuration.values()
@@ -53,6 +54,10 @@ def main():
     environment.pop('MPV_DECODER_RASTER_STRESS_CYCLES', None)
     environment.pop('MPV_DECODER_RASTER_PLAYBACK_VALIDATION', None)
     environment.pop('LIVE_LOUPE_CASES', None)
+    environment.pop('LIVE_LOUPE_COMPARISON_CASES', None)
+    if args.comparison:
+        environment['LIVE_LOUPE_COMPARISON_CASES'] = str(args.manifest.resolve(strict=True))
+        environment['AAGEDAL_MPV_DECODER_RASTER_HWDEC'] = 'videotoolbox'
     for key in ('LIVE_LOUPE_SOAK_CASES', 'LIVE_LOUPE_SOAK_SECONDS', 'LIVE_LOUPE_SOAK_CYCLES'):
         environment.pop(key, None)
     if args.soak_seconds is not None:
@@ -69,7 +74,8 @@ def main():
     with tempfile.NamedTemporaryFile(suffix='.xctestrun', dir=args.xctestrun.resolve().parent) as file:
         file.write(plistlib.dumps(configuration))
         file.flush()
-        test = ('LiveLoupeSessionTests/testSustainedConcurrentViewersKeepCadenceAndBoundMemory' if args.soak_seconds is not None else
+        test = ('LiveLoupeSessionTests/testComparisonCanvasKeepsPairedLiveLoupesAndRestoresPausedInspection' if args.comparison else
+                'LiveLoupeSessionTests/testSustainedConcurrentViewersKeepCadenceAndBoundMemory' if args.soak_seconds is not None else
                 'LiveLoupeSessionTests/testPlaybackViewerKeepsTransportAndReleasesDecoder' if args.live_viewer else
                 'LoupeTrackDecoderTests/testMPVNativeRasterOptInUsesCurrentDecoderFrameAndRevokesOnResume')
         command = ['xcodebuild', 'test-without-building', '-xctestrun', file.name,
@@ -84,7 +90,8 @@ def main():
                              '--path', str(args.output.resolve() / 'tests.xcresult')],
                             capture_output=True, text=True)
     (args.output / 'action.log').write_text(action.stdout + action.stderr)
-    marker = (f'MPV_LIVE_LOUPE_SOAK_ACCEPTANCE: {args.soak_cycles} cycles, 4 cases, 2 pairs, {args.soak_seconds} seconds per case,' if args.soak_seconds is not None else
+    marker = ('MPV_LIVE_LOUPE_COMPARISON_ACCEPTANCE: 2 pairs, 3 modes, paused seek and reopen' if args.comparison else
+              f'MPV_LIVE_LOUPE_SOAK_ACCEPTANCE: {args.soak_cycles} cycles, 4 cases, 2 pairs, {args.soak_seconds} seconds per case,' if args.soak_seconds is not None else
               'MPV_LIVE_LOUPE_ACCEPTANCE: 4 cases' if args.live_viewer else
               'MPV_LOUPE_PLAYBACK_ACCEPTANCE: 4 cases' if args.playback else
               'MPV_NATIVE_STRESS_ACCEPTANCE:' if args.stress_cycles else

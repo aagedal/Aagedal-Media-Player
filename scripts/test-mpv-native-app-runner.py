@@ -23,7 +23,8 @@ class RunnerTests(unittest.TestCase):
             root = Path(directory)
             target = {'TestBundlePath': '__TESTROOT__/Aagedal Media Player Tests.xctest',
                       'EnvironmentVariables': {'PRESERVE': 'yes', 'LIVE_LOUPE_SOAK_SECONDS': '999',
-                                               'LIVE_LOUPE_SOAK_CYCLES': '99', 'LIVE_LOUPE_SOAK_CASES': 'old'}}
+                                               'LIVE_LOUPE_SOAK_CYCLES': '99', 'LIVE_LOUPE_SOAK_CASES': 'old',
+                                               'LIVE_LOUPE_COMPARISON_CASES': 'old'}}
             configuration = ({'Tests': target} if legacy else
                              {'TestConfigurations': [{'TestTargets': [target]}]})
             original = plistlib.dumps(configuration)
@@ -63,6 +64,7 @@ class RunnerTests(unittest.TestCase):
     def test_short_run_clears_inherited_soak_environment_in_legacy_configuration(self):
         observed = self.run_fixture(['--live-viewer'], 'MPV_LIVE_LOUPE_ACCEPTANCE: 4 cases', legacy=True)
         self.assertFalse(any(key.startswith('LIVE_LOUPE_SOAK_') for key in observed['environment']))
+        self.assertNotIn('LIVE_LOUPE_COMPARISON_CASES', observed['environment'])
 
     def test_rejects_short_or_mismatched_acceptance_even_on_successful_xcode_exit(self):
         for marker in ('MPV_LIVE_LOUPE_ACCEPTANCE: 4 cases',
@@ -70,13 +72,26 @@ class RunnerTests(unittest.TestCase):
             with self.subTest(marker=marker), self.assertRaisesRegex(SystemExit, 'acceptance failed'):
                 self.run_fixture(['--live-viewer', '--soak-seconds', '20'], marker)
 
+    def test_comparison_selects_canvas_test_and_requires_its_own_marker(self):
+        marker = 'MPV_LIVE_LOUPE_COMPARISON_ACCEPTANCE: 2 pairs, 3 modes, paused seek and reopen'
+        observed = self.run_fixture(['--comparison'], marker)
+        self.assertIn('-only-testing:Aagedal Media Player Tests/LiveLoupeSessionTests/testComparisonCanvasKeepsPairedLiveLoupesAndRestoresPausedInspection', observed['command'])
+        self.assertNotEqual(observed['environment']['LIVE_LOUPE_COMPARISON_CASES'], 'old')
+        self.assertEqual(observed['environment']['AAGEDAL_MPV_DECODER_RASTER_HWDEC'], 'videotoolbox')
+        self.assertNotIn('LIVE_LOUPE_SOAK_CASES', observed['environment'])
+        for receipt in ('MPV_LIVE_LOUPE_ACCEPTANCE: 4 cases', marker):
+            with self.subTest(receipt=receipt), self.assertRaisesRegex(SystemExit, 'acceptance failed'):
+                self.run_fixture(['--comparison'], receipt, failure=65 if receipt == marker else 0)
+
     def test_xcode_failure_cannot_be_overridden_by_acceptance_marker(self):
         with self.assertRaisesRegex(SystemExit, 'acceptance failed'):
             self.run_fixture(['--live-viewer', '--soak-seconds', '10'],
                 'MPV_LIVE_LOUPE_SOAK_ACCEPTANCE: 3 cycles, 4 cases, 2 pairs, 10 seconds per case,', failure=65)
 
     def test_invalid_soak_arguments_fail_before_reading_inputs(self):
-        for options in (['--soak-seconds', '10'], ['--live-viewer', '--soak-seconds', '9'],
+        for options in (['--comparison', '--live-viewer'], ['--comparison', '--playback'],
+                        ['--comparison', '--stress-cycles', '3'], ['--comparison', '--soak-seconds', '10'],
+                        ['--soak-seconds', '10'], ['--live-viewer', '--soak-seconds', '9'],
                         ['--live-viewer', '--soak-seconds', '3601'], ['--soak-cycles', '3'],
                         ['--live-viewer', '--soak-seconds', '10', '--soak-cycles', '2'],
                         ['--live-viewer', '--soak-seconds', '10', '--soak-cycles', '101']):

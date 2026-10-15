@@ -1,0 +1,13 @@
+MPV_COMPARISON_LOUPE_WINDOW: pair=uhd-h264-hardware/pq-hevc-hardware, mode=sideBySide, source=0, fps=60.070794244696806, maxDrift=0.03333333333333366, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: pair=uhd-h264-hardware/pq-hevc-hardware, mode=sideBySide, source=1, fps=60.39550124061408, maxDrift=0.033333333333333326, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: pair=uhd-h264-hardware/pq-hevc-hardware, mode=verticalWipe, source=0, fps=58.99750742214633, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: pair=uhd-h264-hardware/pq-hevc-hardware, mode=verticalWipe, source=1, fps=58.99750742214633, maxDrift=0.01666666666666683, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: pair=uhd-h264-hardware/pq-hevc-hardware, mode=overlay, source=0, fps=59.79267053008637, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: pair=uhd-h264-hardware/pq-hevc-hardware, mode=overlay, source=1, fps=59.79267053008637, maxDrift=0.016666666666666607, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: pair=pq-hevc-hardware/hlg-hevc-hardware, mode=sideBySide, source=0, fps=59.94550497517975, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: pair=pq-hevc-hardware/hlg-hevc-hardware, mode=sideBySide, source=1, fps=60.27129576308834, maxDrift=0.033333333333333215, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: pair=pq-hevc-hardware/hlg-hevc-hardware, mode=verticalWipe, source=0, fps=59.39942234165479, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: pair=pq-hevc-hardware/hlg-hevc-hardware, mode=verticalWipe, source=1, fps=60.04859635631768, maxDrift=0.03333333333333338, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: pair=pq-hevc-hardware/hlg-hevc-hardware, mode=overlay, source=0, fps=59.22683997557948, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: pair=pq-hevc-hardware/hlg-hevc-hardware, mode=overlay, source=1, fps=59.22683997557948, maxDrift=0.016666666666667496, validSamples=30/30
+MPV_LIVE_LOUPE_COMPARISON_ACCEPTANCE: 2 pairs, 3 modes, paused seek and reopen

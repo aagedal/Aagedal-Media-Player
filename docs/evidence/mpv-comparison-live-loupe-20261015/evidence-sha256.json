@@ -1,0 +1,10 @@
+{
+  "README.md": "c31b2283d63972e0e239c9c5d67156649beeea0b5801b47225fafa56dcbdc323",
+  "acceptance.txt": "a395223f51f9e1d14703be23bcc5c4bc002a88aea605ff96339d65bc8aba9492",
+  "action.log.gz": "93284a9c054ec0a993b10cfaf808a6ee3dd34f27744289787cd5d235f3178f7e",
+  "build.log.gz": "60aa77de9f9cda9992ca73d5491d2dea53fb25ee793a663d21d384bf1857ec1c",
+  "candidate-receipt.json": "612deccfa129da004743922182b92cea0df5e7b16ebf1aba3f791b0b80f2247c",
+  "restore.log.gz": "328da373b7f5bfc9e8846628b5adfbd6e36ea2c3e9d30f927129a7220d87cfaa",
+  "summary.json": "0d194b91f8be392dcb60a9678f11840c29e3cdaa360e944f46d1976fe3f7a915",
+  "xcodebuild.log.gz": "773d0a842d9bdeb0fdda878f764330e04e43cfeb61387c45ff6a39f8db623dd1"
+}
