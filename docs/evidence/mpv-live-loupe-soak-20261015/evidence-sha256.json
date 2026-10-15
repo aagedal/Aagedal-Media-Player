@@ -1,0 +1,16 @@
+{
+  "README.md": "d0dcec354e91e320bfcc41df9d54d910907fda2a4a0bd720b481cfeaa9381ed4",
+  "build.log.gz": "a2b1155b2740a60772fe8aaea69ae10e766d31968d1cf63673c53dba225a154a",
+  "candidate-receipt.json": "4da994d4c814f8c2eca3953b53d3389130a51e542e579030640d5cd4995dad63",
+  "release-validator-tests.log": "6508051d44078a986bbb87b1424ea7510c64abe4a4549be6c75a6e2edfd5fac9",
+  "restore-tests.log": "c791d06887c435fd121e5f7df95ae8521f831107fa4cf54135289eacbaf91821",
+  "restore.log.gz": "142d1cab53abf0f72f011427881427efcfba3d8462a52e9c349a2ee8e19179f1",
+  "runner-tests.log": "106a1692fd4aeaf858c2320aa51f5ed47c85431544b1a7b64747b26eaab2e3e7",
+  "short-action.log.gz": "147542a227f6073b9fcefe5f4bd17fb28430b86df35865a74d4a87f1f87b7442",
+  "short-summary.json": "dbd4d33b4b74af9ac1960a8265fe4ffb338f7188045fb5ecef71b69823305432",
+  "short-xcodebuild.log.gz": "a967e55da5ecc8b76827e472c9246167825544a1f76d5dc5bbc8a6d76596e7bc",
+  "soak-acceptance.txt": "93e364b8cfee496c21ef9391a4a6f2d5c340cb18a94c5b623c00e155a852e62d",
+  "soak-action.log.gz": "eec86eacf3ebcac3167290e48f01ab006a9a2aaf63a223a5a7ca1e4fb7f9f8ae",
+  "soak-summary.json": "081ef38e7bf149a29197cc4705dcf2f2da95437b591fa0168f0b7842fb538279",
+  "soak-xcodebuild.log.gz": "3a5650e3dee5470f5710ba82bb1374f6900f790151bcb81d760d11ba491653ff"
+}

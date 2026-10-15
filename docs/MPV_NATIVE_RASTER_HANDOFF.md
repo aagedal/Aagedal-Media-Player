@@ -147,13 +147,43 @@ python3 scripts/validate-mpv-native-app.py PATH_TO_XCTESTRUN \
   /private/tmp/aagedal-live-viewer-next --live-viewer
 ```
 
+For sustained concurrent decoder qualification, use the same UHD60 manifest:
+
+```sh
+python3 scripts/validate-mpv-native-app.py PATH_TO_XCTESTRUN \
+  /private/tmp/aagedal-loupe-playback-60fps/live-viewer-fixtures.json \
+  /private/tmp/aagedal-live-viewer-soak-next \
+  --live-viewer --soak-seconds 30 --soak-cycles 3
+```
+
+This opt-in XCTest runs two independent source/loupe pairs simultaneously
+(four decoders), for each of the four SDR/PQ/HLG hardware/software-primary
+workloads. `--soak-seconds` accepts 10–3600 seconds per workload;
+`--soak-cycles` accepts 3–100 complete cycles and defaults to three.
+Every three-second measurement window must deliver at least 45 completed Metal
+presentations per second in each of the four surfaces. Each pair must keep
+sampled effective clock drift within 100 ms, with at least 95% usable clock
+samples. Followers must report VideoToolbox; primary decoding and output color
+configuration are also checked. No screenshot readback is used during sampling.
+After each complete cycle, physical footprint must stay within 256 MiB of the
+first warmup cycle. In-playback samples are logged separately; they are not a
+peak-memory measurement or an enforced total-memory ceiling.
+
+Require `MPV_LIVE_LOUPE_SOAK_ACCEPTANCE` with the requested duration and cycle
+count and a successful XCTest exit. This measures concurrent independent viewer
+load, not the comparison UI, frame lock, sanitizer coverage, or HDR calibration.
+The short `--live-viewer` test remains a separate transport/paused-native-raster
+acceptance run.
+
 The [prototype evidence](evidence/mpv-live-loupe-prototype-20261014/README.md)
 records matching SDR/HDR output, VideoToolbox use, actual Metal presentations,
 clock drift, crop pixels, lifecycle, and suppression of background screenshots.
 This is independent-player synchronization, not frame lock. It adds one decoder
 per MPV source while the loupe is open and live video is enabled.
-Further qualification is needed for long-duration loads and simultaneous UHD
-comparison viewers. Shipping pins and the native provider's default-off gate
+The [concurrent soak run](evidence/mpv-live-loupe-soak-20261015/README.md)
+adds three cycles of four 30-second UHD60 workloads with two source/loupe pairs
+and bounded cycle-end memory growth. Longer loads and actual simultaneous UHD
+comparison UI workflows still need qualification. Shipping pins and the native provider's default-off gate
 remain unchanged.
 
 ## Accepted state and next work

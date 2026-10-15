@@ -269,6 +269,171 @@ final class LiveLoupeSessionTests: XCTestCase {
         print("MPV_LIVE_LOUPE_ACCEPTANCE: \(cases.count) cases")
     }
 
+    /// Opt-in qualification: two independent source/loupe pairs exercise the
+    /// four-decoder comparison load without claiming comparison UI acceptance.
+    func testSustainedConcurrentViewersKeepCadenceAndBoundMemory() async throws {
+        let environment = ProcessInfo.processInfo.environment
+        guard let manifestPath = environment["LIVE_LOUPE_SOAK_CASES"] else {
+            throw XCTSkip("Run validate-mpv-native-app.py --live-viewer --soak-seconds to qualify sustained playback")
+        }
+        guard let seconds = environment["LIVE_LOUPE_SOAK_SECONDS"].flatMap(Int.init),
+              (10...3600).contains(seconds),
+              let cycles = environment["LIVE_LOUPE_SOAK_CYCLES"].flatMap(Int.init),
+              (3...100).contains(cycles) else {
+            return XCTFail("Soak requires 10–3600 seconds per workload and 3–100 cycles")
+        }
+        struct Case: Decodable { let name: String, input: String, hardwareDecoder: String }
+        struct Manifest: Decodable { let cases: [Case] }
+        let manifest = try JSONDecoder().decode(Manifest.self,
+            from: Data(contentsOf: URL(fileURLWithPath: manifestPath)))
+        let names = ["uhd-h264-hardware", "pq-hevc-hardware", "hlg-hevc-hardware", "pq-hevc-software"]
+        let cases = names.compactMap { name in manifest.cases.first { $0.name == name } }
+        guard cases.count == names.count,
+              Set(manifest.cases.map(\.name)).count == manifest.cases.count else {
+            return XCTFail("Soak requires all four distinct UHD60 workload identities")
+        }
+        let previous = environment["AAGEDAL_MPV_DECODER_RASTER_HWDEC"]
+        defer {
+            if let previous { setenv("AAGEDAL_MPV_DECODER_RASTER_HWDEC", previous, 1) }
+            else { unsetenv("AAGEDAL_MPV_DECODER_RASTER_HWDEC") }
+        }
+        var footprints: [UInt64] = []
+        for cycle in 1...cycles {
+            for testCase in cases {
+                setenv("AAGEDAL_MPV_DECODER_RASTER_HWDEC", testCase.hardwareDecoder, 1)
+                try await qualifyConcurrentViewers(url: URL(fileURLWithPath: testCase.input),
+                    name: testCase.name, primaryHardware: testCase.hardwareDecoder,
+                    seconds: seconds, cycle: cycle)
+            }
+            // Helpers have returned and released their player/layer references.
+            // Allow asynchronous MPV/Metal teardown to retire before measuring.
+            try await Task.sleep(for: .seconds(1))
+            let footprint = try physicalFootprint()
+            footprints.append(footprint)
+            print("MPV_LIVE_LOUPE_SOAK_CYCLE: \(cycle), physicalFootprintBytes=\(footprint)")
+            let baseline = try XCTUnwrap(footprints.first)
+            XCTAssertLessThanOrEqual(footprint, baseline + 256 * 1024 * 1024,
+                "Cycle-end growth above the first complete warmup cycle exceeded 256 MiB")
+        }
+        print("MPV_LIVE_LOUPE_SOAK_ACCEPTANCE: \(cycles) cycles, \(cases.count) cases, 2 pairs, \(seconds) seconds per case, baselineBytes=\(footprints[0]), maximumCycleEndBytes=\(footprints.max()!), growthLimitBytes=268435456")
+    }
+
+    private func qualifyConcurrentViewers(url: URL, name: String, primaryHardware: String,
+                                           seconds: Int, cycle: Int) async throws {
+        var pairs: [Pair] = []
+        defer {
+            for pair in pairs {
+                pair.session.stop()
+                pair.controller.teardown()
+                pair.window.close()
+                sessions.removeAll { $0 === pair.session }
+                controllers.removeAll { $0 === pair.controller }
+                windows.removeAll { $0 === pair.window }
+            }
+        }
+        for index in 0..<2 {
+            let pair = try await makePair(url: url)
+            pairs.append(pair)
+            if let screen = NSScreen.main {
+                pair.window.setFrameOrigin(CGPoint(x: screen.visibleFrame.minX + 20,
+                    y: screen.visibleFrame.minY + 20 + CGFloat(index) * 420))
+            }
+        }
+        let primaries = try pairs.map { try XCTUnwrap($0.controller.mpvPlayer) }
+        let children = try pairs.map { try XCTUnwrap($0.session.player) }
+        for pair in pairs { pair.controller.play() }
+        let ready = await waitUntil {
+            pairs.allSatisfy { $0.controller.isPlaying && $0.session.isReady }
+                && children.allSatisfy { $0.isPlaying }
+        }
+        XCTAssertTrue(ready, name)
+        try await Task.sleep(for: .seconds(1))
+        for index in pairs.indices {
+            let primary = primaries[index], child = children[index]
+            let output = await Task.detached { (primary.videoOutputSnapshot(), child.videoOutputSnapshot()) }.value
+            let main = try XCTUnwrap(output.0), loupe = try XCTUnwrap(output.1)
+            XCTAssertEqual(primary.videoSourceSize, CGSize(width: 3840, height: 2160), name)
+            XCTAssertEqual(child.videoSourceSize, CGSize(width: 3840, height: 2160), name)
+            XCTAssertEqual(main.hardwareDecoder, primaryHardware)
+            XCTAssertEqual(loupe.hardwareDecoder, "videotoolbox")
+            XCTAssertNotNil(main.targetTransfer)
+            XCTAssertNotNil(main.targetPrimaries)
+            XCTAssertEqual(main.targetTransfer, loupe.targetTransfer)
+            XCTAssertEqual(main.targetPrimaries, loupe.targetPrimaries)
+            XCTAssertEqual(pairs[index].mainLayer.wantsExtendedDynamicRangeContent,
+                pairs[index].liveLayer.wantsExtendedDynamicRangeContent)
+            XCTAssertFalse(child.canInspectDecoderRaster)
+            XCTAssertTrue(child.isMuted)
+        }
+        let loopDurations = primaries.map { $0.duration }
+        let began = ProcessInfo.processInfo.systemUptime
+        var windowStart = began
+        var mainFrames = pairs.map { $0.mainLayer.presentedFrames }
+        var loupeFrames = pairs.map { $0.liveLayer.presentedFrames }
+        var maximumDrift = [Double](repeating: 0, count: pairs.count)
+        var validSamples = [Int](repeating: 0, count: pairs.count)
+        var sampleCount = 0
+        var maximumFootprint: UInt64 = 0
+        var windowsMeasured = 0
+        while ProcessInfo.processInfo.systemUptime - began < Double(seconds) {
+            let drifts = await Task.detached {
+                primaries.indices.map { index in
+                    LiveLoupeClock.sample(readPrimary: { primaries[index].playbackTimeSnapshot() ?? .nan },
+                        readSecondary: { children[index].playbackTimeSnapshot() ?? .nan },
+                        loopDuration: loopDurations[index])?.effectiveDrift
+                }
+            }.value
+            sampleCount += 1
+            for index in pairs.indices {
+                if let drift = drifts[index] {
+                    validSamples[index] += 1
+                    maximumDrift[index] = max(maximumDrift[index], drift)
+                }
+                XCTAssertNil(pairs[index].session.error, name)
+            }
+            let now = ProcessInfo.processInfo.systemUptime
+            // Bound each window, so an aggregate average cannot conceal stalls.
+            if now - windowStart >= 3 {
+                for index in pairs.indices {
+                    let main = pairs[index].mainLayer.presentedFrames
+                    let loupe = pairs[index].liveLayer.presentedFrames
+                    let mainFPS = Double(main - mainFrames[index]) / (now - windowStart)
+                    let loupeFPS = Double(loupe - loupeFrames[index]) / (now - windowStart)
+                    XCTAssertGreaterThanOrEqual(mainFPS, 45, name)
+                    XCTAssertGreaterThanOrEqual(loupeFPS, 45, name)
+                    print("MPV_LIVE_LOUPE_SOAK_WINDOW: cycle=\(cycle), case=\(name), pair=\(index), elapsed=\(now - began), mainFPS=\(mainFPS), loupeFPS=\(loupeFPS)")
+                    mainFrames[index] = main; loupeFrames[index] = loupe
+                }
+                maximumFootprint = max(maximumFootprint, try physicalFootprint())
+                windowsMeasured += 1
+                windowStart = now
+            }
+            try await Task.sleep(for: .milliseconds(100))
+        }
+        XCTAssertGreaterThanOrEqual(windowsMeasured, 3)
+        for index in pairs.indices {
+            XCTAssertGreaterThanOrEqual(Double(validSamples[index]) / Double(sampleCount), 0.95,
+                "Missing clock samples must not silently qualify: \(name)")
+            XCTAssertLessThanOrEqual(maximumDrift[index], 0.1, name)
+            pairs[index].session.stop()
+            XCTAssertNil(children[index].playbackTimeSnapshot())
+            XCTAssertNotNil(primaries[index].playbackTimeSnapshot())
+        }
+        print("MPV_LIVE_LOUPE_SOAK_CASE: cycle=\(cycle), case=\(name), maximumDrift=\(maximumDrift), validSamples=\(validSamples), samples=\(sampleCount), maximumSampledFootprintBytes=\(maximumFootprint)")
+    }
+
+    private func physicalFootprint() throws -> UInt64 {
+        var info = task_vm_info_data_t()
+        var count = mach_msg_type_number_t(MemoryLayout<task_vm_info_data_t>.size / MemoryLayout<integer_t>.size)
+        let status = withUnsafeMutablePointer(to: &info) {
+            $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
+                task_info(mach_task_self_, task_flavor_t(TASK_VM_INFO), $0, &count)
+            }
+        }
+        guard status == KERN_SUCCESS else { throw NSError(domain: NSMachErrorDomain, code: Int(status)) }
+        return info.phys_footprint
+    }
+
     private struct Pair {
         let controller: PlayerController, session: LiveLoupeSession
         let mainLayer: LiveLoupeMetalLayer, liveLayer: LiveLoupeMetalLayer
