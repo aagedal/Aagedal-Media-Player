@@ -1,0 +1,16 @@
+{
+  "secondsPerMode": 10,
+  "cycles": 3,
+  "windows": 144,
+  "minFPS": 59.0109955436812,
+  "maxDrift": 0.050000000000000044,
+  "minValidSamples": 30,
+  "usableSamples": 4320,
+  "expectedSamples": 4320,
+  "cycleEndBytes": [
+    837863560,
+    723093616,
+    558680224
+  ],
+  "maximumSampledPlaybackBytes": 1940310416
+}

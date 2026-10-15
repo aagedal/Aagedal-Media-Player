@@ -1,0 +1,220 @@
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=1, pair=uhd-h264-hardware/pq-hevc-hardware, mode=sideBySide, source=0, fps=60.064676669801166, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=1, pair=uhd-h264-hardware/pq-hevc-hardware, mode=sideBySide, source=1, fps=60.064676669801166, maxDrift=0.016666666666667496, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=1, pair=uhd-h264-hardware/pq-hevc-hardware, mode=sideBySide, elapsed=3.0803125416859984, physicalFootprintBytes=1374177176
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=2, pair=uhd-h264-hardware/pq-hevc-hardware, mode=sideBySide, source=0, fps=59.257953608043366, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=2, pair=uhd-h264-hardware/pq-hevc-hardware, mode=sideBySide, source=1, fps=59.581767562185675, maxDrift=0.05, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=1, pair=uhd-h264-hardware/pq-hevc-hardware, mode=sideBySide, elapsed=6.168599416734651, physicalFootprintBytes=1433765832
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=3, pair=uhd-h264-hardware/pq-hevc-hardware, mode=sideBySide, source=0, fps=60.1362158421433, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=3, pair=uhd-h264-hardware/pq-hevc-hardware, mode=sideBySide, source=1, fps=59.81115521596955, maxDrift=0.016666666666667496, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=1, pair=uhd-h264-hardware/pq-hevc-hardware, mode=sideBySide, elapsed=9.245055333361961, physicalFootprintBytes=1431799752
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=4, pair=uhd-h264-hardware/pq-hevc-hardware, mode=sideBySide, source=0, fps=59.130070528393674, maxDrift=0.05, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=4, pair=uhd-h264-hardware/pq-hevc-hardware, mode=sideBySide, source=1, fps=59.772788686310996, maxDrift=0.033333333333333354, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=1, pair=uhd-h264-hardware/pq-hevc-hardware, mode=sideBySide, elapsed=12.356941333389841, physicalFootprintBytes=1426098120
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=1, pair=uhd-h264-hardware/pq-hevc-hardware, mode=verticalWipe, source=0, fps=59.21084851883685, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=1, pair=uhd-h264-hardware/pq-hevc-hardware, mode=verticalWipe, source=1, fps=59.21084851883685, maxDrift=0.016666666666667496, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=1, pair=uhd-h264-hardware/pq-hevc-hardware, mode=verticalWipe, elapsed=3.175197416683659, physicalFootprintBytes=1222920088
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=2, pair=uhd-h264-hardware/pq-hevc-hardware, mode=verticalWipe, source=0, fps=60.06249096469608, maxDrift=0.03333333333333366, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=2, pair=uhd-h264-hardware/pq-hevc-hardware, mode=verticalWipe, source=1, fps=60.06249096469608, maxDrift=0.016666666666666607, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=1, pair=uhd-h264-hardware/pq-hevc-hardware, mode=verticalWipe, elapsed=6.255436958395876, physicalFootprintBytes=1223198616
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=3, pair=uhd-h264-hardware/pq-hevc-hardware, mode=verticalWipe, source=0, fps=59.29522310073989, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=3, pair=uhd-h264-hardware/pq-hevc-hardware, mode=verticalWipe, source=1, fps=59.29522310073989, maxDrift=0.01666666666666672, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=1, pair=uhd-h264-hardware/pq-hevc-hardware, mode=verticalWipe, elapsed=9.35866395838093, physicalFootprintBytes=1318012896
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=4, pair=uhd-h264-hardware/pq-hevc-hardware, mode=verticalWipe, source=0, fps=59.870868246404925, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=4, pair=uhd-h264-hardware/pq-hevc-hardware, mode=verticalWipe, source=1, fps=60.19449456125036, maxDrift=0.01666666666666705, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=1, pair=uhd-h264-hardware/pq-hevc-hardware, mode=verticalWipe, elapsed=12.448757791658863, physicalFootprintBytes=1311049696
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=1, pair=uhd-h264-hardware/pq-hevc-hardware, mode=overlay, source=0, fps=59.43724574753819, maxDrift=0.03333333333333366, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=1, pair=uhd-h264-hardware/pq-hevc-hardware, mode=overlay, source=1, fps=59.43724574753819, maxDrift=0.01666666666666683, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=1, pair=uhd-h264-hardware/pq-hevc-hardware, mode=overlay, elapsed=3.112743291654624, physicalFootprintBytes=1095485312
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=2, pair=uhd-h264-hardware/pq-hevc-hardware, mode=overlay, source=0, fps=59.99851777860719, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=2, pair=uhd-h264-hardware/pq-hevc-hardware, mode=overlay, source=1, fps=59.99851777860719, maxDrift=0.01666666666666705, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=1, pair=uhd-h264-hardware/pq-hevc-hardware, mode=overlay, elapsed=6.212959291646257, physicalFootprintBytes=1095976832
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=3, pair=uhd-h264-hardware/pq-hevc-hardware, mode=overlay, source=0, fps=59.389585811396984, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=3, pair=uhd-h264-hardware/pq-hevc-hardware, mode=overlay, source=1, fps=59.389585811396984, maxDrift=0.03333333333333333, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=1, pair=uhd-h264-hardware/pq-hevc-hardware, mode=overlay, elapsed=9.328094291733578, physicalFootprintBytes=1100695424
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=4, pair=uhd-h264-hardware/pq-hevc-hardware, mode=overlay, source=0, fps=59.805726976875775, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=4, pair=uhd-h264-hardware/pq-hevc-hardware, mode=overlay, source=1, fps=59.805726976875775, maxDrift=0.016666666666667496, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=1, pair=uhd-h264-hardware/pq-hevc-hardware, mode=overlay, elapsed=12.388126500067301, physicalFootprintBytes=1099499392
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=1, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=sideBySide, source=0, fps=59.91081142313904, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=1, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=sideBySide, source=1, fps=59.91081142313904, maxDrift=0.03333333333333366, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=1, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=sideBySide, elapsed=3.088023041607812, physicalFootprintBytes=1940310416
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=2, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=sideBySide, source=0, fps=59.42515637140719, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=2, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=sideBySide, source=1, fps=59.74637343287426, maxDrift=0.033333333333333354, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=1, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=sideBySide, elapsed=6.201293916674331, physicalFootprintBytes=1939261840
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=3, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=sideBySide, source=0, fps=59.96828488038399, maxDrift=0.03333333333333366, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=3, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=sideBySide, source=1, fps=59.96828488038399, maxDrift=0.01666666666666705, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=1, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=sideBySide, elapsed=9.286365458276123, physicalFootprintBytes=1936017808
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=4, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=sideBySide, source=0, fps=59.558996054129544, maxDrift=0.05, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=4, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=sideBySide, source=1, fps=59.23878639792455, maxDrift=0.01666666666666683, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=1, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=sideBySide, elapsed=12.409416916663758, physicalFootprintBytes=1936050576
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=1, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=verticalWipe, source=0, fps=59.937615470387584, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=1, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=verticalWipe, source=1, fps=59.937615470387584, maxDrift=0.016666666666667496, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=1, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=verticalWipe, elapsed=3.0866272499551997, physicalFootprintBytes=1571916104
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=2, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=verticalWipe, source=0, fps=59.3693458960531, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=2, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=verticalWipe, source=1, fps=59.3693458960531, maxDrift=0.03333333333333338, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=1, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=verticalWipe, elapsed=6.185972208273597, physicalFootprintBytes=1550403912
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=3, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=verticalWipe, source=0, fps=60.18578478234547, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=3, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=verticalWipe, source=1, fps=60.18578478234547, maxDrift=0.016666666666667496, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=1, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=verticalWipe, elapsed=9.27651324996259, physicalFootprintBytes=1554516296
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=4, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=verticalWipe, source=0, fps=59.13650523158609, maxDrift=0.05, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=4, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=verticalWipe, source=1, fps=59.45965553339804, maxDrift=0.01666666666666705, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=1, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=verticalWipe, elapsed=12.371163874980994, physicalFootprintBytes=1151961224
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=1, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=overlay, source=0, fps=59.686191823708754, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=1, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=overlay, source=1, fps=59.686191823708754, maxDrift=0.016666666666667496, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=1, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=overlay, elapsed=3.1163956250529736, physicalFootprintBytes=1149094024
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=2, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=overlay, source=0, fps=60.04862965238114, maxDrift=0.03333333333333366, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=2, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=overlay, source=1, fps=59.72404246507097, maxDrift=0.01666666666666705, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=1, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=overlay, elapsed=6.197348125046119, physicalFootprintBytes=1149094024
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=3, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=overlay, source=0, fps=59.271747527760745, maxDrift=0.050000000000000044, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=3, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=overlay, source=1, fps=59.59387659041162, maxDrift=0.016666666666666663, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=1, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=overlay, elapsed=9.301802541711368, physicalFootprintBytes=1151568008
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=4, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=overlay, source=0, fps=59.86411577733096, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=1, window=4, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=overlay, source=1, fps=59.86411577733096, maxDrift=0.016666666666667496, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=1, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=overlay, elapsed=12.375539083383046, physicalFootprintBytes=1151568008
+MPV_COMPARISON_LOUPE_SOAK_CYCLE: cycle=1, physicalFootprintBytes=837863560
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=1, pair=uhd-h264-hardware/pq-hevc-hardware, mode=sideBySide, source=0, fps=60.112115592625216, maxDrift=0.03333333333333366, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=1, pair=uhd-h264-hardware/pq-hevc-hardware, mode=sideBySide, source=1, fps=60.112115592625216, maxDrift=0.016666666666667496, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=2, pair=uhd-h264-hardware/pq-hevc-hardware, mode=sideBySide, elapsed=3.077665541670285, physicalFootprintBytes=1472153952
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=2, pair=uhd-h264-hardware/pq-hevc-hardware, mode=sideBySide, source=0, fps=59.37588323961523, maxDrift=0.05, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=2, pair=uhd-h264-hardware/pq-hevc-hardware, mode=sideBySide, source=1, fps=60.0177846800435, maxDrift=0.033333333333333354, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=2, pair=uhd-h264-hardware/pq-hevc-hardware, mode=sideBySide, elapsed=6.193511083372869, physicalFootprintBytes=1472235872
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=3, pair=uhd-h264-hardware/pq-hevc-hardware, mode=sideBySide, source=0, fps=60.14955491537816, maxDrift=0.04999999999999982, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=3, pair=uhd-h264-hardware/pq-hevc-hardware, mode=sideBySide, source=1, fps=59.826170211532045, maxDrift=0.016666666666667496, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=2, pair=uhd-h264-hardware/pq-hevc-hardware, mode=sideBySide, elapsed=9.2859107083641, physicalFootprintBytes=1249200408
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=4, pair=uhd-h264-hardware/pq-hevc-hardware, mode=sideBySide, source=0, fps=59.0109955436812, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=4, pair=uhd-h264-hardware/pq-hevc-hardware, mode=sideBySide, source=1, fps=59.32825896058271, maxDrift=0.016666666666667496, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=2, pair=uhd-h264-hardware/pq-hevc-hardware, mode=sideBySide, elapsed=12.43800541665405, physicalFootprintBytes=1264437528
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=1, pair=uhd-h264-hardware/pq-hevc-hardware, mode=verticalWipe, source=0, fps=59.947766100546836, maxDrift=0.03333333333333366, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=1, pair=uhd-h264-hardware/pq-hevc-hardware, mode=verticalWipe, source=1, fps=59.947766100546836, maxDrift=0.01666666666666705, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=2, pair=uhd-h264-hardware/pq-hevc-hardware, mode=verticalWipe, elapsed=3.1194778333883733, physicalFootprintBytes=1255393560
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=2, pair=uhd-h264-hardware/pq-hevc-hardware, mode=verticalWipe, source=0, fps=59.34775454391547, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=2, pair=uhd-h264-hardware/pq-hevc-hardware, mode=verticalWipe, source=1, fps=59.34775454391547, maxDrift=0.016666666666667496, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=2, pair=uhd-h264-hardware/pq-hevc-hardware, mode=verticalWipe, elapsed=6.236808041692711, physicalFootprintBytes=991643640
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=3, pair=uhd-h264-hardware/pq-hevc-hardware, mode=verticalWipe, source=0, fps=59.94860379329542, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=3, pair=uhd-h264-hardware/pq-hevc-hardware, mode=verticalWipe, source=1, fps=59.94860379329542, maxDrift=0.016666666666666607, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=2, pair=uhd-h264-hardware/pq-hevc-hardware, mode=verticalWipe, elapsed=9.322894625016488, physicalFootprintBytes=982157304
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=4, pair=uhd-h264-hardware/pq-hevc-hardware, mode=verticalWipe, source=0, fps=59.28080685149585, maxDrift=0.03333333333333366, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=4, pair=uhd-h264-hardware/pq-hevc-hardware, mode=verticalWipe, source=1, fps=59.60124364528772, maxDrift=0.03333333333333333, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=2, pair=uhd-h264-hardware/pq-hevc-hardware, mode=verticalWipe, elapsed=12.443740833317861, physicalFootprintBytes=984565752
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=1, pair=uhd-h264-hardware/pq-hevc-hardware, mode=overlay, source=0, fps=59.26344665579845, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=1, pair=uhd-h264-hardware/pq-hevc-hardware, mode=overlay, source=1, fps=59.26344665579845, maxDrift=0.01666666666666672, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=2, pair=uhd-h264-hardware/pq-hevc-hardware, mode=overlay, elapsed=3.121748708304949, physicalFootprintBytes=866781104
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=2, pair=uhd-h264-hardware/pq-hevc-hardware, mode=overlay, source=0, fps=60.02207989778523, maxDrift=0.03333333333333366, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=2, pair=uhd-h264-hardware/pq-hevc-hardware, mode=overlay, source=1, fps=60.02207989778523, maxDrift=0.01666666666666705, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=2, pair=uhd-h264-hardware/pq-hevc-hardware, mode=overlay, elapsed=6.220716791693121, physicalFootprintBytes=868304816
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=3, pair=uhd-h264-hardware/pq-hevc-hardware, mode=overlay, source=0, fps=59.31933297829484, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=3, pair=uhd-h264-hardware/pq-hevc-hardware, mode=overlay, source=1, fps=59.31933297829484, maxDrift=0.016666666666667496, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=2, pair=uhd-h264-hardware/pq-hevc-hardware, mode=overlay, elapsed=9.356400791672058, physicalFootprintBytes=858490800
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=4, pair=uhd-h264-hardware/pq-hevc-hardware, mode=overlay, source=0, fps=59.94133483496163, maxDrift=0.03333333333333366, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=4, pair=uhd-h264-hardware/pq-hevc-hardware, mode=overlay, source=1, fps=59.94133483496163, maxDrift=0.016666666666666607, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=2, pair=uhd-h264-hardware/pq-hevc-hardware, mode=overlay, elapsed=12.459541458403692, physicalFootprintBytes=854411184
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=1, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=sideBySide, source=0, fps=60.055456644830564, maxDrift=0.050000000000000044, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=1, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=sideBySide, source=1, fps=60.055456644830564, maxDrift=0.01666666666666705, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=2, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=sideBySide, elapsed=3.0639702499611303, physicalFootprintBytes=1656424824
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=2, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=sideBySide, source=0, fps=59.47133421145138, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=2, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=sideBySide, source=1, fps=59.79107256742692, maxDrift=0.033333333333333326, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=2, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=sideBySide, elapsed=6.1916438332991675, physicalFootprintBytes=1639336312
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=3, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=sideBySide, source=0, fps=59.89031528175034, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=3, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=sideBySide, source=1, fps=59.89031528175034, maxDrift=0.016666666666667496, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=2, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=sideBySide, elapsed=9.264022166724317, physicalFootprintBytes=1639287160
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=4, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=sideBySide, source=0, fps=59.50967133520817, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=4, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=sideBySide, source=1, fps=59.50967133520817, maxDrift=0.016666666666667496, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=2, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=sideBySide, elapsed=12.406474250019528, physicalFootprintBytes=1637255544
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=1, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=verticalWipe, source=0, fps=60.10601770575189, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=1, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=verticalWipe, source=1, fps=60.10601770575189, maxDrift=0.016666666666667496, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=2, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=verticalWipe, elapsed=3.0613649167353287, physicalFootprintBytes=1406601520
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=2, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=verticalWipe, source=0, fps=59.174114685195036, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=2, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=verticalWipe, source=1, fps=59.174114685195036, maxDrift=0.01666666666666683, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=2, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=verticalWipe, elapsed=6.1371546250302345, physicalFootprintBytes=1406339376
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=3, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=verticalWipe, source=0, fps=59.95835419741233, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=3, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=verticalWipe, source=1, fps=60.284214818050444, maxDrift=0.01666666666666705, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=2, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=verticalWipe, elapsed=9.206060500000603, physicalFootprintBytes=1406470448
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=4, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=verticalWipe, source=0, fps=59.5733576288002, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=4, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=verticalWipe, source=1, fps=59.5733576288002, maxDrift=0.016666666666667496, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=2, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=verticalWipe, elapsed=12.294866833370179, physicalFootprintBytes=1109805216
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=1, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=overlay, source=0, fps=59.54104994172238, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=1, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=overlay, source=1, fps=59.215689013079086, maxDrift=0.01666666666666705, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=2, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=overlay, elapsed=3.073594458401203, physicalFootprintBytes=1103333536
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=2, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=overlay, source=0, fps=60.261661835222164, maxDrift=0.03333333333333366, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=2, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=overlay, source=1, fps=59.93592312259934, maxDrift=0.01666666666666705, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=2, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=overlay, elapsed=6.143644916708581, physicalFootprintBytes=1100204192
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=3, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=overlay, source=0, fps=59.16004999849013, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=3, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=overlay, source=1, fps=59.48510521826205, maxDrift=0.016666666666667496, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=2, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=overlay, elapsed=9.220166291692294, physicalFootprintBytes=1107691680
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=4, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=overlay, source=0, fps=60.01398423690598, maxDrift=0.03333333333333366, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=2, window=4, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=overlay, source=1, fps=60.01398423690598, maxDrift=0.01666666666666705, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=2, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=overlay, elapsed=12.286212958395481, physicalFootprintBytes=1100466336
+MPV_COMPARISON_LOUPE_SOAK_CYCLE: cycle=2, physicalFootprintBytes=723093616
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=1, pair=uhd-h264-hardware/pq-hevc-hardware, mode=sideBySide, source=0, fps=60.115782673979936, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=1, pair=uhd-h264-hardware/pq-hevc-hardware, mode=sideBySide, source=1, fps=60.115782673979936, maxDrift=0.01666666666666705, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=3, pair=uhd-h264-hardware/pq-hevc-hardware, mode=sideBySide, elapsed=3.0941018749726936, physicalFootprintBytes=1529317728
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=2, pair=uhd-h264-hardware/pq-hevc-hardware, mode=sideBySide, source=0, fps=59.4471573309043, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=2, pair=uhd-h264-hardware/pq-hevc-hardware, mode=sideBySide, source=1, fps=59.76505656796795, maxDrift=0.03333333333333334, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=3, pair=uhd-h264-hardware/pq-hevc-hardware, mode=sideBySide, elapsed=6.2398633332923055, physicalFootprintBytes=1525582200
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=3, pair=uhd-h264-hardware/pq-hevc-hardware, mode=sideBySide, source=0, fps=59.915482928582534, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=3, pair=uhd-h264-hardware/pq-hevc-hardware, mode=sideBySide, source=1, fps=60.237609180886736, maxDrift=0.033333333333333215, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=3, pair=uhd-h264-hardware/pq-hevc-hardware, mode=sideBySide, elapsed=9.344326083315536, physicalFootprintBytes=1350912328
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=4, pair=uhd-h264-hardware/pq-hevc-hardware, mode=sideBySide, source=0, fps=59.32395038602604, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=4, pair=uhd-h264-hardware/pq-hevc-hardware, mode=sideBySide, source=1, fps=59.32395038602604, maxDrift=0.016666666666667496, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=3, pair=uhd-h264-hardware/pq-hevc-hardware, mode=sideBySide, elapsed=12.446021624957211, physicalFootprintBytes=1360054600
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=1, pair=uhd-h264-hardware/pq-hevc-hardware, mode=verticalWipe, source=0, fps=60.063879702361845, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=1, pair=uhd-h264-hardware/pq-hevc-hardware, mode=verticalWipe, source=1, fps=60.063879702361845, maxDrift=0.016666666666667496, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=3, pair=uhd-h264-hardware/pq-hevc-hardware, mode=verticalWipe, elapsed=3.1134572500595823, physicalFootprintBytes=1348602184
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=2, pair=uhd-h264-hardware/pq-hevc-hardware, mode=verticalWipe, source=0, fps=59.193998130346664, maxDrift=0.04999999999999993, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=2, pair=uhd-h264-hardware/pq-hevc-hardware, mode=verticalWipe, source=1, fps=59.193998130346664, maxDrift=0.01666666666666705, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=3, pair=uhd-h264-hardware/pq-hevc-hardware, mode=verticalWipe, elapsed=6.255776416626759, physicalFootprintBytes=1095403632
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=3, pair=uhd-h264-hardware/pq-hevc-hardware, mode=verticalWipe, source=0, fps=59.9525918375269, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=3, pair=uhd-h264-hardware/pq-hevc-hardware, mode=verticalWipe, source=1, fps=59.9525918375269, maxDrift=0.016666666666666607, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=3, pair=uhd-h264-hardware/pq-hevc-hardware, mode=verticalWipe, elapsed=9.325014416710474, physicalFootprintBytes=1093027952
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=4, pair=uhd-h264-hardware/pq-hevc-hardware, mode=verticalWipe, source=0, fps=59.27343572788868, maxDrift=0.03333333333333366, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=4, pair=uhd-h264-hardware/pq-hevc-hardware, mode=verticalWipe, source=1, fps=59.595573965540254, maxDrift=0.01666666666666705, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=3, pair=uhd-h264-hardware/pq-hevc-hardware, mode=verticalWipe, elapsed=12.429366333293729, physicalFootprintBytes=1092110448
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=1, pair=uhd-h264-hardware/pq-hevc-hardware, mode=overlay, source=0, fps=59.11080897111279, maxDrift=0.05, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=1, pair=uhd-h264-hardware/pq-hevc-hardware, mode=overlay, source=1, fps=59.42860901934458, maxDrift=0.033333333333333354, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=3, pair=uhd-h264-hardware/pq-hevc-hardware, mode=overlay, elapsed=3.1467246665852144, physicalFootprintBytes=879527904
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=2, pair=uhd-h264-hardware/pq-hevc-hardware, mode=overlay, source=0, fps=59.90894725754852, maxDrift=0.03333333333333366, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=2, pair=uhd-h264-hardware/pq-hevc-hardware, mode=overlay, source=1, fps=60.23103837183641, maxDrift=0.03333333333333366, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=3, pair=uhd-h264-hardware/pq-hevc-hardware, mode=overlay, elapsed=6.251543166581541, physicalFootprintBytes=866519008
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=3, pair=uhd-h264-hardware/pq-hevc-hardware, mode=overlay, source=0, fps=59.57788110433485, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=3, pair=uhd-h264-hardware/pq-hevc-hardware, mode=overlay, source=1, fps=59.25756991560187, maxDrift=0.049999999999999996, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=3, pair=uhd-h264-hardware/pq-hevc-hardware, mode=overlay, elapsed=9.373614416574128, physicalFootprintBytes=871483360
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=4, pair=uhd-h264-hardware/pq-hevc-hardware, mode=overlay, source=0, fps=59.77261393107528, maxDrift=0.03333333333333366, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=4, pair=uhd-h264-hardware/pq-hevc-hardware, mode=overlay, source=1, fps=59.77261393107528, maxDrift=0.03333333333333366, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=3, pair=uhd-h264-hardware/pq-hevc-hardware, mode=overlay, elapsed=12.452062374912202, physicalFootprintBytes=869255136
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=1, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=sideBySide, source=0, fps=60.15218747251798, maxDrift=0.01666666666666705, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=1, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=sideBySide, source=1, fps=60.15218747251798, maxDrift=0.033333333333333215, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=3, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=sideBySide, elapsed=3.075643374933861, physicalFootprintBytes=1741588952
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=2, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=sideBySide, source=0, fps=59.318080320420194, maxDrift=0.016666666666667496, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=2, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=sideBySide, source=1, fps=59.966365351244455, maxDrift=0.033333333333333326, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=3, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=sideBySide, elapsed=6.160822666599415, physicalFootprintBytes=1724598744
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=3, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=sideBySide, source=0, fps=59.96523157135775, maxDrift=0.01666666666666705, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=3, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=sideBySide, source=1, fps=59.96523157135775, maxDrift=0.01666666666666705, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=3, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=sideBySide, elapsed=9.22938224999234, physicalFootprintBytes=1722239448
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=4, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=sideBySide, source=0, fps=59.60652203928431, maxDrift=0.016666666666667496, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=4, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=sideBySide, source=1, fps=59.280803339616085, maxDrift=0.016666666666667496, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=3, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=sideBySide, elapsed=12.299619166646153, physicalFootprintBytes=1729808856
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=1, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=verticalWipe, source=0, fps=59.99820086408661, maxDrift=0.016666666666667496, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=1, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=verticalWipe, source=1, fps=59.99820086408661, maxDrift=0.016666666666667496, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=3, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=verticalWipe, elapsed=3.083517541643232, physicalFootprintBytes=1512262080
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=2, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=verticalWipe, source=0, fps=59.4802300699285, maxDrift=0.03333333333333366, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=2, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=verticalWipe, source=1, fps=59.803492189873765, maxDrift=0.033333333333333326, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=3, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=verticalWipe, elapsed=6.177095833350904, physicalFootprintBytes=1505987032
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=3, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=verticalWipe, source=0, fps=59.831903076614495, maxDrift=0.03333333333333366, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=3, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=verticalWipe, source=1, fps=59.831903076614495, maxDrift=0.016666666666667496, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=3, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=verticalWipe, elapsed=9.269197958288714, physicalFootprintBytes=1506134488
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=4, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=verticalWipe, source=0, fps=59.34632043916389, maxDrift=0.03333333333333366, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=4, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=verticalWipe, source=1, fps=59.66885478937673, maxDrift=0.01666666666666683, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=3, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=verticalWipe, elapsed=12.36975212499965, physicalFootprintBytes=1503840728
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=1, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=overlay, source=0, fps=59.23117691078067, maxDrift=0.0333333333333341, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=1, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=overlay, source=1, fps=59.553085480947956, maxDrift=0.016666666666667496, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=3, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=overlay, elapsed=3.1065426249988377, physicalFootprintBytes=1117440184
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=2, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=overlay, source=0, fps=59.983391284329194, maxDrift=0.03333333333333366, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=2, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=overlay, source=1, fps=59.983391284329194, maxDrift=0.016666666666666607, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=3, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=overlay, elapsed=6.174137458321638, physicalFootprintBytes=1117587640
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=3, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=overlay, source=0, fps=59.441464703546615, maxDrift=0.04999999999999982, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=3, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=overlay, source=1, fps=59.441464703546615, maxDrift=0.0, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=3, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=overlay, elapsed=9.286560666747391, physicalFootprintBytes=1117735096
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=4, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=overlay, source=0, fps=60.02937404927625, maxDrift=0.03333333333333366, validSamples=30/30
+MPV_COMPARISON_LOUPE_WINDOW: cycle=3, window=4, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=overlay, source=1, fps=60.02937404927625, maxDrift=0.0, validSamples=30/30
+MPV_COMPARISON_LOUPE_MEMORY: cycle=3, pair=pq-hevc-hardware/hlg-hevc-hardware, mode=overlay, elapsed=12.385142291663215, physicalFootprintBytes=1117997240
+MPV_COMPARISON_LOUPE_SOAK_CYCLE: cycle=3, physicalFootprintBytes=558680224
+MPV_LIVE_LOUPE_COMPARISON_SOAK_ACCEPTANCE: 3 cycles, 2 pairs, 3 modes, 10 seconds per mode, baselineBytes=837863560, maximumCycleEndBytes=837863560, growthLimitBytes=268435456

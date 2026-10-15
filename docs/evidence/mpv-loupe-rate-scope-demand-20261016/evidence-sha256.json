@@ -1,0 +1,20 @@
+{
+  "README.md": "711cdd92a4443ae187915a6b8cbca6d1a98d7c9aed8a5c9cc44bd605dd3b61cd",
+  "build.log.gz": "39b3f9944040d4b8d9d5893f682f458cfb5e017844c1fdd5fb140ac7b4255fc0",
+  "candidate-receipt.json": "790ee891025ba5d7c5de51a12c0428e77a82ae0667cb2a4608622711d540624e",
+  "soak10-action.log.gz": "70ab7881908c4527ef576d54c7d79369af45ecb33076792120547a5c8f9cec64",
+  "soak10-measurements.txt": "c09665e9f0291a3985b016b75a8e6c59ae5ce6c00e9c5c99db2c894a18752c8e",
+  "soak10-stats.json": "1d5decbd3563399e94f20afc5bdaa3dd8fb9b834f2d1b8b4823ebbd09e4b6dd7",
+  "soak10-summary.json": "379198edd8fc5a73900e8520941735892fed69bbfebbfb7b111329131d699e3c",
+  "soak10-xcodebuild.log.gz": "7a75ba464b6eb77d8fc34c01bda8ab987010c58baff23e2ec3f1982a65da4112",
+  "soak30-action.log.gz": "17b03a540d0e6b706d364a344536b7a835d7688d231302516240c7b89538c7ef",
+  "soak30-measurements.txt": "9e84d837aecc05fa853df8fb292178b8cb83a8d4e54699f6176fc2885c9fc658",
+  "soak30-receipt.json": "a4677b5285f8189db0cb3cae00f14faa562b7e38b6f5457e8624e9ebf0169afc",
+  "soak30-source.patch.gz": "aa7238119a29d2264ec47c3d2479a9e14b9ab8934cf6c018de9ebf4263b941ce",
+  "soak30-stats.json": "1b5bd00a126699d3e991b9563495437ff7612e3340f217b01d9cd49b7fdf0f7e",
+  "soak30-summary.json": "37741822fb2804c3b2fe233a9193a7de8ecf1fc8a56462809fb316ccced9e564",
+  "soak30-xcodebuild.log.gz": "d71be1c56b0fc8a91163cd5a0d31737b58e0c7e78044addd38f5a8c614efb8ad",
+  "tests-action.log.gz": "f08563d982ead43cf9cb0e18c42313d0ea66d763db482ccf347b419e1a648e6b",
+  "tests-summary.json": "b5367e5bffe3196dfabf60369e714796d8fc494d6eac1a22f3b949692e0da871",
+  "tests.log.gz": "474cdb818748171629fa9b3ee6fe678a9d0a25092bffa1c53f9975d3e1b75a09"
+}

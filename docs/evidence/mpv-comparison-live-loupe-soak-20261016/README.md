@@ -1,5 +1,9 @@
 # Sustained different-file comparison: qualification rejected
 
+The later [rate-following continuation](../mpv-loupe-rate-scope-demand-20261016/README.md)
+passes a fresh three-cycle, 30-second-per-mode run with unchanged gates. This
+document and its receipts retain the earlier rejected candidate's results.
+
 The arm64 Release candidate completed three cycles of both different-file
 SDR/PQ and PQ/HLG UHD60 pairs in side-by-side, vertical wipe and overlay modes,
 with at least 30 measured seconds per mode per pair. The hosted XCTest failed

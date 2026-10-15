@@ -222,9 +222,17 @@ producer-authentic media, or physical HDR calibration.
 [The completed three-cycle run](evidence/mpv-comparison-live-loupe-soak-20261016/README.md)
 **failed** the 100 ms drift gate: source B reached 133.3 ms and 166.7 ms in
 the first SDR/PQ side-by-side windows. All 358 cadence windows met 45 fps and
-cycle-end memory growth stayed within 256 MiB, but sustained comparison remains
-unqualified. Investigate source/follower startup and comparison-loop transport;
-keep the gates unchanged and rerun after a verified fix.
+cycle-end memory growth stayed within 256 MiB. That rejected result is retained.
+
+The [rate-following continuation](evidence/mpv-loupe-rate-scope-demand-20261016/README.md)
+fixes a follower that used nominal transport speed while its comparison source
+was temporarily rate-corrected. The subsequent three-cycle, 30-second-per-mode
+run passes all unchanged gates: 360 loupe windows, at least 58.80 fps, at most
+66.7 ms drift, all 10,800 clock samples usable, idle screenshot workers, and
+130.03 MiB maximum cycle-end growth above warmup. Its receipt pins the exact
+build/source delta; the final app's separate scope/AV follow-up and validation
+are distinguished in that record. This does not establish frame lock or remove
+the workload limits below.
 
 The comparison workload can also repeat both different-file pairs and all three
 modes for sustained playback, including paused native-raster seek and loupe

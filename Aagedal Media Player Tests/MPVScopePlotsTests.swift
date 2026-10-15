@@ -9,6 +9,87 @@ import XCTest
 @testable import Aagedal_Media_Player
 
 final class MPVScopePlotsTests: XCTestCase {
+    @MainActor
+    func testNativePlotsPublishImmediatelyAndSwitchModesWithoutRecomputation() throws {
+        let plots = try XCTUnwrap(withNode { MPVScopePlots.decode($0, expectedWidth: 64, trackID: 1) })
+        let worker = ScopeRenderWorker()
+        let input = ScopeFrameInput(sdrFrame: nil, hdrFrame: nil, transferFunction: .sdr,
+                                   displayAspectRatio: nil, nativePlots: plots)
+
+        for (index, mode) in WaveformMode.allCases.enumerated() {
+            worker.submit(primary: input, secondary: nil, source: .primary,
+                          differenceGain: 1, mode: mode, resolution: 64)
+            XCTAssertEqual(worker.renderSequence, UInt64(index + 1), "Native results must publish within submit")
+            XCTAssertTrue(worker.waveformImage === (mode == .luma ? plots.waveform : plots.parade))
+            XCTAssertTrue(worker.vectorscopeImage === plots.vectorscope)
+        }
+        worker.submit(primary: input, secondary: input, source: .difference,
+                      differenceGain: 1, mode: .luma, resolution: 64)
+        XCTAssertEqual(worker.renderSequence, 2, "Difference scopes require display pixels, never source plots")
+        XCTAssertNil(worker.waveformImage)
+        XCTAssertNil(worker.vectorscopeImage)
+        worker.cancel(clearImages: true)
+        XCTAssertNil(worker.waveformImage)
+        XCTAssertNil(worker.vectorscopeImage)
+    }
+
+    @MainActor
+    func testNativeSecondaryPublishesItsHDRScaleBeforeRenderNotification() throws {
+        let sdr = try XCTUnwrap(withNode { MPVScopePlots.decode($0, expectedWidth: 64, trackID: 1) })
+        let hdr = MPVScopePlots(waveform: sdr.waveform, parade: sdr.parade, vectorscope: sdr.vectorscope,
+                               pts: 1, trackID: 2, transfer: "hlg", primaries: "bt2020", peakNits: 1000)
+        let worker = ScopeRenderWorker()
+        var notifiedPeak: Float?
+        let observer = worker.$renderSequence.dropFirst().sink { _ in
+            notifiedPeak = worker.hdrPeakNits
+        }
+        defer { observer.cancel() }
+        worker.submit(
+            primary: ScopeFrameInput(sdrFrame: nil, hdrFrame: nil, transferFunction: .sdr,
+                                     displayAspectRatio: nil, nativePlots: sdr),
+            secondary: ScopeFrameInput(sdrFrame: nil, hdrFrame: nil, transferFunction: .sdr,
+                                       displayAspectRatio: nil, nativePlots: hdr),
+            source: .secondary, differenceGain: 1, mode: .parade, resolution: 64
+        )
+        XCTAssertEqual(worker.renderSequence, 1)
+        XCTAssertEqual(worker.hdrPeakNits, 1000, "Native metadata is authoritative even before controller metadata arrives")
+        XCTAssertEqual(notifiedPeak, 1000)
+        XCTAssertTrue(worker.waveformImage === hdr.parade)
+    }
+
+    @MainActor
+    func testNativePublicationRevokesActiveAndPendingFallbackAndAllowsFallbackAgain() async throws {
+        let plots = try XCTUnwrap(withNode { MPVScopePlots.decode($0, expectedWidth: 64, trackID: 1) })
+        let worker = ScopeRenderWorker()
+        let fallback = ScopeFrameInput(sdrFrame: plots.waveform, hdrFrame: nil,
+                                      transferFunction: .sdr, displayAspectRatio: nil)
+        // No suspension here: the main actor cannot publish either fallback
+        // completion before the native submission invalidates both generations.
+        for _ in 0..<2 {
+            worker.submit(primary: fallback, secondary: nil, source: .primary,
+                          differenceGain: 1, mode: .luma, resolution: 64)
+        }
+        worker.submit(primary: ScopeFrameInput(sdrFrame: nil, hdrFrame: nil,
+            transferFunction: .sdr, displayAspectRatio: nil, nativePlots: plots),
+            secondary: nil, source: .primary, differenceGain: 1, mode: .parade, resolution: 64)
+        XCTAssertEqual(worker.renderSequence, 1)
+        XCTAssertTrue(worker.waveformImage === plots.parade)
+
+        worker.submit(primary: fallback, secondary: nil, source: .primary,
+                      differenceGain: 1, mode: .luma, resolution: 64)
+        for _ in 0..<100 where worker.renderSequence == 1 {
+            try await Task.sleep(for: .milliseconds(5))
+        }
+        XCTAssertEqual(worker.renderSequence, 2, "Cancelled fallback generations must not publish")
+        XCTAssertNotNil(worker.waveformImage)
+        XCTAssertFalse(worker.waveformImage === plots.parade)
+        worker.cancel(clearImages: true)
+        await Task.yield()
+        XCTAssertNil(worker.waveformImage)
+        XCTAssertNil(worker.vectorscopeImage)
+        XCTAssertEqual(worker.renderSequence, 2)
+    }
+
     func testAcceptsCompletePlotsAndCopiesNodeOwnedBytes() throws {
         let plots = try XCTUnwrap(withNode { MPVScopePlots.decode($0, expectedWidth: 64, trackID: 1) })
         XCTAssertEqual(plots.waveform.width, 64)
@@ -86,6 +167,95 @@ final class MPVScopePlotsTests: XCTestCase {
 
 @MainActor
 final class MPVNativeScopeIntegrationTests: XCTestCase {
+    func testSuspendedNativeAnalysisSurvivesBackendReplacementAndResumesFresh() async throws {
+        guard let directory = ProcessInfo.processInfo.environment["MPV_SCOPE_TEST_FIXTURES"] else {
+            throw XCTSkip("Set MPV_SCOPE_TEST_FIXTURES for the arm64 native scope candidate")
+        }
+        let oldResolution = UserDefaults.standard.object(forKey: AppSettings.scopeResolution.key)
+        let oldRate = UserDefaults.standard.object(forKey: AppSettings.scopeFrameRate.key)
+        UserDefaults.standard.set(64, forKey: AppSettings.scopeResolution.key)
+        UserDefaults.standard.set(30.0, forKey: AppSettings.scopeFrameRate.key)
+        defer {
+            UserDefaults.standard.set(oldResolution, forKey: AppSettings.scopeResolution.key)
+            UserDefaults.standard.set(oldRate, forKey: AppSettings.scopeFrameRate.key)
+        }
+
+        let players = [MPVPlayer(), MPVPlayer()]
+        let views = players.map { player in
+            let view = NSView(frame: CGRect(x: 0, y: 0, width: 640, height: 360))
+            let layer = MPVMetalLayer()
+            layer.frame = view.bounds
+            layer.drawableSize = view.bounds.size
+            view.layer = layer
+            view.wantsLayer = true
+            XCTAssertFalse(player.attachDrawable(layer))
+            return view
+        }
+        let capture = FrameCapture()
+        var disabledPublications = 0
+        let observer = capture.$currentSample.sink { sample in
+            if sample != nil, !capture.analysisRequested { disabledPublications += 1 }
+        }
+        defer {
+            observer.cancel()
+            capture.stopCapture()
+            capture.detachMPV()
+            players.forEach { $0.destroy() }
+            withExtendedLifetime(views) {}
+        }
+
+        capture.attachMPV(players[0])
+        players[0].load(url: URL(fileURLWithPath: directory).appendingPathComponent("sdr.mkv"))
+        capture.startCapture()
+        for _ in 0..<300 where capture.currentSample?.nativePlots == nil {
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        let first = try XCTUnwrap(capture.currentSample)
+        XCTAssertEqual(try XCTUnwrap(first.nativePlots).transfer, "srgb")
+
+        capture.analysisRequested = false
+        XCTAssertTrue(capture.isCapturing)
+        XCTAssertNil(capture.currentSample)
+        XCTAssertTrue(capture.recentSamplesSnapshot().isEmpty)
+        // Several 30 Hz timer ticks must leave capture idle after revocation.
+        try await Task.sleep(for: .milliseconds(200))
+        XCTAssertNil(capture.currentSample)
+        XCTAssertEqual(disabledPublications, 0)
+
+        // Preserve the same running intent across the production backend
+        // teardown/attachment sequence, without re-enabling analysis.
+        let wasCapturing = capture.isCapturing
+        capture.stopCapture(rebuildPipeline: false)
+        capture.detachMPV()
+        players[0].destroy()
+        capture.attachMPV(players[1])
+        players[1].load(url: URL(fileURLWithPath: directory).appendingPathComponent("pq.mkv"))
+        if wasCapturing { capture.startCapture() }
+        for _ in 0..<300 where !players[1].isFileLoaded {
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        XCTAssertTrue(players[1].isFileLoaded)
+        XCTAssertTrue(capture.isCapturing)
+        XCTAssertFalse(capture.analysisRequested)
+        try await Task.sleep(for: .milliseconds(200))
+        XCTAssertNil(capture.currentSample)
+        XCTAssertEqual(disabledPublications, 0)
+
+        capture.analysisRequested = true
+        for _ in 0..<300 where capture.currentSample?.nativePlots == nil {
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        let replacement = try XCTUnwrap(capture.currentSample)
+        XCTAssertGreaterThan(replacement.sequence, first.sequence)
+        XCTAssertEqual(try XCTUnwrap(replacement.nativePlots).transfer, "pq",
+                       "Re-enabled analysis must come from the replacement source")
+        XCTAssertEqual(replacement.timestampQuality, .exact)
+        XCTAssertNil(replacement.sdrFrame)
+        XCTAssertNil(replacement.hdrFrame)
+        XCTAssertEqual(disabledPublications, 0)
+        print("MPV_SCOPE_DEMAND_ACCEPTANCE: native suspension, backend replacement and fresh resume")
+    }
+
     func testUHDLiveScopeThroughputAgainstScreenshotBackend() async throws {
         guard let path = ProcessInfo.processInfo.environment["MPV_SCOPE_PLAYBACK_FIXTURE"] else {
             throw XCTSkip("Set MPV_SCOPE_PLAYBACK_FIXTURE to the UHD 60 fps HLG fixture")
