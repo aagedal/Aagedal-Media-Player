@@ -1,0 +1,19 @@
+{
+  "architectures": [
+    "arm64"
+  ],
+  "appSHA256": "46193ac940eb2662e5394c0fd8412ea59e830e7245653df2c0caf6d9a65e35b6",
+  "files": {
+    "Aagedal Media Player/Logic/MPV/MPVNativeAudioMeter.swift": "b60b257dd495cfdb328d0e8cff955d65e9adfa30443a11d482217bd23e857c0e",
+    "Aagedal Media Player/Logic/MPVNativeAudioMeterSession.swift": "e0d21f90308fd1d3056447e2b9d8db765b89b6846447d35d0a1204d10b25810b",
+    "Aagedal Media Player/Logic/LiveAudioMeterSession.swift": "4810bca3e01ae07a601496412329f4841eb3040d2783285eef1f1349fce5aca1",
+    "Aagedal Media Player/Logic/MPV/MPVPlayer.swift": "79a8bbfa9ac1458d6fa780973fb006f91ef301fc4f87dddb03bdac602f8e9a50",
+    "Aagedal Media Player/UI/LiveAudioMeterView.swift": "0d27c176ca22baed41e5d64efdbc8d2c1bba5d0cf92dae3f6b599ebf6e86cd6f",
+    "Aagedal Media Player/UI/LiveAudioMeterWindowController.swift": "363dfeeec5c90afa306abb7598c1d065b0b5cad7fc8e56558741c712b47d2162",
+    "Aagedal Media Player Tests/MPVNativeAudioMeterIntegrationTests.swift": "c8b8ac0384820662f6a50c72e9b876d075a3cf52aa28c3b8e11d9da96d910b02",
+    "Aagedal Media Player Tests/MPVNativeAudioMeterTests.swift": "3719474880341987691bdef43ea485f71c4910adf432f6bb64dc26a59b5d43ab",
+    "scripts/prepare-mpv-audio-probe-app.py": "2c162c67509ba0482cb92e90b5f797b8c58a7bc6154785f54ca312536bd81dc7",
+    "docs/mpv-audio-probe-handoff.json": "d441c0e772d100df693e7e435a1df426369ab3adb66e97d1b825aeccc048c5ef"
+  },
+  "scope": "Opt-in development comparison probe; source meter retained; shipping pins unchanged."
+}

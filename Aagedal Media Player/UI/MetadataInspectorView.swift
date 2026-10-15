@@ -237,14 +237,6 @@ struct MetadataInspectorView: View {
                     .help("Copy metadata as JSON")
                     .accessibilityLabel(showCopiedConfirmation ? "Metadata copied" : "Copy metadata as JSON")
                     .disabled(metadata == nil)
-                    Button(action: { isPresented = false }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 16))
-                            .foregroundColor(.secondary)
-                    }
-                    .buttonStyle(.plain)
-                    .help("Close inspector")
-                    .accessibilityLabel("Close inspector")
                 }
 
                 if video != nil || audio != nil {

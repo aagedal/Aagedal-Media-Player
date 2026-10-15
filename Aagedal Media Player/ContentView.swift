@@ -396,9 +396,8 @@ struct ContentView: View {
         }
         .inspector(isPresented: $showInspector) {
             if let item = controller.mediaItem {
-                MetadataInspectorView(
-                    item: item, useMPV: controller.useMPV,
-                    trimIn: controller.trimIn, trimOut: controller.trimOut,
+                PlayerInspectorView(
+                    controller: controller, comparison: compareSession, item: item,
                     isLoadingMetadata: windowCoordinator.isLoadingMetadata,
                     metadataError: windowCoordinator.metadataError,
                     onRetryMetadata: {
@@ -766,8 +765,8 @@ struct ContentView: View {
             }
             .buttonStyle(.plain)
             .playerToolbarFocus()
-            .help("Show metadata inspector")
-            .accessibilityLabel(showInspector ? "Hide metadata inspector" : "Show metadata inspector")
+            .help("Show metadata and playback inspector")
+            .accessibilityLabel(showInspector ? "Hide inspector" : "Show inspector")
             .accessibilityValue(showInspector ? "Shown" : "Hidden")
             .accessibilityAddTraits(showInspector ? .isSelected : [])
             .disabled(controller.mediaItem == nil)

@@ -213,8 +213,10 @@ struct PlayerView: View {
     private func handleKeyEvent(_ characters: String, _ modifiers: NSEvent.ModifierFlags, _ specialKey: NSEvent.SpecialKey?) -> Bool {
         guard acceptsKeyboardInput else { return false }
 
-        // Don't intercept keys when editing timecode
-        if isEditingTimecode || isTextInputActive {
+        // Native monitors see typing before SwiftUI focus changes propagate.
+        // Inspector numeric fields must receive their very first digit too.
+        if isEditingTimecode || isTextInputActive
+            || PlaybackKeyboardFocus.isEditingText(NSApp.keyWindow?.firstResponder) {
             return false
         }
 

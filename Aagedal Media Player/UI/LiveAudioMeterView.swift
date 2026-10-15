@@ -23,6 +23,7 @@ struct LiveAudioMeterView: View {
 
     let state: LiveAudioMeterViewState
     let preferences: LiveAudioMeterPreferences
+    var nativeProbe: MPVNativeAudioMeterSession.State? = nil
     let actions: Actions
 
     var body: some View {
@@ -39,6 +40,7 @@ struct LiveAudioMeterView: View {
                 }
 
                 diagnostics
+                if let nativeProbe { nativeProbeView(nativeProbe) }
                 actionBar
             }
             .padding(16)
@@ -46,6 +48,41 @@ struct LiveAudioMeterView: View {
         }
         .frame(minWidth: 620, idealWidth: 720, minHeight: 460)
         .accessibilityIdentifier("live-audio-meter")
+    }
+
+    private func nativeProbeView(_ probe: MPVNativeAudioMeterSession.State) -> some View {
+        GroupBox("Native playback probe · development") {
+            VStack(alignment: .leading, spacing: 8) {
+                Text(probe.status).font(.caption)
+                if let reading = probe.reading {
+                    Grid(alignment: .trailing, horizontalSpacing: 14) {
+                        GridRow {
+                            Text("Channel"); Text("Sample max"); Text("RMS since reset"); Text("True max ≈")
+                        }.font(.caption)
+                        ForEach(reading.samplePeaks.indices, id: \.self) { index in
+                            GridRow {
+                                Text("\(index + 1)")
+                                Text(probeLevel(reading.samplePeaks[index]))
+                                Text(probeLevel(reading.rms[index]))
+                                Text(reading.truePeaks[index].map { probeLevel($0) } ?? "below precision")
+                            }
+                        }
+                    }.monospacedDigit()
+                    Text("Raw M \(probeLevel(reading.momentary)) · S \(probeLevel(reading.shortTerm)) LUFS")
+                    Text("\(reading.filterFrames) filter samples · player clock at query \(reading.queryPlaybackTime, specifier: "%.3f") s")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+                Text("Filter readings can lead playback. Peaks accumulate until reset; RMS is an average. True peaks have limited metadata precision. Raw loudness uses FFmpeg speaker weights, including its different 7.1 weighting. Source QC readings above remain authoritative.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }.frame(maxWidth: .infinity, alignment: .leading).textSelection(.enabled)
+        }
+        .accessibilityIdentifier("native-audio-meter-probe")
+    }
+
+    private func probeLevel(_ value: Double?) -> String {
+        guard let value else { return "—" }
+        if value == -.infinity { return "−∞" }
+        return String(format: "%.1f", value)
     }
 
     private var header: some View {

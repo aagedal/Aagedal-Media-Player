@@ -1,0 +1,45 @@
+{
+  "architectures": [
+    "arm64"
+  ],
+  "audioRelease": "aagedal-1.0.0-n8.1.2-audio.1",
+  "overlays": [
+    {
+      "target": "Libavcodec",
+      "archiveSHA256": "2ed0fcc6718895eb9058a9230fa5e554f52aceda7168be4125643124005bacdf",
+      "arm64SHA256": "51ddea2f2bd4aa46d2c1087885fb6c1d1340ea621d90c48cea0bfe1780e08588"
+    },
+    {
+      "target": "Libavdevice",
+      "archiveSHA256": "3505377a493476eaa4849e74c6e16dde7e38eef7ea77c602dbd60f78b8aae319",
+      "arm64SHA256": "ea35c0c2f003f7c377aa3833bac67a081ace6d587aa31c648dacb9a5447110a4"
+    },
+    {
+      "target": "Libavfilter",
+      "archiveSHA256": "45b85a2164e3b29f3e91f825c361512841672bbef31e73c13ba740775cb7cf14",
+      "arm64SHA256": "ed887e7792aa0c789482d6e112b7ad8b9db2e9173f7a6998e8b6ff6a8418f326"
+    },
+    {
+      "target": "Libavformat",
+      "archiveSHA256": "6a8696910339f755f9b4efd1eef03f02d19f7c4d533b1f815d0bd60e6bd39ac6",
+      "arm64SHA256": "44a840c48f3294235383a4cadec465e5561230c96dfd3e2ba0d5f0cac5a26291"
+    },
+    {
+      "target": "Libavutil",
+      "archiveSHA256": "bfabacbc89f221025b095e94a39a16f78cc0f1d5a5cb52768818045f98c3d518",
+      "arm64SHA256": "df67ecdfef456ffbf8306b621901d6025500ceb822e58a5f249756b150c77bce"
+    },
+    {
+      "target": "Libswresample",
+      "archiveSHA256": "97cd5e217f15134c1a7c3dc4966a3ae9ccd1480ba93f407b10605c74d7ceb4df",
+      "arm64SHA256": "20fbd4c025992852c5dcabe2d97ca94f941ef9f421dd20c0afedb3ddc8c5b6b3"
+    },
+    {
+      "target": "Libswscale",
+      "archiveSHA256": "c61d77494e2ae6f4e73319381e35aa9b05f3f98fe44610f427613d8910c5f873",
+      "arm64SHA256": "6405284daeebf611b9ac9fd5630a02082174d331a1032217b40cdc37e3fef59d"
+    }
+  ],
+  "libmpvSHA256": "4241063ec2920c1bb49303fec9a18532af6c0f42f890cb55e71fc45de65e8cb1",
+  "scopeDeltaInventorySHA256": "8a3eab1dfdf6d49b18d2da0c494624e1ce21cd0b293f7cbec8af1746ce3909f3"
+}

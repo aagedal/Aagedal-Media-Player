@@ -59,6 +59,16 @@ final class PlayerController: ObservableObject {
     /// persisted as a user preference.
     private(set) var isAudioSuppressed = false
     private var effectiveIsMuted: Bool { isMuted || isAudioSuppressed }
+    @Published private(set) var audioSyncOffsetMilliseconds: Double = 0
+
+    var supportsAudioSyncOffset: Bool { useMPV && mpvPlayer != nil }
+
+    func setAudioSyncOffset(milliseconds: Double) {
+        guard let value = AudioSyncOffset.validatedMilliseconds(milliseconds) else { return }
+        audioSyncOffsetMilliseconds = value
+        mpvPlayer?.setAudioSyncOffset(milliseconds: value)
+    }
+
     var player: AVPlayer? { backendAdapter?.avPlayer }
     @Published private(set) var playbackPhase: PlaybackPhase = .idle {
         didSet { publishLiveAudioMeterTransport() }
@@ -337,6 +347,7 @@ final class PlayerController: ObservableObject {
     /// the values land later via updateMetadata.
     func loadMedia(_ item: MediaItem, startTime: TimeInterval = 0) {
         let previousURL = mediaItem?.url
+        if previousURL != item.url { setAudioSyncOffset(milliseconds: 0) }
         mediaItem = item
 
         // Always prepare if it's a new file, or if it's the first load
@@ -632,6 +643,7 @@ final class PlayerController: ObservableObject {
         backendAdapter = backend
         backend.setAudioChannelRouting(audioChannelRouting)
         let mpv = backend.player
+        mpv.setAudioSyncOffset(milliseconds: audioSyncOffsetMilliseconds)
         mpv.setLooping(mediaItem?.loopPlayback ?? false)
         if isAudioSuppressed {
             mpv.disableAudioTrack()

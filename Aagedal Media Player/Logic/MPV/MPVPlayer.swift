@@ -22,7 +22,7 @@ private nonisolated func mpvWakeupCallback(_ ctx: UnsafeMutableRawPointer?) {
 /// MPV Player - NOT an actor to allow background thread access for event handling
 /// All @Published property updates are dispatched to main thread
 /// Marked @unchecked Sendable because we handle thread safety manually with DispatchQueue
-final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
+final class MPVPlayer: NSObject, ObservableObject, MPVNativeAudioProbeClient, @unchecked Sendable {
     private let logger = Logger(subsystem: "com.aagedal.MediaPlayer", category: "MPVPlayer")
 
     // MPV context
@@ -32,6 +32,22 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
     private nonisolated(unsafe) var seekScheduler = MPVSeekScheduler()
     private nonisolated(unsafe) var commandQueue = MPVCommandQueue()
     private var requestedRate: Float = 1
+    private(set) var requestedAudioSyncOffsetSeconds: Double = 0
+
+    func setAudioSyncOffset(milliseconds: Double) {
+        guard let value = AudioSyncOffset.validatedMilliseconds(milliseconds) else { return }
+        requestedAudioSyncOffsetSeconds = value / 1000
+        setDoubleAsync(MPVProperty.audioDelay, requestedAudioSyncOffsetSeconds)
+    }
+
+    /// Read the actual libmpv value, including after asynchronous slider writes.
+    nonisolated func audioSyncOffsetSnapshot() -> Double? {
+        queue.sync {
+            guard let context = mpv else { return nil }
+            var value: Double = 0
+            return mpv_get_property(context, MPVProperty.audioDelay, MPV_FORMAT_DOUBLE, &value) >= 0 ? value : nil
+        }
+    }
 
     // Published properties for playback state
     @Published var isPlaying = false
@@ -182,6 +198,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
             self.commandQueue.reset()
             mpv_terminate_destroy(self.mpv)
             self.mpv = nil
+            self.nativeAudioProbeOwner = nil
         }
 
         isInitialized = false
@@ -323,6 +340,7 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
         // before the drawable existed and mpv had an initialized context.
         setDouble(MPVProperty.volume, PlaybackVolume.mpvValue(for: volume))
         setDouble(MPVProperty.speed, Double(requestedRate))
+        setDouble(MPVProperty.audioDelay, requestedAudioSyncOffsetSeconds)
         setFlag(MPVProperty.mute, isMuted)
         applyAudioChannelRouting()
         setLooping(shouldLoop)
@@ -1094,6 +1112,44 @@ final class MPVPlayer: NSObject, ObservableObject, @unchecked Sendable {
     /// every time the loupe refreshes. Capture never changes options or filters.
     private nonisolated(unsafe) var nativeScopesCapability: Bool?
     private nonisolated(unsafe) var decoderRasterCapability: Bool?
+    private nonisolated(unsafe) var nativeAudioProbeOwner: UUID?
+
+    /// The labelled development probe owns no decoder and never replaces the
+    /// independently selected source meter. All context access uses this queue.
+    nonisolated func beginNativeAudioProbe(owner: UUID) -> Bool {
+        guard MPVNativeAudioMeter.filtersAvailable else { return false }
+        return queue.sync {
+            guard let context = mpv, nativeAudioProbeOwner == nil else { return false }
+            guard MPVNativeAudioMeter.command(context, ["af", "pre", MPVNativeAudioMeter.filter]) else { return false }
+            nativeAudioProbeOwner = owner
+            return true
+        }
+    }
+
+    nonisolated func readNativeAudioProbe(owner: UUID, channels: Int, sampleRate: Int) async
+        -> MPVNativeAudioMeter.Reading? {
+        await withCheckedContinuation { continuation in
+            queue.async { [weak self] in
+                guard let self, self.nativeAudioProbeOwner == owner, let context = self.mpv else {
+                    continuation.resume(returning: nil)
+                    return
+                }
+                continuation.resume(returning: MPVNativeAudioMeter.read(
+                    context, channels: channels, sampleRate: sampleRate
+                ))
+            }
+        }
+    }
+
+    nonisolated func endNativeAudioProbe(owner: UUID) {
+        queue.sync {
+            guard nativeAudioProbeOwner == owner else { return }
+            if let context = mpv {
+                _ = MPVNativeAudioMeter.command(context, ["af", "remove", "@\(MPVNativeAudioMeter.label)"])
+            }
+            nativeAudioProbeOwner = nil
+        }
+    }
 
     nonisolated func decoderRaster() -> MPVDecoderRaster? {
         queue.sync { () -> MPVDecoderRaster? in
