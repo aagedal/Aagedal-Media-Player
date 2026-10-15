@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "architectures": [
+    "arm64"
+  ],
+  "filename": "mpvkit-native-scopes-arm64-20261015-r3.tar.gz",
+  "sha256": "4c296f9290e5aa69f07a42fdead51e7b5fe908f509b7b6587c6436552b5c20a0",
+  "sizeBytes": 52859530,
+  "inventorySHA256": "8a3eab1dfdf6d49b18d2da0c494624e1ce21cd0b293f7cbec8af1746ce3909f3",
+  "baselineDescriptor": "mpv-decoder-raster-handoff.json",
+  "scope": "Local development delta; shipping package pins remain unchanged.",
+  "sourceRepository": "https://github.com/aagedal/MPVKit",
+  "sourceRevision": "7bab3c83af8b278a1eafc3ab52f009dbbca07b59"
+}

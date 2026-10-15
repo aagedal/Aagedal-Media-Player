@@ -35,17 +35,28 @@ struct ScopeView: View {
         selectedSource == .secondary ? secondaryFrameCapture : primaryFrameCapture
     }
 
+    private var selectedTransferFunction: TransferFunction {
+        if let plots = selectedFrameCapture.currentSample?.nativePlots {
+            return plots.transfer == "pq" ? .pq : plots.transfer == "hlg" ? .hlg : .sdr
+        }
+        return selectedFrameCapture.transferFunction
+    }
+
     private var isHDR: Bool {
-        selectedSource != .difference && selectedFrameCapture.transferFunction != .sdr
+        selectedSource != .difference && selectedTransferFunction != .sdr
     }
 
     private var transferLabel: String? {
         if selectedSource == .difference { return "DISPLAY RGB" }
-        switch selectedFrameCapture.transferFunction {
+        switch selectedTransferFunction {
         case .pq: return "PQ"
         case .hlg: return "HLG"
         case .sdr: return nil
         }
+    }
+
+    private var usesBT2020Targets: Bool {
+        selectedSource != .difference && selectedFrameCapture.currentSample?.nativePlots?.primaries == "bt2020"
     }
 
     private var backgroundColor: Color {
@@ -142,6 +153,7 @@ struct ScopeView: View {
             handleSecondaryCapturedSample()
         }
         .onChange(of: compareSession.scopeSource) {
+            updateCaptureMode()
             renderWorker.cancel(clearImages: false)
             resetDifferencePair()
             if selectedSource == .difference {
@@ -159,6 +171,7 @@ struct ScopeView: View {
             onRender?(selectedSource)
         }
         .onChange(of: compareSession.isActive) {
+            updateCaptureMode()
             renderWorker.cancel(clearImages: false)
             resetDifferencePair()
             if compareSession.isActive, selectedSource == .difference {
@@ -184,14 +197,15 @@ struct ScopeView: View {
             guard selectedSource != .primary else { return }
             submitScopeFrame()
         }
+        .onChange(of: usesBT2020Targets) {
+            updateVectorscopeGraticule()
+        }
         .onChange(of: waveformMode) {
             submitScopeFrame()
         }
         .onAppear {
-            let res = UserDefaults.standard.value(for: AppSettings.scopeResolution)
-            let w = CGFloat(res)
-            let h = round(w * 9.0 / 16.0)
-            vectorscopeGraticule = ScopeComputer.drawVectorscopeGraticule(size: CGSize(width: h, height: h))
+            updateCaptureMode()
+            updateVectorscopeGraticule()
             if selectedSource == .difference {
                 refreshDifferencePair()
             }
@@ -254,6 +268,20 @@ struct ScopeView: View {
         .accessibilityValue("\(compareSession.differenceGain.formatted()) times")
     }
 
+    private func updateVectorscopeGraticule() {
+        let res = UserDefaults.standard.value(for: AppSettings.scopeResolution)
+        let h = round(CGFloat(res) * 9 / 16)
+        vectorscopeGraticule = ScopeComputer.drawVectorscopeGraticule(
+            size: CGSize(width: h, height: h), bt2020: usesBT2020Targets
+        )
+    }
+
+    private func updateCaptureMode() {
+        let difference = selectedSource == .difference
+        primaryFrameCapture.requiresDisplayFrame = difference
+        secondaryFrameCapture.requiresDisplayFrame = difference
+    }
+
     private func submitScopeFrame() {
         let res = UserDefaults.standard.value(for: AppSettings.scopeResolution)
         let primarySample = selectedSource == .difference
@@ -289,7 +317,8 @@ struct ScopeView: View {
             sdrFrame: sample?.sdrFrame,
             hdrFrame: sample?.hdrFrame,
             transferFunction: frameCapture.transferFunction,
-            displayAspectRatio: controller.videoAspectRatio
+            displayAspectRatio: controller.videoAspectRatio,
+            nativePlots: sample?.nativePlots
         )
     }
 

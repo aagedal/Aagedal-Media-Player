@@ -13,6 +13,7 @@ nonisolated struct ScopeFrameInput: Sendable {
     let hdrFrame: HDRFrameData?
     let transferFunction: TransferFunction
     let displayAspectRatio: CGFloat?
+    var nativePlots: MPVScopePlots? = nil
 }
 
 /// Matches independently captured A/B scope frames in their aligned media
@@ -282,6 +283,8 @@ final class ScopeRenderWorker: ObservableObject {
         let hasRequiredFrame: Bool
         if source == .difference {
             hasRequiredFrame = primary.sdrFrame != nil && secondary?.sdrFrame != nil
+        } else if selected?.nativePlots != nil {
+            hasRequiredFrame = true
         } else if isHDR {
             hasRequiredFrame = selected?.sdrFrame != nil || selected?.hdrFrame != nil
         } else {
@@ -379,6 +382,11 @@ final class ScopeRenderWorker: ObservableObject {
         }
 
         let selected = request.source == .secondary ? request.secondary : request.primary
+        if request.source != .difference, let plots = selected?.nativePlots {
+            return Result(waveformImage: request.mode == .luma ? plots.waveform : plots.parade,
+                          vectorscopeImage: plots.vectorscope,
+                          hdrPeakNits: plots.transfer == "pq" || plots.transfer == "hlg" ? plots.peakNits : nil)
+        }
         let sdrFrame: CGImage?
         if request.source == .difference,
            let primary = request.primary.sdrFrame,

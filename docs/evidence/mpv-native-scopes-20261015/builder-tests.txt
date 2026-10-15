@@ -1,0 +1,19 @@
+.[master (root-commit) caec1a6] Fixture baseline
+ 1 file changed, 1 insertion(+)
+ create mode 100644 provider.c
+[master 3bec021] Add opt-in paused decoder-raster provider candidate
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+......[master (root-commit) ab5c54b] Scope fixture baseline
+ 3 files changed, 3 insertions(+)
+ create mode 100644 player/command.c
+ create mode 100644 player/screenshot.c
+ create mode 100644 player/screenshot.h
+[master 56efd53] Add native waveform parade and vectorscope analysis candidate
+ 5 files changed, 222 insertions(+)
+ create mode 100644 player/scope_math.h
+ create mode 100644 player/scope_provider.inc
+..
+----------------------------------------------------------------------
+Ran 9 tests in 0.461s
+
+OK

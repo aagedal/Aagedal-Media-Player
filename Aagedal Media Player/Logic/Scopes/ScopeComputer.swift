@@ -588,7 +588,7 @@ enum ScopeComputer: Sendable {
 
     /// Draws vectorscope graticule overlay: crosshairs, chroma circle, color targets, skin tone line.
     /// Rendered at 2x pixel resolution; use with `Image(decorative:scale: 2.0)`.
-    nonisolated static func drawVectorscopeGraticule(size: CGSize) -> CGImage? {
+    nonisolated static func drawVectorscopeGraticule(size: CGSize, bt2020: Bool = false) -> CGImage? {
         let w = Int(size.width)
         let h = Int(size.height)
         guard w > 0, h > 0 else { return nil }
@@ -629,15 +629,18 @@ enum ScopeComputer: Sendable {
         context.addArc(center: center, radius: scale * 0.75, startAngle: 0, endAngle: .pi * 2, clockwise: false)
         context.strokePath()
 
-        // BT.709 75% color bar targets (Cb, Cr computed from the same matrix as data)
-        let targets: [(cb: CGFloat, cr: CGFloat, r: CGFloat, g: CGFloat, b: CGFloat)] = [
-            (-0.0860,  0.3750, 0.75, 0.15, 0.15),  // Red
-            (-0.2891, -0.3407, 0.15, 0.75, 0.15),  // Green
-            ( 0.3750, -0.0344, 0.15, 0.15, 0.75),  // Blue
-            ( 0.0860, -0.3750, 0.15, 0.75, 0.75),  // Cyan
-            ( 0.2891,  0.3407, 0.75, 0.15, 0.75),  // Magenta
-            (-0.3750,  0.0344, 0.75, 0.75, 0.15),  // Yellow
+        // Targets use the same source RGB matrix as the plotted chroma.
+        let kr: CGFloat = bt2020 ? 0.2627 : 0.2126
+        let kb: CGFloat = bt2020 ? 0.0593 : 0.0722
+        let bars: [(CGFloat, CGFloat, CGFloat)] = [
+            (0.75, 0, 0), (0, 0.75, 0), (0, 0, 0.75),
+            (0, 0.75, 0.75), (0.75, 0, 0.75), (0.75, 0.75, 0)
         ]
+        let targets = bars.map { r, g, b in
+            let y = kr*r + (1-kr-kb)*g + kb*b
+            return (cb: (b-y)/(2*(1-kb)), cr: (r-y)/(2*(1-kr)),
+                    r: max(r, 0.15), g: max(g, 0.15), b: max(b, 0.15))
+        }
 
         let targetSize: CGFloat = 8
         context.setLineWidth(1.0)

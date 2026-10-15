@@ -59,6 +59,20 @@ def apply_decoder_raster_candidate(checkout, output, expected_source):
             'scope': 'Restricted opt-in provider; runtime and app acceptance remain separate.'}
 
 
+def apply_scopes_candidate(checkout, output):
+    source = checkout / 'dist/libmpv-v0.41.0'
+    scopes = module('scopes_candidate', 'build-mpv-scopes-candidate.py')
+    inputs = scopes.apply_scope_source(source, Path(__file__).resolve().parents[1])
+    revision = builder.commit(source, 'Add native waveform parade and vectorscope analysis candidate')
+    evidence = output / 'scopes-source'
+    evidence.mkdir()
+    archive = evidence / 'libmpv-scopes.tar.gz'
+    with archive.open('wb') as stream:
+        subprocess.run(['git', '-C', str(source), 'archive', '--format=tar.gz', revision], stdout=stream, check=True)
+    return {'candidateRevision': revision, 'candidateTree': builder.git(source, 'rev-parse', 'HEAD^{tree}'),
+            'sourceArchive': publication.identity(archive), 'providerInputs': inputs}
+
+
 def tree_identity(root):
     """Bind regular bytes and link targets, retaining SDK/header symlinks."""
     import hashlib
@@ -182,6 +196,7 @@ def build(args):
     checkout = output / 'MPVKit'
     source_snapshot = next(s for s in reconstruction['sourceSnapshots'] if s['name'] == 'libmpv-v0.41.0')
     decoder_raster = apply_decoder_raster_candidate(checkout, output, source_snapshot) if args.decoder_raster_candidate else None
+    scopes = apply_scopes_candidate(checkout, output) if args.scopes_candidate else None
     adaptations = adapt_recipe(checkout, metal, directories, tool_path, args.apple_silicon_only)
     receipt = {'schemaVersion': 1, 'buildSucceeded': False,
                'architectures': ['arm64'] if args.apple_silicon_only else ['arm64', 'x86_64'],
@@ -199,6 +214,10 @@ def build(args):
         receipt['decoderRasterCandidate'] = decoder_raster
         receipt['sourceInputs']['libmpv-v0.41.0'] = {
             key: decoder_raster[key] for key in ('candidateRevision', 'candidateTree')}
+    if scopes:
+        receipt['scopesCandidate'] = scopes
+        receipt['sourceInputs']['libmpv-v0.41.0'] = {
+            key: scopes[key] for key in ('candidateRevision', 'candidateTree')}
     # ZIPs are already present: unpack explicitly, without cached expanded dirs.
     for entry in receipt['prebuiltAuxiliaryInputs']:
         path = checkout / entry['relativePath']
@@ -243,7 +262,11 @@ def main():
     parser.add_argument('--apple-silicon-only', action='store_true', help='build and verify only the macOS arm64 slice')
     parser.add_argument('--decoder-raster-candidate', action='store_true',
                         help='apply and retain the restricted native-pixel provider patch; does not enable it in the app')
+    parser.add_argument('--scopes-candidate', action='store_true',
+                        help='add the development native scope provider; requires decoder-raster and arm64 options')
     args = parser.parse_args()
+    if args.scopes_candidate and not (args.decoder_raster_candidate and args.apple_silicon_only):
+        parser.error('--scopes-candidate requires --decoder-raster-candidate --apple-silicon-only')
     try:
         build(args)
     except (ValueError, OSError, subprocess.CalledProcessError) as error:

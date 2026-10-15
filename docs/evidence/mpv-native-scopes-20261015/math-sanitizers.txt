@@ -1,0 +1,1 @@
+NATIVE_SCOPE_MATH_ACCEPTANCE: 120 transfer/orientation/resolution cases, ASan/UBSan

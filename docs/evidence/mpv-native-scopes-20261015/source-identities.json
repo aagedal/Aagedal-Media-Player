@@ -1,0 +1,38 @@
+{
+  "Aagedal Media Player/Logic/MPV/MPVScopePlots.swift": {
+    "sha256": "a7a4cbf1a9193b97701aabd533b844715d392e1b8e79509617166bec5ab1528d",
+    "sizeBytes": 4175
+  },
+  "Aagedal Media Player/Logic/MPV/MPVPlayer.swift": {
+    "sha256": "640e7640aa6a63087a4f4dc8c2f3e9ee17e96244e0a677a1520419fb9cae93a7",
+    "sizeBytes": 64320
+  },
+  "Aagedal Media Player/Logic/Scopes/FrameCapture.swift": {
+    "sha256": "aa145120c601d267e2f0c296a22f3cd20503c7bfd69c264a5fc9eea695508df9",
+    "sizeBytes": 35244
+  },
+  "Aagedal Media Player/Logic/Scopes/ScopeRenderWorker.swift": {
+    "sha256": "c40a408eb4fbc933ecb8bcd917b68db84ac1e569d77525a918fae47a3ba84c2d",
+    "sizeBytes": 16803
+  },
+  "Aagedal Media Player/Logic/Scopes/ScopeComputer.swift": {
+    "sha256": "789a29c572663085e31982810beea1d8f05923f48c29af85b2f845173aef460a",
+    "sizeBytes": 33355
+  },
+  "Aagedal Media Player/UI/Scopes/ScopeView.swift": {
+    "sha256": "3f1c25ca79f0fffac0472960c0a4c5fff82cb10ab9230d55fd3e45d12a00b3fe",
+    "sizeBytes": 18302
+  },
+  "Aagedal Media Player Tests/MPVScopePlotsTests.swift": {
+    "sha256": "f20c9b0463358efe9c66ae2a2f1f781f84e4be6880748909037aa15c6ca96ef9",
+    "sizeBytes": 12211
+  },
+  "docs/dependency-patches/scopes/scope_math.h": {
+    "sha256": "9b2ca45b93195b43c9743252896726fffa0c98f0f74ee2c6d8610ee151707d15",
+    "sizeBytes": 6086
+  },
+  "docs/dependency-patches/scopes/scope_provider.inc": {
+    "sha256": "b38dfc7ed53aebbdd8ce63e5bf0bdc61d77788b62782f8486998495fe605e025",
+    "sizeBytes": 4452
+  }
+}
