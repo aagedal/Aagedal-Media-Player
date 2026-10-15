@@ -275,19 +275,53 @@ final class LiveLoupeSessionTests: XCTestCase {
         guard let path = ProcessInfo.processInfo.environment["LIVE_LOUPE_COMPARISON_CASES"] else {
             throw XCTSkip("Run validate-mpv-native-app.py --comparison to qualify the UHD60 comparison canvas")
         }
+        try await qualifyComparisonManifest(path: path)
+        print("MPV_LIVE_LOUPE_COMPARISON_ACCEPTANCE: 2 pairs, 3 modes, paused seek and reopen")
+    }
+
+    func testSustainedComparisonCanvasKeepsPairedLoupesAndBoundsMemory() async throws {
+        let environment = ProcessInfo.processInfo.environment
+        guard let path = environment["LIVE_LOUPE_COMPARISON_CASES"],
+              environment["LIVE_LOUPE_COMPARISON_SOAK_SECONDS"] != nil else {
+            throw XCTSkip("Run validate-mpv-native-app.py --comparison --soak-seconds for sustained comparison")
+        }
+        guard let seconds = environment["LIVE_LOUPE_COMPARISON_SOAK_SECONDS"].flatMap(Int.init),
+              (10...3600).contains(seconds),
+              let cycles = environment["LIVE_LOUPE_COMPARISON_SOAK_CYCLES"].flatMap(Int.init),
+              (3...100).contains(cycles) else {
+            return XCTFail("Comparison soak requires 10–3600 seconds per mode and 3–100 cycles")
+        }
+        var footprints: [UInt64] = []
+        for cycle in 1...cycles {
+            try await qualifyComparisonManifest(path: path, secondsPerMode: seconds, cycle: cycle)
+            // Both pair helpers have returned, releasing hosts, layers and players.
+            try await Task.sleep(for: .seconds(1))
+            let footprint = try physicalFootprint()
+            footprints.append(footprint)
+            XCTAssertLessThanOrEqual(footprint, footprints[0] + 256 * 1024 * 1024,
+                "Comparison cycle-end growth exceeded 256 MiB above warmup")
+            print("MPV_COMPARISON_LOUPE_SOAK_CYCLE: cycle=\(cycle), physicalFootprintBytes=\(footprint)")
+        }
+        print("MPV_LIVE_LOUPE_COMPARISON_SOAK_ACCEPTANCE: \(cycles) cycles, 2 pairs, 3 modes, \(seconds) seconds per mode, baselineBytes=\(footprints[0]), maximumCycleEndBytes=\(footprints.max()!), growthLimitBytes=268435456")
+    }
+
+    private func qualifyComparisonManifest(path: String, secondsPerMode: Int = 3, cycle: Int = 1) async throws {
         struct Case: Decodable { let name: String, input: String }
         struct Manifest: Decodable { let cases: [Case] }
         let manifest = try JSONDecoder().decode(Manifest.self,
             from: Data(contentsOf: URL(fileURLWithPath: path)))
+        guard Set(manifest.cases.map(\.name)).count == manifest.cases.count else {
+            return XCTFail("Comparison requires distinct workload identities")
+        }
         for names in [["uhd-h264-hardware", "pq-hevc-hardware"],
                       ["pq-hevc-hardware", "hlg-hevc-hardware"]] {
             let inputs = try names.map { name in
                 try XCTUnwrap(manifest.cases.first { $0.name == name }).input
             }
             XCTAssertNotEqual(inputs[0], inputs[1])
-            try await qualifyComparison(inputs: inputs, name: names.joined(separator: "/"))
+            try await qualifyComparison(inputs: inputs, name: names.joined(separator: "/"),
+                secondsPerMode: secondsPerMode, cycle: cycle)
         }
-        print("MPV_LIVE_LOUPE_COMPARISON_ACCEPTANCE: 2 pairs, 3 modes, paused seek and reopen")
     }
 
     private struct ComparisonHost: View {
@@ -318,7 +352,7 @@ final class LiveLoupeSessionTests: XCTestCase {
         }
     }
 
-    private func qualifyComparison(inputs: [String], name: String) async throws {
+    private func qualifyComparison(inputs: [String], name: String, secondsPerMode: Int, cycle: Int) async throws {
         let primary = PlayerController(proResRAWDetector: { _, _ in false })
         let secondary = PlayerController(proResRAWDetector: { _, _ in false })
         let comparison = CompareSessionController(secondaryController: secondary)
@@ -378,32 +412,48 @@ final class LiveLoupeSessionTests: XCTestCase {
                 XCTAssertTrue(followers[index].isMuted)
                 XCTAssertFalse(followers[index].canInspectDecoderRaster)
             }
-            let counts = surfaces.map { $0.metalLayer.presentedFrames }
-            let captures = [a.captureRequestCount, b.captureRequestCount]
-            let began = ProcessInfo.processInfo.systemUptime
-            var valid = [0, 0], maxDrift = [0.0, 0.0]
-            for _ in 0..<30 {
-                for index in sources.indices {
-                    if let drift = LiveLoupeClock.sample(
-                        readPrimary: { sources[index].playbackTimeSnapshot() ?? .nan },
-                        readSecondary: { followers[index].playbackTimeSnapshot() ?? .nan },
-                        loopDuration: sources[index].duration)?.effectiveDrift {
-                        valid[index] += 1
-                        maxDrift[index] = max(maxDrift[index], drift)
+            let modeBegan = ProcessInfo.processInfo.systemUptime
+            var windows = 0
+            repeat {
+                windows += 1
+                let counts = surfaces.map { $0.metalLayer.presentedFrames }
+                let captures = [a.captureRequestCount, b.captureRequestCount]
+                let began = ProcessInfo.processInfo.systemUptime
+                var valid = [0, 0], maxDrift = [0.0, 0.0]
+                for _ in 0..<30 {
+                    // MPV snapshots can wait for the decoder. Keep measurement
+                    // off the main actor, as the live follower's own sampler does.
+                    let loopDurations = sources.map { $0.duration }
+                    let drifts = await Task.detached {
+                        sources.indices.map { index in
+                            LiveLoupeClock.sample(
+                                readPrimary: { sources[index].playbackTimeSnapshot() ?? .nan },
+                                readSecondary: { followers[index].playbackTimeSnapshot() ?? .nan },
+                                loopDuration: loopDurations[index])?.effectiveDrift
+                        }
+                    }.value
+                    for index in sources.indices {
+                        if let drift = drifts[index] {
+                            valid[index] += 1
+                            maxDrift[index] = max(maxDrift[index], drift)
+                        }
                     }
+                    try await Task.sleep(for: .milliseconds(100))
                 }
-                try await Task.sleep(for: .milliseconds(100))
-            }
-            let elapsed = ProcessInfo.processInfo.systemUptime - began
-            for index in surfaces.indices {
-                let fps = Double(surfaces[index].metalLayer.presentedFrames - counts[index]) / elapsed
-                XCTAssertGreaterThanOrEqual(fps, 45, "\(name), \(mode), source=\(index)")
-                XCTAssertGreaterThanOrEqual(valid[index], 29)
-                XCTAssertLessThanOrEqual(maxDrift[index], 0.1)
-                print("MPV_COMPARISON_LOUPE_WINDOW: pair=\(name), mode=\(mode), source=\(index), fps=\(fps), maxDrift=\(maxDrift[index]), validSamples=\(valid[index])/30")
-            }
-            XCTAssertEqual([a.captureRequestCount, b.captureRequestCount], captures,
-                "Paired live playback must suppress both screenshot workers")
+                let elapsed = ProcessInfo.processInfo.systemUptime - began
+                for index in surfaces.indices {
+                    let fps = Double(surfaces[index].metalLayer.presentedFrames - counts[index]) / elapsed
+                    XCTAssertGreaterThanOrEqual(fps, 45, "\(name), \(mode), source=\(index)")
+                    XCTAssertGreaterThanOrEqual(valid[index], 29)
+                    XCTAssertLessThanOrEqual(maxDrift[index], 0.1)
+                    print("MPV_COMPARISON_LOUPE_WINDOW: cycle=\(cycle), window=\(windows), pair=\(name), mode=\(mode), source=\(index), fps=\(fps), maxDrift=\(maxDrift[index]), validSamples=\(valid[index])/30")
+                }
+                XCTAssertEqual([a.captureRequestCount, b.captureRequestCount], captures,
+                    "Paired live playback must suppress both screenshot workers")
+                let footprint = try physicalFootprint()
+                print("MPV_COMPARISON_LOUPE_MEMORY: cycle=\(cycle), pair=\(name), mode=\(mode), elapsed=\(ProcessInfo.processInfo.systemUptime - modeBegan), physicalFootprintBytes=\(footprint)")
+            } while ProcessInfo.processInfo.systemUptime - modeBegan < Double(secondsPerMode)
+
         }
         comparison.pause(primary: primary)
         let paused = await waitUntil {

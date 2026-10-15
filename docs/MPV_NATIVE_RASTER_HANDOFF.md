@@ -217,6 +217,47 @@ surfaces, not the comparison canvas. It does not establish composite pixel
 correctness, A/B frame lock, sustained memory behavior, active scopes,
 producer-authentic media, or physical HDR calibration.
 
+## Sustained different-file comparison qualification
+
+[The completed three-cycle run](evidence/mpv-comparison-live-loupe-soak-20261016/README.md)
+**failed** the 100 ms drift gate: source B reached 133.3 ms and 166.7 ms in
+the first SDR/PQ side-by-side windows. All 358 cadence windows met 45 fps and
+cycle-end memory growth stayed within 256 MiB, but sustained comparison remains
+unqualified. Investigate source/follower startup and comparison-loop transport;
+keep the gates unchanged and rerun after a verified fix.
+
+The comparison workload can also repeat both different-file pairs and all three
+modes for sustained playback, including paused native-raster seek and loupe
+close/reopen after every pair:
+
+```sh
+python3 scripts/validate-mpv-native-app.py PATH_TO_XCTESTRUN \
+  /private/tmp/aagedal-loupe-playback-60fps/live-viewer-fixtures.json \
+  /private/tmp/aagedal-comparison-soak-next \
+  --comparison --soak-seconds 30 --soak-cycles 3
+```
+
+`--soak-seconds` specifies 10–3600 measured seconds **per mode per pair**;
+`--soak-cycles` specifies 3–100 complete cycles (default three). Measurements
+finish the last three-second window, so each mode may run slightly longer than
+requested. Every window requires both loupe surfaces to deliver at least 45
+completed Metal presentations per second, no more than 100 ms effective
+source/follower clock drift, at least 29/30 usable samples, and idle screenshot
+workers. Between cycles, after host/controller teardown and a one-second
+retirement allowance, physical footprint must remain within 256 MiB above the
+first complete warmup cycle. In-playback physical footprint samples are logged
+separately; they are neither peak measurements nor an enforced total-memory
+ceiling.
+
+Require successful XCTest exit and
+`MPV_LIVE_LOUPE_COMPARISON_SOAK_ACCEPTANCE` with the requested duration and cycle
+count. A short comparison receipt cannot qualify this run. The workload uses
+the production comparison canvas at 960×540 with UHD60 source decoders and
+paired loupe surfaces. Presentation counters measure lenses, not canvas cadence
+or unique video frames. Generated looped media, independent decoder clocks,
+active scopes, composite pixel correctness, sanitizer coverage and physical HDR
+calibration retain their existing qualification limits.
+
 ## Accepted state and next work
 
 [Acceptance evidence](evidence/mpv-native-raster-expanded-20261014/README.md)
