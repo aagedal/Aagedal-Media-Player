@@ -24,7 +24,7 @@ struct PlaybackInspectorView: View {
                 .padding(12)
                 .accessibilityIdentifier("playback-inspector-source")
             }
-            PlaybackSettingsView(controller: selectedPlayer)
+            PlaybackSettingsView(controller: selectedPlayer, primary: primary, comparison: comparison)
                 .id(ObjectIdentifier(selectedPlayer))
         }
         .accessibilityIdentifier("playback-inspector")
@@ -36,6 +36,33 @@ struct PlaybackInspectorView: View {
 
 private struct PlaybackSettingsView: View {
     @ObservedObject var controller: PlayerController
+    @ObservedObject var primary: PlayerController
+    @ObservedObject var comparison: CompareSessionController
+    @AppStorage(AppSettings.audioWaveformBoost.key)
+    private var waveformBoost = AppSettings.audioWaveformBoost.defaultValue
+    @AppStorage(AppSettings.audioWaveformColor.key)
+    private var waveformColor = AppSettings.audioWaveformColor.defaultValue
+
+    private var monitoringVolume: Binding<Double> {
+        Binding(get: { primary.volume }, set: { value in
+            if comparison.isActive {
+                comparison.setMonitoringVolume(value, primary: primary)
+            } else {
+                primary.volume = value
+            }
+        })
+    }
+
+    private var monitoringMute: Binding<Bool> {
+        Binding(get: { primary.isMuted }, set: { value in
+            guard value != primary.isMuted else { return }
+            if comparison.isActive {
+                comparison.toggleMonitoringMute(primary: primary)
+            } else {
+                primary.isMuted = value
+            }
+        })
+    }
 
     private var canAdjust: Bool {
         controller.supportsAudioSyncOffset && controller.isReady && !controller.audioTrackOptions.isEmpty
@@ -63,6 +90,64 @@ private struct PlaybackSettingsView: View {
                 } else {
                     Text("Preparing playback…").foregroundStyle(.secondary)
                 }
+            }
+            Section("Audio output") {
+                if comparison.isActive {
+                    Picker("Listen to", selection: Binding(
+                        get: { comparison.audioSource },
+                        set: { comparison.selectAudioSource($0, primary: primary) }
+                    )) {
+                        ForEach(CompareAudioSource.allCases, id: \.self) { source in
+                            Text(source.label).tag(source)
+                        }
+                    }
+                    .accessibilityIdentifier("playback-inspector-audio-source")
+                }
+                Toggle("Mute", isOn: monitoringMute)
+                    .accessibilityIdentifier("playback-inspector-mute")
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text("Volume")
+                        Spacer()
+                        Text("\(Int(primary.volume))%")
+                            .monospacedDigit().foregroundStyle(.secondary)
+                    }
+                    Slider(value: monitoringVolume, in: 0...100)
+                        .accessibilityLabel("Playback volume")
+                        .accessibilityValue("\(Int(primary.volume)) percent")
+                        .accessibilityIdentifier("playback-inspector-volume")
+                }
+                if comparison.isActive {
+                    Text("Volume and mute apply to the comparison's listening source.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+            }
+            Section("Waveform") {
+                Picker("Color", selection: $waveformColor) {
+                    ForEach(AudioWaveformColor.allCases, id: \.self) { color in
+                        Text(color.label).tag(color.rawValue)
+                    }
+                }
+                .accessibilityIdentifier("playback-inspector-waveform-color")
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text("Quiet detail")
+                        Spacer()
+                        Text("\(Int(waveformBoost))%")
+                            .monospacedDigit().foregroundStyle(.secondary)
+                    }
+                    Slider(value: $waveformBoost, in: 0...100, step: 1)
+                        .accessibilityLabel("Waveform quiet detail")
+                        .accessibilityValue("\(Int(waveformBoost)) percent")
+                        .accessibilityIdentifier("playback-inspector-waveform-detail")
+                }
+                Button("Reset quiet detail") { waveformBoost = 0 }
+                    .disabled(waveformBoost == 0)
+                if controller.isMultiMonoFile {
+                    Toggle("Show all mono tracks", isOn: $controller.showAllMonoWaveforms)
+                }
+                Text("Color and quiet detail apply to all waveform views. Quiet detail reveals low-level audio without changing playback volume. The outer envelope shows peaks; the solid body shows average levels from the waveform's reduced-rate audio preview.")
+                    .font(.caption).foregroundStyle(.secondary)
             }
             Section("Audio sync offset") {
                 VStack(alignment: .leading, spacing: 12) {

@@ -34,6 +34,7 @@ struct AudioOnlyPresentationView: View {
 
     var body: some View {
         GeometryReader { geometry in
+            let compact = geometry.size.height < 300
             ZStack {
                 LinearGradient(
                     colors: [Color.black, Color(red: 0.08, green: 0.05, blue: 0.12), Color.black],
@@ -41,16 +42,18 @@ struct AudioOnlyPresentationView: View {
                     endPoint: .bottomTrailing
                 )
 
-                VStack(spacing: 10) {
-                    Spacer(minLength: 44)
+                VStack(spacing: compact ? 6 : 10) {
+                    Spacer(minLength: 8)
 
-                    Image(systemName: "waveform.circle.fill")
-                        .font(.system(size: min(64, geometry.size.height * 0.13), weight: .light))
-                        .foregroundStyle(.white.opacity(0.88), .pink.opacity(0.72))
-                        .accessibilityHidden(true)
+                    if !compact {
+                        Image(systemName: "waveform.circle.fill")
+                            .font(.system(size: min(64, geometry.size.height * 0.13), weight: .light))
+                            .foregroundStyle(.white.opacity(0.88), .pink.opacity(0.72))
+                            .accessibilityHidden(true)
+                    }
 
                     Text(item.name)
-                        .font(.title2.weight(.semibold))
+                        .font(compact ? .headline : .title2.weight(.semibold))
                         .foregroundStyle(.white)
                         .lineLimit(1)
                         .truncationMode(.middle)
@@ -58,7 +61,7 @@ struct AudioOnlyPresentationView: View {
 
                     if let trackDescription, !trackDescription.isEmpty {
                         Text(trackDescription)
-                            .font(.subheadline)
+                            .font(compact ? .caption : .subheadline)
                             .foregroundStyle(.white.opacity(0.62))
                             .lineLimit(1)
                             .padding(.horizontal, 28)
@@ -71,7 +74,7 @@ struct AudioOnlyPresentationView: View {
                             isOverlay: true,
                             transparentBackground: true
                         )
-                        .frame(height: min(280, max(110, geometry.size.height * 0.34)))
+                        .frame(height: max(0, min(280, geometry.size.height - (compact ? 90 : 180))))
                         .background(.black.opacity(0.32), in: RoundedRectangle(cornerRadius: 12))
                         .overlay {
                             RoundedRectangle(cornerRadius: 12)
@@ -82,7 +85,7 @@ struct AudioOnlyPresentationView: View {
                         .padding(.top, 10)
                     }
 
-                    Spacer(minLength: 92)
+                    Spacer(minLength: 8)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }

@@ -21,6 +21,8 @@ struct AudioWaveformView: View {
     @State private var isDragging = false
     @State private var dragTime: Double = 0
     @State private var deferredRerender = DeferredMainActorTask()
+    @State private var deferredResize = DeferredMainActorTask()
+    @Environment(\.displayScale) private var displayScale
 
     private var duration: Double {
         controller.mediaItem?.durationSeconds ?? 0
@@ -125,9 +127,8 @@ struct AudioWaveformView: View {
                 }
                 // Waveform generation deferred to audioTrackOptions change,
                 // since metadata/tracks aren't available yet when mediaItem changes.
-            } else if oldValue?.metadata == nil && newValue?.metadata != nil {
-                // Metadata just arrived for the same file — trigger generation
-                // in case audioTrackOptions already fired before metadata was available.
+            } else if oldValue?.metadata != newValue?.metadata || oldValue?.durationSeconds != newValue?.durationSeconds {
+                // Same-file metadata can change duration, layout and channel labels.
                 triggerGeneration()
             }
         }
@@ -156,6 +157,7 @@ struct AudioWaveformView: View {
         }
         .onDisappear {
             deferredRerender.cancel()
+            deferredResize.cancel()
         }
     }
 
@@ -168,17 +170,24 @@ struct AudioWaveformView: View {
                 VStack(spacing: 0) {
                     ForEach(Array(generator.channelImages.enumerated()), id: \.offset) { index, image in
                         ZStack(alignment: .leading) {
+                            Rectangle()
+                                .fill(Color.white.opacity(0.15))
+                                .frame(height: 1 / displayScale)
+                                .frame(maxHeight: .infinity, alignment: .center)
+
                             Image(nsImage: image)
                                 .resizable()
-                                .interpolation(.medium)
+                                .interpolation(.none)
 
                             // Channel label
                             if index < generator.channelLabels.count {
                                 Text(generator.channelLabels[index])
                                     .font(.system(size: 9, weight: .medium, design: .monospaced))
-                                    .foregroundColor(Color(white: 0.5))
-                                    .padding(.leading, 4)
-                                    .padding(.top, 2)
+                                    .foregroundStyle(.white.opacity(0.8))
+                                    .padding(.horizontal, 5)
+                                    .padding(.vertical, 2)
+                                    .background(.black.opacity(0.65), in: RoundedRectangle(cornerRadius: 3))
+                                    .padding(4)
                                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                             }
 
@@ -199,8 +208,10 @@ struct AudioWaveformView: View {
 
                 // Playhead
                 let displayedTime = isDragging ? dragTime : controller.currentPlaybackTime
-                let fraction = duration > 0 ? displayedTime / duration : 0
-                let xPos = geo.size.width * CGFloat(fraction)
+                let fraction = duration.isFinite && duration > 0 && displayedTime.isFinite
+                    ? min(1, max(0, displayedTime / duration)) : 0
+                let xPos = min(max(0, geo.size.width - 1 / displayScale),
+                               (geo.size.width * CGFloat(fraction) * displayScale).rounded() / displayScale)
 
                 Path { path in
                     path.move(to: CGPoint(x: xPos, y: 0))
@@ -208,6 +219,30 @@ struct AudioWaveformView: View {
                 }
                 .stroke(Color.white, lineWidth: 1.5)
                 .shadow(color: .black.opacity(0.6), radius: 1, x: 0, y: 0)
+            }
+            .clipped()
+            .onAppear { generator.setRenderWidth(geo.size.width * displayScale) }
+            .onChange(of: geo.size.width) {
+                deferredResize.schedule(after: .milliseconds(80)) {
+                    generator.setRenderWidth(geo.size.width * displayScale)
+                }
+            }
+            .onChange(of: displayScale) {
+                generator.setRenderWidth(geo.size.width * displayScale)
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Audio waveform, \(generator.channelLabels.joined(separator: ", "))")
+            .accessibilityValue("\((controller.currentPlaybackTime.isFinite ? max(0, controller.currentPlaybackTime) : 0).formatted(.number.precision(.fractionLength(0)))) seconds")
+            .accessibilityAdjustableAction { direction in
+                guard duration.isFinite, duration > 0 else { return }
+                let step = max(1, duration / 100)
+                let delta: Double
+                switch direction {
+                case .increment: delta = step
+                case .decrement: delta = -step
+                @unknown default: return
+                }
+                controller.seekTo(min(duration, max(0, controller.currentPlaybackTime + delta)))
             }
             .contentShape(Rectangle())
             .gesture(
@@ -248,7 +283,7 @@ struct AudioWaveformView: View {
     }
 
     private func time(at x: CGFloat, in width: CGFloat) -> Double {
-        guard width > 0, duration > 0 else { return 0 }
+        guard x.isFinite, width.isFinite, width > 0, duration.isFinite, duration > 0 else { return 0 }
         let fraction = max(0, min(1, x / width))
         return fraction * duration
     }
