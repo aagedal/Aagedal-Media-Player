@@ -2,6 +2,23 @@
 
 All notable changes to Aagedal Media Player.
 
+## [2.1.0] — Unreleased
+
+### Added
+- Adjust waveform color and quiet detail, playback volume and mute from the Playback sidebar. Comparison playback also exposes the listening source.
+
+### Changed
+- Show a translucent peak envelope around the solid average-level waveform body, retaining brief peaks when reducing the preview to screen columns.
+- Rasterize waveforms at the current display width, with Retina-aware resizing and bounded image memory.
+- Apply appearance changes to cached waveform data, including changes made while decoding, without restarting audio decoding.
+
+### Fixed
+- Keep audio-only waveforms clear of the transport controls when the sidebar makes the window narrow.
+- Keep silent waveform regions transparent, with consistent channel center lines and clearer track labels.
+- Refresh waveform data when same-file metadata changes the duration or channel layout, and keep the playhead within the waveform bounds.
+
+The waveform remains a reduced-rate navigation preview; use the audio meters or loudness analysis for sample-peak and true-peak measurements.
+
 ## [2.0.1] — 2026-10-13
 
 ### Added

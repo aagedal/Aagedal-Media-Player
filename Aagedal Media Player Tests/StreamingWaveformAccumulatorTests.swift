@@ -25,14 +25,47 @@ final class StreamingWaveformAccumulatorTests: XCTestCase {
 
         let channels = try accumulator.finish()
         XCTAssertEqual(channels.count, 2)
-        XCTAssertEqual(channels[0].maxs[0], 0.4, accuracy: 0.0001)
+        XCTAssertEqual(channels[0].maxs[0], 0.6, accuracy: 0.0001)
         XCTAssertEqual(channels[0].mins[0], 0, accuracy: 0.0001)
         XCTAssertEqual(channels[0].maxs[1], 0, accuracy: 0.0001)
-        XCTAssertEqual(channels[0].mins[1], -0.6, accuracy: 0.0001)
+        XCTAssertEqual(channels[0].mins[1], -0.8, accuracy: 0.0001)
         XCTAssertEqual(channels[1].maxs[0], 0, accuracy: 0.0001)
-        XCTAssertEqual(channels[1].mins[0], -0.4, accuracy: 0.0001)
-        XCTAssertEqual(channels[1].maxs[1], 0.6, accuracy: 0.0001)
+        XCTAssertEqual(channels[1].mins[0], -0.6, accuracy: 0.0001)
+        XCTAssertEqual(channels[1].maxs[1], 0.8, accuracy: 0.0001)
         XCTAssertEqual(channels[1].mins[1], 0, accuracy: 0.0001)
+    }
+
+    func testSingleSampleTransientSurvivesAveragingAndDisplayReduction() throws {
+        let accumulator = StreamingWaveformAccumulator(width: 100, channelCount: 1, expectedFrameCount: 1000)
+        var samples = [Float](repeating: 0.01, count: 1000)
+        samples[445] = 1
+        samples[446] = -0.9
+        accumulator.consume(pcmData(samples))
+        let data = try XCTUnwrap(accumulator.finish().first)
+        let overview = data.resampled(to: 2)
+        XCTAssertEqual(overview.maxs, [1, 0.01])
+        XCTAssertEqual(overview.mins, [-0.9, 0])
+        XCTAssertLessThan(overview.averageMaxs[0], 0.02)
+        XCTAssertEqual(data.averageMins[44], -0.9, accuracy: 0.0001)
+    }
+
+    func testNonFiniteAndOutOfRangePCMProducesFiniteBoundedEnvelope() throws {
+        let accumulator = StreamingWaveformAccumulator(width: 1, channelCount: 1, expectedFrameCount: 6)
+        accumulator.consume(pcmData([.nan, .infinity, -.infinity, 8, -4, 0.25]))
+        let data = try XCTUnwrap(accumulator.finish().first)
+        XCTAssertEqual(data.mins, [-1])
+        XCTAssertEqual(data.maxs, [1])
+        XCTAssertEqual(data.averageMaxs[0], 0.625, accuracy: 0.0001)
+        XCTAssertEqual(data.averageMins, [-1])
+    }
+
+    func testDisplayReductionPreservesAsymmetryAndEverySourceColumn() {
+        let data = WaveformAmplitudeData(mins: [0, -0.8, 0, -0.1, 0], maxs: [0, 0, 0.9, 0, 0.2])
+        XCTAssertEqual(data.resampled(to: 2).mins, [-0.8, -0.1])
+        XCTAssertEqual(data.resampled(to: 2).maxs, [0, 0.9])
+        let enlarged = data.resampled(to: 10)
+        XCTAssertEqual(enlarged.maxs, [0, 0, 0, 0, 0.9, 0.9, 0, 0, 0.2, 0.2])
+        XCTAssertTrue(data.resampled(to: 0).mins.isEmpty)
     }
 
     func testRetainedStorageDoesNotGrowWithInputDuration() throws {

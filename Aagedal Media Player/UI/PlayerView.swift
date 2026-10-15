@@ -101,6 +101,9 @@ struct PlayerView: View {
                     item: item,
                     showsWaveform: automaticAudioOnlyWaveform || showsAudioWaveform
                 )
+                // Reserve the measured toolbar and transport area even when
+                // controls fade, keeping every waveform channel reachable.
+                .padding(failureOverlayInsets)
             }
 
             if controller.player != nil || controller.mpvPlayer != nil {
