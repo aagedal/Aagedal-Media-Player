@@ -24,7 +24,9 @@ class RunnerTests(unittest.TestCase):
             target = {'TestBundlePath': '__TESTROOT__/Aagedal Media Player Tests.xctest',
                       'EnvironmentVariables': {'PRESERVE': 'yes', 'LIVE_LOUPE_SOAK_SECONDS': '999',
                                                'LIVE_LOUPE_SOAK_CYCLES': '99', 'LIVE_LOUPE_SOAK_CASES': 'old',
-                                               'LIVE_LOUPE_COMPARISON_CASES': 'old'}}
+                                               'LIVE_LOUPE_COMPARISON_CASES': 'old',
+                                               'LIVE_LOUPE_COMPARISON_SOAK_SECONDS': '999',
+                                               'LIVE_LOUPE_COMPARISON_SOAK_CYCLES': '99'}}
             configuration = ({'Tests': target} if legacy else
                              {'TestConfigurations': [{'TestTargets': [target]}]})
             original = plistlib.dumps(configuration)
@@ -65,6 +67,7 @@ class RunnerTests(unittest.TestCase):
         observed = self.run_fixture(['--live-viewer'], 'MPV_LIVE_LOUPE_ACCEPTANCE: 4 cases', legacy=True)
         self.assertFalse(any(key.startswith('LIVE_LOUPE_SOAK_') for key in observed['environment']))
         self.assertNotIn('LIVE_LOUPE_COMPARISON_CASES', observed['environment'])
+        self.assertFalse(any(key.startswith('LIVE_LOUPE_COMPARISON_SOAK_') for key in observed['environment']))
 
     def test_rejects_short_or_mismatched_acceptance_even_on_successful_xcode_exit(self):
         for marker in ('MPV_LIVE_LOUPE_ACCEPTANCE: 4 cases',
@@ -79,9 +82,26 @@ class RunnerTests(unittest.TestCase):
         self.assertNotEqual(observed['environment']['LIVE_LOUPE_COMPARISON_CASES'], 'old')
         self.assertEqual(observed['environment']['AAGEDAL_MPV_DECODER_RASTER_HWDEC'], 'videotoolbox')
         self.assertNotIn('LIVE_LOUPE_SOAK_CASES', observed['environment'])
+        self.assertFalse(any(key.startswith('LIVE_LOUPE_COMPARISON_SOAK_') for key in observed['environment']))
         for receipt in ('MPV_LIVE_LOUPE_ACCEPTANCE: 4 cases', marker):
             with self.subTest(receipt=receipt), self.assertRaisesRegex(SystemExit, 'acceptance failed'):
                 self.run_fixture(['--comparison'], receipt, failure=65 if receipt == marker else 0)
+
+    def test_comparison_soak_selects_sustained_test_and_exact_receipt(self):
+        marker = 'MPV_LIVE_LOUPE_COMPARISON_SOAK_ACCEPTANCE: 4 cycles, 2 pairs, 3 modes, 10 seconds per mode,'
+        options = ['--comparison', '--soak-seconds', '10', '--soak-cycles', '4']
+        observed = self.run_fixture(options, marker)
+        self.assertIn('-only-testing:Aagedal Media Player Tests/LiveLoupeSessionTests/testSustainedComparisonCanvasKeepsPairedLoupesAndBoundsMemory', observed['command'])
+        environment = observed['environment']
+        self.assertEqual(environment['LIVE_LOUPE_COMPARISON_SOAK_SECONDS'], '10')
+        self.assertEqual(environment['LIVE_LOUPE_COMPARISON_SOAK_CYCLES'], '4')
+        self.assertFalse(any(key.startswith('LIVE_LOUPE_SOAK_') for key in environment))
+        for receipt in ('MPV_LIVE_LOUPE_COMPARISON_ACCEPTANCE: 2 pairs, 3 modes, paused seek and reopen',
+                        marker.replace('4 cycles', '3 cycles'), marker.replace('10 seconds', '30 seconds')):
+            with self.subTest(receipt=receipt), self.assertRaisesRegex(SystemExit, 'acceptance failed'):
+                self.run_fixture(options, receipt)
+        with self.assertRaisesRegex(SystemExit, 'acceptance failed'):
+            self.run_fixture(options, marker, failure=65)
 
     def test_xcode_failure_cannot_be_overridden_by_acceptance_marker(self):
         with self.assertRaisesRegex(SystemExit, 'acceptance failed'):
@@ -90,7 +110,7 @@ class RunnerTests(unittest.TestCase):
 
     def test_invalid_soak_arguments_fail_before_reading_inputs(self):
         for options in (['--comparison', '--live-viewer'], ['--comparison', '--playback'],
-                        ['--comparison', '--stress-cycles', '3'], ['--comparison', '--soak-seconds', '10'],
+                        ['--comparison', '--stress-cycles', '3'], ['--comparison', '--soak-seconds', '9'],
                         ['--soak-seconds', '10'], ['--live-viewer', '--soak-seconds', '9'],
                         ['--live-viewer', '--soak-seconds', '3601'], ['--soak-cycles', '3'],
                         ['--live-viewer', '--soak-seconds', '10', '--soak-cycles', '2'],

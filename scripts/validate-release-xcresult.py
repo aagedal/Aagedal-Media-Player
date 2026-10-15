@@ -14,6 +14,7 @@ from typing import Any, Iterator
 
 
 ALLOWED_SKIPPED_TESTS = {
+    "LiveLoupeSessionTests/testSustainedComparisonCanvasKeepsPairedLoupesAndBoundsMemory()",
     "LiveLoupeSessionTests/testComparisonCanvasKeepsPairedLiveLoupesAndRestoresPausedInspection()",
     "LiveLoupeSessionTests/testSustainedConcurrentViewersKeepCadenceAndBoundMemory()",
     "CompareLiveBackendTests/testNetworkFileOpeningRemainsResponsive()",
