@@ -1,0 +1,37 @@
+{
+  "loupeWindows": 338,
+  "scopeWindows": 169,
+  "completedCycles": 3,
+  "minimumLoupeFPS": 59.027841118249576,
+  "maximumDriftSeconds": 0.06666666666666668,
+  "usableClockSamples": 10140,
+  "expectedClockSamples": 10140,
+  "scopePublicationsBySelection": {
+    "primary": {
+      "windows": 61,
+      "minimumObservedFPS": 15.146611528143055,
+      "maximumObservedFPS": 30.43881393976403,
+      "publications": 5083
+    },
+    "secondary": {
+      "windows": 54,
+      "minimumObservedFPS": 15.640440862434799,
+      "maximumObservedFPS": 21.76032227936263,
+      "publications": 3803
+    },
+    "difference": {
+      "windows": 54,
+      "minimumObservedFPS": 5.24942900522044,
+      "maximumObservedFPS": 18.710827365438558,
+      "publications": 2805
+    }
+  },
+  "cycleEndPhysicalFootprintBytes": [
+    819645536,
+    1009978704,
+    788434016
+  ],
+  "maximumGrowthAboveWarmupBytes": 190333168,
+  "maximumSampledInPlaybackPhysicalFootprintBytes": 2553548280,
+  "assertionFailures": []
+}

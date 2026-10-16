@@ -28,6 +28,8 @@ class RunnerTests(unittest.TestCase):
                                                'LIVE_LOUPE_COMPARISON_SOAK_SECONDS': '999',
                                                'LIVE_LOUPE_COMPARISON_SOAK_CYCLES': '99',
                                                'LIVE_LOUPE_COMPARISON_ACTIVE_SCOPES': '1',
+                                               'LIVE_LOUPE_COMPARISON_SCOPE_RESOLUTION': '1080',
+                                               'LIVE_LOUPE_COMPARISON_SCOPE_FPS': '27',
                                                'AAGEDAL_SCOPE_BACKEND': 'screenshot'}}
             configuration = ({'Tests': target} if legacy else
                              {'TestConfigurations': [{'TestTargets': [target]}]})
@@ -118,6 +120,8 @@ class RunnerTests(unittest.TestCase):
         observed = self.run_fixture(options, comparison + '\n' + scopes)
         self.assertIn('-only-testing:Aagedal Media Player Tests/LiveLoupeSessionTests/testSustainedComparisonCanvasKeepsPairedLoupesAndBoundsMemory', observed['command'])
         self.assertEqual(observed['environment']['LIVE_LOUPE_COMPARISON_ACTIVE_SCOPES'], '1')
+        self.assertEqual(observed['environment']['LIVE_LOUPE_COMPARISON_SCOPE_RESOLUTION'], '720')
+        self.assertEqual(observed['environment']['LIVE_LOUPE_COMPARISON_SCOPE_FPS'], '15')
         self.assertNotIn('AAGEDAL_SCOPE_BACKEND', observed['environment'])
         for receipt in (comparison, scopes,
                         comparison + '\n' + scopes.replace('4 cycles', '3 cycles'),
@@ -138,11 +142,36 @@ class RunnerTests(unittest.TestCase):
             for legacy in (False, True):
                 with self.subTest(options=options, legacy=legacy):
                     environment = self.run_fixture(options, marker, legacy=legacy)['environment']
-                    self.assertNotIn('LIVE_LOUPE_COMPARISON_ACTIVE_SCOPES', environment)
+                    for key in ('LIVE_LOUPE_COMPARISON_ACTIVE_SCOPES', 'LIVE_LOUPE_COMPARISON_SCOPE_RESOLUTION',
+                                'LIVE_LOUPE_COMPARISON_SCOPE_FPS'):
+                        self.assertNotIn(key, environment)
                     self.assertEqual(environment['AAGEDAL_SCOPE_BACKEND'], 'screenshot')
 
+    def test_selected_scope_settings_require_exact_receipt_in_both_configuration_formats(self):
+        comparison = 'MPV_LIVE_LOUPE_COMPARISON_SOAK_ACCEPTANCE: 3 cycles, 2 pairs, 3 modes, 10 seconds per mode,'
+        for resolution, fps in [(1440, 30), (360, 5), (1080, 21), (720, 15)]:
+            options = ['--comparison', '--soak-seconds', '10', '--active-scopes',
+                       '--scope-resolution', str(resolution), '--scope-fps', str(fps)]
+            scopes = ('MPV_COMPARISON_ACTIVE_SCOPES_ACCEPTANCE: 3 cycles, 2 pairs, 3 modes, '
+                      f'3 scope sources, 10 seconds per selection, resolution={resolution}, targetFPS={fps}')
+            for legacy in (False, True):
+                with self.subTest(resolution=resolution, fps=fps, legacy=legacy):
+                    environment = self.run_fixture(options, comparison + '\n' + scopes, legacy=legacy)['environment']
+                    self.assertEqual(environment['LIVE_LOUPE_COMPARISON_SCOPE_RESOLUTION'], str(resolution))
+                    self.assertEqual(environment['LIVE_LOUPE_COMPARISON_SCOPE_FPS'], str(fps))
+                    for receipt in (scopes.replace(f'resolution={resolution}', 'resolution=64'),
+                                    scopes.replace(f'targetFPS={fps}', 'targetFPS=99'),
+                                    scopes + '0', scopes + '.5'):
+                        with self.assertRaisesRegex(SystemExit, 'acceptance failed'):
+                            self.run_fixture(options, comparison + '\n' + receipt, legacy=legacy)
+
     def test_invalid_soak_arguments_fail_before_reading_inputs(self):
-        for options in (['--active-scopes'], ['--comparison', '--active-scopes'],
+        for options in (['--scope-resolution', '1440'], ['--scope-fps', '30'],
+                        ['--comparison', '--soak-seconds', '10', '--active-scopes', '--scope-resolution', '64'],
+                        ['--comparison', '--soak-seconds', '10', '--active-scopes', '--scope-fps', '31'],
+                        ['--comparison', '--soak-seconds', '10', '--active-scopes', '--scope-fps', '4'],
+                        ['--comparison', '--soak-seconds', '10', '--active-scopes', '--scope-fps', '15.5'],
+                        ['--active-scopes'], ['--comparison', '--active-scopes'],
                         ['--live-viewer', '--soak-seconds', '10', '--active-scopes'],
                         ['--soak-seconds', '10', '--active-scopes'],
                         ['--comparison', '--live-viewer'], ['--comparison', '--playback'],

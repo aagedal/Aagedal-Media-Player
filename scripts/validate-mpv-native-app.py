@@ -9,6 +9,7 @@ It never changes the original test configuration or shipping dependency pins.
 import argparse
 from pathlib import Path
 import plistlib
+import re
 import subprocess
 import tempfile
 
@@ -24,8 +25,16 @@ def main():
     parser.add_argument('--soak-seconds', type=int, help='with --live-viewer or --comparison: 10–3600 seconds per workload/mode')
     parser.add_argument('--soak-cycles', type=int, help='with --soak-seconds: 3–100 cycles (default 3)')
     parser.add_argument('--comparison', action='store_true', help='validate different-file UHD60 comparison canvas and paired loupes')
-    parser.add_argument('--active-scopes', action='store_true', help='with sustained --comparison: mount production scopes and measure A/B/difference at 720 pixels, 15 Hz')
+    parser.add_argument('--active-scopes', action='store_true', help='with sustained --comparison: mount production scopes and measure A/B/difference at selected resolution/update rate')
+    parser.add_argument('--scope-resolution', type=int, choices=[360, 720, 1080, 1440],
+                        help='with --active-scopes: production resolution (default 720)')
+    parser.add_argument('--scope-fps', type=int, choices=range(5, 31), metavar='5–30',
+                        help='with --active-scopes: production update rate (default 15)')
     args = parser.parse_args()
+    if (args.scope_resolution is not None or args.scope_fps is not None) and not args.active_scopes:
+        parser.error('--scope-resolution and --scope-fps require --active-scopes')
+    args.scope_resolution = args.scope_resolution if args.scope_resolution is not None else 720
+    args.scope_fps = args.scope_fps if args.scope_fps is not None else 15
     if args.active_scopes and not (args.comparison and args.soak_seconds is not None):
         parser.error('--active-scopes requires --comparison and --soak-seconds')
     if args.soak_seconds is not None:
@@ -60,9 +69,13 @@ def main():
     environment.pop('LIVE_LOUPE_COMPARISON_CASES', None)
     for key in ('LIVE_LOUPE_COMPARISON_SOAK_SECONDS', 'LIVE_LOUPE_COMPARISON_SOAK_CYCLES'):
         environment.pop(key, None)
-    environment.pop('LIVE_LOUPE_COMPARISON_ACTIVE_SCOPES', None)
+    for key in ('LIVE_LOUPE_COMPARISON_ACTIVE_SCOPES', 'LIVE_LOUPE_COMPARISON_SCOPE_RESOLUTION',
+                'LIVE_LOUPE_COMPARISON_SCOPE_FPS'):
+        environment.pop(key, None)
     if args.active_scopes:
         environment['LIVE_LOUPE_COMPARISON_ACTIVE_SCOPES'] = '1'
+        environment['LIVE_LOUPE_COMPARISON_SCOPE_RESOLUTION'] = str(args.scope_resolution)
+        environment['LIVE_LOUPE_COMPARISON_SCOPE_FPS'] = str(args.scope_fps)
         environment.pop('AAGEDAL_SCOPE_BACKEND', None)
     if args.comparison:
         environment['LIVE_LOUPE_COMPARISON_CASES'] = str(args.manifest.resolve(strict=True))
@@ -111,8 +124,9 @@ def main():
               'MPV_NATIVE_STRESS_ACCEPTANCE:' if args.stress_cycles else
               'MPV_EXTENDED_NATIVE_APP_ACCEPTANCE: 20 cases')
     combined = (args.output / 'xcodebuild.log').read_text() + action.stdout
-    scope_marker = (f'MPV_COMPARISON_ACTIVE_SCOPES_ACCEPTANCE: {args.soak_cycles} cycles, 2 pairs, 3 modes, 3 scope sources, {args.soak_seconds} seconds per selection, resolution=720, targetFPS=15')
-    if result.returncode or action.returncode or marker not in combined or (args.active_scopes and scope_marker not in combined):
+    scope_marker = (f'MPV_COMPARISON_ACTIVE_SCOPES_ACCEPTANCE: {args.soak_cycles} cycles, 2 pairs, 3 modes, 3 scope sources, {args.soak_seconds} seconds per selection, resolution={args.scope_resolution}, targetFPS={args.scope_fps}')
+    scope_receipt_matches = re.search(re.escape(scope_marker) + r'(?=$|[\s"\\])', combined)
+    if result.returncode or action.returncode or marker not in combined or (args.active_scopes and not scope_receipt_matches):
         raise SystemExit('Native app acceptance failed or required marker missing; see ' + str(args.output))
     print('Native app acceptance passed; logs and xcresult:', args.output.resolve())
 

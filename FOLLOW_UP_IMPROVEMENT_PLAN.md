@@ -5375,3 +5375,28 @@ instrumentation, executable hashes and results are retained in
   GPU memory, other scope settings, authentic long media, other hosts and physical
   HDR calibration retain their existing limits. Sanitizer timings and footprints
   do not replace the ordinary-build sustained-performance acceptance.
+
+
+## Upper-setting comparison scopes — 2026-10-16
+
+Status: Arm64 1440-pixel/30-Hz candidate qualification complete. Exact sources,
+binaries, settings and results are retained in
+`docs/evidence/mpv-comparison-scope-settings-20261016/README.md`.
+
+- [x] Parameterize the existing active-scope runner with production resolution
+  and integer update-rate choices, preserving the default 720/15 settings.
+- [x] Independently validate XCTest settings, restore preferences and check
+  actual native-plot/difference-input dimensions; require matching receipts and
+  reject inherited settings or receipt numeric suffixes.
+- [x] Pass a fresh arm64 Release build, 42 focused hosted tests with zero skips
+  and ten strict-runner regressions; retain the independent review result.
+- [x] Pass three cycles at 1440/30, both UHD60 pairs, all three comparison modes
+  and A/B/difference selections: 338 loupe windows, 169 scope windows, at least
+  59.03 presentations/sec, at most 66.7 ms drift, all 10,140 clock samples usable
+  and 181.52 MiB maximum cycle-end growth above warmup (limit 256 MiB).
+- [ ] Qualify other setting combinations, authentic long media, other hosts,
+  native dependency sanitizers and physical HDR calibration. Configured scope
+  Hz remains a scheduling target; observed UI publications do not establish
+  unique-frame throughput, exact difference provenance or frame lock.
+
+No MPVKit rebuild, shipping repin or provider-gate change was required.
