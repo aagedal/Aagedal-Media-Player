@@ -310,11 +310,8 @@ final class LiveLoupeSessionTests: XCTestCase {
         guard let path = ProcessInfo.processInfo.environment["LIVE_LOUPE_SCOPE_PROVENANCE_CASES"] else {
             throw XCTSkip("Set LIVE_LOUPE_SCOPE_PROVENANCE_CASES to the UHD60 manifest")
         }
-        let keys = [AppSettings.scopeResolution.key, AppSettings.scopeFrameRate.key]
-        let previous = keys.map { UserDefaults.standard.object(forKey: $0) }
-        UserDefaults.standard.set(720, forKey: keys[0])
-        UserDefaults.standard.set(15.0, forKey: keys[1])
-        defer { for (key, value) in zip(keys, previous) { UserDefaults.standard.set(value, forKey: key) } }
+        let restoreSettings = overrideScopeSettings(resolution: 720, fps: 15)
+        defer { restoreSettings() }
         try await qualifyComparisonManifest(path: path, activeScopes: true, verifyDifferencePixels: true)
         print("MPV_COMPARISON_SCOPE_PROVENANCE_ACCEPTANCE: 2 pairs, 3 modes, exact difference pixels, capture retirement and resume")
     }
@@ -332,6 +329,10 @@ final class LiveLoupeSessionTests: XCTestCase {
             return XCTFail("Comparison soak requires 10–3600 seconds per mode and 3–100 cycles")
         }
         let activeScopes = environment["LIVE_LOUPE_COMPARISON_ACTIVE_SCOPES"] == "1"
+        let verifyDifferencePixels = environment["LIVE_LOUPE_COMPARISON_SCOPE_PROVENANCE"] == "1"
+        guard !verifyDifferencePixels || activeScopes else {
+            return XCTFail("Sustained difference provenance requires active comparison scopes")
+        }
         let scopeResolution = environment["LIVE_LOUPE_COMPARISON_SCOPE_RESOLUTION"].flatMap(Int.init) ?? 720
         let scopeFPS = environment["LIVE_LOUPE_COMPARISON_SCOPE_FPS"].flatMap(Int.init) ?? 15
         if activeScopes {
@@ -341,19 +342,12 @@ final class LiveLoupeSessionTests: XCTestCase {
                 return XCTFail("Active scopes require a production resolution and integer update rate from 5 through 30")
             }
         }
-        let settings = [AppSettings.scopeResolution.key, AppSettings.scopeFrameRate.key]
-        let previous = settings.map { UserDefaults.standard.object(forKey: $0) }
-        if activeScopes {
-            UserDefaults.standard.set(scopeResolution, forKey: settings[0])
-            UserDefaults.standard.set(Double(scopeFPS), forKey: settings[1])
-        }
-        defer {
-            for (key, value) in zip(settings, previous) { UserDefaults.standard.set(value, forKey: key) }
-        }
+        let restoreSettings = activeScopes ? overrideScopeSettings(resolution: scopeResolution, fps: scopeFPS) : {}
+        defer { restoreSettings() }
         var footprints: [UInt64] = []
         for cycle in 1...cycles {
             try await qualifyComparisonManifest(path: path, secondsPerMode: seconds, cycle: cycle,
-                activeScopes: activeScopes)
+                activeScopes: activeScopes, verifyDifferencePixels: verifyDifferencePixels)
             // Both pair helpers have returned, releasing hosts, layers and players.
             try await Task.sleep(for: .seconds(1))
             let footprint = try physicalFootprint()
@@ -365,7 +359,47 @@ final class LiveLoupeSessionTests: XCTestCase {
         if activeScopes {
             print("MPV_COMPARISON_ACTIVE_SCOPES_ACCEPTANCE: \(cycles) cycles, 2 pairs, 3 modes, 3 scope sources, \(seconds) seconds per selection, resolution=\(scopeResolution), targetFPS=\(scopeFPS)")
         }
+        if verifyDifferencePixels {
+            print("MPV_COMPARISON_SCOPE_PROVENANCE_SOAK_ACCEPTANCE: \(cycles) cycles, 2 pairs, 3 modes, \(seconds) seconds per selection, resolution=\(scopeResolution), targetFPS=\(scopeFPS)")
+        }
         print("MPV_LIVE_LOUPE_COMPARISON_SOAK_ACCEPTANCE: \(cycles) cycles, 2 pairs, 3 modes, \(seconds) seconds per mode, baselineBytes=\(footprints[0]), maximumCycleEndBytes=\(footprints.max()!), growthLimitBytes=268435456")
+    }
+
+    /// NSArgumentDomain precedes persisted preferences and stays inside this
+    /// process. Other app/test instances must not change this workload's settings,
+    /// and qualification must not overwrite the user's persisted scope settings.
+    private func overrideScopeSettings(defaults: UserDefaults = .standard, resolution: Int, fps: Int) -> () -> Void {
+        let previous = defaults.volatileDomain(forName: UserDefaults.argumentDomain)
+        var arguments = previous
+        arguments[AppSettings.scopeResolution.key] = resolution
+        arguments[AppSettings.scopeFrameRate.key] = Double(fps)
+        defaults.setVolatileDomain(arguments, forName: UserDefaults.argumentDomain)
+        return { defaults.setVolatileDomain(previous, forName: UserDefaults.argumentDomain) }
+    }
+
+    func testScopeQualificationSettingsIgnorePersistentChangesAndRestoreArguments() throws {
+        let suite = "ScopeQualification-\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        let originalArguments = defaults.volatileDomain(forName: UserDefaults.argumentDomain)
+        defer {
+            defaults.removePersistentDomain(forName: suite)
+            defaults.setVolatileDomain(originalArguments, forName: UserDefaults.argumentDomain)
+        }
+        defaults.setVolatileDomain(["unrelated": "preserved"], forName: UserDefaults.argumentDomain)
+        let restore = overrideScopeSettings(defaults: defaults, resolution: 720, fps: 15)
+        defaults.set(1440, forKey: AppSettings.scopeResolution.key)
+        defaults.set(30.0, forKey: AppSettings.scopeFrameRate.key)
+        XCTAssertEqual(defaults.value(for: AppSettings.scopeResolution), 720)
+        XCTAssertEqual(defaults.value(for: AppSettings.scopeFrameRate), 15)
+        // SwiftUI and FrameCapture must read the same effective values.
+        XCTAssertEqual(AppStorage(wrappedValue: 0, AppSettings.scopeResolution.key, store: defaults).wrappedValue, 720)
+        XCTAssertEqual(AppStorage(wrappedValue: 0.0, AppSettings.scopeFrameRate.key, store: defaults).wrappedValue, 15)
+        XCTAssertEqual(defaults.string(forKey: "unrelated"), "preserved")
+        restore()
+        XCTAssertEqual(defaults.value(for: AppSettings.scopeResolution), 1440)
+        XCTAssertEqual(defaults.value(for: AppSettings.scopeFrameRate), 30)
+        XCTAssertEqual(defaults.volatileDomain(forName: UserDefaults.argumentDomain) as NSDictionary,
+                       ["unrelated": "preserved"] as NSDictionary)
     }
 
     private func qualifyComparisonManifest(path: String, secondsPerMode: Int = 3, cycle: Int = 1, activeScopes: Bool = false, verifyDifferencePixels: Bool = false) async throws {
@@ -593,6 +627,7 @@ final class LiveLoupeSessionTests: XCTestCase {
                 }
                 let modeBegan = ProcessInfo.processInfo.systemUptime
                 var windows = 0
+                var measuredSeconds = 0.0
                 repeat {
                     windows += 1
                     let counts = surfaces.map { $0.metalLayer.presentedFrames }
@@ -644,6 +679,7 @@ final class LiveLoupeSessionTests: XCTestCase {
                         try await Task.sleep(for: .milliseconds(100))
                     }
                     let elapsed = ProcessInfo.processInfo.systemUptime - began
+                    measuredSeconds += elapsed
                     for index in surfaces.indices {
                         let fps = Double(surfaces[index].metalLayer.presentedFrames - counts[index]) / elapsed
                         XCTAssertGreaterThanOrEqual(fps, 45, "\(name), \(mode), source=\(index)")
@@ -663,7 +699,7 @@ final class LiveLoupeSessionTests: XCTestCase {
                                 "Published B identities must advance")
                             let publication = try XCTUnwrap(scopeProbe.latestDifference)
                             try verifyDifferencePublication(publication)
-                            print("MPV_COMPARISON_DIFFERENCE_PUBLICATION: pair=\(name), mode=\(mode), generation=\(publication.generation), primarySequence=\(publication.primary.identity!.sequence), secondarySequence=\(publication.secondary!.identity!.sequence), publishedPTS=\(scopeProbe.differencePrimaryTimes.count)/\(scopeProbe.differenceSecondaryTimes.count), pixels=\(publication.differenceImage!.width * publication.differenceImage!.height)")
+                            print("MPV_COMPARISON_DIFFERENCE_PUBLICATION: cycle=\(cycle), window=\(windows), pair=\(name), mode=\(mode), generation=\(publication.generation), primarySequence=\(publication.primary.identity!.sequence), secondarySequence=\(publication.secondary!.identity!.sequence), publishedPTS=\(scopeProbe.differencePrimaryTimes.count)/\(scopeProbe.differenceSecondaryTimes.count), pixels=\(publication.differenceImage!.width * publication.differenceImage!.height)")
                         }
                         let demand = ScopeAnalysisDemand(source: scopeSource, isComparing: true)
                         for (index, requested) in [demand.primary, demand.secondary].enumerated() {
@@ -700,11 +736,13 @@ final class LiveLoupeSessionTests: XCTestCase {
                                     "Unselected scope input must remain idle")
                             }
                         }
-                        print("MPV_COMPARISON_SCOPE_WINDOW: cycle=\(cycle), window=\(windows), pair=\(name), mode=\(mode), selection=\(scopeSource), renders=\(updates), fps=\(Double(updates) / elapsed), uniqueInputPTS=\(scopeTimes.map(\.count)), eligibleLatestPairs=\(eligibleLatestPairs), eligibleHistoryPairs=\(eligibleHistoryPairs), resolution=\(scopeResolution), targetFPS=\(scopeFPS)")
+                        print("MPV_COMPARISON_SCOPE_WINDOW: cycle=\(cycle), window=\(windows), pair=\(name), mode=\(mode), selection=\(scopeSource), renders=\(updates), fps=\(Double(updates) / elapsed), uniqueInputPTS=\(scopeTimes.map(\.count)), eligibleLatestPairs=\(eligibleLatestPairs), eligibleHistoryPairs=\(eligibleHistoryPairs), resolution=\(scopeResolution), targetFPS=\(scopeFPS), measuredSeconds=\(measuredSeconds)")
                     }
                     let footprint = try physicalFootprint()
                     print("MPV_COMPARISON_LOUPE_MEMORY: cycle=\(cycle), pair=\(name), mode=\(mode), elapsed=\(ProcessInfo.processInfo.systemUptime - modeBegan), physicalFootprintBytes=\(footprint)")
-                } while ProcessInfo.processInfo.systemUptime - modeBegan < Double(secondsPerMode)
+                // Scalar publication checks run outside each cadence window.
+                // Their cost must not consume the requested measurement duration.
+                } while measuredSeconds < Double(secondsPerMode)
             }
         }
         if verifyDifferencePixels, let scopeProbe {
@@ -723,6 +761,7 @@ final class LiveLoupeSessionTests: XCTestCase {
             }
             XCTAssertTrue(resumed, "Difference scopes must recover with a fresh capture pair")
             try verifyDifferencePublication(try XCTUnwrap(scopeProbe.latestDifference))
+            print("MPV_COMPARISON_DIFFERENCE_RESUME: cycle=\(cycle), pair=\(name), retiredSequence=\(oldSequence), resumedSequence=\(scopeProbe.latestDifference!.primary.identity!.sequence)")
         }
         comparison.pause(primary: primary)
         let paused = await waitUntil {

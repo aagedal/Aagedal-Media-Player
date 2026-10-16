@@ -1,0 +1,6 @@
+{
+  "status": "Failed, not acceptance",
+  "reason": "Cycle2 SDR/PQ vertical-wipe primary scope current sample had no native plots; strict native A/B gate rejected fallback. Concurrent Aagedal workload recorded; cause not established.",
+  "sourceCommit": "f96e4334354ad2a2d0cb960c1ba4f07a8f01c78f",
+  "completedCycles": 1
+}

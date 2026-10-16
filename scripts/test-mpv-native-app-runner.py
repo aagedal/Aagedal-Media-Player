@@ -4,6 +4,8 @@
 import contextlib
 import importlib.util
 import io
+import json
+import os
 from pathlib import Path
 import plistlib
 import subprocess
@@ -31,6 +33,21 @@ class RunnerTests(unittest.TestCase):
                                                'LIVE_LOUPE_COMPARISON_SCOPE_RESOLUTION': '1080',
                                                'LIVE_LOUPE_COMPARISON_SCOPE_FPS': '27',
                                                'AAGEDAL_SCOPE_BACKEND': 'screenshot'}}
+            # Deliberately independent of the runner's sanitation list: omitting
+            # a workload key there must leave a hostile inherited value here.
+            inherited = dict.fromkeys((
+                'AAGEDAL_MPV_DECODER_RASTER_CANDIDATE',
+                'MPV_DECODER_RASTER_CASES', 'MPV_DECODER_RASTER_FIXTURE',
+                'MPV_DECODER_RASTER_STRESS_CYCLES', 'MPV_DECODER_RASTER_PLAYBACK_VALIDATION',
+                'LIVE_LOUPE_CASES', 'LIVE_LOUPE_COMPARISON_CASES',
+                'LIVE_LOUPE_COMPARISON_SOAK_SECONDS', 'LIVE_LOUPE_COMPARISON_SOAK_CYCLES',
+                'LIVE_LOUPE_COMPARISON_ACTIVE_SCOPES', 'LIVE_LOUPE_COMPARISON_SCOPE_RESOLUTION',
+                'LIVE_LOUPE_COMPARISON_SCOPE_FPS', 'LIVE_LOUPE_COMPARISON_SCOPE_PROVENANCE',
+                'LIVE_LOUPE_SCOPE_PROVENANCE_CASES',
+                'LIVE_LOUPE_SOAK_CASES', 'LIVE_LOUPE_SOAK_SECONDS', 'LIVE_LOUPE_SOAK_CYCLES',
+            ), 'inherited')
+            workload_keys = set(inherited)
+            target['EnvironmentVariables'].update(inherited)
             configuration = ({'Tests': target} if legacy else
                              {'TestConfigurations': [{'TestTargets': [target]}]})
             original = plistlib.dumps(configuration)
@@ -38,20 +55,36 @@ class RunnerTests(unittest.TestCase):
             source.write_bytes(original)
             manifest = root / 'fixtures.json'
             manifest.write_text('{}')
-            observed = {}
+            observed = {'process_environments': []}
+            inherited.update({'PRESERVE_PROCESS': 'yes', 'PATH': '/usr/bin:/bin',
+                              'AAGEDAL_SCOPE_BACKEND': 'screenshot'})
 
             def run(command, **kwargs):
+                observed['process_environments'].append(kwargs.get('env'))
                 if command[0] == 'xcodebuild':
                     observed['command'] = command
                     copied = plistlib.loads(Path(command[command.index('-xctestrun') + 1]).read_bytes())
                     copied_target = copied['Tests'] if legacy else copied['TestConfigurations'][0]['TestTargets'][0]
                     observed['environment'] = copied_target['EnvironmentVariables']
+                    self.assertEqual(plistlib.loads((root / 'output' / 'executed-configuration.plist').read_bytes()), copied)
+                    self.assertEqual(json.loads((root / 'output' / 'command.json').read_text()), command)
                     return subprocess.CompletedProcess(command, failure)
                 return subprocess.CompletedProcess(command, 0, stdout=marker, stderr='')
 
             with patch.object(sys, 'argv', ['runner', str(source), str(manifest), str(root / 'output'), *options]), \
-                 patch.object(runner.subprocess, 'run', side_effect=run), contextlib.redirect_stdout(io.StringIO()):
+                 patch.object(runner.subprocess, 'run', side_effect=run), \
+                 patch.dict(os.environ, inherited, clear=True), contextlib.redirect_stdout(io.StringIO()):
                 runner.main()
+            self.assertEqual(len(observed['process_environments']), 2)
+            for environment in observed['process_environments']:
+                self.assertIsNotNone(environment)
+                self.assertFalse(workload_keys & environment.keys())
+                self.assertEqual(environment['PRESERVE_PROCESS'], 'yes')
+                self.assertEqual(environment['PATH'], '/usr/bin:/bin')
+                if '--active-scopes' in options:
+                    self.assertNotIn('AAGEDAL_SCOPE_BACKEND', environment)
+                else:
+                    self.assertEqual(environment['AAGEDAL_SCOPE_BACKEND'], 'screenshot')
             self.assertEqual(source.read_bytes(), original)
             self.assertEqual(list(root.glob('*.xctestrun')), [source])
             return observed
@@ -143,7 +176,8 @@ class RunnerTests(unittest.TestCase):
                 with self.subTest(options=options, legacy=legacy):
                     environment = self.run_fixture(options, marker, legacy=legacy)['environment']
                     for key in ('LIVE_LOUPE_COMPARISON_ACTIVE_SCOPES', 'LIVE_LOUPE_COMPARISON_SCOPE_RESOLUTION',
-                                'LIVE_LOUPE_COMPARISON_SCOPE_FPS'):
+                                'LIVE_LOUPE_COMPARISON_SCOPE_FPS', 'LIVE_LOUPE_COMPARISON_SCOPE_PROVENANCE',
+                                'LIVE_LOUPE_SCOPE_PROVENANCE_CASES'):
                         self.assertNotIn(key, environment)
                     self.assertEqual(environment['AAGEDAL_SCOPE_BACKEND'], 'screenshot')
 
@@ -165,8 +199,52 @@ class RunnerTests(unittest.TestCase):
                         with self.assertRaisesRegex(SystemExit, 'acceptance failed'):
                             self.run_fixture(options, comparison + '\n' + receipt, legacy=legacy)
 
+    def test_provenance_requires_all_exact_receipts_in_both_configuration_formats(self):
+        options = ['--comparison', '--soak-seconds', '20', '--soak-cycles', '4',
+                   '--active-scopes', '--scope-provenance', '--scope-resolution', '1440', '--scope-fps', '30']
+        comparison = 'MPV_LIVE_LOUPE_COMPARISON_SOAK_ACCEPTANCE: 4 cycles, 2 pairs, 3 modes, 20 seconds per mode,'
+        scopes = ('MPV_COMPARISON_ACTIVE_SCOPES_ACCEPTANCE: 4 cycles, 2 pairs, 3 modes, '
+                  '3 scope sources, 20 seconds per selection, resolution=1440, targetFPS=30')
+        provenance = ('MPV_COMPARISON_SCOPE_PROVENANCE_SOAK_ACCEPTANCE: 4 cycles, 2 pairs, 3 modes, '
+                      '20 seconds per selection, resolution=1440, targetFPS=30')
+        for legacy in (False, True):
+            with self.subTest(legacy=legacy):
+                observed = self.run_fixture(options, '\n'.join((comparison, scopes, provenance)), legacy=legacy)
+                self.assertEqual(observed['environment']['LIVE_LOUPE_COMPARISON_SCOPE_PROVENANCE'], '1')
+                self.assertNotIn('LIVE_LOUPE_SCOPE_PROVENANCE_CASES', observed['environment'])
+                for receipts in ((comparison, scopes), (comparison, provenance), (scopes, provenance)):
+                    with self.subTest(receipts=receipts), self.assertRaisesRegex(SystemExit, 'acceptance failed'):
+                        self.run_fixture(options, '\n'.join(receipts), legacy=legacy)
+                for receipt in (provenance.replace('4 cycles', '3 cycles'),
+                                provenance.replace('2 pairs', '1 pairs'),
+                                provenance.replace('3 modes', '2 modes'),
+                                provenance.replace('20 seconds', '10 seconds'),
+                                provenance.replace('resolution=1440', 'resolution=720'),
+                                provenance.replace('targetFPS=30', 'targetFPS=15'),
+                                provenance + '0', provenance + '.5', provenance + '_extra',
+                                provenance.replace('_SOAK_ACCEPTANCE', '_ACCEPTANCE')):
+                    with self.subTest(receipt=receipt), self.assertRaisesRegex(SystemExit, 'acceptance failed'):
+                        self.run_fixture(options, '\n'.join((comparison, scopes, receipt)), legacy=legacy)
+                with self.assertRaisesRegex(SystemExit, 'acceptance failed'):
+                    self.run_fixture(options, '\n'.join((comparison, scopes, provenance)), failure=65, legacy=legacy)
+
+    def test_active_scopes_without_provenance_clears_inherited_provenance_opt_ins(self):
+        comparison = 'MPV_LIVE_LOUPE_COMPARISON_SOAK_ACCEPTANCE: 3 cycles, 2 pairs, 3 modes, 10 seconds per mode,'
+        scopes = ('MPV_COMPARISON_ACTIVE_SCOPES_ACCEPTANCE: 3 cycles, 2 pairs, 3 modes, '
+                  '3 scope sources, 10 seconds per selection, resolution=720, targetFPS=15')
+        for legacy in (False, True):
+            observed = self.run_fixture(['--comparison', '--soak-seconds', '10', '--active-scopes'],
+                                        comparison + '\n' + scopes, legacy=legacy)
+            self.assertNotIn('LIVE_LOUPE_COMPARISON_SCOPE_PROVENANCE', observed['environment'])
+            self.assertNotIn('LIVE_LOUPE_SCOPE_PROVENANCE_CASES', observed['environment'])
+
     def test_invalid_soak_arguments_fail_before_reading_inputs(self):
-        for options in (['--scope-resolution', '1440'], ['--scope-fps', '30'],
+        for options in (['--scope-provenance'], ['--comparison', '--scope-provenance'],
+                        ['--comparison', '--soak-seconds', '10', '--scope-provenance'],
+                        ['--active-scopes', '--scope-provenance'],
+                        ['--comparison', '--active-scopes', '--scope-provenance'],
+                        ['--live-viewer', '--soak-seconds', '10', '--active-scopes', '--scope-provenance'],
+                        ['--scope-resolution', '1440'], ['--scope-fps', '30'],
                         ['--comparison', '--soak-seconds', '10', '--active-scopes', '--scope-resolution', '64'],
                         ['--comparison', '--soak-seconds', '10', '--active-scopes', '--scope-fps', '31'],
                         ['--comparison', '--soak-seconds', '10', '--active-scopes', '--scope-fps', '4'],

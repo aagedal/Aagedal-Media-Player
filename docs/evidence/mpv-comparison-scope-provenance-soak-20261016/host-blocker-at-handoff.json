@@ -1,0 +1,7 @@
+{
+  "checkedAtUTC": "2026-10-16T22:09:43.576106+00:00",
+  "competingAagedalProcesses": [
+    "68486 /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild test-without-building -xctestrun /private/tmp/aagedal-provenance-soak-20261016/derived/Build/Products/tmp_tyfqvjr.xctestrun -destination platform=macOS,arch=arm64 -parallel-testing-enabled NO -only-testing:Aagedal Media Player Tests/LiveLoupeSessionTests/testSustainedComparisonCanvasKeepsPairedLoupesAndBoundsMemory -resultBundlePath /private/tmp/aagedal-provenance-soak-20261016/soak-isolated/tests.xcresult",
+    "68493 /private/tmp/aagedal-provenance-soak-20261016/derived/Build/Products/Release/Aagedal Media Player.app/Contents/MacOS/Aagedal Media Player -NSTreatUnknownArgumentsAsOpen NO -ApplePersistenceIgnoreState YES"
+  ]
+}
