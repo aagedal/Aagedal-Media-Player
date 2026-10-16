@@ -1,0 +1,6 @@
+{
+  "status": "Not started",
+  "reason": "A process check after focused regressions found another Aagedal sustained benchmark active. The planned serial repeat was not launched.",
+  "snapshot": "host-processes-at-quiet-attempt.txt",
+  "candidateSourceCommit": "f2820e8"
+}

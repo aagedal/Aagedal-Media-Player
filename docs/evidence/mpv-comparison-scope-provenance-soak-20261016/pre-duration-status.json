@@ -1,0 +1,4 @@
+{
+  "status": "Interrupted partial repeat; not acceptance",
+  "reason": "Independent review found the wall-time selection timer included post-window scalar oracle work. Final candidate accumulates actual cadence-window measurement time instead."
+}

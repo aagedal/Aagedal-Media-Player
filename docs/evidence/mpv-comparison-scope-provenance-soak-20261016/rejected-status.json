@@ -1,0 +1,7 @@
+{
+  "status": "Rejected and interrupted during cycle 2; not an acceptance run",
+  "reason": "Scope dimensions changed from requested720 to64 and1440 while another Aagedal hosted test process ran with different persisted scope settings. No gate relaxed.",
+  "testSourceSHA256": "1be263b28c23d8346aa9915d51e317308a94d260a87d7bbc556ab1f19ae62a2f",
+  "sourceCommit": "f96e4334354ad2a2d0cb960c1ba4f07a8f01c78f",
+  "competingWorkload": "/private/tmp/aagedal-provenance-soak-20261016/soak; --scope-resolution1440 --scope-fps30"
+}

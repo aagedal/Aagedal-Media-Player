@@ -1,0 +1,13 @@
+[
+  "xcodebuild",
+  "test-without-building",
+  "-xctestrun",
+  "/private/tmp/aagedal-scope-provenance-soak-20261016/derived/Build/Products/Aagedal Media Player_Aagedal Media Player_macosx27.0-arm64.xctestrun",
+  "-destination",
+  "platform=macOS,arch=arm64",
+  "-parallel-testing-enabled",
+  "NO",
+  "-only-testing:Aagedal Media Player Tests/LiveLoupeSessionTests/testScopeQualificationSettingsIgnorePersistentChangesAndRestoreArguments",
+  "-resultBundlePath",
+  "/private/tmp/aagedal-scope-provenance-soak-20261016/settings.xcresult"
+]
