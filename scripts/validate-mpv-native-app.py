@@ -7,6 +7,8 @@ xctestrun beside the original so __TESTROOT__ keeps resolving to the built app.
 It never changes the original test configuration or shipping dependency pins.
 """
 import argparse
+import json
+import os
 from pathlib import Path
 import plistlib
 import re
@@ -30,7 +32,11 @@ def main():
                         help='with --active-scopes: production resolution (default 720)')
     parser.add_argument('--scope-fps', type=int, choices=range(5, 31), metavar='5–30',
                         help='with --active-scopes: production update rate (default 15)')
+    parser.add_argument('--verify-difference-pixels', action='store_true',
+                        help='with --active-scopes: independently verify one completed difference publication per window and fresh capture resume')
     args = parser.parse_args()
+    if args.verify_difference_pixels and not args.active_scopes:
+        parser.error('--verify-difference-pixels requires --active-scopes')
     if (args.scope_resolution is not None or args.scope_fps is not None) and not args.active_scopes:
         parser.error('--scope-resolution and --scope-fps require --active-scopes')
     args.scope_resolution = args.scope_resolution if args.scope_resolution is not None else 720
@@ -67,6 +73,10 @@ def main():
     environment.pop('MPV_DECODER_RASTER_PLAYBACK_VALIDATION', None)
     environment.pop('LIVE_LOUPE_CASES', None)
     environment.pop('LIVE_LOUPE_COMPARISON_CASES', None)
+    environment.pop('LIVE_LOUPE_SCOPE_PROVENANCE_CASES', None)
+    environment.pop('LIVE_LOUPE_COMPARISON_VERIFY_DIFFERENCE_PIXELS', None)
+    if args.verify_difference_pixels:
+        environment['LIVE_LOUPE_COMPARISON_VERIFY_DIFFERENCE_PIXELS'] = '1'
     for key in ('LIVE_LOUPE_COMPARISON_SOAK_SECONDS', 'LIVE_LOUPE_COMPARISON_SOAK_CYCLES'):
         environment.pop(key, None)
     for key in ('LIVE_LOUPE_COMPARISON_ACTIVE_SCOPES', 'LIVE_LOUPE_COMPARISON_SCOPE_RESOLUTION',
@@ -96,6 +106,7 @@ def main():
     if args.stress_cycles is not None:
         environment['MPV_DECODER_RASTER_STRESS_CYCLES'] = str(args.stress_cycles)
     args.output.mkdir(parents=True, exist_ok=False)
+    (args.output / 'executed-configuration.plist').write_bytes(plistlib.dumps(configuration))
     with tempfile.NamedTemporaryFile(suffix='.xctestrun', dir=args.xctestrun.resolve().parent) as file:
         file.write(plistlib.dumps(configuration))
         file.flush()
@@ -109,8 +120,15 @@ def main():
                    '-parallel-testing-enabled', 'NO',
                    '-only-testing:Aagedal Media Player Tests/' + test,
                    '-resultBundlePath', str(args.output.resolve() / 'tests.xcresult')]
+        (args.output / 'command.json').write_text(json.dumps(command, indent=2) + '\n')
         with (args.output / 'xcodebuild.log').open('w') as log:
-            result = subprocess.run(command, stdout=log, stderr=subprocess.STDOUT)
+            # Workload selection belongs to the copied configuration. Do not let
+            # the runner's inherited environment activate a competing test mode.
+            process_environment = {key: value for key, value in os.environ.items()
+                                   if not key.startswith(('LIVE_LOUPE_', 'MPV_DECODER_RASTER_'))}
+            if args.active_scopes:
+                process_environment.pop('AAGEDAL_SCOPE_BACKEND', None)
+            result = subprocess.run(command, stdout=log, stderr=subprocess.STDOUT, env=process_environment)
     # XCTest stdout can live only in the result bundle's action log.
     action = subprocess.run(['xcrun', 'xcresulttool', 'get', 'log', '--type', 'action',
                              '--path', str(args.output.resolve() / 'tests.xcresult')],
@@ -126,7 +144,13 @@ def main():
     combined = (args.output / 'xcodebuild.log').read_text() + action.stdout
     scope_marker = (f'MPV_COMPARISON_ACTIVE_SCOPES_ACCEPTANCE: {args.soak_cycles} cycles, 2 pairs, 3 modes, 3 scope sources, {args.soak_seconds} seconds per selection, resolution={args.scope_resolution}, targetFPS={args.scope_fps}')
     scope_receipt_matches = re.search(re.escape(scope_marker) + r'(?=$|[\s"\\])', combined)
-    if result.returncode or action.returncode or marker not in combined or (args.active_scopes and not scope_receipt_matches):
+    provenance_marker = (f'MPV_COMPARISON_SCOPE_PROVENANCE_SOAK_ACCEPTANCE: {args.soak_cycles} cycles, 2 pairs, 3 modes, '
+                         f'{args.soak_seconds} seconds per selection, resolution={args.scope_resolution}, targetFPS={args.scope_fps}, '
+                         'exact difference pixels and occupied bins, capture retirement and resume')
+    provenance_receipt_matches = re.search(re.escape(provenance_marker) + r'(?=$|[\s"\\])', combined)
+    if (result.returncode or action.returncode or marker not in combined
+            or (args.active_scopes and not scope_receipt_matches)
+            or (args.verify_difference_pixels and not provenance_receipt_matches)):
         raise SystemExit('Native app acceptance failed or required marker missing; see ' + str(args.output))
     print('Native app acceptance passed; logs and xcresult:', args.output.resolve())
 
