@@ -89,6 +89,13 @@ checks protocol, dimensions, track, transfer/primaries/peak combinations,
 finite PTS, duplicate/missing/type-invalid fields and exact payload sizes before
 copying. These plots are analysis results, not source-pixel inspection proof.
 
+App screenshot fallback processing runs explicitly in detached utility tasks,
+including the synchronous mpv screenshot wait and SDR/HDR conversion. This
+avoids inheriting the main actor through nonisolated async helpers under the
+project's approachable-concurrency settings. Completed results still validate
+capture generation and backend identity on the main actor before publication.
+The shared one-shot HDR format diagnostic is synchronized.
+
 The provider takes a VO frame reference under mpv's core lock, then releases
 that lock while downloading, scaling and computing. A spawned command lets
 playback continue. It reacquires the lock and rejects pending seeks, stop,

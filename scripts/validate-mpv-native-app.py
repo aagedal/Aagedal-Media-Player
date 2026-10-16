@@ -24,7 +24,10 @@ def main():
     parser.add_argument('--soak-seconds', type=int, help='with --live-viewer or --comparison: 10–3600 seconds per workload/mode')
     parser.add_argument('--soak-cycles', type=int, help='with --soak-seconds: 3–100 cycles (default 3)')
     parser.add_argument('--comparison', action='store_true', help='validate different-file UHD60 comparison canvas and paired loupes')
+    parser.add_argument('--active-scopes', action='store_true', help='with sustained --comparison: mount production scopes and measure A/B/difference at 720 pixels, 15 Hz')
     args = parser.parse_args()
+    if args.active_scopes and not (args.comparison and args.soak_seconds is not None):
+        parser.error('--active-scopes requires --comparison and --soak-seconds')
     if args.soak_seconds is not None:
         if not (args.live_viewer or args.comparison) or not 10 <= args.soak_seconds <= 3600:
             parser.error('--soak-seconds requires --live-viewer or --comparison and a value from 10 through 3600')
@@ -57,6 +60,10 @@ def main():
     environment.pop('LIVE_LOUPE_COMPARISON_CASES', None)
     for key in ('LIVE_LOUPE_COMPARISON_SOAK_SECONDS', 'LIVE_LOUPE_COMPARISON_SOAK_CYCLES'):
         environment.pop(key, None)
+    environment.pop('LIVE_LOUPE_COMPARISON_ACTIVE_SCOPES', None)
+    if args.active_scopes:
+        environment['LIVE_LOUPE_COMPARISON_ACTIVE_SCOPES'] = '1'
+        environment.pop('AAGEDAL_SCOPE_BACKEND', None)
     if args.comparison:
         environment['LIVE_LOUPE_COMPARISON_CASES'] = str(args.manifest.resolve(strict=True))
         environment['AAGEDAL_MPV_DECODER_RASTER_HWDEC'] = 'videotoolbox'
@@ -104,7 +111,8 @@ def main():
               'MPV_NATIVE_STRESS_ACCEPTANCE:' if args.stress_cycles else
               'MPV_EXTENDED_NATIVE_APP_ACCEPTANCE: 20 cases')
     combined = (args.output / 'xcodebuild.log').read_text() + action.stdout
-    if result.returncode or action.returncode or marker not in combined:
+    scope_marker = (f'MPV_COMPARISON_ACTIVE_SCOPES_ACCEPTANCE: {args.soak_cycles} cycles, 2 pairs, 3 modes, 3 scope sources, {args.soak_seconds} seconds per selection, resolution=720, targetFPS=15')
+    if result.returncode or action.returncode or marker not in combined or (args.active_scopes and scope_marker not in combined):
         raise SystemExit('Native app acceptance failed or required marker missing; see ' + str(args.output))
     print('Native app acceptance passed; logs and xcresult:', args.output.resolve())
 

@@ -9,6 +9,7 @@ import AVFoundation
 import AppKit
 import Combine
 import OSLog
+import os
 import VideoToolbox
 
 /// Identifies one scope-capture session and the MPV backend that supplied a
@@ -146,7 +147,7 @@ final class FrameCapture: ObservableObject {
     private var mpvCaptureInFlight: ScopeCaptureIdentity?
     private var sampleSequence: UInt64 = 0
     private var sampleHistory = ScopeFrameHistory()
-    private nonisolated(unsafe) static var hdrFormatLogged = false
+    private nonisolated static let hdrFormatLogged = OSAllocatedUnfairLock(initialState: false)
 
     // Shared timer
     private var captureTimer: Timer?
@@ -277,7 +278,7 @@ final class FrameCapture: ObservableObject {
         captureTimer?.invalidate()
         captureTimer = nil
         clearCapturedSamples()
-        Self.hdrFormatLogged = false
+        Self.hdrFormatLogged.withLock { $0 = false }
 
         // Remove video output so it doesn't interfere with playback pipeline
         let hadOutput = videoOutput != nil || hdrVideoOutput != nil
@@ -513,7 +514,9 @@ final class FrameCapture: ObservableObject {
         let width = analysisWidth
 
         Task { [weak self] in
-            let result = await Self.screenshotAndDownsample(mpv: mpv, targetWidth: width)
+            let result = await Task.detached(priority: .utility) {
+                Self.screenshotAndDownsample(mpv: mpv, targetWidth: width)
+            }.value
             self?.finishMPVCapture(
                 identity: identity,
                 sdrImage: result?.image,
@@ -538,7 +541,9 @@ final class FrameCapture: ObservableObject {
         let peak = contentPeakNits
 
         Task { [weak self] in
-            let result = await Self.screenshotAndDownsampleHDR(mpv: mpv, targetWidth: width, transferFunction: tf, peakNits: peak)
+            let result = await Task.detached(priority: .utility) {
+                Self.screenshotAndDownsampleHDR(mpv: mpv, targetWidth: width, transferFunction: tf, peakNits: peak)
+            }.value
             self?.finishMPVCapture(
                 identity: identity,
                 sdrImage: result?.sdrImage,
@@ -627,7 +632,7 @@ final class FrameCapture: ObservableObject {
     }
 
     /// Runs off the main actor: captures raw pixels via mpv and downscales.
-    private struct MPVSDRResult: Sendable {
+    private nonisolated struct MPVSDRResult: Sendable {
         let image: CGImage
         let playbackTime: TimeInterval?
         let timestampUncertainty: TimeInterval
@@ -636,7 +641,7 @@ final class FrameCapture: ObservableObject {
 
     nonisolated private static func screenshotAndDownsample(
         mpv: MPVPlayer, targetWidth: Int
-    ) async -> MPVSDRResult? {
+    ) -> MPVSDRResult? {
         let interval = performanceSignposter.beginInterval("Scope capture")
         defer { performanceSignposter.endInterval("Scope capture", interval) }
 
@@ -672,7 +677,7 @@ final class FrameCapture: ObservableObject {
         )
     }
 
-    private struct MPVHDRResult {
+    private nonisolated struct MPVHDRResult: Sendable {
         let hdrFrame: HDRFrameData
         let sdrImage: CGImage?  // For vectorscope
         let playbackTime: TimeInterval?
@@ -684,7 +689,7 @@ final class FrameCapture: ObservableObject {
     nonisolated private static func screenshotAndDownsampleHDR(
         mpv: MPVPlayer, targetWidth: Int,
         transferFunction: TransferFunction, peakNits: Float
-    ) async -> MPVHDRResult? {
+    ) -> MPVHDRResult? {
         let interval = performanceSignposter.beginInterval("Scope capture")
         defer { performanceSignposter.endInterval("Scope capture", interval) }
 
@@ -695,8 +700,12 @@ final class FrameCapture: ObservableObject {
         guard srcW > 0, srcH > 0 else { return nil }
 
         // One-shot diagnostic: log format and sample pixel values on first HDR capture
-        if !Self.hdrFormatLogged {
-            Self.hdrFormatLogged = true
+        let shouldLogFormat = Self.hdrFormatLogged.withLock { logged in
+            guard !logged else { return false }
+            logged = true
+            return true
+        }
+        if shouldLogFormat {
             // Sample center pixel to verify value range
             let cx = srcW / 2, cy = srcH / 2
             var sampleR: Float = 0, sampleG: Float = 0, sampleB: Float = 0

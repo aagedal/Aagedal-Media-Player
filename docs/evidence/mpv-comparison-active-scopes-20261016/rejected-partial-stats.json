@@ -1,0 +1,34 @@
+{
+  "loupeWindows": 36,
+  "scopeWindows": 18,
+  "completedCycles": 0,
+  "minimumLoupeFPS": 59.11992365218592,
+  "maximumDriftSeconds": 0.050000000000000266,
+  "usableClockSamples": 1080,
+  "expectedClockSamples": 1080,
+  "scopePublicationsBySelection": {
+    "primary": {
+      "windows": 8,
+      "minimumObservedFPS": 14.814228169900495,
+      "maximumObservedFPS": 15.24192588079499,
+      "publications": 377
+    },
+    "secondary": {
+      "windows": 8,
+      "minimumObservedFPS": 14.65582071839082,
+      "maximumObservedFPS": 15.20147697108722,
+      "publications": 378
+    },
+    "difference": {
+      "windows": 2,
+      "minimumObservedFPS": 0.0,
+      "maximumObservedFPS": 0.3038912091756182,
+      "publications": 2
+    }
+  },
+  "maximumSampledInPlaybackPhysicalFootprintBytes": 2200439688,
+  "assertionFailures": [
+    "/tmp/aagedal-active-scopes-20261016/app/Aagedal Media Player Tests/LiveLoupeSessionTests.swift:534: error: -[Aagedal_Media_Player_Tests.LiveLoupeSessionTests testSustainedComparisonCanvasKeepsPairedLoupesAndBoundsMemory] : XCTAssertGreaterThan failed: (\"0\") is not greater than (\"0\") - Active scopes must publish in every measurement window"
+  ],
+  "status": "Rejected partial run; interrupted after an assertion failure for diagnosis; no completed cycle or acceptance receipt. Xcode could not finalize the interrupted result bundle; stdout is retained."
+}
