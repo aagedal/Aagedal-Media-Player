@@ -5400,3 +5400,40 @@ binaries, settings and results are retained in
   unique-frame throughput, exact difference provenance or frame lock.
 
 No MPVKit rebuild, shipping repin or provider-gate change was required.
+
+## Sustained sampled difference-scope provenance — 2026-10-17
+
+Status: Bounded arm64 sustained qualification complete; final results and retained
+rejections are recorded in
+`docs/evidence/mpv-comparison-provenance-soak-20261016/README.md`.
+
+- [x] Add optional `--verify-difference-pixels` to sustained active-scope
+  comparison; require all three exact parameterized acceptance receipts and
+  successful XCTest exit. Retain the executed configuration and command.
+- [x] Check a fresh completed difference publication in every difference window,
+  all RGB pixels and all occupied plot bins, with capture retirement/gain-change
+  suppression and fresh resume after each pair. Preserve original gates.
+- [x] Run the independent oracle off the main actor with fixed-size occupancy
+  masks and an explicit autorelease pool. Accumulate measured window duration
+  independently of oracle execution time; keep retained payload history bounded.
+- [x] Isolate requested scope settings in the process-local argument domain,
+  preserving other XCTest arguments and restoring the previous domain. Keep
+  actual native/difference dimensions under assertion.
+- [x] Pass the arm64 Release build, all 68 selected hosted tests with zero skips,
+  and all 12 strict-runner regressions. Preserve the rejected initial memory run,
+  a transient 150 ms short-run drift failure and its same-build passing repeat,
+  and the stopped partial run whose actual scope dimensions were incorrect.
+- [x] Pass final sustained qualification with unchanged 1440/30 settings,
+  ten measured seconds per selection and three cycles: 344 loupe windows,
+  172 scope windows, 54 sampled difference publications and six fresh resumes.
+  Minimum cadence is 58.76 fps, maximum drift 83.3 ms and maximum cycle-end
+  growth 115.91 MiB above warmup (limit 256 MiB). Every selection includes at
+  least 10.09 measured seconds; all windows meet the clock-usability gate.
+- [ ] Qualify producer-authentic long media, other settings/hosts, native dependency
+  sanitizers and physical HDR calibration. Sampled publications do not establish
+  every-output correctness, exact screenshot timestamps, frame lock, peak memory
+  or a deterministic 100 ms drift guarantee under arbitrary load.
+
+MPVKit was reused from verified candidates. Shipping pins and the native-raster
+provider's default-off gate remain unchanged. No production leak or new drift
+cause is claimed from the retained rejected runs.

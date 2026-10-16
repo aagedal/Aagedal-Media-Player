@@ -1,0 +1,4 @@
+codesign --verify --deep --strict '/private/tmp/aagedal-provenance-soak-20261016/derived/Build/Products/Release/Aagedal Media Player.app'
+Exit status: 0
+Verification used normal system trust/keychain access.
+Local development signature verification; no distribution/notarization claim.

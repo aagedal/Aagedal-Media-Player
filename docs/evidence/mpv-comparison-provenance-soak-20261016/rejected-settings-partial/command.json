@@ -1,0 +1,13 @@
+[
+  "xcodebuild",
+  "test-without-building",
+  "-xctestrun",
+  "/private/tmp/aagedal-provenance-soak-20261016/derived/Build/Products/tmp5jt9wn9h.xctestrun",
+  "-destination",
+  "platform=macOS,arch=arm64",
+  "-parallel-testing-enabled",
+  "NO",
+  "-only-testing:Aagedal Media Player Tests/LiveLoupeSessionTests/testSustainedComparisonCanvasKeepsPairedLoupesAndBoundsMemory",
+  "-resultBundlePath",
+  "/private/tmp/aagedal-provenance-soak-20261016/soak-bounded/tests.xcresult"
+]

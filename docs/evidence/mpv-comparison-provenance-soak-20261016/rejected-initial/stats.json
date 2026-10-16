@@ -1,0 +1,16 @@
+{
+  "result": "rejected",
+  "failedGate": "cycle-end growth above first warmup cycle exceeds 256 MiB",
+  "loupeWindows": 338,
+  "scopeWindows": 169,
+  "sampledDifferencePublications": 54,
+  "resumedDifferencePublications": 6,
+  "minimumLoupePresentationsPerSecond": 58.78570366536674,
+  "maximumFollowerDriftSeconds": 0.06666666666666685,
+  "cycleEndFootprintBytes": [
+    703073592,
+    943050040,
+    1253395840
+  ],
+  "maximumCycleEndGrowthBytes": 550322248
+}

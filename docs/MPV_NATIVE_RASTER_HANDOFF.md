@@ -324,6 +324,33 @@ The observation hook retains no payload history in ordinary app use. Restore
 the existing candidates and use the evidence's runner to reproduce; no MPVKit
 rebuild or shipping package change is required.
 
+## Sustained difference-scope publication provenance
+
+The active-scope comparison soak also accepts `--verify-difference-pixels`:
+
+```sh
+python3 scripts/validate-mpv-native-app.py PATH_TO_XCTESTRUN UHD60_MANIFEST NEW_OUTPUT \
+  --comparison --active-scopes --verify-difference-pixels \
+  --scope-resolution 1440 --scope-fps 30 --soak-seconds 10 --soak-cycles 3
+```
+
+This adds a sampled completed-publication RGB difference/occupied-bin oracle in
+every difference window, plus capture retirement and fresh resume per pair.
+The independent scalar oracle runs off the main actor between cadence windows;
+its time does not consume the requested measured duration. All original
+cadence/drift/capture/memory gates remain. Require successful XCTest exit and
+matching comparison, active-scope and
+`MPV_COMPARISON_SCOPE_PROVENANCE_SOAK_ACCEPTANCE` receipts. The runner saves the
+executed configuration and command. The [continuation record](evidence/mpv-comparison-provenance-soak-20261016/README.md)
+retains source/binary/fixture identity, exact window coverage and workload limits.
+The final three-cycle 1440/30 run passes 344 loupe windows, 172 scope windows,
+54 sampled difference publications and six fresh resumes, with at least 58.76
+presentations/sec, at most 83.3 ms drift and 115.91 MiB maximum cycle-end growth.
+The earlier memory/drift rejections and stopped settings run remain in that record;
+a passing repeat does not establish a deterministic drift guarantee or leak cause.
+This samples completed publications rather than qualifying every output frame,
+and preserves the existing timestamp, generated-media and physical-HDR limits.
+
 ## Accepted state and next work
 
 The [app-side AddressSanitizer continuation](evidence/mpv-app-asan-20261016/README.md)
