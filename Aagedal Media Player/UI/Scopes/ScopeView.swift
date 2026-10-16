@@ -11,6 +11,16 @@ enum WaveformMode: String, CaseIterable, Sendable {
     case parade = "Parade"
 }
 
+nonisolated struct ScopeAnalysisDemand: Equatable, Sendable {
+    let primary: Bool
+    let secondary: Bool
+
+    init(source: CompareScopeSource, isComparing: Bool) {
+        primary = !isComparing || source != .secondary
+        secondary = isComparing && source != .primary
+    }
+}
+
 struct ScopeView: View {
     @ObservedObject var primaryController: PlayerController
     @ObservedObject var secondaryController: PlayerController
@@ -280,6 +290,9 @@ struct ScopeView: View {
         let difference = selectedSource == .difference
         primaryFrameCapture.requiresDisplayFrame = difference
         secondaryFrameCapture.requiresDisplayFrame = difference
+        let demand = ScopeAnalysisDemand(source: selectedSource, isComparing: compareSession.isActive)
+        primaryFrameCapture.analysisRequested = demand.primary
+        secondaryFrameCapture.analysisRequested = demand.secondary
     }
 
     private func submitScopeFrame() {

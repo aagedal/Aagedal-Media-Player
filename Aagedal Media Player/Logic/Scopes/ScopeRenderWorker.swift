@@ -279,12 +279,23 @@ final class ScopeRenderWorker: ObservableObject {
         resolution: Int
     ) {
         let selected = source == .secondary ? secondary : primary
+        if source != .difference, let plots = selected?.nativePlots {
+            // Native analysis has already produced the diagnostic images.
+            // Publish their references directly instead of scheduling compute
+            // work, and revoke any older screenshot computation or pending frame
+            // before it can replace this newer native result.
+            cancel(clearImages: false)
+            publish(Result(
+                waveformImage: mode == .luma ? plots.waveform : plots.parade,
+                vectorscopeImage: plots.vectorscope,
+                hdrPeakNits: plots.transfer == "pq" || plots.transfer == "hlg" ? plots.peakNits : nil
+            ))
+            return
+        }
         let isHDR = source != .difference && selected?.transferFunction != .sdr
         let hasRequiredFrame: Bool
         if source == .difference {
             hasRequiredFrame = primary.sdrFrame != nil && secondary?.sdrFrame != nil
-        } else if selected?.nativePlots != nil {
-            hasRequiredFrame = true
         } else if isHDR {
             hasRequiredFrame = selected?.sdrFrame != nil || selected?.hdrFrame != nil
         } else {
@@ -362,12 +373,7 @@ final class ScopeRenderWorker: ObservableObject {
         guard let completion = gate.complete(generation) else { return }
         computeTask = nil
 
-        waveformImage = result.waveformImage
-        vectorscopeImage = result.vectorscopeImage
-        renderSequence &+= 1
-        if let peakNits = result.hdrPeakNits {
-            hdrPeakNits = peakNits
-        }
+        publish(result)
 
         guard let nextGeneration = completion.nextGeneration,
               let request = pendingRequest,
@@ -376,17 +382,21 @@ final class ScopeRenderWorker: ObservableObject {
         start(request)
     }
 
+    private func publish(_ result: Result) {
+        waveformImage = result.waveformImage
+        vectorscopeImage = result.vectorscopeImage
+        if let peakNits = result.hdrPeakNits {
+            hdrPeakNits = peakNits
+        }
+        renderSequence &+= 1
+    }
+
     nonisolated private static func compute(_ request: Request) -> Result {
         guard !Task.isCancelled else {
             return Result(waveformImage: nil, vectorscopeImage: nil, hdrPeakNits: nil)
         }
 
         let selected = request.source == .secondary ? request.secondary : request.primary
-        if request.source != .difference, let plots = selected?.nativePlots {
-            return Result(waveformImage: request.mode == .luma ? plots.waveform : plots.parade,
-                          vectorscopeImage: plots.vectorscope,
-                          hdrPeakNits: plots.transfer == "pq" || plots.transfer == "hlg" ? plots.peakNits : nil)
-        }
         let sdrFrame: CGImage?
         if request.source == .difference,
            let primary = request.primary.sdrFrame,

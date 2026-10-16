@@ -44,6 +44,32 @@ final class LiveLoupeSessionTests: XCTestCase {
             readSecondary: { 1.99 }, loopDuration: 2))
     }
 
+    func testFollowerTracksTemporarySourceRateWithoutChangingTransportSpeed() async throws {
+        let pair = try await makePair(url: fixture("landscape"))
+        let primary = try XCTUnwrap(pair.controller.mpvPlayer)
+        let child = try XCTUnwrap(pair.session.player)
+        pair.controller.play()
+        let running = await waitUntil { pair.session.isReady && child.isPlaying }
+        XCTAssertTrue(running)
+        // Compare Mode changes only the backend rate during clock recovery.
+        // Repeating both directions also checks restoration of the base rate.
+        for rate in [Float(1.5), 1, 0.5, 1, 1.5, 1] {
+            pair.controller.setSynchronizationPlaybackRate(rate)
+            try await Task.sleep(for: .milliseconds(175))
+            XCTAssertEqual(pair.controller.currentPlaybackSpeed, 1)
+            XCTAssertEqual(child.rate, rate, accuracy: rate * 0.051,
+                "The follower must apply its correction around the source's effective rate")
+            XCTAssertTrue(pair.session.isReady)
+            let loopDuration = primary.duration
+            let drift = await Task.detached {
+                LiveLoupeClock.sample(readPrimary: { primary.playbackTimeSnapshot() ?? .nan },
+                    readSecondary: { child.playbackTimeSnapshot() ?? .nan }, loopDuration: loopDuration)
+            }.value
+            XCTAssertLessThanOrEqual(try XCTUnwrap(drift).effectiveDrift, 0.1)
+        }
+        XCTAssertTrue(pair.session.player === child)
+    }
+
     func testResizingLensUpdatesOutputWithoutReloadingPrimary() async throws {
         let pair = try await makePair(url: fixture("landscape"))
         let primary = try XCTUnwrap(pair.controller.mpvPlayer)

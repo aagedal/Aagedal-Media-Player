@@ -135,13 +135,14 @@ final class FrameCapture: ObservableObject {
     private var videoOutput: AVPlayerItemVideoOutput?
     private var hdrVideoOutput: AVPlayerItemVideoOutput?
     private weak var player: AVPlayer?
+    private var needsAVFrameAfterDemandChange = false
 
     /// Called after the video output is removed so the host can rebuild the decode pipeline.
     var onAVOutputRemoved: (() -> Void)?
 
     // MPV capture via screenshot-raw
     private weak var mpvPlayer: MPVPlayer?
-    private var captureGeneration = OperationGeneration()
+    private(set) var captureGeneration = OperationGeneration()
     private var mpvCaptureInFlight: ScopeCaptureIdentity?
     private var sampleSequence: UInt64 = 0
     private var sampleHistory = ScopeFrameHistory()
@@ -150,6 +151,18 @@ final class FrameCapture: ObservableObject {
     // Shared timer
     private var captureTimer: Timer?
     private(set) var isCapturing = false
+
+    /// Keep the capture session alive as scope visibility/lifecycle intent,
+    /// while avoiding analysis of an unselected comparison source. Retain AV
+    /// outputs until normal teardown so selection cannot change its pipeline.
+    var analysisRequested = true {
+        didSet {
+            guard oldValue != analysisRequested else { return }
+            if analysisRequested { needsAVFrameAfterDemandChange = true }
+            invalidatePendingCapture()
+            if isCapturing { scheduleCaptureTimer() }
+        }
+    }
 
     /// Display-space difference retains its established capture/color contract.
     var requiresDisplayFrame = false {
@@ -207,9 +220,7 @@ final class FrameCapture: ObservableObject {
 
     func startCapture() {
         guard !isCapturing else { return }
-        let tickIdentity = ScopeCaptureTickIdentity(
-            generation: captureGeneration.advance()
-        )
+        captureGeneration.advance()
         isCapturing = true
 
         // Lazily attach AVPlayerItemVideoOutput only when capture is needed
@@ -237,6 +248,14 @@ final class FrameCapture: ObservableObject {
             }
         }
 
+        scheduleCaptureTimer()
+
+        logger.info("Scope frame capture started")
+    }
+
+    private func scheduleCaptureTimer() {
+        captureTimer?.invalidate()
+        let tickIdentity = ScopeCaptureTickIdentity(generation: captureGeneration.current)
         let fps = UserDefaults.standard.value(for: AppSettings.scopeFrameRate)
         let interval = 1.0 / max(fps, 1)
         captureTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
@@ -244,8 +263,6 @@ final class FrameCapture: ObservableObject {
                 self?.captureFrame(identity: tickIdentity)
             }
         }
-
-        logger.info("Scope frame capture started")
     }
 
     /// Stop capture. When `rebuildPipeline` is false, the AVFoundation decode pipeline
@@ -296,7 +313,7 @@ final class FrameCapture: ObservableObject {
         guard identity.matches(
             generation: captureGeneration.current,
             isCapturing: isCapturing
-        ) else { return }
+        ), analysisRequested else { return }
 
         if mpvPlayer != nil, !requiresDisplayFrame {
             captureMPVNativeOrFallback()
@@ -322,16 +339,21 @@ final class FrameCapture: ObservableObject {
         defer { Self.performanceSignposter.endInterval("Scope capture", interval) }
 
         let requestedTime = player.currentTime()
-        guard output.hasNewPixelBuffer(forItemTime: requestedTime) else { return }
+        // A paused frame remains copyable after consumption even though it is
+        // no longer "new". Re-enabling analysis needs one successful recapture
+        // because changing demand cleared the previously published sample.
+        guard needsAVFrameAfterDemandChange || output.hasNewPixelBuffer(forItemTime: requestedTime) else { return }
         var displayTime = CMTime.invalid
         guard let pixelBuffer = output.copyPixelBuffer(
             forItemTime: requestedTime,
             itemTimeForDisplay: &displayTime
         ) else { return }
+        guard let image = downsamplePixelBuffer(pixelBuffer) else { return }
 
         let timestamp = validSeconds(displayTime) ?? validSeconds(requestedTime)
+        needsAVFrameAfterDemandChange = false
         publishSample(
-            sdrFrame: downsamplePixelBuffer(pixelBuffer),
+            sdrFrame: image,
             hdrFrame: nil,
             playbackTime: timestamp,
             timestampUncertainty: 0,
@@ -346,7 +368,7 @@ final class FrameCapture: ObservableObject {
         defer { Self.performanceSignposter.endInterval("Scope capture", interval) }
 
         let requestedTime = player.currentTime()
-        guard output.hasNewPixelBuffer(forItemTime: requestedTime) else { return }
+        guard needsAVFrameAfterDemandChange || output.hasNewPixelBuffer(forItemTime: requestedTime) else { return }
         var displayTime = CMTime.invalid
         guard let pixelBuffer = output.copyPixelBuffer(
             forItemTime: requestedTime,
@@ -360,8 +382,10 @@ final class FrameCapture: ObservableObject {
         // Extract HDR and SDR data on the main actor before sending to detached task
         let hdrFrame = Self.convertFloat16PixelBuffer(pixelBuffer, targetWidth: targetW, transferFunction: tf, peakNits: peak)
         let sdrFrame = downsamplePixelBuffer(pixelBuffer)
+        guard hdrFrame != nil || sdrFrame != nil else { return }
 
         let timestamp = validSeconds(displayTime) ?? validSeconds(requestedTime)
+        needsAVFrameAfterDemandChange = false
         publishSample(
             sdrFrame: sdrFrame,
             hdrFrame: hdrFrame,

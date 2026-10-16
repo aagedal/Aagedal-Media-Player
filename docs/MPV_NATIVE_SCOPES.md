@@ -96,6 +96,22 @@ replacement and track changes. The app admits one request per capture session,
 rejects obsolete completions, and restarts its generation-tagged timer when
 switching capture modes. Diagnostic image history does not retain native plots.
 
+Comparison scopes request analysis only for the selected source; display-space
+difference requests both. Both capture sessions retain their running intent so
+backend replacement can restore capture correctly. Changing selection revokes
+old requests and timer ticks, clears old samples, and schedules ticks for the
+new generation. An unselected source skips analysis, including screenshot
+fallback. AV outputs remain attached until normal capture teardown so selection
+does not change the ProRes RAW decode pipeline.
+
+The app publishes completed native plot image references directly on the main
+actor, including waveform/parade switches, without scheduling another scope
+computation. A native submission first invalidates active and pending screenshot
+computations so their late completions cannot replace the newer native plots.
+The HDR scale is published before the render notification. This app-side change
+needs no MPVKit rebuild or shipping package pin change; the earlier acceptance
+throughput is not a measurement of this publication change.
+
 Input is post-filter, pre-display-rendering video. Crop and orthogonal rotation
 or reflection are applied to the analysed column ordering. Samples are scaled
 once to RGBA16 while preserving source transfer values. Analysis uses the
@@ -115,6 +131,10 @@ This implementation performs native CPU analysis, including a shared pass for
 all three plots and an EOTF lookup table. VideoToolbox surfaces still incur a
 hardware download. GPU histogram analysis is a possible further optimization;
 it is not needed to obtain the measured gain, and is not implemented here.
+Direct publication does not remove the native analysis, pixel conversion,
+VideoToolbox download or plot payload copies for selected sources. Unselected
+capture sessions retain a lightweight timer and their existing AV outputs.
+GPU analysis remains a possible further improvement.
 
 ## Rebuild only when changing provider source
 

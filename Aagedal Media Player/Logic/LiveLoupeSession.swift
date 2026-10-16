@@ -71,6 +71,7 @@ final class LiveLoupeSession: ObservableObject {
     private var viewport: LoupeVideoViewport?
     private var nearest = true
     private var wasPlaying: Bool?
+    private var nominalRate: Float?
     private var baseRate: Float?
     private var looping: Bool?
     private var lastCorrection: TimeInterval = -.infinity
@@ -113,7 +114,7 @@ final class LiveLoupeSession: ObservableObject {
         observation = controller.objectWillChange.sink { [weak self] _ in
             Task { @MainActor [weak self] in self?.synchronize() }
         }
-        let timer = Timer(timeInterval: 0.1, repeats: true) { [weak self] _ in
+        let timer = Timer(timeInterval: 0.05, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
                 self?.synchronize()
             }
@@ -189,6 +190,7 @@ final class LiveLoupeSession: ObservableObject {
         cleanupPlayer = nil
         isReady = false
         wasPlaying = nil
+        nominalRate = nil
         baseRate = nil
         looping = nil
         needsAlignment = true
@@ -237,16 +239,26 @@ final class LiveLoupeSession: ObservableObject {
             return
         }
         let playing = Self.supportsPlayback(controller)
-        let rate = max(0.01, abs(controller.currentPlaybackSpeed))
-        let transportChanged = playing != wasPlaying || rate != baseRate
+        let nominalRate = max(0.01, abs(controller.currentPlaybackSpeed))
+        // Comparison synchronization temporarily nudges the source backend's
+        // rate without changing its user-facing speed. Follow that intent as
+        // feed-forward; chasing it only with our own 5% drift correction lets
+        // the lens fall behind a source that can be nudged by up to 50%.
+        let rate = primary.rate
+        let transportChanged = playing != wasPlaying || nominalRate != self.nominalRate
         if transportChanged {
             needsAlignment = true
             isReady = false
             child.rate = rate
             if playing { child.play() } else { child.pause() }
             wasPlaying = playing
-            baseRate = rate
+            self.nominalRate = nominalRate
+        } else if rate != baseRate {
+            // A temporary source nudge is continuous playback, not a seek or
+            // readiness transition. Reset our local correction around it.
+            child.rate = rate
         }
+        baseRate = rate
         // EOF or buffering can stop the follower independently of the primary.
         if playing && !child.isPlaying && !child.isBusy { child.play() }
         else if !playing && child.isPlaying { child.pause() }
@@ -265,7 +277,7 @@ final class LiveLoupeSession: ObservableObject {
                   self.generation == generation, self.player === child,
                   self.source == source else { return }
             self.clockTask = nil
-            guard self.wasPlaying == playing, self.baseRate == rate else {
+            guard self.wasPlaying == playing, self.baseRate == rate, primary.rate == rate else {
                 self.synchronize()
                 return
             }

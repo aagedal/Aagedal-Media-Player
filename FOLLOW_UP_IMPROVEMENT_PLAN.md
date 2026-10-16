@@ -5291,3 +5291,35 @@ Composer First edition may have limitations that do not apply to the full editio
 207. Phase 222 native Premiere marker text and drop-frame evidence.
 
 208. Phase 223 integrated Review closure and native Premiere continuation.
+
+## MPV loupe rate following and scope analysis demand — 2026-10-16
+
+Status: App-side implementation complete. Validation and exact build receipts
+are retained in `docs/evidence/mpv-loupe-rate-scope-demand-20261016/README.md`.
+
+- [x] Follow Compare Mode's temporary backend rate in live loupes without
+  changing nominal transport speed, seeking on each nudge, or withdrawing
+  readiness; reject obsolete asynchronous clock samples.
+- [x] Repeat the previously rejected three-cycle, 30-second-per-mode UHD/HDR
+  comparison qualification with unchanged gates: 360 passing loupe windows,
+  58.80 fps minimum, 66.7 ms maximum drift, 10,800 usable clock samples and
+  130.03 MiB maximum cycle-end growth above the first complete cycle.
+- [x] Publish existing native MPV scope plots without redundant detached compute
+  tasks, revoking older fallback generations and publishing HDR scale first.
+- [x] Analyze only the selected A/B source, or both for display-space difference,
+  preserving capture visibility intent, AV output identity and backend reloads.
+- [x] Restore consumed paused AV frames once when analysis resumes, without
+  playback/seek or repeated unchanged-frame analysis.
+- [x] Pass 59 focused arm64 Release regressions with zero skips, including native
+  SDR-to-PQ replacement while analysis is disabled and paused AV pixel/timestamp
+  identity; record UHD60 HLG native 29.98 fps versus screenshot 19.64 fps.
+- [x] Recheck the final AV-corrected binary for three comparison cycles at ten
+  measured seconds per mode: 144 windows, 59.01 fps minimum, 50 ms maximum drift,
+  all 4,320 clock samples usable, and no cycle-end growth above warmup.
+- [ ] Complete the existing physical HDR, sanitizer, producer-authentic media,
+  active-scope sustained comparison and other-machine qualification gates.
+
+Native MPVKit scope analysis was already implemented in the restored candidate.
+These app changes require no dependency rebuild. Shipping pins and the native
+raster provider's default-off gate remain unchanged; no isolated throughput gain
+is claimed for direct publication or source-demand gating.

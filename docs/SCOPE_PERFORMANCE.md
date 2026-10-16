@@ -1,5 +1,32 @@
 # Scope Performance
 
+The [native MPV scopes candidate](MPV_NATIVE_SCOPES.md) computes all three plots
+inside libmpv and returns diagnostic images. The app now publishes those image
+references directly, without another detached compute task. It invalidates older
+active and pending screenshot computations before publishing native plots, and
+updates the HDR scale before the render notification. This app-side change needs
+no MPVKit rebuild or shipping package pin change. No isolated throughput gain
+is claimed for direct publication.
+
+Comparison scopes now request analysis only for the selected source, or both
+for display-space difference. Changing demand invalidates old capture requests
+and timer ticks. Both sessions retain their running intent for backend reloads;
+unselected sources skip analysis while keeping their timer and AV outputs, so
+selection does not change the ProRes RAW decode pipeline. Re-enabling a paused
+AVPlayer source requests one fresh copy of its already-consumed frame, then
+resumes ordinary new-frame checks.
+
+The native provider still performs CPU analysis, pixel conversion and
+VideoToolbox downloads for selected sources; plot payload copies remain in the
+app. GPU analysis remains further optimization work. AVPlayer, unsupported MPV
+inputs and display-space difference scopes keep their existing capture/compute
+paths when requested. No isolated throughput gain is claimed for selection
+gating.
+
+The [2026-10-16 candidate evidence](evidence/mpv-loupe-rate-scope-demand-20261016/README.md)
+records 59 passing loupe/scope regressions and a UHD60 HLG end-to-end check at
+29.98 native updates/sec versus 19.64 screenshot updates/sec on this host.
+
 The CPU scope renderer has a reproducible optimized profiling matrix:
 
 ```bash
@@ -35,8 +62,9 @@ composition, and playback decoding are outside this focused benchmark and
 should still be checked with the existing `ScopePerformance` signposts on the
 oldest release-supported hardware.
 
-The runtime worker permits one active computation and one replaceable pending
-frame. If end-to-end work exceeds a frame budget, the newest submission replaces
+For captured frames, the runtime worker permits one active computation and one
+replaceable pending frame. If end-to-end work exceeds a frame budget, the newest
+submission replaces
 the pending one instead of creating an unbounded queue. Memory-pressure events
 cancel pending scope work, and teardown cancels both active and pending work.
 

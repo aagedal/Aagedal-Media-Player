@@ -1,0 +1,14 @@
+{
+  "windows": 360,
+  "minFPS": 58.80306443736759,
+  "maxDrift": 0.06666666666666667,
+  "minValidSamples": 30,
+  "usableSamples": 10800,
+  "expectedSamples": 10800,
+  "cycleEndBytes": [
+    759908704,
+    781125984,
+    896256400
+  ],
+  "maximumSampledPlaybackBytes": 1648855608
+}
