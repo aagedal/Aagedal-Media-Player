@@ -299,6 +299,12 @@ or physical HDR calibration. Other scope settings and other hosts remain open.
 
 ## Accepted state and next work
 
+The [app-side AddressSanitizer continuation](evidence/mpv-app-asan-20261016/README.md)
+passes 63 arm64 Release tests with zero failures/skips, including all 20 native
+raster fixtures, native scopes and capture/loupe lifecycle checks. App and XCTest
+code are instrumented; the restored MPVKit binaries are not. Native dependency
+sanitizer coverage remains open and requires a separately built candidate.
+
 [Acceptance evidence](evidence/mpv-native-raster-expanded-20261014/README.md)
 records 31/31 native cases, 20/20 hosted fixtures inside one XCTest, and 70/70
 consumer/loupe tests with no skips. Hardware H.264 and 10-bit PQ/HLG HEVC match

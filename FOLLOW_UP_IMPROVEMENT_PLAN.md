@@ -5353,3 +5353,25 @@ are retained in `docs/evidence/mpv-comparison-active-scopes-20261016/README.md`.
 No MPVKit source rebuild, shipping package repin or provider-gate change was
 required. The retained candidate is at
 `build/active-scopes-candidate-20261016/Aagedal Media Player.app`.
+
+## App-side native loupe/scope AddressSanitizer — 2026-10-16
+
+Status: Bounded arm64 app-side qualification complete. Exact source, compiler
+instrumentation, executable hashes and results are retained in
+`docs/evidence/mpv-app-asan-20261016/README.md`.
+
+- [x] Restore and verify the existing native raster/scope dependency inventories
+  and prepared package; build current app and XCTest code for arm64 Release
+  with AddressSanitizer, preserving shipping pins and the default-off gate.
+- [x] Read every byte of all three scope image providers after their native
+  fixture payloads are freed; distinguish plot contents with separate patterns.
+- [x] Pass 63 selected tests with zero failures/skips and no reported ASan
+  diagnostics, including all 20 native-raster fixtures, native SDR/PQ/HLG scope
+  integration, fallback/difference processing, capture demand and loupe lifecycle.
+- [x] Retain a serial runner with required acceptance markers and zero-skip
+  gating; verify that it rejects an ordinary non-ASan test configuration.
+- [ ] Qualify native dependency internals under sanitizers with a separately
+  built candidate. Uninstrumented MPVKit/system frameworks, data races, leaks,
+  GPU memory, other scope settings, authentic long media, other hosts and physical
+  HDR calibration retain their existing limits. Sanitizer timings and footprints
+  do not replace the ordinary-build sustained-performance acceptance.

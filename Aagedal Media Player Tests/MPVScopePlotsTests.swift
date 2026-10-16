@@ -97,7 +97,13 @@ final class MPVScopePlotsTests: XCTestCase {
         XCTAssertEqual(plots.vectorscope.width, 36)
         XCTAssertEqual(plots.pts, 1)
         XCTAssertEqual(plots.transfer, "srgb")
-        XCTAssertEqual(plots.waveform.dataProvider?.data.map { CFDataGetLength($0) }, 64*36*4)
+        // withNode has freed every native payload. Read all three complete
+        // providers now so a retained node pointer cannot pass on dimensions alone.
+        for (image, byte) in [(plots.waveform, UInt8(0x31)), (plots.parade, 0x72),
+                              (plots.vectorscope, 0xB4)] {
+            let data = try XCTUnwrap(image.dataProvider?.data)
+            XCTAssertEqual(data as Data, Data(repeating: byte, count: image.width * image.height * 4))
+        }
     }
 
     func testRejectsMalformedMetadataAndPayloadBeforeCopy() {
@@ -145,7 +151,8 @@ final class MPVScopePlotsTests: XCTestCase {
             } else {
                 let count = (key == "vectorscope" ? 36 : 64)*36*4
                 let bytes = UnsafeMutableRawPointer.allocate(byteCount: count, alignment: 8)
-                bytes.initializeMemory(as: UInt8.self, repeating: 0, count: count); buffers.append(bytes)
+                let pattern: UInt8 = ["waveform": 0x31, "parade": 0x72, "vectorscope": 0xB4][key]!
+                bytes.initializeMemory(as: UInt8.self, repeating: pattern, count: count); buffers.append(bytes)
                 let array = UnsafeMutablePointer<mpv_byte_array>.allocate(capacity: 1)
                 array.initialize(to: mpv_byte_array(data: bytes, size: size ?? count)); arrays.append(array)
                 n.format = MPV_FORMAT_BYTE_ARRAY; n.u.ba = array
