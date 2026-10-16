@@ -305,6 +305,20 @@ final class LiveLoupeSessionTests: XCTestCase {
         print("MPV_LIVE_LOUPE_COMPARISON_ACCEPTANCE: 2 pairs, 3 modes, paused seek and reopen")
     }
 
+    /// Short provenance qualification, separate from sustained cadence receipts.
+    func testComparisonScopePublicationsCarryExactDifferenceInputs() async throws {
+        guard let path = ProcessInfo.processInfo.environment["LIVE_LOUPE_SCOPE_PROVENANCE_CASES"] else {
+            throw XCTSkip("Set LIVE_LOUPE_SCOPE_PROVENANCE_CASES to the UHD60 manifest")
+        }
+        let keys = [AppSettings.scopeResolution.key, AppSettings.scopeFrameRate.key]
+        let previous = keys.map { UserDefaults.standard.object(forKey: $0) }
+        UserDefaults.standard.set(720, forKey: keys[0])
+        UserDefaults.standard.set(15.0, forKey: keys[1])
+        defer { for (key, value) in zip(keys, previous) { UserDefaults.standard.set(value, forKey: key) } }
+        try await qualifyComparisonManifest(path: path, activeScopes: true, verifyDifferencePixels: true)
+        print("MPV_COMPARISON_SCOPE_PROVENANCE_ACCEPTANCE: 2 pairs, 3 modes, exact difference pixels, capture retirement and resume")
+    }
+
     func testSustainedComparisonCanvasKeepsPairedLoupesAndBoundsMemory() async throws {
         let environment = ProcessInfo.processInfo.environment
         guard let path = environment["LIVE_LOUPE_COMPARISON_CASES"],
@@ -354,7 +368,7 @@ final class LiveLoupeSessionTests: XCTestCase {
         print("MPV_LIVE_LOUPE_COMPARISON_SOAK_ACCEPTANCE: \(cycles) cycles, 2 pairs, 3 modes, \(seconds) seconds per mode, baselineBytes=\(footprints[0]), maximumCycleEndBytes=\(footprints.max()!), growthLimitBytes=268435456")
     }
 
-    private func qualifyComparisonManifest(path: String, secondsPerMode: Int = 3, cycle: Int = 1, activeScopes: Bool = false) async throws {
+    private func qualifyComparisonManifest(path: String, secondsPerMode: Int = 3, cycle: Int = 1, activeScopes: Bool = false, verifyDifferencePixels: Bool = false) async throws {
         struct Case: Decodable { let name: String, input: String }
         struct Manifest: Decodable { let cases: [Case] }
         let manifest = try JSONDecoder().decode(Manifest.self,
@@ -369,13 +383,25 @@ final class LiveLoupeSessionTests: XCTestCase {
             }
             XCTAssertNotEqual(inputs[0], inputs[1])
             try await qualifyComparison(inputs: inputs, name: names.joined(separator: "/"),
-                secondsPerMode: secondsPerMode, cycle: cycle, activeScopes: activeScopes)
+                secondsPerMode: secondsPerMode, cycle: cycle, activeScopes: activeScopes,
+                verifyDifferencePixels: verifyDifferencePixels)
         }
     }
 
     private final class ScopeProbe {
         var renders: [CompareScopeSource: Int] = [:]
-        func record(_ source: CompareScopeSource) { renders[source, default: 0] += 1 }
+        var latestDifference: ScopeRenderPublication?
+        var differencePrimaryTimes: Set<Double> = []
+        var differenceSecondaryTimes: Set<Double> = []
+        func record(_ publication: ScopeRenderPublication) {
+            guard publication.waveformImage != nil, publication.vectorscopeImage != nil else { return }
+            renders[publication.source, default: 0] += 1
+            if publication.source == .difference {
+                latestDifference = publication
+                if let time = publication.primary.identity?.playbackTime { differencePrimaryTimes.insert(time) }
+                if let time = publication.secondary?.identity?.playbackTime { differenceSecondaryTimes.insert(time) }
+            }
+        }
     }
 
     private struct ComparisonHost: View {
@@ -409,14 +435,86 @@ final class LiveLoupeSessionTests: XCTestCase {
                     ScopeView(primaryController: primary, secondaryController: comparison.secondaryController,
                         primaryFrameCapture: primary.frameCapture,
                         secondaryFrameCapture: comparison.secondaryController.frameCapture,
-                        compareSession: comparison, onRender: { scopeProbe.record($0) })
+                        compareSession: comparison, onPublication: { scopeProbe.record($0) })
                         .frame(height: 200)
                 }
             }
         }
     }
 
-    private func qualifyComparison(inputs: [String], name: String, secondsPerMode: Int, cycle: Int, activeScopes: Bool) async throws {
+    private func verifyDifferencePublication(_ publication: ScopeRenderPublication) throws {
+        XCTAssertEqual(publication.source, .difference)
+        let a = try XCTUnwrap(publication.primary.sdrFrame)
+        let b = try XCTUnwrap(publication.secondary?.sdrFrame)
+        let difference = try XCTUnwrap(publication.differenceImage)
+        let aID = try XCTUnwrap(publication.primary.identity)
+        let bID = try XCTUnwrap(publication.secondary?.identity)
+        XCTAssertNotEqual(aID.timestampQuality, .unavailable)
+        XCTAssertNotEqual(bID.timestampQuality, .unavailable)
+        XCTAssertLessThanOrEqual(abs(try XCTUnwrap(aID.playbackTime) - XCTUnwrap(bID.playbackTime))
+            + aID.timestampUncertainty + bID.timestampUncertainty, 1.0 / 30.0)
+        // This workload uses matching 16:9 rasters. Geometry/aspect-fit behavior
+        // has separate focused tests; these bytes verify the actual live pair.
+        guard a.width == b.width, a.height == b.height,
+              difference.width == a.width, difference.height == a.height else {
+            return XCTFail("Provenance workload requires matching input and difference rasters")
+        }
+        func normalized(_ image: CGImage) throws -> [UInt8] {
+            var bytes = [UInt8](repeating: 0, count: image.width * image.height * 4)
+            let context = try XCTUnwrap(CGContext(data: &bytes, width: image.width, height: image.height,
+                bitsPerComponent: 8, bytesPerRow: image.width * 4, space: CGColorSpaceCreateDeviceRGB(),
+                bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue))
+            context.draw(image, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
+            return bytes
+        }
+        let first = try normalized(a), second = try normalized(b)
+        var expected = first
+        for i in expected.indices {
+            expected[i] = i % 4 == 3 ? 255
+                : UInt8(min(255, Double(abs(Int(first[i]) - Int(second[i]))) * publication.differenceGain))
+        }
+        let actual = try XCTUnwrap(difference.dataProvider?.data) as Data
+        XCTAssertTrue(actual == Data(expected), "Every live difference pixel must derive from the published A/B pair")
+        let waveform = try XCTUnwrap(publication.waveformImage)
+        let vector = try XCTUnwrap(publication.vectorscopeImage)
+        XCTAssertEqual(publication.mode, .luma)
+        // Independent occupied-bin oracle. No production difference or scope
+        // computation is invoked; trace color/intensity has separate unit tests.
+        let pixels = try normalized(difference)
+        var waveBins = Set<Int>(), vectorBins = Set<Int>()
+        let halfW = Float(vector.width) / 2, halfH = Float(vector.height) / 2
+        let scale = min(halfW, halfH) * 0.9
+        for y in 0..<difference.height {
+            for x in 0..<difference.width {
+                let offset = (y * difference.width + x) * 4
+                let blue = Float(pixels[offset]) / 255
+                let green = Float(pixels[offset + 1]) / 255
+                let red = Float(pixels[offset + 2]) / 255
+                let luma = 0.2126 * red + 0.7152 * green + 0.0722 * blue
+                let column = min(x * waveform.width / difference.width, waveform.width - 1)
+                let row = waveform.height - 1 - min(Int(luma * Float(waveform.height - 1)), waveform.height - 1)
+                waveBins.insert(row * waveform.width + column)
+                let cb = -0.1146 * red - 0.3854 * green + 0.5 * blue
+                let cr = 0.5 * red - 0.4542 * green - 0.0458 * blue
+                let vx = Int(halfW + cb * scale * 2), vy = Int(halfH - cr * scale * 2)
+                if (0..<vector.width).contains(vx), (0..<vector.height).contains(vy) {
+                    vectorBins.insert(vy * vector.width + vx)
+                }
+            }
+        }
+        func occupiedBins(_ image: CGImage) throws -> Set<Int> {
+            let bytes = [UInt8](try XCTUnwrap(image.dataProvider?.data) as Data)
+            guard bytes.count >= image.width * image.height * 4 else {
+                XCTFail("Scope image provider is shorter than its pixel dimensions")
+                return []
+            }
+            return Set((0..<(image.width * image.height)).filter { bytes[$0 * 4 + 3] != 0 })
+        }
+        XCTAssertTrue(try occupiedBins(waveform) == waveBins, "Published waveform must plot the exact difference pair")
+        XCTAssertTrue(try occupiedBins(vector) == vectorBins, "Published vectorscope must plot the exact difference pair")
+    }
+
+    private func qualifyComparison(inputs: [String], name: String, secondsPerMode: Int, cycle: Int, activeScopes: Bool, verifyDifferencePixels: Bool = false) async throws {
         let scopeResolution = UserDefaults.standard.value(for: AppSettings.scopeResolution)
         let scopeFPS = Int(UserDefaults.standard.value(for: AppSettings.scopeFrameRate))
         let primary = PlayerController(proResRAWDetector: { _, _ in false })
@@ -502,6 +600,8 @@ final class LiveLoupeSessionTests: XCTestCase {
                     let scopeCaptures = [primary.frameCapture, secondary.frameCapture]
                     let sequences = scopeCaptures.map { $0.currentSample?.sequence }
                     let renders = scopeProbe?.renders[scopeSource, default: 0] ?? 0
+                    scopeProbe?.differencePrimaryTimes.removeAll(keepingCapacity: true)
+                    scopeProbe?.differenceSecondaryTimes.removeAll(keepingCapacity: true)
                     let began = ProcessInfo.processInfo.systemUptime
                     var valid = [0, 0], maxDrift = [0.0, 0.0]
                     var scopeTimes = [Set<Double>(), Set<Double>()]
@@ -556,6 +656,15 @@ final class LiveLoupeSessionTests: XCTestCase {
                     if let scopeProbe {
                         let updates = scopeProbe.renders[scopeSource, default: 0] - renders
                         XCTAssertGreaterThan(updates, 0, "Active scopes must publish in every measurement window")
+                        if verifyDifferencePixels, scopeSource == .difference {
+                            XCTAssertGreaterThan(scopeProbe.differencePrimaryTimes.count, 1,
+                                "Published A identities must advance, not merely capture timestamps")
+                            XCTAssertGreaterThan(scopeProbe.differenceSecondaryTimes.count, 1,
+                                "Published B identities must advance")
+                            let publication = try XCTUnwrap(scopeProbe.latestDifference)
+                            try verifyDifferencePublication(publication)
+                            print("MPV_COMPARISON_DIFFERENCE_PUBLICATION: pair=\(name), mode=\(mode), generation=\(publication.generation), primarySequence=\(publication.primary.identity!.sequence), secondarySequence=\(publication.secondary!.identity!.sequence), publishedPTS=\(scopeProbe.differencePrimaryTimes.count)/\(scopeProbe.differenceSecondaryTimes.count), pixels=\(publication.differenceImage!.width * publication.differenceImage!.height)")
+                        }
                         let demand = ScopeAnalysisDemand(source: scopeSource, isComparing: true)
                         for (index, requested) in [demand.primary, demand.secondary].enumerated() {
                             let capture = scopeCaptures[index]
@@ -597,6 +706,23 @@ final class LiveLoupeSessionTests: XCTestCase {
                     print("MPV_COMPARISON_LOUPE_MEMORY: cycle=\(cycle), pair=\(name), mode=\(mode), elapsed=\(ProcessInfo.processInfo.systemUptime - modeBegan), physicalFootprintBytes=\(footprint)")
                 } while ProcessInfo.processInfo.systemUptime - modeBegan < Double(secondsPerMode)
             }
+        }
+        if verifyDifferencePixels, let scopeProbe {
+            let oldSequence = try XCTUnwrap(scopeProbe.latestDifference?.primary.identity?.sequence)
+            primary.frameCapture.stopCapture(rebuildPipeline: false)
+            // Allow SwiftUI to observe retirement before exercising another submission trigger.
+            try await Task.sleep(for: .milliseconds(200))
+            let retiredCount = scopeProbe.renders[.difference, default: 0]
+            comparison.setDifferenceGain(2)
+            try await Task.sleep(for: .milliseconds(200))
+            XCTAssertEqual(scopeProbe.renders[.difference, default: 0], retiredCount,
+                "A gain change must not resubmit retired capture pixels")
+            primary.frameCapture.startCapture()
+            let resumed = await waitUntil {
+                (scopeProbe.latestDifference?.primary.identity?.sequence ?? 0) > oldSequence
+            }
+            XCTAssertTrue(resumed, "Difference scopes must recover with a fresh capture pair")
+            try verifyDifferencePublication(try XCTUnwrap(scopeProbe.latestDifference))
         }
         comparison.pause(primary: primary)
         let paused = await waitUntil {

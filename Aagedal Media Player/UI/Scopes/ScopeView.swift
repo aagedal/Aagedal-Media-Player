@@ -30,12 +30,16 @@ struct ScopeView: View {
     var isOverlay = false
     var transparentBackground = false
     /// Optional profiler hook fired only after both scope images are published.
-    var onRender: ((CompareScopeSource) -> Void)? = nil
+    var onRender: (@MainActor @Sendable (CompareScopeSource) -> Void)? = nil
+    /// Opt-in exact-input/output observation for qualification; not retained by the view.
+    var onPublication: (@MainActor @Sendable (ScopeRenderPublication) -> Void)? = nil
     @StateObject private var renderWorker = ScopeRenderWorker()
     @State private var waveformMode: WaveformMode = .luma
     @State private var vectorscopeGraticule: CGImage?
     @State private var pairedPrimarySample: ScopeFrameSample?
     @State private var pairedSecondarySample: ScopeFrameSample?
+    @State private var pairedPrimaryGeneration: UInt64?
+    @State private var pairedSecondaryGeneration: UInt64?
 
     private var selectedSource: CompareScopeSource {
         compareSession.isActive ? compareSession.scopeSource : .primary
@@ -175,11 +179,6 @@ struct ScopeView: View {
             guard selectedSource == .difference else { return }
             submitScopeFrame()
         }
-        .onChange(of: renderWorker.renderSequence) {
-            guard renderWorker.waveformImage != nil,
-                  renderWorker.vectorscopeImage != nil else { return }
-            onRender?(selectedSource)
-        }
         .onChange(of: compareSession.isActive) {
             updateCaptureMode()
             renderWorker.cancel(clearImages: false)
@@ -296,6 +295,7 @@ struct ScopeView: View {
     }
 
     private func submitScopeFrame() {
+        if selectedSource == .difference { invalidateRetiredDifferencePair() }
         let res = UserDefaults.standard.value(for: AppSettings.scopeResolution)
         let primarySample = selectedSource == .difference
             ? pairedPrimarySample
@@ -317,8 +317,21 @@ struct ScopeView: View {
             source: selectedSource,
             differenceGain: compareSession.differenceGain,
             mode: waveformMode,
-            resolution: res
+            resolution: res,
+            onPublication: publicationObserver
         )
+    }
+
+    private var publicationObserver: (@MainActor @Sendable (ScopeRenderPublication) -> Void)? {
+        guard onRender != nil || onPublication != nil else { return nil }
+        let render = onRender
+        let publication = onPublication
+        return { snapshot in
+            if snapshot.waveformImage != nil, snapshot.vectorscopeImage != nil {
+                render?(snapshot.source)
+            }
+            publication?(snapshot)
+        }
     }
 
     private func scopeInput(
@@ -331,7 +344,8 @@ struct ScopeView: View {
             hdrFrame: sample?.hdrFrame,
             transferFunction: frameCapture.transferFunction,
             displayAspectRatio: controller.videoAspectRatio,
-            nativePlots: sample?.nativePlots
+            nativePlots: sample?.nativePlots,
+            identity: sample.map(ScopeFrameIdentity.init)
         )
     }
 
@@ -365,6 +379,7 @@ struct ScopeView: View {
     @discardableResult
     private func refreshDifferencePair() -> Bool {
         guard compareSession.isActive else { return false }
+        invalidateRetiredDifferencePair()
         let tolerance = ScopeFramePairer.tolerance(
             primaryFrameRate: primaryController.mediaItem?
                 .metadata?.primaryVideoStream?.frameRate?.value,
@@ -373,7 +388,12 @@ struct ScopeView: View {
         )
 
         guard let primary = primaryFrameCapture.currentSample,
-              let secondary = ScopeFramePairer.closestSecondary(
+              secondaryFrameCapture.currentSample != nil else {
+            resetDifferencePair()
+            renderWorker.cancel(clearImages: true)
+            return false
+        }
+        guard let secondary = ScopeFramePairer.closestSecondary(
                 to: primary,
                 mapping: compareSession.mapping,
                 secondaryDuration: secondaryController.mediaItem?.durationSeconds ?? 0,
@@ -391,12 +411,28 @@ struct ScopeView: View {
             hdrFrame: nil
         )
         pairedSecondarySample = secondary
+        pairedPrimaryGeneration = primaryFrameCapture.captureGeneration.current
+        pairedSecondaryGeneration = secondaryFrameCapture.captureGeneration.current
         return true
+    }
+
+    private func invalidateRetiredDifferencePair() {
+        guard pairedPrimarySample != nil || pairedSecondarySample != nil else { return }
+        guard primaryFrameCapture.currentSample != nil,
+              secondaryFrameCapture.currentSample != nil,
+              pairedPrimaryGeneration == primaryFrameCapture.captureGeneration.current,
+              pairedSecondaryGeneration == secondaryFrameCapture.captureGeneration.current else {
+            resetDifferencePair()
+            renderWorker.cancel(clearImages: true)
+            return
+        }
     }
 
     private func resetDifferencePair() {
         pairedPrimarySample = nil
         pairedSecondarySample = nil
+        pairedPrimaryGeneration = nil
+        pairedSecondaryGeneration = nil
     }
 }
 

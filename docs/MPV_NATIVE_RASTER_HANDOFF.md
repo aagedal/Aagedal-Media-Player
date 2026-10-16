@@ -305,6 +305,25 @@ passes three cycles with 338 loupe windows, 169 scope windows, 59.03 fps minimum
 66.7 ms maximum drift and 181.52 MiB maximum cycle-end growth. Other setting
 combinations and other hosts remain open.
 
+## Completed difference-scope publication provenance
+
+[The short arm64 continuation](evidence/mpv-comparison-scope-provenance-20261016/README.md)
+associates completed difference scopes with their exact submitted A/B captures.
+For SDR/PQ and PQ/HLG UHD60 pairs in all three comparison modes, sampled
+publications pass independent whole-image RGB difference and waveform/vectorscope
+occupied-bin checks. Published input timestamps must advance in every difference
+window. Capture retirement followed by a gain change cannot resubmit the old
+pair; restarting must publish fresh inputs. Focused regressions also cover
+pending replacement, cancellation and callback reentrancy.
+
+This is a short 720-pixel/15-Hz correctness workload, separate from the sustained
+receipts above. Exact provenance refers to submitted captures; screenshot
+PTS remains estimated. It does not qualify every publication, complete plot
+colors/intensities, composite-canvas pixels, frame lock or physical HDR output.
+The observation hook retains no payload history in ordinary app use. Restore
+the existing candidates and use the evidence's runner to reproduce; no MPVKit
+rebuild or shipping package change is required.
+
 ## Accepted state and next work
 
 The [app-side AddressSanitizer continuation](evidence/mpv-app-asan-20261016/README.md)

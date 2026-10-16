@@ -8,12 +8,44 @@ import Dispatch
 import Foundation
 import OSLog
 
+/// Capture identity travels with pixels; never infer it from currentSample after
+/// asynchronous computation, which may already be several captures ahead.
+nonisolated struct ScopeFrameIdentity: Equatable, Sendable {
+    let sequence: UInt64
+    let playbackTime: TimeInterval?
+    let timestampUncertainty: TimeInterval
+    let timestampQuality: ScopeFrameTimestampQuality
+
+    init(_ sample: ScopeFrameSample) {
+        sequence = sample.sequence
+        playbackTime = sample.playbackTime
+        timestampUncertainty = sample.timestampUncertainty
+        timestampQuality = sample.timestampQuality
+    }
+}
+
 nonisolated struct ScopeFrameInput: Sendable {
     let sdrFrame: CGImage?
     let hdrFrame: HDRFrameData?
     let transferFunction: TransferFunction
     let displayAspectRatio: CGFloat?
     var nativePlots: MPVScopePlots? = nil
+    var identity: ScopeFrameIdentity? = nil
+}
+
+/// Optional qualification observation of one completed request. The worker does
+/// not retain this snapshot after the callback: in ordinary use no extra image
+/// or HDR payload lifetime is introduced. Consumers that retain it own that cost.
+nonisolated struct ScopeRenderPublication: Sendable {
+    let generation: UInt64
+    let primary: ScopeFrameInput
+    let secondary: ScopeFrameInput?
+    let source: CompareScopeSource
+    let differenceGain: Double
+    let mode: WaveformMode
+    let waveformImage: CGImage?
+    let vectorscopeImage: CGImage?
+    let differenceImage: CGImage?
 }
 
 /// Matches independently captured A/B scope frames in their aligned media
@@ -243,12 +275,14 @@ final class ScopeRenderWorker: ObservableObject {
         let mode: WaveformMode
         let waveformSize: CGSize
         let vectorscopeSize: CGSize
+        let onPublication: (@MainActor @Sendable (ScopeRenderPublication) -> Void)?
     }
 
     private struct Result: Sendable {
         let waveformImage: CGImage?
         let vectorscopeImage: CGImage?
         let hdrPeakNits: Float?
+        var differenceImage: CGImage? = nil
     }
 
     private var gate = LatestFrameGate()
@@ -276,7 +310,8 @@ final class ScopeRenderWorker: ObservableObject {
         source: CompareScopeSource,
         differenceGain: Double,
         mode: WaveformMode,
-        resolution: Int
+        resolution: Int,
+        onPublication: (@MainActor @Sendable (ScopeRenderPublication) -> Void)? = nil
     ) {
         let selected = source == .secondary ? secondary : primary
         if source != .difference, let plots = selected?.nativePlots {
@@ -285,10 +320,17 @@ final class ScopeRenderWorker: ObservableObject {
             // work, and revoke any older screenshot computation or pending frame
             // before it can replace this newer native result.
             cancel(clearImages: false)
-            publish(Result(
+            let result = Result(
                 waveformImage: mode == .luma ? plots.waveform : plots.parade,
                 vectorscopeImage: plots.vectorscope,
                 hdrPeakNits: plots.transfer == "pq" || plots.transfer == "hlg" ? plots.peakNits : nil
+            )
+            publish(result)
+            onPublication?(ScopeRenderPublication(
+                generation: gate.latestGeneration, primary: primary, secondary: secondary,
+                source: source, differenceGain: CompareSessionController.clampedDifferenceGain(differenceGain),
+                mode: mode, waveformImage: result.waveformImage,
+                vectorscopeImage: result.vectorscopeImage, differenceImage: nil
             ))
             return
         }
@@ -314,11 +356,12 @@ final class ScopeRenderWorker: ObservableObject {
             primary: primary,
             secondary: secondary,
             source: source,
-            differenceGain: differenceGain,
+            differenceGain: CompareSessionController.clampedDifferenceGain(differenceGain),
             isHDR: isHDR,
             mode: mode,
             waveformSize: CGSize(width: width, height: height),
-            vectorscopeSize: CGSize(width: height, height: height)
+            vectorscopeSize: CGSize(width: height, height: height),
+            onPublication: onPublication
         )
 
         if submission.startImmediately {
@@ -365,21 +408,29 @@ final class ScopeRenderWorker: ObservableObject {
             }
 
             guard !Task.isCancelled else { return }
-            self?.finish(result, generation: request.generation)
+            self?.finish(result, request: request)
         }
     }
 
-    private func finish(_ result: Result, generation: UInt64) {
-        guard let completion = gate.complete(generation) else { return }
+    private func finish(_ result: Result, request: Request) {
+        guard let completion = gate.complete(request.generation) else { return }
         computeTask = nil
 
         publish(result)
-
-        guard let nextGeneration = completion.nextGeneration,
-              let request = pendingRequest,
-              request.generation == nextGeneration else { return }
-        pendingRequest = nil
-        start(request)
+        // Advance the queue before calling external code. An observer can submit
+        // or cancel synchronously; it must not strand the promoted generation.
+        if let nextGeneration = completion.nextGeneration,
+           let next = pendingRequest,
+           next.generation == nextGeneration {
+            pendingRequest = nil
+            start(next)
+        }
+        request.onPublication?(ScopeRenderPublication(
+            generation: request.generation, primary: request.primary, secondary: request.secondary,
+            source: request.source, differenceGain: request.differenceGain, mode: request.mode,
+            waveformImage: result.waveformImage, vectorscopeImage: result.vectorscopeImage,
+            differenceImage: result.differenceImage
+        ))
     }
 
     private func publish(_ result: Result) {
@@ -429,7 +480,8 @@ final class ScopeRenderWorker: ObservableObject {
                 return Result(waveformImage: nil, vectorscopeImage: nil, hdrPeakNits: nil)
             }
             let vectorscope = ScopeComputer.computeVectorscope(from: frame, outputSize: request.vectorscopeSize)
-            return Result(waveformImage: waveform, vectorscopeImage: vectorscope, hdrPeakNits: nil)
+            return Result(waveformImage: waveform, vectorscopeImage: vectorscope, hdrPeakNits: nil,
+                differenceImage: request.source == .difference && request.onPublication != nil ? sdrFrame : nil)
         }
 
         var waveform: CGImage?
