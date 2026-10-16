@@ -337,6 +337,160 @@ final class ScopeFrameDifferenceTests: XCTestCase {
         XCTAssertEqual(try pixel(in: difference, x: 2, y: 1), Pixel(red: 0, green: 0, blue: 0))
     }
 
+    @MainActor
+    func testDifferencePublicationKeepsActiveAndNewestPendingSampleProvenance() async throws {
+        let worker = ScopeRenderWorker()
+        let probe = PublicationProbe()
+        let published = expectation(description: "Active and newest pending requests publish")
+        published.expectedFulfillmentCount = 2
+        let primary = try makeImage(width: 4, height: 2, red: 10, green: 80, blue: 200)
+        let secondary = try makeImage(width: 4, height: 2, red: 50, green: 20, blue: 100)
+
+        // Main-actor submissions cannot interleave with asynchronous publication.
+        // Request 2 is replaced before request 1 can complete.
+        for sequence in UInt64(1)...3 {
+            worker.submit(
+                primary: identifiedInput(frame: primary, sequence: sequence, time: Double(sequence)),
+                secondary: identifiedInput(frame: secondary, sequence: sequence + 10, time: Double(sequence) + 0.01),
+                source: .difference,
+                differenceGain: Double(sequence),
+                mode: sequence == 3 ? .parade : .luma,
+                resolution: 64,
+                onPublication: { publication in
+                    probe.publications.append(publication)
+                    published.fulfill()
+                }
+            )
+        }
+        await fulfillment(of: [published], timeout: 5)
+        defer { worker.cancel(clearImages: true) }
+
+        XCTAssertEqual(probe.publications.count, 2)
+        XCTAssertEqual(probe.publications.compactMap { $0.primary.identity?.sequence }, [1, 3])
+        XCTAssertEqual(probe.publications.compactMap { $0.secondary?.identity?.sequence }, [11, 13])
+        for (publication, sequence) in zip(probe.publications, [UInt64(1), 3]) {
+            let identity = try XCTUnwrap(publication.primary.identity)
+            XCTAssertEqual(identity.playbackTime, Double(sequence))
+            XCTAssertEqual(identity.timestampUncertainty, 0.001)
+            XCTAssertEqual(identity.timestampQuality, .estimated)
+            XCTAssertEqual(publication.secondary?.identity?.playbackTime, Double(sequence) + 0.01)
+            XCTAssertTrue(publication.primary.sdrFrame === primary)
+            XCTAssertTrue(publication.secondary?.sdrFrame === secondary)
+            XCTAssertEqual(publication.source, .difference)
+            XCTAssertEqual(publication.differenceGain, Double(sequence))
+            XCTAssertEqual(publication.mode, sequence == 3 ? .parade : .luma)
+            XCTAssertNotNil(publication.differenceImage)
+            XCTAssertNotNil(publication.waveformImage)
+            XCTAssertNotNil(publication.vectorscopeImage)
+        }
+        let first = try XCTUnwrap(probe.publications.first)
+        let last = try XCTUnwrap(probe.publications.last)
+        XCTAssertLessThan(first.generation, last.generation)
+    }
+
+    @MainActor
+    func testPublicationCallbackCanSubmitWhileNewestPendingRequestStarts() async throws {
+        let worker = ScopeRenderWorker()
+        let probe = PublicationProbe()
+        let published = expectation(description: "Callback submission does not strand the pending worker")
+        published.expectedFulfillmentCount = 3
+        let frame = try makeImage(width: 4, height: 2, red: 80, green: 80, blue: 80)
+        let replacementPrimary = identifiedInput(frame: frame, sequence: 4, time: 4)
+        let replacementSecondary = identifiedInput(frame: frame, sequence: 14, time: 4)
+        for sequence in UInt64(1)...3 {
+            worker.submit(primary: identifiedInput(frame: frame, sequence: sequence, time: Double(sequence)),
+                secondary: identifiedInput(frame: frame, sequence: sequence + 10, time: Double(sequence)),
+                source: .difference, differenceGain: 1, mode: .luma, resolution: 64,
+                onPublication: { publication in
+                    probe.publications.append(publication)
+                    published.fulfill()
+                    if publication.primary.identity?.sequence == 1 {
+                        worker.submit(primary: replacementPrimary, secondary: replacementSecondary,
+                            source: .difference, differenceGain: 1, mode: .luma, resolution: 64,
+                            onPublication: { replacement in
+                                probe.publications.append(replacement)
+                                published.fulfill()
+                            })
+                    }
+                })
+        }
+        await fulfillment(of: [published], timeout: 5)
+        XCTAssertEqual(probe.publications.compactMap { $0.primary.identity?.sequence }, [1, 3, 4])
+        XCTAssertEqual(worker.renderSequence, 3)
+        worker.cancel(clearImages: true)
+    }
+
+    @MainActor
+    func testCancellationRevokesActiveAndPendingPublicationCallbacks() async throws {
+        let worker = ScopeRenderWorker()
+        let frame = try makeImage(width: 4, height: 2, red: 80, green: 80, blue: 80)
+        let probe = PublicationProbe()
+        let published = expectation(description: "Replacement publishes after cancellation")
+        for sequence in UInt64(1)...2 {
+            worker.submit(primary: identifiedInput(frame: frame, sequence: sequence, time: 1),
+                secondary: identifiedInput(frame: frame, sequence: sequence + 10, time: 1),
+                source: .difference, differenceGain: 1, mode: .luma, resolution: 64,
+                onPublication: { publication in
+                    probe.publications.append(publication)
+                    XCTFail("Canceled active or pending request must never invoke its publication hook")
+                })
+        }
+        worker.cancel(clearImages: true)
+        worker.submit(primary: identifiedInput(frame: frame, sequence: 3, time: 2),
+            secondary: identifiedInput(frame: frame, sequence: 13, time: 2),
+            source: .difference, differenceGain: 1, mode: .luma, resolution: 64,
+            onPublication: { publication in
+                probe.publications.append(publication)
+                published.fulfill()
+            })
+        await fulfillment(of: [published], timeout: 5)
+        XCTAssertEqual(probe.publications.compactMap { $0.primary.identity?.sequence }, [3])
+        XCTAssertEqual(worker.renderSequence, 1)
+        worker.cancel(clearImages: true)
+    }
+
+    @MainActor
+    func testPublishedDifferencePixelsMatchIndependentAbsoluteRGBFixture() async throws {
+        let worker = ScopeRenderWorker()
+        let probe = PublicationProbe()
+        let published = expectation(description: "Difference images published")
+        let primary = try makeImage(width: 4, height: 2, red: 10, green: 80, blue: 200)
+        let secondary = try makeImage(width: 4, height: 2, red: 50, green: 20, blue: 100)
+        worker.submit(primary: identifiedInput(frame: primary, sequence: 7, time: 2),
+            secondary: identifiedInput(frame: secondary, sequence: 19, time: 2.01),
+            source: .difference, differenceGain: 2, mode: .luma, resolution: 64,
+            onPublication: { publication in
+                probe.publications.append(publication)
+                published.fulfill()
+            })
+        await fulfillment(of: [published], timeout: 5)
+        defer { worker.cancel(clearImages: true) }
+        let publication = try XCTUnwrap(probe.publications.first)
+        let difference = try XCTUnwrap(publication.differenceImage)
+        XCTAssertEqual(difference.width, 4)
+        XCTAssertEqual(difference.height, 2)
+        // Independent integer oracle: 2 * abs([10,80,200] - [50,20,100]).
+        let expected = Pixel(red: 80, green: 120, blue: 200)
+        for y in 0..<difference.height {
+            for x in 0..<difference.width {
+                XCTAssertEqual(try storedPixel(in: difference, x: x, y: y), expected)
+                XCTAssertEqual(try storedAlpha(in: difference, x: x, y: y), 255)
+            }
+        }
+
+        // Renderer reuse checks transport from the independent expected fixture
+        // into the published plots; this is not an independent renderer oracle.
+        let expectedFrame = try makeImage(width: 4, height: 2, red: 80, green: 120, blue: 200)
+        let waveform = try XCTUnwrap(publication.waveformImage)
+        let vectorscope = try XCTUnwrap(publication.vectorscopeImage)
+        let expectedWaveform = try XCTUnwrap(ScopeComputer.computeWaveform(
+            from: expectedFrame, outputSize: CGSize(width: 64, height: 36)))
+        let expectedVectorscope = try XCTUnwrap(ScopeComputer.computeVectorscope(
+            from: expectedFrame, outputSize: CGSize(width: 36, height: 36)))
+        XCTAssertEqual(try storedBytes(in: waveform), try storedBytes(in: expectedWaveform))
+        XCTAssertEqual(try storedBytes(in: vectorscope), try storedBytes(in: expectedVectorscope))
+    }
+
     func testDifferenceIsAbsoluteSymmetricAndAppliesGain() throws {
         let first = try makeImage(width: 2, height: 1, red: 10, green: 80, blue: 200)
         let second = try makeImage(width: 2, height: 1, red: 50, green: 20, blue: 100)
@@ -413,6 +567,19 @@ final class ScopeFrameDifferenceTests: XCTestCase {
         let red: UInt8
         let green: UInt8
         let blue: UInt8
+    }
+
+    @MainActor
+    private final class PublicationProbe {
+        var publications: [ScopeRenderPublication] = []
+    }
+
+    private func identifiedInput(frame: CGImage, sequence: UInt64, time: TimeInterval) -> ScopeFrameInput {
+        ScopeFrameInput(sdrFrame: frame, hdrFrame: nil, transferFunction: .sdr,
+            displayAspectRatio: 2,
+            identity: ScopeFrameIdentity(ScopeFrameSample(sequence: sequence, playbackTime: time,
+                timestampUncertainty: 0.001, timestampQuality: .estimated,
+                sdrFrame: frame, hdrFrame: nil)))
     }
 
     private func sample(

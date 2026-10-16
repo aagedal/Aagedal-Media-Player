@@ -1,0 +1,25 @@
+Independent scoped review passed after fixes.
+
+Reviewed immutable completed-request provenance, source labeling, native direct
+publication, active/newest-pending behavior, cancellation, callback reentrancy,
+capture-generation retirement and qualification oracles.
+
+Review found callback reentrancy could strand promoted work; queue progression
+now precedes the hook, with a regression. Review also identified coalesced
+capture invalidation; the view tracks both capture generations. Test failure
+paths now reject mismatched source dimensions before indexing pixel buffers.
+
+Verified 198 current/prepared Swift source hashes, both arm64 executable hashes,
+helpers, dependency descriptors, manifests, all eight UHD60 media/reference
+hashes, decompressed build-log hash and the exact four-file Swift source patch.
+Measurements independently reproduce 36 loupe windows, 18 scope windows, six
+logged sampled difference publications, 58.9803222276 minimum fps and
+0.0833333333 maximum drift. Summary and acceptance markers confirm 68 passed,
+zero failures and zero skips. Two resumed-publication checks are enforced in
+code but have no separate publication measurement line.
+
+Evidence accurately limits the result to sampled all-pixel difference checks,
+independent occupied-bin correctness and capture-associated estimated timestamps.
+It does not renew sustained qualification or establish complete plot colors,
+exact decoder timestamps, frame lock, composite-canvas pixels or physical HDR.
+No remaining substantive issue found in the scoped change.

@@ -1,0 +1,16 @@
+{
+  "loupeWindows": 36,
+  "scopeWindows": 18,
+  "loggedDifferencePixelSamples": 6,
+  "additionalResumedPixelSamples": 2,
+  "pixelsPerDifferenceSample": 291600,
+  "minimumLoupePresentationsPerSecond": 58.98032222761932,
+  "maximumFollowerDriftSeconds": 0.08333333333333348,
+  "scopeSettings": {
+    "resolution": 720,
+    "targetFPS": 15
+  },
+  "passedTests": 68,
+  "failedTests": 0,
+  "skippedTests": 0
+}
