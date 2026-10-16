@@ -317,9 +317,20 @@ final class LiveLoupeSessionTests: XCTestCase {
               (3...100).contains(cycles) else {
             return XCTFail("Comparison soak requires 10–3600 seconds per mode and 3–100 cycles")
         }
+        let activeScopes = environment["LIVE_LOUPE_COMPARISON_ACTIVE_SCOPES"] == "1"
+        let settings = [AppSettings.scopeResolution.key, AppSettings.scopeFrameRate.key]
+        let previous = settings.map { UserDefaults.standard.object(forKey: $0) }
+        if activeScopes {
+            UserDefaults.standard.set(720, forKey: settings[0])
+            UserDefaults.standard.set(15.0, forKey: settings[1])
+        }
+        defer {
+            for (key, value) in zip(settings, previous) { UserDefaults.standard.set(value, forKey: key) }
+        }
         var footprints: [UInt64] = []
         for cycle in 1...cycles {
-            try await qualifyComparisonManifest(path: path, secondsPerMode: seconds, cycle: cycle)
+            try await qualifyComparisonManifest(path: path, secondsPerMode: seconds, cycle: cycle,
+                activeScopes: activeScopes)
             // Both pair helpers have returned, releasing hosts, layers and players.
             try await Task.sleep(for: .seconds(1))
             let footprint = try physicalFootprint()
@@ -328,10 +339,13 @@ final class LiveLoupeSessionTests: XCTestCase {
                 "Comparison cycle-end growth exceeded 256 MiB above warmup")
             print("MPV_COMPARISON_LOUPE_SOAK_CYCLE: cycle=\(cycle), physicalFootprintBytes=\(footprint)")
         }
+        if activeScopes {
+            print("MPV_COMPARISON_ACTIVE_SCOPES_ACCEPTANCE: \(cycles) cycles, 2 pairs, 3 modes, 3 scope sources, \(seconds) seconds per selection, resolution=720, targetFPS=15")
+        }
         print("MPV_LIVE_LOUPE_COMPARISON_SOAK_ACCEPTANCE: \(cycles) cycles, 2 pairs, 3 modes, \(seconds) seconds per mode, baselineBytes=\(footprints[0]), maximumCycleEndBytes=\(footprints.max()!), growthLimitBytes=268435456")
     }
 
-    private func qualifyComparisonManifest(path: String, secondsPerMode: Int = 3, cycle: Int = 1) async throws {
+    private func qualifyComparisonManifest(path: String, secondsPerMode: Int = 3, cycle: Int = 1, activeScopes: Bool = false) async throws {
         struct Case: Decodable { let name: String, input: String }
         struct Manifest: Decodable { let cases: [Case] }
         let manifest = try JSONDecoder().decode(Manifest.self,
@@ -346,8 +360,13 @@ final class LiveLoupeSessionTests: XCTestCase {
             }
             XCTAssertNotEqual(inputs[0], inputs[1])
             try await qualifyComparison(inputs: inputs, name: names.joined(separator: "/"),
-                secondsPerMode: secondsPerMode, cycle: cycle)
+                secondsPerMode: secondsPerMode, cycle: cycle, activeScopes: activeScopes)
         }
+    }
+
+    private final class ScopeProbe {
+        var renders: [CompareScopeSource: Int] = [:]
+        func record(_ source: CompareScopeSource) { renders[source, default: 0] += 1 }
     }
 
     private struct ComparisonHost: View {
@@ -356,35 +375,46 @@ final class LiveLoupeSessionTests: XCTestCase {
         @ObservedObject var state: InspectionLoupeState
         let primaryCapture: LoupeFrameCapture, secondaryCapture: LoupeFrameCapture
         let item: MediaItem
+        var scopeProbe: ScopeProbe? = nil
         let waveform = AudioWaveformGenerator()
 
         var body: some View {
-            ZStack {
-                ComparePlayerView(primaryController: primary, compareSession: comparison,
-                    primaryWaveformGenerator: waveform, primaryItem: item, showsAudioWaveform: false,
-                    isEditingTimecode: .constant(false), isTimelineFocused: .constant(false),
-                    isOverlayControlFocused: false, isTextInputActive: false,
-                    timecodeActivationTrigger: .constant(nil))
-                if state.isEnabled {
-                    InspectionLoupeOverlay(state: state, primary: primary,
-                        secondary: comparison.secondaryController, primaryCapture: primaryCapture,
-                        secondaryCapture: secondaryCapture, isComparing: comparison.isActive,
-                        geometry: CompareDisplayGeometry(canvasSize: CGSize(width: 960, height: 540),
-                            primaryAspectRatio: primary.videoAspectRatio ?? 16.0 / 9,
-                            secondaryAspectRatio: comparison.secondaryController.videoAspectRatio ?? 16.0 / 9),
-                        mode: comparison.viewMode)
+            VStack(spacing: 0) {
+                ZStack {
+                    ComparePlayerView(primaryController: primary, compareSession: comparison,
+                        primaryWaveformGenerator: waveform, primaryItem: item, showsAudioWaveform: false,
+                        isEditingTimecode: .constant(false), isTimelineFocused: .constant(false),
+                        isOverlayControlFocused: false, isTextInputActive: false,
+                        timecodeActivationTrigger: .constant(nil))
+                    if state.isEnabled {
+                        InspectionLoupeOverlay(state: state, primary: primary,
+                            secondary: comparison.secondaryController, primaryCapture: primaryCapture,
+                            secondaryCapture: secondaryCapture, isComparing: comparison.isActive,
+                            geometry: CompareDisplayGeometry(canvasSize: CGSize(width: 960, height: 540),
+                                primaryAspectRatio: primary.videoAspectRatio ?? 16.0 / 9,
+                                secondaryAspectRatio: comparison.secondaryController.videoAspectRatio ?? 16.0 / 9),
+                            mode: comparison.viewMode)
+                    }
+                }.frame(width: 960, height: 540)
+                if let scopeProbe {
+                    ScopeView(primaryController: primary, secondaryController: comparison.secondaryController,
+                        primaryFrameCapture: primary.frameCapture,
+                        secondaryFrameCapture: comparison.secondaryController.frameCapture,
+                        compareSession: comparison, onRender: { scopeProbe.record($0) })
+                        .frame(height: 200)
                 }
             }
         }
     }
 
-    private func qualifyComparison(inputs: [String], name: String, secondsPerMode: Int, cycle: Int) async throws {
+    private func qualifyComparison(inputs: [String], name: String, secondsPerMode: Int, cycle: Int, activeScopes: Bool) async throws {
         let primary = PlayerController(proResRAWDetector: { _, _ in false })
         let secondary = PlayerController(proResRAWDetector: { _, _ in false })
         let comparison = CompareSessionController(secondaryController: secondary)
         let state = InspectionLoupeState()
         let a = LoupeFrameCapture(), b = LoupeFrameCapture()
-        let window = NSWindow(contentRect: CGRect(x: 40, y: 40, width: 960, height: 540),
+        let scopeProbe = activeScopes ? ScopeProbe() : nil
+        let window = NSWindow(contentRect: CGRect(x: 40, y: 40, width: 960, height: activeScopes ? 740 : 540),
             styleMask: [.titled], backing: .buffered, defer: false)
         window.isReleasedWhenClosed = false
         defer {
@@ -396,7 +426,8 @@ final class LiveLoupeSessionTests: XCTestCase {
         let constructed = await waitUntil { primary.mpvPlayer != nil }
         XCTAssertTrue(constructed)
         let host = NSHostingView(rootView: ComparisonHost(primary: primary, comparison: comparison,
-            state: state, primaryCapture: a, secondaryCapture: b, item: try XCTUnwrap(primary.mediaItem)))
+            state: state, primaryCapture: a, secondaryCapture: b, item: try XCTUnwrap(primary.mediaItem),
+            scopeProbe: scopeProbe))
         window.contentView = host
         window.orderFront(nil)
         let primaryReady = await waitUntil { primary.isReady }
@@ -404,6 +435,10 @@ final class LiveLoupeSessionTests: XCTestCase {
         comparison.loadSecondary(URL(fileURLWithPath: inputs[1]), alignedWith: primary)
         let ready = await waitUntil { comparison.isSecondaryReady }
         XCTAssertTrue(ready, comparison.loadError ?? name)
+        if activeScopes {
+            primary.frameCapture.startCapture()
+            secondary.frameCapture.startCapture()
+        }
         state.isEnabled = true
         primary.updateLoopPlayback(true)
         secondary.updateLoopPlayback(true)
@@ -438,48 +473,112 @@ final class LiveLoupeSessionTests: XCTestCase {
                 XCTAssertTrue(followers[index].isMuted)
                 XCTAssertFalse(followers[index].canInspectDecoderRaster)
             }
-            let modeBegan = ProcessInfo.processInfo.systemUptime
-            var windows = 0
-            repeat {
-                windows += 1
-                let counts = surfaces.map { $0.metalLayer.presentedFrames }
-                let captures = [a.captureRequestCount, b.captureRequestCount]
-                let began = ProcessInfo.processInfo.systemUptime
-                var valid = [0, 0], maxDrift = [0.0, 0.0]
-                for _ in 0..<30 {
-                    // MPV snapshots can wait for the decoder. Keep measurement
-                    // off the main actor, as the live follower's own sampler does.
-                    let loopDurations = sources.map { $0.duration }
-                    let drifts = await Task.detached {
-                        sources.indices.map { index in
-                            LiveLoupeClock.sample(
-                                readPrimary: { sources[index].playbackTimeSnapshot() ?? .nan },
-                                readSecondary: { followers[index].playbackTimeSnapshot() ?? .nan },
-                                loopDuration: loopDurations[index])?.effectiveDrift
+            for scopeSource in activeScopes ? CompareScopeSource.allCases : [.primary] {
+                comparison.scopeSource = scopeSource
+                if let scopeProbe {
+                    let previousRenders = scopeProbe.renders[scopeSource, default: 0]
+                    let rendering = await waitUntil { scopeProbe.renders[scopeSource, default: 0] > previousRenders }
+                    XCTAssertTrue(rendering, "Scopes must render after selection: \(scopeSource)")
+                    // Retire requests and UI callbacks from the preceding selection.
+                    try await Task.sleep(for: .seconds(1))
+                }
+                let modeBegan = ProcessInfo.processInfo.systemUptime
+                var windows = 0
+                repeat {
+                    windows += 1
+                    let counts = surfaces.map { $0.metalLayer.presentedFrames }
+                    let captures = [a.captureRequestCount, b.captureRequestCount]
+                    let scopeCaptures = [primary.frameCapture, secondary.frameCapture]
+                    let sequences = scopeCaptures.map { $0.currentSample?.sequence }
+                    let renders = scopeProbe?.renders[scopeSource, default: 0] ?? 0
+                    let began = ProcessInfo.processInfo.systemUptime
+                    var valid = [0, 0], maxDrift = [0.0, 0.0]
+                    var scopeTimes = [Set<Double>(), Set<Double>()]
+                    var eligibleLatestPairs = 0, eligibleHistoryPairs = 0
+                    for _ in 0..<30 {
+                        // MPV snapshots can wait for the decoder. Keep measurement
+                        // off the main actor, as the live follower's own sampler does.
+                        let loopDurations = sources.map { $0.duration }
+                        let drifts = await Task.detached {
+                            sources.indices.map { index in
+                                LiveLoupeClock.sample(
+                                    readPrimary: { sources[index].playbackTimeSnapshot() ?? .nan },
+                                    readSecondary: { followers[index].playbackTimeSnapshot() ?? .nan },
+                                    loopDuration: loopDurations[index])?.effectiveDrift
+                            }
+                        }.value
+                        for index in sources.indices {
+                            if let drift = drifts[index] {
+                                valid[index] += 1
+                                maxDrift[index] = max(maxDrift[index], drift)
+                            }
                         }
-                    }.value
-                    for index in sources.indices {
-                        if let drift = drifts[index] {
-                            valid[index] += 1
-                            maxDrift[index] = max(maxDrift[index], drift)
+                        for index in scopeCaptures.indices {
+                            if let time = scopeCaptures[index].currentSample?.playbackTime {
+                                scopeTimes[index].insert(time)
+                            }
                         }
+                        if activeScopes, scopeSource == .difference {
+                            let tolerance = ScopeFramePairer.tolerance(primaryFrameRate: 60, secondaryFrameRate: 60)
+                            let primaryHistory = scopeCaptures[0].recentSamplesSnapshot()
+                            let secondaryHistory = scopeCaptures[1].recentSamplesSnapshot()
+                            func eligible(_ sample: ScopeFrameSample) -> Bool {
+                                ScopeFramePairer.closestSecondary(to: sample, mapping: comparison.mapping,
+                                    secondaryDuration: secondary.mediaItem?.durationSeconds ?? 0,
+                                    candidates: secondaryHistory, tolerance: tolerance) != nil
+                            }
+                            if let sample = scopeCaptures[0].currentSample, eligible(sample) { eligibleLatestPairs += 1 }
+                            if primaryHistory.contains(where: eligible) { eligibleHistoryPairs += 1 }
+                        }
+                        try await Task.sleep(for: .milliseconds(100))
                     }
-                    try await Task.sleep(for: .milliseconds(100))
-                }
-                let elapsed = ProcessInfo.processInfo.systemUptime - began
-                for index in surfaces.indices {
-                    let fps = Double(surfaces[index].metalLayer.presentedFrames - counts[index]) / elapsed
-                    XCTAssertGreaterThanOrEqual(fps, 45, "\(name), \(mode), source=\(index)")
-                    XCTAssertGreaterThanOrEqual(valid[index], 29)
-                    XCTAssertLessThanOrEqual(maxDrift[index], 0.1)
-                    print("MPV_COMPARISON_LOUPE_WINDOW: cycle=\(cycle), window=\(windows), pair=\(name), mode=\(mode), source=\(index), fps=\(fps), maxDrift=\(maxDrift[index]), validSamples=\(valid[index])/30")
-                }
-                XCTAssertEqual([a.captureRequestCount, b.captureRequestCount], captures,
-                    "Paired live playback must suppress both screenshot workers")
-                let footprint = try physicalFootprint()
-                print("MPV_COMPARISON_LOUPE_MEMORY: cycle=\(cycle), pair=\(name), mode=\(mode), elapsed=\(ProcessInfo.processInfo.systemUptime - modeBegan), physicalFootprintBytes=\(footprint)")
-            } while ProcessInfo.processInfo.systemUptime - modeBegan < Double(secondsPerMode)
-
+                    let elapsed = ProcessInfo.processInfo.systemUptime - began
+                    for index in surfaces.indices {
+                        let fps = Double(surfaces[index].metalLayer.presentedFrames - counts[index]) / elapsed
+                        XCTAssertGreaterThanOrEqual(fps, 45, "\(name), \(mode), source=\(index)")
+                        XCTAssertGreaterThanOrEqual(valid[index], 29)
+                        XCTAssertLessThanOrEqual(maxDrift[index], 0.1)
+                        print("MPV_COMPARISON_LOUPE_WINDOW: cycle=\(cycle), window=\(windows), pair=\(name), mode=\(mode), source=\(index), fps=\(fps), maxDrift=\(maxDrift[index]), validSamples=\(valid[index])/30, scopeSelection=\(activeScopes ? String(describing: scopeSource) : "inactive")")
+                    }
+                    XCTAssertEqual([a.captureRequestCount, b.captureRequestCount], captures,
+                        "Paired live playback must suppress both screenshot workers")
+                    if let scopeProbe {
+                        let updates = scopeProbe.renders[scopeSource, default: 0] - renders
+                        XCTAssertGreaterThan(updates, 0, "Active scopes must publish in every measurement window")
+                        let demand = ScopeAnalysisDemand(source: scopeSource, isComparing: true)
+                        for (index, requested) in [demand.primary, demand.secondary].enumerated() {
+                            let capture = scopeCaptures[index]
+                            XCTAssertEqual(capture.analysisRequested, requested)
+                            XCTAssertEqual(capture.requiresDisplayFrame, scopeSource == .difference)
+                            if requested {
+                                let sample = try XCTUnwrap(capture.currentSample)
+                                XCTAssertNotEqual(sample.sequence, sequences[index], "Selected scope input must advance")
+                                XCTAssertNotNil(sample.playbackTime)
+                                XCTAssertGreaterThan(scopeTimes[index].count, 1, "Selected scope PTS must change")
+                                if scopeSource == .difference {
+                                    XCTAssertNil(sample.nativePlots)
+                                    XCTAssertNotNil(sample.sdrFrame)
+                                } else {
+                                    let plots = try XCTUnwrap(sample.nativePlots, "A/B must exercise native scopes, not fallback")
+                                    XCTAssertEqual(plots.pts, sample.playbackTime)
+                                    let sourceName = name.split(separator: "/")[index]
+                                    XCTAssertEqual(plots.transfer, sourceName.hasPrefix("pq") ? "pq" : sourceName.hasPrefix("hlg") ? "hlg" : "bt1886")
+                                    XCTAssertNil(sample.sdrFrame)
+                                    XCTAssertNil(sample.hdrFrame)
+                                    XCTAssertEqual(sample.timestampQuality, .exact)
+                                }
+                            } else {
+                                XCTAssertNil(capture.currentSample, "Unselected scope input must remain cleared")
+                                XCTAssertEqual(capture.currentSample?.sequence, sequences[index],
+                                    "Unselected scope input must remain idle")
+                            }
+                        }
+                        print("MPV_COMPARISON_SCOPE_WINDOW: cycle=\(cycle), window=\(windows), pair=\(name), mode=\(mode), selection=\(scopeSource), renders=\(updates), fps=\(Double(updates) / elapsed), uniqueInputPTS=\(scopeTimes.map(\.count)), eligibleLatestPairs=\(eligibleLatestPairs), eligibleHistoryPairs=\(eligibleHistoryPairs), resolution=720, targetFPS=15")
+                    }
+                    let footprint = try physicalFootprint()
+                    print("MPV_COMPARISON_LOUPE_MEMORY: cycle=\(cycle), pair=\(name), mode=\(mode), elapsed=\(ProcessInfo.processInfo.systemUptime - modeBegan), physicalFootprintBytes=\(footprint)")
+                } while ProcessInfo.processInfo.systemUptime - modeBegan < Double(secondsPerMode)
+            }
         }
         comparison.pause(primary: primary)
         let paused = await waitUntil {

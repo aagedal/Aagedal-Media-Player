@@ -26,7 +26,9 @@ class RunnerTests(unittest.TestCase):
                                                'LIVE_LOUPE_SOAK_CYCLES': '99', 'LIVE_LOUPE_SOAK_CASES': 'old',
                                                'LIVE_LOUPE_COMPARISON_CASES': 'old',
                                                'LIVE_LOUPE_COMPARISON_SOAK_SECONDS': '999',
-                                               'LIVE_LOUPE_COMPARISON_SOAK_CYCLES': '99'}}
+                                               'LIVE_LOUPE_COMPARISON_SOAK_CYCLES': '99',
+                                               'LIVE_LOUPE_COMPARISON_ACTIVE_SCOPES': '1',
+                                               'AAGEDAL_SCOPE_BACKEND': 'screenshot'}}
             configuration = ({'Tests': target} if legacy else
                              {'TestConfigurations': [{'TestTargets': [target]}]})
             original = plistlib.dumps(configuration)
@@ -108,8 +110,42 @@ class RunnerTests(unittest.TestCase):
             self.run_fixture(['--live-viewer', '--soak-seconds', '10'],
                 'MPV_LIVE_LOUPE_SOAK_ACCEPTANCE: 3 cycles, 4 cases, 2 pairs, 10 seconds per case,', failure=65)
 
+    def test_active_scopes_requires_both_matching_receipts_and_successful_xcode(self):
+        options = ['--comparison', '--soak-seconds', '10', '--soak-cycles', '4', '--active-scopes']
+        comparison = 'MPV_LIVE_LOUPE_COMPARISON_SOAK_ACCEPTANCE: 4 cycles, 2 pairs, 3 modes, 10 seconds per mode,'
+        scopes = ('MPV_COMPARISON_ACTIVE_SCOPES_ACCEPTANCE: 4 cycles, 2 pairs, 3 modes, '
+                  '3 scope sources, 10 seconds per selection, resolution=720, targetFPS=15')
+        observed = self.run_fixture(options, comparison + '\n' + scopes)
+        self.assertIn('-only-testing:Aagedal Media Player Tests/LiveLoupeSessionTests/testSustainedComparisonCanvasKeepsPairedLoupesAndBoundsMemory', observed['command'])
+        self.assertEqual(observed['environment']['LIVE_LOUPE_COMPARISON_ACTIVE_SCOPES'], '1')
+        self.assertNotIn('AAGEDAL_SCOPE_BACKEND', observed['environment'])
+        for receipt in (comparison, scopes,
+                        comparison + '\n' + scopes.replace('4 cycles', '3 cycles'),
+                        comparison + '\n' + scopes.replace('10 seconds', '30 seconds'),
+                        comparison + '\n' + scopes.replace('resolution=720', 'resolution=64'),
+                        comparison + '\n' + scopes.replace('targetFPS=15', 'targetFPS=30')):
+            with self.subTest(receipt=receipt), self.assertRaisesRegex(SystemExit, 'acceptance failed'):
+                self.run_fixture(options, receipt)
+        with self.assertRaisesRegex(SystemExit, 'acceptance failed'):
+            self.run_fixture(options, comparison + '\n' + scopes, failure=65)
+
+    def test_ordinary_runs_clear_inherited_active_scopes_and_preserve_backend_override(self):
+        cases = [([], 'MPV_EXTENDED_NATIVE_APP_ACCEPTANCE: 20 cases'),
+                 (['--comparison'], 'MPV_LIVE_LOUPE_COMPARISON_ACCEPTANCE: 2 pairs, 3 modes, paused seek and reopen'),
+                 (['--comparison', '--soak-seconds', '10'],
+                  'MPV_LIVE_LOUPE_COMPARISON_SOAK_ACCEPTANCE: 3 cycles, 2 pairs, 3 modes, 10 seconds per mode,')]
+        for options, marker in cases:
+            for legacy in (False, True):
+                with self.subTest(options=options, legacy=legacy):
+                    environment = self.run_fixture(options, marker, legacy=legacy)['environment']
+                    self.assertNotIn('LIVE_LOUPE_COMPARISON_ACTIVE_SCOPES', environment)
+                    self.assertEqual(environment['AAGEDAL_SCOPE_BACKEND'], 'screenshot')
+
     def test_invalid_soak_arguments_fail_before_reading_inputs(self):
-        for options in (['--comparison', '--live-viewer'], ['--comparison', '--playback'],
+        for options in (['--active-scopes'], ['--comparison', '--active-scopes'],
+                        ['--live-viewer', '--soak-seconds', '10', '--active-scopes'],
+                        ['--soak-seconds', '10', '--active-scopes'],
+                        ['--comparison', '--live-viewer'], ['--comparison', '--playback'],
                         ['--comparison', '--stress-cycles', '3'], ['--comparison', '--soak-seconds', '9'],
                         ['--soak-seconds', '10'], ['--live-viewer', '--soak-seconds', '9'],
                         ['--live-viewer', '--soak-seconds', '3601'], ['--soak-cycles', '3'],

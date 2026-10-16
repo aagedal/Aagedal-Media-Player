@@ -5316,10 +5316,40 @@ are retained in `docs/evidence/mpv-loupe-rate-scope-demand-20261016/README.md`.
 - [x] Recheck the final AV-corrected binary for three comparison cycles at ten
   measured seconds per mode: 144 windows, 59.01 fps minimum, 50 ms maximum drift,
   all 4,320 clock samples usable, and no cycle-end growth above warmup.
-- [ ] Complete the existing physical HDR, sanitizer, producer-authentic media,
-  active-scope sustained comparison and other-machine qualification gates.
+- [ ] Complete the existing physical HDR, sanitizer, producer-authentic media
+  and other-machine qualification gates. The default-settings active-scope
+  comparison continuation is recorded below; other scope settings remain open.
 
 Native MPVKit scope analysis was already implemented in the restored candidate.
 These app changes require no dependency rebuild. Shipping pins and the native
 raster provider's default-off gate remain unchanged; no isolated throughput gain
 is claimed for direct publication or source-demand gating.
+
+## Active-scope sustained comparison — 2026-10-16
+
+Status: Default-settings arm64 candidate qualification complete. Exact source,
+app/test binary hashes, successful results and the rejected initial partial run
+are retained in `docs/evidence/mpv-comparison-active-scopes-20261016/README.md`.
+
+- [x] Mount production scopes with the comparison canvas and paired live loupes,
+  exercising A, B and display-space difference in every comparison mode.
+- [x] Move synchronous screenshot waits and SDR/HDR conversion explicitly off
+  the main actor, preserving capture-generation/backend ownership checks and
+  protecting the shared HDR diagnostic state with a lock.
+- [x] Keep every existing loupe cadence/drift/memory threshold; require selected
+  scope input timestamp progress and completed plot publication in every window.
+  Require native A/B plots and display-space difference inputs with correct demand.
+- [x] Pass three cycles, both UHD60 SDR/PQ and PQ/HLG pairs, three modes and three
+  scope selections at 720 pixels/15 Hz and ten measured seconds per selection.
+  All 396 loupe windows and 198 scope windows pass: 56.52 fps minimum,
+  83.3 ms maximum follower drift, 11,878/11,880 usable clock samples (every window
+  meets 29/30), and 228.95 MiB maximum cycle-end growth above warmup.
+- [x] Pass 42 focused arm64 Release regressions with zero skips, nine strict-runner
+  regressions, static analysis and retained-app signature verification.
+- [ ] Qualify other scope settings, longer authentic media, other machines,
+  sanitizer coverage and physical HDR calibration. Scope publication counts do
+  not prove unique video frames, difference-output pixel provenance or frame lock.
+
+No MPVKit source rebuild, shipping package repin or provider-gate change was
+required. The retained candidate is at
+`build/active-scopes-candidate-20261016/Aagedal Media Player.app`.

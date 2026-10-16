@@ -185,7 +185,8 @@ adds three cycles of four 30-second UHD60 workloads with two source/loupe pairs
 and bounded cycle-end memory growth. Longer loads still need qualification. The subsequent
 [different-file comparison check](evidence/mpv-comparison-live-loupe-20261015/README.md)
 qualifies short SDR/PQ and PQ/HLG comparison-canvas workflows with paired live
-loupes; sustained comparison UI loads remain open. Shipping pins and the native provider's default-off gate
+loupes; the sustained and active-scope continuations below retain their own
+workload limits. Shipping pins and the native provider's default-off gate
 remain unchanged.
 
 ## Different-file comparison canvas qualification
@@ -263,8 +264,38 @@ count. A short comparison receipt cannot qualify this run. The workload uses
 the production comparison canvas at 960×540 with UHD60 source decoders and
 paired loupe surfaces. Presentation counters measure lenses, not canvas cadence
 or unique video frames. Generated looped media, independent decoder clocks,
-active scopes, composite pixel correctness, sanitizer coverage and physical HDR
-calibration retain their existing qualification limits.
+composite pixel correctness, sanitizer coverage and physical HDR calibration
+retain their existing qualification limits. The active-scope continuation below
+is a separate qualification.
+
+## Active scopes during sustained comparison
+
+The comparison runner can mount production scopes below the comparison canvas,
+repeating A, B and display-space difference scopes in every mode:
+
+```sh
+python3 scripts/validate-mpv-native-app.py PATH_TO_XCTESTRUN \
+  /private/tmp/aagedal-loupe-playback-60fps/live-viewer-fixtures.json \
+  /private/tmp/aagedal-comparison-active-scopes-next \
+  --comparison --active-scopes --soak-seconds 10 --soak-cycles 3
+```
+
+In this mode, duration is per **scope selection per mode per pair**. Settings
+are pinned to the production defaults (720 pixels, 15 Hz) and restored afterward.
+All original loupe cadence/drift/memory gates remain. Selected scope inputs must
+advance media timestamps, and scopes must publish both plots in every window.
+A/B require native source-signal plots; difference retains display-space capture.
+The runner requires successful XCTest exit and both ordinary comparison and
+`MPV_COMPARISON_ACTIVE_SCOPES_ACCEPTANCE` receipts with matching duration/cycles.
+
+[The continuation record](evidence/mpv-comparison-active-scopes-20261016/README.md)
+retains the initial rejected partial run, the app-side capture-threading fix,
+exact build receipts and the accepted three-cycle result: 396 loupe windows,
+198 scope windows, 56.52 fps minimum, 83.3 ms maximum follower drift and
+228.95 MiB maximum cycle-end growth above warmup. Publication rates
+are observations, not a fixed scope throughput floor or unique-frame count.
+Input progress does not establish difference-output pixel provenance, frame lock
+or physical HDR calibration. Other scope settings and other hosts remain open.
 
 ## Accepted state and next work
 
