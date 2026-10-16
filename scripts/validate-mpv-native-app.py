@@ -16,6 +16,21 @@ import subprocess
 import tempfile
 
 
+# Clear these in both sources of XCTest environment. A copied xctestrun alone
+# does not isolate a run from workload flags inherited by xcodebuild.
+WORKLOAD_ENVIRONMENT_KEYS = (
+    'AAGEDAL_MPV_DECODER_RASTER_CANDIDATE',
+    'MPV_DECODER_RASTER_CASES', 'MPV_DECODER_RASTER_FIXTURE',
+    'MPV_DECODER_RASTER_STRESS_CYCLES', 'MPV_DECODER_RASTER_PLAYBACK_VALIDATION',
+    'LIVE_LOUPE_CASES', 'LIVE_LOUPE_COMPARISON_CASES',
+    'LIVE_LOUPE_COMPARISON_SOAK_SECONDS', 'LIVE_LOUPE_COMPARISON_SOAK_CYCLES',
+    'LIVE_LOUPE_COMPARISON_ACTIVE_SCOPES', 'LIVE_LOUPE_COMPARISON_SCOPE_RESOLUTION',
+    'LIVE_LOUPE_COMPARISON_SCOPE_FPS', 'LIVE_LOUPE_COMPARISON_SCOPE_PROVENANCE',
+    'LIVE_LOUPE_SCOPE_PROVENANCE_CASES', 'LIVE_LOUPE_COMPARISON_VERIFY_DIFFERENCE_PIXELS',
+    'LIVE_LOUPE_SOAK_CASES', 'LIVE_LOUPE_SOAK_SECONDS', 'LIVE_LOUPE_SOAK_CYCLES',
+)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('xctestrun', type=Path)
@@ -32,7 +47,7 @@ def main():
                         help='with --active-scopes: production resolution (default 720)')
     parser.add_argument('--scope-fps', type=int, choices=range(5, 31), metavar='5–30',
                         help='with --active-scopes: production update rate (default 15)')
-    parser.add_argument('--verify-difference-pixels', action='store_true',
+    parser.add_argument('--verify-difference-pixels', '--scope-provenance', action='store_true',
                         help='with --active-scopes: independently verify one completed difference publication per window and fresh capture resume')
     args = parser.parse_args()
     if args.verify_difference_pixels and not args.active_scopes:
@@ -67,31 +82,24 @@ def main():
     if len(targets) != 1:
         parser.error('expected exactly one Aagedal Media Player Tests target')
     environment = targets[0].setdefault('EnvironmentVariables', {})
+    process_environment = os.environ.copy()
+    for key in WORKLOAD_ENVIRONMENT_KEYS:
+        environment.pop(key, None)
+        process_environment.pop(key, None)
     environment['AAGEDAL_MPV_DECODER_RASTER_CANDIDATE'] = '1'
     environment['MPV_DECODER_RASTER_CASES'] = str(args.manifest.resolve(strict=True))
-    environment.pop('MPV_DECODER_RASTER_STRESS_CYCLES', None)
-    environment.pop('MPV_DECODER_RASTER_PLAYBACK_VALIDATION', None)
-    environment.pop('LIVE_LOUPE_CASES', None)
-    environment.pop('LIVE_LOUPE_COMPARISON_CASES', None)
-    environment.pop('LIVE_LOUPE_SCOPE_PROVENANCE_CASES', None)
-    environment.pop('LIVE_LOUPE_COMPARISON_VERIFY_DIFFERENCE_PIXELS', None)
     if args.verify_difference_pixels:
+        environment['LIVE_LOUPE_COMPARISON_SCOPE_PROVENANCE'] = '1'
         environment['LIVE_LOUPE_COMPARISON_VERIFY_DIFFERENCE_PIXELS'] = '1'
-    for key in ('LIVE_LOUPE_COMPARISON_SOAK_SECONDS', 'LIVE_LOUPE_COMPARISON_SOAK_CYCLES'):
-        environment.pop(key, None)
-    for key in ('LIVE_LOUPE_COMPARISON_ACTIVE_SCOPES', 'LIVE_LOUPE_COMPARISON_SCOPE_RESOLUTION',
-                'LIVE_LOUPE_COMPARISON_SCOPE_FPS'):
-        environment.pop(key, None)
     if args.active_scopes:
         environment['LIVE_LOUPE_COMPARISON_ACTIVE_SCOPES'] = '1'
         environment['LIVE_LOUPE_COMPARISON_SCOPE_RESOLUTION'] = str(args.scope_resolution)
         environment['LIVE_LOUPE_COMPARISON_SCOPE_FPS'] = str(args.scope_fps)
         environment.pop('AAGEDAL_SCOPE_BACKEND', None)
+        process_environment.pop('AAGEDAL_SCOPE_BACKEND', None)
     if args.comparison:
         environment['LIVE_LOUPE_COMPARISON_CASES'] = str(args.manifest.resolve(strict=True))
         environment['AAGEDAL_MPV_DECODER_RASTER_HWDEC'] = 'videotoolbox'
-    for key in ('LIVE_LOUPE_SOAK_CASES', 'LIVE_LOUPE_SOAK_SECONDS', 'LIVE_LOUPE_SOAK_CYCLES'):
-        environment.pop(key, None)
     if args.comparison and args.soak_seconds is not None:
         environment['LIVE_LOUPE_COMPARISON_SOAK_SECONDS'] = str(args.soak_seconds)
         environment['LIVE_LOUPE_COMPARISON_SOAK_CYCLES'] = str(args.soak_cycles)
@@ -122,17 +130,12 @@ def main():
                    '-resultBundlePath', str(args.output.resolve() / 'tests.xcresult')]
         (args.output / 'command.json').write_text(json.dumps(command, indent=2) + '\n')
         with (args.output / 'xcodebuild.log').open('w') as log:
-            # Workload selection belongs to the copied configuration. Do not let
-            # the runner's inherited environment activate a competing test mode.
-            process_environment = {key: value for key, value in os.environ.items()
-                                   if not key.startswith(('LIVE_LOUPE_', 'MPV_DECODER_RASTER_'))}
-            if args.active_scopes:
-                process_environment.pop('AAGEDAL_SCOPE_BACKEND', None)
-            result = subprocess.run(command, stdout=log, stderr=subprocess.STDOUT, env=process_environment)
+            result = subprocess.run(command, stdout=log, stderr=subprocess.STDOUT,
+                                    env=process_environment)
     # XCTest stdout can live only in the result bundle's action log.
     action = subprocess.run(['xcrun', 'xcresulttool', 'get', 'log', '--type', 'action',
                              '--path', str(args.output.resolve() / 'tests.xcresult')],
-                            capture_output=True, text=True)
+                            capture_output=True, text=True, env=process_environment)
     (args.output / 'action.log').write_text(action.stdout + action.stderr)
     marker = (f'MPV_LIVE_LOUPE_COMPARISON_SOAK_ACCEPTANCE: {args.soak_cycles} cycles, 2 pairs, 3 modes, {args.soak_seconds} seconds per mode,' if args.comparison and args.soak_seconds is not None else
               'MPV_LIVE_LOUPE_COMPARISON_ACCEPTANCE: 2 pairs, 3 modes, paused seek and reopen' if args.comparison else

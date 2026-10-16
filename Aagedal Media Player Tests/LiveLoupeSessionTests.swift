@@ -310,8 +310,8 @@ final class LiveLoupeSessionTests: XCTestCase {
         guard let path = ProcessInfo.processInfo.environment["LIVE_LOUPE_SCOPE_PROVENANCE_CASES"] else {
             throw XCTSkip("Set LIVE_LOUPE_SCOPE_PROVENANCE_CASES to the UHD60 manifest")
         }
-        let previous = overrideScopeSettings(resolution: 720, fps: 15)
-        defer { UserDefaults.standard.setVolatileDomain(previous, forName: UserDefaults.argumentDomain) }
+        let restoreSettings = overrideScopeSettings(resolution: 720, fps: 15)
+        defer { restoreSettings() }
         try await qualifyComparisonManifest(path: path, activeScopes: true, verifyDifferencePixels: true)
         print("MPV_COMPARISON_SCOPE_PROVENANCE_ACCEPTANCE: 2 pairs, 3 modes, exact difference pixels, capture retirement and resume")
     }
@@ -330,6 +330,7 @@ final class LiveLoupeSessionTests: XCTestCase {
         }
         let activeScopes = environment["LIVE_LOUPE_COMPARISON_ACTIVE_SCOPES"] == "1"
         let verification = environment["LIVE_LOUPE_COMPARISON_VERIFY_DIFFERENCE_PIXELS"]
+            ?? environment["LIVE_LOUPE_COMPARISON_SCOPE_PROVENANCE"]
         guard verification == nil || verification == "1", verification == nil || activeScopes else {
             return XCTFail("Difference pixel verification requires active scopes and an explicit value of 1")
         }
@@ -343,13 +344,8 @@ final class LiveLoupeSessionTests: XCTestCase {
                 return XCTFail("Active scopes require a production resolution and integer update rate from 5 through 30")
             }
         }
-        let previous = UserDefaults.standard.volatileDomain(forName: UserDefaults.argumentDomain)
-        if activeScopes { _ = overrideScopeSettings(resolution: scopeResolution, fps: scopeFPS) }
-        defer {
-            if activeScopes {
-                UserDefaults.standard.setVolatileDomain(previous, forName: UserDefaults.argumentDomain)
-            }
-        }
+        let restoreSettings = activeScopes ? overrideScopeSettings(resolution: scopeResolution, fps: scopeFPS) : {}
+        defer { restoreSettings() }
         var footprints: [UInt64] = []
         for cycle in 1...cycles {
             try await qualifyComparisonManifest(path: path, secondsPerMode: seconds, cycle: cycle,
@@ -371,17 +367,41 @@ final class LiveLoupeSessionTests: XCTestCase {
         print("MPV_LIVE_LOUPE_COMPARISON_SOAK_ACCEPTANCE: \(cycles) cycles, 2 pairs, 3 modes, \(seconds) seconds per mode, baselineBytes=\(footprints[0]), maximumCycleEndBytes=\(footprints.max()!), growthLimitBytes=268435456")
     }
 
-    /// Process-local, high-priority preferences keep app startup or another
-    /// running app from replacing this workload's requested scope settings.
-    /// Preserve all XCTest argument-domain values and restore them afterward.
-    private func overrideScopeSettings(resolution: Int, fps: Int) -> [String: Any] {
-        let defaults = UserDefaults.standard
+    /// NSArgumentDomain precedes persisted preferences and stays inside this
+    /// process. Other app/test instances must not change this workload's settings,
+    /// and qualification must not overwrite the user's persisted scope settings.
+    private func overrideScopeSettings(defaults: UserDefaults = .standard, resolution: Int, fps: Int) -> () -> Void {
         let previous = defaults.volatileDomain(forName: UserDefaults.argumentDomain)
-        var selected = previous
-        selected[AppSettings.scopeResolution.key] = resolution
-        selected[AppSettings.scopeFrameRate.key] = Double(fps)
-        defaults.setVolatileDomain(selected, forName: UserDefaults.argumentDomain)
-        return previous
+        var arguments = previous
+        arguments[AppSettings.scopeResolution.key] = resolution
+        arguments[AppSettings.scopeFrameRate.key] = Double(fps)
+        defaults.setVolatileDomain(arguments, forName: UserDefaults.argumentDomain)
+        return { defaults.setVolatileDomain(previous, forName: UserDefaults.argumentDomain) }
+    }
+
+    func testScopeQualificationSettingsIgnorePersistentChangesAndRestoreArguments() throws {
+        let suite = "ScopeQualification-\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        let originalArguments = defaults.volatileDomain(forName: UserDefaults.argumentDomain)
+        defer {
+            defaults.removePersistentDomain(forName: suite)
+            defaults.setVolatileDomain(originalArguments, forName: UserDefaults.argumentDomain)
+        }
+        defaults.setVolatileDomain(["unrelated": "preserved"], forName: UserDefaults.argumentDomain)
+        let restore = overrideScopeSettings(defaults: defaults, resolution: 720, fps: 15)
+        defaults.set(1440, forKey: AppSettings.scopeResolution.key)
+        defaults.set(30.0, forKey: AppSettings.scopeFrameRate.key)
+        XCTAssertEqual(defaults.value(for: AppSettings.scopeResolution), 720)
+        XCTAssertEqual(defaults.value(for: AppSettings.scopeFrameRate), 15)
+        // SwiftUI and FrameCapture must read the same effective values.
+        XCTAssertEqual(AppStorage(wrappedValue: 0, AppSettings.scopeResolution.key, store: defaults).wrappedValue, 720)
+        XCTAssertEqual(AppStorage(wrappedValue: 0.0, AppSettings.scopeFrameRate.key, store: defaults).wrappedValue, 15)
+        XCTAssertEqual(defaults.string(forKey: "unrelated"), "preserved")
+        restore()
+        XCTAssertEqual(defaults.value(for: AppSettings.scopeResolution), 1440)
+        XCTAssertEqual(defaults.value(for: AppSettings.scopeFrameRate), 30)
+        XCTAssertEqual(defaults.volatileDomain(forName: UserDefaults.argumentDomain) as NSDictionary,
+                       ["unrelated": "preserved"] as NSDictionary)
     }
 
     private func qualifyComparisonManifest(path: String, secondsPerMode: Int = 3, cycle: Int = 1, activeScopes: Bool = false, verifyDifferencePixels: Bool = false) async throws {
@@ -733,7 +753,9 @@ final class LiveLoupeSessionTests: XCTestCase {
                     }
                     let footprint = try physicalFootprint()
                     print("MPV_COMPARISON_LOUPE_MEMORY: cycle=\(cycle), pair=\(name), mode=\(mode), elapsed=\(ProcessInfo.processInfo.systemUptime - modeBegan), physicalFootprintBytes=\(footprint)")
-                } while (verifyDifferencePixels ? measuredSeconds : ProcessInfo.processInfo.systemUptime - modeBegan) < Double(secondsPerMode)
+                // Scalar publication checks run outside each cadence window.
+                // Their cost must not consume the requested measurement duration.
+                } while measuredSeconds < Double(secondsPerMode)
             }
         }
         if verifyDifferencePixels, let scopeProbe {

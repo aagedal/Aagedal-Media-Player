@@ -5401,6 +5401,42 @@ binaries, settings and results are retained in
 
 No MPVKit rebuild, shipping repin or provider-gate change was required.
 
+## Sustained difference-scope provenance tooling — 2026-10-17
+
+Status: Qualification tooling verified; sustained candidate acceptance remains
+open. Exact candidate, passing regressions, rejected results and reproduction
+instructions are retained in
+`docs/evidence/mpv-comparison-scope-provenance-soak-20261016/README.md`.
+
+- [x] Opt into completed difference-pixel/bin checks and published-input progress
+  in every sustained difference window, plus capture retirement/restart per pair.
+- [x] Isolate scope settings in the test process without overwriting persisted
+  app preferences; cover defaults, AppStorage lookups and argument restoration.
+- [x] Accumulate actual cadence-window duration so scalar verification cannot
+  consume the requested measurement budget; log totals for all selection groups.
+- [x] Require exact comparison, active-scope and provenance receipts, clear
+  inherited opt-ins, and retain executed configuration/commands.
+- [x] Pass the arm64 Release build, signature verification, 69 hosted tests with
+  zero failures/skips and 12 strict-runner regressions. Commit tooling as
+  `f2820e8` without production app changes or an MPVKit rebuild.
+- [x] Retain the settings-conflicted partial run, the interrupted pre-duration
+  repeat and the corrected-duration native-scope rejection under concurrent load.
+  Metal allocation errors are context, not a proven cause of native fallback.
+- [ ] Complete one serial three-cycle 720/15 sustained provenance run with all
+  existing gates unchanged. Another Aagedal benchmark occupied the shared host
+  after focused regressions passed, so that repeat did not start.
+- [ ] If native fallback reproduces without that competing workload, collect
+  failure-reason diagnostics before selecting an app/provider fix. Any separate
+  success must retain the loaded rejection and its workload limit.
+
+Shipping pins and the native-raster provider's default-off gate remain unchanged.
+Producer-authentic long media, other hosts/settings, native dependency sanitizers,
+peak/GPU memory, frame lock and physical HDR qualification retain their limits.
+
+The tooling continuation above retains its separate 720/15 loaded rejection and
+serial-repeat requirement. The accepted 1440/30 candidate below does not qualify
+that rejected workload. Both CLI options now select the same verification.
+
 ## Sustained sampled difference-scope provenance — 2026-10-17
 
 Status: Bounded arm64 sustained qualification complete; final results and retained

@@ -1,0 +1,42 @@
+Independent review of the Swift continuation and runner implementation:
+
+No blocking findings. The sustained provenance flag requires active scopes,
+propagates through each cycle/pair, and emits a receipt carrying exact settings.
+Every difference measurement checks advancing published A/B timestamps and the
+latest completed publication's pixels and occupied bins; each pair also checks
+capture retirement and fresh restart. The probe retains only one publication.
+
+The reviewer confirmed two limits retained in README.md: only the latest
+publication per window is pixel/bin checked, and scalar verification runs after
+the cadence interval, leaving unmeasured time between windows. XCTest assertion
+failures may still print receipts; the runner also requires successful Xcode
+exit, so a receipt alone cannot establish acceptance.
+
+Runner regressions pass 12 tests across legacy/format-2 configurations,
+prerequisites, inherited workload isolation, exact receipts and failed XCTest.
+
+Follow-up independent review of process-local settings: no blocking issues.
+NSArgumentDomain precedes persisted settings, preserves unrelated arguments and
+is restored by defer. The regression validates defaults and AppStorage lookup;
+it does not simulate every notification of a mounted view. Preference isolation
+cannot isolate shared CPU/GPU contention.
+
+Duration review identified that post-window scalar work consumed the original
+wall-time selection budget. The final helper accumulates only 30-sample cadence
+window elapsed time, resets per selection, and logs measuredSeconds. Follow-up
+review found the fix correct; evidence must include 54 complete selection groups
+with increasing totals and at least 10 measured seconds each.
+
+Review of loaded native-scope rejection: no capture ownership defect identified.
+FrameCapture intentionally publishes screenshot fallback when native capture
+returns nil; seek/loop/restart, hardware download, resource or decode failures
+currently share that outcome. Current samples are not history copies that drop
+nativePlots. Metal allocation errors occur near the rejection, but causation is
+not established. Retain the failure, keep all gates, and perform one separate
+repeat without the competing Aagedal workload; do not hold stale native pixels
+or wait away failed measurement endpoints.
+
+Final handoff review: no blocking findings or acceptance overclaims in README,
+native-raster handoff or follow-up plan. Verified tooling, 69 hosted passes and 12
+runner checks remain distinct from open sustained acceptance. The quiet-repeat
+non-start/shared-host prerequisite and loaded rejection are explicit.

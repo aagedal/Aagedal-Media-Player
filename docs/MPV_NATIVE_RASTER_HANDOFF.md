@@ -324,9 +324,43 @@ The observation hook retains no payload history in ordinary app use. Restore
 the existing candidates and use the evidence's runner to reproduce; no MPVKit
 rebuild or shipping package change is required.
 
+## Retained 720/15 sustained provenance rejection
+
+The [sustained continuation](evidence/mpv-comparison-scope-provenance-soak-20261016/README.md)
+adds `--scope-provenance` to the existing active-scope comparison runner. It
+checks exact completed difference pixels/bins and advancing published inputs in
+every difference window, plus retirement/restart after each pair. Scope settings
+are process-local, and scalar verification no longer consumes the requested
+cadence-measurement duration. The arm64 Release build, 69 hosted tests and 12
+runner regressions pass; shipping pins and the default-off provider gate remain
+unchanged.
+
+This is **not yet sustained acceptance**. The corrected-duration run failed the
+native A/B gate in cycle two when the primary sample contained screenshot
+fallback. Another Aagedal workload was active and Metal allocation errors occur
+near the failure; causation is unproven. The rejected result and earlier partial
+runs are retained. A new competing benchmark prevented the planned serial repeat.
+Run the unchanged three-cycle workload at 720/15 when that shared-host prerequisite
+is available; require both existing receipts and
+`MPV_COMPARISON_SCOPE_PROVENANCE_SOAK_ACCEPTANCE` with matching settings. Preserve
+the loaded rejection even if a separate run passes. App/provider changes require
+a reproducible diagnosis; holding stale native plots or relaxing the gate does
+not qualify the rejected workload.
+
+```sh
+python3 scripts/validate-mpv-native-app.py PATH_TO_XCTESTRUN \
+  PATH_TO_UHD60_MANIFEST NEW_OUTPUT \
+  --comparison --active-scopes --scope-provenance \
+  --soak-seconds 10 --soak-cycles 3
+```
+
+
 ## Sustained difference-scope publication provenance
 
-The active-scope comparison soak also accepts `--verify-difference-pixels`:
+The active-scope comparison soak accepts `--verify-difference-pixels` and its
+`--scope-provenance` alias. Both select the same verification and strict receipts.
+The retained 720/15 rejection above and the separate accepted 1440/30 run below
+have distinct candidates and workload limits; neither supersedes the other.
 
 ```sh
 python3 scripts/validate-mpv-native-app.py PATH_TO_XCTESTRUN UHD60_MANIFEST NEW_OUTPUT \
