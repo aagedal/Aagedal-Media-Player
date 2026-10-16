@@ -318,11 +318,20 @@ final class LiveLoupeSessionTests: XCTestCase {
             return XCTFail("Comparison soak requires 10–3600 seconds per mode and 3–100 cycles")
         }
         let activeScopes = environment["LIVE_LOUPE_COMPARISON_ACTIVE_SCOPES"] == "1"
+        let scopeResolution = environment["LIVE_LOUPE_COMPARISON_SCOPE_RESOLUTION"].flatMap(Int.init) ?? 720
+        let scopeFPS = environment["LIVE_LOUPE_COMPARISON_SCOPE_FPS"].flatMap(Int.init) ?? 15
+        if activeScopes {
+            guard ScopeResolution(rawValue: scopeResolution) != nil, (5...30).contains(scopeFPS),
+                  environment["LIVE_LOUPE_COMPARISON_SCOPE_RESOLUTION"].map({ Int($0) != nil }) ?? true,
+                  environment["LIVE_LOUPE_COMPARISON_SCOPE_FPS"].map({ Int($0) != nil }) ?? true else {
+                return XCTFail("Active scopes require a production resolution and integer update rate from 5 through 30")
+            }
+        }
         let settings = [AppSettings.scopeResolution.key, AppSettings.scopeFrameRate.key]
         let previous = settings.map { UserDefaults.standard.object(forKey: $0) }
         if activeScopes {
-            UserDefaults.standard.set(720, forKey: settings[0])
-            UserDefaults.standard.set(15.0, forKey: settings[1])
+            UserDefaults.standard.set(scopeResolution, forKey: settings[0])
+            UserDefaults.standard.set(Double(scopeFPS), forKey: settings[1])
         }
         defer {
             for (key, value) in zip(settings, previous) { UserDefaults.standard.set(value, forKey: key) }
@@ -340,7 +349,7 @@ final class LiveLoupeSessionTests: XCTestCase {
             print("MPV_COMPARISON_LOUPE_SOAK_CYCLE: cycle=\(cycle), physicalFootprintBytes=\(footprint)")
         }
         if activeScopes {
-            print("MPV_COMPARISON_ACTIVE_SCOPES_ACCEPTANCE: \(cycles) cycles, 2 pairs, 3 modes, 3 scope sources, \(seconds) seconds per selection, resolution=720, targetFPS=15")
+            print("MPV_COMPARISON_ACTIVE_SCOPES_ACCEPTANCE: \(cycles) cycles, 2 pairs, 3 modes, 3 scope sources, \(seconds) seconds per selection, resolution=\(scopeResolution), targetFPS=\(scopeFPS)")
         }
         print("MPV_LIVE_LOUPE_COMPARISON_SOAK_ACCEPTANCE: \(cycles) cycles, 2 pairs, 3 modes, \(seconds) seconds per mode, baselineBytes=\(footprints[0]), maximumCycleEndBytes=\(footprints.max()!), growthLimitBytes=268435456")
     }
@@ -408,6 +417,8 @@ final class LiveLoupeSessionTests: XCTestCase {
     }
 
     private func qualifyComparison(inputs: [String], name: String, secondsPerMode: Int, cycle: Int, activeScopes: Bool) async throws {
+        let scopeResolution = UserDefaults.standard.value(for: AppSettings.scopeResolution)
+        let scopeFPS = Int(UserDefaults.standard.value(for: AppSettings.scopeFrameRate))
         let primary = PlayerController(proResRAWDetector: { _, _ in false })
         let secondary = PlayerController(proResRAWDetector: { _, _ in false })
         let comparison = CompareSessionController(secondaryController: secondary)
@@ -557,9 +568,16 @@ final class LiveLoupeSessionTests: XCTestCase {
                                 XCTAssertGreaterThan(scopeTimes[index].count, 1, "Selected scope PTS must change")
                                 if scopeSource == .difference {
                                     XCTAssertNil(sample.nativePlots)
-                                    XCTAssertNotNil(sample.sdrFrame)
+                                    XCTAssertEqual(sample.sdrFrame?.width, scopeResolution)
                                 } else {
                                     let plots = try XCTUnwrap(sample.nativePlots, "A/B must exercise native scopes, not fallback")
+                                    let plotHeight = Int((Double(scopeResolution) * 9 / 16).rounded())
+                                    XCTAssertEqual(plots.waveform.height, plotHeight)
+                                    XCTAssertEqual(plots.parade.height, plotHeight)
+                                    XCTAssertEqual(plots.vectorscope.height, plotHeight)
+                                    XCTAssertEqual(plots.waveform.width, scopeResolution)
+                                    XCTAssertEqual(plots.parade.width, scopeResolution)
+                                    XCTAssertEqual(plots.vectorscope.width, plotHeight)
                                     XCTAssertEqual(plots.pts, sample.playbackTime)
                                     let sourceName = name.split(separator: "/")[index]
                                     XCTAssertEqual(plots.transfer, sourceName.hasPrefix("pq") ? "pq" : sourceName.hasPrefix("hlg") ? "hlg" : "bt1886")
@@ -573,7 +591,7 @@ final class LiveLoupeSessionTests: XCTestCase {
                                     "Unselected scope input must remain idle")
                             }
                         }
-                        print("MPV_COMPARISON_SCOPE_WINDOW: cycle=\(cycle), window=\(windows), pair=\(name), mode=\(mode), selection=\(scopeSource), renders=\(updates), fps=\(Double(updates) / elapsed), uniqueInputPTS=\(scopeTimes.map(\.count)), eligibleLatestPairs=\(eligibleLatestPairs), eligibleHistoryPairs=\(eligibleHistoryPairs), resolution=720, targetFPS=15")
+                        print("MPV_COMPARISON_SCOPE_WINDOW: cycle=\(cycle), window=\(windows), pair=\(name), mode=\(mode), selection=\(scopeSource), renders=\(updates), fps=\(Double(updates) / elapsed), uniqueInputPTS=\(scopeTimes.map(\.count)), eligibleLatestPairs=\(eligibleLatestPairs), eligibleHistoryPairs=\(eligibleHistoryPairs), resolution=\(scopeResolution), targetFPS=\(scopeFPS)")
                     }
                     let footprint = try physicalFootprint()
                     print("MPV_COMPARISON_LOUPE_MEMORY: cycle=\(cycle), pair=\(name), mode=\(mode), elapsed=\(ProcessInfo.processInfo.systemUptime - modeBegan), physicalFootprintBytes=\(footprint)")

@@ -281,7 +281,12 @@ python3 scripts/validate-mpv-native-app.py PATH_TO_XCTESTRUN \
 ```
 
 In this mode, duration is per **scope selection per mode per pair**. Settings
-are pinned to the production defaults (720 pixels, 15 Hz) and restored afterward.
+default to 720 pixels/15 Hz and are restored afterward. Use
+`--scope-resolution` (360, 720, 1080, 1440) and `--scope-fps` (integer 5–30)
+with `--active-scopes` to select other production settings. The runner requires
+receipts matching those exact values; native plot and difference-capture
+dimensions must match the requested width. Configured Hz is a scheduling target,
+not a guaranteed publication rate.
 All original loupe cadence/drift/memory gates remain. Selected scope inputs must
 advance media timestamps, and scopes must publish both plots in every window.
 A/B require native source-signal plots; difference retains display-space capture.
@@ -295,7 +300,10 @@ exact build receipts and the accepted three-cycle result: 396 loupe windows,
 228.95 MiB maximum cycle-end growth above warmup. Publication rates
 are observations, not a fixed scope throughput floor or unique-frame count.
 Input progress does not establish difference-output pixel provenance, frame lock
-or physical HDR calibration. Other scope settings and other hosts remain open.
+or physical HDR calibration. The subsequent [1440-pixel/30-Hz qualification](evidence/mpv-comparison-scope-settings-20261016/README.md)
+passes three cycles with 338 loupe windows, 169 scope windows, 59.03 fps minimum,
+66.7 ms maximum drift and 181.52 MiB maximum cycle-end growth. Other setting
+combinations and other hosts remain open.
 
 ## Accepted state and next work
 
