@@ -1,0 +1,2 @@
+Ordinary acceptance retention rejects the failed sustained XCTest (exit 1).
+The explicitly rejected receipt remains accepted=false.

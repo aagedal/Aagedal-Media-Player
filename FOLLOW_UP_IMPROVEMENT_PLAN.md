@@ -5473,3 +5473,33 @@ rejections are recorded in
 MPVKit was reused from verified candidates. Shipping pins and the native-raster
 provider's default-off gate remain unchanged. No production leak or new drift
 cause is claimed from the retained rejected runs.
+
+
+## 720/15 sustained provenance repeat — 2026-10-17
+
+Status: Full three-cycle attempt retained as **rejected**. The exact arm64
+candidate and results are in
+`docs/evidence/mpv-comparison-provenance-720-20261017/README.md`.
+
+- [x] Verify baseline/scope inventories and overlaid package, build current
+  sources arm64 Release, and pass local deep/strict signature verification.
+- [x] Pass 69 focused hosted tests with zero failures/skips and 14 runner
+  regressions; include the process-local scope-settings regression.
+- [x] Execute three complete cycles at 720/15 without another Media Player
+  benchmark. Record unrelated Photo Agent/Media Converter test activity; this
+  is not a quiet-host claim or acceptance of the earlier loaded workload.
+- [x] Retain all 54 measured selections, 396 loupe/198 scope windows, 54 sampled
+  difference publications and six fresh resumes. Preserve the failed XCTest
+  and unsuccessful runner despite printed completion markers.
+- [x] Retain cycle-end memory rejection: 643,877,912 / 959,368,288 / 968,838,384
+  bytes, maximum growth 309.91 MiB above warmup (limit 256 MiB). Other sampled
+  gates pass; every selection measures at least 11.79 seconds. A post-rejection
+  cycle-three vmmap diagnostic may perturb timing and is identified separately.
+- [ ] Diagnose cycle-end allocation categories and verify object retirement
+  before choosing a production/provider change. Inspection found no concrete
+  accumulating retain cycle; in-playback vmmap is not causal leak evidence.
+- [ ] Pass a coordinated serial/quiet-host 720/15 repeat with unchanged gates.
+  Preserve this memory rejection and the earlier native-fallback rejection.
+
+No production/test Swift changes, MPVKit rebuild, shipping repin or provider-gate
+change was made. Existing authentic-media, host, sanitizer and HDR limits remain.

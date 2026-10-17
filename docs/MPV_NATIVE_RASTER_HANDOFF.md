@@ -355,6 +355,21 @@ python3 scripts/validate-mpv-native-app.py PATH_TO_XCTESTRUN \
 ```
 
 
+## Subsequent 720/15 memory rejection
+
+[The 2026-10-17 repeat](evidence/mpv-comparison-provenance-720-20261017/README.md)
+completes all three cycles on current arm64 sources but fails the unchanged
+cycle-end memory gate: maximum growth is 309.91 MiB above warmup (limit 256 MiB).
+All 54 measured selections, 54 sampled difference checks and six fresh resumes
+complete; the runner correctly rejects the failed XCTest despite its printed
+markers. The fresh build, 69 focused hosted tests and 14 runner regressions pass.
+No competing Media Player benchmark was observed, but unrelated project tests
+were active; this is not quiet-host acceptance. A cycle-three memory diagnostic
+was collected after rejection and may affect later timing. Preserve both this
+memory rejection and the earlier native-fallback rejection. Matched cycle-end
+allocation/retirement diagnostics remain next; no causal production fix is
+established and no gate, dependency or shipping pin changed.
+
 ## Sustained difference-scope publication provenance
 
 The active-scope comparison soak accepts `--verify-difference-pixels` and its
