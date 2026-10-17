@@ -7,8 +7,25 @@ import SwiftUI
 import XCTest
 @testable import Aagedal_Media_Player
 
+// XCTest callbacks may arrive outside the main actor. Retain only a locked
+// completion uptime, never the XCTestCase supplied to the callback.
+private final class ComparisonWorkloadCompletion: NSObject, XCTestObservation, @unchecked Sendable {
+    private let lock = NSLock()
+    private var finished: Double?
+    var finishedUptime: Double? { lock.withLock { finished } }
+    func testCaseDidFinish(_ testCase: XCTestCase) {
+        if testCase.name.contains("testSustainedComparisonCanvasKeepsPairedLoupesAndBoundsMemory") {
+            lock.withLock { finished = ProcessInfo.processInfo.systemUptime }
+        }
+    }
+}
+
 @MainActor
 final class LiveLoupeSessionTests: XCTestCase {
+    // Only the weak registry crosses the XCTest method boundary. No host,
+    // window, controller or captured workload closure is stored here.
+    private static var postTestRetirement: (path: String, cycles: Int, probe: RetirementProbe, completion: ComparisonWorkloadCompletion)?
+
     private var controllers: [PlayerController] = []
     private var sessions: [LiveLoupeSession] = []
     private var windows: [NSWindow] = []
@@ -348,6 +365,11 @@ final class LiveLoupeSessionTests: XCTestCase {
         defer { restoreSettings() }
         let diagnosticsPath = environment["LIVE_LOUPE_COMPARISON_MEMORY_DIAGNOSTICS"]
         let retirement = diagnosticsPath.map { _ in RetirementProbe() }
+        let postTest = environment["LIVE_LOUPE_COMPARISON_POST_TEST_RETIREMENT"] == "1"
+        if postTest {
+            Self.postTestRetirement = nil
+            guard diagnosticsPath != nil else { return XCTFail("Post-test observation requires memory diagnostics") }
+        }
         var footprints: [UInt64] = []
         if let diagnosticsPath {
             try recordComparisonMemory(path: diagnosticsPath, cycle: 0, retirement: retirement!)
@@ -379,6 +401,33 @@ final class LiveLoupeSessionTests: XCTestCase {
             print("MPV_COMPARISON_SCOPE_PROVENANCE_SOAK_ACCEPTANCE: \(cycles) cycles, 2 pairs, 3 modes, \(seconds) seconds per selection, resolution=\(scopeResolution), targetFPS=\(scopeFPS), exact difference pixels and occupied bins, capture retirement and resume")
         }
         print("MPV_LIVE_LOUPE_COMPARISON_SOAK_ACCEPTANCE: \(cycles) cycles, 2 pairs, 3 modes, \(seconds) seconds per mode, baselineBytes=\(footprints[0]), maximumCycleEndBytes=\(footprints.max()!), growthLimitBytes=268435456")
+        if postTest, let diagnosticsPath, let retirement {
+            let completion = ComparisonWorkloadCompletion()
+            XCTestObservationCenter.shared.addTestObserver(completion)
+            Self.postTestRetirement = (diagnosticsPath, cycles, retirement, completion)
+        }
+    }
+
+    /// A separate, serially selected XCTest method. This bounds survival after
+    /// the workload method returns; it does not assert that XCTest/AppKit drained
+    /// an outer autorelease pool. Never alter the original gate's pool lifetime.
+    func testZZComparisonPostTestRetirement() async throws {
+        guard ProcessInfo.processInfo.environment["LIVE_LOUPE_COMPARISON_POST_TEST_RETIREMENT"] == "1" else {
+            throw XCTSkip("Use --post-test-retirement with sustained comparison diagnostics")
+        }
+        let context = try XCTUnwrap(Self.postTestRetirement,
+            "The sustained workload must finish first in this same serial test process")
+        Self.postTestRetirement = nil
+        defer { XCTestObservationCenter.shared.removeTestObserver(context.completion) }
+        guard let finishedUptime = context.completion.finishedUptime else {
+            return XCTFail("Missing XCTest source testCaseDidFinish callback; observations cannot qualify")
+        }
+        try recordComparisonMemory(path: context.path, cycle: context.cycles,
+            retirement: context.probe, postTest: true, sourceFinishedUptime: finishedUptime)
+        try await Task.sleep(for: .seconds(5))
+        try recordComparisonMemory(path: context.path, cycle: context.cycles,
+            retirement: context.probe, delayed: true, postTest: true, sourceFinishedUptime: finishedUptime)
+        print("MPV_COMPARISON_POST_TEST_RETIREMENT: same-process subsequent test, scalar-only, 5 second delay")
     }
 
     /// NSArgumentDomain precedes persisted preferences and stays inside this
@@ -1052,7 +1101,7 @@ final class LiveLoupeSessionTests: XCTestCase {
 
         /// Scalar identifiers only: these snapshots cannot keep a view graph alive.
         /// A null related ID means the referenced object was not registered.
-        func snapshot(checkpoint: String) -> [[String: Any]] {
+        func snapshot(checkpoint: String, inspectRelationships: Bool = true) -> [[String: Any]] {
             func id(_ object: AnyObject?) -> Any {
                 guard let object else { return NSNull() }
                 return entries.first { $0.object === object }?.id as Any? ?? NSNull()
@@ -1071,6 +1120,9 @@ final class LiveLoupeSessionTests: XCTestCase {
                     "teardownUptime": teardownTimes[entry.origin] as Any? ?? NSNull(),
                     "firstRetiredCheckpoint": entry.firstRetiredCheckpoint as Any? ?? NSNull()
                 ]
+                // Later observations avoid framework getters (especially
+                // NSApp.windows) that can themselves enqueue autoreleases.
+                guard inspectRelationships else { return row }
                 if let host = object as? NSHostingView<ComparisonHost> {
                     row["host"] = ["primaryControllerID": id(host.rootView.primary),
                         "comparisonControllerID": id(host.rootView.comparison),
@@ -1161,6 +1213,10 @@ final class LiveLoupeSessionTests: XCTestCase {
         window.contentView = view
         probe.track(window, label: "window", origin: "cycle=2,pair=B")
         probe.track(view, label: "host", origin: "cycle=2,pair=B")
+        let scalar = probe.snapshot(checkpoint: "scalar", inspectRelationships: false)
+        XCTAssertNil(scalar[1]["window"])
+        XCTAssertNil(scalar[2]["view"])
+        XCTAssertEqual(scalar[1]["alive"] as? Bool, true)
         let rows = probe.snapshot(checkpoint: "attached")
         let windowState = try XCTUnwrap(rows[1]["window"] as? [String: Any])
         let viewState = try XCTUnwrap(rows[2]["view"] as? [String: Any])
@@ -1177,12 +1233,16 @@ final class LiveLoupeSessionTests: XCTestCase {
     /// Opt-in diagnosis, sampled after the ordinary retirement delay. No pool
     /// drain, cache purge or extra retirement delay changes the memory gate.
     private func recordComparisonMemory(path: String, cycle: Int, retirement: RetirementProbe,
-                                        gateFootprint: UInt64? = nil, delayed: Bool = false) throws {
+                                        gateFootprint: UInt64? = nil, delayed: Bool = false, postTest: Bool = false, sourceFinishedUptime: Double? = nil) throws {
         let info = try virtualMemoryInfo()
-        let checkpoint = delayed ? "final-delayed" : "cycle-\(cycle)"
+        let checkpoint = postTest ? (delayed ? "post-test-delayed" : "post-test-entry")
+            : (delayed ? "final-delayed" : "cycle-\(cycle)")
         let sample: [String: Any] = [
             "schemaVersion": 2, "checkpoint": checkpoint,
-            "objects": retirement.snapshot(checkpoint: checkpoint),
+            "objects": retirement.snapshot(checkpoint: checkpoint, inspectRelationships: !postTest),
+            "sourceTestFinished": postTest,
+            "sourceTestFinishedUptime": sourceFinishedUptime as Any? ?? NSNull(),
+            "observationKind": postTest ? "subsequent-test-scalar-only" : "in-workload-relationships",
             "cycle": cycle, "pid": ProcessInfo.processInfo.processIdentifier,
             "uptime": ProcessInfo.processInfo.systemUptime,
             "physicalFootprintBytes": info.phys_footprint,

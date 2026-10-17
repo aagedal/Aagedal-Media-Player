@@ -28,12 +28,12 @@ WORKLOAD_ENVIRONMENT_KEYS = (
     'LIVE_LOUPE_COMPARISON_ACTIVE_SCOPES', 'LIVE_LOUPE_COMPARISON_SCOPE_RESOLUTION',
     'LIVE_LOUPE_COMPARISON_SCOPE_FPS', 'LIVE_LOUPE_COMPARISON_SCOPE_PROVENANCE',
     'LIVE_LOUPE_SCOPE_PROVENANCE_CASES', 'LIVE_LOUPE_COMPARISON_VERIFY_DIFFERENCE_PIXELS',
-    'LIVE_LOUPE_COMPARISON_MEMORY_DIAGNOSTICS',
+    'LIVE_LOUPE_COMPARISON_MEMORY_DIAGNOSTICS', 'LIVE_LOUPE_COMPARISON_POST_TEST_RETIREMENT',
     'LIVE_LOUPE_SOAK_CASES', 'LIVE_LOUPE_SOAK_SECONDS', 'LIVE_LOUPE_SOAK_CYCLES',
 )
 
 
-def validate_memory_diagnostics(directory, cycles):
+def validate_memory_diagnostics(directory, cycles, post_test=False):
     """Require origin-aware observations and a separate post-gate checkpoint."""
     expected = {f'cycle-{cycle}.json' for cycle in range(cycles + 1)}
     if ({p.name for p in directory.glob('cycle-*.json')} != expected
@@ -50,10 +50,15 @@ def validate_memory_diagnostics(directory, cycles):
     previous = {}
     previous_uptime = None
     final_gate_uptime = None
+    source_finished_uptime = None
     checkpoints = [f'cycle-{cycle}' for cycle in range(cycles + 1)] + ['final-delayed']
+    if post_test:
+        checkpoints += ['post-test-entry', 'post-test-delayed']
+        if any(not (directory / f'{name}.json').is_file() for name in checkpoints[-2:]):
+            raise SystemExit('Post-test memory diagnostics incomplete; see ' + str(directory))
     for index, checkpoint in enumerate(checkpoints):
         cycle = min(index, cycles)
-        delayed = checkpoint == 'final-delayed'
+        delayed = not checkpoint.startswith('cycle-')
         try:
             sample = json.loads((directory / f'{checkpoint}.json').read_text())
         except (OSError, ValueError):
@@ -90,6 +95,8 @@ def validate_memory_diagnostics(directory, cycles):
             retired = row.get('firstRetiredCheckpoint')
             if (type(identity) is not int or identity <= last_id
                     or not isinstance(row.get('label'), str) or not row['label']
+                    or not isinstance(row.get('address'), str)
+                    or not re.fullmatch(r'0x[0-9a-fA-F]+', row['address'])
                     or not match or int(match[1]) > cycle
                     or type(row.get('alive')) is not bool or not number(observed) or observed > uptime
                     or 'teardownUptime' not in row or 'firstRetiredCheckpoint' not in row
@@ -99,7 +106,7 @@ def validate_memory_diagnostics(directory, cycles):
                 invalid()
             if identity in previous:
                 prior = previous[identity]
-                if (any(row[key] != prior[key] for key in ('label', 'origin', 'observedUptime'))
+                if (any(row[key] != prior[key] for key in ('label', 'origin', 'address', 'observedUptime'))
                         or (prior['teardownUptime'] is not None and teardown != prior['teardownUptime'])
                         or (prior['firstRetiredCheckpoint'] is not None and retired != prior['firstRetiredCheckpoint'])
                         or (not prior['alive'] and row['alive'])
@@ -112,7 +119,20 @@ def validate_memory_diagnostics(directory, cycles):
             last_id = identity
         if not previous.keys() <= current.keys():
             invalid()
-        if delayed and uptime - final_gate_uptime < 5:
+        if checkpoint.startswith('post-test-'):
+            finished = sample.get('sourceTestFinishedUptime')
+            if (not number(finished) or finished > uptime
+                    or (checkpoint == 'post-test-entry' and finished < previous_uptime)
+                    or (source_finished_uptime is not None and finished != source_finished_uptime)
+                    or sample.get('sourceTestFinished') is not True
+                    or sample.get('observationKind') != 'subsequent-test-scalar-only'
+                    or any(set(row) - {'id', 'label', 'origin', 'alive', 'address', 'observedUptime',
+                                       'teardownUptime', 'firstRetiredCheckpoint'} for row in objects)):
+                invalid()
+            source_finished_uptime = finished
+        if checkpoint == 'post-test-delayed' and uptime - previous_uptime < 5:
+            invalid()
+        if checkpoint == 'final-delayed' and uptime - final_gate_uptime < 5:
             invalid()
         if cycle == cycles and not delayed:
             final_gate_uptime = uptime
@@ -139,7 +159,11 @@ def main():
                         help='with --active-scopes: independently verify one completed difference publication per window and fresh capture resume')
     parser.add_argument('--memory-diagnostics', action='store_true',
                         help='with sustained --comparison: record cycle-end VM categories and weak object retirement')
+    parser.add_argument('--post-test-retirement', action='store_true',
+                        help='with --memory-diagnostics: observe weak identities in a subsequent serial XCTest method')
     args = parser.parse_args()
+    if args.post_test_retirement and not args.memory_diagnostics:
+        parser.error('--post-test-retirement requires --memory-diagnostics')
     if args.memory_diagnostics and not (args.comparison and args.soak_seconds is not None):
         parser.error('--memory-diagnostics requires --comparison and --soak-seconds')
     if args.verify_difference_pixels and not args.active_scopes:
@@ -180,6 +204,8 @@ def main():
         process_environment.pop(key, None)
     environment['AAGEDAL_MPV_DECODER_RASTER_CANDIDATE'] = '1'
     environment['MPV_DECODER_RASTER_CASES'] = str(args.manifest.resolve(strict=True))
+    if args.post_test_retirement:
+        environment['LIVE_LOUPE_COMPARISON_POST_TEST_RETIREMENT'] = '1'
     if args.memory_diagnostics:
         environment['LIVE_LOUPE_COMPARISON_MEMORY_DIAGNOSTICS'] = str(args.output.resolve() / 'memory-diagnostics')
     if args.verify_difference_pixels:
@@ -222,6 +248,8 @@ def main():
                    '-parallel-testing-enabled', 'NO',
                    '-only-testing:Aagedal Media Player Tests/' + test,
                    '-resultBundlePath', str(args.output.resolve() / 'tests.xcresult')]
+        if args.post_test_retirement:
+            command.append('-only-testing:Aagedal Media Player Tests/LiveLoupeSessionTests/testZZComparisonPostTestRetirement')
         (args.output / 'command.json').write_text(json.dumps(command, indent=2) + '\n')
         with (args.output / 'xcodebuild.log').open('w') as log:
             result = subprocess.run(command, stdout=log, stderr=subprocess.STDOUT,
@@ -249,8 +277,10 @@ def main():
             or (args.active_scopes and not scope_receipt_matches)
             or (args.verify_difference_pixels and not provenance_receipt_matches)):
         raise SystemExit('Native app acceptance failed or required marker missing; see ' + str(args.output))
+    if args.post_test_retirement and 'MPV_COMPARISON_POST_TEST_RETIREMENT: same-process subsequent test, scalar-only, 5 second delay' not in combined:
+        raise SystemExit('Post-test observation marker missing; see ' + str(args.output))
     if args.memory_diagnostics:
-        validate_memory_diagnostics(args.output / 'memory-diagnostics', args.soak_cycles)
+        validate_memory_diagnostics(args.output / 'memory-diagnostics', args.soak_cycles, args.post_test_retirement)
     print('Native app acceptance passed; logs and xcresult:', args.output.resolve())
 
 
