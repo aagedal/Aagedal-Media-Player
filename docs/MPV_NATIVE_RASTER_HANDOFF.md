@@ -416,6 +416,30 @@ and a separate snapshot at least five seconds after the final gate, without
 extending any cycle's one-second allowance. The evidence's optional external
 graph collector runs only after all gates and may affect later retirement timing.
 
+## Retirement after the workload XCTest returns
+
+[The post-test continuation](evidence/mpv-comparison-post-test-retirement-20261017/README.md)
+adds opt-in `--post-test-retirement` alongside `--memory-diagnostics`. It keeps
+only the weak registry across a serial XCTest boundary and requires the source
+test's actual completion callback/uptime before two scalar-only observations.
+The final arm64 build, 71 focused hosted tests, 21 runner regressions and both
+sustained/post-test cases pass. The unchanged three-cycle 720/15 workload covers
+396 loupe windows, 198 scope windows, 54 sampled difference publications and six
+fresh resumes: at least 58.90 presentations/sec, at most 66.7 ms drift and
+121.92 MiB maximum cycle-end growth. All original gates remain unchanged.
+
+All six hosts and other observed payload owners retire by their cycle checkpoints
+in this run; the earlier detached-host survival is not reproduced or explained.
+Six closed windows survive the final delayed in-test snapshot, then all 180
+observed identities are dead at the subsequent test's entry and five seconds
+later. This establishes retirement across the test boundary for these identities,
+not a particular pool drain or causal owning path. Post-test footprints never
+replace gate samples. Allocation/insertion stacks or a controlled pool experiment,
+prior host-survival reproduction and quiet-host qualification remain open.
+The coordinator's brief optional compile and other Xcode activity are retained as
+shared-host context. No production teardown, dependency, shipping pin or provider
+gate changes; earlier rejected results remain retained and unexplained.
+
 ## Sustained difference-scope publication provenance
 
 The active-scope comparison soak accepts `--verify-difference-pixels` and its

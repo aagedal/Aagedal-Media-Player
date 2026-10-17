@@ -1,0 +1,671 @@
+{
+  "cycle-0": {
+    "uptime": 632302.7045335,
+    "aliveByOrigin": {},
+    "newlyRetiredIDs": [],
+    "aliveObjects": []
+  },
+  "cycle-1": {
+    "uptime": 632564.2800527083,
+    "aliveByOrigin": {
+      "cycle=1,pair=pq-hevc-hardware/hlg-hevc-hardware": {
+        "window": 1
+      },
+      "cycle=1,pair=uhd-h264-hardware/pq-hevc-hardware": {
+        "window": 1
+      }
+    },
+    "newlyRetiredIDs": [],
+    "aliveObjects": [
+      {
+        "address": "0x00000076b9e7d900",
+        "alive": true,
+        "firstRetiredCheckpoint": null,
+        "id": 1,
+        "label": "window",
+        "observedUptime": 632302.7076910834,
+        "origin": "cycle=1,pair=uhd-h264-hardware/pq-hevc-hardware",
+        "teardownUptime": 632433.2466087501,
+        "window": {
+          "childWindowCount": 0,
+          "contentViewClass": null,
+          "contentViewControllerClass": null,
+          "contentViewID": null,
+          "delegateID": null,
+          "firstResponderClass": "NSWindow",
+          "firstResponderID": 1,
+          "hasContentViewController": false,
+          "hasDelegate": false,
+          "hasWindowController": false,
+          "inApplicationWindows": true,
+          "key": false,
+          "main": false,
+          "number": 55308,
+          "parentWindowID": null,
+          "releasedWhenClosed": false,
+          "sheetCount": 0,
+          "visible": false,
+          "windowControllerID": null
+        }
+      },
+      {
+        "address": "0x00000076b9e7f480",
+        "alive": true,
+        "firstRetiredCheckpoint": null,
+        "id": 31,
+        "label": "window",
+        "observedUptime": 632433.2486635001,
+        "origin": "cycle=1,pair=pq-hevc-hardware/hlg-hevc-hardware",
+        "teardownUptime": 632563.2743900834,
+        "window": {
+          "childWindowCount": 0,
+          "contentViewClass": null,
+          "contentViewControllerClass": null,
+          "contentViewID": null,
+          "delegateID": null,
+          "firstResponderClass": "NSWindow",
+          "firstResponderID": 31,
+          "hasContentViewController": false,
+          "hasDelegate": false,
+          "hasWindowController": false,
+          "inApplicationWindows": true,
+          "key": false,
+          "main": false,
+          "number": 55339,
+          "parentWindowID": null,
+          "releasedWhenClosed": false,
+          "sheetCount": 0,
+          "visible": false,
+          "windowControllerID": null
+        }
+      }
+    ]
+  },
+  "cycle-2": {
+    "uptime": 632824.9351419584,
+    "aliveByOrigin": {
+      "cycle=1,pair=pq-hevc-hardware/hlg-hevc-hardware": {
+        "window": 1
+      },
+      "cycle=1,pair=uhd-h264-hardware/pq-hevc-hardware": {
+        "window": 1
+      },
+      "cycle=2,pair=pq-hevc-hardware/hlg-hevc-hardware": {
+        "window": 1
+      },
+      "cycle=2,pair=uhd-h264-hardware/pq-hevc-hardware": {
+        "window": 1
+      }
+    },
+    "newlyRetiredIDs": [],
+    "aliveObjects": [
+      {
+        "address": "0x00000076b9e7d900",
+        "alive": true,
+        "firstRetiredCheckpoint": null,
+        "id": 1,
+        "label": "window",
+        "observedUptime": 632302.7076910834,
+        "origin": "cycle=1,pair=uhd-h264-hardware/pq-hevc-hardware",
+        "teardownUptime": 632433.2466087501,
+        "window": {
+          "childWindowCount": 0,
+          "contentViewClass": null,
+          "contentViewControllerClass": null,
+          "contentViewID": null,
+          "delegateID": null,
+          "firstResponderClass": "NSWindow",
+          "firstResponderID": 1,
+          "hasContentViewController": false,
+          "hasDelegate": false,
+          "hasWindowController": false,
+          "inApplicationWindows": true,
+          "key": false,
+          "main": false,
+          "number": 55308,
+          "parentWindowID": null,
+          "releasedWhenClosed": false,
+          "sheetCount": 0,
+          "visible": false,
+          "windowControllerID": null
+        }
+      },
+      {
+        "address": "0x00000076b9e7f480",
+        "alive": true,
+        "firstRetiredCheckpoint": null,
+        "id": 31,
+        "label": "window",
+        "observedUptime": 632433.2486635001,
+        "origin": "cycle=1,pair=pq-hevc-hardware/hlg-hevc-hardware",
+        "teardownUptime": 632563.2743900834,
+        "window": {
+          "childWindowCount": 0,
+          "contentViewClass": null,
+          "contentViewControllerClass": null,
+          "contentViewID": null,
+          "delegateID": null,
+          "firstResponderClass": "NSWindow",
+          "firstResponderID": 31,
+          "hasContentViewController": false,
+          "hasDelegate": false,
+          "hasWindowController": false,
+          "inApplicationWindows": true,
+          "key": false,
+          "main": false,
+          "number": 55339,
+          "parentWindowID": null,
+          "releasedWhenClosed": false,
+          "sheetCount": 0,
+          "visible": false,
+          "windowControllerID": null
+        }
+      },
+      {
+        "address": "0x00000076b9f7b700",
+        "alive": true,
+        "firstRetiredCheckpoint": null,
+        "id": 61,
+        "label": "window",
+        "observedUptime": 632564.3019813334,
+        "origin": "cycle=2,pair=uhd-h264-hardware/pq-hevc-hardware",
+        "teardownUptime": 632693.7184031667,
+        "window": {
+          "childWindowCount": 0,
+          "contentViewClass": null,
+          "contentViewControllerClass": null,
+          "contentViewID": null,
+          "delegateID": null,
+          "firstResponderClass": "NSWindow",
+          "firstResponderID": 61,
+          "hasContentViewController": false,
+          "hasDelegate": false,
+          "hasWindowController": false,
+          "inApplicationWindows": true,
+          "key": false,
+          "main": false,
+          "number": 55340,
+          "parentWindowID": null,
+          "releasedWhenClosed": false,
+          "sheetCount": 0,
+          "visible": false,
+          "windowControllerID": null
+        }
+      },
+      {
+        "address": "0x00000076bcb7d180",
+        "alive": true,
+        "firstRetiredCheckpoint": null,
+        "id": 91,
+        "label": "window",
+        "observedUptime": 632693.7201932917,
+        "origin": "cycle=2,pair=pq-hevc-hardware/hlg-hevc-hardware",
+        "teardownUptime": 632823.8870917084,
+        "window": {
+          "childWindowCount": 0,
+          "contentViewClass": null,
+          "contentViewControllerClass": null,
+          "contentViewID": null,
+          "delegateID": null,
+          "firstResponderClass": "NSWindow",
+          "firstResponderID": 91,
+          "hasContentViewController": false,
+          "hasDelegate": false,
+          "hasWindowController": false,
+          "inApplicationWindows": true,
+          "key": false,
+          "main": false,
+          "number": 55343,
+          "parentWindowID": null,
+          "releasedWhenClosed": false,
+          "sheetCount": 0,
+          "visible": false,
+          "windowControllerID": null
+        }
+      }
+    ]
+  },
+  "cycle-3": {
+    "uptime": 633085.6647682501,
+    "aliveByOrigin": {
+      "cycle=1,pair=pq-hevc-hardware/hlg-hevc-hardware": {
+        "window": 1
+      },
+      "cycle=1,pair=uhd-h264-hardware/pq-hevc-hardware": {
+        "window": 1
+      },
+      "cycle=2,pair=pq-hevc-hardware/hlg-hevc-hardware": {
+        "window": 1
+      },
+      "cycle=2,pair=uhd-h264-hardware/pq-hevc-hardware": {
+        "window": 1
+      },
+      "cycle=3,pair=pq-hevc-hardware/hlg-hevc-hardware": {
+        "window": 1
+      },
+      "cycle=3,pair=uhd-h264-hardware/pq-hevc-hardware": {
+        "window": 1
+      }
+    },
+    "newlyRetiredIDs": [],
+    "aliveObjects": [
+      {
+        "address": "0x00000076b9e7d900",
+        "alive": true,
+        "firstRetiredCheckpoint": null,
+        "id": 1,
+        "label": "window",
+        "observedUptime": 632302.7076910834,
+        "origin": "cycle=1,pair=uhd-h264-hardware/pq-hevc-hardware",
+        "teardownUptime": 632433.2466087501,
+        "window": {
+          "childWindowCount": 0,
+          "contentViewClass": null,
+          "contentViewControllerClass": null,
+          "contentViewID": null,
+          "delegateID": null,
+          "firstResponderClass": "NSWindow",
+          "firstResponderID": 1,
+          "hasContentViewController": false,
+          "hasDelegate": false,
+          "hasWindowController": false,
+          "inApplicationWindows": true,
+          "key": false,
+          "main": false,
+          "number": 55308,
+          "parentWindowID": null,
+          "releasedWhenClosed": false,
+          "sheetCount": 0,
+          "visible": false,
+          "windowControllerID": null
+        }
+      },
+      {
+        "address": "0x00000076b9e7f480",
+        "alive": true,
+        "firstRetiredCheckpoint": null,
+        "id": 31,
+        "label": "window",
+        "observedUptime": 632433.2486635001,
+        "origin": "cycle=1,pair=pq-hevc-hardware/hlg-hevc-hardware",
+        "teardownUptime": 632563.2743900834,
+        "window": {
+          "childWindowCount": 0,
+          "contentViewClass": null,
+          "contentViewControllerClass": null,
+          "contentViewID": null,
+          "delegateID": null,
+          "firstResponderClass": "NSWindow",
+          "firstResponderID": 31,
+          "hasContentViewController": false,
+          "hasDelegate": false,
+          "hasWindowController": false,
+          "inApplicationWindows": true,
+          "key": false,
+          "main": false,
+          "number": 55339,
+          "parentWindowID": null,
+          "releasedWhenClosed": false,
+          "sheetCount": 0,
+          "visible": false,
+          "windowControllerID": null
+        }
+      },
+      {
+        "address": "0x00000076b9f7b700",
+        "alive": true,
+        "firstRetiredCheckpoint": null,
+        "id": 61,
+        "label": "window",
+        "observedUptime": 632564.3019813334,
+        "origin": "cycle=2,pair=uhd-h264-hardware/pq-hevc-hardware",
+        "teardownUptime": 632693.7184031667,
+        "window": {
+          "childWindowCount": 0,
+          "contentViewClass": null,
+          "contentViewControllerClass": null,
+          "contentViewID": null,
+          "delegateID": null,
+          "firstResponderClass": "NSWindow",
+          "firstResponderID": 61,
+          "hasContentViewController": false,
+          "hasDelegate": false,
+          "hasWindowController": false,
+          "inApplicationWindows": true,
+          "key": false,
+          "main": false,
+          "number": 55340,
+          "parentWindowID": null,
+          "releasedWhenClosed": false,
+          "sheetCount": 0,
+          "visible": false,
+          "windowControllerID": null
+        }
+      },
+      {
+        "address": "0x00000076bcb7d180",
+        "alive": true,
+        "firstRetiredCheckpoint": null,
+        "id": 91,
+        "label": "window",
+        "observedUptime": 632693.7201932917,
+        "origin": "cycle=2,pair=pq-hevc-hardware/hlg-hevc-hardware",
+        "teardownUptime": 632823.8870917084,
+        "window": {
+          "childWindowCount": 0,
+          "contentViewClass": null,
+          "contentViewControllerClass": null,
+          "contentViewID": null,
+          "delegateID": null,
+          "firstResponderClass": "NSWindow",
+          "firstResponderID": 91,
+          "hasContentViewController": false,
+          "hasDelegate": false,
+          "hasWindowController": false,
+          "inApplicationWindows": true,
+          "key": false,
+          "main": false,
+          "number": 55343,
+          "parentWindowID": null,
+          "releasedWhenClosed": false,
+          "sheetCount": 0,
+          "visible": false,
+          "windowControllerID": null
+        }
+      },
+      {
+        "address": "0x00000076bc460c80",
+        "alive": true,
+        "firstRetiredCheckpoint": null,
+        "id": 121,
+        "label": "window",
+        "observedUptime": 632824.9419510834,
+        "origin": "cycle=3,pair=uhd-h264-hardware/pq-hevc-hardware",
+        "teardownUptime": 632955.0284230834,
+        "window": {
+          "childWindowCount": 0,
+          "contentViewClass": null,
+          "contentViewControllerClass": null,
+          "contentViewID": null,
+          "delegateID": null,
+          "firstResponderClass": "NSWindow",
+          "firstResponderID": 121,
+          "hasContentViewController": false,
+          "hasDelegate": false,
+          "hasWindowController": false,
+          "inApplicationWindows": true,
+          "key": false,
+          "main": false,
+          "number": 55372,
+          "parentWindowID": null,
+          "releasedWhenClosed": false,
+          "sheetCount": 0,
+          "visible": false,
+          "windowControllerID": null
+        }
+      },
+      {
+        "address": "0x00000076bc62db80",
+        "alive": true,
+        "firstRetiredCheckpoint": null,
+        "id": 151,
+        "label": "window",
+        "observedUptime": 632955.0301992917,
+        "origin": "cycle=3,pair=pq-hevc-hardware/hlg-hevc-hardware",
+        "teardownUptime": 633084.6396410834,
+        "window": {
+          "childWindowCount": 0,
+          "contentViewClass": null,
+          "contentViewControllerClass": null,
+          "contentViewID": null,
+          "delegateID": null,
+          "firstResponderClass": "NSWindow",
+          "firstResponderID": 151,
+          "hasContentViewController": false,
+          "hasDelegate": false,
+          "hasWindowController": false,
+          "inApplicationWindows": true,
+          "key": false,
+          "main": false,
+          "number": 55373,
+          "parentWindowID": null,
+          "releasedWhenClosed": false,
+          "sheetCount": 0,
+          "visible": false,
+          "windowControllerID": null
+        }
+      }
+    ]
+  },
+  "final-delayed": {
+    "uptime": 633090.7680555417,
+    "aliveByOrigin": {
+      "cycle=1,pair=pq-hevc-hardware/hlg-hevc-hardware": {
+        "window": 1
+      },
+      "cycle=1,pair=uhd-h264-hardware/pq-hevc-hardware": {
+        "window": 1
+      },
+      "cycle=2,pair=pq-hevc-hardware/hlg-hevc-hardware": {
+        "window": 1
+      },
+      "cycle=2,pair=uhd-h264-hardware/pq-hevc-hardware": {
+        "window": 1
+      },
+      "cycle=3,pair=pq-hevc-hardware/hlg-hevc-hardware": {
+        "window": 1
+      },
+      "cycle=3,pair=uhd-h264-hardware/pq-hevc-hardware": {
+        "window": 1
+      }
+    },
+    "newlyRetiredIDs": [],
+    "aliveObjects": [
+      {
+        "address": "0x00000076b9e7d900",
+        "alive": true,
+        "firstRetiredCheckpoint": null,
+        "id": 1,
+        "label": "window",
+        "observedUptime": 632302.7076910834,
+        "origin": "cycle=1,pair=uhd-h264-hardware/pq-hevc-hardware",
+        "teardownUptime": 632433.2466087501,
+        "window": {
+          "childWindowCount": 0,
+          "contentViewClass": null,
+          "contentViewControllerClass": null,
+          "contentViewID": null,
+          "delegateID": null,
+          "firstResponderClass": "NSWindow",
+          "firstResponderID": 1,
+          "hasContentViewController": false,
+          "hasDelegate": false,
+          "hasWindowController": false,
+          "inApplicationWindows": true,
+          "key": false,
+          "main": false,
+          "number": 55308,
+          "parentWindowID": null,
+          "releasedWhenClosed": false,
+          "sheetCount": 0,
+          "visible": false,
+          "windowControllerID": null
+        }
+      },
+      {
+        "address": "0x00000076b9e7f480",
+        "alive": true,
+        "firstRetiredCheckpoint": null,
+        "id": 31,
+        "label": "window",
+        "observedUptime": 632433.2486635001,
+        "origin": "cycle=1,pair=pq-hevc-hardware/hlg-hevc-hardware",
+        "teardownUptime": 632563.2743900834,
+        "window": {
+          "childWindowCount": 0,
+          "contentViewClass": null,
+          "contentViewControllerClass": null,
+          "contentViewID": null,
+          "delegateID": null,
+          "firstResponderClass": "NSWindow",
+          "firstResponderID": 31,
+          "hasContentViewController": false,
+          "hasDelegate": false,
+          "hasWindowController": false,
+          "inApplicationWindows": true,
+          "key": false,
+          "main": false,
+          "number": 55339,
+          "parentWindowID": null,
+          "releasedWhenClosed": false,
+          "sheetCount": 0,
+          "visible": false,
+          "windowControllerID": null
+        }
+      },
+      {
+        "address": "0x00000076b9f7b700",
+        "alive": true,
+        "firstRetiredCheckpoint": null,
+        "id": 61,
+        "label": "window",
+        "observedUptime": 632564.3019813334,
+        "origin": "cycle=2,pair=uhd-h264-hardware/pq-hevc-hardware",
+        "teardownUptime": 632693.7184031667,
+        "window": {
+          "childWindowCount": 0,
+          "contentViewClass": null,
+          "contentViewControllerClass": null,
+          "contentViewID": null,
+          "delegateID": null,
+          "firstResponderClass": "NSWindow",
+          "firstResponderID": 61,
+          "hasContentViewController": false,
+          "hasDelegate": false,
+          "hasWindowController": false,
+          "inApplicationWindows": true,
+          "key": false,
+          "main": false,
+          "number": 55340,
+          "parentWindowID": null,
+          "releasedWhenClosed": false,
+          "sheetCount": 0,
+          "visible": false,
+          "windowControllerID": null
+        }
+      },
+      {
+        "address": "0x00000076bcb7d180",
+        "alive": true,
+        "firstRetiredCheckpoint": null,
+        "id": 91,
+        "label": "window",
+        "observedUptime": 632693.7201932917,
+        "origin": "cycle=2,pair=pq-hevc-hardware/hlg-hevc-hardware",
+        "teardownUptime": 632823.8870917084,
+        "window": {
+          "childWindowCount": 0,
+          "contentViewClass": null,
+          "contentViewControllerClass": null,
+          "contentViewID": null,
+          "delegateID": null,
+          "firstResponderClass": "NSWindow",
+          "firstResponderID": 91,
+          "hasContentViewController": false,
+          "hasDelegate": false,
+          "hasWindowController": false,
+          "inApplicationWindows": true,
+          "key": false,
+          "main": false,
+          "number": 55343,
+          "parentWindowID": null,
+          "releasedWhenClosed": false,
+          "sheetCount": 0,
+          "visible": false,
+          "windowControllerID": null
+        }
+      },
+      {
+        "address": "0x00000076bc460c80",
+        "alive": true,
+        "firstRetiredCheckpoint": null,
+        "id": 121,
+        "label": "window",
+        "observedUptime": 632824.9419510834,
+        "origin": "cycle=3,pair=uhd-h264-hardware/pq-hevc-hardware",
+        "teardownUptime": 632955.0284230834,
+        "window": {
+          "childWindowCount": 0,
+          "contentViewClass": null,
+          "contentViewControllerClass": null,
+          "contentViewID": null,
+          "delegateID": null,
+          "firstResponderClass": "NSWindow",
+          "firstResponderID": 121,
+          "hasContentViewController": false,
+          "hasDelegate": false,
+          "hasWindowController": false,
+          "inApplicationWindows": true,
+          "key": false,
+          "main": false,
+          "number": 55372,
+          "parentWindowID": null,
+          "releasedWhenClosed": false,
+          "sheetCount": 0,
+          "visible": false,
+          "windowControllerID": null
+        }
+      },
+      {
+        "address": "0x00000076bc62db80",
+        "alive": true,
+        "firstRetiredCheckpoint": null,
+        "id": 151,
+        "label": "window",
+        "observedUptime": 632955.0301992917,
+        "origin": "cycle=3,pair=pq-hevc-hardware/hlg-hevc-hardware",
+        "teardownUptime": 633084.6396410834,
+        "window": {
+          "childWindowCount": 0,
+          "contentViewClass": null,
+          "contentViewControllerClass": null,
+          "contentViewID": null,
+          "delegateID": null,
+          "firstResponderClass": "NSWindow",
+          "firstResponderID": 151,
+          "hasContentViewController": false,
+          "hasDelegate": false,
+          "hasWindowController": false,
+          "inApplicationWindows": true,
+          "key": false,
+          "main": false,
+          "number": 55373,
+          "parentWindowID": null,
+          "releasedWhenClosed": false,
+          "sheetCount": 0,
+          "visible": false,
+          "windowControllerID": null
+        }
+      }
+    ]
+  },
+  "post-test-entry": {
+    "uptime": 633090.9381502917,
+    "aliveByOrigin": {},
+    "newlyRetiredIDs": [
+      1,
+      31,
+      61,
+      91,
+      121,
+      151
+    ],
+    "aliveObjects": []
+  },
+  "post-test-delayed": {
+    "uptime": 633095.9882632501,
+    "aliveByOrigin": {},
+    "newlyRetiredIDs": [],
+    "aliveObjects": []
+  }
+}

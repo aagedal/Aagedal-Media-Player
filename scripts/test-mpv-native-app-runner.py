@@ -19,20 +19,25 @@ runner = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(runner)
 
 
-def write_memory_diagnostics(directory, cycles=3):
+def write_memory_diagnostics(directory, cycles=3, post_test=False):
     directory.mkdir(exist_ok=True)
-    for index, checkpoint in enumerate([f'cycle-{n}' for n in range(cycles + 1)] + ['final-delayed']):
+    checkpoints = [f'cycle-{n}' for n in range(cycles + 1)] + ['final-delayed']
+    if post_test:
+        checkpoints += ['post-test-entry', 'post-test-delayed']
+    for index, checkpoint in enumerate(checkpoints):
         cycle = min(index, cycles)
-        delayed = checkpoint == 'final-delayed'
+        delayed = not checkpoint.startswith('cycle-')
         objects = [{'id': n, 'label': 'host', 'origin': f'cycle={n},pair=A/B',
-                    'alive': False, 'observedUptime': n * 10.0 - 2,
+                    'address': f'0x{n:016x}', 'alive': False, 'observedUptime': n * 10.0 - 2,
                     'teardownUptime': n * 10.0 - 1, 'firstRetiredCheckpoint': f'cycle-{n}'}
                    for n in range(1, cycle + 1)]
         (directory / f'{checkpoint}.json').write_text(json.dumps({
             'schemaVersion': 2, 'checkpoint': checkpoint, 'cycle': cycle, 'pid': 123,
-            'uptime': cycle * 10.0 + (5 if delayed else 0), 'physicalFootprintBytes': 10,
+            'uptime': cycle * 10.0 + max(0, index - cycles) * 5, 'physicalFootprintBytes': 10,
             'gatePhysicalFootprintBytes': 10 if cycle and not delayed else None,
-            'objects': objects,
+            'objects': objects, 'sourceTestFinishedUptime': cycles * 10.0 + 5 if checkpoint.startswith('post-test-') else None,
+            'sourceTestFinished': checkpoint.startswith('post-test-'),
+            'observationKind': 'subsequent-test-scalar-only' if checkpoint.startswith('post-test-') else 'in-workload-relationships',
             'retirement': {'host': {'observed': cycle, 'alive': 0}} if cycle else {}}))
 
 
@@ -63,7 +68,7 @@ class RunnerTests(unittest.TestCase):
                 'LIVE_LOUPE_COMPARISON_ACTIVE_SCOPES', 'LIVE_LOUPE_COMPARISON_SCOPE_RESOLUTION',
                 'LIVE_LOUPE_COMPARISON_SCOPE_FPS', 'LIVE_LOUPE_COMPARISON_SCOPE_PROVENANCE',
                 'LIVE_LOUPE_SCOPE_PROVENANCE_CASES', 'LIVE_LOUPE_COMPARISON_VERIFY_DIFFERENCE_PIXELS',
-                'LIVE_LOUPE_COMPARISON_MEMORY_DIAGNOSTICS',
+                'LIVE_LOUPE_COMPARISON_MEMORY_DIAGNOSTICS', 'LIVE_LOUPE_COMPARISON_POST_TEST_RETIREMENT',
                 'LIVE_LOUPE_SOAK_CASES', 'LIVE_LOUPE_SOAK_SECONDS', 'LIVE_LOUPE_SOAK_CYCLES',
             ), 'inherited')
             workload_keys = set(inherited)
@@ -92,7 +97,7 @@ class RunnerTests(unittest.TestCase):
                     if '--memory-diagnostics' in options:
                         directory = root / 'output' / 'memory-diagnostics'
                         cycles = int(observed['environment']['LIVE_LOUPE_COMPARISON_SOAK_CYCLES'])
-                        write_memory_diagnostics(directory, cycles)
+                        write_memory_diagnostics(directory, cycles, post_test='--post-test-retirement' in options)
                     return subprocess.CompletedProcess(command, failure)
                 return subprocess.CompletedProcess(command, 0, stdout=marker, stderr='')
 
@@ -323,6 +328,53 @@ class RunnerTests(unittest.TestCase):
             with self.assertRaisesRegex(SystemExit, 'acceptance failed'):
                 self.run_fixture(options + ['--memory-diagnostics'], marker, failure=65, legacy=legacy)
 
+    def test_post_test_retirement_is_explicit_and_requires_matching_marker(self):
+        marker = 'MPV_LIVE_LOUPE_COMPARISON_SOAK_ACCEPTANCE: 3 cycles, 2 pairs, 3 modes, 10 seconds per mode,'
+        receipt = 'MPV_COMPARISON_POST_TEST_RETIREMENT: same-process subsequent test, scalar-only, 5 second delay'
+        options = ['--comparison', '--soak-seconds', '10', '--memory-diagnostics']
+        for legacy in (False, True):
+            ordinary = self.run_fixture(options, marker, legacy=legacy)
+            self.assertNotIn('LIVE_LOUPE_COMPARISON_POST_TEST_RETIREMENT', ordinary['environment'])
+            observed = self.run_fixture(options + ['--post-test-retirement'], marker + '\n' + receipt, legacy=legacy)
+            self.assertEqual(observed['environment']['LIVE_LOUPE_COMPARISON_POST_TEST_RETIREMENT'], '1')
+            self.assertIn('-only-testing:Aagedal Media Player Tests/LiveLoupeSessionTests/testZZComparisonPostTestRetirement', observed['command'])
+            with self.assertRaisesRegex(SystemExit, 'marker missing'):
+                self.run_fixture(options + ['--post-test-retirement'], marker, legacy=legacy)
+            with self.assertRaisesRegex(SystemExit, 'acceptance failed'):
+                self.run_fixture(options + ['--post-test-retirement'], marker + '\n' + receipt, failure=65, legacy=legacy)
+
+    def test_post_test_observations_require_completion_identity_and_delay(self):
+        cases = [
+            ('post-test-entry', lambda s: s.update(sourceTestFinished=False)),
+            ('post-test-entry', lambda s: s.update(observationKind='in-workload-relationships')),
+            ('post-test-entry', lambda s: s.update(pid=456)),
+            ('post-test-entry', lambda s: s.update(sourceTestFinishedUptime=34.99)),
+            ('post-test-entry', lambda s: s.update(sourceTestFinishedUptime=41)),
+            ('post-test-delayed', lambda s: s.update(sourceTestFinishedUptime=36)),
+            ('post-test-entry', lambda s: s['objects'][0].update(address='0xbeef')),
+            ('post-test-entry', lambda s: s['objects'][0].pop('address')),
+            ('post-test-entry', lambda s: s.update(gatePhysicalFootprintBytes=10)),
+            ('post-test-entry', lambda s: s['objects'][0].update(window={})),
+            ('post-test-entry', lambda s: s['objects'][0].update(origin='cycle=1,pair=C/D')),
+            ('post-test-delayed', lambda s: s.update(uptime=44.99)),
+            ('post-test-delayed', lambda s: s['objects'].pop(0)),
+        ]
+        for checkpoint, mutate in cases:
+            with self.subTest(checkpoint=checkpoint), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                write_memory_diagnostics(root, post_test=True)
+                runner.validate_memory_diagnostics(root, 3, post_test=True)
+                file = root / f'{checkpoint}.json'
+                sample = json.loads(file.read_text()); mutate(sample)
+                file.write_text(json.dumps(sample))
+                with self.assertRaisesRegex(SystemExit, 'invalid'):
+                    runner.validate_memory_diagnostics(root, 3, post_test=True)
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            write_memory_diagnostics(root)
+            with self.assertRaisesRegex(SystemExit, 'incomplete'):
+                runner.validate_memory_diagnostics(root, 3, post_test=True)
+
     def test_memory_diagnostics_require_all_gate_and_delayed_checkpoints(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -358,7 +410,7 @@ class RunnerTests(unittest.TestCase):
             file = root / 'final-delayed.json'
             sample = json.loads(file.read_text())
             sample['objects'].append({
-                'id': 4, 'label': 'scopeWorker', 'origin': 'cycle=3,pair=A/B',
+                'id': 4, 'address': '0x4', 'label': 'scopeWorker', 'origin': 'cycle=3,pair=A/B',
                 'alive': True, 'observedUptime': 34.0, 'teardownUptime': 29.0,
                 'firstRetiredCheckpoint': None})
             sample['retirement']['scopeWorker'] = {'observed': 1, 'alive': 1}
@@ -404,7 +456,7 @@ class RunnerTests(unittest.TestCase):
                     runner.validate_memory_diagnostics(root, 3)
 
     def test_invalid_soak_arguments_fail_before_reading_inputs(self):
-        for options in (['--memory-diagnostics'], ['--comparison', '--memory-diagnostics'],
+        for options in (['--post-test-retirement'], ['--comparison', '--soak-seconds', '10', '--post-test-retirement'], ['--memory-diagnostics'], ['--comparison', '--memory-diagnostics'],
                         ['--live-viewer', '--soak-seconds', '10', '--memory-diagnostics'],
                         ['--scope-provenance'], ['--comparison', '--scope-provenance'],
                         ['--comparison', '--soak-seconds', '10', '--scope-provenance'],
