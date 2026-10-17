@@ -1,0 +1,25 @@
+{
+  "loupeWindows": 344,
+  "scopeWindows": 172,
+  "sampledDifferencePublications": 54,
+  "resumedDifferencePublications": 6,
+  "pixelsPerSample": 1166400,
+  "minimumLoupePresentationsPerSecond": 58.761876859703875,
+  "maximumFollowerDriftSeconds": 0.08333333333333331,
+  "usableClockSamples": 10318,
+  "totalClockSamples": 10320,
+  "minimumMeasuredSecondsPerSelection": 10.094176625018008,
+  "measuredSelections": 54,
+  "cycleEndFootprintBytes": [
+    1048055072,
+    1064783208,
+    1169591848
+  ],
+  "maximumCycleEndGrowthBytes": 121536776,
+  "scopeConfiguration": {
+    "resolution": 1440,
+    "targetFPS": 30,
+    "secondsPerSelection": 10,
+    "cycles": 3
+  }
+}

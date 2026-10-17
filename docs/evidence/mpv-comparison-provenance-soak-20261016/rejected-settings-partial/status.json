@@ -1,0 +1,6 @@
+{
+  "result": "stopped invalid workload",
+  "reason": "requested1440/30 but actual native plots720x405",
+  "scopeSettingAssertionsFailed": true,
+  "taskOwnedAppTerminated": 63657
+}

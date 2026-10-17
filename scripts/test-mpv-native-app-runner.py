@@ -27,6 +27,8 @@ class RunnerTests(unittest.TestCase):
                       'EnvironmentVariables': {'PRESERVE': 'yes', 'LIVE_LOUPE_SOAK_SECONDS': '999',
                                                'LIVE_LOUPE_SOAK_CYCLES': '99', 'LIVE_LOUPE_SOAK_CASES': 'old',
                                                'LIVE_LOUPE_COMPARISON_CASES': 'old',
+                                               'LIVE_LOUPE_SCOPE_PROVENANCE_CASES': 'old',
+                                               'LIVE_LOUPE_COMPARISON_VERIFY_DIFFERENCE_PIXELS': '1',
                                                'LIVE_LOUPE_COMPARISON_SOAK_SECONDS': '999',
                                                'LIVE_LOUPE_COMPARISON_SOAK_CYCLES': '99',
                                                'LIVE_LOUPE_COMPARISON_ACTIVE_SCOPES': '1',
@@ -43,7 +45,7 @@ class RunnerTests(unittest.TestCase):
                 'LIVE_LOUPE_COMPARISON_SOAK_SECONDS', 'LIVE_LOUPE_COMPARISON_SOAK_CYCLES',
                 'LIVE_LOUPE_COMPARISON_ACTIVE_SCOPES', 'LIVE_LOUPE_COMPARISON_SCOPE_RESOLUTION',
                 'LIVE_LOUPE_COMPARISON_SCOPE_FPS', 'LIVE_LOUPE_COMPARISON_SCOPE_PROVENANCE',
-                'LIVE_LOUPE_SCOPE_PROVENANCE_CASES',
+                'LIVE_LOUPE_SCOPE_PROVENANCE_CASES', 'LIVE_LOUPE_COMPARISON_VERIFY_DIFFERENCE_PIXELS',
                 'LIVE_LOUPE_SOAK_CASES', 'LIVE_LOUPE_SOAK_SECONDS', 'LIVE_LOUPE_SOAK_CYCLES',
             ), 'inherited')
             workload_keys = set(inherited)
@@ -56,13 +58,14 @@ class RunnerTests(unittest.TestCase):
             manifest = root / 'fixtures.json'
             manifest.write_text('{}')
             observed = {'process_environments': []}
-            inherited.update({'PRESERVE_PROCESS': 'yes', 'PATH': '/usr/bin:/bin',
+            inherited.update({'PRESERVE_PROCESS': 'yes', 'PRESERVE_TEST': 'yes', 'PATH': '/usr/bin:/bin',
                               'AAGEDAL_SCOPE_BACKEND': 'screenshot'})
 
             def run(command, **kwargs):
                 observed['process_environments'].append(kwargs.get('env'))
                 if command[0] == 'xcodebuild':
                     observed['command'] = command
+                    observed['process_environment'] = kwargs['env']
                     copied = plistlib.loads(Path(command[command.index('-xctestrun') + 1]).read_bytes())
                     copied_target = copied['Tests'] if legacy else copied['TestConfigurations'][0]['TestTargets'][0]
                     observed['environment'] = copied_target['EnvironmentVariables']
@@ -199,6 +202,53 @@ class RunnerTests(unittest.TestCase):
                         with self.assertRaisesRegex(SystemExit, 'acceptance failed'):
                             self.run_fixture(options, comparison + '\n' + receipt, legacy=legacy)
 
+    def test_provenance_soak_requires_three_exact_receipts(self):
+        options = ['--comparison', '--active-scopes', '--verify-difference-pixels',
+                   '--soak-seconds', '10', '--scope-resolution', '1440', '--scope-fps', '30']
+        comparison = 'MPV_LIVE_LOUPE_COMPARISON_SOAK_ACCEPTANCE: 3 cycles, 2 pairs, 3 modes, 10 seconds per mode,'
+        scopes = ('MPV_COMPARISON_ACTIVE_SCOPES_ACCEPTANCE: 3 cycles, 2 pairs, 3 modes, '
+                  '3 scope sources, 10 seconds per selection, resolution=1440, targetFPS=30')
+        provenance = ('MPV_COMPARISON_SCOPE_PROVENANCE_SOAK_ACCEPTANCE: 3 cycles, 2 pairs, 3 modes, '
+                      '10 seconds per selection, resolution=1440, targetFPS=30, '
+                      'exact difference pixels and occupied bins, capture retirement and resume')
+        for legacy in (False, True):
+            with self.subTest(legacy=legacy):
+                observed = self.run_fixture(options, '\n'.join([comparison, scopes, provenance]), legacy=legacy)
+                environment = observed['environment']
+                self.assertEqual(environment['LIVE_LOUPE_COMPARISON_VERIFY_DIFFERENCE_PIXELS'], '1')
+                self.assertNotIn('LIVE_LOUPE_SCOPE_PROVENANCE_CASES', environment)
+                for receipt in ('\n'.join([comparison, scopes]), '\n'.join([comparison, provenance]),
+                                '\n'.join([scopes, provenance]),
+                                '\n'.join([comparison, scopes, provenance.replace('3 cycles', '4 cycles')]),
+                                '\n'.join([comparison, scopes, provenance.replace('10 seconds', '20 seconds')]),
+                                '\n'.join([comparison, scopes, provenance.replace('resolution=1440', 'resolution=720')]),
+                                '\n'.join([comparison, scopes, provenance.replace('targetFPS=30', 'targetFPS=15')]),
+                                '\n'.join([comparison, scopes, provenance + 'garbage'])):
+                    with self.assertRaisesRegex(SystemExit, 'acceptance failed'):
+                        self.run_fixture(options, receipt, legacy=legacy)
+                with self.assertRaisesRegex(SystemExit, 'acceptance failed'):
+                    self.run_fixture(options, '\n'.join([comparison, scopes, provenance]), failure=65, legacy=legacy)
+
+    def test_all_modes_clear_inherited_provenance_workloads(self):
+        comparison = 'MPV_LIVE_LOUPE_COMPARISON_SOAK_ACCEPTANCE: 3 cycles, 2 pairs, 3 modes, 10 seconds per mode,'
+        scopes = ('MPV_COMPARISON_ACTIVE_SCOPES_ACCEPTANCE: 3 cycles, 2 pairs, 3 modes, '
+                  '3 scope sources, 10 seconds per selection, resolution=720, targetFPS=15')
+        for options, marker in [([], 'MPV_EXTENDED_NATIVE_APP_ACCEPTANCE: 20 cases'),
+                                (['--comparison'], 'MPV_LIVE_LOUPE_COMPARISON_ACCEPTANCE: 2 pairs, 3 modes, paused seek and reopen'),
+                                (['--comparison', '--soak-seconds', '10', '--active-scopes'], comparison + '\n' + scopes)]:
+            for legacy in (False, True):
+                with self.subTest(options=options, legacy=legacy), patch.dict(os.environ, {
+                    'LIVE_LOUPE_COMPARISON_VERIFY_DIFFERENCE_PIXELS': '1',
+                    'LIVE_LOUPE_SCOPE_PROVENANCE_CASES': 'old',
+                    'AAGEDAL_SCOPE_BACKEND': 'screenshot', 'PRESERVE_TEST': 'yes'}):
+                    observed = self.run_fixture(options, marker, legacy=legacy)
+                    for key in ('LIVE_LOUPE_COMPARISON_VERIFY_DIFFERENCE_PIXELS', 'LIVE_LOUPE_SCOPE_PROVENANCE_CASES'):
+                        self.assertNotIn(key, observed['environment'])
+                        self.assertNotIn(key, observed['process_environment'])
+                    self.assertEqual(observed['process_environment']['PRESERVE_TEST'], 'yes')
+                    if '--active-scopes' in options:
+                        self.assertNotIn('AAGEDAL_SCOPE_BACKEND', observed['process_environment'])
+
     def test_provenance_requires_all_exact_receipts_in_both_configuration_formats(self):
         options = ['--comparison', '--soak-seconds', '20', '--soak-cycles', '4',
                    '--active-scopes', '--scope-provenance', '--scope-resolution', '1440', '--scope-fps', '30']
@@ -206,7 +256,8 @@ class RunnerTests(unittest.TestCase):
         scopes = ('MPV_COMPARISON_ACTIVE_SCOPES_ACCEPTANCE: 4 cycles, 2 pairs, 3 modes, '
                   '3 scope sources, 20 seconds per selection, resolution=1440, targetFPS=30')
         provenance = ('MPV_COMPARISON_SCOPE_PROVENANCE_SOAK_ACCEPTANCE: 4 cycles, 2 pairs, 3 modes, '
-                      '20 seconds per selection, resolution=1440, targetFPS=30')
+                      '20 seconds per selection, resolution=1440, targetFPS=30, '
+                      'exact difference pixels and occupied bins, capture retirement and resume')
         for legacy in (False, True):
             with self.subTest(legacy=legacy):
                 observed = self.run_fixture(options, '\n'.join((comparison, scopes, provenance)), legacy=legacy)
@@ -241,9 +292,10 @@ class RunnerTests(unittest.TestCase):
     def test_invalid_soak_arguments_fail_before_reading_inputs(self):
         for options in (['--scope-provenance'], ['--comparison', '--scope-provenance'],
                         ['--comparison', '--soak-seconds', '10', '--scope-provenance'],
-                        ['--active-scopes', '--scope-provenance'],
-                        ['--comparison', '--active-scopes', '--scope-provenance'],
-                        ['--live-viewer', '--soak-seconds', '10', '--active-scopes', '--scope-provenance'],
+                        ['--verify-difference-pixels'],
+                        ['--comparison', '--verify-difference-pixels'],
+                        ['--comparison', '--soak-seconds', '10', '--verify-difference-pixels'],
+                        ['--live-viewer', '--soak-seconds', '10', '--verify-difference-pixels'],
                         ['--scope-resolution', '1440'], ['--scope-fps', '30'],
                         ['--comparison', '--soak-seconds', '10', '--active-scopes', '--scope-resolution', '64'],
                         ['--comparison', '--soak-seconds', '10', '--active-scopes', '--scope-fps', '31'],

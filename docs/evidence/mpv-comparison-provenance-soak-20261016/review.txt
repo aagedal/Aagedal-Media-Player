@@ -1,0 +1,21 @@
+Independent read-only review of the sustained provenance integration found no blockers.
+Verified detached nonisolated scalar oracle, accumulated measured-window duration,
+fresh publication generation, bounded snapshot retention, flag bounds, inherited
+environment cleanup and all three exact acceptance receipts. Reviewer ran all
+12 runner regressions successfully. The noted post-await publication-count
+logging issue was corrected by snapshotting counts before awaiting the oracle.
+Hosted arm64 execution is recorded separately in the retained results.
+
+Evidence-retention review confirmed xcresult aggregate output duplication. The
+retainer selects exactly one named sustained-test leaf and independently requires
+the three exact settings receipts, all expected cycle/pair/mode/selection keys,
+matching per-window scope/loupe/pixel identities and fresh resume per cycle/pair.
+
+Additional reviews confirmed fixed bin masks preserve every missing/extra-bin
+check, explicit autorelease pools bound bridge temporaries, and process-local
+argument-domain scope settings preserve unrelated test values and restore the
+exact previous domain. No production leak or new drift cause was established.
+
+Final evidence review found no factual or association blockers: README, handoff
+and follow-up plan match statistics and successful summaries; rejected runs and
+repeatability limitations remain explicit. No workload was rerun by the reviewer.

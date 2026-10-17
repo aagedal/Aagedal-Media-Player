@@ -26,7 +26,7 @@ WORKLOAD_ENVIRONMENT_KEYS = (
     'LIVE_LOUPE_COMPARISON_SOAK_SECONDS', 'LIVE_LOUPE_COMPARISON_SOAK_CYCLES',
     'LIVE_LOUPE_COMPARISON_ACTIVE_SCOPES', 'LIVE_LOUPE_COMPARISON_SCOPE_RESOLUTION',
     'LIVE_LOUPE_COMPARISON_SCOPE_FPS', 'LIVE_LOUPE_COMPARISON_SCOPE_PROVENANCE',
-    'LIVE_LOUPE_SCOPE_PROVENANCE_CASES',
+    'LIVE_LOUPE_SCOPE_PROVENANCE_CASES', 'LIVE_LOUPE_COMPARISON_VERIFY_DIFFERENCE_PIXELS',
     'LIVE_LOUPE_SOAK_CASES', 'LIVE_LOUPE_SOAK_SECONDS', 'LIVE_LOUPE_SOAK_CYCLES',
 )
 
@@ -43,15 +43,15 @@ def main():
     parser.add_argument('--soak-cycles', type=int, help='with --soak-seconds: 3–100 cycles (default 3)')
     parser.add_argument('--comparison', action='store_true', help='validate different-file UHD60 comparison canvas and paired loupes')
     parser.add_argument('--active-scopes', action='store_true', help='with sustained --comparison: mount production scopes and measure A/B/difference at selected resolution/update rate')
-    parser.add_argument('--scope-provenance', action='store_true',
-                        help='with --active-scopes: verify completed difference-scope publication provenance')
     parser.add_argument('--scope-resolution', type=int, choices=[360, 720, 1080, 1440],
                         help='with --active-scopes: production resolution (default 720)')
     parser.add_argument('--scope-fps', type=int, choices=range(5, 31), metavar='5–30',
                         help='with --active-scopes: production update rate (default 15)')
+    parser.add_argument('--verify-difference-pixels', '--scope-provenance', action='store_true',
+                        help='with --active-scopes: independently verify one completed difference publication per window and fresh capture resume')
     args = parser.parse_args()
-    if args.scope_provenance and not args.active_scopes:
-        parser.error('--scope-provenance requires --active-scopes')
+    if args.verify_difference_pixels and not args.active_scopes:
+        parser.error('--verify-difference-pixels requires --active-scopes')
     if (args.scope_resolution is not None or args.scope_fps is not None) and not args.active_scopes:
         parser.error('--scope-resolution and --scope-fps require --active-scopes')
     args.scope_resolution = args.scope_resolution if args.scope_resolution is not None else 720
@@ -88,8 +88,9 @@ def main():
         process_environment.pop(key, None)
     environment['AAGEDAL_MPV_DECODER_RASTER_CANDIDATE'] = '1'
     environment['MPV_DECODER_RASTER_CASES'] = str(args.manifest.resolve(strict=True))
-    if args.scope_provenance:
+    if args.verify_difference_pixels:
         environment['LIVE_LOUPE_COMPARISON_SCOPE_PROVENANCE'] = '1'
+        environment['LIVE_LOUPE_COMPARISON_VERIFY_DIFFERENCE_PIXELS'] = '1'
     if args.active_scopes:
         environment['LIVE_LOUPE_COMPARISON_ACTIVE_SCOPES'] = '1'
         environment['LIVE_LOUPE_COMPARISON_SCOPE_RESOLUTION'] = str(args.scope_resolution)
@@ -113,6 +114,7 @@ def main():
     if args.stress_cycles is not None:
         environment['MPV_DECODER_RASTER_STRESS_CYCLES'] = str(args.stress_cycles)
     args.output.mkdir(parents=True, exist_ok=False)
+    (args.output / 'executed-configuration.plist').write_bytes(plistlib.dumps(configuration))
     with tempfile.NamedTemporaryFile(suffix='.xctestrun', dir=args.xctestrun.resolve().parent) as file:
         file.write(plistlib.dumps(configuration))
         file.flush()
@@ -126,7 +128,6 @@ def main():
                    '-parallel-testing-enabled', 'NO',
                    '-only-testing:Aagedal Media Player Tests/' + test,
                    '-resultBundlePath', str(args.output.resolve() / 'tests.xcresult')]
-        (args.output / 'executed-configuration.plist').write_bytes(plistlib.dumps(configuration))
         (args.output / 'command.json').write_text(json.dumps(command, indent=2) + '\n')
         with (args.output / 'xcodebuild.log').open('w') as log:
             result = subprocess.run(command, stdout=log, stderr=subprocess.STDOUT,
@@ -146,11 +147,13 @@ def main():
     combined = (args.output / 'xcodebuild.log').read_text() + action.stdout
     scope_marker = (f'MPV_COMPARISON_ACTIVE_SCOPES_ACCEPTANCE: {args.soak_cycles} cycles, 2 pairs, 3 modes, 3 scope sources, {args.soak_seconds} seconds per selection, resolution={args.scope_resolution}, targetFPS={args.scope_fps}')
     scope_receipt_matches = re.search(re.escape(scope_marker) + r'(?=$|[\s"\\])', combined)
-    provenance_marker = (f'MPV_COMPARISON_SCOPE_PROVENANCE_SOAK_ACCEPTANCE: {args.soak_cycles} cycles, 2 pairs, 3 modes, {args.soak_seconds} seconds per selection, resolution={args.scope_resolution}, targetFPS={args.scope_fps}')
+    provenance_marker = (f'MPV_COMPARISON_SCOPE_PROVENANCE_SOAK_ACCEPTANCE: {args.soak_cycles} cycles, 2 pairs, 3 modes, '
+                         f'{args.soak_seconds} seconds per selection, resolution={args.scope_resolution}, targetFPS={args.scope_fps}, '
+                         'exact difference pixels and occupied bins, capture retirement and resume')
     provenance_receipt_matches = re.search(re.escape(provenance_marker) + r'(?=$|[\s"\\])', combined)
     if (result.returncode or action.returncode or marker not in combined
             or (args.active_scopes and not scope_receipt_matches)
-            or (args.scope_provenance and not provenance_receipt_matches)):
+            or (args.verify_difference_pixels and not provenance_receipt_matches)):
         raise SystemExit('Native app acceptance failed or required marker missing; see ' + str(args.output))
     print('Native app acceptance passed; logs and xcresult:', args.output.resolve())
 

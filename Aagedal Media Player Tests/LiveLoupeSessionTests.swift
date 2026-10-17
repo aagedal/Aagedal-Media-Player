@@ -329,10 +329,12 @@ final class LiveLoupeSessionTests: XCTestCase {
             return XCTFail("Comparison soak requires 10–3600 seconds per mode and 3–100 cycles")
         }
         let activeScopes = environment["LIVE_LOUPE_COMPARISON_ACTIVE_SCOPES"] == "1"
-        let verifyDifferencePixels = environment["LIVE_LOUPE_COMPARISON_SCOPE_PROVENANCE"] == "1"
-        guard !verifyDifferencePixels || activeScopes else {
-            return XCTFail("Sustained difference provenance requires active comparison scopes")
+        let verification = environment["LIVE_LOUPE_COMPARISON_VERIFY_DIFFERENCE_PIXELS"]
+            ?? environment["LIVE_LOUPE_COMPARISON_SCOPE_PROVENANCE"]
+        guard verification == nil || verification == "1", verification == nil || activeScopes else {
+            return XCTFail("Difference pixel verification requires active scopes and an explicit value of 1")
         }
+        let verifyDifferencePixels = verification == "1"
         let scopeResolution = environment["LIVE_LOUPE_COMPARISON_SCOPE_RESOLUTION"].flatMap(Int.init) ?? 720
         let scopeFPS = environment["LIVE_LOUPE_COMPARISON_SCOPE_FPS"].flatMap(Int.init) ?? 15
         if activeScopes {
@@ -360,7 +362,7 @@ final class LiveLoupeSessionTests: XCTestCase {
             print("MPV_COMPARISON_ACTIVE_SCOPES_ACCEPTANCE: \(cycles) cycles, 2 pairs, 3 modes, 3 scope sources, \(seconds) seconds per selection, resolution=\(scopeResolution), targetFPS=\(scopeFPS)")
         }
         if verifyDifferencePixels {
-            print("MPV_COMPARISON_SCOPE_PROVENANCE_SOAK_ACCEPTANCE: \(cycles) cycles, 2 pairs, 3 modes, \(seconds) seconds per selection, resolution=\(scopeResolution), targetFPS=\(scopeFPS)")
+            print("MPV_COMPARISON_SCOPE_PROVENANCE_SOAK_ACCEPTANCE: \(cycles) cycles, 2 pairs, 3 modes, \(seconds) seconds per selection, resolution=\(scopeResolution), targetFPS=\(scopeFPS), exact difference pixels and occupied bins, capture retirement and resume")
         }
         print("MPV_LIVE_LOUPE_COMPARISON_SOAK_ACCEPTANCE: \(cycles) cycles, 2 pairs, 3 modes, \(seconds) seconds per mode, baselineBytes=\(footprints[0]), maximumCycleEndBytes=\(footprints.max()!), growthLimitBytes=268435456")
     }
@@ -476,7 +478,7 @@ final class LiveLoupeSessionTests: XCTestCase {
         }
     }
 
-    private func verifyDifferencePublication(_ publication: ScopeRenderPublication) throws {
+    nonisolated private static func verifyDifferencePublication(_ publication: ScopeRenderPublication) throws {
         XCTAssertEqual(publication.source, .difference)
         let a = try XCTUnwrap(publication.primary.sdrFrame)
         let b = try XCTUnwrap(publication.secondary?.sdrFrame)
@@ -515,7 +517,10 @@ final class LiveLoupeSessionTests: XCTestCase {
         // Independent occupied-bin oracle. No production difference or scope
         // computation is invoked; trace color/intensity has separate unit tests.
         let pixels = try normalized(difference)
-        var waveBins = Set<Int>(), vectorBins = Set<Int>()
+        // Fixed-size masks keep the independent oracle's temporary storage
+        // proportional to output pixels, without growing hash tables/index lists.
+        var waveBins = [UInt8](repeating: 0, count: waveform.width * waveform.height)
+        var vectorBins = [UInt8](repeating: 0, count: vector.width * vector.height)
         let halfW = Float(vector.width) / 2, halfH = Float(vector.height) / 2
         let scale = min(halfW, halfH) * 0.9
         for y in 0..<difference.height {
@@ -527,25 +532,26 @@ final class LiveLoupeSessionTests: XCTestCase {
                 let luma = 0.2126 * red + 0.7152 * green + 0.0722 * blue
                 let column = min(x * waveform.width / difference.width, waveform.width - 1)
                 let row = waveform.height - 1 - min(Int(luma * Float(waveform.height - 1)), waveform.height - 1)
-                waveBins.insert(row * waveform.width + column)
+                waveBins[row * waveform.width + column] = 1
                 let cb = -0.1146 * red - 0.3854 * green + 0.5 * blue
                 let cr = 0.5 * red - 0.4542 * green - 0.0458 * blue
                 let vx = Int(halfW + cb * scale * 2), vy = Int(halfH - cr * scale * 2)
                 if (0..<vector.width).contains(vx), (0..<vector.height).contains(vy) {
-                    vectorBins.insert(vy * vector.width + vx)
+                    vectorBins[vy * vector.width + vx] = 1
                 }
             }
         }
-        func occupiedBins(_ image: CGImage) throws -> Set<Int> {
-            let bytes = [UInt8](try XCTUnwrap(image.dataProvider?.data) as Data)
+        func verifyOccupiedBins(_ image: CGImage, expected: [UInt8]) throws {
+            let bytes = try XCTUnwrap(image.dataProvider?.data) as Data
             guard bytes.count >= image.width * image.height * 4 else {
-                XCTFail("Scope image provider is shorter than its pixel dimensions")
-                return []
+                return XCTFail("Scope image provider is shorter than its pixel dimensions")
             }
-            return Set((0..<(image.width * image.height)).filter { bytes[$0 * 4 + 3] != 0 })
+            XCTAssertTrue(expected.indices.allSatisfy {
+                (bytes[$0 * 4 + 3] != 0) == (expected[$0] != 0)
+            }, "Published scope must plot the exact difference pair's occupied bins")
         }
-        XCTAssertTrue(try occupiedBins(waveform) == waveBins, "Published waveform must plot the exact difference pair")
-        XCTAssertTrue(try occupiedBins(vector) == vectorBins, "Published vectorscope must plot the exact difference pair")
+        try verifyOccupiedBins(waveform, expected: waveBins)
+        try verifyOccupiedBins(vector, expected: vectorBins)
     }
 
     private func qualifyComparison(inputs: [String], name: String, secondsPerMode: Int, cycle: Int, activeScopes: Bool, verifyDifferencePixels: Bool = false) async throws {
@@ -634,6 +640,7 @@ final class LiveLoupeSessionTests: XCTestCase {
                     let captures = [a.captureRequestCount, b.captureRequestCount]
                     let scopeCaptures = [primary.frameCapture, secondary.frameCapture]
                     let sequences = scopeCaptures.map { $0.currentSample?.sequence }
+                    let initialDifferenceGeneration = scopeProbe?.latestDifference?.generation ?? 0
                     let renders = scopeProbe?.renders[scopeSource, default: 0] ?? 0
                     scopeProbe?.differencePrimaryTimes.removeAll(keepingCapacity: true)
                     scopeProbe?.differenceSecondaryTimes.removeAll(keepingCapacity: true)
@@ -697,9 +704,15 @@ final class LiveLoupeSessionTests: XCTestCase {
                                 "Published A identities must advance, not merely capture timestamps")
                             XCTAssertGreaterThan(scopeProbe.differenceSecondaryTimes.count, 1,
                                 "Published B identities must advance")
+                            let publishedPTS = [scopeProbe.differencePrimaryTimes.count, scopeProbe.differenceSecondaryTimes.count]
                             let publication = try XCTUnwrap(scopeProbe.latestDifference)
-                            try verifyDifferencePublication(publication)
-                            print("MPV_COMPARISON_DIFFERENCE_PUBLICATION: cycle=\(cycle), window=\(windows), pair=\(name), mode=\(mode), generation=\(publication.generation), primarySequence=\(publication.primary.identity!.sequence), secondarySequence=\(publication.secondary!.identity!.sequence), publishedPTS=\(scopeProbe.differencePrimaryTimes.count)/\(scopeProbe.differenceSecondaryTimes.count), pixels=\(publication.differenceImage!.width * publication.differenceImage!.height)")
+                            XCTAssertGreaterThan(publication.generation, initialDifferenceGeneration)
+                            // Retain only this sampled publication while the independent
+                            // scalar oracle runs away from the UI and capture callbacks.
+                            try await Task.detached {
+                                try autoreleasepool { try Self.verifyDifferencePublication(publication) }
+                            }.value
+                            print("MPV_COMPARISON_DIFFERENCE_PUBLICATION: cycle=\(cycle), window=\(windows), pair=\(name), mode=\(mode), generation=\(publication.generation), primarySequence=\(publication.primary.identity!.sequence), secondarySequence=\(publication.secondary!.identity!.sequence), publishedPTS=\(publishedPTS[0])/\(publishedPTS[1]), pixels=\(publication.differenceImage!.width * publication.differenceImage!.height)")
                         }
                         let demand = ScopeAnalysisDemand(source: scopeSource, isComparing: true)
                         for (index, requested) in [demand.primary, demand.secondary].enumerated() {
@@ -760,8 +773,11 @@ final class LiveLoupeSessionTests: XCTestCase {
                 (scopeProbe.latestDifference?.primary.identity?.sequence ?? 0) > oldSequence
             }
             XCTAssertTrue(resumed, "Difference scopes must recover with a fresh capture pair")
-            try verifyDifferencePublication(try XCTUnwrap(scopeProbe.latestDifference))
-            print("MPV_COMPARISON_DIFFERENCE_RESUME: cycle=\(cycle), pair=\(name), retiredSequence=\(oldSequence), resumedSequence=\(scopeProbe.latestDifference!.primary.identity!.sequence)")
+            let publication = try XCTUnwrap(scopeProbe.latestDifference)
+            try await Task.detached {
+                try autoreleasepool { try Self.verifyDifferencePublication(publication) }
+            }.value
+            print("MPV_COMPARISON_DIFFERENCE_RESUME: cycle=\(cycle), pair=\(name), primarySequence=\(publication.primary.identity!.sequence), secondarySequence=\(publication.secondary!.identity!.sequence), pixels=\(publication.differenceImage!.width * publication.differenceImage!.height)")
         }
         comparison.pause(primary: primary)
         let paused = await waitUntil {
