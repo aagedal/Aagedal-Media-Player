@@ -27,8 +27,27 @@ WORKLOAD_ENVIRONMENT_KEYS = (
     'LIVE_LOUPE_COMPARISON_ACTIVE_SCOPES', 'LIVE_LOUPE_COMPARISON_SCOPE_RESOLUTION',
     'LIVE_LOUPE_COMPARISON_SCOPE_FPS', 'LIVE_LOUPE_COMPARISON_SCOPE_PROVENANCE',
     'LIVE_LOUPE_SCOPE_PROVENANCE_CASES', 'LIVE_LOUPE_COMPARISON_VERIFY_DIFFERENCE_PIXELS',
+    'LIVE_LOUPE_COMPARISON_MEMORY_DIAGNOSTICS',
     'LIVE_LOUPE_SOAK_CASES', 'LIVE_LOUPE_SOAK_SECONDS', 'LIVE_LOUPE_SOAK_CYCLES',
 )
+
+
+def validate_memory_diagnostics(directory, cycles):
+    """Reject stale test binaries that ignore the requested diagnostic setting."""
+    expected = {f'cycle-{cycle}.json' for cycle in range(cycles + 1)}
+    if {p.name for p in directory.glob('cycle-*.json')} != expected:
+        raise SystemExit('Memory diagnostics incomplete; see ' + str(directory))
+    pid = None
+    for cycle in range(cycles + 1):
+        sample = json.loads((directory / f'cycle-{cycle}.json').read_text())
+        if (sample.get('cycle') != cycle or not isinstance(sample.get('pid'), int)
+                or sample['pid'] <= 0 or (pid is not None and sample['pid'] != pid)
+                or not isinstance(sample.get('physicalFootprintBytes'), int)
+                or (cycle > 0 and not isinstance(sample.get('gatePhysicalFootprintBytes'), int))
+                or not isinstance(sample.get('retirement'), dict)
+                or (cycle > 0 and not sample['retirement'])):
+            raise SystemExit('Memory diagnostics invalid; see ' + str(directory))
+        pid = sample['pid']
 
 
 def main():
@@ -49,7 +68,11 @@ def main():
                         help='with --active-scopes: production update rate (default 15)')
     parser.add_argument('--verify-difference-pixels', '--scope-provenance', action='store_true',
                         help='with --active-scopes: independently verify one completed difference publication per window and fresh capture resume')
+    parser.add_argument('--memory-diagnostics', action='store_true',
+                        help='with sustained --comparison: record cycle-end VM categories and weak object retirement')
     args = parser.parse_args()
+    if args.memory_diagnostics and not (args.comparison and args.soak_seconds is not None):
+        parser.error('--memory-diagnostics requires --comparison and --soak-seconds')
     if args.verify_difference_pixels and not args.active_scopes:
         parser.error('--verify-difference-pixels requires --active-scopes')
     if (args.scope_resolution is not None or args.scope_fps is not None) and not args.active_scopes:
@@ -88,6 +111,8 @@ def main():
         process_environment.pop(key, None)
     environment['AAGEDAL_MPV_DECODER_RASTER_CANDIDATE'] = '1'
     environment['MPV_DECODER_RASTER_CASES'] = str(args.manifest.resolve(strict=True))
+    if args.memory_diagnostics:
+        environment['LIVE_LOUPE_COMPARISON_MEMORY_DIAGNOSTICS'] = str(args.output.resolve() / 'memory-diagnostics')
     if args.verify_difference_pixels:
         environment['LIVE_LOUPE_COMPARISON_SCOPE_PROVENANCE'] = '1'
         environment['LIVE_LOUPE_COMPARISON_VERIFY_DIFFERENCE_PIXELS'] = '1'
@@ -155,6 +180,8 @@ def main():
             or (args.active_scopes and not scope_receipt_matches)
             or (args.verify_difference_pixels and not provenance_receipt_matches)):
         raise SystemExit('Native app acceptance failed or required marker missing; see ' + str(args.output))
+    if args.memory_diagnostics:
+        validate_memory_diagnostics(args.output / 'memory-diagnostics', args.soak_cycles)
     print('Native app acceptance passed; logs and xcresult:', args.output.resolve())
 
 

@@ -370,6 +370,28 @@ memory rejection and the earlier native-fallback rejection. Matched cycle-end
 allocation/retirement diagnostics remain next; no causal production fix is
 established and no gate, dependency or shipping pin changed.
 
+## Matched 720/15 teardown diagnostics
+
+[The subsequent diagnostic run](evidence/mpv-comparison-memory-diagnostics-20261017/README.md)
+adds opt-in `--memory-diagnostics` to sustained comparison. The final arm64 build,
+70 hosted tests and 16 runner regressions pass, followed by an accepted
+three-cycle 720/15 provenance soak: 396 loupe windows, 198 scope windows,
+54 sampled publications, six fresh resumes, at least 58.82 presentations/sec,
+at most 66.7 ms drift and 235.55 MiB maximum cycle-end growth (limit 256 MiB).
+Earlier native-fallback and memory rejections remain retained and unexplained.
+
+Matched VM ledgers and weak probes show all observed payload owners retired after
+cycle one, while one object in each host/controller/scope-worker category survives
+the one-second checkpoint in each later cycle; counts do not establish a connected
+graph or originating pair. All follower player wrappers retire; closed
+window objects accumulate to two, four and six. These observations do not
+establish active native handles or a causal leak. No production teardown,
+provider, dependency, gate or shipping pin changes. Next identify object origin,
+delayed retirement and window reference paths/allocation stacks before selecting
+a fix. Unrelated FTP Sync UI tests were active, so quiet-host qualification
+remains open. Use the same provenance command above with `--memory-diagnostics`
+to collect baseline and per-cycle JSON; ordinary runs clear that setting.
+
 ## Sustained difference-scope publication provenance
 
 The active-scope comparison soak accepts `--verify-difference-pixels` and its
