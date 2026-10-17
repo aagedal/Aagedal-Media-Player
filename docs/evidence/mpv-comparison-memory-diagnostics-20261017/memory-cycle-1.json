@@ -1,0 +1,94 @@
+{
+  "compressedBytes" : 0,
+  "cycle" : 1,
+  "deviceBytes" : 0,
+  "externalBytes" : 101564416,
+  "gatePhysicalFootprintBytes" : 699059248,
+  "graphicsFootprintBytes" : 208879616,
+  "graphicsFootprintCompressedBytes" : 0,
+  "internalBytes" : 1511260160,
+  "mediaFootprintBytes" : 0,
+  "mediaFootprintCompressedBytes" : 0,
+  "physicalFootprintBytes" : 699059248,
+  "pid" : 63296,
+  "purgeableNonvolatileBytes" : 46252032,
+  "purgeableNonvolatileCompressedBytes" : 0,
+  "purgeableVolatilePmapBytes" : 0,
+  "residentBytes" : 1993555968,
+  "retirement" : {
+    "comparisonController" : {
+      "alive" : 0,
+      "observed" : 2
+    },
+    "followerPlayer" : {
+      "alive" : 0,
+      "observed" : 8
+    },
+    "host" : {
+      "alive" : 0,
+      "observed" : 2
+    },
+    "loupeLayer" : {
+      "alive" : 0,
+      "observed" : 8
+    },
+    "loupeSession" : {
+      "alive" : 0,
+      "observed" : 8
+    },
+    "loupeState" : {
+      "alive" : 0,
+      "observed" : 2
+    },
+    "loupeSurface" : {
+      "alive" : 0,
+      "observed" : 8
+    },
+    "primaryController" : {
+      "alive" : 0,
+      "observed" : 2
+    },
+    "primaryLoupeCapture" : {
+      "alive" : 0,
+      "observed" : 2
+    },
+    "primaryPlayer" : {
+      "alive" : 0,
+      "observed" : 2
+    },
+    "primaryScopeCapture" : {
+      "alive" : 0,
+      "observed" : 2
+    },
+    "scopeProbe" : {
+      "alive" : 0,
+      "observed" : 2
+    },
+    "scopeWorker" : {
+      "alive" : 0,
+      "observed" : 2
+    },
+    "secondaryController" : {
+      "alive" : 0,
+      "observed" : 2
+    },
+    "secondaryLoupeCapture" : {
+      "alive" : 0,
+      "observed" : 2
+    },
+    "secondaryPlayer" : {
+      "alive" : 0,
+      "observed" : 2
+    },
+    "secondaryScopeCapture" : {
+      "alive" : 0,
+      "observed" : 2
+    },
+    "window" : {
+      "alive" : 2,
+      "observed" : 2
+    }
+  },
+  "reusableBytes" : 380731392,
+  "uptime" : 623445.33745241666
+}

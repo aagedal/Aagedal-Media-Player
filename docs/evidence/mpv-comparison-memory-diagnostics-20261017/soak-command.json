@@ -1,0 +1,13 @@
+[
+  "xcodebuild",
+  "test-without-building",
+  "-xctestrun",
+  "/private/tmp/aagedal-memory-diagnostics-20261017/derived/Build/Products/tmphfunup4z.xctestrun",
+  "-destination",
+  "platform=macOS,arch=arm64",
+  "-parallel-testing-enabled",
+  "NO",
+  "-only-testing:Aagedal Media Player Tests/LiveLoupeSessionTests/testSustainedComparisonCanvasKeepsPairedLoupesAndBoundsMemory",
+  "-resultBundlePath",
+  "/private/tmp/aagedal-memory-diagnostics-20261017/soak/tests.xcresult"
+]

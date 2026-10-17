@@ -33,6 +33,8 @@ struct ScopeView: View {
     var onRender: (@MainActor @Sendable (CompareScopeSource) -> Void)? = nil
     /// Opt-in exact-input/output observation for qualification; not retained by the view.
     var onPublication: (@MainActor @Sendable (ScopeRenderPublication) -> Void)? = nil
+    /// Qualification-only lifecycle observation; callers must store weak references.
+    var onWorkerAppear: (@MainActor @Sendable (ScopeRenderWorker) -> Void)? = nil
     @StateObject private var renderWorker = ScopeRenderWorker()
     @State private var waveformMode: WaveformMode = .luma
     @State private var vectorscopeGraticule: CGImage?
@@ -213,6 +215,7 @@ struct ScopeView: View {
             submitScopeFrame()
         }
         .onAppear {
+            onWorkerAppear?(renderWorker)
             updateCaptureMode()
             updateVectorscopeGraticule()
             if selectedSource == .difference {

@@ -46,6 +46,7 @@ class RunnerTests(unittest.TestCase):
                 'LIVE_LOUPE_COMPARISON_ACTIVE_SCOPES', 'LIVE_LOUPE_COMPARISON_SCOPE_RESOLUTION',
                 'LIVE_LOUPE_COMPARISON_SCOPE_FPS', 'LIVE_LOUPE_COMPARISON_SCOPE_PROVENANCE',
                 'LIVE_LOUPE_SCOPE_PROVENANCE_CASES', 'LIVE_LOUPE_COMPARISON_VERIFY_DIFFERENCE_PIXELS',
+                'LIVE_LOUPE_COMPARISON_MEMORY_DIAGNOSTICS',
                 'LIVE_LOUPE_SOAK_CASES', 'LIVE_LOUPE_SOAK_SECONDS', 'LIVE_LOUPE_SOAK_CYCLES',
             ), 'inherited')
             workload_keys = set(inherited)
@@ -71,6 +72,15 @@ class RunnerTests(unittest.TestCase):
                     observed['environment'] = copied_target['EnvironmentVariables']
                     self.assertEqual(plistlib.loads((root / 'output' / 'executed-configuration.plist').read_bytes()), copied)
                     self.assertEqual(json.loads((root / 'output' / 'command.json').read_text()), command)
+                    if '--memory-diagnostics' in options:
+                        directory = root / 'output' / 'memory-diagnostics'
+                        directory.mkdir()
+                        cycles = int(observed['environment']['LIVE_LOUPE_COMPARISON_SOAK_CYCLES'])
+                        for cycle in range(cycles + 1):
+                            (directory / f'cycle-{cycle}.json').write_text(json.dumps({
+                                'cycle': cycle, 'pid': 123, 'physicalFootprintBytes': 10,
+                                'gatePhysicalFootprintBytes': 10 if cycle else None,
+                                'retirement': {'host': {'observed': cycle * 2, 'alive': 0}} if cycle else {}}))
                     return subprocess.CompletedProcess(command, failure)
                 return subprocess.CompletedProcess(command, 0, stdout=marker, stderr='')
 
@@ -289,8 +299,39 @@ class RunnerTests(unittest.TestCase):
             self.assertNotIn('LIVE_LOUPE_COMPARISON_SCOPE_PROVENANCE', observed['environment'])
             self.assertNotIn('LIVE_LOUPE_SCOPE_PROVENANCE_CASES', observed['environment'])
 
+    def test_memory_diagnostics_are_explicit_and_isolated(self):
+        marker = 'MPV_LIVE_LOUPE_COMPARISON_SOAK_ACCEPTANCE: 3 cycles, 2 pairs, 3 modes, 10 seconds per mode,'
+        for legacy in (False, True):
+            options = ['--comparison', '--soak-seconds', '10']
+            ordinary = self.run_fixture(options, marker, legacy=legacy)
+            self.assertNotIn('LIVE_LOUPE_COMPARISON_MEMORY_DIAGNOSTICS', ordinary['environment'])
+            diagnostic = self.run_fixture(options + ['--memory-diagnostics'], marker, legacy=legacy)
+            self.assertTrue(diagnostic['environment']['LIVE_LOUPE_COMPARISON_MEMORY_DIAGNOSTICS'].endswith('/output/memory-diagnostics'))
+            self.assertNotIn('LIVE_LOUPE_COMPARISON_MEMORY_DIAGNOSTICS', diagnostic['process_environment'])
+            with self.assertRaisesRegex(SystemExit, 'acceptance failed'):
+                self.run_fixture(options + ['--memory-diagnostics'], marker, failure=65, legacy=legacy)
+
+    def test_memory_diagnostics_reject_missing_cycles_and_changed_process(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            with self.assertRaisesRegex(SystemExit, 'incomplete'):
+                runner.validate_memory_diagnostics(root, 3)
+            for cycle in range(4):
+                (root / f'cycle-{cycle}.json').write_text(json.dumps({
+                    'cycle': cycle, 'pid': 123, 'physicalFootprintBytes': 10,
+                    'gatePhysicalFootprintBytes': 10 if cycle else None,
+                    'retirement': {'host': {'observed': cycle * 2, 'alive': 0}} if cycle else {}}))
+            runner.validate_memory_diagnostics(root, 3)
+            last = root / 'cycle-3.json'
+            sample = json.loads(last.read_text()); sample['pid'] = 456
+            last.write_text(json.dumps(sample))
+            with self.assertRaisesRegex(SystemExit, 'invalid'):
+                runner.validate_memory_diagnostics(root, 3)
+
     def test_invalid_soak_arguments_fail_before_reading_inputs(self):
-        for options in (['--scope-provenance'], ['--comparison', '--scope-provenance'],
+        for options in (['--memory-diagnostics'], ['--comparison', '--memory-diagnostics'],
+                        ['--live-viewer', '--soak-seconds', '10', '--memory-diagnostics'],
+                        ['--scope-provenance'], ['--comparison', '--scope-provenance'],
                         ['--comparison', '--soak-seconds', '10', '--scope-provenance'],
                         ['--verify-difference-pixels'],
                         ['--comparison', '--verify-difference-pixels'],

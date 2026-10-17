@@ -346,13 +346,21 @@ final class LiveLoupeSessionTests: XCTestCase {
         }
         let restoreSettings = activeScopes ? overrideScopeSettings(resolution: scopeResolution, fps: scopeFPS) : {}
         defer { restoreSettings() }
+        let diagnosticsPath = environment["LIVE_LOUPE_COMPARISON_MEMORY_DIAGNOSTICS"]
+        let retirement = diagnosticsPath.map { _ in RetirementProbe() }
         var footprints: [UInt64] = []
+        if let diagnosticsPath {
+            try recordComparisonMemory(path: diagnosticsPath, cycle: 0, retirement: retirement!)
+        }
         for cycle in 1...cycles {
             try await qualifyComparisonManifest(path: path, secondsPerMode: seconds, cycle: cycle,
-                activeScopes: activeScopes, verifyDifferencePixels: verifyDifferencePixels)
+                activeScopes: activeScopes, verifyDifferencePixels: verifyDifferencePixels, retirement: retirement)
             // Both pair helpers have returned, releasing hosts, layers and players.
             try await Task.sleep(for: .seconds(1))
             let footprint = try physicalFootprint()
+            if let diagnosticsPath {
+                try recordComparisonMemory(path: diagnosticsPath, cycle: cycle, retirement: retirement!, gateFootprint: footprint)
+            }
             footprints.append(footprint)
             XCTAssertLessThanOrEqual(footprint, footprints[0] + 256 * 1024 * 1024,
                 "Comparison cycle-end growth exceeded 256 MiB above warmup")
@@ -404,7 +412,7 @@ final class LiveLoupeSessionTests: XCTestCase {
                        ["unrelated": "preserved"] as NSDictionary)
     }
 
-    private func qualifyComparisonManifest(path: String, secondsPerMode: Int = 3, cycle: Int = 1, activeScopes: Bool = false, verifyDifferencePixels: Bool = false) async throws {
+    private func qualifyComparisonManifest(path: String, secondsPerMode: Int = 3, cycle: Int = 1, activeScopes: Bool = false, verifyDifferencePixels: Bool = false, retirement: RetirementProbe? = nil) async throws {
         struct Case: Decodable { let name: String, input: String }
         struct Manifest: Decodable { let cases: [Case] }
         let manifest = try JSONDecoder().decode(Manifest.self,
@@ -420,7 +428,7 @@ final class LiveLoupeSessionTests: XCTestCase {
             XCTAssertNotEqual(inputs[0], inputs[1])
             try await qualifyComparison(inputs: inputs, name: names.joined(separator: "/"),
                 secondsPerMode: secondsPerMode, cycle: cycle, activeScopes: activeScopes,
-                verifyDifferencePixels: verifyDifferencePixels)
+                verifyDifferencePixels: verifyDifferencePixels, retirement: retirement)
         }
     }
 
@@ -447,6 +455,7 @@ final class LiveLoupeSessionTests: XCTestCase {
         let primaryCapture: LoupeFrameCapture, secondaryCapture: LoupeFrameCapture
         let item: MediaItem
         var scopeProbe: ScopeProbe? = nil
+        var retirement: RetirementProbe? = nil
         let waveform = AudioWaveformGenerator()
 
         var body: some View {
@@ -471,7 +480,8 @@ final class LiveLoupeSessionTests: XCTestCase {
                     ScopeView(primaryController: primary, secondaryController: comparison.secondaryController,
                         primaryFrameCapture: primary.frameCapture,
                         secondaryFrameCapture: comparison.secondaryController.frameCapture,
-                        compareSession: comparison, onPublication: { scopeProbe.record($0) })
+                        compareSession: comparison, onPublication: { scopeProbe.record($0) },
+                        onWorkerAppear: { retirement?.track($0, label: "scopeWorker") })
                         .frame(height: 200)
                 }
             }
@@ -554,7 +564,7 @@ final class LiveLoupeSessionTests: XCTestCase {
         try verifyOccupiedBins(vector, expected: vectorBins)
     }
 
-    private func qualifyComparison(inputs: [String], name: String, secondsPerMode: Int, cycle: Int, activeScopes: Bool, verifyDifferencePixels: Bool = false) async throws {
+    private func qualifyComparison(inputs: [String], name: String, secondsPerMode: Int, cycle: Int, activeScopes: Bool, verifyDifferencePixels: Bool = false, retirement: RetirementProbe? = nil) async throws {
         let scopeResolution = UserDefaults.standard.value(for: AppSettings.scopeResolution)
         let scopeFPS = Int(UserDefaults.standard.value(for: AppSettings.scopeFrameRate))
         let primary = PlayerController(proResRAWDetector: { _, _ in false })
@@ -566,6 +576,16 @@ final class LiveLoupeSessionTests: XCTestCase {
         let window = NSWindow(contentRect: CGRect(x: 40, y: 40, width: 960, height: activeScopes ? 740 : 540),
             styleMask: [.titled], backing: .buffered, defer: false)
         window.isReleasedWhenClosed = false
+        retirement?.track(window, label: "window")
+        retirement?.track(primary, label: "primaryController")
+        retirement?.track(secondary, label: "secondaryController")
+        retirement?.track(comparison, label: "comparisonController")
+        retirement?.track(state, label: "loupeState")
+        retirement?.track(a, label: "primaryLoupeCapture")
+        retirement?.track(b, label: "secondaryLoupeCapture")
+        retirement?.track(primary.frameCapture, label: "primaryScopeCapture")
+        retirement?.track(secondary.frameCapture, label: "secondaryScopeCapture")
+        if let scopeProbe { retirement?.track(scopeProbe, label: "scopeProbe") }
         defer {
             window.contentView = nil
             a.stop(); b.stop(); comparison.stop(); primary.teardown(); secondary.teardown()
@@ -576,7 +596,8 @@ final class LiveLoupeSessionTests: XCTestCase {
         XCTAssertTrue(constructed)
         let host = NSHostingView(rootView: ComparisonHost(primary: primary, comparison: comparison,
             state: state, primaryCapture: a, secondaryCapture: b, item: try XCTUnwrap(primary.mediaItem),
-            scopeProbe: scopeProbe))
+            scopeProbe: scopeProbe, retirement: retirement))
+        retirement?.track(host, label: "host")
         window.contentView = host
         window.orderFront(nil)
         let primaryReady = await waitUntil { primary.isReady }
@@ -594,6 +615,7 @@ final class LiveLoupeSessionTests: XCTestCase {
         comparison.play(primary: primary)
         let live = await waitUntil {
             let surfaces = self.liveSurfaces(in: host)
+            retirement?.trackSurfaces(surfaces)
             return surfaces.count == 2 && surfaces.allSatisfy { $0.session?.isReady == true }
         }
         XCTAssertTrue(live, name)
@@ -602,6 +624,9 @@ final class LiveLoupeSessionTests: XCTestCase {
             // Geometry changes can replace follower contexts to resize their output.
             try await Task.sleep(for: .seconds(1))
             let surfaces = liveSurfaces(in: host)
+            retirement?.trackSurfaces(surfaces)
+            if let player = primary.mpvPlayer { retirement?.track(player, label: "primaryPlayer") }
+            if let player = secondary.mpvPlayer { retirement?.track(player, label: "secondaryPlayer") }
             guard surfaces.count == 2 else {
                 return XCTFail("Comparison must mount both live lenses: \(name), \(mode)")
             }
@@ -649,6 +674,7 @@ final class LiveLoupeSessionTests: XCTestCase {
                     var scopeTimes = [Set<Double>(), Set<Double>()]
                     var eligibleLatestPairs = 0, eligibleHistoryPairs = 0
                     for _ in 0..<30 {
+                        if let retirement { retirement.trackSurfaces(self.liveSurfaces(in: host)) }
                         // MPV snapshots can wait for the decoder. Keep measurement
                         // off the main actor, as the live follower's own sampler does.
                         let loopDurations = sources.map { $0.duration }
@@ -797,6 +823,7 @@ final class LiveLoupeSessionTests: XCTestCase {
         comparison.play(primary: primary)
         let resumed = await waitUntil {
             let surfaces = self.liveSurfaces(in: host)
+            retirement?.trackSurfaces(surfaces)
             return a.image == nil && b.image == nil && surfaces.count == 2
                 && surfaces.allSatisfy { $0.session?.isReady == true }
         }
@@ -813,6 +840,7 @@ final class LiveLoupeSessionTests: XCTestCase {
         state.isEnabled = true
         let reopened = await waitUntil {
             let surfaces = self.liveSurfaces(in: host)
+            retirement?.trackSurfaces(surfaces)
             return surfaces.count == 2 && surfaces.allSatisfy { $0.session?.isReady == true }
         }
         XCTAssertTrue(reopened)
@@ -976,7 +1004,92 @@ final class LiveLoupeSessionTests: XCTestCase {
         print("MPV_LIVE_LOUPE_SOAK_CASE: cycle=\(cycle), case=\(name), maximumDrift=\(maximumDrift), validSamples=\(validSamples), samples=\(sampleCount), maximumSampledFootprintBytes=\(maximumFootprint)")
     }
 
+    /// Stores only weak references. Dead entries are kept for coverage counts;
+    /// identity reuse is handled by checking the live reference, not its address.
+    @MainActor
+    private final class RetirementProbe {
+        private struct Entry {
+            weak var object: AnyObject?
+            let label: String
+        }
+        private var entries: [Entry] = []
+
+        func track(_ object: AnyObject, label: String) {
+            guard !entries.contains(where: { $0.object === object }) else { return }
+            entries.append(Entry(object: object, label: label))
+        }
+
+        func trackSurfaces(_ surfaces: [LiveLoupeVideoSurface.SurfaceView]) {
+            for surface in surfaces {
+                track(surface, label: "loupeSurface")
+                track(surface.metalLayer, label: "loupeLayer")
+                if let session = surface.session {
+                    track(session, label: "loupeSession")
+                    if let player = session.player { track(player, label: "followerPlayer") }
+                }
+            }
+        }
+
+        var counts: [String: [String: Int]] {
+            var counts: [String: [String: Int]] = [:]
+            for entry in entries {
+                counts[entry.label, default: ["observed": 0, "alive": 0]]["observed", default: 0] += 1
+                if entry.object != nil { counts[entry.label]!["alive", default: 0] += 1 }
+            }
+            return counts
+        }
+    }
+
+    func testRetirementProbeDoesNotRetainObservedObjectsAndDeduplicatesLiveIdentities() {
+        let probe = RetirementProbe()
+        var object: NSObject? = NSObject()
+        weak var released = object
+        probe.track(object!, label: "object")
+        probe.track(object!, label: "object")
+        XCTAssertEqual(probe.counts["object"], ["observed": 1, "alive": 1])
+        object = nil
+        XCTAssertNil(released)
+        XCTAssertEqual(probe.counts["object"], ["observed": 1, "alive": 0])
+        let replacement = NSObject()
+        probe.track(replacement, label: "object")
+        XCTAssertEqual(probe.counts["object"], ["observed": 2, "alive": 1])
+        withExtendedLifetime(replacement) {}
+    }
+
+    /// Opt-in diagnosis, sampled after the ordinary retirement delay. No pool
+    /// drain, cache purge or extra retirement delay changes the memory gate.
+    private func recordComparisonMemory(path: String, cycle: Int, retirement: RetirementProbe,
+                                        gateFootprint: UInt64? = nil) throws {
+        let info = try virtualMemoryInfo()
+        let sample: [String: Any] = [
+            "cycle": cycle, "pid": ProcessInfo.processInfo.processIdentifier,
+            "uptime": ProcessInfo.processInfo.systemUptime,
+            "physicalFootprintBytes": info.phys_footprint,
+            "gatePhysicalFootprintBytes": gateFootprint as Any? ?? NSNull(),
+            "residentBytes": info.resident_size, "internalBytes": info.internal,
+            "externalBytes": info.external, "compressedBytes": info.compressed,
+            "reusableBytes": info.reusable, "deviceBytes": info.device,
+            "mediaFootprintBytes": info.ledger_tag_media_footprint,
+            "mediaFootprintCompressedBytes": info.ledger_tag_media_footprint_compressed,
+            "graphicsFootprintBytes": info.ledger_tag_graphics_footprint,
+            "graphicsFootprintCompressedBytes": info.ledger_tag_graphics_footprint_compressed,
+            "purgeableNonvolatileBytes": info.ledger_purgeable_nonvolatile,
+            "purgeableNonvolatileCompressedBytes": info.ledger_purgeable_novolatile_compressed,
+            "purgeableVolatilePmapBytes": info.purgeable_volatile_pmap,
+            "retirement": retirement.counts
+        ]
+        let directory = URL(fileURLWithPath: path, isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let data = try JSONSerialization.data(withJSONObject: sample, options: [.sortedKeys, .prettyPrinted])
+        try data.write(to: directory.appendingPathComponent("cycle-\(cycle).json"), options: .atomic)
+        print("MPV_COMPARISON_MEMORY_DIAGNOSTIC: cycle=\(cycle), footprint=\(info.phys_footprint), retirement=\(retirement.counts)")
+    }
+
     private func physicalFootprint() throws -> UInt64 {
+        try virtualMemoryInfo().phys_footprint
+    }
+
+    private func virtualMemoryInfo() throws -> task_vm_info_data_t {
         var info = task_vm_info_data_t()
         var count = mach_msg_type_number_t(MemoryLayout<task_vm_info_data_t>.size / MemoryLayout<integer_t>.size)
         let status = withUnsafeMutablePointer(to: &info) {
@@ -985,7 +1098,7 @@ final class LiveLoupeSessionTests: XCTestCase {
             }
         }
         guard status == KERN_SUCCESS else { throw NSError(domain: NSMachErrorDomain, code: Int(status)) }
-        return info.phys_footprint
+        return info
     }
 
     private struct Pair {
