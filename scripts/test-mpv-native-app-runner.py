@@ -19,6 +19,23 @@ runner = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(runner)
 
 
+def write_memory_diagnostics(directory, cycles=3):
+    directory.mkdir(exist_ok=True)
+    for index, checkpoint in enumerate([f'cycle-{n}' for n in range(cycles + 1)] + ['final-delayed']):
+        cycle = min(index, cycles)
+        delayed = checkpoint == 'final-delayed'
+        objects = [{'id': n, 'label': 'host', 'origin': f'cycle={n},pair=A/B',
+                    'alive': False, 'observedUptime': n * 10.0 - 2,
+                    'teardownUptime': n * 10.0 - 1, 'firstRetiredCheckpoint': f'cycle-{n}'}
+                   for n in range(1, cycle + 1)]
+        (directory / f'{checkpoint}.json').write_text(json.dumps({
+            'schemaVersion': 2, 'checkpoint': checkpoint, 'cycle': cycle, 'pid': 123,
+            'uptime': cycle * 10.0 + (5 if delayed else 0), 'physicalFootprintBytes': 10,
+            'gatePhysicalFootprintBytes': 10 if cycle and not delayed else None,
+            'objects': objects,
+            'retirement': {'host': {'observed': cycle, 'alive': 0}} if cycle else {}}))
+
+
 class RunnerTests(unittest.TestCase):
     def run_fixture(self, options, marker, *, failure=0, legacy=False):
         with tempfile.TemporaryDirectory() as directory:
@@ -74,13 +91,8 @@ class RunnerTests(unittest.TestCase):
                     self.assertEqual(json.loads((root / 'output' / 'command.json').read_text()), command)
                     if '--memory-diagnostics' in options:
                         directory = root / 'output' / 'memory-diagnostics'
-                        directory.mkdir()
                         cycles = int(observed['environment']['LIVE_LOUPE_COMPARISON_SOAK_CYCLES'])
-                        for cycle in range(cycles + 1):
-                            (directory / f'cycle-{cycle}.json').write_text(json.dumps({
-                                'cycle': cycle, 'pid': 123, 'physicalFootprintBytes': 10,
-                                'gatePhysicalFootprintBytes': 10 if cycle else None,
-                                'retirement': {'host': {'observed': cycle * 2, 'alive': 0}} if cycle else {}}))
+                        write_memory_diagnostics(directory, cycles)
                     return subprocess.CompletedProcess(command, failure)
                 return subprocess.CompletedProcess(command, 0, stdout=marker, stderr='')
 
@@ -311,22 +323,85 @@ class RunnerTests(unittest.TestCase):
             with self.assertRaisesRegex(SystemExit, 'acceptance failed'):
                 self.run_fixture(options + ['--memory-diagnostics'], marker, failure=65, legacy=legacy)
 
-    def test_memory_diagnostics_reject_missing_cycles_and_changed_process(self):
+    def test_memory_diagnostics_require_all_gate_and_delayed_checkpoints(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             with self.assertRaisesRegex(SystemExit, 'incomplete'):
                 runner.validate_memory_diagnostics(root, 3)
-            for cycle in range(4):
-                (root / f'cycle-{cycle}.json').write_text(json.dumps({
-                    'cycle': cycle, 'pid': 123, 'physicalFootprintBytes': 10,
-                    'gatePhysicalFootprintBytes': 10 if cycle else None,
-                    'retirement': {'host': {'observed': cycle * 2, 'alive': 0}} if cycle else {}}))
+            write_memory_diagnostics(root)
             runner.validate_memory_diagnostics(root, 3)
-            last = root / 'cycle-3.json'
-            sample = json.loads(last.read_text()); sample['pid'] = 456
-            last.write_text(json.dumps(sample))
-            with self.assertRaisesRegex(SystemExit, 'invalid'):
+            (root / 'final-delayed.json').unlink()
+            with self.assertRaisesRegex(SystemExit, 'incomplete'):
                 runner.validate_memory_diagnostics(root, 3)
+            write_memory_diagnostics(root)
+            (root / 'cycle-2.json').unlink()
+            with self.assertRaisesRegex(SystemExit, 'incomplete'):
+                runner.validate_memory_diagnostics(root, 3)
+
+    def test_memory_diagnostics_accept_retirement_first_observed_after_final_gate(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            write_memory_diagnostics(root)
+            for checkpoint in ('cycle-1', 'cycle-2', 'cycle-3', 'final-delayed'):
+                file = root / f'{checkpoint}.json'
+                sample = json.loads(file.read_text())
+                row = sample['objects'][0]
+                row.update(alive=checkpoint != 'final-delayed',
+                           firstRetiredCheckpoint='final-delayed' if checkpoint == 'final-delayed' else None)
+                file.write_text(json.dumps(sample))
+            runner.validate_memory_diagnostics(root, 3)
+
+    def test_memory_diagnostics_accept_late_registration_after_origin_teardown(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            write_memory_diagnostics(root)
+            file = root / 'final-delayed.json'
+            sample = json.loads(file.read_text())
+            sample['objects'].append({
+                'id': 4, 'label': 'scopeWorker', 'origin': 'cycle=3,pair=A/B',
+                'alive': True, 'observedUptime': 34.0, 'teardownUptime': 29.0,
+                'firstRetiredCheckpoint': None})
+            sample['retirement']['scopeWorker'] = {'observed': 1, 'alive': 1}
+            file.write_text(json.dumps(sample))
+            runner.validate_memory_diagnostics(root, 3)
+
+    def test_memory_diagnostics_reject_stale_or_inconsistent_object_evidence(self):
+        cases = [
+            ('cycle-3', lambda s: s.update(pid=456)),
+            ('cycle-3', lambda s: s.update(schemaVersion=1)),
+            ('cycle-3', lambda s: s.pop('schemaVersion')),
+            ('cycle-3', lambda s: s.update(checkpoint='cycle-2')),
+            ('cycle-3', lambda s: s.update(objects=[])),
+            ('cycle-0', lambda s: s.update(objects=[{}])),
+            ('cycle-3', lambda s: s['objects'][0].update(origin='cycle=1,pair=C/D')),
+            ('cycle-3', lambda s: s['objects'][0].update(label='window')),
+            ('cycle-3', lambda s: s['objects'][0].update(observedUptime=9)),
+            ('cycle-3', lambda s: s['objects'][0].update(teardownUptime=9.5)),
+            ('cycle-3', lambda s: s['objects'][0].update(alive=True, firstRetiredCheckpoint=None)),
+            ('cycle-3', lambda s: s['objects'][0].update(firstRetiredCheckpoint='cycle-3')),
+            ('cycle-3', lambda s: s['objects'][0].update(firstRetiredCheckpoint=None)),
+            ('cycle-3', lambda s: s['objects'][0].update(id=True)),
+            ('cycle-3', lambda s: s['objects'][1].update(id=1)),
+            ('cycle-3', lambda s: s['objects'].reverse()),
+            ('cycle-3', lambda s: s['objects'].pop(0)),
+            ('cycle-3', lambda s: s['objects'][-1].update(origin='cycle=4,pair=A/B')),
+            ('cycle-3', lambda s: s['objects'][-1].update(observedUptime=float('nan'))),
+            ('cycle-3', lambda s: s.update(uptime=float('inf'))),
+            ('final-delayed', lambda s: s.update(uptime=34.999)),
+            ('final-delayed', lambda s: s.update(gatePhysicalFootprintBytes=10)),
+            ('final-delayed', lambda s: s.update(cycle=4)),
+        ]
+        for index, (checkpoint, mutate) in enumerate(cases):
+            with self.subTest(checkpoint=checkpoint, mutation=index), \
+                 tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                write_memory_diagnostics(root)
+                file = root / f'{checkpoint}.json'
+                sample = json.loads(file.read_text())
+                mutate(sample)
+                file.write_text(json.dumps(sample))
+                with self.assertRaisesRegex(SystemExit, 'invalid'):
+                    runner.validate_memory_diagnostics(root, 3)
 
     def test_invalid_soak_arguments_fail_before_reading_inputs(self):
         for options in (['--memory-diagnostics'], ['--comparison', '--memory-diagnostics'],

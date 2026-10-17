@@ -1,0 +1,6 @@
+[
+  "/usr/bin/leaks",
+  "--forkCorpse",
+  "--outputGraph=/private/tmp/aagedal-retirement-origins-20261017/final.memgraph",
+  "31841"
+]

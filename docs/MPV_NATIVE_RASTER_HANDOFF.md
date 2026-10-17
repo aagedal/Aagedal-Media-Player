@@ -392,6 +392,30 @@ a fix. Unrelated FTP Sync UI tests were active, so quiet-host qualification
 remains open. Use the same provenance command above with `--memory-diagnostics`
 to collect baseline and per-cycle JSON; ordinary runs clear that setting.
 
+## Object origins, delayed retirement and reference paths
+
+[The origin-aware continuation](evidence/mpv-comparison-retirement-origins-20261017/README.md)
+passes the final arm64 build, 71 hosted tests, 19 runner regressions and the
+unchanged three-cycle 720/15 provenance soak: 396 loupe windows, 198 scope
+windows, 54 sampled publications, six fresh resumes, at least 58.91
+presentations/sec, at most 83.3 ms drift and 84.92 MiB maximum cycle-end growth.
+Stable weak IDs identify the same cycle-one PQ/HLG host surviving through cycle
+three and a separate final delayed snapshot (530.14 seconds after teardown).
+Both cycle-two hosts retire; two cycle-three hosts also survive the delayed
+snapshot. Closed windows have no content views, while detached hosts retain
+their observed root state and report no active current players.
+
+A post-gate memory graph retains reference reports including autorelease-pool,
+XCTest wait-stack and AppKit/SwiftUI paths. The scanner also traverses known weak
+probe storage, so root counts do not prove owning paths or a causal leak.
+Allocation stacks and ownership-aware pool/framework diagnosis remain next;
+no production teardown or gate changes are justified. The earlier rejections
+remain unexplained and retained; other Xcode activity keeps quiet-host
+qualification open. `--memory-diagnostics` now requires origin-aware schema 2
+and a separate snapshot at least five seconds after the final gate, without
+extending any cycle's one-second allowance. The evidence's optional external
+graph collector runs only after all gates and may affect later retirement timing.
+
 ## Sustained difference-scope publication provenance
 
 The active-scope comparison soak accepts `--verify-difference-pixels` and its
