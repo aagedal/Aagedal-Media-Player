@@ -1,0 +1,10 @@
+{
+  "/Users/truls.aagedal/.t3/worktrees/Aagedal-Media-Player/t3-ff9a8179/scripts/validate-mpv-native-app.py": "12581e216d1679c8f7304c26f9cf20951c5f98269fb1e8f16dd15914fb79b331",
+  "/Users/truls.aagedal/.t3/worktrees/Aagedal-Media-Player/t3-ff9a8179/scripts/test-mpv-native-app-runner.py": "3eb89b6fa975eb0e7a27e2314c79015806e0a3a5f2611bc0927d7c9fb35ddc9f",
+  "/Users/truls.aagedal/.t3/worktrees/Aagedal-Media-Player/t3-ff9a8179/docs/evidence/mpv-scope-failure-provenance-20261018/prepare.py": "7e62e1a6d10377e0130a7ab9e0836046366b9b24b607148d5955748fbb47f4ed",
+  "/Users/truls.aagedal/.t3/worktrees/Aagedal-Media-Player/t3-ff9a8179/docs/evidence/mpv-scope-failure-provenance-20261018/retain.py": "d3f4d55100e66a4fb3dc393e08d1dd1cec6be9f21579316296fc3d774a28b371",
+  "/Users/truls.aagedal/.t3/worktrees/Aagedal-Media-Player/t3-ff9a8179/docs/evidence/mpv-scope-failure-provenance-20261018/run-diagnostic.py": "41296f5d122c03c03fdf0f8767e69c53e6601d691f92b5c784555f88ddcf31eb",
+  "/Users/truls.aagedal/.t3/worktrees/Aagedal-Media-Player/t3-ff9a8179/docs/evidence/mpv-scope-failure-provenance-20261018/run-focused.py": "bc4c1bcb09970ce5de3a9d6b9314b325ddcc3c98aa54340c1f1619a11d58dbf5",
+  "/Users/truls.aagedal/.t3/worktrees/Aagedal-Media-Player/t3-ff9a8179/docs/evidence/mpv-scope-failure-provenance-20261018/run-validation.py": "948f431fc6374cfd1881322073f0aac5178a01b678da259161162a9b146b1e0c",
+  "/Users/truls.aagedal/.t3/worktrees/Aagedal-Media-Player/t3-ff9a8179/docs/evidence/mpv-scope-failure-provenance-20261018/summarize-retirement.py": "5b39bc5438c5d4ae3742e07051c6344b365108ff36f042bba2d45f15a52257b3"
+}

@@ -5536,3 +5536,37 @@ rejections are in
 Shipping pins, native-provider default-off gate and production teardown remain
 unchanged. Quiet-host, authentic-media, native dependency sanitizer, peak/GPU
 memory, frame-lock and physical-HDR qualifications remain open.
+
+
+## Native-scope failure provenance and full same-build controls — 2026-10-18
+
+Status: Diagnostic implementation verified; complete relationship/scalar attempts
+retained with different memory outcomes. See
+`docs/evidence/mpv-scope-failure-provenance-20261018/README.md`.
+
+- [x] Distinguish capability, command, track and decode failures with scalar-only
+  results, preserving optional API acceptance and the original negative cache.
+- [x] Carry the matching attempt's provenance through SDR/HDR fallback and stale
+  guards; distinguish empty payloads, direct difference capture and native success.
+  Keep payload history bounded and detailed logging confined to XCTest.
+- [x] Pass final arm64 Release build/signature verification, 75 focused hosted tests
+  with zero failures/skips and 23 runner regressions. Retain the initial drift/test
+  rejection and corrected compile attempt; acceptance gates remain unchanged.
+- [x] Complete both same-binary three-cycle 720/15 controls: each covers 396 loupe
+  windows, 198 scope windows, 54 sampled publications and six resumes. Retain the
+  relationship memory rejection (417.00 MiB growth) and scalar pass (142.09 MiB).
+  Both keep the unchanged 256 MiB gate and all cadence/drift/provenance checks.
+- [x] Observe native command error -12 followed by usable fallback in all eight
+  relationship and sixteen scalar events, with no decoded-map/capability failures
+  among those events. This does not diagnose earlier uninstrumented failures or
+  the provider's internal early exit; passing checkpoints do not mean zero fallback.
+- [x] Verify only windows survive checkpoints in both modes; all 180 weak identities
+  in each process retire by post-test entry. Retain unequal host activity/fixed order.
+- [ ] Identify native failure stage/state before selecting app/provider behavior changes.
+- [ ] Collect matched allocation/insertion evidence and coordinated repeats to
+  explain memory rejection and prior host survival; differing control outcomes
+  alone do not establish an observer effect or causal leak.
+
+MPVKit, shipping pins, the default-off provider gate and production capture/teardown
+behavior remain unchanged. Authentic-media, native dependency sanitizer, peak/GPU
+memory, frame-lock and physical-HDR qualifications remain open.

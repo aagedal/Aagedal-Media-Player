@@ -1,0 +1,29 @@
+{
+  "accepted": false,
+  "memoryGatePassed": false,
+  "cadenceGatePassed": true,
+  "clockGatePassed": true,
+  "loupeWindows": 396,
+  "scopeWindows": 198,
+  "sampledDifferencePublications": 54,
+  "resumedDifferencePublications": 6,
+  "pixelsPerSample": 291600,
+  "minimumLoupePresentationsPerSecond": 58.722181523704485,
+  "maximumFollowerDriftSeconds": 0.08333333333333333,
+  "usableClockSamples": 11878,
+  "totalClockSamples": 11880,
+  "minimumMeasuredSecondsPerSelection": 11.875982291647233,
+  "measuredSelections": 54,
+  "cycleEndFootprintBytes": [
+    744459312,
+    781028448,
+    1181715720
+  ],
+  "maximumCycleEndGrowthBytes": 437256408,
+  "scopeConfiguration": {
+    "resolution": 720,
+    "targetFPS": 15,
+    "secondsPerSelection": 10,
+    "cycles": 3
+  }
+}

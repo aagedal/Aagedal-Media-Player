@@ -240,6 +240,7 @@ final class MPVPlayer: NSObject, ObservableObject, MPVNativeAudioProbeClient, @u
 
         decoderRasterCapability = nil
         nativeScopesCapability = nil
+        nativeScopesCapabilityFailure = nil
         supportsDecoderRasterCapture = false
         supportsDecoderRasterTransforms = false
         mpv = mpv_create()
@@ -1111,6 +1112,7 @@ final class MPVPlayer: NSObject, ObservableObject, MPVNativeAudioProbeClient, @u
     /// capture. Probe command-list first to avoid logging unsupported commands
     /// every time the loupe refreshes. Capture never changes options or filters.
     private nonisolated(unsafe) var nativeScopesCapability: Bool?
+    private nonisolated(unsafe) var nativeScopesCapabilityFailure: MPVScopeFailure?
     private nonisolated(unsafe) var decoderRasterCapability: Bool?
     private nonisolated(unsafe) var nativeAudioProbeOwner: UUID?
 
@@ -1509,28 +1511,31 @@ extension MPVPlayer {
     /// Serialized with teardown. Unsupported shipping packages retain capture;
     /// the candidate computes the plots without invoking screenshot-raw.
     nonisolated func nativeScopePlots(width: Int) -> MPVScopePlots? {
-        guard ProcessInfo.processInfo.environment["AAGEDAL_SCOPE_BACKEND"] != "screenshot",
-              (64...1440).contains(width) else { return nil }
-        return queue.sync { () -> MPVScopePlots? in
-            guard let context = mpv else { return nil }
+        try? nativeScopePlotsResult(width: width).get()
+    }
+
+    nonisolated func nativeScopePlotsResult(width: Int) -> Result<MPVScopePlots, MPVScopeFailure> {
+        guard ProcessInfo.processInfo.environment["AAGEDAL_SCOPE_BACKEND"] != "screenshot" else {
+            return .failure(MPVScopeFailure(reason: .screenshotOverride))
+        }
+        guard (64...1440).contains(width) else { return .failure(MPVScopeFailure(reason: .invalidWidth)) }
+        return queue.sync { () -> Result<MPVScopePlots, MPVScopeFailure> in
+            guard let context = mpv else { return .failure(MPVScopeFailure(reason: .playerUnavailable)) }
             if nativeScopesCapability == nil {
                 var node = mpv_node()
                 let status = mpv_get_property(context, "command-list", MPV_FORMAT_NODE, &node)
                 defer { mpv_free_node_contents(&node) }
-                var available = false
-                if status >= 0, node.format == MPV_FORMAT_NODE_ARRAY, let list = node.u.list,
-                   let values = list.pointee.values {
-                    for i in 0..<Int(list.pointee.num) {
-                        if let fields = MPVScopePlots.fields(values[i]), let name = fields["name"],
-                           name.format == MPV_FORMAT_STRING, let string = name.u.string,
-                           String(cString: string) == "aagedal-scopes" { available = true; break }
-                    }
-                }
-                nativeScopesCapability = available
+                nativeScopesCapabilityFailure = MPVScopePlots.capabilityFailure(status: status, node: node)
+                nativeScopesCapability = nativeScopesCapabilityFailure == nil
             }
-            guard nativeScopesCapability == true else { return nil }
+            guard nativeScopesCapability == true else {
+                return .failure(nativeScopesCapabilityFailure ?? MPVScopeFailure(reason: .commandUnavailable))
+            }
             var track: Int64 = 0
-            guard mpv_get_property(context, "vid", MPV_FORMAT_INT64, &track) >= 0 else { return nil }
+            let trackStatus = mpv_get_property(context, "vid", MPV_FORMAT_INT64, &track)
+            guard trackStatus >= 0 else {
+                return .failure(MPVScopeFailure(reason: .initialTrackLookupFailed, status: trackStatus))
+            }
             let name = strdup("aagedal-scopes"), size = strdup(String(width))
             defer { free(name); free(size) }
             var args: [UnsafePointer<CChar>?] = [name.map { UnsafePointer<CChar>($0) }, size.map { UnsafePointer<CChar>($0) }, nil]
@@ -1538,9 +1543,15 @@ extension MPVPlayer {
             let status = args.withUnsafeMutableBufferPointer { mpv_command_ret(context, $0.baseAddress, &result) }
             defer { mpv_free_node_contents(&result) }
             var after: Int64 = 0
-            guard status >= 0, mpv_get_property(context, "vid", MPV_FORMAT_INT64, &after) >= 0,
-                  after == track else { return nil }
-            return MPVScopePlots.decode(result, expectedWidth: width, trackID: track)
+            guard status >= 0 else { return .failure(MPVScopeFailure(reason: .commandFailed, status: status, expectedTrack: track)) }
+            let afterStatus = mpv_get_property(context, "vid", MPV_FORMAT_INT64, &after)
+            guard afterStatus >= 0 else {
+                return .failure(MPVScopeFailure(reason: .finalTrackLookupFailed, status: afterStatus, expectedTrack: track))
+            }
+            guard after == track else {
+                return .failure(MPVScopeFailure(reason: .trackChanged, expectedTrack: track, actualTrack: after))
+            }
+            return MPVScopePlots.decodeResult(result, expectedWidth: width, trackID: track)
         }
     }
 }

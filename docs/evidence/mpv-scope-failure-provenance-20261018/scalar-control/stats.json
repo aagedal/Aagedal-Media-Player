@@ -1,0 +1,43 @@
+{
+  "result": "Passed",
+  "accepted": true,
+  "memoryGatePassed": true,
+  "cadenceGatePassed": true,
+  "clockGatePassed": true,
+  "minimumMeasuredSecondsPerSelection": 11.777123125037178,
+  "measuredSelections": 54,
+  "analysisScriptSHA256": "abb27a7ddb92fcadc9b9ef508bc80b1fea32c155bcb86935b5fe3936b5a2171d",
+  "actionLogSHA256": "4678662d89c9708b5801947f6826f2d478459ea25bf35a374a78b002061bda4d",
+  "executionInputsSHA256": "42abeb959072582692df7ee82fd99dc85ecb8ad9a376b494dced0b92788623c5",
+  "loupeWindows": 396,
+  "scopeWindows": 198,
+  "sampledDifferencePublications": 54,
+  "resumedDifferencePublications": 6,
+  "minimumLoupePresentationsPerSecond": 58.76999446324573,
+  "maximumFollowerDriftSeconds": 0.08333333333333333,
+  "usableClockSamples": 11875,
+  "totalClockSamples": 11880,
+  "cycleEndFootprintBytes": [
+    739429328,
+    725552152,
+    888425448
+  ],
+  "maximumCycleEndGrowthBytes": 148996120,
+  "aliveByCheckpoint": {
+    "cycle-0": {},
+    "cycle-1": {
+      "window": 2
+    },
+    "cycle-2": {
+      "window": 4
+    },
+    "cycle-3": {
+      "window": 6
+    },
+    "final-delayed": {
+      "window": 6
+    },
+    "post-test-delayed": {},
+    "post-test-entry": {}
+  }
+}

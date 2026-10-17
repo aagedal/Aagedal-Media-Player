@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import AppKit
+import Combine
 import SwiftUI
 import XCTest
 @testable import Aagedal_Media_Player
@@ -633,6 +634,25 @@ final class LiveLoupeSessionTests: XCTestCase {
         let comparison = CompareSessionController(secondaryController: secondary)
         let state = InspectionLoupeState()
         let a = LoupeFrameCapture(), b = LoupeFrameCapture()
+        // Test-only observation keeps scalar counts, never sample/payload history.
+        // Bound logs if a provider becomes persistently unavailable.
+        var fallbackCounts = [0, 0]
+        let fallbackObservers: [AnyCancellable] = activeScopes ? [primary.frameCapture, secondary.frameCapture].enumerated().map { index, capture in
+            capture.$currentSample.sink { sample in
+                guard let sample, let failure = sample.nativeFailure else { return }
+                fallbackCounts[index] += 1
+                if fallbackCounts[index] <= 8 {
+                    let payload = sample.hdrFrame != nil ? "hdr" : (sample.sdrFrame != nil ? "sdr" : "empty")
+                    print("MPV_COMPARISON_SCOPE_NATIVE_FALLBACK: cycle=\(cycle), pair=\(name), source=\(index), sequence=\(sample.sequence), payload=\(payload), timestampQuality=\(sample.timestampQuality), \(failure)")
+                }
+            }
+        } : []
+        defer {
+            fallbackObservers.forEach { $0.cancel() }
+            if activeScopes {
+                print("MPV_COMPARISON_SCOPE_NATIVE_FALLBACK_COUNTS: cycle=\(cycle), pair=\(name), primary=\(fallbackCounts[0]), secondary=\(fallbackCounts[1])")
+            }
+        }
         let scopeProbe = activeScopes ? ScopeProbe() : nil
         let window = NSWindow(contentRect: CGRect(x: 40, y: 40, width: 960, height: activeScopes ? 740 : 540),
             styleMask: [.titled], backing: .buffered, defer: false)
@@ -816,7 +836,7 @@ final class LiveLoupeSessionTests: XCTestCase {
                                     XCTAssertNil(sample.nativePlots)
                                     XCTAssertEqual(sample.sdrFrame?.width, scopeResolution)
                                 } else {
-                                    let plots = try XCTUnwrap(sample.nativePlots, "A/B must exercise native scopes, not fallback")
+                                    let plots = try XCTUnwrap(sample.nativePlots, "A/B must exercise native scopes, not fallback; sequence=\(sample.sequence), sdr=\(sample.sdrFrame != nil), hdr=\(sample.hdrFrame != nil), \(sample.nativeFailure.map(String.init(describing:)) ?? "no-native-attempt")")
                                     let plotHeight = Int((Double(scopeResolution) * 9 / 16).rounded())
                                     XCTAssertEqual(plots.waveform.height, plotHeight)
                                     XCTAssertEqual(plots.parade.height, plotHeight)

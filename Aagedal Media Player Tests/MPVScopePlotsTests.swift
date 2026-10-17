@@ -125,6 +125,72 @@ final class MPVScopePlotsTests: XCTestCase {
         }
     }
 
+    func testDecodeFailuresIdentifyRejectedStageWithoutRetainingNativeBytes() throws {
+        let cases: [(String, MPVScopeFailureReason)] = [
+            ("protocol", .invalidProtocol), ("w", .invalidDimensions), ("h", .invalidDimensions),
+            ("track-id", .invalidTrack), ("format", .invalidFormat), ("pts", .invalidTimestamp),
+            ("primaries", .invalidColor), ("transfer", .invalidColor), ("peak-nits", .invalidColor),
+            ("waveform", .invalidWaveform), ("parade", .invalidParade), ("vectorscope", .invalidVectorscope)
+        ]
+        for (key, reason) in cases {
+            for failure in [withNode(omit: key, { MPVScopePlots.decodeResult($0, expectedWidth: 64, trackID: 1) }),
+                            withNode(wrongType: key, { MPVScopePlots.decodeResult($0, expectedWidth: 64, trackID: 1) })] {
+                guard case .failure(let diagnostic) = failure else { return XCTFail("Accepted malformed \(key)") }
+                XCTAssertEqual(diagnostic.reason, reason, key)
+            }
+            let duplicate = withNode(duplicate: key) { MPVScopePlots.decodeResult($0, expectedWidth: 64, trackID: 1) }
+            guard case .failure(let diagnostic) = duplicate else { return XCTFail("Accepted duplicate \(key)") }
+            XCTAssertEqual(diagnostic.reason, .invalidMap)
+        }
+        let mismatch = withNode { MPVScopePlots.decodeResult($0, expectedWidth: 64, trackID: 2) }
+        guard case .failure(let diagnostic) = mismatch else { return XCTFail("Accepted wrong track") }
+        XCTAssertEqual(diagnostic, MPVScopeFailure(reason: .invalidTrack, expectedTrack: 2, actualTrack: 1))
+        let success = try withNode { MPVScopePlots.decodeResult($0, expectedWidth: 64, trackID: 1) }.get()
+        XCTAssertEqual(success.waveform.dataProvider?.data as Data?, Data(repeating: 0x31, count: 64 * 36 * 4))
+    }
+
+    func testCapabilityDiagnosticsDistinguishLookupFailureMalformedAndAbsentCommands() {
+        var node = mpv_node()
+        XCTAssertEqual(MPVScopePlots.capabilityFailure(status: -10, node: node),
+                       MPVScopeFailure(reason: .capabilityLookupFailed, status: -10))
+        XCTAssertEqual(MPVScopePlots.capabilityFailure(status: 0, node: node)?.reason, .capabilityMalformed)
+        var value = mpv_node()
+        withUnsafeMutablePointer(to: &value) { values in
+            var list = mpv_node_list(num: 0, values: values, keys: nil)
+            withUnsafeMutablePointer(to: &list) { list in
+                node.format = MPV_FORMAT_NODE_ARRAY
+                node.u.list = list
+                XCTAssertEqual(MPVScopePlots.capabilityFailure(status: 0, node: node)?.reason, .commandUnavailable)
+                list.pointee.num = 1
+                XCTAssertEqual(MPVScopePlots.capabilityFailure(status: 0, node: node)?.reason, .capabilityMalformed)
+            }
+        }
+        let commandName = strdup("aagedal-scopes")!
+        let nameKey = strdup("name")!
+        defer { free(commandName); free(nameKey) }
+        var text = mpv_node(); text.format = MPV_FORMAT_STRING; text.u.string = commandName
+        var key: UnsafeMutablePointer<CChar>? = nameKey
+        withUnsafeMutablePointer(to: &text) { text in
+            withUnsafeMutablePointer(to: &key) { keys in
+                var fields = mpv_node_list(num: 1, values: text, keys: keys)
+                withUnsafeMutablePointer(to: &fields) { fields in
+                    var command = mpv_node(); command.format = MPV_FORMAT_NODE_MAP; command.u.list = fields
+                    for entries in [[mpv_node(), command], [command, mpv_node()]] {
+                        var entries = entries
+                        entries.withUnsafeMutableBufferPointer { entries in
+                            var list = mpv_node_list(num: 2, values: entries.baseAddress, keys: nil)
+                            withUnsafeMutablePointer(to: &list) { list in
+                                var root = mpv_node(); root.format = MPV_FORMAT_NODE_ARRAY; root.u.list = list
+                                XCTAssertNil(MPVScopePlots.capabilityFailure(status: 0, node: root),
+                                             "An available command wins regardless of unrelated malformed entries")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     private func withNode<T>(omit: String? = nil, wrongType: String? = nil, duplicate: String? = nil,
                              pts: Double = 1, size: Int? = nil, _ body: (mpv_node) -> T) -> T {
         let names: [String] = (["protocol", "w", "h", "track-id", "pts", "peak-nits", "primaries", "transfer", "format", "waveform", "parade", "vectorscope"].filter { $0 != omit }) + (duplicate.map { [$0] } ?? [])
@@ -174,6 +240,78 @@ final class MPVScopePlotsTests: XCTestCase {
 
 @MainActor
 final class MPVNativeScopeIntegrationTests: XCTestCase {
+    func testFallbackProvenanceFollowsPublishedSampleAndClearsOnDemandChange() async throws {
+        guard let directory = ProcessInfo.processInfo.environment["MPV_SCOPE_TEST_FIXTURES"] else {
+            throw XCTSkip("Set MPV_SCOPE_TEST_FIXTURES for native scope fallback provenance")
+        }
+        let arguments = UserDefaults.standard.volatileDomain(forName: UserDefaults.argumentDomain)
+        var settings = arguments
+        settings[AppSettings.scopeResolution.key] = 64
+        settings[AppSettings.scopeFrameRate.key] = 30.0
+        UserDefaults.standard.setVolatileDomain(settings, forName: UserDefaults.argumentDomain)
+        defer { UserDefaults.standard.setVolatileDomain(arguments, forName: UserDefaults.argumentDomain) }
+        let previous = ProcessInfo.processInfo.environment["AAGEDAL_SCOPE_BACKEND"]
+        setenv("AAGEDAL_SCOPE_BACKEND", "screenshot", 1)
+        defer {
+            if let previous { setenv("AAGEDAL_SCOPE_BACKEND", previous, 1) }
+            else { unsetenv("AAGEDAL_SCOPE_BACKEND") }
+        }
+        let player = MPVPlayer()
+        let capture = FrameCapture()
+        let view = NSView(frame: CGRect(x: 0, y: 0, width: 640, height: 360))
+        let layer = MPVMetalLayer()
+        layer.frame = view.bounds; layer.drawableSize = view.bounds.size
+        view.layer = layer; view.wantsLayer = true
+        XCTAssertFalse(player.attachDrawable(layer))
+        defer {
+            capture.stopCapture(); capture.detachMPV(); player.destroy()
+            withExtendedLifetime(view) {}
+        }
+        capture.attachMPV(player)
+        capture.startCapture()
+        // Before loading, screenshot fallback has no pixels. Empty publication
+        // retains the native reason and is not confused with a usable screenshot.
+        for _ in 0..<300 where capture.currentSample == nil { try await Task.sleep(for: .milliseconds(10)) }
+        let empty = try XCTUnwrap(capture.currentSample)
+        XCTAssertNil(empty.sdrFrame); XCTAssertNil(empty.hdrFrame); XCTAssertNil(empty.nativePlots)
+        XCTAssertEqual(empty.nativeFailure?.failure.reason, .screenshotOverride)
+        XCTAssertEqual(empty.nativeFailure?.generation, capture.captureGeneration.current)
+        player.load(url: URL(fileURLWithPath: directory).appendingPathComponent("sdr.mkv"))
+        for _ in 0..<300 where capture.currentSample?.sdrFrame == nil { try await Task.sleep(for: .milliseconds(10)) }
+        let fallback = try XCTUnwrap(capture.currentSample)
+        XCTAssertNotNil(fallback.sdrFrame)
+        XCTAssertEqual(fallback.nativeFailure?.failure.reason, .screenshotOverride)
+        XCTAssertEqual(fallback.nativeFailure?.generation, capture.captureGeneration.current)
+        XCTAssertEqual(fallback.nativeFailure?.requestedWidth, 64)
+        XCTAssertEqual(fallback.sdrFrame?.width, 16, "The retained 16-pixel fixture is not upscaled")
+        XCTAssertEqual(capture.recentSamplesSnapshot().last?.nativeFailure, fallback.nativeFailure)
+        capture.requiresDisplayFrame = true
+        XCTAssertNil(capture.currentSample)
+        for _ in 0..<300 where capture.currentSample?.sdrFrame == nil { try await Task.sleep(for: .milliseconds(10)) }
+        XCTAssertNotNil(capture.currentSample?.sdrFrame)
+        XCTAssertNil(capture.currentSample?.nativeFailure, "Direct difference capture makes no native attempt")
+        capture.stopCapture()
+        capture.requiresDisplayFrame = false
+        capture.transferFunction = .pq
+        capture.contentPeakNits = 10000
+        player.load(url: URL(fileURLWithPath: directory).appendingPathComponent("pq.mkv"))
+        capture.startCapture()
+        for _ in 0..<300 where capture.currentSample?.hdrFrame == nil { try await Task.sleep(for: .milliseconds(10)) }
+        let hdrFallback = try XCTUnwrap(capture.currentSample)
+        XCTAssertNotNil(hdrFallback.hdrFrame)
+        XCTAssertEqual(hdrFallback.nativeFailure?.failure.reason, .screenshotOverride)
+        XCTAssertEqual(hdrFallback.nativeFailure?.generation, capture.captureGeneration.current)
+        XCTAssertEqual(hdrFallback.nativeFailure?.requestedWidth, 64)
+        unsetenv("AAGEDAL_SCOPE_BACKEND")
+        for _ in 0..<300 where capture.currentSample?.nativePlots == nil { try await Task.sleep(for: .milliseconds(10)) }
+        XCTAssertNotNil(capture.currentSample?.nativePlots)
+        XCTAssertNil(capture.currentSample?.nativeFailure)
+        capture.stopCapture()
+        XCTAssertNil(capture.currentSample)
+        try await Task.sleep(for: .milliseconds(150))
+        XCTAssertNil(capture.currentSample, "Retired completions cannot republish stale provenance")
+    }
+
     func testSuspendedNativeAnalysisSurvivesBackendReplacementAndResumesFresh() async throws {
         guard let directory = ProcessInfo.processInfo.environment["MPV_SCOPE_TEST_FIXTURES"] else {
             throw XCTSkip("Set MPV_SCOPE_TEST_FIXTURES for the arm64 native scope candidate")

@@ -1,0 +1,286 @@
+{
+  "detailBudgetPerSourcePerPair": 8,
+  "sampledPublications": 16,
+  "totalPublicationsFromCompletedPairCounters": 16,
+  "completedPairCounters": [
+    {
+      "cycle": "1",
+      "pair": "uhd-h264-hardware/pq-hevc-hardware",
+      "primary": "0",
+      "secondary": "2"
+    },
+    {
+      "cycle": "1",
+      "pair": "pq-hevc-hardware/hlg-hevc-hardware",
+      "primary": "1",
+      "secondary": "4"
+    },
+    {
+      "cycle": "2",
+      "pair": "uhd-h264-hardware/pq-hevc-hardware",
+      "primary": "0",
+      "secondary": "1"
+    },
+    {
+      "cycle": "2",
+      "pair": "pq-hevc-hardware/hlg-hevc-hardware",
+      "primary": "1",
+      "secondary": "1"
+    },
+    {
+      "cycle": "3",
+      "pair": "uhd-h264-hardware/pq-hevc-hardware",
+      "primary": "1",
+      "secondary": "1"
+    },
+    {
+      "cycle": "3",
+      "pair": "pq-hevc-hardware/hlg-hevc-hardware",
+      "primary": "1",
+      "secondary": "3"
+    }
+  ],
+  "sampledReasonStatusPayloadCounts": [
+    {
+      "reason": "commandFailed",
+      "status": "-12",
+      "payload": "hdr",
+      "count": 15
+    },
+    {
+      "reason": "commandFailed",
+      "status": "-12",
+      "payload": "sdr",
+      "count": 1
+    }
+  ],
+  "samples": [
+    {
+      "cycle": "1",
+      "pair": "uhd-h264-hardware/pq-hevc-hardware",
+      "source": "1",
+      "sequence": "562",
+      "payload": "hdr",
+      "timestampQuality": "estimated",
+      "generation": "16",
+      "width": "720",
+      "reason": "commandFailed",
+      "status": "-12",
+      "expectedTrack": "1",
+      "actualTrack": "none"
+    },
+    {
+      "cycle": "1",
+      "pair": "uhd-h264-hardware/pq-hevc-hardware",
+      "source": "1",
+      "sequence": "985",
+      "payload": "hdr",
+      "timestampQuality": "estimated",
+      "generation": "22",
+      "width": "720",
+      "reason": "commandFailed",
+      "status": "-12",
+      "expectedTrack": "1",
+      "actualTrack": "none"
+    },
+    {
+      "cycle": "1",
+      "pair": "pq-hevc-hardware/hlg-hevc-hardware",
+      "source": "1",
+      "sequence": "49",
+      "payload": "hdr",
+      "timestampQuality": "estimated",
+      "generation": "10",
+      "width": "720",
+      "reason": "commandFailed",
+      "status": "-12",
+      "expectedTrack": "1",
+      "actualTrack": "none"
+    },
+    {
+      "cycle": "1",
+      "pair": "pq-hevc-hardware/hlg-hevc-hardware",
+      "source": "1",
+      "sequence": "141",
+      "payload": "hdr",
+      "timestampQuality": "estimated",
+      "generation": "10",
+      "width": "720",
+      "reason": "commandFailed",
+      "status": "-12",
+      "expectedTrack": "1",
+      "actualTrack": "none"
+    },
+    {
+      "cycle": "1",
+      "pair": "pq-hevc-hardware/hlg-hevc-hardware",
+      "source": "1",
+      "sequence": "475",
+      "payload": "hdr",
+      "timestampQuality": "estimated",
+      "generation": "16",
+      "width": "720",
+      "reason": "commandFailed",
+      "status": "-12",
+      "expectedTrack": "1",
+      "actualTrack": "none"
+    },
+    {
+      "cycle": "1",
+      "pair": "pq-hevc-hardware/hlg-hevc-hardware",
+      "source": "0",
+      "sequence": "1032",
+      "payload": "hdr",
+      "timestampQuality": "estimated",
+      "generation": "16",
+      "width": "720",
+      "reason": "commandFailed",
+      "status": "-12",
+      "expectedTrack": "1",
+      "actualTrack": "none"
+    },
+    {
+      "cycle": "1",
+      "pair": "pq-hevc-hardware/hlg-hevc-hardware",
+      "source": "1",
+      "sequence": "899",
+      "payload": "hdr",
+      "timestampQuality": "estimated",
+      "generation": "22",
+      "width": "720",
+      "reason": "commandFailed",
+      "status": "-12",
+      "expectedTrack": "1",
+      "actualTrack": "none"
+    },
+    {
+      "cycle": "2",
+      "pair": "uhd-h264-hardware/pq-hevc-hardware",
+      "source": "1",
+      "sequence": "48",
+      "payload": "hdr",
+      "timestampQuality": "estimated",
+      "generation": "12",
+      "width": "720",
+      "reason": "commandFailed",
+      "status": "-12",
+      "expectedTrack": "1",
+      "actualTrack": "none"
+    },
+    {
+      "cycle": "2",
+      "pair": "pq-hevc-hardware/hlg-hevc-hardware",
+      "source": "1",
+      "sequence": "476",
+      "payload": "hdr",
+      "timestampQuality": "estimated",
+      "generation": "18",
+      "width": "720",
+      "reason": "commandFailed",
+      "status": "-12",
+      "expectedTrack": "1",
+      "actualTrack": "none"
+    },
+    {
+      "cycle": "2",
+      "pair": "pq-hevc-hardware/hlg-hevc-hardware",
+      "source": "0",
+      "sequence": "944",
+      "payload": "hdr",
+      "timestampQuality": "estimated",
+      "generation": "16",
+      "width": "720",
+      "reason": "commandFailed",
+      "status": "-12",
+      "expectedTrack": "1",
+      "actualTrack": "none"
+    },
+    {
+      "cycle": "3",
+      "pair": "uhd-h264-hardware/pq-hevc-hardware",
+      "source": "1",
+      "sequence": "50",
+      "payload": "hdr",
+      "timestampQuality": "estimated",
+      "generation": "12",
+      "width": "720",
+      "reason": "commandFailed",
+      "status": "-12",
+      "expectedTrack": "1",
+      "actualTrack": "none"
+    },
+    {
+      "cycle": "3",
+      "pair": "uhd-h264-hardware/pq-hevc-hardware",
+      "source": "0",
+      "sequence": "848",
+      "payload": "sdr",
+      "timestampQuality": "estimated",
+      "generation": "16",
+      "width": "720",
+      "reason": "commandFailed",
+      "status": "-12",
+      "expectedTrack": "1",
+      "actualTrack": "none"
+    },
+    {
+      "cycle": "3",
+      "pair": "pq-hevc-hardware/hlg-hevc-hardware",
+      "source": "1",
+      "sequence": "472",
+      "payload": "hdr",
+      "timestampQuality": "estimated",
+      "generation": "18",
+      "width": "720",
+      "reason": "commandFailed",
+      "status": "-12",
+      "expectedTrack": "1",
+      "actualTrack": "none"
+    },
+    {
+      "cycle": "3",
+      "pair": "pq-hevc-hardware/hlg-hevc-hardware",
+      "source": "1",
+      "sequence": "562",
+      "payload": "hdr",
+      "timestampQuality": "estimated",
+      "generation": "18",
+      "width": "720",
+      "reason": "commandFailed",
+      "status": "-12",
+      "expectedTrack": "1",
+      "actualTrack": "none"
+    },
+    {
+      "cycle": "3",
+      "pair": "pq-hevc-hardware/hlg-hevc-hardware",
+      "source": "0",
+      "sequence": "940",
+      "payload": "hdr",
+      "timestampQuality": "estimated",
+      "generation": "16",
+      "width": "720",
+      "reason": "commandFailed",
+      "status": "-12",
+      "expectedTrack": "1",
+      "actualTrack": "none"
+    },
+    {
+      "cycle": "3",
+      "pair": "pq-hevc-hardware/hlg-hevc-hardware",
+      "source": "1",
+      "sequence": "987",
+      "payload": "hdr",
+      "timestampQuality": "estimated",
+      "generation": "24",
+      "width": "720",
+      "reason": "commandFailed",
+      "status": "-12",
+      "expectedTrack": "1",
+      "actualTrack": "none"
+    }
+  ],
+  "sourceArchiveSHA256": "9c462e6144d3b2c183dea2233d131a011fb468bbf7f438de7b3d3ed1d4851745",
+  "analysisScriptSHA256": "81dfd08edfbc0cef88dff8ba8146cfdab1f55593cc3aae4c9a3cbab684fc536f",
+  "limits": "Details are bounded samples; counters include unlogged events. No reason is inferred for unlogged events; no internal provider cause is attributed."
+}
