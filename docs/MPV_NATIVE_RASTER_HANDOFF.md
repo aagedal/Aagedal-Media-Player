@@ -440,6 +440,30 @@ The coordinator's brief optional compile and other Xcode activity are retained a
 shared-host context. No production teardown, dependency, shipping pin or provider
 gate changes; earlier rejected results remain retained and unexplained.
 
+## Scalar-only observer-effect control
+
+[The scalar diagnostic continuation](evidence/mpv-comparison-scalar-retirement-20261017/README.md)
+adds `--scalar-memory-diagnostics` alongside `--memory-diagnostics` to omit all
+relationship getters from workload snapshots. Weak identities/counts, original
+one-second gate timing, final/post-test delays and every acceptance gate remain.
+Mode mismatches and relationship fields in scalar rows are rejected. The final
+arm64 build, 72 hosted tests and 23 runner regressions pass; an initial focused
+clock rejection is retained alongside its unchanged same-build passing repeat.
+
+The same-build relationship control stops in cycle two at the native A/B plot
+gate, retaining its partial result and one PQ/HLG host plus other same-origin
+identities at cycle one. The completed scalar three-cycle 720/15 provenance run
+passes 396 loupe/198 scope windows, 54 sampled difference publications and six
+fresh resumes: at least 58.85 presentations/sec, at most 66.7 ms drift and zero
+maximum cycle-end growth above warmup. Only closed windows survive its checkpoints
+(two/four/six); all 180 observed identities retire by post-test entry. Window
+survival therefore remains without relationship getters. The interrupted control,
+fixed run order and other Xcode activity prevent a completed paired causal or
+quiet-host claim. No production fix or pool/owning-path attribution is established.
+Complete the coordinated controls and native-fallback diagnostics or collect
+allocation/insertion stacks next. Earlier rejections remain retained and unexplained.
+No dependency, shipping pin or default-off provider gate changes.
+
 ## Sustained difference-scope publication provenance
 
 The active-scope comparison soak accepts `--verify-difference-pixels` and its

@@ -1,0 +1,293 @@
+{
+  "cycle-0": {
+    "uptime": 639772.57032725,
+    "aliveByOrigin": {},
+    "newlyRetiredIDs": [],
+    "aliveObjects": []
+  },
+  "cycle-1": {
+    "uptime": 640035.1642539584,
+    "aliveByOrigin": {
+      "cycle=1,pair=pq-hevc-hardware/hlg-hevc-hardware": {
+        "window": 1
+      },
+      "cycle=1,pair=uhd-h264-hardware/pq-hevc-hardware": {
+        "window": 1
+      }
+    },
+    "newlyRetiredIDs": [],
+    "aliveObjects": [
+      {
+        "address": "0x0000007c9dd4d900",
+        "alive": true,
+        "firstRetiredCheckpoint": null,
+        "id": 1,
+        "label": "window",
+        "observedUptime": 639772.573589,
+        "origin": "cycle=1,pair=uhd-h264-hardware/pq-hevc-hardware",
+        "teardownUptime": 639902.7688626667
+      },
+      {
+        "address": "0x0000007c9d7ef980",
+        "alive": true,
+        "firstRetiredCheckpoint": null,
+        "id": 31,
+        "label": "window",
+        "observedUptime": 639902.77108975,
+        "origin": "cycle=1,pair=pq-hevc-hardware/hlg-hevc-hardware",
+        "teardownUptime": 640034.1627259167
+      }
+    ]
+  },
+  "cycle-2": {
+    "uptime": 640297.9286644167,
+    "aliveByOrigin": {
+      "cycle=1,pair=pq-hevc-hardware/hlg-hevc-hardware": {
+        "window": 1
+      },
+      "cycle=1,pair=uhd-h264-hardware/pq-hevc-hardware": {
+        "window": 1
+      },
+      "cycle=2,pair=pq-hevc-hardware/hlg-hevc-hardware": {
+        "window": 1
+      },
+      "cycle=2,pair=uhd-h264-hardware/pq-hevc-hardware": {
+        "window": 1
+      }
+    },
+    "newlyRetiredIDs": [],
+    "aliveObjects": [
+      {
+        "address": "0x0000007c9dd4d900",
+        "alive": true,
+        "firstRetiredCheckpoint": null,
+        "id": 1,
+        "label": "window",
+        "observedUptime": 639772.573589,
+        "origin": "cycle=1,pair=uhd-h264-hardware/pq-hevc-hardware",
+        "teardownUptime": 639902.7688626667
+      },
+      {
+        "address": "0x0000007c9d7ef980",
+        "alive": true,
+        "firstRetiredCheckpoint": null,
+        "id": 31,
+        "label": "window",
+        "observedUptime": 639902.77108975,
+        "origin": "cycle=1,pair=pq-hevc-hardware/hlg-hevc-hardware",
+        "teardownUptime": 640034.1627259167
+      },
+      {
+        "address": "0x0000007c9ac16d00",
+        "alive": true,
+        "firstRetiredCheckpoint": null,
+        "id": 61,
+        "label": "window",
+        "observedUptime": 640035.1739842917,
+        "origin": "cycle=2,pair=uhd-h264-hardware/pq-hevc-hardware",
+        "teardownUptime": 640166.7582031667
+      },
+      {
+        "address": "0x0000007c9add8c80",
+        "alive": true,
+        "firstRetiredCheckpoint": null,
+        "id": 91,
+        "label": "window",
+        "observedUptime": 640166.7599584167,
+        "origin": "cycle=2,pair=pq-hevc-hardware/hlg-hevc-hardware",
+        "teardownUptime": 640296.9201273334
+      }
+    ]
+  },
+  "cycle-3": {
+    "uptime": 640559.3714687501,
+    "aliveByOrigin": {
+      "cycle=1,pair=pq-hevc-hardware/hlg-hevc-hardware": {
+        "window": 1
+      },
+      "cycle=1,pair=uhd-h264-hardware/pq-hevc-hardware": {
+        "window": 1
+      },
+      "cycle=2,pair=pq-hevc-hardware/hlg-hevc-hardware": {
+        "window": 1
+      },
+      "cycle=2,pair=uhd-h264-hardware/pq-hevc-hardware": {
+        "window": 1
+      },
+      "cycle=3,pair=pq-hevc-hardware/hlg-hevc-hardware": {
+        "window": 1
+      },
+      "cycle=3,pair=uhd-h264-hardware/pq-hevc-hardware": {
+        "window": 1
+      }
+    },
+    "newlyRetiredIDs": [],
+    "aliveObjects": [
+      {
+        "address": "0x0000007c9dd4d900",
+        "alive": true,
+        "firstRetiredCheckpoint": null,
+        "id": 1,
+        "label": "window",
+        "observedUptime": 639772.573589,
+        "origin": "cycle=1,pair=uhd-h264-hardware/pq-hevc-hardware",
+        "teardownUptime": 639902.7688626667
+      },
+      {
+        "address": "0x0000007c9d7ef980",
+        "alive": true,
+        "firstRetiredCheckpoint": null,
+        "id": 31,
+        "label": "window",
+        "observedUptime": 639902.77108975,
+        "origin": "cycle=1,pair=pq-hevc-hardware/hlg-hevc-hardware",
+        "teardownUptime": 640034.1627259167
+      },
+      {
+        "address": "0x0000007c9ac16d00",
+        "alive": true,
+        "firstRetiredCheckpoint": null,
+        "id": 61,
+        "label": "window",
+        "observedUptime": 640035.1739842917,
+        "origin": "cycle=2,pair=uhd-h264-hardware/pq-hevc-hardware",
+        "teardownUptime": 640166.7582031667
+      },
+      {
+        "address": "0x0000007c9add8c80",
+        "alive": true,
+        "firstRetiredCheckpoint": null,
+        "id": 91,
+        "label": "window",
+        "observedUptime": 640166.7599584167,
+        "origin": "cycle=2,pair=pq-hevc-hardware/hlg-hevc-hardware",
+        "teardownUptime": 640296.9201273334
+      },
+      {
+        "address": "0x0000007c9addb700",
+        "alive": true,
+        "firstRetiredCheckpoint": null,
+        "id": 121,
+        "label": "window",
+        "observedUptime": 640297.940899375,
+        "origin": "cycle=3,pair=uhd-h264-hardware/pq-hevc-hardware",
+        "teardownUptime": 640428.8134022084
+      },
+      {
+        "address": "0x0000007c90c42a80",
+        "alive": true,
+        "firstRetiredCheckpoint": null,
+        "id": 151,
+        "label": "window",
+        "observedUptime": 640428.8172043334,
+        "origin": "cycle=3,pair=pq-hevc-hardware/hlg-hevc-hardware",
+        "teardownUptime": 640558.3198996667
+      }
+    ]
+  },
+  "final-delayed": {
+    "uptime": 640564.4264882917,
+    "aliveByOrigin": {
+      "cycle=1,pair=pq-hevc-hardware/hlg-hevc-hardware": {
+        "window": 1
+      },
+      "cycle=1,pair=uhd-h264-hardware/pq-hevc-hardware": {
+        "window": 1
+      },
+      "cycle=2,pair=pq-hevc-hardware/hlg-hevc-hardware": {
+        "window": 1
+      },
+      "cycle=2,pair=uhd-h264-hardware/pq-hevc-hardware": {
+        "window": 1
+      },
+      "cycle=3,pair=pq-hevc-hardware/hlg-hevc-hardware": {
+        "window": 1
+      },
+      "cycle=3,pair=uhd-h264-hardware/pq-hevc-hardware": {
+        "window": 1
+      }
+    },
+    "newlyRetiredIDs": [],
+    "aliveObjects": [
+      {
+        "address": "0x0000007c9dd4d900",
+        "alive": true,
+        "firstRetiredCheckpoint": null,
+        "id": 1,
+        "label": "window",
+        "observedUptime": 639772.573589,
+        "origin": "cycle=1,pair=uhd-h264-hardware/pq-hevc-hardware",
+        "teardownUptime": 639902.7688626667
+      },
+      {
+        "address": "0x0000007c9d7ef980",
+        "alive": true,
+        "firstRetiredCheckpoint": null,
+        "id": 31,
+        "label": "window",
+        "observedUptime": 639902.77108975,
+        "origin": "cycle=1,pair=pq-hevc-hardware/hlg-hevc-hardware",
+        "teardownUptime": 640034.1627259167
+      },
+      {
+        "address": "0x0000007c9ac16d00",
+        "alive": true,
+        "firstRetiredCheckpoint": null,
+        "id": 61,
+        "label": "window",
+        "observedUptime": 640035.1739842917,
+        "origin": "cycle=2,pair=uhd-h264-hardware/pq-hevc-hardware",
+        "teardownUptime": 640166.7582031667
+      },
+      {
+        "address": "0x0000007c9add8c80",
+        "alive": true,
+        "firstRetiredCheckpoint": null,
+        "id": 91,
+        "label": "window",
+        "observedUptime": 640166.7599584167,
+        "origin": "cycle=2,pair=pq-hevc-hardware/hlg-hevc-hardware",
+        "teardownUptime": 640296.9201273334
+      },
+      {
+        "address": "0x0000007c9addb700",
+        "alive": true,
+        "firstRetiredCheckpoint": null,
+        "id": 121,
+        "label": "window",
+        "observedUptime": 640297.940899375,
+        "origin": "cycle=3,pair=uhd-h264-hardware/pq-hevc-hardware",
+        "teardownUptime": 640428.8134022084
+      },
+      {
+        "address": "0x0000007c90c42a80",
+        "alive": true,
+        "firstRetiredCheckpoint": null,
+        "id": 151,
+        "label": "window",
+        "observedUptime": 640428.8172043334,
+        "origin": "cycle=3,pair=pq-hevc-hardware/hlg-hevc-hardware",
+        "teardownUptime": 640558.3198996667
+      }
+    ]
+  },
+  "post-test-entry": {
+    "uptime": 640564.5929318334,
+    "aliveByOrigin": {},
+    "newlyRetiredIDs": [
+      1,
+      31,
+      61,
+      91,
+      121,
+      151
+    ],
+    "aliveObjects": []
+  },
+  "post-test-delayed": {
+    "uptime": 640569.647233875,
+    "aliveByOrigin": {},
+    "newlyRetiredIDs": [],
+    "aliveObjects": []
+  }
+}

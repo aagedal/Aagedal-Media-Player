@@ -5503,3 +5503,36 @@ candidate and results are in
 
 No production/test Swift changes, MPVKit rebuild, shipping repin or provider-gate
 change was made. Existing authentic-media, host, sanitizer and HDR limits remain.
+
+
+## Scalar-only comparison retirement control — 2026-10-17
+
+Status: Diagnostic tooling and bounded scalar qualification complete; matched
+causal comparison remains open. Exact evidence, candidate pins and retained
+rejections are in
+`docs/evidence/mpv-comparison-scalar-retirement-20261017/README.md`.
+
+- [x] Add explicit scalar-only workload snapshots while preserving weak identity
+  histories, VM ledgers, post-test completion checks and all original gates.
+  Require matching observation modes and reject relationship fields in scalar rows.
+- [x] Pass arm64 Release build/signature verification, 72 focused hosted tests
+  with zero failures/skips and 23 runner regressions. Retain the first focused
+  clock rejection and unchanged same-build passing repeat.
+- [x] Attempt both same-build controls serially in fresh processes; retain the
+  relationship run's cycle-two native-scope rejection and incomplete observer
+  context, rather than treating missing checkpoints as acceptance.
+- [x] Pass the scalar three-cycle 720/15 provenance workload: 396 loupe/198 scope
+  windows, 54 sampled publications, six fresh resumes, at least 58.85 fps, at most
+  66.7 ms drift and zero growth above warmup. Only windows survive cycle checkpoints;
+  all 180 identities retire by post-test entry and remain dead five seconds later.
+- [x] Establish that closed-window survival is observable without the relationship
+  getter bundle. Retain both shared-host workload context and independent process
+  identity registries; no causal host-retirement or autorelease attribution.
+- [ ] Complete coordinated same-build controls without interruption; diagnose
+  native-scope fallback before selecting production/provider changes.
+- [ ] Obtain owning/allocation/insertion paths or an appropriately controlled
+  synchronous pool experiment; explain prior host survival and memory rejection.
+
+Shipping pins, native-provider default-off gate and production teardown remain
+unchanged. Quiet-host, authentic-media, native dependency sanitizer, peak/GPU
+memory, frame-lock and physical-HDR qualifications remain open.

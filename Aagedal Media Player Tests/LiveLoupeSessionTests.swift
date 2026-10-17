@@ -364,6 +364,10 @@ final class LiveLoupeSessionTests: XCTestCase {
         let restoreSettings = activeScopes ? overrideScopeSettings(resolution: scopeResolution, fps: scopeFPS) : {}
         defer { restoreSettings() }
         let diagnosticsPath = environment["LIVE_LOUPE_COMPARISON_MEMORY_DIAGNOSTICS"]
+        let scalarDiagnostics = environment["LIVE_LOUPE_COMPARISON_SCALAR_MEMORY_DIAGNOSTICS"] == "1"
+        guard !scalarDiagnostics || diagnosticsPath != nil else {
+            return XCTFail("Scalar memory diagnostics require memory diagnostics")
+        }
         let retirement = diagnosticsPath.map { _ in RetirementProbe() }
         let postTest = environment["LIVE_LOUPE_COMPARISON_POST_TEST_RETIREMENT"] == "1"
         if postTest {
@@ -372,7 +376,7 @@ final class LiveLoupeSessionTests: XCTestCase {
         }
         var footprints: [UInt64] = []
         if let diagnosticsPath {
-            try recordComparisonMemory(path: diagnosticsPath, cycle: 0, retirement: retirement!)
+            try recordComparisonMemory(path: diagnosticsPath, cycle: 0, retirement: retirement!, scalarOnly: scalarDiagnostics)
         }
         for cycle in 1...cycles {
             try await qualifyComparisonManifest(path: path, secondsPerMode: seconds, cycle: cycle,
@@ -381,7 +385,7 @@ final class LiveLoupeSessionTests: XCTestCase {
             try await Task.sleep(for: .seconds(1))
             let footprint = try physicalFootprint()
             if let diagnosticsPath {
-                try recordComparisonMemory(path: diagnosticsPath, cycle: cycle, retirement: retirement!, gateFootprint: footprint)
+                try recordComparisonMemory(path: diagnosticsPath, cycle: cycle, retirement: retirement!, gateFootprint: footprint, scalarOnly: scalarDiagnostics)
             }
             footprints.append(footprint)
             XCTAssertLessThanOrEqual(footprint, footprints[0] + 256 * 1024 * 1024,
@@ -392,7 +396,7 @@ final class LiveLoupeSessionTests: XCTestCase {
         // separately. This delay never changes a measured cycle's allowance.
         if let diagnosticsPath {
             try await Task.sleep(for: .seconds(5))
-            try recordComparisonMemory(path: diagnosticsPath, cycle: cycles, retirement: retirement!, delayed: true)
+            try recordComparisonMemory(path: diagnosticsPath, cycle: cycles, retirement: retirement!, delayed: true, scalarOnly: scalarDiagnostics)
         }
         if activeScopes {
             print("MPV_COMPARISON_ACTIVE_SCOPES_ACCEPTANCE: \(cycles) cycles, 2 pairs, 3 modes, 3 scope sources, \(seconds) seconds per selection, resolution=\(scopeResolution), targetFPS=\(scopeFPS)")
@@ -1230,19 +1234,46 @@ final class LiveLoupeSessionTests: XCTestCase {
         XCTAssertNoThrow(try JSONSerialization.data(withJSONObject: detached))
     }
 
+    func testScalarMemoryDiagnosticsOmitRelationshipsAndKeepIdentityHistory() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let probe = RetirementProbe()
+        let window = NSWindow(contentRect: .zero, styleMask: [.titled], backing: .buffered, defer: false)
+        window.isReleasedWhenClosed = false
+        defer { window.close() }
+        probe.track(window, label: "window", origin: "cycle=1,pair=control")
+        probe.markTeardown(origin: "cycle=1,pair=control")
+        try recordComparisonMemory(path: directory.path, cycle: 1, retirement: probe, gateFootprint: 123, scalarOnly: true)
+        let scalar = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(contentsOf:
+            directory.appendingPathComponent("cycle-1.json"))) as? [String: Any])
+        let row = try XCTUnwrap((scalar["objects"] as? [[String: Any]])?.first)
+        XCTAssertEqual(scalar["observationKind"] as? String, "in-workload-scalar-only")
+        XCTAssertEqual(scalar["gatePhysicalFootprintBytes"] as? Int, 123)
+        XCTAssertEqual(Set(row.keys), Set(["id", "label", "origin", "alive", "address", "observedUptime",
+                                           "teardownUptime", "firstRetiredCheckpoint"]))
+        XCTAssertEqual(row["alive"] as? Bool, true)
+        try recordComparisonMemory(path: directory.path, cycle: 2, retirement: probe, gateFootprint: 456)
+        let relationships = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(contentsOf:
+            directory.appendingPathComponent("cycle-2.json"))) as? [String: Any])
+        XCTAssertEqual(relationships["observationKind"] as? String, "in-workload-relationships")
+        let related = try XCTUnwrap((relationships["objects"] as? [[String: Any]])?.first)
+        XCTAssertNotNil(related["window"])
+        XCTAssertEqual(related["id"] as? Int, row["id"] as? Int)
+    }
+
     /// Opt-in diagnosis, sampled after the ordinary retirement delay. No pool
     /// drain, cache purge or extra retirement delay changes the memory gate.
     private func recordComparisonMemory(path: String, cycle: Int, retirement: RetirementProbe,
-                                        gateFootprint: UInt64? = nil, delayed: Bool = false, postTest: Bool = false, sourceFinishedUptime: Double? = nil) throws {
+                                        gateFootprint: UInt64? = nil, delayed: Bool = false, postTest: Bool = false, sourceFinishedUptime: Double? = nil, scalarOnly: Bool = false) throws {
         let info = try virtualMemoryInfo()
         let checkpoint = postTest ? (delayed ? "post-test-delayed" : "post-test-entry")
             : (delayed ? "final-delayed" : "cycle-\(cycle)")
         let sample: [String: Any] = [
             "schemaVersion": 2, "checkpoint": checkpoint,
-            "objects": retirement.snapshot(checkpoint: checkpoint, inspectRelationships: !postTest),
+            "objects": retirement.snapshot(checkpoint: checkpoint, inspectRelationships: !postTest && !scalarOnly),
             "sourceTestFinished": postTest,
             "sourceTestFinishedUptime": sourceFinishedUptime as Any? ?? NSNull(),
-            "observationKind": postTest ? "subsequent-test-scalar-only" : "in-workload-relationships",
+            "observationKind": postTest ? "subsequent-test-scalar-only" : (scalarOnly ? "in-workload-scalar-only" : "in-workload-relationships"),
             "cycle": cycle, "pid": ProcessInfo.processInfo.processIdentifier,
             "uptime": ProcessInfo.processInfo.systemUptime,
             "physicalFootprintBytes": info.phys_footprint,

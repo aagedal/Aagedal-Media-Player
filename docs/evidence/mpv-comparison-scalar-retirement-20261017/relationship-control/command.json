@@ -1,0 +1,14 @@
+[
+  "xcodebuild",
+  "test-without-building",
+  "-xctestrun",
+  "/private/tmp/aagedal-scalar-retirement-20261017/derived/Build/Products/tmp2ohxja11.xctestrun",
+  "-destination",
+  "platform=macOS,arch=arm64",
+  "-parallel-testing-enabled",
+  "NO",
+  "-only-testing:Aagedal Media Player Tests/LiveLoupeSessionTests/testSustainedComparisonCanvasKeepsPairedLoupesAndBoundsMemory",
+  "-resultBundlePath",
+  "/private/tmp/aagedal-scalar-retirement-20261017/relationship-control/tests.xcresult",
+  "-only-testing:Aagedal Media Player Tests/LiveLoupeSessionTests/testZZComparisonPostTestRetirement"
+]

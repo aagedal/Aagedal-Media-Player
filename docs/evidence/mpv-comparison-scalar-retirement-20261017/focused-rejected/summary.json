@@ -1,0 +1,56 @@
+{
+  "devicesAndConfigurations" : [
+    {
+      "device" : {
+        "architecture" : "arm64",
+        "deviceId" : "00006050-001C293C22F9401C",
+        "deviceName" : "My Mac",
+        "modelName" : "MacBook Pro",
+        "osBuildNumber" : "26A434",
+        "osVersion" : "27.0.1",
+        "platform" : "macOS"
+      },
+      "expectedFailures" : 0,
+      "failedTests" : 1,
+      "passedTests" : 71,
+      "skippedTests" : 0,
+      "testPlanConfiguration" : {
+        "configurationId" : "1",
+        "configurationName" : "Test Scheme Action"
+      }
+    }
+  ],
+  "environmentDescription" : "Aagedal Media Player · Built with macOS 27.0.1",
+  "expectedFailures" : 0,
+  "failedTests" : 1,
+  "finishTime" : 1792272947.908,
+  "passedTests" : 71,
+  "result" : "Failed",
+  "runtimeWarnings" : [
+
+  ],
+  "skippedTests" : 0,
+  "startTime" : 1792272819.441,
+  "statistics" : [
+
+  ],
+  "testFailures" : [
+    {
+      "failureText" : "XCTAssertLessThanOrEqual failed: (\"0.10000000000000009\") is greater than (\"0.1\")",
+      "targetName" : "Aagedal Media Player Tests",
+      "testIdentifier" : 1,
+      "testIdentifierString" : "LiveLoupeSessionTests/testComparisonScopePublicationsCarryExactDifferenceInputs()",
+      "testIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveLoupeSessionTests/testComparisonScopePublicationsCarryExactDifferenceInputs",
+      "testName" : "testComparisonScopePublicationsCarryExactDifferenceInputs()"
+    }
+  ],
+  "title" : "Test - Aagedal Media Player",
+  "topInsights" : [
+    {
+      "category" : "Longest Test Runs",
+      "impact" : "84% of duration",
+      "text" : "1 longest test run with outlier durations exceeding 37.11s (three standard deviations)"
+    }
+  ],
+  "totalTestCount" : 72
+}
