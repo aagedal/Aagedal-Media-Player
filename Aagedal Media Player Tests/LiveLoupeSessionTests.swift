@@ -366,6 +366,12 @@ final class LiveLoupeSessionTests: XCTestCase {
                 "Comparison cycle-end growth exceeded 256 MiB above warmup")
             print("MPV_COMPARISON_LOUPE_SOAK_CYCLE: cycle=\(cycle), physicalFootprintBytes=\(footprint)")
         }
+        // Only after all original gate samples: observe final-pair retirement
+        // separately. This delay never changes a measured cycle's allowance.
+        if let diagnosticsPath {
+            try await Task.sleep(for: .seconds(5))
+            try recordComparisonMemory(path: diagnosticsPath, cycle: cycles, retirement: retirement!, delayed: true)
+        }
         if activeScopes {
             print("MPV_COMPARISON_ACTIVE_SCOPES_ACCEPTANCE: \(cycles) cycles, 2 pairs, 3 modes, 3 scope sources, \(seconds) seconds per selection, resolution=\(scopeResolution), targetFPS=\(scopeFPS)")
         }
@@ -456,6 +462,7 @@ final class LiveLoupeSessionTests: XCTestCase {
         let item: MediaItem
         var scopeProbe: ScopeProbe? = nil
         var retirement: RetirementProbe? = nil
+        var retirementOrigin = "unspecified"
         let waveform = AudioWaveformGenerator()
 
         var body: some View {
@@ -481,7 +488,7 @@ final class LiveLoupeSessionTests: XCTestCase {
                         primaryFrameCapture: primary.frameCapture,
                         secondaryFrameCapture: comparison.secondaryController.frameCapture,
                         compareSession: comparison, onPublication: { scopeProbe.record($0) },
-                        onWorkerAppear: { retirement?.track($0, label: "scopeWorker") })
+                        onWorkerAppear: { retirement?.track($0, label: "scopeWorker", origin: retirementOrigin) })
                         .frame(height: 200)
                 }
             }
@@ -565,6 +572,7 @@ final class LiveLoupeSessionTests: XCTestCase {
     }
 
     private func qualifyComparison(inputs: [String], name: String, secondsPerMode: Int, cycle: Int, activeScopes: Bool, verifyDifferencePixels: Bool = false, retirement: RetirementProbe? = nil) async throws {
+        let origin = "cycle=\(cycle),pair=\(name)"
         let scopeResolution = UserDefaults.standard.value(for: AppSettings.scopeResolution)
         let scopeFPS = Int(UserDefaults.standard.value(for: AppSettings.scopeFrameRate))
         let primary = PlayerController(proResRAWDetector: { _, _ in false })
@@ -576,28 +584,29 @@ final class LiveLoupeSessionTests: XCTestCase {
         let window = NSWindow(contentRect: CGRect(x: 40, y: 40, width: 960, height: activeScopes ? 740 : 540),
             styleMask: [.titled], backing: .buffered, defer: false)
         window.isReleasedWhenClosed = false
-        retirement?.track(window, label: "window")
-        retirement?.track(primary, label: "primaryController")
-        retirement?.track(secondary, label: "secondaryController")
-        retirement?.track(comparison, label: "comparisonController")
-        retirement?.track(state, label: "loupeState")
-        retirement?.track(a, label: "primaryLoupeCapture")
-        retirement?.track(b, label: "secondaryLoupeCapture")
-        retirement?.track(primary.frameCapture, label: "primaryScopeCapture")
-        retirement?.track(secondary.frameCapture, label: "secondaryScopeCapture")
-        if let scopeProbe { retirement?.track(scopeProbe, label: "scopeProbe") }
+        retirement?.track(window, label: "window", origin: origin)
+        retirement?.track(primary, label: "primaryController", origin: origin)
+        retirement?.track(secondary, label: "secondaryController", origin: origin)
+        retirement?.track(comparison, label: "comparisonController", origin: origin)
+        retirement?.track(state, label: "loupeState", origin: origin)
+        retirement?.track(a, label: "primaryLoupeCapture", origin: origin)
+        retirement?.track(b, label: "secondaryLoupeCapture", origin: origin)
+        retirement?.track(primary.frameCapture, label: "primaryScopeCapture", origin: origin)
+        retirement?.track(secondary.frameCapture, label: "secondaryScopeCapture", origin: origin)
+        if let scopeProbe { retirement?.track(scopeProbe, label: "scopeProbe", origin: origin) }
         defer {
             window.contentView = nil
             a.stop(); b.stop(); comparison.stop(); primary.teardown(); secondary.teardown()
             window.close()
+            retirement?.markTeardown(origin: origin)
         }
         primary.loadMedia(PlayerWindowCoordinator.makeMediaItem(for: URL(fileURLWithPath: inputs[0])))
         let constructed = await waitUntil { primary.mpvPlayer != nil }
         XCTAssertTrue(constructed)
         let host = NSHostingView(rootView: ComparisonHost(primary: primary, comparison: comparison,
             state: state, primaryCapture: a, secondaryCapture: b, item: try XCTUnwrap(primary.mediaItem),
-            scopeProbe: scopeProbe, retirement: retirement))
-        retirement?.track(host, label: "host")
+            scopeProbe: scopeProbe, retirement: retirement, retirementOrigin: origin))
+        retirement?.track(host, label: "host", origin: origin)
         window.contentView = host
         window.orderFront(nil)
         let primaryReady = await waitUntil { primary.isReady }
@@ -615,7 +624,7 @@ final class LiveLoupeSessionTests: XCTestCase {
         comparison.play(primary: primary)
         let live = await waitUntil {
             let surfaces = self.liveSurfaces(in: host)
-            retirement?.trackSurfaces(surfaces)
+            retirement?.trackSurfaces(surfaces, origin: origin)
             return surfaces.count == 2 && surfaces.allSatisfy { $0.session?.isReady == true }
         }
         XCTAssertTrue(live, name)
@@ -624,9 +633,9 @@ final class LiveLoupeSessionTests: XCTestCase {
             // Geometry changes can replace follower contexts to resize their output.
             try await Task.sleep(for: .seconds(1))
             let surfaces = liveSurfaces(in: host)
-            retirement?.trackSurfaces(surfaces)
-            if let player = primary.mpvPlayer { retirement?.track(player, label: "primaryPlayer") }
-            if let player = secondary.mpvPlayer { retirement?.track(player, label: "secondaryPlayer") }
+            retirement?.trackSurfaces(surfaces, origin: origin)
+            if let player = primary.mpvPlayer { retirement?.track(player, label: "primaryPlayer", origin: origin) }
+            if let player = secondary.mpvPlayer { retirement?.track(player, label: "secondaryPlayer", origin: origin) }
             guard surfaces.count == 2 else {
                 return XCTFail("Comparison must mount both live lenses: \(name), \(mode)")
             }
@@ -674,7 +683,7 @@ final class LiveLoupeSessionTests: XCTestCase {
                     var scopeTimes = [Set<Double>(), Set<Double>()]
                     var eligibleLatestPairs = 0, eligibleHistoryPairs = 0
                     for _ in 0..<30 {
-                        if let retirement { retirement.trackSurfaces(self.liveSurfaces(in: host)) }
+                        if let retirement { retirement.trackSurfaces(self.liveSurfaces(in: host), origin: origin) }
                         // MPV snapshots can wait for the decoder. Keep measurement
                         // off the main actor, as the live follower's own sampler does.
                         let loopDurations = sources.map { $0.duration }
@@ -823,7 +832,7 @@ final class LiveLoupeSessionTests: XCTestCase {
         comparison.play(primary: primary)
         let resumed = await waitUntil {
             let surfaces = self.liveSurfaces(in: host)
-            retirement?.trackSurfaces(surfaces)
+            retirement?.trackSurfaces(surfaces, origin: origin)
             return a.image == nil && b.image == nil && surfaces.count == 2
                 && surfaces.allSatisfy { $0.session?.isReady == true }
         }
@@ -840,7 +849,7 @@ final class LiveLoupeSessionTests: XCTestCase {
         state.isEnabled = true
         let reopened = await waitUntil {
             let surfaces = self.liveSurfaces(in: host)
-            retirement?.trackSurfaces(surfaces)
+            retirement?.trackSurfaces(surfaces, origin: origin)
             return surfaces.count == 2 && surfaces.allSatisfy { $0.session?.isReady == true }
         }
         XCTAssertTrue(reopened)
@@ -1010,23 +1019,98 @@ final class LiveLoupeSessionTests: XCTestCase {
     private final class RetirementProbe {
         private struct Entry {
             weak var object: AnyObject?
+            let id: Int
             let label: String
+            let origin: String
+            let address: String
+            let observedUptime: Double
+            var firstRetiredCheckpoint: String?
         }
         private var entries: [Entry] = []
+        private var teardownTimes: [String: Double] = [:]
 
-        func track(_ object: AnyObject, label: String) {
+        func track(_ object: AnyObject, label: String, origin: String = "unspecified") {
             guard !entries.contains(where: { $0.object === object }) else { return }
-            entries.append(Entry(object: object, label: label))
+            entries.append(Entry(object: object, id: entries.count + 1, label: label,
+                origin: origin, address: String(describing: Unmanaged.passUnretained(object).toOpaque()), observedUptime: ProcessInfo.processInfo.systemUptime))
         }
 
-        func trackSurfaces(_ surfaces: [LiveLoupeVideoSurface.SurfaceView]) {
+        func markTeardown(origin: String) {
+            teardownTimes[origin] = ProcessInfo.processInfo.systemUptime
+        }
+
+        func trackSurfaces(_ surfaces: [LiveLoupeVideoSurface.SurfaceView], origin: String) {
             for surface in surfaces {
-                track(surface, label: "loupeSurface")
-                track(surface.metalLayer, label: "loupeLayer")
+                track(surface, label: "loupeSurface", origin: origin)
+                track(surface.metalLayer, label: "loupeLayer", origin: origin)
                 if let session = surface.session {
-                    track(session, label: "loupeSession")
-                    if let player = session.player { track(player, label: "followerPlayer") }
+                    track(session, label: "loupeSession", origin: origin)
+                    if let player = session.player { track(player, label: "followerPlayer", origin: origin) }
                 }
+            }
+        }
+
+        /// Scalar identifiers only: these snapshots cannot keep a view graph alive.
+        /// A null related ID means the referenced object was not registered.
+        func snapshot(checkpoint: String) -> [[String: Any]] {
+            func id(_ object: AnyObject?) -> Any {
+                guard let object else { return NSNull() }
+                return entries.first { $0.object === object }?.id as Any? ?? NSNull()
+            }
+            return entries.indices.map { index in
+                // Promote the weak reference once. A background-owned wrapper
+                // can retire concurrently; all fields for this row must agree.
+                let object = entries[index].object
+                if object == nil && entries[index].firstRetiredCheckpoint == nil {
+                    entries[index].firstRetiredCheckpoint = checkpoint
+                }
+                let entry = entries[index]
+                var row: [String: Any] = [
+                    "id": entry.id, "label": entry.label, "origin": entry.origin,
+                    "alive": object != nil, "address": entry.address, "observedUptime": entry.observedUptime,
+                    "teardownUptime": teardownTimes[entry.origin] as Any? ?? NSNull(),
+                    "firstRetiredCheckpoint": entry.firstRetiredCheckpoint as Any? ?? NSNull()
+                ]
+                if let host = object as? NSHostingView<ComparisonHost> {
+                    row["host"] = ["primaryControllerID": id(host.rootView.primary),
+                        "comparisonControllerID": id(host.rootView.comparison),
+                        "loupeStateID": id(host.rootView.state),
+                        "primaryCaptureID": id(host.rootView.primaryCapture),
+                        "secondaryCaptureID": id(host.rootView.secondaryCapture),
+                        "scopeProbeID": id(host.rootView.scopeProbe)]
+                }
+                if let controller = object as? PlayerController {
+                    row["controller"] = ["playerID": id(controller.mpvPlayer),
+                        "scopeCaptureID": id(controller.frameCapture)]
+                }
+                if let session = object as? LiveLoupeSession {
+                    row["session"] = ["playerID": id(session.player), "ready": session.isReady]
+                }
+                if let window = object as? NSWindow {
+                    row["window"] = [
+                        "number": window.windowNumber, "visible": window.isVisible,
+                        "key": window.isKeyWindow, "main": window.isMainWindow,
+                        "releasedWhenClosed": window.isReleasedWhenClosed,
+                        "inApplicationWindows": NSApp.windows.contains { $0 === window },
+                        "contentViewID": id(window.contentView),
+                        "contentViewClass": window.contentView.map { String(describing: type(of: $0)) } as Any? ?? NSNull(),
+                        "windowControllerID": id(window.windowController),
+                        "hasWindowController": window.windowController != nil,
+                        "hasContentViewController": window.contentViewController != nil,
+                        "contentViewControllerClass": window.contentViewController.map { String(describing: type(of: $0)) } as Any? ?? NSNull(),
+                        "delegateID": id(window.delegate), "hasDelegate": window.delegate != nil,
+                        "parentWindowID": id(window.parent),
+                        "childWindowCount": window.childWindows?.count ?? 0,
+                        "sheetCount": window.sheets.count,
+                        "firstResponderID": id(window.firstResponder),
+                        "firstResponderClass": window.firstResponder.map { String(describing: type(of: $0)) } as Any? ?? NSNull()
+                    ] as [String: Any]
+                }
+                if let view = object as? NSView {
+                    row["view"] = ["windowID": id(view.window), "superviewID": id(view.superview),
+                        "nextResponderID": id(view.nextResponder), "subviewCount": view.subviews.count]
+                }
+                return row
             }
         }
 
@@ -1056,12 +1140,49 @@ final class LiveLoupeSessionTests: XCTestCase {
         withExtendedLifetime(replacement) {}
     }
 
+    func testRetirementSnapshotsPreserveOriginsAndOnlyRecordScalarRelationships() throws {
+        let probe = RetirementProbe()
+        var object: NSObject? = NSObject()
+        probe.track(object!, label: "payload", origin: "cycle=1,pair=A")
+        probe.track(object!, label: "duplicate", origin: "cycle=2,pair=B")
+        probe.markTeardown(origin: "cycle=1,pair=A")
+        let alive = try XCTUnwrap(probe.snapshot(checkpoint: "cycle-1").first)
+        XCTAssertEqual(alive["id"] as? Int, 1)
+        XCTAssertEqual(alive["origin"] as? String, "cycle=1,pair=A")
+        XCTAssertNotNil(alive["teardownUptime"] as? Double)
+        XCTAssertEqual(alive["alive"] as? Bool, true)
+        object = nil
+        let dead = try XCTUnwrap(probe.snapshot(checkpoint: "cycle-2").first)
+        XCTAssertEqual(dead["firstRetiredCheckpoint"] as? String, "cycle-2")
+        XCTAssertEqual(probe.snapshot(checkpoint: "final-delayed").first?["firstRetiredCheckpoint"] as? String, "cycle-2")
+        let window = NSWindow(contentRect: .zero, styleMask: [.titled], backing: .buffered, defer: false)
+        window.isReleasedWhenClosed = false
+        let view = NSView()
+        window.contentView = view
+        probe.track(window, label: "window", origin: "cycle=2,pair=B")
+        probe.track(view, label: "host", origin: "cycle=2,pair=B")
+        let rows = probe.snapshot(checkpoint: "attached")
+        let windowState = try XCTUnwrap(rows[1]["window"] as? [String: Any])
+        let viewState = try XCTUnwrap(rows[2]["view"] as? [String: Any])
+        XCTAssertEqual(windowState["contentViewID"] as? Int, 3)
+        XCTAssertEqual(viewState["windowID"] as? Int, 2)
+        window.contentView = nil
+        window.close()
+        let detached = probe.snapshot(checkpoint: "detached")
+        XCTAssertTrue((detached[1]["window"] as? [String: Any])?["contentViewID"] is NSNull)
+        XCTAssertTrue((detached[2]["view"] as? [String: Any])?["windowID"] is NSNull)
+        XCTAssertNoThrow(try JSONSerialization.data(withJSONObject: detached))
+    }
+
     /// Opt-in diagnosis, sampled after the ordinary retirement delay. No pool
     /// drain, cache purge or extra retirement delay changes the memory gate.
     private func recordComparisonMemory(path: String, cycle: Int, retirement: RetirementProbe,
-                                        gateFootprint: UInt64? = nil) throws {
+                                        gateFootprint: UInt64? = nil, delayed: Bool = false) throws {
         let info = try virtualMemoryInfo()
+        let checkpoint = delayed ? "final-delayed" : "cycle-\(cycle)"
         let sample: [String: Any] = [
+            "schemaVersion": 2, "checkpoint": checkpoint,
+            "objects": retirement.snapshot(checkpoint: checkpoint),
             "cycle": cycle, "pid": ProcessInfo.processInfo.processIdentifier,
             "uptime": ProcessInfo.processInfo.systemUptime,
             "physicalFootprintBytes": info.phys_footprint,
@@ -1081,7 +1202,7 @@ final class LiveLoupeSessionTests: XCTestCase {
         let directory = URL(fileURLWithPath: path, isDirectory: true)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         let data = try JSONSerialization.data(withJSONObject: sample, options: [.sortedKeys, .prettyPrinted])
-        try data.write(to: directory.appendingPathComponent("cycle-\(cycle).json"), options: .atomic)
+        try data.write(to: directory.appendingPathComponent("\(checkpoint).json"), options: .atomic)
         print("MPV_COMPARISON_MEMORY_DIAGNOSTIC: cycle=\(cycle), footprint=\(info.phys_footprint), retirement=\(retirement.counts)")
     }
 

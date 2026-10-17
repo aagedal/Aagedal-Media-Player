@@ -1,0 +1,32 @@
+{
+  "path": "/private/tmp/aagedal-retirement-origins-20261017/final.memgraph",
+  "size": 7488408,
+  "sha256": "efb8d7519f4a276293731ebbd399ab26b81afa3873844c46496f597a02666d0b",
+  "command": [
+    "/usr/bin/leaks",
+    "--forkCorpse",
+    "--outputGraph=/private/tmp/aagedal-retirement-origins-20261017/final.memgraph",
+    "31841"
+  ],
+  "exitCode": 0,
+  "referenceReports": {
+    "window-1-reference-paths.txt": "760d6d8ee1d73a0bba758ada53f60fadc41601a8302bcc402b2a1b095bf08b0b",
+    "window-1-reference-tree.txt": "31f7d5771573705d2ae347ffeebd6fa72a6549cc94c9af8bbf9f0bc38f263540",
+    "window-31-reference-paths.txt": "1db7babb5ecdcdca35c62b030b4f18e946f66ec27d45da8a344ef347a6c2c205",
+    "window-31-reference-tree.txt": "ca3d8dcb82106c6b69b2f38a8a5480408bbd37f5894d03495d865bb6bbfc9e6f",
+    "host-41-reference-paths.txt": "63ce1fbef429f32009389bf4c21ee30e1a6a72cb2d4f350cb2814a238b32916a",
+    "host-41-reference-tree.txt": "ce56ed18a9f3a0e10a91379040732dea8906f509ed351cbf2c564e54cdedfdf9",
+    "window-61-reference-paths.txt": "b4a463b306be13755444672afafb76ca79c124faf597e610ad328cc942eed04b",
+    "window-61-reference-tree.txt": "72fa3f7b00124605a5ff4f2c4a95470859953018d98af6b31bc2b738147286d1",
+    "window-91-reference-paths.txt": "2c77f4d80e86301991414eb201801347c94f8e0aff57828b94b8a935e6755589",
+    "window-91-reference-tree.txt": "d3b07f80ff786b06d6cb22640e9e696d119c990c1e08d5d907929869b0c2975d",
+    "window-121-reference-paths.txt": "4f74e46fac199ca019f2075b92a493703a39ef394cbd5324861bfa1ec2074a9a",
+    "window-121-reference-tree.txt": "7a4dbcbd53a690383029cbdfb823201b072081d9c0fcb7d3f4960acf4ce4ec84",
+    "host-131-reference-paths.txt": "d2d08ac4b180d397c0cf392233003ba8b5f5848d27344e8d1e3ef963030998ec",
+    "host-131-reference-tree.txt": "557b6e21b19b713d10d6ef972d22c58c49f38603bf22e548f92825bf9aa19806",
+    "window-151-reference-paths.txt": "f61533642779f84bedb798b40edbf4dd841504c762980700dcd6967e27451aa3",
+    "window-151-reference-tree.txt": "f1756c0714b77fc78a94d140c181cb226fff0c73f8e0973cbdf401450c3778ff",
+    "host-161-reference-paths.txt": "dec240f79717f873e74dd20dfa521cd4ed8bdb6a146a90d07aea4f5e19a7be30",
+    "host-161-reference-tree.txt": "92460b974f73bf66349fbf1a8336bcc6665b66603e5cffcd84dd0df1b17db946"
+  }
+}

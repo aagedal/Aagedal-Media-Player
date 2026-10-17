@@ -8,6 +8,7 @@ It never changes the original test configuration or shipping dependency pins.
 """
 import argparse
 import json
+import math
 import os
 from pathlib import Path
 import plistlib
@@ -33,21 +34,89 @@ WORKLOAD_ENVIRONMENT_KEYS = (
 
 
 def validate_memory_diagnostics(directory, cycles):
-    """Reject stale test binaries that ignore the requested diagnostic setting."""
+    """Require origin-aware observations and a separate post-gate checkpoint."""
     expected = {f'cycle-{cycle}.json' for cycle in range(cycles + 1)}
-    if {p.name for p in directory.glob('cycle-*.json')} != expected:
+    if ({p.name for p in directory.glob('cycle-*.json')} != expected
+            or not (directory / 'final-delayed.json').is_file()):
         raise SystemExit('Memory diagnostics incomplete; see ' + str(directory))
+
+    def invalid():
+        raise SystemExit('Memory diagnostics invalid; see ' + str(directory))
+
+    def number(value):
+        return type(value) in (int, float) and math.isfinite(value) and value >= 0
+
     pid = None
-    for cycle in range(cycles + 1):
-        sample = json.loads((directory / f'cycle-{cycle}.json').read_text())
-        if (sample.get('cycle') != cycle or not isinstance(sample.get('pid'), int)
-                or sample['pid'] <= 0 or (pid is not None and sample['pid'] != pid)
-                or not isinstance(sample.get('physicalFootprintBytes'), int)
-                or (cycle > 0 and not isinstance(sample.get('gatePhysicalFootprintBytes'), int))
+    previous = {}
+    previous_uptime = None
+    final_gate_uptime = None
+    checkpoints = [f'cycle-{cycle}' for cycle in range(cycles + 1)] + ['final-delayed']
+    for index, checkpoint in enumerate(checkpoints):
+        cycle = min(index, cycles)
+        delayed = checkpoint == 'final-delayed'
+        try:
+            sample = json.loads((directory / f'{checkpoint}.json').read_text())
+        except (OSError, ValueError):
+            invalid()
+        if not isinstance(sample, dict):
+            invalid()
+        uptime = sample.get('uptime')
+        gate = sample.get('gatePhysicalFootprintBytes')
+        objects = sample.get('objects')
+        if (type(sample.get('schemaVersion')) is not int or sample['schemaVersion'] != 2
+                or sample.get('checkpoint') != checkpoint or sample.get('cycle') != cycle
+                or type(sample.get('pid')) is not int or sample['pid'] <= 0
+                or (pid is not None and sample['pid'] != pid)
+                or type(sample.get('physicalFootprintBytes')) is not int
+                or sample['physicalFootprintBytes'] < 0 or not number(uptime)
+                or (previous_uptime is not None and uptime < previous_uptime)
+                or (cycle > 0 and not delayed and (type(gate) is not int or gate < 0))
+                or ((cycle == 0 or delayed) and gate is not None)
                 or not isinstance(sample.get('retirement'), dict)
-                or (cycle > 0 and not sample['retirement'])):
-            raise SystemExit('Memory diagnostics invalid; see ' + str(directory))
-        pid = sample['pid']
+                or (cycle > 0 and not sample['retirement'])
+                or not isinstance(objects, list) or (cycle == 0 and objects)
+                or (cycle > 0 and not objects)):
+            invalid()
+        current = {}
+        last_id = 0
+        for row in objects:
+            if not isinstance(row, dict):
+                invalid()
+            identity = row.get('id')
+            origin = row.get('origin')
+            match = re.fullmatch(r'cycle=([1-9][0-9]*),pair=(.+)', origin) if isinstance(origin, str) else None
+            observed = row.get('observedUptime')
+            teardown = row.get('teardownUptime')
+            retired = row.get('firstRetiredCheckpoint')
+            if (type(identity) is not int or identity <= last_id
+                    or not isinstance(row.get('label'), str) or not row['label']
+                    or not match or int(match[1]) > cycle
+                    or type(row.get('alive')) is not bool or not number(observed) or observed > uptime
+                    or 'teardownUptime' not in row or 'firstRetiredCheckpoint' not in row
+                    or (teardown is not None and (not number(teardown) or teardown > uptime))
+                    or (row['alive'] and retired is not None)
+                    or (not row['alive'] and retired not in checkpoints[1:index + 1])):
+                invalid()
+            if identity in previous:
+                prior = previous[identity]
+                if (any(row[key] != prior[key] for key in ('label', 'origin', 'observedUptime'))
+                        or (prior['teardownUptime'] is not None and teardown != prior['teardownUptime'])
+                        or (prior['firstRetiredCheckpoint'] is not None and retired != prior['firstRetiredCheckpoint'])
+                        or (not prior['alive'] and row['alive'])
+                        or (prior['alive'] and not row['alive'] and retired != checkpoint)):
+                    invalid()
+            elif ((previous and identity <= max(previous))
+                  or (not row['alive'] and retired != checkpoint)):
+                invalid()
+            current[identity] = row
+            last_id = identity
+        if not previous.keys() <= current.keys():
+            invalid()
+        if delayed and uptime - final_gate_uptime < 5:
+            invalid()
+        if cycle == cycles and not delayed:
+            final_gate_uptime = uptime
+        pid, previous, previous_uptime = sample['pid'], current, uptime
 
 
 def main():
