@@ -341,7 +341,7 @@ python3() { echo remote-validation >> "$TRACE"; }
         self.assertLess(focused_validation, analysis)
         self.assertIn('testAVFoundationPrimaryAndMPVSecondaryShareTransport', source)
         self.assertIn('testMPVPrimaryAndAVFoundationSecondaryShareTransport', source)
-        self.assertEqual(source.count('--require-test'), 108)
+        self.assertEqual(source.count('--require-test'), 115)
         for name in ('testPassiveTextDepartureUsesCorrectionSelectedAfterRowRender',
                      'testPassiveTextDepartureRetainsFailuresAndCommitsOnceAfterRetry',
                      'testPassiveRangeBlurUsesTextCorrectionSelectedAfterRowRender'):
@@ -490,7 +490,7 @@ python3() { echo remote-validation >> "$TRACE"; }
         self.assertLess(result_validation, preflight)
         self.assertLess(result_validation, archive)
         self.assertIn('--minimum-tests 862', self.source)
-        self.assertEqual(self.source.count('--require-test'), 108)
+        self.assertEqual(self.source.count('--require-test'), 115)
         for name in ('testPassiveTextDepartureUsesCorrectionSelectedAfterRowRender',
                      'testPassiveTextDepartureRetainsFailuresAndCommitsOnceAfterRetry',
                      'testPassiveRangeBlurUsesTextCorrectionSelectedAfterRowRender'):

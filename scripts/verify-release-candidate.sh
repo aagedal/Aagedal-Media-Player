@@ -136,6 +136,13 @@ python3 scripts/validate-release-xcresult.py \
     --require-test "LiveAudioMeterDecoderTests/testTimestampedProcessorAllowsBoundedDTSRoundingButRejectsCumulativeDrift()" \
     --require-test "LiveAudioMeterSessionTests/testIndependentTrackAndMonoGroupingLeavePlaybackSelectionUnchanged()" \
     --require-test "LoudnessAnalysisTests/testOfflineGraphParsesWarmupAndBoundsFullDurationHistory()" \
+    --require-test "WaveformLoudnessTests/testRangeHistoryUsesWholeFileClockAndIndependentWindows()" \
+    --require-test "WaveformLoudnessTests/testMissingOrInvalidSamplesBreakLinesAndLevelsClipToFixedScale()" \
+    --require-test "WaveformLoudnessTests/testRangeDoesNotPlotUnmeasuredAudio()" \
+    --require-test "WaveformLoudnessTests/testPlayerKeepsResultsByAudioOrdinalAndRejectsReplacementIdentity()" \
+    --require-test "WaveformLoudnessTests/testRenderedTracesStayInAnalyzedRangeAndUseDistinctLineColors()" \
+    --require-test "WaveformLoudnessTests/testWaveformCompositeKeepsGraphVisibleAboveChannelImages()" \
+    --require-test "ProgrammeLoudnessControllerTests/testCompletionPublishesOnlyCurrentSuccessfulAnalysis()" \
     --require-test "ProgrammeLoudnessTests/testLiveGroupedMonoMeasuresAssignedTracksAndPreservesSeek()" \
     --require-test "ProgrammeLoudnessTests/testLiveGroupedSurroundUsesExplicitSpeakerRoles()" \
     --require-test "LiveAudioMeterCoordinatorTests/testMalformedIntegratedLoudnessFailsGenerationAndCancelsWorker()" \

@@ -108,6 +108,13 @@ The real network-opening regression is also opt-in: supply
 mounted network media file. Its descriptive skip is allowed in ordinary runs;
 retain a separate real-network result when qualifying opening responsiveness.
 
+The native-scope integration, UHD comparison-publication and post-test-retirement
+checks also require their separate development provider/workload harnesses.
+Their exact names are allowlisted with descriptive skips in ordinary shipping
+verification; this does not enable the experimental provider or qualify those
+workloads. All seven LUFS waveform/analysis-publication regressions are required
+by both candidate verification and release consumption.
+
 Opt-in reference, performance, and destructive-filesystem tests report named
 skips unless their documented harness supplies the required inputs. A passing
 ordinary suite therefore does not claim those acceptance gates ran.

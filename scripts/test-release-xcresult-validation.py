@@ -102,6 +102,16 @@ class ReleaseXCResultValidationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "no descriptive skip reason"):
             self.validate()
 
+    def test_native_candidate_diagnostics_require_explicit_descriptive_opt_in_skips(self) -> None:
+        for name in ['LiveLoupeSessionTests/testComparisonScopePublicationsCarryExactDifferenceInputs()', 'LiveLoupeSessionTests/testZZComparisonPostTestRetirement()', 'MPVNativeScopeIntegrationTests/testFallbackProvenanceFollowsPublishedSampleAndClearsOnDemandChange()', 'MPVNativeScopeIntegrationTests/testSuspendedNativeAnalysisSurvivesBackendReplacementAndResumesFresh()', 'MPVNativeScopeIntegrationTests/testUHDLiveScopeThroughputAgainstScreenshotBackend()', 'MPVNativeScopeIntegrationTests/testNativeCaptureRendersAllModesAndRetainsDisplayDifferenceFallback()']:
+            with self.subTest(name=name):
+                self.skipped_case["nodeIdentifier"] = name
+                self.skipped_case["children"] = [{"nodeType": "Skip Message", "name": "Test skipped - Requires an explicit external input"}]
+                self.assertEqual(self.validate(), (662, 1))
+                self.skipped_case["children"] = []
+                with self.assertRaisesRegex(ValueError, "no descriptive skip reason"):
+                    self.validate()
+
     def test_accepts_no_skips_when_optional_inputs_are_supplied(self) -> None:
         self.summary["passedTests"] = 662
         self.summary["skippedTests"] = 0

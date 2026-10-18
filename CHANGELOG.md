@@ -2,9 +2,10 @@
 
 All notable changes to Aagedal Media Player.
 
-## [2.1.0] — Unreleased
+## [2.1.0] — 2026-10-18
 
 ### Added
+- Keep loupe video live during forward MPV playback, with a separate GPU-rendered viewer and automatic capture fallback.
 - Adjust waveform color and quiet detail, playback volume and mute from the Playback sidebar. Comparison playback also exposes the listening source.
 - Overlay analyzed momentary and short-term LUFS on audio waveforms, with track/programme selection and a show/hide control.
 
