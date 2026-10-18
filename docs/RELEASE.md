@@ -186,6 +186,46 @@ xcrun stapler validate "build/distribution-check/Aagedal Media Player.app"
 spctl --assess --type execute --verbose=2 "build/distribution-check/Aagedal Media Player.app"
 ```
 
+## Website release backup
+
+The [website backup workflow](../.github/workflows/publish-backup-appcast.yml)
+runs when `appcast.xml` is pushed to `main`, or manually through GitHub Actions.
+It uses the same `Aagedal Apps` environment as Media Converter, with secrets
+`APPCAST_FTP_HOST`, `APPCAST_FTP_PORT`, `APPCAST_FTP_USERNAME`, and
+`APPCAST_FTP_PASSWORD`. The FTP account root maps to `https://aagedal.me/apps/`.
+No hosting credentials belong in this repository.
+
+The workflow downloads the latest stable release named by the appcast and
+requires its filename, size and SHA-256 to match GitHub's published asset
+metadata. It uploads the unchanged signed/notarized ZIP over FTPS to
+`mediaplayer/Aagedal_Media_Player_VERSION.zip`, then compares a complete public
+HTTPS download byte for byte. Only after that succeeds does it upload and
+atomically rename `appcast/mediaplayer.xml`, then verify its public bytes.
+Both files use temporary upload names before rename. A failed ZIP verification
+leaves the existing backup feed in place; rerun the workflow after correcting
+the hosting problem. Website backup failure does not undo the GitHub release.
+
+The backup feed is `https://aagedal.me/apps/appcast/mediaplayer.xml`.
+It advertises the latest mirrored release with a website enclosure URL, retaining
+the original Sparkle signature, version, OS requirement and notes. Older entries
+are omitted because their ZIPs are not uploaded by this workflow. The canonical
+GitHub appcast stays unchanged. The app already retries the website feed when
+the primary feed fails to download or parse; it does not retry installation or
+signature failures, or switch feeds after a successful primary feed load.
+
+To prepare and inspect a mirror locally without uploading or rebuilding:
+
+```bash
+gh api repos/aagedal/Aagedal-Media-Player/releases/tags/VERSION > build/release.json
+python3 scripts/prepare-release-mirror.py \
+  --archive build/Aagedal_Media_Player_VERSION.zip \
+  --release-json build/release.json
+python3 scripts/test-release-mirror.py
+```
+
+The generated feed and checksum manifest are in `build/website-mirror/`.
+The ZIP is the existing release artifact; do not rebuild it or re-sign it.
+
 ## Updating ffmpeg
 
 The bundled FFmpeg is the 9.0.2 full arm64 build supplied on 2026-10-13 in

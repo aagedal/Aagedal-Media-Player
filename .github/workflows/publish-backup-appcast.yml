@@ -1,0 +1,87 @@
+name: Publish website release backup
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - appcast.xml
+      - .github/workflows/publish-backup-appcast.yml
+      - scripts/prepare-release-mirror.py
+      - scripts/test-release-mirror.py
+      - scripts/validate-github-release-asset.py
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-website-release-backup
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Mirror signed ZIP and appcast over FTPS
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: Aagedal Apps
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Test mirror preparation
+        run: python3 scripts/test-release-mirror.py
+
+      - name: Identify latest appcast release
+        id: release
+        run: python3 scripts/prepare-release-mirror.py --identity >> "$GITHUB_OUTPUT"
+
+      - name: Download and validate published release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.release.outputs.version }}
+          FILENAME: ${{ steps.release.outputs.filename }}
+        run: |
+          set -euo pipefail
+          mkdir -p build
+          gh api "repos/aagedal/Aagedal-Media-Player/releases/tags/${VERSION}" > build/release.json
+          gh release download "$VERSION" --repo aagedal/Aagedal-Media-Player --pattern "$FILENAME" --dir build
+          python3 scripts/prepare-release-mirror.py --archive "build/$FILENAME" --release-json build/release.json
+
+      - name: Upload ZIP, verify public bytes, then publish backup feed
+        env:
+          FTP_HOST: ${{ secrets.APPCAST_FTP_HOST }}
+          FTP_PORT: ${{ secrets.APPCAST_FTP_PORT }}
+          FTP_USERNAME: ${{ secrets.APPCAST_FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.APPCAST_FTP_PASSWORD }}
+          FILENAME: ${{ steps.release.outputs.filename }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          : "${FTP_HOST:?Missing APPCAST_FTP_HOST}"
+          : "${FTP_PORT:?Missing APPCAST_FTP_PORT}"
+          : "${FTP_USERNAME:?Missing APPCAST_FTP_USERNAME}"
+          : "${FTP_PASSWORD:?Missing APPCAST_FTP_PASSWORD}"
+          # Like Media Converter, the FTP account root maps to /apps/.
+          # Rename only complete uploads; publish the feed after the ZIP works.
+          curl --disable --fail --silent --show-error --ssl-reqd --ftp-create-dirs \
+            --user "${FTP_USERNAME}:${FTP_PASSWORD}" \
+            --upload-file "build/$FILENAME" \
+            --quote "-RNFR ${FILENAME}.tmp" --quote "-RNTO ${FILENAME}" \
+            "ftp://${FTP_HOST}:${FTP_PORT}/mediaplayer/${FILENAME}.tmp"
+          curl --disable --fail --silent --show-error --retry 5 --retry-all-errors --retry-delay 2 \
+            "https://aagedal.me/apps/mediaplayer/${FILENAME}?revision=${GITHUB_SHA}" \
+            --output build/public-release.zip
+          cmp --silent "build/$FILENAME" build/public-release.zip
+          curl --disable --fail --silent --show-error --ssl-reqd --ftp-create-dirs \
+            --user "${FTP_USERNAME}:${FTP_PASSWORD}" \
+            --upload-file build/website-mirror/mediaplayer.xml \
+            --quote "-RNFR mediaplayer.xml.tmp" --quote "-RNTO mediaplayer.xml" \
+            "ftp://${FTP_HOST}:${FTP_PORT}/appcast/mediaplayer.xml.tmp"
+          curl --disable --fail --silent --show-error --retry 5 --retry-all-errors --retry-delay 2 \
+            "https://aagedal.me/apps/appcast/mediaplayer.xml?revision=${GITHUB_SHA}" \
+            --output build/public-appcast.xml
+          cmp --silent build/website-mirror/mediaplayer.xml build/public-appcast.xml
