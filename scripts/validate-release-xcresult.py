@@ -14,8 +14,9 @@ from typing import Any, Iterator
 
 
 # These named checks require external workloads or the separate default-off
-# native-scope development provider. Ordinary shipping regressions remain required.
+# native-scope/audio-filter development providers. Ordinary shipping regressions remain required.
 ALLOWED_SKIPPED_TESTS = {
+    "MPVNativeAudioMeterIntegrationTests/testNativeFiltersAgainstExistingDSPAndSparsePolling()",
     "LiveLoupeSessionTests/testComparisonScopePublicationsCarryExactDifferenceInputs()",
     "LiveLoupeSessionTests/testZZComparisonPostTestRetirement()",
     "MPVNativeScopeIntegrationTests/testFallbackProvenanceFollowsPublishedSampleAndClearsOnDemandChange()",

@@ -8,6 +8,28 @@ import XCTest
 
 @MainActor
 final class ScopeAnalysisDemandTests: XCTestCase {
+    func testAVDisplayRequirementChangesKeepOutputAndCaptureSession() throws {
+        let item = AVPlayerItem(asset: AVMutableComposition())
+        let player = AVPlayer(playerItem: item)
+        let capture = FrameCapture()
+        capture.attachAVPlayer(player)
+        capture.startCapture()
+        defer {
+            capture.stopCapture(rebuildPipeline: false)
+            capture.detachAVPlayer()
+        }
+        let output = try XCTUnwrap(item.outputs.first as? AVPlayerItemVideoOutput)
+        let generation = capture.captureGeneration.current
+        for displayRequired in [true, false, true, false] {
+            capture.requiresDisplayFrame = displayRequired
+            XCTAssertTrue(capture.isCapturing)
+            XCTAssertEqual(capture.captureGeneration.current, generation)
+            XCTAssertEqual(item.outputs.count, 1)
+            XCTAssertTrue(item.outputs.first === output,
+                "Scope selection must retain AVFoundation's unchanged capture output")
+        }
+    }
+
     func testPausedAVSourceRecapturesConsumedFrameWhenAnalysisResumes() async throws {
         let fixtureRoot = ProcessInfo.processInfo.environment["MEDIA_FIXTURE_DIR"].map {
             URL(fileURLWithPath: $0)

@@ -183,6 +183,10 @@ final class FrameCapture: ObservableObject {
     var requiresDisplayFrame = false {
         didSet {
             guard oldValue != requiresDisplayFrame else { return }
+            // Only MPV switches between native plots and display readback here.
+            // AVFoundation uses the same output in every mode; removing it on
+            // each A/B/difference switch interrupts its decode pipeline.
+            guard mpvPlayer != nil else { return }
             if isCapturing {
                 // The timer carries a generation too. Restart it along with
                 // invalidating in-flight work so future ticks remain eligible.

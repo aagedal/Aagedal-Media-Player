@@ -103,7 +103,15 @@ class ReleaseXCResultValidationTests(unittest.TestCase):
             self.validate()
 
     def test_native_candidate_diagnostics_require_explicit_descriptive_opt_in_skips(self) -> None:
-        for name in ['LiveLoupeSessionTests/testComparisonScopePublicationsCarryExactDifferenceInputs()', 'LiveLoupeSessionTests/testZZComparisonPostTestRetirement()', 'MPVNativeScopeIntegrationTests/testFallbackProvenanceFollowsPublishedSampleAndClearsOnDemandChange()', 'MPVNativeScopeIntegrationTests/testSuspendedNativeAnalysisSurvivesBackendReplacementAndResumesFresh()', 'MPVNativeScopeIntegrationTests/testUHDLiveScopeThroughputAgainstScreenshotBackend()', 'MPVNativeScopeIntegrationTests/testNativeCaptureRendersAllModesAndRetainsDisplayDifferenceFallback()']:
+        for name in [
+            'MPVNativeAudioMeterIntegrationTests/testNativeFiltersAgainstExistingDSPAndSparsePolling()',
+            'LiveLoupeSessionTests/testComparisonScopePublicationsCarryExactDifferenceInputs()',
+            'LiveLoupeSessionTests/testZZComparisonPostTestRetirement()',
+            'MPVNativeScopeIntegrationTests/testFallbackProvenanceFollowsPublishedSampleAndClearsOnDemandChange()',
+            'MPVNativeScopeIntegrationTests/testSuspendedNativeAnalysisSurvivesBackendReplacementAndResumesFresh()',
+            'MPVNativeScopeIntegrationTests/testUHDLiveScopeThroughputAgainstScreenshotBackend()',
+            'MPVNativeScopeIntegrationTests/testNativeCaptureRendersAllModesAndRetainsDisplayDifferenceFallback()',
+        ]:
             with self.subTest(name=name):
                 self.skipped_case["nodeIdentifier"] = name
                 self.skipped_case["children"] = [{"nodeType": "Skip Message", "name": "Test skipped - Requires an explicit external input"}]

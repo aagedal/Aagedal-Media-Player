@@ -2289,6 +2289,9 @@ final class CompareLiveBackendTests: XCTestCase {
         let avItem = try XCTUnwrap(
             primaryBackend == .avFoundation ? primary.player?.currentItem : secondary.player?.currentItem
         )
+        // The initial checkpoint requests both scope inputs explicitly. A/B
+        // selections now suspend the unselected capture by design.
+        session.scopeSource = .difference
         let primaryPreparationID = primary.preparationID
         let secondaryPreparationID = secondary.preparationID
         session.viewMode = .sideBySide
@@ -2368,6 +2371,8 @@ final class CompareLiveBackendTests: XCTestCase {
         let scopeRenderStart = scopeProbe.renderCount
         let primaryScopeStart = primary.frameCapture.currentSample?.sequence ?? 0
         let secondaryScopeStart = secondary.frameCapture.currentSample?.sequence ?? 0
+        var primaryScopeLatest = primaryScopeStart
+        var secondaryScopeLatest = secondaryScopeStart
         let clock = ContinuousClock()
         let start = clock.now
         let deadline = start.advanced(by: .seconds(duration))
@@ -2398,6 +2403,10 @@ final class CompareLiveBackendTests: XCTestCase {
                     }
                 }
             }
+            // Demand changes clear inactive payloads. Count actual publications
+            // observed while each source is requested, not only the final view.
+            primaryScopeLatest = max(primaryScopeLatest, primary.frameCapture.currentSample?.sequence ?? 0)
+            secondaryScopeLatest = max(secondaryScopeLatest, secondary.frameCapture.currentSample?.sequence ?? 0)
             session.scopeSource = CompareScopeSource.allCases[(updateCount / 10) % CompareScopeSource.allCases.count]
             state.selectMagnification(
                 magnifications[(updateCount / 4) % magnifications.count],
@@ -2451,8 +2460,8 @@ final class CompareLiveBackendTests: XCTestCase {
         }
         XCTAssertGreaterThanOrEqual(scopeProbe.renderCount - scopeRenderStart, CompareScopeSource.allCases.count, description)
         XCTAssertEqual(scopeProbe.renderedSources.count, CompareScopeSource.allCases.count, description)
-        XCTAssertGreaterThan(primary.frameCapture.currentSample?.sequence ?? 0, primaryScopeStart)
-        XCTAssertGreaterThan(secondary.frameCapture.currentSample?.sequence ?? 0, secondaryScopeStart)
+        XCTAssertGreaterThan(primaryScopeLatest, primaryScopeStart)
+        XCTAssertGreaterThan(secondaryScopeLatest, secondaryScopeStart)
         assertStableVisualSurfaces(
             primary: primary, secondary: secondary, hostingView: hostingView,
             primaryPreparationID: primaryPreparationID, secondaryPreparationID: secondaryPreparationID,
@@ -2714,6 +2723,9 @@ final class CompareLiveBackendTests: XCTestCase {
             return
         }
 
+        // The initial checkpoint requests both scope inputs explicitly. A/B
+        // selections now suspend the unselected capture by design.
+        session.scopeSource = .difference
         let primaryPreparationID = primary.preparationID
         let secondaryPreparationID = secondary.preparationID
         let primaryMPV = primary.mpvPlayer
@@ -3134,6 +3146,8 @@ final class CompareLiveBackendTests: XCTestCase {
         let deadline = start.advanced(by: .seconds(duration))
         let primaryStartSequence = primaryFrameCapture.currentSample?.sequence ?? 0
         let secondaryStartSequence = secondaryFrameCapture.currentSample?.sequence ?? 0
+        var primaryEndSequence = primaryStartSequence
+        var secondaryEndSequence = secondaryStartSequence
         var expectedUpdate = start
         var tickCount = 0
         var maximumSchedulingDelay: TimeInterval = 0
@@ -3145,6 +3159,8 @@ final class CompareLiveBackendTests: XCTestCase {
                 max(0, durationSeconds(from: expectedUpdate, to: now))
             )
 
+            primaryEndSequence = max(primaryEndSequence, primaryFrameCapture.currentSample?.sequence ?? 0)
+            secondaryEndSequence = max(secondaryEndSequence, secondaryFrameCapture.currentSample?.sequence ?? 0)
             if tickCount % sourceHoldTicks == 0 {
                 let sourceIndex = (tickCount / sourceHoldTicks) % CompareScopeSource.allCases.count
                 let source = CompareScopeSource.allCases[sourceIndex]
@@ -3172,8 +3188,8 @@ final class CompareLiveBackendTests: XCTestCase {
             }
         }
 
-        let primaryEndSequence = primaryFrameCapture.currentSample?.sequence ?? 0
-        let secondaryEndSequence = secondaryFrameCapture.currentSample?.sequence ?? 0
+        primaryEndSequence = max(primaryEndSequence, primaryFrameCapture.currentSample?.sequence ?? 0)
+        secondaryEndSequence = max(secondaryEndSequence, secondaryFrameCapture.currentSample?.sequence ?? 0)
         return ScopeObservation(
             renderUpdateCount: renderProbe.renderCount,
             coveredSourceCount: renderProbe.renderedSources.count,

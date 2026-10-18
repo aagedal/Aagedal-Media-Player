@@ -216,6 +216,7 @@ python3 scripts/validate-release-xcresult.py \
     --require-test "LiveAudioMeterDecoderTests/testTimestampedProcessorAllowsBoundedDTSRoundingButRejectsCumulativeDrift()" \
     --require-test "LiveAudioMeterSessionTests/testIndependentTrackAndMonoGroupingLeavePlaybackSelectionUnchanged()" \
     --require-test "LoudnessAnalysisTests/testOfflineGraphParsesWarmupAndBoundsFullDurationHistory()" \
+    --require-test "ScopeAnalysisDemandTests/testAVDisplayRequirementChangesKeepOutputAndCaptureSession()" \
     --require-test "WaveformLoudnessTests/testRangeHistoryUsesWholeFileClockAndIndependentWindows()" \
     --require-test "WaveformLoudnessTests/testMissingOrInvalidSamplesBreakLinesAndLevelsClipToFixedScale()" \
     --require-test "WaveformLoudnessTests/testRangeDoesNotPlotUnmeasuredAudio()" \

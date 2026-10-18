@@ -15,6 +15,7 @@ All notable changes to Aagedal Media Player.
 - Apply appearance changes to cached waveform data, including changes made while decoding, without restarting audio decoding.
 
 ### Fixed
+- Avoid interrupting AVFoundation playback when switching comparison scope sources.
 - Keep the LUFS graph menu outside the right-edge cursor-hide zone.
 - Match waveform decoding and loudness overlays by audio ordinal when MPV track IDs differ from source audio order.
 - Keep audio-only waveforms clear of the transport controls when the sidebar makes the window narrow.
