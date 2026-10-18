@@ -14,6 +14,7 @@ from pathlib import Path
 import plistlib
 import re
 import subprocess
+import sys
 import tempfile
 
 
@@ -30,6 +31,8 @@ WORKLOAD_ENVIRONMENT_KEYS = (
     'LIVE_LOUPE_SCOPE_PROVENANCE_CASES', 'LIVE_LOUPE_COMPARISON_VERIFY_DIFFERENCE_PIXELS',
     'LIVE_LOUPE_COMPARISON_MEMORY_DIAGNOSTICS', 'LIVE_LOUPE_COMPARISON_POST_TEST_RETIREMENT',
     'LIVE_LOUPE_COMPARISON_SCALAR_MEMORY_DIAGNOSTICS',
+    'LIVE_LOUPE_COMPARISON_ALLOCATION_STACKS',
+    'MallocStackLogging', 'MallocStackLoggingNoCompact', 'MallocStackLoggingDirectory',
     'LIVE_LOUPE_SOAK_CASES', 'LIVE_LOUPE_SOAK_SECONDS', 'LIVE_LOUPE_SOAK_CYCLES',
 )
 
@@ -169,7 +172,11 @@ def main():
                         help='with --memory-diagnostics: observe weak identities in a subsequent serial XCTest method')
     parser.add_argument('--scalar-memory-diagnostics', action='store_true',
                         help='with --memory-diagnostics: omit relationship getters throughout the workload as an observer-effect control')
+    parser.add_argument('--allocation-stacks', action='store_true',
+                        help='with --memory-diagnostics: instrument the test host with malloc stack logging and collect surviving identities after all gates')
     args = parser.parse_args()
+    if args.allocation_stacks and not args.memory_diagnostics:
+        parser.error('--allocation-stacks requires --memory-diagnostics')
     if args.scalar_memory_diagnostics and not args.memory_diagnostics:
         parser.error('--scalar-memory-diagnostics requires --memory-diagnostics')
     if args.post_test_retirement and not args.memory_diagnostics:
@@ -214,6 +221,10 @@ def main():
         process_environment.pop(key, None)
     environment['AAGEDAL_MPV_DECODER_RASTER_CANDIDATE'] = '1'
     environment['MPV_DECODER_RASTER_CASES'] = str(args.manifest.resolve(strict=True))
+    if args.allocation_stacks:
+        environment['MallocStackLogging'] = '1'
+        environment['MallocStackLoggingNoCompact'] = '1'
+        environment['LIVE_LOUPE_COMPARISON_ALLOCATION_STACKS'] = '1'
     if args.post_test_retirement:
         environment['LIVE_LOUPE_COMPARISON_POST_TEST_RETIREMENT'] = '1'
     if args.scalar_memory_diagnostics:
@@ -263,9 +274,40 @@ def main():
         if args.post_test_retirement:
             command.append('-only-testing:Aagedal Media Player Tests/LiveLoupeSessionTests/testZZComparisonPostTestRetirement')
         (args.output / 'command.json').write_text(json.dumps(command, indent=2) + '\n')
-        with (args.output / 'xcodebuild.log').open('w') as log:
-            result = subprocess.run(command, stdout=log, stderr=subprocess.STDOUT,
-                                    env=process_environment)
+        collector_status = None
+        with (args.output / 'xcodebuild.log').open('w') as log, (args.output / 'allocation-collector.log').open('w') as collector_log:
+            collector = None
+            try:
+                if args.allocation_stacks:
+                    collector_command = [sys.executable, str(Path(__file__).with_name('collect-mpv-allocation-stacks.py')),
+                        str(args.output.resolve() / 'memory-diagnostics'), str(args.output.resolve() / 'allocation-stacks'),
+                        '--wait-seconds', str(max(1800, args.soak_seconds * args.soak_cycles * (18 if args.active_scopes else 6) + 1800))]
+                    (args.output / 'allocation-command.json').write_text(json.dumps(collector_command, indent=2) + '\n')
+                    collector = subprocess.Popen(collector_command, stdout=collector_log, stderr=subprocess.STDOUT, env=process_environment)
+                result = subprocess.run(command, stdout=log, stderr=subprocess.STDOUT,
+                                        env=process_environment)
+                if collector is not None:
+                    # XCTest waits for the collector only after the original final
+                    # delayed snapshot. An early workload failure has no request.
+                    if (args.output / 'memory-diagnostics' / 'allocation-request.json').exists():
+                        try:
+                            collector_status = collector.wait(timeout=30)
+                        except subprocess.TimeoutExpired:
+                            collector_status = -1
+                    else:
+                        collector.terminate()
+                        try:
+                            collector_status = collector.wait(timeout=10)
+                        except subprocess.TimeoutExpired:
+                            collector_status = -1
+            finally:
+                if collector is not None and collector.poll() is None:
+                    collector.terminate()
+                    try:
+                        collector.wait(timeout=10)
+                    except subprocess.TimeoutExpired:
+                        collector.kill()
+                        collector.wait(timeout=10)
     # XCTest stdout can live only in the result bundle's action log.
     action = subprocess.run(['xcrun', 'xcresulttool', 'get', 'log', '--type', 'action',
                              '--path', str(args.output.resolve() / 'tests.xcresult')],
@@ -291,6 +333,8 @@ def main():
         raise SystemExit('Native app acceptance failed or required marker missing; see ' + str(args.output))
     if args.post_test_retirement and 'MPV_COMPARISON_POST_TEST_RETIREMENT: same-process subsequent test, scalar-only, 5 second delay' not in combined:
         raise SystemExit('Post-test observation marker missing; see ' + str(args.output))
+    if args.allocation_stacks and (collector_status != 0 or 'MPV_COMPARISON_ALLOCATION_STACKS: post-gate collection complete' not in combined):
+        raise SystemExit('Allocation stack collection failed; see ' + str(args.output))
     if args.memory_diagnostics:
         validate_memory_diagnostics(args.output / 'memory-diagnostics', args.soak_cycles, args.post_test_retirement, args.scalar_memory_diagnostics)
     print('Native app acceptance passed; logs and xcresult:', args.output.resolve())

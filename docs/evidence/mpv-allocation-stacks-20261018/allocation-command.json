@@ -1,0 +1,8 @@
+[
+  "/opt/homebrew/opt/python@3.15/bin/python3.15",
+  "/Users/truls.aagedal/.t3/worktrees/Aagedal-Media-Player/t3-eee25200/scripts/collect-mpv-allocation-stacks.py",
+  "/private/tmp/aagedal-allocation-stacks-20261018/soak/memory-diagnostics",
+  "/private/tmp/aagedal-allocation-stacks-20261018/soak/allocation-stacks",
+  "--wait-seconds",
+  "2340"
+]
