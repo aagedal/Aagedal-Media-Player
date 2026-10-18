@@ -1,0 +1,194 @@
+[
+  {
+    "content": "bare",
+    "arm": "outer",
+    "checkpoint": "after-close",
+    "iterations": 6,
+    "survivingWindows": 6,
+    "survivingHosts": 0
+  },
+  {
+    "content": "bare",
+    "arm": "outer",
+    "checkpoint": "after-inner-boundary",
+    "iterations": 6,
+    "survivingWindows": 6,
+    "survivingHosts": 0
+  },
+  {
+    "content": "bare",
+    "arm": "outer",
+    "checkpoint": "before-outer-drain",
+    "iterations": 6,
+    "survivingWindows": 6,
+    "survivingHosts": 0
+  },
+  {
+    "content": "bare",
+    "arm": "outer",
+    "checkpoint": "after-outer-drain",
+    "iterations": 6,
+    "survivingWindows": 0,
+    "survivingHosts": 0
+  },
+  {
+    "content": "bare",
+    "arm": "nested",
+    "checkpoint": "after-close",
+    "iterations": 6,
+    "survivingWindows": 6,
+    "survivingHosts": 0
+  },
+  {
+    "content": "bare",
+    "arm": "nested",
+    "checkpoint": "after-inner-boundary",
+    "iterations": 6,
+    "survivingWindows": 0,
+    "survivingHosts": 0
+  },
+  {
+    "content": "bare",
+    "arm": "nested",
+    "checkpoint": "before-outer-drain",
+    "iterations": 6,
+    "survivingWindows": 0,
+    "survivingHosts": 0
+  },
+  {
+    "content": "bare",
+    "arm": "nested",
+    "checkpoint": "after-outer-drain",
+    "iterations": 6,
+    "survivingWindows": 0,
+    "survivingHosts": 0
+  },
+  {
+    "content": "appkit",
+    "arm": "outer",
+    "checkpoint": "after-close",
+    "iterations": 6,
+    "survivingWindows": 6,
+    "survivingHosts": 6
+  },
+  {
+    "content": "appkit",
+    "arm": "outer",
+    "checkpoint": "after-inner-boundary",
+    "iterations": 6,
+    "survivingWindows": 6,
+    "survivingHosts": 6
+  },
+  {
+    "content": "appkit",
+    "arm": "outer",
+    "checkpoint": "before-outer-drain",
+    "iterations": 6,
+    "survivingWindows": 6,
+    "survivingHosts": 6
+  },
+  {
+    "content": "appkit",
+    "arm": "outer",
+    "checkpoint": "after-outer-drain",
+    "iterations": 6,
+    "survivingWindows": 0,
+    "survivingHosts": 0
+  },
+  {
+    "content": "appkit",
+    "arm": "nested",
+    "checkpoint": "after-close",
+    "iterations": 6,
+    "survivingWindows": 6,
+    "survivingHosts": 6
+  },
+  {
+    "content": "appkit",
+    "arm": "nested",
+    "checkpoint": "after-inner-boundary",
+    "iterations": 6,
+    "survivingWindows": 0,
+    "survivingHosts": 0
+  },
+  {
+    "content": "appkit",
+    "arm": "nested",
+    "checkpoint": "before-outer-drain",
+    "iterations": 6,
+    "survivingWindows": 0,
+    "survivingHosts": 0
+  },
+  {
+    "content": "appkit",
+    "arm": "nested",
+    "checkpoint": "after-outer-drain",
+    "iterations": 6,
+    "survivingWindows": 0,
+    "survivingHosts": 0
+  },
+  {
+    "content": "swiftui",
+    "arm": "outer",
+    "checkpoint": "after-close",
+    "iterations": 6,
+    "survivingWindows": 6,
+    "survivingHosts": 6
+  },
+  {
+    "content": "swiftui",
+    "arm": "outer",
+    "checkpoint": "after-inner-boundary",
+    "iterations": 6,
+    "survivingWindows": 6,
+    "survivingHosts": 6
+  },
+  {
+    "content": "swiftui",
+    "arm": "outer",
+    "checkpoint": "before-outer-drain",
+    "iterations": 6,
+    "survivingWindows": 6,
+    "survivingHosts": 6
+  },
+  {
+    "content": "swiftui",
+    "arm": "outer",
+    "checkpoint": "after-outer-drain",
+    "iterations": 6,
+    "survivingWindows": 0,
+    "survivingHosts": 0
+  },
+  {
+    "content": "swiftui",
+    "arm": "nested",
+    "checkpoint": "after-close",
+    "iterations": 6,
+    "survivingWindows": 6,
+    "survivingHosts": 6
+  },
+  {
+    "content": "swiftui",
+    "arm": "nested",
+    "checkpoint": "after-inner-boundary",
+    "iterations": 6,
+    "survivingWindows": 0,
+    "survivingHosts": 0
+  },
+  {
+    "content": "swiftui",
+    "arm": "nested",
+    "checkpoint": "before-outer-drain",
+    "iterations": 6,
+    "survivingWindows": 0,
+    "survivingHosts": 0
+  },
+  {
+    "content": "swiftui",
+    "arm": "nested",
+    "checkpoint": "after-outer-drain",
+    "iterations": 6,
+    "survivingWindows": 0,
+    "survivingHosts": 0
+  }
+]

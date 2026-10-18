@@ -1224,6 +1224,107 @@ final class LiveLoupeSessionTests: XCTestCase {
         withExtendedLifetime(replacement) {}
     }
 
+    /// A synchronous reduction of the workload's window construction/close path.
+    /// No await, run-loop pumping, relationship getters or workload gate changes.
+    /// Survival is an observation, not a platform-independent pass/fail condition.
+    func testClosedWindowRetirementAcrossSynchronousPoolBoundaries() throws {
+        var observations: [[String: Any]] = []
+        for content in ["bare", "appkit", "swiftui"] {
+            for iteration in 1...6 {
+                // Each arm has its own outer pool; a treatment drain cannot
+                // consume the control arm's queued autoreleases.
+                let arms = iteration.isMultiple(of: 2) ? ["nested", "outer"] : ["outer", "nested"]
+                for arm in arms {
+                    let probe = RetirementProbe()
+                    func observe(_ checkpoint: String) {
+                        observations.append(["content": content, "iteration": iteration,
+                            "arm": arm, "armOrder": arms,
+                            "checkpoint": checkpoint,
+                            "objects": probe.snapshot(checkpoint: checkpoint, inspectRelationships: false)])
+                    }
+                    autoreleasepool {
+                        // Both arms return only after all explicit strong fixture
+                        // locals have left the non-inlined constructor's scope.
+                        if arm == "nested" {
+                            autoreleasepool {
+                                Self.makeClosedPoolWindow(content: content, arm: arm, probe: probe)
+                                observe("after-close")
+                            }
+                        } else {
+                            Self.makeClosedPoolWindow(content: content, arm: arm, probe: probe)
+                            observe("after-close")
+                        }
+                        observe("after-inner-boundary")
+                        observe("before-outer-drain")
+                    }
+                    observe("after-outer-drain")
+                    let rows = probe.snapshot(checkpoint: "verification", inspectRelationships: false)
+                    XCTAssertEqual(rows.filter { $0["label"] as? String == "window" }.count, 1)
+                    XCTAssertEqual(rows.filter { $0["label"] as? String == "host" }.count, content == "bare" ? 0 : 1)
+                    // A pure Swift ownership sentinel has no AppKit/autorelease
+                    // behavior. Its retirement verifies the helper's ARC boundary.
+                    let sentinels = rows.filter { $0["label"] as? String == "arcSentinel" }
+                    XCTAssertEqual(sentinels.count, 1)
+                    XCTAssertTrue(sentinels.allSatisfy { $0["alive"] as? Bool == false })
+                }
+            }
+        }
+        XCTAssertEqual(observations.count, 144)
+        var retired = Set<String>()
+        for observation in observations {
+            let rows = try XCTUnwrap(observation["objects"] as? [[String: Any]])
+            for row in rows {
+                XCTAssertNil(row["window"])
+                XCTAssertNil(row["view"])
+                let identity = "\(observation["content"]!)/\(observation["iteration"]!)/\(observation["arm"]!)/\(row["id"]!)"
+                let alive = try XCTUnwrap(row["alive"] as? Bool)
+                if retired.contains(identity) { XCTAssertFalse(alive, "Weak identities cannot revive") }
+                if !alive { retired.insert(identity) }
+                if row["label"] as? String == "arcSentinel" { XCTAssertFalse(alive) }
+            }
+        }
+        let receipt: [String: Any] = ["schemaVersion": 1,
+            "experiment": "synchronous-window-pool-boundary",
+            "processID": ProcessInfo.processInfo.processIdentifier,
+            "operatingSystem": ProcessInfo.processInfo.operatingSystemVersionString,
+            "iterationsPerContent": 6, "alternatingArmOrder": true,
+            "independentOuterPools": true, "ordersFront": true,
+            "pumpsRunLoop": false, "inspectsRelationships": false,
+            "observations": observations]
+        let data = try JSONSerialization.data(withJSONObject: receipt, options: [.sortedKeys])
+        let attachment = XCTAttachment(data: data, uniformTypeIdentifier: "public.json")
+        attachment.name = "synchronous-window-pool-boundary.json"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+        print("MPV_COMPARISON_SYNCHRONOUS_POOL_OBSERVATIONS: \(String(decoding: data, as: UTF8.self))")
+    }
+
+    private final class PoolARCSentinel {}
+
+    @inline(never)
+    private static func makeClosedPoolWindow(content: String, arm: String, probe: RetirementProbe) {
+        let sentinel = PoolARCSentinel()
+        let window = NSWindow(contentRect: CGRect(x: 40, y: 40, width: 960, height: 540),
+            styleMask: [.titled], backing: .buffered, defer: false)
+        window.isReleasedWhenClosed = false
+        probe.track(window, label: "window", origin: arm)
+        probe.track(sentinel, label: "arcSentinel", origin: arm)
+        if content != "bare" {
+            let host: NSView = content == "swiftui"
+                ? NSHostingView(rootView: Color.black.frame(width: 960, height: 540)) : NSView()
+            probe.track(host, label: "host", origin: arm)
+            window.contentView = host
+            withExtendedLifetime(host) { XCTAssertEqual(probe.counts["host"]?["alive"], 1) }
+        }
+        XCTAssertEqual(probe.counts["window"]?["alive"], 1)
+        withExtendedLifetime(sentinel) { XCTAssertEqual(probe.counts["arcSentinel"]?["alive"], 1) }
+        window.orderFront(nil)
+        window.contentView = nil
+        window.close()
+        probe.markTeardown(origin: arm)
+        withExtendedLifetime(sentinel) {}
+    }
+
     func testRetirementSnapshotsPreserveOriginsAndOnlyRecordScalarRelationships() throws {
         let probe = RetirementProbe()
         var object: NSObject? = NSObject()

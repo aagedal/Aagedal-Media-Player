@@ -1,0 +1,16 @@
+{
+  "sourceBaseCommit": "8b321791c652f233b01067e3fec946297e772031",
+  "testSourceSHA256": "1854f58716b38ec03c6c847ad2a0e79a1838989864e8cb8a0acfa7dc9bcf0598",
+  "architecture": "arm64",
+  "configuration": "Release",
+  "mpvRebuilt": false,
+  "productionBehaviorChanged": false,
+  "focusedPassedTests": 77,
+  "failedTests": 0,
+  "skippedTests": 0,
+  "rawPoolObservationsSHA256": "86c6a92e5ba0e933c9b20aae53898c7a7a98091213b2f13236b6954dbbd0a710",
+  "fixtureManifestsSHA256": {
+    "/private/tmp/aagedal-synchronous-pool-20261018/native-fixtures.json": "25cba01adb6438d2da663a6439952ca18d1cec47e4446e1d05a0db3081100cc5",
+    "/private/tmp/aagedal-loupe-playback-60fps/live-viewer-fixtures.json": "48dc8b84cfdd7575b931a011b1279048242e786887abfff996f2810f5b24abb6"
+  }
+}

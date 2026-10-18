@@ -1,0 +1,22 @@
+{
+  "README.md": "59794700729cdb2e17d5134252d8a2a1643b5844bf9c26e49180397a2bc38b2b",
+  "build.log.gz": "47b7707a322317c03c3eae2aed1e1f8029015fa000a2cfff41ec61ef5839370b",
+  "candidate-receipt.json": "9617ea32bdf1f08c4e7e4bb875de109030267029ca9317fec3abb2a71b8730d3",
+  "collection-inputs.json": "4ea9588c357889ab4573b72d6a0e66cd26467d225faee7288f357c91d1772a15",
+  "execution-inputs.json": "ccb026fbbd53aae4fe82821dcdeff72faf0ebc30d863344e820053ebf69a601b",
+  "focused/action.log.gz": "4905685ba393bb4b8ea3db6f297e2f0c0c679c784b3e1d653c171df565a49cbd",
+  "focused/command.json": "9c4fa92b54c4fa64153862d284e00e4b18d4a83e6e184c550b3cdeb6e3862ead",
+  "focused/executed-configuration.plist": "fa75d70918dc9a2e060cf1f6c2dee158aa3b725baf24ae2d6ea3713aab47a0a9",
+  "focused/summary.json": "0275d583552a8d309ec6a5e36847462b59c0d450644e08f24d173d8582091e94",
+  "focused/xcodebuild.log.gz": "2d3b616e93b3e150425de019b8ab6a5a75d5c2a9cadb02a4a7b18cca6a2750ee",
+  "initial-collection-rejection.log.gz": "0de2e3c60c504968e64103c9b1c90458901d1ccfc798256e17e28ca091bdbf81",
+  "initial-run-validation.py.gz": "5ab8f770866c46d781d7782424c35b99c11cb50b91215318c3764341d24594b6",
+  "pool-observations.json.gz": "c6d64d0110edb805dc613b3523b5866f4ad9035439faea650d561e4d2d18827b",
+  "pool-summary.json": "0ee2f1b182f13e0984ba296e79f2ff54beff45c47d85be757f5ebef0ede454e4",
+  "prepare.py": "68bf5a449c68201fc0a21e60c071d998cd6fa34f5bc7e6fae8aecbcef6e375d5",
+  "retain.py": "aa74e279e06e95b5b15069377276595468ef1c7b75a4852690321c6807cd0a2c",
+  "run-focused.py": "1058219b9f7bc1dedc5ecd429a3ee81536455b944b30af6e90328539eea6417d",
+  "run-validation.py": "2cc540d660ae2460df13c1796792ba576ab28dadbe4bd675c1ac2200c7638104",
+  "signature-verification.txt": "f5eff501b9fae8e4d4b7cc2b9d350c68251fdd13afb62b843edb23a36c2c71ba",
+  "test-source.patch.gz": "0d9aac096b5be5c1dd8acfc9e26150a249d959add3c1191ff4940fd6880a5cb5"
+}

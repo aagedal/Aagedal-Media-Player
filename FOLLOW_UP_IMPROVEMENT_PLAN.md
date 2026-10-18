@@ -5570,3 +5570,31 @@ retained with different memory outcomes. See
 MPVKit, shipping pins, the default-off provider gate and production capture/teardown
 behavior remain unchanged. Authentic-media, native dependency sanitizer, peak/GPU
 memory, frame-lock and physical-HDR qualifications remain open.
+
+## Synchronous comparison-window pool control — 2026-10-18
+
+Status: Controlled reduced-fixture experiment implemented; sustained-workload
+ownership and memory-growth cause remain open. See
+`docs/evidence/mpv-synchronous-pool-20261018/README.md`.
+
+- [x] Add a synchronous construction/order-front/detach/close reduction for bare,
+  AppKit-content and static SwiftUI-content windows. Run six paired iterations
+  per configuration with alternating order and independent outer pools, adding
+  only a nested pool in the treatment arm. No awaits or run-loop pumping.
+- [x] Pass arm64 Release build, strict signature verification and 77 focused hosted
+  tests with zero failures/skips/runtime warnings, including all 20 native fixtures.
+  Retain the initial evidence-collector parse rejection and corrected same-run collection.
+- [x] Retain all 144 weak scalar snapshots across 36 window lifecycles. Verify live
+  construction counts, pure Swift ARC sentinel retirement, exact coverage and
+  monotonic identity retirement without relationship getters.
+- [x] Observe all 18 controls survive close until outer-pool drain, while all
+  18 treatment windows retire at nested-pool drain. All 24 explicit content views
+  follow the matching window pattern. This narrows the reduced construction/close
+  case; it does not locate autorelease insertion or explain a workload rejection.
+- [ ] Obtain sustained-workload ownership/insertion evidence and explain previous
+  host survival/memory rejection; the synchronous static-host reduction does not
+  reproduce async production roots, decoding, active scopes or run-loop work.
+
+All original qualification gates, production teardown/capture behavior, MPVKit,
+shipping pins and the default-off provider gate remain unchanged. Existing media,
+host, sanitizer, peak/GPU memory and physical-HDR qualification limits remain.

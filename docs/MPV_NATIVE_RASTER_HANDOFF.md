@@ -517,6 +517,26 @@ keeps quiet-host qualification open. Native failure-stage/state and ownership or
 controlled pool-boundary evidence remain next; shipping pins, teardown and the
 default-off provider gate remain unchanged.
 
+## Synchronous window pool-boundary control
+
+The [reduced synchronous experiment](evidence/mpv-synchronous-pool-20261018/README.md)
+isolates the comparison fixture's construction/order-front/detach/close path
+with no custom content, an NSView, or a static NSHostingView. Six paired iterations
+per configuration alternate control/treatment order, with independent outer pools
+and an additional nested treatment pool. No awaits, run-loop pumping, relationship
+getters or original workload gate changes occur. Weak scalar snapshots and a pure
+Swift ARC sentinel verify helper return and monotonic retirement.
+
+The arm64 Release build, signature checks and 77 focused hosted tests pass with
+zero failures/skips/runtime warnings, including all 20 native raster fixtures.
+All 36 windows survive close; all 18 treatment windows retire at nested-pool drain,
+while all 18 controls survive until outer-pool drain. The 24 explicit content views
+follow the same pattern. The complete 144-snapshot receipt is retained. This is
+pool-boundary evidence for reduced synchronous fixtures, not autorelease insertion
+or retaining-path evidence for the async production-root workload. Prior memory
+rejections and detached-host survival remain unexplained; production teardown,
+MPVKit, shipping pins and the default-off provider gate remain unchanged.
+
 ## Sustained difference-scope publication provenance
 
 The active-scope comparison soak accepts `--verify-difference-pixels` and its
