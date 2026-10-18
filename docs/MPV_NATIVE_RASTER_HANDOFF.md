@@ -440,6 +440,60 @@ The coordinator's brief optional compile and other Xcode activity are retained a
 shared-host context. No production teardown, dependency, shipping pin or provider
 gate changes; earlier rejected results remain retained and unexplained.
 
+## Scalar-only observer-effect control
+
+[The scalar diagnostic continuation](evidence/mpv-comparison-scalar-retirement-20261017/README.md)
+adds `--scalar-memory-diagnostics` alongside `--memory-diagnostics` to omit all
+relationship getters from workload snapshots. Weak identities/counts, original
+one-second gate timing, final/post-test delays and every acceptance gate remain.
+Mode mismatches and relationship fields in scalar rows are rejected. The final
+arm64 build, 72 hosted tests and 23 runner regressions pass; an initial focused
+clock rejection is retained alongside its unchanged same-build passing repeat.
+
+The same-build relationship control stops in cycle two at the native A/B plot
+gate, retaining its partial result and one PQ/HLG host plus other same-origin
+identities at cycle one. The completed scalar three-cycle 720/15 provenance run
+passes 396 loupe/198 scope windows, 54 sampled difference publications and six
+fresh resumes: at least 58.85 presentations/sec, at most 66.7 ms drift and zero
+maximum cycle-end growth above warmup. Only closed windows survive its checkpoints
+(two/four/six); all 180 observed identities retire by post-test entry. Window
+survival therefore remains without relationship getters. The interrupted control,
+fixed run order and other Xcode activity prevent a completed paired causal or
+quiet-host claim. No production fix or pool/owning-path attribution is established.
+Complete the coordinated controls and native-fallback diagnostics or collect
+allocation/insertion stacks next. Earlier rejections remain retained and unexplained.
+No dependency, shipping pin or default-off provider gate changes.
+
+## Native-scope fallback provenance and completed controls
+
+[The failure-provenance continuation](evidence/mpv-scope-failure-provenance-20261018/README.md)
+adds scalar request/decode failure results and carries each reason through its
+matching SDR/HDR fallback publication. Capability caching, capture scheduling,
+stale-result guards and all qualification gates remain unchanged. Empty fallback
+is distinguished from usable screenshot payload. XCTest logs bounded details and
+full per-pair counters; ordinary app use retains no additional payload history.
+The final arm64 build, signature checks, 75 focused hosted tests and 23 runner
+regressions pass; initial test/clock and compile rejections remain retained.
+
+Both same-build three-cycle 720/15 controls complete 396 loupe/198 scope windows,
+54 sampled difference publications and six resumes. Relationship mode is rejected
+on memory: 417.00 MiB cycle-end growth, limit 256 MiB. Scalar mode passes at
+142.09 MiB growth. Cadence/drift/provenance gates pass in both, but printed markers
+do not rescue the failed relationship XCTest. Only two/four/six windows survive
+both modes' checkpoints; all 180 identities in each independent process retire by
+post-test entry. Closed-window survival remains without relationship getters.
+
+All eight relationship and sixteen scalar published fallbacks fit their detail
+budgets and report `commandFailed/status=-12` (`MPV_ERROR_COMMAND`), with usable
+SDR/HDR payloads and estimated timestamps. These particular samples fail at the
+native API boundary, rather than app-side decoding or capability lookup. They do
+not identify the provider's internal early exit or explain prior uninstrumented
+rejections. Passing sampled native-plot checkpoints does not qualify every capture.
+Unequal shared-host activity and fixed run order prevent causal observer/memory
+or quiet-host claims. Collect native stage/state and allocation/insertion evidence
+before selecting a production fix; earlier rejections remain unexplained. MPVKit
+was reused; no shipping pin, provider gate or teardown behavior changes.
+
 ## Sustained difference-scope publication provenance
 
 The active-scope comparison soak accepts `--verify-difference-pixels` and its

@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/Users/truls.aagedal/.t3/worktrees/Aagedal-Media-Player/t3-ff9a8179/docs/evidence/mpv-scope-failure-provenance-20261018/run-validation.py", line 30, in <module>
+    subprocess.run(command,stdout=log,stderr=subprocess.STDOUT,check=True)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.15/3.15.0/Frameworks/Python.framework/Versions/3.15/lib/python3.15/subprocess.py", line 692, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['/opt/homebrew/opt/python@3.15/bin/python3.15', '/Users/truls.aagedal/.t3/worktrees/Aagedal-Media-Player/t3-ff9a8179/docs/evidence/mpv-scope-failure-provenance-20261018/run-focused.py', '/private/tmp/aagedal-scope-failure-provenance-20261018/derived/Build/Products/Aagedal Media Player_Aagedal Media Player_macosx27.0-arm64.xctestrun', '/private/tmp/aagedal-scope-failure-provenance-20261018/native-fixtures.json', '/private/tmp/aagedal-continuation-20261016-fixtures', '/private/tmp/aagedal-scopes-delta-restored-r3-20261015/delta/validation/signal-fixtures', '/private/tmp/aagedal-loupe-playback-60fps/live-viewer-fixtures.json', '/private/tmp/aagedal-scope-failure-provenance-20261018/focused']' returned non-zero exit status 1.

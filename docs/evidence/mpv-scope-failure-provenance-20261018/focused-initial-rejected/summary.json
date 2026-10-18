@@ -1,0 +1,64 @@
+{
+  "devicesAndConfigurations" : [
+    {
+      "device" : {
+        "architecture" : "arm64",
+        "deviceId" : "00006050-001C293C22F9401C",
+        "deviceName" : "My Mac",
+        "modelName" : "MacBook Pro",
+        "osBuildNumber" : "26A434",
+        "osVersion" : "27.0.1",
+        "platform" : "macOS"
+      },
+      "expectedFailures" : 0,
+      "failedTests" : 2,
+      "passedTests" : 73,
+      "skippedTests" : 0,
+      "testPlanConfiguration" : {
+        "configurationId" : "1",
+        "configurationName" : "Test Scheme Action"
+      }
+    }
+  ],
+  "environmentDescription" : "Aagedal Media Player · Built with macOS 27.0.1",
+  "expectedFailures" : 0,
+  "failedTests" : 2,
+  "finishTime" : 1792275224.905,
+  "passedTests" : 73,
+  "result" : "Failed",
+  "runtimeWarnings" : [
+
+  ],
+  "skippedTests" : 0,
+  "startTime" : 1792275090.754,
+  "statistics" : [
+
+  ],
+  "testFailures" : [
+    {
+      "failureText" : "XCTAssertLessThanOrEqual failed: (\"0.11666666666666667\") is greater than (\"0.1\")",
+      "targetName" : "Aagedal Media Player Tests",
+      "testIdentifier" : 1,
+      "testIdentifierString" : "LiveLoupeSessionTests/testComparisonScopePublicationsCarryExactDifferenceInputs()",
+      "testIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveLoupeSessionTests/testComparisonScopePublicationsCarryExactDifferenceInputs",
+      "testName" : "testComparisonScopePublicationsCarryExactDifferenceInputs()"
+    },
+    {
+      "failureText" : "XCTAssertEqual failed: (\"Optional(64)\") is not equal to (\"Optional(16)\")",
+      "targetName" : "Aagedal Media Player Tests",
+      "testIdentifier" : 36,
+      "testIdentifierString" : "MPVNativeScopeIntegrationTests/testFallbackProvenanceFollowsPublishedSampleAndClearsOnDemandChange()",
+      "testIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/MPVNativeScopeIntegrationTests/testFallbackProvenanceFollowsPublishedSampleAndClearsOnDemandChange",
+      "testName" : "testFallbackProvenanceFollowsPublishedSampleAndClearsOnDemandChange()"
+    }
+  ],
+  "title" : "Test - Aagedal Media Player",
+  "topInsights" : [
+    {
+      "category" : "Longest Test Runs",
+      "impact" : "84% of duration",
+      "text" : "1 longest test run with outlier durations exceeding 38.38s (three standard deviations)"
+    }
+  ],
+  "totalTestCount" : 75
+}

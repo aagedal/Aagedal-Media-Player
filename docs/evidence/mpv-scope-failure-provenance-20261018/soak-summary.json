@@ -1,0 +1,46 @@
+{
+  "devicesAndConfigurations": [
+    {
+      "device": {
+        "architecture": "arm64",
+        "deviceId": "00006050-001C293C22F9401C",
+        "deviceName": "My Mac",
+        "modelName": "MacBook Pro",
+        "osBuildNumber": "26A434",
+        "osVersion": "27.0.1",
+        "platform": "macOS"
+      },
+      "expectedFailures": 0,
+      "failedTests": 1,
+      "passedTests": 1,
+      "skippedTests": 0,
+      "testPlanConfiguration": {
+        "configurationId": "1",
+        "configurationName": "Test Scheme Action"
+      }
+    }
+  ],
+  "environmentDescription": "Aagedal Media Player \u00b7 Built with macOS 27.0.1",
+  "expectedFailures": 0,
+  "failedTests": 1,
+  "finishTime": 1792276383.242,
+  "passedTests": 1,
+  "result": "Failed",
+  "runtimeWarnings": [],
+  "skippedTests": 0,
+  "startTime": 1792275577.242,
+  "statistics": [],
+  "testFailures": [
+    {
+      "failureText": "XCTAssertLessThanOrEqual failed: (\"1181715720\") is greater than (\"1012894768\") - Comparison cycle-end growth exceeded 256 MiB above warmup",
+      "targetName": "Aagedal Media Player Tests",
+      "testIdentifier": 1,
+      "testIdentifierString": "LiveLoupeSessionTests/testSustainedComparisonCanvasKeepsPairedLoupesAndBoundsMemory()",
+      "testIdentifierURL": "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/LiveLoupeSessionTests/testSustainedComparisonCanvasKeepsPairedLoupesAndBoundsMemory",
+      "testName": "testSustainedComparisonCanvasKeepsPairedLoupesAndBoundsMemory()"
+    }
+  ],
+  "title": "Test - Aagedal Media Player",
+  "topInsights": [],
+  "totalTestCount": 2
+}

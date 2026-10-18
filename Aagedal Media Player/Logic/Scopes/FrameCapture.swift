@@ -52,6 +52,18 @@ nonisolated enum ScopeFrameTimestampQuality: Equatable, Sendable {
     case unavailable
 }
 
+/// Provenance is carried with the matching fallback, not read from a shared
+/// last-error property that a newer native attempt could have overwritten.
+nonisolated struct ScopeNativeFailure: Equatable, Sendable, CustomStringConvertible {
+    let generation: UInt64
+    let requestedWidth: Int
+    let failure: MPVScopeFailure
+
+    var description: String {
+        "generation=\(generation),width=\(requestedWidth),\(failure)"
+    }
+}
+
 /// One atomically published scope capture. Publishing SDR/HDR payloads and
 /// their item-relative media time together prevents a difference request from
 /// combining a new image with the preceding image's timestamp.
@@ -63,6 +75,7 @@ nonisolated struct ScopeFrameSample: Equatable, Sendable {
     let sdrFrame: CGImage?
     let hdrFrame: HDRFrameData?
     var nativePlots: MPVScopePlots? = nil
+    var nativeFailure: ScopeNativeFailure? = nil
 
     static func == (lhs: ScopeFrameSample, rhs: ScopeFrameSample) -> Bool {
         lhs.sequence == rhs.sequence
@@ -98,7 +111,8 @@ nonisolated struct ScopeFrameHistory: Sendable {
             timestampUncertainty: sample.timestampUncertainty,
             timestampQuality: sample.timestampQuality,
             sdrFrame: sample.sdrFrame,
-            hdrFrame: nil
+            hdrFrame: nil,
+            nativeFailure: sample.nativeFailure
         ))
         if samples.count > capacity {
             samples.removeFirst(samples.count - capacity)
@@ -485,25 +499,29 @@ final class FrameCapture: ObservableObject {
         mpvCaptureInFlight = identity
         let width = analysisWidth
         Task { [weak self] in
-            let plots = await Task.detached(priority: .utility) {
-                mpv.nativeScopePlots(width: width)
+            let result = await Task.detached(priority: .utility) {
+                mpv.nativeScopePlotsResult(width: width)
             }.value
             guard let self, self.mpvCaptureInFlight == identity else { return }
             self.mpvCaptureInFlight = nil
             guard self.isCapturing,
                   identity.matches(generation: self.captureGeneration.current, player: self.mpvPlayer) else { return }
-            if let plots {
+            switch result {
+            case .success(let plots):
                 self.publishSample(sdrFrame: nil, hdrFrame: nil, playbackTime: plots.pts,
                                    timestampUncertainty: 0, timestampQuality: .exact, nativePlots: plots)
-            } else if self.transferFunction != .sdr {
-                self.captureMPVHDRFrame()
-            } else {
-                self.captureMPVFrame()
+            case .failure(let failure):
+                let provenance = ScopeNativeFailure(generation: identity.generation, requestedWidth: width, failure: failure)
+                if self.transferFunction != .sdr {
+                    self.captureMPVHDRFrame(nativeFailure: provenance)
+                } else {
+                    self.captureMPVFrame(nativeFailure: provenance)
+                }
             }
         }
     }
 
-    private func captureMPVFrame() {
+    private func captureMPVFrame(nativeFailure: ScopeNativeFailure? = nil) {
         guard mpvCaptureInFlight == nil, let mpv = mpvPlayer else { return }
 
         let identity = ScopeCaptureIdentity(
@@ -523,12 +541,13 @@ final class FrameCapture: ObservableObject {
                 hdrFrame: nil,
                 playbackTime: result?.playbackTime,
                 timestampUncertainty: result?.timestampUncertainty ?? .infinity,
-                timestampQuality: result?.timestampQuality ?? .unavailable
+                timestampQuality: result?.timestampQuality ?? .unavailable,
+                nativeFailure: nativeFailure
             )
         }
     }
 
-    private func captureMPVHDRFrame() {
+    private func captureMPVHDRFrame(nativeFailure: ScopeNativeFailure? = nil) {
         guard mpvCaptureInFlight == nil, let mpv = mpvPlayer else { return }
 
         let identity = ScopeCaptureIdentity(
@@ -550,7 +569,8 @@ final class FrameCapture: ObservableObject {
                 hdrFrame: result?.hdrFrame,
                 playbackTime: result?.playbackTime,
                 timestampUncertainty: result?.timestampUncertainty ?? .infinity,
-                timestampQuality: result?.timestampQuality ?? .unavailable
+                timestampQuality: result?.timestampQuality ?? .unavailable,
+                nativeFailure: nativeFailure
             )
         }
     }
@@ -567,7 +587,8 @@ final class FrameCapture: ObservableObject {
         hdrFrame: HDRFrameData?,
         playbackTime: TimeInterval?,
         timestampUncertainty: TimeInterval,
-        timestampQuality: ScopeFrameTimestampQuality
+        timestampQuality: ScopeFrameTimestampQuality,
+        nativeFailure: ScopeNativeFailure? = nil
     ) {
         // A replacement capture may already be in flight. An older completion
         // must neither clear that request nor publish its frame.
@@ -585,7 +606,8 @@ final class FrameCapture: ObservableObject {
             hdrFrame: hdrFrame,
             playbackTime: playbackTime,
             timestampUncertainty: timestampUncertainty,
-            timestampQuality: timestampQuality
+            timestampQuality: timestampQuality,
+            nativeFailure: nativeFailure
         )
     }
 
@@ -599,7 +621,8 @@ final class FrameCapture: ObservableObject {
         playbackTime: TimeInterval?,
         timestampUncertainty: TimeInterval,
         timestampQuality: ScopeFrameTimestampQuality,
-        nativePlots: MPVScopePlots? = nil
+        nativePlots: MPVScopePlots? = nil,
+        nativeFailure: ScopeNativeFailure? = nil
     ) {
         sampleSequence &+= 1
         let sanitizedTime = playbackTime.flatMap {
@@ -614,7 +637,8 @@ final class FrameCapture: ObservableObject {
             timestampQuality: sanitizedTime == nil ? .unavailable : timestampQuality,
             sdrFrame: sdrFrame,
             hdrFrame: hdrFrame,
-            nativePlots: nativePlots
+            nativePlots: nativePlots,
+            nativeFailure: nativeFailure
         )
         sampleHistory.append(sample)
         currentSample = sample

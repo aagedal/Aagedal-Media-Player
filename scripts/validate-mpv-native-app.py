@@ -29,11 +29,12 @@ WORKLOAD_ENVIRONMENT_KEYS = (
     'LIVE_LOUPE_COMPARISON_SCOPE_FPS', 'LIVE_LOUPE_COMPARISON_SCOPE_PROVENANCE',
     'LIVE_LOUPE_SCOPE_PROVENANCE_CASES', 'LIVE_LOUPE_COMPARISON_VERIFY_DIFFERENCE_PIXELS',
     'LIVE_LOUPE_COMPARISON_MEMORY_DIAGNOSTICS', 'LIVE_LOUPE_COMPARISON_POST_TEST_RETIREMENT',
+    'LIVE_LOUPE_COMPARISON_SCALAR_MEMORY_DIAGNOSTICS',
     'LIVE_LOUPE_SOAK_CASES', 'LIVE_LOUPE_SOAK_SECONDS', 'LIVE_LOUPE_SOAK_CYCLES',
 )
 
 
-def validate_memory_diagnostics(directory, cycles, post_test=False):
+def validate_memory_diagnostics(directory, cycles, post_test=False, scalar_only=False):
     """Require origin-aware observations and a separate post-gate checkpoint."""
     expected = {f'cycle-{cycle}.json' for cycle in range(cycles + 1)}
     if ({p.name for p in directory.glob('cycle-*.json')} != expected
@@ -119,15 +120,20 @@ def validate_memory_diagnostics(directory, cycles, post_test=False):
             last_id = identity
         if not previous.keys() <= current.keys():
             invalid()
+        scalar_observation = scalar_only or checkpoint.startswith('post-test-')
+        expected_kind = ('subsequent-test-scalar-only' if checkpoint.startswith('post-test-')
+                         else 'in-workload-scalar-only' if scalar_only else 'in-workload-relationships')
+        if (sample.get('observationKind') != expected_kind
+                or (scalar_observation and any(set(row) - {
+                    'id', 'label', 'origin', 'alive', 'address', 'observedUptime',
+                    'teardownUptime', 'firstRetiredCheckpoint'} for row in objects))):
+            invalid()
         if checkpoint.startswith('post-test-'):
             finished = sample.get('sourceTestFinishedUptime')
             if (not number(finished) or finished > uptime
                     or (checkpoint == 'post-test-entry' and finished < previous_uptime)
                     or (source_finished_uptime is not None and finished != source_finished_uptime)
-                    or sample.get('sourceTestFinished') is not True
-                    or sample.get('observationKind') != 'subsequent-test-scalar-only'
-                    or any(set(row) - {'id', 'label', 'origin', 'alive', 'address', 'observedUptime',
-                                       'teardownUptime', 'firstRetiredCheckpoint'} for row in objects)):
+                    or sample.get('sourceTestFinished') is not True):
                 invalid()
             source_finished_uptime = finished
         if checkpoint == 'post-test-delayed' and uptime - previous_uptime < 5:
@@ -161,7 +167,11 @@ def main():
                         help='with sustained --comparison: record cycle-end VM categories and weak object retirement')
     parser.add_argument('--post-test-retirement', action='store_true',
                         help='with --memory-diagnostics: observe weak identities in a subsequent serial XCTest method')
+    parser.add_argument('--scalar-memory-diagnostics', action='store_true',
+                        help='with --memory-diagnostics: omit relationship getters throughout the workload as an observer-effect control')
     args = parser.parse_args()
+    if args.scalar_memory_diagnostics and not args.memory_diagnostics:
+        parser.error('--scalar-memory-diagnostics requires --memory-diagnostics')
     if args.post_test_retirement and not args.memory_diagnostics:
         parser.error('--post-test-retirement requires --memory-diagnostics')
     if args.memory_diagnostics and not (args.comparison and args.soak_seconds is not None):
@@ -206,6 +216,8 @@ def main():
     environment['MPV_DECODER_RASTER_CASES'] = str(args.manifest.resolve(strict=True))
     if args.post_test_retirement:
         environment['LIVE_LOUPE_COMPARISON_POST_TEST_RETIREMENT'] = '1'
+    if args.scalar_memory_diagnostics:
+        environment['LIVE_LOUPE_COMPARISON_SCALAR_MEMORY_DIAGNOSTICS'] = '1'
     if args.memory_diagnostics:
         environment['LIVE_LOUPE_COMPARISON_MEMORY_DIAGNOSTICS'] = str(args.output.resolve() / 'memory-diagnostics')
     if args.verify_difference_pixels:
@@ -280,7 +292,7 @@ def main():
     if args.post_test_retirement and 'MPV_COMPARISON_POST_TEST_RETIREMENT: same-process subsequent test, scalar-only, 5 second delay' not in combined:
         raise SystemExit('Post-test observation marker missing; see ' + str(args.output))
     if args.memory_diagnostics:
-        validate_memory_diagnostics(args.output / 'memory-diagnostics', args.soak_cycles, args.post_test_retirement)
+        validate_memory_diagnostics(args.output / 'memory-diagnostics', args.soak_cycles, args.post_test_retirement, args.scalar_memory_diagnostics)
     print('Native app acceptance passed; logs and xcresult:', args.output.resolve())
 
 

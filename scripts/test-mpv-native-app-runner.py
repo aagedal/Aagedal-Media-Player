@@ -19,7 +19,7 @@ runner = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(runner)
 
 
-def write_memory_diagnostics(directory, cycles=3, post_test=False):
+def write_memory_diagnostics(directory, cycles=3, post_test=False, scalar_only=False):
     directory.mkdir(exist_ok=True)
     checkpoints = [f'cycle-{n}' for n in range(cycles + 1)] + ['final-delayed']
     if post_test:
@@ -37,7 +37,7 @@ def write_memory_diagnostics(directory, cycles=3, post_test=False):
             'gatePhysicalFootprintBytes': 10 if cycle and not delayed else None,
             'objects': objects, 'sourceTestFinishedUptime': cycles * 10.0 + 5 if checkpoint.startswith('post-test-') else None,
             'sourceTestFinished': checkpoint.startswith('post-test-'),
-            'observationKind': 'subsequent-test-scalar-only' if checkpoint.startswith('post-test-') else 'in-workload-relationships',
+            'observationKind': 'subsequent-test-scalar-only' if checkpoint.startswith('post-test-') else 'in-workload-scalar-only' if scalar_only else 'in-workload-relationships',
             'retirement': {'host': {'observed': cycle, 'alive': 0}} if cycle else {}}))
 
 
@@ -69,6 +69,7 @@ class RunnerTests(unittest.TestCase):
                 'LIVE_LOUPE_COMPARISON_SCOPE_FPS', 'LIVE_LOUPE_COMPARISON_SCOPE_PROVENANCE',
                 'LIVE_LOUPE_SCOPE_PROVENANCE_CASES', 'LIVE_LOUPE_COMPARISON_VERIFY_DIFFERENCE_PIXELS',
                 'LIVE_LOUPE_COMPARISON_MEMORY_DIAGNOSTICS', 'LIVE_LOUPE_COMPARISON_POST_TEST_RETIREMENT',
+                'LIVE_LOUPE_COMPARISON_SCALAR_MEMORY_DIAGNOSTICS',
                 'LIVE_LOUPE_SOAK_CASES', 'LIVE_LOUPE_SOAK_SECONDS', 'LIVE_LOUPE_SOAK_CYCLES',
             ), 'inherited')
             workload_keys = set(inherited)
@@ -97,7 +98,8 @@ class RunnerTests(unittest.TestCase):
                     if '--memory-diagnostics' in options:
                         directory = root / 'output' / 'memory-diagnostics'
                         cycles = int(observed['environment']['LIVE_LOUPE_COMPARISON_SOAK_CYCLES'])
-                        write_memory_diagnostics(directory, cycles, post_test='--post-test-retirement' in options)
+                        write_memory_diagnostics(directory, cycles, post_test='--post-test-retirement' in options,
+                                                 scalar_only='--scalar-memory-diagnostics' in options)
                     return subprocess.CompletedProcess(command, failure)
                 return subprocess.CompletedProcess(command, 0, stdout=marker, stderr='')
 
@@ -328,6 +330,42 @@ class RunnerTests(unittest.TestCase):
             with self.assertRaisesRegex(SystemExit, 'acceptance failed'):
                 self.run_fixture(options + ['--memory-diagnostics'], marker, failure=65, legacy=legacy)
 
+    def test_scalar_diagnostics_are_explicit_and_isolated(self):
+        marker = 'MPV_LIVE_LOUPE_COMPARISON_SOAK_ACCEPTANCE: 3 cycles, 2 pairs, 3 modes, 10 seconds per mode,'
+        options = ['--comparison', '--soak-seconds', '10', '--memory-diagnostics']
+        for legacy in (False, True):
+            ordinary = self.run_fixture(options, marker, legacy=legacy)
+            self.assertNotIn('LIVE_LOUPE_COMPARISON_SCALAR_MEMORY_DIAGNOSTICS', ordinary['environment'])
+            observed = self.run_fixture(options + ['--scalar-memory-diagnostics'], marker, legacy=legacy)
+            self.assertEqual(observed['environment']['LIVE_LOUPE_COMPARISON_SCALAR_MEMORY_DIAGNOSTICS'], '1')
+            self.assertNotIn('LIVE_LOUPE_COMPARISON_SCALAR_MEMORY_DIAGNOSTICS', observed['process_environment'])
+            with self.assertRaisesRegex(SystemExit, 'acceptance failed'):
+                self.run_fixture(options + ['--scalar-memory-diagnostics'], marker, failure=65, legacy=legacy)
+
+    def test_scalar_diagnostics_reject_relationships_and_mixed_modes(self):
+        for post_test in (False, True):
+            with tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                write_memory_diagnostics(root, post_test=post_test, scalar_only=True)
+                runner.validate_memory_diagnostics(root, 3, post_test=post_test, scalar_only=True)
+                with self.assertRaisesRegex(SystemExit, 'invalid'):
+                    runner.validate_memory_diagnostics(root, 3, post_test=post_test)
+                for checkpoint in ('cycle-1', 'final-delayed'):
+                    file = root / f'{checkpoint}.json'
+                    original = file.read_text()
+                    for relationship in ('window', 'host', 'controller', 'session', 'view', 'unknown'):
+                        sample = json.loads(original)
+                        sample['objects'][0][relationship] = {}
+                        file.write_text(json.dumps(sample))
+                        with self.assertRaisesRegex(SystemExit, 'invalid'):
+                            runner.validate_memory_diagnostics(root, 3, post_test=post_test, scalar_only=True)
+                    sample = json.loads(original)
+                    sample['observationKind'] = 'in-workload-relationships'
+                    file.write_text(json.dumps(sample))
+                    with self.assertRaisesRegex(SystemExit, 'invalid'):
+                        runner.validate_memory_diagnostics(root, 3, post_test=post_test, scalar_only=True)
+                    file.write_text(original)
+
     def test_post_test_retirement_is_explicit_and_requires_matching_marker(self):
         marker = 'MPV_LIVE_LOUPE_COMPARISON_SOAK_ACCEPTANCE: 3 cycles, 2 pairs, 3 modes, 10 seconds per mode,'
         receipt = 'MPV_COMPARISON_POST_TEST_RETIREMENT: same-process subsequent test, scalar-only, 5 second delay'
@@ -456,7 +494,7 @@ class RunnerTests(unittest.TestCase):
                     runner.validate_memory_diagnostics(root, 3)
 
     def test_invalid_soak_arguments_fail_before_reading_inputs(self):
-        for options in (['--post-test-retirement'], ['--comparison', '--soak-seconds', '10', '--post-test-retirement'], ['--memory-diagnostics'], ['--comparison', '--memory-diagnostics'],
+        for options in (['--scalar-memory-diagnostics'], ['--comparison', '--soak-seconds', '10', '--scalar-memory-diagnostics'], ['--post-test-retirement'], ['--comparison', '--soak-seconds', '10', '--post-test-retirement'], ['--memory-diagnostics'], ['--comparison', '--memory-diagnostics'],
                         ['--live-viewer', '--soak-seconds', '10', '--memory-diagnostics'],
                         ['--scope-provenance'], ['--comparison', '--scope-provenance'],
                         ['--comparison', '--soak-seconds', '10', '--scope-provenance'],
