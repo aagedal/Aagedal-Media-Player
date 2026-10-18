@@ -43,6 +43,7 @@ struct AudioWaveformView: View {
                             .foregroundColor(.secondary)
                             .lineLimit(1)
                     }
+                    if hasLoudnessAnalysis { loudnessMenu }
                     Spacer()
                     HStack(spacing: 4) {
                         Image(systemName: "waveform.badge.plus")
@@ -71,6 +72,19 @@ struct AudioWaveformView: View {
                 .background(Color(nsColor: .windowBackgroundColor))
 
                 Divider()
+            }
+
+            // Keep the graph control at the left, outside the player's explicit
+            // right-edge cursor-hide zone. Reserve space rather than covering
+            // channel labels or putting the menu back over the picture edge.
+            if isOverlay && hasLoudnessAnalysis {
+                HStack {
+                    loudnessMenu
+                    Spacer(minLength: 0)
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(backgroundColor)
             }
 
             // Waveform channels
@@ -267,28 +281,28 @@ struct AudioWaveformView: View {
                         isDragging = false
                     }
             )
-            .overlay(alignment: .topTrailing) {
-                if hasLoudnessAnalysis {
-                    Menu {
-                        Text(loudnessTitle)
-                        Toggle("Show LUFS graph", isOn: $controller.showsWaveformLoudness)
-                        if controller.waveformProgrammeLoudness?.loudness.samples?.isEmpty == false {
-                            Toggle("Use programme loudness", isOn: $controller.waveformUsesProgrammeLoudness)
-                        }
-                    } label: {
-                        Text("LUFS").font(.system(size: 10, weight: .medium))
-                    }
-                    .menuStyle(.borderlessButton)
-                    .fixedSize()
-                    .padding(4)
-                    .background(.black.opacity(0.8), in: RoundedRectangle(cornerRadius: 4))
-                    .foregroundStyle(.white)
-                    .padding(4)
-                    .accessibilityLabel("Waveform LUFS graph options")
-                    .help("Show or hide analyzed momentary (M) and short-term (S) loudness")
-                }
-            }
+
         }
+    }
+
+    private var loudnessMenu: some View {
+        Menu {
+            Text(loudnessTitle)
+            Toggle("Show LUFS graph", isOn: $controller.showsWaveformLoudness)
+            if controller.waveformProgrammeLoudness?.loudness.samples?.isEmpty == false {
+                Toggle("Use programme loudness", isOn: $controller.waveformUsesProgrammeLoudness)
+            }
+        } label: {
+            Text("LUFS").font(.system(size: 11, weight: .medium))
+        }
+        .menuStyle(.borderlessButton)
+        .fixedSize()
+        .padding(.horizontal, 6)
+        .padding(.vertical, 3)
+        .background(.black.opacity(0.8), in: RoundedRectangle(cornerRadius: 4))
+        .foregroundStyle(.white)
+        .accessibilityLabel("Waveform LUFS graph options")
+        .help("Show or hide analyzed momentary (M) and short-term (S) loudness")
     }
 
     private var selectedTrackLoudness: FFmpegService.LUFSResult? {

@@ -37,7 +37,8 @@ without correction provenance remain decodable and are treated as uncorrected.
 
 After a successful analysis, the audio-only waveform and floating Audio Waveform
 window can overlay the retained momentary (**M**, cyan solid) and short-term
-(**S**, yellow dashed) LUFS history. The waveform's **LUFS** menu shows or hides
+(**S**, yellow dashed) LUFS history. The **LUFS** menu at the left of the
+waveform toolbar, outside the right-edge cursor-hide zone, shows or hides
 the graph. It also switches between the selected audio track and a measured
 multi-mono programme when programme results are available. The latest successful
 measurement selects its source; hiding the graph remains your choice.
