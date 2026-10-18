@@ -1,0 +1,31 @@
+{
+  "checkpoint" : "cycle-0",
+  "compressedBytes" : 0,
+  "cycle" : 0,
+  "deviceBytes" : 0,
+  "externalBytes" : 82444288,
+  "gatePhysicalFootprintBytes" : null,
+  "graphicsFootprintBytes" : 105086976,
+  "graphicsFootprintCompressedBytes" : 0,
+  "internalBytes" : 63766528,
+  "mediaFootprintBytes" : 0,
+  "mediaFootprintCompressedBytes" : 0,
+  "objects" : [
+
+  ],
+  "observationKind" : "in-workload-scalar-only",
+  "physicalFootprintBytes" : 171148416,
+  "pid" : 14576,
+  "purgeableNonvolatileBytes" : 2752512,
+  "purgeableNonvolatileCompressedBytes" : 0,
+  "purgeableVolatilePmapBytes" : 0,
+  "residentBytes" : 146407424,
+  "retirement" : {
+
+  },
+  "reusableBytes" : 196608,
+  "schemaVersion" : 2,
+  "sourceTestFinished" : false,
+  "sourceTestFinishedUptime" : null,
+  "uptime" : 658823.19822558342
+}

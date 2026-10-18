@@ -12,7 +12,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 spec = importlib.util.spec_from_file_location('runner', Path(__file__).with_name('validate-mpv-native-app.py'))
 runner = importlib.util.module_from_spec(spec)
@@ -42,7 +42,7 @@ def write_memory_diagnostics(directory, cycles=3, post_test=False, scalar_only=F
 
 
 class RunnerTests(unittest.TestCase):
-    def run_fixture(self, options, marker, *, failure=0, legacy=False):
+    def run_fixture(self, options, marker, *, failure=0, legacy=False, collector_failure=0, collector_timeout=False):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             target = {'TestBundlePath': '__TESTROOT__/Aagedal Media Player Tests.xctest',
@@ -70,6 +70,8 @@ class RunnerTests(unittest.TestCase):
                 'LIVE_LOUPE_SCOPE_PROVENANCE_CASES', 'LIVE_LOUPE_COMPARISON_VERIFY_DIFFERENCE_PIXELS',
                 'LIVE_LOUPE_COMPARISON_MEMORY_DIAGNOSTICS', 'LIVE_LOUPE_COMPARISON_POST_TEST_RETIREMENT',
                 'LIVE_LOUPE_COMPARISON_SCALAR_MEMORY_DIAGNOSTICS',
+                'LIVE_LOUPE_COMPARISON_ALLOCATION_STACKS',
+                'MallocStackLogging', 'MallocStackLoggingNoCompact', 'MallocStackLoggingDirectory',
                 'LIVE_LOUPE_SOAK_CASES', 'LIVE_LOUPE_SOAK_SECONDS', 'LIVE_LOUPE_SOAK_CYCLES',
             ), 'inherited')
             workload_keys = set(inherited)
@@ -100,13 +102,23 @@ class RunnerTests(unittest.TestCase):
                         cycles = int(observed['environment']['LIVE_LOUPE_COMPARISON_SOAK_CYCLES'])
                         write_memory_diagnostics(directory, cycles, post_test='--post-test-retirement' in options,
                                                  scalar_only='--scalar-memory-diagnostics' in options)
+                        if '--allocation-stacks' in options:
+                            (directory / 'allocation-request.json').write_text('{}')
                     return subprocess.CompletedProcess(command, failure)
                 return subprocess.CompletedProcess(command, 0, stdout=marker, stderr='')
 
-            with patch.object(sys, 'argv', ['runner', str(source), str(manifest), str(root / 'output'), *options]), \
+            collector = Mock()
+            collector.wait.return_value = collector_failure
+            collector.poll.return_value = None if collector_timeout else 0
+            if collector_timeout:
+                collector.wait.side_effect = [subprocess.TimeoutExpired('collector', 30), 0]
+            with patch.object(runner.subprocess, 'Popen', return_value=collector) as spawn, \
+                 patch.object(sys, 'argv', ['runner', str(source), str(manifest), str(root / 'output'), *options]), \
                  patch.object(runner.subprocess, 'run', side_effect=run), \
                  patch.dict(os.environ, inherited, clear=True), contextlib.redirect_stdout(io.StringIO()):
                 runner.main()
+                observed['collector_spawn'] = spawn.call_args
+                observed['collector_terminated'] = collector.terminate.called
             self.assertEqual(len(observed['process_environments']), 2)
             for environment in observed['process_environments']:
                 self.assertIsNotNone(environment)
@@ -330,6 +342,31 @@ class RunnerTests(unittest.TestCase):
             with self.assertRaisesRegex(SystemExit, 'acceptance failed'):
                 self.run_fixture(options + ['--memory-diagnostics'], marker, failure=65, legacy=legacy)
 
+    def test_allocation_stack_logging_is_explicit_isolated_and_requires_collection(self):
+        marker = 'MPV_LIVE_LOUPE_COMPARISON_SOAK_ACCEPTANCE: 3 cycles, 2 pairs, 3 modes, 10 seconds per mode,'
+        receipt = 'MPV_COMPARISON_ALLOCATION_STACKS: post-gate collection complete'
+        options = ['--comparison', '--soak-seconds', '10', '--memory-diagnostics']
+        for legacy in (False, True):
+            ordinary = self.run_fixture(options, marker, legacy=legacy)
+            self.assertIsNone(ordinary['collector_spawn'])
+            for key in ('MallocStackLogging', 'MallocStackLoggingNoCompact', 'MallocStackLoggingDirectory',
+                        'LIVE_LOUPE_COMPARISON_ALLOCATION_STACKS'):
+                self.assertNotIn(key, ordinary['environment'])
+            observed = self.run_fixture(options + ['--allocation-stacks'], marker + '\n' + receipt, legacy=legacy)
+            for key in ('MallocStackLogging', 'MallocStackLoggingNoCompact', 'LIVE_LOUPE_COMPARISON_ALLOCATION_STACKS'):
+                self.assertEqual(observed['environment'][key], '1')
+            self.assertNotIn('MallocStackLoggingDirectory', observed['environment'])
+            self.assertIn('collect-mpv-allocation-stacks.py', observed['collector_spawn'].args[0][1])
+            self.assertFalse(observed['collector_terminated'])
+            for collector_options in ({'collector_failure': 1}, {'collector_timeout': True}):
+                with self.assertRaisesRegex(SystemExit, 'Allocation stack collection failed'):
+                    self.run_fixture(options + ['--allocation-stacks'], marker + '\n' + receipt,
+                                     legacy=legacy, **collector_options)
+            with self.assertRaisesRegex(SystemExit, 'Allocation stack collection failed'):
+                self.run_fixture(options + ['--allocation-stacks'], marker, legacy=legacy)
+            with self.assertRaisesRegex(SystemExit, 'acceptance failed'):
+                self.run_fixture(options + ['--allocation-stacks'], marker + '\n' + receipt, failure=65, legacy=legacy)
+
     def test_scalar_diagnostics_are_explicit_and_isolated(self):
         marker = 'MPV_LIVE_LOUPE_COMPARISON_SOAK_ACCEPTANCE: 3 cycles, 2 pairs, 3 modes, 10 seconds per mode,'
         options = ['--comparison', '--soak-seconds', '10', '--memory-diagnostics']
@@ -494,7 +531,8 @@ class RunnerTests(unittest.TestCase):
                     runner.validate_memory_diagnostics(root, 3)
 
     def test_invalid_soak_arguments_fail_before_reading_inputs(self):
-        for options in (['--scalar-memory-diagnostics'], ['--comparison', '--soak-seconds', '10', '--scalar-memory-diagnostics'], ['--post-test-retirement'], ['--comparison', '--soak-seconds', '10', '--post-test-retirement'], ['--memory-diagnostics'], ['--comparison', '--memory-diagnostics'],
+        for options in (['--allocation-stacks'],
+                ['--scalar-memory-diagnostics'], ['--comparison', '--soak-seconds', '10', '--scalar-memory-diagnostics'], ['--post-test-retirement'], ['--comparison', '--soak-seconds', '10', '--post-test-retirement'], ['--memory-diagnostics'], ['--comparison', '--memory-diagnostics'],
                         ['--live-viewer', '--soak-seconds', '10', '--memory-diagnostics'],
                         ['--scope-provenance'], ['--comparison', '--scope-provenance'],
                         ['--comparison', '--soak-seconds', '10', '--scope-provenance'],

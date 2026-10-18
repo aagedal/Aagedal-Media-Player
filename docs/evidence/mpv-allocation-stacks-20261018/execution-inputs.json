@@ -1,0 +1,14 @@
+{
+  "/private/tmp/aagedal-allocation-stacks-20261018/derived/Build/Products/Aagedal Media Player_Aagedal Media Player_macosx27.0-arm64.xctestrun": "56466069c757c6bb10ca0efbeaee5d75e2936ccc5f2f567355935e61f5dfbeff",
+  "/private/tmp/aagedal-allocation-stacks-20261018/native-fixtures.json": "25cba01adb6438d2da663a6439952ca18d1cec47e4446e1d05a0db3081100cc5",
+  "/private/tmp/aagedal-loupe-playback-60fps/live-viewer-fixtures.json": "48dc8b84cfdd7575b931a011b1279048242e786887abfff996f2810f5b24abb6",
+  "/private/tmp/aagedal-allocation-stacks-20261018/derived/Build/Products/Release/Aagedal Media Player.app/Contents/MacOS/Aagedal Media Player": "2dfdd217e73f6a4814a4880b486a50c50f068098f341d66d5f602fe405a743d2",
+  "/private/tmp/aagedal-allocation-stacks-20261018/derived/Build/Products/Release/Aagedal Media Player.app/Contents/PlugIns/Aagedal Media Player Tests.xctest/Contents/MacOS/Aagedal Media Player Tests": "635a0c9714f7e33c2a63f3074d0e75dd3bc9a45f0d5463f06c0f4e565a483960",
+  "/Users/truls.aagedal/.t3/worktrees/Aagedal-Media-Player/t3-eee25200/docs/evidence/mpv-allocation-stacks-20261018/prepare.py": "07460f84f8a7b032fec9f3fc8cc38f7bbaae10f23a6fb698c748b9eb7faeb832",
+  "/Users/truls.aagedal/.t3/worktrees/Aagedal-Media-Player/t3-eee25200/docs/evidence/mpv-allocation-stacks-20261018/run-focused.py": "9eccfdaae91ba16784c90e3278ff315e43d3c45d1d68c90aadf3ddee0e0338b3",
+  "/Users/truls.aagedal/.t3/worktrees/Aagedal-Media-Player/t3-eee25200/docs/evidence/mpv-allocation-stacks-20261018/run-validation.py": "e89786315cf05f9c409d0acb0f78047578fb4d9d71a1f95c6c72599a59aec71a",
+  "/Users/truls.aagedal/.t3/worktrees/Aagedal-Media-Player/t3-eee25200/scripts/validate-mpv-native-app.py": "98cb5c32d617cf8ffe24c3089b80e97ab51521fe54b7de9dd473d44e1de23e79",
+  "/Users/truls.aagedal/.t3/worktrees/Aagedal-Media-Player/t3-eee25200/scripts/test-mpv-native-app-runner.py": "a5c7e02d4d2b7e3067f0a847872e6c7fe8bbbad84122fe7dba7601b43151cc2a",
+  "/Users/truls.aagedal/.t3/worktrees/Aagedal-Media-Player/t3-eee25200/scripts/collect-mpv-allocation-stacks.py": "95dc98d2549370a9119c2182cedae4619047c01fd5a9f92bf0170cbdeb2a4d0b",
+  "/Users/truls.aagedal/.t3/worktrees/Aagedal-Media-Player/t3-eee25200/scripts/test-mpv-allocation-stacks.py": "60883b670ad0edeec717cc193bb39764a4b1064247a4afebdc1928b72fdbd12b"
+}

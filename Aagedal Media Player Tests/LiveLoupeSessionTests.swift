@@ -369,6 +369,11 @@ final class LiveLoupeSessionTests: XCTestCase {
         guard !scalarDiagnostics || diagnosticsPath != nil else {
             return XCTFail("Scalar memory diagnostics require memory diagnostics")
         }
+        let allocationStacks = environment["LIVE_LOUPE_COMPARISON_ALLOCATION_STACKS"] == "1"
+        guard !allocationStacks || (diagnosticsPath != nil && environment["MallocStackLogging"] == "1"
+                && environment["MallocStackLoggingNoCompact"] == "1") else {
+            return XCTFail("Allocation diagnostics require memory diagnostics and noncompacting malloc stack logging")
+        }
         let retirement = diagnosticsPath.map { _ in RetirementProbe() }
         let postTest = environment["LIVE_LOUPE_COMPARISON_POST_TEST_RETIREMENT"] == "1"
         if postTest {
@@ -398,6 +403,9 @@ final class LiveLoupeSessionTests: XCTestCase {
         if let diagnosticsPath {
             try await Task.sleep(for: .seconds(5))
             try recordComparisonMemory(path: diagnosticsPath, cycle: cycles, retirement: retirement!, delayed: true, scalarOnly: scalarDiagnostics)
+        }
+        if allocationStacks, let diagnosticsPath {
+            try await collectComparisonAllocationStacks(path: diagnosticsPath)
         }
         if activeScopes {
             print("MPV_COMPARISON_ACTIVE_SCOPES_ACCEPTANCE: \(cycles) cycles, 2 pairs, 3 modes, 3 scope sources, \(seconds) seconds per selection, resolution=\(scopeResolution), targetFPS=\(scopeFPS)")
@@ -1315,6 +1323,64 @@ final class LiveLoupeSessionTests: XCTestCase {
         let data = try JSONSerialization.data(withJSONObject: sample, options: [.sortedKeys, .prettyPrinted])
         try data.write(to: directory.appendingPathComponent("\(checkpoint).json"), options: .atomic)
         print("MPV_COMPARISON_MEMORY_DIAGNOSTIC: cycle=\(cycle), footprint=\(info.phys_footprint), retirement=\(retirement.counts)")
+    }
+
+    /// External inspection begins only after every original gate and the final
+    /// delayed snapshot. This wait changes later retirement timing, never the
+    /// original checkpoints. No observed object is promoted during the wait.
+    private func collectComparisonAllocationStacks(path: String, timeout: Duration = .seconds(600)) async throws {
+        let directory = URL(fileURLWithPath: path, isDirectory: true)
+        let request: [String: Any] = ["schemaVersion": 1,
+            "pid": ProcessInfo.processInfo.processIdentifier,
+            "checkpoint": "final-delayed", "snapshotFile": "final-delayed.json"]
+        let data = try JSONSerialization.data(withJSONObject: request, options: [.sortedKeys])
+        try data.write(to: directory.appendingPathComponent("allocation-request.json"), options: .atomic)
+        let completion = directory.appendingPathComponent("allocation-complete.json")
+        let clock = ContinuousClock()
+        let deadline = clock.now.advanced(by: timeout)
+        while !FileManager.default.fileExists(atPath: completion.path) {
+            guard clock.now < deadline else {
+                throw NSError(domain: "ComparisonAllocationStacks", code: 1,
+                    userInfo: [NSLocalizedDescriptionKey: "Timed out waiting for external allocation collector"])
+            }
+            try await Task.sleep(for: .milliseconds(100))
+        }
+        let result = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(contentsOf: completion)) as? [String: Any])
+        guard result["schemaVersion"] as? Int == 1,
+              result["pid"] as? Int32 == ProcessInfo.processInfo.processIdentifier,
+              result["success"] as? Bool == true else {
+            throw NSError(domain: "ComparisonAllocationStacks", code: 2,
+                userInfo: [NSLocalizedDescriptionKey: "External allocation collection failed or process identity mismatched; inspect raw reports"])
+        }
+        print("MPV_COMPARISON_ALLOCATION_STACKS: post-gate collection complete")
+    }
+
+    func testAllocationCollectorHandshakeRejectsFailureWrongProcessAndTimeout() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let completion = directory.appendingPathComponent("allocation-complete.json")
+        for (pid, success) in [(ProcessInfo.processInfo.processIdentifier, false), (Int32(-1), true)] {
+            let data = try JSONSerialization.data(withJSONObject: ["schemaVersion": 1, "pid": pid, "success": success])
+            try data.write(to: completion, options: .atomic)
+            do {
+                try await collectComparisonAllocationStacks(path: directory.path)
+                XCTFail("Invalid collector completion must fail")
+            } catch { XCTAssertEqual((error as NSError).code, 2) }
+        }
+        try FileManager.default.removeItem(at: completion)
+        do {
+            try await collectComparisonAllocationStacks(path: directory.path, timeout: .zero)
+            XCTFail("Missing collector completion must time out")
+        } catch { XCTAssertEqual((error as NSError).code, 1) }
+        let data = try JSONSerialization.data(withJSONObject: ["schemaVersion": 1,
+            "pid": ProcessInfo.processInfo.processIdentifier, "success": true])
+        try data.write(to: completion, options: .atomic)
+        try await collectComparisonAllocationStacks(path: directory.path)
+        let request = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(contentsOf:
+            directory.appendingPathComponent("allocation-request.json"))) as? [String: Any])
+        XCTAssertEqual(request["snapshotFile"] as? String, "final-delayed.json")
+        XCTAssertEqual(request["pid"] as? Int32, ProcessInfo.processInfo.processIdentifier)
     }
 
     private func physicalFootprint() throws -> UInt64 {

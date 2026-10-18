@@ -494,6 +494,29 @@ or quiet-host claims. Collect native stage/state and allocation/insertion eviden
 before selecting a production fix; earlier rejections remain unexplained. MPVKit
 was reused; no shipping pin, provider gate or teardown behavior changes.
 
+## Post-gate allocation histories
+
+[The allocation-stack continuation](evidence/mpv-allocation-stacks-20261018/README.md)
+adds opt-in `--allocation-stacks` alongside `--memory-diagnostics`. Noncompacting
+malloc stack logging is confined to the test host; an external collector inspects
+only after every original gate and the final delayed snapshot. Its bounded wait
+changes later retirement timing, never the original gate allowance. Ordinary runs
+clear all added profiling settings. No MPVKit rebuild or production change.
+
+The arm64 build, signature checks, 76 focused hosted tests, 24 runner and 14
+collector regressions pass. The three-cycle scalar 720/15 provenance workload and
+post-test observer pass: 396 loupe windows, 198 scope windows, 54 sampled
+publications, six fresh resumes, at least 58.71 presentations/sec, at most 66.7 ms
+drift and 159.89 MiB maximum cycle-end growth. Six matching allocation reports
+resolve the surviving window addresses to the fixture's NSWindow constructor.
+Only two/four/six windows survive cycle checkpoints; all 180 tracked identities
+retire by post-test entry. Allocation origins do not establish retainers,
+autorelease insertion or a memory-growth cause. The instrumented run does not
+explain prior rejections or reproduce detached-host survival. Other Xcode activity
+keeps quiet-host qualification open. Native failure-stage/state and ownership or
+controlled pool-boundary evidence remain next; shipping pins, teardown and the
+default-off provider gate remain unchanged.
+
 ## Sustained difference-scope publication provenance
 
 The active-scope comparison soak accepts `--verify-difference-pixels` and its

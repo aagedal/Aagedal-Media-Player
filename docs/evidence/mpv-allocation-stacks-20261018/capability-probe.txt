@@ -1,0 +1,18 @@
+Local capability probe before hosted tests; these observations are not workload acceptance.
+A short-lived C process mallocs 12345 bytes, prints the address and waits.
+Parent environment: MallocStackLogging=1 MallocStackLoggingNoCompact=1.
+Command: /usr/bin/malloc_history PID -fullStacks ADDRESS
+
+Sandboxed observation: PID 5681, address 0x7a16c20000, exit 255.
+malloc_history[5682]: malloc_history cannot examine process 5681 (aagedal-allocation-probe) for unknown reasons, even though it appears to exist; try running with `sudo`.
+malloc_history[5682]: [fatal] mach port for process 0 not valid
+
+Outside sandbox, same source/binary/environment: exit 0, stderr empty.
+malloc_history Report Version:  2.0
+ALLOC 0x7825008000-0x782500b7ff [size=14336]:
+0   libsystem_malloc.dylib                0x181ba0630 _malloc_zone_malloc_instrumented_or_legacy + 152
+1   aagedal-allocation-probe              0x104594474 main + 20
+2   dyld                                  0x1819a3e80 start + 6688
+
+Both probes terminated/reaped only their own child process afterward.
+The hosted app's actual allocation reports are retained separately by the collector.
