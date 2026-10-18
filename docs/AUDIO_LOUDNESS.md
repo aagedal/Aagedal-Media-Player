@@ -33,6 +33,32 @@ measurements include `lufs.weightingCorrection` with value
 Uncorrected 7.1 results retain `lufsWarning`. Previously exported results
 without correction provenance remain decodable and are treated as uncorrected.
 
+## LUFS over the waveform
+
+After a successful analysis, the audio-only waveform and floating Audio Waveform
+window can overlay the retained momentary (**M**, cyan solid) and short-term
+(**S**, yellow dashed) LUFS history. The waveform's **LUFS** menu shows or hides
+the graph. It also switches between the selected audio track and a measured
+multi-mono programme when programme results are available. The latest successful
+measurement selects its source; hiding the graph remains your choice.
+
+The graph uses the waveform's full source-time axis and a fixed −70 to 0 LUFS
+vertical scale. Values beyond this display range are clipped. Missing/warm-up
+windows break the lines. In–Out measurements cover only their measured source
+interval, printed in the legend; changing trim points does not stretch or
+recalculate an existing graph. In All Tracks mode, individual-track graphs sit
+on the selected mono track's row; programme graphs span the stack and identify
+the assigned tracks. Multi-channel measurements describe the selected stream,
+not separate per-channel loudness.
+
+Completed graph results stay with the player when the inspector or waveform
+panel closes. Replacing media (including reopening the same path with a new
+media identity) or changing its audio-stream metadata clears them. No extra
+analysis is started by displaying, resizing, hiding or reopening a graph.
+Existing history decimation bounds the data to 4,096 samples per measurement;
+this is a sampled offline overview, not a continuous compliance trace. Playback
+volume, waveform gain and mute do not change the measured LUFS levels.
+
 ## Limits
 
 - These are offline summaries, not live momentary/short-term meters or a

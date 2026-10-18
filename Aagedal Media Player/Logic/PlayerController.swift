@@ -213,7 +213,35 @@ final class PlayerController: ObservableObject {
 
     // MARK: - State
 
-    @Published var mediaItem: MediaItem?
+    @Published var mediaItem: MediaItem? {
+        didSet {
+            if oldValue?.id != mediaItem?.id || oldValue?.metadata?.audioStreams != mediaItem?.metadata?.audioStreams {
+                waveformLoudnessResults.removeAll()
+                waveformProgrammeLoudness = nil
+            }
+        }
+    }
+    /// Completed offline measurements survive inspector/panel closure, but never
+    /// a new media identity. The analyzer bounds each retained history to 4,096 points.
+    @Published private(set) var waveformLoudnessResults: [Int: FFmpegService.LUFSResult] = [:]
+    @Published private(set) var waveformProgrammeLoudness: ProgrammeLoudnessResult?
+    @Published var showsWaveformLoudness = true
+    @Published var waveformUsesProgrammeLoudness = false
+
+    func recordWaveformLoudness(_ result: FFmpegService.LUFSResult, streamIndex: Int, mediaID: UUID) {
+        guard mediaItem?.id == mediaID, streamIndex >= 0,
+              let streams = mediaItem?.metadata?.audioStreams, streams.indices.contains(streamIndex) else { return }
+        waveformLoudnessResults[streamIndex] = result
+        waveformUsesProgrammeLoudness = false
+    }
+
+    func recordWaveformProgrammeLoudness(_ result: ProgrammeLoudnessResult, mediaID: UUID) {
+        guard mediaItem?.id == mediaID, let streams = mediaItem?.metadata?.audioStreams,
+              (try? result.mapping.validate(audioStreams: streams)) != nil else { return }
+        waveformProgrammeLoudness = result
+        waveformUsesProgrammeLoudness = true
+    }
+
     var loopObserver: Any?
     var playbackTimeObserver: Any?
     weak var playbackTimeObserverOwner: AVPlayer?

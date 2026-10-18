@@ -43,6 +43,12 @@ struct PlayerInspectorView: View {
                     trimIn: controller.trimIn, trimOut: controller.trimOut,
                     isLoadingMetadata: isLoadingMetadata,
                     metadataError: metadataError, onRetryMetadata: onRetryMetadata,
+                    onLoudnessAnalysis: { mediaID, streamIndex, result in
+                        controller.recordWaveformLoudness(result, streamIndex: streamIndex, mediaID: mediaID)
+                    },
+                    onProgrammeLoudnessAnalysis: { mediaID, result in
+                        controller.recordWaveformProgrammeLoudness(result, mediaID: mediaID)
+                    },
                     isPresented: $isPresented
                 )
                 .opacity(selectedTab == .metadata ? 1 : 0)

@@ -82,7 +82,8 @@ final class ProgrammeLoudnessController: ObservableObject {
         )
     }
 
-    func measure(duration: Double?, range: FFmpegService.LoudnessRange?) {
+    func measure(duration: Double?, range: FFmpegService.LoudnessRange?,
+                 onCompletion: ((ProgrammeLoudnessResult) -> Void)? = nil) {
         guard let sourceURL, let mapping else { return }
         cancel(resetResult: true)
         guard mappingError == nil else { error = mappingError; return }
@@ -95,6 +96,7 @@ final class ProgrammeLoudnessController: ObservableObject {
                 let result = try await analyzer(sourceURL, mapping, streams, duration, range)
                 guard !Task.isCancelled, let self, self.generation.isCurrent(token) else { return }
                 self.result = result
+                onCompletion?(result)
                 self.isAnalyzing = false
                 self.task = nil
             } catch {

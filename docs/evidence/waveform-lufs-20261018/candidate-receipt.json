@@ -1,0 +1,26 @@
+{
+  "sourceBaseCommit": "71bdeca75476dcaa7d41b6e89a103238ec6dc88a",
+  "architecture": "arm64",
+  "configuration": "Release",
+  "sourceSHA256": {
+    "Aagedal Media Player Tests/ProgrammeLoudnessControllerTests.swift": "e7be4c6cfbd4ca8a4e58a6325ba4ce2ae2d6a54706b716308b158d648bb2f738",
+    "Aagedal Media Player/Logic/FFmpegService.swift": "5019919864b077f2e8b6298a9411e63049f375b6de7e0083f0392a46b6a4462b",
+    "Aagedal Media Player/Logic/PlayerController.swift": "d5c8c3025acc7b563d9d7114f4bc2047a5e5167a79b4db374e24678ea948ed6f",
+    "Aagedal Media Player/Logic/ProgrammeLoudnessController.swift": "a5c1f2137b702bae40d6e210ae01bc2c258f723762da28c400277e30aada40ed",
+    "Aagedal Media Player/UI/AudioWaveformView.swift": "abbe27c4f1e390a9bb1d6e4bee5a1cf578bee0e323646986f5ce01829d76318a",
+    "Aagedal Media Player/UI/AudioWaveformWindowController.swift": "1585b370c17d078228f03d511b2ba229919bffac474c850f600a79d612dbeac9",
+    "Aagedal Media Player/UI/MetadataInspectorView.swift": "67667f57c9a189676686169388bff3ed1379272a05c29951a3700b20b4c9cdc1",
+    "Aagedal Media Player/UI/PlayerInspectorView.swift": "d23bab6e6e953d02d2729910c8c31c49fea8183620bf13aafdf34274d0248db7",
+    "Aagedal Media Player/UI/ProgrammeLoudnessSection.swift": "61f97fc499075acf2890163152e3e5da3c53035f4a1dc5ced0577536eb3b01b2",
+    "Aagedal Media Player Tests/WaveformLoudnessTests.swift": "9aa26322b5b379533ec241509e377fe6dc6fd093f95e92b58a3258114e929f52",
+    "Aagedal Media Player/Logic/WaveformLoudness.swift": "99c9833246d5221c2be17e0fce3ca920d7db2917b948b983fa25c99ecc5dfe67",
+    "Aagedal Media Player/UI/WaveformLoudnessOverlay.swift": "ae2f165b499b6fbb12edff435ed665ac634ad367411ba9114ded484901675137"
+  },
+  "appExecutableSHA256": "75210b77a632c5784860a621600ddb77ee885d5f3e5b98f4fa8d0d1efe719572",
+  "testExecutableSHA256": "ca6a80230ee33bfd43cec629d48c2a3a4c322163c3cdb0490a2bbf12027cc620",
+  "nativeDemoFixtureSHA256": "9fd2fad324e970c15584daf7600f277b2813f2a764f39d5d84695494c5efa3b6",
+  "passedTests": 77,
+  "failedTests": 0,
+  "skippedTests": 0,
+  "runtimeWarnings": []
+}

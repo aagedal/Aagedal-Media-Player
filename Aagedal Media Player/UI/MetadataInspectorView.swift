@@ -15,6 +15,8 @@ struct MetadataInspectorView: View {
     var isLoadingMetadata = false
     var metadataError: String?
     var onRetryMetadata: (() -> Void)?
+    var onLoudnessAnalysis: ((UUID, Int, FFmpegService.LUFSResult) -> Void)?
+    var onProgrammeLoudnessAnalysis: ((UUID, ProgrammeLoudnessResult) -> Void)?
     @Binding var isPresented: Bool
     @State private var showCopiedConfirmation = false
     @State private var copiedConfirmationTask = DeferredMainActorTask()
@@ -124,7 +126,8 @@ struct MetadataInspectorView: View {
                     ProgrammeLoudnessSection(
                         item: item, streams: metadata.audioStreams, controller: programmeLoudness,
                         measureSelectedRange: $measureSelectedRange, isPresented: $isPresented,
-                        selectedRange: selectedLoudnessRange
+                        selectedRange: selectedLoudnessRange,
+                        onAnalysis: onProgrammeLoudnessAnalysis
                     )
                 }
 
@@ -279,6 +282,7 @@ struct MetadataInspectorView: View {
             cancelLUFSAnalyses(resetResults: true)
         }
         .onChange(of: metadata?.audioStreams) {
+            cancelLUFSAnalyses(resetResults: true)
             programmeLoudness.configure(url: item.url, audioStreams: metadata?.audioStreams ?? [])
         }
         .onChange(of: metadata?.duration) {
@@ -287,7 +291,7 @@ struct MetadataInspectorView: View {
         .onChange(of: selectedLoudnessRange) {
             if measureSelectedRange { cancelLUFSAnalyses(resetResults: true) }
         }
-        .onChange(of: item.url) {
+        .onChange(of: item.id) {
             copiedConfirmationTask.cancel()
             showCopiedConfirmation = false
             cancelLUFSAnalyses(resetResults: true)
@@ -630,6 +634,7 @@ struct MetadataInspectorView: View {
         lufsErrors.removeValue(forKey: streamIndex)
         lufsAnalyzing.insert(streamIndex)
         let url = item.url
+        let mediaID = item.id
         lufsTasks[streamIndex]?.cancel()
         let generation = lufsGenerations.begin(for: streamIndex)
         lufsTasks[streamIndex] = Task(priority: .userInitiated) {
@@ -643,6 +648,7 @@ struct MetadataInspectorView: View {
                 lufsAnalyzing.remove(streamIndex)
                 lufsTasks.removeValue(forKey: streamIndex)
                 lufsResults[streamIndex] = result
+                onLoudnessAnalysis?(mediaID, streamIndex, result)
             } catch {
                 guard lufsGenerations.finish(generation, for: streamIndex) else { return }
                 lufsAnalyzing.remove(streamIndex)

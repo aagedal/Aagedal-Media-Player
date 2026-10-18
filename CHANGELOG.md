@@ -6,6 +6,7 @@ All notable changes to Aagedal Media Player.
 
 ### Added
 - Adjust waveform color and quiet detail, playback volume and mute from the Playback sidebar. Comparison playback also exposes the listening source.
+- Overlay analyzed momentary and short-term LUFS on audio waveforms, with track/programme selection and a show/hide control.
 
 ### Changed
 - Show a translucent peak envelope around the solid average-level waveform body, retaining brief peaks when reducing the preview to screen columns.
@@ -13,6 +14,7 @@ All notable changes to Aagedal Media Player.
 - Apply appearance changes to cached waveform data, including changes made while decoding, without restarting audio decoding.
 
 ### Fixed
+- Match waveform decoding and loudness overlays by audio ordinal when MPV track IDs differ from source audio order.
 - Keep audio-only waveforms clear of the transport controls when the sidebar makes the window narrow.
 - Keep silent waveform regions transparent, with consistent channel center lines and clearer track labels.
 - Refresh waveform data when same-file metadata changes the duration or channel layout, and keep the playhead within the waveform bounds.

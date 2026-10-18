@@ -172,6 +172,24 @@ final class ProgrammeLoudnessControllerTests: XCTestCase {
         XCTAssertNil(exportedTracks[1]["lufs"])
     }
 
+    func testCompletionPublishesOnlyCurrentSuccessfulAnalysis() async {
+        let probe = SuspendedProgrammeAnalysis()
+        let controller = makeController(probe)
+        controller.configure(url: sourceURL, audioStreams: monoStreams(count: 2))
+        var completed: [Double] = []
+        controller.measure(duration: 10, range: nil, onCompletion: { completed.append($0.loudness.integratedLoudness) })
+        await waitForCalls(1, probe: probe)
+        controller.cancel(resetResult: true)
+        probe.complete(0, loudness: -30)
+        await settle()
+        XCTAssertTrue(completed.isEmpty)
+        controller.measure(duration: 10, range: nil, onCompletion: { completed.append($0.loudness.integratedLoudness) })
+        await waitForCalls(2, probe: probe)
+        probe.complete(1, loudness: -23)
+        await settle()
+        XCTAssertEqual(completed, [-23])
+    }
+
     private var sourceURL: URL { URL(fileURLWithPath: "/tmp/programme-source.mov") }
 
     private func makeController(_ probe: SuspendedProgrammeAnalysis) -> ProgrammeLoudnessController {

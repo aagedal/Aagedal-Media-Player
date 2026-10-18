@@ -206,6 +206,15 @@ struct AudioWaveformView: View {
                     }
                 }
 
+                if controller.showsWaveformLoudness, let result = loudnessResult {
+                    let row = loudnessRow
+                    let height = row == nil ? geo.size.height : geo.size.height / CGFloat(max(1, generator.channelImages.count))
+                    WaveformLoudnessOverlay(result: result, duration: duration, title: loudnessTitle)
+                        .equatable()
+                        .frame(width: geo.size.width, height: height)
+                        .position(x: geo.size.width / 2, y: height * (CGFloat(row ?? 0) + 0.5))
+                }
+
                 // Playhead
                 let displayedTime = isDragging ? dragTime : controller.currentPlaybackTime
                 let fraction = duration.isFinite && duration > 0 && displayedTime.isFinite
@@ -232,7 +241,7 @@ struct AudioWaveformView: View {
             }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Audio waveform, \(generator.channelLabels.joined(separator: ", "))")
-            .accessibilityValue("\((controller.currentPlaybackTime.isFinite ? max(0, controller.currentPlaybackTime) : 0).formatted(.number.precision(.fractionLength(0)))) seconds")
+            .accessibilityValue("\((controller.currentPlaybackTime.isFinite ? max(0, controller.currentPlaybackTime) : 0).formatted(.number.precision(.fractionLength(0)))) seconds\(loudnessAccessibilityDescription)")
             .accessibilityAdjustableAction { direction in
                 guard duration.isFinite, duration > 0 else { return }
                 let step = max(1, duration / 100)
@@ -258,14 +267,76 @@ struct AudioWaveformView: View {
                         isDragging = false
                     }
             )
+            .overlay(alignment: .topTrailing) {
+                if hasLoudnessAnalysis {
+                    Menu {
+                        Text(loudnessTitle)
+                        Toggle("Show LUFS graph", isOn: $controller.showsWaveformLoudness)
+                        if controller.waveformProgrammeLoudness?.loudness.samples?.isEmpty == false {
+                            Toggle("Use programme loudness", isOn: $controller.waveformUsesProgrammeLoudness)
+                        }
+                    } label: {
+                        Text("LUFS").font(.system(size: 10, weight: .medium))
+                    }
+                    .menuStyle(.borderlessButton)
+                    .fixedSize()
+                    .padding(4)
+                    .background(.black.opacity(0.8), in: RoundedRectangle(cornerRadius: 4))
+                    .foregroundStyle(.white)
+                    .padding(4)
+                    .accessibilityLabel("Waveform LUFS graph options")
+                    .help("Show or hide analyzed momentary (M) and short-term (S) loudness")
+                }
+            }
         }
+    }
+
+    private var selectedTrackLoudness: FFmpegService.LUFSResult? {
+        let index = controller.selectedAudioTrackOrderIndex
+        guard controller.audioTrackOptions.indices.contains(index) else { return nil }
+        return controller.waveformLoudnessResults[controller.audioTrackOptions[index].audioStreamOrderIndex]
+    }
+
+    private var hasLoudnessAnalysis: Bool {
+        selectedTrackLoudness?.samples?.isEmpty == false || controller.waveformProgrammeLoudness?.loudness.samples?.isEmpty == false
+    }
+
+    private var loudnessResult: FFmpegService.LUFSResult? {
+        let result = controller.waveformUsesProgrammeLoudness
+            ? controller.waveformProgrammeLoudness?.loudness : selectedTrackLoudness
+        guard let result, result.samples?.isEmpty == false else { return nil }
+        return result
+    }
+
+    private var loudnessTitle: String {
+        let range = loudnessResult?.analysisRange.map {
+            String(format: " · %.1f–%.1f s", $0.start, $0.end)
+        } ?? ""
+        if controller.waveformUsesProgrammeLoudness {
+            let tracks = controller.waveformProgrammeLoudness?.mapping.audioStreamIndices.map { String($0 + 1) }.joined(separator: "+") ?? ""
+            return "Programme \(tracks)" + range
+        }
+        let index = controller.selectedAudioTrackOrderIndex
+        guard controller.audioTrackOptions.indices.contains(index) else { return "Track" + range }
+        return "Track \(controller.audioTrackOptions[index].audioStreamOrderIndex + 1)" + range
+    }
+
+    private var loudnessRow: Int? {
+        guard !controller.waveformUsesProgrammeLoudness, let index = activeStreamIndex,
+              generator.channelImages.indices.contains(index) else { return nil }
+        return index
+    }
+
+    private var loudnessAccessibilityDescription: String {
+        guard controller.showsWaveformLoudness, let result = loudnessResult else { return "" }
+        return ", \(loudnessTitle) momentary and short-term LUFS graph, integrated \(String(format: "%.1f", result.integratedLoudness)) LUFS"
     }
 
     private var activeStreamIndex: Int? {
         guard controller.showAllMonoWaveforms, controller.isMultiMonoFile else { return nil }
         let idx = controller.selectedAudioTrackOrderIndex
         guard idx < controller.audioTrackOptions.count else { return nil }
-        return controller.audioTrackOptions[idx].streamIndex
+        return controller.audioTrackOptions[idx].audioStreamOrderIndex
     }
 
     private var currentTrackTitle: String? {
@@ -298,7 +369,7 @@ struct AudioWaveformView: View {
                 let label: String
                 if let title = stream.title, !title.isEmpty {
                     label = title
-                } else if let option = controller.audioTrackOptions.first(where: { $0.streamIndex == offset }) {
+                } else if let option = controller.audioTrackOptions.first(where: { $0.audioStreamOrderIndex == offset }) {
                     label = option.title
                 } else {
                     label = "Track \(offset + 1)"
@@ -314,7 +385,7 @@ struct AudioWaveformView: View {
         guard trackIdx < controller.audioTrackOptions.count else { return }
 
         let option = controller.audioTrackOptions[trackIdx]
-        let streamIndex = option.streamIndex
+        let streamIndex = option.audioStreamOrderIndex
 
         // Find the audio stream metadata for channel info
         let audioStreams = metadata.audioStreams

@@ -163,7 +163,7 @@ final class AudioWaveformWindowController {
                 let label: String
                 if let title = stream.title, !title.isEmpty {
                     label = title
-                } else if let option = controller.audioTrackOptions.first(where: { $0.streamIndex == offset }) {
+                } else if let option = controller.audioTrackOptions.first(where: { $0.audioStreamOrderIndex == offset }) {
                     label = option.title
                 } else {
                     label = "Track \(offset + 1)"
@@ -184,7 +184,7 @@ final class AudioWaveformWindowController {
         guard trackIdx < controller.audioTrackOptions.count else { return }
 
         let option = controller.audioTrackOptions[trackIdx]
-        let streamIndex = option.streamIndex
+        let streamIndex = option.audioStreamOrderIndex
         let audioStreams = metadata.audioStreams
         guard streamIndex < audioStreams.count else { return }
 

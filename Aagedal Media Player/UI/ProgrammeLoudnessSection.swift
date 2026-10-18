@@ -12,6 +12,7 @@ struct ProgrammeLoudnessSection: View {
     @Binding var measureSelectedRange: Bool
     @Binding var isPresented: Bool
     let selectedRange: FFmpegService.LoudnessRange?
+    var onAnalysis: ((UUID, ProgrammeLoudnessResult) -> Void)?
 
     private var duration: Double? { item.metadata?.duration }
     private var hasDuration: Bool { duration.map { $0.isFinite && $0 > 0 } ?? false }
@@ -99,7 +100,10 @@ struct ProgrammeLoudnessSection: View {
                 }
                 Button {
                     guard isPresented else { return }
-                    controller.measure(duration: duration, range: measureSelectedRange ? selectedRange : nil)
+                    let mediaID = item.id
+                    let onAnalysis = onAnalysis
+                    controller.measure(duration: duration, range: measureSelectedRange ? selectedRange : nil,
+                                       onCompletion: { result in onAnalysis?(mediaID, result) })
                 } label: {
                     Label(controller.result == nil ? "Measure Programme LUFS" : "Measure Programme Again",
                           systemImage: "waveform.badge.magnifyingglass")

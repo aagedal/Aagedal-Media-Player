@@ -171,7 +171,7 @@ enum FFmpegService {
         let shortTerm: Double?
     }
 
-    struct LUFSResult: Sendable, Codable {
+    struct LUFSResult: Sendable, Codable, Equatable {
         let integratedLoudness: Double
         let loudnessRange: Double
         let truePeak: Double
