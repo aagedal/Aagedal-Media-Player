@@ -26,6 +26,43 @@
         -->
 
         <item>
+            <title>Version 2.1.0</title>
+            <pubDate>Sun, 18 Oct 2026 18:53:07 +0200</pubDate>
+            <sparkle:version>166</sparkle:version>
+            <sparkle:shortVersionString>2.1.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <enclosure
+                url="https://github.com/aagedal/Aagedal-Media-Player/releases/download/2.1.0/Aagedal_Media_Player_2-1-0.zip"
+                length="46781492"
+                type="application/octet-stream"
+                sparkle:edSignature="JZLHSXjy078Sp+R5WD+ee94v54YverkLt7tzmCbRQtQCQxfpVmdDlxZcJLncNgbBsA9sgGHEb8L6APMlGcIoDQ==" />
+            <description><![CDATA[
+<h3>Added</h3>
+<ul>
+<li>Keep loupe video live during forward MPV playback, with a separate GPU-rendered viewer and automatic capture fallback.</li>
+<li>Adjust waveform color and quiet detail, playback volume and mute from the Playback sidebar. Comparison playback also exposes the listening source.</li>
+<li>Overlay analyzed momentary and short-term LUFS on audio waveforms, with track/programme selection and a show/hide control.</li>
+</ul>
+<h3>Changed</h3>
+<ul>
+<li>Show a translucent peak envelope around the solid average-level waveform body, retaining brief peaks when reducing the preview to screen columns.</li>
+<li>Rasterize waveforms at the current display width, with Retina-aware resizing and bounded image memory.</li>
+<li>Apply appearance changes to cached waveform data, including changes made while decoding, without restarting audio decoding.</li>
+</ul>
+<h3>Fixed</h3>
+<ul>
+<li>Avoid interrupting AVFoundation playback when switching comparison scope sources.</li>
+<li>Keep the LUFS graph menu outside the right-edge cursor-hide zone.</li>
+<li>Match waveform decoding and loudness overlays by audio ordinal when MPV track IDs differ from source audio order.</li>
+<li>Keep audio-only waveforms clear of the transport controls when the sidebar makes the window narrow.</li>
+<li>Keep silent waveform regions transparent, with consistent channel center lines and clearer track labels.</li>
+<li>Refresh waveform data when same-file metadata changes the duration or channel layout, and keep the playhead within the waveform bounds.</li>
+</ul>
+<p>The waveform remains a reduced-rate navigation preview; use the audio meters or loudness analysis for sample-peak and true-peak measurements.</p>
+            ]]></description>
+        </item>
+
+        <item>
             <title>Version 2.0.1</title>
             <pubDate>Tue, 13 Oct 2026 14:16:45 +0200</pubDate>
             <sparkle:version>165</sparkle:version>

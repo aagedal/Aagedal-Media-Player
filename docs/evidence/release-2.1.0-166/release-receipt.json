@@ -1,0 +1,15 @@
+{
+  "version": "2.1.0",
+  "build": 166,
+  "sourceCommit": "bc5ba4a47c62c897bb5c4dd67d3ad1e5129b165b",
+  "architecture": "arm64",
+  "sourcePackageResolvedSHA256": "91ff8b51c0b73b91f653360fc8f1252944f6a5eaf513ea83c9c08871fe525d05",
+  "zipName": "Aagedal_Media_Player_2-1-0.zip",
+  "zipSHA256": "0f6363426a3685816ab33bb034fc4bba9da0759f22ccff91812cd8f89990bca8",
+  "zipSizeBytes": 46781492,
+  "downloadURL": "https://github.com/aagedal/Aagedal-Media-Player/releases/download/2.1.0/Aagedal_Media_Player_2-1-0.zip",
+  "appcastSHA256": "bba9a200146e18404de4fb1f04c32a07a8827986cf7580bf62ed83d3281af14f",
+  "homebrewCommit": "72a2e2183fba4682882c9bb928353e8db2ecb08c",
+  "executedPassingTests": 943,
+  "allowlistedOptInSkips": 20
+}

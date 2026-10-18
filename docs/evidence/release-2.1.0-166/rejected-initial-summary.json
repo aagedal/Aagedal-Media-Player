@@ -1,0 +1,90 @@
+{
+  "devicesAndConfigurations" : [
+    {
+      "device" : {
+        "architecture" : "arm64",
+        "deviceId" : "00006050-001C293C22F9401C",
+        "deviceName" : "My Mac",
+        "modelName" : "MacBook Pro",
+        "osBuildNumber" : "26A434",
+        "osVersion" : "27.0.1",
+        "platform" : "macOS"
+      },
+      "expectedFailures" : 0,
+      "failedTests" : 4,
+      "passedTests" : 936,
+      "skippedTests" : 20,
+      "testPlanConfiguration" : {
+        "configurationId" : "1",
+        "configurationName" : "Test Scheme Action"
+      }
+    }
+  ],
+  "environmentDescription" : "Aagedal Media Player · Built with macOS 27.0.1",
+  "expectedFailures" : 0,
+  "failedTests" : 4,
+  "finishTime" : 1792341147.609,
+  "passedTests" : 936,
+  "result" : "Failed",
+  "runtimeWarnings" : [
+
+  ],
+  "skippedTests" : 20,
+  "startTime" : 1792340902.414,
+  "statistics" : [
+
+  ],
+  "testFailures" : [
+    {
+      "failureText" : "failed - Both production loupe captures must start with the visible overlay.",
+      "targetName" : "Aagedal Media Player Tests",
+      "testIdentifier" : 806,
+      "testIdentifierString" : "CompareLiveBackendTests/testAVFoundationPrimaryAndMPVSecondaryProfileLiveLoupes()",
+      "testIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareLiveBackendTests/testAVFoundationPrimaryAndMPVSecondaryProfileLiveLoupes",
+      "testName" : "testAVFoundationPrimaryAndMPVSecondaryProfileLiveLoupes()"
+    },
+    {
+      "failureText" : "failed - Both decoders and frame captures did not start for live-scope validation.",
+      "targetName" : "Aagedal Media Player Tests",
+      "testIdentifier" : 807,
+      "testIdentifierString" : "CompareLiveBackendTests/testAVFoundationPrimaryAndMPVSecondaryRenderLiveComparisonScopes()",
+      "testIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareLiveBackendTests/testAVFoundationPrimaryAndMPVSecondaryRenderLiveComparisonScopes",
+      "testName" : "testAVFoundationPrimaryAndMPVSecondaryRenderLiveComparisonScopes()"
+    },
+    {
+      "failureText" : "failed - Both production loupe captures must start with the visible overlay.",
+      "targetName" : "Aagedal Media Player Tests",
+      "testIdentifier" : 823,
+      "testIdentifierString" : "CompareLiveBackendTests/testMPVPrimaryAndAVFoundationSecondaryProfileLiveLoupes()",
+      "testIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareLiveBackendTests/testMPVPrimaryAndAVFoundationSecondaryProfileLiveLoupes",
+      "testName" : "testMPVPrimaryAndAVFoundationSecondaryProfileLiveLoupes()"
+    },
+    {
+      "failureText" : "failed - Both decoders and frame captures did not start for live-scope validation.",
+      "targetName" : "Aagedal Media Player Tests",
+      "testIdentifier" : 824,
+      "testIdentifierString" : "CompareLiveBackendTests/testMPVPrimaryAndAVFoundationSecondaryRenderLiveComparisonScopes()",
+      "testIdentifierURL" : "test://com.apple.xcode/Aagedal%20Media%20Player/Aagedal%20Media%20Player%20Tests/CompareLiveBackendTests/testMPVPrimaryAndAVFoundationSecondaryRenderLiveComparisonScopes",
+      "testName" : "testMPVPrimaryAndAVFoundationSecondaryRenderLiveComparisonScopes()"
+    }
+  ],
+  "title" : "Test - Aagedal Media Player",
+  "topInsights" : [
+    {
+      "category" : "Common Failures",
+      "impact" : "50% of failures",
+      "text" : "2 runs of 2 tests failed with failed - Both production loupe captures must start with the visible overlay."
+    },
+    {
+      "category" : "Common Failures",
+      "impact" : "50% of failures",
+      "text" : "2 runs of 2 tests failed with failed - Both decoders and frame captures did not start for live-scope validation."
+    },
+    {
+      "category" : "Longest Test Runs",
+      "impact" : "63% of duration",
+      "text" : "14 longest test runs with outlier durations exceeding 2.81s (three standard deviations)"
+    }
+  ],
+  "totalTestCount" : 960
+}
