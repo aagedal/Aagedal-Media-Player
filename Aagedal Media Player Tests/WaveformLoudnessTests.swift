@@ -114,6 +114,27 @@ final class WaveformLoudnessTests: XCTestCase {
         }
     }
 
+    func testHistoryLessResultsDoNotHideThePlottableSource() {
+        let player = PlayerController()
+        defer { player.teardown() }
+        let item = makeItem()
+        player.mediaItem = item
+        var empty = result()
+        empty.samples = []
+        player.recordWaveformLoudness(result(), streamIndex: 0, mediaID: item.id)
+        player.recordWaveformProgrammeLoudness(.init(
+            mapping: .init(layout: .stereo, audioStreamIndices: [0, 1]), loudness: empty), mediaID: item.id)
+        XCTAssertNotNil(player.waveformProgrammeLoudness)
+        XCTAssertFalse(player.waveformUsesProgrammeLoudness, "An empty programme history must not hide the track graph")
+        player.recordWaveformProgrammeLoudness(.init(
+            mapping: .init(layout: .stereo, audioStreamIndices: [0, 1]), loudness: result()), mediaID: item.id)
+        XCTAssertTrue(player.waveformUsesProgrammeLoudness)
+        player.recordWaveformLoudness(empty, streamIndex: 1, mediaID: item.id)
+        XCTAssertTrue(player.waveformUsesProgrammeLoudness, "An empty track history must not hide the programme graph")
+        player.mediaItem = makeItem()
+        XCTAssertFalse(player.waveformUsesProgrammeLoudness, "New media starts on the track graph")
+    }
+
     func testWaveformCompositeKeepsGraphVisibleAboveChannelImages() throws {
         let player = PlayerController()
         let item = makeItem()

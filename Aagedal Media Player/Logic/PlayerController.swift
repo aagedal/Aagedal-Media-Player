@@ -218,6 +218,7 @@ final class PlayerController: ObservableObject {
             if oldValue?.id != mediaItem?.id || oldValue?.metadata?.audioStreams != mediaItem?.metadata?.audioStreams {
                 waveformLoudnessResults.removeAll()
                 waveformProgrammeLoudness = nil
+                waveformUsesProgrammeLoudness = false
             }
         }
     }
@@ -232,14 +233,15 @@ final class PlayerController: ObservableObject {
         guard mediaItem?.id == mediaID, streamIndex >= 0,
               let streams = mediaItem?.metadata?.audioStreams, streams.indices.contains(streamIndex) else { return }
         waveformLoudnessResults[streamIndex] = result
-        waveformUsesProgrammeLoudness = false
+        // A history-less result cannot be plotted, so it must not hide the other graph.
+        if result.samples?.isEmpty == false { waveformUsesProgrammeLoudness = false }
     }
 
     func recordWaveformProgrammeLoudness(_ result: ProgrammeLoudnessResult, mediaID: UUID) {
         guard mediaItem?.id == mediaID, let streams = mediaItem?.metadata?.audioStreams,
               (try? result.mapping.validate(audioStreams: streams)) != nil else { return }
         waveformProgrammeLoudness = result
-        waveformUsesProgrammeLoudness = true
+        if result.loudness.samples?.isEmpty == false { waveformUsesProgrammeLoudness = true }
     }
 
     var loopObserver: Any?
