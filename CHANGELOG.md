@@ -2,6 +2,11 @@
 
 All notable changes to Aagedal Media Player.
 
+## [Unreleased]
+
+### Fixed
+- Keep the plottable LUFS graph selected when a track or programme analysis completes without loudness history, and start new media on the track graph.
+
 ## [2.1.0] — 2026-10-18
 
 ### Added
