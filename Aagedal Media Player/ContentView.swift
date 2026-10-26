@@ -35,8 +35,6 @@ struct ContentView: View {
     @State private var timecodeActivationTrigger: String?
     @State private var topToolbarHeight: CGFloat = 0
     @State private var playbackControlsHeight: CGFloat = 0
-    @State private var inspectorSurfaceReload = DeferredMainActorTask()
-    @State private var isInspectorSurfaceReloadPending = false
     @AppStorage(AppSettings.showCursorHideHint.key)
     private var showCursorHideHint = AppSettings.showCursorHideHint.defaultValue
     @AppStorage(AppSettings.didShowCompareModeCallout.key)
@@ -83,8 +81,8 @@ struct ContentView: View {
     }
 
     private var videoAspectRatio: CGFloat? {
-        // Keep one stable comparison canvas. Resizing the window as the view
-        // mode changes can make MPV recreate its drawable and reload playback.
+        // Keep one stable comparison canvas so a view-mode change does not
+        // resize every MPV swapchain at once.
         controller.videoAspectRatio
     }
 
@@ -211,37 +209,25 @@ struct ContentView: View {
                     )
                 }
             }
-            .onGeometryChange(for: CGSize.self) { $0.size } action: { _ in
-                if isInspectorSurfaceReloadPending { scheduleInspectorSurfaceReload() }
-            }
         }
         .onChange(of: controller.mediaItem?.url) { _, _ in
             compareReviewDrafts.clear()
             loupe.close()
             loupe.validateNativePixels(.unavailable("The source changed."))
-            cancelInspectorSurfaceReload()
         }
         .onChange(of: compareSession.secondaryController.mediaItem?.url) { _, _ in
             compareReviewDrafts.clear()
             loupe.validateNativePixels(.unavailable("Source B changed."))
-            cancelInspectorSurfaceReload()
         }
         .onChange(of: controller.preparationID) { _, _ in
             loupe.validateNativePixels(.unavailable("Source A playback was reloaded."))
-            cancelInspectorSurfaceReload()
         }
         .onChange(of: compareSession.secondaryController.preparationID) { _, _ in
             loupe.validateNativePixels(.unavailable("Source B playback was reloaded."))
-            cancelInspectorSurfaceReload()
         }
         .onChange(of: compareSession.isActive) { _, _ in
             compareReviewDrafts.clear()
             loupe.validateNativePixels(.unavailable("The comparison sources changed."))
-            cancelInspectorSurfaceReload()
-        }
-        .onChange(of: showInspector) { _, _ in
-            isInspectorSurfaceReloadPending = true
-            scheduleInspectorSurfaceReload()
         }
         .onChange(of: compareSession.reviewSidecarURL) { _, _ in
             compareReviewDrafts.clear()
@@ -264,43 +250,6 @@ struct ContentView: View {
     }
 
     // MARK: - Content Layers
-
-    private func cancelInspectorSurfaceReload() {
-        inspectorSurfaceReload.cancel()
-        isInspectorSurfaceReloadPending = false
-    }
-
-    private var hasReadyMPVSurface: Bool {
-        (controller.mpvPlayer != nil && controller.playbackPhase.permitsPlaybackControls)
-            || (compareSession.isActive && compareSession.secondaryController.mpvPlayer != nil
-                && compareSession.secondaryController.playbackPhase.permitsPlaybackControls)
-    }
-
-    private func scheduleInspectorSurfaceReload() {
-        guard hasReadyMPVSurface else {
-            cancelInspectorSurfaceReload()
-            return
-        }
-        let primaryURL = controller.mediaItem?.url
-        let secondaryURL = compareSession.secondaryController.mediaItem?.url
-        let primaryPreparationID = controller.preparationID
-        let secondaryPreparationID = compareSession.secondaryController.preparationID
-        let wasComparing = compareSession.isActive
-        // Inspector animation changes the canvas without a window live-resize
-        // notification. Wait for geometry to settle, then use the existing
-        // paired reload to refresh MPV's cached destination rectangle, even
-        // for paused/EOF frames. Ordinary canvas changes never arm this work.
-        inspectorSurfaceReload.schedule(after: .milliseconds(300)) {
-            isInspectorSurfaceReloadPending = false
-            guard hasReadyMPVSurface,
-                  let primaryURL, controller.mediaItem?.url == primaryURL,
-                  compareSession.secondaryController.mediaItem?.url == secondaryURL,
-                  controller.preparationID == primaryPreparationID,
-                  compareSession.secondaryController.preparationID == secondaryPreparationID,
-                  compareSession.isActive == wasComparing else { return }
-            compareSession.reload(primary: controller)
-        }
-    }
 
     private var renderedContentLayers: some View {
         ZStack {
@@ -503,7 +452,6 @@ struct ContentView: View {
             )
         }
         .onDisappear {
-            cancelInspectorSurfaceReload()
             deferredComparisonAction.cancel()
             loupePrimaryCapture.stop()
             loupeSecondaryCapture.stop()
@@ -827,7 +775,7 @@ struct ContentView: View {
                 "Frame resolution",
                 selection: Binding(
                     get: { compareSession.frameResolution },
-                    set: { compareSession.setFrameResolution($0, primary: controller) }
+                    set: { compareSession.setFrameResolution($0) }
                 )
             ) {
                 ForEach(CompareFrameResolution.allCases, id: \.self) { resolution in

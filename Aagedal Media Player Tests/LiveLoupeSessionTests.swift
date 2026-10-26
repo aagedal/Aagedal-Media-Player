@@ -88,7 +88,7 @@ final class LiveLoupeSessionTests: XCTestCase {
         XCTAssertTrue(pair.session.player === child)
     }
 
-    func testResizingLensUpdatesOutputWithoutReloadingPrimary() async throws {
+    func testResizingLensUpdatesOutputInPlace() async throws {
         let pair = try await makePair(url: fixture("landscape"))
         let primary = try XCTUnwrap(pair.controller.mpvPlayer)
         let child = try XCTUnwrap(pair.session.player)
@@ -100,16 +100,18 @@ final class LiveLoupeSessionTests: XCTestCase {
         view.layoutSubtreeIfNeeded()
         var correctSize = false
         for _ in 0..<30 {
-            let current = pair.session.player
-            let raw = await Task.detached { current?.screenshotRaw(scaledToWindow: true) }.value
+            let raw = await Task.detached { child.screenshotRaw(scaledToWindow: true) }.value
             if raw?.width == Int(pair.liveLayer.drawableSize.width),
                raw?.height == Int(pair.liveLayer.drawableSize.height) { correctSize = true; break }
             try await Task.sleep(for: .milliseconds(50))
         }
         XCTAssertTrue(correctSize, "The output must follow the lens even when its zoom factor is unchanged")
-        let centered = await waitForColor(.red, player: try XCTUnwrap(pair.session.player), x: 0.5, y: 0.5)
+        let centered = await waitForColor(.red, player: child, x: 0.5, y: 0.5)
         XCTAssertTrue(centered)
-        XCTAssertNil(child.playbackTimeSnapshot(), "The obsolete follower must be destroyed after resizing")
+        // Outlast the former 150 ms coalesced rebuild.
+        try await Task.sleep(for: .milliseconds(300))
+        XCTAssertTrue(pair.session.player === child, "The follower must resize in place, not be rebuilt")
+        XCTAssertTrue(pair.session.isReady)
         XCTAssertTrue(pair.controller.mpvPlayer === primary)
     }
 

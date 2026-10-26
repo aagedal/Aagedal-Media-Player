@@ -367,7 +367,7 @@
 				CODE_SIGN_ENTITLEMENTS = "Aagedal Media Player/Aagedal_Media_Player.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 166;
+				CURRENT_PROJECT_VERSION = 167;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 3R5QGG9DW6;
 				ENABLE_APP_SANDBOX = NO;
@@ -382,7 +382,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 2.1.0;
+				MARKETING_VERSION = 2.1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.aagedal.MediaPlayer;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -401,7 +401,7 @@
 				CODE_SIGN_ENTITLEMENTS = "Aagedal Media Player/Aagedal_Media_Player.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 166;
+				CURRENT_PROJECT_VERSION = 167;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 3R5QGG9DW6;
 				ENABLE_APP_SANDBOX = NO;
@@ -416,7 +416,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 2.1.0;
+				MARKETING_VERSION = 2.1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.aagedal.MediaPlayer;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -495,7 +495,7 @@
 			repositoryURL = "https://github.com/aagedal/MPVKit";
 			requirement = {
 				kind = revision;
-				revision = 1d44b9a0aa9e8faa5b8bf222173f6cc2930ed233;
+				revision = f957f4830d449e80723554cdc05ddc4138c1806e;
 			};
 		};
 		8EA00006AAAA000000000001 /* XCRemoteSwiftPackageReference "Sparkle" */ = {

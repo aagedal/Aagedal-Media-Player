@@ -438,8 +438,8 @@ struct ComparePlayerView: View {
         let sideBySide = mode == .sideBySide
 
         // Side-by-side is a visual transform over two full-size render
-        // surfaces. Keeping their layout size stable avoids MPV's large-
-        // surface-change reload path when the user switches modes.
+        // surfaces. Keeping their layout size stable avoids resizing both MPV
+        // swapchains when the user switches modes.
         return PresentationGeometry(
             primaryTransform: sideBySide
                 ? displayGeometry.sideBySideTransform(for: .primary)

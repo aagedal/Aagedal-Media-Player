@@ -33,16 +33,15 @@ final class ComparePresentationTests: XCTestCase {
         let session = CompareSessionController()
         let preparationID = primary.preparationID
 
-        session.setFrameResolution(.reduced, primary: primary)
+        session.setFrameResolution(.reduced)
 
         XCTAssertEqual(session.frameResolution, .reduced)
         XCTAssertEqual(primary.preparationID, preparationID)
     }
 
     func testStoppingSessionRestoresFullFrameResolution() {
-        let primary = PlayerController()
         let session = CompareSessionController()
-        session.setFrameResolution(.reduced, primary: primary)
+        session.setFrameResolution(.reduced)
 
         session.stop()
 

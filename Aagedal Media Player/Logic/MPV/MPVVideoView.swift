@@ -23,24 +23,12 @@ final class MPVViewController: NSViewController {
     private var hasAttachedDrawable = false
     private var metalLayer: MPVMetalLayer!
 
-    // nonisolated(unsafe) because we tear these down from `deinit` which runs
-    // outside the main actor — matches the same pattern in WindowConfigurator.
-    nonisolated(unsafe) private var willEnterFullScreenObserver: NSObjectProtocol?
-    nonisolated(unsafe) private var didEnterFullScreenObserver: NSObjectProtocol?
-    nonisolated(unsafe) private var willExitFullScreenObserver: NSObjectProtocol?
-    nonisolated(unsafe) private var didExitFullScreenObserver: NSObjectProtocol?
-    nonisolated(unsafe) private var didEndLiveResizeObserver: NSObjectProtocol?
-    private weak var observedWindow: NSWindow?
-
-    // Compare with the size MPV initialized against, rather than the preceding
-    // layout tick: small incremental or programmatic resizes can also strand
-    // its destination rectangle. Coalesce changes until the surface settles.
-    private var attachedDrawableSize: CGSize = .zero
-    private var pendingDrawableSize: CGSize?
-    private var forcesPendingSurfaceReload = false
-    private var hasRequestedSurfaceReload = false
+    // A replacement controller can find MPV still bound to the previous layer.
+    // That rebind is the only case that recreates playback. Size changes reach
+    // MPV in place through `MPVPlayer.updateSurfaceSize`.
     private var requiresReloadForReplacedDrawable = false
-    private var isTransitioningFullScreen = false
+    private var hasRequestedSurfaceReload = false
+    private var isReplacedDrawableReloadPending = false
     private var isDisappearing = false
     private let layoutReload = DeferredMainActorTask()
 
@@ -59,8 +47,7 @@ final class MPVViewController: NSViewController {
         self.managesSurfaceReloads = managesSurfaceReloads
         if !managesSurfaceReloads {
             layoutReload.cancel()
-            pendingDrawableSize = nil
-            forcesPendingSurfaceReload = false
+            isReplacedDrawableReloadPending = false
         }
     }
 
@@ -82,11 +69,11 @@ final class MPVViewController: NSViewController {
         metalLayer.frame = view.bounds
         metalLayer.contentsScale = view.window?.backingScaleFactor
             ?? NSScreen.main?.backingScaleFactor ?? 2
-        metalLayer.drawableSize = CGSize(
+        applyDrawableSize(CGSize(
             width: view.bounds.width * metalLayer.contentsScale,
             height: view.bounds.height * metalLayer.contentsScale
-        )
-        scheduleReloadForDrawableChange()
+        ))
+        scheduleReloadForReplacedDrawable()
         attachDrawableIfSized()
     }
 
@@ -94,22 +81,18 @@ final class MPVViewController: NSViewController {
         guard !hasAttachedDrawable,
               surfaceSize.width.isFinite, surfaceSize.height.isFinite,
               surfaceSize.width > 1, surfaceSize.height > 1 else { return }
-        attachedDrawableSize = metalLayer.drawableSize
         hasAttachedDrawable = true
         requiresReloadForReplacedDrawable = player.attachDrawable(metalLayer)
-        scheduleReloadForDrawableChange()
+        scheduleReloadForReplacedDrawable()
     }
 
-    deinit {
-        for token in [
-            willEnterFullScreenObserver,
-            didEnterFullScreenObserver,
-            willExitFullScreenObserver,
-            didExitFullScreenObserver,
-            didEndLiveResizeObserver,
-        ].compactMap({ $0 }) {
-            NotificationCenter.default.removeObserver(token)
-        }
+    /// Sizes the Metal drawable and, once MPV owns the layer, tells it about
+    /// the change so the swapchain and picture rectangle follow in place.
+    private func applyDrawableSize(_ size: CGSize) {
+        guard size.width > 1, size.height > 1, metalLayer.drawableSize != size else { return }
+        metalLayer.drawableSize = size
+        // A replaced layer is not the one MPV renders into; its rebind reload handles it.
+        if !requiresReloadForReplacedDrawable { player.updateSurfaceSize(size) }
     }
 
     override func loadView() {
@@ -150,23 +133,20 @@ final class MPVViewController: NSViewController {
         // rapid Force Reloads), in which case viewDidLayout never fires
         // and mpv's drawable would never get attached — leaving the pending
         // loadfile stuck forever. Subsequent bounds changes from
-        // viewDidLayout update drawableSize, and MoltenVK recreates the
-        // swapchain to match.
+        // viewDidLayout update drawableSize, and MPV follows them in place.
         attachDrawableIfSized()
     }
 
     override func viewWillAppear() {
         super.viewWillAppear()
         isDisappearing = false
-        installWindowObservers(on: view.window)
-        scheduleReloadForDrawableChange()
+        scheduleReloadForReplacedDrawable()
     }
 
     override func viewWillDisappear() {
         isDisappearing = true
         layoutReload.cancel()
-        pendingDrawableSize = nil
-        forcesPendingSurfaceReload = false
+        isReplacedDrawableReloadPending = false
         super.viewWillDisappear()
     }
 
@@ -176,20 +156,14 @@ final class MPVViewController: NSViewController {
             scalingLogger.debug("viewDidLayout: no window yet (bounds=\(String(describing: self.view.bounds)))")
             return
         }
-        // Install window observers lazily here too — viewDidLayout
-        // is the earliest point we're guaranteed to have a window.
-        if observedWindow !== window {
-            installWindowObservers(on: window)
-        }
 
         let scale = window.screen?.backingScaleFactor ?? 2.0
         metalLayer.frame = view.bounds
         metalLayer.contentsScale = scale
 
-        // Update drawableSize so MoltenVK detects the surface change and
-        // recreates its Vulkan swapchain. Do NOT call setNeedsDisplay() —
-        // that triggers a Core Animation display cycle that races with
-        // MoltenVK's background rendering and causes Metal validation errors.
+        // Fullscreen transitions and live resizes arrive here as bounds changes,
+        // so no window notifications are needed: MPV's MoltenVK context follows
+        // each drawableSize change directly.
         let newDrawableSize = CGSize(
             width: view.bounds.width * scale,
             height: view.bounds.height * scale
@@ -197,124 +171,34 @@ final class MPVViewController: NSViewController {
         let oldDrawableSize = metalLayer.drawableSize
         let isFullScreen = window.styleMask.contains(.fullScreen)
         if newDrawableSize.width > 1 && newDrawableSize.height > 1 {
-            metalLayer.drawableSize = newDrawableSize
+            applyDrawableSize(newDrawableSize)
             scalingLogger.info("viewDidLayout: bounds=\(String(describing: self.view.bounds)) scale=\(scale) oldDrawable=\(String(describing: oldDrawableSize)) newDrawable=\(String(describing: newDrawableSize)) fullscreen=\(isFullScreen)")
-
-            scheduleReloadForDrawableChange()
         } else {
             scalingLogger.debug("viewDidLayout: bounds=\(String(describing: self.view.bounds)) skipped (newDrawable=\(String(describing: newDrawableSize)) <=1)")
         }
+        scheduleReloadForReplacedDrawable()
     }
 
-    private func scheduleReloadForDrawableChange(force: Bool = false) {
-        guard managesSurfaceReloads, hasAttachedDrawable,
-              !hasRequestedSurfaceReload, !isTransitioningFullScreen, !isDisappearing,
-              let window = view.window else { return }
-        let size = metalLayer.drawableSize
-        guard force || forcesPendingSurfaceReload || requiresReloadForReplacedDrawable
-                || abs(size.width - attachedDrawableSize.width) > 1
-                || abs(size.height - attachedDrawableSize.height) > 1 else {
-            layoutReload.cancel()
-            pendingDrawableSize = nil
-            return
-        }
-        // Playback updates often repeat the same settled proposal. They must
-        // not keep postponing a pending repair indefinitely.
-        guard force || pendingDrawableSize != size else { return }
-        pendingDrawableSize = size
-        forcesPendingSurfaceReload = forcesPendingSurfaceReload || force
-        layoutReload.schedule(after: .milliseconds(150)) { [weak self, weak window] in
-            guard let self, let window, self.view.window === window,
-                  self.managesSurfaceReloads, !self.isTransitioningFullScreen, !self.isDisappearing,
-                  !self.view.inLiveResize, !self.hasRequestedSurfaceReload else { return }
+    /// Schedules the single rebind reload for a replacement controller. Playback
+    /// updates repeat while SwiftUI settles, so a pending reload is kept rather
+    /// than postponed on every update.
+    private func scheduleReloadForReplacedDrawable() {
+        guard managesSurfaceReloads, requiresReloadForReplacedDrawable, hasAttachedDrawable,
+              !hasRequestedSurfaceReload, !isReplacedDrawableReloadPending, !isDisappearing,
+              view.window != nil else { return }
+        isReplacedDrawableReloadPending = true
+        layoutReload.schedule(after: .milliseconds(150)) { [weak self] in
+            guard let self else { return }
+            self.isReplacedDrawableReloadPending = false
+            guard let window = self.view.window else { return }
+            if self.view.inLiveResize {
+                // The rebind still has to happen once the drag ends.
+                self.scheduleReloadForReplacedDrawable()
+                return
+            }
+            guard self.managesSurfaceReloads, !self.isDisappearing, !self.hasRequestedSurfaceReload else { return }
             self.hasRequestedSurfaceReload = true
-            self.pendingDrawableSize = nil
-            self.forcesPendingSurfaceReload = false
-            self.requestReloadForSurfaceChange(reason: "settled drawable size changed")
-        }
-    }
-
-    // MARK: - Window observers (fullscreen + live resize)
-
-    private func installWindowObservers(on window: NSWindow?) {
-        // Tear down any previous observers if the window changed.
-        if observedWindow !== window {
-            for token in [
-                willEnterFullScreenObserver,
-                didEnterFullScreenObserver,
-                willExitFullScreenObserver,
-                didExitFullScreenObserver,
-                didEndLiveResizeObserver,
-            ].compactMap({ $0 }) {
-                NotificationCenter.default.removeObserver(token)
-            }
-            willEnterFullScreenObserver = nil
-            didEnterFullScreenObserver = nil
-            willExitFullScreenObserver = nil
-            didExitFullScreenObserver = nil
-            didEndLiveResizeObserver = nil
-            observedWindow = window
-        }
-        guard let window, willEnterFullScreenObserver == nil else { return }
-
-        willEnterFullScreenObserver = NotificationCenter.default.addObserver(
-            forName: NSWindow.willEnterFullScreenNotification,
-            object: window, queue: .main
-        ) { [weak self] _ in
-            MainActor.assumeIsolated {
-                guard let self else { return }
-                self.isTransitioningFullScreen = true
-                self.layoutReload.cancel()
-                scalingLogger.info("willEnterFullScreen: bounds=\(String(describing: self.view.bounds)) drawable=\(String(describing: self.metalLayer.drawableSize))")
-            }
-        }
-        didEnterFullScreenObserver = NotificationCenter.default.addObserver(
-            forName: NSWindow.didEnterFullScreenNotification,
-            object: window, queue: .main
-        ) { [weak self] _ in
-            MainActor.assumeIsolated {
-                guard let self else { return }
-                scalingLogger.info("didEnterFullScreen: bounds=\(String(describing: self.view.bounds)) drawable=\(String(describing: self.metalLayer.drawableSize))")
-                self.isTransitioningFullScreen = false
-                self.viewDidLayout()
-                self.scheduleReloadForDrawableChange(force: true)
-            }
-        }
-        willExitFullScreenObserver = NotificationCenter.default.addObserver(
-            forName: NSWindow.willExitFullScreenNotification,
-            object: window, queue: .main
-        ) { [weak self] _ in
-            MainActor.assumeIsolated {
-                guard let self else { return }
-                self.isTransitioningFullScreen = true
-                self.layoutReload.cancel()
-                scalingLogger.info("willExitFullScreen: bounds=\(String(describing: self.view.bounds)) drawable=\(String(describing: self.metalLayer.drawableSize))")
-            }
-        }
-        didExitFullScreenObserver = NotificationCenter.default.addObserver(
-            forName: NSWindow.didExitFullScreenNotification,
-            object: window, queue: .main
-        ) { [weak self] _ in
-            MainActor.assumeIsolated {
-                guard let self else { return }
-                scalingLogger.info("didExitFullScreen: bounds=\(String(describing: self.view.bounds)) drawable=\(String(describing: self.metalLayer.drawableSize))")
-                self.isTransitioningFullScreen = false
-                self.viewDidLayout()
-                self.scheduleReloadForDrawableChange(force: true)
-            }
-        }
-        // Wait until the user releases the resize handle. The deferred path
-        // also covers programmatic resizes, which do not emit this notification.
-        didEndLiveResizeObserver = NotificationCenter.default.addObserver(
-            forName: NSWindow.didEndLiveResizeNotification,
-            object: window, queue: .main
-        ) { [weak self] _ in
-            MainActor.assumeIsolated {
-                guard let self else { return }
-                scalingLogger.info("didEndLiveResize: bounds=\(String(describing: self.view.bounds)) drawable=\(String(describing: self.metalLayer.drawableSize))")
-                self.viewDidLayout()
-                self.scheduleReloadForDrawableChange(force: true)
-            }
+            self.requestReloadForSurfaceChange(window: window, reason: "replaced MPV drawable")
         }
     }
 
@@ -322,25 +206,15 @@ final class MPVViewController: NSViewController {
     /// work even when another player or an auxiliary panel is key.
     /// ContentView's handler calls
     /// `PlayerController.preparePlayback(startTime:resetAudioSelection:)`,
-    /// which destroys+recreates the mpv context — the only thing we've
-    /// found that reliably re-inits mpv's vo at the *current* layer
-    /// surface size.
-    ///
-    /// Background on why lighter nudges don't work: with
-    /// `wid=metalLayer + gpu-next/vulkan/moltenvk`, mpv's `vo->dwidth`
-    /// /`dheight` are supposed to update inside `vk_acquire`, but in
-    /// practice, after the layer's drawableSize grows underneath a
-    /// paused stream (fullscreen entry), even a frame-forcing seek
-    /// renders into the old dst rect. Property nudges (video-zoom=0)
-    /// hit short-circuit checks. Only a full mpv-context recreate
-    /// observably clears the stale state. Heavier than ideal, but it
-    /// matches the user's known-working manual workaround.
-    private func requestReloadForSurfaceChange(reason: String) {
-        guard managesSurfaceReloads, let window = view.window else {
+    /// which destroys+recreates the mpv context. That is required only for a
+    /// rebind: `wid` is fixed at context creation, so a context still bound to
+    /// a previous layer cannot adopt the replacement.
+    private func requestReloadForSurfaceChange(window: NSWindow, reason: String) {
+        guard managesSurfaceReloads else {
             scalingLogger.info("requestReloadForSurfaceChange: \(reason) — paired surface owns reload")
             return
         }
-        scalingLogger.info("requestReloadForSurfaceChange: \(reason) — posting targeted surface reload to recreate mpv at current surface size")
+        scalingLogger.info("requestReloadForSurfaceChange: \(reason) — posting targeted surface reload to rebind mpv")
         NotificationCenter.default.post(.reloadPlayerSurface(targetWindow: window))
     }
 }

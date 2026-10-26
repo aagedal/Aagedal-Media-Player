@@ -35,7 +35,7 @@ Restore the validated arm64 candidate using [the handoff](docs/MPV_NATIVE_RASTER
 
 Swift Package dependencies (all remote, resolved via SPM):
 
-- **MPVKit-GPL** — `https://github.com/aagedal/MPVKit`, exact revision `1d44b9a0aa9e8faa5b8bf222173f6cc2930ed233` (published GPL/CoreAudio/Metal build). Truls's fork of MPVKit. Bundles mpv 0.41.0, FFmpeg n8.1.2, MoltenVK 1.4.2, Libplacebo 7.360.1.
+- **MPVKit-GPL** — `https://github.com/aagedal/MPVKit`, exact revision `f957f4830d449e80723554cdc05ddc4138c1806e` (`aagedal-1.1.0-n9.0.2-resize.1`: published GPL/CoreAudio/Metal build with the MoltenVK layer-resize fix). Truls's fork of MPVKit. Bundles mpv 0.41.0, FFmpeg n9.0.2, MoltenVK 1.4.2, Libplacebo 7.360.1.
 - **SwiftMediaMetadata** — `https://github.com/aagedal/SwiftMediaMetadata`, exact version `3.0.2` (`9e8e912deb8d941da66a4b76854a90e3e9f01e3f`). Pure-Swift metadata library, replaces the earlier ffprobe shell-out for stream metadata. Version 3.0.2 includes bounded MXF reading; the earlier 3.0.1 correction avoids materializing top-level `mdat` payloads during Sony RTMD discovery.
 - **Sparkle** — `https://github.com/sparkle-project/Sparkle`, semver `>= 2.9.1`, currently resolved to `2.9.6`. Auto-update infrastructure.
 
@@ -58,7 +58,7 @@ MPV renders through Vulkan via MoltenVK onto a `CAMetalLayer`:
 
 - `MPVPlayer` — Core wrapper around `mpv_handle`. Manages the mpv context, property observation, and event loop. Marked `@unchecked Sendable` for manual thread safety since mpv callbacks arrive on background threads.
 - `MPVMetalLayer` — `CAMetalLayer` subclass handling HDR and drawable size management. Connected to mpv via the `wid` option (not the render API).
-- `MPVVideoView` — `NSViewControllerRepresentable` embedding the Metal rendering surface into SwiftUI.
+- `MPVVideoView` — `NSViewControllerRepresentable` embedding the Metal rendering surface into SwiftUI. Drawable size changes (window resize, fullscreen, inspector, comparison frame resolution) go to mpv through `MPVPlayer.updateSurfaceSize` (`moltenvk-surface-size`), so they never reload playback. The controller reloads only when mpv is still bound to a replaced layer, since `wid` is fixed at context creation.
 - `MPVProperty` — Typed property accessors for mpv options.
 
 **Critical layer setup order:** `view.layer = metalLayer` must be set before `view.wantsLayer = true`.

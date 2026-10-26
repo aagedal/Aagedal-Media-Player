@@ -916,16 +916,11 @@ final class CompareSessionController: ObservableObject {
         }
     }
 
-    func setFrameResolution(_ resolution: CompareFrameResolution, primary: PlayerController) {
+    /// Each surface follows its new size in place: MPV resizes its swapchain
+    /// when the view's drawable changes, so playback keeps its timeline.
+    func setFrameResolution(_ resolution: CompareFrameResolution) {
         guard frameResolution != resolution else { return }
         frameResolution = resolution
-        // MPV's Metal destination can retain its old drawable size after a
-        // large surface growth. Reuse the paired reload path so both backends
-        // restart at the same timeline position and the requested resolution
-        // is applied predictably in either direction.
-        if isActive, isSecondaryReady {
-            reload(primary: primary)
-        }
     }
 
     func setWipePosition(_ position: Double) {
