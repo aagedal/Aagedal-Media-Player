@@ -341,7 +341,7 @@ python3() { echo remote-validation >> "$TRACE"; }
         self.assertLess(focused_validation, analysis)
         self.assertIn('testAVFoundationPrimaryAndMPVSecondaryShareTransport', source)
         self.assertIn('testMPVPrimaryAndAVFoundationSecondaryShareTransport', source)
-        self.assertEqual(source.count('--require-test'), 116)
+        self.assertEqual(source.count('--require-test'), 117)
         for name in ('testPassiveTextDepartureUsesCorrectionSelectedAfterRowRender',
                      'testPassiveTextDepartureRetainsFailuresAndCommitsOnceAfterRetry',
                      'testPassiveRangeBlurUsesTextCorrectionSelectedAfterRowRender'):
@@ -350,11 +350,12 @@ python3() { echo remote-validation >> "$TRACE"; }
             ('AudioChannelRoutingTests', 'testBundledMPVSwitchesBetweenMonoStereoAndSurroundProgrammes'),
             ('AudioChannelRoutingTests', 'testMonoProgrammeUsesExplicitSpeakerAssignments'),
             ('AudioChannelRoutingTests', 'testMonoSpeakerReassignmentSwapsExistingTrack'),
-            ('CompareLiveBackendTests', 'testIncrementalMPVSurfaceGrowthDefersOneTargetedReloadAndRespectsPairedOwnership'),
-            ('CompareLiveBackendTests', 'testAppKitSurfaceShrinkRequestsRecoveryAndCancelledLayoutDoesNotReload'),
-            ('CompareLiveBackendTests', 'testFullscreenRecoverySurvivesUnchangedPlaybackProposals'),
+            ('CompareLiveBackendTests', 'testIncrementalMPVSurfaceGrowthResizesInPlaceWithoutReload'),
+            ('CompareLiveBackendTests', 'testAppKitSurfaceShrinkResizesInPlaceWithoutReload'),
+            ('CompareLiveBackendTests', 'testFullscreenTransitionResizesInPlaceWithoutReload'),
             ('CompareLiveBackendTests', 'testReplacementMPVSurfaceRequestsReloadEvenAtIdenticalSize'),
-            ('CompareLiveBackendTests', 'testProgrammaticWindowResizeReloadsPausedProductionPlayerOnceAtSettledSize'),
+            ('CompareLiveBackendTests', 'testProgrammaticWindowResizeKeepsPausedPlayerInPlace'),
+            ('MPVSurfaceSizeTests', 'testPinnedLibmpvAcceptsMoltenVKSurfaceSize'),
             ('MPVDecoderRasterTests', 'testRejectsUnsupportedPixelFormatsAndMalformedBuffersBeforeCopying'),
             ('MPVDecoderRasterTests', 'testRejectsProviderGeometryBeyondBoundedProtocolBeforeCopying'),
             ('CompareTimelineMappingTests', 'testDriftSampleBracketsSecondaryReadAndRemovesClockReadLatency'),
@@ -490,7 +491,7 @@ python3() { echo remote-validation >> "$TRACE"; }
         self.assertLess(result_validation, preflight)
         self.assertLess(result_validation, archive)
         self.assertIn('--minimum-tests 862', self.source)
-        self.assertEqual(self.source.count('--require-test'), 116)
+        self.assertEqual(self.source.count('--require-test'), 117)
         for name in ('testPassiveTextDepartureUsesCorrectionSelectedAfterRowRender',
                      'testPassiveTextDepartureRetainsFailuresAndCommitsOnceAfterRetry',
                      'testPassiveRangeBlurUsesTextCorrectionSelectedAfterRowRender'):
@@ -499,11 +500,12 @@ python3() { echo remote-validation >> "$TRACE"; }
             ('AudioChannelRoutingTests', 'testBundledMPVSwitchesBetweenMonoStereoAndSurroundProgrammes'),
             ('AudioChannelRoutingTests', 'testMonoProgrammeUsesExplicitSpeakerAssignments'),
             ('AudioChannelRoutingTests', 'testMonoSpeakerReassignmentSwapsExistingTrack'),
-            ('CompareLiveBackendTests', 'testIncrementalMPVSurfaceGrowthDefersOneTargetedReloadAndRespectsPairedOwnership'),
-            ('CompareLiveBackendTests', 'testAppKitSurfaceShrinkRequestsRecoveryAndCancelledLayoutDoesNotReload'),
-            ('CompareLiveBackendTests', 'testFullscreenRecoverySurvivesUnchangedPlaybackProposals'),
+            ('CompareLiveBackendTests', 'testIncrementalMPVSurfaceGrowthResizesInPlaceWithoutReload'),
+            ('CompareLiveBackendTests', 'testAppKitSurfaceShrinkResizesInPlaceWithoutReload'),
+            ('CompareLiveBackendTests', 'testFullscreenTransitionResizesInPlaceWithoutReload'),
             ('CompareLiveBackendTests', 'testReplacementMPVSurfaceRequestsReloadEvenAtIdenticalSize'),
-            ('CompareLiveBackendTests', 'testProgrammaticWindowResizeReloadsPausedProductionPlayerOnceAtSettledSize'),
+            ('CompareLiveBackendTests', 'testProgrammaticWindowResizeKeepsPausedPlayerInPlace'),
+            ('MPVSurfaceSizeTests', 'testPinnedLibmpvAcceptsMoltenVKSurfaceSize'),
             ('MPVDecoderRasterTests', 'testRejectsUnsupportedPixelFormatsAndMalformedBuffersBeforeCopying'),
             ('MPVDecoderRasterTests', 'testRejectsProviderGeometryBeyondBoundedProtocolBeforeCopying'),
             ('CompareTimelineMappingTests', 'testDriftSampleBracketsSecondaryReadAndRemovesClockReadLatency'),

@@ -115,11 +115,12 @@ python3 scripts/validate-release-xcresult.py \
     --require-test "AudioChannelRoutingTests/testBundledMPVSwitchesBetweenMonoStereoAndSurroundProgrammes()" \
     --require-test "AudioChannelRoutingTests/testMonoProgrammeUsesExplicitSpeakerAssignments()" \
     --require-test "AudioChannelRoutingTests/testMonoSpeakerReassignmentSwapsExistingTrack()" \
-    --require-test "CompareLiveBackendTests/testIncrementalMPVSurfaceGrowthDefersOneTargetedReloadAndRespectsPairedOwnership()" \
-    --require-test "CompareLiveBackendTests/testAppKitSurfaceShrinkRequestsRecoveryAndCancelledLayoutDoesNotReload()" \
-    --require-test "CompareLiveBackendTests/testFullscreenRecoverySurvivesUnchangedPlaybackProposals()" \
+    --require-test "CompareLiveBackendTests/testIncrementalMPVSurfaceGrowthResizesInPlaceWithoutReload()" \
+    --require-test "CompareLiveBackendTests/testAppKitSurfaceShrinkResizesInPlaceWithoutReload()" \
+    --require-test "CompareLiveBackendTests/testFullscreenTransitionResizesInPlaceWithoutReload()" \
     --require-test "CompareLiveBackendTests/testReplacementMPVSurfaceRequestsReloadEvenAtIdenticalSize()" \
-    --require-test "CompareLiveBackendTests/testProgrammaticWindowResizeReloadsPausedProductionPlayerOnceAtSettledSize()" \
+    --require-test "CompareLiveBackendTests/testProgrammaticWindowResizeKeepsPausedPlayerInPlace()" \
+    --require-test "MPVSurfaceSizeTests/testPinnedLibmpvAcceptsMoltenVKSurfaceSize()" \
     --require-test "MPVDecoderRasterTests/testRejectsUnsupportedPixelFormatsAndMalformedBuffersBeforeCopying()" \
     --require-test "MPVDecoderRasterTests/testRejectsProviderGeometryBeyondBoundedProtocolBeforeCopying()" \
     --require-test "CompareTimelineMappingTests/testDriftSampleBracketsSecondaryReadAndRemovesClockReadLatency()" \
