@@ -84,7 +84,7 @@ xcodebuild test \
     -configuration Release \
     -destination "platform=macOS" \
     -derivedDataPath "$derived_data" \
-    "${package_cache_args[@]}" \
+    ${package_cache_args[@]+"${package_cache_args[@]}"} \
     -resultBundlePath "$artifact_dir/Tests.xcresult" \
     -onlyUsePackageVersionsFromResolvedFile \
     -skip-testing:"Aagedal Media Player Tests/CompareLiveBackendTests/testAVFoundationPrimaryAndMPVSecondaryShareTransport" \
@@ -232,7 +232,7 @@ xcodebuild test \
     -configuration Release \
     -destination "platform=macOS" \
     -derivedDataPath "$derived_data" \
-    "${package_cache_args[@]}" \
+    ${package_cache_args[@]+"${package_cache_args[@]}"} \
     -resultBundlePath "$artifact_dir/MixedBackendTransport.xcresult" \
     -onlyUsePackageVersionsFromResolvedFile \
     -parallel-testing-enabled NO \
@@ -265,7 +265,7 @@ xcodebuild analyze \
     -configuration Release \
     -destination "platform=macOS" \
     -derivedDataPath "$derived_data" \
-    "${package_cache_args[@]}" \
+    ${package_cache_args[@]+"${package_cache_args[@]}"} \
     -onlyUsePackageVersionsFromResolvedFile \
     2>&1 | tee "$artifact_dir/analyze.log"
 
