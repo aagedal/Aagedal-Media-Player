@@ -2,10 +2,15 @@
 
 All notable changes to Aagedal Media Player.
 
-## [Unreleased]
+## [2.1.1] — 2026-10-26
+
+### Changed
+- Updated the MPV playback engine to FFmpeg 9.0.2, with a MoltenVK fix that lets video follow surface size changes directly.
 
 ### Fixed
+- Resizing the window, entering or leaving fullscreen, toggling the inspector, changing the comparison frame resolution and resizing the live loupe no longer reload playback. Video follows the new size immediately, also while paused.
 - Keep the plottable LUFS graph selected when a track or programme analysis completes without loudness history, and start new media on the track graph.
+- Credits list the bundled FFmpeg version correctly.
 
 ## [2.1.0] — 2026-10-18
 
