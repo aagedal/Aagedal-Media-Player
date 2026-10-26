@@ -227,6 +227,29 @@ final class MPVPlayer: NSObject, ObservableObject, MPVNativeAudioProbeClient, @u
         return false
     }
 
+    /// Last drawable size sent to MoltenVK, in pixels. Lets tests confirm that a
+    /// resize reached mpv without reloading playback.
+    private(set) var lastSurfaceSize: CGSize?
+
+    /// Tells the MoltenVK context that the layer's drawableSize changed. mpv
+    /// resizes its swapchain and redraws immediately, including while paused,
+    /// so the picture follows the view without recreating playback. Call it
+    /// after updating the layer's drawableSize.
+    func updateSurfaceSize(_ size: CGSize) {
+        guard let mpvCtx = mpv, size.width > 1, size.height > 1 else { return }
+        let width = Int(size.width.rounded())
+        let height = Int(size.height.rounded())
+        lastSurfaceSize = CGSize(width: width, height: height)
+        let value = "\(width)x\(height)"
+        value.withCString { cString in
+            var pointer = cString
+            let result = mpv_set_property_async(mpvCtx, 0, "moltenvk-surface-size", MPV_FORMAT_STRING, &pointer)
+            if result < 0 {
+                logger.warning("Could not enqueue MPV surface size: \(String(cString: mpv_error_string(result)))")
+            }
+        }
+    }
+
     private func setupMPV() {
         guard mpv == nil else {
             logger.info("MPV already initialized, skipping setup")

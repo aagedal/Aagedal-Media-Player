@@ -231,7 +231,7 @@ final class CompareLiveBackendTests: XCTestCase {
         // ContentView branch that replaced A's PlayerView on isActive changes.
         session.viewMode = .difference
         session.setDifferenceGain(8)
-        session.setFrameResolution(.reduced, primary: primary)
+        session.setFrameResolution(.reduced)
         session.safeAreaGuide = .actionAndTitle
         session.aspectRatioGuide = .fourByThree
         let hostingView = NSHostingView(rootView: ContentView(controller: primary, compareSession: session))
@@ -254,7 +254,7 @@ final class CompareLiveBackendTests: XCTestCase {
         XCTAssertGreaterThan(inactivePictureSize.width, 1)
         XCTAssertGreaterThan(inactivePictureSize.height, 1)
         session.viewMode = .sideBySide
-        session.setFrameResolution(.full, primary: primary)
+        session.setFrameResolution(.full)
         primary.seekTo(1)
         let sought = await waitUntil(tolerance: 0.05) { primary.playbackTimeSnapshot() - 1 }
         XCTAssertTrue(sought)
@@ -300,7 +300,7 @@ final class CompareLiveBackendTests: XCTestCase {
         XCTAssertNotNil(primary.mpvPlayer?.screenshotRaw())
     }
 
-    func testIncrementalMPVSurfaceGrowthDefersOneTargetedReloadAndRespectsPairedOwnership() async throws {
+    func testIncrementalMPVSurfaceGrowthResizesInPlaceWithoutReload() async throws {
         for ownsReload in [true, false] {
             let player = MPVPlayer()
             defer { player.destroy() }
@@ -328,30 +328,26 @@ final class CompareLiveBackendTests: XCTestCase {
             }
             defer { observation.cancel() }
 
-            // Every step and the total growth stay below the old 1.5× cutoff.
+            let layer = try XCTUnwrap(controller.view.layer as? MPVMetalLayer)
             for size in [CGSize(width: 350, height: 197), CGSize(width: 400, height: 225)] {
                 controller.setSurfaceSize(size)
                 controller.viewDidLayout()
             }
-            XCTAssertEqual(reloadCount, 0, "SwiftUI sizing must not synchronously publish a reload.")
-            // Repeated playback proposals must not starve the deferred repair.
+            // Repeated playback proposals must not disturb the growth.
             for _ in 0..<5 {
                 controller.setSurfaceSize(CGSize(width: 400, height: 225))
                 try await Task.sleep(for: .milliseconds(40))
             }
-            if ownsReload {
-                let reloaded = await waitUntil { reloadCount == 1 }
-                XCTAssertTrue(reloaded, "Explicit drawable growth must retain the single-source workaround.")
-            }
             controller.setSurfaceSize(CGSize(width: 1280, height: 720))
             controller.viewDidLayout()
             try await Task.sleep(for: .milliseconds(200))
-            XCTAssertEqual(reloadCount, ownsReload ? 1 : 0,
-                           "Only the owning surface may request one layout-growth reload.")
+            XCTAssertEqual(reloadCount, 0, "Surface growth must reach MPV in place, not recreate playback.")
+            XCTAssertEqual(player.lastSurfaceSize?.width ?? 0, layer.drawableSize.width, accuracy: 1)
+            XCTAssertEqual(player.lastSurfaceSize?.height ?? 0, layer.drawableSize.height, accuracy: 1)
         }
     }
 
-    func testAppKitSurfaceShrinkRequestsRecoveryAndCancelledLayoutDoesNotReload() async throws {
+    func testAppKitSurfaceShrinkResizesInPlaceWithoutReload() async throws {
         for outcome in ["shrink", "reverted", "disappeared"] {
             let player = MPVPlayer()
             defer { player.destroy() }
@@ -377,6 +373,7 @@ final class CompareLiveBackendTests: XCTestCase {
                 }
             }
             defer { observation.cancel() }
+            let layer = try XCTUnwrap(controller.view.layer as? MPVMetalLayer)
             // Exercise native layout without an explicit SwiftUI proposal or
             // didEndLiveResize notification (programmatic resize path).
             controller.view.setFrameSize(CGSize(width: 540, height: 304))
@@ -388,11 +385,13 @@ final class CompareLiveBackendTests: XCTestCase {
                 controller.viewWillDisappear()
             }
             try await Task.sleep(for: .milliseconds(250))
-            XCTAssertEqual(reloadCount, outcome == "shrink" ? 1 : 0, outcome)
+            XCTAssertEqual(reloadCount, 0, "\(outcome): layout changes must not recreate playback.")
+            XCTAssertEqual(player.lastSurfaceSize?.width ?? 0, layer.drawableSize.width, accuracy: 1, outcome)
+            XCTAssertEqual(player.lastSurfaceSize?.height ?? 0, layer.drawableSize.height, accuracy: 1, outcome)
         }
     }
 
-    func testFullscreenRecoverySurvivesUnchangedPlaybackProposals() async throws {
+    func testFullscreenTransitionResizesInPlaceWithoutReload() async throws {
         let player = MPVPlayer()
         defer { player.destroy() }
         let size = CGSize(width: 320, height: 180)
@@ -405,6 +404,7 @@ final class CompareLiveBackendTests: XCTestCase {
         window.contentViewController = controller
         controller.viewDidLayout()
         defer { window.contentViewController = nil; window.close() }
+        let layer = try XCTUnwrap(controller.view.layer as? MPVMetalLayer)
         var reloadCount = 0
         let observation = NotificationCenter.default.appCommandPublisher.sink { notification in
             if case .reloadPlayerSurface(let target)? = notification.appCommand, target === window {
@@ -413,12 +413,18 @@ final class CompareLiveBackendTests: XCTestCase {
         }
         defer { observation.cancel() }
         NotificationCenter.default.post(name: NSWindow.willEnterFullScreenNotification, object: window)
+        // Fullscreen arrives as a bounds change; the drawable follows it in place.
+        let fullscreen = CGSize(width: 1280, height: 720)
+        controller.view.setFrameSize(fullscreen)
+        controller.viewDidLayout()
         NotificationCenter.default.post(name: NSWindow.didEnterFullScreenNotification, object: window)
         for _ in 0..<5 {
-            controller.setSurfaceSize(size)
+            controller.setSurfaceSize(fullscreen)
             try await Task.sleep(for: .milliseconds(40))
         }
-        XCTAssertEqual(reloadCount, 1, "Steady playback proposals must not cancel fullscreen recovery.")
+        XCTAssertEqual(reloadCount, 0, "Fullscreen transitions must not recreate playback.")
+        XCTAssertEqual(player.lastSurfaceSize?.width ?? 0, layer.drawableSize.width, accuracy: 1)
+        XCTAssertEqual(player.lastSurfaceSize?.height ?? 0, layer.drawableSize.height, accuracy: 1)
     }
 
     func testReplacementMPVSurfaceRequestsReloadEvenAtIdenticalSize() async throws {
@@ -453,7 +459,7 @@ final class CompareLiveBackendTests: XCTestCase {
         XCTAssertEqual(reloadCount, 1)
     }
 
-    func testProgrammaticWindowResizeReloadsPausedProductionPlayerOnceAtSettledSize() async throws {
+    func testProgrammaticWindowResizeKeepsPausedPlayerInPlace() async throws {
         let fixtures = try fixtureDirectory()
         let primary = makeController(forcedBackend: .mpv)
         let session = CompareSessionController()
@@ -503,24 +509,30 @@ final class CompareLiveBackendTests: XCTestCase {
         hostingView.setFrameSize(resized)
         hostingView.rootView = root(size: resized)
         hostingView.layoutSubtreeIfNeeded()
-        let recovered = await waitUntil {
-            primary.preparationID > preparationID && primary.isReady &&
-                self.metalLayers(in: hostingView).first !== previousLayer
+        let resizedInPlace = await waitUntil {
+            self.metalLayers(in: hostingView).first === previousLayer &&
+                previousLayer.drawableSize.width > previousDrawableSize.width
         }
-        XCTAssertTrue(recovered, "A modest programmatic resize must rebuild the stale renderer: " +
-            "preparation \(preparationID) → \(primary.preparationID), " +
-            "ready=\(primary.isReady), requests=\(surfaceRequests).")
-        let recoveredID = primary.preparationID
-        XCTAssertEqual(surfaceRequests, 1)
+        XCTAssertTrue(resizedInPlace, "A programmatic resize must reach the existing MPV surface: " +
+            "drawable \(previousDrawableSize) → \(previousLayer.drawableSize), requests=\(surfaceRequests).")
+        XCTAssertEqual(primary.preparationID, preparationID, "A resize must not recreate playback.")
+        XCTAssertEqual(surfaceRequests, 0)
         try await Task.sleep(for: .milliseconds(500))
-        XCTAssertEqual(primary.preparationID, recoveredID, "Settled geometry must not loop through reloads.")
+        XCTAssertEqual(primary.preparationID, preparationID, "Settled geometry must not reload playback.")
         XCTAssertFalse(primary.isPlaying)
         XCTAssertEqual(primary.playbackTimeSnapshot(), 1, accuracy: 0.05)
         let layer = try XCTUnwrap(metalLayers(in: hostingView).first)
         XCTAssertEqual(layer.drawableSize.width, layer.bounds.width * layer.contentsScale, accuracy: 1)
         XCTAssertEqual(layer.drawableSize.height, layer.bounds.height * layer.contentsScale, accuracy: 1)
         XCTAssertGreaterThan(layer.drawableSize.width, previousDrawableSize.width)
-        XCTAssertNotNil(primary.mpvPlayer?.screenshotRaw())
+        XCTAssertEqual(primary.mpvPlayer?.lastSurfaceSize?.width ?? 0, layer.drawableSize.width, accuracy: 1)
+        XCTAssertEqual(primary.mpvPlayer?.lastSurfaceSize?.height ?? 0, layer.drawableSize.height, accuracy: 1)
+        // A window screenshot renders at the swapchain size, so this confirms
+        // the paused player's output followed the drawable.
+        let player = try XCTUnwrap(primary.mpvPlayer)
+        let raw = await Task.detached { player.screenshotRaw(scaledToWindow: true) }.value
+        XCTAssertEqual(raw?.width, Int(layer.drawableSize.width))
+        XCTAssertEqual(raw?.height, Int(layer.drawableSize.height))
     }
 
     func testSingleSourceReloadPreservesTransportAndRejectsSupersededResume() async throws {
@@ -2066,16 +2078,21 @@ final class CompareLiveBackendTests: XCTestCase {
         }
 
         if frameResolution != .full {
-            let primaryPreparationBeforeReload = primary.preparationID
-            let secondaryPreparationBeforeReload = secondary.preparationID
-            session.setFrameResolution(frameResolution, primary: primary)
+            let primaryPreparationBeforeChange = primary.preparationID
+            let secondaryPreparationBeforeChange = secondary.preparationID
+            session.setFrameResolution(frameResolution)
+            hostingView.layoutSubtreeIfNeeded()
 
+            // Both surfaces follow the new size in place; neither decoder reloads.
+            let expectedSize = frameResolution.surfaceSize(for: visualCanvasSize)
             guard await waitUntil({
-                primary.preparationID > primaryPreparationBeforeReload &&
-                    secondary.preparationID > secondaryPreparationBeforeReload &&
-                    primary.isReady && secondary.isReady
+                let layer = self.metalLayers(in: hostingView).first
+                return abs((layer?.bounds.width ?? 0) - expectedSize.width) < 1 &&
+                    abs((layer?.bounds.height ?? 0) - expectedSize.height) < 1 &&
+                    primary.preparationID == primaryPreparationBeforeChange &&
+                    secondary.preparationID == secondaryPreparationBeforeChange
             }) else {
-                XCTFail("Both decoders did not become ready after the resolution reload.")
+                XCTFail("The comparison surfaces did not resize in place for \(frameResolution).")
                 return
             }
         }

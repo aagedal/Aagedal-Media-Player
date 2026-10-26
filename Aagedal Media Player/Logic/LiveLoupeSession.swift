@@ -63,7 +63,6 @@ final class LiveLoupeSession: ObservableObject {
     private var observation: AnyCancellable?
     private nonisolated(unsafe) var timer: Timer?
     private var clockTask: Task<Void, Never>?
-    private var surfaceReloadTask: Task<Void, Never>?
     private var generation: UInt64 = 0
     private var isRunning = false
     private var source: Source?
@@ -163,26 +162,14 @@ final class LiveLoupeSession: ObservableObject {
     }
 
     func surfaceSizeChanged() {
-        guard isRunning, player != nil, let surface else { return }
-        surfaceReloadTask?.cancel()
-        let generation = self.generation
-        // The layer can resize while gpu-next retains its previous output
-        // rectangle. Coalesce layout changes, then rebuild just the follower
-        // against the settled drawable size, as the primary surface does.
-        surfaceReloadTask = Task { @MainActor [weak self, weak surface] in
-            try? await Task.sleep(for: .milliseconds(150))
-            guard let self, !Task.isCancelled, self.isRunning,
-                  self.generation == generation, self.surface === surface else { return }
-            self.surfaceReloadTask = nil
-            self.destroyPlayer()
-            self.synchronize()
-        }
+        guard isRunning, let player, let surface else { return }
+        // MPV's MoltenVK context follows the drawable in place, so a lens
+        // resize keeps the follower and its clock alignment.
+        player.updateSurfaceSize(surface.drawableSize)
     }
 
     private func destroyPlayer() {
         generation &+= 1
-        surfaceReloadTask?.cancel()
-        surfaceReloadTask = nil
         clockTask?.cancel()
         clockTask = nil
         player?.destroy()
