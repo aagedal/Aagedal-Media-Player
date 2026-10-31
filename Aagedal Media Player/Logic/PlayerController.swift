@@ -69,6 +69,54 @@ final class PlayerController: ObservableObject {
         mpvPlayer?.setAudioSyncOffset(milliseconds: value)
     }
 
+    // MARK: - Per-file presentation settings (mpv only)
+
+    @Published private(set) var deinterlaceMode = DeinterlaceMode.auto
+    @Published private(set) var pictureAdjustments = VideoPictureAdjustments()
+    @Published private(set) var subtitlePresentation = SubtitlePresentation()
+    @Published private(set) var externalSubtitleURLs: [URL] = []
+
+    func setDeinterlaceMode(_ mode: DeinterlaceMode) {
+        deinterlaceMode = mode
+        mpvPlayer?.setDeinterlace(mode)
+    }
+
+    func setPictureAdjustment(_ kind: VideoPictureAdjustments.Kind, to value: Double) {
+        var adjustments = pictureAdjustments
+        adjustments[kind] = value
+        setPictureAdjustments(adjustments)
+    }
+
+    func setPictureAdjustments(_ adjustments: VideoPictureAdjustments) {
+        pictureAdjustments = adjustments
+        mpvPlayer?.setPictureAdjustments(adjustments)
+    }
+
+    func setSubtitlePresentation(_ presentation: SubtitlePresentation) {
+        subtitlePresentation = presentation
+        mpvPlayer?.setSubtitlePresentation(presentation)
+    }
+
+    /// Adds a sidecar subtitle file to the loaded media and selects it.
+    @discardableResult
+    func addExternalSubtitle(_ url: URL) -> Bool {
+        guard useMPV, let mpvPlayer, let trackID = mpvPlayer.addExternalSubtitle(url) else { return false }
+        if !externalSubtitleURLs.contains(url) { externalSubtitleURLs.append(url) }
+        buildMPVSubtitleTrackOptions()
+        if let option = subtitleTrackOptions.first(where: { $0.trackId == trackID }) {
+            selectSubtitleTrack(at: option.position)
+        }
+        return true
+    }
+
+    private func resetPresentationSettings() {
+        setDeinterlaceMode(.auto)
+        setPictureAdjustments(VideoPictureAdjustments())
+        setSubtitlePresentation(SubtitlePresentation())
+        externalSubtitleURLs = []
+        mpvPlayer?.setExternalSubtitles([])
+    }
+
     var player: AVPlayer? { backendAdapter?.avPlayer }
     @Published private(set) var playbackPhase: PlaybackPhase = .idle {
         didSet { publishLiveAudioMeterTransport() }
@@ -377,7 +425,10 @@ final class PlayerController: ObservableObject {
     /// the values land later via updateMetadata.
     func loadMedia(_ item: MediaItem, startTime: TimeInterval = 0) {
         let previousURL = mediaItem?.url
-        if previousURL != item.url { setAudioSyncOffset(milliseconds: 0) }
+        if previousURL != item.url {
+            setAudioSyncOffset(milliseconds: 0)
+            resetPresentationSettings()
+        }
         mediaItem = item
 
         // Always prepare if it's a new file, or if it's the first load
@@ -674,6 +725,10 @@ final class PlayerController: ObservableObject {
         backend.setAudioChannelRouting(audioChannelRouting)
         let mpv = backend.player
         mpv.setAudioSyncOffset(milliseconds: audioSyncOffsetMilliseconds)
+        mpv.setDeinterlace(deinterlaceMode)
+        mpv.setPictureAdjustments(pictureAdjustments)
+        mpv.setSubtitlePresentation(subtitlePresentation)
+        mpv.setExternalSubtitles(externalSubtitleURLs)
         mpv.setLooping(mediaItem?.loopPlayback ?? false)
         if isAudioSuppressed {
             mpv.disableAudioTrack()

@@ -40,6 +40,81 @@ final class MPVPlayer: NSObject, ObservableObject, MPVNativeAudioProbeClient, @u
         setDoubleAsync(MPVProperty.audioDelay, requestedAudioSyncOffsetSeconds)
     }
 
+    // MARK: - Presentation settings
+
+    private(set) var requestedDeinterlace = DeinterlaceMode.auto
+    private(set) var requestedPictureAdjustments = VideoPictureAdjustments()
+    private(set) var requestedSubtitlePresentation = SubtitlePresentation()
+    private(set) var externalSubtitlePaths: [String] = []
+    /// The decoder-raster candidate must present undeinterlaced frames.
+    private var locksDeinterlace = false
+
+    func setDeinterlace(_ mode: DeinterlaceMode) {
+        requestedDeinterlace = mode
+        guard !locksDeinterlace else { return }
+        commandAsync("set", args: [MPVProperty.deinterlace, mode.mpvValue])
+    }
+
+    func setPictureAdjustments(_ adjustments: VideoPictureAdjustments) {
+        let previous = requestedPictureAdjustments
+        requestedPictureAdjustments = adjustments
+        for kind in VideoPictureAdjustments.Kind.allCases where previous[kind] != adjustments[kind] {
+            commandAsync("set", args: [kind.mpvProperty, String(Int(adjustments[kind]))])
+        }
+    }
+
+    func setSubtitlePresentation(_ presentation: SubtitlePresentation) {
+        let previous = requestedSubtitlePresentation
+        requestedSubtitlePresentation = presentation
+        if previous.delayMilliseconds != presentation.delayMilliseconds {
+            commandAsync("set", args: [MPVProperty.subDelay, String(presentation.delayMilliseconds / 1000)])
+        }
+        if previous.scale != presentation.scale {
+            commandAsync("set", args: [MPVProperty.subScale, String(presentation.scale)])
+        }
+        if previous.position != presentation.position {
+            commandAsync("set", args: [MPVProperty.subPos, String(presentation.position)])
+        }
+    }
+
+    /// Paths are re-added after every file load so a rebuilt backend keeps them.
+    func setExternalSubtitles(_ urls: [URL]) {
+        externalSubtitlePaths = urls.map(\.path)
+    }
+
+    /// Adds and selects a subtitle file for the loaded media. Returns its mpv track ID.
+    func addExternalSubtitle(_ url: URL) -> Int32? {
+        guard isFileLoaded, command("sub-add", args: [url.path, "select"]) else { return nil }
+        if !externalSubtitlePaths.contains(url.path) { externalSubtitlePaths.append(url.path) }
+        let id = currentSubtitleTrackIndex
+        return id > 0 ? id : nil
+    }
+
+    /// Uses mpv's string parser so integer and float properties need no format matching.
+    private func applyPresentationSettings() {
+        var values = [
+            (MPVProperty.subDelay, String(requestedSubtitlePresentation.delayMilliseconds / 1000)),
+            (MPVProperty.subScale, String(requestedSubtitlePresentation.scale)),
+            (MPVProperty.subPos, String(requestedSubtitlePresentation.position)),
+        ]
+        if !locksDeinterlace { values.append((MPVProperty.deinterlace, requestedDeinterlace.mpvValue)) }
+        for kind in VideoPictureAdjustments.Kind.allCases where requestedPictureAdjustments[kind] != 0 {
+            values.append((kind.mpvProperty, String(Int(requestedPictureAdjustments[kind]))))
+        }
+        for (name, value) in values {
+            checkError(mpv_set_property_string(mpv, name, value), context: name)
+        }
+    }
+
+    /// Reads a property's current libmpv string form after queued writes.
+    nonisolated func propertyStringSnapshot(_ name: String) -> String? {
+        queue.sync {
+            guard let context = mpv, let value = mpv_get_property_string(context, name) else { return nil }
+            defer { mpv_free(value) }
+            return String(cString: value)
+        }
+    }
+
     /// Read the actual libmpv value, including after asynchronous slider writes.
     nonisolated func audioSyncOffsetSnapshot() -> Double? {
         queue.sync {
@@ -315,6 +390,7 @@ final class MPVPlayer: NSObject, ObservableObject, MPVNativeAudioProbeClient, @u
 
         checkError(mpv_set_option_string(mpv, "target-colorspace-hint", "yes"), context: "target-colorspace-hint")
         checkError(mpv_set_option_string(mpv, "keep-open", "yes"), context: "keep-open")
+        locksDeinterlace = usesDecoderRasterCandidate
         checkError(mpv_set_option_string(mpv, "deinterlace", usesDecoderRasterCandidate ? "no" : "auto"), context: "deinterlace")
         checkError(mpv_set_option_string(mpv, "screenshot-high-bit-depth", "yes"), context: "screenshot-high-bit-depth")
         // Raw scopes use sRGB; the loupe temporarily opts into the PNG target's
@@ -365,6 +441,7 @@ final class MPVPlayer: NSObject, ObservableObject, MPVNativeAudioProbeClient, @u
         setDouble(MPVProperty.volume, PlaybackVolume.mpvValue(for: volume))
         setDouble(MPVProperty.speed, Double(requestedRate))
         setDouble(MPVProperty.audioDelay, requestedAudioSyncOffsetSeconds)
+        applyPresentationSettings()
         setFlag(MPVProperty.mute, isMuted)
         applyAudioChannelRouting()
         setLooping(shouldLoop)
@@ -1000,6 +1077,9 @@ final class MPVPlayer: NSObject, ObservableObject, MPVNativeAudioProbeClient, @u
                     DispatchQueue.main.async {
                         self.logger.info("MPV file loaded")
                         self.isFileLoaded = true
+                        for path in self.externalSubtitlePaths {
+                            self.command("sub-add", args: [path, "auto"])
+                        }
                         if self.pendingSeekAfterLoad > 0 {
                             self.seek(to: self.pendingSeekAfterLoad)
                             self.pendingSeekAfterLoad = 0
