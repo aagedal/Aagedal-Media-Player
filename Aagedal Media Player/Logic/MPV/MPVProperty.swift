@@ -45,6 +45,12 @@ struct MPVProperty {
     // Subtitles
     nonisolated static let sid = "sid"
     nonisolated static let subVisibility = "sub-visibility"
+    nonisolated static let subDelay = "sub-delay"
+    nonisolated static let subScale = "sub-scale"
+    nonisolated static let subPos = "sub-pos"
+
+    // Video filtering
+    nonisolated static let deinterlace = "deinterlace"
 
     // Chapters
     nonisolated static let chapter = "chapter"
