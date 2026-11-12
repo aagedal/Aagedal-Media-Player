@@ -10,8 +10,9 @@ import XCTest
 final class MPVRecoveryTests: XCTestCase {
     func testReversalBudgetLeavesRoomForPairedDecodersOnSmallMachines() {
         let gib: UInt64 = 1_073_741_824
-        XCTAssertEqual(MPVPlaybackPolicy.reversalBufferBytes(physicalMemory: 8 * gib), gib / 2)
-        XCTAssertEqual(MPVPlaybackPolicy.reversalBufferBytes(physicalMemory: 16 * gib), gib)
+        XCTAssertEqual(MPVPlaybackPolicy.reversalBufferBytes(physicalMemory: 8 * gib), gib)
+        XCTAssertEqual(MPVPlaybackPolicy.reversalBufferBytes(physicalMemory: 16 * gib), 2 * gib)
+        XCTAssertEqual(MPVPlaybackPolicy.reversalBufferBytes(physicalMemory: 32 * gib), 4 * gib)
         XCTAssertEqual(MPVPlaybackPolicy.reversalBufferBytes(physicalMemory: 64 * gib), 4 * gib)
         XCTAssertEqual(MPVPlaybackPolicy.reversalBufferBytes(physicalMemory: UInt64.max), 4 * gib)
         XCTAssertEqual(MPVPlaybackPolicy.reversalBufferBytes(physicalMemory: 0), gib / 4)
