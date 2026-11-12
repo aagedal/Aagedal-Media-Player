@@ -28,13 +28,14 @@ nonisolated struct MPVScopeFailure: Error, Equatable, Sendable, CustomStringConv
     }
 }
 
-/// Scope images contain diagnostic colors, not source image pixels. All three
-/// plots and their source-frame metadata come from one native analysis request
-/// (aagedal-scopes protocol 2). `transfer` and `primaries` use the app's
+/// Scope images contain diagnostic colors, not source image pixels. The plots
+/// and their source-frame metadata come from one native analysis request
+/// (aagedal-scopes protocol 2), which computes only the requested waveform
+/// plots and always the vectorscope. `transfer` and `primaries` use the app's
 /// identifiers (`bt709`, `bt2020`, `bt1886`, ...), mapped from mpv's names.
 nonisolated struct MPVScopePlots: Sendable {
-    let waveform: CGImage
-    let parade: CGImage
+    let waveform: CGImage?
+    let parade: CGImage?
     let vectorscope: CGImage
     let pts: Double
     let trackID: Int64
@@ -45,6 +46,21 @@ nonisolated struct MPVScopePlots: Sendable {
     var backend: String = "cpu"
     /// Dolby Vision, analysed as the BT.2020 PQ signal it reshapes to.
     var dolbyVision = false
+
+    static let allWaveforms = Set(WaveformMode.allCases)
+
+    /// The command's `<plots>` argument, e.g. `waveform+vectorscope`.
+    static func plotsArgument(_ waveforms: Set<WaveformMode>) -> String {
+        (WaveformMode.allCases.filter(waveforms.contains).map(plotName) + ["vectorscope"]).joined(separator: "+")
+    }
+
+    private static func plotName(_ mode: WaveformMode) -> String {
+        mode == .luma ? "waveform" : "parade"
+    }
+
+    func waveform(for mode: WaveformMode) -> CGImage? {
+        mode == .luma ? waveform : parade
+    }
 
     /// mpv color names (as in `video-params`) to the app's identifiers.
     static let primariesNames = ["bt.709": "bt709", "bt.2020": "bt2020"]
@@ -83,16 +99,19 @@ nonisolated struct MPVScopePlots: Sendable {
         return MPVScopeFailure(reason: malformed ? .capabilityMalformed : .commandUnavailable)
     }
 
-    static func decode(_ node: mpv_node, expectedWidth: Int, trackID: Int64) -> Self? {
-        try? decodeValidated(node, expectedWidth: expectedWidth, trackID: trackID)
+    static func decode(_ node: mpv_node, expectedWidth: Int, trackID: Int64,
+                       waveforms: Set<WaveformMode> = allWaveforms) -> Self? {
+        try? decodeValidated(node, expectedWidth: expectedWidth, trackID: trackID, waveforms: waveforms)
     }
 
-    static func decodeResult(_ node: mpv_node, expectedWidth: Int, trackID: Int64) -> Result<Self, MPVScopeFailure> {
-        do { return .success(try decodeValidated(node, expectedWidth: expectedWidth, trackID: trackID)) }
+    static func decodeResult(_ node: mpv_node, expectedWidth: Int, trackID: Int64,
+                             waveforms: Set<WaveformMode> = allWaveforms) -> Result<Self, MPVScopeFailure> {
+        do { return .success(try decodeValidated(node, expectedWidth: expectedWidth, trackID: trackID, waveforms: waveforms)) }
         catch { return .failure(error) }
     }
 
-    private static func decodeValidated(_ node: mpv_node, expectedWidth: Int, trackID: Int64) throws(MPVScopeFailure) -> Self {
+    private static func decodeValidated(_ node: mpv_node, expectedWidth: Int, trackID: Int64,
+                                        waveforms: Set<WaveformMode>) throws(MPVScopeFailure) -> Self {
         guard let f = fields(node) else { throw MPVScopeFailure(reason: .invalidMap) }
         func integer(_ key: String) -> Int64? {
             guard let n = f[key], n.format == MPV_FORMAT_INT64 else { return nil }
@@ -153,8 +172,10 @@ nonisolated struct MPVScopePlots: Sendable {
             }
             return image
         }
-        let waveform = try image("waveform", width: expectedWidth, failure: .invalidWaveform)
-        let parade = try image("parade", width: expectedWidth, failure: .invalidParade)
+        let waveform = try waveforms.contains(.luma)
+            ? image("waveform", width: expectedWidth, failure: .invalidWaveform) : nil
+        let parade = try waveforms.contains(.parade)
+            ? image("parade", width: expectedWidth, failure: .invalidParade) : nil
         let vectorscope = try image("vectorscope", width: height, failure: .invalidVectorscope)
         return Self(waveform: waveform, parade: parade, vectorscope: vectorscope, pts: pts,
                     trackID: trackID, transfer: transfer, primaries: primaries, peakNits: Float(peak),

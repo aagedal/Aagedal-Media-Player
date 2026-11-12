@@ -320,8 +320,12 @@ final class ScopeRenderWorker: ObservableObject {
             // work, and revoke any older screenshot computation or pending frame
             // before it can replace this newer native result.
             cancel(clearImages: false)
+            // Native analysis computes only the displayed waveform. After a
+            // mode switch, keep the current images until the capture that
+            // carries the newly shown plot arrives.
+            guard let waveform = plots.waveform(for: mode) else { return }
             let result = Result(
-                waveformImage: mode == .luma ? plots.waveform : plots.parade,
+                waveformImage: waveform,
                 vectorscopeImage: plots.vectorscope,
                 hdrPeakNits: plots.transfer == "pq" || plots.transfer == "hlg" ? plots.peakNits : nil
             )

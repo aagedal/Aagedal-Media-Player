@@ -179,6 +179,16 @@ final class FrameCapture: ObservableObject {
         }
     }
 
+    /// Waveform plots native analysis computes alongside the vectorscope.
+    /// Narrowing this skips the other plot's GPU work and readback.
+    var nativeWaveforms = MPVScopePlots.allWaveforms {
+        didSet {
+            guard oldValue != nativeWaveforms, isCapturing else { return }
+            // Fetch the newly shown plot now instead of on the next tick.
+            captureFrame(identity: ScopeCaptureTickIdentity(generation: captureGeneration.current))
+        }
+    }
+
     /// Display-space difference retains its established capture/color contract.
     var requiresDisplayFrame = false {
         didSet {
@@ -502,9 +512,10 @@ final class FrameCapture: ObservableObject {
         let identity = ScopeCaptureIdentity(generation: captureGeneration.current, player: mpv)
         mpvCaptureInFlight = identity
         let width = analysisWidth
+        let waveforms = nativeWaveforms
         Task { [weak self] in
             let result = await Task.detached(priority: .utility) {
-                mpv.nativeScopePlotsResult(width: width)
+                mpv.nativeScopePlotsResult(width: width, waveforms: waveforms)
             }.value
             guard let self, self.mpvCaptureInFlight == identity else { return }
             self.mpvCaptureInFlight = nil

@@ -92,8 +92,8 @@ final class MPVScopePlotsTests: XCTestCase {
 
     func testAcceptsCompletePlotsAndCopiesNodeOwnedBytes() throws {
         let plots = try XCTUnwrap(withNode { MPVScopePlots.decode($0, expectedWidth: 64, trackID: 1) })
-        XCTAssertEqual(plots.waveform.width, 64)
-        XCTAssertEqual(plots.parade.height, 36)
+        XCTAssertEqual(plots.waveform?.width, 64)
+        XCTAssertEqual(plots.parade?.height, 36)
         XCTAssertEqual(plots.vectorscope.width, 36)
         XCTAssertEqual(plots.pts, 1)
         XCTAssertEqual(plots.transfer, "srgb")
@@ -101,6 +101,7 @@ final class MPVScopePlotsTests: XCTestCase {
         // providers now so a retained node pointer cannot pass on dimensions alone.
         for (image, byte) in [(plots.waveform, UInt8(0x31)), (plots.parade, 0x72),
                               (plots.vectorscope, 0xB4)] {
+            let image = try XCTUnwrap(image)
             let data = try XCTUnwrap(image.dataProvider?.data)
             XCTAssertEqual(data as Data, Data(repeating: byte, count: image.width * image.height * 4))
         }
@@ -177,7 +178,65 @@ final class MPVScopePlotsTests: XCTestCase {
         guard case .failure(let diagnostic) = mismatch else { return XCTFail("Accepted wrong track") }
         XCTAssertEqual(diagnostic, MPVScopeFailure(reason: .invalidTrack, expectedTrack: 2, actualTrack: 1))
         let success = try withNode { MPVScopePlots.decodeResult($0, expectedWidth: 64, trackID: 1) }.get()
-        XCTAssertEqual(success.waveform.dataProvider?.data as Data?, Data(repeating: 0x31, count: 64 * 36 * 4))
+        XCTAssertEqual(success.waveform?.dataProvider?.data as Data?, Data(repeating: 0x31, count: 64 * 36 * 4))
+    }
+
+    func testRequestsAndDecodesOnlySelectedWaveformPlots() throws {
+        XCTAssertEqual(MPVScopePlots.plotsArgument([.luma]), "waveform+vectorscope")
+        XCTAssertEqual(MPVScopePlots.plotsArgument([.parade]), "parade+vectorscope")
+        XCTAssertEqual(MPVScopePlots.plotsArgument(MPVScopePlots.allWaveforms), "waveform+parade+vectorscope")
+        XCTAssertEqual(MPVScopePlots.plotsArgument([]), "vectorscope")
+
+        let luma = try XCTUnwrap(withNode(omit: "parade") {
+            MPVScopePlots.decode($0, expectedWidth: 64, trackID: 1, waveforms: [.luma])
+        })
+        XCTAssertEqual(luma.waveform?.width, 64)
+        XCTAssertNil(luma.parade)
+        XCTAssertTrue(luma.waveform(for: .luma) === luma.waveform)
+        XCTAssertNil(luma.waveform(for: .parade))
+        let parade = try XCTUnwrap(withNode(omit: "waveform") {
+            MPVScopePlots.decode($0, expectedWidth: 64, trackID: 1, waveforms: [.parade])
+        })
+        XCTAssertNil(parade.waveform)
+        XCTAssertEqual(parade.parade?.height, 36)
+        XCTAssertEqual(parade.vectorscope.width, 36)
+
+        let missing = withNode(omit: "waveform") {
+            MPVScopePlots.decodeResult($0, expectedWidth: 64, trackID: 1, waveforms: [.luma])
+        }
+        guard case .failure(let diagnostic) = missing else { return XCTFail("Accepted a missing requested plot") }
+        XCTAssertEqual(diagnostic.reason, .invalidWaveform)
+    }
+
+    @MainActor
+    func testModeSwitchKeepsImagesUntilTheShownPlotArrives() throws {
+        let luma = try XCTUnwrap(withNode(omit: "parade") {
+            MPVScopePlots.decode($0, expectedWidth: 64, trackID: 1, waveforms: [.luma])
+        })
+        let parade = try XCTUnwrap(withNode(omit: "waveform") {
+            MPVScopePlots.decode($0, expectedWidth: 64, trackID: 1, waveforms: [.parade])
+        })
+        func input(_ plots: MPVScopePlots) -> ScopeFrameInput {
+            ScopeFrameInput(sdrFrame: nil, hdrFrame: nil, transferFunction: .sdr,
+                            displayAspectRatio: nil, nativePlots: plots)
+        }
+        let worker = ScopeRenderWorker()
+        worker.submit(primary: input(luma), secondary: nil, source: .primary,
+                      differenceGain: 1, mode: .luma, resolution: 64)
+        XCTAssertEqual(worker.renderSequence, 1)
+        XCTAssertTrue(worker.waveformImage === luma.waveform)
+
+        worker.submit(primary: input(luma), secondary: nil, source: .primary,
+                      differenceGain: 1, mode: .parade, resolution: 64)
+        XCTAssertEqual(worker.renderSequence, 1, "A sample without the shown plot publishes nothing")
+        XCTAssertTrue(worker.waveformImage === luma.waveform)
+        XCTAssertTrue(worker.vectorscopeImage === luma.vectorscope)
+
+        worker.submit(primary: input(parade), secondary: nil, source: .primary,
+                      differenceGain: 1, mode: .parade, resolution: 64)
+        XCTAssertEqual(worker.renderSequence, 2)
+        XCTAssertTrue(worker.waveformImage === parade.parade)
+        XCTAssertTrue(worker.vectorscopeImage === parade.vectorscope)
     }
 
     func testCapabilityDiagnosticsDistinguishLookupFailureMalformedAndAbsentCommands() {
@@ -460,16 +519,29 @@ final class MPVNativeScopeIntegrationTests: XCTestCase {
             let capture = FrameCapture()
             capture.transferFunction = .hlg; capture.contentPeakNits = 1000
             capture.requiresDisplayFrame = !native
+            capture.nativeWaveforms = [.luma]  // As ScopeView requests in luma mode.
             capture.attachMPV(mpv)
             let worker = ScopeRenderWorker()
-            var rendered = 0, captured = 0, wrongBackend = 0
+            var rendered = 0, captured = 0, wrongBackend = 0, restartFallbacks = 0
+            var fallbacks: [String] = []
             var times = Set<Double>()
             var measuring = false
             let sampleObserver = capture.$currentSample.sink { sample in
                 guard let sample else { return }
                 if measuring {
                     captured += 1
-                    if (sample.nativePlots != nil) != native { wrongBackend += 1 }
+                    if (sample.nativePlots != nil) != native {
+                        // The provider rejects requests while a loop restart
+                        // settles; that one tick falls back to a screenshot.
+                        if native, sample.nativeFailure?.failure.reason == .commandFailed,
+                           let time = sample.playbackTime, time < 0.1 {
+                            restartFallbacks += 1
+                        } else {
+                            wrongBackend += 1
+                        }
+                        let reason: String = sample.nativeFailure?.description ?? "no-native-attempt"
+                        fallbacks.append("pts=\(sample.playbackTime ?? -1),\(reason)")
+                    }
                     if let time = sample.playbackTime { times.insert(time) }
                 }
                 worker.submit(primary: ScopeFrameInput(sdrFrame: sample.sdrFrame,
@@ -492,8 +564,9 @@ final class MPVNativeScopeIntegrationTests: XCTestCase {
             let seconds = ProcessInfo.processInfo.systemUptime-start
             rates.append(Double(rendered)/seconds)
             XCTAssertEqual(wrongBackend, 0)
+            XCTAssertLessThanOrEqual(restartFallbacks, 2, "At most the loop restarts within the window")
             XCTAssertGreaterThan(Double(times.count), Double(captured)*0.8)
-            print("MPV_SCOPE_THROUGHPUT: native=\(native) rendered=\(rendered) captured=\(captured) distinctPTS=\(times.count) seconds=\(seconds)")
+            print("MPV_SCOPE_THROUGHPUT: native=\(native) rendered=\(rendered) captured=\(captured) distinctPTS=\(times.count) seconds=\(seconds) fallbacks=\(fallbacks)")
             sampleObserver.cancel(); renderObserver.cancel()
             capture.stopCapture(); capture.detachMPV(); worker.cancel(clearImages: true); mpv.destroy()
             withExtendedLifetime(view) {}
@@ -543,6 +616,15 @@ final class MPVNativeScopeIntegrationTests: XCTestCase {
                 XCTAssertTrue(worker.waveformImage === (mode == .luma ? plots.waveform : plots.parade))
                 XCTAssertTrue(worker.vectorscopeImage === plots.vectorscope)
             }
+            capture.nativeWaveforms = [.parade]
+            for _ in 0..<300 where capture.currentSample?.nativePlots?.waveform != nil {
+                try await Task.sleep(for: .milliseconds(10))
+            }
+            let paradeOnly = try XCTUnwrap(capture.currentSample?.nativePlots)
+            XCTAssertNil(paradeOnly.waveform, "Native analysis returns only the requested waveform plot")
+            XCTAssertEqual(paradeOnly.parade?.width, 64)
+            XCTAssertEqual(paradeOnly.vectorscope.width, 36)
+            capture.nativeWaveforms = MPVScopePlots.allWaveforms
             worker.cancel(clearImages: true)
             capture.requiresDisplayFrame = true
             XCTAssertNil(capture.currentSample)
@@ -557,6 +639,6 @@ final class MPVNativeScopeIntegrationTests: XCTestCase {
             XCTAssertNil(capture.currentSample, "Stopping rejects an in-flight native completion")
             withExtendedLifetime(view) {}
         }
-        print("MPV_NATIVE_SCOPE_APP_ACCEPTANCE: SDR/PQ/HLG, waveform/parade/vector, fallback and stop")
+        print("MPV_NATIVE_SCOPE_APP_ACCEPTANCE: SDR/PQ/HLG, waveform/parade/vector, plot selection, fallback and stop")
     }
 }

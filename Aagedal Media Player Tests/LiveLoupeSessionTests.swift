@@ -848,11 +848,11 @@ final class LiveLoupeSessionTests: XCTestCase {
                                 } else {
                                     let plots = try XCTUnwrap(sample.nativePlots, "A/B must exercise native scopes, not fallback; sequence=\(sample.sequence), sdr=\(sample.sdrFrame != nil), hdr=\(sample.hdrFrame != nil), \(sample.nativeFailure.map(String.init(describing:)) ?? "no-native-attempt")")
                                     let plotHeight = Int((Double(scopeResolution) * 9 / 16).rounded())
-                                    XCTAssertEqual(plots.waveform.height, plotHeight)
-                                    XCTAssertEqual(plots.parade.height, plotHeight)
+                                    // ScopeView shows luma, so the parade is not computed.
+                                    XCTAssertEqual(plots.waveform?.height, plotHeight)
+                                    XCTAssertNil(plots.parade)
                                     XCTAssertEqual(plots.vectorscope.height, plotHeight)
-                                    XCTAssertEqual(plots.waveform.width, scopeResolution)
-                                    XCTAssertEqual(plots.parade.width, scopeResolution)
+                                    XCTAssertEqual(plots.waveform?.width, scopeResolution)
                                     XCTAssertEqual(plots.vectorscope.width, plotHeight)
                                     XCTAssertEqual(plots.pts, sample.playbackTime)
                                     let sourceName = name.split(separator: "/")[index]
