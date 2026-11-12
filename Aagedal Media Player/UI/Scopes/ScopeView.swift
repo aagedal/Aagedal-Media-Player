@@ -6,7 +6,7 @@
 
 import SwiftUI
 
-enum WaveformMode: String, CaseIterable, Sendable {
+nonisolated enum WaveformMode: String, CaseIterable, Sendable {
     case luma = "Luma"
     case parade = "Parade"
 }
@@ -212,6 +212,7 @@ struct ScopeView: View {
             updateVectorscopeGraticule()
         }
         .onChange(of: waveformMode) {
+            updateCaptureMode()
             submitScopeFrame()
         }
         .onAppear {
@@ -295,6 +296,8 @@ struct ScopeView: View {
         let demand = ScopeAnalysisDemand(source: selectedSource, isComparing: compareSession.isActive)
         primaryFrameCapture.analysisRequested = demand.primary
         secondaryFrameCapture.analysisRequested = demand.secondary
+        primaryFrameCapture.nativeWaveforms = [waveformMode]
+        secondaryFrameCapture.nativeWaveforms = [waveformMode]
     }
 
     private func submitScopeFrame() {

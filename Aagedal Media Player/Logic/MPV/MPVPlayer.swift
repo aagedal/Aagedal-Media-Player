@@ -1617,7 +1617,9 @@ extension MPVPlayer {
         try? nativeScopePlotsResult(width: width).get()
     }
 
-    nonisolated func nativeScopePlotsResult(width: Int) -> Result<MPVScopePlots, MPVScopeFailure> {
+    nonisolated func nativeScopePlotsResult(
+        width: Int, waveforms: Set<WaveformMode> = MPVScopePlots.allWaveforms
+    ) -> Result<MPVScopePlots, MPVScopeFailure> {
         guard ProcessInfo.processInfo.environment["AAGEDAL_SCOPE_BACKEND"] != "screenshot" else {
             return .failure(MPVScopeFailure(reason: .screenshotOverride))
         }
@@ -1640,8 +1642,9 @@ extension MPVPlayer {
                 return .failure(MPVScopeFailure(reason: .initialTrackLookupFailed, status: trackStatus))
             }
             let name = strdup("aagedal-scopes"), size = strdup(String(width))
-            defer { free(name); free(size) }
-            var args: [UnsafePointer<CChar>?] = [name.map { UnsafePointer<CChar>($0) }, size.map { UnsafePointer<CChar>($0) }, nil]
+            let plots = strdup(MPVScopePlots.plotsArgument(waveforms))
+            defer { free(name); free(size); free(plots) }
+            var args: [UnsafePointer<CChar>?] = [name, size, plots].map { $0.map { UnsafePointer<CChar>($0) } } + [nil]
             var result = mpv_node()
             let status = args.withUnsafeMutableBufferPointer { mpv_command_ret(context, $0.baseAddress, &result) }
             defer { mpv_free_node_contents(&result) }
@@ -1654,7 +1657,7 @@ extension MPVPlayer {
             guard after == track else {
                 return .failure(MPVScopeFailure(reason: .trackChanged, expectedTrack: track, actualTrack: after))
             }
-            return MPVScopePlots.decodeResult(result, expectedWidth: width, trackID: track)
+            return MPVScopePlots.decodeResult(result, expectedWidth: width, trackID: track, waveforms: waveforms)
         }
     }
 }

@@ -92,8 +92,8 @@ final class MPVScopePlotsTests: XCTestCase {
 
     func testAcceptsCompletePlotsAndCopiesNodeOwnedBytes() throws {
         let plots = try XCTUnwrap(withNode { MPVScopePlots.decode($0, expectedWidth: 64, trackID: 1) })
-        XCTAssertEqual(plots.waveform.width, 64)
-        XCTAssertEqual(plots.parade.height, 36)
+        XCTAssertEqual(plots.waveform?.width, 64)
+        XCTAssertEqual(plots.parade?.height, 36)
         XCTAssertEqual(plots.vectorscope.width, 36)
         XCTAssertEqual(plots.pts, 1)
         XCTAssertEqual(plots.transfer, "srgb")
@@ -101,13 +101,44 @@ final class MPVScopePlotsTests: XCTestCase {
         // providers now so a retained node pointer cannot pass on dimensions alone.
         for (image, byte) in [(plots.waveform, UInt8(0x31)), (plots.parade, 0x72),
                               (plots.vectorscope, 0xB4)] {
+            let image = try XCTUnwrap(image)
             let data = try XCTUnwrap(image.dataProvider?.data)
             XCTAssertEqual(data as Data, Data(repeating: byte, count: image.width * image.height * 4))
         }
     }
 
+    func testProtocol2ColorNamesMapToAppIdentifiers() throws {
+        let accepted: [(String, String, Double, Bool, String, String)] = [
+            ("bt.709", "bt.1886", 100, false, "bt709", "bt1886"),
+            ("bt.709", "gamma2.2", 100, false, "bt709", "gamma22"),
+            ("bt.2020", "bt.1886", 100, false, "bt2020", "bt1886"),
+            ("bt.2020", "pq", 10000, false, "bt2020", "pq"),
+            ("bt.2020", "pq", 10000, true, "bt2020", "pq"),
+            ("bt.2020", "hlg", 1000, false, "bt2020", "hlg"),
+        ]
+        for (primaries, transfer, peak, dovi, appPrimaries, appTransfer) in accepted {
+            let plots = try XCTUnwrap(withNode(primaries: primaries, transfer: transfer, peak: peak, dolbyVision: dovi) {
+                MPVScopePlots.decode($0, expectedWidth: 64, trackID: 1)
+            }, "\(primaries) \(transfer)")
+            XCTAssertEqual(plots.primaries, appPrimaries)
+            XCTAssertEqual(plots.transfer, appTransfer)
+            XCTAssertEqual(plots.dolbyVision, dovi)
+            XCTAssertEqual(plots.backend, "gpu")
+        }
+        let rejected: [(String, String, Double, Bool)] = [
+            ("bt709", "srgb", 100, false), ("bt.709", "bt1886", 100, false), ("display-p3", "srgb", 100, false),
+            ("bt.709", "pq", 10000, false), ("bt.2020", "pq", 1000, false), ("bt.2020", "hlg", 1000, true),
+            ("bt.709", "srgb", 100, true), ("bt.2020", "v-log", 1000, false),
+        ]
+        for (primaries, transfer, peak, dovi) in rejected {
+            XCTAssertNil(withNode(primaries: primaries, transfer: transfer, peak: peak, dolbyVision: dovi) {
+                MPVScopePlots.decode($0, expectedWidth: 64, trackID: 1)
+            }, "\(primaries) \(transfer) \(peak) \(dovi)")
+        }
+    }
+
     func testRejectsMalformedMetadataAndPayloadBeforeCopy() {
-        let keys = ["protocol", "w", "h", "track-id", "pts", "peak-nits", "primaries", "transfer", "format", "waveform", "parade", "vectorscope"]
+        let keys = ["protocol", "w", "h", "track-id", "pts", "peak-nits", "primaries", "transfer", "dolby-vision", "backend", "format", "waveform", "parade", "vectorscope"]
         for key in keys {
             XCTAssertNil(withNode(omit: key) { MPVScopePlots.decode($0, expectedWidth: 64, trackID: 1) }, key)
             XCTAssertNil(withNode(wrongType: key) { MPVScopePlots.decode($0, expectedWidth: 64, trackID: 1) }, key)
@@ -130,6 +161,7 @@ final class MPVScopePlotsTests: XCTestCase {
             ("protocol", .invalidProtocol), ("w", .invalidDimensions), ("h", .invalidDimensions),
             ("track-id", .invalidTrack), ("format", .invalidFormat), ("pts", .invalidTimestamp),
             ("primaries", .invalidColor), ("transfer", .invalidColor), ("peak-nits", .invalidColor),
+            ("dolby-vision", .invalidColor), ("backend", .invalidColor),
             ("waveform", .invalidWaveform), ("parade", .invalidParade), ("vectorscope", .invalidVectorscope)
         ]
         for (key, reason) in cases {
@@ -146,7 +178,65 @@ final class MPVScopePlotsTests: XCTestCase {
         guard case .failure(let diagnostic) = mismatch else { return XCTFail("Accepted wrong track") }
         XCTAssertEqual(diagnostic, MPVScopeFailure(reason: .invalidTrack, expectedTrack: 2, actualTrack: 1))
         let success = try withNode { MPVScopePlots.decodeResult($0, expectedWidth: 64, trackID: 1) }.get()
-        XCTAssertEqual(success.waveform.dataProvider?.data as Data?, Data(repeating: 0x31, count: 64 * 36 * 4))
+        XCTAssertEqual(success.waveform?.dataProvider?.data as Data?, Data(repeating: 0x31, count: 64 * 36 * 4))
+    }
+
+    func testRequestsAndDecodesOnlySelectedWaveformPlots() throws {
+        XCTAssertEqual(MPVScopePlots.plotsArgument([.luma]), "waveform+vectorscope")
+        XCTAssertEqual(MPVScopePlots.plotsArgument([.parade]), "parade+vectorscope")
+        XCTAssertEqual(MPVScopePlots.plotsArgument(MPVScopePlots.allWaveforms), "waveform+parade+vectorscope")
+        XCTAssertEqual(MPVScopePlots.plotsArgument([]), "vectorscope")
+
+        let luma = try XCTUnwrap(withNode(omit: "parade") {
+            MPVScopePlots.decode($0, expectedWidth: 64, trackID: 1, waveforms: [.luma])
+        })
+        XCTAssertEqual(luma.waveform?.width, 64)
+        XCTAssertNil(luma.parade)
+        XCTAssertTrue(luma.waveform(for: .luma) === luma.waveform)
+        XCTAssertNil(luma.waveform(for: .parade))
+        let parade = try XCTUnwrap(withNode(omit: "waveform") {
+            MPVScopePlots.decode($0, expectedWidth: 64, trackID: 1, waveforms: [.parade])
+        })
+        XCTAssertNil(parade.waveform)
+        XCTAssertEqual(parade.parade?.height, 36)
+        XCTAssertEqual(parade.vectorscope.width, 36)
+
+        let missing = withNode(omit: "waveform") {
+            MPVScopePlots.decodeResult($0, expectedWidth: 64, trackID: 1, waveforms: [.luma])
+        }
+        guard case .failure(let diagnostic) = missing else { return XCTFail("Accepted a missing requested plot") }
+        XCTAssertEqual(diagnostic.reason, .invalidWaveform)
+    }
+
+    @MainActor
+    func testModeSwitchKeepsImagesUntilTheShownPlotArrives() throws {
+        let luma = try XCTUnwrap(withNode(omit: "parade") {
+            MPVScopePlots.decode($0, expectedWidth: 64, trackID: 1, waveforms: [.luma])
+        })
+        let parade = try XCTUnwrap(withNode(omit: "waveform") {
+            MPVScopePlots.decode($0, expectedWidth: 64, trackID: 1, waveforms: [.parade])
+        })
+        func input(_ plots: MPVScopePlots) -> ScopeFrameInput {
+            ScopeFrameInput(sdrFrame: nil, hdrFrame: nil, transferFunction: .sdr,
+                            displayAspectRatio: nil, nativePlots: plots)
+        }
+        let worker = ScopeRenderWorker()
+        worker.submit(primary: input(luma), secondary: nil, source: .primary,
+                      differenceGain: 1, mode: .luma, resolution: 64)
+        XCTAssertEqual(worker.renderSequence, 1)
+        XCTAssertTrue(worker.waveformImage === luma.waveform)
+
+        worker.submit(primary: input(luma), secondary: nil, source: .primary,
+                      differenceGain: 1, mode: .parade, resolution: 64)
+        XCTAssertEqual(worker.renderSequence, 1, "A sample without the shown plot publishes nothing")
+        XCTAssertTrue(worker.waveformImage === luma.waveform)
+        XCTAssertTrue(worker.vectorscopeImage === luma.vectorscope)
+
+        worker.submit(primary: input(parade), secondary: nil, source: .primary,
+                      differenceGain: 1, mode: .parade, resolution: 64)
+        XCTAssertEqual(worker.renderSequence, 2)
+        XCTAssertTrue(worker.waveformImage === parade.parade)
+        XCTAssertTrue(worker.vectorscopeImage === parade.vectorscope)
     }
 
     func testCapabilityDiagnosticsDistinguishLookupFailureMalformedAndAbsentCommands() {
@@ -192,8 +282,10 @@ final class MPVScopePlotsTests: XCTestCase {
     }
 
     private func withNode<T>(omit: String? = nil, wrongType: String? = nil, duplicate: String? = nil,
-                             pts: Double = 1, size: Int? = nil, _ body: (mpv_node) -> T) -> T {
-        let names: [String] = (["protocol", "w", "h", "track-id", "pts", "peak-nits", "primaries", "transfer", "format", "waveform", "parade", "vectorscope"].filter { $0 != omit }) + (duplicate.map { [$0] } ?? [])
+                             pts: Double = 1, size: Int? = nil, primaries: String = "bt.709",
+                             transfer: String = "srgb", peak: Double = 100, dolbyVision: Bool = false,
+                             _ body: (mpv_node) -> T) -> T {
+        let names: [String] = (["protocol", "w", "h", "track-id", "pts", "peak-nits", "primaries", "transfer", "dolby-vision", "backend", "format", "waveform", "parade", "vectorscope"].filter { $0 != omit }) + (duplicate.map { [$0] } ?? [])
         var strings: [UnsafeMutablePointer<CChar>] = []
         var arrays: [UnsafeMutablePointer<mpv_byte_array>] = []
         var buffers: [UnsafeMutableRawPointer] = []
@@ -208,12 +300,15 @@ final class MPVScopePlotsTests: XCTestCase {
         var keys = names.map { Optional(text($0)) }
         var values = names.map { key in
             var n = mpv_node()
-            if let value: Int64 = ["protocol": 1, "w": 64, "h": 36, "track-id": 1][key] {
+            if let value: Int64 = ["protocol": 2, "w": 64, "h": 36, "track-id": 1][key] {
                 n.format = MPV_FORMAT_INT64; n.u.int64 = value
             } else if key == "pts" || key == "peak-nits" {
-                n.format = MPV_FORMAT_DOUBLE; n.u.double_ = key == "pts" ? pts : 100
-            } else if let s = ["primaries": "bt709", "transfer": "srgb", "format": "bgra-premultiplied"][key] {
+                n.format = MPV_FORMAT_DOUBLE; n.u.double_ = key == "pts" ? pts : peak
+            } else if let s = ["primaries": primaries, "transfer": transfer, "backend": "gpu",
+                               "format": "bgra-premultiplied"][key] {
                 n.format = MPV_FORMAT_STRING; n.u.string = text(s)
+            } else if key == "dolby-vision" {
+                n.format = MPV_FORMAT_FLAG; n.u.flag = dolbyVision ? 1 : 0
             } else {
                 let count = (key == "vectorscope" ? 36 : 64)*36*4
                 let bytes = UnsafeMutableRawPointer.allocate(byteCount: count, alignment: 8)
@@ -424,16 +519,29 @@ final class MPVNativeScopeIntegrationTests: XCTestCase {
             let capture = FrameCapture()
             capture.transferFunction = .hlg; capture.contentPeakNits = 1000
             capture.requiresDisplayFrame = !native
+            capture.nativeWaveforms = [.luma]  // As ScopeView requests in luma mode.
             capture.attachMPV(mpv)
             let worker = ScopeRenderWorker()
-            var rendered = 0, captured = 0, wrongBackend = 0
+            var rendered = 0, captured = 0, wrongBackend = 0, restartFallbacks = 0
+            var fallbacks: [String] = []
             var times = Set<Double>()
             var measuring = false
             let sampleObserver = capture.$currentSample.sink { sample in
                 guard let sample else { return }
                 if measuring {
                     captured += 1
-                    if (sample.nativePlots != nil) != native { wrongBackend += 1 }
+                    if (sample.nativePlots != nil) != native {
+                        // The provider rejects requests while a loop restart
+                        // settles; that one tick falls back to a screenshot.
+                        if native, sample.nativeFailure?.failure.reason == .commandFailed,
+                           let time = sample.playbackTime, time < 0.1 {
+                            restartFallbacks += 1
+                        } else {
+                            wrongBackend += 1
+                        }
+                        let reason: String = sample.nativeFailure?.description ?? "no-native-attempt"
+                        fallbacks.append("pts=\(sample.playbackTime ?? -1),\(reason)")
+                    }
                     if let time = sample.playbackTime { times.insert(time) }
                 }
                 worker.submit(primary: ScopeFrameInput(sdrFrame: sample.sdrFrame,
@@ -456,8 +564,9 @@ final class MPVNativeScopeIntegrationTests: XCTestCase {
             let seconds = ProcessInfo.processInfo.systemUptime-start
             rates.append(Double(rendered)/seconds)
             XCTAssertEqual(wrongBackend, 0)
+            XCTAssertLessThanOrEqual(restartFallbacks, 2, "At most the loop restarts within the window")
             XCTAssertGreaterThan(Double(times.count), Double(captured)*0.8)
-            print("MPV_SCOPE_THROUGHPUT: native=\(native) rendered=\(rendered) captured=\(captured) distinctPTS=\(times.count) seconds=\(seconds)")
+            print("MPV_SCOPE_THROUGHPUT: native=\(native) rendered=\(rendered) captured=\(captured) distinctPTS=\(times.count) seconds=\(seconds) fallbacks=\(fallbacks)")
             sampleObserver.cancel(); renderObserver.cancel()
             capture.stopCapture(); capture.detachMPV(); worker.cancel(clearImages: true); mpv.destroy()
             withExtendedLifetime(view) {}
@@ -507,6 +616,15 @@ final class MPVNativeScopeIntegrationTests: XCTestCase {
                 XCTAssertTrue(worker.waveformImage === (mode == .luma ? plots.waveform : plots.parade))
                 XCTAssertTrue(worker.vectorscopeImage === plots.vectorscope)
             }
+            capture.nativeWaveforms = [.parade]
+            for _ in 0..<300 where capture.currentSample?.nativePlots?.waveform != nil {
+                try await Task.sleep(for: .milliseconds(10))
+            }
+            let paradeOnly = try XCTUnwrap(capture.currentSample?.nativePlots)
+            XCTAssertNil(paradeOnly.waveform, "Native analysis returns only the requested waveform plot")
+            XCTAssertEqual(paradeOnly.parade?.width, 64)
+            XCTAssertEqual(paradeOnly.vectorscope.width, 36)
+            capture.nativeWaveforms = MPVScopePlots.allWaveforms
             worker.cancel(clearImages: true)
             capture.requiresDisplayFrame = true
             XCTAssertNil(capture.currentSample)
@@ -521,6 +639,6 @@ final class MPVNativeScopeIntegrationTests: XCTestCase {
             XCTAssertNil(capture.currentSample, "Stopping rejects an in-flight native completion")
             withExtendedLifetime(view) {}
         }
-        print("MPV_NATIVE_SCOPE_APP_ACCEPTANCE: SDR/PQ/HLG, waveform/parade/vector, fallback and stop")
+        print("MPV_NATIVE_SCOPE_APP_ACCEPTANCE: SDR/PQ/HLG, waveform/parade/vector, plot selection, fallback and stop")
     }
 }

@@ -1,5 +1,14 @@
 # Native MPV video scopes candidate
 
+> **Shipping status.** Native scopes are part of every MPVKit build since
+> `aagedal-1.1.0-n9.0.2-mpv0.42` and the app pins
+> `aagedal-1.1.0-n9.0.2-mpv0.42.1`. That build returns **protocol 2**: GPU
+> (libplacebo compute in vo_gpu_next) with a CPU fallback, mpv's color names,
+> and selectable plots. The app requests only the waveform plot the scope view
+> shows plus the vectorscope (`aagedal-scopes <width> waveform+vectorscope` or
+> `parade+vectorscope`). See MPVKit's `docs/native-scopes/README.md` for the
+> protocol. The rest of this page records the earlier protocol 1 candidate.
+
 The arm64 development candidate computes the waveform, RGBY parade, and
 vectorscope inside libmpv. It reads a reference to the current VO input frame;
 it does not call `screenshot-raw`, wait for a renderer screenshot, or open another

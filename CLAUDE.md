@@ -29,13 +29,13 @@ The shared scheme includes the `Aagedal Media Player Tests` XCTest target. No Gi
 
 ## Native-pixel MPVKit continuation
 
-Restore the validated arm64 candidate using [the handoff](docs/MPV_NATIVE_RASTER_HANDOFF.md) instead of rebuilding MPVKit. The repository-pinned development bundle includes binaries, fixtures, native test clients, retained sources and acceptance receipts. Shipping dependency pins remain unchanged.
+The pinned MPVKit release includes the native scopes and the decoder raster (still gated by `AAGEDAL_MPV_DECODER_RASTER_CANDIDATE=1`), so no candidate bundle is needed to build or test them. [The handoff](docs/MPV_NATIVE_RASTER_HANDOFF.md) documents the earlier mpv 0.41 candidate bundle, its fixtures, native test clients and acceptance receipts.
 
 ## Dependencies
 
 Swift Package dependencies (all remote, resolved via SPM):
 
-- **MPVKit-GPL** — `https://github.com/aagedal/MPVKit`, exact revision `f957f4830d449e80723554cdc05ddc4138c1806e` (`aagedal-1.1.0-n9.0.2-resize.1`: published GPL/CoreAudio/Metal build with the MoltenVK layer-resize fix). Truls's fork of MPVKit. Bundles mpv 0.41.0, FFmpeg n9.0.2, MoltenVK 1.4.2, Libplacebo 7.360.1.
+- **MPVKit-GPL** — `https://github.com/aagedal/MPVKit`, exact revision `3b3748b8a488608598fbde73e70e8cf9bf7097c4` (release `aagedal-1.1.0-n9.0.2-mpv0.42.1`). Truls's fork of MPVKit. Bundles mpv 0.42.0, FFmpeg n9.0.2, MoltenVK 1.4.2, Libplacebo 7.387.0, arm64 only. Every build includes the native `aagedal-scopes` command (protocol 2, read by `MPVScopePlots`) and the default-off decoder raster; VideoToolbox frames count against `video-reversal-buffer`.
 - **SwiftMediaMetadata** — `https://github.com/aagedal/SwiftMediaMetadata`, exact version `3.0.2` (`9e8e912deb8d941da66a4b76854a90e3e9f01e3f`). Pure-Swift metadata library, replaces the earlier ffprobe shell-out for stream metadata. Version 3.0.2 includes bounded MXF reading; the earlier 3.0.1 correction avoids materializing top-level `mdat` payloads during Sony RTMD discovery.
 - **Sparkle** — `https://github.com/sparkle-project/Sparkle`, semver `>= 2.9.1`, currently resolved to `2.9.6`. Auto-update infrastructure.
 

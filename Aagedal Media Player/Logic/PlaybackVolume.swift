@@ -5,9 +5,9 @@ import Foundation
 nonisolated enum PlaybackVolume {
     static func mpvValue(for percent: Double) -> Double {
         let amplitude = percent.isFinite ? min(100, max(0, percent)) / 100 : 1
-        // mpv 0.41 audio_get_gain cubes volume/100. Invert that curve so
+        // mpv 0.42 audio_get_gain cubes volume/100. Invert that curve so
         // 50% means half amplitude instead of one eighth (-18 dB).
-        // https://github.com/mpv-player/mpv/blob/v0.41.0/player/audio.c
+        // https://github.com/mpv-player/mpv/blob/v0.42.0/player/audio.c
         return 100 * cbrt(amplitude)
     }
 }
