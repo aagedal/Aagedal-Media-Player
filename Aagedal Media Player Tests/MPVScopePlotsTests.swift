@@ -106,8 +106,38 @@ final class MPVScopePlotsTests: XCTestCase {
         }
     }
 
+    func testProtocol2ColorNamesMapToAppIdentifiers() throws {
+        let accepted: [(String, String, Double, Bool, String, String)] = [
+            ("bt.709", "bt.1886", 100, false, "bt709", "bt1886"),
+            ("bt.709", "gamma2.2", 100, false, "bt709", "gamma22"),
+            ("bt.2020", "bt.1886", 100, false, "bt2020", "bt1886"),
+            ("bt.2020", "pq", 10000, false, "bt2020", "pq"),
+            ("bt.2020", "pq", 10000, true, "bt2020", "pq"),
+            ("bt.2020", "hlg", 1000, false, "bt2020", "hlg"),
+        ]
+        for (primaries, transfer, peak, dovi, appPrimaries, appTransfer) in accepted {
+            let plots = try XCTUnwrap(withNode(primaries: primaries, transfer: transfer, peak: peak, dolbyVision: dovi) {
+                MPVScopePlots.decode($0, expectedWidth: 64, trackID: 1)
+            }, "\(primaries) \(transfer)")
+            XCTAssertEqual(plots.primaries, appPrimaries)
+            XCTAssertEqual(plots.transfer, appTransfer)
+            XCTAssertEqual(plots.dolbyVision, dovi)
+            XCTAssertEqual(plots.backend, "gpu")
+        }
+        let rejected: [(String, String, Double, Bool)] = [
+            ("bt709", "srgb", 100, false), ("bt.709", "bt1886", 100, false), ("display-p3", "srgb", 100, false),
+            ("bt.709", "pq", 10000, false), ("bt.2020", "pq", 1000, false), ("bt.2020", "hlg", 1000, true),
+            ("bt.709", "srgb", 100, true), ("bt.2020", "v-log", 1000, false),
+        ]
+        for (primaries, transfer, peak, dovi) in rejected {
+            XCTAssertNil(withNode(primaries: primaries, transfer: transfer, peak: peak, dolbyVision: dovi) {
+                MPVScopePlots.decode($0, expectedWidth: 64, trackID: 1)
+            }, "\(primaries) \(transfer) \(peak) \(dovi)")
+        }
+    }
+
     func testRejectsMalformedMetadataAndPayloadBeforeCopy() {
-        let keys = ["protocol", "w", "h", "track-id", "pts", "peak-nits", "primaries", "transfer", "format", "waveform", "parade", "vectorscope"]
+        let keys = ["protocol", "w", "h", "track-id", "pts", "peak-nits", "primaries", "transfer", "dolby-vision", "backend", "format", "waveform", "parade", "vectorscope"]
         for key in keys {
             XCTAssertNil(withNode(omit: key) { MPVScopePlots.decode($0, expectedWidth: 64, trackID: 1) }, key)
             XCTAssertNil(withNode(wrongType: key) { MPVScopePlots.decode($0, expectedWidth: 64, trackID: 1) }, key)
@@ -130,6 +160,7 @@ final class MPVScopePlotsTests: XCTestCase {
             ("protocol", .invalidProtocol), ("w", .invalidDimensions), ("h", .invalidDimensions),
             ("track-id", .invalidTrack), ("format", .invalidFormat), ("pts", .invalidTimestamp),
             ("primaries", .invalidColor), ("transfer", .invalidColor), ("peak-nits", .invalidColor),
+            ("dolby-vision", .invalidColor), ("backend", .invalidColor),
             ("waveform", .invalidWaveform), ("parade", .invalidParade), ("vectorscope", .invalidVectorscope)
         ]
         for (key, reason) in cases {
@@ -192,8 +223,10 @@ final class MPVScopePlotsTests: XCTestCase {
     }
 
     private func withNode<T>(omit: String? = nil, wrongType: String? = nil, duplicate: String? = nil,
-                             pts: Double = 1, size: Int? = nil, _ body: (mpv_node) -> T) -> T {
-        let names: [String] = (["protocol", "w", "h", "track-id", "pts", "peak-nits", "primaries", "transfer", "format", "waveform", "parade", "vectorscope"].filter { $0 != omit }) + (duplicate.map { [$0] } ?? [])
+                             pts: Double = 1, size: Int? = nil, primaries: String = "bt.709",
+                             transfer: String = "srgb", peak: Double = 100, dolbyVision: Bool = false,
+                             _ body: (mpv_node) -> T) -> T {
+        let names: [String] = (["protocol", "w", "h", "track-id", "pts", "peak-nits", "primaries", "transfer", "dolby-vision", "backend", "format", "waveform", "parade", "vectorscope"].filter { $0 != omit }) + (duplicate.map { [$0] } ?? [])
         var strings: [UnsafeMutablePointer<CChar>] = []
         var arrays: [UnsafeMutablePointer<mpv_byte_array>] = []
         var buffers: [UnsafeMutableRawPointer] = []
@@ -208,12 +241,15 @@ final class MPVScopePlotsTests: XCTestCase {
         var keys = names.map { Optional(text($0)) }
         var values = names.map { key in
             var n = mpv_node()
-            if let value: Int64 = ["protocol": 1, "w": 64, "h": 36, "track-id": 1][key] {
+            if let value: Int64 = ["protocol": 2, "w": 64, "h": 36, "track-id": 1][key] {
                 n.format = MPV_FORMAT_INT64; n.u.int64 = value
             } else if key == "pts" || key == "peak-nits" {
-                n.format = MPV_FORMAT_DOUBLE; n.u.double_ = key == "pts" ? pts : 100
-            } else if let s = ["primaries": "bt709", "transfer": "srgb", "format": "bgra-premultiplied"][key] {
+                n.format = MPV_FORMAT_DOUBLE; n.u.double_ = key == "pts" ? pts : peak
+            } else if let s = ["primaries": primaries, "transfer": transfer, "backend": "gpu",
+                               "format": "bgra-premultiplied"][key] {
                 n.format = MPV_FORMAT_STRING; n.u.string = text(s)
+            } else if key == "dolby-vision" {
+                n.format = MPV_FORMAT_FLAG; n.u.flag = dolbyVision ? 1 : 0
             } else {
                 let count = (key == "vectorscope" ? 36 : 64)*36*4
                 let bytes = UnsafeMutableRawPointer.allocate(byteCount: count, alignment: 8)

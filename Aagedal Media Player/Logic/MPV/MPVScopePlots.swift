@@ -29,7 +29,9 @@ nonisolated struct MPVScopeFailure: Error, Equatable, Sendable, CustomStringConv
 }
 
 /// Scope images contain diagnostic colors, not source image pixels. All three
-/// plots and their source-frame metadata come from one native analysis request.
+/// plots and their source-frame metadata come from one native analysis request
+/// (aagedal-scopes protocol 2). `transfer` and `primaries` use the app's
+/// identifiers (`bt709`, `bt2020`, `bt1886`, ...), mapped from mpv's names.
 nonisolated struct MPVScopePlots: Sendable {
     let waveform: CGImage
     let parade: CGImage
@@ -39,6 +41,15 @@ nonisolated struct MPVScopePlots: Sendable {
     let transfer: String
     let primaries: String
     let peakNits: Float
+    /// "gpu" (gpu-next compute) or "cpu" (fallback), for diagnostics.
+    var backend: String = "cpu"
+    /// Dolby Vision, analysed as the BT.2020 PQ signal it reshapes to.
+    var dolbyVision = false
+
+    /// mpv color names (as in `video-params`) to the app's identifiers.
+    static let primariesNames = ["bt.709": "bt709", "bt.2020": "bt2020"]
+    static let transferNames = ["srgb": "srgb", "bt.1886": "bt1886", "gamma2.2": "gamma22",
+                                "gamma2.4": "gamma24", "pq": "pq", "hlg": "hlg"]
 
     static func fields(_ node: mpv_node) -> [String: mpv_node]? {
         guard node.format == MPV_FORMAT_NODE_MAP, let list = node.u.list,
@@ -95,7 +106,11 @@ nonisolated struct MPVScopePlots: Sendable {
             guard let n = f[key], n.format == MPV_FORMAT_DOUBLE, n.u.double_.isFinite else { return nil }
             return n.u.double_
         }
-        guard integer("protocol") == 1 else { throw MPVScopeFailure(reason: .invalidProtocol) }
+        func flag(_ key: String) -> Bool? {
+            guard let n = f[key], n.format == MPV_FORMAT_FLAG else { return nil }
+            return n.u.flag != 0
+        }
+        guard integer("protocol") == 2 else { throw MPVScopeFailure(reason: .invalidProtocol) }
         guard expectedWidth >= 64, expectedWidth <= 1440,
               integer("w") == Int64(expectedWidth),
               let height64 = integer("h"), let height = Int(exactly: height64),
@@ -107,12 +122,18 @@ nonisolated struct MPVScopePlots: Sendable {
         }
         guard string("format") == "bgra-premultiplied" else { throw MPVScopeFailure(reason: .invalidFormat) }
         guard let pts = double("pts"), pts >= 0 else { throw MPVScopeFailure(reason: .invalidTimestamp) }
-        guard let primaries = string("primaries"), let transfer = string("transfer"),
-              let peak = double("peak-nits") else { throw MPVScopeFailure(reason: .invalidColor) }
+        guard let primaries = string("primaries").flatMap({ primariesNames[$0] }),
+              let transfer = string("transfer").flatMap({ transferNames[$0] }),
+              let peak = double("peak-nits"), let dolbyVision = flag("dolby-vision"),
+              let backend = string("backend"), backend == "gpu" || backend == "cpu" else {
+            throw MPVScopeFailure(reason: .invalidColor)
+        }
         let sdrTransfers = ["srgb", "bt1886", "gamma22", "gamma24"]
-        guard (primaries == "bt709" && sdrTransfers.contains(transfer) && peak == 100)
+        guard (sdrTransfers.contains(transfer) && peak == 100 && !dolbyVision)
                 || (primaries == "bt2020" && transfer == "pq" && peak == 10000)
-                || (primaries == "bt2020" && transfer == "hlg" && peak == 1000) else { throw MPVScopeFailure(reason: .invalidColor) }
+                || (primaries == "bt2020" && transfer == "hlg" && peak == 1000 && !dolbyVision) else {
+            throw MPVScopeFailure(reason: .invalidColor)
+        }
         func image(_ key: String, width: Int, failure: MPVScopeFailureReason) throws(MPVScopeFailure) -> CGImage {
             let count = width*height*4
             guard let n = f[key], n.format == MPV_FORMAT_BYTE_ARRAY, let ba = n.u.ba,
@@ -136,6 +157,7 @@ nonisolated struct MPVScopePlots: Sendable {
         let parade = try image("parade", width: expectedWidth, failure: .invalidParade)
         let vectorscope = try image("vectorscope", width: height, failure: .invalidVectorscope)
         return Self(waveform: waveform, parade: parade, vectorscope: vectorscope, pts: pts,
-                    trackID: trackID, transfer: transfer, primaries: primaries, peakNits: Float(peak))
+                    trackID: trackID, transfer: transfer, primaries: primaries, peakNits: Float(peak),
+                    backend: backend, dolbyVision: dolbyVision)
     }
 }
