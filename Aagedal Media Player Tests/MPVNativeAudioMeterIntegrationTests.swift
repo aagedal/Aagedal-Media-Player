@@ -42,16 +42,22 @@ final class MPVNativeAudioMeterIntegrationTests: XCTestCase {
             XCTAssertTrue(MPVNativeAudioMeter.command(context, ["af", "add", "@probe-route:lavfi=[pan=\(format.channelCount)c|\(outputs)]"]))
             XCTAssertTrue(MPVNativeAudioMeter.command(context, ["af", "pre", MPVNativeAudioMeter.filter]))
             XCTAssertTrue(MPVNativeAudioMeter.command(context, ["loadfile", url.path, "replace"]))
-            // No polls during the early transient. A latest-frame peak filter
-            // would lose it; cumulative astats/ebur128 must retain it.
-            try await Task.sleep(for: .milliseconds(3350))
-            var observed: MPVNativeAudioMeter.Reading?
-            for _ in 0..<60 {
-                observed = MPVNativeAudioMeter.read(context, channels: format.channelCount, sampleRate: rate)
-                if (observed?.filterFrames ?? 0) >= Int64(rate * 3) { break }
+            // Ordinary polling. Each reading covers the timestamped frames the
+            // audio clock reached since the previous one, so the brief early
+            // transient must survive in the aggregated maxima.
+            var history = MPVNativeAudioMeterHistory(channels: format.channelCount, sampleRate: rate)
+            var readings: [MPVNativeAudioMeter.Reading] = []
+            for _ in 0..<160 where (readings.last?.filterFrames ?? 0) < Int64(rate * 3) {
+                if let reading = MPVNativeAudioMeter.read(context, history: &history) { readings.append(reading) }
                 try await Task.sleep(for: .milliseconds(50))
             }
-            let reading = try XCTUnwrap(observed, name)
+            let reading = try XCTUnwrap(readings.last, name)
+            XCTAssertFalse(history.needsFilterRestart, "\(name): \(history.lastFailure ?? "")")
+            XCTAssertEqual(reading.historyRestarts, 0, name)
+            XCTAssertTrue(zip(readings, readings.dropFirst()).allSatisfy {
+                $0.measuredUntil < $1.measuredUntil && $0.filterFrames < $1.filterFrames
+            }, name)
+            XCTAssertGreaterThan(readings.count, 20, "\(name): readings arrive as the clock advances")
             XCTAssertGreaterThanOrEqual(reading.filterFrames, Int64(rate * 3), name)
             XCTAssertLessThanOrEqual(reading.filterFrames, Int64(rate * 4), name)
             var dsp = try LiveAudioMeterDSP(format: format, startFrame: 0)
@@ -64,9 +70,12 @@ final class MPVNativeAudioMeterIntegrationTests: XCTestCase {
                 snapshots += try dsp.process(block, startFrame: Int64(frame))
             }
             let reference = try XCTUnwrap(snapshots.last { $0.loudnessEndFrame == reading.filterFrames }, name)
+            // The final reading's RMS covers only the frames after the previous reading.
+            let windowStart = Int(readings.dropLast().last?.filterFrames ?? 0)
             for channel in 0..<format.channelCount {
                 let expected = reference.maximumSamplePeakDBFS[channel]
-                let energy = stride(from: channel, to: frames * format.channelCount, by: format.channelCount)
+                let energy = stride(from: windowStart * format.channelCount + channel,
+                                    to: frames * format.channelCount, by: format.channelCount)
                     .reduce(0.0) { sum, offset in
                         let sample = Double(pcm[offset]) / 32768
                         return sum + sample * sample
@@ -74,13 +83,14 @@ final class MPVNativeAudioMeterIntegrationTests: XCTestCase {
                 if energy == 0 {
                     XCTAssertEqual(reading.rms[channel], -.infinity, name)
                 } else {
-                    XCTAssertEqual(reading.rms[channel], 10 * log10(energy / Double(frames)), accuracy: 0.001, name)
+                    XCTAssertEqual(reading.rms[channel], 10 * log10(energy / Double(frames - windowStart)),
+                                   accuracy: 0.01, name)
                 }
                 if expected == -.infinity {
-                    XCTAssertEqual(reading.samplePeaks[channel], -.infinity, name)
+                    XCTAssertEqual(reading.maximumSamplePeaks[channel], -.infinity, name)
                     XCTAssertNil(reading.truePeaks[channel], name)
                 } else {
-                    XCTAssertEqual(reading.samplePeaks[channel], expected, accuracy: 0.001, "\(name)/\(channel)")
+                    XCTAssertEqual(reading.maximumSamplePeaks[channel], expected, accuracy: 0.001, "\(name)/\(channel)")
                     XCTAssertEqual(try XCTUnwrap(reading.truePeaks[channel]), reference.maximumTruePeakDBTP[channel],
                                    accuracy: 0.4, "\(name)/\(channel)")
                 }
@@ -97,11 +107,18 @@ final class MPVNativeAudioMeterIntegrationTests: XCTestCase {
                 XCTAssertEqual(try XCTUnwrap(reading.momentary), try XCTUnwrap(reference.momentaryLUFS), accuracy: 0.1, name)
                 XCTAssertEqual(try XCTUnwrap(reading.shortTerm), try XCTUnwrap(reference.shortTermLUFS), accuracy: 0.1, name)
             }
-            if name == "transient" { XCTAssertGreaterThan(reading.samplePeaks[0], -2) }
-            if name == "intersample" { XCTAssertGreaterThan(try XCTUnwrap(reading.truePeaks[0]), reading.samplePeaks[0] + 1) }
+            if name == "transient" {
+                XCTAssertGreaterThan(reading.maximumSamplePeaks[0], -2)
+                XCTAssertGreaterThan(readings.map { $0.samplePeaks[0] }.max() ?? -.infinity, -2,
+                                     "One reading's own peak holds the transient")
+            }
+            if name == "intersample" {
+                XCTAssertGreaterThan(try XCTUnwrap(reading.truePeaks[0]), reading.maximumSamplePeaks[0] + 1)
+            }
             results.append(["signal": name, "rate": rate, "channels": format.channelCount,
-                            "filterFrames": reading.filterFrames, "queryPlaybackTime": reading.queryPlaybackTime,
-                            "samplePeaks": reading.samplePeaks.map { String($0) },
+                            "filterFrames": reading.filterFrames, "measuredUntil": reading.measuredUntil,
+                            "readings": readings.count, "framesPerReading": Double(readings.map(\.frameCount).reduce(0, +)) / Double(readings.count),
+                            "samplePeaks": reading.maximumSamplePeaks.map { String($0) },
                             "nativeTruePeaks": reading.truePeaks.map { $0.map { String($0) } ?? "below metadata precision" },
                             "referenceTruePeaks": reference.maximumTruePeakDBTP.map { String($0) },
                             "nativeM": String(reading.momentary ?? .nan),
@@ -127,18 +144,25 @@ final class MPVNativeAudioMeterIntegrationTests: XCTestCase {
                 try await Task.sleep(for: .milliseconds(10))
             }
             XCTAssertTrue(resumed, name)
-            XCTAssertNil(MPVNativeAudioMeter.read(context, channels: format.channelCount, sampleRate: rate))
+            var removed = MPVNativeAudioMeterHistory(channels: format.channelCount, sampleRate: rate)
+            XCTAssertNil(MPVNativeAudioMeter.read(context, history: &removed))
             if name == "transient" {
                 // A fresh filter after an exact seek past the transient cannot
-                // republish the old cumulative maximum or completed S window.
+                // republish the old maximum or completed S window.
                 XCTAssertTrue(MPVNativeAudioMeter.command(context, ["seek", "2", "absolute+exact"]))
                 try await Task.sleep(for: .milliseconds(100))
                 XCTAssertTrue(MPVNativeAudioMeter.command(context, ["af", "pre", MPVNativeAudioMeter.filter]))
-                try await Task.sleep(for: .milliseconds(250))
-                let fresh = try XCTUnwrap(MPVNativeAudioMeter.read(context, channels: format.channelCount, sampleRate: rate))
-                XCTAssertLessThan(fresh.filterFrames, Int64(rate))
-                XCTAssertNil(fresh.shortTerm)
-                XCTAssertLessThan(fresh.samplePeaks[0], -20)
+                var restarted = MPVNativeAudioMeterHistory(channels: format.channelCount, sampleRate: rate)
+                var fresh: MPVNativeAudioMeter.Reading?
+                for _ in 0..<20 where fresh == nil {
+                    try await Task.sleep(for: .milliseconds(50))
+                    fresh = MPVNativeAudioMeter.read(context, history: &restarted)
+                }
+                let first = try XCTUnwrap(fresh)
+                XCTAssertLessThan(first.filterFrames, Int64(rate))
+                XCTAssertNil(first.shortTerm)
+                XCTAssertLessThan(first.maximumSamplePeaks[0], -20)
+                XCTAssertGreaterThanOrEqual(first.measuredUntil, 2)
             }
         }
         let report = try JSONSerialization.data(withJSONObject: results, options: [.prettyPrinted, .sortedKeys])
@@ -146,7 +170,7 @@ final class MPVNativeAudioMeterIntegrationTests: XCTestCase {
         attachment.name = "Native audio probe versus source DSP"
         attachment.lifetime = .keepAlways
         add(attachment)
-        print("MPV_NATIVE_AUDIO_PROBE_ACCEPTANCE: \(results.count) signals; sparse polling, units, source-DSP comparison, removal and seek")
+        print("MPV_NATIVE_AUDIO_PROBE_ACCEPTANCE: \(results.count) signals; timestamped history, units, source-DSP comparison, removal and seek")
     }
 
     private func makePlayer() throws -> OpaquePointer {

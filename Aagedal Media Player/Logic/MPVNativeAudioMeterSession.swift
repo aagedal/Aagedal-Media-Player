@@ -13,7 +13,8 @@ protocol MPVNativeAudioProbeClient: AnyObject, Sendable {
 
 /// One optional, panel-owned comparison probe. The source meter remains the
 /// authority. At most one query is in flight; cancellation invalidates its token
-/// before removing this session's filter. No sample/history queue is retained.
+/// before removing this session's filter. The player holds the bounded frame
+/// history; this session keeps only the latest reading.
 @MainActor
 final class MPVNativeAudioMeterSession: ObservableObject {
     struct State: Equatable {
@@ -28,7 +29,9 @@ final class MPVNativeAudioMeterSession: ObservableObject {
     private var query: Task<Void, Never>?
     private var lastQuery = ContinuousClock.now
     private var attemptedPlayer: ObjectIdentifier?
-    private var started = ContinuousClock.now
+    /// Probe start or the latest reading. History restarts and frames not yet
+    /// due legitimately return nothing for a while.
+    private var lastProgress = ContinuousClock.now
 
     init(enabled: Bool = ProcessInfo.processInfo.environment["AAGEDAL_MPV_AUDIO_PROBE"] == "1") {
         self.enabled = enabled
@@ -68,7 +71,7 @@ final class MPVNativeAudioMeterSession: ObservableObject {
             }
             player = next
             owner = token
-            started = .now
+            lastProgress = .now
             state = State(status: "Waiting for native filter metadata…")
         }
         guard query == nil, let token = owner,
@@ -82,8 +85,9 @@ final class MPVNativeAudioMeterSession: ObservableObject {
             guard !Task.isCancelled, let self, self.owner == token else { return }
             self.query = nil
             if let reading {
-                self.state = State(status: "Native playback filter · approximate comparison", reading: reading)
-            } else if self.started.duration(to: .now) > .seconds(2) {
+                self.lastProgress = .now
+                self.state = State(status: "Native playback filter · timestamped frames", reading: reading)
+            } else if self.lastProgress.duration(to: .now) > .seconds(2) {
                 self.reset("Native metadata unavailable; using the existing source meter.")
                 self.attemptedPlayer = ObjectIdentifier(next)
             } else {

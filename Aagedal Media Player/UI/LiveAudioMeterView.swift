@@ -57,22 +57,23 @@ struct LiveAudioMeterView: View {
                 if let reading = probe.reading {
                     Grid(alignment: .trailing, horizontalSpacing: 14) {
                         GridRow {
-                            Text("Channel"); Text("Sample max"); Text("RMS since reset"); Text("True max ≈")
+                            Text("Channel"); Text("Peak"); Text("RMS"); Text("Sample max"); Text("True max ≈")
                         }.font(.caption)
                         ForEach(reading.samplePeaks.indices, id: \.self) { index in
                             GridRow {
                                 Text("\(index + 1)")
                                 Text(probeLevel(reading.samplePeaks[index]))
                                 Text(probeLevel(reading.rms[index]))
+                                Text(probeLevel(reading.maximumSamplePeaks[index]))
                                 Text(reading.truePeaks[index].map { probeLevel($0) } ?? "below precision")
                             }
                         }
                     }.monospacedDigit()
                     Text("Raw M \(probeLevel(reading.momentary)) · S \(probeLevel(reading.shortTerm)) LUFS")
-                    Text("\(reading.filterFrames) filter samples · player clock at query \(reading.queryPlaybackTime, specifier: "%.3f") s")
+                    Text("Audio measured to \(reading.measuredUntil, specifier: "%.3f") s · \(reading.frameCount) frames · \(reading.filterFrames) samples since filter start\(reading.historyRestarts > 0 ? " · \(reading.historyRestarts) history restarts" : "")")
                         .font(.caption).foregroundStyle(.secondary)
                 }
-                Text("Filter readings can lead playback. Peaks accumulate until reset; RMS is an average. True peaks have limited metadata precision. Raw loudness uses FFmpeg speaker weights, including its different 7.1 weighting. Source QC readings above remain authoritative.")
+                Text("Each reading covers the filter frames the audio clock reached since the previous one; peak and RMS describe those frames. Maxima and true peaks accumulate from the filter start. Lost frames restart the filter instead of hiding gaps. True peaks have limited metadata precision. Raw loudness uses FFmpeg speaker weights, including its different 7.1 weighting. Source QC readings above remain authoritative.")
                     .font(.caption).foregroundStyle(.secondary)
             }.frame(maxWidth: .infinity, alignment: .leading).textSelection(.enabled)
         }

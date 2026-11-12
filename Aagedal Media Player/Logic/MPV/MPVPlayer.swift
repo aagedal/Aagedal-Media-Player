@@ -274,6 +274,7 @@ final class MPVPlayer: NSObject, ObservableObject, MPVNativeAudioProbeClient, @u
             mpv_terminate_destroy(self.mpv)
             self.mpv = nil
             self.nativeAudioProbeOwner = nil
+            self.nativeAudioProbeHistory = nil
         }
 
         isInitialized = false
@@ -1218,6 +1219,7 @@ final class MPVPlayer: NSObject, ObservableObject, MPVNativeAudioProbeClient, @u
     private nonisolated(unsafe) var nativeScopesCapabilityFailure: MPVScopeFailure?
     private nonisolated(unsafe) var decoderRasterCapability: Bool?
     private nonisolated(unsafe) var nativeAudioProbeOwner: UUID?
+    private nonisolated(unsafe) var nativeAudioProbeHistory: MPVNativeAudioMeterHistory?
 
     /// The labelled development probe owns no decoder and never replaces the
     /// independently selected source meter. All context access uses this queue.
@@ -1239,9 +1241,14 @@ final class MPVPlayer: NSObject, ObservableObject, MPVNativeAudioProbeClient, @u
                     continuation.resume(returning: nil)
                     return
                 }
-                continuation.resume(returning: MPVNativeAudioMeter.read(
-                    context, channels: channels, sampleRate: sampleRate
-                ))
+                // A new source format starts a new history; the session also
+                // resets the probe when its source format changes.
+                var history = self.nativeAudioProbeHistory.flatMap {
+                    $0.channels == channels && $0.sampleRate == sampleRate ? $0 : nil
+                } ?? MPVNativeAudioMeterHistory(channels: channels, sampleRate: sampleRate)
+                let reading = MPVNativeAudioMeter.read(context, history: &history)
+                self.nativeAudioProbeHistory = history
+                continuation.resume(returning: reading)
             }
         }
     }
@@ -1253,6 +1260,7 @@ final class MPVPlayer: NSObject, ObservableObject, MPVNativeAudioProbeClient, @u
                 _ = MPVNativeAudioMeter.command(context, ["af", "remove", "@\(MPVNativeAudioMeter.label)"])
             }
             nativeAudioProbeOwner = nil
+            nativeAudioProbeHistory = nil
         }
     }
 
