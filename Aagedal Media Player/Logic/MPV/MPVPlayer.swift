@@ -152,6 +152,9 @@ final class MPVPlayer: NSObject, ObservableObject, MPVNativeAudioProbeClient, @u
     @Published private(set) var errorStage: PlaybackFailureStage = .loading
     @Published var videoGamma: String?
     @Published var videoSigPeak: Double = 1.0
+    /// Nil when the file has at most one edition (mpv reports the property
+    /// as unavailable).
+    @Published private(set) var currentEditionID: Int?
 
     /// Fires when mpv itself gives up on backward playback (it emits
     /// "Backward playback is likely stuck/broken now." when its experimental
@@ -458,6 +461,7 @@ final class MPVPlayer: NSObject, ObservableObject, MPVNativeAudioProbeClient, @u
         mpv_observe_property(mpv, 0, MPVProperty.videoParamsRotate, MPV_FORMAT_INT64)
         mpv_observe_property(mpv, 0, MPVProperty.videoParamsGamma, MPV_FORMAT_STRING)
         mpv_observe_property(mpv, 0, MPVProperty.videoParamsSigPeak, MPV_FORMAT_DOUBLE)
+        mpv_observe_property(mpv, 0, MPVProperty.currentEdition, MPV_FORMAT_INT64)
 
         wakeupContext = Unmanaged.passRetained(self).toOpaque()
         mpv_set_wakeup_callback(mpv, mpvWakeupCallback, wakeupContext)
@@ -545,6 +549,8 @@ final class MPVPlayer: NSObject, ObservableObject, MPVNativeAudioProbeClient, @u
         // Do not synchronously wait on the playback core while it opens a
         // network file. The argv form preserves paths containing whitespace.
         setFlagAsync(MPVProperty.pause, !autostart)
+        // `edition` is an option, so a choice would carry over to this file.
+        commandAsync("set", args: [MPVProperty.edition, "auto"])
         let path = url.isFileURL ? url.path : url.absoluteString
         let requestID = Self.loadCommandMask | mediaLoadGeneration
         if !commandAsync("loadfile", args: [path, "replace"], requestID: requestID) {
@@ -764,10 +770,27 @@ final class MPVPlayer: NSObject, ObservableObject, MPVNativeAudioProbeClient, @u
                 components.append("\(sampleRate / 1000) kHz")
             }
 
+            components.append(contentsOf: audioTrackRoles(at: i))
+
             names.append(components.joined(separator: " \u{2022} "))
         }
 
         return names
+    }
+
+    /// Disposition flags mpv 0.42 reports per track, in menu order.
+    private func audioTrackRoles(at index: Int) -> [String] {
+        let title = getString("track-list/\(index)/title")?.lowercased() ?? ""
+        return [
+            ("commentary", "Commentary"),
+            ("original", "Original"),
+            ("visual-impaired", "Audio Description"),
+        ].compactMap { flag, label in
+            // Skip a role the track title already states.
+            guard getFlag("track-list/\(index)/\(flag)"),
+                  !title.contains(label.lowercased()) else { return nil }
+            return label
+        }
     }
 
     private func formatChannelCount(_ channels: Int) -> String {
@@ -957,6 +980,21 @@ final class MPVPlayer: NSObject, ObservableObject, MPVNativeAudioProbeClient, @u
         return result
     }
 
+    var editions: [(id: Int, title: String)] {
+        guard mpv != nil else { return [] }
+        return (0..<getInt(MPVProperty.editionListCount)).map { i in
+            let id = getInt("edition-list/\(i)/id")
+            let title = getString("edition-list/\(i)/title") ?? ""
+            return (id, title.isEmpty ? "Edition \(id + 1)" : title)
+        }
+    }
+
+    /// MPEG-TS programs and HLS variants switch tracks in place; Matroska
+    /// editions reload the file from its start.
+    func selectEdition(id: Int) {
+        commandAsync("set", args: [MPVProperty.edition, String(id)])
+    }
+
     // MARK: - Event Handling
 
     fileprivate nonisolated func readEvents() {
@@ -1035,6 +1073,11 @@ final class MPVPlayer: NSObject, ObservableObject, MPVNativeAudioProbeClient, @u
                             if let value = UnsafePointer<Double>(OpaquePointer(property.data))?.pointee, value > 0 {
                                 DispatchQueue.main.async { self.videoSigPeak = value }
                             }
+                        case MPVProperty.currentEdition:
+                            let value = property.format == MPV_FORMAT_INT64
+                                ? UnsafePointer<Int64>(OpaquePointer(property.data)).map { Int($0.pointee) }
+                                : nil
+                            DispatchQueue.main.async { self.currentEditionID = value }
                         default:
                             break
                         }
@@ -1077,6 +1120,10 @@ final class MPVPlayer: NSObject, ObservableObject, MPVNativeAudioProbeClient, @u
                     DispatchQueue.main.async {
                         self.logger.info("MPV file loaded")
                         self.isFileLoaded = true
+                        // A Matroska edition switch reloads the file without
+                        // touching `pause`, so END_FILE's reset is never undone
+                        // by a property change.
+                        self.isPlaying = !self.getFlag(MPVProperty.pause)
                         for path in self.externalSubtitlePaths {
                             self.command("sub-add", args: [path, "auto"])
                         }
@@ -1574,6 +1621,12 @@ final class MPVPlayer: NSObject, ObservableObject, MPVNativeAudioProbeClient, @u
         var data = Int64()
         mpv_get_property(mpv, name, MPV_FORMAT_INT64, &data)
         return Int(data)
+    }
+
+    private func getFlag(_ name: String) -> Bool {
+        guard mpv != nil else { return false }
+        var data = Int32()
+        return mpv_get_property(mpv, name, MPV_FORMAT_FLAG, &data) >= 0 && data != 0
     }
 
     private func setInt(_ name: String, _ value: Int) {

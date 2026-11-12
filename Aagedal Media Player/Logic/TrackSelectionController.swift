@@ -44,6 +44,12 @@ final class TrackSelectionController: ObservableObject {
         let title: String
     }
 
+    /// A Matroska edition, MPEG-TS program or HLS variant (mpv edition).
+    struct EditionOption: Identifiable, Equatable {
+        let id: Int
+        let title: String
+    }
+
     /// Connects a display-order row to the corresponding AVFoundation source
     /// track and media-selection option. Audio rows may be sorted independently
     /// of the file's stream order, so the display position is not itself a
@@ -57,6 +63,7 @@ final class TrackSelectionController: ObservableObject {
     @Published private(set) var audioTrackOptions: [AudioTrackOption] = []
     @Published private(set) var subtitleTrackOptions: [SubtitleTrackOption] = []
     @Published private(set) var chapterOptions: [ChapterOption] = []
+    @Published private(set) var editionOptions: [EditionOption] = []
     @Published private(set) var selectedAudioTrackOrderIndex = 0
     @Published private(set) var selectedSubtitleTrackOrderIndex = -1
 
@@ -234,6 +241,16 @@ final class TrackSelectionController: ObservableObject {
         }
     }
 
+    /// mpv exposes editions only for its own backend; a single edition is
+    /// not a choice and publishes nothing.
+    func refreshEditionOptions(mpvPlayer: MPVPlayer?, useMPV: Bool) {
+        let editions = useMPV ? mpvPlayer?.editions ?? [] : []
+        let options = editions.count > 1
+            ? editions.map { EditionOption(id: $0.id, title: $0.title) }
+            : []
+        if options != editionOptions { editionOptions = options }
+    }
+
     func reset(preservingSelections: Bool) {
         audioOperationGeneration.advance()
         chapterOperationGeneration.advance()
@@ -244,6 +261,7 @@ final class TrackSelectionController: ObservableObject {
         audioTrackOptions = []
         subtitleTrackOptions = []
         chapterOptions = []
+        editionOptions = []
     }
 
     /// Pure MPV option mapping kept internal so it can be regression tested

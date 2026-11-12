@@ -55,4 +55,10 @@ struct MPVProperty {
     // Chapters
     nonisolated static let chapter = "chapter"
     nonisolated static let chapterListCount = "chapter-list/count"
+
+    // Editions: Matroska editions, MPEG-TS programs and HLS variants
+    nonisolated static let currentEdition = "current-edition"
+    /// The writable selection; `current-edition` is read-only.
+    nonisolated static let edition = "edition"
+    nonisolated static let editionListCount = "edition-list/count"
 }

@@ -16,6 +16,7 @@ private enum PlaybackControlFocus: Hashable {
     case mute
     case audioTrack
     case subtitles
+    case editions
     case chapters
     case loop
     case fullscreen
@@ -217,6 +218,11 @@ struct ControlsView: View {
 
         // Subtitle track picker
         subtitleTrackPicker
+
+        // Edition picker (programs, variants or editions; only when there is a choice)
+        if !controller.editionOptions.isEmpty {
+            editionPicker
+        }
 
         // Chapter picker (only when chapters exist)
         if !controller.chapterOptions.isEmpty {
@@ -1062,6 +1068,34 @@ struct ControlsView: View {
         .accessibilityValue(selectedSubtitleTrackTitle)
     }
 
+    // MARK: - Edition Picker
+
+    private var editionPicker: some View {
+        Menu {
+            ForEach(controller.editionOptions) { option in
+                Button(action: { controller.selectEdition(id: option.id) }) {
+                    HStack {
+                        Text(option.title)
+                        if option.id == controller.currentEditionID {
+                            Image(systemName: "checkmark")
+                        }
+                    }
+                }
+            }
+        } label: {
+            Image(systemName: "square.stack")
+                .font(.system(size: 14))
+                .frame(width: 28, height: 28)
+        }
+        .menuStyle(.borderlessButton)
+        .frame(width: 28)
+        .focused($focusedControl, equals: .editions)
+        .modifier(PlaybackControlFocusRing(isFocused: focusedControl == .editions))
+        .help("Program, variant or edition")
+        .accessibilityLabel("Edition")
+        .accessibilityValue(selectedEditionTitle)
+    }
+
     // MARK: - Chapter Picker
 
     private var chapterPicker: some View {
@@ -1112,6 +1146,10 @@ struct ControlsView: View {
         return controller.subtitleTrackOptions.first {
             $0.position == controller.selectedSubtitleTrackOrderIndex
         }?.title ?? "Off"
+    }
+
+    private var selectedEditionTitle: String {
+        controller.editionOptions.first { $0.id == controller.currentEditionID }?.title ?? "None"
     }
 
     private var selectedChapterTitle: String {
