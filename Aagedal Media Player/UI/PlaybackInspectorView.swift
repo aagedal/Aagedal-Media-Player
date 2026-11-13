@@ -180,6 +180,20 @@ private struct PlaybackGeneralSettingsView: View {
                 LabeledContent("Speed", value: speedText)
                 InspectorFootnote("Change speed and direction with the J, K and L shortcuts.")
             }
+            if !primary.editionOptions.isEmpty {
+                Section("Edition") {
+                    Picker("Edition", selection: Binding(
+                        get: { primary.currentEditionID ?? -1 },
+                        set: { primary.selectEdition(id: $0) }
+                    )) {
+                        ForEach(primary.editionOptions) { option in
+                            Text(option.title).tag(option.id)
+                        }
+                    }
+                    .accessibilityIdentifier("playback-inspector-edition")
+                    InspectorFootnote("Programs in transport streams, variants in HLS streams and editions in Matroska files. Switching a Matroska edition restarts playback.")
+                }
+            }
             if !primary.chapterOptions.isEmpty {
                 Section("Chapters") {
                     ForEach(primary.chapterOptions) { chapter in

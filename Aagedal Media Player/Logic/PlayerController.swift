@@ -140,6 +140,8 @@ final class PlayerController: ObservableObject {
     var audioTrackOptions: [AudioTrackOption] { trackSelection.audioTrackOptions }
     var subtitleTrackOptions: [SubtitleTrackOption] { trackSelection.subtitleTrackOptions }
     var chapterOptions: [ChapterOption] { trackSelection.chapterOptions }
+    var editionOptions: [TrackSelectionController.EditionOption] { trackSelection.editionOptions }
+    @Published private(set) var currentEditionID: Int?
     var selectedAudioTrackOrderIndex: Int { trackSelection.selectedAudioTrackOrderIndex }
     var selectedSubtitleTrackOrderIndex: Int { trackSelection.selectedSubtitleTrackOrderIndex }
     @Published private(set) var monoPlaybackProgramme: MonoPlaybackProgramme?
@@ -317,6 +319,7 @@ final class PlayerController: ObservableObject {
     private var mpvErrorCancellable: AnyCancellable?
     private var mpvBusyCancellable: AnyCancellable?
     private var mpvEOFCancellable: AnyCancellable?
+    private var mpvEditionCancellable: AnyCancellable?
 
     /// URLs where mpv's native `play-direction=backward` has previously
     /// failed (it emits "Backward playback is likely stuck/broken now."
@@ -932,6 +935,32 @@ final class PlayerController: ObservableObject {
                 } else if self.frameCapture.transferFunction == .hlg {
                     self.frameCapture.contentPeakNits = self.snappedPeakNits(Float(sigPeak * 1000))
                 }
+            }
+
+        // mpv lists only the current edition's tracks, and a Matroska edition
+        // has its own chapters, so every switch rebuilds all three menus.
+        var lastEditionID: Int?
+        mpvEditionCancellable = mpv.$currentEditionID
+            .removeDuplicates()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self, weak mpv] editionID in
+                guard let self, mpv != nil,
+                      observationIdentity.matches(
+                          preparationID: self.preparationID,
+                          player: self.mpvPlayer
+                      ) else { return }
+                self.currentEditionID = editionID
+                // A Matroska edition reload reports no edition in between,
+                // so compare against the last edition actually shown.
+                if let editionID {
+                    if let previous = lastEditionID, previous != editionID {
+                        self.trackSelection.reset(preservingSelections: false)
+                        self.refreshAudioTrackOptions(playerItem: nil)
+                        self.refreshChapterOptions(playerItem: nil)
+                    }
+                    lastEditionID = editionID
+                }
+                self.trackSelection.refreshEditionOptions(mpvPlayer: self.mpvPlayer, useMPV: true)
             }
 
         // Refresh audio tracks after MPV parses the media
@@ -1690,6 +1719,12 @@ final class PlayerController: ObservableObject {
         }
     }
 
+    func selectEdition(id: Int) {
+        guard useMPV, id != currentEditionID,
+              editionOptions.contains(where: { $0.id == id }) else { return }
+        mpvPlayer?.selectEdition(id: id)
+    }
+
     func jumpToChapter(at position: Int) {
         guard chapterOptions.indices.contains(position) else { return }
         seekTo(chapterOptions[position].time)
@@ -1834,6 +1869,8 @@ final class PlayerController: ObservableObject {
         mpvErrorCancellable = nil
         mpvBusyCancellable = nil
         mpvEOFCancellable = nil
+        mpvEditionCancellable = nil
+        currentEditionID = nil
         removeMPVLoopObserver()
         if resetAudioSelection {
             showAllMonoWaveforms = UserDefaults.standard.value(for: AppSettings.showAllMonoWaveforms)

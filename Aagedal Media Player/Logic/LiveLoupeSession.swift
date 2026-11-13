@@ -67,6 +67,7 @@ final class LiveLoupeSession: ObservableObject {
     private var isRunning = false
     private var source: Source?
     private var failedSource: Source?
+    private var edition: Int?
     private var viewport: LoupeVideoViewport?
     private var nearest = true
     private var wasPlaying: Bool?
@@ -101,6 +102,7 @@ final class LiveLoupeSession: ObservableObject {
               let primary = controller.mpvPlayer else { return false }
         return source.preparationID == controller.preparationID
             && source.backend == ObjectIdentifier(primary) && source.url == controller.mediaItem?.url
+            && (controller.currentEditionID.map { $0 == edition } ?? true)
     }
 
     func start(controller: PlayerController) {
@@ -134,6 +136,7 @@ final class LiveLoupeSession: ObservableObject {
         destroyPlayer()
         source = nil
         failedSource = nil
+        edition = nil
         surface = nil
         controller = nil
         error = nil
@@ -195,7 +198,15 @@ final class LiveLoupeSession: ObservableObject {
             destroyPlayer()
             source = latest
             failedSource = nil
+            edition = nil
             error = nil
+        }
+        // The follower opens the file itself, so it must be told the main
+        // player's program, variant or edition. A Matroska edition reload
+        // briefly reports none; keep the last one rather than loading twice.
+        if let current = controller.currentEditionID, current != edition {
+            edition = current
+            if player != nil { destroyPlayer() }
         }
         guard let source, let primary = controller.mpvPlayer, let surface,
               source != failedSource else { return }
@@ -206,7 +217,8 @@ final class LiveLoupeSession: ObservableObject {
             if let viewport { child.configureLiveLoupe(viewport: viewport, nearest: nearest) }
             child.setLooping(controller.mediaItem?.loopPlayback ?? false)
             child.attachDrawable(surface)
-            child.load(url: source.url, startTime: max(0, controller.currentPlaybackTime), autostart: false)
+            child.load(url: source.url, startTime: max(0, controller.currentPlaybackTime), autostart: false,
+                       edition: edition)
         }
         guard let child = player else { return }
         if let message = child.error {
