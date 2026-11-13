@@ -216,6 +216,7 @@ final class MPVPlayer: NSObject, ObservableObject, MPVNativeAudioProbeClient, @u
     private var pendingURL: URL?
     private var pendingStartTime: Double = 0
     private var pendingAutostart: Bool = false
+    private var pendingEdition: Int?
     private var mediaLoadTask: Task<Void, Never>?
     private var mediaLoadGeneration: UInt64 = 0
     private var rifxDetector: @Sendable (URL) -> Bool = {
@@ -490,7 +491,8 @@ final class MPVPlayer: NSObject, ObservableObject, MPVNativeAudioProbeClient, @u
         }
     }
 
-    func load(url: URL, startTime: Double = 0, autostart: Bool = false) {
+    /// `edition` nil lets mpv choose the file's default program, variant or edition.
+    func load(url: URL, startTime: Double = 0, autostart: Bool = false, edition: Int? = nil) {
         cancelPendingMediaLoad()
         queue.sync {
             seekScheduler.reset()
@@ -500,6 +502,7 @@ final class MPVPlayer: NSObject, ObservableObject, MPVNativeAudioProbeClient, @u
         pendingURL = url
         pendingStartTime = startTime
         pendingAutostart = autostart
+        pendingEdition = edition
         isFileLoaded = false
         error = nil
         errorStage = .loading
@@ -539,9 +542,11 @@ final class MPVPlayer: NSObject, ObservableObject, MPVNativeAudioProbeClient, @u
         guard mediaLoadTask == nil, mpv != nil, let url = pendingURL else { return }
         let startTime = pendingStartTime
         let autostart = pendingAutostart
+        let edition = pendingEdition
         pendingURL = nil
         pendingStartTime = 0
         pendingAutostart = false
+        pendingEdition = nil
         startPaused = !autostart
         pendingSeekAfterLoad = startTime
         logger.info("Loading file: \(url.lastPathComponent), startTime: \(startTime), autostart: \(autostart)")
@@ -549,8 +554,8 @@ final class MPVPlayer: NSObject, ObservableObject, MPVNativeAudioProbeClient, @u
         // Do not synchronously wait on the playback core while it opens a
         // network file. The argv form preserves paths containing whitespace.
         setFlagAsync(MPVProperty.pause, !autostart)
-        // `edition` is an option, so a choice would carry over to this file.
-        commandAsync("set", args: [MPVProperty.edition, "auto"])
+        // `edition` is an option, so a previous file's choice would carry over.
+        commandAsync("set", args: [MPVProperty.edition, edition.map(String.init) ?? "auto"])
         let path = url.isFileURL ? url.path : url.absoluteString
         let requestID = Self.loadCommandMask | mediaLoadGeneration
         if !commandAsync("loadfile", args: [path, "replace"], requestID: requestID) {

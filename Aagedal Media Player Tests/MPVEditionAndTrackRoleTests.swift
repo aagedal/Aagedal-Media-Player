@@ -11,10 +11,13 @@ import XCTest
 @MainActor
 final class MPVEditionAndTrackRoleTests: XCTestCase {
     private var retainedSurfaces: [NSView] = []
+    private var windows: [NSWindow] = []
     private var temporaryFiles: [URL] = []
 
     override func tearDown() async throws {
         retainedSurfaces.removeAll()
+        windows.forEach { $0.close() }
+        windows.removeAll()
         temporaryFiles.forEach { try? FileManager.default.removeItem(at: $0) }
         temporaryFiles.removeAll()
         try await super.tearDown()
@@ -49,17 +52,7 @@ final class MPVEditionAndTrackRoleTests: XCTestCase {
     }
 
     func testTransportStreamProgramsSwitchTracksInPlace() async throws {
-        let url = try await generate("programs.ts", [
-            "-f", "lavfi", "-i", "testsrc2=s=320x180:r=25:d=6",
-            "-f", "lavfi", "-i", "sine=frequency=440:duration=6",
-            "-f", "lavfi", "-i", "smptebars=s=320x180:r=25:d=6",
-            "-f", "lavfi", "-i", "sine=frequency=880:duration=6",
-            "-map", "0", "-map", "1", "-map", "2", "-map", "3",
-            "-c:v", "mpeg2video", "-c:a", "mp2",
-            "-metadata:s:a:0", "language=eng", "-metadata:s:a:1", "language=nor",
-            "-program", "title=Alpha:program_num=1:st=0:st=1",
-            "-program", "title=Beta:program_num=2:st=2:st=3",
-        ])
+        let url = try await makeProgramsFile()
         let controller = try await makePlayingController(url: url)
         defer { controller.teardown() }
 
@@ -88,6 +81,85 @@ final class MPVEditionAndTrackRoleTests: XCTestCase {
     }
 
     func testMatroskaEditionReloadRebuildsChaptersAndKeepsPlaying() async throws {
+        let url = try await makeEditionsFile()
+        let controller = try await makePlayingController(url: url)
+        defer { controller.teardown() }
+
+        let listed = await waitUntil {
+            controller.editionOptions.count == 2 && controller.chapterOptions.count == 2
+        }
+        XCTAssertTrue(listed, "Editions \(controller.editionOptions), chapters \(controller.chapterOptions)")
+        controller.selectEdition(id: 1)
+        let switched = await waitUntil {
+            controller.currentEditionID == 1 && controller.chapterOptions.map(\.title) == ["Alternate"]
+        }
+        XCTAssertTrue(switched, "Chapters after the reload: \(controller.chapterOptions)")
+        XCTAssertEqual(controller.editionOptions.count, 2)
+        let playing = await waitUntil {
+            controller.isPlaying && (controller.mpvPlayer?.timePos ?? 0) > 0.2
+        }
+        XCTAssertTrue(playing, "The reload resumes playing and the controller reports it")
+    }
+
+    func testLiveLoupeOpensAndFollowsTheChosenProgram() async throws {
+        let controller = try await makePlayingController(url: try await makeProgramsFile())
+        defer { controller.teardown() }
+        let listed = await waitUntil { controller.editionOptions.count == 2 && controller.currentEditionID != nil }
+        XCTAssertTrue(listed, "Editions: \(controller.editionOptions)")
+        let first = try XCTUnwrap(controller.currentEditionID)
+        let target = try XCTUnwrap(controller.editionOptions.first { $0.id != first })
+        controller.selectEdition(id: target.id)
+        let switched = await waitUntil { controller.currentEditionID == target.id }
+        XCTAssertTrue(switched)
+
+        let session = startLiveLoupe(controller: controller)
+        defer { session.stop() }
+        let opened = await waitUntil { session.player?.currentEditionID == target.id && session.isReady(for: controller) }
+        XCTAssertTrue(opened, "Loupe edition \(String(describing: session.player?.currentEditionID)), "
+            + "error \(session.error ?? "none")")
+
+        let opening = session.player
+        controller.selectEdition(id: first)
+        let followed = await waitUntil { session.player?.currentEditionID == first && session.isReady(for: controller) }
+        XCTAssertTrue(followed, "Loupe edition \(String(describing: session.player?.currentEditionID))")
+        XCTAssertFalse(session.player === opening, "The loupe reopens on the new program")
+    }
+
+    func testLiveLoupeFollowsAMatroskaEditionReload() async throws {
+        let controller = try await makePlayingController(url: try await makeEditionsFile())
+        defer { controller.teardown() }
+        let listed = await waitUntil { controller.editionOptions.count == 2 && controller.currentEditionID == 0 }
+        XCTAssertTrue(listed, "Editions: \(controller.editionOptions)")
+        let session = startLiveLoupe(controller: controller)
+        defer { session.stop() }
+        let opened = await waitUntil { session.player?.currentEditionID == 0 && session.isReady(for: controller) }
+        XCTAssertTrue(opened, session.error ?? "The loupe did not open")
+
+        controller.selectEdition(id: 1)
+        let followed = await waitUntil {
+            controller.currentEditionID == 1 && session.player?.currentEditionID == 1 && session.isReady(for: controller)
+        }
+        XCTAssertTrue(followed, "Loupe edition \(String(describing: session.player?.currentEditionID)), "
+            + "error \(session.error ?? "none")")
+    }
+
+    // MARK: - Helpers
+
+    private func makeProgramsFile() async throws -> URL {
+        try await generate("programs.ts", [
+            "-f", "lavfi", "-i", "testsrc2=s=320x180:r=25:d=6",
+            "-f", "lavfi", "-i", "sine=frequency=440:duration=6",
+            "-f", "lavfi", "-i", "smptebars=s=320x180:r=25:d=6",
+            "-f", "lavfi", "-i", "sine=frequency=880:duration=6",
+            "-map", "0", "-map", "1", "-map", "2", "-map", "3",
+            "-c:v", "mpeg2video", "-c:a", "mp2",
+            "-metadata:s:a:0", "language=eng", "-metadata:s:a:1", "language=nor",
+            "-program", "title=Alpha:program_num=1:st=0:st=1",
+            "-program", "title=Beta:program_num=2:st=2:st=3",
+        ])
+    }
+
+    private func makeEditionsFile() async throws -> URL {
         let metadata = try temporaryURL("chapters.ffmetadata")
         try """
         ;FFMETADATA1
@@ -111,26 +183,23 @@ final class MPVEditionAndTrackRoleTests: XCTestCase {
             "-c:v", "ffv1", "-c:a", "pcm_s16le", "-write_crc32", "0",
         ])
         try addSingleChapterEdition(titled: "Alternate", to: url)
-        let controller = try await makePlayingController(url: url)
-        defer { controller.teardown() }
-
-        let listed = await waitUntil {
-            controller.editionOptions.count == 2 && controller.chapterOptions.count == 2
-        }
-        XCTAssertTrue(listed, "Editions \(controller.editionOptions), chapters \(controller.chapterOptions)")
-        controller.selectEdition(id: 1)
-        let switched = await waitUntil {
-            controller.currentEditionID == 1 && controller.chapterOptions.map(\.title) == ["Alternate"]
-        }
-        XCTAssertTrue(switched, "Chapters after the reload: \(controller.chapterOptions)")
-        XCTAssertEqual(controller.editionOptions.count, 2)
-        let playing = await waitUntil {
-            controller.isPlaying && (controller.mpvPlayer?.timePos ?? 0) > 0.2
-        }
-        XCTAssertTrue(playing, "The reload resumes playing and the controller reports it")
+        return url
     }
 
-    // MARK: - Helpers
+    private func startLiveLoupe(controller: PlayerController) -> LiveLoupeSession {
+        let session = LiveLoupeSession()
+        let window = NSWindow(contentRect: CGRect(x: 100, y: 100, width: 160, height: 120),
+            styleMask: [.titled], backing: .buffered, defer: false)
+        window.isReleasedWhenClosed = false
+        windows.append(window)
+        let surface = LiveLoupeVideoSurface.SurfaceView(frame: CGRect(x: 0, y: 0, width: 160, height: 120))
+        surface.session = session
+        window.contentView = surface
+        window.orderFront(nil)
+        session.attachSurface(surface.metalLayer)
+        session.start(controller: controller)
+        return session
+    }
 
     private func makePlayingController(url: URL) async throws -> PlayerController {
         let controller = PlayerController(proResRAWDetector: { _, _ in false })
