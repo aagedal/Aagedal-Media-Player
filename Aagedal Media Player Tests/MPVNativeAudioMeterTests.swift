@@ -10,57 +10,50 @@ import XCTest
 final class MPVNativeAudioMeterTests: XCTestCase {
     private func metadata() -> [String: String] {
         ["lavfi.astats.1.Peak_level": "-6.0206", "lavfi.astats.1.RMS_level": "-9.0309",
-         "lavfi.r128.true_peaks_ch0": "0.500", "lavfi.r128.M": "-9.031",
-         "lavfi.r128.S": "-9.031", "lavfi.astats.Overall.Number_of_samples": "144000.000000"]
+         "lavfi.r128.true_peaks_ch0": "0.500", "lavfi.r128.M": "-9.031", "lavfi.r128.S": "-9.031"]
     }
 
-    func testUnitsWarmupAndSilenceRemainDistinct() throws {
+    func testFrameUnitsAndSilenceRemainDistinct() throws {
         var values = metadata()
-        func decode() -> MPVNativeAudioMeter.Reading? {
-            MPVNativeAudioMeter.decode(values, channels: 1, sampleRate: 48_000, queryPlaybackTime: 3)
-        }
-        let reading = try XCTUnwrap(decode())
-        XCTAssertEqual(try XCTUnwrap(reading.truePeaks[0]), -6.0206, accuracy: 0.0001)
-        XCTAssertEqual(reading.samplePeaks[0], -6.0206)
-        XCTAssertEqual(reading.filterFrames, 144000)
-        values["lavfi.astats.Overall.Number_of_samples"] = "4800"
-        XCTAssertNil(try XCTUnwrap(decode()).momentary)
-        XCTAssertNil(try XCTUnwrap(decode()).shortTerm)
-        values["lavfi.astats.Overall.Number_of_samples"] = "19200"
-        XCTAssertNotNil(try XCTUnwrap(decode()).momentary)
-        XCTAssertNil(try XCTUnwrap(decode()).shortTerm)
+        let frame = try XCTUnwrap(MPVNativeAudioMeter.decodeFrame(values, channels: 1))
+        XCTAssertEqual(try XCTUnwrap(frame.truePeaks[0]), -6.0206, accuracy: 0.0001)
+        XCTAssertEqual(frame.samplePeaks, [-6.0206])
+        XCTAssertEqual(frame.rms, [-9.0309])
+        XCTAssertEqual(frame.momentary, -9.031)
         values["lavfi.astats.1.Peak_level"] = "-inf"
         values["lavfi.astats.1.RMS_level"] = "-inf"
         values["lavfi.r128.true_peaks_ch0"] = "0.000"
-        XCTAssertEqual(try XCTUnwrap(decode()).samplePeaks, [-.infinity])
-        XCTAssertEqual(try XCTUnwrap(decode()).truePeaks, [nil])
+        let silent = try XCTUnwrap(MPVNativeAudioMeter.decodeFrame(values, channels: 1))
+        XCTAssertEqual(silent.samplePeaks, [-.infinity])
+        XCTAssertEqual(silent.truePeaks, [nil])
     }
 
-    func testRejectsMalformedMetadataAndFormatBeforePublication() {
+    func testRejectsMalformedFrameMetadataAndChannelCounts() {
         let original = metadata()
         for key in original.keys {
             var values = original
             values.removeValue(forKey: key)
-            XCTAssertNil(MPVNativeAudioMeter.decode(values, channels: 1, sampleRate: 48000, queryPlaybackTime: 1), key)
+            XCTAssertNil(MPVNativeAudioMeter.decodeFrame(values, channels: 1), key)
             for bad in ["nan", "inf", "", "garbage"] {
                 values[key] = bad
-                XCTAssertNil(MPVNativeAudioMeter.decode(values, channels: 1, sampleRate: 48000, queryPlaybackTime: 1), key)
+                XCTAssertNil(MPVNativeAudioMeter.decodeFrame(values, channels: 1), key)
             }
         }
         var values = original
         values["lavfi.r128.true_peaks_ch0"] = "-0.5"
-        XCTAssertNil(MPVNativeAudioMeter.decode(values, channels: 1, sampleRate: 48000, queryPlaybackTime: 1))
-        for count in ["0", "-1", "0.5", String(Double(Int64.max))] {
-            values = original; values["lavfi.astats.Overall.Number_of_samples"] = count
-            XCTAssertNil(MPVNativeAudioMeter.decode(values, channels: 1, sampleRate: 48000, queryPlaybackTime: 1))
-        }
+        XCTAssertNil(MPVNativeAudioMeter.decodeFrame(values, channels: 1))
         for channels in [0, 2, 9, Int.max] {
-            XCTAssertNil(MPVNativeAudioMeter.decode(original, channels: channels, sampleRate: 48000, queryPlaybackTime: 1))
+            XCTAssertNil(MPVNativeAudioMeter.decodeFrame(original, channels: channels))
         }
         values = original; values["lavfi.astats.2.Peak_level"] = "-6"
-        XCTAssertNil(MPVNativeAudioMeter.decode(values, channels: 1, sampleRate: 48000, queryPlaybackTime: 1))
-        XCTAssertNil(MPVNativeAudioMeter.decode(original, channels: 1, sampleRate: 192000, queryPlaybackTime: 1))
-        XCTAssertNil(MPVNativeAudioMeter.decode(original, channels: 1, sampleRate: 48000, queryPlaybackTime: .nan))
+        XCTAssertNil(MPVNativeAudioMeter.decodeFrame(values, channels: 1))
+    }
+
+    func testFilterRequestsTimestampedHistory() {
+        XCTAssertTrue(MPVNativeAudioMeter.filter.hasPrefix("@\(MPVNativeAudioMeter.label):lavfi=graph=["))
+        XCTAssertTrue(MPVNativeAudioMeter.filter.hasSuffix("]:amc-meter-history=yes"))
+        XCTAssertTrue(MPVNativeAudioMeter.filter.contains("astats=metadata=1:reset=1:"),
+                      "Per-frame astats; the history aggregates frames")
     }
 
     func testNodeMapCopiesStringsAndRejectsDuplicatesTypesAndBounds() {
@@ -164,8 +157,9 @@ final class MPVNativeAudioMeterSessionTests: XCTestCase {
             lock.withLock { counts[1] += 1 }
             // Deliberately return even after cancellation to test token rejection.
             try? await Task.sleep(for: .milliseconds(80))
-            return .init(samplePeaks: [-6, -6], rms: [-9, -9], truePeaks: [-6, -6],
-                         momentary: -6, shortTerm: -6, filterFrames: 144000, queryPlaybackTime: 3)
+            return .init(samplePeaks: [-6, -6], rms: [-9, -9], maximumSamplePeaks: [-6, -6],
+                         truePeaks: [-6, -6], momentary: -6, shortTerm: -6, filterFrames: 144000,
+                         measuredUntil: 3, frameCount: 1, historyRestarts: 0)
         }
         func endNativeAudioProbe(owner: UUID) { lock.withLock { counts[2] += 1 } }
     }

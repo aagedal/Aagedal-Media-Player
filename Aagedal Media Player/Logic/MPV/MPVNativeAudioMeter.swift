@@ -6,24 +6,46 @@ import Foundation
 import Libavfilter
 import Libmpv
 
-/// Development comparison probe, never a source-QC snapshot. af-metadata has
-/// no frame timestamp and returns only the last frame. Cumulative filter peaks
-/// survive missed polls; RMS is explicitly the average since filter reset.
+/// Development comparison probe, never a source-QC snapshot. MPVKit's
+/// `amc-meter-history` transport timestamps every filter output frame, so a
+/// reading covers exactly the frames the audio clock has reached since the
+/// previous one; `MPVNativeAudioMeterHistory` detects lost frames.
 nonisolated enum MPVNativeAudioMeter {
     static let label = "amp-native-audio-probe"
-    static let filter = "@\(label):lavfi=[ebur128=metadata=1:peak=true:framelog=verbose,"
-        + "astats=metadata=1:reset=0:measure_perchannel=Peak_level+RMS_level:measure_overall=Number_of_samples]"
+    static let filter = "@\(label):lavfi=graph=[ebur128=metadata=1:peak=true:framelog=verbose,"
+        + "astats=metadata=1:reset=1:measure_perchannel=Peak_level+RMS_level:measure_overall=none]"
+        + ":amc-meter-history=yes"
+    static let historyKey = "amc-meter-history-v1"
 
     struct Reading: Equatable, Sendable {
+        /// Maximum over this reading's frames.
         let samplePeaks: [Double]
+        /// Over this reading's frames.
         let rms: [Double]
-        /// Nil means below the metadata's linear-amplitude rounding precision.
+        /// Every frame measured since the filter started.
+        let maximumSamplePeaks: [Double]
+        /// ebur128's maxima since the filter started. Nil means below the
+        /// metadata's linear-amplitude rounding precision.
         let truePeaks: [Double?]
         let momentary: Double?
         let shortTerm: Double?
+        /// Samples per channel measured since the filter started.
         let filterFrames: Int64
-        /// Player clock at query time, NOT the PTS of these measurements.
-        let queryPlaybackTime: Double
+        /// Media time at which the newest included frame ends.
+        let measuredUntil: Double
+        /// Filter output frames aggregated into this reading.
+        let frameCount: Int
+        /// Filter restarts after lost or discontinuous history.
+        let historyRestarts: Int
+    }
+
+    /// One filter output frame's own metadata (astats resets every frame).
+    struct FrameMeasurement: Equatable, Sendable {
+        let samplePeaks: [Double]
+        let rms: [Double]
+        let truePeaks: [Double?]
+        let momentary: Double
+        let shortTerm: Double
     }
 
     static var filtersAvailable: Bool {
@@ -54,13 +76,8 @@ nonisolated enum MPVNativeAudioMeter {
         return result
     }
 
-    static func decode(_ values: [String: String], channels: Int, sampleRate: Int,
-                       queryPlaybackTime: Double) -> Reading? {
-        guard (1...8).contains(channels), [44_100, 48_000, 96_000].contains(sampleRate),
-              queryPlaybackTime.isFinite, queryPlaybackTime >= 0,
-              let countText = values["lavfi.astats.Overall.Number_of_samples"],
-              let count = Double(countText), count.isFinite, count > 0,
-              count.rounded() == count, count < Double(Int64.max) else { return nil }
+    static func decodeFrame(_ values: [String: String], channels: Int) -> FrameMeasurement? {
+        guard (1...8).contains(channels) else { return nil }
         let peakKeys = values.keys.filter {
             $0.hasPrefix("lavfi.astats.") && $0.hasSuffix(".Peak_level") && !$0.contains(".Overall.")
         }
@@ -83,20 +100,28 @@ nonisolated enum MPVNativeAudioMeter {
             truePeaks.append(amplitude == 0 ? nil : 20 * log10(amplitude))
         }
         guard let momentary = db("lavfi.r128.M"), let shortTerm = db("lavfi.r128.S") else { return nil }
-        return Reading(samplePeaks: peaks, rms: rms, truePeaks: truePeaks,
-                       momentary: count >= Double(sampleRate) * 0.4 ? momentary : nil,
-                       shortTerm: count >= Double(sampleRate) * 3 ? shortTerm : nil,
-                       filterFrames: Int64(count), queryPlaybackTime: queryPlaybackTime)
+        return FrameMeasurement(samplePeaks: peaks, rms: rms, truePeaks: truePeaks,
+                                momentary: momentary, shortTerm: shortTerm)
     }
 
     /// Used only on the owning MPVPlayer queue (or an isolated test context).
-    static func read(_ context: OpaquePointer, channels: Int, sampleRate: Int) -> Reading? {
+    /// Reinstalls the filter when `history` reports lost frames. The clock is
+    /// mpv's audio playback position, falling back to `time-pos` without one.
+    static func read(_ context: OpaquePointer, history: inout MPVNativeAudioMeterHistory) -> Reading? {
+        if history.needsFilterRestart {
+            _ = command(context, ["af", "remove", "@\(label)"])
+            guard command(context, ["af", "pre", filter]) else { return nil }
+            history.restart()
+            return nil
+        }
         var node = mpv_node()
         defer { mpv_free_node_contents(&node) }
-        var time: Double = 0
-        guard mpv_get_property(context, "time-pos", MPV_FORMAT_DOUBLE, &time) >= 0,
-              mpv_get_property(context, "af-metadata/\(label)", MPV_FORMAT_NODE, &node) >= 0,
-              let values = metadata(node) else { return nil }
-        return decode(values, channels: channels, sampleRate: sampleRate, queryPlaybackTime: time)
+        guard mpv_get_property(context, "af-metadata/\(label)", MPV_FORMAT_NODE, &node) >= 0,
+              let values = metadata(node), let json = values[historyKey] else { return nil }
+        history.ingest(json: json)
+        var clock: Double = 0
+        guard mpv_get_property(context, "audio-pts", MPV_FORMAT_DOUBLE, &clock) >= 0
+                || mpv_get_property(context, "time-pos", MPV_FORMAT_DOUBLE, &clock) >= 0 else { return nil }
+        return history.reading(at: clock)
     }
 }
