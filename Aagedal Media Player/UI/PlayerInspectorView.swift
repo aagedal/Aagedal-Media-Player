@@ -106,5 +106,9 @@ struct PlayerInspectorView: View {
         }
         .frame(minWidth: 280, idealWidth: 320)
         .onExitCommand { isPresented = false }
+        // Owned here so the reset also happens while the Metadata tab is shown.
+        .onChange(of: comparison.isActive) { _, active in
+            if !active { selectsSecondary = false }
+        }
     }
 }

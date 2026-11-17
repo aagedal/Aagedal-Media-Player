@@ -83,11 +83,29 @@ final class MPVPlayer: NSObject, ObservableObject, MPVNativeAudioProbeClient, @u
     }
 
     /// Adds and selects a subtitle file for the loaded media. Returns its mpv track ID.
-    func addExternalSubtitle(_ url: URL) -> Int32? {
-        guard isFileLoaded, command("sub-add", args: [url.path, "select"]) else { return nil }
-        if !externalSubtitlePaths.contains(url.path) { externalSubtitlePaths.append(url.path) }
-        let id = currentSubtitleTrackIndex
-        return id > 0 ? id : nil
+    /// mpv reads and parses the file inside `sub-add`, so the command waits on
+    /// `queue` rather than on the main actor for a large or network file.
+    func addExternalSubtitle(_ url: URL) async -> Int32? {
+        guard isFileLoaded else { return nil }
+        let path = url.path
+        let generation = mediaLoadGeneration
+        let trackID: Int64? = await withCheckedContinuation { continuation in
+            queue.async { [weak self] in
+                guard let self, let context = self.mpv,
+                      MPVNativeAudioMeter.command(context, ["sub-add", path, "select"]) else {
+                    continuation.resume(returning: nil)
+                    return
+                }
+                var sid = Int64()
+                let status = mpv_get_property(context, MPVProperty.sid, MPV_FORMAT_INT64, &sid)
+                continuation.resume(returning: status >= 0 && sid > 0 ? sid : nil)
+            }
+        }
+        // A file loaded meanwhile replaced the track list; its own re-add
+        // would otherwise pick up a subtitle meant for the previous file.
+        guard let trackID, mediaLoadGeneration == generation, isFileLoaded else { return nil }
+        if !externalSubtitlePaths.contains(path) { externalSubtitlePaths.append(path) }
+        return Int32(trackID)
     }
 
     /// Uses mpv's string parser so integer and float properties need no format matching.
@@ -109,9 +127,8 @@ final class MPVPlayer: NSObject, ObservableObject, MPVNativeAudioProbeClient, @u
     /// Reads a property's current libmpv string form after queued writes.
     nonisolated func propertyStringSnapshot(_ name: String) -> String? {
         queue.sync {
-            guard let context = mpv, let value = mpv_get_property_string(context, name) else { return nil }
-            defer { mpv_free(value) }
-            return String(cString: value)
+            guard let context = mpv else { return nil }
+            return stringPropertyLocked(name, context: context)
         }
     }
 
@@ -995,9 +1012,11 @@ final class MPVPlayer: NSObject, ObservableObject, MPVNativeAudioProbeClient, @u
         }
     }
 
-    /// MPEG-TS programs and HLS variants switch tracks in place; Matroska
-    /// editions reload the file from its start.
+    /// MPEG-TS programs and HLS variants switch tracks in place. A Matroska
+    /// edition reloads the file, which would start it over, so the reload
+    /// returns to the current time and Compare Mode's source B stays aligned.
     func selectEdition(id: Int) {
+        pendingSeekAfterLoad = max(0, playbackTimeSnapshot() ?? timePos)
         commandAsync("set", args: [MPVProperty.edition, String(id)])
     }
 
@@ -1130,8 +1149,10 @@ final class MPVPlayer: NSObject, ObservableObject, MPVNativeAudioProbeClient, @u
                         // touching `pause`, so END_FILE's reset is never undone
                         // by a property change.
                         self.isPlaying = !self.getFlag(MPVProperty.pause)
+                        // Queued so parsing a large or network file never
+                        // blocks the main actor.
                         for path in self.externalSubtitlePaths {
-                            self.command("sub-add", args: [path, "auto"])
+                            self.commandAsync("sub-add", args: [path, "auto"])
                         }
                         if self.pendingSeekAfterLoad > 0 {
                             self.seek(to: self.pendingSeekAfterLoad)
@@ -1521,6 +1542,13 @@ final class MPVPlayer: NSObject, ObservableObject, MPVNativeAudioProbeClient, @u
         return max(0, value)
     }
 
+    /// Reads a property's string form while already serialized on mpv's queue.
+    private nonisolated func stringPropertyLocked(_ name: String, context: OpaquePointer) -> String? {
+        guard let value = mpv_get_property_string(context, name) else { return nil }
+        defer { mpv_free(value) }
+        return String(cString: value)
+    }
+
     // MARK: - MPV Commands & Properties
 
     private func commandString(_ cmd: String) {
@@ -1701,6 +1729,12 @@ extension MPVPlayer {
             }
             guard nativeScopesCapability == true else {
                 return .failure(nativeScopesCapabilityFailure ?? MPVScopeFailure(reason: .commandUnavailable))
+            }
+            if let failure = MPVScopePlots.sourceColorFailure(
+                primaries: stringPropertyLocked(MPVProperty.videoParamsPrimaries, context: context),
+                transfer: stringPropertyLocked(MPVProperty.videoParamsGamma, context: context)
+            ) {
+                return .failure(failure)
             }
             var track: Int64 = 0
             let trackStatus = mpv_get_property(context, "vid", MPV_FORMAT_INT64, &track)

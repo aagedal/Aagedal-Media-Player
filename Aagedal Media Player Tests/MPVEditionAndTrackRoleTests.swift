@@ -101,6 +101,56 @@ final class MPVEditionAndTrackRoleTests: XCTestCase {
         XCTAssertTrue(playing, "The reload resumes playing and the controller reports it")
     }
 
+    func testMatroskaEditionReloadKeepsThePlayhead() async throws {
+        let url = try await makeEditionsFile()
+        let controller = try await makePlayingController(url: url)
+        defer { controller.teardown() }
+
+        let listed = await waitUntil { controller.editionOptions.count == 2 && controller.currentEditionID == 0 }
+        XCTAssertTrue(listed, "Editions \(controller.editionOptions)")
+        controller.pause()
+        controller.seekTo(3)
+        let positioned = await waitUntil {
+            !controller.isPlaying && abs((controller.mpvPlayer?.timePos ?? 0) - 3) < 0.1
+        }
+        XCTAssertTrue(positioned, "Position \(String(describing: controller.mpvPlayer?.timePos))")
+
+        controller.selectEdition(id: 1)
+        // The picker shows the choice while mpv reloads the file.
+        XCTAssertEqual(controller.displayedEditionID, 1)
+        let switched = await waitUntil {
+            controller.currentEditionID == 1 && controller.chapterOptions.map(\.title) == ["Alternate"]
+        }
+        XCTAssertTrue(switched, "Chapters after the reload: \(controller.chapterOptions)")
+        let returned = await waitUntil { abs((controller.mpvPlayer?.timePos ?? 0) - 3) < 0.1 }
+        XCTAssertTrue(returned, "Position after the reload \(String(describing: controller.mpvPlayer?.timePos))")
+        XCTAssertFalse(controller.isPlaying, "A paused reload stays paused")
+    }
+
+    func testBackendRebuildKeepsTheChosenProgramUntilTheSelectionResets() async throws {
+        let url = try await makeProgramsFile()
+        let controller = try await makePlayingController(url: url)
+        defer { controller.teardown() }
+
+        let listed = await waitUntil { controller.editionOptions.count == 2 && controller.currentEditionID != nil }
+        XCTAssertTrue(listed, "Editions: \(controller.editionOptions)")
+        let first = try XCTUnwrap(controller.currentEditionID)
+        let target = try XCTUnwrap(controller.editionOptions.first { $0.id != first })
+        controller.selectEdition(id: target.id)
+        let switched = await waitUntil { controller.currentEditionID == target.id }
+        XCTAssertTrue(switched)
+
+        // A geometry reload or Compare Mode rebuild keeps the selection.
+        try await rebuild(controller, resetAudioSelection: false)
+        let kept = await waitUntil { controller.currentEditionID == target.id }
+        XCTAssertTrue(kept, "Program after a rebuild: \(String(describing: controller.currentEditionID))")
+
+        try await rebuild(controller, resetAudioSelection: true)
+        let reset = await waitUntil { controller.currentEditionID == first }
+        XCTAssertTrue(reset, "Program after a reset: \(String(describing: controller.currentEditionID))")
+        XCTAssertNil(controller.selectedEditionID)
+    }
+
     func testLiveLoupeOpensAndFollowsTheChosenProgram() async throws {
         let controller = try await makePlayingController(url: try await makeProgramsFile())
         defer { controller.teardown() }
@@ -199,6 +249,18 @@ final class MPVEditionAndTrackRoleTests: XCTestCase {
         session.attachSurface(surface.metalLayer)
         session.start(controller: controller)
         return session
+    }
+
+    private func rebuild(_ controller: PlayerController, resetAudioSelection: Bool) async throws {
+        let previous = controller.mpvPlayer
+        controller.preparePlayback(startTime: 0, resetAudioSelection: resetAudioSelection)
+        let constructed = await waitUntil { controller.mpvPlayer != nil && controller.mpvPlayer !== previous }
+        XCTAssertTrue(constructed)
+        let mpv = try XCTUnwrap(controller.mpvPlayer)
+        mpv.isMuted = true
+        attachSurface(to: mpv)
+        let ready = await waitUntil { controller.isReady }
+        XCTAssertTrue(ready)
     }
 
     private func makePlayingController(url: URL) async throws -> PlayerController {

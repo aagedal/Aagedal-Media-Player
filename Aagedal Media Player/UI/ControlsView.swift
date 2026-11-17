@@ -1076,7 +1076,7 @@ struct ControlsView: View {
                 Button(action: { controller.selectEdition(id: option.id) }) {
                     HStack {
                         Text(option.title)
-                        if option.id == controller.currentEditionID {
+                        if option.id == controller.displayedEditionID {
                             Image(systemName: "checkmark")
                         }
                     }
@@ -1149,7 +1149,7 @@ struct ControlsView: View {
     }
 
     private var selectedEditionTitle: String {
-        controller.editionOptions.first { $0.id == controller.currentEditionID }?.title ?? "None"
+        controller.editionOptions.first { $0.id == controller.displayedEditionID }?.title ?? "None"
     }
 
     private var selectedChapterTitle: String {

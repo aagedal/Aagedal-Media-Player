@@ -107,6 +107,20 @@ final class MPVScopePlotsTests: XCTestCase {
         }
     }
 
+    func testUnsupportedSourceColorSkipsNativeAnalysis() {
+        for (primaries, transfer) in [("bt.709", "bt.1886"), ("bt.2020", "pq"), ("bt.2020", "hlg")] {
+            XCTAssertNil(MPVScopePlots.sourceColorFailure(primaries: primaries, transfer: transfer),
+                         "\(primaries) \(transfer)")
+        }
+        // Unavailable parameters are left to the provider's own report.
+        XCTAssertNil(MPVScopePlots.sourceColorFailure(primaries: nil, transfer: nil))
+        for (primaries, transfer) in [("bt.601-525", "bt.1886"), ("bt.601-625", "bt.1886"),
+                                      ("display-p3", "srgb"), ("bt.709", "linear"), ("bt.601-625", nil)] {
+            XCTAssertEqual(MPVScopePlots.sourceColorFailure(primaries: primaries, transfer: transfer)?.reason,
+                           .unsupportedSourceColor, "\(primaries) \(String(describing: transfer))")
+        }
+    }
+
     func testProtocol2ColorNamesMapToAppIdentifiers() throws {
         let accepted: [(String, String, Double, Bool, String, String)] = [
             ("bt.709", "bt.1886", 100, false, "bt709", "bt1886"),
