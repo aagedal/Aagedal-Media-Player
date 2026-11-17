@@ -2,6 +2,28 @@
 
 All notable changes to Aagedal Media Player.
 
+## [2.2.0] — 2026-11-17
+
+### Added
+- Switch between MPEG-TS programs, HLS variants and Matroska editions from the transport bar or the Playback inspector. Audio, subtitle and chapter menus follow the selection, and the live loupe shows the same one.
+- Label audio tracks flagged as Commentary, Original or Audio Description.
+- Video, Audio and Subtitles tabs in the playback inspector: per-file deinterlacing, brightness, contrast, saturation, gamma and hue, subtitle delay, scale and position, and sidecar subtitle files.
+
+### Changed
+- Updated the MPV playback engine to mpv 0.42. Native scopes compute only the waveform or parade on screen, and also accept BT.2020 SDR and Dolby Vision PQ.
+- Backward playback of hardware-decoded video now stays within its memory limit. A 1-second GOP of UHD 10-bit 60p still plays backward at full frame rate on 16 GB Macs.
+- Updated the bundled FFmpeg to a new signed and notarized 9.0.2 full build.
+
+### Fixed
+- Fragmented MP4 and MOV files, such as growing-file recordings, now show their full duration, frame count, frame rate and bitrate instead of about one second.
+- MXF metadata reads much faster and identifies more codecs, including XAVC Long, XDCAM, ProRes, DNxHD/DNxHR and AVC-Intra, and reports XAVC 1080p as 1920×1080.
+- ProRes 4444 without an alpha channel is no longer reported as having one.
+- Switching a Matroska edition keeps the playhead, so Compare Mode stays aligned, and a playback reload keeps the selected program or edition.
+- Switching program or edition clears combined-mono monitoring and channel mutes that belonged to the previous tracks.
+- Adding or reloading a large or network subtitle file no longer freezes the window.
+- Native scopes skip their GPU analysis for SD (BT.601) and other color spaces they don't plot, instead of computing it before falling back.
+- The playback inspector returns to Source A when Compare Mode ends while the Metadata tab is open.
+
 ## [2.1.1] — 2026-10-26
 
 ### Changed
