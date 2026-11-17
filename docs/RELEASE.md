@@ -228,15 +228,19 @@ The ZIP is the existing release artifact; do not rebuild it or re-sign it.
 
 ## Updating ffmpeg
 
-The bundled FFmpeg is the 9.0.2 full arm64 build supplied on 2026-10-13 in
-`ffmpeg-9.0.2-full-signed.zip` from the local `ffmpeg-apple-silicon` build
-worktree `t3-8b3606d8`. Its SHA-256 is
-`ec3d81944809bf5d0173edb77b8dbf8eaeabf2388289812ce87b3f90fbe410c6`.
-The extracted binary passes strict Developer ID verification for
-Truls Aagedal (`3R5QGG9DW6`), Hardened Runtime, secure timestamp, and the
-notarized-code requirement. The supplied notarization receipt records
-accepted submission `d801a829-9a76-492e-9712-bad727ef8358`; its FFmpeg code hash
-is `e57dfafe46e4a3cece0514eb1d3a903e63e9fa73`.
+The bundled FFmpeg is the 9.0.2 full arm64 build of 2026-11-16, supplied on
+2026-11-17 in `ffmpeg-9.0.2-full-signed.zip` from the local
+`ffmpeg-apple-silicon` build worktree `t3-movenc-h264-fiel-32f17b0c84615371`.
+Besides the earlier yadif_videotoolbox and whisper corrections, it carries the
+libopenjpeg DCI/IMF encoder options and writes the MOV `fiel` atom for
+interlaced H.264. Its SHA-256 is
+`18c8235278b7b478377c2c4ad04824f91e8867c879cb63827352640004e538af`.
+The extracted binary (identifier `no.aagedal.ffmpeg`) passes strict
+Developer ID verification for Truls Aagedal (`3R5QGG9DW6`), Hardened Runtime,
+secure timestamp, and the notarized-code requirement. The supplied
+notarization receipt records accepted submission
+`33ddc0e8-72c0-403d-a193-12ba29052d27`; its FFmpeg code hash is
+`d19ca085d8c2bca39b5d3da845606f4f5ce4ecdb`.
 Run Developer ID checks with access to macOS signing services: the restricted
 filesystem sandbox can report an unavailable authority and an invalid signature.
 

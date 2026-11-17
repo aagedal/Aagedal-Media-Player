@@ -13,6 +13,7 @@ nonisolated enum MPVScopeFailureReason: String, Sendable {
     case capabilityLookupFailed, capabilityMalformed, commandUnavailable
     case initialTrackLookupFailed, commandFailed, finalTrackLookupFailed, trackChanged
     case invalidMap, invalidProtocol, invalidDimensions, invalidTrack, invalidFormat
+    case unsupportedSourceColor
     case invalidTimestamp, invalidColor, invalidWaveform, invalidParade, invalidVectorscope
     case imageConstructionFailed
 }
@@ -66,6 +67,16 @@ nonisolated struct MPVScopePlots: Sendable {
     static let primariesNames = ["bt.709": "bt709", "bt.2020": "bt2020"]
     static let transferNames = ["srgb": "srgb", "bt.1886": "bt1886", "gamma2.2": "gamma22",
                                 "gamma2.4": "gamma24", "pq": "pq", "hlg": "hlg"]
+
+    /// Declines a source whose `video-params` color has no mapping (SD BT.601,
+    /// Display P3, linear, ...) before the native analysis runs, so it does not
+    /// compute plots that `decodeResult` rejects ahead of the screenshot
+    /// fallback. Unavailable parameters are left to the provider.
+    static func sourceColorFailure(primaries: String?, transfer: String?) -> MPVScopeFailure? {
+        let unsupported = primaries.map { primariesNames[$0] == nil } == true
+            || transfer.map { transferNames[$0] == nil } == true
+        return unsupported ? MPVScopeFailure(reason: .unsupportedSourceColor) : nil
+    }
 
     static func fields(_ node: mpv_node) -> [String: mpv_node]? {
         guard node.format == MPV_FORMAT_NODE_MAP, let list = node.u.list,

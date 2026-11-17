@@ -99,8 +99,11 @@ final class PlayerController: ObservableObject {
 
     /// Adds a sidecar subtitle file to the loaded media and selects it.
     @discardableResult
-    func addExternalSubtitle(_ url: URL) -> Bool {
-        guard useMPV, let mpvPlayer, let trackID = mpvPlayer.addExternalSubtitle(url) else { return false }
+    func addExternalSubtitle(_ url: URL) async -> Bool {
+        guard useMPV, let mpvPlayer else { return false }
+        let myPrepID = preparationID
+        guard let trackID = await mpvPlayer.addExternalSubtitle(url),
+              preparationID == myPrepID, self.mpvPlayer === mpvPlayer else { return false }
         if !externalSubtitleURLs.contains(url) { externalSubtitleURLs.append(url) }
         buildMPVSubtitleTrackOptions()
         if let option = subtitleTrackOptions.first(where: { $0.trackId == trackID }) {
@@ -142,6 +145,12 @@ final class PlayerController: ObservableObject {
     var chapterOptions: [ChapterOption] { trackSelection.chapterOptions }
     var editionOptions: [TrackSelectionController.EditionOption] { trackSelection.editionOptions }
     @Published private(set) var currentEditionID: Int?
+    /// The user's program, variant or edition choice. It outlives backend
+    /// rebuilds of the same file and is cleared with the audio selection.
+    @Published private(set) var selectedEditionID: Int?
+    /// The choice while mpv switches to it (a Matroska edition reload reports
+    /// no edition in between), otherwise the edition mpv plays.
+    var displayedEditionID: Int? { selectedEditionID ?? currentEditionID }
     var selectedAudioTrackOrderIndex: Int { trackSelection.selectedAudioTrackOrderIndex }
     var selectedSubtitleTrackOrderIndex: Int { trackSelection.selectedSubtitleTrackOrderIndex }
     @Published private(set) var monoPlaybackProgramme: MonoPlaybackProgramme?
@@ -722,7 +731,8 @@ final class PlayerController: ObservableObject {
             startTime: startTime,
             volume: volume,
             isMuted: effectiveIsMuted,
-            correctsReflection: correctsReflection
+            correctsReflection: correctsReflection,
+            edition: selectedEditionID
         )
         backendAdapter = backend
         backend.setAudioChannelRouting(audioChannelRouting)
@@ -953,6 +963,8 @@ final class PlayerController: ObservableObject {
                 // A Matroska edition reload reports no edition in between,
                 // so compare against the last edition actually shown.
                 if let editionID {
+                    // mpv may fall back from a choice it cannot open.
+                    if self.selectedEditionID != nil { self.selectedEditionID = editionID }
                     if let previous = lastEditionID, previous != editionID {
                         self.trackSelection.reset(preservingSelections: false)
                         self.refreshAudioTrackOptions(playerItem: nil)
@@ -1720,8 +1732,14 @@ final class PlayerController: ObservableObject {
     }
 
     func selectEdition(id: Int) {
-        guard useMPV, id != currentEditionID,
+        guard useMPV, id != displayedEditionID,
               editionOptions.contains(where: { $0.id == id }) else { return }
+        // Track IDs belong to one program or edition. Drop the mono programme
+        // before the switch, since its filter graph names the current tracks.
+        clearMonoPlaybackProgramme()
+        audioChannelRoutingByTrackID.removeAll()
+        updateEffectiveAudioChannelRouting()
+        selectedEditionID = id
         mpvPlayer?.selectEdition(id: id)
     }
 
@@ -1873,6 +1891,7 @@ final class PlayerController: ObservableObject {
         currentEditionID = nil
         removeMPVLoopObserver()
         if resetAudioSelection {
+            selectedEditionID = nil
             showAllMonoWaveforms = UserDefaults.standard.value(for: AppSettings.showAllMonoWaveforms)
             audioChannelRoutingByTrackID.removeAll()
             sessionAudioChannelRouting = nil

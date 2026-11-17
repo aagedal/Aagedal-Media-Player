@@ -103,7 +103,8 @@ final class PlaybackPresentationSettingsTests: XCTestCase {
             try await Task.sleep(for: .milliseconds(10))
         }
         XCTAssertTrue(player.isFileLoaded)
-        let trackID = try XCTUnwrap(player.addExternalSubtitle(subtitleURL))
+        let added = await player.addExternalSubtitle(subtitleURL)
+        let trackID = try XCTUnwrap(added)
         XCTAssertEqual(player.currentSubtitleTrackIndex, trackID)
         XCTAssertEqual(player.externalSubtitlePaths, [subtitleURL.path])
 

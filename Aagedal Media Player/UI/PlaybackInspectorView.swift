@@ -52,9 +52,6 @@ struct PlaybackInspectorView: View {
             .id(ObjectIdentifier(selectedPlayer))
         }
         .accessibilityIdentifier("playback-inspector")
-        .onChange(of: comparison.isActive) { _, active in
-            if !active { selectsSecondary = false }
-        }
     }
 }
 
@@ -182,8 +179,9 @@ private struct PlaybackGeneralSettingsView: View {
             }
             if !primary.editionOptions.isEmpty {
                 Section("Edition") {
+                    // Every tag is a listed edition, also while one loads.
                     Picker("Edition", selection: Binding(
-                        get: { primary.currentEditionID ?? -1 },
+                        get: { primary.displayedEditionID ?? primary.editionOptions[0].id },
                         set: { primary.selectEdition(id: $0) }
                     )) {
                         ForEach(primary.editionOptions) { option in
@@ -191,7 +189,7 @@ private struct PlaybackGeneralSettingsView: View {
                         }
                     }
                     .accessibilityIdentifier("playback-inspector-edition")
-                    InspectorFootnote("Programs in transport streams, variants in HLS streams and editions in Matroska files. Switching a Matroska edition restarts playback.")
+                    InspectorFootnote("Programs in transport streams, variants in HLS streams and editions in Matroska files. Switching a Matroska edition reloads the file at the current time.")
                 }
             }
             if !primary.chapterOptions.isEmpty {
@@ -567,7 +565,8 @@ private struct SubtitleSettingsView: View {
         panel.allowedContentTypes = Self.fileExtensions.compactMap { UTType(filenameExtension: $0) }
         panel.directoryURL = controller.mediaItem?.url.deletingLastPathComponent()
         guard panel.runModal() == .OK, let url = panel.url else { return }
-        if !controller.addExternalSubtitle(url) {
+        Task {
+            guard await !controller.addExternalSubtitle(url) else { return }
             let alert = NSAlert()
             alert.messageText = "The subtitle file couldn't be added."
             alert.informativeText = "mpv could not read “\(url.lastPathComponent)” as subtitles."
