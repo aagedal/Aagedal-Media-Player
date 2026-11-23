@@ -2,6 +2,11 @@
 
 All notable changes to Aagedal Media Player.
 
+## [2.2.1] — 2026-11-23
+
+### Fixed
+- Prevent the Mac display from dimming or sleeping while video is playing across both MPV and AVFoundation playback, reverse playback, Compare Mode and multiple windows. Audio-only playback still lets the display dim while keeping the system awake, and sleep assertions release immediately on pause, end of file or window close.
+
 ## [2.2.0] — 2026-11-17
 
 ### Added
