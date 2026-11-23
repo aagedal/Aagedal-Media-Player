@@ -131,13 +131,18 @@ final class PlayerController: ObservableObject {
         didSet { publishLiveAudioMeterClock() }
     }
     @Published private(set) var isPlaying: Bool = false {
-        didSet { publishLiveAudioMeterTransport() }
+        didSet {
+            publishLiveAudioMeterTransport()
+            updateSleepAssertion()
+        }
     }
     @Published private(set) var currentPlaybackSpeed: Float = 1.0 {
         didSet { publishLiveAudioMeterTransport() }
     }
     @Published private(set) var playbackLoopCount: UInt64 = 0
-    @Published private(set) var isReversing: Bool = false
+    @Published private(set) var isReversing: Bool = false {
+        didSet { updateSleepAssertion() }
+    }
     private let trackSelection = TrackSelectionController()
     private var trackSelectionCancellable: AnyCancellable?
     var audioTrackOptions: [AudioTrackOption] { trackSelection.audioTrackOptions }
@@ -279,6 +284,7 @@ final class PlayerController: ObservableObject {
                 waveformProgrammeLoudness = nil
                 waveformUsesProgrammeLoudness = false
             }
+            updateSleepAssertion()
         }
     }
     /// Completed offline measurements survive inspector/panel closure, but never
@@ -408,11 +414,17 @@ final class PlayerController: ObservableObject {
     }
 
     private let logger = Logger(subsystem: "com.aagedal.MediaPlayer", category: "PlayerController")
+    private let sleepAssertionID = UUID()
+    private let sleepAssertionCoordinator: PlaybackSleepAssertionCoordinator
 
-    init(proResRAWDetector: ProResRAWDetector? = nil) {
+    init(
+        proResRAWDetector: ProResRAWDetector? = nil,
+        sleepAssertionCoordinator: PlaybackSleepAssertionCoordinator = .shared
+    ) {
         self.proResRAWDetector = proResRAWDetector ?? { url, metadata in
             await PlayerController.isProResRAWFile(url: url, metadata: metadata)
         }
+        self.sleepAssertionCoordinator = sleepAssertionCoordinator
         let defaults = UserDefaults.standard
         // Volume starts at unity gain for each player session.
         isMuted = defaults.value(for: AppSettings.playbackMuted)
@@ -422,6 +434,25 @@ final class PlayerController: ObservableObject {
         trackSelectionCancellable = trackSelection.objectWillChange.sink { [weak self] in
             self?.objectWillChange.send()
         }
+    }
+
+    deinit {
+        let coordinator = sleepAssertionCoordinator
+        let sourceID = sleepAssertionID
+        Task { @MainActor in
+            coordinator.removeSource(sourceID)
+        }
+    }
+
+    private func updateSleepAssertion() {
+        let level = PlaybackSleepAssertionLevel.required(
+            isPlaying: isPlaying,
+            isReversing: isReversing,
+            hasMediaItem: mediaItem != nil,
+            presentationKind: mediaItem?.presentationKind,
+            hasVideoStream: mediaItem?.hasVideoStream ?? false
+        )
+        sleepAssertionCoordinator.update(sourceID: sleepAssertionID, level: level)
     }
 
     // MARK: - Media Item Management
