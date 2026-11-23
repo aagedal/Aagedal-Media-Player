@@ -431,6 +431,7 @@ final class MPVPlayer: NSObject, ObservableObject, MPVNativeAudioProbeClient, @u
 
         #if os(macOS)
         checkError(mpv_set_option_string(mpv, "input-media-keys", "no"), context: "input-media-keys")
+        checkError(mpv_set_option_string(mpv, "stop-screensaver", "no"), context: "stop-screensaver")
         #endif
 
         let initializationStatus = mpv_initialize(mpv)
