@@ -26,6 +26,25 @@
         -->
 
         <item>
+            <title>Version 2.2.1</title>
+            <pubDate>Tue, 24 Nov 2026 00:52:25 +0100</pubDate>
+            <sparkle:version>169</sparkle:version>
+            <sparkle:shortVersionString>2.2.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <enclosure
+                url="https://github.com/aagedal/Aagedal-Media-Player/releases/download/2.2.1/Aagedal_Media_Player_2-2-1.zip"
+                length="50502327"
+                type="application/octet-stream"
+                sparkle:edSignature="HMUv2RNIH1nj+s9mS1bqUKI/sDamS+dtuovVDbt5WklIKdLvftrh+cxREhyqGPFBEkOcne3TvNj0cKJ0YQliCg==" />
+            <description><![CDATA[
+<h3>Fixed</h3>
+<ul>
+<li>Prevent the Mac display from dimming or sleeping while video is playing across both MPV and AVFoundation playback, reverse playback, Compare Mode and multiple windows. Audio-only playback still lets the display dim while keeping the system awake, and sleep assertions release immediately on pause, end of file or window close.</li>
+</ul>
+            ]]></description>
+        </item>
+
+        <item>
             <title>Version 2.2.0</title>
             <pubDate>Tue, 17 Nov 2026 22:53:37 +0100</pubDate>
             <sparkle:version>168</sparkle:version>
