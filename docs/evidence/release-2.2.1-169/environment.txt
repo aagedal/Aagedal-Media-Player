@@ -1,0 +1,10 @@
+sourceCommit=928e488923f46a502964b20fb0805a7f9f9d21af
+packageResolvedSHA256=2daaf91042eed77e6889a83422b5d9440057d4dc9e26d4b4b326886ce40cb8c0
+packageCache=/Users/truls.aagedal/Library/Developer/Xcode/DerivedData/Aagedal_Media_Player-aommcajwehgpvmfdxanwezdbprhg/SourcePackages
+startedAt=2026-11-23T23:05:30Z
+powerStartedAtLocal=2026-11-24 00:05:30
+host=macOS 27.2.1 (26B131)
+Xcode 27.2
+Build version 27B52
+completedAt=2026-11-23T23:11:28Z
+status=passed
