@@ -23,6 +23,8 @@ final class SettingsNavigationTests: XCTestCase {
         XCTAssertTrue(SettingsSearchIndex.search("v210").contains { $0.category == .cleanfeed })
         XCTAssertTrue(SettingsSearchIndex.search("4K limit").contains { $0.id == "cleanfeed.resolution" })
         XCTAssertTrue(SettingsSearchIndex.search("HDR PQ").contains { $0.id == "cleanfeed.colorspace" })
+        XCTAssertTrue(SettingsSearchIndex.search("1080i").contains { $0.id == "cleanfeed.scanmode" })
+        XCTAssertTrue(SettingsSearchIndex.search("interlaced").contains { $0.id == "cleanfeed.scanmode" })
         XCTAssertTrue(SettingsSearchIndex.search("SMPTE").contains { $0.id == "cleanfeed.timecode" })
     }
 

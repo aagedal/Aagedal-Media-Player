@@ -83,6 +83,7 @@ nonisolated enum AppSettings {
     // External Cleanfeed (CoreMediaIO SDI/HDMI output)
     static let cleanfeedDeviceUID = AppSetting(key: "cleanfeedDeviceUID", defaultValue: "")
     static let cleanfeedResolutionMode = AppSetting(key: "cleanfeedResolutionMode", defaultValue: "1080p")
+    static let cleanfeedScanMode = AppSetting(key: "cleanfeedScanMode", defaultValue: "progressive")
     static let cleanfeedFrameRateMode = AppSetting(key: "cleanfeedFrameRateMode", defaultValue: "auto30")
     static let cleanfeedColorMode = AppSetting(key: "cleanfeedColorMode", defaultValue: "rec709")
     static let cleanfeedPixelFormatMode = AppSetting(key: "cleanfeedPixelFormatMode", defaultValue: "auto")
@@ -136,6 +137,7 @@ nonisolated enum AppSettings {
             liveAudioMeterCustomLoudnessTarget.key: liveAudioMeterCustomLoudnessTarget.defaultValue,
             cleanfeedDeviceUID.key: cleanfeedDeviceUID.defaultValue,
             cleanfeedResolutionMode.key: cleanfeedResolutionMode.defaultValue,
+            cleanfeedScanMode.key: cleanfeedScanMode.defaultValue,
             cleanfeedFrameRateMode.key: cleanfeedFrameRateMode.defaultValue,
             cleanfeedColorMode.key: cleanfeedColorMode.defaultValue,
             cleanfeedPixelFormatMode.key: cleanfeedPixelFormatMode.defaultValue,

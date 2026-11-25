@@ -291,6 +291,64 @@ final class CleanfeedTests: XCTestCase {
         XCTAssertEqual(caps.effectivePixelFormatMode, .tenBitYUV)
         XCTAssertTrue(caps.colorModes.contains(.hdrPQ))
         XCTAssertTrue(caps.colorModes.contains(.hdrHLG))
+        // UHD 2160 only advertises progressive formats, so Interlaced is hidden there.
+        XCTAssertEqual(caps.scanModes, [.progressive])
+    }
+
+    func testScanModeSupports1080i50AndAutoMatchesInterlacedSource() {
+        let device = makeUltraStudioLikeDevice()
+
+        // 1080 offers both progressive and interlaced on UltraStudio.
+        let caps1080 = CMIOOutputCapabilities.evaluate(
+            device: device,
+            preferredResolution: .hd1080,
+            preferredScan: .interlaced,
+            preferredFrameRate: .fps25,
+            preferredColor: .sdr709,
+            preferredPixelFormat: .auto
+        )
+        XCTAssertEqual(caps1080.scanModes, [.progressive, .interlaced, .auto])
+        XCTAssertEqual(caps1080.effectiveScanMode, .interlaced)
+        XCTAssertEqual(caps1080.frameRateModes, [.matchMax30, .fps25, .fps29_97])
+
+        // Explicit Interlaced selects 1080i50 (25 fps frame rate, 50 fields/sec broadcast label).
+        let source25p = CMIOOutputSourceDescriptor(
+            width: 1920, height: 1080, frameRate: 25.0, bitDepth: 8,
+            colorPrimaries: "bt709", colorTransfer: "bt709", isInterlaced: false
+        )
+        let interlacedSel = CMIOOutputFormatSelector.select(
+            device: device,
+            source: source25p,
+            resolutionMode: .hd1080,
+            scanMode: .interlaced,
+            frameRateMode: .fps25
+        )
+        XCTAssertEqual(interlacedSel?.format.isProgressive, false)
+        XCTAssertEqual(interlacedSel?.frameRate ?? 0, 25.0, accuracy: 0.01)
+        XCTAssertEqual(interlacedSel?.summaryLabel, "1920×1080i50 • BGRA • Rec.709")
+
+        // Auto scan matches an interlaced source to 1080i and a progressive source to 1080p.
+        let source25i = CMIOOutputSourceDescriptor(
+            width: 1920, height: 1080, frameRate: 25.0, bitDepth: 8,
+            colorPrimaries: "bt709", colorTransfer: "bt709", isInterlaced: true
+        )
+        let autoInterlaced = CMIOOutputFormatSelector.select(
+            device: device,
+            source: source25i,
+            resolutionMode: .hd1080,
+            scanMode: .auto,
+            frameRateMode: .matchMax30
+        )
+        XCTAssertEqual(autoInterlaced?.format.isProgressive, false)
+
+        let autoProgressive = CMIOOutputFormatSelector.select(
+            device: device,
+            source: source25p,
+            resolutionMode: .hd1080,
+            scanMode: .auto,
+            frameRateMode: .matchMax30
+        )
+        XCTAssertEqual(autoProgressive?.format.isProgressive, true)
     }
 
     func testV210PackingAndBroadcastLegalRange() {

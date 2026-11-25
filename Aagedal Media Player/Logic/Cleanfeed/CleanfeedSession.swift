@@ -63,14 +63,14 @@ nonisolated enum CleanfeedSMPTETime {
     }
 
     static func smpteTimeType(for frameRate: Double, dropFrame: Bool) -> SMPTETimeType {
-        if abs(frameRate - 23.976) < 0.05 { return .type2398 }
-        if abs(frameRate - 24.0) < 0.05 { return .type24 }
-        if abs(frameRate - 25.0) < 0.05 { return .type25 }
-        if abs(frameRate - 29.97) < 0.05 { return dropFrame ? .type2997Drop : .type2997 }
-        if abs(frameRate - 30.0) < 0.05 { return dropFrame ? .type30Drop : .type30 }
-        if abs(frameRate - 50.0) < 0.05 { return .type50 }
-        if abs(frameRate - 59.94) < 0.05 { return dropFrame ? .type5994Drop : .type5994 }
-        if abs(frameRate - 60.0) < 0.05 { return .type60 }
+        if abs(frameRate - 23.976) < 0.015 { return .type2398 }
+        if abs(frameRate - 24.0) < 0.015 { return .type24 }
+        if abs(frameRate - 25.0) < 0.015 { return .type25 }
+        if abs(frameRate - 29.97) < 0.015 { return dropFrame ? .type2997Drop : .type2997 }
+        if abs(frameRate - 30.0) < 0.015 { return dropFrame ? .type30Drop : .type30 }
+        if abs(frameRate - 50.0) < 0.015 { return .type50 }
+        if abs(frameRate - 59.94) < 0.015 { return dropFrame ? .type5994Drop : .type5994 }
+        if abs(frameRate - 60.0) < 0.015 { return .type60 }
         return .type25
     }
 }
@@ -110,6 +110,18 @@ final class CleanfeedSession: ObservableObject {
         }
         set {
             UserDefaults.standard.set(newValue.rawValue, for: AppSettings.cleanfeedResolutionMode)
+            objectWillChange.send()
+            reapplyOutputConfigurationIfActive()
+        }
+    }
+
+    var scanMode: CleanfeedScanMode {
+        get {
+            CleanfeedScanMode(rawValue: UserDefaults.standard.value(for: AppSettings.cleanfeedScanMode))
+                ?? .progressive
+        }
+        set {
+            UserDefaults.standard.set(newValue.rawValue, for: AppSettings.cleanfeedScanMode)
             objectWillChange.send()
             reapplyOutputConfigurationIfActive()
         }
@@ -190,6 +202,7 @@ final class CleanfeedSession: ObservableObject {
         CMIOOutputCapabilities.evaluate(
             device: resolvedTargetDevice,
             preferredResolution: resolutionMode,
+            preferredScan: scanMode,
             preferredFrameRate: frameRateMode,
             preferredColor: colorMode,
             preferredPixelFormat: pixelFormatMode
@@ -198,6 +211,10 @@ final class CleanfeedSession: ObservableObject {
 
     var effectiveResolutionMode: CleanfeedResolutionMode {
         capabilities.effectiveResolutionMode
+    }
+
+    var effectiveScanMode: CleanfeedScanMode {
+        capabilities.effectiveScanMode
     }
 
     var effectiveFrameRateMode: CleanfeedFrameRateMode {
@@ -361,6 +378,7 @@ final class CleanfeedSession: ObservableObject {
         let caps = CMIOOutputCapabilities.evaluate(
             device: device,
             preferredResolution: resolutionMode,
+            preferredScan: scanMode,
             preferredFrameRate: frameRateMode,
             preferredColor: colorMode,
             preferredPixelFormat: pixelFormatMode
@@ -369,6 +387,7 @@ final class CleanfeedSession: ObservableObject {
             device: device,
             source: testSource,
             resolutionMode: caps.effectiveResolutionMode,
+            scanMode: caps.effectiveScanMode,
             frameRateMode: caps.effectiveFrameRateMode,
             colorMode: caps.effectiveColorMode,
             pixelFormatMode: caps.effectivePixelFormatMode
@@ -505,6 +524,7 @@ final class CleanfeedSession: ObservableObject {
         let caps = CMIOOutputCapabilities.evaluate(
             device: device,
             preferredResolution: resolutionMode,
+            preferredScan: scanMode,
             preferredFrameRate: frameRateMode,
             preferredColor: colorMode,
             preferredPixelFormat: pixelFormatMode
@@ -513,6 +533,7 @@ final class CleanfeedSession: ObservableObject {
             device: device,
             source: sourceDescriptor,
             resolutionMode: caps.effectiveResolutionMode,
+            scanMode: caps.effectiveScanMode,
             frameRateMode: caps.effectiveFrameRateMode,
             colorMode: caps.effectiveColorMode,
             pixelFormatMode: caps.effectivePixelFormatMode
@@ -631,6 +652,7 @@ final class CleanfeedSession: ObservableObject {
             let caps = CMIOOutputCapabilities.evaluate(
                 device: device,
                 preferredResolution: resolutionMode,
+                preferredScan: scanMode,
                 preferredFrameRate: frameRateMode,
                 preferredColor: colorMode,
                 preferredPixelFormat: pixelFormatMode
@@ -639,6 +661,7 @@ final class CleanfeedSession: ObservableObject {
                 device: device,
                 source: sourceDescriptor,
                 resolutionMode: caps.effectiveResolutionMode,
+                scanMode: caps.effectiveScanMode,
                 frameRateMode: caps.effectiveFrameRateMode,
                 colorMode: caps.effectiveColorMode,
                 pixelFormatMode: caps.effectivePixelFormatMode
@@ -730,11 +753,12 @@ final class CleanfeedSession: ObservableObject {
             }
             cleanfeedLayer = layer
 
+            let effectiveDeinterlace = cleanfeedDeinterlaceMode(for: controller, outputProgressive: selection.format.isProgressive)
             let child = primary.makeCleanfeedPlayer(colorSpace: selection.colorSpace)
             child.setLooping(controller.mediaItem?.loopPlayback ?? false)
-            child.setDeinterlace(controller.deinterlaceMode)
+            child.setDeinterlace(effectiveDeinterlace)
             child.setPictureAdjustments(controller.pictureAdjustments)
-            mirroredDeinterlace = controller.deinterlaceMode
+            mirroredDeinterlace = effectiveDeinterlace
             mirroredPictureAdjustments = controller.pictureAdjustments
 
             followerPlayer = child
@@ -758,9 +782,10 @@ final class CleanfeedSession: ObservableObject {
         guard child.isFileLoaded else { return }
 
         // Mirror live presentation settings (deinterlace & picture adjustments).
-        if mirroredDeinterlace != controller.deinterlaceMode {
-            child.setDeinterlace(controller.deinterlaceMode)
-            mirroredDeinterlace = controller.deinterlaceMode
+        let desiredDeinterlace = cleanfeedDeinterlaceMode(for: controller, outputProgressive: selection.format.isProgressive)
+        if mirroredDeinterlace != desiredDeinterlace {
+            child.setDeinterlace(desiredDeinterlace)
+            mirroredDeinterlace = desiredDeinterlace
         }
         if mirroredPictureAdjustments != controller.pictureAdjustments {
             child.setPictureAdjustments(controller.pictureAdjustments)
@@ -876,6 +901,20 @@ final class CleanfeedSession: ObservableObject {
                 }
             }
         }
+    }
+
+    /// Preserves native interlaced fields when outputting interlaced (e.g. 1080i50)
+    /// from an interlaced source unless the user explicitly forced deinterlacing.
+    private func cleanfeedDeinterlaceMode(
+        for controller: PlayerController,
+        outputProgressive: Bool
+    ) -> DeinterlaceMode {
+        if !outputProgressive,
+           controller.deinterlaceMode == .auto,
+           controller.mediaItem?.metadata?.videoStreams.first?.isInterlaced == true {
+            return .off
+        }
+        return controller.deinterlaceMode
     }
 
     private func destroyMPVFollower() {

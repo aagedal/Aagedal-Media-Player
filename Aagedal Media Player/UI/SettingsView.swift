@@ -1147,6 +1147,22 @@ private struct CleanfeedSettingsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
+                LabeledContent("Scan Mode") {
+                    Picker("", selection: Binding(
+                        get: { caps.effectiveScanMode },
+                        set: { cleanfeed.scanMode = $0 }
+                    )) {
+                        ForEach(caps.scanModes) { mode in
+                            Text(mode.label).tag(mode)
+                        }
+                    }
+                    .labelsHidden()
+                    .disabled(caps.scanModes.count <= 1)
+                }
+                Text("Interlaced options (such as 1080i50 / 1080i59.94) appear only when supported at the chosen resolution.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
                 LabeledContent("Frame Rate") {
                     Picker("", selection: Binding(
                         get: { caps.effectiveFrameRateMode },

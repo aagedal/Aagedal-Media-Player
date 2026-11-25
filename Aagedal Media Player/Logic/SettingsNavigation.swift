@@ -156,7 +156,14 @@ nonisolated enum SettingsSearchIndex {
             category: .cleanfeed,
             section: "Signal Format",
             title: "Cleanfeed Resolution Limit",
-            keywords: ["cleanfeed", "resolution", "720p", "1080p", "2k", "2160p", "4k", "uhd", "dci", "hd", "limit", "cap", "downscale"]
+            keywords: ["cleanfeed", "resolution", "720p", "1080p", "1080i", "2k", "2160p", "4k", "uhd", "dci", "hd", "limit", "cap", "downscale"]
+        ),
+        SettingsSearchItem(
+            id: "cleanfeed.scanmode",
+            category: .cleanfeed,
+            section: "Signal Format",
+            title: "Cleanfeed Scan Mode (Progressive / Interlaced)",
+            keywords: ["cleanfeed", "scan", "progressive", "interlaced", "1080i", "1080i50", "1080i59.94", "1080p", "psf", "fields", "deinterlace"]
         ),
         SettingsSearchItem(
             id: "cleanfeed.framerate",

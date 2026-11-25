@@ -64,6 +64,22 @@ nonisolated enum CleanfeedResolutionMode: String, CaseIterable, Sendable, Identi
     }
 }
 
+nonisolated enum CleanfeedScanMode: String, CaseIterable, Sendable, Identifiable {
+    case progressive = "progressive"
+    case interlaced = "interlaced"
+    case auto = "auto"
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .progressive: "Progressive (p)"
+        case .interlaced: "Interlaced (i)"
+        case .auto: "Auto (Match Source)"
+        }
+    }
+}
+
 nonisolated enum CleanfeedFrameRateMode: String, CaseIterable, Sendable, Identifiable {
     case matchMax30 = "auto30"
     case matchMax60 = "auto60"
@@ -291,6 +307,25 @@ nonisolated struct CMIOOutputSourceDescriptor: Sendable, Equatable {
     let bitDepth: Int?
     let colorPrimaries: String?
     let colorTransfer: String?
+    let isInterlaced: Bool?
+
+    init(
+        width: Int?,
+        height: Int?,
+        frameRate: Double?,
+        bitDepth: Int?,
+        colorPrimaries: String?,
+        colorTransfer: String?,
+        isInterlaced: Bool? = nil
+    ) {
+        self.width = width
+        self.height = height
+        self.frameRate = frameRate
+        self.bitDepth = bitDepth
+        self.colorPrimaries = colorPrimaries
+        self.colorTransfer = colorTransfer
+        self.isInterlaced = isInterlaced
+    }
 
     var desiredColorSpace: CleanfeedColorSpace {
         let transfer = (colorTransfer ?? "").lowercased()
@@ -321,7 +356,8 @@ nonisolated struct CMIOOutputSourceDescriptor: Sendable, Equatable {
             frameRate: stream?.frameRate?.value,
             bitDepth: stream?.bitDepth,
             colorPrimaries: stream?.colorPrimaries,
-            colorTransfer: stream?.colorTransfer
+            colorTransfer: stream?.colorTransfer,
+            isInterlaced: stream?.isInterlaced
         )
     }
 }
@@ -333,11 +369,13 @@ nonisolated struct CMIOOutputFormatSelection: Sendable, Equatable {
 
     var summaryLabel: String {
         let scan = format.isProgressive ? "p" : "i"
+        // Broadcast interlaced notation reports field rate (2x frame rate: 25 fps -> 1080i50, 29.97 -> 1080i59.94).
+        let displayRate = format.isProgressive ? frameRate : frameRate * 2.0
         let fpsText: String
-        if abs(frameRate - frameRate.rounded()) < 0.01 {
-            fpsText = String(Int(frameRate.rounded()))
+        if abs(displayRate - displayRate.rounded()) < 0.01 {
+            fpsText = String(Int(displayRate.rounded()))
         } else {
-            fpsText = String(format: "%.2f", frameRate)
+            fpsText = String(format: "%.2f", displayRate)
         }
         return "\(format.width)×\(format.height)\(scan)\(fpsText) • \(format.pixelFormatCode) • \(colorSpace.label)"
     }
@@ -347,11 +385,13 @@ nonisolated struct CMIOOutputFormatSelection: Sendable, Equatable {
 
 nonisolated struct CMIOOutputCapabilities: Sendable, Equatable {
     let resolutionModes: [CleanfeedResolutionMode]
+    let scanModes: [CleanfeedScanMode]
     let frameRateModes: [CleanfeedFrameRateMode]
     let colorModes: [CleanfeedColorMode]
     let pixelFormatModes: [CleanfeedPixelFormatMode]
 
     let effectiveResolutionMode: CleanfeedResolutionMode
+    let effectiveScanMode: CleanfeedScanMode
     let effectiveFrameRateMode: CleanfeedFrameRateMode
     let effectiveColorMode: CleanfeedColorMode
     let effectivePixelFormatMode: CleanfeedPixelFormatMode
@@ -359,25 +399,28 @@ nonisolated struct CMIOOutputCapabilities: Sendable, Equatable {
     static func evaluate(
         device: CMIOOutputDevice?,
         preferredResolution: CleanfeedResolutionMode,
+        preferredScan: CleanfeedScanMode = .progressive,
         preferredFrameRate: CleanfeedFrameRateMode,
         preferredColor: CleanfeedColorMode,
         preferredPixelFormat: CleanfeedPixelFormatMode
     ) -> CMIOOutputCapabilities {
         guard let device else {
-            // Without a connected device, present conservative HD/SDR choices
-            // (preserving any previously saved preference so the picker stays valid).
             var resolutions: [CleanfeedResolutionMode] = [.hd720, .hd1080, .matchUpTo1080]
             if !resolutions.contains(preferredResolution) { resolutions.append(preferredResolution) }
+            var scans: [CleanfeedScanMode] = [.progressive]
+            if !scans.contains(preferredScan) { scans.append(preferredScan) }
             var rates: [CleanfeedFrameRateMode] = [.matchMax30, .matchMax60, .fps23_98, .fps24, .fps25, .fps29_97, .fps30, .fps50, .fps59_94, .fps60]
             if !rates.contains(preferredFrameRate) { rates.append(preferredFrameRate) }
             var colors: [CleanfeedColorMode] = [.sdr709, .auto]
             if !colors.contains(preferredColor) { colors.append(preferredColor) }
             return CMIOOutputCapabilities(
                 resolutionModes: resolutions,
+                scanModes: scans,
                 frameRateModes: rates,
                 colorModes: colors,
                 pixelFormatModes: CleanfeedPixelFormatMode.allCases,
                 effectiveResolutionMode: preferredResolution,
+                effectiveScanMode: preferredScan,
                 effectiveFrameRateMode: preferredFrameRate,
                 effectiveColorMode: preferredColor,
                 effectivePixelFormatMode: preferredPixelFormat
@@ -385,11 +428,9 @@ nonisolated struct CMIOOutputCapabilities: Sendable, Equatable {
         }
 
         let allCandidates = device.supportedFormats.filter { !$0.frameRates.isEmpty }
-        let progressive = allCandidates.filter(\.isProgressive)
-        let scanPool = progressive.isEmpty ? allCandidates : progressive
 
-        // 1. Supported resolutions on this hardware.
-        let resolutionModes = availableResolutionModes(in: scanPool)
+        // 1. Supported resolutions on this hardware (progressive + interlaced).
+        let resolutionModes = availableResolutionModes(in: allCandidates)
         let effectiveResolution: CleanfeedResolutionMode
         if resolutionModes.contains(preferredResolution) {
             effectiveResolution = preferredResolution
@@ -402,10 +443,23 @@ nonisolated struct CMIOOutputCapabilities: Sendable, Equatable {
         }
 
         // 2. Narrow pool to formats reachable under effectiveResolution.
-        let resPool = formatsMatchingResolution(in: scanPool, mode: effectiveResolution)
+        let resPool = formatsMatchingResolution(in: allCandidates, mode: effectiveResolution)
 
-        // 3. Supported frame rates for those formats.
-        let frameRateModes = availableFrameRateModes(in: resPool)
+        // 3. Supported scan modes (Progressive / Interlaced / Auto) for that resolution.
+        let scanModes = availableScanModes(in: resPool)
+        let effectiveScan: CleanfeedScanMode
+        if scanModes.contains(preferredScan) {
+            effectiveScan = preferredScan
+        } else if scanModes.contains(.progressive) {
+            effectiveScan = .progressive
+        } else {
+            effectiveScan = scanModes.first ?? .progressive
+        }
+
+        let scanPool = formatsMatchingScan(in: resPool, mode: effectiveScan)
+
+        // 4. Supported frame rates for those formats.
+        let frameRateModes = availableFrameRateModes(in: scanPool)
         let effectiveFrameRate: CleanfeedFrameRateMode
         if frameRateModes.contains(preferredFrameRate) {
             effectiveFrameRate = preferredFrameRate
@@ -417,8 +471,8 @@ nonisolated struct CMIOOutputCapabilities: Sendable, Equatable {
             effectiveFrameRate = frameRateModes.first ?? .matchMax30
         }
 
-        // 4. Supported color spaces for those formats.
-        let colorModes = availableColorModes(in: resPool)
+        // 5. Supported color spaces for those formats.
+        let colorModes = availableColorModes(in: scanPool)
         let effectiveColor: CleanfeedColorMode
         if colorModes.contains(preferredColor) {
             effectiveColor = preferredColor
@@ -428,8 +482,8 @@ nonisolated struct CMIOOutputCapabilities: Sendable, Equatable {
             effectiveColor = colorModes.first ?? .sdr709
         }
 
-        // 5. Supported pixel formats for the chosen resolution + frame rate.
-        let ratePool = formatsMatchingFrameRate(in: resPool, mode: effectiveFrameRate)
+        // 6. Supported pixel formats for the chosen resolution + scan + frame rate.
+        let ratePool = formatsMatchingFrameRate(in: scanPool, mode: effectiveFrameRate)
         let pixelFormatModes = availablePixelFormatModes(in: ratePool)
         let effectivePixelFormat: CleanfeedPixelFormatMode
         if pixelFormatModes.contains(preferredPixelFormat) {
@@ -442,14 +496,42 @@ nonisolated struct CMIOOutputCapabilities: Sendable, Equatable {
 
         return CMIOOutputCapabilities(
             resolutionModes: resolutionModes,
+            scanModes: scanModes,
             frameRateModes: frameRateModes,
             colorModes: colorModes,
             pixelFormatModes: pixelFormatModes,
             effectiveResolutionMode: effectiveResolution,
+            effectiveScanMode: effectiveScan,
             effectiveFrameRateMode: effectiveFrameRate,
             effectiveColorMode: effectiveColor,
             effectivePixelFormatMode: effectivePixelFormat
         )
+    }
+
+    private static func availableScanModes(in pool: [CMIOOutputFormat]) -> [CleanfeedScanMode] {
+        let hasProgressive = pool.contains(where: \.isProgressive)
+        let hasInterlaced = pool.contains { !$0.isProgressive }
+        var modes: [CleanfeedScanMode] = []
+        if hasProgressive { modes.append(.progressive) }
+        if hasInterlaced { modes.append(.interlaced) }
+        if hasProgressive && hasInterlaced { modes.append(.auto) }
+        return modes.isEmpty ? [.progressive] : modes
+    }
+
+    private static func formatsMatchingScan(
+        in pool: [CMIOOutputFormat],
+        mode: CleanfeedScanMode
+    ) -> [CMIOOutputFormat] {
+        switch mode {
+        case .progressive:
+            let filtered = pool.filter(\.isProgressive)
+            return filtered.isEmpty ? pool : filtered
+        case .interlaced:
+            let filtered = pool.filter { !$0.isProgressive }
+            return filtered.isEmpty ? pool : filtered
+        case .auto:
+            return pool
+        }
     }
 
     private static func availableResolutionModes(in pool: [CMIOOutputFormat]) -> [CleanfeedResolutionMode] {
@@ -509,7 +591,7 @@ nonisolated struct CMIOOutputCapabilities: Sendable, Equatable {
         }
         for fixed: CleanfeedFrameRateMode in [.fps23_98, .fps24, .fps25, .fps29_97, .fps30, .fps50, .fps59_94, .fps60] {
             if let target = fixed.fixedFrameRate,
-               allRates.contains(where: { abs($0 - target) < 0.05 }) {
+               allRates.contains(where: { abs($0 - target) < 0.015 }) {
                 modes.append(fixed)
             }
         }
@@ -544,7 +626,7 @@ nonisolated struct CMIOOutputCapabilities: Sendable, Equatable {
     ) -> [CMIOOutputFormat] {
         if let fixed = mode.fixedFrameRate {
             let matching = pool.filter { fmt in
-                fmt.frameRates.contains(where: { abs($0 - fixed) < 0.05 })
+                fmt.frameRates.contains(where: { abs($0 - fixed) < 0.015 })
             }
             if !matching.isEmpty { return matching }
         }
@@ -582,6 +664,7 @@ nonisolated enum CMIOOutputFormatSelector {
         device: CMIOOutputDevice,
         source: CMIOOutputSourceDescriptor?,
         resolutionMode: CleanfeedResolutionMode = .hd1080,
+        scanMode: CleanfeedScanMode = .progressive,
         frameRateMode: CleanfeedFrameRateMode = .matchMax30,
         colorMode: CleanfeedColorMode = .sdr709,
         pixelFormatMode: CleanfeedPixelFormatMode = .auto
@@ -589,17 +672,25 @@ nonisolated enum CMIOOutputFormatSelector {
         let candidates = device.supportedFormats.filter { !$0.frameRates.isEmpty }
         guard !candidates.isEmpty else { return nil }
 
-        let progressive = candidates.filter(\.isProgressive)
-        let scanPool = progressive.isEmpty ? candidates : progressive
+        let preferInterlaced: Bool = switch scanMode {
+        case .progressive: false
+        case .interlaced: true
+        case .auto: source?.isInterlaced == true
+        }
 
         // Strictly cap resolution so an HD monitor never receives a 4K signal.
         let resolutionPool: [CMIOOutputFormat]
         if let maxDims = resolutionMode.maxDimensions {
-            let capped = scanPool.filter { $0.width <= maxDims.width && $0.height <= maxDims.height }
-            resolutionPool = capped.isEmpty ? scanPool : capped
+            let capped = candidates.filter { $0.width <= maxDims.width && $0.height <= maxDims.height }
+            resolutionPool = capped.isEmpty ? candidates : capped
         } else {
-            resolutionPool = scanPool
+            resolutionPool = candidates
         }
+
+        // Apply scan mode filter within the capped resolution pool (falling back
+        // gracefully if the chosen resolution only supports the opposite scan).
+        let scanFiltered = resolutionPool.filter { preferInterlaced ? !$0.isProgressive : $0.isProgressive }
+        let eligiblePool = scanFiltered.isEmpty ? resolutionPool : scanFiltered
 
         let desiredWidth: Int
         let desiredHeight: Int
@@ -665,7 +756,7 @@ nonisolated enum CMIOOutputFormatSelector {
         var bestSelection: CMIOOutputFormatSelection?
         var bestScore = Int.min
 
-        for format in resolutionPool {
+        for format in eligiblePool {
             let resScore = resolutionScore(
                 width: format.width,
                 height: format.height,
@@ -732,8 +823,9 @@ nonisolated enum CMIOOutputFormatSelector {
 
     private static func frameRateScore(actual: Double, desired: Double) -> Int {
         let diff = abs(actual - desired)
-        if diff < 0.05 { return 50_000 }
-        if diff < 0.15 { return 48_000 }
+        if diff < 0.015 { return 50_000 }
+        if diff < 0.05 { return 48_500 }
+        if diff < 0.15 { return 47_000 }
         // Exact 2x multiple (e.g. 25 -> 50, 29.97 -> 59.94, 30 -> 60)
         if abs(actual - desired * 2.0) < 0.15 { return 38_000 }
         // Exact 1/2 divisor (e.g. 120 -> 60, 100 -> 50)

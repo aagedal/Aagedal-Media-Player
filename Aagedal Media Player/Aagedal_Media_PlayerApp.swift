@@ -220,6 +220,21 @@ struct Aagedal_Media_PlayerApp: App {
                                 }
                             }
                         }
+                        if caps.scanModes.count > 1 {
+                            Menu("Scan Mode") {
+                                ForEach(caps.scanModes) { mode in
+                                    Button {
+                                        cleanfeed.scanMode = mode
+                                    } label: {
+                                        if caps.effectiveScanMode == mode {
+                                            Label(mode.label, systemImage: "checkmark")
+                                        } else {
+                                            Text(mode.label)
+                                        }
+                                    }
+                                }
+                            }
+                        }
                         Menu("Frame Rate") {
                             ForEach(caps.frameRateModes) { mode in
                                 Button {

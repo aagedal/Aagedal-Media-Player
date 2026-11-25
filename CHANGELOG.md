@@ -2,6 +2,15 @@
 
 All notable changes to Aagedal Media Player.
 
+## [2.3.0] — 2026-11-25
+
+### Added
+- External SDI/HDMI cleanfeed video output using Apple’s OS-level CoreMediaIO and CoreAudio frameworks (tested with Blackmagic UltraStudio 4K Mini, with no proprietary vendor SDK dependency).
+- Dynamic cleanfeed output configuration filtered to the connected device’s capabilities, with safe 1080p / max 30 fps / progressive / SDR (Rec.709) defaults, optional Interlaced (1080i) / HDR10 (PQ) / HLG / 10-bit 4:2:2 (v210) output, linked CoreAudio audio routing, SMPTE timecode embedding, and an animated 75% SMPTE color bars test mode.
+
+### Changed
+- Redesigned the Settings window with a grouped vertical sidebar, collapsible icon-only mode, and live keyword search (`⌘F`).
+
 ## [2.2.1] — 2026-11-23
 
 ### Fixed
