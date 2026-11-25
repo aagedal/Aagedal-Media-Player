@@ -368,16 +368,28 @@ nonisolated struct CMIOOutputFormatSelection: Sendable, Equatable {
     let colorSpace: CleanfeedColorSpace
 
     var summaryLabel: String {
+        summaryLabel(actualFrameRate: nil)
+    }
+
+    func summaryLabel(actualFrameRate: Double?) -> String {
+        let effectiveRate = actualFrameRate ?? frameRate
         let scan = format.isProgressive ? "p" : "i"
         // Broadcast interlaced notation reports field rate (2x frame rate: 25 fps -> 1080i50, 29.97 -> 1080i59.94).
-        let displayRate = format.isProgressive ? frameRate : frameRate * 2.0
-        let fpsText: String
-        if abs(displayRate - displayRate.rounded()) < 0.01 {
-            fpsText = String(Int(displayRate.rounded()))
-        } else {
-            fpsText = String(format: "%.2f", displayRate)
+        let displayRate = format.isProgressive ? effectiveRate : effectiveRate * 2.0
+        let fpsText = Self.formatRate(displayRate)
+        var base = "\(format.width)×\(format.height)\(scan)\(fpsText) • \(format.pixelFormatCode) • \(colorSpace.label)"
+        if let actualFrameRate, abs(actualFrameRate - frameRate) >= 0.05 {
+            let requestedDisplay = format.isProgressive ? frameRate : frameRate * 2.0
+            base += " (device locked; requested \(Self.formatRate(requestedDisplay)))"
         }
-        return "\(format.width)×\(format.height)\(scan)\(fpsText) • \(format.pixelFormatCode) • \(colorSpace.label)"
+        return base
+    }
+
+    private static func formatRate(_ rate: Double) -> String {
+        if abs(rate - rate.rounded()) < 0.01 {
+            return String(Int(rate.rounded()))
+        }
+        return String(format: "%.2f", rate)
     }
 }
 

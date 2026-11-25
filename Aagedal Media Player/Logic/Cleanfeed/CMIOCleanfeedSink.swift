@@ -48,12 +48,21 @@ nonisolated struct CMIOCleanfeedStats: Sendable, Equatable {
     var underrunCount: UInt32 = 0
 }
 
+nonisolated struct CMIOCleanfeedStartResult: Sendable, Equatable {
+    let generation: UInt64
+    let negotiatedFrameRate: Double
+}
+
 /// Drives a single CoreMediaIO output/sink stream (`kCMIOStreamPropertyDirection == 0`)
 /// at a steady broadcast frame cadence.
 nonisolated final class CMIOCleanfeedSink: @unchecked Sendable {
     private static let logger = Logger(subsystem: "com.aagedal.MediaPlayer", category: "CleanfeedSink")
 
     private struct FrameSlot: @unchecked Sendable {
+        var generation: UInt64 = 0
+        var expectedWidth: Int = 0
+        var expectedHeight: Int = 0
+        var expectedPixelFormat: OSType = 0
         var pixelBuffer: CVPixelBuffer?
         var smpteTime: SMPTETime?
     }
@@ -70,6 +79,8 @@ nonisolated final class CMIOCleanfeedSink: @unchecked Sendable {
 
     private var activeDevice: CMIOOutputDevice?
     private var activeSelection: CMIOOutputFormatSelection?
+    private var negotiatedFrameRate: Double = 25.0
+    private var streamGeneration: UInt64 = 0
     private var bufferQueue: CMSimpleQueue?
     private var streamFormatDescription: CMFormatDescription?
     private var fallbackBlackBuffer: CVPixelBuffer?
@@ -86,15 +97,16 @@ nonisolated final class CMIOCleanfeedSink: @unchecked Sendable {
         stop()
     }
 
-    /// Starts streaming to `device` using `selection`. Call `submitFrame(_:smpteTime:)`
+    /// Starts streaming to `device` using `selection`. Call `submitFrame(_:smpteTime:generation:)`
     /// whenever a new converted `CVPixelBuffer` is ready; until the first video frame
     /// arrives (and whenever playback is paused), the sink repeats the latest frame
     /// (or broadcast black) to keep the SDI/HDMI output continuously locked.
+    @discardableResult
     func start(
         device: CMIOOutputDevice,
         selection: CMIOOutputFormatSelection,
         initialFrame: CVPixelBuffer?
-    ) throws {
+    ) throws -> CMIOCleanfeedStartResult {
         stop()
 
         guard let liveFormatDescription = CMIOOutputDeviceDiscovery.copyFormatDescription(
@@ -145,24 +157,29 @@ nonisolated final class CMIOCleanfeedSink: @unchecked Sendable {
             throw CMIOCleanfeedSinkError.formatSelectionFailed(formatStatus)
         }
 
-        // Configure output frame rate.
-        var rateAddress = CMIOObjectPropertyAddress(
-            mSelector: CMIOObjectPropertySelector(kCMIOStreamPropertyFrameRate),
-            mScope: CMIOObjectPropertyScope(kCMIOObjectPropertyScopeGlobal),
-            mElement: CMIOObjectPropertyElement(kCMIOObjectPropertyElementMain)
-        )
-        var fps = Float64(selection.frameRate)
-        let rateStatus = CMIOObjectSetPropertyData(
-            device.streamID,
-            &rateAddress,
-            0,
-            nil,
-            UInt32(MemoryLayout<Float64>.size),
-            &fps
-        )
+        // Configure output frame rate (and minimum frame rate in safe order so
+        // drivers that enforce minRate <= maxRate accept both down-steps and up-steps).
+        let rateStatus = configureStreamFrameRate(streamID: device.streamID, targetFPS: selection.frameRate)
         guard rateStatus == noErr else {
             releaseDeviceControl(deviceID: device.deviceID)
             throw CMIOCleanfeedSinkError.frameRateSelectionFailed(rateStatus)
+        }
+
+        // Read back the device's actual active frame rate. Some CMIO extensions
+        // (such as BlackmagicCameraExtension 16.5) accept FrameRate writes with
+        // noErr yet keep a hardware-locked rate (e.g. 29.97 at 1080p/2160p or
+        // 50 at 720p). Pacing the sink to the actual active rate prevents queue
+        // underruns and reports the true signal rate in the UI.
+        let actualFPS: Double
+        if let reported = readStreamFrameRate(streamID: device.streamID),
+           reported.isFinite, reported > 0,
+           abs(reported - selection.frameRate) >= 0.05 {
+            Self.logger.warning(
+                "Output device \(device.name) kept frame rate \(reported, format: .fixed(precision: 3)) fps instead of requested \(selection.frameRate, format: .fixed(precision: 3)) fps"
+            )
+            actualFPS = reported
+        } else {
+            actualFPS = selection.frameRate
         }
 
         // Retain self for C callbacks until stop() unregisters them.
@@ -188,7 +205,8 @@ nonisolated final class CMIOCleanfeedSink: @unchecked Sendable {
             &schedProc
         )
 
-        // Acquire the CMIO sink buffer queue.
+        // Acquire the CMIO sink buffer queue and drain any leftover buffers from
+        // a previous resolution/format before starting the stream.
         var unmanagedQueue: Unmanaged<CMSimpleQueue>?
         let queueStatus = CMIOStreamCopyBufferQueue(
             device.streamID,
@@ -201,6 +219,7 @@ nonisolated final class CMIOCleanfeedSink: @unchecked Sendable {
             releaseDeviceControl(deviceID: device.deviceID)
             throw CMIOCleanfeedSinkError.bufferQueueUnavailable(queueStatus)
         }
+        Self.drainQueue(queue)
 
         // Start hardware output stream.
         let startStatus = CMIODeviceStartStream(device.deviceID, device.streamID)
@@ -210,23 +229,41 @@ nonisolated final class CMIOCleanfeedSink: @unchecked Sendable {
             throw CMIOCleanfeedSinkError.streamStartFailed(startStatus)
         }
 
-        let rate = TimecodeRate(frameRate: selection.frameRate)
+        let rate = TimecodeRate(frameRate: actualFPS)
         let duration = CMTime(value: rate.denominator, timescale: CMTimeScale(rate.numerator))
         let capacity = Int(CMSimpleQueueGetCapacity(queue))
         let startupPreroll = max(device.outputBuffersRequiredForStartup, 3)
 
-        pumpQueue.sync {
+        let startedGeneration: UInt64 = pumpQueue.sync {
+            self.streamGeneration &+= 1
+            let gen = self.streamGeneration
             self.activeDevice = device
             self.activeSelection = selection
+            self.negotiatedFrameRate = actualFPS
             self.bufferQueue = queue
             self.streamFormatDescription = liveFormatDescription
-            self.fallbackBlackBuffer = initialFrame
+            let validatedInitial = initialFrame.flatMap {
+                Self.pixelBufferMatches(
+                    $0,
+                    width: selection.format.width,
+                    height: selection.format.height,
+                    pixelFormat: selection.format.pixelFormat
+                ) ? $0 : nil
+            }
+            self.fallbackBlackBuffer = validatedInitial
             self.frameDuration = duration
             self.sequenceNumber = 0
             self.targetQueueDepth = min(max(capacity - 1, 2), max(startupPreroll + 1, 4))
             self.isRunning = true
 
-            let initialSlot = FrameSlot(pixelBuffer: initialFrame, smpteTime: nil)
+            let initialSlot = FrameSlot(
+                generation: gen,
+                expectedWidth: selection.format.width,
+                expectedHeight: selection.format.height,
+                expectedPixelFormat: selection.format.pixelFormat,
+                pixelBuffer: validatedInitial,
+                smpteTime: nil
+            )
             self.latestFrameLock.withLock {
                 $0 = initialSlot
             }
@@ -239,7 +276,7 @@ nonisolated final class CMIOCleanfeedSink: @unchecked Sendable {
                 self.enqueueNextFrameLocked()
             }
 
-            let intervalNs = max(Int64((1_000_000_000.0 / max(selection.frameRate, 1.0)).rounded()), 1_000_000)
+            let intervalNs = max(Int64((1_000_000_000.0 / max(actualFPS, 1.0)).rounded()), 1_000_000)
             let timer = DispatchSource.makeTimerSource(flags: .strict, queue: self.pumpQueue)
             timer.schedule(
                 deadline: .now() + .nanoseconds(Int(intervalNs)),
@@ -251,16 +288,58 @@ nonisolated final class CMIOCleanfeedSink: @unchecked Sendable {
             }
             self.pumpTimer = timer
             timer.resume()
+            return gen
         }
 
-        Self.logger.info("Started cleanfeed sink on \(device.name): \(selection.summaryLabel)")
+        Self.logger.info("Started cleanfeed sink on \(device.name): \(selection.summaryLabel(actualFrameRate: actualFPS))")
+        return CMIOCleanfeedStartResult(generation: startedGeneration, negotiatedFrameRate: actualFPS)
     }
 
-    func submitFrame(_ pixelBuffer: CVPixelBuffer, smpteTime: SMPTETime? = nil) {
-        let slot = FrameSlot(pixelBuffer: pixelBuffer, smpteTime: smpteTime)
-        latestFrameLock.withLock {
-            $0 = slot
+    private struct PixelBufferBox: @unchecked Sendable {
+        let value: CVPixelBuffer
+    }
+
+    /// Submits the latest converted frame to the active stream. Rejects buffers
+    /// from an old stream generation or whose dimensions/pixel format do not
+    /// match the negotiated stream format (preventing stale Metal completions
+    /// from injecting previous-resolution frames after a live resolution switch).
+    @discardableResult
+    func submitFrame(
+        _ pixelBuffer: CVPixelBuffer,
+        smpteTime: SMPTETime? = nil,
+        generation expectedGeneration: UInt64? = nil
+    ) -> Bool {
+        let width = CVPixelBufferGetWidth(pixelBuffer)
+        let height = CVPixelBufferGetHeight(pixelBuffer)
+        let pixelFormat = CVPixelBufferGetPixelFormatType(pixelBuffer)
+        let box = PixelBufferBox(value: pixelBuffer)
+        return latestFrameLock.withLock { slot in
+            if let expectedGeneration, expectedGeneration != slot.generation {
+                return false
+            }
+            guard slot.expectedWidth > 0,
+                  slot.expectedHeight > 0,
+                  width == slot.expectedWidth,
+                  height == slot.expectedHeight,
+                  pixelFormat == slot.expectedPixelFormat else {
+                return false
+            }
+            slot.pixelBuffer = box.value
+            slot.smpteTime = smpteTime
+            return true
         }
+    }
+
+    /// Exposed for deterministic unit testing of pixel-buffer format matching.
+    nonisolated static func pixelBufferMatches(
+        _ pixelBuffer: CVPixelBuffer,
+        width: Int,
+        height: Int,
+        pixelFormat: OSType
+    ) -> Bool {
+        CVPixelBufferGetWidth(pixelBuffer) == width
+            && CVPixelBufferGetHeight(pixelBuffer) == height
+            && CVPixelBufferGetPixelFormatType(pixelBuffer) == pixelFormat
     }
 
     func currentStats() -> CMIOCleanfeedStats {
@@ -284,31 +363,104 @@ nonisolated final class CMIOCleanfeedSink: @unchecked Sendable {
 
     func stop() {
         var deviceToStop: CMIOOutputDevice?
+        var queueToDrain: CMSimpleQueue?
         pumpQueue.sync {
             guard self.isRunning || self.activeDevice != nil else { return }
             self.isRunning = false
+            self.streamGeneration &+= 1
+            let nextGen = self.streamGeneration
             self.pumpTimer?.cancel()
             self.pumpTimer = nil
             deviceToStop = self.activeDevice
+            queueToDrain = self.bufferQueue
             self.activeDevice = nil
             self.activeSelection = nil
             self.bufferQueue = nil
             self.streamFormatDescription = nil
             self.fallbackBlackBuffer = nil
             self.latestFrameLock.withLock {
-                $0.pixelBuffer = nil
-                $0.smpteTime = nil
+                $0 = FrameSlot(generation: nextGen)
             }
         }
 
         if let device = deviceToStop {
             _ = CMIODeviceStopStream(device.deviceID, device.streamID)
+            if let queueToDrain {
+                // Drain all queued CMSampleBuffers from the previous format so
+                // restarting at a different resolution starts with a clean queue.
+                Self.drainQueue(queueToDrain)
+            }
             unregisterCallbacks(streamID: device.streamID)
             releaseDeviceControl(deviceID: device.deviceID)
             Self.logger.info("Stopped cleanfeed sink on \(device.name)")
         } else if let ctx = callbackContext {
             callbackContext = nil
             Unmanaged<CMIOCleanfeedSink>.fromOpaque(ctx).release()
+        }
+    }
+
+    private func configureStreamFrameRate(streamID: CMIOStreamID, targetFPS: Double) -> OSStatus {
+        var rateAddress = CMIOObjectPropertyAddress(
+            mSelector: CMIOObjectPropertySelector(kCMIOStreamPropertyFrameRate),
+            mScope: CMIOObjectPropertyScope(kCMIOObjectPropertyScopeGlobal),
+            mElement: CMIOObjectPropertyElement(kCMIOObjectPropertyElementMain)
+        )
+        var minRateAddress = CMIOObjectPropertyAddress(
+            mSelector: CMIOObjectPropertySelector(kCMIOStreamPropertyMinimumFrameRate),
+            mScope: CMIOObjectPropertyScope(kCMIOObjectPropertyScopeGlobal),
+            mElement: CMIOObjectPropertyElement(kCMIOObjectPropertyElementMain)
+        )
+
+        let hasMinRate = CMIOObjectHasProperty(streamID, &minRateAddress)
+        var minSettable: DarwinBoolean = false
+        if hasMinRate {
+            _ = CMIOObjectIsPropertySettable(streamID, &minRateAddress, &minSettable)
+        }
+
+        let currentFPS = readStreamFrameRate(streamID: streamID)
+        var fps = Float64(targetFPS)
+
+        if minSettable.boolValue, let currentFPS, targetFPS < currentFPS {
+            _ = CMIOObjectSetPropertyData(streamID, &minRateAddress, 0, nil, UInt32(MemoryLayout<Float64>.size), &fps)
+        }
+        let rateStatus = CMIOObjectSetPropertyData(
+            streamID,
+            &rateAddress,
+            0,
+            nil,
+            UInt32(MemoryLayout<Float64>.size),
+            &fps
+        )
+        if rateStatus == noErr, minSettable.boolValue {
+            _ = CMIOObjectSetPropertyData(streamID, &minRateAddress, 0, nil, UInt32(MemoryLayout<Float64>.size), &fps)
+        }
+        return rateStatus
+    }
+
+    private func readStreamFrameRate(streamID: CMIOStreamID) -> Double? {
+        var rateAddress = CMIOObjectPropertyAddress(
+            mSelector: CMIOObjectPropertySelector(kCMIOStreamPropertyFrameRate),
+            mScope: CMIOObjectPropertyScope(kCMIOObjectPropertyScopeGlobal),
+            mElement: CMIOObjectPropertyElement(kCMIOObjectPropertyElementMain)
+        )
+        guard CMIOObjectHasProperty(streamID, &rateAddress) else { return nil }
+        var fps: Float64 = 0
+        var used: UInt32 = 0
+        let status = CMIOObjectGetPropertyData(
+            streamID,
+            &rateAddress,
+            0,
+            nil,
+            UInt32(MemoryLayout<Float64>.size),
+            &used,
+            &fps
+        )
+        return status == noErr && fps.isFinite && fps > 0 ? fps : nil
+    }
+
+    private static func drainQueue(_ queue: CMSimpleQueue) {
+        while let raw = CMSimpleQueueDequeue(queue) {
+            Unmanaged<CMSampleBuffer>.fromOpaque(raw).release()
         }
     }
 

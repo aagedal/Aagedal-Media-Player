@@ -491,4 +491,48 @@ final class CleanfeedTests: XCTestCase {
         XCTAssertEqual(actualV210.0, expected.0)
         XCTAssertEqual(actualV210.1, expected.1)
     }
+
+    func testSummaryLabelReportsDeviceLockedFrameRateMismatch() {
+        let device = makeUltraStudioLikeDevice()
+        let source2398 = CMIOOutputSourceDescriptor(
+            width: 3840, height: 2160, frameRate: 24_000.0 / 1_001.0, bitDepth: 10,
+            colorPrimaries: "bt2020", colorTransfer: "smpte2084"
+        )
+        let selection = CMIOOutputFormatSelector.select(
+            device: device,
+            source: source2398,
+            resolutionMode: .uhd2160,
+            frameRateMode: .matchMax30,
+            colorMode: .sdr709
+        )
+        XCTAssertNotNil(selection)
+        XCTAssertEqual(
+            selection?.summaryLabel(actualFrameRate: 24_000.0 / 1_001.0),
+            "3840×2160p23.98 • v210 • Rec.709"
+        )
+        XCTAssertEqual(
+            selection?.summaryLabel(actualFrameRate: 30_000.0 / 1_001.0),
+            "3840×2160p29.97 • v210 • Rec.709 (device locked; requested 23.98)"
+        )
+    }
+
+    func testSinkPixelBufferFormatMatchingRejectsStaleResolutionBuffers() throws {
+        let conv1080 = try XCTUnwrap(CMIOFrameConverter(
+            width: 1920, height: 1080, pixelFormat: kCVPixelFormatType_32BGRA, colorSpace: .rec709
+        ))
+        let pb1080 = try XCTUnwrap(conv1080.makeBlackPixelBuffer())
+        XCTAssertTrue(CMIOCleanfeedSink.pixelBufferMatches(
+            pb1080, width: 1920, height: 1080, pixelFormat: kCVPixelFormatType_32BGRA
+        ))
+        XCTAssertFalse(CMIOCleanfeedSink.pixelBufferMatches(
+            pb1080, width: 3840, height: 2160, pixelFormat: kCVPixelFormatType_32BGRA
+        ))
+        XCTAssertFalse(CMIOCleanfeedSink.pixelBufferMatches(
+            pb1080, width: 1920, height: 1080, pixelFormat: kCVPixelFormatType_422YpCbCr10
+        ))
+
+        // Unstarted sink must reject frames instead of caching mismatched buffers.
+        let sink = CMIOCleanfeedSink()
+        XCTAssertFalse(sink.submitFrame(pb1080, smpteTime: nil, generation: 1))
+    }
 }

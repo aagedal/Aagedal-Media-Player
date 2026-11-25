@@ -91,6 +91,7 @@ final class CleanfeedSession: ObservableObject {
     @Published private(set) var isColorBarsActive = false
     @Published private(set) var activeDevice: CMIOOutputDevice?
     @Published private(set) var activeSelection: CMIOOutputFormatSelection?
+    @Published private(set) var activeNegotiatedFrameRate: Double?
     @Published private(set) var stats = CMIOCleanfeedStats()
     @Published private(set) var errorMessage: String?
 
@@ -238,10 +239,10 @@ final class CleanfeedSession: ObservableObject {
             return errorMessage
         }
         if isColorBarsActive, let device = activeDevice, let selection = activeSelection {
-            return "Color Bars → \(device.name) (\(selection.summaryLabel))"
+            return "Color Bars → \(device.name) (\(selection.summaryLabel(actualFrameRate: activeNegotiatedFrameRate)))"
         }
         if isStreaming, let device = activeDevice, let selection = activeSelection {
-            return "\(device.name) • \(selection.summaryLabel)"
+            return "\(device.name) • \(selection.summaryLabel(actualFrameRate: activeNegotiatedFrameRate))"
         }
         if isEnabled {
             if availableDevices.isEmpty {
@@ -261,6 +262,7 @@ final class CleanfeedSession: ObservableObject {
     private var controllerCancellable: AnyCancellable?
 
     private let sink = CMIOCleanfeedSink()
+    private var activeSinkGeneration: UInt64 = 0
     private var converter: CMIOFrameConverter?
 
     // Option A MPV follower
@@ -406,8 +408,9 @@ final class CleanfeedSession: ObservableObject {
         }
 
         let initialBars = conv.makeColorBarsPixelBuffer(frameIndex: 0) ?? conv.makeBlackPixelBuffer()
+        let startResult: CMIOCleanfeedStartResult
         do {
-            try sink.start(device: device, selection: selection, initialFrame: initialBars)
+            startResult = try sink.start(device: device, selection: selection, initialFrame: initialBars)
         } catch {
             errorMessage = error.localizedDescription
             return
@@ -416,11 +419,13 @@ final class CleanfeedSession: ObservableObject {
         converter = conv
         activeDevice = device
         activeSelection = selection
+        activeNegotiatedFrameRate = startResult.negotiatedFrameRate
+        activeSinkGeneration = startResult.generation
         isColorBarsActive = true
         isStreaming = true
         colorBarsFrameIndex = 1
 
-        let interval = 1.0 / max(selection.frameRate, 1.0)
+        let interval = 1.0 / max(startResult.negotiatedFrameRate, 1.0)
         let timer = Timer(timeInterval: interval, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
                 self?.emitNextColorBarsFrame()
@@ -560,8 +565,9 @@ final class CleanfeedSession: ObservableObject {
             }
 
             let blackFrame = conv.makeBlackPixelBuffer()
+            let startResult: CMIOCleanfeedStartResult
             do {
-                try sink.start(device: device, selection: selection, initialFrame: blackFrame)
+                startResult = try sink.start(device: device, selection: selection, initialFrame: blackFrame)
             } catch {
                 errorMessage = error.localizedDescription
                 return
@@ -570,6 +576,8 @@ final class CleanfeedSession: ObservableObject {
             converter = conv
             activeDevice = device
             activeSelection = selection
+            activeNegotiatedFrameRate = startResult.negotiatedFrameRate
+            activeSinkGeneration = startResult.generation
             isStreaming = true
             errorMessage = nil
         }
@@ -596,6 +604,8 @@ final class CleanfeedSession: ObservableObject {
         converter = nil
         activeDevice = nil
         activeSelection = nil
+        activeNegotiatedFrameRate = nil
+        activeSinkGeneration = 0
         activeSource = nil
         activeEdition = nil
         isStreaming = false
@@ -631,7 +641,7 @@ final class CleanfeedSession: ObservableObject {
                 activeSource = nil
                 activeEdition = nil
                 if let black = converter?.makeBlackPixelBuffer() {
-                    sink.submitFrame(black, smpteTime: nil)
+                    sink.submitFrame(black, smpteTime: nil, generation: activeSinkGeneration)
                 }
             }
             return
@@ -672,7 +682,7 @@ final class CleanfeedSession: ObservableObject {
         }
 
         // Update timecode snapshot for incoming frames.
-        let outputFPS = activeSelection?.frameRate ?? 25.0
+        let outputFPS = activeNegotiatedFrameRate ?? activeSelection?.frameRate ?? 25.0
         let playbackTime = controller.currentPlaybackTime
         let sourceTC = mediaItem.metadata?.timecode
         let sourceFPS = mediaItem.metadata?.primaryVideoStream?.frameRate?.value
@@ -731,6 +741,7 @@ final class CleanfeedSession: ObservableObject {
             layer.drawableSize = outputSize
 
             let sinkRef = sink
+            let sinkGen = activeSinkGeneration
             let tcLock = timecodeContextLock
             layer.onDrawablePresented = { drawable, isLinearEDR in
                 let tc = tcLock.withLock { ctx -> SMPTETime? in
@@ -748,7 +759,7 @@ final class CleanfeedSession: ObservableObject {
                     retainedToken: drawable
                 ) { pixelBuffer in
                     guard let pixelBuffer else { return }
-                    sinkRef.submitFrame(pixelBuffer, smpteTime: tc)
+                    sinkRef.submitFrame(pixelBuffer, smpteTime: tc, generation: sinkGen)
                 }
             }
             cleanfeedLayer = layer
@@ -961,7 +972,7 @@ final class CleanfeedSession: ObservableObject {
             avOutputItem = item
             lastAVCapturedTime = .invalid
 
-            let interval = 1.0 / max(selection.frameRate, 24.0)
+            let interval = 1.0 / max(activeNegotiatedFrameRate ?? selection.frameRate, 24.0)
             let timer = Timer(timeInterval: interval, repeats: true) { [weak self] _ in
                 Task { @MainActor [weak self] in
                     self?.pullAVPlayerFrame()
@@ -1005,7 +1016,7 @@ final class CleanfeedSession: ObservableObject {
                 outputFrameRate: ctx.outputFrameRate
             )
         }
-        sink.submitFrame(converted, smpteTime: smpte)
+        sink.submitFrame(converted, smpteTime: smpte, generation: activeSinkGeneration)
     }
 
     private func detachAVVideoOutput() {
@@ -1054,16 +1065,17 @@ final class CleanfeedSession: ObservableObject {
     private func emitNextColorBarsFrame() {
         guard isColorBarsActive, let converter, let selection = activeSelection else { return }
         guard let pb = converter.makeColorBarsPixelBuffer(frameIndex: colorBarsFrameIndex) else { return }
-        let seconds = Double(colorBarsFrameIndex) / max(selection.frameRate, 1.0)
+        let effectiveFPS = activeNegotiatedFrameRate ?? selection.frameRate
+        let seconds = Double(colorBarsFrameIndex) / max(effectiveFPS, 1.0)
         let tc = embedSMPTETimecode
             ? CleanfeedSMPTETime.make(
                 playbackSeconds: seconds,
                 sourceStartTimecode: "01:00:00:00",
-                sourceFrameRate: selection.frameRate,
-                outputFrameRate: selection.frameRate
+                sourceFrameRate: effectiveFPS,
+                outputFrameRate: effectiveFPS
             )
             : nil
-        sink.submitFrame(pb, smpteTime: tc)
+        sink.submitFrame(pb, smpteTime: tc, generation: activeSinkGeneration)
         colorBarsFrameIndex += 1
     }
 }
