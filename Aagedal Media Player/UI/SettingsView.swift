@@ -114,30 +114,334 @@ enum ScopeResolution: Int, CaseIterable {
 }
 
 struct SettingsView: View {
+    @State private var selectedCategory: SettingsCategory = .general
+    @State private var searchText: String = ""
+    @State private var isSidebarCompact: Bool = false
+    @State private var highlightedSection: String?
+    @FocusState private var isSearchFocused: Bool
+    @ObservedObject private var cleanfeed = CleanfeedSession.shared
+
+    private var trimmedSearch: String {
+        searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var searchResults: [SettingsSearchItem] {
+        SettingsSearchIndex.search(trimmedSearch)
+    }
+
     var body: some View {
-        TabView {
-            GeneralSettingsView()
-                .tabItem { Label("General", systemImage: "gear") }
+        HStack(spacing: 0) {
+            sidebar
+                .frame(width: isSidebarCompact ? 56 : 224)
+                .background(.background.secondary)
 
-            ScreenshotSettingsView()
-                .tabItem { Label("Screenshots", systemImage: "camera") }
+            Divider()
 
-            ExportSettingsView()
-                .tabItem { Label("Export", systemImage: "square.and.arrow.up") }
-
-            ScopeSettingsView()
-                .tabItem { Label("Scopes", systemImage: "waveform") }
-
-            AudioSettingsView()
-                .tabItem { Label("Audio", systemImage: "waveform.path") }
-
-            KeyboardShortcutsView()
-                .tabItem { Label("Shortcuts", systemImage: "command") }
-
-            UpdateSettingsView()
-                .tabItem { Label("Updates", systemImage: "arrow.triangle.2.circlepath") }
+            detailPane
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color(nsColor: .windowBackgroundColor))
         }
-        .frame(width: 480, height: 500)
+        .frame(minWidth: 660, idealWidth: 740, maxWidth: 920, minHeight: 480, idealHeight: 560, maxHeight: 760)
+        .animation(.snappy(duration: 0.18), value: isSidebarCompact)
+        .onChange(of: searchText) { _, newValue in
+            let matches = SettingsSearchIndex.search(newValue)
+            if let first = matches.first, !matches.contains(where: { $0.category == selectedCategory }) {
+                selectedCategory = first.category
+                highlightedSection = first.section
+            } else if newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                highlightedSection = nil
+            }
+        }
+        .background {
+            // Hidden Cmd+F shortcut to focus the settings search bar
+            Button("") {
+                if isSidebarCompact { isSidebarCompact = false }
+                isSearchFocused = true
+            }
+            .keyboardShortcut("f", modifiers: .command)
+            .hidden()
+        }
+    }
+
+    // MARK: - Sidebar
+
+    private var sidebar: some View {
+        VStack(spacing: 0) {
+            sidebarHeader
+
+            Divider()
+
+            if trimmedSearch.isEmpty || isSidebarCompact {
+                categoryList
+            } else {
+                searchResultsList
+            }
+        }
+    }
+
+    private var sidebarHeader: some View {
+        HStack(spacing: 6) {
+            if !isSidebarCompact {
+                HStack(spacing: 6) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                    TextField("Search", text: $searchText)
+                        .textFieldStyle(.plain)
+                        .font(.system(size: 12))
+                        .focused($isSearchFocused)
+                    if !searchText.isEmpty {
+                        Button {
+                            searchText = ""
+                            highlightedSection = nil
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 11))
+                                .foregroundStyle(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                        .help("Clear search")
+                    }
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 5)
+                .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 7))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 7)
+                        .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
+                )
+            }
+
+            Button {
+                isSidebarCompact.toggle()
+                if isSidebarCompact { isSearchFocused = false }
+            } label: {
+                Image(systemName: "sidebar.left")
+                    .font(.system(size: 13))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 26, height: 26)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .help(isSidebarCompact ? "Expand sidebar" : "Collapse sidebar to icons")
+        }
+        .padding(.horizontal, isSidebarCompact ? 8 : 10)
+        .padding(.vertical, 10)
+        .frame(maxWidth: .infinity, alignment: isSidebarCompact ? .center : .leading)
+    }
+
+    private var categoryList: some View {
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 14) {
+                ForEach(SettingsCategoryGroup.allCases) { group in
+                    VStack(alignment: .leading, spacing: 2) {
+                        if !isSidebarCompact {
+                            Text(group.title.uppercased())
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundStyle(.tertiary)
+                                .padding(.horizontal, 10)
+                                .padding(.bottom, 2)
+                        }
+
+                        ForEach(group.categories) { category in
+                            sidebarRow(for: category)
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal, isSidebarCompact ? 6 : 8)
+            .padding(.vertical, 10)
+        }
+    }
+
+    private func sidebarRow(for category: SettingsCategory) -> some View {
+        let isSelected = selectedCategory == category
+        return Button {
+            selectedCategory = category
+            highlightedSection = nil
+        } label: {
+            HStack(spacing: 9) {
+                categoryIconBadge(category, size: 22)
+
+                if !isSidebarCompact {
+                    Text(category.title)
+                        .font(.system(size: 13, weight: isSelected ? .medium : .regular))
+                        .foregroundStyle(isSelected ? Color.primary : Color.primary.opacity(0.88))
+                        .lineLimit(1)
+
+                    Spacer(minLength: 4)
+
+                    if category == .cleanfeed, cleanfeed.isStreaming {
+                        Circle()
+                            .fill(Color.green)
+                            .frame(width: 7, height: 7)
+                            .help("Cleanfeed active")
+                    }
+                }
+            }
+            .padding(.horizontal, isSidebarCompact ? 0 : 8)
+            .padding(.vertical, 5)
+            .frame(maxWidth: .infinity, alignment: isSidebarCompact ? .center : .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 7)
+                    .fill(isSelected ? Color.accentColor.opacity(0.18) : Color.clear)
+            )
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help(isSidebarCompact ? category.title : "")
+    }
+
+    private var searchResultsList: some View {
+        ScrollView {
+            if searchResults.isEmpty {
+                VStack(spacing: 8) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 22))
+                        .foregroundStyle(.tertiary)
+                    Text("No Matching Settings")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(.secondary)
+                    Text("Try a different term such as “4K”, “SDI”, “JXL”, or “waveform”.")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                        .multilineTextAlignment(.center)
+                }
+                .padding(20)
+                .frame(maxWidth: .infinity)
+            } else {
+                LazyVStack(alignment: .leading, spacing: 4) {
+                    ForEach(searchResults) { item in
+                        let isSelected = selectedCategory == item.category && highlightedSection == item.section
+                        Button {
+                            selectedCategory = item.category
+                            highlightedSection = item.section
+                        } label: {
+                            HStack(spacing: 9) {
+                                categoryIconBadge(item.category, size: 20)
+                                VStack(alignment: .leading, spacing: 1) {
+                                    Text(item.title)
+                                        .font(.system(size: 12, weight: .medium))
+                                        .foregroundStyle(.primary)
+                                        .lineLimit(1)
+                                    Text("\(item.category.title) \u{203A} \(item.section)")
+                                        .font(.system(size: 10))
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(1)
+                                }
+                                Spacer(minLength: 0)
+                            }
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 6)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(
+                                RoundedRectangle(cornerRadius: 7)
+                                    .fill(isSelected ? Color.accentColor.opacity(0.18) : Color.clear)
+                            )
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(8)
+            }
+        }
+    }
+
+    private func categoryIconBadge(_ category: SettingsCategory, size: CGFloat) -> some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: size * 0.25)
+                .fill(categoryTint(category).gradient)
+                .frame(width: size, height: size)
+            Image(systemName: category.systemImage)
+                .font(.system(size: size * 0.54, weight: .semibold))
+                .foregroundStyle(.white)
+        }
+    }
+
+    private func categoryTint(_ category: SettingsCategory) -> Color {
+        switch category {
+        case .general: .gray
+        case .cleanfeed: .indigo
+        case .scopes: .teal
+        case .audio: .pink
+        case .screenshots: .orange
+        case .export: .green
+        case .shortcuts: .blue
+        case .updates: .cyan
+        }
+    }
+
+    // MARK: - Detail Pane
+
+    private var detailPane: some View {
+        VStack(spacing: 0) {
+            detailHeader
+
+            Divider()
+
+            Group {
+                switch selectedCategory {
+                case .general:
+                    GeneralSettingsView()
+                case .cleanfeed:
+                    CleanfeedSettingsView()
+                case .scopes:
+                    ScopeSettingsView()
+                case .audio:
+                    AudioSettingsView()
+                case .screenshots:
+                    ScreenshotSettingsView()
+                case .export:
+                    ExportSettingsView()
+                case .shortcuts:
+                    KeyboardShortcutsView(filterQuery: trimmedSearch)
+                case .updates:
+                    UpdateSettingsView()
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+    }
+
+    private var detailHeader: some View {
+        HStack(spacing: 10) {
+            categoryIconBadge(selectedCategory, size: 28)
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text(selectedCategory.title)
+                    .font(.headline)
+                Text(selectedCategory.subtitle)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+
+            if let highlightedSection, !trimmedSearch.isEmpty {
+                Label(highlightedSection, systemImage: "magnifyingglass")
+                    .font(.caption)
+                    .foregroundStyle(Color.accentColor)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(Color.accentColor.opacity(0.12), in: Capsule())
+            } else if selectedCategory == .cleanfeed, let device = cleanfeed.resolvedTargetDevice {
+                HStack(spacing: 5) {
+                    Circle()
+                        .fill(cleanfeed.isStreaming ? Color.green : Color.secondary.opacity(0.5))
+                        .frame(width: 7, height: 7)
+                    Text(device.name)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(Color(nsColor: .controlBackgroundColor), in: Capsule())
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 12)
     }
 
     // MARK: - Static Resolution
@@ -767,86 +1071,248 @@ private struct AudioSettingsView: View {
     }
 }
 
+// MARK: - Cleanfeed Output Settings
+
+private struct CleanfeedSettingsView: View {
+    @ObservedObject private var cleanfeed = CleanfeedSession.shared
+
+    var body: some View {
+        Form {
+            Section("External Video Output (CoreMediaIO)") {
+                if cleanfeed.availableDevices.isEmpty {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("No CoreMediaIO output device detected.")
+                            .foregroundStyle(.secondary)
+                        Text("Connect an SDI/HDMI device such as a Blackmagic UltraStudio and ensure its macOS Driver Extension and Camera Extension are enabled in System Settings \u{2192} General \u{2192} Login Items & Extensions.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                } else {
+                    LabeledContent("Output Device") {
+                        Picker("", selection: Binding(
+                            get: { cleanfeed.resolvedTargetDevice?.uid ?? "" },
+                            set: { cleanfeed.selectedDeviceUID = $0 }
+                        )) {
+                            ForEach(cleanfeed.availableDevices) { device in
+                                Text(device.name).tag(device.uid)
+                            }
+                        }
+                        .labelsHidden()
+                    }
+                }
+
+                LabeledContent("Status") {
+                    Text(cleanfeed.statusSummary)
+                        .foregroundStyle(cleanfeed.errorMessage != nil ? .red : .secondary)
+                        .multilineTextAlignment(.trailing)
+                }
+
+                if cleanfeed.isStreaming {
+                    LabeledContent("Telemetry") {
+                        Text("\(cleanfeed.stats.framesScheduled) scheduled \u{2022} \(cleanfeed.stats.droppedFrames) dropped \u{2022} \(cleanfeed.stats.underrunCount) underruns")
+                            .font(.caption.monospacedDigit())
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                HStack {
+                    Button(cleanfeed.isColorBarsActive ? "Stop Color Bars Test" : "Send Color Bars Test") {
+                        cleanfeed.toggleColorBarsTest()
+                    }
+                    .disabled(!cleanfeed.hasOutputDevice && !cleanfeed.isColorBarsActive)
+
+                    Spacer()
+
+                    Button("Refresh Devices") {
+                        cleanfeed.refreshDevices()
+                    }
+                }
+            }
+
+            Section("Signal Format") {
+                let caps = cleanfeed.capabilities
+
+                LabeledContent("Resolution") {
+                    Picker("", selection: Binding(
+                        get: { caps.effectiveResolutionMode },
+                        set: { cleanfeed.resolutionMode = $0 }
+                    )) {
+                        ForEach(caps.resolutionModes) { mode in
+                            Text(mode.label).tag(mode)
+                        }
+                    }
+                    .labelsHidden()
+                }
+                Text("Filtered to resolutions advertised by the selected device. Defaults to 1080p HD so HD displays don\u{2019}t lose signal on 4K files.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                LabeledContent("Frame Rate") {
+                    Picker("", selection: Binding(
+                        get: { caps.effectiveFrameRateMode },
+                        set: { cleanfeed.frameRateMode = $0 }
+                    )) {
+                        ForEach(caps.frameRateModes) { mode in
+                            Text(mode.label).tag(mode)
+                        }
+                    }
+                    .labelsHidden()
+                }
+                Text("Filtered to frame rates supported at the chosen resolution. Use a fixed rate to prevent monitor re-sync between clips, or cap automatic matching.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                LabeledContent("Color Space") {
+                    Picker("", selection: Binding(
+                        get: { caps.effectiveColorMode },
+                        set: { cleanfeed.colorMode = $0 }
+                    )) {
+                        ForEach(caps.colorModes) { mode in
+                            Text(mode.label).tag(mode)
+                        }
+                    }
+                    .labelsHidden()
+                    .disabled(caps.colorModes.count <= 1)
+                }
+                Text("SDR (Rec.709) safely tone-maps HDR clips for standard monitors. HDR options appear only when supported by the connected device.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                LabeledContent("Pixel Format") {
+                    Picker("", selection: Binding(
+                        get: { caps.effectivePixelFormatMode },
+                        set: { cleanfeed.pixelFormatMode = $0 }
+                    )) {
+                        ForEach(caps.pixelFormatModes) { mode in
+                            Text(mode.label).tag(mode)
+                        }
+                    }
+                    .labelsHidden()
+                    .disabled(caps.pixelFormatModes.count <= 1)
+                }
+                Text("Filtered to pixel formats supported at the chosen resolution and frame rate (e.g. 4K 50/60p requires 10-bit 4:2:2 v210).")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section("Audio & Timecode") {
+                Toggle("Route Audio to Output Device", isOn: Binding(
+                    get: { cleanfeed.routeAudioToDevice },
+                    set: { cleanfeed.routeAudioToDevice = $0 }
+                ))
+                Text("Routes playback audio to the output device\u{2019}s linked CoreAudio driver (SDI/HDMI embedded audio) while cleanfeed is active.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Toggle("Embed SMPTE Timecode", isOn: Binding(
+                    get: { cleanfeed.embedSMPTETimecode },
+                    set: { cleanfeed.embedSMPTETimecode = $0 }
+                ))
+                Text("Attaches source or relative SMPTE timecode to each CoreMediaIO output frame.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .formStyle(.grouped)
+        .onAppear {
+            cleanfeed.refreshDevices()
+        }
+    }
+}
+
 // MARK: - Keyboard Shortcuts
 
 private struct KeyboardShortcutsView: View {
+    let filterQuery: String
     @AppStorage(AppSettings.precisionScrubFactor.key)
     private var precisionScrubFactor = AppSettings.precisionScrubFactor.defaultValue
 
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                shortcutSection("Playback", shortcuts: [
-                    ("Space / K", "Play / Pause"),
-                    ("J", "Reverse (press again to increase speed)"),
-                    ("L", "Fast Forward (press again to increase speed)"),
-                ])
-
-                shortcutSection("Navigation", shortcuts: [
-                    ("\u{2190}", "Back 1 frame"),
-                    ("\u{2192}", "Forward 1 frame"),
-                    ("\u{2191}", "Back 10 frames"),
-                    ("\u{2193}", "Forward 10 frames"),
-                    ("\u{21E7}\u{2190}", "Back 10 seconds"),
-                    ("\u{21E7}\u{2192}", "Forward 10 seconds"),
-                    ("\u{2318}\u{2191}", "Jump to start"),
-                    ("\u{2318}\u{2193}", "Jump to end"),
-                    ("\u{2318}[", "Previous file in folder"),
-                    ("\u{2318}]", "Next file in folder"),
-                    ("\u{2325}\u{2190}\u{2192}\u{2191}\u{2193}", "Same as above, current window only"),
-                    ("\u{2325}Drag", "Precision scrub (\(Int(precisionScrubFactor))x slower)"),
-                ])
-
-                shortcutSection("Trim", shortcuts: [
-                    ("I", "Set trim in"),
-                    ("O", "Set trim out"),
-                    ("\u{21E7}I", "Jump to trim in"),
-                    ("\u{21E7}O", "Jump to trim out"),
-                    ("\u{2325}I", "Clear trim in"),
-                    ("\u{2325}O", "Clear trim out"),
-                    ("\u{2325}X", "Clear all trim points"),
-                    ("\u{2318}E", "Export trim"),
-                ])
-
-                shortcutSection("Compare Mode", shortcuts: [
-                    ("B", "Toggle source A / B"),
-                    ("[ / ]", "Move wipe 2%"),
-                    ("\u{21E7}[ / ]", "Move wipe 10%"),
-                ])
-
-                shortcutSection("General", shortcuts: [
-                    ("\u{2318}N", "New window (multi-window mode)"),
-                    ("\u{21E7}\u{2318}S", "Align windows to current timecode once"),
-                    ("\u{2318}W", "Close window"),
-                    ("\u{2318}S", "Screenshot"),
-                    ("\u{2318}F", "Toggle fullscreen"),
-                    ("T", "Cycle timecode display"),
-                    ("\u{2318}I", "Toggle inspector"),
-                    ("\u{2318}O", "Open file"),
-                    ("\u{21E7}\u{2318}R", "Reload player"),
-                    ("\u{2318},", "Settings"),
-                ])
-            }
-            .padding()
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
+    private var allSections: [(title: String, shortcuts: [(String, String)])] {
+        [
+            ("Playback", [
+                ("Space / K", "Play / Pause"),
+                ("J", "Reverse (press again to increase speed)"),
+                ("L", "Fast Forward (press again to increase speed)"),
+            ]),
+            ("Navigation", [
+                ("\u{2190}", "Back 1 frame"),
+                ("\u{2192}", "Forward 1 frame"),
+                ("\u{2191}", "Back 10 frames"),
+                ("\u{2193}", "Forward 10 frames"),
+                ("\u{21E7}\u{2190}", "Back 10 seconds"),
+                ("\u{21E7}\u{2192}", "Forward 10 seconds"),
+                ("\u{2318}\u{2191}", "Jump to start"),
+                ("\u{2318}\u{2193}", "Jump to end"),
+                ("\u{2318}[", "Previous file in folder"),
+                ("\u{2318}]", "Next file in folder"),
+                ("\u{2325}\u{2190}\u{2192}\u{2191}\u{2193}", "Same as above, current window only"),
+                ("\u{2325}Drag", "Precision scrub (\(Int(precisionScrubFactor))x slower)"),
+            ]),
+            ("Trim", [
+                ("I", "Set trim in"),
+                ("O", "Set trim out"),
+                ("\u{21E7}I", "Jump to trim in"),
+                ("\u{21E7}O", "Jump to trim out"),
+                ("\u{2325}I", "Clear trim in"),
+                ("\u{2325}O", "Clear trim out"),
+                ("\u{2325}X", "Clear all trim points"),
+                ("\u{2318}E", "Export trim"),
+            ]),
+            ("Compare Mode", [
+                ("B", "Toggle source A / B"),
+                ("[ / ]", "Move wipe 2%"),
+                ("\u{21E7}[ / ]", "Move wipe 10%"),
+            ]),
+            ("General", [
+                ("\u{2318}N", "New window (multi-window mode)"),
+                ("\u{21E7}\u{2318}S", "Align windows to current timecode once"),
+                ("\u{2318}W", "Close window"),
+                ("\u{2318}S", "Screenshot"),
+                ("\u{2318}F", "Toggle fullscreen"),
+                ("T", "Cycle timecode display"),
+                ("\u{2318}I", "Toggle inspector"),
+                ("\u{2318}O", "Open file"),
+                ("\u{21E7}\u{2318}O", "Toggle cleanfeed output"),
+                ("\u{21E7}\u{2318}R", "Reload player"),
+                ("\u{2318},", "Settings"),
+            ]),
+        ]
     }
 
-    private func shortcutSection(_ title: String, shortcuts: [(String, String)]) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(title)
-                .font(.headline)
+    private var filteredSections: [(title: String, shortcuts: [(String, String)])] {
+        let query = filterQuery.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !query.isEmpty else { return allSections }
+        let matched = allSections.compactMap { section -> (title: String, shortcuts: [(String, String)])? in
+            if section.title.lowercased().contains(query) {
+                return section
+            }
+            let items = section.shortcuts.filter { key, desc in
+                key.lowercased().contains(query) || desc.lowercased().contains(query)
+            }
+            return items.isEmpty ? nil : (section.title, items)
+        }
+        return matched.isEmpty ? allSections : matched
+    }
 
-            ForEach(Array(shortcuts.enumerated()), id: \.offset) { _, shortcut in
-                HStack {
-                    Text(shortcut.0)
-                        .font(.system(.body, design: .monospaced))
-                        .frame(width: 80, alignment: .trailing)
-
-                    Text(shortcut.1)
-                        .foregroundStyle(.secondary)
+    var body: some View {
+        Form {
+            ForEach(filteredSections, id: \.title) { section in
+                Section(section.title) {
+                    ForEach(Array(section.shortcuts.enumerated()), id: \.offset) { _, shortcut in
+                        HStack {
+                            Text(shortcut.1)
+                            Spacer()
+                            Text(shortcut.0)
+                                .font(.system(.callout, design: .monospaced))
+                                .foregroundStyle(.secondary)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 4))
+                        }
+                    }
                 }
             }
         }
+        .formStyle(.grouped)
     }
 }

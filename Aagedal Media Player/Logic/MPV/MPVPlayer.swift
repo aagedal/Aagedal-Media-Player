@@ -182,6 +182,9 @@ final class MPVPlayer: NSObject, ObservableObject, MPVNativeAudioProbeClient, @u
 
     private var correctsReflection = false
     private var isLiveLoupePlayer = false
+    private var isCleanfeedPlayer = false
+    private var cleanfeedColorSpace: CleanfeedColorSpace?
+    private var requestedAudioDevice: String?
     private var liveLoupeViewport: LoupeVideoViewport?
     private var liveLoupeNearest = true
 
@@ -194,6 +197,28 @@ final class MPVPlayer: NSObject, ObservableObject, MPVNativeAudioProbeClient, @u
         player.isMuted = true
         player.volume = 0
         return player
+    }
+
+    /// An independent, silent decoder targeting an offscreen broadcast raster
+    /// and color space for CoreMediaIO cleanfeed output.
+    func makeCleanfeedPlayer(colorSpace: CleanfeedColorSpace) -> MPVPlayer {
+        let player = MPVPlayer(correctsReflection: correctsReflection)
+        player.isCleanfeedPlayer = true
+        player.cleanfeedColorSpace = colorSpace
+        player.disableAudioTrack()
+        player.isMuted = true
+        player.volume = 0
+        return player
+    }
+
+    /// Routes CoreAudio output to a specific device UID (e.g. a linked
+    /// Blackmagic UltraStudio CoreAudio device), or `"auto"` when `nil`.
+    func setAudioOutputDevice(coreAudioUID: String?) {
+        let target = coreAudioUID.flatMap { $0.isEmpty ? nil : "coreaudio/\($0)" }
+        guard target != requestedAudioDevice else { return }
+        requestedAudioDevice = target
+        guard mpv != nil, !isAudioTrackDisabled else { return }
+        commandAsync("set", args: ["audio-device", target ?? "auto"])
     }
 
     func configureLiveLoupe(viewport: LoupeVideoViewport, nearest: Bool, force: Bool = false) {
@@ -372,7 +397,7 @@ final class MPVPlayer: NSObject, ObservableObject, MPVNativeAudioProbeClient, @u
         }
 
         let profilesNativeAudio = ProcessInfo.processInfo.environment["LIVE_AUDIO_METER_PROFILE_INPUTS"] != nil
-        let usesDecoderRasterCandidate = !isLiveLoupePlayer && enablesDecoderRasterCandidate &&
+        let usesDecoderRasterCandidate = !isLiveLoupePlayer && !isCleanfeedPlayer && enablesDecoderRasterCandidate &&
             mpv_set_option_string(mpv, "aagedal-decoder-raster", "yes") >= 0
         // Warning events are also control signals: disabling them in Release
         // prevents the native reverse-playback fallback from ever firing.
@@ -410,7 +435,21 @@ final class MPVPlayer: NSObject, ObservableObject, MPVNativeAudioProbeClient, @u
         checkError(mpv_set_option_string(mpv, "video-reversal-buffer", String(reversalBytes)), context: "video-reversal-buffer")
         checkError(mpv_set_option_string(mpv, "audio-reversal-buffer", "128MiB"), context: "audio-reversal-buffer")
 
-        checkError(mpv_set_option_string(mpv, "target-colorspace-hint", "yes"), context: "target-colorspace-hint")
+        if isCleanfeedPlayer, let colorSpace = cleanfeedColorSpace {
+            checkError(mpv_set_option_string(mpv, "target-prim", colorSpace.mpvTargetPrimaries), context: "target-prim")
+            checkError(mpv_set_option_string(mpv, "target-trc", colorSpace.mpvTargetTransfer), context: "target-trc")
+            checkError(
+                mpv_set_option_string(mpv, "target-colorspace-hint", colorSpace.isHDR ? "yes" : "no"),
+                context: "target-colorspace-hint"
+            )
+            checkError(mpv_set_option_string(mpv, "keepaspect", "yes"), context: "keepaspect")
+            checkError(mpv_set_option_string(mpv, "osd-level", "0"), context: "osd-level")
+        } else {
+            checkError(mpv_set_option_string(mpv, "target-colorspace-hint", "yes"), context: "target-colorspace-hint")
+        }
+        if !isAudioTrackDisabled, let audioDevice = requestedAudioDevice {
+            checkError(mpv_set_option_string(mpv, "audio-device", audioDevice), context: "audio-device")
+        }
         checkError(mpv_set_option_string(mpv, "keep-open", "yes"), context: "keep-open")
         locksDeinterlace = usesDecoderRasterCandidate
         checkError(mpv_set_option_string(mpv, "deinterlace", usesDecoderRasterCandidate ? "no" : "auto"), context: "deinterlace")

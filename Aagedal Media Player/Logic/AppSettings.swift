@@ -80,6 +80,15 @@ nonisolated enum AppSettings {
         defaultValue: nil
     )
 
+    // External Cleanfeed (CoreMediaIO SDI/HDMI output)
+    static let cleanfeedDeviceUID = AppSetting(key: "cleanfeedDeviceUID", defaultValue: "")
+    static let cleanfeedResolutionMode = AppSetting(key: "cleanfeedResolutionMode", defaultValue: "1080p")
+    static let cleanfeedFrameRateMode = AppSetting(key: "cleanfeedFrameRateMode", defaultValue: "auto30")
+    static let cleanfeedColorMode = AppSetting(key: "cleanfeedColorMode", defaultValue: "rec709")
+    static let cleanfeedPixelFormatMode = AppSetting(key: "cleanfeedPixelFormatMode", defaultValue: "auto")
+    static let cleanfeedRouteAudio = AppSetting(key: "cleanfeedRouteAudio", defaultValue: true)
+    static let cleanfeedEmbedTimecode = AppSetting(key: "cleanfeedEmbedTimecode", defaultValue: true)
+
     // Update checker
     static let updateLastChecked = AppSetting<Date?>(key: "updateLastChecked", defaultValue: nil)
     static let updateCheckInterval = AppSetting(key: "updateCheckInterval", defaultValue: 7.0 * 24 * 3_600)
@@ -125,6 +134,13 @@ nonisolated enum AppSettings {
             automaticAudioOnlyWaveform.key: automaticAudioOnlyWaveform.defaultValue,
             liveAudioMeterPreset.key: liveAudioMeterPreset.defaultValue,
             liveAudioMeterCustomLoudnessTarget.key: liveAudioMeterCustomLoudnessTarget.defaultValue,
+            cleanfeedDeviceUID.key: cleanfeedDeviceUID.defaultValue,
+            cleanfeedResolutionMode.key: cleanfeedResolutionMode.defaultValue,
+            cleanfeedFrameRateMode.key: cleanfeedFrameRateMode.defaultValue,
+            cleanfeedColorMode.key: cleanfeedColorMode.defaultValue,
+            cleanfeedPixelFormatMode.key: cleanfeedPixelFormatMode.defaultValue,
+            cleanfeedRouteAudio.key: cleanfeedRouteAudio.defaultValue,
+            cleanfeedEmbedTimecode.key: cleanfeedEmbedTimecode.defaultValue,
             updateCheckInterval.key: updateCheckInterval.defaultValue,
             didShowAutoUpdateNotice.key: didShowAutoUpdateNotice.defaultValue,
         ])

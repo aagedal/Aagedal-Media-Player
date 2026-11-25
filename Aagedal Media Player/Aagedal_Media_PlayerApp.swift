@@ -64,6 +64,7 @@ struct Aagedal_Media_PlayerApp: App {
     private var allowMultipleWindows = AppSettings.allowMultipleWindows.defaultValue
     @AppStorage(AppSettings.syncPlaybackControls.key)
     private var syncPlaybackControls = AppSettings.syncPlaybackControls.defaultValue
+    @ObservedObject private var cleanfeed = CleanfeedSession.shared
 
     /// Construct Sparkle eagerly so the updater attaches to the run loop
     /// before the first window appears. Inert for Homebrew installs and when
@@ -180,6 +181,92 @@ struct Aagedal_Media_PlayerApp: App {
                 }
                 .keyboardShortcut("l", modifiers: [.command, .shift])
                 .disabled(!mediaLoaded)
+
+                Divider()
+
+                Button(cleanfeed.isEnabled ? "Stop Cleanfeed Output" : "Cleanfeed Output") {
+                    NotificationCenter.default.post(.toggleCleanfeed)
+                }
+                .keyboardShortcut("o", modifiers: [.command, .shift])
+                .disabled(!cleanfeed.hasOutputDevice && !cleanfeed.isEnabled)
+
+                Menu("Cleanfeed Device") {
+                    if cleanfeed.availableDevices.isEmpty {
+                        Text("No CoreMediaIO output device detected")
+                    } else {
+                        ForEach(cleanfeed.availableDevices) { device in
+                            Button {
+                                cleanfeed.selectedDeviceUID = device.uid
+                            } label: {
+                                if cleanfeed.resolvedTargetDevice?.uid == device.uid {
+                                    Label(device.name, systemImage: "checkmark")
+                                } else {
+                                    Text(device.name)
+                                }
+                            }
+                        }
+                        let caps = cleanfeed.capabilities
+                        Divider()
+                        Menu("Resolution") {
+                            ForEach(caps.resolutionModes) { mode in
+                                Button {
+                                    cleanfeed.resolutionMode = mode
+                                } label: {
+                                    if caps.effectiveResolutionMode == mode {
+                                        Label(mode.label, systemImage: "checkmark")
+                                    } else {
+                                        Text(mode.label)
+                                    }
+                                }
+                            }
+                        }
+                        Menu("Frame Rate") {
+                            ForEach(caps.frameRateModes) { mode in
+                                Button {
+                                    cleanfeed.frameRateMode = mode
+                                } label: {
+                                    if caps.effectiveFrameRateMode == mode {
+                                        Label(mode.label, systemImage: "checkmark")
+                                    } else {
+                                        Text(mode.label)
+                                    }
+                                }
+                            }
+                        }
+                        if caps.colorModes.count > 1 {
+                            Menu("Color Space") {
+                                ForEach(caps.colorModes) { mode in
+                                    Button {
+                                        cleanfeed.colorMode = mode
+                                    } label: {
+                                        if caps.effectiveColorMode == mode {
+                                            Label(mode.label, systemImage: "checkmark")
+                                        } else {
+                                            Text(mode.label)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        Divider()
+                        Toggle("Route Audio to Output Device", isOn: Binding(
+                            get: { cleanfeed.routeAudioToDevice },
+                            set: { cleanfeed.routeAudioToDevice = $0 }
+                        ))
+                        Toggle("Embed SMPTE Timecode", isOn: Binding(
+                            get: { cleanfeed.embedSMPTETimecode },
+                            set: { cleanfeed.embedSMPTETimecode = $0 }
+                        ))
+                        Divider()
+                        Button(cleanfeed.isColorBarsActive ? "Stop Color Bars Test" : "Send Color Bars Test") {
+                            cleanfeed.toggleColorBarsTest()
+                        }
+                    }
+                    Divider()
+                    Button("Refresh Output Devices") {
+                        cleanfeed.refreshDevices()
+                    }
+                }
             }
             CommandMenu("Playback") {
                 Button("Play / Pause") {
@@ -391,5 +478,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         true
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        CleanfeedSession.shared.shutdown()
     }
 }
