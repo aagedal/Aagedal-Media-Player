@@ -40,6 +40,7 @@ struct ContentView: View {
     @AppStorage(AppSettings.didShowCompareModeCallout.key)
     private var didShowCompareModeCallout = AppSettings.didShowCompareModeCallout.defaultValue
     @ObservedObject private var updateChecker = UpdateChecker.shared
+    @ObservedObject private var cleanfeed = CleanfeedSession.shared
     @State private var updateBannerDismissed = false
     @State private var scopeWindowController: ScopeWindowController?
     @State private var showScopeOverlay = false
@@ -325,6 +326,7 @@ struct ContentView: View {
                     windowCoordinator.accept(
                         window,
                         onClose: { [controller, compareSession, audioWaveformGenerator, loupePrimaryCapture, loupeSecondaryCapture] in
+                            CleanfeedSession.shared.detach(controller: controller)
                             loupePrimaryCapture.stop()
                             loupeSecondaryCapture.stop()
                             Self.stopPlaybackForWindowClose(
@@ -383,6 +385,17 @@ struct ContentView: View {
 
     private var observedContentLayers: some View {
         renderedContentLayers
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.didBecomeKeyNotification)) { notification in
+            guard let window = notification.object as? NSWindow, window === nsWindow else { return }
+            if isMediaLoaded {
+                CleanfeedSession.shared.attach(controller: controller)
+            }
+        }
+        .onChange(of: controller.preparationID) { _, _ in
+            if isMediaLoaded, WindowManager.shared.isActiveWindow(nsWindow) {
+                CleanfeedSession.shared.attach(controller: controller)
+            }
+        }
         .onChange(of: controller.screenshotState) { _, state in
             switch state {
             case .succeeded:
@@ -688,6 +701,26 @@ struct ContentView: View {
             )
                 .playerToolbarFocus()
                 .disabled(!isMediaLoaded || controller.mediaItem?.presentationKind == .audioOnly)
+
+            if cleanfeed.hasOutputDevice || cleanfeed.isEnabled || cleanfeed.isColorBarsActive {
+                Button(action: { cleanfeed.toggleEnabled(for: controller) }) {
+                    Image(systemName: cleanfeed.isStreaming ? "tv.fill" : "tv")
+                        .font(.system(size: 16))
+                        .foregroundColor(
+                            cleanfeed.isStreaming
+                                ? Color.accentColor
+                                : Color.white.opacity(0.9)
+                        )
+                }
+                .buttonStyle(.plain)
+                .playerToolbarFocus()
+                .help(cleanfeed.isStreaming
+                      ? "Stop cleanfeed output (\(cleanfeed.statusSummary))"
+                      : "Send cleanfeed to \(cleanfeed.resolvedTargetDevice?.name ?? "external output") (\u{21E7}\u{2318}O)")
+                .accessibilityLabel(cleanfeed.isStreaming ? "Stop cleanfeed output" : "Start cleanfeed output")
+                .accessibilityValue(cleanfeed.statusSummary)
+                .accessibilityAddTraits(cleanfeed.isStreaming ? .isSelected : [])
+            }
 
             Button(action: toggleLiveAudioMeter) {
                 Image(systemName: "waveform.path.ecg")

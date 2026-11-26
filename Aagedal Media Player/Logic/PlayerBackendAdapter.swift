@@ -23,6 +23,7 @@ protocol PlayerBackendAdapter: AnyObject {
     var isMuted: Bool { get set }
 
     func setAudioChannelRouting(_ routing: AudioChannelRouting)
+    func setAudioOutputDevice(coreAudioUID: String?)
 
     func play()
     func pause()
@@ -82,6 +83,10 @@ final class AVFoundationPlayerBackend: PlayerBackendAdapter {
         hasAudioChannelRouting = !routing.isBypassed
     }
 
+    func setAudioOutputDevice(coreAudioUID: String?) {
+        player.audioOutputDeviceUniqueID = coreAudioUID
+    }
+
     func teardown() {
         player.isMuted = true
         player.rate = 0
@@ -134,6 +139,10 @@ final class MPVPlayerBackend: PlayerBackendAdapter {
 
     func setAudioChannelRouting(_ routing: AudioChannelRouting) {
         player.setAudioChannelRouting(routing)
+    }
+
+    func setAudioOutputDevice(coreAudioUID: String?) {
+        player.setAudioOutputDevice(coreAudioUID: coreAudioUID)
     }
 
     func teardown() {

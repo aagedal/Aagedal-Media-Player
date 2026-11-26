@@ -295,6 +295,12 @@ private struct FileAndWindowHandlers: ViewModifier {
                 guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
                 toggleLiveAudioMeter()
             }
+            .onReceive(NotificationCenter.default.appCommandPublisher) { notification in
+                guard let command = notification.appCommand,
+                      case .toggleCleanfeed = command else { return }
+                guard WindowManager.shared.isActiveWindow(nsWindow) else { return }
+                CleanfeedSession.shared.toggleEnabled(for: controller)
+            }
     }
 
     private var keepsAutomaticAudioOnlyWaveform: Bool {

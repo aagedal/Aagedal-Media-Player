@@ -59,7 +59,13 @@ final class PlayerController: ObservableObject {
     /// persisted as a user preference.
     private(set) var isAudioSuppressed = false
     private var effectiveIsMuted: Bool { isMuted || isAudioSuppressed }
+    private var requestedAudioOutputDeviceUID: String?
     @Published private(set) var audioSyncOffsetMilliseconds: Double = 0
+
+    func setAudioOutputDevice(coreAudioUID: String?) {
+        requestedAudioOutputDeviceUID = coreAudioUID
+        backendAdapter?.setAudioOutputDevice(coreAudioUID: coreAudioUID)
+    }
 
     var supportsAudioSyncOffset: Bool { useMPV && mpvPlayer != nil }
 
@@ -703,6 +709,7 @@ final class PlayerController: ObservableObject {
         let backend = AVFoundationPlayerBackend(url: url, volume: volume, isMuted: effectiveIsMuted)
         backendAdapter = backend
         backend.setAudioChannelRouting(audioChannelRouting)
+        backend.setAudioOutputDevice(coreAudioUID: requestedAudioOutputDeviceUID)
         let player = backend.player
         guard let playerItem = player.currentItem else {
             reportPlaybackFailure(
@@ -767,6 +774,7 @@ final class PlayerController: ObservableObject {
         )
         backendAdapter = backend
         backend.setAudioChannelRouting(audioChannelRouting)
+        backend.setAudioOutputDevice(coreAudioUID: requestedAudioOutputDeviceUID)
         let mpv = backend.player
         mpv.setAudioSyncOffset(milliseconds: audioSyncOffsetMilliseconds)
         mpv.setDeinterlace(deinterlaceMode)
